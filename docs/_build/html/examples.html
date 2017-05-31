@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Mesh Reading and Writing &mdash; vtkInterface  documentation</title>
+  <title>Examples &mdash; vtkInterface  documentation</title>
   
 
   
@@ -90,10 +90,14 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Mesh Reading and Writing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#mesh-manipulation-and-plotting">Mesh Manipulation and Plotting</a></li>
-<li class="toctree-l1"><a class="reference internal" href="#unstructured-grid-plotting">Unstructured Grid Plotting</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mesh-reading-and-writing">Mesh Reading and Writing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#mesh-manipulation-and-plotting">Mesh Manipulation and Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#unstructured-grid-plotting">Unstructured Grid Plotting</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -138,7 +142,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Mesh Reading and Writing</li>
+      <li>Examples</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -157,8 +161,10 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="mesh-reading-and-writing">
-<span id="examples-ref"></span><h1>Mesh Reading and Writing<a class="headerlink" href="#mesh-reading-and-writing" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="examples">
+<span id="id1"></span><h1>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="mesh-reading-and-writing">
+<h2>Mesh Reading and Writing<a class="headerlink" href="#mesh-reading-and-writing" title="Permalink to this headline">¶</a></h2>
 <p>Both binary and ASCII .ply, .stl, and .vtk files can be read using
 vtkInterface.  The vtkInterface package contains example meshes and these can
 be loaded with:</p>
@@ -185,7 +191,7 @@ be loaded with:</p>
 </div>
 </div>
 <div class="section" id="mesh-manipulation-and-plotting">
-<h1>Mesh Manipulation and Plotting<a class="headerlink" href="#mesh-manipulation-and-plotting" title="Permalink to this headline">¶</a></h1>
+<h2>Mesh Manipulation and Plotting<a class="headerlink" href="#mesh-manipulation-and-plotting" title="Permalink to this headline">¶</a></h2>
 <p>Meshes can be directly manipulated using numpy or with the built-in
 translation and rotation routines.  This example loads two meshes and moves,
 scales, and copies them:</p>
@@ -234,7 +240,7 @@ various colors:</p>
 <img alt="_images/AntsAndPlane.png" src="_images/AntsAndPlane.png" />
 </div>
 <div class="section" id="unstructured-grid-plotting">
-<h1>Unstructured Grid Plotting<a class="headerlink" href="#unstructured-grid-plotting" title="Permalink to this headline">¶</a></h1>
+<h2>Unstructured Grid Plotting<a class="headerlink" href="#unstructured-grid-plotting" title="Permalink to this headline">¶</a></h2>
 <p>This example shows how you can load an unstructured grid from a vtk file and
 create a plot and gif movie by updating the plotting object:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Load module and example file</span>
@@ -342,6 +348,7 @@ exit the window:</p>
 </pre></div>
 </div>
 <img alt="_images/beam_wireframe.gif" src="_images/beam_wireframe.gif" />
+</div>
 </div>
 
 

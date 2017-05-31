@@ -9,7 +9,7 @@ This moudle is suited creating engineering plots for presentations and research 
 Documentation
 -------------
 
-See `vtkInterface Documentation <http://vtkinterface.readthedocs.io/en/`_ for detailed documentation and examples.
+See `vtkInterface Documentation <http://vtkinterface.readthedocs.io/en/>`_ for detailed documentation and examples.
 
 
 Installation
@@ -21,7 +21,7 @@ If you have a working copy of VTK, installation is simply::
     
 You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
 
-See the `Installation <http://vtkinterface.readthedocs.io/en/latest/#installation`_ for more details.
+See the `Installation <http://vtkinterface.readthedocs.io/en/latest/#installation>`_ for more details.
 
 
 Quick Examples

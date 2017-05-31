@@ -30,7 +30,7 @@ You can also install vtk from the source by following these `Directions <http://
 
 Install vtkInterface
 ~~~~~~~~~~~~~~~~~~~~
-Install vtkInterface from PyPi `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ by running::
+Install vtkInterface from `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ by running::
 
     pip install vtkInterface
 
@@ -73,7 +73,11 @@ Test Installation
 Regardless of your OS, you can test your installation by running an example 
 from Tests::
 
-    from vtkInterface import Tests
-    Tests.ShowWave()
+    from vtkInterface import tests
+    tests.ShowWave()
 
-See the examples page for more tests you can run.
+You can also run examples from::
+
+    from vtkInterface import examples
+
+See the examples for some built in examples.

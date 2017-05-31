@@ -1,7 +1,10 @@
-.. _examples_ref:
+.. _examples:
+
+Examples
+========
 
 Mesh Reading and Writing
-========================
+------------------------
 
 Both binary and ASCII .ply, .stl, and .vtk files can be read using
 vtkInterface.  The vtkInterface package contains example meshes and these can 
@@ -30,7 +33,7 @@ These meshes are identical::
  
     
 Mesh Manipulation and Plotting
-==============================
+------------------------------
 
 Meshes can be directly manipulated using numpy or with the built-in
 translation and rotation routines.  This example loads two meshes and moves, 
@@ -82,7 +85,7 @@ various colors::
 
 
 Unstructured Grid Plotting
-==========================
+--------------------------
 
 This example shows how you can load an unstructured grid from a vtk file and
 create a plot and gif movie by updating the plotting object::

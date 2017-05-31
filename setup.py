@@ -43,7 +43,7 @@ setup(
     keywords='vtk numpy plotting mesh',
                            
     package_data={'vtkInterface.examples': ['airplane.ply', 'ant.ply', 
-                                            'hexbeam.vtk']},
+                                            'hexbeam.vtk', 'sphere.ply']},
 
     install_requires=['numpy']
 

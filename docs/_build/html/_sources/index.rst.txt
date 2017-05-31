@@ -1,9 +1,9 @@
 vtkInterface Overview
 =====================
 
-vtkInterface is a python module that takes a different approach on interfacing with VTK by using numpy and direct array access.  This module also simplifies mesh creation and plotting by adding functionality to existing VTK objects.
+vtkInterface is a Python module that simplifies the interface with VTK by using numpy and direct array access and more general classes to work with meshes and plotting.
 
-This moudle is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent python modules.
+This moudle is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent Python modules that would like to simplify hundreds of lines of code into just a few lines.
 
 
 Installation
@@ -148,6 +148,7 @@ Contents
 .. toctree::
    :maxdepth: 2
    
+   overview
    installation
    examples
 

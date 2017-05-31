@@ -8,6 +8,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 antfile = os.path.join(dir_path, 'ant.ply')
 planefile = os.path.join(dir_path, 'airplane.ply')
 hexbeamfile = os.path.join(dir_path, 'hexbeam.vtk')
+spherefile = os.path.join(dir_path, 'sphere.vtk')
 
 
 # get location of this folder
@@ -23,6 +24,11 @@ def LoadAirplane():
     """ Load ply airplane mesh """
     return vtkInterface.LoadMesh(planefile)
     
+
+def LoadSphere():
+    """ Loads sphere ply mesh """
+    return vtkInterface.LoadMesh(spherefile)
+
 
 def PlotAirplane():
     """ Plot a white airplane """

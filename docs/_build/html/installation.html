@@ -36,8 +36,8 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="vtkInterface  documentation" href="index.html"/>
-        <link rel="next" title="Mesh Reading and Writing" href="examples.html"/>
-        <link rel="prev" title="vtkInterface Overview" href="index.html"/> 
+        <link rel="next" title="Examples" href="examples.html"/>
+        <link rel="prev" title="Overview" href="overview.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -91,6 +91,7 @@
             
             
               <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#windows-installation">Windows Installation</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#install-vtk">Install VTK</a></li>
@@ -105,9 +106,7 @@
 <li class="toctree-l2"><a class="reference internal" href="#test-installation">Test Installation</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html">Mesh Reading and Writing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#mesh-manipulation-and-plotting">Mesh Manipulation and Plotting</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples.html#unstructured-grid-plotting">Unstructured Grid Plotting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 </ul>
 
             
@@ -195,7 +194,7 @@ enviornment it’s easier to use a distribution such as
 </div>
 <div class="section" id="install-vtkinterface">
 <h3>Install vtkInterface<a class="headerlink" href="#install-vtkinterface" title="Permalink to this headline">¶</a></h3>
-<p>Install vtkInterface from PyPi <a class="reference external" href="http://pypi.python.org/pypi/vtkInterface">PyPi</a> by running:</p>
+<p>Install vtkInterface from <a class="reference external" href="http://pypi.python.org/pypi/vtkInterface">PyPi</a> by running:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">vtkInterface</span>
 </pre></div>
 </div>
@@ -237,11 +236,15 @@ package manager:</p>
 <h2>Test Installation<a class="headerlink" href="#test-installation" title="Permalink to this headline">¶</a></h2>
 <p>Regardless of your OS, you can test your installation by running an example
 from Tests:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">vtkInterface</span> <span class="k">import</span> <span class="n">Tests</span>
-<span class="n">Tests</span><span class="o">.</span><span class="n">ShowWave</span><span class="p">()</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">vtkInterface</span> <span class="k">import</span> <span class="n">tests</span>
+<span class="n">tests</span><span class="o">.</span><span class="n">ShowWave</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>See the examples page for more tests you can run.</p>
+<p>You can also run examples from:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">vtkInterface</span> <span class="k">import</span> <span class="n">examples</span>
+</pre></div>
+</div>
+<p>See the examples for some built in examples.</p>
 </div>
 </div>
 
@@ -255,10 +258,10 @@ from Tests:</p>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="examples.html" class="btn btn-neutral float-right" title="Mesh Reading and Writing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="index.html" class="btn btn-neutral" title="vtkInterface Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="overview.html" class="btn btn-neutral" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

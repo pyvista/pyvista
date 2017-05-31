@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Overview &mdash; vtkInterface  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="vtkInterface  documentation" href="index.html"/>
+        <link rel="next" title="Installation" href="installation.html"/>
+        <link rel="prev" title="vtkInterface Overview" href="index.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="index.html" class="icon icon-home"> vtkInterface
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">vtkInterface</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>Overview</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/overview.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="overview">
+<span id="overview-ref"></span><h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>VTK is an excellent visualization toolkit, and with Python bindings it should
+be able to combine the speed of C++ with the rapid prototyping of Python.
+However, despite this VTK code programmed in Python generally looks the same
+as its C++ counterpart.
+For <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Examples/Python/STLReader">example</a>, loading
+and plotting an STL file requires:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtk</span>
+
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;myfile.stl&quot;</span>
+
+<span class="n">reader</span> <span class="o">=</span> <span class="n">vtk</span><span class="o">.</span><span class="n">vtkSTLReader</span><span class="p">()</span>
+<span class="n">reader</span><span class="o">.</span><span class="n">SetFileName</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<span class="n">mapper</span> <span class="o">=</span> <span class="n">vtk</span><span class="o">.</span><span class="n">vtkPolyDataMapper</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">vtk</span><span class="o">.</span><span class="n">VTK_MAJOR_VERSION</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">:</span>
+    <span class="n">mapper</span><span class="o">.</span><span class="n">SetInput</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">GetOutput</span><span class="p">())</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">mapper</span><span class="o">.</span><span class="n">SetInputConnection</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">GetOutputPort</span><span class="p">())</span>
+
+<span class="n">actor</span> <span class="o">=</span> <span class="n">vtk</span><span class="o">.</span><span class="n">vtkActor</span><span class="p">()</span>
+<span class="n">actor</span><span class="o">.</span><span class="n">SetMapper</span><span class="p">(</span><span class="n">mapper</span><span class="p">)</span>
+
+<span class="c1"># Create a rendering window and renderer</span>
+<span class="n">ren</span> <span class="o">=</span> <span class="n">vtk</span><span class="o">.</span><span class="n">vtkRenderer</span><span class="p">()</span>
+<span class="n">renWin</span> <span class="o">=</span> <span class="n">vtk</span><span class="o">.</span><span class="n">vtkRenderWindow</span><span class="p">()</span>
+<span class="n">renWin</span><span class="o">.</span><span class="n">AddRenderer</span><span class="p">(</span><span class="n">ren</span><span class="p">)</span>
+
+<span class="c1"># Create a renderwindowinteractor</span>
+<span class="n">iren</span> <span class="o">=</span> <span class="n">vtk</span><span class="o">.</span><span class="n">vtkRenderWindowInteractor</span><span class="p">()</span>
+<span class="n">iren</span><span class="o">.</span><span class="n">SetRenderWindow</span><span class="p">(</span><span class="n">renWin</span><span class="p">)</span>
+
+<span class="c1"># Assign actor to the renderer</span>
+<span class="n">ren</span><span class="o">.</span><span class="n">AddActor</span><span class="p">(</span><span class="n">actor</span><span class="p">)</span>
+
+<span class="c1"># Enable user interface interactor</span>
+<span class="n">iren</span><span class="o">.</span><span class="n">Initialize</span><span class="p">()</span>
+<span class="n">renWin</span><span class="o">.</span><span class="n">Render</span><span class="p">()</span>
+<span class="n">iren</span><span class="o">.</span><span class="n">Start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The goal of vtkInterface is to simplfiy this without loosing functionality.
+The same stl can be loaded and plotted using vtkInterface with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+
+<span class="c1"># Load mesh</span>
+<span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;myfile.stl&quot;</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">LoadMesh</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+<span class="c1"># Plot mesh interactively</span>
+<span class="n">mesh</span><span class="o">.</span><span class="n">Plot</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>When combined with numpy, you can make some truly spectacular plots:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># Make a grid</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+                      <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">20</span><span class="p">),</span>
+                      <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+<span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">points</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+<span class="n">points</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+<span class="n">points</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">ravel</span><span class="p">(</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+
+<span class="c1"># Compute a direction for the vector field</span>
+<span class="n">direction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">points</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+
+
+<span class="c1"># plot using the plotting class</span>
+<span class="n">plobj</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">PlotClass</span><span class="p">()</span>
+<span class="n">plobj</span><span class="o">.</span><span class="n">AddArrows</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">direction</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plobj</span><span class="o">.</span><span class="n">SetBackground</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="c1"># RGB set to black</span>
+<span class="n">plobj</span><span class="o">.</span><span class="n">Plot</span><span class="p">()</span>
+<span class="k">del</span> <span class="n">plobj</span>
+</pre></div>
+</div>
+<img alt="_images/vectorfield.png" src="_images/vectorfield.png" />
+<p>While not everything can be simplified without losing functionality, many of the
+objects can.  For example, triangular surface meshes in VTK can be tesselated
+but every other object in VTK cannot be tesselated.  It then makes sense that
+a tesselation method be added to the existing triangular surface mesh.  That
+way, tesselation can be performed with:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">submesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">Subdivide</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">nsub</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and help(mesh.Subdivide) yields a useful helpdoc:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Help</span> <span class="n">on</span> <span class="n">function</span> <span class="n">Subdivide</span> <span class="ow">in</span> <span class="n">module</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">utilities</span><span class="p">:</span>
+
+<span class="n">Subdivide</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">nsub</span><span class="p">,</span> <span class="n">subfilter</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">)</span>
+    <span class="n">Increase</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">triangles</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">single</span><span class="p">,</span> <span class="n">connected</span> <span class="n">triangular</span> <span class="n">mesh</span><span class="o">.</span>
+
+    <span class="n">Uses</span> <span class="n">one</span> <span class="n">of</span> <span class="n">the</span> <span class="n">following</span> <span class="n">vtk</span> <span class="n">subdivision</span> <span class="n">filters</span> <span class="n">to</span> <span class="n">subdivide</span> <span class="n">a</span> <span class="n">mesh</span><span class="o">.</span>
+    <span class="n">vtkButterflySubdivisionFilter</span>
+    <span class="n">vtkLoopSubdivisionFilter</span>
+    <span class="n">vtkLinearSubdivisionFilter</span>
+
+    <span class="n">Linear</span> <span class="n">subdivision</span> <span class="n">results</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">fastest</span> <span class="n">mesh</span> <span class="n">subdivision</span><span class="p">,</span> <span class="n">but</span> <span class="n">it</span> <span class="n">does</span> <span class="ow">not</span>
+    <span class="n">smooth</span> <span class="n">mesh</span> <span class="n">edges</span><span class="p">,</span> <span class="n">but</span> <span class="n">rather</span> <span class="n">splits</span> <span class="n">each</span> <span class="n">triangle</span> <span class="n">into</span> <span class="mi">4</span> <span class="n">smaller</span>
+    <span class="n">triangles</span><span class="o">.</span>
+
+    <span class="n">Butterfly</span> <span class="ow">and</span> <span class="n">loop</span> <span class="n">subdivision</span> <span class="n">perform</span> <span class="n">smoothing</span> <span class="n">when</span> <span class="n">dividing</span><span class="p">,</span> <span class="ow">and</span> <span class="n">may</span>
+    <span class="n">introduce</span> <span class="n">artifacts</span> <span class="n">into</span> <span class="n">the</span> <span class="n">mesh</span> <span class="n">when</span> <span class="n">dividing</span><span class="o">.</span>
+
+    <span class="n">Subdivision</span> <span class="nb">filter</span> <span class="n">appears</span> <span class="n">to</span> <span class="n">fail</span> <span class="k">for</span> <span class="n">multiple</span> <span class="n">part</span> <span class="n">meshes</span><span class="o">.</span>  <span class="n">Should</span> <span class="n">be</span> <span class="n">one</span>
+    <span class="n">single</span> <span class="n">mesh</span><span class="o">.</span>
+
+    <span class="n">Parameters</span>
+    <span class="o">----------</span>
+    <span class="n">mesh</span> <span class="p">:</span> <span class="n">vtk</span><span class="o">.</span><span class="n">vtkPolyData</span>
+        <span class="n">Mesh</span> <span class="n">to</span> <span class="n">be</span> <span class="n">subdivided</span><span class="o">.</span>  <span class="n">Must</span> <span class="n">be</span> <span class="n">a</span> <span class="n">triangular</span> <span class="n">mesh</span><span class="o">.</span>
+    <span class="n">nsub</span> <span class="p">:</span> <span class="nb">int</span>
+        <span class="n">Number</span> <span class="n">of</span> <span class="n">subdivisions</span><span class="o">.</span>  <span class="n">Each</span> <span class="n">subdivision</span> <span class="n">creates</span> <span class="mi">4</span> <span class="n">new</span> <span class="n">triangles</span><span class="p">,</span> <span class="n">so</span>
+        <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="n">resulting</span> <span class="n">triangles</span> <span class="ow">is</span> <span class="n">nface</span><span class="o">*</span><span class="mi">4</span><span class="o">**</span><span class="n">nsub</span> <span class="n">where</span> <span class="n">nface</span> <span class="ow">is</span> <span class="n">the</span>
+        <span class="n">current</span> <span class="n">number</span> <span class="n">of</span> <span class="n">faces</span><span class="o">.</span>
+    <span class="n">subfilter</span> <span class="p">:</span> <span class="n">string</span><span class="p">,</span> <span class="n">optional</span>
+        <span class="n">Can</span> <span class="n">be</span> <span class="n">one</span> <span class="n">of</span> <span class="n">the</span> <span class="n">following</span><span class="p">:</span> <span class="s1">&#39;butterfly&#39;</span><span class="p">,</span> <span class="s1">&#39;loop&#39;</span><span class="p">,</span> <span class="s1">&#39;linear&#39;</span>
+
+    <span class="n">Returns</span>
+    <span class="o">-------</span>
+    <span class="n">mesh</span> <span class="p">:</span> <span class="n">vtkPolydata</span> <span class="nb">object</span>
+        <span class="n">VTK</span> <span class="n">surface</span> <span class="n">mesh</span> <span class="nb">object</span><span class="o">.</span>
+
+    <span class="n">Examples</span>
+    <span class="o">--------</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">vtkInterface</span> <span class="k">import</span> <span class="n">examples</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">vtkInterface</span>
+
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">mesh</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">LoadMesh</span><span class="p">(</span><span class="n">examples</span><span class="o">.</span><span class="n">planefile</span><span class="p">)</span>
+    <span class="o">&gt;&gt;&gt;</span> <span class="n">submesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">Subdivide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;loop&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral" title="vtkInterface Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, Alex Kaszynski.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

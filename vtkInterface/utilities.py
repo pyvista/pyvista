@@ -13,7 +13,7 @@ from vtk.util import numpy_support as VN
 # Determine if using vtk > 5
 new_vtk = vtk.vtkVersion().GetVTKMajorVersion() > 5
 if not new_vtk:
-    warnings.warn('Using VTK version 5 or less. May encounter errors.')
+    warnings.warn('Using VTK version 5 or less. May encounter errors')
 
 # mesh morph import
 from vtkInterface import Plot
@@ -51,6 +51,72 @@ def Translate(mesh, xyz):
     ApplyTransformationInPlace(mesh, trans)
 
 
+def Subdivide(mesh, nsub, subfilter='linear'):
+    """
+    Increase the number of triangles in a single, connected triangular mesh.
+    
+    Uses one of the following vtk subdivision filters to subdivide a mesh.
+    vtkButterflySubdivisionFilter
+    vtkLoopSubdivisionFilter
+    vtkLinearSubdivisionFilter
+
+    Linear subdivision results in the fastest mesh subdivision, but it does not
+    smooth mesh edges, but rather splits each triangle into 4 smaller 
+    triangles.
+    
+    Butterfly and loop subdivision perform smoothing when dividing, and may
+    introduce artifacts into the mesh when dividing.
+    
+    Subdivision filter appears to fail for multiple part meshes.  Should be one
+    single mesh.
+    
+    Parameters
+    ----------
+    mesh : vtk.vtkPolyData
+        Mesh to be subdivided.  Must be a triangular mesh.
+    nsub : int
+        Number of subdivisions.  Each subdivision creates 4 new triangles, so
+        the number of resulting triangles is nface*4**nsub where nface is the
+        current number of faces.
+    subfilter : string, optional
+        Can be one of the following: 'butterfly', 'loop', 'linear'
+        
+    Returns
+    -------
+    mesh : vtkPolydata object
+        VTK surface mesh object.
+        
+    Examples
+    --------
+    >>> from vtkInterface import examples
+    >>> import vtkInterface
+    
+    >>> mesh = vtkInterface.LoadMesh(examples.planefile)
+    >>> submesh = mesh.Subdivide(1, 'loop')
+    
+    """
+    
+    # select filter
+    if subfilter is 'linear':
+        sfilter = vtk.vtkLinearSubdivisionFilter() 
+    elif subfilter is 'butterfly':
+        sfilter = vtk.vtkButterflySubdivisionFilter()
+    elif subfilter is 'loop':
+        sfilter = vtk.vtkLoopSubdivisionFilter()
+    else:
+        raise Exception("Subdivision filter must be one of the following: " +\
+                        "'butterfly', 'loop', or 'linear'")
+        
+    # Subdivide
+    sfilter.SetNumberOfSubdivisions(nsub)
+    sfilter.SetInputData(mesh)
+    sfilter.Update()
+    submesh = sfilter.GetOutput()
+    AddFunctions(submesh)
+
+    return submesh
+
+
 def AddFunctions(grid):
     
     # check if it already has the convenience functions
@@ -70,31 +136,32 @@ def AddFunctions(grid):
         
 def PolyAddExtraFunctions(poly):
     """ Adds convenience functions to vtk.vtkpoly objects """
-    poly.GetNumpyPoints  = types.MethodType(GetPoints, poly)#, vtk.vtkPolyData)
-    poly.SetNumpyPoints  = types.MethodType(SetPoints, poly)#, vtk.vtkPolyData)
-    poly.GetNumpyFaces   = types.MethodType(GetFaces, poly)#, vtk.vtkPolyData)
-    poly.GetPointScalars = types.MethodType(GetPointScalars, poly)#, vtk.vtkPolyData)
-    poly.AddPointScalars = types.MethodType(AddPointScalars, poly)#, vtk.vtkPolyData)
-    poly.GetCellScalars  = types.MethodType(GetCellScalars, poly)#, vtk.vtkPolyData)
-    poly.AddCellScalars  = types.MethodType(AddCellScalars, poly)#, vtk.vtkPolyData)      
-    poly.ApplyTransformation = types.MethodType(ApplyTransformation, poly)#, vtk.vtkPolyData)      
-    poly.ApplyTransformationInPlace = types.MethodType(ApplyTransformationInPlace, poly)#, vtk.vtkPolyData)
-    poly.Plot            = types.MethodType(Plot, poly)#, vtk.vtkPolyData)
-    poly.RotateX         = types.MethodType(RotateX, poly)#, vtk.vtkPolyData)
-    poly.RotateY         = types.MethodType(RotateY, poly)#, vtk.vtkPolyData)
-    poly.RotateZ         = types.MethodType(RotateZ, poly)#, vtk.vtkPolyData)
-    poly.Translate       = types.MethodType(Translate, poly)#, vtk.vtkPolyData)
-    poly.Copy            = types.MethodType(CopyGrid, poly)#, vtk.vtkPolyData)
-    poly.GetEdgeMask     = types.MethodType(GetEdgeMask, poly)#, vtk.vtkPolyData)
-    poly.BooleanCut      = types.MethodType(BooleanCut, poly)#, vtk.vtkPolyData)
-    poly.BooleanAdd      = types.MethodType(BooleanAdd, poly)#, vtk.vtkPolyData)
-    poly.GetCurvature    = types.MethodType(GetCurvature, poly)#, vtk.vtkPolyData)
-    poly.SetNumpyPolys   = types.MethodType(SetNumpyPolys, poly)#, vtk.vtkPolyData)
-    poly.RemovePoints    = types.MethodType(RemovePoints, poly)#, vtk.vtkPolyData)
-    poly.WriteMesh       = types.MethodType(WriteMesh, poly)#, vtk.vtkPolyData)
-    poly.CheckArrayExists = types.MethodType(CheckArrayExists, poly)#, vtk.vtkPolyData)
-    poly.PlotCurvature = types.MethodType(PlotCurvature, poly)#, vtk.vtkPolyData)
-    poly.TriFilter      = types.MethodType(TriFilter, poly)#, vtk.vtkPolyData)
+    poly.GetNumpyPoints  = types.MethodType(GetPoints, poly)
+    poly.SetNumpyPoints  = types.MethodType(SetPoints, poly)
+    poly.GetNumpyFaces   = types.MethodType(GetFaces, poly)
+    poly.GetPointScalars = types.MethodType(GetPointScalars, poly)
+    poly.AddPointScalars = types.MethodType(AddPointScalars, poly)
+    poly.GetCellScalars  = types.MethodType(GetCellScalars, poly)
+    poly.AddCellScalars  = types.MethodType(AddCellScalars, poly)      
+    poly.ApplyTransformation = types.MethodType(ApplyTransformation, poly)      
+    poly.ApplyTransformationInPlace = types.MethodType(ApplyTransformationInPlace, poly)
+    poly.Plot            = types.MethodType(Plot, poly)
+    poly.RotateX         = types.MethodType(RotateX, poly)
+    poly.RotateY         = types.MethodType(RotateY, poly)
+    poly.RotateZ         = types.MethodType(RotateZ, poly)
+    poly.Translate       = types.MethodType(Translate, poly)
+    poly.Copy            = types.MethodType(CopyGrid, poly)
+    poly.GetEdgeMask     = types.MethodType(GetEdgeMask, poly)
+    poly.BooleanCut      = types.MethodType(BooleanCut, poly)
+    poly.BooleanAdd      = types.MethodType(BooleanAdd, poly)
+    poly.GetCurvature    = types.MethodType(GetCurvature, poly)
+    poly.SetNumpyPolys   = types.MethodType(SetNumpyPolys, poly)
+    poly.RemovePoints    = types.MethodType(RemovePoints, poly)
+    poly.WriteMesh       = types.MethodType(WriteMesh, poly)
+    poly.CheckArrayExists = types.MethodType(CheckArrayExists, poly)
+    poly.PlotCurvature = types.MethodType(PlotCurvature, poly)
+    poly.TriFilter      = types.MethodType(TriFilter, poly)
+    poly.Subdivide       = types.MethodType(Subdivide, poly)
     
     
 def GridAddExtraFunctions(grid):
@@ -104,31 +171,31 @@ def GridAddExtraFunctions(grid):
     """
 
     # Check if object is a unstructred or structured grid    
-    if isinstance(grid, vtk.vtkUnstructuredGrid):
-        gridobj = vtk.vtkUnstructuredGrid
-    elif isinstance(grid, vtk.vtkStructuredGrid):
-        gridobj = vtk.vtkStructuredGrid
-    else:
-        raise Exception('Cannot add grid functions to a non-grid object')
+#    if isinstance(grid, vtk.vtkUnstructuredGrid):
+#        gridobj = vtk.vtkUnstructuredGrid
+#    elif isinstance(grid, vtk.vtkStructuredGrid):
+#        gridobj = vtk.vtkStructuredGrid
+#    else:
+#        raise Exception('Cannot add grid functions to a non-grid object')
         
     # Add unbound function added
-    grid.GetNumpyPoints  = types.MethodType(GetPoints, grid)#, gridobj)
-    grid.SetNumpyPoints  = types.MethodType(SetPoints, grid)#, gridobj)
-    grid.GetNumpyCells   = types.MethodType(ReturnCells, grid)#, gridobj)
-    grid.GetPointScalars = types.MethodType(GetPointScalars, grid)#, gridobj)
-    grid.AddPointScalars = types.MethodType(AddPointScalars, grid)#, gridobj)    
-    grid.GetCellScalars  = types.MethodType(GetCellScalars, grid)#, gridobj)
-    grid.AddCellScalars  = types.MethodType(AddCellScalars, grid)#, gridobj)      
-    grid.ApplyTransformation = types.MethodType(ApplyTransformation, grid)#, gridobj)      
-    grid.ApplyTransformationInPlace = types.MethodType(ApplyTransformationInPlace, grid)#, gridobj)      
-    grid.ExtractExteriorTri = types.MethodType(ExtractExteriorTri, grid)#, gridobj)      
-    grid.ExtractSurface = types.MethodType(ExtractSurface, grid)#, gridobj)      
-    grid.Plot = types.MethodType(Plot, grid)#, gridobj)
-    grid.Copy = types.MethodType(CopyGrid, grid)#, gridobj)
-    grid.CheckArrayExists = types.MethodType(CheckArrayExists, grid)#, gridobj)
-    grid.ExtractSurfaceInd = types.MethodType(ExtractSurfaceInd, grid)#, gridobj)
-    grid.TriFilter      = types.MethodType(TriFilter, grid)#, gridobj)
-    grid.WriteGrid  = types.MethodType(WriteGrid, grid)#, gridobj)
+    grid.GetNumpyPoints  = types.MethodType(GetPoints, grid)
+    grid.SetNumpyPoints  = types.MethodType(SetPoints, grid)
+    grid.GetNumpyCells   = types.MethodType(ReturnCells, grid)
+    grid.GetPointScalars = types.MethodType(GetPointScalars, grid)
+    grid.AddPointScalars = types.MethodType(AddPointScalars, grid)    
+    grid.GetCellScalars  = types.MethodType(GetCellScalars, grid)
+    grid.AddCellScalars  = types.MethodType(AddCellScalars, grid)      
+    grid.ApplyTransformation = types.MethodType(ApplyTransformation, grid)      
+    grid.ApplyTransformationInPlace = types.MethodType(ApplyTransformationInPlace, grid)      
+    grid.ExtractExteriorTri = types.MethodType(ExtractExteriorTri, grid)      
+    grid.ExtractSurface = types.MethodType(ExtractSurface, grid)      
+    grid.Plot = types.MethodType(Plot, grid)
+    grid.Copy = types.MethodType(CopyGrid, grid)
+    grid.CheckArrayExists = types.MethodType(CheckArrayExists, grid)
+    grid.ExtractSurfaceInd = types.MethodType(ExtractSurfaceInd, grid)
+    grid.TriFilter      = types.MethodType(TriFilter, grid)
+    grid.WriteGrid  = types.MethodType(WriteGrid, grid)
 
 
 def MakeuGrid(offset, cells, cell_type, nodes):
@@ -1432,3 +1499,14 @@ def ReadG3D(filename):
     f.close()
     
     return points, triangles
+
+
+#==============================================================================
+# 
+#==============================================================================
+#def Sphere(radius, center=[0, 0, 0]):
+#    source = vtk.vtkSphereSource()
+#    source.SetCenter(0,0,0)
+#    source.SetRadius(5.0)
+
+
