@@ -1,0 +1,20 @@
+# Compiled source #
+###################
+*.pyc
+*.pyd
+*.so
+*.o
+
+# Cython generated files #
+#pymeshfix/cython/_meshfix.cpp
+
+# OS generated files #
+######################
+.fuse_hidden*
+*~
+
+# Pip generated folders #
+#########################
+*.egg-info/
+build/
+dist/
