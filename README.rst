@@ -6,6 +6,12 @@ vtkInterface is a VTK helper module that takes a different approach on interfaci
 This moudle is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent python modules.
 
 
+Documentation
+-------------
+
+See `vtkInterface Documentation <http://vtkinterface.readthedocs.io/en/`_ for detailed documentation and examples.
+
+
 Installation
 ------------
 
@@ -15,7 +21,7 @@ If you have a working copy of VTK, installation is simply::
     
 You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
 
-See the :ref:`install_ref` for more details.
+See the `Installation <http://vtkinterface.readthedocs.io/en/latest/#installation`_ for more details.
 
 
 Quick Examples
@@ -30,7 +36,7 @@ Loading a mesh is trivial::
     mesh = vtkInterface.LoadMesh('airplane.ply')
     mesh.Plot(color='orange')
     
-.. image:: airplane.png
+.. image:: /docs/airplane.png
 
 In fact, the code to generate the previous screenshot was created with::
 
@@ -81,7 +87,7 @@ This example creates a simple surface grid and plots the resulting grid and its 
     # Plot mean curvature as well
     surf.PlotCurvature()
 
-.. image:: curvature.png
+.. image:: /docs/curvature.png
 
 Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array::
 
@@ -139,5 +145,5 @@ This example shows the versatility of the plotting object by generating a moving
     plobj.Close()
     del plobj
 
-.. image:: wave.gif
+.. image:: /docs/wave.gif
 
