@@ -9,7 +9,7 @@ This moudle is suited creating engineering plots for presentations and research 
 Documentation
 -------------
 
-See `vtkInterface <http://vtkinterface.readthedocs.io/en/>`_ for detailed documentation and examples.
+See `vtkInterface <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed documentation and examples.
 
 
 Installation
