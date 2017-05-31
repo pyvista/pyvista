@@ -45,7 +45,7 @@ and plotting an STL file requires::
     iren.Start()
 
 
-The goal of vtkInterface is to simplfiy this without loosing functionality.  
+The goal of vtkInterface is to simplfiy this without losing functionality.  
 The same stl can be loaded and plotted using vtkInterface with::
 
     import vtkInterface

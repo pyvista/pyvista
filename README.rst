@@ -21,7 +21,7 @@ If you have a working copy of VTK, installation is simply::
     
 You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
 
-See the `Installation <http://vtkinterface.readthedocs.io/en/latest/#installation>`_ for more details.
+See the `Installation <http://vtkinterface.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details.
 
 
 Quick Examples

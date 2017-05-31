@@ -13,8 +13,9 @@ setup(
     # Version
     version='0.1',
 
-    description='Pythonic interface to VTK',
-    long_description=open('README.rst').read(),
+    description='Easier Pythonic interface to VTK',
+#    long_description=open('README.rst').read(),
+    long_description=open('pypiREADME.rst').read(),
 
     # Author details
     author='Alex Kaszynski',
@@ -45,6 +46,6 @@ setup(
     package_data={'vtkInterface.examples': ['airplane.ply', 'ant.ply', 
                                             'hexbeam.vtk', 'sphere.ply']},
 
-    install_requires=['numpy']
+    install_requires=['numpy'],
 
 )

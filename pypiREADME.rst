@@ -1,9 +1,15 @@
 vtkInterface Overview
 =====================
 
-vtkInterface is a Python module that simplifies the interface with VTK by using numpy and direct array access and more general classes to work with meshes and plotting.
+vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module also simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
-This moudle is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent Python modules that would like to simplify hundreds of lines of code into just a few lines.
+This moudle is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent python modules.
+
+
+Documentation
+-------------
+
+See `vtkInterface <http://vtkinterface.readthedocs.io/en/>`_ for detailed documentation and examples.
 
 
 Installation
@@ -15,7 +21,7 @@ If you have a working copy of VTK, installation is simply::
     
 You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
 
-See the :ref:`install_ref` for more details.
+See the `Installation <http://vtkinterface.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details.
 
 
 Quick Examples
@@ -30,12 +36,6 @@ Loading a mesh is trivial::
     mesh = vtkInterface.LoadMesh('airplane.ply')
     mesh.Plot(color='orange')
     
-.. image:: airplane.png
-
-In fact, the code to generate the previous screenshot was created with::
-
-    mesh.Plot(screenshot='airplane.png', color='orange')
-
 The points and faces from the mesh are directly accessible as a numpy array::
     
     print mesh.GetNumpyPoints()
@@ -80,8 +80,6 @@ This example creates a simple surface grid and plots the resulting grid and its 
     
     # Plot mean curvature as well
     surf.PlotCurvature()
-
-.. image:: ../curvature.png
 
 Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array::
 
@@ -139,22 +137,3 @@ This example shows the versatility of the plotting object by generating a moving
     plobj.Close()
     del plobj
 
-.. image:: wave.gif
-
-
-Contents
-========
-
-.. toctree::
-   :maxdepth: 2
-   
-   overview
-   installation
-   examples
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`

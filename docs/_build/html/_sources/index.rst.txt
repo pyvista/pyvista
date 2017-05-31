@@ -81,7 +81,7 @@ This example creates a simple surface grid and plots the resulting grid and its 
     # Plot mean curvature as well
     surf.PlotCurvature()
 
-.. image:: curvature.png
+.. image:: ../curvature.png
 
 Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array::
 
