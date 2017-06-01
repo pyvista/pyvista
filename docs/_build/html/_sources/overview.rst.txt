@@ -45,7 +45,7 @@ and plotting an STL file requires::
     iren.Start()
 
 
-The goal of vtkInterface is to simplfiy this without losing functionality.  
+The goal of vtkInterface is to simplify this without losing functionality.  
 The same stl can be loaded and plotted using vtkInterface with::
 
     import vtkInterface
@@ -88,10 +88,10 @@ When combined with numpy, you can make some truly spectacular plots::
 
 
 While not everything can be simplified without losing functionality, many of the
-objects can.  For example, triangular surface meshes in VTK can be tesselated 
-but every other object in VTK cannot be tesselated.  It then makes sense that
-a tesselation method be added to the existing triangular surface mesh.  That
-way, tesselation can be performed with::
+objects can.  For example, triangular surface meshes in VTK can be subdivided 
+but every other object in VTK cannot.  It then makes sense that
+a subdivided method be added to the existing triangular surface mesh.  That
+way, subdivision can be performed with::
 
     submesh = mesh.Subdivide('linear', nsub=3)
 
@@ -141,6 +141,5 @@ and help(mesh.Subdivide) yields a useful helpdoc::
         >>> mesh = vtkInterface.LoadMesh(examples.planefile)
         >>> submesh = mesh.Subdivide(1, 'loop')
     
-
 
 

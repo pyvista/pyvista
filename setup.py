@@ -11,11 +11,11 @@ setup(
     packages = ['vtkInterface', 'vtkInterface.tests', 'vtkInterface.examples'],
 
     # Version
-    version='0.1',
+    version='0.1.1',
 
     description='Easier Pythonic interface to VTK',
-#    long_description=open('README.rst').read(),
-    long_description=open('pypiREADME.rst').read(),
+    long_description=open('README.rst').read(),
+#    long_description=open('pypiREADME.rst').read(),
 
     # Author details
     author='Alex Kaszynski',

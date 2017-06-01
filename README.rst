@@ -1,15 +1,15 @@
 vtkInterface Overview
 =====================
 
-vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module also simplifies mesh creation and plotting by adding functionality to existing VTK objects.
+vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
-This moudle is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent python modules.
+This module can be used for scientific plotting for presentations and research papers as well as a supporting module for other mesh dependent Python modules.
 
 
 Documentation
 -------------
 
-See `vtkInterface Documentation <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed documentation and examples.
+Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed installation and setup details.
 
 
 Installation
@@ -146,4 +146,3 @@ This example shows the versatility of the plotting object by generating a moving
     del plobj
 
 .. image:: /docs/wave.gif
-

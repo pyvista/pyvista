@@ -199,7 +199,7 @@ and plotting an STL file requires:</p>
 <span class="n">iren</span><span class="o">.</span><span class="n">Start</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>The goal of vtkInterface is to simplfiy this without losing functionality.
+<p>The goal of vtkInterface is to simplify this without losing functionality.
 The same stl can be loaded and plotted using vtkInterface with:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
 
@@ -239,10 +239,10 @@ The same stl can be loaded and plotted using vtkInterface with:</p>
 </div>
 <img alt="_images/vectorfield.png" src="_images/vectorfield.png" />
 <p>While not everything can be simplified without losing functionality, many of the
-objects can.  For example, triangular surface meshes in VTK can be tesselated
-but every other object in VTK cannot be tesselated.  It then makes sense that
-a tesselation method be added to the existing triangular surface mesh.  That
-way, tesselation can be performed with:</p>
+objects can.  For example, triangular surface meshes in VTK can be subdivided
+but every other object in VTK cannot.  It then makes sense that
+a subdivided method be added to the existing triangular surface mesh.  That
+way, subdivision can be performed with:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">submesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">Subdivide</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">nsub</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>

@@ -136,7 +136,7 @@ A more complex plot can be created using::
 .. image:: beam.png
 
 
-You can animiate the motion of the beam by updating the positions and scalars
+You can animate the motion of the beam by updating the positions and scalars
 of the grid copied to the plotting object.  First you have to setup the
 plotting object:::
 
@@ -148,7 +148,7 @@ plotting object:::
     plobj.AddAxes()
     plobj.SetCameraPosition(cpos)
     
-You then open the render window by plotting befroe before opening movie file.
+You then open the render window by plotting before opening movie file.
 Set autoclose to False so
 the plobj doesn't close automatically.  Disabling interactive means 
 the plot will automatically continue without waiting for the user to
@@ -197,6 +197,5 @@ You can also render the beam as as a wireframe object::
     del plobj
     
 .. image:: beam_wireframe.gif
-
 
 

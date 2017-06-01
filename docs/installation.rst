@@ -3,14 +3,13 @@
 Installation
 ============
 
-Installing vtkInterface is quite simple, but you will need VTK.  
+Installing vtkInterface itself is quite straightforward, but you will need VTK.  
 VTK can be easily compiled on a UNIX or Linux machine, but with a Windows 
-enviornment it's easier to use a distribution such as 
-`Anaconda <https://www.continuum.io/downloads>`_.
+environment it's easier to use a distribution such as 
+`Anaconda <https://www.continuum.io/downloads>`_. The installation directions are different depending on your OS.  See below.
 
-The installation directions are different depending on your OS.  See below
+vtkInterface requires numpy and VTK.  Optional modules include moviepy and imageio for saving movies or moving gifs.
 
-vtkInterface is dependent on numpy and VTK.  Optional modules include moviepy and 
 
 Windows Installation
 --------------------
@@ -25,7 +24,7 @@ Or, if you're using Python 2.7, install using::
 
     conda install -c anaconda vtk=6.3.0
 
-You can also install vtk from the source by following these `Directions <http://www.vtk.org/Wiki/VTK/Building/Windows>`_.  This is generally quite difficult in Windows.
+You can also install VTK from the source by following these `Directions <http://www.vtk.org/Wiki/VTK/Building/Windows>`_.  This is generally quite difficult in Windows.
 
 
 Install vtkInterface
@@ -45,14 +44,14 @@ Linux Installation
 
 Install VTK
 ~~~~~~~~~~~
-Building VTK from the source under Linux is straightforward.  See `Building VTK for Linux <http://www.vtk.org/Wiki/VTK/Building/Linux>`_ and make sure to enable building with Python.  See `Python Environment Setup <http://www.vtk.org/Wiki/VTK/Tutorials/PythonEnvironmentSetup>`_ if you have problems loading VTK from Python.
-
 If you have Ubuntu 14.04 or newer, you can also install VTK using the apt
 package manager::
 
     sudo apt-get install python-vtk
 
-This will be an earlier version of VTK and is not recommended.
+This will be an earlier version of VTK and while it’s the easiest approach, it’s probably not the best approach given how easy it is to build VTK.
+
+Building VTK from the source under Linux is generally straightforward.  See `Building VTK for Linux <http://www.vtk.org/Wiki/VTK/Building/Linux>`_ and make sure to enable building with Python.  See `Python Environment Setup <http://www.vtk.org/Wiki/VTK/Tutorials/PythonEnvironmentSetup>`_ if you have problems loading VTK from Python.
 
 
 Install vtkInterface

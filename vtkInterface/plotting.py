@@ -8,12 +8,6 @@ import vtk
 from vtk.util import numpy_support as VN
 import numpy as np
 
-# attempt to import imsave for saving screenshots from vtk
-try:
-    from scipy.misc import imsave
-except:
-    pass
-
 import vtkInterface
 
 #==============================================================================
@@ -659,6 +653,13 @@ class PlotClass(object):
         Takes screenshot at current camera position
         """
         
+        # attempt to import imsave for saving screenshots from vtk
+        try:
+            from scipy.misc import imsave
+        except:
+            raise Exception('To use scipy.misc.imsave install pip install pillow')
+
+        # create inage filter        
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.renWin)
         ifilter.SetInputBufferTypeToRGBA()

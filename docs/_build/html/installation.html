@@ -172,12 +172,11 @@
             
   <div class="section" id="installation">
 <span id="install-ref"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>Installing vtkInterface is quite simple, but you will need VTK.
+<p>Installing vtkInterface itself is quite straightforward, but you will need VTK.
 VTK can be easily compiled on a UNIX or Linux machine, but with a Windows
-enviornment it’s easier to use a distribution such as
-<a class="reference external" href="https://www.continuum.io/downloads">Anaconda</a>.</p>
-<p>The installation directions are different depending on your OS.  See below</p>
-<p>vtkInterface is dependent on numpy and VTK.  Optional modules include moviepy and</p>
+environment it’s easier to use a distribution such as
+<a class="reference external" href="https://www.continuum.io/downloads">Anaconda</a>. The installation directions are different depending on your OS.  See below.</p>
+<p>vtkInterface requires numpy and VTK.  Optional modules include moviepy and imageio for saving movies or moving gifs.</p>
 <div class="section" id="windows-installation">
 <h2>Windows Installation<a class="headerlink" href="#windows-installation" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="install-vtk">
@@ -190,7 +189,7 @@ enviornment it’s easier to use a distribution such as
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">anaconda</span> <span class="n">vtk</span><span class="o">=</span><span class="mf">6.3</span><span class="o">.</span><span class="mi">0</span>
 </pre></div>
 </div>
-<p>You can also install vtk from the source by following these <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Building/Windows">Directions</a>.  This is generally quite difficult in Windows.</p>
+<p>You can also install VTK from the source by following these <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Building/Windows">Directions</a>.  This is generally quite difficult in Windows.</p>
 </div>
 <div class="section" id="install-vtkinterface">
 <h3>Install vtkInterface<a class="headerlink" href="#install-vtkinterface" title="Permalink to this headline">¶</a></h3>
@@ -209,13 +208,13 @@ enviornment it’s easier to use a distribution such as
 <h2>Linux Installation<a class="headerlink" href="#linux-installation" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id2">
 <h3>Install VTK<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
-<p>Building VTK from the source under Linux is straightforward.  See <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Building/Linux">Building VTK for Linux</a> and make sure to enable building with Python.  See <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Tutorials/PythonEnvironmentSetup">Python Environment Setup</a> if you have problems loading VTK from Python.</p>
 <p>If you have Ubuntu 14.04 or newer, you can also install VTK using the apt
 package manager:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">python</span><span class="o">-</span><span class="n">vtk</span>
 </pre></div>
 </div>
-<p>This will be an earlier version of VTK and is not recommended.</p>
+<p>This will be an earlier version of VTK and while it’s the easiest approach, it’s probably not the best approach given how easy it is to build VTK.</p>
+<p>Building VTK from the source under Linux is generally straightforward.  See <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Building/Linux">Building VTK for Linux</a> and make sure to enable building with Python.  See <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Tutorials/PythonEnvironmentSetup">Python Environment Setup</a> if you have problems loading VTK from Python.</p>
 </div>
 <div class="section" id="id3">
 <h3>Install vtkInterface<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
