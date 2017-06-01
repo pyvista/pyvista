@@ -70,13 +70,18 @@ You can also install the latest source from
 Test Installation
 -----------------
 Regardless of your OS, you can test your installation by running an example 
-from Tests::
+from tests:
+
+.. code:: python
 
     from vtkInterface import tests
     tests.ShowWave()
 
-You can also run examples from::
+You can also run examples from:
+
+.. code:: python
 
     from vtkInterface import examples
+    print dir(examples) # look for functions
 
-See the examples for some built in examples.
+See the examples for other examples.
