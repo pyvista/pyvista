@@ -40,7 +40,6 @@ def Plot(mesh, **args):
     
     # Set camera
     if cpos:
-        print cpos
         plobj.SetCameraPosition(cpos)
         
     cpos = plobj.Plot(autoclose=False)
