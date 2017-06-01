@@ -165,7 +165,7 @@ However, despite this VTK code programmed in Python generally looks the same
 as its C++ counterpart.
 For <a class="reference external" href="http://www.vtk.org/Wiki/VTK/Examples/Python/STLReader">example</a>, loading
 and plotting an STL file requires:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtk</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtk</span>
 
 <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;myfile.stl&quot;</span>
 
@@ -201,7 +201,7 @@ and plotting an STL file requires:</p>
 </div>
 <p>The goal of vtkInterface is to simplify this without losing functionality.
 The same stl can be loaded and plotted using vtkInterface with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
 
 <span class="c1"># Load mesh</span>
 <span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;myfile.stl&quot;</span>
@@ -212,7 +212,7 @@ The same stl can be loaded and plotted using vtkInterface with:</p>
 </pre></div>
 </div>
 <p>When combined with numpy, you can make some truly spectacular plots:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="c1"># Make a grid</span>
@@ -243,7 +243,7 @@ objects can.  For example, triangular surface meshes in VTK can be subdivided
 but every other object in VTK cannot.  It then makes sense that
 a subdivided method be added to the existing triangular surface mesh.  That
 way, subdivision can be performed with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">submesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">Subdivide</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">nsub</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">submesh</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">Subdivide</span><span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">nsub</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>and help(mesh.Subdivide) yields a useful helpdoc:</p>

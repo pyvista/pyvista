@@ -148,6 +148,7 @@ class PlotClass(object):
         # initialize movie type
         self.movietype = None
 
+
     def AddMesh(self, meshin, color=None, style='surface', scalars=None, 
                 rng=None, stitle=None, showedges=True, psize=5.0, opacity=1,
                 linethick=None, flipscalars=False, lighting=False, ncolors=1000,

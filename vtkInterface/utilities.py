@@ -1269,18 +1269,22 @@ def AlignMesh(fixed, moving, nlan=[], niter=[], mmdist=[]):
 ###############################################################################
 def WriteGrid(grid, filename, binary=True):
     """
-    WriteGrid(grid, filename)
     Writes a structured or unstructured grid to disk.
-    
-    Written file may be an ASCII or binary vtk file.  Object types other than
-    vtk structured or unstructured grids will raise an error.
+        
+    The file extension will select the type of writer to use.  *.vtk will use
+    the legacy writer, while *.vtu will select the VTK XML writer.
+
+    Object types other than vtk structured or unstructured grids will raise 
+    an error.
     
     Parameters
     ----------
     grid : vtkUnstructuredGrid or vtkStructuredGrid
         Structured or unstructured vtk grid.
     filename : str
-        Filename of grid to be written.
+        Filename of grid to be written.  The file extension will select the 
+        type of writer to use.  *.vtk will use the legacy writer, while *.vtu 
+        will select the VTK XML writer
     binary : bool, optional
         Writes as a binary file by default.  Set to False to write ASCII
         
@@ -1290,18 +1294,34 @@ def WriteGrid(grid, filename, binary=True):
         
     Notes
     -----
-    Binary files write much faster than ASCII.
+    Binary files write much faster than ASCII, but binary files written on one 
+    system may not be readable on other systems.  Binary can only be selected
+    for the legacy writer.
     
     
     """
     
+    # Check file extention
+    if '.vtu' in filename:
+        legacy_writer = False
+    elif '.vtk' in filename:
+        legacy_writer = True
+    else:
+        raise Exception('Extension should be either ".vtu" (xml) or ".vtk" (legacy)')
+    
     
     # Create writer
     if isinstance(grid, vtk.vtkUnstructuredGrid):
-        writer = vtk.vtkUnstructuredGridWriter()
+        if legacy_writer:
+            writer = vtk.vtkUnstructuredGridWriter()
+        else:
+            writer = vtk.vtkXMLUnstructuredGridWriter()
 
     elif isinstance(grid, vtk.vtkStructuredGrid):
-        writer = vtk.vtkStructuredGridWriter()
+        if legacy_writer:
+            writer = vtk.vtkStructuredGridWriter()
+        else:
+            writer = vtk.vtkXMLStructuredGridWriter()
 
     elif isinstance(grid, vtk.vtkPolyData):
         raise Exception('Use WriteMesh for vtkPolydata objects')
@@ -1312,7 +1332,7 @@ def WriteGrid(grid, filename, binary=True):
     # Write
     writer.SetFileName(filename)
     writer.SetInputData(grid)
-    if binary:
+    if binary and legacy_writer:
         writer.SetFileTypeToBinary
     writer.Write()
 
@@ -1320,27 +1340,48 @@ def WriteGrid(grid, filename, binary=True):
 def LoadGrid(filename, structured=False):
     """
     LoadGrid(filename)
-    Load a vtkUnstructuredGrid or vtkStructuredGrid from file.
+    Load a vtkUnstructuredGrid or vtkStructuredGrid from a file.
+    
+    The file extension will select the type of reader to use.  *.vtk will use
+    the legacy reader, while *.vtu will select the VTK XML reader.
     
     Parameters
     ----------
     filename : str
-        Filename of grid to be loaded.
+        Filename of grid to be loaded.  The file extension will select the type
+        of reader to use.  *.vtk will use the legacy reader, while *.vtu will 
+        select the VTK XML reader.
     structured : bool, optional
         By detault, this function reads an unstructured grid.  Setting this to
         true allows a structured grid to be read
         
     Returns
     -------
-    grid : vtkUnstructuredGrid object
-        VTK vtkUnstructuredGrid object.
+    grid : vtkUnstructuredGrid or vtkStructuredGrid object
+        Grid from vtk reader.
         
     """
-    if structured:
-        reader = vtk.vtkStructuredGridReader()
+    # Check file extention
+    if '.vtu' in filename:
+        legacy_writer = False
+    elif '.vtk' in filename:
+        legacy_writer = True
     else:
-        reader = vtk.vtkUnstructuredGridReader()
+        raise Exception('Extension should be either ".vtu" (xml) or ".vtk" (legacy)')
+        
+    # Create reader
+    if structured:
+        if legacy_writer:
+            reader = vtk.vtkStructuredGridReader()
+        else:
+            reader = vtk.vtkXMLStructuredGridReader()
+    else:
+        if legacy_writer:
+            reader = vtk.vtkUnstructuredGridReader()
+        else:
+            reader = vtk.vtkXMLUnstructuredGridReader()
 
+    # load file
     reader.SetFileName(filename)
     reader.Update()
     grid = reader.GetOutput()

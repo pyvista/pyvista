@@ -8,7 +8,9 @@ Mesh Reading and Writing
 
 Both binary and ASCII .ply, .stl, and .vtk files can be read using
 vtkInterface.  The vtkInterface package contains example meshes and these can 
-be loaded with::
+be loaded with:
+
+.. code:: python
 
     import vtkInterface
     
@@ -19,12 +21,16 @@ be loaded with::
     # Load mesh
     mesh = vtkInterface.LoadMesh(filename)
 
-This mesh can then be written to a vtk file using::
+This mesh can then be written to a vtk file using:
+
+.. code:: python
 
     mesh.WriteMesh('plane.vtk')
     
     
-These meshes are identical::
+These meshes are identical.
+
+.. code:: python
 
     mesh_from_vtk = vtkInterface.LoadMesh('plane.vtk')
     
@@ -37,7 +43,9 @@ Mesh Manipulation and Plotting
 
 Meshes can be directly manipulated using numpy or with the built-in
 translation and rotation routines.  This example loads two meshes and moves, 
-scales, and copies them::
+scales, and copies them.
+
+.. code:: python
 
     # Load module and examples
     import vtkInterface
@@ -61,7 +69,9 @@ scales, and copies them::
 
 To plot more than one mesh a plotting class must be created to manage the 
 plotting.  The following code creates the class and plots the meshes with 
-various colors::
+various colors.
+
+.. code:: python
     
     # Create plotting object
     plobj = vtkInterface.PlotClass()
@@ -88,7 +98,9 @@ Unstructured Grid Plotting
 --------------------------
 
 This example shows how you can load an unstructured grid from a vtk file and
-create a plot and gif movie by updating the plotting object::
+create a plot and gif movie by updating the plotting object.
+
+.. code:: python
 
     # Load module and example file
     import vtkInterface
@@ -109,11 +121,15 @@ create a plot and gif movie by updating the plotting object::
     # Displace original grid
     grid.SetNumpyPoints(pts + d)
 
-A simple plot can be created by using::
+A simple plot can be created by using:
+
+.. code:: python
 
     grid.Plot(scalars=d[:, 1], stitle='Y Displacement')
 
-A more complex plot can be created using::
+A more complex plot can be created using:
+
+.. code:: python
 
     # Store Camera position.  This can be obtained manually by getting the
     # output of plobj.Plot()
@@ -138,7 +154,9 @@ A more complex plot can be created using::
 
 You can animate the motion of the beam by updating the positions and scalars
 of the grid copied to the plotting object.  First you have to setup the
-plotting object:::
+plotting object:
+
+.. code:: python
 
     # Animate plot
     plobj = vtkInterface.PlotClass()
@@ -152,7 +170,9 @@ You then open the render window by plotting before opening movie file.
 Set autoclose to False so
 the plobj doesn't close automatically.  Disabling interactive means 
 the plot will automatically continue without waiting for the user to
-exit the window::
+exit the window.
+
+.. code:: python
 
     plobj.Plot(interactive=False, autoclose=False, window_size=[800, 600])
     
@@ -173,7 +193,9 @@ exit the window::
     
 .. image:: beam.gif
 
-You can also render the beam as as a wireframe object::
+You can also render the beam as as a wireframe object:
+
+.. code:: python
 
     # Animate plot as a wireframe
     plobj = vtkInterface.PlotClass()

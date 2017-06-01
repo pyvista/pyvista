@@ -9,7 +9,7 @@ This module can be used for scientific plotting for presentations and research p
 Documentation
 -------------
 
-Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed installation and setup details.
+Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed installation and usage details.
 
 
 Installation

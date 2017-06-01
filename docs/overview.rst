@@ -8,8 +8,9 @@ be able to combine the speed of C++ with the rapid prototyping of Python.
 However, despite this VTK code programmed in Python generally looks the same 
 as its C++ counterpart.  
 For `example <http://www.vtk.org/Wiki/VTK/Examples/Python/STLReader>`_, loading
-and plotting an STL file requires::
+and plotting an STL file requires:
 
+.. code:: python
 
     import vtk
      
@@ -46,7 +47,9 @@ and plotting an STL file requires::
 
 
 The goal of vtkInterface is to simplify this without losing functionality.  
-The same stl can be loaded and plotted using vtkInterface with::
+The same stl can be loaded and plotted using vtkInterface with:
+
+.. code:: python
 
     import vtkInterface
     
@@ -58,7 +61,9 @@ The same stl can be loaded and plotted using vtkInterface with::
     mesh.Plot()
 
 
-When combined with numpy, you can make some truly spectacular plots::
+When combined with numpy, you can make some truly spectacular plots:
+
+.. code:: python
 
     import vtkInterface
     import numpy as np
@@ -91,7 +96,9 @@ While not everything can be simplified without losing functionality, many of the
 objects can.  For example, triangular surface meshes in VTK can be subdivided 
 but every other object in VTK cannot.  It then makes sense that
 a subdivided method be added to the existing triangular surface mesh.  That
-way, subdivision can be performed with::
+way, subdivision can be performed with:
+
+.. code:: python
 
     submesh = mesh.Subdivide('linear', nsub=3)
 

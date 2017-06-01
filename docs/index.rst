@@ -24,7 +24,9 @@ Quick Examples
 Loading and Plotting a Mesh from File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Loading a mesh is trivial::
+Loading a mesh is trivial.
+
+.. code:: python
 
     import vtkInterface
     mesh = vtkInterface.LoadMesh('airplane.ply')
@@ -32,12 +34,16 @@ Loading a mesh is trivial::
     
 .. image:: airplane.png
 
-In fact, the code to generate the previous screenshot was created with::
+In fact, the code to generate the previous screenshot was created with:
+
+.. code:: python
 
     mesh.Plot(screenshot='airplane.png', color='orange')
 
-The points and faces from the mesh are directly accessible as a numpy array::
-    
+The points and faces from the mesh are directly accessible as a numpy array:
+
+.. code:: python
+
     print mesh.GetNumpyPoints()
     
     #[[ 896.99401855   48.76010132   82.26560211]
@@ -62,7 +68,10 @@ The points and faces from the mesh are directly accessible as a numpy array::
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example creates a simple surface grid and plots the resulting grid and its curvature::
+This example creates a simple surface grid and plots the resulting grid and 
+its curvature:
+
+.. code:: python
 
     import vtkInterface
 
@@ -83,7 +92,10 @@ This example creates a simple surface grid and plots the resulting grid and its 
 
 .. image:: curvature.png
 
-Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array::
+Generating a structured grid is a one liner in this module, and the points from
+the resulting surface are also a numpy array:
+
+.. code:: python
 
     surf.GetNumpyPoints()
     
@@ -99,7 +111,10 @@ Generating a structured grid is a one liner in this module, and the points from 
 Creating a GIF Movie
 ~~~~~~~~~~~~~~~~~~~~
 
-This example shows the versatility of the plotting object by generating a moving gif::
+This example shows the versatility of the plotting object by generating a 
+moving gif:
+
+.. code:: python
     
     import vtkInterface
     import numpy as np

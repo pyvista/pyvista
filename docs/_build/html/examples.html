@@ -168,7 +168,7 @@
 <p>Both binary and ASCII .ply, .stl, and .vtk files can be read using
 vtkInterface.  The vtkInterface package contains example meshes and these can
 be loaded with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
 
 <span class="c1"># Get the filename from the examples</span>
 <span class="kn">from</span> <span class="nn">vtkInterface</span> <span class="k">import</span> <span class="n">examples</span>
@@ -179,11 +179,11 @@ be loaded with:</p>
 </pre></div>
 </div>
 <p>This mesh can then be written to a vtk file using:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mesh</span><span class="o">.</span><span class="n">WriteMesh</span><span class="p">(</span><span class="s1">&#39;plane.vtk&#39;</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">mesh</span><span class="o">.</span><span class="n">WriteMesh</span><span class="p">(</span><span class="s1">&#39;plane.vtk&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>These meshes are identical:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mesh_from_vtk</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">LoadMesh</span><span class="p">(</span><span class="s1">&#39;plane.vtk&#39;</span><span class="p">)</span>
+<p>These meshes are identical.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">mesh_from_vtk</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">LoadMesh</span><span class="p">(</span><span class="s1">&#39;plane.vtk&#39;</span><span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">mesh_from_vtk</span><span class="o">.</span><span class="n">GetNumpyPoints</span><span class="p">(),</span> <span class="n">mesh</span><span class="o">.</span><span class="n">GetNumpyPoints</span><span class="p">())</span>
@@ -194,8 +194,8 @@ be loaded with:</p>
 <h2>Mesh Manipulation and Plotting<a class="headerlink" href="#mesh-manipulation-and-plotting" title="Permalink to this headline">¶</a></h2>
 <p>Meshes can be directly manipulated using numpy or with the built-in
 translation and rotation routines.  This example loads two meshes and moves,
-scales, and copies them:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Load module and examples</span>
+scales, and copies them.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Load module and examples</span>
 <span class="kn">import</span> <span class="nn">vtkInterface</span>
 <span class="kn">from</span> <span class="nn">vtkInterface</span> <span class="k">import</span> <span class="n">examples</span>
 <span class="n">planefile</span> <span class="o">=</span> <span class="n">examples</span><span class="o">.</span><span class="n">planefile</span>
@@ -218,8 +218,8 @@ scales, and copies them:</p>
 </div>
 <p>To plot more than one mesh a plotting class must be created to manage the
 plotting.  The following code creates the class and plots the meshes with
-various colors:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Create plotting object</span>
+various colors.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Create plotting object</span>
 <span class="n">plobj</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">PlotClass</span><span class="p">()</span>
 <span class="n">plobj</span><span class="o">.</span><span class="n">AddMesh</span><span class="p">(</span><span class="n">ant</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
 <span class="n">plobj</span><span class="o">.</span><span class="n">AddMesh</span><span class="p">(</span><span class="n">ant_copy</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">)</span>
@@ -242,8 +242,8 @@ various colors:</p>
 <div class="section" id="unstructured-grid-plotting">
 <h2>Unstructured Grid Plotting<a class="headerlink" href="#unstructured-grid-plotting" title="Permalink to this headline">¶</a></h2>
 <p>This example shows how you can load an unstructured grid from a vtk file and
-create a plot and gif movie by updating the plotting object:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Load module and example file</span>
+create a plot and gif movie by updating the plotting object.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Load module and example file</span>
 <span class="kn">import</span> <span class="nn">vtkInterface</span>
 <span class="kn">from</span> <span class="nn">vtkInterface</span> <span class="k">import</span> <span class="n">examples</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -264,11 +264,11 @@ create a plot and gif movie by updating the plotting object:</p>
 </pre></div>
 </div>
 <p>A simple plot can be created by using:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">grid</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">scalars</span><span class="o">=</span><span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">stitle</span><span class="o">=</span><span class="s1">&#39;Y Displacement&#39;</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">grid</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">scalars</span><span class="o">=</span><span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">stitle</span><span class="o">=</span><span class="s1">&#39;Y Displacement&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>A more complex plot can be created using:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Store Camera position.  This can be obtained manually by getting the</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Store Camera position.  This can be obtained manually by getting the</span>
 <span class="c1"># output of plobj.Plot()</span>
 <span class="n">cpos</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">11.915126303095157</span><span class="p">,</span> <span class="mf">6.11392754955802</span><span class="p">,</span> <span class="mf">3.6124956735471914</span><span class="p">),</span>
          <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.375</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span>
@@ -290,8 +290,8 @@ create a plot and gif movie by updating the plotting object:</p>
 <img alt="_images/beam.png" src="_images/beam.png" />
 <p>You can animate the motion of the beam by updating the positions and scalars
 of the grid copied to the plotting object.  First you have to setup the
-plotting object::</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Animate plot</span>
+plotting object:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Animate plot</span>
 <span class="n">plobj</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">PlotClass</span><span class="p">()</span>
 <span class="n">plobj</span><span class="o">.</span><span class="n">AddMesh</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">scalars</span><span class="o">=</span><span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">stitle</span><span class="o">=</span><span class="s1">&#39;Y Displacement&#39;</span><span class="p">,</span>
               <span class="n">showedges</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">rng</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">()],</span>
@@ -304,8 +304,8 @@ plotting object::</p>
 Set autoclose to False so
 the plobj doesn’t close automatically.  Disabling interactive means
 the plot will automatically continue without waiting for the user to
-exit the window:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">plobj</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">interactive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">autoclose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">[</span><span class="mi">800</span><span class="p">,</span> <span class="mi">600</span><span class="p">])</span>
+exit the window.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">plobj</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">interactive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">autoclose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">window_size</span><span class="o">=</span><span class="p">[</span><span class="mi">800</span><span class="p">,</span> <span class="mi">600</span><span class="p">])</span>
 
 <span class="c1"># open movie file.  A mp4 file can be written instead.  Requires moviepy</span>
 <span class="c1">#plobj.OpenMovie(&#39;beam.mp4&#39;)</span>
@@ -325,7 +325,7 @@ exit the window:</p>
 </div>
 <img alt="_images/beam.gif" src="_images/beam.gif" />
 <p>You can also render the beam as as a wireframe object:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Animate plot as a wireframe</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="c1"># Animate plot as a wireframe</span>
 <span class="n">plobj</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">PlotClass</span><span class="p">()</span>
 <span class="n">plobj</span><span class="o">.</span><span class="n">AddMesh</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">scalars</span><span class="o">=</span><span class="n">d</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">stitle</span><span class="o">=</span><span class="s1">&#39;Y Displacement&#39;</span><span class="p">,</span> <span class="n">showedges</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
               <span class="n">rng</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">()],</span> <span class="n">interpolatebeforemap</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>

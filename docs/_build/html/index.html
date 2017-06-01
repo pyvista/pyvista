@@ -173,19 +173,19 @@
 <h2>Quick Examples<a class="headerlink" href="#quick-examples" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="loading-and-plotting-a-mesh-from-file">
 <h3>Loading and Plotting a Mesh from File<a class="headerlink" href="#loading-and-plotting-a-mesh-from-file" title="Permalink to this headline">¶</a></h3>
-<p>Loading a mesh is trivial:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+<p>Loading a mesh is trivial.</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
 <span class="n">mesh</span> <span class="o">=</span> <span class="n">vtkInterface</span><span class="o">.</span><span class="n">LoadMesh</span><span class="p">(</span><span class="s1">&#39;airplane.ply&#39;</span><span class="p">)</span>
 <span class="n">mesh</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="_images/airplane.png" src="_images/airplane.png" />
 <p>In fact, the code to generate the previous screenshot was created with:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">mesh</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">screenshot</span><span class="o">=</span><span class="s1">&#39;airplane.png&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">mesh</span><span class="o">.</span><span class="n">Plot</span><span class="p">(</span><span class="n">screenshot</span><span class="o">=</span><span class="s1">&#39;airplane.png&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The points and faces from the mesh are directly accessible as a numpy array:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">print</span> <span class="n">mesh</span><span class="o">.</span><span class="n">GetNumpyPoints</span><span class="p">()</span>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="nb">print</span> <span class="n">mesh</span><span class="o">.</span><span class="n">GetNumpyPoints</span><span class="p">()</span>
 
 <span class="c1">#[[ 896.99401855   48.76010132   82.26560211]</span>
 <span class="c1"># [ 906.59301758   48.76010132   80.74520111]</span>
@@ -209,8 +209,9 @@
 </div>
 <div class="section" id="creating-a-structured-surface">
 <h3>Creating a Structured Surface<a class="headerlink" href="#creating-a-structured-surface" title="Permalink to this headline">¶</a></h3>
-<p>This example creates a simple surface grid and plots the resulting grid and its curvature:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+<p>This example creates a simple surface grid and plots the resulting grid and
+its curvature:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
 
 <span class="c1"># Make data</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -229,8 +230,9 @@
 </pre></div>
 </div>
 <img alt="_images/curvature.png" src="_images/curvature.png" />
-<p>Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">surf</span><span class="o">.</span><span class="n">GetNumpyPoints</span><span class="p">()</span>
+<p>Generating a structured grid is a one liner in this module, and the points from
+the resulting surface are also a numpy array:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="n">surf</span><span class="o">.</span><span class="n">GetNumpyPoints</span><span class="p">()</span>
 
 <span class="c1">#[[-10.         -10.           0.99998766]</span>
 <span class="c1"># [ -9.75       -10.           0.98546793]</span>
@@ -244,8 +246,9 @@
 </div>
 <div class="section" id="creating-a-gif-movie">
 <h3>Creating a GIF Movie<a class="headerlink" href="#creating-a-gif-movie" title="Permalink to this headline">¶</a></h3>
-<p>This example shows the versatility of the plotting object by generating a moving gif:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
+<p>This example shows the versatility of the plotting object by generating a
+moving gif:</p>
+<div class="code python highlight-default"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">vtkInterface</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="c1"># Make data</span>

@@ -3,7 +3,7 @@ import vtkInterface
 import numpy as np
 import time
 
-# get location of this folder and the xample files
+# get location of this folder and the example files
 dir_path = os.path.dirname(os.path.realpath(__file__))
 antfile = os.path.join(dir_path, 'ant.ply')
 planefile = os.path.join(dir_path, 'airplane.ply')
