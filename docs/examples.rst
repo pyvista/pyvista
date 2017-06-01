@@ -1,7 +1,3 @@
-=========
-First one
-=========
-
 .. _examples:
 
 Examples
