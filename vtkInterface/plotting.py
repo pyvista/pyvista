@@ -36,7 +36,11 @@ def Plot(mesh, **args):
 
     # create plotting object and add mesh
     plobj = PlotClass()
-    plobj.AddMesh(mesh, **args)
+    
+    if type(mesh) is np.ndarray:
+        plobj.AddPoints(mesh, **args)
+    else:
+        plobj.AddMesh(mesh, **args)
     
     # Set camera
     if cpos:
@@ -337,10 +341,36 @@ class PlotClass(object):
         if mesh is None:
             mesh = self.mesh
             
-        mesh.AddPointScalars(scalars, '', True)
+        # get pointer to active point scalars            
+        if scalars.shape[0] == mesh.GetNumberOfPoints():
+            s = VN.vtk_to_numpy(self.mesh.GetPointData().GetScalars())
+            s[:] = scalars
+            
+        # get pointer to active cell scalars            
+        elif scalars.shape[0] == mesh.GetNumberOfCells():
+            s = VN.vtk_to_numpy(self.mesh.GetCellData().GetScalars())
+            s[:] = scalars
+            
         if render:
             self.Render()
             
+            
+    def UpdatePointScalars(self, scalars, points=None, render=True):
+        """ updates scalars of object (point only for now) 
+        assumes last inputted mesh if mesh left empty
+        """
+        
+        if points is None:
+            points = self.points
+            
+        # get pointer to active point scalars            
+        if scalars.shape[0] == points.GetNumberOfPoints():
+            s = VN.vtk_to_numpy(points.GetPointData().GetScalars())
+            s[:] = scalars
+            
+            
+        if render:
+            self.Render()            
             
     def UpdateCoordinates(self, points, mesh=None, render=True):
         """ updates points of object (point only for now) 
@@ -481,20 +511,28 @@ class PlotClass(object):
         self.ren.AddActor(actor)
         
 
-    def AddPoints(self, points, color=[1, 1, 1], psize=5, scalars=None, 
+    def AddPoints(self, points, color=None, psize=5, scalars=None, 
                   rng=None, name='', opacity=1, stitle='', flipscalars=False):
         """ Adds a point actor or numpy points array to plotting object """
         
-        # Convert to points actor if "points" is a numpy array
+        # select color
+        if color is None:
+            color = [1, 1, 1]
+        elif type(color) is str or type(color) is unicode:
+            color = vtkInterface.StringToRGB(color)
+            
+        # Convert to vtk points object if "points" is a numpy array
         if type(points) == np.ndarray:
-            pdata = MakeVTKPointsMesh(points)
+            self.points = MakeVTKPointsMesh(points)
+        else:
+            self.points = points
             
         # Create mapper and add lines
         mapper = vtk.vtkDataSetMapper()
-        vtkInterface.SetVTKInput(mapper, pdata)
+        vtkInterface.SetVTKInput(mapper, self.points)
 
         if np.any(scalars):
-            vtkInterface.AddPointScalars(pdata, scalars, name, True)
+            vtkInterface.AddPointScalars(self.points, scalars, name, True)
             mapper.SetScalarModeToUsePointData()
         
             if not rng:
@@ -536,9 +574,16 @@ class PlotClass(object):
             self.ren.AddActor(self.scalarBar)
                 
             
-    def AddArrows(self, start, direction, mag=1):
+    def AddArrows(self, cent, direction, mag=1):
         """ Adds arrows to plotting object """
-        pdata = vtkInterface.CreateVectorPolyData(start, direction*mag)
+        
+        if cent.ndim != 2:
+            cent = cent.reshape((-1, 3))
+            
+        if direction.ndim != 2:
+            direction = direction.reshape((-1, 3))
+        
+        pdata = vtkInterface.CreateVectorPolyData(cent, direction*mag)
         arrows = CreateArrowsActor(pdata)
         self.AddActor(arrows)
 
@@ -766,7 +811,7 @@ def PlotCurvature(mesh, curvtype='Gaussian', rng=None):
     return cpos
 
     
-def PlotGrids(grids, wFEM=False):
+def PlotGrids(grids, wFEM=False, background=[0, 0, 0], legend_entries=None):
     """
     Creates a plot of several grids as wireframes.  When wFEM is true, the first
     grid is a white solid
@@ -785,7 +830,14 @@ def PlotGrids(grids, wFEM=False):
             pobj.AddMesh(grids[i], color=colors[i], style='wireframe')
     
     # Render plot and delete when finished
-    pobj.SetBackground([0.8, 0.8, 0.8])
+    pobj.SetBackground(background)
+    
+    if legend_entries:
+        legend = []
+        for i in range(len(legend_entries)):
+            legend.append([legend_entries[i], colors[i]])
+            
+        pobj.AddLegend(legend)
     pobj.Plot(); del pobj
 
 

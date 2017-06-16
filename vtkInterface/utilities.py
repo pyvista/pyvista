@@ -19,6 +19,13 @@ if not new_vtk:
 from vtkInterface import Plot
 from vtkInterface import PlotCurvature
 
+try:
+    from pyansys import CellQuality
+    hasqualfunc = True
+except:
+    hasqualfunc = False
+    
+
 #==============================================================================
 # Functions
 #==============================================================================
@@ -150,7 +157,7 @@ def PolyAddExtraFunctions(poly):
     poly.RotateY         = types.MethodType(RotateY, poly)
     poly.RotateZ         = types.MethodType(RotateZ, poly)
     poly.Translate       = types.MethodType(Translate, poly)
-    poly.Copy            = types.MethodType(CopyGrid, poly)
+    poly.Copy            = types.MethodType(CopyVtkObject, poly)
     poly.GetEdgeMask     = types.MethodType(GetEdgeMask, poly)
     poly.BooleanCut      = types.MethodType(BooleanCut, poly)
     poly.BooleanAdd      = types.MethodType(BooleanAdd, poly)
@@ -191,11 +198,16 @@ def GridAddExtraFunctions(grid):
     grid.ExtractExteriorTri = types.MethodType(ExtractExteriorTri, grid)      
     grid.ExtractSurface = types.MethodType(ExtractSurface, grid)      
     grid.Plot = types.MethodType(Plot, grid)
-    grid.Copy = types.MethodType(CopyGrid, grid)
+    grid.Copy = types.MethodType(CopyVtkObject, grid)
     grid.CheckArrayExists = types.MethodType(CheckArrayExists, grid)
     grid.ExtractSurfaceInd = types.MethodType(ExtractSurfaceInd, grid)
     grid.TriFilter      = types.MethodType(TriFilter, grid)
     grid.WriteGrid  = types.MethodType(WriteGrid, grid)
+
+    # Optional pyansys cell quality calculator
+    if hasqualfunc:
+        grid.CellQuality = types.MethodType(CellQuality, grid)
+        
 
 
 def MakeuGrid(offset, cells, cell_type, nodes):
@@ -377,23 +389,27 @@ def GetCellScalars(vobj, name):
         return None
 
 
-def CopyGrid(grid):
+def CopyVtkObject(vtkobject):
     """ Copies a vtk structured, unstructured, or polydata object """
     
-    # Grab vtk type from string
-    typestring = str(type(grid))
-    typestring = typestring.replace("<type 'vtkCommonDataModelPython.", '')
-    typestring = typestring.replace("<class 'vtkCommonDataModelPython.", '')
-    typestring = typestring.replace("'>", '')
-    try:
-        gridcopy = eval('vtk.{:s}()'.format(typestring))
-    except:
-        raise Exception('Unsupported type {:s} for vtk copy'.format(typestring))
+    # Grab vtk type from string (seems to be vtk version dependent)
+    if isinstance(vtkobject, vtk.vtkPolyData):
+        vtkobject_copy = vtk.vtkPolyData()
+
+    elif isinstance(vtkobject, vtk.vtkUnstructuredGrid):
+        vtkobject_copy = vtk.vtkUnstructuredGrid()
+        
+    elif isinstance(vtkobject, vtk.vtkStructuredGrid):
+        vtkobject_copy = vtk.vtkStructuredGrid()
+        
+    else:
+        raise Exception('Unsupported object for VTK copy')
         
     # copy, add extra functions
-    gridcopy.DeepCopy(grid)
-    AddFunctions(gridcopy)
-    return gridcopy
+    vtkobject_copy.DeepCopy(vtkobject)
+    AddFunctions(vtkobject_copy)
+    
+    return vtkobject_copy
     
 
 def PerformLandmarkTrans(sland, tland):
@@ -590,27 +606,27 @@ def UpdatePointScalars(mesh, scalars, name):
     vtkarr.DeepCopy(vtkarrnew)
 
 
-#def GetBoundaryPoints(mesh):
-#    """
-#    Extracts boundary points from a vtk mesh and return the indices of those
-#    points """    
-#    
-#    # Create feature object
-#    featureEdges = vtk.vtkFeatureEdges()
-#    SetVTKInput(featureEdges, mesh) 
-#    featureEdges.FeatureEdgesOff()
-#    featureEdges.BoundaryEdgesOn()
-#    featureEdges.NonManifoldEdgesOff()
-#    featureEdges.ManifoldEdgesOff()
-#    featureEdges.Update()
-#    edges = featureEdges.GetOutput()
-#
-#    # Get the location of the boundary points
-#    bpts = VN.vtk_to_numpy(edges.GetPoints().GetData()).astype(np.float64)
-#
-#    # Return indices of the boundary points
+def GetBoundaryPoints(mesh):
+    """
+    Extracts boundary points from a vtk mesh and return the indices of those
+    points """    
+    
+    # Create feature object
+    featureEdges = vtk.vtkFeatureEdges()
+    SetVTKInput(featureEdges, mesh) 
+    featureEdges.FeatureEdgesOff()
+    featureEdges.BoundaryEdgesOn()
+    featureEdges.NonManifoldEdgesOff()
+    featureEdges.ManifoldEdgesOff()
+    featureEdges.Update()
+    edges = featureEdges.GetOutput()
+
+    # Get the location of the boundary points
+    return GetPoints(edges)#.astype(np.float64)
+
+    # Return indices of the boundary points
 #    bidx = Meshutil.SingleNeighbor(GetPoints(mesh), bpts) 
-#
+
 #    return bidx
 
 
@@ -688,8 +704,14 @@ def GetPoints(mesh, datatype=None, deep=False):
         return points
 
 
-def GetFaces(mesh, force_C_CONTIGUOUS=False, nocut=False, dtype=None):
-    """ returns points from a polydata polydata object and return as a numpy int array """
+def GetFaces(mesh, force_C_CONTIGUOUS=False, nocut=False, dtype=None,
+             raw=False):
+    """ 
+    Returns the faces from a polydata object as a numpy int array
+    """
+    if raw:
+        return VN.vtk_to_numpy(mesh.GetPolys().GetData())
+
     if nocut:
         return VN.vtk_to_numpy(mesh.GetPolys().GetData()).reshape((-1, 4))
 

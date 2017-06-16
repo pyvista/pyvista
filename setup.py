@@ -11,7 +11,7 @@ setup(
     packages = ['vtkInterface', 'vtkInterface.tests', 'vtkInterface.examples'],
 
     # Version
-    version='0.1.2',
+    version='0.1.3',
 
     description='Easier Pythonic interface to VTK',
     long_description=open('README.rst').read(),
