@@ -1,4 +1,4 @@
-from _version import __version__
+from vtkInterface._version import __version__
 
 from vtkInterface.plotting import *
 from vtkInterface.utilities import *
