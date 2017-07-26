@@ -3,15 +3,26 @@ Installation file for python vtkInterface module
 """
 
 from setuptools import setup
+import os
+from io import open as io_open
 
+package_name = 'vtkInterface'
+
+# Get version from tqdm/_version.py
+__version__ = None
+version_file = os.path.join(os.path.dirname(__file__), package_name, '_version.py')
+with io_open(version_file, mode='r') as fd:
+    # execute file from raw string
+    exec(fd.read())
+    
 
 # Actual setup
 setup(
-    name='vtkInterface',
-    packages = ['vtkInterface', 'vtkInterface.tests', 'vtkInterface.examples'],
+    name=package_name,
+    packages = [package_name, 'vtkInterface.tests', 'vtkInterface.examples'],
 
     # Version
-    version='0.1.3',
+    version=__version__,
 
     description='Easier Pythonic interface to VTK',
     long_description=open('README.rst').read(),

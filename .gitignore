@@ -18,3 +18,6 @@
 *.egg-info/
 build/
 dist/
+
+# MISC
+*.sh

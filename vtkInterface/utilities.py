@@ -44,7 +44,7 @@ def RotateY(mesh, angle):
         
         
 def RotateZ(mesh, angle):
-    """ Rotates mesh or refined mesh inplace """
+    """ Rotates mesh inplace """
     trans = vtk.vtkTransform()
     trans.RotateZ(angle)
     ApplyTransformationInPlace(mesh, trans)
@@ -146,6 +146,7 @@ def PolyAddExtraFunctions(poly):
     poly.GetNumpyPoints  = types.MethodType(GetPoints, poly)
     poly.SetNumpyPoints  = types.MethodType(SetPoints, poly)
     poly.GetNumpyFaces   = types.MethodType(GetFaces, poly)
+    poly.SetNumpyFaces   = types.MethodType(SetFaces, poly)
     poly.GetPointScalars = types.MethodType(GetPointScalars, poly)
     poly.AddPointScalars = types.MethodType(AddPointScalars, poly)
     poly.GetCellScalars  = types.MethodType(GetCellScalars, poly)
@@ -161,14 +162,16 @@ def PolyAddExtraFunctions(poly):
     poly.GetEdgeMask     = types.MethodType(GetEdgeMask, poly)
     poly.BooleanCut      = types.MethodType(BooleanCut, poly)
     poly.BooleanAdd      = types.MethodType(BooleanAdd, poly)
+    poly.BooleanUnion    = types.MethodType(BooleanUnion, poly)
     poly.GetCurvature    = types.MethodType(GetCurvature, poly)
     poly.SetNumpyPolys   = types.MethodType(SetNumpyPolys, poly)
     poly.RemovePoints    = types.MethodType(RemovePoints, poly)
     poly.WriteMesh       = types.MethodType(WriteMesh, poly)
     poly.CheckArrayExists = types.MethodType(CheckArrayExists, poly)
-    poly.PlotCurvature = types.MethodType(PlotCurvature, poly)
-    poly.TriFilter      = types.MethodType(TriFilter, poly)
+    poly.PlotCurvature   = types.MethodType(PlotCurvature, poly)
+    poly.TriFilter       = types.MethodType(TriFilter, poly)
     poly.Subdivide       = types.MethodType(Subdivide, poly)
+    poly.ExtractEdges    = types.MethodType(ExtractEdges, poly)
     
     
 def GridAddExtraFunctions(grid):
@@ -177,15 +180,7 @@ def GridAddExtraFunctions(grid):
     objects
     """
 
-    # Check if object is a unstructred or structured grid    
-#    if isinstance(grid, vtk.vtkUnstructuredGrid):
-#        gridobj = vtk.vtkUnstructuredGrid
-#    elif isinstance(grid, vtk.vtkStructuredGrid):
-#        gridobj = vtk.vtkStructuredGrid
-#    else:
-#        raise Exception('Cannot add grid functions to a non-grid object')
-        
-    # Add unbound function added
+    # Add unbound functions
     grid.GetNumpyPoints  = types.MethodType(GetPoints, grid)
     grid.SetNumpyPoints  = types.MethodType(SetPoints, grid)
     grid.GetNumpyCells   = types.MethodType(ReturnCells, grid)
@@ -196,18 +191,23 @@ def GridAddExtraFunctions(grid):
     grid.ApplyTransformation = types.MethodType(ApplyTransformation, grid)      
     grid.ApplyTransformationInPlace = types.MethodType(ApplyTransformationInPlace, grid)      
     grid.ExtractExteriorTri = types.MethodType(ExtractExteriorTri, grid)      
-    grid.ExtractSurface = types.MethodType(ExtractSurface, grid)      
-    grid.Plot = types.MethodType(Plot, grid)
-    grid.Copy = types.MethodType(CopyVtkObject, grid)
+    grid.ExtractSurface  = types.MethodType(ExtractSurface, grid)      
+    grid.Plot            = types.MethodType(Plot, grid)
+    grid.Copy            = types.MethodType(CopyVtkObject, grid)
     grid.CheckArrayExists = types.MethodType(CheckArrayExists, grid)
     grid.ExtractSurfaceInd = types.MethodType(ExtractSurfaceInd, grid)
-    grid.TriFilter      = types.MethodType(TriFilter, grid)
-    grid.WriteGrid  = types.MethodType(WriteGrid, grid)
+    grid.TriFilter       = types.MethodType(TriFilter, grid)
+    grid.WriteGrid       = types.MethodType(WriteGrid, grid)
+    grid.ExtractSelectionCells = types.MethodType(ExtractSelectionCells, grid)
+    grid.RotateX         = types.MethodType(RotateX, grid)
+    grid.RotateY         = types.MethodType(RotateY, grid)
+    grid.RotateZ         = types.MethodType(RotateZ, grid)
+    grid.Translate       = types.MethodType(Translate, grid)
+    grid.ExtractEdges    = types.MethodType(ExtractEdges, grid)
 
     # Optional pyansys cell quality calculator
     if hasqualfunc:
         grid.CellQuality = types.MethodType(CellQuality, grid)
-        
 
 
 def MakeuGrid(offset, cells, cell_type, nodes):
@@ -252,11 +252,88 @@ def MakeuGrid(offset, cells, cell_type, nodes):
     
     return uGrid
 
+
+def ExtractEdges(mesh, feature_angle=30, boundary_edges=True,
+                 non_manifold_edges=True, feature_edges=True,
+                 manifold_edges=True):
+    """ 
+    Extracts edges from a surface.  From vtk documentation:
+    
+    These edges are either 
+        1) boundary (used by one polygon) or a line cell; 
+        2) non-manifold (used by three or more polygons)
+        3) feature edges (edges used by two triangles and whose 
+           dihedral angle > feature_angle)
+        4) manifold edges (edges used by exactly two polygons). 
+        
+    
+    Parameters
+    ----------
+    mesh : vtk.vtkUnstructuredGrid, vtk.vtkStructuredGrid, or vtk.vtkPolyData
+    
+    feature_angle : float, optional
+        Defaults to 30 degrees.
+        
+    boundary_edges : bool, optional
+        Defaults to True
+        
+    non_manifold_edges : bool, optional
+        Defaults to True
+        
+    feature_edges : bool, optional
+        Defaults to True
+    
+    manifold_edges : bool, optional
+        Defaults to True
+        
+    Returns
+    -------
+    edges : vtk.vtkPolyData
+        Extracted edges.
+    
+    """
+    
+    if isinstance(mesh, vtk.vtkUnstructuredGrid):
+        surf = mesh.ExtractSurface()
+    elif isinstance(mesh, vtk.vtkStructuredGrid):
+        surf = mesh.ExtractSurface()
+    elif isinstance(mesh, vtk.vtkPolyData):
+        surf = mesh
+    else:
+        raise Exception('Type not allowed')
+        
+    # extract edges from mesh
+    featureEdges = vtk.vtkFeatureEdges()
+    featureEdges.SetInputData(surf)
+    featureEdges.SetFeatureAngle(feature_angle)
+    featureEdges.SetManifoldEdges(manifold_edges)
+    featureEdges.SetNonManifoldEdges(non_manifold_edges)
+    featureEdges.SetBoundaryEdges(non_manifold_edges)
+    featureEdges.SetFeatureEdges(feature_edges)
+    featureEdges.SetColoring(False)
+    featureEdges.Update()
+    return featureEdges.GetOutput()
+
+
 def BooleanCut(mesh, cut):
     """ Performs a boolean cut on 'mesh' using 'cut' """
     
     bfilter = vtk.vtkBooleanOperationPolyDataFilter()
     bfilter.SetOperationToIntersection()
+    bfilter.SetInputData(1, cut)
+    bfilter.SetInputData(0, mesh)
+    bfilter.ReorientDifferenceCellsOff()
+    bfilter.Update()
+    cut = bfilter.GetOutput()
+    PolyAddExtraFunctions(cut)
+    return cut
+
+
+def BooleanUnion(mesh, cut):
+    """ Performs a boolean cut on 'mesh' using 'cut' """
+    
+    bfilter = vtk.vtkBooleanOperationPolyDataFilter()
+    bfilter.SetOperationToUnion()
     bfilter.SetInputData(1, cut)
     bfilter.SetInputData(0, mesh)
     bfilter.ReorientDifferenceCellsOff()
@@ -609,7 +686,8 @@ def UpdatePointScalars(mesh, scalars, name):
 def GetBoundaryPoints(mesh):
     """
     Extracts boundary points from a vtk mesh and return the indices of those
-    points """    
+    points
+    """    
     
     # Create feature object
     featureEdges = vtk.vtkFeatureEdges()
@@ -792,22 +870,29 @@ def ExtractExteriorTri(uGrid, extract_extern=False):
     """
     Creates an all tri surface mesh from an unstructured grid
     
-    Input:
-        uGrid: Unstructured grid
+    Parameters
+    ----------
+    uGrid : Unstructured grid
         
-    Output:
-        extsurf: vtkPolyData surface containing array 'vtkOriginalPointIds' relating the points of
-                 extsurf and uGrid
     
+    Returns
+    -------
+    trisurf : vtkPolyData 
+        All triangle mesh of uGrid
+
+    extsurf : vtkPolyData 
+        Surface mesh of uGrid
+
     """    
 
     # Extract surface mesh
-    surf = vtk.vtkDataSetSurfaceFilter()
-    SetVTKInput(surf, uGrid)        
-    surf.PassThroughPointIdsOn()
-    surf.PassThroughCellIdsOn()
-    surf.Update()
-    surf = surf.GetOutput()
+    surf_filter = vtk.vtkDataSetSurfaceFilter()
+    SetVTKInput(surf_filter, uGrid)
+#    surf_filter.SetNonlinearSubdivisionLevel(0)
+    surf_filter.PassThroughCellIdsOn()
+    surf_filter.PassThroughPointIdsOn()
+    surf_filter.Update()
+    surf = surf_filter.GetOutput()
     PolyAddExtraFunctions(surf)
     
     # Return triangle mesh as well as original
@@ -828,7 +913,6 @@ def TriFilter(mesh):
     return trimesh
         
 
-    
 def CyclicRotate(mesh, angle):
     """ Rotates a mesh about the z axis for a given angle """
     
@@ -920,6 +1004,36 @@ def GridtoTri(uGrid):
     return surf.GetOutput(), origID
     
 
+def FlipNormals(mesh):
+    """ Flip normals of a triangular mesh by reversing the point ordering """
+    # roll current faces
+    f_orig = mesh.GetNumpyFaces(raw=True)
+#    f_orig = f_orig[:, 1]
+    
+    f = np.roll(f_orig[:, ::-1], 1)
+    
+    vtkcells = vtk.vtkCellArray()
+    vtkcells.SetCells(f.shape[0],
+                      VN.numpy_to_vtkIdTypeArray(f, deep=True))
+
+    mesh.SetPolys(vtkcells)
+
+
+def SetFaces(mesh, f):
+    """ Updates faces inplace.  Assumes a triangular mesh """
+    # Check shape
+    if f.ndim != 2:
+        raise Exception('Faces should be a 2D array')
+    elif f.shape[1] != 4:
+        raise Exception('First column should contain the number of points per face')
+        
+    vtkcells = vtk.vtkCellArray()
+    vtkcells.SetCells(f.shape[0],
+                      VN.numpy_to_vtkIdTypeArray(f, deep=True))
+
+    mesh.SetPolys(vtkcells)
+
+
 def FEMtoTri(points, tri, quad):
     """ Creates an all tri surface mesh from FEM data  """
     
@@ -959,7 +1073,6 @@ def FEMtoTri(points, tri, quad):
     
     # return polydata surface as well as relationship between surface and original numbering scheme
     return surf, uni[0]
-        
     
     
 def SetPoints(VTKobject, points, deep=True):
@@ -1190,7 +1303,7 @@ def CreateVectorPolyData(orig, vec):
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)
     
-    return pdata    
+    return pdata
     
     
 def ApplyTransformation(mesh, trans):
@@ -1564,8 +1677,52 @@ def ReadG3D(filename):
     return points, triangles
 
 
+
+def ExtractSelectionCells(grid, ind):
+    """
+    Returns a subset of an unstructured grid
+    
+    Parameters
+    ----------
+    grid : vtk.vtkUnstructuredGrid
+        Input grid to be subselected
+        
+    ind : np.ndarray
+        Numpy array of cell indices to be extracted.
+        
+    Returns
+    -------
+    subgrid : vtk.vtkUnstructuredGrid
+        Subselected grid
+        
+    
+    """
+    # Convert to vtk indices
+    if ind.dtype != np.int64:
+        ind = ind.astype(np.int64)
+    vtk_ind = VN.numpy_to_vtkIdTypeArray(ind, deep=True)
+
+    # Create selection objects
+    selectionNode = vtk.vtkSelectionNode()
+    selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
+    selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+    selectionNode.SetSelectionList(vtk_ind)
+
+    selection = vtk.vtkSelection()
+    selection.AddNode(selectionNode)
+
+    # extract
+    extractSelection = vtk.vtkExtractSelection()    
+    extractSelection.SetInputData(0, grid)
+    extractSelection.SetInputData(1, selection)
+    extractSelection.Update()
+    subgrid = extractSelection.GetOutput()
+    AddFunctions(subgrid)
+
+    return subgrid
+
 #==============================================================================
-# 
+# Sources
 #==============================================================================
 #def Sphere(radius, center=[0, 0, 0]):
 #    source = vtk.vtkSphereSource()

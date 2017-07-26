@@ -19,6 +19,10 @@ Install VTK
 Install VTK by installing from a distribution like `Anaconda <https://www.continuum.io/downloads>`_ and then installing VTK for Python 3.6 by running the following from a command prompt::
 
     conda install -c clinicalgraphics vtk=7.1.0
+
+If you're using Python 3.5::
+
+    conda install -c menpo vtk=7.0.0
     
 Or, if you're using Python 2.7, install using::
 

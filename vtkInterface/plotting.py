@@ -10,6 +10,10 @@ import numpy as np
 
 import vtkInterface
 
+font_keys = {'arial': vtk.VTK_ARIAL,
+             'courier': vtk.VTK_COURIER,
+             'times': vtk.VTK_TIMES}
+
 #==============================================================================
 # Functions
 #==============================================================================
@@ -58,27 +62,6 @@ def Plot(mesh, **args):
     return cpos
 
 
-def CreateScalarBar(mapper, title=None):
-    """ Creates scalar bar based on input mapper """
-    
-    # Create scalar bar
-    scalarBar = vtk.vtkScalarBarActor()
-    scalarBar.SetLookupTable(mapper.GetLookupTable())
-      
-    # Set properties
-    scalarBar.GetTitleTextProperty().SetFontFamilyToCourier()
-    scalarBar.GetTitleTextProperty().ItalicOff()
-    scalarBar.GetTitleTextProperty().BoldOn()
-    scalarBar.GetLabelTextProperty().SetFontFamilyToCourier()
-    scalarBar.GetLabelTextProperty().ItalicOff()
-    scalarBar.GetLabelTextProperty().BoldOn()
-    scalarBar.SetNumberOfLabels(5)  
-            
-    if title:
-        scalarBar.SetTitle(title)
-        
-    return scalarBar
-
 #==============================================================================
 # Classes
 #==============================================================================
@@ -99,16 +82,14 @@ class PlotClass(object):
     
     def __init__(self, off_screen=False):
         """ 
-        DESCRIPTION
         Initialize a vtk plotting object
         
-        
-        INPUTS
-        off_screen (bool, default False)
-            When enabled, renders off screen.  Useful for automated screenshots
+        Parameters
+        off_screen : bool, optional
+            Renders off screen when False.  Useful for automated screenshots.
             
-            
-        OUTPUTS
+        Returns
+        -------
         None
         
         """
@@ -157,77 +138,82 @@ class PlotClass(object):
                 linethick=None, flipscalars=False, lighting=False, ncolors=1000,
                 interpolatebeforemap=False, no_copy=False):
         """ 
-        DESCRIPTION
         Adds a vtk unstructured, structured, or polymesh to the plotting object
         
         By default, the input mesh is copied on load.
 
 
-        INPUTS
-        meshin (vtk unstructured, structured, or polymesh)
-            A vtk unstructured, structured, or polymesh.
+        Parameters
+        ----------
+        meshin : vtk unstructured, structured, or polymesh
+            A vtk unstructured, structured, or polymesh to plot.
             
-        color (string or 3 item list, optional, defaults to white)
+        color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
                 color='white'
                 color='w'
                 color=[1, 1, 1]
                 color='#FFFFFF'
+                
+            Color will be overridden when scalars are input.
             
-        style (string, default 'surface')
+        style : string, optional 
             Visualization style of the vtk mesh.  One for the following:
                 style='surface'
                 style='wireframe'
                 style='points'
                 
-        scalars (numpy array, default None)
+            Defaults to 'surface'
+                
+        scalars : numpy array, optional
             Scalars used to "color" the mesh.  Accepts an array equal to the
             number of cells or the number of points in the mesh.  Array should
             be sized as a single vector.
             
-        rng (2 item list, default None)
+        rng : 2 item list, optional
             Range of mapper for scalars.  Defaults to minimum and maximum of
             scalars array.  Example: [-1, 2]
             
-        stitle (string, default None)
+        stitle : string, optional
             Scalar title.  By default there is no scalar legend bar.  Setting
             this creates the legend bar and adds a title to it.  To create a
             bar with no title, use an empty string (i.e. '').
             
-        showedges (bool, default True)
+        showedges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
             
-        psize (float, default 5.0)
-            Point size.
+        psize : float, optional
+            Point size.  Applicable when style='points'.  Default 5.0
             
-        opacity (float, default 1)
-            Opacity of mesh.  Should be between 0 and 1.
+        opacity : float, optional
+            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
             
-        linethick (float, default None)
+        linethick : float, optional
             Thickness of lines.  Only valid for wireframe and surface
-            representations.
+            representations.  Default None.
             
-        flipscalars (bool, default False)
+        flipscalars : bool, optional
             Flip scalar display approach.  Default is red is minimum and blue
             is maximum.
             
-        lighting (bool, default False)
-            Enable or disable Z direction lighting.
+        lighting : bool, optional
+            Enable or disable Z direction lighting.  True by default.
         
-        ncolors (int, default 1000)
+        ncolors : int, optional
             Number of colors to use when displaying scalars.
         
-        interpolatebeforemap (bool, default False)
-            Enabling makes for a smoother scalar display.
+        interpolatebeforemap : bool, default False
+            Enabling makes for a smoother scalar display.  Default False
         
-        no_copy (bool, default False)
+        no_copy : bool, optional
             Enabling forces the mesh to not to copy.  Faster, but adds 
             possibly unwanted extra scalars to the mesh.
             
 
-        OUTPUTS
-        mesh (vtk object)
+        Returns
+        -------
+        mesh : vtk object
             Pointer to added mesh (either copy or original)
             
         
@@ -326,13 +312,123 @@ class PlotClass(object):
         
         # Add scalar bar if available
         if stitle is not None:
-            self.scalarBar = CreateScalarBar(self.mapper, stitle)
-            self.ren.AddActor(self.scalarBar)
+            self.AddScalarBar(stitle)
             
         # return pointer to mesh
         return self.mesh
+    
+        
+    def AddScalarBar(self, title=None, nlabels=5, italic=False, bold=True,
+                     title_fontsize=None, label_fontsize=None, color=None, 
+                     font_family='courier', shadow=False):
+        """
+        Creates scalar bar using the ranges as set by the last input mesh.
+        
+        Parameters
+        ----------
+        title : string, optional
+            Title of the scalar bar.  Default None
+            
+        nlabels : int, optional
+            Number of labels to use for the scalar bar.
+            
+        italic : bool, optional
+            Italicises title and bar labels.  Default False.
+            
+        bold  : bool, optional
+            Bolds title and bar labels.  Default True
+            
+        title_fontsize : float, optional
+            Sets the size of the title font.  Defaults to None and is sized
+            automatically.
+            
+        label_fontsize : float, optional
+            Sets the size of the title font.  Defaults to None and is sized
+            automatically.
+            
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.  For example:
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+                
+        font_family : string, optional
+            Font family.  Must be either courier, times, or arial.
+            
+        shadow : bool, optional
+            Adds a black shadow to the text.  Defaults to False
+            
+        Returns
+        -------
+        None
+        
+        Notes
+        -----
+        Setting title_fontsize, or label_fontsize disables automatic font 
+        sizing for both the title and label.
 
+        
+        """
+        # check if maper exists
+        if not hasattr(self, 'mapper'):
+            raise Exception('Mapper does not exist.  ' +\
+                            'Add a mesh with scalars first.')
+        
+        # check font name
+        font_family = font_family.lower()
+        if font_family not in ['courier', 'times', 'arial']:
+            raise Exception('Font must be either "courier", "times" ' +\
+                            'or "arial"')
+            
+        # parse color
+        if color is None:
+            color = [1, 1, 1]
+        elif type(color) is str or type(color) is unicode:
+            color = vtkInterface.StringToRGB(color)
+        else:
+            raise Exception('Invalid color input')
+        
+        # Create scalar bar
+        self.scalarBar = vtk.vtkScalarBarActor()
+        self.scalarBar.SetLookupTable(self.mapper.GetLookupTable())
+        self.scalarBar.SetNumberOfLabels(nlabels)  
 
+        if label_fontsize or title_fontsize:
+            self.scalarBar.UnconstrainedFontSizeOn()
+
+        if nlabels:
+            label_text = self.scalarBar.GetLabelTextProperty()
+            label_text.SetColor(color)
+            label_text.SetShadow(shadow)
+            
+            # Set font
+            label_text.SetFontFamily(font_keys[font_family])
+            label_text.SetItalic(italic)
+            label_text.SetBold(bold)
+            if label_fontsize:
+                label_text.SetFontSize(label_fontsize)
+                  
+        # Set properties
+        if title:
+            self.scalarBar.SetTitle(title)
+            title_text = self.scalarBar.GetTitleTextProperty()
+
+            title_text.SetItalic(italic)
+            title_text.SetBold(bold)
+            if title_fontsize:
+                title_text.SetFontSize(title_fontsize)
+    
+            # Set font
+            title_text.SetFontFamily(font_keys[font_family])
+                
+            # set color
+            title_text.SetColor(color)
+
+        
+        self.ren.AddActor(self.scalarBar)
+        
+    
     def UpdateScalars(self, scalars, mesh=None, render=True):
         """ updates scalars of object (point only for now) 
         assumes last inputted mesh if mesh left empty
@@ -379,10 +475,6 @@ class PlotClass(object):
         if mesh is None:
             mesh = self.mesh
             
-        # get pointer to array
-#        pts_pointer = self.mesh.GetNumpyPoints()
-#        pts_pointer[:] = points
-        
         self.mesh.SetNumpyPoints(points)
         
         if render:
@@ -409,30 +501,43 @@ class PlotClass(object):
                 pass
             
 
-    def AddText(self, text, position=[10, 10], fontsize=50, color=[1, 1, 1],
-                font='courier'):
+    def AddText(self, text, position=[10, 10], fontsize=50, color=None,
+                font='courier', shadow=False):
         """ 
         Adds text to plot object
         
-        font may be courier, times, or arial
+        Parameters
+        ----------
+        font : string, optional
+            Font name may be courier, times, or arial
+            
+        shadow : bool, optional
+            Adds a black shadow to the text.  Defaults to False
+            
+            
+        Returns
+        -------
+        shadow : False
+        
         """
+        
+        # parse color
+        if color is None:
+            color = [1, 1, 1]
+        elif type(color) is str or type(color) is unicode:
+            color = vtkInterface.StringToRGB(color)
+        else:
+            raise Exception('Invalid color input')
+            
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
         self.textActor.GetTextProperty().SetFontSize(fontsize)
         self.textActor.GetTextProperty().SetColor(color)
+        self.textActor.GetTextProperty().SetFontFamily(font_keys[font])
+        self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
         self.AddActor(self.textActor)
         
-        # Set font
-        if font == 'courier':
-            self.textActor.GetTextProperty().SetFontFamilyToCourier()
-            
-        elif font == 'times':
-            self.textActor.GetTextProperty().SetFontFamilyToTimes()
-            
-        elif font == 'arial':
-            self.textActor.GetTextProperty().SetFontFamilyToArial()          
-            
 
     def OpenMovie(self, filename, framerate=24, codec='libx264', 
                   preset='medium'):
@@ -589,6 +694,28 @@ class PlotClass(object):
 
         return arrows
     
+    
+    def AddLineSegments(self, points, edges, color=None):
+        """ Adds arrows to plotting object """
+        
+        cent = (points[edges[:, 0]] + points[edges[:, 1]])/2
+        direction = points[edges[:, 1]] - points[edges[:, 0]]
+        pdata = vtkInterface.CreateVectorPolyData(cent, direction)
+        
+        pdata = vtkInterface.CreateVectorPolyData(cent, direction)
+        arrows, mapper = CreateLineSegmentsActor(pdata)
+        
+        # set color
+        if type(color) is str or type(color) is unicode:
+            color = vtkInterface.StringToRGB(color)
+            mapper.ScalarVisibilityOff()
+            arrows.GetProperty().SetColor(color)
+#            print 'color', str(color)
+            
+        # add to mrain class
+        self.AddActor(arrows)
+        return arrows
+    
         
     def GetCameraPosition(self):
         """ Returns camera position of active render window """
@@ -604,12 +731,33 @@ class PlotClass(object):
         camera = self.ren.GetActiveCamera()
         camera.SetPosition(cameraloc[0])
         camera.SetFocalPoint(cameraloc[1]) 
-        camera.SetViewUp(cameraloc[2])        
-        
+        camera.SetViewUp(cameraloc[2])
 
-    def SetBackground(self, bcolor):
-        """ Sets background color """
-        self.ren.SetBackground(bcolor)
+        # reset clipping range
+        self.ren.ResetCameraClippingRange()
+
+
+    def SetBackground(self, color):
+        """
+        Sets background color
+        
+        Parameters
+        ----------
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.  For example:
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+                
+        """
+        
+        if color is None:
+            color = [1, 1, 1]
+        elif type(color) is str or type(color) is unicode:
+            color = vtkInterface.StringToRGB(color)
+            
+        self.ren.SetBackground(color)
         
         
     def AddLegend(self, entries, bcolor=[0.5, 0.5, 0.5], border=False):
@@ -638,9 +786,33 @@ class PlotClass(object):
         self.ren.AddActor(legend)
         
         
-    def Plot(self, title='', window_size=[1024, 768], interactive=True,
+    def Plot(self, title=None, window_size=[1024, 768], interactive=True,
              autoclose=True):
-        """ Renders """
+        """
+        Creates plotting window
+        
+        Parameters
+        ----------
+        title : string, optional
+            Title of plotting window.
+            
+        window_size : list, optional
+            Window size in pixels.  Defaults to [1024, 768]
+            
+        interactive : bool, optional
+            Enabled by default.  Allows user to pan and move figure.
+            
+        autoclose : bool, optional
+            Enabled by default.  Exits plotting session when user closes the
+            window when interactive is True.
+            
+        Returns
+        -------
+        cpos : list
+            List of camera position, focal point, and view up       
+
+        
+        """
         
         if title:
             self.renWin.SetWindowName(title)
@@ -680,7 +852,7 @@ class PlotClass(object):
         axesActor = vtk.vtkAxesActor()
         self.ren.AddActor(axesActor)
         
-        # interactive axes appear broken as of 7.0
+        # interactive axes appear broken as of version 7.0
 #        # create interactive axes        
 #        axes = vtk.vtkOrientationMarkerWidget()
 #        axes.SetOrientationMarker(axesActor)
@@ -764,9 +936,33 @@ def MakeVTKPointsMesh(points):
     pdata = vtk.vtkPolyData()
     pdata.SetPoints(vtkPoints)
     pdata.SetVerts(vtkcells)
+    vtkInterface.AddFunctions(pdata)
     
     return pdata
             
+
+def CreateLineSegmentsActor(pdata):
+    
+    # Create arrow object
+    lines_source = vtk.vtkLineSource()
+    lines_source.Update()
+    glyph3D = vtk.vtkGlyph3D()
+    glyph3D.SetSourceData(lines_source.GetOutput())
+    glyph3D.SetInputData(pdata)
+    glyph3D.SetVectorModeToUseVector()
+    glyph3D.Update()
+    
+    # Create mapper    
+    mapper = vtk.vtkDataSetMapper()
+    mapper.SetInputConnection(glyph3D.GetOutputPort())
+    
+    # Create actor
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    actor.GetProperty().LightingOff()
+
+    return actor, mapper
+
 
 def CreateArrowsActor(pdata):
     """ Creates an actor composed of arrows """

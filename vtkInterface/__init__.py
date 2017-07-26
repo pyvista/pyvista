@@ -1,4 +1,4 @@
-__version__ = '0.1.3'
+from _version import __version__
 
 from vtkInterface.plotting import *
 from vtkInterface.utilities import *
