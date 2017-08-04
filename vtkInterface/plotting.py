@@ -821,9 +821,7 @@ class PlotClass(object):
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')
         for item in labels:
-            print str(item)
             vtklabels.InsertNextValue(str(item))
-#            vtklabels.InsertNextValue('woa')
         
         vtkpoints.GetPointData().AddArray(vtklabels)
         
