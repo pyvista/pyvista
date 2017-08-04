@@ -67,11 +67,10 @@ def Plot(mesh, **args):
 #==============================================================================
 class PlotClass(object):
     """
-    DESCRIPTION
     Plotting object to display vtk meshes or numpy arrays.
 
-    
-    EXAMPLE
+    Example
+    -------
     plobj = PlotClass()
     plobj.AddMesh(mesh, color='red')
     plobj.AddMesh(another_mesh, color='blue')
@@ -85,6 +84,7 @@ class PlotClass(object):
         Initialize a vtk plotting object
         
         Parameters
+        ----------
         off_screen : bool, optional
             Renders off screen when False.  Useful for automated screenshots.
             
@@ -223,12 +223,6 @@ class PlotClass(object):
         if not hasattr(meshin, 'Copy'):
             vtkInterface.AddFunctions(meshin)
         
-        # select color
-        if color is None:
-            color = [1, 1, 1]
-        elif type(color) is str or type(color) is unicode:
-            color = vtkInterface.StringToRGB(color)
-                
         # Create mapper
         self.mapper = vtk.vtkDataSetMapper()
 
@@ -296,7 +290,7 @@ class PlotClass(object):
         # edge display style
         if showedges:
             actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetColor(color)
+        actor.GetProperty().SetColor(ParseColor(color))
         actor.GetProperty().SetOpacity(opacity)
         
         # lighting display style
@@ -316,6 +310,167 @@ class PlotClass(object):
             
         # return pointer to mesh
         return self.mesh
+    
+    
+    def AddBoundsAxes(self, mesh=None, bounds=None, show_xaxis=True, 
+                      show_yaxis=True, show_zaxis=True, show_xlabels=True,
+                      show_ylabels=True, show_zlabels=True, italic=False,
+                      bold=True, shadow=False, fontsize=16, 
+                      font_family='courier', color='w', 
+                      xtitle='X Axis', ytitle='Y Axis', ztitle='Z Axis'):
+        """
+        Adds bounds axes.  Shows the bounds of the most recent input mesh 
+        unless mesh is specified.
+        
+        Parameters
+        ----------
+        mesh : vtkPolydata or unstructured grid, optional
+            Input mesh to draw bounds axes around
+        
+        bounds : list or tuple, optional
+            Bounds to override mesh bounds.
+            [xmin, xmax, ymin, ymax, zmin, zmax]
+            
+        show_xaxis : bool, optional
+            Makes x axis visible.  Default True.
+            
+        show_yaxis : bool, optional
+            Makes y axis visible.  Default True.
+        
+        show_zaxis : bool, optional
+            Makes z axis visible.  Default True.
+        
+        show_xlabels : bool, optional
+            Shows x labels.  Default True.
+
+        show_ylabels : bool, optional
+            Shows y labels.  Default True.
+
+        show_zlabels : bool, optional
+            Shows z labels.  Default True.
+            
+        italic : bool, optional
+            Italicises axis labels and numbers.  Default False.
+            
+        bold  : bool, optional
+            Bolds axis labels and numbers.  Default True.
+        
+        shadow : bool, optional
+            Adds a black shadow to the text.  Default False.
+            
+        fontsize : float, optional
+            Sets the size of the label font.  Defaults to 16.
+            
+        font_family : string, optional
+            Font family.  Must be either courier, times, or arial.
+
+        color : string or 3 item list, optional
+            Color of all labels and axis titles.  Default white.
+            Either a string, rgb list, or hex color string.  For example:
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+
+        xtitle : string, optional
+            Title of the x axis.  Default "X Axis"
+
+        ytitle : string, optional
+            Title of the y axis.  Default "Y Axis"
+            
+        ztitle : string, optional
+            Title of the z axis.  Default "Z Axis"
+
+        Returns
+        -------
+        cubeAxesActor : vtk.vtkCubeAxesActor
+            Bounds actor
+            
+        """
+        
+        # Use last input mesh if availble
+        if not mesh and not bounds:
+            if not hasattr(self, 'mesh'):
+                raise Exception('Specify bounds or first input a mesh')
+            mesh = self.mesh
+        
+        # create actor
+        cubeAxesActor = vtk.vtkCubeAxesActor()
+        cubeAxesActor.SetUse2DMode(True)
+
+        # set bounds
+        if not bounds:
+            bounds = mesh.GetBounds()
+        cubeAxesActor.SetBounds(mesh.GetBounds())
+        
+        # show or hide axes
+        cubeAxesActor.SetXAxisVisibility(show_xaxis)
+        cubeAxesActor.SetYAxisVisibility(show_yaxis)
+        cubeAxesActor.SetZAxisVisibility(show_zaxis)
+        
+        # disable minor ticks
+        cubeAxesActor.XAxisMinorTickVisibilityOff();
+        cubeAxesActor.YAxisMinorTickVisibilityOff();
+        cubeAxesActor.ZAxisMinorTickVisibilityOff();
+        
+        cubeAxesActor.SetCamera(self.ren.GetActiveCamera())
+        
+        # set color
+        color = ParseColor(color)
+        cubeAxesActor.GetXAxesLinesProperty().SetColor(color)
+        cubeAxesActor.GetYAxesLinesProperty().SetColor(color)
+        cubeAxesActor.GetZAxesLinesProperty().SetColor(color)
+
+        # empty arr
+        empty_str = vtk.vtkStringArray()
+        empty_str.InsertNextValue('')
+        
+        # show lines
+        if show_xaxis:
+            cubeAxesActor.SetXTitle(xtitle)
+        else:
+            cubeAxesActor.SetXTitle('')
+            cubeAxesActor.SetAxisLabels(0, empty_str)
+
+        if show_yaxis:
+            cubeAxesActor.SetYTitle(ytitle)
+        else:
+            cubeAxesActor.SetYTitle('')
+            cubeAxesActor.SetAxisLabels(1, empty_str)
+
+        if show_zaxis:
+            cubeAxesActor.SetZTitle(ztitle)
+        else:
+            cubeAxesActor.SetZTitle('')
+            cubeAxesActor.SetAxisLabels(2, empty_str)
+
+        # show labels
+        if not show_xlabels:
+            cubeAxesActor.SetAxisLabels(0, empty_str)
+
+        if not show_ylabels:
+            cubeAxesActor.SetAxisLabels(1, empty_str)
+
+        if not show_zlabels:
+            cubeAxesActor.SetAxisLabels(2, empty_str)
+
+        # set font
+        font_family = ParseFontFamily(font_family)
+        for i in range(3):
+            cubeAxesActor.GetTitleTextProperty(i).SetFontSize(fontsize)
+            cubeAxesActor.GetTitleTextProperty(i).SetColor(color)
+            cubeAxesActor.GetTitleTextProperty(i).SetFontFamily(font_family)
+            cubeAxesActor.GetTitleTextProperty(i).SetBold(bold)
+
+            cubeAxesActor.GetLabelTextProperty(i).SetFontSize(fontsize)
+            cubeAxesActor.GetLabelTextProperty(i).SetColor(color)
+            cubeAxesActor.GetLabelTextProperty(i).SetFontFamily(font_family)
+            cubeAxesActor.GetLabelTextProperty(i).SetBold(bold)
+
+
+        self.AddActor(cubeAxesActor)
+        self.cubeAxesActor = cubeAxesActor
+        return cubeAxesActor
     
         
     def AddScalarBar(self, title=None, nlabels=5, italic=False, bold=True,
@@ -375,19 +530,8 @@ class PlotClass(object):
             raise Exception('Mapper does not exist.  ' +\
                             'Add a mesh with scalars first.')
         
-        # check font name
-        font_family = font_family.lower()
-        if font_family not in ['courier', 'times', 'arial']:
-            raise Exception('Font must be either "courier", "times" ' +\
-                            'or "arial"')
-            
         # parse color
-        if color is None:
-            color = [1, 1, 1]
-        elif type(color) is str or type(color) is unicode:
-            color = vtkInterface.StringToRGB(color)
-        else:
-            raise Exception('Invalid color input')
+        color = ParseColor(color)
         
         # Create scalar bar
         self.scalarBar = vtk.vtkScalarBarActor()
@@ -403,7 +547,7 @@ class PlotClass(object):
             label_text.SetShadow(shadow)
             
             # Set font
-            label_text.SetFontFamily(font_keys[font_family])
+            label_text.SetFontFamily(ParseFontFamily(font_family))
             label_text.SetItalic(italic)
             label_text.SetBold(bold)
             if label_fontsize:
@@ -420,7 +564,7 @@ class PlotClass(object):
                 title_text.SetFontSize(title_fontsize)
     
             # Set font
-            title_text.SetFontFamily(font_keys[font_family])
+            title_text.SetFontFamily(ParseFontFamily(font_family))
                 
             # set color
             title_text.SetColor(color)
@@ -521,18 +665,11 @@ class PlotClass(object):
         
         """
         
-        # parse color
-        if color is None:
-            color = [1, 1, 1]
-        elif type(color) is str or type(color) is unicode:
-            color = vtkInterface.StringToRGB(color)
-        else:
-            raise Exception('Invalid color input')
             
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
         self.textActor.GetTextProperty().SetFontSize(fontsize)
-        self.textActor.GetTextProperty().SetColor(color)
+        self.textActor.GetTextProperty().SetColor(ParseColor(color))
         self.textActor.GetTextProperty().SetFontFamily(font_keys[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
@@ -547,7 +684,8 @@ class PlotClass(object):
         try:
             import moviepy.video.io.ffmpeg_writer as mwrite
         except:
-            raise Exception('To use this feature install moviepy')
+            print('\n\nTo use this feature install moviepy and ffmpeg\n\n')
+            import moviepy.video.io.ffmpeg_writer as mwrite
         
         # Create movie object and check if render window is active
         self.window_size = self.renWin.GetSize()
@@ -609,12 +747,112 @@ class PlotClass(object):
         actor.GetProperty().SetLineWidth(width); 
         actor.GetProperty().EdgeVisibilityOn()
         actor.GetProperty().SetEdgeColor(color)
-        actor.GetProperty().SetColor(color)
+        actor.GetProperty().SetColor(ParseColor(color))
         actor.GetProperty().LightingOff()
         
         # Add to renderer
         self.ren.AddActor(actor)
+
+
+    def AddPointLabels(self, points, labels, bold=True, fontsize=16,
+                       textcolor='k', font_family='courier', shadow=False,
+                       showpoints=True, pointcolor='k', pointsize=5):
+        """
+        Creates a point actor with one label from list labels assigned to
+        each point.
         
+        Parameters
+        ----------
+        points : np.ndarray
+            3 x n numpy array of points.
+            
+        labels : list
+            List of labels.  Must be the same length as points.
+            
+        italic : bool, optional
+            Italicises title and bar labels.  Default False.
+            
+        bold : bool, optional
+            Bolds title and bar labels.  Default True
+            
+        fontsize : float, optional
+            Sets the size of the title font.  Defaults to 16.
+            
+        textcolor : string or 3 item list, optional, defaults to black
+            Color of text.
+            Either a string, rgb list, or hex color string.  For example:
+                textcolor='white'
+                textcolor='w'
+                textcolor=[1, 1, 1]
+                textcolor='#FFFFFF'
+                
+        font_family : string, optional
+            Font family.  Must be either courier, times, or arial.
+            
+        shadow : bool, optional
+            Adds a black shadow to the text.  Defaults to False
+            
+        showpoints : bool, optional
+            Controls if points are visible.  Default True
+            
+        pointcolor : string or 3 item list, optional, defaults to black
+            Color of points (if visible).
+            Either a string, rgb list, or hex color string.  For example:
+                textcolor='white'
+                textcolor='w'
+                textcolor=[1, 1, 1]
+                textcolor='#FFFFFF'
+                
+        pointsize : float, optional
+            Size of points (if visible)
+        
+        Returns
+        -------
+        labelMapper : vtk.vtkvtkLabeledDataMapper
+            VTK label mapper.  Can be used to change properties of the labels.
+        
+        """
+        
+        if len(points) != len(labels):
+            raise Exception('There must be one label for each point')
+        
+        vtkpoints = vtkInterface.MakePointMesh(points)
+
+        vtklabels = vtk.vtkStringArray()
+        vtklabels.SetName('labels')
+        for item in labels:
+            print str(item)
+            vtklabels.InsertNextValue(str(item))
+#            vtklabels.InsertNextValue('woa')
+        
+        vtkpoints.GetPointData().AddArray(vtklabels)
+        
+        # create label mapper
+        labelMapper = vtk.vtkLabeledDataMapper()
+        labelMapper.SetInputData(vtkpoints)
+        textprop = labelMapper.GetLabelTextProperty()
+        textprop.SetBold(bold)
+        textprop.SetFontSize(fontsize)
+        textprop.SetFontFamily(ParseFontFamily(font_family))
+        textprop.SetColor(ParseColor(textcolor))
+        textprop.SetShadow(shadow)
+        labelMapper.SetLabelModeToLabelFieldData()
+        labelMapper.SetFieldDataName('labels')
+
+        labelActor = vtk.vtkActor2D()
+        labelActor.SetMapper(labelMapper)
+        
+        # add points
+        if showpoints:
+            self.AddMesh(vtkpoints, style='points', color=pointcolor,
+                         psize=pointsize)
+        else:
+            self.AddMesh(vtkpoints)
+            
+        self.AddActor(labelActor)
+        return labelMapper
+
+
 
     def AddPoints(self, points, color=None, psize=5, scalars=None, 
                   rng=None, name='', opacity=1, stitle='', flipscalars=False):
@@ -1099,3 +1337,31 @@ def MakeLegendPoly():
     return mesh                                  
                                                                      
                                                                      
+def ParseColor(color):
+    """ Parses color into a vtk friendly rgb list """
+    
+    if color is None:
+        return [1, 1, 1]
+    elif type(color) is str or type(color) is unicode:
+        return vtkInterface.StringToRGB(color)
+    elif len(color) == 3:
+        return color
+    else:
+        raise Exception("""
+    Invalid color input
+    Must ba string, rgb list, or hex color string.  For example:
+        color='white'
+        color='w'
+        color=[1, 1, 1]
+        color='#FFFFFF'""")
+
+
+def ParseFontFamily(font_family):
+    """ checks font name """
+    # check font name
+    font_family = font_family.lower()
+    if font_family not in ['courier', 'times', 'arial']:
+        raise Exception('Font must be either "courier", "times" ' +\
+                        'or "arial"')
+        
+    return font_keys[font_family]

@@ -199,6 +199,7 @@ def GridAddExtraFunctions(grid):
     grid.TriFilter       = types.MethodType(TriFilter, grid)
     grid.WriteGrid       = types.MethodType(WriteGrid, grid)
     grid.ExtractSelectionCells = types.MethodType(ExtractSelectionCells, grid)
+    grid.ExtractSelectionPoints = types.MethodType(ExtractSelectionPoints, grid)
     grid.RotateX         = types.MethodType(RotateX, grid)
     grid.RotateY         = types.MethodType(RotateY, grid)
     grid.RotateZ         = types.MethodType(RotateZ, grid)
@@ -515,6 +516,38 @@ def MakevtkPoints(points, deep=True):
     vtkpts.SetData(VN.numpy_to_vtk(points, deep=deep))
     return vtkpts
     
+
+def MakePointMesh(points, deep=True):
+    """ Convert numpy points to vtkPoints """
+
+    # Data checking
+    if not points.flags['C_CONTIGUOUS']:
+        points = np.ascontiguousarray(points)
+
+    # Convert to vtk objects
+    vtkpoints = vtk.vtkPoints()
+    vtkpoints.SetData(VN.numpy_to_vtk(points, deep=True))
+    
+    npoints = points.shape[0]
+    
+    pcell = np.vstack((np.ones(npoints, dtype=np.int64),
+                       np.arange(npoints, dtype=np.int64))).ravel('F')
+    
+    # Convert to a vtk array
+    vtkcells = vtk.vtkCellArray()
+    vtkcells.SetCells(npoints, VN.numpy_to_vtkIdTypeArray(pcell,
+                      deep=True))
+    
+    # Create polydata object
+    mesh = vtk.vtkPolyData()
+    PolyAddExtraFunctions(mesh)
+    mesh.SetPoints(vtkpoints)
+    mesh.SetPolys(vtkcells)
+    
+    # return cleaned mesh
+    return mesh
+
+
 
 def SetVTKInput(obj, inp):
     """ Accounts for version discrepancy between VTK versions in input method """
@@ -1705,6 +1738,50 @@ def ExtractSelectionCells(grid, ind):
     # Create selection objects
     selectionNode = vtk.vtkSelectionNode()
     selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
+    selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+    selectionNode.SetSelectionList(vtk_ind)
+
+    selection = vtk.vtkSelection()
+    selection.AddNode(selectionNode)
+
+    # extract
+    extractSelection = vtk.vtkExtractSelection()    
+    extractSelection.SetInputData(0, grid)
+    extractSelection.SetInputData(1, selection)
+    extractSelection.Update()
+    subgrid = extractSelection.GetOutput()
+    AddFunctions(subgrid)
+
+    return subgrid
+
+
+def ExtractSelectionPoints(grid, ind):
+    """
+    Returns a subset of an unstructured grid
+    
+    Parameters
+    ----------
+    grid : vtk.vtkUnstructuredGrid
+        Input grid to be subselected
+        
+    ind : np.ndarray
+        Numpy array of point indices to be extracted.
+        
+    Returns
+    -------
+    subgrid : vtk.vtkUnstructuredGrid
+        Subselected grid
+        
+    
+    """
+    # Convert to vtk indices
+    if ind.dtype != np.int64:
+        ind = ind.astype(np.int64)
+    vtk_ind = VN.numpy_to_vtkIdTypeArray(ind, deep=True)
+
+    # Create selection objects
+    selectionNode = vtk.vtkSelectionNode()
+    selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
     selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
     selectionNode.SetSelectionList(vtk_ind)
 

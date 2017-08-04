@@ -221,3 +221,64 @@ You can also render the beam as as a wireframe object:
 .. image:: beam_wireframe.gif
 
 
+Adding Labels to a Plot
+-----------------------
+
+Labels can be added to a plot using the ``AddPointLabels`` function within the 
+``PlotClass`` object.  The following example loads the included example beam, generates a plotting class, and subselects points along the y-z plane and labels their coordinates.  ``AddPointLabels`` requires that the number of labels matches the number of points, and that labels is a list containing one entry per point.  The code automatically converts each item in the list to a string.
+
+.. code:: python
+
+    # Load module and example file
+    import vtkInterface
+    from vtkInterface import examples
+
+    hexfile = examples.hexbeamfile
+
+    # Load Grid
+    grid = vtkInterface.LoadGrid(hexfile)
+
+    # Create plotting class and add the unstructured grid
+    plobj = vtkInterface.PlotClass()
+    plobj.AddMesh(grid)
+
+    # Add labels to points on the yz plane (where x == 0)
+    points = grid.GetNumpyPoints()
+    mask = points[:, 0] == 0
+    plobj.AddPointLabels(points[mask], points[mask].tolist())
+
+    # plot and then close plot
+    plobj.Plot(); del plobj
+
+.. image:: labels0.png
+
+This example is similar and shows how labels can be combined with a scalar bar to show the exact value of certain points.
+
+.. code:: python
+
+    # Load module and example file
+    import vtkInterface
+    from vtkInterface import examples
+
+    hexfile = examples.hexbeamfile
+
+    # get a numpy array of the points from  the unstructured grid
+    points = grid.GetNumpyPoints()
+    values = points[:, 2]
+
+    # Create plotting class and add the unstructured grid
+    plobj = vtkInterface.PlotClass()
+    plobj.AddMesh(grid, scalars=values) # color mesh according to z value
+    plobj.AddScalarBar(title='Z Position')
+
+    # Add labels to points on the yz plane (where x == 0)
+    mask = points[:, 0] == 0
+    plobj.AddPointLabels(points[mask], values.tolist(), fontsize=24)
+
+    # add some text to the plot
+    plobj.AddText('Example showing plot labels')
+
+    # plot and then close plot
+    plobj.Plot(); del plobj
+
+.. image:: labels1.png
