@@ -242,9 +242,7 @@ class PlotClass(object):
         else:
             self.mesh = meshin
 
-        #======================================================================
-        # Scalar formatting
-        #======================================================================
+        # Scalar formatting ===================================================
         if scalars is not None:
             # convert to numpy array
             if not isinstance(scalars, np.ndarray):
@@ -284,32 +282,33 @@ class PlotClass(object):
         # Set mapper
         self.mapper.SetInputData(self.mesh)
 
-        # Create Actor
+        # Create Actor and get actor property handle
         actor = vtk.vtkActor()
         actor.SetMapper(self.mapper)
+        prop = actor.GetProperty()
 
         # select view style
         if style == 'wireframe':
-            actor.GetProperty().SetRepresentationToWireframe()
+            prop.SetRepresentationToWireframe()
         elif style == 'points':
-            actor.GetProperty().SetRepresentationToPoints()
-            actor.GetProperty().SetPointSize(psize)
+            prop.SetRepresentationToPoints()
+            prop.SetPointSize(psize)
         elif style == 'surface':
-            actor.GetProperty().SetRepresentationToSurface()
+            prop.SetRepresentationToSurface()
 
         # edge display style
         if showedges:
-            actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetColor(ParseColor(color))
-        actor.GetProperty().SetOpacity(opacity)
+            prop.EdgeVisibilityOn()
+        prop.SetColor(ParseColor(color))
+        prop.SetOpacity(opacity)
 
         # lighting display style
         if lighting is False:
-            actor.GetProperty().LightingOff()
+            prop.LightingOff()
 
         # set line thickness
         if linethick:
-            actor.GetProperty().SetLineWidth(linethick)
+            prop.SetLineWidth(linethick)
 
         # Add to renderer
         self.ren.AddActor(actor)
@@ -572,6 +571,7 @@ class PlotClass(object):
 
             title_text.SetItalic(italic)
             title_text.SetBold(bold)
+            title_text.SetShadow(shadow)
             if title_fontsize:
                 title_text.SetFontSize(title_fontsize)
 
@@ -867,6 +867,10 @@ class PlotClass(object):
 
         # Convert to vtk points object if "points" is a numpy array
         if isinstance(points, np.ndarray):
+            # check size of points
+            if points.ndim != 2 or points.shape[1] != 3:
+                raise Exception('Invalid point array shape'
+                                '%s' % str(points.shape))
             self.points = MakeVTKPointsMesh(points)
         else:
             self.points = points
@@ -1000,6 +1004,10 @@ class PlotClass(object):
         Adds a legend to render window.  Entries must be a list containing
         one string and color entry for each item
 
+        pos : list
+            Two float list, each float between 0 and 1.  For example
+            [0.5, 0.5] would put the legend in the middle of the figure.
+
         Example
         -------
 
@@ -1014,7 +1022,6 @@ class PlotClass(object):
 
         legend = vtk.vtkLegendBoxActor()
         legend.SetNumberOfEntries(len(entries))
-#        legend.SetDragable(1)
         if pos:
             legend.SetPosition2(pos[0], pos[1])
 
@@ -1096,20 +1103,14 @@ class PlotClass(object):
 
     def AddAxes(self):
         """ Add axes actor at origin """
-        axesActor = vtk.vtkAxesActor()
-        self.ren.AddActor(axesActor)
+        axes = vtk.vtkAxesActor()
+        self.marker = vtk.vtkOrientationMarkerWidget()
+        self.marker.SetInteractor(self.iren)
+        self.marker.SetOrientationMarker(axes)
+        self.marker.SetEnabled(1)
 
-        # interactive axes appear broken as of version 7.0
-#        # create interactive axes
-#        axes = vtk.vtkOrientationMarkerWidget()
-#        axes.SetOrientationMarker(axesActor)
-#        axes.SetInteractor(self.iren)
-#        axes.SetViewport(0.0, 0.0, 0.4, 0.4)
-# axes.On()
-#        axes.SetEnabled(1)
-#        axes.InteractiveOn()
-#        self.ren.ResetCamera()
-#        self.Render()
+        # axesActor = vtk.vtkAxesActor()
+        # self.ren.AddActor(axesActor)
 
     def TakeScreenShot(self, filename=None):
         """

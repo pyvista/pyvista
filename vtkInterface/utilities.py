@@ -10,24 +10,20 @@ import numpy as np
 import vtk
 from vtk.util import numpy_support as VN
 
-# termine if using vtk > 5
-new_vtk = vtk.vtkVersion().GetVTKMajorVersion() > 5
-if not new_vtk:
-    warnings.warn('Using VTK version 5 or less. May encounter errors.')
-
 # mesh morph import
 from vtkInterface import Plot
 from vtkInterface import PlotCurvature
+
+# determine if using vtk > 5
+new_vtk = vtk.vtkVersion().GetVTKMajorVersion() > 5
+if not new_vtk:
+    warnings.warn('Using VTK version 5 or less. May encounter errors.')
 
 try:
     from pyansys import CellQuality
     hasqualfunc = True
 except BaseException:
     hasqualfunc = False
-
-#==============================================================================
-# Functions
-#==============================================================================
 
 
 def RotateX(mesh, angle):
@@ -175,6 +171,10 @@ def PolyAddExtraFunctions(poly):
     poly.Subdivide = types.MethodType(Subdivide, poly)
     poly.ExtractEdges = types.MethodType(ExtractEdges, poly)
     poly.Decimate = types.MethodType(Decimate, poly)
+    poly.FlipNormals = types.MethodType(FlipNormals, poly)
+    poly.UpdateCellScalars = types.MethodType(UpdateCellScalars, poly)
+    poly.UpdatePointScalars = types.MethodType(UpdatePointScalars, poly)
+    poly.OverwriteMesh = types.MethodType(OverwriteMesh, poly)
 
 
 def GridAddExtraFunctions(grid):
@@ -210,6 +210,8 @@ def GridAddExtraFunctions(grid):
     grid.RotateZ = types.MethodType(RotateZ, grid)
     grid.Translate = types.MethodType(Translate, grid)
     grid.ExtractEdges = types.MethodType(ExtractEdges, grid)
+    grid.UpdateCellScalars = types.MethodType(UpdateCellScalars, grid)
+    grid.UpdatePointScalars = types.MethodType(UpdatePointScalars, grid)
 
     # Optional pyansys cell quality calculator
     if hasqualfunc:
@@ -1041,18 +1043,24 @@ def GridtoTri(uGrid):
 
 
 def FlipNormals(mesh):
-    """ Flip normals of a triangular mesh by reversing the point ordering """
+    """Flip normals of a triangular mesh by reversing the point ordering
+    in place"""
     # roll current faces
-    f_orig = mesh.GetNumpyFaces(raw=True)
-#    f_orig = f_orig[:, 1]
+    # f_orig = mesh.GetNumpyFaces(nocut=True)
+    # f = np.roll(f_orig[:, ::-1], 1)
 
-    f = np.roll(f_orig[:, ::-1], 1)
+    # take a view of the original object and flip the order of faces without
+    # copying the array
+    ptr = mesh.GetNumpyFaces(raw=True)
+    f = ptr.reshape((-1, 4)).view()
+    f[:, 1:] = f[:, 1:][:, ::-1]
 
-    vtkcells = vtk.vtkCellArray()
-    vtkcells.SetCells(f.shape[0],
-                      VN.numpy_to_vtkIdTypeArray(f, deep=True))
+    # # import pdb; pdb.set_trace()
+    # vtkcells = vtk.vtkCellArray()
+    # vtkcells.SetCells(f.shape[0],
+    #                   VN.numpy_to_vtkIdTypeArray(f, deep=True))
 
-    mesh.SetPolys(vtkcells)
+    # mesh.SetPolys(vtkcells)
 
 
 def SetFaces(mesh, f):
@@ -1120,40 +1128,43 @@ def FEMtoTri(points, tri, quad):
 
 def SetPoints(VTKobject, points, deep=True):
     """ Sets points on a VTK object """
-    VTKobject.SetPoints(MakevtkPoints(points))
+    VTKobject.SetPoints(MakevtkPoints(points, deep))
 
 
-def GetCurvature(mesh, curvature='Mean'):
+def GetCurvature(mesh, curvature='mean'):
     """
-    DESCRIPTION
     Returns the pointwise curvature of a mesh
 
-    INPUTS
-    mesh (vtk polydata)
+    Parameters
+    ----------
+    mesh : vtk.polydata
         vtk polydata mesh
 
-    curvature (string, optional default 'Gaussian')
+    curvature string, optional
+        One of the following strings
         Mean
         Gaussian
         Maximum
         Minimum
 
-    OUTPUTS
-    curvature (numpy array)
+    Returns
+    -------
+    curvature : np.ndarray
         Curvature values
 
     """
+    curvature = curvature.lower()
 
     # Create curve filter and compute curvature
     curvefilter = vtk.vtkCurvatures()
     SetVTKInput(curvefilter, mesh)
-    if curvature == 'Mean':
+    if curvature == 'mean':
         curvefilter.SetCurvatureTypeToMean()
-    elif curvature == 'Gaussian':
+    elif curvature == 'gaussian':
         curvefilter.SetCurvatureTypeToGaussian()
-    elif curvature == 'Maximum':
+    elif curvature == 'maximum':
         curvefilter.SetCurvatureTypeToMaximum()
-    elif curvature == 'Minimum':
+    elif curvature == 'minimum':
         curvefilter.SetCurvatureTypeToMinimum()
     else:
         raise Exception(
@@ -1396,7 +1407,7 @@ def ApplyTransformationInPlace(mesh, trans):
     else:
         transformFilter = vtk.vtkTransformPolyDataFilter()
 
-    transformFilter.SetOutputPointsPrecision(vtk.vtkAlgorithm.DOUBLE_PRECISION)
+    # transformFilter.SetOutputPointsPrecision(vtk.vtkAlgorithm.DOUBLE_PRECISION)
     SetVTKInput(transformFilter, mesh)
     transformFilter.SetTransform(trans)
     transformFilter.Update()
@@ -1814,37 +1825,32 @@ def ExtractSelectionPoints(grid, ind):
 
 def Decimate(mesh, target_reduction):
     """
-    Reduces the number of triangles in a triangular mesh
+    Reduces the number of triangles in a triangular mesh using
+    vtkQuadricDecimation.
 
     Parameters
     ----------
     mesh : vtk.PolyData
         Mesh to decimate
 
-    target_reduction : float
-        Fraction of the original mesh to remove.  TargetReduction is set to 0.9,
-        this filter will try to reduce the data set to 10% of its original size
-        and will remove 90% of the input triangles.
+    target_reduction : float Fraction of the original mesh to remove.
+        TargetReduction is set to 0.9, this filter will try to reduce
+        the data set to 10% of its original size and will remove 90%
+        of the input triangles.
 
     Returns
     -------
     outmesh : vtk.PolyData
         Decimated mesh
+
     """
 
     # create decimation filter
-    decimate = vtk.vtkDecimatePro()
+    # decimate = vtk.vtkDecimatePro()
+    decimate = vtk.vtkQuadricDecimation()
     decimate.AddInputData(mesh)
     decimate.SetTargetReduction(target_reduction)
     decimate.Update()
     dmesh = decimate.GetOutput()
     AddFunctions(dmesh)
     return dmesh
-
-#==============================================================================
-# Sources
-#==============================================================================
-# def Sphere(radius, center=[0, 0, 0]):
-#    source = vtk.vtkSphereSource()
-#    source.SetCenter(0,0,0)
-#    source.SetRadius(5.0)
