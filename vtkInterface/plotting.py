@@ -1339,7 +1339,7 @@ def MakeLegendPoly():
     """ Creates a legend polydata object """
     pts = np.zeros((4, 3))
     vtkpoints = vtkInterface.MakevtkPoints(pts)
-    triangles = np.array([[4, 0, 1, 2, 3]])
+    triangles = np.array([[4, 0, 1, 2, 3]], np.int64)
     vtkcells = vtk.vtkCellArray()
     vtkcells.SetCells(triangles.shape[0],
                       VN.numpy_to_vtkIdTypeArray(triangles, deep=True))
