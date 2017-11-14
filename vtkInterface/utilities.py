@@ -14,6 +14,8 @@ from vtk.util import numpy_support as VN
 from vtkInterface import Plot
 from vtkInterface import PlotCurvature
 
+DOUBLE_PRECISION = vtk.vtkAlgorithm.DOUBLE_PRECISION
+
 # determine if using vtk > 5
 new_vtk = vtk.vtkVersion().GetVTKMajorVersion() > 5
 if not new_vtk:
@@ -212,6 +214,7 @@ def GridAddExtraFunctions(grid):
     grid.ExtractEdges = types.MethodType(ExtractEdges, grid)
     grid.UpdateCellScalars = types.MethodType(UpdateCellScalars, grid)
     grid.UpdatePointScalars = types.MethodType(UpdatePointScalars, grid)
+    grid.LinearGridCopy = types.MethodType(LinearGridCopy, grid)
 
     # Optional pyansys cell quality calculator
     if hasqualfunc:
@@ -221,7 +224,6 @@ def GridAddExtraFunctions(grid):
 def MakeuGrid(offset, cells, cell_type, nodes):
     """ Create VTK unstructured grid """
 
-    # Check inputs (necessary since offset and cells can int32)
     if offset.dtype != 'int64':
         offset = offset.astype(np.int64)
 
@@ -473,7 +475,7 @@ def GetCellScalars(vobj, name):
         return None
 
 
-def CopyVtkObject(vtkobject):
+def CopyVtkObject(vtkobject, deep=True):
     """ Copies a vtk structured, unstructured, or polydata object """
 
     # Grab vtk type from string (seems to be vtk version dependent)
@@ -490,7 +492,10 @@ def CopyVtkObject(vtkobject):
         raise Exception('Unsupported object for VTK copy')
 
     # copy, add extra functions
-    vtkobject_copy.DeepCopy(vtkobject)
+    if deep:
+        vtkobject_copy.DeepCopy(vtkobject)
+    else:
+        vtkobject_copy.ShallowCopy(vtkobject)
     AddFunctions(vtkobject_copy)
 
     return vtkobject_copy
@@ -661,6 +666,10 @@ def CyclicReplicationSolid(grid, ncopy, cyclicpair):
         else:
             tsurfpts[higpair] = XY_rot(gridpts, rang * (i + 1))
         SetPoints(tgrid, tsurfpts)
+
+        snum = np.empty(grid.GetNumberOfPoints(), np.int16)
+        snum[:] = i
+        tgrid.AddPointScalars(snum, 'sector')
 
         # Append
         if new_vtk:
@@ -834,9 +843,11 @@ def GetFaces(mesh, force_C_CONTIGUOUS=False, nocut=False, dtype=None,
     f = VN.vtk_to_numpy(mesh.GetPolys().GetData()).reshape(-1, 4)[:, 1:]
 
     if force_C_CONTIGUOUS:
-        f = np.ascontiguousarray(f)
-
-    if dtype:
+        if dtype:
+            f = np.ascontiguousarray(f, dtype)
+        else:
+            f = np.ascontiguousarray(f)
+    elif dtype:
         if f.dtype != dtype:
             f = f.astype(dtype)
 
@@ -925,7 +936,6 @@ def ExtractExteriorTri(uGrid, extract_extern=False):
     # Extract surface mesh
     surf_filter = vtk.vtkDataSetSurfaceFilter()
     SetVTKInput(surf_filter, uGrid)
-#    surf_filter.SetNonlinearSubdivisionLevel(0)
     surf_filter.PassThroughCellIdsOn()
     surf_filter.PassThroughPointIdsOn()
     surf_filter.Update()
@@ -1379,7 +1389,7 @@ def ApplyTransformation(mesh, trans):
     else:
         transformFilter = vtk.vtkTransformPolyDataFilter()
 
-    transformFilter.SetOutputPointsPrecision(vtk.vtkAlgorithm.DOUBLE_PRECISION)
+    transformFilter.SetOutputPointsPrecision(DOUBLE_PRECISION)
     SetVTKInput(transformFilter, mesh)
     transformFilter.SetTransform(trans)
     transformFilter.Update()
@@ -1407,7 +1417,6 @@ def ApplyTransformationInPlace(mesh, trans):
     else:
         transformFilter = vtk.vtkTransformPolyDataFilter()
 
-    # transformFilter.SetOutputPointsPrecision(vtk.vtkAlgorithm.DOUBLE_PRECISION)
     SetVTKInput(transformFilter, mesh)
     transformFilter.SetTransform(trans)
     transformFilter.Update()
@@ -1430,7 +1439,9 @@ def ApplyTransformationSolid(grid, trans):
     SetVTKInput(transformFilter, grid)
     transformFilter.SetTransform(trans)
     transformFilter.Update()
-    return transformFilter.GetOutput()
+    tgrid = transformFilter.GetOutput()
+    AddFunctions(tgrid)
+    return tgrid
 
 
 def AlignMesh(fixed, moving, nlan=None, niter=None, mmdist=None):
@@ -1776,6 +1787,11 @@ def ExtractSelectionCells(grid, ind):
     subgrid = extractSelection.GetOutput()
     AddFunctions(subgrid)
 
+    # extracts only in float32
+    if grid.GetNumpyPoints().dtype is not np.dtype('float32'):
+        ind = subgrid.GetPointScalars('VTKorigID')
+        subgrid.SetNumpyPoints(grid.GetNumpyPoints()[ind])
+
     return subgrid
 
 
@@ -1846,11 +1862,27 @@ def Decimate(mesh, target_reduction):
     """
 
     # create decimation filter
-    # decimate = vtk.vtkDecimatePro()
-    decimate = vtk.vtkQuadricDecimation()
+    decimate = vtk.vtkQuadricDecimation()  # vtkDecimatePro as well
     decimate.AddInputData(mesh)
     decimate.SetTargetReduction(target_reduction)
     decimate.Update()
     dmesh = decimate.GetOutput()
     AddFunctions(dmesh)
     return dmesh
+
+
+def LinearGridCopy(grid, deep=False):
+    """Returns a copy of the input unstructured grid containing only
+    linear cells """
+
+    lgrid = grid.Copy(deep)
+    vtk_cell_type = VN.numpy_to_vtk(grid.GetCellTypesArray(), deep=True)
+    celltype = VN.vtk_to_numpy(vtk_cell_type)
+    celltype[celltype == 24] = 10
+    celltype[celltype == 27] = 14
+    celltype[celltype == 26] = 13
+    celltype[celltype == 25] = 12
+
+    offset = grid.GetCellLocationsArray()
+    lgrid.SetCells(vtk_cell_type, offset, grid.GetCells())
+    return lgrid
