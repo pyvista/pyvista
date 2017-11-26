@@ -56,7 +56,6 @@ def Plot(mesh, **args):
 
     # close and return camera position
     plobj.Close()
-    del plobj
     return cpos
 
 
@@ -70,53 +69,35 @@ class PlotClass(object):
     plobj.AddMesh(mesh, color='red')
     plobj.AddMesh(another_mesh, color='blue')
     plobj.Plot()
-    del plobj
+
+    Parameters
+    ----------
+    off_screen : bool, optional
+        Renders off screen when False.  Useful for automated screenshots.
 
     """
 
     def __init__(self, off_screen=False):
         """
         Initialize a vtk plotting object
-
-        Parameters
-        ----------
-        off_screen : bool, optional
-            Renders off screen when False.  Useful for automated screenshots.
-
-        Returns
-        -------
-        None
-
         """
-
-        # Store setting
         self.off_screen = off_screen
 
-        # Add FEM Actor to renderer window
-        self.ren = vtk.vtkRenderer()
-
+        # initialize render window
+        self.renderer = vtk.vtkRenderer()
         self.renWin = vtk.vtkRenderWindow()
-        self.renWin.AddRenderer(self.ren)
+        self.renWin.AddRenderer(self.renderer)
 
         if self.off_screen:
             self.renWin.SetOffScreenRendering(1)
-
-        else:
-
+        else:  # Allow user to interact
             self.iren = vtk.vtkRenderWindowInteractor()
             self.iren.SetRenderWindow(self.renWin)
-
-            # Allow user to interact
             istyle = vtk.vtkInteractorStyleTrackballCamera()
             self.iren.SetInteractorStyle(istyle)
 
         # Set background
-        self.ren.SetBackground(0.3, 0.3, 0.3)
-
-        # track objects
-        self.objects = []
-
-        self.frames = []
+        self.renderer.SetBackground(0.3, 0.3, 0.3)
 
         # initialize image filter
         self.ifilter = vtk.vtkWindowToImageFilter()
@@ -127,13 +108,11 @@ class PlotClass(object):
         # initialize movie type
         self.movietype = None
 
-        self.copied_mesh = []
-
     def AddMesh(
             self,
-            meshin,
+            mesh,
             color=None,
-            style='surface',
+            style=None,
             scalars=None,
             rng=None,
             stitle=None,
@@ -144,17 +123,13 @@ class PlotClass(object):
             flipscalars=False,
             lighting=False,
             ncolors=1000,
-            interpolatebeforemap=False,
-            no_copy=True):
+            interpolatebeforemap=False):
         """
         Adds a vtk unstructured, structured, or polymesh to the plotting object
 
-        By default, the input mesh is copied on load.
-
-
         Parameters
         ----------
-        meshin : vtk unstructured, structured, or polymesh
+        mesh : vtk unstructured, structured, or polymesh
             A vtk unstructured, structured, or polymesh to plot.
 
         color : string or 3 item list, optional, defaults to white
@@ -215,32 +190,16 @@ class PlotClass(object):
         interpolatebeforemap : bool, default False
             Enabling makes for a smoother scalar display.  Default False
 
-        no_copy : bool, optional
-            Enabling forces the mesh to not to copy.  Faster, but adds
-            possibly unwanted extra scalars to the mesh.
-
-
         Returns
         -------
-        mesh : vtk object
-            Pointer to added mesh (either copy or original)
-
-
+        actor: vtk.vtkActor
+            VTK actor of the mesh.
         """
-
-        # add convenience functions on load if not already loaded
-        if not hasattr(meshin, 'Copy'):
-            vtkInterface.AddFunctions(meshin)
-
-        # Create mapper
+        # set main values
+        self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
-
-        # copy grid on import for display purposes
-        if not no_copy:
-            self.mesh = meshin.Copy()
-            self.copied_mesh.append(self.mesh)
-        else:
-            self.mesh = meshin
+        self.mapper.SetInputData(self.mesh)
+        actor, prop = self.AddActor(self.mapper)
 
         # Scalar formatting ===================================================
         if scalars is not None:
@@ -253,14 +212,14 @@ class PlotClass(object):
                 scalars = scalars.ravel()
 
             # Scalar interpolation approach
-            if scalars.size == meshin.GetNumberOfPoints():
+            if scalars.size == mesh.GetNumberOfPoints():
                 self.mesh.AddPointScalars(scalars, '', True)
                 self.mapper.SetScalarModeToUsePointData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
 
-            elif scalars.size == meshin.GetNumberOfCells():
+            elif scalars.size == mesh.GetNumberOfCells():
                 self.mesh.AddCellScalars(scalars, '')
                 self.mapper.SetScalarModeToUseCellData()
 
@@ -279,22 +238,20 @@ class PlotClass(object):
         else:
             self.mapper.SetScalarModeToUseFieldData()
 
-        # Set mapper
-        self.mapper.SetInputData(self.mesh)
-
-        # Create Actor and get actor property handle
-        actor = vtk.vtkActor()
-        actor.SetMapper(self.mapper)
-        prop = actor.GetProperty()
-
         # select view style
+        if not style:
+            style = 'surface'
+        style = style.lower()
         if style == 'wireframe':
             prop.SetRepresentationToWireframe()
         elif style == 'points':
             prop.SetRepresentationToPoints()
-            prop.SetPointSize(psize)
         elif style == 'surface':
             prop.SetRepresentationToSurface()
+        else:
+            raise Exception('Invalid style')
+
+        prop.SetPointSize(psize)
 
         # edge display style
         if showedges:
@@ -310,15 +267,23 @@ class PlotClass(object):
         if linethick:
             prop.SetLineWidth(linethick)
 
-        # Add to renderer
-        self.ren.AddActor(actor)
-
         # Add scalar bar if available
         if stitle is not None:
             self.AddScalarBar(stitle)
 
-        # return pointer to mesh
-        return self.mesh
+        return actor
+
+    def AddActor(self, uinput):
+        """adds an actor to render window.  creates an actor if input is a
+        mapper"""
+        if isinstance(uinput, vtk.vtkMapper):
+            actor = vtk.vtkActor()
+            actor.SetMapper(uinput)
+        else:
+            actor = uinput
+        self.renderer.AddActor(actor)
+
+        return actor, actor.GetProperty()
 
     def AddBoundsAxes(self, mesh=None, bounds=None, show_xaxis=True,
                       show_yaxis=True, show_zaxis=True, show_xlabels=True,
@@ -426,7 +391,7 @@ class PlotClass(object):
         cubeAxesActor.YAxisMinorTickVisibilityOff()
         cubeAxesActor.ZAxisMinorTickVisibilityOff()
 
-        cubeAxesActor.SetCamera(self.ren.GetActiveCamera())
+        cubeAxesActor.SetCamera(self.renderer.GetActiveCamera())
 
         # set color
         color = ParseColor(color)
@@ -581,7 +546,7 @@ class PlotClass(object):
             # set color
             title_text.SetColor(color)
 
-        self.ren.AddActor(self.scalarBar)
+        self.renderer.AddActor(self.scalarBar)
 
     def UpdateScalars(self, scalars, mesh=None, render=True):
         """ updates scalars of object (point only for now)
@@ -653,9 +618,8 @@ class PlotClass(object):
             except BaseException:
                 pass
 
-        # delete copied meshes
-        for mesh in self.copied_mesh:
-            del mesh
+        if hasattr(self, 'ifilter'):
+            del self.ifilter
 
     def AddText(self, text, position=[10, 10], fontsize=50, color=None,
                 font='courier', shadow=False):
@@ -757,7 +721,7 @@ class PlotClass(object):
         actor.GetProperty().LightingOff()
 
         # Add to renderer
-        self.ren.AddActor(actor)
+        self.renderer.AddActor(actor)
 
     def AddPointLabels(self, points, labels, bold=True, fontsize=16,
                        textcolor='k', font_family='courier', shadow=False,
@@ -871,16 +835,17 @@ class PlotClass(object):
             if points.ndim != 2 or points.shape[1] != 3:
                 raise Exception('Invalid point array shape'
                                 '%s' % str(points.shape))
-            self.points = MakeVTKPointsMesh(points)
+            self.points = vtkInterface.MakeVTKPointsMesh(points)
         else:
             self.points = points
 
         # Create mapper and add lines
         mapper = vtk.vtkDataSetMapper()
-        vtkInterface.SetVTKInput(mapper, self.points)
+        mapper.SetInputData(self.points)
 
         if np.any(scalars):
-            vtkInterface.AddPointScalars(self.points, scalars, name, True)
+            # vtkInterface.AddPointScalars(self.points, scalars, name, True)
+            self.points.AddPointScalars(scalars, name, True)
             mapper.SetScalarModeToUsePointData()
 
             if not rng:
@@ -903,7 +868,7 @@ class PlotClass(object):
         actor.GetProperty().LightingOff()
         actor.GetProperty().SetOpacity(opacity)
 
-        self.ren.AddActor(actor)
+        self.renderer.AddActor(actor)
 
         # Add scalar bar
         if stitle:
@@ -920,7 +885,7 @@ class PlotClass(object):
             self.scalarBar.SetTitle(stitle)
             self.scalarBar.SetNumberOfLabels(5)
 
-            self.ren.AddActor(self.scalarBar)
+            self.renderer.AddActor(self.scalarBar)
 
     def AddArrows(self, cent, direction, mag=1):
         """ Adds arrows to plotting object """
@@ -952,15 +917,14 @@ class PlotClass(object):
             color = vtkInterface.StringToRGB(color)
             mapper.ScalarVisibilityOff()
             arrows.GetProperty().SetColor(color)
-#            print 'color', str(color)
 
-        # add to mrain class
+        # add to rain class
         self.AddActor(arrows)
         return arrows
 
     def GetCameraPosition(self):
         """ Returns camera position of active render window """
-        camera = self.ren.GetActiveCamera()
+        camera = self.renderer.GetActiveCamera()
         pos = camera.GetPosition()
         fpt = camera.GetFocalPoint()
         vup = camera.GetViewUp()
@@ -968,13 +932,13 @@ class PlotClass(object):
 
     def SetCameraPosition(self, cameraloc):
         """ Set camera position of active render window """
-        camera = self.ren.GetActiveCamera()
+        camera = self.renderer.GetActiveCamera()
         camera.SetPosition(cameraloc[0])
         camera.SetFocalPoint(cameraloc[1])
         camera.SetViewUp(cameraloc[2])
 
         # reset clipping range
-        self.ren.ResetCameraClippingRange()
+        self.renderer.ResetCameraClippingRange()
 
     def SetBackground(self, color):
         """
@@ -996,7 +960,7 @@ class PlotClass(object):
         elif isinstance(color, str):
             color = vtkInterface.StringToRGB(color)
 
-        self.ren.SetBackground(color)
+        self.renderer.SetBackground(color)
 
     def AddLegend(self, entries, bcolor=[0.5, 0.5, 0.5], border=False,
                   pos=None):
@@ -1040,7 +1004,7 @@ class PlotClass(object):
             legend.BorderOff()
 
         # Add to renderer
-        self.ren.AddActor(legend)
+        self.renderer.AddActor(legend)
         return legend
 
     def Plot(self, title=None, window_size=[1024, 768], interactive=True,
@@ -1081,12 +1045,18 @@ class PlotClass(object):
         if interactive and (not self.off_screen):
             self.renWin.Render()
             self.iren.Initialize()
-            self.iren.Start()
+
+            # interrupts will be caught here
+            try:
+                self.iren.Start()
+            except KeyboardInterrupt:
+                self.Close()
+                raise KeyboardInterrupt
 
         else:
             self.renWin.Render()
 
-        # Get camera position
+        # Get camera position before closing
         cpos = self.GetCameraPosition()
 
         if autoclose:
@@ -1094,12 +1064,8 @@ class PlotClass(object):
 
         return cpos
 
-    def AddActor(self, actor):
-        """ Adds actor to render window """
-        self.ren.AddActor(actor)
-
     def RemoveActor(self, actor):
-        self.ren.RemoveActor(actor)
+        self.renderer.RemoveActor(actor)
 
     def AddAxes(self):
         """ Add axes actor at origin """
@@ -1108,9 +1074,6 @@ class PlotClass(object):
         self.marker.SetInteractor(self.iren)
         self.marker.SetOrientationMarker(axes)
         self.marker.SetEnabled(1)
-
-        # axesActor = vtk.vtkAxesActor()
-        # self.ren.AddActor(axesActor)
 
     def TakeScreenShot(self, filename=None):
         """
@@ -1141,7 +1104,7 @@ class PlotClass(object):
         img_array = vtkInterface.GetPointScalars(image, 'ImageScalars')
 
         # overwrite background
-        background = self.ren.GetBackground()
+        background = self.renderer.GetBackground()
         mask = img_array[:, -1] == 0
         img_array[mask, 0] = int(255 * background[0])
         img_array[mask, 1] = int(255 * background[1])
@@ -1165,32 +1128,6 @@ class PlotClass(object):
 
     def Render(self):
         self.renWin.Render()
-
-
-def MakeVTKPointsMesh(points):
-    """ Creates a vtk polydata object from a numpy array """
-    if points.ndim != 2:
-        points = points.reshape((-1, 3))
-
-    npoints = points.shape[0]
-
-    # Make VTK cells array
-    cells = np.hstack((np.ones((npoints, 1)),
-                       np.arange(npoints).reshape(-1, 1)))
-    cells = np.ascontiguousarray(cells, dtype=np.int64)
-    vtkcells = vtk.vtkCellArray()
-    vtkcells.SetCells(npoints, VN.numpy_to_vtkIdTypeArray(cells, deep=True))
-
-    # Convert points to vtk object
-    vtkPoints = vtkInterface.MakevtkPoints(points)
-
-    # Create polydata
-    pdata = vtk.vtkPolyData()
-    pdata.SetPoints(vtkPoints)
-    pdata.SetVerts(vtkcells)
-    vtkInterface.AddFunctions(pdata)
-
-    return pdata
 
 
 def CreateLineSegmentsActor(pdata):
@@ -1238,25 +1175,6 @@ def CreateArrowsActor(pdata):
     actor.GetProperty().LightingOff()
 
     return actor
-
-
-def PlotCurvature(mesh, curvtype='Gaussian', rng=None):
-    """
-    Plots curvature
-    Availble options for curvtype:
-        'Mean'
-        'Gaussian'
-        'Maximum  '
-
-    """
-
-    # Get curvature values and plot
-    c = vtkInterface.GetCurvature(mesh, curvtype)
-    cpos = Plot(mesh, scalars=c, rng=rng,
-                stitle='{:s}\nCurvature'.format(curvtype))
-
-    # Return camera posision
-    return cpos
 
 
 def PlotGrids(grids, wFEM=False, background=[0, 0, 0], legend_entries=None):

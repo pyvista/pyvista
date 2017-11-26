@@ -1,175 +1,186 @@
 vtkInterface Overview
 =====================
+``vtkInterface`` is a Python module that simplifies the interface with VTK by using numpy and direct array access and more general classes to work with meshes and plotting.  It's designed to make working with VTK more pythonic and more straightforward.
 
-vtkInterface is a Python module that simplifies the interface with VTK by using numpy and direct array access and more general classes to work with meshes and plotting.
-
-This moudle is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent Python modules that would like to simplify hundreds of lines of code into just a few lines.
+This module is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent Python modules that would like to simplify hundreds of lines of code into just a few lines.
 
 
 Installation
 ------------
-
 If you have a working copy of VTK, installation is simply::
 
-    pip install vtkInterface
+    $ pip install vtkInterface
     
 You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
 
 See :ref:`install_ref` for more details.
 
 
-Quick Examples
---------------
+Why?
+----
+VTK is an excellent visualization toolkit, and with Python bindings it should be able to combine the speed of C++ with the rapid prototyping of Python.  However, despite this VTK code programmed in Python generally looks the same as its C++ counterpart.  This module seeks to simpify mesh creation and plotting without losing functionality.
 
-Loading and Plotting a Mesh from File
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Compare two approachs for loading and plotting a surface mesh from a file:
 
-Loading a mesh is trivial.
+
+Plotting a Mesh using Python's VTK
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Using this `example <http://www.vtk.org/Wiki/VTK/Examples/Python/STLReader>`_, loading and plotting an STL file requires a lot of code when using only the ``vtk`` module.
+
+.. code:: python
+
+    import vtk
+
+    # create reader
+    reader = vtk.vtkSTLReader()
+    reader.SetFileName("myfile.stl")
+     
+    mapper = vtk.vtkPolyDataMapper()
+    if vtk.VTK_MAJOR_VERSION <= 5:
+        mapper.SetInput(reader.GetOutput())
+    else:
+        mapper.SetInputConnection(reader.GetOutputPort())
+
+    # create actor
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+     
+    # Create a rendering window and renderer
+    ren = vtk.vtkRenderer()
+    renWin = vtk.vtkRenderWindow()
+    renWin.AddRenderer(ren)
+     
+    # Create a renderwindowinteractor
+    iren = vtk.vtkRenderWindowInteractor()
+    iren.SetRenderWindow(renWin)
+     
+    # Assign actor to the renderer
+    ren.AddActor(actor)
+     
+    # Enable user interface interactor
+    iren.Initialize()
+    renWin.Render()
+    iren.Start()
+
+    # clean up objects
+    del iren
+    del renWin
+
+
+Plot a Mesh using vtkInterface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The same stl can be loaded and plotted using vtkInterface with:
 
 .. code:: python
 
     import vtkInterface
-    mesh = vtkInterface.LoadMesh('airplane.ply')
-    mesh.Plot(color='orange')
     
-.. image:: airplane.png
+    filename = "myfile.stl"
+    mesh = vtkInterface.LoadMesh(filename)
+    mesh.Plot()
 
-In fact, the code to generate the previous screenshot was created with:
+The mesh object is more pythonic and the code is much more straightforward.  Garbage collection is taken care automatically and the renderer is cleaned up after the user closes the vtk plotting window.
+
+
+Advanced Plotting with Numpy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+When combined with numpy, you can make some truly spectacular plots:
 
 .. code:: python
 
-    mesh.Plot(screenshot='airplane.png', color='orange')
-
-The points and faces from the mesh are directly accessible as a numpy array:
-
-.. code:: python
-
-    print mesh.GetNumpyPoints()
-    
-    #[[ 896.99401855   48.76010132   82.26560211]
-    # [ 906.59301758   48.76010132   80.74520111]
-    # [ 907.53900146   55.49020004   83.65809631]
-    # ..., 
-    # [ 806.66497803  627.36297607    5.11482   ]
-    # [ 806.66497803  654.43200684    7.51997995]
-    # [ 806.66497803  681.5369873     9.48744011]]
-    
-    print mesh.GetNumpyFaces()
-    
-    #[[   0    1    2]
-    # [   0    2    3]
-    # [   4    5    1]
-    # ..., 
-    # [1324 1333 1323]
-    # [1325 1216 1334]
-    # [1325 1334 1324]]
-    
-    
-Creating a Structured Surface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This example creates a simple surface grid and plots the resulting grid and 
-its curvature:
-
-.. code:: python
-
-    import vtkInterface
-
-    # Make data
-    import numpy as np
-    X = np.arange(-10, 10, 0.25)
-    Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
-    
-    # Create and plot structured grid
-    sgrid = vtkInterface.GenStructSurf(X, Y, Z)
-    sgrid.Plot()
-    
-    # Plot mean curvature as well
-    surf.PlotCurvature()
-
-.. image:: curvature.png
-
-Generating a structured grid is a one liner in this module, and the points from
-the resulting surface are also a numpy array:
-
-.. code:: python
-
-    surf.GetNumpyPoints()
-    
-    #[[-10.         -10.           0.99998766]
-    # [ -9.75       -10.           0.98546793]
-    # [ -9.5        -10.           0.9413954 ]
-    # ..., 
-    # [  9.25         9.75         0.76645876]
-    # [  9.5          9.75         0.86571785]
-    # [  9.75         9.75         0.93985707]]
-
-
-Creating a GIF Movie
-~~~~~~~~~~~~~~~~~~~~
-
-This example shows the versatility of the plotting object by generating a 
-moving gif:
-
-.. code:: python
-    
     import vtkInterface
     import numpy as np
     
-    # Make data
-    X = np.arange(-10, 10, 0.25)
-    Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
+    # Make a grid
+    x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
+                          np.linspace(-5, 5, 20),
+                          np.linspace(-5, 5, 5))
     
-    # Create and structured surface
-    sgrid = vtkInterface.GenStructSurf(X, Y, Z)
+    points = np.empty((x.size, 3))
+    points[:, 0] = x.ravel('F')
+    points[:, 1] = y.ravel('F')
+    points[:, 2] = z.ravel('F')
     
-    # Make deep copy of points
-    pts = sgrid.GetNumpyPoints(deep=True)
+    # Compute a direction for the vector field
+    direction = np.sin(points)**3
     
-    # Start a plotter object and set the scalars to the Z height
+    # plot using the plotting class
     plobj = vtkInterface.PlotClass()
-    plobj.AddMesh(sgrid, scalars=Z.ravel())
-    plobj.Plot(autoclose=False)
-    
-    # Open a gif
-    plobj.OpenGif('wave.gif')
-    
-    # Update Z and write a frame for each updated position
-    nframe = 15
-    for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
-        Z = np.sin(R + phase)
-        pts[:, -1] = Z.ravel()
-        plobj.UpdateCoordinates(pts)
-        plobj.UpdateScalars(Z.ravel())
-    
-        plobj.WriteFrame()
-    
-    # Close movie and delete object
-    plobj.Close()
+    plobj.AddArrows(points, direction, 0.5)
+    plobj.SetBackground([0, 0, 0]) # RGB set to black
+    plobj.Plot()
     del plobj
 
-.. image:: wave.gif
+.. image:: ./images/vectorfield.png
+
+While not everything can be simplified without losing functionality, many of the objects can.  For example, triangular surface meshes in VTK can be subdivided but every other object in VTK cannot.  It then makes sense that a subdivided method be added to the existing triangular surface mesh.  That way, subdivision can be performed with:
+
+.. code:: python
+
+    submesh = mesh.Subdivide('linear', nsub=3)
+
+and ``help(mesh.Subdivide)`` yields a useful helpdoc::
+
+    Help on function Subdivide in module vtkInterface.utilities:
+    
+    Subdivide(self, nsub, subfilter='linear'):
+        Increase the number of triangles in a single, connected triangular
+        mesh.
+
+        Uses one of the following vtk subdivision filters to subdivide a mesh.
+        vtkButterflySubdivisionFilter
+        vtkLoopSubdivisionFilter
+        vtkLinearSubdivisionFilter
+
+        Linear subdivision results in the fastest mesh subdivision, but it
+        does not smooth mesh edges, but rather splits each triangle into 4
+        smaller triangles.
+
+        Butterfly and loop subdivision perform smoothing when dividing, and may
+        introduce artifacts into the mesh when dividing.
+
+        Subdivision filter appears to fail for multiple part meshes.  Should
+        be one single mesh.
+
+
+        Parameters
+        ----------
+        nsub : int
+            Number of subdivisions.  Each subdivision creates 4 new triangles,
+            so the number of resulting triangles is nface*4**nsub where nface
+            is the current number of faces.
+
+        subfilter : string, optional
+            Can be one of the following: 'butterfly', 'loop', 'linear'
+
+        Returns
+        -------
+        mesh : Polydata object
+            vtkInterface polydata object.
+
+        Examples
+        --------
+        >>> from vtkInterface import examples
+        >>> import vtkInterface
+
+        >>> mesh = vtkInterface.PolyData(examples.planefile)
+        >>> submesh = mesh.Subdivide(1, 'loop')
 
 
 Contents
 ========
-
 .. toctree::
    :maxdepth: 2
-   
-   overview
-   installation
+
+   installation   
    examples
+   common
+   polydata
+   grids
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+..
+   Indices and tables
+   ==================
+   * :ref:`genindex`
+   * :ref:`modindex`
+   * :ref:`search`
