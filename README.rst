@@ -1,6 +1,5 @@
 vtkInterface Overview
 =====================
-
 vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
 This module can be used for scientific plotting for presentations and research papers as well as a supporting module for other mesh dependent Python modules.
@@ -30,64 +29,69 @@ Quick Examples
 Loading and Plotting a Mesh from File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Loading a mesh is trivial::
+Loading a mesh is trivial
+
+.. code:: python
 
     import vtkInterface
-    mesh = vtkInterface.LoadMesh('airplane.ply')
+    mesh = vtkInterface.PolyData('airplane.ply')
     mesh.Plot(color='orange')
     
-.. image:: /docs/airplane.png
+.. image:: /docs/images/airplane.png
 
 In fact, the code to generate the previous screenshot was created with::
 
     mesh.Plot(screenshot='airplane.png', color='orange')
 
-The points and faces from the mesh are directly accessible as a numpy array::
+The points and faces from the mesh are directly accessible as a numpy array:
+
+.. code:: python
+
+    >>> print(mesh.points)
+    [[ 896.99401855   48.76010132   82.26560211]
+     [ 906.59301758   48.76010132   80.74520111]
+     [ 907.53900146   55.49020004   83.65809631]
+     ..., 
+     [ 806.66497803  627.36297607    5.11482   ]
+     [ 806.66497803  654.43200684    7.51997995]
+     [ 806.66497803  681.5369873     9.48744011]]
     
-    print mesh.GetNumpyPoints()
-    
-    #[[ 896.99401855   48.76010132   82.26560211]
-    # [ 906.59301758   48.76010132   80.74520111]
-    # [ 907.53900146   55.49020004   83.65809631]
-    # ..., 
-    # [ 806.66497803  627.36297607    5.11482   ]
-    # [ 806.66497803  654.43200684    7.51997995]
-    # [ 806.66497803  681.5369873     9.48744011]]
-    
-    print mesh.GetNumpyFaces()
-    
-    #[[   0    1    2]
-    # [   0    2    3]
-    # [   4    5    1]
-    # ..., 
-    # [1324 1333 1323]
-    # [1325 1216 1334]
-    # [1325 1334 1324]]
+.. code:: python
+
+    >>> print(mesh.GetNumpyFaces())
+    [[   0    1    2]
+     [   0    2    3]
+     [   4    5    1]
+     ..., 
+     [1324 1333 1323]
+     [1325 1216 1334]
+     [1325 1334 1324]]
     
     
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+This example creates a simple surface grid and plots the resulting grid and its curvature:
 
-This example creates a simple surface grid and plots the resulting grid and its curvature::
+.. code:: python
 
     import vtkInterface
 
     # Make data
     import numpy as np
-    X = np.arange(-10, 10, 0.25)
-    Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
+    x = np.arange(-10, 10, 0.25)
+    y = np.arange(-10, 10, 0.25)
+    x, y = np.meshgrid(x, y)
+    r = np.sqrt(x**2 + y**2)
+    z = np.sin(r)
     
-    # Create and plot structured grid
-    sgrid = vtkInterface.GenStructSurf(X, Y, Z)
-    sgrid.Plot()
+    # create and plot structured grid
+    grid = vtkInterface.StructuredGrid(x, y, z)
+    grid.Plot()  # basic plot
     
-    # Plot mean curvature as well
-    surf.PlotCurvature()
+    # Plot mean curvature
+    grid.PlotCurvature()
 
-.. image:: /docs/curvature.png
+.. image:: /docs/images/curvature.png
 
 Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array::
 
@@ -145,4 +149,4 @@ This example shows the versatility of the plotting object by generating a moving
     plobj.Close()
     del plobj
 
-.. image:: /docs/wave.gif
+.. image:: /docs/images/wave.gif
