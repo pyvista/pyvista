@@ -7,7 +7,6 @@ This module can be used for scientific plotting for presentations and research p
 
 Documentation
 -------------
-
 Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed installation and usage details.
 
 
@@ -78,6 +77,7 @@ This example creates a simple surface grid and plots the resulting grid and its 
 
     # Make data
     import numpy as np
+
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -93,43 +93,44 @@ This example creates a simple surface grid and plots the resulting grid and its 
 
 .. image:: /docs/images/curvature.png
 
-Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array::
+Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array:
 
-    surf.GetNumpyPoints()
-    
-    #[[-10.         -10.           0.99998766]
-    # [ -9.75       -10.           0.98546793]
-    # [ -9.5        -10.           0.9413954 ]
-    # ..., 
-    # [  9.25         9.75         0.76645876]
-    # [  9.5          9.75         0.86571785]
-    # [  9.75         9.75         0.93985707]]
+.. code:: python
+
+    >>> grid.points
+    [[-10.         -10.           0.99998766]
+     [ -9.75       -10.           0.98546793]
+     [ -9.5        -10.           0.9413954 ]
+     ..., 
+     [  9.25         9.75         0.76645876]
+     [  9.5          9.75         0.86571785]
+     [  9.75         9.75         0.93985707]]
 
 
 Creating a GIF Movie
 ~~~~~~~~~~~~~~~~~~~~
+This example shows the versatility of the plotting object by generating a moving gif:
 
-This example shows the versatility of the plotting object by generating a moving gif::
+.. code:: python
     
     import vtkInterface
     import numpy as np
-    
-    # Make data
-    X = np.arange(-10, 10, 0.25)
-    Y = np.arange(-10, 10, 0.25)
-    X, Y = np.meshgrid(X, Y)
-    R = np.sqrt(X**2 + Y**2)
-    Z = np.sin(R)
+
+    x = np.arange(-10, 10, 0.25)
+    y = np.arange(-10, 10, 0.25)
+    x, y = np.meshgrid(x, y)
+    r = np.sqrt(x**2 + y**2)
+    z = np.sin(r)
     
     # Create and structured surface
-    sgrid = vtkInterface.GenStructSurf(X, Y, Z)
+    grid = vtkInterface.StructuredGrid(x, y, z)
     
-    # Make deep copy of points
-    pts = sgrid.GetNumpyPoints(deep=True)
+    # Make copy of points
+    pts = grid.points.copy()
     
     # Start a plotter object and set the scalars to the Z height
     plobj = vtkInterface.PlotClass()
-    plobj.AddMesh(sgrid, scalars=Z.ravel())
+    plobj.AddMesh(grid, scalars=z.ravel())
     plobj.Plot(autoclose=False)
     
     # Open a gif
@@ -138,15 +139,14 @@ This example shows the versatility of the plotting object by generating a moving
     # Update Z and write a frame for each updated position
     nframe = 15
     for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
-        Z = np.sin(R + phase)
-        pts[:, -1] = Z.ravel()
+        z = np.sin(r + phase)
+        pts[:, -1] = z.ravel()
         plobj.UpdateCoordinates(pts)
-        plobj.UpdateScalars(Z.ravel())
+        plobj.UpdateScalars(z.ravel())
     
         plobj.WriteFrame()
     
     # Close movie and delete object
     plobj.Close()
-    del plobj
 
 .. image:: /docs/images/wave.gif
