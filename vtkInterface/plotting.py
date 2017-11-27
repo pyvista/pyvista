@@ -15,6 +15,7 @@ try:
 except:
     pass
 
+
 def Plot(mesh, **args):
     """
     Convenience plotting function for a vtk object

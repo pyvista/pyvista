@@ -2,12 +2,16 @@
 Supporting functions for polydata and grid objects
 
 """
-import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
-
+import warnings
 import vtkInterface
+import numpy as np
+
+try:
+    import vtk
+    from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
+    from vtk.util.numpy_support import numpy_to_vtk
+except Exception as e:
+    warnings.warn(str(e))
 
 
 def GetPointScalars(mesh, name):
