@@ -3,25 +3,32 @@ Sub-classes for vtk.vtkUnstructuredGrid and vtk.vtkStructuredGrid
 """
 import os
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
-
 import vtkInterface
 
-# cell types
-VTK_TRIANGLE = vtk.VTK_TRIANGLE
-VTK_QUAD = vtk.VTK_QUAD
-VTK_QUADRATIC_TRIANGLE = vtk.VTK_QUADRATIC_TRIANGLE
-VTK_QUADRATIC_QUAD = vtk.VTK_QUADRATIC_QUAD
-VTK_HEXAHEDRON = vtk.VTK_HEXAHEDRON
-VTK_PYRAMID = vtk.VTK_PYRAMID
-VTK_TETRA = vtk.VTK_TETRA
-VTK_WEDGE = vtk.VTK_WEDGE
-VTK_QUADRATIC_TETRA = vtk.VTK_QUADRATIC_TETRA
-VTK_QUADRATIC_PYRAMID = vtk.VTK_QUADRATIC_PYRAMID
-VTK_QUADRATIC_WEDGE = vtk.VTK_QUADRATIC_WEDGE
-VTK_QUADRATIC_HEXAHEDRON = vtk.VTK_QUADRATIC_HEXAHEDRON
+# allow readthedocs to parse objects
+try:
+    import vtk
+    from vtk import vtkUnstructuredGrid, vtkStructuredGrid
+    from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
+    from vtk.util.numpy_support import numpy_to_vtk
+
+    # cell types
+    VTK_TRIANGLE = vtk.VTK_TRIANGLE
+    VTK_QUAD = vtk.VTK_QUAD
+    VTK_QUADRATIC_TRIANGLE = vtk.VTK_QUADRATIC_TRIANGLE
+    VTK_QUADRATIC_QUAD = vtk.VTK_QUADRATIC_QUAD
+    VTK_HEXAHEDRON = vtk.VTK_HEXAHEDRON
+    VTK_PYRAMID = vtk.VTK_PYRAMID
+    VTK_TETRA = vtk.VTK_TETRA
+    VTK_WEDGE = vtk.VTK_WEDGE
+    VTK_QUADRATIC_TETRA = vtk.VTK_QUADRATIC_TETRA
+    VTK_QUADRATIC_PYRAMID = vtk.VTK_QUADRATIC_PYRAMID
+    VTK_QUADRATIC_WEDGE = vtk.VTK_QUADRATIC_WEDGE
+    VTK_QUADRATIC_HEXAHEDRON = vtk.VTK_QUADRATIC_HEXAHEDRON
+
+except:
+    vtkUnstructuredGrid = object
+    vtkStructuredGrid = object
 
 
 class Grid(vtkInterface.Common):
@@ -153,7 +160,7 @@ class Grid(vtkInterface.Common):
                                  manifold_edges)
 
 
-class UnstructuredGrid(vtk.vtkUnstructuredGrid, Grid):
+class UnstructuredGrid(vtkUnstructuredGrid, Grid):
     """
     Extends the functionality of a vtk.vtkUnstructuredGrid object.
 
@@ -526,7 +533,7 @@ class UnstructuredGrid(vtk.vtkUnstructuredGrid, Grid):
         return UnstructuredGrid(extractSelection.GetOutput())
 
 
-class StructuredGrid(vtk.vtkStructuredGrid, Grid):
+class StructuredGrid(vtkStructuredGrid, Grid):
     """
     Extends the functionality of a vtk.vtkStructuredGrid object
     Can be initialized in several ways:

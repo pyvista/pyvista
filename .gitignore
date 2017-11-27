@@ -2,11 +2,10 @@
 ###################
 *.pyc
 *.pyd
+*.c
+*.cpp
 *.so
 *.o
-
-# Cython generated files #
-#pymeshfix/cython/_meshfix.cpp
 
 # OS generated files #
 ######################
@@ -15,14 +14,16 @@
 
 # Pip generated folders #
 #########################
-*.egg-info/
+vtkInterface.egg-info/
 build/
 dist/
 
-# MISC
-*.sh
-
-# doc generated
+# doc stuff
 docs/_build
-docs/_static
-docs/_templates
+
+# MISC
+uploadpypi.sh
+
+# Testing
+Testing/
+

@@ -16,11 +16,11 @@ with io_open(version_file, mode='r') as fd:
 
 # pre-compiled vtk available for python3
 install_requires = ['numpy']
-if sys.version[0] == '3':
-    if os.name is 'posix' and int(sys.version[2]) >= 4:
-        install_requires.append(['vtk'])
-    elif os.name == 'nt' and int(sys.version[2]) >= 6:
-        install_requires.append(['vtk'])
+# if sys.version[0] == '3':
+#     if os.name is 'posix' and int(sys.version[2]) >= 4:
+#         install_requires.append(['vtk'])
+#     elif os.name == 'nt' and int(sys.version[2]) >= 6:
+#         install_requires.append(['vtk'])
 
 setup(
     name=package_name,

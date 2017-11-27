@@ -2,13 +2,9 @@
 
 Installation
 ============
+Installing vtkInterface itself is quite straightforward as it can be installed using ``pip``.  ``VTK`` itself can also be installed using pip or from a a distribution such as `Anaconda <https://www.continuum.io/downloads>`_. The installation directions are different depending on your OS; see the directions below.
 
-Installing vtkInterface itself is quite straightforward, but you will need VTK.  
-VTK can be easily compiled on a UNIX or Linux machine, but with a Windows 
-environment it's easier to use a distribution such as 
-`Anaconda <https://www.continuum.io/downloads>`_. The installation directions are different depending on your OS.  See below.
-
-vtkInterface requires numpy and VTK.  Optional modules include moviepy and imageio for saving movies or moving gifs.
+``vtkInterface`` requires ``numpy`` and ``VTK``.  Optional modules include ``moviepy`` and ``imageio`` for saving movies or moving gifs.
 
 
 Windows Installation
@@ -16,6 +12,11 @@ Windows Installation
 
 Install VTK
 ~~~~~~~~~~~
+VTK can be installed using pip for Python 3.6::
+
+  $ pip install vtk
+
+
 Install VTK by installing from a distribution like `Anaconda <https://www.continuum.io/downloads>`_ and then installing VTK for Python 3.6 by running the following from a command prompt::
 
     conda install -c clinicalgraphics vtk=7.1.0
@@ -28,7 +29,7 @@ Or, if you're using Python 2.7, install using::
 
     conda install -c anaconda vtk=6.3.0
 
-You can also install VTK from the source by following these `Directions <http://www.vtk.org/Wiki/VTK/Building/Windows>`_.  This is generally quite difficult in Windows.
+You can also install VTK from the source by following these `Directions <http://www.vtk.org/Wiki/VTK/Building/Windows>`_.  This is quite difficult.
 
 
 Install vtkInterface
@@ -48,33 +49,35 @@ Linux Installation
 
 Install VTK
 ~~~~~~~~~~~
-If you have Ubuntu 14.04 or newer, you can also install VTK using the apt
-package manager::
+If using Python 3.4 or greater, VTK can be installed from pip with::
 
-    sudo apt-get install python-vtk
+    $ pip install vtk --user
 
-This will be an earlier version of VTK and while it’s the easiest approach, it’s probably not the best approach given how easy it is to build VTK.
+Please note that as of the time of this writing, python will not be able to find the dynamic libraries of the vtk install.  This can be fixed by appending the LD_LIBRARY_PATH::
 
-Building VTK from the source under Linux is generally straightforward.  See `Building VTK for Linux <http://www.vtk.org/Wiki/VTK/Building/Linux>`_ and make sure to enable building with Python.  See `Python Environment Setup <http://www.vtk.org/Wiki/VTK/Tutorials/PythonEnvironmentSetup>`_ if you have problems loading VTK from Python.
+    $ touch pythonvtk.conf
+    $ echo '/home/user/.local/lib/python3.5/site-packages/vtk' >> pythonvtk.conf
+    $ sudo mv pythonvtk.conf /etc/ld.so.conf.d/pythonvtk.conf
 
+This path will vary depending on the user name and if the vtk package has been installed using the ``user`` flag or if it has been installed as root.
 
 Install vtkInterface
 ~~~~~~~~~~~~~~~~~~~~
 Install vtkInterface from `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ by running::
 
-    pip install vtkInterface
+    $ pip install vtkInterface --user
 
 You can also install the latest source from 
 `GitHub <https://github.com/akaszynski/vtkInterface>`_ with::
 
-    git clone https://github.com/akaszynski/vtkInterface
-    cd vtkInterface
-    pip install .
+    $ git clone https://github.com/akaszynski/vtkInterface
+    $ cd vtkInterface
+    $ pip install . --user
+
 
 Test Installation
 -----------------
-Regardless of your OS, you can test your installation by running an example 
-from tests:
+Regardless of your OS, you can test your installation by running an example from tests:
 
 .. code:: python
 
@@ -86,6 +89,4 @@ You can also run examples from:
 .. code:: python
 
     from vtkInterface import examples
-    print dir(examples) # look for functions
-
-See the examples for other examples.
+    print(dir(examples))

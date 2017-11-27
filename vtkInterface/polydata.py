@@ -2,16 +2,23 @@
 Sub-classes for vtk.vtkPolyData
 """
 import os
-
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
+
+# allow readthedocs to parse objects
+try:
+    import vtk
+    from vtk import vtkPolyData
+    from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
+    from vtk.util.numpy_support import numpy_to_vtk
+
+except:
+    vtkPolyData = object
+
 
 import vtkInterface
 
 
-class PolyData(vtk.vtkPolyData, vtkInterface.Common):
+class PolyData(vtkPolyData, vtkInterface.Common):
     """
     Extends the functionality of a vtk.vtkPolyData object
 

@@ -2,11 +2,14 @@
 Attributes common to PolyData and Grid Objects
 """
 import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy
-from vtk.util.numpy_support import numpy_to_vtk
-
 import vtkInterface
+
+try:
+    import vtk
+    from vtk.util.numpy_support import vtk_to_numpy
+    from vtk.util.numpy_support import numpy_to_vtk
+except:
+    pass
 
 
 class Common(object):
