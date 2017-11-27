@@ -27,8 +27,15 @@ try:
     VTK_QUADRATIC_HEXAHEDRON = vtk.VTK_QUADRATIC_HEXAHEDRON
 
 except:
-    vtkUnstructuredGrid = object
-    vtkStructuredGrid = object
+    # create dummy classes
+    class vtkUnstructuredGrid(object):
+        def __init__(self, *args, **kwargs):
+            pass
+
+    # create dummy class
+    class vtkStructuredGrid(object):
+        def __init__(self, *args, **kwargs):
+            pass
 
 
 class Grid(vtkInterface.Common):

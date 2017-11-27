@@ -3,6 +3,7 @@ Sub-classes for vtk.vtkPolyData
 """
 import os
 import numpy as np
+import vtkInterface
 
 # allow readthedocs to parse objects
 try:
@@ -12,10 +13,11 @@ try:
     from vtk.util.numpy_support import numpy_to_vtk
 
 except:
-    vtkPolyData = object
+    # create dummy class
+    class vtkPolyData(object):
+        def __init__(self, *args, **kwargs):
+            pass
 
-
-import vtkInterface
 
 
 class PolyData(vtkPolyData, vtkInterface.Common):
