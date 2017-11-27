@@ -3,17 +3,17 @@ vtk plotting module
 
 """
 import colorsys
-
-import vtk
-from vtk.util import numpy_support as VN
 import numpy as np
-
 import vtkInterface
 
-font_keys = {'arial': vtk.VTK_ARIAL,
-             'courier': vtk.VTK_COURIER,
-             'times': vtk.VTK_TIMES}
-
+try:
+    import vtk
+    from vtk.util import numpy_support as VN
+    font_keys = {'arial': vtk.VTK_ARIAL,
+                 'courier': vtk.VTK_COURIER,
+                 'times': vtk.VTK_TIMES}
+except:
+    pass
 
 def Plot(mesh, **args):
     """
