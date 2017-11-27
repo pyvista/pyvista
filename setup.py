@@ -4,7 +4,7 @@ Installation file for python vtkInterface module
 from setuptools import setup
 from io import open as io_open
 import os
-import sys
+# import sys
 
 package_name = 'vtkInterface'
 

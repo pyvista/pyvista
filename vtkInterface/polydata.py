@@ -19,7 +19,6 @@ except:
             pass
 
 
-
 class PolyData(vtkPolyData, vtkInterface.Common):
     """
     Extends the functionality of a vtk.vtkPolyData object
