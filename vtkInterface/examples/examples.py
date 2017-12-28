@@ -11,7 +11,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 antfile = os.path.join(dir_path, 'ant.ply')
 planefile = os.path.join(dir_path, 'airplane.ply')
 hexbeamfile = os.path.join(dir_path, 'hexbeam.vtk')
-spherefile = os.path.join(dir_path, 'sphere.vtk')
+spherefile = os.path.join(dir_path, 'sphere.ply')
 
 
 # get location of this folder
@@ -31,6 +31,12 @@ def LoadAirplane():
 def LoadSphere():
     """ Loads sphere ply mesh """
     return vtkInterface.PolyData(spherefile)
+
+
+def PlotSphere():
+    """ Plot a white airplane """
+    sphere = vtkInterface.PolyData(spherefile)
+    sphere.Plot()
 
 
 def PlotAirplane():
@@ -160,4 +166,6 @@ def RunAll():
             testfunctions.append(obj)
 
     # run all the functions
-    any(f() for f in testfunctions)
+    for f in testfunctions:
+        print('Running %s' % str(f))
+        f()
