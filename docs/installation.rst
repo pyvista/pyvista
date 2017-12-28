@@ -4,7 +4,7 @@ Installation
 ============
 Installing vtkInterface itself is quite straightforward as it can be installed using ``pip``.  ``VTK`` itself can also be installed using pip or from a a distribution such as `Anaconda <https://www.continuum.io/downloads>`_. The installation directions are different depending on your OS; see the directions below.
 
-``vtkInterface`` requires ``numpy`` and ``VTK``.  Optional modules include ``moviepy`` and ``imageio`` for saving movies or moving gifs.
+``vtkInterface`` requires ``numpy`` and ``VTK`` version 7.0 or newer.  Optional modules include ``moviepy`` and ``imageio`` for saving movies or moving gifs.
 
 
 Windows Installation
@@ -17,17 +17,9 @@ VTK can be installed using pip for Python 3.6::
   $ pip install vtk
 
 
-Install VTK by installing from a distribution like `Anaconda <https://www.continuum.io/downloads>`_ and then installing VTK for Python 3.6 by running the following from a command prompt::
+Install VTK by installing from a distribution like `Anaconda <https://www.continuum.io/downloads>`_ and then installing VTK for Python 2.7, 3.4, 3.5, and 3.6 by running the following from a command prompt::
 
-    conda install -c clinicalgraphics vtk=7.1.0
-
-If you're using Python 3.5::
-
-    conda install -c menpo vtk=7.0.0
-    
-Or, if you're using Python 2.7, install using::
-
-    conda install -c anaconda vtk=6.3.0
+    conda install -c conda-forge vtk
 
 You can also install VTK from the source by following these `Directions <http://www.vtk.org/Wiki/VTK/Building/Windows>`_.  This is quite difficult.
 

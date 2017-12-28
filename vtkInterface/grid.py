@@ -197,6 +197,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
             elif isinstance(args[0], str):
                 self.LoadFile(args[0])
 
+            elif isinstance(args[0], vtk.vtkStructuredGrid):
+                vtkappend = vtk.vtkAppendFilter()
+                vtkappend.AddInputData(args[0])
+                vtkappend.Update()
+                self.ShallowCopy(vtkappend.GetOutput())
+
+            else:
+                itype = type(args[0])
+                raise Exception('Cannot work with input type %s' % itype)
+
         elif len(args) == 4:
             arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
@@ -209,6 +219,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
                 else:
                     deep = True
                 self.MakeFromArrays(args[0], args[1], args[2], args[3], deep)
+            else:
+                raise Exception('All input types must be np.ndarray')
 
     def MakeFromArrays(self, offset, cells, cell_type, points, deep=True):
         """
@@ -498,7 +510,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
 
         # extracts only in float32
         if self.GetNumpyPoints().dtype is not np.dtype('float32'):
-            ind = subgrid.GetPointScalars('VTKorigID')
+            ind = subgrid.GetPointScalars('vtkOriginalPointIds')
             subgrid.SetNumpyPoints(self.GetNumpyPoints()[ind])
 
         return subgrid
@@ -696,3 +708,18 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         if binary and legacy:
             writer.SetFileTypeToBinary
         writer.Write()
+
+    @property
+    def x(self):
+        dim = self.GetDimensions()
+        return self.points[:, 0].reshape(dim, order='F')
+
+    @property
+    def y(self):
+        dim = self.GetDimensions()
+        return self.points[:, 1].reshape(dim, order='F')
+
+    @property
+    def z(self):
+        dim = self.GetDimensions()
+        return self.points[:, 2].reshape(dim, order='F')

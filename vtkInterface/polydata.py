@@ -5,7 +5,7 @@ import os
 import numpy as np
 import vtkInterface
 
-# allow readthedocs to parse objects
+# allows readthedocs to autodoc
 try:
     import vtk
     from vtk import vtkPolyData
@@ -33,11 +33,9 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
     Examples
     --------
-    >>> grid = PolyData()  # Create an empty mesh
-    >>> grid = PolyData(vtkgrid)  # Initialize from a vtk.vtkPolyData
-    >>> grid = UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)  # from arrays
-    >>> grid = UnstructuredGrid(filename)  # Create from a file
-
+    >>> surf = PolyData()  # Create an empty mesh
+    >>> surf = PolyData(vtkobj)  # Initialize from a vtk.vtkPolyData object
+    >>> surf = PolyData(vertices, faces)  # initialize from vertices and face
     """
 
     def __init__(self, *args, **kwargs):
@@ -652,12 +650,10 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         Flip normals of a triangular mesh by reversing the point ordering.
 
         """
-        if not self.faces.size % 4:
+        if self.faces.size % 4:
             raise Exception('Can only flip normals on an all triangular mesh')
 
-        # take a view of the original object and flip the order of faces
-        # without copying the array
-        f = self.faces.reshape((-1, 4)).view()
+        f = self.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
 
     def OverwriteMesh(self, mesh):

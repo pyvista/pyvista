@@ -12,8 +12,7 @@ Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/lat
 
 Installation
 ------------
-
-If you have a working copy of VTK, installation is simply::
+If you have a working copy of VTK 7.0 or newer, installation is simply::
 
     pip install vtkInterface
     

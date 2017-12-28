@@ -250,7 +250,10 @@ class PlotClass(object):
         elif style == 'surface':
             prop.SetRepresentationToSurface()
         else:
-            raise Exception('Invalid style')
+            raise Exception('Invalid style.  Must be one of the following:\n' +
+                            '\t"surface"\n' +
+                            '\t"wireframe"\n' +
+                            '\t"points"\n')
 
         prop.SetPointSize(psize)
 
@@ -1178,7 +1181,8 @@ def CreateArrowsActor(pdata):
     return actor
 
 
-def PlotGrids(grids, wFEM=False, background=[0, 0, 0], legend_entries=None):
+def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
+              legend_entries=None):
     """ Creates a plot of several grids as wireframes.  When wFEM is
     true, the first grid is a white solid """
 
@@ -1192,7 +1196,7 @@ def PlotGrids(grids, wFEM=False, background=[0, 0, 0], legend_entries=None):
         if not i and wFEM:  # Special plotting for first grid
             pobj.AddMesh(grids[i])
         else:
-            pobj.AddMesh(grids[i], color=colors[i], style='wireframe')
+            pobj.AddMesh(grids[i], color=colors[i], style=style)
 
     # Render plot and delete when finished
     pobj.SetBackground(background)
@@ -1204,7 +1208,6 @@ def PlotGrids(grids, wFEM=False, background=[0, 0, 0], legend_entries=None):
 
         pobj.AddLegend(legend)
     pobj.Plot()
-    del pobj
 
 
 def PlotEdges(mesh, angle, width=10):
