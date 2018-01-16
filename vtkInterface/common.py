@@ -232,9 +232,7 @@ class Common(object):
             Angle in degrees to rotate about the x-axis.
 
         """
-        trans = vtk.vtkTransform()
-        trans.RotateX(angle)
-        self.ApplyTransformationInPlace(trans)
+        AxisRotation(self.points, angle, inplace=True, axis='x')
 
     def RotateY(self, angle):
         """
@@ -246,9 +244,7 @@ class Common(object):
             Angle in degrees to rotate about the y-axis.
 
         """
-        trans = vtk.vtkTransform()
-        trans.RotateY(angle)
-        self.ApplyTransformationInPlace(trans)
+        AxisRotation(self.points, angle, inplace=True, axis='y')
 
     def RotateZ(self, angle):
         """
@@ -260,9 +256,7 @@ class Common(object):
             Angle in degrees to rotate about the z-axis.
 
         """
-        trans = vtk.vtkTransform()
-        trans.RotateZ(angle)
-        self.ApplyTransformationInPlace(trans)
+        AxisRotation(self.points, angle, inplace=True, axis='z')
 
     def Translate(self, xyz):
         """
@@ -296,7 +290,6 @@ class Common(object):
                 raise Exception('invalid input shape')
             t = trans
 
-        # import pdb; pdb.set_trace()
         x = (self.points*t[0, :3]).sum(1) + t[0, -1]
         y = (self.points*t[1, :3]).sum(1) + t[1, -1]
         z = (self.points*t[2, :3]).sum(1) + t[2, -1]
@@ -321,15 +314,6 @@ class Common(object):
             True when array exists and False when it does not.
         """
         return bool(self.GetPointData().GetArray(name))
-
-    # def UpdatePointScalars(self, scalars, name):
-    #     """
-    #     Updates point scalars in-place
-    #     """
-    #     vtkarrnew = numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
-    #     vtkarrnew.SetName(name)
-    #     vtkarr = self.GetPointData().GetArray(name)
-    #     vtkarr.DeepCopy(vtkarrnew)
 
     def GetCellScalars(self, name):
         """
@@ -407,9 +391,36 @@ class Common(object):
             newobject.ShallowCopy(self)
         return newobject
 
-    # def UpdateCellScalars(self, scalars, name):
-    #     """ Updates cell scalars """
-    #     vtkarrnew = numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
-    #     vtkarrnew.SetName(name)
-    #     vtkarr = self.GetCellData().GetArray(name)
-    #     vtkarr.DeepCopy(vtkarrnew)
+
+def AxisRotation(p, ang, inplace=False, deg=True, axis='z'):
+    """ Rotates points p angle ang (in deg) about an axis """
+    axis = axis.lower()
+
+    # Copy original array to if not inplace
+    if not inplace:
+        p = p.copy()
+
+    # Convert angle to radians
+    if deg:
+        ang *= np.pi / 180
+
+    if axis == 'x':
+        y = p[:, 1] * np.cos(ang) - p[:, 2] * np.sin(ang)
+        z = p[:, 1] * np.sin(ang) + p[:, 2] * np.cos(ang)
+        p[:, 1] = y
+        p[:, 2] = z
+    elif axis == 'y':
+        x = p[:, 0] * np.cos(ang) + p[:, 2] * np.sin(ang)
+        z = - p[:, 0] * np.sin(ang) + p[:, 2] * np.cos(ang)
+        p[:, 0] = x
+        p[:, 2] = z
+    elif axis == 'z':
+        x = p[:, 0] * np.cos(ang) - p[:, 1] * np.sin(ang)
+        y = p[:, 0] * np.sin(ang) + p[:, 1] * np.cos(ang)
+        p[:, 0] = x
+        p[:, 1] = y
+    else:
+        raise Exception('invalid axis.  Must be either "x", "y", or "z"')
+
+    if not inplace:
+        return p

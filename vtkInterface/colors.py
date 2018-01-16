@@ -1,5 +1,4 @@
 """
-DESCRIPTION
 Color module supporting plotting module
 
 Used code from matplotlib.colors.  Thanks for your work!
@@ -156,10 +155,6 @@ yellow
 yellowgreen
 
 """
-
-#==============================================================================
-# Color formatting
-#==============================================================================
 
 # shamelessly copied from matplotlib.colors
 hexcolors = {
@@ -322,6 +317,7 @@ color_char_to_word = {
         'k': 'black',
         'w': 'white'}
 
+
 def HexToRGB(h):
     """ Returns 0 to 1 rgb from a hex list or tuple """
     h = h.lstrip('#')
@@ -330,10 +326,9 @@ def HexToRGB(h):
 
 def StringToRGB(string):
     """
-    DESCRIPTION
     Converts a literal color string (i.e. white) to a color rgb.  Also accepts
     hex strings or single characters from the following list.
-    
+
         b: blue
         g: green
         r: red
@@ -344,29 +339,26 @@ def StringToRGB(string):
         w: white
 
     """
-    
+
     # if a single character
     if len(string) == 1:
-        
+
         # Convert from single character to full hex
         try:
             colorhex = hexcolors[color_char_to_word[string.lower()]]
         except:
-            ValueError('Single character string must be one of the following {:s}'.format(color_char_to_word))
-
+            ValueError('Single character string must be one of the following:'
+                       '\n%s' % str(color_char_to_word))
 
     # if a color name
     elif string.lower() in hexcolors:
         colorhex = hexcolors[string.lower()]
-        
+
     # try to convert to hex
     else:
         try:
             return HexToRGB(string)
         except:
             raise Exception('Invalid color string or hex string.')
-            
-            
+
     return HexToRGB(colorhex)
-        
-        

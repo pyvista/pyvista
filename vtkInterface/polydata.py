@@ -13,7 +13,7 @@ try:
     from vtk.util.numpy_support import numpy_to_vtk
 
 except:
-    # create dummy class
+    # create dummy class when readthedocs can't import vtk
     class vtkPolyData(object):
         def __init__(self, *args, **kwargs):
             pass

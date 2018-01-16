@@ -8,7 +8,6 @@ from vtkInterface.polydata import PolyData
 from vtkInterface.grid import UnstructuredGrid
 from vtkInterface.grid import StructuredGrid
 from vtkInterface.grid import Grid
-from vtkInterface.common import Common
 
 import numpy as np
 

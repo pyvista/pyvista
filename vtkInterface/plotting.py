@@ -1207,6 +1207,7 @@ def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
             legend.append([legend_entries[i], colors[i]])
 
         pobj.AddLegend(legend)
+
     pobj.Plot()
 
 
