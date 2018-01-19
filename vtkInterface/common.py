@@ -281,14 +281,19 @@ class Common(object):
 
         """
         # work with mulitple input types
-        if trans.IsA('vtkMatrix4x4'):
+        if isinstance(trans, vtk.vtkMatrix4x4):
             t = vtkInterface.TransFromMatrix(trans)
         elif isinstance(trans, vtk.vtkTransform):
             t = vtkInterface.TransFromMatrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
             if trans.shape[1] != 4:
-                raise Exception('invalid input shape')
+                raise Exception('Invalid input shape')
             t = trans
+        else:
+            raise Exception('Input transform must be either:\n'
+                            + '\tvtk.vtkMatrix4x4\n'
+                            + '\tvtk.vtkTransform\n'
+                            + '\t4x4 np.ndarray\n')
 
         x = (self.points*t[0, :3]).sum(1) + t[0, -1]
         y = (self.points*t[1, :3]).sum(1) + t[1, -1]
