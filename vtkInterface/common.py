@@ -16,7 +16,7 @@ class Common(object):
     """ Methods in common to grid and surface objects"""
 
     def __init__(self, *args, **kwargs):
-        pass
+        self.references = []
 
     @property
     def points(self):
@@ -27,7 +27,10 @@ class Common(object):
     def points(self, newpoints):
         if not isinstance(newpoints, np.ndarray):
             raise TypeError('Points must be a numpy array')
-        self.SetNumpyPoints(newpoints)
+        self.SetNumpyPoints(newpoints, False)
+
+        # keep a reference as pointer might be deleted
+        self.references.append(newpoints)
 
     def GetNumpyPoints(self, dtype=None, deep=False):
         """

@@ -156,7 +156,7 @@ def CreateVectorPolyData(orig, vec):
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)
 
-    return pdata
+    return vtkInterface.PolyData(pdata)
 
 
 def ReadG3D(filename):

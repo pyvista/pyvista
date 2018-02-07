@@ -60,6 +60,13 @@ def Plot(mesh, **args):
     return cpos
 
 
+def PlotArrows(cent, direction):
+    """ Plots arrows """
+    plotter = PlotClass()
+    plotter.AddArrows(cent, direction)
+    return plotter.Plot()
+
+
 class PlotClass(object):
     """
     Plotting object to display vtk meshes or numpy arrays.
@@ -837,8 +844,11 @@ class PlotClass(object):
         if isinstance(points, np.ndarray):
             # check size of points
             if points.ndim != 2 or points.shape[1] != 3:
-                raise Exception('Invalid point array shape'
-                                '%s' % str(points.shape))
+                try:
+                    points = points.reshape((-1, 3))
+                except:
+                    raise Exception('Invalid point array shape'
+                                    '%s' % str(points.shape))
             self.points = vtkInterface.MakeVTKPointsMesh(points)
         else:
             self.points = points
@@ -906,13 +916,13 @@ class PlotClass(object):
 
         return arrows
 
-    def AddLineSegments(self, points, edges, color=None):
+    def AddLineSegments(self, points, edges, color=None, scalars=None,
+                        ncolors=256):
         """ Adds arrows to plotting object """
 
         cent = (points[edges[:, 0]] + points[edges[:, 1]]) / 2
         direction = points[edges[:, 1]] - points[edges[:, 0]]
-        pdata = vtkInterface.CreateVectorPolyData(cent, direction)
-
+        # pdata = vtkInterface.CreateVectorPolyData(cent, direction)
         pdata = vtkInterface.CreateVectorPolyData(cent, direction)
         arrows, mapper = CreateLineSegmentsActor(pdata)
 
@@ -921,6 +931,16 @@ class PlotClass(object):
             color = vtkInterface.StringToRGB(color)
             mapper.ScalarVisibilityOff()
             arrows.GetProperty().SetColor(color)
+
+        if scalars is not None:
+            if scalars.size == edges.shape[0]:
+                pdata.AddCellScalars(scalars, '', True)
+                mapper.SetScalarModeToUseCellData()
+                mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
+                # if interpolatebeforemap:
+                    # self.mapper.InterpolateScalarsBeforeMappingOn()
+            else:
+                raise Exception('Number of scalars must match number of edges')
 
         # add to rain class
         self.AddActor(arrows)

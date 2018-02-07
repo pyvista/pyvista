@@ -65,6 +65,18 @@ class Grid(vtkInterface.Common):
         # extract surface and plot its curvature
         self.ExtractExteriorTri()[0].PlotCurvature(curvtype, rng)
 
+    @property
+    def volume(self):
+        """
+        Computes volume by extracting the external surface and
+        computing interior volume
+        """
+
+        surf = self.ExtractSurface().TriFilter()
+        mass = vtk.vtkMassProperties()
+        mass.SetInputData(surf)
+        return mass.GetVolume()
+
     def ExtractExteriorTri(self):
         """
         Creates an all tri surface mesh
@@ -471,6 +483,14 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         offset = self.GetCellLocationsArray()
         lgrid.SetCells(vtk_cell_type, offset, self.GetCells())
         return lgrid
+
+    @property
+    def celltypes(self):
+        return vtk_to_numpy(self.GetCellTypesArray())
+
+    @property
+    def offset(self):
+        return vtk_to_numpy(self.GetCellLocationsArray())
 
     def ExtractSelectionCells(self, ind):
         """

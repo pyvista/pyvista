@@ -109,6 +109,12 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         """ returns a pointer to the points as a numpy object """
         return vtk_to_numpy(self.GetPolys().GetData())
 
+    @property
+    def lines(self):
+        """ returns a copy of the indices of the lines """
+        lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
+        return np.ascontiguousarray(lines[:, 1:])
+
     def MakeFromArrays(self, vertices, faces, deep=True):
         """
         Set polygons and points from numpy arrays
