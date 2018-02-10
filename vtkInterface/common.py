@@ -30,7 +30,10 @@ class Common(object):
         self.SetNumpyPoints(newpoints, False)
 
         # keep a reference as pointer might be deleted
-        self.references.append(newpoints)
+        if not hasattr(self, 'references'):
+            self.references = [newpoints]
+        else:
+            self.references.append(newpoints)
 
     def GetNumpyPoints(self, dtype=None, deep=False):
         """

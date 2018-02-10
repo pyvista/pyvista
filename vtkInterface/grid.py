@@ -297,7 +297,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         if cells.ndim != 1:
             cells = cells.ravel()
 
-        if cell_type != np.uint8:
+        if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
 
         # Get number of cells
@@ -751,6 +751,29 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         return self.points[:, 2].reshape(dim, order='F')
 
     def CellQuality(self):
+        """
+        Computes the minimum scaled jacobian of each cell.  Cells that have
+        values below 0 are invalid for a finite element analysis.
+
+        Returns
+        -------
+        cellquality : np.ndarray
+            Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
+
+        Notes
+        -----
+        Requires pyansys to be installed.
+
+        """
+        try:
+            import pyansys
+        except:
+            raise Exception('Install pyansys for this function')
+
+        return pyansys.CellQuality(UnstructuredGrid(self))
+
+    @property
+    def quality(self):
         """
         Computes the minimum scaled jacobian of each cell.  Cells that have
         values below 0 are invalid for a finite element analysis.

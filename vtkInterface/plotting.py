@@ -2,6 +2,7 @@
 vtk plotting module
 
 """
+from multiprocessing import Process
 import colorsys
 import numpy as np
 import vtkInterface
@@ -616,7 +617,7 @@ class PlotClass(object):
             del self.renWin
 
         if hasattr(self, 'iren'):
-            self.iren.TerminateApp()
+            # self.iren.TerminateApp()
             del self.iren
 
         if hasattr(self, 'textActor'):
@@ -1031,8 +1032,8 @@ class PlotClass(object):
         self.renderer.AddActor(legend)
         return legend
 
-    def Plot(self, title=None, window_size=[1024, 768], interactive=True,
-             autoclose=True):
+    def _plot(self, title=None, window_size=[1024, 768], interactive=True,
+              autoclose=True):
         """
         Creates plotting window
 
@@ -1087,6 +1088,42 @@ class PlotClass(object):
             self.Close()
 
         return cpos
+
+    def Plot(self, title=None, window_size=[1024, 768], interactive=True,
+             autoclose=True, in_background=False):
+        """
+        Creates plotting window
+
+        Parameters
+        ----------
+        title : string, optional
+            Title of plotting window.
+
+        window_size : list, optional
+            Window size in pixels.  Defaults to [1024, 768]
+
+        interactive : bool, optional
+            Enabled by default.  Allows user to pan and move figure.
+
+        autoclose : bool, optional
+            Enabled by default.  Exits plotting session when user closes the
+            window when interactive is True.
+
+        Returns
+        -------
+        cpos : list
+            List of camera position, focal point, and view up
+
+        """
+        def PlotFun():
+            return self._plot(title, window_size, interactive, autoclose)
+
+        if in_background:
+            process = Process(target=PlotFun)
+            process.start()
+            return process
+        else:
+            return PlotFun()
 
     def RemoveActor(self, actor):
         self.renderer.RemoveActor(actor)
