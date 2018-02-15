@@ -4,7 +4,8 @@ Installation file for python vtkInterface module
 from setuptools import setup
 from io import open as io_open
 import os
-# import sys
+import sys
+import warnings
 
 package_name = 'vtkInterface'
 
@@ -15,12 +16,14 @@ with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
 # pre-compiled vtk available for python3
-install_requires = ['numpy']
-# if sys.version[0] == '3':
-#     if os.name is 'posix' and int(sys.version[2]) >= 4:
-#         install_requires.append(['vtk'])
-#     elif os.name == 'nt' and int(sys.version[2]) >= 6:
-#         install_requires.append(['vtk'])
+install_requires = ['numpy',
+                    'imageio']
+
+# add vtk if not windows and 2.7
+if os.name == 'nt' and int(sys.version[0]) >= 0:
+    warnings.warn('Will need to install VTK manually')
+else:
+    install_requires.append(['vtk'])
 
 setup(
     name=package_name,

@@ -6,6 +6,7 @@ from multiprocessing import Process
 import colorsys
 import numpy as np
 import vtkInterface
+import imageio
 
 try:
     import vtk
@@ -685,10 +686,6 @@ class PlotClass(object):
         self.movietype = 'mp4'
 
     def OpenGif(self, filename):
-        try:
-            import imageio
-        except BaseException:
-            raise Exception('To use this feature, install imageio')
         if filename[-3:] != 'gif':
             raise Exception('Unsupported filetype')
         self.mwriter = imageio.get_writer(filename, mode='I')
@@ -1139,19 +1136,23 @@ class PlotClass(object):
     def TakeScreenShot(self, filename=None):
         """
         Takes screenshot at current camera position
+
+        Parameters
+        ----------
+        filename : str, optional
+            Filename to write image to.
+
+        Returns
+        -------
+        img :  numpy.ndarray
+            Array containing pixel RGB and alpha.  Sized:
+            [Window height x Window width x 4]
+
         """
-
-        # attempt to import imsave for saving screenshots from vtk
-        try:
-            from scipy.misc import imsave
-        except BaseException:
-            raise Exception('To use scipy.misc.imsave\n'
-                            'install pip install pillow')
-
         # check render window exists
         if not hasattr(self, 'renWin'):
             raise Exception('Render window has been closed.\n'
-                            'Run again with plot(autoclose=False)')
+                            'Run again with Plot(autoclose=False)')
 
         # create image filter
         ifilter = vtk.vtkWindowToImageFilter()
@@ -1176,16 +1177,10 @@ class PlotClass(object):
         img_array[mask, -1] = 255
 
         img = img_array.reshape((origshape[1], origshape[0], -1))[::-1, :, :]
-        if filename[-3:] == 'png':
-            imsave(filename, img)
+        if filename:
+            imageio.imwrite(filename, img)
 
-        elif filename[-3:] == 'jpg':
-            imsave(filename, img[:, :, :-1])
-
-        else:
-            raise Exception('Only png and jpg supported')
-
-        return img_array
+        return img
 
     def Render(self):
         self.renWin.Render()

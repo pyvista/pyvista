@@ -602,7 +602,7 @@ class StructuredGrid(vtkStructuredGrid, Grid):
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkStructuredGrid):
-                self.ShallowCopy(args[0])
+                self.DeepCopy(args[0])
             elif isinstance(args[0], str):
                 self.LoadFile(args[0])
 

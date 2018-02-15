@@ -22,6 +22,24 @@ In fact, the code to generate the previous screenshot was created with:
 
     mesh.Plot(screenshot='airplane.png', color='orange')
 
+You can also take a screenshot without creating an interactive plot window using the ``PlotClass``:
+
+.. code:: python
+
+    plotter = vtkInterface.PlotClass(off_screen=True)
+    plotter.AddMesh(mesh, color='orange')
+    img = plotter.Plot(autoclose=False)
+    plotter.TakeScreenShot('airplane.png')
+    plotter.Close()
+
+The ``img`` array can be used to plot the screenshot in ``matplotlib``:
+
+.. code:: python
+
+    import matplotlib.pyplot as plt
+    plt.imshow(img)
+    plt.show()
+
 The points and faces from the mesh are directly accessible as a numpy array:
 
 .. code:: python
