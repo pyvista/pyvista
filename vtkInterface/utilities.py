@@ -79,7 +79,7 @@ def MakeLine(points):
                        np.arange(1, npoints + 1))).T.ravel()
 
     # Create polydata object
-    return vtkInterface.vtkPolyData(lines, points)
+    return vtkInterface.PolyData(points, lines)
 
 
 def MeshfromVF(points, triangles_in, clean=True, deep_points=True):
@@ -132,7 +132,8 @@ def CreateVectorPolyData(orig, vec):
     cells = np.hstack((np.ones((npts, 1), 'int'),
                        np.arange(npts).reshape((-1, 1))))
 
-    cells = np.ascontiguousarray(cells)
+    if cells.dtype != np.int64 or cells.flags.c_contiguous:
+        cells = np.ascontiguousarray(cells, np.int64)
     vcells = vtk.vtkCellArray()
     vcells.SetCells(npts, numpy_to_vtkIdTypeArray(cells, deep=True))
 

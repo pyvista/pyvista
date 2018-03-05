@@ -559,11 +559,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         """
         subfilter = subfilter.lower()
-        if subfilter is 'linear':
+        if subfilter == 'linear':
             sfilter = vtk.vtkLinearSubdivisionFilter()
-        elif subfilter is 'butterfly':
+        elif subfilter == 'butterfly':
             sfilter = vtk.vtkButterflySubdivisionFilter()
-        elif subfilter is 'loop':
+        elif subfilter == 'loop':
             sfilter = vtk.vtkLoopSubdivisionFilter()
         else:
             raise Exception("Subdivision filter must be one of the following: " +

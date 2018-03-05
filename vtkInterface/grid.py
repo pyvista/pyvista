@@ -456,6 +456,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         linear cells.  Converts the following cell types to their linear
         equivalents.
 
+        - VTK_QUADRATIC_QUAD       --> VTK_QUADRATIC
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
         - VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID
         - VTK_QUADRATIC_WEDGE      --> VTK_WEDGE

@@ -599,13 +599,14 @@ class PlotClass(object):
             self.Render()
 
     def UpdateCoordinates(self, points, mesh=None, render=True):
-        """ updates points of object (point only for now)
+        """
+        Updates points of object (point only for now)
         assumes last inputted mesh if mesh left empty
         """
         if mesh is None:
             mesh = self.mesh
 
-        self.mesh.SetNumpyPoints(points)
+        mesh.SetNumpyPoints(points)
 
         if render:
             self.Render()
@@ -618,7 +619,6 @@ class PlotClass(object):
             del self.renWin
 
         if hasattr(self, 'iren'):
-            # self.iren.TerminateApp()
             del self.iren
 
         if hasattr(self, 'textActor'):
@@ -647,13 +647,12 @@ class PlotClass(object):
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to False
 
-
         Returns
         -------
-        shadow : False
+        textActor : vtk.vtkTextActor
+            Text actor added to plot
 
         """
-
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
         self.textActor.GetTextProperty().SetFontSize(fontsize)
@@ -662,6 +661,8 @@ class PlotClass(object):
         self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
         self.AddActor(self.textActor)
+
+        return self.textActor
 
     def OpenMovie(self, filename, framerate=24, codec='libx264',
                   preset='medium'):
@@ -912,7 +913,7 @@ class PlotClass(object):
         arrows = CreateArrowsActor(pdata)
         self.AddActor(arrows)
 
-        return arrows
+        return arrows, pdata
 
     def AddLineSegments(self, points, edges, color=None, scalars=None,
                         ncolors=256):
@@ -1002,7 +1003,7 @@ class PlotClass(object):
         plobj = PlotClass()
         plobj.AddMesh(mesh)
         plobj.AddLegend(legend_entries)
-        plobj.Plot(); del plobj
+        plobj.Plot()
 
         """
 
@@ -1265,49 +1266,28 @@ def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
 
 def PlotEdges(mesh, angle, width=10):
     """ Plots edges of a mesh """
-
-    # Extract edge points from a mesh
     edges = vtkInterface.GetEdgePoints(mesh, angle, False)
-
-    # Render
     pobj = PlotClass()
     pobj.AddLines(edges, [0, 1, 1], width)
     pobj.AddMesh(mesh)
     pobj.Plot()
-    del pobj
 
 
-def PlotBoundaries(mesh):
+def PlotBoundaries(mesh, **args):
     """ Plots boundaries of a mesh """
     featureEdges = vtk.vtkFeatureEdges()
-    vtkInterface.SetVTKInput(featureEdges, mesh)
-
+    featureEdges.SetInputData(mesh)
     featureEdges.FeatureEdgesOff()
     featureEdges.BoundaryEdgesOn()
     featureEdges.NonManifoldEdgesOn()
     featureEdges.ManifoldEdgesOff()
+    featureEdges.Update()
+    edges = vtkInterface.PolyData(featureEdges.GetOutput())
 
-    edgeMapper = vtk.vtkPolyDataMapper()
-    edgeMapper.SetInputConnection(featureEdges.GetOutputPort())
-
-    edgeActor = vtk.vtkActor()
-    edgeActor.GetProperty().SetLineWidth(5)
-    edgeActor.SetMapper(edgeMapper)
-
-    mapper = vtk.vtkDataSetMapper()
-    vtkInterface.SetVTKInput(mapper, mesh)
-
-    # Actor
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    actor.GetProperty().LightingOff()
-
-    # Render
-    pobj = PlotClass()
-    pobj.AddActor(actor)
-    pobj.AddActor(edgeActor)
-    pobj.Plot()
-    del pobj
+    plobj = PlotClass()
+    plobj.AddMesh(edges, 'r', style='wireframe')
+    plobj.AddMesh(mesh)
+    plobj.Plot()
 
 
 def MakeLegendPoly():
@@ -1329,7 +1309,6 @@ def MakeLegendPoly():
 
 def ParseColor(color):
     """ Parses color into a vtk friendly rgb list """
-
     if color is None:
         return [1, 1, 1]
     elif isinstance(color, str):
