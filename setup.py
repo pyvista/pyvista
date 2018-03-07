@@ -23,7 +23,10 @@ install_requires = ['numpy',
 if os.name == 'nt' and int(sys.version[0]) >= 0:
     warnings.warn('Will need to install VTK manually')
 else:
-    install_requires.append(['vtk'])
+    # don't install for readthedocs
+    on_rtd = os.environ.get('READTHEDOCS') == 'True'
+    if not on_rtd:
+        install_requires.append(['vtk'])
 
 setup(
     name=package_name,
