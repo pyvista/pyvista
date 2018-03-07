@@ -106,20 +106,28 @@ def BeamExample():
             (0.0, 0.375, 2.0),
             (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
 
+    try:
+        import matplotlib
+        colormap = 'bwr'
+    except ImportError:
+        colormap = None
+
     # plot this displaced beam
     plobj = vtkInterface.PlotClass()
     plobj.AddMesh(grid, scalars=d[:, 1], stitle='Y Displacement',
-                  rng=[-d.max(), d.max()])
+                  rng=[-d.max(), d.max()], colormap=colormap)
     plobj.AddAxes()
     plobj.SetCameraPosition(cpos)
     plobj.AddText('Static Beam Example')
     cpos = plobj.Plot(autoclose=False)  # store camera position
-#    plobj.TakeScreenShot('beam.png')
+    # plobj.TakeScreenShot('beam.png')
+    plobj.Close()
 
     # Animate plot
     plobj = vtkInterface.PlotClass()
     plobj.AddMesh(grid, scalars=d[:, 1], stitle='Y Displacement', showedges=True,
-                  rng=[-d.max(), d.max()], interpolatebeforemap=True)
+                  rng=[-d.max(), d.max()], interpolatebeforemap=True,
+                  colormap=colormap)
     plobj.AddAxes()
     plobj.SetCameraPosition(cpos)
     plobj.AddText('Beam Animation Example')
@@ -139,7 +147,7 @@ def BeamExample():
     # Animate plot as a wireframe
     plobj = vtkInterface.PlotClass()
     plobj.AddMesh(grid, scalars=d[:, 1], stitle='Y Displacement',
-                  showedges=True, rng=[-d.max(), d.max()],
+                  showedges=True, rng=[-d.max(), d.max()], colormap=colormap,
                   interpolatebeforemap=True, style='wireframe')
     plobj.AddAxes()
     plobj.SetCameraPosition(cpos)

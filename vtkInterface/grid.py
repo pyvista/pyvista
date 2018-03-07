@@ -332,7 +332,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         """
         # check file exists
         if not os.path.isfile(filename):
-            raise Exception('%s does not exist')
+            raise Exception('%s does not exist' % filename)
 
         # Check file extention
         if '.vtu' in filename:

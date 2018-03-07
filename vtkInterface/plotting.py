@@ -175,8 +175,9 @@ class PlotClass(object):
             linethick=None,
             flipscalars=False,
             lighting=False,
-            ncolors=1000,
-            interpolatebeforemap=False):
+            ncolors=256,
+            interpolatebeforemap=False,
+            colormap=None):
         """
         Adds a vtk unstructured, structured, or polymesh to the plotting object
 
@@ -231,17 +232,20 @@ class PlotClass(object):
             representations.  Default None.
 
         flipscalars : bool, optional
-            Flip scalar display approach.  Default is red is minimum and blue
-            is maximum.
+            Flip direction of colormap.
 
         lighting : bool, optional
             Enable or disable Z direction lighting.  True by default.
 
         ncolors : int, optional
-            Number of colors to use when displaying scalars.
+            Number of colors to use when displaying scalars.  Default 256.
 
         interpolatebeforemap : bool, default False
             Enabling makes for a smoother scalar display.  Default False
+
+        colormap : str, optional
+           Colormap string.  See available matplotlib colormaps.  Only applicable for
+           when displaying scalars.  Defaults None (rainbow).  Requires matplotlib.
 
         Returns
         -------
@@ -286,8 +290,22 @@ class PlotClass(object):
                 self.mapper.SetScalarRange(rng[0], rng[1])
 
             # Flip if requested
+            table = self.mapper.GetLookupTable()
+            if colormap is not None:
+                try:
+                    from matplotlib.cm import get_cmap
+                except ImportError:
+                    raise Exception('colormap requires matplotlib')
+                cmap = get_cmap(colormap)
+                ctable = cmap(np.linspace(0, 1, ncolors))*255
+                ctable = ctable.astype(np.uint8)
+                table.SetTable(VN.numpy_to_vtk(ctable))
+
+            # change direction of colormap
             if flipscalars:
-                self.mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
+                ctable = VN.vtk_to_numpy(table.GetTable())[::-1]
+                table.SetTable(VN.numpy_to_vtk(ctable))
+
         else:
             self.mapper.SetScalarModeToUseFieldData()
 
@@ -649,7 +667,7 @@ class PlotClass(object):
         if mesh is None:
             mesh = self.mesh
 
-        mesh.SetNumpyPoints(points)
+        mesh.points = points
 
         if render:
             self.Render()
