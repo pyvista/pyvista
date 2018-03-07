@@ -7,6 +7,7 @@ import colorsys
 import numpy as np
 import vtkInterface
 import imageio
+import time
 
 try:
     import vtk
@@ -88,9 +89,21 @@ class PlotClass(object):
     """
 
     def __init__(self, off_screen=False):
+
+        def onTimer(iren, eventId):
+            if 'TimerEvent' == eventId:
+                # TODO: python binding didn't provide
+                # third parameter, which indicate right timer id
+                # timer_id = iren.GetCommand(44)
+                # if timer_id != self.right_timer_id:
+                #     return
+                self.iren.TerminateApp()
+
         """
         Initialize a vtk plotting object
         """
+        self.right_timer_id = -1
+
         self.off_screen = off_screen
 
         # initialize render window
@@ -102,6 +115,7 @@ class PlotClass(object):
             self.renWin.SetOffScreenRendering(1)
         else:  # Allow user to interact
             self.iren = vtk.vtkRenderWindowInteractor()
+            self.iren.SetDesiredUpdateRate(30.0)
             self.iren.SetRenderWindow(self.renWin)
             istyle = vtk.vtkInteractorStyleTrackballCamera()
             self.iren.SetInteractorStyle(istyle)
@@ -117,6 +131,35 @@ class PlotClass(object):
 
         # initialize movie type
         self.movietype = None
+
+        self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
+
+    last_update_time = 0.0
+    def Update(self, stime=1, force_redraw=True):
+        """
+        Update window, redraw, process messages query
+
+        Parameters
+        ----------
+        stime : duration of timer that interrupt vtkRenderWindowInteractor.
+        force_redraw : call vtkRenderWindowInteractor.Render() immediately.
+        """
+
+        if stime <= 0:
+            stime = 1
+
+        if force_redraw:
+            self.iren.Render();
+
+        curr_time = time.time()
+        if PlotClass.last_update_time > curr_time:
+            PlotClass.last_update_time = curr_time
+        if (curr_time - PlotClass.last_update_time) > (1.0 / self.iren.GetDesiredUpdateRate()):
+            self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
+            self.iren.Start()
+            self.iren.DestroyTimer(self.right_timer_id)
+            PlotClass.last_update_time = curr_time
+
 
     def AddMesh(
             self,
@@ -1031,7 +1074,7 @@ class PlotClass(object):
         return legend
 
     def _plot(self, title=None, window_size=[1024, 768], interactive=True,
-              autoclose=True):
+              autoclose=True, interactive_update=False):
         """
         Creates plotting window
 
@@ -1049,6 +1092,10 @@ class PlotClass(object):
         autoclose : bool, optional
             Enabled by default.  Exits plotting session when user closes the
             window when interactive is True.
+
+        interactive_update: bool, optional
+            Disabled by default.  Allows user to non-blocking draw,
+            user should call Update() in each iteration.
 
         Returns
         -------
@@ -1069,12 +1116,13 @@ class PlotClass(object):
             self.renWin.Render()
             self.iren.Initialize()
 
-            # interrupts will be caught here
-            try:
-                self.iren.Start()
-            except KeyboardInterrupt:
-                self.Close()
-                raise KeyboardInterrupt
+            if not interactive_update:
+                # interrupts will be caught here
+                try:
+                    self.iren.Start()
+                except KeyboardInterrupt:
+                    self.Close()
+                    raise KeyboardInterrupt
 
         else:
             self.renWin.Render()
@@ -1088,7 +1136,7 @@ class PlotClass(object):
         return cpos
 
     def Plot(self, title=None, window_size=[1024, 768], interactive=True,
-             autoclose=True, in_background=False):
+             autoclose=True, in_background=False, interactive_update=False):
         """
         Creates plotting window
 
@@ -1107,6 +1155,10 @@ class PlotClass(object):
             Enabled by default.  Exits plotting session when user closes the
             window when interactive is True.
 
+        interactive_update: bool, optional
+            Disabled by default.  Allows user to non-blocking draw,
+            user should call Update() in each iteration.
+
         Returns
         -------
         cpos : list
@@ -1114,7 +1166,7 @@ class PlotClass(object):
 
         """
         def PlotFun():
-            return self._plot(title, window_size, interactive, autoclose)
+            return self._plot(title, window_size, interactive, autoclose, interactive_update)
 
         if in_background:
             process = Process(target=PlotFun)
