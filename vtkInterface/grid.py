@@ -429,6 +429,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         """ returns a pointer to the cells as a numpy object """
         return vtk_to_numpy(self.GetCells().GetData())
 
+    @property
+    def quality(self):
+        """
+        Calls CellQuality
+        """
+        return self.CellQuality()
+
     def CellQuality(self):
         """
         Computes the minimum scaled jacobian of each cell.  Cells that have

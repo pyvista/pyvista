@@ -28,3 +28,5 @@ except Exception as e:
     warnings.warn(str(e))
     warnings.warn('Unable to import VTK.  Check if installed')
     ID_TYPE = np.int64
+
+warnings.filterwarnings("ignore", message="Conversion of the second argument of issubdtype from `complex` to `np.complexfloating` is deprecated. In future, it will be treated as `np.complex128 == np.dtype(complex).type`.")

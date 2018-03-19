@@ -87,6 +87,7 @@ class PlotClass(object):
         Renders off screen when False.  Useful for automated screenshots.
 
     """
+    last_update_time = 0.0
 
     def __init__(self, off_screen=False):
 
@@ -132,34 +133,38 @@ class PlotClass(object):
         # initialize movie type
         self.movietype = None
 
-        self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
+        # add timer event if interactive render exists
+        if hasattr(self, 'iren'):
+            self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
 
-    last_update_time = 0.0
     def Update(self, stime=1, force_redraw=True):
         """
         Update window, redraw, process messages query
 
         Parameters
         ----------
-        stime : duration of timer that interrupt vtkRenderWindowInteractor.
-        force_redraw : call vtkRenderWindowInteractor.Render() immediately.
+        stime : float, optional
+            Duration of timer that interrupt vtkRenderWindowInteractor.
+
+        force_redraw : bool, optional
+            Call vtkRenderWindowInteractor.Render() immediately.
         """
 
         if stime <= 0:
             stime = 1
 
         if force_redraw:
-            self.iren.Render();
+            self.iren.Render()
 
         curr_time = time.time()
         if PlotClass.last_update_time > curr_time:
             PlotClass.last_update_time = curr_time
+
         if (curr_time - PlotClass.last_update_time) > (1.0 / self.iren.GetDesiredUpdateRate()):
             self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
             PlotClass.last_update_time = curr_time
-
 
     def AddMesh(
             self,
@@ -275,14 +280,19 @@ class PlotClass(object):
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
-
             elif scalars.size == mesh.GetNumberOfCells():
                 self.mesh.AddCellScalars(scalars, '')
                 self.mapper.SetScalarModeToUseCellData()
+            else:
+                raise Exception('Number of scalars (%d) ' % scalars.size +
+                                'must match either the number of points ' +
+                                '(%d) ' % mesh.GetNumberOfPoints() +
+                                'or the number of cells ' +
+                                '(%d) ' % mesh.GetNumberOfCells())
 
             # Set scalar range
             if not rng:
-                rng = [np.min(scalars), np.max(scalars)]
+                rng = [np.nanmin(scalars), np.nanmax(scalars)]
             elif isinstance(rng, float):
                 rng = [-rng, rng]
 
@@ -299,12 +309,16 @@ class PlotClass(object):
                 cmap = get_cmap(colormap)
                 ctable = cmap(np.linspace(0, 1, ncolors))*255
                 ctable = ctable.astype(np.uint8)
+                if flipscalars:
+                    ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
 
-            # change direction of colormap
-            if flipscalars:
-                ctable = VN.vtk_to_numpy(table.GetTable())[::-1]
-                table.SetTable(VN.numpy_to_vtk(ctable))
+                # change direction of colormap
+                # if flipscalars:
+                #     table.ForceBuild()
+                #     ctable = VN.vtk_to_numpy(table.GetTable())
+                    
+                #     table.SetTable(VN.numpy_to_vtk(ctable))
 
         else:
             self.mapper.SetScalarModeToUseFieldData()
@@ -563,10 +577,6 @@ class PlotClass(object):
 
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to False
-
-        Returns
-        -------
-        None
 
         Notes
         -----
@@ -931,8 +941,9 @@ class PlotClass(object):
                 mapper.SetScalarRange(rng[0], rng[1])
 
             # Flip if requested
-            if flipscalars:
-                mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
+            # if flipscalars:
+                
+                # mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
 
         # Create Actor
         actor = vtk.vtkActor()
@@ -1119,7 +1130,6 @@ class PlotClass(object):
         -------
         cpos : list
             List of camera position, focal point, and view up
-
 
         """
 
