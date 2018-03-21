@@ -1,3 +1,10 @@
+# import numpy
+# with numpy.warnings.catch_warnings():
+#     # numpy.warnings.filterwarnings('ignore', r"== np.dtype(complex).type`.")
+#     numpy.warnings.filterwarnings('ignore')
+#     from vtk.util import numpy_support as VN
+#     VN.numpy_to_vtk(numpy.zeros(10))
+
 import warnings
 from vtkInterface._version import __version__
 from vtkInterface.plotting import *
@@ -29,4 +36,8 @@ except Exception as e:
     warnings.warn('Unable to import VTK.  Check if installed')
     ID_TYPE = np.int64
 
-warnings.filterwarnings("ignore", message="Conversion of the second argument of issubdtype from `complex` to `np.complexfloating` is deprecated. In future, it will be treated as `np.complex128 == np.dtype(complex).type`.")
+
+# catch annoying numpy/vtk future warning:
+# vtk/util/numpy_support.py:135: FutureWarning: Conversion of the second argument of issubdtype from `complex` to `np.complexfloating` is deprecated. In future, it will be treated as `np.complex128 == np.dtype(complex).type`.
+#   assert not numpy.issubdtype(z.dtype, complex), \
+warnings.simplefilter(action='ignore', category=FutureWarning)

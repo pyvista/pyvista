@@ -4,6 +4,10 @@ Sub-classes for vtk.vtkPolyData
 import os
 import numpy as np
 import vtkInterface
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel('CRITICAL')
 
 # allows readthedocs to autodoc
 try:
@@ -103,6 +107,16 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         reader.SetFileName(filename)
         reader.Update()
         self.ShallowCopy(reader.GetOutput())
+
+        # sanity check
+        try:
+            self.points
+        except:
+            raise Exception('Cannot access points.  Empty or invalid file')
+        try:
+            self.faces
+        except:
+            raise Exception('Cannot access points.  Empty or invalid file')
 
     @property
     def faces(self):
@@ -719,3 +733,6 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         clean.Update()
 
         self.OverwriteMesh(clean.GetOutput())
+
+    # def __del__(self):
+    #     log.debug('Object collected')

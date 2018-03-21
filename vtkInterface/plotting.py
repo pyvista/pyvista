@@ -8,6 +8,12 @@ import numpy as np
 import vtkInterface
 import imageio
 import time
+import logging
+from PIL import Image
+
+log = logging.getLogger(__name__)
+log.setLevel('CRITICAL')
+
 
 try:
     import vtk
@@ -1257,14 +1263,19 @@ class PlotClass(object):
         mask = img_array[:, -1] != 255
         img_array[mask, -1] = 255
 
+        # write screenshot to file
         img = img_array.reshape((origshape[1], origshape[0], -1))[::-1, :, :]
         if filename:
-            imageio.imwrite(filename, img)
+            image = Image.fromarray(img)
+            image.save(filename)
 
         return img
 
     def Render(self):
         self.renWin.Render()
+
+    def __del__(self):
+        log.debug('Object collected')
 
 
 def CreateLineSegmentsActor(pdata):

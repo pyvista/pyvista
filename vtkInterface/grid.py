@@ -4,6 +4,10 @@ Sub-classes for vtk.vtkUnstructuredGrid and vtk.vtkStructuredGrid
 import os
 import numpy as np
 import vtkInterface
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel('CRITICAL')
 
 # allow readthedocs to parse objects
 try:

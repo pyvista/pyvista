@@ -3,6 +3,10 @@ Attributes common to PolyData and Grid Objects
 """
 import numpy as np
 import vtkInterface
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel('CRITICAL')
 
 try:
     import vtk
@@ -401,6 +405,9 @@ class Common(object):
         else:
             newobject.ShallowCopy(self)
         return newobject
+
+    def __del__(self):
+        log.debug('Object collected')
 
 
 def AxisRotation(p, ang, inplace=False, deg=True, axis='z'):
