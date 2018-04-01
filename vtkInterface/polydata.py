@@ -285,7 +285,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         bfilter.Update()
         return PolyData(bfilter.GetOutput())
 
-    def BooleanAdd(self, mesh):
+    def BooleanAdd(self, mesh, merge=False):
         """
         Add a mesh to the current mesh.
 
@@ -631,7 +631,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         featureEdges.SetFeatureAngle(feature_angle)
         featureEdges.SetManifoldEdges(manifold_edges)
         featureEdges.SetNonManifoldEdges(non_manifold_edges)
-        featureEdges.SetBoundaryEdges(non_manifold_edges)
+        featureEdges.SetBoundaryEdges(boundary_edges)
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
         featureEdges.Update()

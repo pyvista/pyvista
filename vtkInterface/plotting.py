@@ -33,6 +33,11 @@ def Plot(mesh, **args):
     help(vtkInterface.PlotClass.AddMesh)
 
     """
+    if 'off_screen' in args:
+        off_screen = args['off_screen']
+        del args['off_screen']
+    else:
+        off_screen = False
 
     if 'screenshot' in args:
         filename = args['screenshot']
@@ -40,14 +45,26 @@ def Plot(mesh, **args):
     else:
         filename = None
 
+    if 'interactive' in args:
+        interactive = args['interactive']
+        del args['interactive']
+    else:
+        interactive = True
+
     if 'cpos' in args:
         cpos = args['cpos']
         del args['cpos']
     else:
         cpos = None
 
+    if 'window_size' in args:
+        window_size = args['window_size']
+        del args['window_size']
+    else:
+        window_size = [1024, 768]
+
     # create plotting object and add mesh
-    plobj = PlotClass()
+    plobj = PlotClass(off_screen=off_screen)
 
     if isinstance(mesh, np.ndarray):
         plobj.AddPoints(mesh, **args)
@@ -58,7 +75,9 @@ def Plot(mesh, **args):
     if cpos:
         plobj.SetCameraPosition(cpos)
 
-    cpos = plobj.Plot(autoclose=False)
+    cpos = plobj.Plot(window_size=window_size,
+                      autoclose=False,
+                      interactive=interactive)
 
     # take screenshot
     if filename:
@@ -94,6 +113,8 @@ class PlotClass(object):
 
     """
     last_update_time = 0.0
+    q_pressed = False
+    right_timer_id = -1
 
     def __init__(self, off_screen=False):
 
@@ -109,8 +130,6 @@ class PlotClass(object):
         """
         Initialize a vtk plotting object
         """
-        self.right_timer_id = -1
-
         self.off_screen = off_screen
 
         # initialize render window
@@ -126,6 +145,7 @@ class PlotClass(object):
             self.iren.SetRenderWindow(self.renWin)
             istyle = vtk.vtkInteractorStyleTrackballCamera()
             self.iren.SetInteractorStyle(istyle)
+            self.iren.AddObserver("KeyPressEvent", self.KeyPressEvent)
 
         # Set background
         self.renderer.SetBackground(0.3, 0.3, 0.3)
@@ -143,14 +163,21 @@ class PlotClass(object):
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
 
+    def KeyPressEvent(self, obj, event):
+        """ Listens for q key press """
+        key = self.iren.GetKeySym()
+        if key == 'q':
+            self.q_pressed = True
+
     def Update(self, stime=1, force_redraw=True):
         """
         Update window, redraw, process messages query
 
         Parameters
         ----------
-        stime : float, optional
-            Duration of timer that interrupt vtkRenderWindowInteractor.
+        stime : int, optional
+            Duration of timer that interrupt vtkRenderWindowInteractor in
+            milliseconds.
 
         force_redraw : bool, optional
             Call vtkRenderWindowInteractor.Render() immediately.
@@ -159,18 +186,21 @@ class PlotClass(object):
         if stime <= 0:
             stime = 1
 
-        if force_redraw:
-            self.iren.Render()
-
         curr_time = time.time()
         if PlotClass.last_update_time > curr_time:
             PlotClass.last_update_time = curr_time
 
-        if (curr_time - PlotClass.last_update_time) > (1.0 / self.iren.GetDesiredUpdateRate()):
+        update_rate = self.iren.GetDesiredUpdateRate()
+        if (curr_time - PlotClass.last_update_time) > (1.0/update_rate):
             self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
+            self.Render()
             PlotClass.last_update_time = curr_time
+        else:
+            if force_redraw:
+                self.iren.Render()
+
 
     def AddMesh(
             self,
@@ -319,12 +349,8 @@ class PlotClass(object):
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
 
-                # change direction of colormap
-                # if flipscalars:
-                #     table.ForceBuild()
-                #     ctable = VN.vtk_to_numpy(table.GetTable())
-                    
-                #     table.SetTable(VN.numpy_to_vtk(ctable))
+            else:  # no colormap specifide
+                self.mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
 
         else:
             self.mapper.SetScalarModeToUseFieldData()
@@ -907,7 +933,8 @@ class PlotClass(object):
         return labelMapper
 
     def AddPoints(self, points, color=None, psize=5, scalars=None,
-                  rng=None, name='', opacity=1, stitle='', flipscalars=False):
+                  rng=None, name='', opacity=1, stitle='', flipscalars=False,
+                  colormap=None, ncolors=256):
         """ Adds a point actor or numpy points array to plotting object """
 
         # select color
@@ -934,9 +961,9 @@ class PlotClass(object):
         mapper.SetInputData(self.points)
 
         if np.any(scalars):
-            # vtkInterface.AddPointScalars(self.points, scalars, name, True)
             self.points.AddPointScalars(scalars, name, True)
             mapper.SetScalarModeToUsePointData()
+            mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
 
             if not rng:
                 rng = [np.min(scalars), np.max(scalars)]
@@ -946,10 +973,23 @@ class PlotClass(object):
             if np.any(rng):
                 mapper.SetScalarRange(rng[0], rng[1])
 
-            # Flip if requested
-            # if flipscalars:
-                
-                # mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
+        # Flip if requested
+        table = mapper.GetLookupTable()
+        if colormap is not None:
+            try:
+                from matplotlib.cm import get_cmap
+            except ImportError:
+                raise Exception('colormap requires matplotlib')
+            cmap = get_cmap(colormap)
+            ctable = cmap(np.linspace(0, 1, ncolors))*255
+            ctable = ctable.astype(np.uint8)
+            if flipscalars:
+                ctable = np.ascontiguousarray(ctable[::-1])
+            table.SetTable(VN.numpy_to_vtk(ctable))
+
+        else:  # no colormap specifide
+            mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
+
 
         # Create Actor
         actor = vtk.vtkActor()
@@ -1090,12 +1130,12 @@ class PlotClass(object):
         if pos:
             legend.SetPosition2(pos[0], pos[1])
 
-        c = 0
         legendface = MakeLegendPoly()
-        for entry in entries:
-            color = ParseColor(entry[1])
-            legend.SetEntry(c, legendface, entry[0], color)
-            c += 1
+        for i, (text, color) in enumerate(entries):
+            # try:
+            legend.SetEntry(i, legendface, text, ParseColor(color))
+            # except:
+                # import pdb; pdb.set_trace()
 
         legend.UseBackgroundOn()
         legend.SetBackgroundColor(bcolor)
@@ -1146,8 +1186,8 @@ class PlotClass(object):
         self.renWin.SetSize(window_size[0], window_size[1])
 
         # Render
+        self.renWin.Render()
         if interactive and (not self.off_screen):
-            self.renWin.Render()
             self.iren.Initialize()
 
             if not interactive_update:
@@ -1158,8 +1198,8 @@ class PlotClass(object):
                     self.Close()
                     raise KeyboardInterrupt
 
-        else:
-            self.renWin.Render()
+        # else:
+        #     self.renWin.Render()
 
         # Get camera position before closing
         cpos = self.GetCameraPosition()
@@ -1220,20 +1260,24 @@ class PlotClass(object):
         self.marker.SetOrientationMarker(axes)
         self.marker.SetEnabled(1)
 
-    def TakeScreenShot(self, filename=None):
+    def TakeScreenShot(self, filename=None, transparent_background=False):
         """
         Takes screenshot at current camera position
 
         Parameters
         ----------
         filename : str, optional
-            Filename to write image to.
+            Location to write image to.
+
+        transparent_background : bool, optional
+            Makes the background transparent.  Default False.
 
         Returns
         -------
         img :  numpy.ndarray
             Array containing pixel RGB and alpha.  Sized:
-            [Window height x Window width x 4]
+            [Window height x Window width x 3] for transparent_background=False
+            [Window height x Window width x 4] for transparent_background=True
 
         """
         # check render window exists
@@ -1244,30 +1288,31 @@ class PlotClass(object):
         # create image filter
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.renWin)
-        ifilter.SetInputBufferTypeToRGBA()
+        if transparent_background:
+            ifilter.SetInputBufferTypeToRGBA()
+        else:
+            ifilter.SetInputBufferTypeToRGB()
         ifilter.ReadFrontBufferOff()
         ifilter.Update()
+
         image = ifilter.GetOutput()
         origshape = image.GetDimensions()
 
         img_array = vtkInterface.GetPointScalars(image, 'ImageScalars')
-
-        # overwrite background
-        background = self.renderer.GetBackground()
-        mask = img_array[:, -1] == 0
-        img_array[mask, 0] = int(255 * background[0])
-        img_array[mask, 1] = int(255 * background[1])
-        img_array[mask, 2] = int(255 * background[2])
-        img_array[mask, -1] = 255
-
-        mask = img_array[:, -1] != 255
-        img_array[mask, -1] = 255
+        if not img_array.size:
+            raise Exception('Empty image.  Have you run Plot first?')
 
         # write screenshot to file
         img = img_array.reshape((origshape[1], origshape[0], -1))[::-1, :, :]
         if filename:
             image = Image.fromarray(img)
             image.save(filename)
+
+        # could also use vtk's build-in writer
+        # iwriter = vtk.vtkPNGWriter()
+        # iwriter.SetFileName(filename)
+        # iwriter.SetInputConnection(ifilter.GetOutputPort())
+        # iwriter.Write()
 
         return img
 
@@ -1347,8 +1392,12 @@ def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
 
     if legend_entries:
         legend = []
-        for i in range(len(legend_entries)):
-            legend.append([legend_entries[i], colors[i]])
+        if isinstance(legend_entries, range):
+            for c, i in enumerate(legend_entries):
+                legend.append([str(legend_entries[i]), colors[c]])
+        else:
+            for i in range(len(legend_entries)):
+                legend.append([legend_entries[i], colors[i]])
 
         pobj.AddLegend(legend)
 
