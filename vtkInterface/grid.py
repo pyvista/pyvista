@@ -674,7 +674,7 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         Load a structured grid from a file.
 
         The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vtu will select the VTK
+        extension will use the legacy reader, while .vts will select the VTK
         XML reader.
 
         Parameters
@@ -688,13 +688,13 @@ class StructuredGrid(vtkStructuredGrid, Grid):
             raise Exception('%s does not exist')
 
         # Check file extention
-        if '.vtu' in filename:
+        if '.vts' in filename:
             legacy_writer = False
         elif '.vtk' in filename:
             legacy_writer = True
         else:
             raise Exception(
-                'Extension should be either ".vtu" (xml) or ".vtk" (legacy)')
+                'Extension should be either ".vts" (xml) or ".vtk" (legacy)')
 
         # Create reader
         if legacy_writer:
@@ -717,7 +717,7 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         filename : str
             Filename of grid to be written.  The file extension will select the
             type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vtu" will select the VTK XML writer.
+            ".vts" will select the VTK XML writer.
 
         binary : bool, optional
             Writes as a binary file by default.  Set to False to write ASCII.
@@ -734,11 +734,11 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         if '.vtk' in filename:
             writer = vtk.vtkStructuredGridWriter()
             legacy = True
-        elif '.vtu' in filename:
+        elif '.vts' in filename:
             writer = vtk.vtkXMLStructuredGridWriter()
             legacy = False
         else:
-            raise Exception('Extension should be either ".vtu" (xml) or' +
+            raise Exception('Extension should be either ".vts" (xml) or' +
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
