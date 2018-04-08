@@ -66,6 +66,10 @@ def Plot(mesh, **args):
     # create plotting object and add mesh
     plobj = PlotClass(off_screen=off_screen)
 
+    if 'background' in args:
+        plobj.SetBackground(args['background'])
+        del args['background']
+
     if isinstance(mesh, np.ndarray):
         plobj.AddPoints(mesh, **args)
     else:
@@ -200,7 +204,6 @@ class PlotClass(object):
         else:
             if force_redraw:
                 self.iren.Render()
-
 
     def AddMesh(
             self,
@@ -349,8 +352,11 @@ class PlotClass(object):
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
 
-            else:  # no colormap specifide
-                self.mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
+            else:  # no colormap specified
+                if flipscalars:
+                    self.mapper.GetLookupTable().SetHueRange(0.0, 0.66667)
+                else:
+                    self.mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
 
         else:
             self.mapper.SetScalarModeToUseFieldData()
