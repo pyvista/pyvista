@@ -347,7 +347,10 @@ class Common(object):
         """
         vtkarr = self.GetCellData().GetArray(name)
         if vtkarr:
-            return vtk_to_numpy(vtkarr)
+            array = vtk_to_numpy(vtkarr)
+            if array.dtype == np.int8:
+                array = array.astype(np.bool)
+            return array
         else:
             return None
 
@@ -372,11 +375,13 @@ class Common(object):
 
         """
         if scalars.shape[0] != self.GetNumberOfCells():
-            raise Exception('Number of scalars must match the number of ' +
-                            'cells')
+            raise Exception('Number of scalars must match the number of cells')
 
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
+
+        if scalars.dtype == np.bool:
+            scalars = scalars.astype(np.int8)
 
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
