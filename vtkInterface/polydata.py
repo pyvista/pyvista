@@ -263,7 +263,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
                        origID,
                        assume_unique=True)
 
-    def BooleanCut(self, cut):
+    def BooleanCut(self, cut, tolerance=1E-5):
         """
         Performs a Boolean cut using another mesh.
 
@@ -282,6 +282,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         bfilter.SetInputData(1, cut)
         bfilter.SetInputData(0, self)
         bfilter.ReorientDifferenceCellsOff()
+        bfilter.SetTolerance(tolerance)
         bfilter.Update()
         return PolyData(bfilter.GetOutput())
 
@@ -549,13 +550,13 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         Subdivision filter appears to fail for multiple part meshes.  Should
         be one single mesh.
 
-
         Parameters
         ----------
         nsub : int
             Number of subdivisions.  Each subdivision creates 4 new triangles,
             so the number of resulting triangles is nface*4**nsub where nface
             is the current number of faces.
+
         subfilter : string, optional
             Can be one of the following: 'butterfly', 'loop', 'linear'
 

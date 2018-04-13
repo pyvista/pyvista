@@ -63,6 +63,13 @@ def Plot(mesh, **args):
     else:
         window_size = [1024, 768]
 
+    # add bounds
+    if 'show_bounds' in args:
+        show_bounds = True
+        del args['show_bounds']
+    else:
+        show_bounds = False
+
     # create plotting object and add mesh
     plobj = PlotClass(off_screen=off_screen)
 
@@ -74,6 +81,9 @@ def Plot(mesh, **args):
         plobj.AddPoints(mesh, **args)
     else:
         plobj.AddMesh(mesh, **args)
+
+    if show_bounds:
+        plobj.AddBoundsAxes()
 
     # Set camera
     if cpos:
@@ -97,6 +107,48 @@ def PlotArrows(cent, direction):
     plotter = PlotClass()
     plotter.AddArrows(cent, direction)
     return plotter.Plot()
+
+
+# class PickPointInteractor(vtk.vtkInteractorStyleTrackballCamera):
+#     """ Stores point to self when left button is clicked after b is pressed """
+
+#     def __init__(self, renderer, renWin, CallBack=None):
+#         self.AddObserver('KeyPressEvent', self.OnKeyPress)
+
+#         self.renderer = renderer
+#         self.renWin = renWin
+#         self.CallBack = CallBack
+
+#     def OnKeyPress(self, obj, eventType):
+#         """ Run whenever a key is pressed """
+#         key = self.GetInteractor().GetKeySym()
+#         if key == 'p':
+#             self.observer = self.AddObserver('LeftButtonPressEvent', self.OnLeftButtonDown)
+
+#     def OnLeftButtonDown(self, obj, eventType):
+
+#         # Get 2D click location on window
+#         clickPos = self.GetInteractor().GetEventPosition()
+
+#         # Get corresponding click location in the 3D plot
+#         picker = vtk.vtkWorldPointPicker()
+#         picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
+#         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
+
+#         # Run callback function when complete
+#         if self.CallBack:
+#             self.CallBack(self)
+
+#     # def EnablePointPicking(self, CallBack):
+#     #     """ Enables blender interactor """
+#     #     self.inStyle = PickPointInteractor(self.ren, self.vtkWindow, CallBack)
+#     #     self.iren.SetInteractorStyle(self.inStyle)
+#     #     self.iren.Initialize()
+
+#     def EnableDefaultInteractor(self):
+#         """ Enables default trackball interactor """
+#         self.iren.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
+#         self.iren.Initialize()
 
 
 class PlotClass(object):
@@ -172,6 +224,23 @@ class PlotClass(object):
         key = self.iren.GetKeySym()
         if key == 'q':
             self.q_pressed = True
+        elif key == 'b':
+            self.observer = self.iren.AddObserver('LeftButtonPressEvent',
+                                                  self.OnLeftButtonDown)
+
+    def OnLeftButtonDown(self, obj, eventType):
+
+        # Get 2D click location on window
+        clickPos = self.iren.GetEventPosition()
+
+        # Get corresponding click location in the 3D plot
+        picker = vtk.vtkWorldPointPicker()
+        picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
+        self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
+
+        self.iren.AddObserver('LeftButtonPressEvent',
+                              self.OnLeftButtonDown)
+
 
     def Update(self, stime=1, force_redraw=True):
         """
@@ -221,7 +290,8 @@ class PlotClass(object):
             lighting=False,
             ncolors=256,
             interpolatebeforemap=False,
-            colormap=None):
+            colormap=None,
+            **kwargs):
         """
         Adds a vtk unstructured, structured, or polymesh to the plotting object
 
@@ -332,7 +402,7 @@ class PlotClass(object):
             # Set scalar range
             if not rng:
                 rng = [np.nanmin(scalars), np.nanmax(scalars)]
-            elif isinstance(rng, float):
+            elif isinstance(rng, float) or isinstance(rng, int):
                 rng = [-rng, rng]
 
             if np.any(rng):
@@ -728,6 +798,7 @@ class PlotClass(object):
             del self.renWin
 
         if hasattr(self, 'iren'):
+            self.iren.RemoveAllObservers()
             del self.iren
 
         if hasattr(self, 'textActor'):
@@ -1260,11 +1331,15 @@ class PlotClass(object):
 
     def AddAxes(self):
         """ Add axes actor at origin """
-        axes = vtk.vtkAxesActor()
-        self.marker = vtk.vtkOrientationMarkerWidget()
-        self.marker.SetInteractor(self.iren)
-        self.marker.SetOrientationMarker(axes)
-        self.marker.SetEnabled(1)
+        pass  # causes segfault
+        # axes = vtk.vtkAxesActor()
+        # self.marker = vtk.vtkOrientationMarkerWidget()
+        # self.marker.SetInteractor(self.iren)
+        # self.marker.SetOrientationMarker(axes)
+        # self.marker.SetEnabled(1)
+
+        # axes = vtk.vtkAxesActor()
+        # widget = vtk.vtkOrientationMarkerWidget()
 
     def TakeScreenShot(self, filename=None, transparent_background=False):
         """

@@ -522,9 +522,14 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         # Convert to vtk indices
         if not isinstance(ind, np.ndarray):
             ind = np.array(ind, np.int64)
-        elif ind.dtype != np.int64:
+
+        if ind.dtype == np.bool:
+            ind = ind.nonzero()[0]
+
+        if ind.dtype != np.int64:
             ind = ind.astype(np.int64)
-        elif not ind.flags.c_contiguous:
+
+        if not ind.flags.c_contiguous:
             ind = np.ascontiguousarray(ind)
 
         vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=True)
