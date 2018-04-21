@@ -488,7 +488,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             writer.SetFileTypeToASCII()
         writer.Write()
 
-    def PlotCurvature(self, curvtype='mean', rng=None):
+    def PlotCurvature(self, curvtype='mean', rng=None, colormap=None):
         """
         Plots curvature
 
@@ -510,7 +510,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         c = self.Curvature(curvtype)
 
         # Return camera posision
-        return vtkInterface.Plot(self, scalars=c, rng=rng,
+        return vtkInterface.Plot(self, scalars=c, rng=rng, colormap=colormap,
                                  stitle='%s\nCurvature' % curvtype)
 
     def TriFilter(self):

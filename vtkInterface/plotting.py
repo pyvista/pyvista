@@ -21,7 +21,7 @@ try:
     font_keys = {'arial': vtk.VTK_ARIAL,
                  'courier': vtk.VTK_COURIER,
                  'times': vtk.VTK_TIMES}
-except:
+except ImportError:
     pass
 
 
@@ -107,48 +107,6 @@ def PlotArrows(cent, direction):
     plotter = PlotClass()
     plotter.AddArrows(cent, direction)
     return plotter.Plot()
-
-
-# class PickPointInteractor(vtk.vtkInteractorStyleTrackballCamera):
-#     """ Stores point to self when left button is clicked after b is pressed """
-
-#     def __init__(self, renderer, renWin, CallBack=None):
-#         self.AddObserver('KeyPressEvent', self.OnKeyPress)
-
-#         self.renderer = renderer
-#         self.renWin = renWin
-#         self.CallBack = CallBack
-
-#     def OnKeyPress(self, obj, eventType):
-#         """ Run whenever a key is pressed """
-#         key = self.GetInteractor().GetKeySym()
-#         if key == 'p':
-#             self.observer = self.AddObserver('LeftButtonPressEvent', self.OnLeftButtonDown)
-
-#     def OnLeftButtonDown(self, obj, eventType):
-
-#         # Get 2D click location on window
-#         clickPos = self.GetInteractor().GetEventPosition()
-
-#         # Get corresponding click location in the 3D plot
-#         picker = vtk.vtkWorldPointPicker()
-#         picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
-#         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
-
-#         # Run callback function when complete
-#         if self.CallBack:
-#             self.CallBack(self)
-
-#     # def EnablePointPicking(self, CallBack):
-#     #     """ Enables blender interactor """
-#     #     self.inStyle = PickPointInteractor(self.ren, self.vtkWindow, CallBack)
-#     #     self.iren.SetInteractorStyle(self.inStyle)
-#     #     self.iren.Initialize()
-
-#     def EnableDefaultInteractor(self):
-#         """ Enables default trackball interactor """
-#         self.iren.SetInteractorStyle(vtk.vtkInteractorStyleTrackballCamera())
-#         self.iren.Initialize()
 
 
 class PlotClass(object):
@@ -240,7 +198,6 @@ class PlotClass(object):
 
         self.iren.AddObserver('LeftButtonPressEvent',
                               self.OnLeftButtonDown)
-
 
     def Update(self, stime=1, force_redraw=True):
         """
@@ -1389,16 +1346,15 @@ class PlotClass(object):
             image = Image.fromarray(img)
             image.save(filename)
 
-        # could also use vtk's build-in writer
-        # iwriter = vtk.vtkPNGWriter()
-        # iwriter.SetFileName(filename)
-        # iwriter.SetInputConnection(ifilter.GetOutputPort())
-        # iwriter.Write()
-
         return img
 
     def Render(self):
         self.renWin.Render()
+
+    def SetFocus(self, point):
+        """ sets focus to a point """
+        camera = self.renderer.GetActiveCamera()
+        camera.SetFocalPoint(point)
 
     def __del__(self):
         log.debug('Object collected')
