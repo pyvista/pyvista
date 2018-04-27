@@ -1,5 +1,5 @@
 # major, minor, patch
-version_info = 0, 6, 9
+version_info = 0, 6, 10
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))
