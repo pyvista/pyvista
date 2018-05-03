@@ -12,7 +12,7 @@ try:
     import vtk
     from vtk.util.numpy_support import vtk_to_numpy
     from vtk.util.numpy_support import numpy_to_vtk
-except:
+except ImportError:
     pass
 
 
@@ -29,6 +29,7 @@ class Common(object):
 
     @points.setter
     def points(self, newpoints):
+        """ set the new points without copying """
         if not isinstance(newpoints, np.ndarray):
             raise TypeError('Points must be a numpy array')
         self.SetNumpyPoints(newpoints, False)

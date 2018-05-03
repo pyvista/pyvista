@@ -488,7 +488,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             writer.SetFileTypeToASCII()
         writer.Write()
 
-    def PlotCurvature(self, curvtype='mean', rng=None, colormap=None):
+    def PlotCurvature(self, curvtype='mean', **kwargs):
         """
         Plots curvature
 
@@ -502,16 +502,19 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             - Maximum
             - Minimum
 
-        rng : list, optional
-            Minimum and maximum limits on curvature plot
+        **kwargs : optional
+            See help(vtkInterface.Plot)
 
+        Returns
+        -------
+        cpos : list
+            List of camera position, focal point, and view up
         """
         # Get curvature values and plot
         c = self.Curvature(curvtype)
 
         # Return camera posision
-        return vtkInterface.Plot(self, scalars=c, rng=rng, colormap=colormap,
-                                 stitle='%s\nCurvature' % curvtype)
+        return vtkInterface.Plot(self, scalars=c, stitle='%s\nCurvature' % curvtype, **kwargs)
 
     def TriFilter(self):
         """

@@ -9,12 +9,11 @@ import vtkInterface
 import imageio
 import time
 import logging
-from PIL import Image
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-
+# for readthedocs
 try:
     import vtk
     from vtk.util import numpy_support as VN
@@ -27,10 +26,30 @@ except ImportError:
 
 def Plot(mesh, **args):
     """
-    Convenience plotting function for a vtk object
+    Convenience plotting function for a vtk object.
 
-    Includes extra argument 'screenshot', otherwise see :
-    help(vtkInterface.PlotClass.AddMesh)
+    Parameters
+    ----------
+    mesh : vtk object
+        vtk object to plot.
+
+    **args : various, optional
+        See help(vtkInterface.PlotClass.AddMesh)
+
+    screenshot : str, optional
+        Saves screenshot to file when enabled.  See:
+        help(vtkinterface.PlotClass.TakeScreenShot).  Default disabled.
+
+    window_size : list, optional
+        Window size in pixels.  Defaults to [1024, 768]
+
+    show_bounds : bool, optional
+        Shows mesh bounds when True.  Default False.
+
+    Returns
+    -------
+    cpos : list
+        List of camera position, focal point, and view up.
 
     """
     if 'off_screen' in args:
@@ -81,6 +100,9 @@ def Plot(mesh, **args):
         plobj.AddPoints(mesh, **args)
     else:
         plobj.AddMesh(mesh, **args)
+
+    if 'text' in args:
+        plobj.AddText(args['text'])
 
     if show_bounds:
         plobj.AddBoundsAxes()
@@ -306,7 +328,7 @@ class PlotClass(object):
             Flip direction of colormap.
 
         lighting : bool, optional
-            Enable or disable Z direction lighting.  True by default.
+            Enable or disable view direction lighting.  Default False.
 
         ncolors : int, optional
             Number of colors to use when displaying scalars.  Default 256.
@@ -1231,9 +1253,6 @@ class PlotClass(object):
                 except KeyboardInterrupt:
                     self.Close()
                     raise KeyboardInterrupt
-
-        # else:
-        #     self.renWin.Render()
 
         # Get camera position before closing
         cpos = self.GetCameraPosition()
