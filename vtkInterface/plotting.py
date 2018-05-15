@@ -192,9 +192,6 @@ class PlotClass(object):
         self.ifilter.SetInputBufferTypeToRGB()
         self.ifilter.ReadFrontBufferOff()
 
-        # initialize movie type
-        self.movietype = None
-
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
@@ -826,24 +823,8 @@ class PlotClass(object):
     def OpenMovie(self, filename, framerate=24, codec='libx264',
                   preset='medium'):
         """ Establishes a connection to the ffmpeg writer """
-
-        # Attempt to load moviepy
-        try:
-            import moviepy.video.io.ffmpeg_writer as mwrite
-        except BaseException:
-            print('\n\nTo use this feature install moviepy and ffmpeg\n\n')
-            import moviepy.video.io.ffmpeg_writer as mwrite
-
         # Create movie object and check if render window is active
-        self.window_size = self.renWin.GetSize()
-        if not self.window_size[0]:
-            raise Exception('Run Plot first')
-
-        self.mwriter = mwrite.FFMPEG_VideoWriter(filename, self.window_size,
-                                                 framerate, codec=codec,
-                                                 preset=preset)
-
-        self.movietype = 'mp4'
+        self.mwriter = imageio.get_writer(filename, fps=framerate)
 
     def OpenGif(self, filename):
         if filename[-3:] != 'gif':
@@ -852,10 +833,7 @@ class PlotClass(object):
 
     def WriteFrame(self):
         """ Writes a single frame to the movie file """
-        if self.movietype is 'mp4':
-            self.mwriter.write_frame(self.GetImage())
-        else:
-            self.mwriter.append_data(self.GetImage())
+        self.mwriter.append_data(self.GetImage())
 
     def GetImage(self):
         """ Returns an image array of current render window """
@@ -1307,6 +1285,7 @@ class PlotClass(object):
 
     def AddAxes(self):
         """ Add axes actor at origin """
+        raise Exception('Disabled')
         pass  # causes segfault
         # axes = vtk.vtkAxesActor()
         # self.marker = vtk.vtkOrientationMarkerWidget()
@@ -1317,13 +1296,13 @@ class PlotClass(object):
         # axes = vtk.vtkAxesActor()
         # widget = vtk.vtkOrientationMarkerWidget()
 
-    def TakeScreenShot(self, filename=None, transparent_background=False):
+    def TakeScreenShot(self, filename, transparent_background=False):
         """
         Takes screenshot at current camera position
 
         Parameters
         ----------
-        filename : str, optional
+        filename : str
             Location to write image to.
 
         transparent_background : bool, optional
@@ -1342,28 +1321,22 @@ class PlotClass(object):
             raise Exception('Render window has been closed.\n'
                             'Run again with Plot(autoclose=False)')
 
-        # create image filter
-        ifilter = vtk.vtkWindowToImageFilter()
-        ifilter.SetInput(self.renWin)
+        # configure image filter
         if transparent_background:
-            ifilter.SetInputBufferTypeToRGBA()
+            self.ifilter.SetInputBufferTypeToRGBA()
         else:
-            ifilter.SetInputBufferTypeToRGB()
-        ifilter.ReadFrontBufferOff()
-        ifilter.Update()
+            self.ifilter.SetInputBufferTypeToRGB()
 
-        image = ifilter.GetOutput()
-        origshape = image.GetDimensions()
+        # this needs to be called twice for some reason,  debug later
+        img = self.GetImage()
+        img = self.GetImage()
 
-        img_array = vtkInterface.GetPointScalars(image, 'ImageScalars')
-        if not img_array.size:
+        if not img.size:
             raise Exception('Empty image.  Have you run Plot first?')
 
         # write screenshot to file
-        img = img_array.reshape((origshape[1], origshape[0], -1))[::-1, :, :]
         if filename:
-            image = Image.fromarray(img)
-            image.save(filename)
+            imageio.imwrite(filename, img)
 
         return img
 

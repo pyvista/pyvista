@@ -9,16 +9,17 @@ Documentation
 -------------
 Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed installation and usage details.
 
+Also see the `wiki <https://github.com/akaszynski/vtkInterface/wiki>`_ for brief code snippets.
 
 Installation
 ------------
-If you have a working copy of VTK 7.0 or newer, installation is simply::
+Installation is simply::
 
     pip install vtkInterface
     
 You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
 
-See the `Installation <http://vtkinterface.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details.
+See the `Installation <http://vtkinterface.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details if the installation through pip doesn't work out.
 
 
 Quick Examples
@@ -35,7 +36,9 @@ Loading a mesh is trivial
     mesh = vtkInterface.PolyData('airplane.ply')
     mesh.Plot(color='orange')
     
-.. image:: /docs/images/airplane.png
+.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/airplane.png
+	   ..
+	      /docs/images/airplane.png
 
 In fact, the code to generate the previous screenshot was created with::
 
@@ -90,7 +93,7 @@ This example creates a simple surface grid and plots the resulting grid and its 
     # Plot mean curvature
     grid.PlotCurvature()
 
-.. image:: /docs/images/curvature.png
+.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/curvature.png
 
 Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array:
 
@@ -148,4 +151,4 @@ This example shows the versatility of the plotting object by generating a moving
     # Close movie and delete object
     plobj.Close()
 
-.. image:: /docs/images/wave.gif
+.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/wave.gif

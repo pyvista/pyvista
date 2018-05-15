@@ -447,8 +447,6 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         Writes a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh file.
-        Email author to suggest support for another filetype.
-
 
         Parameters
         ----------
@@ -460,7 +458,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         ftype : str, optional
             Filetype.  Inferred from filename unless specified with a three
             character string.  Can be one of the following: 'ply',  'stl', or
-            'vtk'
+            'vtk'.
 
         Notes
         -----
@@ -533,7 +531,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         trifilter.Update()
         return PolyData(trifilter.GetOutput())
 
-    def Subdivide(self, nsub, subfilter='linear'):
+    def Subdivide(self, nsub, subfilter='linear', inplace=False):
         """
         Increase the number of triangles in a single, connected triangular
         mesh.
@@ -591,7 +589,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         sfilter.SetNumberOfSubdivisions(nsub)
         sfilter.SetInputData(self)
         sfilter.Update()
-        return PolyData(sfilter.GetOutput())
+        submesh = PolyData(sfilter.GetOutput())
+        if inplace:
+            self.OverwriteMesh(submesh)
+        else:
+            return submesh
 
     def ExtractEdges(self, feature_angle=30, boundary_edges=True,
                      non_manifold_edges=True, feature_edges=True,
