@@ -37,8 +37,6 @@ Loading a mesh is trivial
     mesh.Plot(color='orange')
     
 .. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/airplane.png
-	   ..
-	      /docs/images/airplane.png
 
 In fact, the code to generate the previous screenshot was created with::
 
