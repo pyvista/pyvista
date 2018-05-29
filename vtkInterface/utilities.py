@@ -229,3 +229,56 @@ def MakeVTKPointsMesh(points):
     pdata.SetPoints(vtkPoints)
     pdata.SetVerts(vtkcells)
     return pdata
+
+def TriUnitNormal(p1, p2, p3):
+    ''' Retrieve the unit normal of a triangle polygon.
+
+    Parameters
+    ----------
+    p1, p2, p3 : float, float, float
+        Coordinates for triangle vertices
+
+    Returns
+    -------
+    normal : float
+        Unit normal for triangle
+    '''
+    x = np.linalg.det([[1, p1[1], p1[2]],
+                       [1, p2[1], p2[2]],
+                       [1, p3[1], p3[2]]])
+    y = np.linalg.det([[p1[0], 1, p1[2]],
+                       [p2[0], 1, p2[2]],
+                       [p3[0], 1, p3[2]]])
+    z = np.linalg.det([[p1[0], p1[1], 1],
+                       [p2[0], p2[1], 1],
+                       [p3[0], p3[1], 1]])
+
+    magnitude = (x**2 + y**2 + z**2)**.5
+    normal = np.array([x, y, z]) / magnitude
+
+    return normal
+
+def TriangleArea(p1, p2, p3):
+    ''' Calculate triangle area using the Shoelace formula.
+
+    Parameters
+    ----------
+    p1, p2, p3 : float, float, float
+        Coordinates for triangle vertices
+
+    Returns
+    ----------
+    result : float
+        Area of triangle
+    '''
+
+    poly = np.array([p1, p2, p3])
+    total = np.zeros((3,))
+    for ii in range(len(poly)):
+        vi1 = poly[ii]
+        vi2 = poly[(ii + 1) % len(poly)]
+        prod = np.cross(vi1, vi2)
+        total += prod
+    result = np.abs(np.dot(total, TriUnitNormal(*poly))) / 2
+
+    return result

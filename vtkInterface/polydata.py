@@ -765,107 +765,27 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         # Must rebuild or subsequent operations on this mesh will segfault
         self.BuildCells()
 
-    def GenerateNormals(self, cell_normals=False, point_normals=True,
-                        split_vertices=True, flip_normals=False,
-                        consistent_normals=True, auto_orient_normals=False,
-                        non_manifold_traversal=True, feature_angle=30.0):
-        """Generate point and/or cell normals for a mesh.
-
-        The filter can reorder polygons to insure consistent orientation across
-        polygon neighbors. Sharp edges can be split (TODO) and points duplicated
-        with separate normals to give crisp (rendered) surface definition. It is
-        also possible to globally flip the normal orientation.
-
-        The algorithm works by determining normals for each polygon and then
-        averaging them at shared points. When sharp edges are present, the edges
-        are split and new points generated to prevent blurry edges (due to
-        Gouraud shading).
+    def CenterOfMass(self, scalars_weight=False):
+        """ Returns the coordinates for the center of mass of the mesh.
 
         Parameters
         ----------
-        cell_normals : bool, optional
-            Calculation of cell normals. Defaults to False.
-
-        point_normals  : bool, optional
-            Calculation of point normals. Defaults to True.
-
-        split_vertices  : bool, optional
-            Splitting of sharp edges. Defaults to True.
-
-        flip_normals : bool, optional
-            Set global flipping of normal orientation. Flipping modifies both
-            the normal direction and the order of a cell's points. Defaults to
-            False.
-
-            TODO: Probably need to update point ordering in PolyData when
-                setting flip_normals to True.
-
-        consistent_normals  : bool, optional
-            Enforcement of consistent polygon ordering. Defaults to True.
-
-        auto_orient_normals : bool, optional
-            Turn on/off the automatic determination of correct normal
-            orientation. NOTE: This assumes a completely closed surface (i.e. no
-            boundary edges) and no non-manifold edges. If these constraints do
-            not hold, all bets are off. This option adds some computational
-            complexity, and is useful if you don't want to have to inspect the
-            rendered image to determine whether to turn on the FlipNormals flag.
-            However, this flag can work with the FlipNormals flag, and if both
-            are set, all the normals in the output will point "inward". Defaults
-            to False.
-
-        non_manifold_traversal : bool, optional
-            Turn on/off traversal across non-manifold edges. Changing this may
-            prevent problems where the consistency of polygonal ordering is
-            corrupted due to topological loops. Defaults to True.
-
-        feature_angle : float, optional
-            The angle that defines a sharp edge. If the difference in angle
-            across neighboring polygons is greater than this value, the shared
-            edge is considered "sharp". Defaults to 30.0.
-
-        Note
-        ----
-        Previous arrays named "Normals" will be overwritten.
-
-        Normals are computed only for polygons and triangle strips. Normals are
-        not computed for lines or vertices.
-
-        Triangle strips are broken up into triangle polygons. You may want to
-        restrip the triangles.
+        scalars_weight : bool, optional
+            Flag for using the mesh scalars as weights. Defaults to False.
 
         Return
         ------
-        no return :
-            Adds point and/or cell scalar data to PolyData object.
-
+        center : np.ndarray, float
+            Coordinates for the center of mass.
         """
 
-        normal = vtk.vtkPolyDataNormals()
-        normal.SetComputeCellNormals(cell_normals)
-        normal.SetComputePointNormals(point_normals)
-        normal.SetSplitting(split_vertices) # TODO: Vertex splitting not currently working. (Issue with vtkInterface.PolyData.AddPointScalars.)
-        normal.SetFlipNormals(flip_normals)
-        normal.SetConsistency(consistent_normals)
-        normal.SetAutoOrientNormals(auto_orient_normals)
-        normal.SetNonManifoldTraversal(non_manifold_traversal)
-        normal.SetFeatureAngle(feature_angle)
+        comfilter = vtk.vtkCenterOfMass()
+        comfilter.SetInputData(self)
+        comfilter.SetUseScalarsAsWeights(scalars_weight)
+        comfilter.Update()
+        center = np.array(comfilter.GetCenter())
 
-        normal.SetInputData(self)
-        normal.Update()
-
-        if cell_normals:
-            cnorms = normal.GetOutput().GetCellData().GetArray('Normals')
-            self.AddCellScalars(vtk_to_numpy(cnorms), 'Normals', setactive=True,
-                                deep=True)
-            self.GetCellData().SetNormals(cnorms)
-
-        if point_normals:
-            pnorms = normal.GetOutput().GetPointData().GetArray('Normals')
-            self.AddPointScalars(vtk_to_numpy(pnorms), 'Normals',
-                                 setactive=True, deep=True)
-            self.GetPointData().SetNormals(pnorms)
-
+        return center
 
     def ClipPlane(self, origin, normal, value=0):
       """Clip a vtkInterface.PolyData or vtk.vtkPolyData with a plane.
@@ -1004,6 +924,33 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         clean.Update()
 
         self.OverwriteMesh(clean.GetOutput())
+
+    def SurfaceArea(self):
+        """ Calculates the surface area of the mesh.
+
+        Note
+        ----
+        Assumes triangulated mesh.
+
+        Returns
+        -------
+        area : np.float
+            Total area of the mesh.
+
+        """
+        from utilities import TriangleArea
+
+        faces = self.faces.reshape(-1, 4)[:, 1:4]
+        pts = self.points
+
+        # Get the point coordinates grouped by facet
+        face_coords = np.array([[pts[faces[ii, jj]] for jj in xrange(
+            len(faces[ii]))] for ii in xrange(len(faces))])
+
+        # Area as sum of all triangle components
+        area = np.sum([TriangleArea(*face_coords[ii])
+                       for ii in xrange(len(face_coords))])
+        return area
 
     # def __del__(self):
     #     log.debug('Object collected')
