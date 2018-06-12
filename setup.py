@@ -20,13 +20,13 @@ install_requires = ['numpy',
                     'imageio']
 
 # add vtk if not windows and 2.7
-if os.name == 'nt' and int(sys.version[0]) >= 0:
+if os.name == 'nt' and int(sys.version[0]) < 3:
     warnings.warn('Will need to install VTK manually')
-else:
+elif os.environ.get('READTHEDOCS') == 'True':
     # don't install for readthedocs
-    on_rtd = os.environ.get('READTHEDOCS') == 'True'
-    if not on_rtd:
-        install_requires.append(['vtk'])
+    pass
+else:
+    install_requires.append(['vtk'])
 
 setup(
     name=package_name,

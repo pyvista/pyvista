@@ -643,7 +643,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         featureEdges.Update()
         return PolyData(featureEdges.GetOutput())
 
-    def Decimate(self, target_reduction):
+    def Decimate(self, target_reduction, inplace=False):
         """
         Reduces the number of triangles in a triangular mesh using
         vtkQuadricDecimation.
@@ -669,7 +669,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         decimate.SetInputData(self)
         decimate.SetTargetReduction(target_reduction)
         decimate.Update()
-        return PolyData(decimate.GetOutput())
+
+        if inplace:
+            self.Overwrite(decimate.GetOutput())
+        else:
+            return PolyData(decimate.GetOutput())
 
     def FlipNormals(self):
         """
@@ -684,6 +688,22 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
     def OverwriteMesh(self, mesh):
         """
+        Degenerated.  Use Overwrite
+
+        """
+        # copy points and point data
+        self.SetPoints(mesh.GetPoints())
+        self.GetPointData().DeepCopy(mesh.GetPointData())
+
+        # copy cells and cell data
+        self.SetPolys(mesh.GetPolys())
+        self.GetCellData().DeepCopy(mesh.GetCellData())
+
+        # Must rebuild or subsequent operations on this mesh will segfault
+        self.BuildCells()
+
+    def Overwrite(self, mesh):
+        """
         Overwrites the old mesh data with the new mesh data
 
         Parameters
@@ -692,11 +712,17 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             The overwriting mesh.
 
         """
+        # copy points and point data
         self.SetPoints(mesh.GetPoints())
+        self.GetPointData().DeepCopy(mesh.GetPointData())
+
+        # copy cells and cell data
         self.SetPolys(mesh.GetPolys())
+        self.GetCellData().DeepCopy(mesh.GetCellData())
 
         # Must rebuild or subsequent operations on this mesh will segfault
         self.BuildCells()
+
 
     def Clean(self, point_merging=True, mergtol=None, lines_to_points=True,
               polys_to_lines=True, strips_to_polys=True):

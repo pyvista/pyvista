@@ -46,6 +46,10 @@ def Plot(mesh, **args):
     show_bounds : bool, optional
         Shows mesh bounds when True.  Default False.
 
+    full_screen : bool, optional
+        Opens window in full screen.  When enabled, ignores window_size.
+        Default False.
+
     Returns
     -------
     cpos : list
@@ -57,6 +61,12 @@ def Plot(mesh, **args):
         del args['off_screen']
     else:
         off_screen = False
+
+    if 'full_screen' in args:
+        full_screen = args['full_screen']
+        del args['full_screen']
+    else:
+        full_screen = False
 
     if 'screenshot' in args:
         filename = args['screenshot']
@@ -113,7 +123,8 @@ def Plot(mesh, **args):
 
     cpos = plobj.Plot(window_size=window_size,
                       autoclose=False,
-                      interactive=interactive)
+                      interactive=interactive,
+                      full_screen=full_screen)
 
     # take screenshot
     if filename:
@@ -1166,10 +1177,7 @@ class PlotClass(object):
 
         legendface = MakeLegendPoly()
         for i, (text, color) in enumerate(entries):
-            # try:
             legend.SetEntry(i, legendface, text, ParseColor(color))
-            # except:
-                # import pdb; pdb.set_trace()
 
         legend.UseBackgroundOn()
         legend.SetBackgroundColor(bcolor)
@@ -1183,7 +1191,7 @@ class PlotClass(object):
         return legend
 
     def _plot(self, title=None, window_size=[1024, 768], interactive=True,
-              autoclose=True, interactive_update=False):
+              autoclose=True, interactive_update=False, full_screen=False):
         """
         Creates plotting window
 
@@ -1206,21 +1214,29 @@ class PlotClass(object):
             Disabled by default.  Allows user to non-blocking draw,
             user should call Update() in each iteration.
 
+        full_screen : bool, optional
+            Opens window in full screen.  When enabled, ignores window_size.
+            Default False.
+
         Returns
         -------
         cpos : list
             List of camera position, focal point, and view up
 
         """
-
         if title:
             self.renWin.SetWindowName(title)
 
-        # size window
-        self.renWin.SetSize(window_size[0], window_size[1])
+        # if full_screen:
+        if full_screen:
+            self.renWin.SetFullScreen(True)
+            self.renWin.BordersOn()  # super buggy when disabled
+        else:
+            self.renWin.SetSize(window_size[0], window_size[1])
 
         # Render
         self.renWin.Render()
+
         if interactive and (not self.off_screen):
             self.iren.Initialize()
 
@@ -1241,7 +1257,8 @@ class PlotClass(object):
         return cpos
 
     def Plot(self, title=None, window_size=[1024, 768], interactive=True,
-             autoclose=True, in_background=False, interactive_update=False):
+             autoclose=True, in_background=False, interactive_update=False,
+             full_screen=False):
         """
         Creates plotting window
 
@@ -1264,6 +1281,10 @@ class PlotClass(object):
             Disabled by default.  Allows user to non-blocking draw,
             user should call Update() in each iteration.
 
+        full_screen : bool, optional
+            Opens window in full screen.  When enabled, ignores window_size.
+            Default False.
+
         Returns
         -------
         cpos : list
@@ -1271,7 +1292,12 @@ class PlotClass(object):
 
         """
         def PlotFun():
-            return self._plot(title, window_size, interactive, autoclose, interactive_update)
+            return self._plot(title,
+                              window_size=window_size,
+                              interactive=interactive,
+                              autoclose=autoclose,
+                              interactive_update=interactive_update,
+                              full_screen=full_screen)
 
         if in_background:
             process = Process(target=PlotFun)
