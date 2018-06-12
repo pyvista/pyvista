@@ -561,10 +561,13 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         subfilter : string, optional
             Can be one of the following: 'butterfly', 'loop', 'linear'
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         mesh : Polydata object
-            vtkInterface polydata object.
+            vtkInterface polydata object.  None when inplace=True
 
         Examples
         --------
@@ -572,6 +575,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         >>> import vtkInterface
         >>> mesh = vtkInterface.LoadMesh(examples.planefile)
         >>> submesh = mesh.Subdivide(1, 'loop')
+        >>> mesh.Subdivide(1, 'loop', inplace=True)  # alternatively, update mesh in-place
 
         """
         subfilter = subfilter.lower()
@@ -643,7 +647,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         featureEdges.Update()
         return PolyData(featureEdges.GetOutput())
 
-    def Decimate(self, target_reduction, inplace=False):
+    def Decimate(self, target_reduction, volume_preservation=False,
+                 attribute_error=False, scalars=True, vectors=True,
+                 normals=False, tcoords=True, tensors=True, scalars_weight=0.1,
+                 vectors_weight=0.1, normals_weight=0.1, tcoords_weight=0.1,
+                 tensors_weight=0.1, inplace=True):
         """
         Reduces the number of triangles in a triangular mesh using
         vtkQuadricDecimation.
@@ -653,21 +661,85 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         mesh : vtk.PolyData
             Mesh to decimate
 
-        target_reduction : float Fraction of the original mesh to remove.
+        target_reduction : float
+            Fraction of the original mesh to remove.
             TargetReduction is set to 0.9, this filter will try to reduce
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
 
+        volume_preservation : bool, optional
+            Decide whether to activate volume preservation which greatly reduces
+            errors in triangle normal direction. If off, volume preservation is
+            disabled and if AttributeErrorMetric is active, these errors can be
+            large. Defaults to False.
+
+        attribute_error : bool, optional
+            Decide whether to include data attributes in the error metric. If
+            off, then only geometric error is used to control the decimation.
+            Defaults to False.
+
+        scalars : bool, optional
+            If attribute errors are to be included in the metric (i.e.,
+            AttributeErrorMetric is on), then the following flags control which
+            attributes are to be included in the error calculation. Defaults to
+            True.
+
+        vectors : bool, optional
+            See scalars parameter. Defaults to True.
+
+        normals : bool, optional
+            See scalars parameter. Defaults to False.
+
+        tcoords : bool, optional
+            See scalars parameter. Defaults to True.
+
+        tensors : bool, optional
+            See scalars parameter. Defaults to True.
+
+        scalars_weight : float, optional
+            The scaling weight contribution of the scalar attribute. These
+            values are used to weight the contribution of the attributes towards
+            the error metric. Defaults to 0.1.
+
+        vectors_weight : float, optional
+            See scalars weight parameter. Defaults to 0.1.
+
+        normals_weight : float, optional
+            See scalars weight parameter. Defaults to 0.1.
+
+        tcoords_weight : float, optional
+            See scalars weight parameter. Defaults to 0.1.
+
+        tensors_weight : float, optional
+            See scalars weight parameter. Defaults to 0.1.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         outmesh : vtkInterface.PolyData
-            Decimated mesh
+            Decimated mesh.  None when inplace=True.
 
         """
         # create decimation filter
         decimate = vtk.vtkQuadricDecimation()  # vtkDecimatePro as well
-        decimate.SetInputData(self)
+
+        decimate.SetVolumePreservation(volume_preservation)
+        decimate.SetAttributeErrorMetric(attribute_error)
+        decimate.SetScalarsAttribute(scalars)
+        decimate.SetVectorsAttribute(vectors)
+        decimate.SetNormalsAttribute(normals)
+        decimate.SetTCoordsAttribute(tcoords)
+        decimate.SetTensorsAttribute(tensors)
+        decimate.SetScalarsWeight(scalars_weight)
+        decimate.SetVectorsWeight(vectors_weight)
+        decimate.SetNormalsWeight(normals_weight)
+        decimate.SetTCoordsWeight(tcoords_weight)
+        decimate.SetTensorsWeight(tensors_weight)
         decimate.SetTargetReduction(target_reduction)
+
+        decimate.SetInputData(self)
         decimate.Update()
 
         if inplace:
@@ -723,6 +795,203 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         # Must rebuild or subsequent operations on this mesh will segfault
         self.BuildCells()
 
+    def GenerateNormals(self, cell_normals=False, point_normals=True,
+                        split_vertices=True, flip_normals=False,
+                        consistent_normals=True, auto_orient_normals=False,
+                        non_manifold_traversal=True, feature_angle=30.0):
+        """Generate point and/or cell normals for a mesh.
+
+        The filter can reorder polygons to insure consistent orientation across
+        polygon neighbors. Sharp edges can be split (TODO) and points duplicated
+        with separate normals to give crisp (rendered) surface definition. It is
+        also possible to globally flip the normal orientation.
+
+        The algorithm works by determining normals for each polygon and then
+        averaging them at shared points. When sharp edges are present, the edges
+        are split and new points generated to prevent blurry edges (due to
+        Gouraud shading).
+
+        Parameters
+        ----------
+        cell_normals : bool, optional
+            Calculation of cell normals. Defaults to False.
+
+        point_normals  : bool, optional
+            Calculation of point normals. Defaults to True.
+
+        split_vertices  : bool, optional
+            Splitting of sharp edges. Defaults to True.
+
+        flip_normals : bool, optional
+            Set global flipping of normal orientation. Flipping modifies both
+            the normal direction and the order of a cell's points. Defaults to
+            False.
+
+            TODO: Probably need to update point ordering in PolyData when
+                setting flip_normals to True.
+
+        consistent_normals  : bool, optional
+            Enforcement of consistent polygon ordering. Defaults to True.
+
+        auto_orient_normals : bool, optional
+            Turn on/off the automatic determination of correct normal
+            orientation. NOTE: This assumes a completely closed surface (i.e. no
+            boundary edges) and no non-manifold edges. If these constraints do
+            not hold, all bets are off. This option adds some computational
+            complexity, and is useful if you don't want to have to inspect the
+            rendered image to determine whether to turn on the FlipNormals flag.
+            However, this flag can work with the FlipNormals flag, and if both
+            are set, all the normals in the output will point "inward". Defaults
+            to False.
+
+        non_manifold_traversal : bool, optional
+            Turn on/off traversal across non-manifold edges. Changing this may
+            prevent problems where the consistency of polygonal ordering is
+            corrupted due to topological loops. Defaults to True.
+
+        feature_angle : float, optional
+            The angle that defines a sharp edge. If the difference in angle
+            across neighboring polygons is greater than this value, the shared
+            edge is considered "sharp". Defaults to 30.0.
+
+        Note
+        ----
+        Previous arrays named "Normals" will be overwritten.
+
+        Normals are computed only for polygons and triangle strips. Normals are
+        not computed for lines or vertices.
+
+        Triangle strips are broken up into triangle polygons. You may want to
+        restrip the triangles.
+
+        Return
+        ------
+        no return :
+            Adds point and/or cell scalar data to PolyData object.
+
+        """
+
+        normal = vtk.vtkPolyDataNormals()
+        normal.SetComputeCellNormals(cell_normals)
+        normal.SetComputePointNormals(point_normals)
+        normal.SetSplitting(split_vertices) # TODO: Vertex splitting not currently working. (Issue with vtkInterface.PolyData.AddPointScalars.)
+        normal.SetFlipNormals(flip_normals)
+        normal.SetConsistency(consistent_normals)
+        normal.SetAutoOrientNormals(auto_orient_normals)
+        normal.SetNonManifoldTraversal(non_manifold_traversal)
+        normal.SetFeatureAngle(feature_angle)
+
+        normal.SetInputData(self)
+        normal.Update()
+
+        if cell_normals:
+            cnorms = normal.GetOutput().GetCellData().GetArray('Normals')
+            self.AddCellScalars(vtk_to_numpy(cnorms), 'Normals', setactive=True,
+                                deep=True)
+            self.GetCellData().SetNormals(cnorms)
+
+        if point_normals:
+            pnorms = normal.GetOutput().GetPointData().GetArray('Normals')
+            self.AddPointScalars(vtk_to_numpy(pnorms), 'Normals',
+                                 setactive=True, deep=True)
+            self.GetPointData().SetNormals(pnorms)
+
+
+    def ClipPlane(self, origin, normal, value=0):
+      """Clip a vtkInterface.PolyData or vtk.vtkPolyData with a plane.
+
+      Can be used to open a mesh which has been closed along a well-defined
+      plane.
+
+      Parameters
+      ----------
+      origin : ndarray
+          3D point through which plane passes. Defines the plane together with
+          normal parameter.
+      normal : ndarray
+          3D vector defining plane normal.
+      value : float, optional
+          Scalar clipping value. The default value is 0.0.
+
+      Note
+      ----
+      Not guaranteed to produce a manifold output.
+
+      Return
+      ------
+      no return :
+          Overwrites mesh.
+      """
+
+      plane = vtk.vtkPlane()
+      plane.SetOrigin(origin)
+      plane.SetNormal(normal)
+      plane.Modified()
+
+      clip = vtk.vtkClipPolyData()
+      clip.SetValue(value)
+      clip.GenerateClippedOutputOn()
+      clip.SetClipFunction(plane)
+
+      clip.SetInputData(self)
+      clip.Update()
+
+      self.OverwriteMesh(clip.GetOutput())
+
+    def ExtractLargest(self):
+        """Extract largest connected set in mesh.
+
+        Can be used to reduce residues obtained when generating an isosurface.
+        Works only if residues are not connected (share at least one point with)
+        the main component of the image.
+
+        Return
+        ------
+        no return :
+            Overwrites mesh.
+        """
+        connect = vtk.vtkConnectivityFilter()
+        connect.SetExtractionModeToLargestRegion()
+
+        connect.SetInputData(self)
+        connect.Update()
+
+        geofilter = vtk.vtkGeometryFilter()
+
+        geofilter.SetInputData(connect.GetOutput())
+        geofilter.Update()
+
+        self.OverwriteMesh(geofilter.GetOutput())
+
+    def FillHoles(self, size):
+        """Fill holes in a vtkInterface.PolyData or vtk.vtkPolyData object.
+
+        Holes are identified by locating boundary edges, linking them together
+        into loops, and then triangulating the resulting loops. Note that you
+        can specify an approximate limit to the size of the hole that can be
+        filled.
+
+        Parameters
+        ----------
+        size : float
+            Specifies the maximum hole size to fill. This is represented as a
+            radius to the bounding circumsphere containing the hole. Note that
+            this is an approximate area; the actual area cannot be computed
+            without first triangulating the hole.
+
+        Return
+        ------
+        no return :
+            Overwrites mesh.
+        """
+
+        fill = vtk.vtkFillHolesFilter()
+        fill.SetHoleSize(size)
+
+        fill.SetInputData(self)
+        fill.Update()
+
+        self.OverwriteMesh(fill.GetOutput())
 
     def Clean(self, point_merging=True, mergtol=None, lines_to_points=True,
               polys_to_lines=True, strips_to_polys=True):
