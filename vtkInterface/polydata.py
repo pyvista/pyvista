@@ -31,8 +31,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
     - Create an empty mesh
     - Initialize from a vtk.vtkPolyData
-    - Initialize using cell, offset, and node numpy arrays (see MakeFromArrays
-      for more details on this method)
+    - Create using vertices and faces
     - Create from a file
 
     Examples
@@ -40,6 +39,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
     >>> surf = PolyData()  # Create an empty mesh
     >>> surf = PolyData(vtkobj)  # Initialize from a vtk.vtkPolyData object
     >>> surf = PolyData(vertices, faces)  # initialize from vertices and face
+    >>> surf = PolyData('file.ply')  # initialize from a filename
     """
 
     def __init__(self, *args, **kwargs):

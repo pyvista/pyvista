@@ -6,6 +6,7 @@ from multiprocessing import Process
 import colorsys
 import numpy as np
 import vtkInterface
+import vtkInterface as vtki
 import imageio
 import time
 import logging
@@ -1154,22 +1155,37 @@ class PlotClass(object):
         Adds a legend to render window.  Entries must be a list containing
         one string and color entry for each item
 
-        pos : list
+        Parameters
+        ----------
+        entries : list
+            List contianing one entry for each item to be added to the legend.
+            Each entry must contain two strings, [label, color], where label is the
+            name of the item to add, and color is the color of the label to add.
+
+        bcolor : list or string, optional
+            Background color, either a three item 0 to 1 RGB color list, or a 
+            matplotlib color string (e.g. 'w' or 'white' for a white color).
+
+        border : bool, optional
+            Controls if there will be a border around the legend.  Default False.
+
+        pos : list, optional
             Two float list, each float between 0 and 1.  For example
             [0.5, 0.5] would put the legend in the middle of the figure.
 
-        Example
-        -------
-
-        legend_entries = []
-        legend_entries.append(['Label', 'w'])
-        plobj = PlotClass()
-        plobj.AddMesh(mesh)
-        plobj.AddLegend(legend_entries)
-        plobj.Plot()
+        Examples
+        --------
+        >>> import vtkInterface as vtki
+        >>> legend_entries = []
+        >>> legend_entries.append(['My Mesh', 'w'])
+        >>> legend_entries.append(['My Other Mesh', 'k'])
+        >>> plobj = vtki.PlotClass()
+        >>> plobj.AddMesh(mesh)
+        >>> plobj.AddMesh(othermesh, 'k')
+        >>> plobj.AddLegend(legend_entries)
+        >>> plobj.Plot()
 
         """
-
         legend = vtk.vtkLegendBoxActor()
         legend.SetNumberOfEntries(len(entries))
         if pos:
@@ -1487,19 +1503,11 @@ def PlotBoundaries(mesh, **args):
 
 def MakeLegendPoly():
     """ Creates a legend polydata object """
-    pts = np.zeros((4, 3))
-    vtkpoints = vtkInterface.MakevtkPoints(pts)
-    triangles = np.array([[4, 0, 1, 2, 3]], np.int64)
-    vtkcells = vtk.vtkCellArray()
-    vtkcells.SetCells(triangles.shape[0],
-                      VN.numpy_to_vtkIdTypeArray(triangles, deep=True))
-
-    # Create polydata object
-    mesh = vtk.vtkPolyData()
-    mesh.SetPoints(vtkpoints)
-    mesh.SetPolys(vtkcells)
-
-    return mesh
+    pts = np.zeros((3, 3))
+    pts[1] = [1, 0, 0]
+    pts[2] = [0.5, 0.707, 0]
+    triangles = np.array([[3, 0, 1, 2]], np.int64)
+    return vtki.PolyData(pts, triangles)
 
 
 def ParseColor(color):
