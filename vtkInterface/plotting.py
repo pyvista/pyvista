@@ -2,6 +2,8 @@
 vtk plotting module
 
 """
+from subprocess import Popen, PIPE
+
 from multiprocessing import Process
 import colorsys
 import numpy as np
@@ -156,6 +158,14 @@ def PlotArrows(cent, direction):
     plotter.AddArrows(cent, direction)
     return plotter.Plot()
 
+def RunningXServer():
+    """ Check if x server is running """
+    if os.name != 'posix':  # linux or mac os
+        raise Exception('Can only check x server on POSIX')
+    p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
+    p.communicate()
+    return p.returncode == 0
+
 
 class PlotClass(object):
     """
@@ -179,6 +189,9 @@ class PlotClass(object):
     right_timer_id = -1
 
     def __init__(self, off_screen=False):
+        """
+        Initialize a vtk plotting object
+        """
 
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:
@@ -189,9 +202,11 @@ class PlotClass(object):
                 #     return
                 self.iren.TerminateApp()
 
-        """
-        Initialize a vtk plotting object
-        """
+        # POSIX segfaults without X11
+        if os.name == 'posix':  # linux or mac os
+            if not RunningXServer():
+                raise Exception('Unable to plot without x window system')
+
         self.off_screen = off_screen
 
         # initialize render window
