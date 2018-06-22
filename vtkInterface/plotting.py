@@ -37,9 +37,11 @@ def Plot(mesh, **args):
     **args : various, optional
         See help(vtkInterface.PlotClass.AddMesh)
 
-    screenshot : str, optional
+    screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
         help(vtkinterface.PlotClass.TakeScreenShot).  Default disabled.
+
+        When True, takes screenshot and returns numpy array of image.
 
     window_size : list, optional
         Window size in pixels.  Defaults to [1024, 768]
@@ -55,6 +57,12 @@ def Plot(mesh, **args):
     -------
     cpos : list
         List of camera position, focal point, and view up.
+
+    img :  numpy.ndarray
+        Array containing pixel RGB and alpha.  Sized:
+        [Window height x Window width x 3] for transparent_background=False
+        [Window height x Window width x 4] for transparent_background=True
+        Returned when screenshot enabled
 
     """
     if 'off_screen' in args:
@@ -129,11 +137,17 @@ def Plot(mesh, **args):
 
     # take screenshot
     if filename:
-        plobj.TakeScreenShot(filename)
+        if filename == True:
+            img = plobj.TakeScreenShot()
+        else:
+            img = plobj.TakeScreenShot(filename)
 
     # close and return camera position
     plobj.Close()
-    return cpos
+    if filename:
+        return cpos, img
+    else:
+        return cpos
 
 
 def PlotArrows(cent, direction):
@@ -1338,7 +1352,7 @@ class PlotClass(object):
         # axes = vtk.vtkAxesActor()
         # widget = vtk.vtkOrientationMarkerWidget()
 
-    def TakeScreenShot(self, filename, transparent_background=False):
+    def TakeScreenShot(self, filename=None, transparent_background=False):
         """
         Takes screenshot at current camera position
 

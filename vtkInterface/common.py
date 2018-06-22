@@ -229,6 +229,12 @@ class Common(object):
         -------
         cpos : list
             Camera position.
+
+        Examples
+        --------
+        >>> # take screenshot without opening window
+        >>> mesh.Plot(off_screen=True, screenshot='mesh_picture.png')
+
         """
         return vtkInterface.Plot(self, **args)
 

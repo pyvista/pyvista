@@ -5,6 +5,7 @@ import os
 import numpy as np
 import vtkInterface
 import logging
+import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -21,6 +22,7 @@ except:
     class vtkPolyData(object):
         def __init__(self, *args, **kwargs):
             pass
+    warnings.warn('Unable to import vtk')
 
 
 class PolyData(vtkPolyData, vtkInterface.Common):

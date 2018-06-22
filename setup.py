@@ -28,12 +28,15 @@ elif os.environ.get('READTHEDOCS') == 'True':
 else:
     install_requires.append(['vtk'])
 
+
+readme_file = os.path.join(filepath, 'README.rst')
+
 setup(
     name=package_name,
     packages=[package_name, 'vtkInterface.tests', 'vtkInterface.examples'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
-    long_description=open('README.rst').read(),
+    long_description=open(readme_file).read(),
     author='Alex Kaszynski',
     author_email='akascap@gmail.com',
     license='MIT',
