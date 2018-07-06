@@ -10,11 +10,12 @@ python:
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov
+  - pip install .
 
 # run tests
 script:
   # - python -m pytest
-  - py.test --cov vtkInterface --cov-report html
+  # - py.test --cov vtkInterface --cov-report html
 
 # speed up later builds
 cache:
