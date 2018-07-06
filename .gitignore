@@ -27,3 +27,8 @@ docs/_build
 docs/_static
 docs/_templates
 wiki/
+
+# testing coverage and cache
+.pytest_cache/
+tests/.coverage
+tests/htmlcov/

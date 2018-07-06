@@ -1,5 +1,15 @@
-vtkInterface Overview
-=====================
+vtkInterface
+============
+..
+   travis ci build badge
+.. image:: https://travis-ci.org/akaszynski/vtkInterface.svg?branch=master
+    :target: https://travis-ci.org/akaszynski/vtkInterface
+
+..
+   coverage badge
+.. image:: https://coveralls.io/repos/github/akaszynski/vtkInterface/badge.svg?branch=master
+:target: https://coveralls.io/github/akaszynski/vtkInterface?branch=master
+
 vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
 This module can be used for scientific plotting for presentations and research papers as well as a supporting module for other mesh dependent Python modules.

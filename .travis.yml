@@ -9,12 +9,17 @@ python:
 # install dependencies
 install:
   - pip install -r requirements.txt
+  - pip install pytest-cov
 
 # run tests
 script:
-  - python -m pytest
+  # - python -m pytest
+  - py.test --cov vtkInterface --cov-report html
 
 # speed up later builds
 cache:
   directories:
     - $HOME/.cache/pip
+
+after_success:
+    - coveralls
