@@ -36,7 +36,7 @@ def test_docexample_advancedplottingwithnumpy():
     assert np.any(img)
     plobj.Close()
 
-
+@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
 def test_creatingagifmovie(tmpdir, off_screen=True):
     if tmpdir:
         filename = str(tmpdir.mkdir("tmpdir").join('wave.gif'))

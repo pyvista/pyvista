@@ -1,31 +1,19 @@
+sudo: false
+
+os:
+  - linux
+  # - osx
+  - windows
+
 language: python
 
-# python:
-#   - "2.7"
-#   - "3.5"
-#   - "3.6"
-#   # - "3.7-dev"  # 3.7 development branch
+python:
+  # - "2.7"
+  - "3.5"
+  - "3.6"
+  # - "3.7-dev"  # 3.7 development branch
 
-matrix:
-    include:
-        - os:
-          - linux
-          - osx
-          sudo: false
-          python: 2.7
-        - os:
-          - linux
-          - osx
-          - windows
-          sudo: false
-          python: 3.5
-        - os:
-          - linux
-          - osx
-          - windows
-          sudo: false
-          python: 3.6
-
+# install dependencies
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov

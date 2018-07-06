@@ -27,10 +27,3 @@ class TestPlotting(object):
         direction = np.random.random((100, 3))
         cpos, img = vtki.PlotArrows(cent, direction, off_screen=True, screenshot=True)
         assert np.any(img)
-
-
-tester = TestPlotting()
-tester.test_plotarrow()
-tester.test_plotarrows()
-
-
