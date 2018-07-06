@@ -1,6 +1,5 @@
 """
-vtk plotting module
-
+vtkInterface plotting module
 """
 from subprocess import Popen, PIPE
 import os
@@ -12,6 +11,7 @@ import vtkInterface as vtki
 import imageio
 import time
 import logging
+import ctypes
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -119,6 +119,10 @@ def Plot(mesh, **args):
 
     if isinstance(mesh, np.ndarray):
         plobj.AddPoints(mesh, **args)
+    elif isinstance(mesh, list):
+        if len(mesh) == 2:  # might be arrows
+            if isinstance(mesh[0], np.ndarray) and isinstance(mesh[1], np.ndarray):
+                plobj.AddArrows(mesh[0], mesh[1])
     else:
         plobj.AddMesh(mesh, **args)
 
@@ -144,19 +148,39 @@ def Plot(mesh, **args):
         else:
             img = plobj.TakeScreenShot(filename)
 
-    # close and return camera position
+    # close and return camera position and maybe image
     plobj.Close()
+
     if filename:
         return cpos, img
     else:
         return cpos
 
 
-def PlotArrows(cent, direction):
-    """ Plots arrows """
-    plotter = PlotClass()
-    plotter.AddArrows(cent, direction)
-    return plotter.Plot()
+def PlotArrows(cent, direction, **kwargs):
+    """
+    Plots arrows as vectors
+
+    Parameters
+    ----------
+    cent : np.ndarray
+        Accepts a single 3d point or array of 3d points.
+
+    directions : np.ndarray
+        Accepts a single 3d point or array of 3d vectors.
+        Must contain the same number of items as cent.
+
+    **kwargs : additional arguments, optional
+        See help(vtkInterface.Plot)
+
+    Returns
+    -------
+    Same as Plot.  See help(vtkInterface.Plot)
+
+    """
+    # call general plotting function
+    return Plot([cent, direction], **kwargs)
+
 
 def RunningXServer():
     """ Check if x server is running """
@@ -1535,7 +1559,7 @@ def MakeLegendPoly():
     pts = np.zeros((3, 3))
     pts[1] = [1, 0, 0]
     pts[2] = [0.5, 0.707, 0]
-    triangles = np.array([[3, 0, 1, 2]], np.int64)
+    triangles = np.array([[3, 0, 1, 2]], ctypes.c_long)
     return vtki.PolyData(pts, triangles)
 
 

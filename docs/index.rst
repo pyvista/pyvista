@@ -18,9 +18,9 @@ See :ref:`install_ref` for more details.
 
 Why?
 ----
-VTK is an excellent visualization toolkit, and with Python bindings it should be able to combine the speed of C++ with the rapid prototyping of Python.  However, despite this VTK code programmed in Python generally looks the same as its C++ counterpart.  This module seeks to simpify mesh creation and plotting without losing functionality.
+VTK is an excellent visualization toolkit, and with Python bindings it should be able to combine the speed of C++ with the rapid prototyping of Python.  However, despite this VTK code programmed in Python generally looks the same as its C++ counterpart.  This module seeks to simplify mesh creation and plotting without losing functionality.
 
-Compare two approachs for loading and plotting a surface mesh from a file:
+Compare two approaches for loading and plotting a surface mesh from a file:
 
 
 Plotting a Mesh using Python's VTK
@@ -88,7 +88,7 @@ When combined with numpy, you can make some truly spectacular plots:
 
 .. code:: python
 
-    import vtkInterface
+    import vtkInterface as vtki
     import numpy as np
     
     # Make a grid
@@ -105,11 +105,10 @@ When combined with numpy, you can make some truly spectacular plots:
     direction = np.sin(points)**3
     
     # plot using the plotting class
-    plobj = vtkInterface.PlotClass()
+    plobj = vtki.PlotClass()
     plobj.AddArrows(points, direction, 0.5)
     plobj.SetBackground([0, 0, 0]) # RGB set to black
     plobj.Plot()
-    del plobj
 
 .. image:: ./images/vectorfield.png
 

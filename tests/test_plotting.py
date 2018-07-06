@@ -1,15 +1,36 @@
+from subprocess import Popen, PIPE
+import os
+
+import numpy as np
+import pytest
 import vtkInterface as vtki
+
 from vtkInterface import examples
+from vtkInterface.plotting import RunningXServer
 
-def RunningXServer():
-    """ Check if x server is running """
-    if os.name != 'posix':  # linux or mac os
-        raise Exception('Can only check x server on POSIX')
-    p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
-    p.communicate()
-    return p.returncode == 0
 
-# we're getting there
-# def test_offscreen():
-#     sphere = examples.LoadSphere()
-#     sphere.Plot(off_screen=True)
+@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
+class TestPlotting(object):
+
+    def test_init(self):
+        plotter = vtki.PlotClass()
+        assert hasattr(plotter, 'renWin')
+
+    def test_plotarrow(self):
+        cent = np.random.random(3)
+        direction = np.random.random(3)
+        cpos, img = vtki.PlotArrows(cent, direction, off_screen=True, screenshot=True)
+        assert np.any(img)
+
+    def test_plotarrows(self):
+        cent = np.random.random((100, 3))
+        direction = np.random.random((100, 3))
+        cpos, img = vtki.PlotArrows(cent, direction, off_screen=True, screenshot=True)
+        assert np.any(img)
+
+
+tester = TestPlotting()
+tester.test_plotarrow()
+tester.test_plotarrows()
+
+

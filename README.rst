@@ -5,11 +5,6 @@ vtkInterface
 .. image:: https://travis-ci.org/akaszynski/vtkInterface.svg?branch=master
     :target: https://travis-ci.org/akaszynski/vtkInterface
 
-..
-   coverage badge
-.. image:: https://coveralls.io/repos/github/akaszynski/vtkInterface/badge.svg?branch=master
-:target: https://coveralls.io/github/akaszynski/vtkInterface?branch=master
-
 vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
 This module can be used for scientific plotting for presentations and research papers as well as a supporting module for other mesh dependent Python modules.
@@ -42,8 +37,8 @@ Loading a mesh is trivial
 
 .. code:: python
 
-    import vtkInterface
-    mesh = vtkInterface.PolyData('airplane.ply')
+    import vtkInterface as vtki
+    mesh = vtki.PolyData('airplane.ply')
     mesh.Plot(color='orange')
     
 .. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/airplane.png
@@ -83,7 +78,7 @@ This example creates a simple surface grid and plots the resulting grid and its 
 
 .. code:: python
 
-    import vtkInterface
+    import vtkInterface as vtki
 
     # Make data
     import numpy as np
@@ -95,7 +90,7 @@ This example creates a simple surface grid and plots the resulting grid and its 
     z = np.sin(r)
     
     # create and plot structured grid
-    grid = vtkInterface.StructuredGrid(x, y, z)
+    grid = vtki.StructuredGrid(x, y, z)
     grid.Plot()  # basic plot
     
     # Plot mean curvature
@@ -123,7 +118,7 @@ This example shows the versatility of the plotting object by generating a moving
 
 .. code:: python
     
-    import vtkInterface
+    import vtkInterface as vtki
     import numpy as np
 
     x = np.arange(-10, 10, 0.25)
@@ -133,13 +128,13 @@ This example shows the versatility of the plotting object by generating a moving
     z = np.sin(r)
     
     # Create and structured surface
-    grid = vtkInterface.StructuredGrid(x, y, z)
+    grid = vtki.StructuredGrid(x, y, z)
     
     # Make copy of points
     pts = grid.points.copy()
     
     # Start a plotter object and set the scalars to the Z height
-    plobj = vtkInterface.PlotClass()
+    plobj = vtki.PlotClass()
     plobj.AddMesh(grid, scalars=z.ravel())
     plobj.Plot(autoclose=False)
     

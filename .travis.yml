@@ -1,12 +1,31 @@
-sudo: false
 language: python
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
-  # - "3.7-dev"  # 3.7 development branch
 
-# install dependencies
+# python:
+#   - "2.7"
+#   - "3.5"
+#   - "3.6"
+#   # - "3.7-dev"  # 3.7 development branch
+
+matrix:
+    include:
+        - os:
+	  - linux
+	  - osx
+          sudo: false
+          python: 2.7
+        - os:
+	  - linux
+	  - osx
+	  - windows
+          sudo: false
+          python: 3.5
+        - os:
+	  - linux
+	  - osx
+	  - windows
+          sudo: false
+          python: 3.6
+
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov
@@ -15,7 +34,7 @@ install:
 # run tests
 script:
   # - python -m pytest
-  - py.test --cov vtkInterface --cov-report html -v
+  - py.test --cov vtkInterface
 
 # speed up later builds
 cache:

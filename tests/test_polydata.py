@@ -12,5 +12,3 @@ class TestPolyData(object):
         assert sphere.GetNumberOfCells()
         assert hasattr(sphere, 'points')
 
-# self = TestPolyData()
-# self.test_loadfromfile()
