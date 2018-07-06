@@ -15,7 +15,7 @@ install:
 # run tests
 script:
   # - python -m pytest
-  # - py.test --cov vtkInterface --cov-report html
+  - py.test --cov vtkInterface --cov-report html -v
 
 # speed up later builds
 cache:
