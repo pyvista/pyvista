@@ -9,20 +9,20 @@ language: python
 matrix:
     include:
         - os:
-	  - linux
-	  - osx
+          - linux
+          - osx
           sudo: false
           python: 2.7
         - os:
-	  - linux
-	  - osx
-	  - windows
+          - linux
+          - osx
+          - windows
           sudo: false
           python: 3.5
         - os:
-	  - linux
-	  - osx
-	  - windows
+          - linux
+          - osx
+          - windows
           sudo: false
           python: 3.6
 
