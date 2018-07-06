@@ -125,6 +125,17 @@ def MeshfromVF(points, triangles_in, clean=True, deep_points=True):
 def CreateVectorPolyData(orig, vec):
     """ Creates a vtkPolyData object composed of vectors """
 
+    # shape, dimention checking
+    if orig.ndim != 2:
+        orig = orig.reshape((-1, 3))
+    elif orig.shape[1] != 3:
+        raise Exception('orig array must be 3D')
+
+    if vec.ndim != 2:
+        vec = vec.reshape((-1, 3))
+    elif vec.shape[1] != 3:
+        raise Exception('vec array must be 3D')
+
     # Create vtk points and cells objects
     vpts = vtk.vtkPoints()
     vpts.SetData(numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
