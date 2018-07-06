@@ -3,7 +3,7 @@ vtk plotting module
 
 """
 from subprocess import Popen, PIPE
-
+import os
 from multiprocessing import Process
 import colorsys
 import numpy as np
