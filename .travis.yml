@@ -2,22 +2,27 @@ sudo: false
 
 os:
   - linux
-  # - osx
+  # - osx x
   - windows
 
 language: python
 
 python:
-  # - "2.7"
+  - "2.7"
   - "3.5"
   - "3.6"
   # - "3.7-dev"  # 3.7 development branch
+
+matrix:
+  exclude:
+  - os: windows
+    python: "2.7"
 
 # install dependencies
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov
-  - pip install .
+  - pip install . -e
 
 # run tests
 script:
