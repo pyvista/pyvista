@@ -1546,8 +1546,7 @@ def PlotNormals(mesh, ntype='point', show_mesh=True, mag=1.0, flip=False,
         else:
             normals = mesh.point_normals
     elif ntype == 'cell':
-        print('Visualization of cell normals not yet implemented. Returning
-                nothing.')
+        print('Visualization of cell normals not yet implemented. Returning None.')
         return
 
     # Flip normal orientation
