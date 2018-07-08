@@ -5,6 +5,7 @@ import os
 import numpy as np
 import vtkInterface
 import logging
+import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -21,6 +22,7 @@ except:
     class vtkPolyData(object):
         def __init__(self, *args, **kwargs):
             pass
+    warnings.warn('Unable to import vtk')
 
 
 class PolyData(vtkPolyData, vtkInterface.Common):
@@ -31,8 +33,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
     - Create an empty mesh
     - Initialize from a vtk.vtkPolyData
-    - Initialize using cell, offset, and node numpy arrays (see MakeFromArrays
-      for more details on this method)
+    - Create using vertices and faces
     - Create from a file
 
     Examples
@@ -40,6 +41,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
     >>> surf = PolyData()  # Create an empty mesh
     >>> surf = PolyData(vtkobj)  # Initialize from a vtk.vtkPolyData object
     >>> surf = PolyData(vertices, faces)  # initialize from vertices and face
+    >>> surf = PolyData('file.ply')  # initialize from a filename
     """
 
     def __init__(self, *args, **kwargs):
@@ -260,10 +262,9 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         origID = vtkInterface.GetPointScalars(edges, 'vtkOriginalPointIds')
 
         return np.in1d(self.GetPointScalars('vtkOriginalPointIds'),
-                       origID,
-                       assume_unique=True)
+                       origID, assume_unique=True)
 
-    def BooleanCut(self, cut, tolerance=1E-5):
+    def BooleanCut(self, cut, tolerance=1E-5, inplace=False):
         """
         Performs a Boolean cut using another mesh.
 
@@ -272,10 +273,14 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         cut : vtkInterface.PolyData
             Mesh making the cut
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         mesh : vtkInterface.PolyData
-            The cut mesh
+            The cut mesh when inplace=False
+
         """
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToIntersection()
@@ -284,29 +289,41 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         bfilter.ReorientDifferenceCellsOff()
         bfilter.SetTolerance(tolerance)
         bfilter.Update()
-        return PolyData(bfilter.GetOutput())
 
-    def BooleanAdd(self, mesh, merge=False):
+        if inplace:
+            self.Overwrite(bfilter.GetOutput())
+        else:
+            return PolyData(bfilter.GetOutput())
+
+    def BooleanAdd(self, mesh, inplace=False):
         """
         Add a mesh to the current mesh.
 
         Parameters
         ----------
         mesh : vtkInterface.PolyData
-            The mesh to add
+            The mesh to add.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
 
         Returns
         -------
         joinedmesh : vtkInterface.PolyData
-            Initial mesh and the new mesh.
+            Initial mesh and the new mesh when inplace=False.
+
         """
         vtkappend = vtk.vtkAppendPolyData()
         vtkappend.AddInputData(self)
         vtkappend.AddInputData(mesh)
         vtkappend.Update()
-        return PolyData(vtkappend.GetOutput())
 
-    def BooleanUnion(self, mesh):
+        if inplace:
+            self.Overwrite(vtkappend.GetOutput())
+        else:
+            return PolyData(vtkappend.GetOutput())
+
+    def BooleanUnion(self, mesh, inplace=False):
         """
         Returns the mesh in common between the current mesh and the input mesh.
 
@@ -315,10 +332,14 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         mesh : vtkInterface.PolyData
             The mesh to perform a union against.
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         union : vtkInterface.PolyData
-            The union mesh
+            The union mesh when inplace=False.
+
         """
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToUnion()
@@ -326,7 +347,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         bfilter.SetInputData(0, self)
         bfilter.ReorientDifferenceCellsOff()
         bfilter.Update()
-        return PolyData(bfilter.GetOutput())
+
+        if inplace:
+            self.Overwrite(vtkappend.GetOutput())
+        else:
+            return PolyData(vtkappend.GetOutput())
 
     def Curvature(self, curvature='mean'):
         """
@@ -374,7 +399,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         curves = curvefilter.GetOutput()
         return vtk_to_numpy(curves.GetPointData().GetScalars())
 
-    def RemovePoints(self, remove_mask, mode='all', keepscalars=True):
+    def RemovePoints(self, remove_mask, mode='all', keepscalars=True, inplace=False):
         """
         Rebuild a mesh by removing points that are true in "remove_mask"
 
@@ -391,10 +416,18 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             When True, point and cell scalars will be passed on to the new
             mesh.
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         mesh : vtkInterface.PolyData
-            Mesh without the points flagged for removal.
+            Mesh without the points flagged for removal.  Not returned when
+            inplace=False.
+
+        ridx : np.ndarray
+            Indices of new points relative to the original mesh.  Not returned when
+            inplace=False.
 
         """
         # Extract points and faces from mesh
@@ -440,7 +473,10 @@ class PolyData(vtkPolyData, vtkInterface.Common):
                 newmesh.AddCellScalars(adata, vtkarr.GetName())
 
         # Return vtk surface and reverse indexing array
-        return newmesh, ridx
+        if inplace:
+            self.Overwrite(newmesh)
+        else:
+            return newmesh, ridx
 
     def Write(self, filename, ftype=None, binary=True):
         """
@@ -514,22 +550,31 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         # Return camera posision
         return vtkInterface.Plot(self, scalars=c, stitle='%s\nCurvature' % curvtype, **kwargs)
 
-    def TriFilter(self):
+    def TriFilter(self, inplace=False):
         """
         Returns an all triangle mesh.  More complex polygons will be broken
         down into triangles.
 
+        Parameters
+        ----------
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         mesh : vtkInterface.PolyData
-            Mesh containing only triangles.
+            Mesh containing only triangles.  None when inplace=True
+
         """
         trifilter = vtk.vtkTriangleFilter()
         trifilter.SetInputData(self)
         trifilter.PassVertsOff()
         trifilter.PassLinesOff()
         trifilter.Update()
-        return PolyData(trifilter.GetOutput())
+        if inplace:
+            self.Overwrite(trifilter.GetOutput())
+        else:
+            return PolyData(trifilter.GetOutput())
 
     def Subdivide(self, nsub, subfilter='linear', inplace=False):
         """
@@ -561,10 +606,13 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         subfilter : string, optional
             Can be one of the following: 'butterfly', 'loop', 'linear'
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         mesh : Polydata object
-            vtkInterface polydata object.
+            vtkInterface polydata object.  None when inplace=True
 
         Examples
         --------
@@ -572,6 +620,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         >>> import vtkInterface
         >>> mesh = vtkInterface.LoadMesh(examples.planefile)
         >>> submesh = mesh.Subdivide(1, 'loop')
+        >>> mesh.Subdivide(1, 'loop', inplace=True)  # alternatively, update mesh in-place
 
         """
         subfilter = subfilter.lower()
@@ -591,7 +640,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         sfilter.Update()
         submesh = PolyData(sfilter.GetOutput())
         if inplace:
-            self.OverwriteMesh(submesh)
+            self.Overwrite(submesh)
         else:
             return submesh
 
@@ -647,9 +696,8 @@ class PolyData(vtkPolyData, vtkInterface.Common):
                  attribute_error=False, scalars=True, vectors=True,
                  normals=False, tcoords=True, tensors=True, scalars_weight=0.1,
                  vectors_weight=0.1, normals_weight=0.1, tcoords_weight=0.1,
-                 tensors_weight=0.1):
-        """Reduce the number of triangles in a mesh.
-
+                 tensors_weight=0.1, inplace=True):
+        """
         Reduces the number of triangles in a triangular mesh using
         vtkQuadricDecimation.
 
@@ -710,10 +758,13 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         tensors_weight : float, optional
             See scalars weight parameter. Defaults to 0.1.
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
         Returns
         -------
         outmesh : vtkInterface.PolyData
-            Decimated mesh
+            Decimated mesh.  None when inplace=True.
 
         """
         # create decimation filter
@@ -736,7 +787,10 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         decimate.SetInputData(self)
         decimate.Update()
 
-        return PolyData(decimate.GetOutput())
+        if inplace:
+            self.Overwrite(decimate.GetOutput())
+        else:
+            return PolyData(decimate.GetOutput())
 
     def FlipNormals(self):
         """
@@ -751,6 +805,22 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
     def OverwriteMesh(self, mesh):
         """
+        Degenerated.  Use Overwrite
+
+        """
+        # copy points and point data
+        self.SetPoints(mesh.GetPoints())
+        self.GetPointData().DeepCopy(mesh.GetPointData())
+
+        # copy cells and cell data
+        self.SetPolys(mesh.GetPolys())
+        self.GetCellData().DeepCopy(mesh.GetCellData())
+
+        # Must rebuild or subsequent operations on this mesh will segfault
+        self.BuildCells()
+
+    def Overwrite(self, mesh):
+        """
         Overwrites the old mesh data with the new mesh data
 
         Parameters
@@ -759,14 +829,20 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             The overwriting mesh.
 
         """
+        # copy points and point data
         self.SetPoints(mesh.GetPoints())
+        self.GetPointData().DeepCopy(mesh.GetPointData())
+
+        # copy cells and cell data
         self.SetPolys(mesh.GetPolys())
+        self.GetCellData().DeepCopy(mesh.GetCellData())
 
         # Must rebuild or subsequent operations on this mesh will segfault
         self.BuildCells()
 
     def CenterOfMass(self, scalars_weight=False):
-        """ Returns the coordinates for the center of mass of the mesh.
+        """
+        Returns the coordinates for the center of mass of the mesh.
 
         Parameters
         ----------
@@ -787,58 +863,190 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         return center
 
-    def ClipPlane(self, origin, normal, value=0):
-      """Clip a vtkInterface.PolyData or vtk.vtkPolyData with a plane.
+    def GenerateNormals(self, cell_normals=True, point_normals=True,
+                        split_vertices=False, flip_normals=False,
+                        consistent_normals=True, auto_orient_normals=False,
+                        non_manifold_traversal=True, feature_angle=30.0, inplace=True):
+        """
+        Generate point and/or cell normals for a mesh.
 
-      Can be used to open a mesh which has been closed along a well-defined
-      plane.
+        The filter can reorder polygons to insure consistent orientation across
+        polygon neighbors. Sharp edges can be split and points duplicated
+        with separate normals to give crisp (rendered) surface definition. It is
+        also possible to globally flip the normal orientation.
 
-      Parameters
-      ----------
-      origin : ndarray
-          3D point through which plane passes. Defines the plane together with
-          normal parameter.
-      normal : ndarray
-          3D vector defining plane normal.
-      value : float, optional
-          Scalar clipping value. The default value is 0.0.
+        The algorithm works by determining normals for each polygon and then
+        averaging them at shared points. When sharp edges are present, the edges
+        are split and new points generated to prevent blurry edges (due to
+        Gouraud shading).
 
-      Note
-      ----
-      Not guaranteed to produce a manifold output.
+        Parameters
+        ----------
+        cell_normals : bool, optional
+            Calculation of cell normals. Defaults to False.
 
-      Return
-      ------
-      no return :
-          Overwrites mesh.
-      """
+        point_normals : bool, optional
+            Calculation of point normals. Defaults to True.
 
-      plane = vtk.vtkPlane()
-      plane.SetOrigin(origin)
-      plane.SetNormal(normal)
-      plane.Modified()
+        split_vertices : bool, optional
+            Splitting of sharp edges. Defaults to True.
 
-      clip = vtk.vtkClipPolyData()
-      clip.SetValue(value)
-      clip.GenerateClippedOutputOn()
-      clip.SetClipFunction(plane)
+        flip_normals : bool, optional
+            Set global flipping of normal orientation. Flipping modifies both
+            the normal direction and the order of a cell's points. Defaults to
+            False.
 
-      clip.SetInputData(self)
-      clip.Update()
+        consistent_normals : bool, optional
+            Enforcement of consistent polygon ordering. Defaults to True.
 
-      self.OverwriteMesh(clip.GetOutput())
+        auto_orient_normals : bool, optional
+            Turn on/off the automatic determination of correct normal
+            orientation. NOTE: This assumes a completely closed surface (i.e. no
+            boundary edges) and no non-manifold edges. If these constraints do
+            not hold, all bets are off. This option adds some computational
+            complexity, and is useful if you don't want to have to inspect the
+            rendered image to determine whether to turn on the FlipNormals flag.
+            However, this flag can work with the FlipNormals flag, and if both
+            are set, all the normals in the output will point "inward". Defaults
+            to False.
 
-    def ExtractLargest(self):
-        """Extract largest connected set in mesh.
+        non_manifold_traversal : bool, optional
+            Turn on/off traversal across non-manifold edges. Changing this may
+            prevent problems where the consistency of polygonal ordering is
+            corrupted due to topological loops. Defaults to True.
+
+        feature_angle : float, optional
+            The angle that defines a sharp edge. If the difference in angle
+            across neighboring polygons is greater than this value, the shared
+            edge is considered "sharp". Defaults to 30.0.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtkInterface.PolyData
+            Updated mesh with cell and point normals if inplace=False
+
+        Notes
+        -----
+        Previous arrays named "Normals" will be overwritten.
+
+        Normals are computed only for polygons and triangle strips. Normals are
+        not computed for lines or vertices.
+
+        Triangle strips are broken up into triangle polygons. You may want to
+        restrip the triangles.
+
+        May be easier to run mesh.point_normals or mesh.cell_normals
+
+        """
+        normal = vtk.vtkPolyDataNormals()
+        normal.SetComputeCellNormals(cell_normals)
+        normal.SetComputePointNormals(point_normals)
+        normal.SetSplitting(split_vertices)
+        normal.SetFlipNormals(flip_normals)
+        normal.SetConsistency(consistent_normals)
+        normal.SetAutoOrientNormals(auto_orient_normals)
+        normal.SetNonManifoldTraversal(non_manifold_traversal)
+        normal.SetFeatureAngle(feature_angle)
+        normal.SetInputData(self)
+        normal.Update()
+
+        if inplace:
+            self.Overwrite(normal.GetOutput())
+        else:
+            return PolyData(normal.GetOutput())
+
+    @property
+    def point_normals(self):
+        """ Point normals.  Run with basic settings """
+        mesh = self.GenerateNormals(cell_normals=False, point_normals=True,
+                                    split_vertices=False, flip_normals=False,
+                                    consistent_normals=False, auto_orient_normals=False,
+                                    non_manifold_traversal=False, feature_angle=30.0,
+                                    inplace=False)
+        return mesh.GetPointScalars('Normals')
+
+    @property
+    def cell_normals(self):
+        """ Point normals.  Run with basic settings """
+        mesh = self.GenerateNormals(cell_normals=True, point_normals=False,
+                                    split_vertices=False, flip_normals=False,
+                                    consistent_normals=False, auto_orient_normals=False,
+                                    non_manifold_traversal=False, feature_angle=30.0,
+                                    inplace=False)
+        return mesh.GetCellScalars('Normals')
+
+    def ClipPlane(self, origin, normal, value=0, inplace=True):
+        """
+        Clip a vtkInterface.PolyData or vtk.vtkPolyData with a plane.
+
+        Can be used to open a mesh which has been closed along a well-defined
+        plane.
+
+        Parameters
+        ----------
+        origin : numpy.ndarray
+            3D point through which plane passes. Defines the plane together with
+            normal parameter.
+
+        normal : numpy.ndarray
+            3D vector defining plane normal.
+
+        value : float, optional
+            Scalar clipping value. The default value is 0.0.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtkInterface.PolyData
+            Updated mesh with cell and point normals if inplace=False
+
+        Notes
+        -----
+        Not guaranteed to produce a manifold output.
+
+        """
+
+        plane = vtk.vtkPlane()
+        plane.SetOrigin(origin)
+        plane.SetNormal(normal)
+        plane.Modified()
+
+        clip = vtk.vtkClipPolyData()
+        clip.SetValue(value)
+        clip.GenerateClippedOutputOn()
+        clip.SetClipFunction(plane)
+
+        clip.SetInputData(self)
+        clip.Update()
+
+        if inplace:
+            self.Overwrite(clip.GetOutput())
+        else:
+            return PolyData(clip.GetOutput())
+
+    def ExtractLargest(self, inplace=False):
+        """
+        Extract largest connected set in mesh.
 
         Can be used to reduce residues obtained when generating an isosurface.
         Works only if residues are not connected (share at least one point with)
         the main component of the image.
 
-        Return
-        ------
-        no return :
-            Overwrites mesh.
+        Parameters
+        ----------
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtkInterface.PolyData
+            Largest connected set in mesh
+
         """
         connect = vtk.vtkConnectivityFilter()
         connect.SetExtractionModeToLargestRegion()
@@ -851,10 +1059,14 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         geofilter.SetInputData(connect.GetOutput())
         geofilter.Update()
 
-        self.OverwriteMesh(geofilter.GetOutput())
+        if inplace:
+            self.Overwrite(geofilter.GetOutput())
+        else:
+            return PolyData(geofilter.GetOutput())
 
-    def FillHoles(self, size):
-        """Fill holes in a vtkInterface.PolyData or vtk.vtkPolyData object.
+    def FillHoles(self, hole_size, inplace=True):
+        """
+        Fill holes in a vtkInterface.PolyData or vtk.vtkPolyData object.
 
         Holes are identified by locating boundary edges, linking them together
         into loops, and then triangulating the resulting loops. Note that you
@@ -863,28 +1075,33 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Parameters
         ----------
-        size : float
+        hole_size : float
             Specifies the maximum hole size to fill. This is represented as a
             radius to the bounding circumsphere containing the hole. Note that
             this is an approximate area; the actual area cannot be computed
             without first triangulating the hole.
 
-        Return
-        ------
-        no return :
-            Overwrites mesh.
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtkInterface.PolyData
+            Mesh with holes filled.  None when inplace=True
+
         """
-
         fill = vtk.vtkFillHolesFilter()
-        fill.SetHoleSize(size)
-
+        fill.SetHoleSize(hole_size)
         fill.SetInputData(self)
         fill.Update()
 
-        self.OverwriteMesh(fill.GetOutput())
+        if inplace:
+            self.OverwriteMesh(fill.GetOutput())
+        else:
+            return PolyData(fill.GetOutput())
 
     def Clean(self, point_merging=True, mergtol=None, lines_to_points=True,
-              polys_to_lines=True, strips_to_polys=True):
+              polys_to_lines=True, strips_to_polys=True, inplace=True):
         """
         Cleans mesh by merging duplicate points, remove unused
         points, and/or remove degenerate cells.
@@ -909,6 +1126,13 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         strips_to_polys : bool, optional
             Turn on/off conversion of degenerate strips to polys.
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.  Default True.
+
+        Returns
+        -------
+        mesh : vtkInterface.PolyData
+            Cleaned mesh.  None when inplace=True
         """
         clean = vtk.vtkCleanPolyData()
         if not lines_to_points:
@@ -923,10 +1147,15 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         clean.SetInputData(self)
         clean.Update()
 
-        self.OverwriteMesh(clean.GetOutput())
+        if inplace:
+            self.OverwriteMesh(clean.GetOutput())
+        else:
+            return PolyData(clean.GetOutput())
 
     def SurfaceArea(self):
-        """ Calculates the surface area of the mesh.
+        """
+        Calculates the surface area of the mesh object based on the sum of
+        triangle areas.
 
         Note
         ----

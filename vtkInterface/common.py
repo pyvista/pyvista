@@ -221,10 +221,20 @@ class Common(object):
             Takes a screenshot when window is closed when a filename is
             entered as this parameter.
 
+        full_screen : bool, optional
+            Opens window in full screen.  When enabled, ignores window_size.
+            Default False.
+
         Returns
         -------
         cpos : list
             Camera position.
+
+        Examples
+        --------
+        >>> # take screenshot without opening window
+        >>> mesh.Plot(off_screen=True, screenshot='mesh_picture.png')
+
         """
         return vtkInterface.Plot(self, **args)
 

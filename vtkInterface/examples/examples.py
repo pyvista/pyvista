@@ -116,7 +116,6 @@ def BeamExample():
     plobj = vtkInterface.PlotClass()
     plobj.AddMesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   rng=[-d.max(), d.max()], colormap=colormap)
-    plobj.AddAxes()
     plobj.SetCameraPosition(cpos)
     plobj.AddText('Static Beam Example')
     cpos = plobj.Plot(autoclose=False)  # store camera position
@@ -128,7 +127,6 @@ def BeamExample():
     plobj.AddMesh(grid, scalars=d[:, 1], stitle='Y Displacement', showedges=True,
                   rng=[-d.max(), d.max()], interpolatebeforemap=True,
                   colormap=colormap)
-    plobj.AddAxes()
     plobj.SetCameraPosition(cpos)
     plobj.AddText('Beam Animation Example')
     plobj.Plot(interactive=False, autoclose=False, window_size=[800, 600])
@@ -149,7 +147,6 @@ def BeamExample():
     plobj.AddMesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   showedges=True, rng=[-d.max(), d.max()], colormap=colormap,
                   interpolatebeforemap=True, style='wireframe')
-    plobj.AddAxes()
     plobj.SetCameraPosition(cpos)
     plobj.AddText('Beam Animation Example 2')
     plobj.Plot(interactive=False, autoclose=False, window_size=[800, 600])

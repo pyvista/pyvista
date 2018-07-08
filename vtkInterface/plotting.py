@@ -1,14 +1,17 @@
 """
-vtk plotting module
-
+vtkInterface plotting module
 """
+from subprocess import Popen, PIPE
+import os
 from multiprocessing import Process
 import colorsys
 import numpy as np
 import vtkInterface
+import vtkInterface as vtki
 import imageio
 import time
 import logging
+import ctypes
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -36,9 +39,11 @@ def Plot(mesh, **args):
     **args : various, optional
         See help(vtkInterface.PlotClass.AddMesh)
 
-    screenshot : str, optional
+    screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
         help(vtkinterface.PlotClass.TakeScreenShot).  Default disabled.
+
+        When True, takes screenshot and returns numpy array of image.
 
     window_size : list, optional
         Window size in pixels.  Defaults to [1024, 768]
@@ -46,10 +51,20 @@ def Plot(mesh, **args):
     show_bounds : bool, optional
         Shows mesh bounds when True.  Default False.
 
+    full_screen : bool, optional
+        Opens window in full screen.  When enabled, ignores window_size.
+        Default False.
+
     Returns
     -------
     cpos : list
         List of camera position, focal point, and view up.
+
+    img :  numpy.ndarray
+        Array containing pixel RGB and alpha.  Sized:
+        [Window height x Window width x 3] for transparent_background=False
+        [Window height x Window width x 4] for transparent_background=True
+        Returned when screenshot enabled
 
     """
     if 'off_screen' in args:
@@ -57,6 +72,12 @@ def Plot(mesh, **args):
         del args['off_screen']
     else:
         off_screen = False
+
+    if 'full_screen' in args:
+        full_screen = args['full_screen']
+        del args['full_screen']
+    else:
+        full_screen = False
 
     if 'screenshot' in args:
         filename = args['screenshot']
@@ -98,6 +119,10 @@ def Plot(mesh, **args):
 
     if isinstance(mesh, np.ndarray):
         plobj.AddPoints(mesh, **args)
+    elif isinstance(mesh, list):
+        if len(mesh) == 2:  # might be arrows
+            if isinstance(mesh[0], np.ndarray) and isinstance(mesh[1], np.ndarray):
+                plobj.AddArrows(mesh[0], mesh[1])
     else:
         plobj.AddMesh(mesh, **args)
 
@@ -113,22 +138,57 @@ def Plot(mesh, **args):
 
     cpos = plobj.Plot(window_size=window_size,
                       autoclose=False,
-                      interactive=interactive)
+                      interactive=interactive,
+                      full_screen=full_screen)
 
     # take screenshot
     if filename:
-        plobj.TakeScreenShot(filename)
+        if filename == True:
+            img = plobj.TakeScreenShot()
+        else:
+            img = plobj.TakeScreenShot(filename)
 
-    # close and return camera position
+    # close and return camera position and maybe image
     plobj.Close()
-    return cpos
+
+    if filename:
+        return cpos, img
+    else:
+        return cpos
 
 
-def PlotArrows(cent, direction):
-    """ Plots arrows """
-    plotter = PlotClass()
-    plotter.AddArrows(cent, direction)
-    return plotter.Plot()
+def PlotArrows(cent, direction, **kwargs):
+    """
+    Plots arrows as vectors
+
+    Parameters
+    ----------
+    cent : np.ndarray
+        Accepts a single 3d point or array of 3d points.
+
+    directions : np.ndarray
+        Accepts a single 3d point or array of 3d vectors.
+        Must contain the same number of items as cent.
+
+    **kwargs : additional arguments, optional
+        See help(vtkInterface.Plot)
+
+    Returns
+    -------
+    Same as Plot.  See help(vtkInterface.Plot)
+
+    """
+    # call general plotting function
+    return Plot([cent, direction], **kwargs)
+
+
+def RunningXServer():
+    """ Check if x server is running """
+    if os.name != 'posix':  # linux or mac os
+        raise Exception('Can only check x server on POSIX')
+    p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
+    p.communicate()
+    return p.returncode == 0
 
 
 class PlotClass(object):
@@ -153,6 +213,9 @@ class PlotClass(object):
     right_timer_id = -1
 
     def __init__(self, off_screen=False):
+        """
+        Initialize a vtk plotting object
+        """
 
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:
@@ -163,9 +226,11 @@ class PlotClass(object):
                 #     return
                 self.iren.TerminateApp()
 
-        """
-        Initialize a vtk plotting object
-        """
+        # POSIX segfaults without X11
+        if os.name == 'posix':  # linux or mac os
+            if not RunningXServer():
+                raise Exception('Unable to plot without x window system')
+
         self.off_screen = off_screen
 
         # initialize render window
@@ -1143,22 +1208,37 @@ class PlotClass(object):
         Adds a legend to render window.  Entries must be a list containing
         one string and color entry for each item
 
-        pos : list
+        Parameters
+        ----------
+        entries : list
+            List contianing one entry for each item to be added to the legend.
+            Each entry must contain two strings, [label, color], where label is the
+            name of the item to add, and color is the color of the label to add.
+
+        bcolor : list or string, optional
+            Background color, either a three item 0 to 1 RGB color list, or a 
+            matplotlib color string (e.g. 'w' or 'white' for a white color).
+
+        border : bool, optional
+            Controls if there will be a border around the legend.  Default False.
+
+        pos : list, optional
             Two float list, each float between 0 and 1.  For example
             [0.5, 0.5] would put the legend in the middle of the figure.
 
-        Example
-        -------
-
-        legend_entries = []
-        legend_entries.append(['Label', 'w'])
-        plobj = PlotClass()
-        plobj.AddMesh(mesh)
-        plobj.AddLegend(legend_entries)
-        plobj.Plot()
+        Examples
+        --------
+        >>> import vtkInterface as vtki
+        >>> legend_entries = []
+        >>> legend_entries.append(['My Mesh', 'w'])
+        >>> legend_entries.append(['My Other Mesh', 'k'])
+        >>> plobj = vtki.PlotClass()
+        >>> plobj.AddMesh(mesh)
+        >>> plobj.AddMesh(othermesh, 'k')
+        >>> plobj.AddLegend(legend_entries)
+        >>> plobj.Plot()
 
         """
-
         legend = vtk.vtkLegendBoxActor()
         legend.SetNumberOfEntries(len(entries))
         if pos:
@@ -1166,10 +1246,7 @@ class PlotClass(object):
 
         legendface = MakeLegendPoly()
         for i, (text, color) in enumerate(entries):
-            # try:
             legend.SetEntry(i, legendface, text, ParseColor(color))
-            # except:
-                # import pdb; pdb.set_trace()
 
         legend.UseBackgroundOn()
         legend.SetBackgroundColor(bcolor)
@@ -1183,7 +1260,7 @@ class PlotClass(object):
         return legend
 
     def _plot(self, title=None, window_size=[1024, 768], interactive=True,
-              autoclose=True, interactive_update=False):
+              autoclose=True, interactive_update=False, full_screen=False):
         """
         Creates plotting window
 
@@ -1206,21 +1283,29 @@ class PlotClass(object):
             Disabled by default.  Allows user to non-blocking draw,
             user should call Update() in each iteration.
 
+        full_screen : bool, optional
+            Opens window in full screen.  When enabled, ignores window_size.
+            Default False.
+
         Returns
         -------
         cpos : list
             List of camera position, focal point, and view up
 
         """
-
         if title:
             self.renWin.SetWindowName(title)
 
-        # size window
-        self.renWin.SetSize(window_size[0], window_size[1])
+        # if full_screen:
+        if full_screen:
+            self.renWin.SetFullScreen(True)
+            self.renWin.BordersOn()  # super buggy when disabled
+        else:
+            self.renWin.SetSize(window_size[0], window_size[1])
 
         # Render
         self.renWin.Render()
+
         if interactive and (not self.off_screen):
             self.iren.Initialize()
 
@@ -1241,7 +1326,8 @@ class PlotClass(object):
         return cpos
 
     def Plot(self, title=None, window_size=[1024, 768], interactive=True,
-             autoclose=True, in_background=False, interactive_update=False):
+             autoclose=True, in_background=False, interactive_update=False,
+             full_screen=False):
         """
         Creates plotting window
 
@@ -1264,6 +1350,10 @@ class PlotClass(object):
             Disabled by default.  Allows user to non-blocking draw,
             user should call Update() in each iteration.
 
+        full_screen : bool, optional
+            Opens window in full screen.  When enabled, ignores window_size.
+            Default False.
+
         Returns
         -------
         cpos : list
@@ -1271,7 +1361,12 @@ class PlotClass(object):
 
         """
         def PlotFun():
-            return self._plot(title, window_size, interactive, autoclose, interactive_update)
+            return self._plot(title,
+                              window_size=window_size,
+                              interactive=interactive,
+                              autoclose=autoclose,
+                              interactive_update=interactive_update,
+                              full_screen=full_screen)
 
         if in_background:
             process = Process(target=PlotFun)
@@ -1296,7 +1391,7 @@ class PlotClass(object):
         # axes = vtk.vtkAxesActor()
         # widget = vtk.vtkOrientationMarkerWidget()
 
-    def TakeScreenShot(self, filename, transparent_background=False):
+    def TakeScreenShot(self, filename=None, transparent_background=False):
         """
         Takes screenshot at current camera position
 
@@ -1497,19 +1592,11 @@ def PlotBoundaries(mesh, **args):
 
 def MakeLegendPoly():
     """ Creates a legend polydata object """
-    pts = np.zeros((4, 3))
-    vtkpoints = vtkInterface.MakevtkPoints(pts)
-    triangles = np.array([[4, 0, 1, 2, 3]], np.int64)
-    vtkcells = vtk.vtkCellArray()
-    vtkcells.SetCells(triangles.shape[0],
-                      VN.numpy_to_vtkIdTypeArray(triangles, deep=True))
-
-    # Create polydata object
-    mesh = vtk.vtkPolyData()
-    mesh.SetPoints(vtkpoints)
-    mesh.SetPolys(vtkcells)
-
-    return mesh
+    pts = np.zeros((3, 3))
+    pts[1] = [1, 0, 0]
+    pts[2] = [0.5, 0.707, 0]
+    triangles = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    return vtki.PolyData(pts, triangles)
 
 
 def ParseColor(color):
