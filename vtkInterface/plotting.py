@@ -1433,6 +1433,42 @@ def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
     pobj.Plot()
 
 
+def PlotNormals(mesh, ntype='point', show_mesh=True, mag=1.0, flip=False,
+                use_every=1):
+    """ Plot mesh (optional) with normals. """
+
+    pobj = PlotClass()
+    if show_mesh:
+        pobj.AddMesh(mesh)
+
+    # TODO: Implement visualisation of cell normals
+    if ntype == 'point':
+        points = mesh.points
+
+        # If normals exist, don't recalculate them
+        if mesh.GetPointData().HasArray('Normals'):
+            normals = VN.vtk_to_numpy(mesh.GetPointData().GetArray('Normals'))
+        else:
+            normals = mesh.point_normals
+    elif ntype == 'cell':
+        print('Visualization of cell normals not yet implemented. Returning
+                nothing.')
+        return
+
+    # Flip normal orientation
+    if flip:
+        normals = normals.copy()
+        normals *= -1
+
+    # Reduce sampling if needed
+    points = points[::use_every]
+    normals = normals[::use_every]
+
+    pobj.AddArrows(points, normals, mag=mag)
+
+    return pobj.Plot()
+
+
 def PlotEdges(mesh, angle, width=10):
     """ Plots edges of a mesh """
     edges = vtkInterface.GetEdgePoints(mesh, angle, False)
