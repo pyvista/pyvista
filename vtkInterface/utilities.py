@@ -294,3 +294,4 @@ def TriangleArea(p1, p2, p3):
     result = np.abs(np.dot(total, TriUnitNormal(*poly))) / 2
 
     return result
+

@@ -357,7 +357,6 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         """
         Returns the pointwise curvature of a mesh
 
-
         Parameters
         ----------
         mesh : vtk.polydata
@@ -369,7 +368,6 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             Gaussian
             Maximum
             Minimum
-
 
         Returns
         -------
@@ -656,7 +654,6 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             3) feature edges (edges used by two triangles and whose
                dihedral angle > feature_angle)
             4) manifold edges (edges used by exactly two polygons).
-
 
         Parameters
         ----------
