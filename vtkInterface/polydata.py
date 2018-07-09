@@ -353,11 +353,9 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         else:
             return PolyData(vtkappend.GetOutput())
 
-
     def Curvature(self, curvature='mean'):
         """
         Returns the pointwise curvature of a mesh
-
 
         Parameters
         ----------
@@ -370,7 +368,6 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             Gaussian
             Maximum
             Minimum
-
 
         Returns
         -------
@@ -423,11 +420,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         Returns
         -------
         mesh : vtkInterface.PolyData
-            Mesh without the points flagged for removal.  Not returned when 
+            Mesh without the points flagged for removal.  Not returned when
             inplace=False.
 
         ridx : np.ndarray
-            Indices of new points relative to the original mesh.  Not returned when 
+            Indices of new points relative to the original mesh.  Not returned when
             inplace=False.
 
         """
@@ -658,7 +655,6 @@ class PolyData(vtkPolyData, vtkInterface.Common):
                dihedral angle > feature_angle)
             4) manifold edges (edges used by exactly two polygons).
 
-
         Parameters
         ----------
         feature_angle : float, optional
@@ -841,6 +837,29 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         # Must rebuild or subsequent operations on this mesh will segfault
         self.BuildCells()
 
+    def CenterOfMass(self, scalars_weight=False):
+        """
+        Returns the coordinates for the center of mass of the mesh.
+
+        Parameters
+        ----------
+        scalars_weight : bool, optional
+            Flag for using the mesh scalars as weights. Defaults to False.
+
+        Return
+        ------
+        center : np.ndarray, float
+            Coordinates for the center of mass.
+        """
+
+        comfilter = vtk.vtkCenterOfMass()
+        comfilter.SetInputData(self)
+        comfilter.SetUseScalarsAsWeights(scalars_weight)
+        comfilter.Update()
+        center = np.array(comfilter.GetCenter())
+
+        return center
+
     def GenerateNormals(self, cell_normals=True, point_normals=True,
                         split_vertices=False, flip_normals=False,
                         consistent_normals=True, auto_orient_normals=False,
@@ -959,19 +978,19 @@ class PolyData(vtkPolyData, vtkInterface.Common):
     def ClipPlane(self, origin, normal, value=0, inplace=True):
         """
         Clip a vtkInterface.PolyData or vtk.vtkPolyData with a plane.
-  
+
         Can be used to open a mesh which has been closed along a well-defined
         plane.
-  
+
         Parameters
         ----------
         origin : numpy.ndarray
             3D point through which plane passes. Defines the plane together with
             normal parameter.
-  
+
         normal : numpy.ndarray
             3D vector defining plane normal.
-  
+
         value : float, optional
             Scalar clipping value. The default value is 0.0.
 
@@ -982,23 +1001,23 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         -------
         mesh : vtkInterface.PolyData
             Updated mesh with cell and point normals if inplace=False
-  
+
         Notes
         -----
         Not guaranteed to produce a manifold output.
-  
+
         """
-  
+
         plane = vtk.vtkPlane()
         plane.SetOrigin(origin)
         plane.SetNormal(normal)
         plane.Modified()
-  
+
         clip = vtk.vtkClipPolyData()
         clip.SetValue(value)
         clip.GenerateClippedOutputOn()
         clip.SetClipFunction(plane)
-  
+
         clip.SetInputData(self)
         clip.Update()
 
@@ -1024,7 +1043,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         -------
         mesh : vtkInterface.PolyData
             Largest connected set in mesh
-        
+
         """
         connect = vtk.vtkConnectivityFilter()
         connect.SetExtractionModeToLargestRegion()
@@ -1129,3 +1148,35 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             self.OverwriteMesh(clean.GetOutput())
         else:
             return PolyData(clean.GetOutput())
+
+    def SurfaceArea(self):
+        """
+        Calculates the surface area of the mesh object based on the sum of
+        triangle areas.
+
+        Note
+        ----
+        Assumes triangulated mesh.
+
+        Returns
+        -------
+        area : np.float
+            Total area of the mesh.
+
+        """
+        from utilities import TriangleArea
+
+        faces = self.faces.reshape(-1, 4)[:, 1:4]
+        pts = self.points
+
+        # Get the point coordinates grouped by facet
+        face_coords = np.array([[pts[faces[ii, jj]] for jj in xrange(
+            len(faces[ii]))] for ii in xrange(len(faces))])
+
+        # Area as sum of all triangle components
+        area = np.sum([TriangleArea(*face_coords[ii])
+                       for ii in xrange(len(face_coords))])
+        return area
+
+    # def __del__(self):
+    #     log.debug('Object collected')
