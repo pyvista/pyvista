@@ -185,7 +185,8 @@ def PlotArrows(cent, direction, **kwargs):
 def RunningXServer():
     """ Check if x server is running """
     if os.name != 'posix':  # linux or mac os
-        raise Exception('Can only check x server on POSIX')
+        return False
+    
     p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
     p.communicate()
     return p.returncode == 0

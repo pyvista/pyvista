@@ -1,0 +1,37 @@
+environment:
+
+  matrix:
+    # vtk python wheel not available for python2.7
+    # - PYTHON: "C:\\Python27-x64\\python"
+    #   PYTHON_VERSION: "2.7.13"
+    #   PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python35-x64\\python"
+      PYTHON_VERSION: "3.5.2"
+      PYTHON_ARCH: "64"
+
+    - PYTHON: "C:\\Python36-x64\\python"
+      PYTHON_VERSION: "3.6.0"
+      PYTHON_ARCH: "64"
+
+init:
+  - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
+
+install:
+  - "%PYTHON% -m ensurepip"
+  - "%PYTHON% -m pip install -r requirements.txt"
+  - "%PYTHON% -m pip install pytest"
+
+build_script:
+  - "%PYTHON% setup.py sdist"
+  - "%PYTHON% setup.py install"
+
+# Appveyor's build step is specific to .NET projects, so we build in the
+# install step instead.
+# build: off
+
+# it's not apparent that the root directory changes
+test_script:
+  - "cd tests"
+  - "%PYTHON% -m pytest"
+  - "cd .."
