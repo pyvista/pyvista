@@ -242,6 +242,7 @@ def MakeVTKPointsMesh(points):
     pdata.SetVerts(vtkcells)
     return pdata
 
+
 def TriUnitNormal(p1, p2, p3):
     ''' Retrieve the unit normal of a triangle polygon.
 
@@ -269,6 +270,7 @@ def TriUnitNormal(p1, p2, p3):
     normal = np.array([x, y, z]) / magnitude
 
     return normal
+
 
 def TriangleArea(p1, p2, p3):
     ''' Calculate triangle area using the Shoelace formula.
