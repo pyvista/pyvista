@@ -791,13 +791,17 @@ class PlotClass(object):
 
         # get pointer to active point scalars
         if scalars.shape[0] == mesh.GetNumberOfPoints():
-            s = VN.vtk_to_numpy(self.mesh.GetPointData().GetScalars())
+            pointdata = self.mesh.GetPointData()
+            s = VN.vtk_to_numpy(pointdata.GetScalars())
             s[:] = scalars
+            pointdata.Modified()
 
         # get pointer to active cell scalars
         elif scalars.shape[0] == mesh.GetNumberOfCells():
-            s = VN.vtk_to_numpy(self.mesh.GetCellData().GetScalars())
+            celldata = self.mesh.GetCellData()
+            s = VN.vtk_to_numpy(celldata.GetScalars())
             s[:] = scalars
+            celldata.Modified()
 
         if render:
             self.Render()
