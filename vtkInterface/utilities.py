@@ -53,8 +53,8 @@ def MakePointMesh(points, deep=True):
 
     npoints = points.shape[0]
 
-    pcell = np.vstack((np.ones(npoints, dtype=ctypes.c_long),
-                       np.arange(npoints, dtype=ctypes.c_long))).ravel('F')
+    pcell = np.vstack((np.ones(npoints, dtype=ctypes.c_int64),
+                       np.arange(npoints, dtype=ctypes.c_int64))).ravel('F')
 
     # Convert to a vtk array
     vtkcells = vtk.vtkCellArray()
@@ -88,7 +88,7 @@ def MeshfromVF(points, triangles_in, clean=True, deep_points=True):
 
     # Add face padding if necessary
     if triangles_in.shape[1] == 3:
-        triangles = np.empty((triangles_in.shape[0], 4), dtype=ctypes.c_long)
+        triangles = np.empty((triangles_in.shape[0], 4), dtype=ctypes.c_int64)
         triangles[:, -3:] = triangles_in
         triangles[:, 0] = 3
 
@@ -144,8 +144,8 @@ def CreateVectorPolyData(orig, vec):
     cells = np.hstack((np.ones((npts, 1), 'int'),
                        np.arange(npts).reshape((-1, 1))))
 
-    if cells.dtype != ctypes.c_long or cells.flags.c_contiguous:
-        cells = np.ascontiguousarray(cells, ctypes.c_long)
+    if cells.dtype != ctypes.c_int64 or cells.flags.c_contiguous:
+        cells = np.ascontiguousarray(cells, ctypes.c_int64)
     vcells = vtk.vtkCellArray()
     vcells.SetCells(npts, numpy_to_vtkIdTypeArray(cells, deep=True))
 
@@ -195,7 +195,7 @@ def ReadG3D(filename):
 
         # Read in triangles
         tri = np.fromstring(f.read(12 * tri_dat[0]), dtype=np.uint32)
-        triangles = np.zeros((tri_dat[0], 4), dtype=ctypes.c_long)
+        triangles = np.zeros((tri_dat[0], 4), dtype=ctypes.c_int64)
         triangles[:, 0] = 3
         triangles[:, 1:] = tri.reshape((-1, 3))
 
@@ -229,7 +229,7 @@ def MakeVTKPointsMesh(points):
     # Make VTK cells array
     cells = np.hstack((np.ones((npoints, 1)),
                        np.arange(npoints).reshape(-1, 1)))
-    cells = np.ascontiguousarray(cells, dtype=ctypes.c_long)
+    cells = np.ascontiguousarray(cells, dtype=ctypes.c_int64)
     vtkcells = vtk.vtkCellArray()
     vtkcells.SetCells(npoints, numpy_to_vtkIdTypeArray(cells, deep=True))
 
