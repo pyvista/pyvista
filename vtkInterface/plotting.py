@@ -186,10 +186,13 @@ def RunningXServer():
     """ Check if x server is running """
     if os.name != 'posix':  # linux or mac os
         return False
-    
-    p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
-    p.communicate()
-    return p.returncode == 0
+
+    try:
+        p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
+        p.communicate()
+        return p.returncode == 0
+    except:
+        False
 
 
 class PlotClass(object):
@@ -217,7 +220,7 @@ class PlotClass(object):
         """
         Initialize a vtk plotting object
         """
-
+        log.debug('Initializing')
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:
                 # TODO: python binding didn't provide
@@ -265,6 +268,7 @@ class PlotClass(object):
     def KeyPressEvent(self, obj, event):
         """ Listens for q key press """
         key = self.iren.GetKeySym()
+        log.debug('Key %s pressed' % key)
         if key == 'q':
             self.q_pressed = True
         elif key == 'b':
@@ -1309,18 +1313,19 @@ class PlotClass(object):
             self.renWin.SetSize(window_size[0], window_size[1])
 
         # Render
+        log.debug('Rendering')
         self.renWin.Render()
 
         if interactive and (not self.off_screen):
-            self.iren.Initialize()
-
-            if not interactive_update:
-                # interrupts will be caught here
-                try:
+            try:  # interrupts will be caught here
+                log.debug('Starting iren')
+                self.iren.Initialize()
+                if not interactive_update:
                     self.iren.Start()
-                except KeyboardInterrupt:
-                    self.Close()
-                    raise KeyboardInterrupt
+            except KeyboardInterrupt:
+                log.debug('KeyboardInterrupt')
+                self.Close()
+                raise KeyboardInterrupt
 
         # Get camera position before closing
         cpos = self.GetCameraPosition()
@@ -1374,6 +1379,7 @@ class PlotClass(object):
                               full_screen=full_screen)
 
         if in_background:
+            log.debug('Starting process')
             process = Process(target=PlotFun)
             process.start()
             return process
@@ -1383,16 +1389,14 @@ class PlotClass(object):
     def RemoveActor(self, actor):
         self.renderer.RemoveActor(actor)
 
-    def AddAxes(self):
-        """ Add axes actor at origin """
-        raise Exception('Disabled')
-        pass  # causes segfault
+    # pass  # causes segfault
+    # def AddAxes(self):
+        # """ Add axes actor at origin """
         # axes = vtk.vtkAxesActor()
         # self.marker = vtk.vtkOrientationMarkerWidget()
         # self.marker.SetInteractor(self.iren)
         # self.marker.SetOrientationMarker(axes)
         # self.marker.SetEnabled(1)
-
         # axes = vtk.vtkAxesActor()
         # widget = vtk.vtkOrientationMarkerWidget()
 
@@ -1501,8 +1505,11 @@ def CreateArrowsActor(pdata):
 
 def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
               legend_entries=None):
-    """ Creates a plot of several grids as wireframes.  When wFEM is
-    true, the first grid is a white solid """
+    """
+    Creates a plot of several grids as wireframes.  When wFEM is
+    true, the first grid is a white solid
+
+    """
 
     # Make grid colors
     N = len(grids)
