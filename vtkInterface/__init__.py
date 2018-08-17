@@ -15,6 +15,7 @@ from vtkInterface.polydata import PolyData
 from vtkInterface.grid import UnstructuredGrid
 from vtkInterface.grid import StructuredGrid
 from vtkInterface.grid import Grid
+from vtkInterface.geometric_objects import *
 
 import numpy as np
 

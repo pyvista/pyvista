@@ -1,0 +1,16 @@
+import numpy as np
+import vtkInterface as vtki
+
+
+def test_cylinder():
+    surf = vtki.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
+    assert np.any(surf.points)
+    assert np.any(surf.faces)
+
+
+def test_arrow():
+    surf = vtki.Arrow([0, 0, 0], [1, 1, 1])
+    assert np.any(surf.points)
+    assert np.any(surf.faces)
+
+

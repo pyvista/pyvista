@@ -126,6 +126,12 @@ def CreateVectorPolyData(orig, vec):
     """ Creates a vtkPolyData object composed of vectors """
 
     # shape, dimention checking
+    if not isinstance(orig, np.ndarray):
+        orig = np.asarray(orig)
+
+    if not isinstance(vec, np.ndarray):
+        vec = np.asarray(vec)
+
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
