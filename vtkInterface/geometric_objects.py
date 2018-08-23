@@ -1,12 +1,11 @@
 """
 Provides an easy way of generating several geometric objects
 
-
 CONTAINS
 --------
 vtkArrowSource
 vtkCylinderSource
-
+vtkSphereSource
 
 NEED TO ADD
 -----------
@@ -16,15 +15,18 @@ vtkCylinderSource
 vtkDiskSource
 vtkLineSource
 vtkRegularPolygonSource
-vtkSphereSource
 
 """
-from vtkInterface import PolyData, CreateVectorPolyData
+from vtkInterface import PolyData
 import vtk
 import numpy as np
 
 
 def Translate(surf, center, direction):
+    """
+    Translates and orientates a mesh centered at the origin and
+    facing in the x direction to a new center and direction
+    """
     normx = np.array(direction)/np.linalg.norm(direction)
     normz = np.cross(normx, np.random.random(3))
     normz /= np.linalg.norm(normz)
@@ -41,6 +43,7 @@ def Translate(surf, center, direction):
 
 
 def Cylinder(center, direction, radius, height, resolution=100, cap_ends=True):
+
     """
     Create the surface of a cylinder.
 
@@ -89,7 +92,34 @@ def Cylinder(center, direction, radius, height, resolution=100, cap_ends=True):
 
 def Arrow(start, direction, tip_length=0.25, tip_radius=0.1, shaft_radius=0.05,
           shaft_resolution=20):
+    """
+    Create a vtk Arrow
 
+    Parameters
+    ----------
+    start : np.ndarray
+        Start location in [x, y, z]
+
+    direction : list or np.ndarray
+        Direction the arrow points to in [x, y, z]
+
+    tip_length : float, optional
+        Length of the tip.
+
+    tip_radius : float, optional
+        Radius of the tip.
+
+    shaft_radius : float, optional
+        Radius of the shaft.
+
+    shaft_resolution : int, optional
+        Number of faces around the shaft
+
+    Returns
+    -------
+    arrow : vtkInterface.PolyData
+        Arrow surface.
+    """
     # Create arrow object
     arrow = vtk.vtkArrowSource()
     arrow.SetTipLength(tip_length)
@@ -101,3 +131,58 @@ def Arrow(start, direction, tip_length=0.25, tip_radius=0.1, shaft_radius=0.05,
     Translate(surf, start, direction)
     return surf
 
+
+def Sphere(radius=0.5, center=[0, 0, 0], direction=[0, 0, 1], theta_resolution=30,
+           phi_resolution=30, start_theta=0, end_theta=360, start_phi=0, end_phi=180):
+    """
+    Create a vtk Sphere
+
+    Parameters
+    ----------
+    radius : float, optional
+        Sphere radius
+    
+    center : np.ndarray or list, optional
+        Center in [x, y, z]
+
+    direction : list or np.ndarray
+        Direction the top of the sphere points to in [x, y, z]
+
+    theta_resolution: int , optional
+        Set the number of points in the longitude direction (ranging from 
+        start_theta to end theta).
+
+    phi_resolution : int, optional
+        Set the number of points in the latitude direction (ranging from
+        start_phi to end_phi).
+
+    start_theta : float, optional
+        Starting longitude angle.
+
+    end_theta : float, optional
+        Ending longitude angle.
+
+    start_phi : float, optional
+        Starting latitude angle.
+
+    end_phi : float, optional
+        Ending latitude angle.
+
+    Returns
+    -------
+    sphere : vtkInterface.PolyData
+        Sphere mesh.
+    """
+    sphere = vtk.vtkSphereSource()
+    sphere.SetRadius(radius)
+    sphere.SetThetaResolution(theta_resolution)
+    sphere.SetPhiResolution(phi_resolution)
+    sphere.SetStartTheta(start_theta)
+    sphere.SetEndTheta(end_theta)
+    sphere.SetStartPhi(start_phi)
+    sphere.SetEndPhi(end_phi)
+    sphere.Update()
+    surf = PolyData(sphere.GetOutput())
+    surf.RotateY(-90)
+    Translate(surf, center, direction)
+    return surf

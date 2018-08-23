@@ -230,6 +230,8 @@ class PlotClass(object):
                 #     return
                 self.iren.TerminateApp()
 
+        self._labels = []
+
         # POSIX segfaults without X11
         if os.name == 'posix':  # linux or mac os
             if not RunningXServer():
@@ -320,26 +322,13 @@ class PlotClass(object):
             if force_redraw:
                 self.iren.Render()
 
-    def AddMesh(
-            self,
-            mesh,
-            color=None,
-            style=None,
-            scalars=None,
-            rng=None,
-            stitle=None,
-            showedges=True,
-            psize=5.0,
-            opacity=1,
-            linethick=None,
-            flipscalars=False,
-            lighting=False,
-            ncolors=256,
-            interpolatebeforemap=False,
-            colormap=None,
-            **kwargs):
+    def AddMesh( self, mesh, color=None, style=None,
+                 scalars=None,rng=None, stitle=None, showedges=True,
+                 psize=5.0, opacity=1, linethick=None, flipscalars=False,
+                 lighting=False, ncolors=256, interpolatebeforemap=False,
+                 colormap=None, label=None, **kwargs):
         """
-        Adds a vtk unstructured, structured, or polymesh to the plotting object
+        Adds a unstructured, structured, or surface mesh to the plotting object.
 
         Parameters
         ----------
@@ -498,8 +487,15 @@ class PlotClass(object):
         # edge display style
         if showedges:
             prop.EdgeVisibilityOn()
-        prop.SetColor(ParseColor(color))
+
+        rgb_color = ParseColor(color)
+        prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
+
+        # legend label
+        if label:
+            assert isinstance(label, str), 'Label must be a string'
+            self._labels.append([SingleTriangle(), label, rgb_color])
 
         # lighting display style
         if lighting is False:
@@ -922,27 +918,64 @@ class PlotClass(object):
         # Reshape and write
         return img_array.reshape((window_size[1], window_size[0], -1))[::-1]
 
-    def AddLines(self, lines, color=[1, 1, 1], width=5):
-        """ Adds an actor to the renderwindow """
+    def AddLines(self, lines, color=[1, 1, 1], width=5, label=None):
+        """
+        Adds lines to the plotting object.
 
-        if isinstance(lines, np.ndarray):
-            lines = vtkInterface.MakeLine(lines)
+        Parameters
+        ----------
+        lines : np.ndarray or vtki.PolyData
+            Points representing line segments.  For example, two line segments 
+            would be represented as:
+
+            np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.  For example:
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+
+        width : float, optional
+            Thickness of lines
+
+        Returns
+        -------
+        actor : vtk.vtkActor
+            Lines actor.
+
+        """
+        if not isinstance(lines, np.ndarray):
+            raise Exception('Input should be an array of point segments')
+
+        lines = vtkInterface.MakeLine(lines)
 
         # Create mapper and add lines
         mapper = vtk.vtkDataSetMapper()
-        vtkInterface.SetVTKInput(mapper, lines)
+        mapper.SetInputData(lines)
+
+        rgb_color = ParseColor(color)
+
+        # legend label
+        if label:
+            assert isinstance(label, str), 'Label must be a string'
+            # single_line = lines.ExtractSelectionCells([0])
+            self._labels.append([lines, label, rgb_color])
 
         # Create Actor
         actor = vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetLineWidth(width)
         actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(color)
-        actor.GetProperty().SetColor(ParseColor(color))
+        actor.GetProperty().SetEdgeColor(rgb_color)
+        actor.GetProperty().SetColor(rgb_color)
         actor.GetProperty().LightingOff()
 
         # Add to renderer
         self.renderer.AddActor(actor)
+
+        return actor
 
     def AddPointLabels(self, points, labels, bold=True, fontsize=16,
                        textcolor='k', font_family='courier', shadow=False,
@@ -1040,17 +1073,59 @@ class PlotClass(object):
         self.AddActor(labelActor)
         return labelMapper
 
-    def AddPoints(self, points, color=None, psize=5, scalars=None,
-                  rng=None, name='', opacity=1, stitle='', flipscalars=False,
-                  colormap=None, ncolors=256):
-        """ Adds a point actor or numpy points array to plotting object """
+    def AddPoints(self, points, color=[1, 1, 1], psize=5, scalars=None,
+                  rng=None, stitle='', opacity=1, flipscalars=False,
+                  ncolors=256, colormap=None, label=None):
+        """
+        Adds a point actor or numpy points array to the plotting object.
 
-        # select color
-        if color is None:
-            color = [1, 1, 1]
-        elif isinstance(color, str):
-            color = vtkInterface.StringToRGB(color)
+        points : np.ndarray
+            3 x n numpy array of points.
 
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.  For example:
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+
+            Color will be overridden when scalars are input.
+
+        psize : float, optional
+            Point size
+
+        scalars : numpy array, optional
+            Scalars used to "color" the mesh.  Accepts an array equal to the
+            number of cells or the number of points in the mesh.  Array should
+            be sized as a single vector.
+
+        rng : 2 item list, optional
+            Range of mapper for scalars.  Defaults to minimum and maximum of
+            scalars array.  Example: [-1, 2]
+
+        stitle : string, optional
+            Scalar title.  By default there is no scalar legend bar.  Setting
+            this creates the legend bar and adds a title to it.  To create a
+            bar with no title, use an empty string (i.e. '').
+
+        opacity : float, optional
+            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+
+        flipscalars : bool, optional
+            Flip direction of colormap.
+
+        ncolors : int, optional
+            Number of colors to use when displaying scalars.  Default 256.
+
+        colormap : str, optional
+           Colormap string.  See available matplotlib colormaps.  Only applicable for
+           when displaying scalars.  Defaults None (rainbow).  Requires matplotlib.
+
+        Returns
+        -------
+        actor : vtk.vtkActor
+            Points actor.
+        """
         # Convert to vtk points object if "points" is a numpy array
         if isinstance(points, np.ndarray):
             # check size of points
@@ -1064,12 +1139,20 @@ class PlotClass(object):
         else:
             self.points = points
 
+        # select color
+        rgb_color = vtkInterface.StringToRGB(color)
+
+        # legend label
+        if label:
+            assert isinstance(label, str), 'Label must be a string'
+            self._labels.append([self.points, label, rgb_color])
+
         # Create mapper and add lines
         mapper = vtk.vtkDataSetMapper()
         mapper.SetInputData(self.points)
 
         if np.any(scalars):
-            self.points.AddPointScalars(scalars, name, True)
+            self.points.AddPointScalars(scalars, '', True)
             mapper.SetScalarModeToUsePointData()
             mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
 
@@ -1103,7 +1186,7 @@ class PlotClass(object):
         actor = vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetPointSize(psize)
-        actor.GetProperty().SetColor(color)
+        actor.GetProperty().SetColor(rgb_color)
         actor.GetProperty().LightingOff()
         actor.GetProperty().SetOpacity(opacity)
 
@@ -1125,6 +1208,9 @@ class PlotClass(object):
             self.scalarBar.SetNumberOfLabels(5)
 
             self.renderer.AddActor(self.scalarBar)
+
+        return actor
+
 
     def AddArrows(self, cent, direction, mag=1):
         """ Adds arrows to plotting object """
@@ -1211,7 +1297,7 @@ class PlotClass(object):
 
         self.renderer.SetBackground(color)
 
-    def AddLegend(self, entries, bcolor=[0.5, 0.5, 0.5], border=False,
+    def AddLegend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
                   pos=None):
         """
         Adds a legend to render window.  Entries must be a list containing
@@ -1219,7 +1305,13 @@ class PlotClass(object):
 
         Parameters
         ----------
-        entries : list
+        labels : list, optional
+            When set to None, uses existing labels as specified by 
+
+            - AddMesh
+            - AddLines
+            - AddPoints
+
             List contianing one entry for each item to be added to the legend.
             Each entry must contain two strings, [label, color], where label is the
             name of the item to add, and color is the color of the label to add.
@@ -1227,6 +1319,7 @@ class PlotClass(object):
         bcolor : list or string, optional
             Background color, either a three item 0 to 1 RGB color list, or a 
             matplotlib color string (e.g. 'w' or 'white' for a white color).
+            If None, legend background is disabled.
 
         border : bool, optional
             Controls if there will be a border around the legend.  Default False.
@@ -1235,8 +1328,22 @@ class PlotClass(object):
             Two float list, each float between 0 and 1.  For example
             [0.5, 0.5] would put the legend in the middle of the figure.
 
+        Returns
+        -------
+        legend : vtk.vtkLegendBoxActor
+            Actor for the legend.
+
         Examples
         --------
+        >>> import vtkInterface as vtki
+        >>> plobj = vtki.PlotClass()
+        >>> plobj.AddMesh(mesh, label='My Mesh')
+        >>> plobj.AddMesh(othermesh, 'k', label='My Other Mesh')
+        >>> plobj.AddLegend()
+        >>> plobj.Plot()
+
+        Alternative manual example
+
         >>> import vtkInterface as vtki
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
@@ -1247,18 +1354,36 @@ class PlotClass(object):
         >>> plobj.AddLegend(legend_entries)
         >>> plobj.Plot()
 
-        """
-        legend = vtk.vtkLegendBoxActor()
-        legend.SetNumberOfEntries(len(entries))
+        """        
+        legend = vtk.vtkLegendBoxActor()        
+
+        if labels is None:
+            # use existing labels
+            if not self._labels:
+                raise Exception('No labels input.\n\n' +
+                                'Add labels to individual items when adding them to' +
+                                'the plotting object with the "label=" parameter.  ' +
+                                'or enter them as the "labels" parameter.')
+
+            legend.SetNumberOfEntries(len(self._labels))
+            for i, (vtk_object, text, color) in enumerate(self._labels):
+                legend.SetEntry(i, vtk_object, text, ParseColor(color))
+
+        else:
+            legend.SetNumberOfEntries(len(labels))
+            legendface = SingleTriangle()
+            for i, (text, color) in enumerate(labels):
+                legend.SetEntry(i, legendface, text, ParseColor(color))
+
         if pos:
             legend.SetPosition2(pos[0], pos[1])
 
-        legendface = MakeLegendPoly()
-        for i, (text, color) in enumerate(entries):
-            legend.SetEntry(i, legendface, text, ParseColor(color))
+        if bcolor is None:
+            legend.UseBackgroundOff()
+        else:
+            legend.UseBackgroundOn()
+            legend.SetBackgroundColor(bcolor)
 
-        legend.UseBackgroundOn()
-        legend.SetBackgroundColor(bcolor)
         if border:
             legend.BorderOn()
         else:
@@ -1601,13 +1726,32 @@ def PlotBoundaries(mesh, **args):
     plobj.Plot()
 
 
-def MakeLegendPoly():
-    """ Creates a legend polydata object """
-    pts = np.zeros((3, 3))
-    pts[1] = [1, 0, 0]
-    pts[2] = [0.5, 0.707, 0]
-    triangles = np.array([[3, 0, 1, 2]], ctypes.c_long)
-    return vtki.PolyData(pts, triangles)
+def SingleTriangle():
+    """ A single triangle polydata object"""
+    points = np.zeros((3, 3))
+    points[1] = [1, 0, 0]
+    points[2] = [0.5, 0.707, 0]
+    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    return vtki.PolyData(points, cells)
+
+
+# def SingleLine():
+#     """ A single line polydata object"""
+#     points = np.zeros((2, 3))
+#     points[1] = [1.0, 0.0, 0]
+#     cells = np.array([2, 0, 1], ctypes.c_long)
+#     return vtki.PolyData(points, cells)
+
+
+def SinglePoint():
+    """ A single point polydata object"""
+    points = np.zeros((3, 3))
+    points[1] = [1, 0, 0]
+    points[2] = [0.5, 0.707, 0]
+    cells = np.array([1, 0, 1, 1, 1, 2], ctypes.c_long)
+    return vtki.PolyData(points, cells)
+
+# SinglePoint().Plot()
 
 
 def ParseColor(color):

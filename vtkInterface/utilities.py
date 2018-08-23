@@ -15,6 +15,9 @@ except Exception as e:
     warnings.warn(str(e))
 
 
+"""
+Various utility functions for plotting and vtkInterface objects
+"""
 def GetPointScalars(mesh, name):
     """ Returns point scalars of a vtk object """
     vtkarr = mesh.GetPointData().GetArray(name)
@@ -71,15 +74,38 @@ def MakePointMesh(points, deep=True):
 
 
 def MakeLine(points):
-    """ Generates line from points.  Assumes points are ordered """
+    """
+    Generates line from points.  Assumes points are ordered as line segments.
 
+    Parameters
+    ----------
+    points : np.ndarray
+        Points representing line segments.  For example, two line segments 
+        would be represented as:
+
+        np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+    Returns
+    -------
+    lines : vtki.PolyData
+        PolyData with lines and cells.
+
+    Examples
+    --------
+    This example plots two line segments at right angles to each other line.
+
+    >>> import vtkInterface as vtki
+    >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+    >>> lines = vtki.MakeLine(points)
+    >>> lines.Plot()
+
+    """
     # Assuming ordered points, create array defining line order
     npoints = points.shape[0] - 1
     lines = np.vstack((2 * np.ones(npoints, np.int),
                        np.arange(npoints),
                        np.arange(1, npoints + 1))).T.ravel()
 
-    # Create polydata object
     return vtkInterface.PolyData(points, lines)
 
 
@@ -212,6 +238,7 @@ def ReadG3D(filename):
 
 
 def TransFromMatrix(matrix, rigid=True):
+    """ Convert a vtk MATRIX to a np.array """
     if rigid:
         n = 3
     else:
@@ -302,4 +329,3 @@ def TriangleArea(p1, p2, p3):
     result = np.abs(np.dot(total, TriUnitNormal(*poly))) / 2
 
     return result
-

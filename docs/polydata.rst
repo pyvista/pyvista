@@ -118,6 +118,29 @@ To plot more than one mesh a plotting class must be created to manage the plotti
 .. image:: ./images/AntsAndPlane.png
 
 
+Ray Tracing
+-----------
+vtkInterface supports single line segment ray tracing.
+
+.. code:: python
+
+    # Use built-in sphere and test againt a single ray
+    import vtkInterface as vtki
+    sphere = vtki.Sphere()
+    points, ind = sphere.RayTrace([0, 0, 0], [1, 1, 1])
+
+.. image:: ./images/intersection_sphere.png
+
+
+Simple Geometric Objects
+------------------------
+vtkInterface includes a few functions to generate simple geometric surfaces.
+
+.. autofunction:: vtkInterface.geometric_objects.Sphere
+.. autofunction:: vtkInterface.geometric_objects.Cylinder
+.. autofunction:: vtkInterface.geometric_objects.Arrow
+
+
 vtkInterface.PolyData Grid Class Methods
 ----------------------------------------
 The following is a description of the methods available to a ``vtkInterface.PolyData`` object.  It inherits all methods from the original vtk object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkPolyData.html>`_.

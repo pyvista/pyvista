@@ -3,7 +3,7 @@ Sub-classes for vtk.vtkPolyData
 """
 import os
 import numpy as np
-import vtkInterface
+import vtkInterface as vtki
 import logging
 import warnings
 
@@ -25,7 +25,7 @@ except:
     warnings.warn('Unable to import vtk')
 
 
-class PolyData(vtkPolyData, vtkInterface.Common):
+class PolyData(vtkPolyData, vtki.Common):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -96,7 +96,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         elif fext == 'stl':
             reader = vtk.vtkSTLReader()
         elif fext == 'g3d':  # Don't use vtk reader
-            v, f = vtkInterface.ReadG3D(filename)
+            v, f = vtki.ReadG3D(filename)
             v /= 25.4  # convert to inches
             self.MakeFromArrays(v, f)
         elif fext == 'vtk':
@@ -162,8 +162,8 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         # Convert to a vtk array
         vtkcells = vtk.vtkCellArray()
-        if faces.dtype != vtkInterface.ID_TYPE:
-            faces = faces.astype(vtkInterface.ID_TYPE)
+        if faces.dtype != vtki.ID_TYPE:
+            faces = faces.astype(vtki.ID_TYPE)
 
         # get number of faces
         if faces.ndim == 1:
@@ -259,7 +259,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         featureEdges.SetFeatureAngle(angle)
         featureEdges.Update()
         edges = featureEdges.GetOutput()
-        origID = vtkInterface.GetPointScalars(edges, 'vtkOriginalPointIds')
+        origID = vtki.GetPointScalars(edges, 'vtkOriginalPointIds')
 
         return np.in1d(self.GetPointScalars('vtkOriginalPointIds'),
                        origID, assume_unique=True)
@@ -270,7 +270,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Parameters
         ----------
-        cut : vtkInterface.PolyData
+        cut : vtki.PolyData
             Mesh making the cut
 
         inplace : bool, optional
@@ -278,7 +278,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             The cut mesh when inplace=False
 
         """
@@ -301,7 +301,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Parameters
         ----------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             The mesh to add.
 
         inplace : bool, optional
@@ -309,7 +309,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        joinedmesh : vtkInterface.PolyData
+        joinedmesh : vtki.PolyData
             Initial mesh and the new mesh when inplace=False.
 
         """
@@ -329,7 +329,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Parameters
         ----------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             The mesh to perform a union against.
 
         inplace : bool, optional
@@ -337,7 +337,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        union : vtkInterface.PolyData
+        union : vtki.PolyData
             The union mesh when inplace=False.
 
         """
@@ -419,7 +419,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             Mesh without the points flagged for removal.  Not returned when
             inplace=False.
 
@@ -447,7 +447,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         v = v.take(uni[0], 0)
         f = np.reshape(uni[1], (fmask.sum(), 3))
 
-        newmesh = vtkInterface.MeshfromVF(v, f, False)
+        newmesh = vtki.MeshfromVF(v, f, False)
         ridx = uni[0]
 
         # Add scalars back to mesh if requested
@@ -535,7 +535,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             - Minimum
 
         **kwargs : optional
-            See help(vtkInterface.Plot)
+            See help(vtki.Plot)
 
         Returns
         -------
@@ -546,7 +546,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         c = self.Curvature(curvtype)
 
         # Return camera posision
-        return vtkInterface.Plot(self, scalars=c, stitle='%s\nCurvature' % curvtype, **kwargs)
+        return vtki.Plot(self, scalars=c, stitle='%s\nCurvature' % curvtype, **kwargs)
 
     def TriFilter(self, inplace=False):
         """
@@ -1177,6 +1177,71 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         area = np.sum([TriangleArea(*face_coords[ii])
                        for ii in xrange(len(face_coords))])
         return area
+
+    @property
+    def obbTree(self):
+        if not hasattr(self, '_obbTree'):
+            self._obbTree = vtk.vtkOBBTree()
+            self._obbTree.SetDataSet(self)
+            self._obbTree.BuildLocator()
+
+        return self._obbTree
+
+    def RayTrace(self, origin, end_point, plot=False):
+        """
+        Performs a single ray trace calculation given a mesh and a line segment
+        defined by an origin and end_point.
+
+        Parameters
+        ----------
+        mesh : vtkInterface.PolyData
+            Mesh to perform the ray tracing on.
+
+        origin : np.ndarray or list
+            Start of the line segment.
+
+        end_point : np.ndarray or list
+            End of the line segment.
+
+        plot : bool, optional
+            Plots ray trace results
+
+        Returns
+        -------
+        intersection_points : np.ndarray
+            Location of the intersection points.  Empty array if no intersections.
+
+        intersection_cells : np.ndarray
+            Indices of the intersection cells.  Empty array if no intersections.
+
+        intersection_cells
+
+        """
+        points = vtk.vtkPoints()
+        cellIDs = vtk.vtkIdList()
+        code = self.obbTree.IntersectWithLine(np.array(origin),
+                                              np.array(end_point),
+                                              points, cellIDs)
+        intersection_points = vtk_to_numpy(points.GetData())
+        if intersection_points is None:
+            intersection_points = np.array([[], [], []])
+
+        intersection_cells = []
+        for i in range(cellIDs.GetNumberOfIds()):
+            intersection_cells.append(cellIDs.GetId(i))
+        intersection_cells = np.array(intersection_cells)
+
+        if plot:
+            plotter = vtki.PlotClass()
+            plotter.AddMesh(self, label='Test Mesh', opacity=0.5)
+            segment = np.array([origin, end_point])
+            plotter.AddLines(segment, 'b', label='Ray Segment')
+            plotter.AddPoints(intersection_points, 'r', psize=10, label='Intersection Points')
+            plotter.AddLegend()
+            plotter.Plot()
+
+        return intersection_points, intersection_cells
+
 
     # def __del__(self):
     #     log.debug('Object collected')
