@@ -12,6 +12,7 @@ import imageio
 import time
 import logging
 import ctypes
+import PIL.Image
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -54,6 +55,10 @@ def Plot(mesh, **args):
     full_screen : bool, optional
         Opens window in full screen.  When enabled, ignores window_size.
         Default False.
+
+    notebook : bool, optional
+        When True, the resulting plot is placed inline a jupyter notebook.
+        Assumes a jupyter console is active.
 
     Returns
     -------
@@ -110,6 +115,15 @@ def Plot(mesh, **args):
     else:
         show_bounds = False
 
+    if 'notebook' in args:
+        notebook = True
+        if not filename:
+            filename = True
+        off_screen = True
+        del args['notebook']
+    else:
+        notebook = False
+
     # create plotting object and add mesh
     plobj = PlotClass(off_screen=off_screen)
 
@@ -150,6 +164,14 @@ def Plot(mesh, **args):
 
     # close and return camera position and maybe image
     plobj.Close()
+
+    if notebook:
+        try:
+            import IPython
+        except ImportError:
+            raise Exception('Install ipython to display image in a notebook')
+
+        IPython.display.display(PIL.Image.fromarray(img))
 
     if filename:
         return cpos, img
@@ -211,12 +233,16 @@ class PlotClass(object):
     off_screen : bool, optional
         Renders off screen when False.  Useful for automated screenshots.
 
+    notebook : bool, optional
+        When True, the resulting plot is placed inline a jupyter notebook.
+        Assumes a jupyter console is active.  Automatically enables off_screen.
+
     """
     last_update_time = 0.0
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False):
+    def __init__(self, off_screen=False, notebook=False):
         """
         Initialize a vtk plotting object
         """
@@ -237,6 +263,9 @@ class PlotClass(object):
             if not RunningXServer():
                 raise Exception('Unable to plot without x window system')
 
+        self.notebook = notebook
+        if self.notebook:
+            off_screen = True
         self.off_screen = off_screen
 
         # initialize render window
@@ -1455,6 +1484,15 @@ class PlotClass(object):
         # Get camera position before closing
         cpos = self.GetCameraPosition()
 
+        if self.notebook:
+            try:
+                import IPython
+            except ImportError:
+                raise Exception('Install ipython to display image in a notebook')
+
+            img = self.TakeScreenShot()
+            IPython.display.display(PIL.Image.fromarray(img))
+
         if autoclose:
             self.Close()
 
@@ -1531,8 +1569,8 @@ class PlotClass(object):
 
         Parameters
         ----------
-        filename : str
-            Location to write image to.
+        filename : str, optional
+            Location to write image to.  If None, no image is written.
 
         transparent_background : bool, optional
             Makes the background transparent.  Default False.

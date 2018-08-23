@@ -147,3 +147,28 @@ This example shows the versatility of the plotting object by generating a moving
     plobj.Close()
 
 .. image:: ./images/wave.gif
+
+
+Plotting in a Jupyter Notebook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Inline plots are possible using a Jupyter notebook.  For example:
+
+
+.. code:: python
+
+    import vtkInterface as vtki
+    sphere = vtki.Sphere()
+
+    # short example
+    cpos, image = sphere.Plot(notebook=True)
+
+    # long example
+    plotter = vtki.PlotClass(notebook=True)
+    plotter.AddMesh(sphere)
+    plotter.Plot()
+
+
+.. figure:: ./images/notebook_sphere.png
+    :width: 600pt
+
+    Jupyter Inline Plotting
