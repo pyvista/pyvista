@@ -1,9 +1,14 @@
 vtkInterface
 ============
 ..
-   travis ci build badge
+   PyPi
+.. image:: https://img.shields.io/pypi/v/vtkInterface.svg
+
 .. image:: https://travis-ci.org/akaszynski/vtkInterface.svg?branch=master
     :target: https://travis-ci.org/akaszynski/vtkInterface
+
+.. image:: https://readthedocs.org/projects/vtkinterface/badge/?version=latest
+    :target: https://vtkinterface.readthedocs.io/en/latest/?badge=latest
 
 vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
@@ -32,7 +37,6 @@ Quick Examples
 
 Loading and Plotting a Mesh from File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Loading a mesh is trivial
 
 .. code:: python
@@ -79,10 +83,9 @@ This example creates a simple surface grid and plots the resulting grid and its 
 .. code:: python
 
     import vtkInterface as vtki
-
-    # Make data
     import numpy as np
 
+    # Make data
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -134,24 +137,24 @@ This example shows the versatility of the plotting object by generating a moving
     pts = grid.points.copy()
     
     # Start a plotter object and set the scalars to the Z height
-    plobj = vtki.PlotClass()
-    plobj.AddMesh(grid, scalars=z.ravel())
-    plobj.Plot(autoclose=False)
+    plotter = vtki.PlotClass()
+    plotter.AddMesh(grid, scalars=z.ravel())
+    plotter.Plot(autoclose=False)
     
     # Open a gif
-    plobj.OpenGif('wave.gif')
+    plotter.OpenGif('wave.gif')
     
     # Update Z and write a frame for each updated position
     nframe = 15
     for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
         z = np.sin(r + phase)
         pts[:, -1] = z.ravel()
-        plobj.UpdateCoordinates(pts)
-        plobj.UpdateScalars(z.ravel())
+        plotter.UpdateCoordinates(pts)
+        plotter.UpdateScalars(z.ravel())
     
-        plobj.WriteFrame()
+        plotter.WriteFrame()
     
     # Close movie and delete object
-    plobj.Close()
+    plotter.Close()
 
 .. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/wave.gif

@@ -29,8 +29,7 @@ deploy:
   on:
     condition: "$TRAVIS_PYTHON_VERSION == 3.6"
     tags: true
-  password:
-    secure: "d9rO8z4f/+/8zHfab3ESY/26aqAoDZj1wg4Txm7B2pH9vma4SK2rGBV4/lwVsLYVxspKwB4Gr1AfQNfJNlfcsdxvJFZduzS5ynZnkpiAaH7seDyWH+PDezm/fvkUn+/9pLpskiTH6F+lJFPBCKmJlBwY+KPtCkofidE3uj2TZTBEyqmd/CnwEOnIDFh35moEeoQcYmqo5r4tmClvskPoTtyr7BeXHor/RdUwAZsqY/o3PopRR5DBhtf7i8A/4gM5CW5PdFsnKK3RIWOu8d8K1RmoAM1aSRmC8q1hI61ujh6E/+g35cSm3DgNdI9E2mf7xbgTNX3/n09HeUcYsGkjalDvlGBXuYdfUqCl5ahjcZUlD4IzwvI9tOx6e6xKpWWne5bq+KVgw8DdDjUkyviDgnyg2po1rybYadgv/Uyn2P8JpMZTH8sQ9raxIgu8LOq0wbgTcjq5g+778dcmMdAWe2ChRFpL524dACPAoHSLDN9vmay6fwC0XTPXfIQdY48+gC5Zu5+TNanqurNp+XPMdwsEA+L9EOdjEwNP0rZ30wPOLomSG9W6HleUb6V6xJIs+Fjk/cuTqCNwojdfmf8qOm8A6OhQbK4gKtWD0LuFnlsZMUhDl83pGsLUrDvrLZG7AWkXU6VO+ggcwBQjiq/1pO5T/774nostewSngVGDpI8="
+  password: $PYPI_PASSWORD
 
 notifications:
   email: false
