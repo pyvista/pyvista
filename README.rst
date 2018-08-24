@@ -44,8 +44,9 @@ Loading a mesh is trivial
     import vtkInterface as vtki
     mesh = vtki.PolyData('airplane.ply')
     mesh.Plot(color='orange')
-    
-.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/airplane.png
+
+.. figure:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/airplane.png
+    :width: 500pt
 
 In fact, the code to generate the previous screenshot was created with::
 
@@ -99,7 +100,9 @@ This example creates a simple surface grid and plots the resulting grid and its 
     # Plot mean curvature
     grid.PlotCurvature()
 
-.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/curvature.png
+.. figure:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/curvature.png
+    :width: 500pt
+
 
 Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array:
 
@@ -157,4 +160,5 @@ This example shows the versatility of the plotting object by generating a moving
     # Close movie and delete object
     plotter.Close()
 
-.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/wave.gif
+.. figure:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/wave.gif
+    :width: 500pt
