@@ -349,9 +349,9 @@ class PolyData(vtkPolyData, vtki.Common):
         bfilter.Update()
 
         if inplace:
-            self.Overwrite(vtkappend.GetOutput())
+            self.Overwrite(bfilter.GetOutput())
         else:
-            return PolyData(vtkappend.GetOutput())
+            return PolyData(bfilter.GetOutput())
 
     def Curvature(self, curvature='mean'):
         """
