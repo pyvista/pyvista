@@ -1,6 +1,6 @@
 PolyData Surface
 ================
-The ``vtkInterface.PolyData`` object adds addiction functionality to the vtk.vtkPolyData object, to include direct array access through numpy, one line plotting, and other mesh functions.
+The ``vtkInterface.PolyData`` object adds additional functionality to the vtk.vtkPolyData object, to include direct array access through numpy, one line plotting, and other mesh functions.
 
 
 PolyData Creation
