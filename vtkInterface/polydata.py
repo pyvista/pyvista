@@ -1187,7 +1187,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         return self._obbTree
 
-    def RayTrace(self, origin, end_point, plot=False):
+    def RayTrace(self, origin, end_point, first_point=False, plot=False):
         """
         Performs a single ray trace calculation given a mesh and a line segment
         defined by an origin and end_point.
@@ -1203,6 +1203,9 @@ class PolyData(vtkPolyData, vtki.Common):
         end_point : np.ndarray or list
             End of the line segment.
 
+        first_point : bool, optional
+            Returns intersection of first point only.
+
         plot : bool, optional
             Plots ray trace results
 
@@ -1214,34 +1217,40 @@ class PolyData(vtkPolyData, vtki.Common):
         intersection_cells : np.ndarray
             Indices of the intersection cells.  Empty array if no intersections.
 
-        intersection_cells
-
         """
         points = vtk.vtkPoints()
         cellIDs = vtk.vtkIdList()
         code = self.obbTree.IntersectWithLine(np.array(origin),
                                               np.array(end_point),
-                                              points, cellIDs)
+                                              points, cellIDs) 
+
         intersection_points = vtk_to_numpy(points.GetData())
-        if intersection_points is None:
-            intersection_points = np.array([[], [], []])
+        if first_point and intersection_points.shape[0] >= 1:
+            intersection_points = intersection_points[0]
 
         intersection_cells = []
-        for i in range(cellIDs.GetNumberOfIds()):
-            intersection_cells.append(cellIDs.GetId(i))
+        if intersection_points.any():
+            if first_point:
+                ncells = 1
+            else:
+                ncells = cellIDs.GetNumberOfIds()
+            for i in range(ncells):
+                intersection_cells.append(cellIDs.GetId(i))
         intersection_cells = np.array(intersection_cells)
 
         if plot:
             plotter = vtki.PlotClass()
-            plotter.AddMesh(self, label='Test Mesh', opacity=0.5)
+            plotter.AddMesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.AddLines(segment, 'b', label='Ray Segment')
             plotter.AddPoints(intersection_points, 'r', psize=10, label='Intersection Points')
             plotter.AddLegend()
+            plotter.AddAxesAtOrigin()
+            # if np.any(intersection_points):
+            #     if first_point:
+            #         plotter.SetFocus(intersection_points)
+            #     else:
+            #         plotter.SetFocus(intersection_points[0])
             plotter.Plot()
 
         return intersection_points, intersection_cells
-
-
-    # def __del__(self):
-    #     log.debug('Object collected')

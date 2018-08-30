@@ -1552,10 +1552,12 @@ class PlotClass(object):
     def RemoveActor(self, actor):
         self.renderer.RemoveActor(actor)
 
-    # pass  # causes segfault
-    # def AddAxes(self):
-        # """ Add axes actor at origin """
-        # axes = vtk.vtkAxesActor()
+    def AddAxesAtOrigin(self):
+        """ Add axes actor at origin """
+        self.marker = vtk.vtkAxesActor()
+        self.renderer.AddActor(self.marker)
+
+        # interactor doesn't work
         # self.marker = vtk.vtkOrientationMarkerWidget()
         # self.marker.SetInteractor(self.iren)
         # self.marker.SetOrientationMarker(axes)

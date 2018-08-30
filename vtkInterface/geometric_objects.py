@@ -6,6 +6,7 @@ CONTAINS
 vtkArrowSource
 vtkCylinderSource
 vtkSphereSource
+vtkPlaneSource
 
 NEED TO ADD
 -----------
@@ -28,7 +29,8 @@ def Translate(surf, center, direction):
     facing in the x direction to a new center and direction
     """
     normx = np.array(direction)/np.linalg.norm(direction)
-    normz = np.cross(normx, np.random.random(3))
+    # normz = np.cross(normx, np.random.random(3))
+    normz = np.cross(normx, [0, 1.0, 0.0000001])
     normz /= np.linalg.norm(normz)
     normy = np.cross(normz, normx)
 
@@ -183,6 +185,51 @@ def Sphere(radius=0.5, center=[0, 0, 0], direction=[0, 0, 1], theta_resolution=3
     sphere.SetEndPhi(end_phi)
     sphere.Update()
     surf = PolyData(sphere.GetOutput())
+    surf.RotateY(-90)
+    Translate(surf, center, direction)
+    return surf
+
+
+def Plane(center=[0, 0, 0], direction=[0, 0, 1], i_size=1, j_size=1, i_resolution=10,
+          j_resolution=10):
+    """
+    Create a plane
+
+    Parameters
+    ----------
+    center : list or np.ndarray
+        Location of the centroid in [x, y, z]
+
+    direction : list or np.ndarray
+        Direction cylinder points to  in [x, y, z]
+
+    i_size : float
+        Size of the plane in the i direction.
+
+    j_size : float
+        Size of the plane in the i direction.
+
+    i_resolution : int
+        Number of points on the plane in the i direction.
+
+    j_resolution : int
+        Number of points on the plane in the j direction.
+
+    Returns
+    -------
+    plane : vtkInterface.PolyData
+        Plane mesh
+
+    """
+    planeSource = vtk.vtkPlaneSource()
+    planeSource.SetXResolution(i_resolution)
+    planeSource.SetYResolution(j_resolution)
+    planeSource.Update()
+
+    surf = PolyData(planeSource.GetOutput())
+
+    surf.points[:, 0] *= i_size
+    surf.points[:, 1] *= j_size
     surf.RotateY(-90)
     Translate(surf, center, direction)
     return surf
