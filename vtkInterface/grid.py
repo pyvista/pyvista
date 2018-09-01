@@ -3,7 +3,7 @@ Sub-classes for vtk.vtkUnstructuredGrid and vtk.vtkStructuredGrid
 """
 import os
 import numpy as np
-import vtkInterface
+import vtkInterface as vtki
 import logging
 
 log = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ except:
             pass
 
 
-class Grid(vtkInterface.Common):
+class Grid(vtki.Common):
     """ Class in common with structured and unstructured grids """
 
     def __init__(self, *args, **kwargs):
@@ -87,10 +87,10 @@ class Grid(vtkInterface.Common):
 
         Returns
         -------
-        trisurf : vtkInterface.PolyData
+        trisurf : vtki.PolyData
             All triangle mesh of the grid
 
-        extsurf : vtkInterface.PolyData
+        extsurf : vtki.PolyData
             Surface mesh of the grid
 
         """
@@ -114,7 +114,7 @@ class Grid(vtkInterface.Common):
 
         Returns
         -------
-        extsurf : vtkInterface.PolyData
+        extsurf : vtki.PolyData
             Surface mesh of the grid
         """
         surf_filter = vtk.vtkDataSetSurfaceFilter()
@@ -124,7 +124,7 @@ class Grid(vtkInterface.Common):
         if pass_cellid:
             surf_filter.PassThroughPointIdsOn()
         surf_filter.Update()
-        return vtkInterface.PolyData(surf_filter.GetOutput())
+        return vtki.PolyData(surf_filter.GetOutput())
 
     def ExtractSurfaceInd(self):
         """
@@ -173,7 +173,7 @@ class Grid(vtkInterface.Common):
 
         Returns
         -------
-        edges : vtkInterface.vtkPolyData
+        edges : vtki.vtkPolyData
             Extracted edges
 
         """
@@ -285,15 +285,15 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
 
         >>> points = np.vstack((cell1, cell2))
 
-        >>> grid = vtkInterface.UnstructuredGrid(offset, cells, cell_type, points)
+        >>> grid = vtki.UnstructuredGrid(offset, cells, cell_type, points)
         
         """
 
-        if offset.dtype != vtkInterface.ID_TYPE:
+        if offset.dtype != vtki.ID_TYPE:
             offset = offset.astype(np.int64)
 
-        if cells.dtype != vtkInterface.ID_TYPE:
-            cells = cells.astype(vtkInterface.ID_TYPE)
+        if cells.dtype != vtki.ID_TYPE:
+            cells = cells.astype(vtki.ID_TYPE)
 
         if not cells.flags['C_CONTIGUOUS']:
             cells = np.ascontiguousarray(cells)
@@ -315,7 +315,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         vtkcells.SetCells(ncells, numpy_to_vtkIdTypeArray(cells, deep=deep))
 
         # Convert points to vtkPoints object
-        points = vtkInterface.MakevtkPoints(points, deep=deep)
+        points = vtki.MakevtkPoints(points, deep=deep)
 
         # Create unstructured grid
         self.SetPoints(points)
@@ -480,7 +480,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
 
         Returns
         -------
-        grid : vtkInterface.UnstructuredGrid
+        grid : vtki.UnstructuredGrid
             UnstructuredGrid containing only linear cells.
         """
         lgrid = self.Copy(deep)
@@ -515,7 +515,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
 
         Returns
         -------
-        subgrid : vtkInterface.UnstructuredGrid
+        subgrid : vtki.UnstructuredGrid
             Subselected grid
 
         """
@@ -568,7 +568,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
 
         Returns
         -------
-        subgrid : vtkInterface.UnstructuredGrid
+        subgrid : vtki.UnstructuredGrid
             Subselected grid.
 
         """
@@ -592,6 +592,33 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         extractSelection.SetInputData(1, selection)
         extractSelection.Update()
         return UnstructuredGrid(extractSelection.GetOutput())
+
+    def Merge(self, grid, merge_points=True):
+        """
+        Join one or many other grids to this grid.  Grid is updated
+        in-place
+
+        Parameters
+        ----------
+        grid : vtk.UnstructuredGrid or list of vtk.UnstructuredGrids
+            Grids to merge to this grid.
+
+        merge_points : bool, optional
+            Points in exactly the same location will be merged between 
+            the two meshes.
+
+        """
+        append_filter = vtk.vtkAppendFilter()
+        append_filter.AddInputData(self)
+        if isinstance(grid, vtki.UnstructuredGrid):
+            append_filter.AddInputData(grid)
+        else:
+            grid = grids
+            for grid in grids:
+                append_filter.AddInputData(grid)
+        append_filter.MergePointsOn()
+        append_filter.Update()
+        self.DeepCopy(UnstructuredGrid(append_filter.GetOutput()))
 
 
 class StructuredGrid(vtkStructuredGrid, Grid):
@@ -653,7 +680,7 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         >>> x, y = np.meshgrid(x, y)
         >>> r = np.sqrt(x**2 + y**2)
         >>> z = np.sin(r)
-        >>> grid = vtkInterface.StructuredGrid(x, y, z)
+        >>> grid = vtki.StructuredGrid(x, y, z)
 
         """
         if not(x.shape == y.shape == z.shape):
@@ -672,7 +699,7 @@ class StructuredGrid(vtkStructuredGrid, Grid):
 
         # Create structured grid
         self.SetDimensions(dim)
-        self.SetPoints(vtkInterface.MakevtkPoints(points))
+        self.SetPoints(vtki.MakevtkPoints(points))
 
     def LoadFile(self, filename):
         """
