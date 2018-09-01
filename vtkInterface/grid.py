@@ -593,10 +593,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         extractSelection.Update()
         return UnstructuredGrid(extractSelection.GetOutput())
 
-    def Merge(self, grid, merge_points=True):
+    def Merge(self, grid=None, merge_points=True):
         """
         Join one or many other grids to this grid.  Grid is updated
-        in-place
+        in-place.
+
+        Can be used to merge points of adjcent cells when no grids
+        are input.
 
         Parameters
         ----------
@@ -609,14 +612,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
 
         """
         append_filter = vtk.vtkAppendFilter()
+        append_filter.SetMergePoints(merge_points)
         append_filter.AddInputData(self)
+        
         if isinstance(grid, vtki.UnstructuredGrid):
             append_filter.AddInputData(grid)
-        else:
+        elif isinstance(grid, list):
             grid = grids
             for grid in grids:
                 append_filter.AddInputData(grid)
-        append_filter.MergePointsOn()
+
         append_filter.Update()
         self.DeepCopy(UnstructuredGrid(append_filter.GetOutput()))
 

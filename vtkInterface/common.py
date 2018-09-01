@@ -422,6 +422,28 @@ class Common(object):
             newobject.ShallowCopy(self)
         return newobject
 
+    @property
+    def point_arrays(self):
+        """ Returns the all point arrays """
+        pdata = self.GetPointData()
+        narr = pdata.GetNumberOfArrays()
+        point_arrays = {}
+        for i in range(narr):
+            name = pdata.GetArrayName(i)
+            point_arrays[name] = self.GetPointScalars(name)
+        return point_arrays
+
+    @property
+    def cell_arrays(self):
+        """ Returns the all cell arrays """
+        cdata = self.GetCellData()
+        narr = cdata.GetNumberOfArrays()
+        cell_arrays = {}
+        for i in range(narr):
+            name = cdata.GetArrayName(i)
+            cell_arrays[name] = self.GetCellScalars(name)
+        return cell_arrays
+
     def __del__(self):
         log.debug('Object collected')
 
