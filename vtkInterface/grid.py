@@ -593,7 +593,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         extractSelection.Update()
         return UnstructuredGrid(extractSelection.GetOutput())
 
-    def Merge(self, grid=None, merge_points=True):
+    def Merge(self, grid=None, merge_points=True, inplace=True,
+              main_has_priority=True):
         """
         Join one or many other grids to this grid.  Grid is updated
         in-place.
@@ -610,11 +611,31 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
             Points in exactly the same location will be merged between 
             the two meshes.
 
+        inplace : bool, optional
+            Updates grid inplace when True.
+
+        main_has_priority : bool, optional
+            When this parameter is true and merge_points is true, 
+            the scalar arrays of the merging grids will be overwritten
+            by the original main mesh.
+
+        Returns
+        -------
+        merged_grid : vtk.UnstructuredGrid
+            Merged grid.  Returned when inplace is False.
+
+        Notes
+        -----
+        When two or more grids are joined, the type and name of each
+        scalar array must match or the arrays will be ignored and not
+        included in the final merged mesh.
         """
         append_filter = vtk.vtkAppendFilter()
         append_filter.SetMergePoints(merge_points)
-        append_filter.AddInputData(self)
-        
+
+        if not main_has_priority:
+            append_filter.AddInputData(self)
+
         if isinstance(grid, vtki.UnstructuredGrid):
             append_filter.AddInputData(grid)
         elif isinstance(grid, list):
@@ -622,8 +643,15 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
             for grid in grids:
                 append_filter.AddInputData(grid)
 
+        if main_has_priority:
+            append_filter.AddInputData(self)
+
         append_filter.Update()
-        self.DeepCopy(UnstructuredGrid(append_filter.GetOutput()))
+        merged = UnstructuredGrid(append_filter.GetOutput())
+        if inplace:
+            self.DeepCopy(merged)
+        else:
+            return merged
 
 
 class StructuredGrid(vtkStructuredGrid, Grid):

@@ -136,6 +136,9 @@ class Common(object):
             must be kept to avoid a segfault.
 
         """
+        if not isinstance(scalars, np.ndarray):
+            raise Exception('First argument, "scalars" must be an array') 
+
         if scalars.shape[0] != self.GetNumberOfPoints():
             raise Exception('Number of scalars must match the number of ' +
                             'points')
@@ -385,6 +388,9 @@ class Common(object):
             must be kept to avoid a segfault.
 
         """
+        if not isinstance(scalars, np.ndarray):
+            raise Exception('First argument, "scalars" must be an array') 
+
         if scalars.shape[0] != self.GetNumberOfCells():
             raise Exception('Number of scalars must match the number of cells')
 
