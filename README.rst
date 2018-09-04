@@ -3,6 +3,7 @@ vtkInterface
 ..
    PyPi
 .. image:: https://img.shields.io/pypi/v/vtkInterface.svg
+    :target: https://pypi.org/project/vtkInterface/
 
 .. image:: https://travis-ci.org/akaszynski/vtkInterface.svg?branch=master
     :target: https://travis-ci.org/akaszynski/vtkInterface
@@ -17,7 +18,7 @@ This module can be used for scientific plotting for presentations and research p
 
 Documentation
 -------------
-Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed installation and usage details.
+Refer to the detailed `readthedocs <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ documentation for detailed installation and usage details.
 
 Also see the `wiki <https://github.com/akaszynski/vtkInterface/wiki>`_ for brief code snippets.
 
