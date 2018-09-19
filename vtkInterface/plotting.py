@@ -8,7 +8,13 @@ import colorsys
 import numpy as np
 import vtkInterface
 import vtkInterface as vtki
-import imageio
+
+# ignore for now
+try:
+    import imageio
+except:
+    pass
+
 import time
 import logging
 import ctypes
@@ -342,9 +348,10 @@ class PlotClass(object):
 
         update_rate = self.iren.GetDesiredUpdateRate()
         if (curr_time - PlotClass.last_update_time) > (1.0/update_rate):
-            self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
-            self.iren.Start()
-            self.iren.DestroyTimer(self.right_timer_id)
+            if hasattr(self, 'iren'):
+                self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
+                self.iren.Start()
+                self.iren.DestroyTimer(self.right_timer_id)
             self.Render()
             PlotClass.last_update_time = curr_time
         else:
@@ -1821,3 +1828,12 @@ def ParseFontFamily(font_family):
                         'or "arial"')
 
     return font_keys[font_family]
+
+
+def MakeLegendPoly():
+    """ Creates a legend polydata object """
+    pts = np.zeros((3, 3))
+    pts[1] = [1, 0, 0]
+    pts[2] = [0.5, 0.707, 0]
+    triangles = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    return vtki.PolyData(pts, triangles)

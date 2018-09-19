@@ -8,12 +8,9 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-try:
-    import vtk
-    from vtk.util.numpy_support import vtk_to_numpy
-    from vtk.util.numpy_support import numpy_to_vtk
-except ImportError:
-    pass
+import vtk
+from vtk.util.numpy_support import vtk_to_numpy
+from vtk.util.numpy_support import numpy_to_vtk
 
 
 class Common(object):
@@ -33,12 +30,6 @@ class Common(object):
         if not isinstance(newpoints, np.ndarray):
             raise TypeError('Points must be a numpy array')
         self.SetNumpyPoints(newpoints, False)
-
-        # keep a reference as pointer might be deleted
-        if not hasattr(self, 'references'):
-            self.references = [newpoints]
-        else:
-            self.references.append(newpoints)
 
     def GetNumpyPoints(self, dtype=None, deep=False):
         """
@@ -83,13 +74,13 @@ class Common(object):
             Points to set to.
 
         deep : bool, optional
-            Copies points when True.  When False, does not copy, but
-            a reference to the original points must be kept or else
-            Python will segfault.
+            Copies points when True.  When False, does not copy array.
 
         """
         vtkPoints = vtkInterface.MakevtkPoints(points, deep)
         self.SetPoints(vtkPoints)
+        if not deep:
+            self._point_ref = points
 
     def GetPointScalars(self, name):
         """
