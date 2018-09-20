@@ -27,3 +27,11 @@ class TestPlotting(object):
         direction = np.random.random((100, 3))
         cpos, img = vtki.PlotArrows(cent, direction, off_screen=True, screenshot=True)
         assert np.any(img)
+
+
+def test_axes():
+    plotter = vtki.PlotClass(off_screen=True)
+    plotter.AddAxes()
+    plotter.AddMesh(vtki.Sphere())    
+    plotter.Plot()
+    

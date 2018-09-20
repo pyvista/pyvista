@@ -1,37 +1,29 @@
 """
 vtkInterface plotting module
 """
-from subprocess import Popen, PIPE
-import os
-from multiprocessing import Process
-import colorsys
-import numpy as np
-import vtkInterface
-import vtkInterface as vtki
-
-# ignore for now
-try:
-    import imageio
-except:
-    pass
-
 import time
 import logging
 import ctypes
 import PIL.Image
+from subprocess import Popen, PIPE
+import os
+from multiprocessing import Process
+import colorsys
+
+import numpy as np
+import vtkInterface
+import vtkInterface as vtki
+import imageio
+
+
+import vtk
+from vtk.util import numpy_support as VN
+font_keys = {'arial': vtk.VTK_ARIAL,
+             'courier': vtk.VTK_COURIER,
+             'times': vtk.VTK_TIMES}
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
-
-# for readthedocs
-try:
-    import vtk
-    from vtk.util import numpy_support as VN
-    font_keys = {'arial': vtk.VTK_ARIAL,
-                 'courier': vtk.VTK_COURIER,
-                 'times': vtk.VTK_TIMES}
-except ImportError:
-    pass
 
 
 def Plot(mesh, **args):
@@ -65,6 +57,9 @@ def Plot(mesh, **args):
     notebook : bool, optional
         When True, the resulting plot is placed inline a jupyter notebook.
         Assumes a jupyter console is active.
+
+    show_axes : bool, optional
+        Shows a vtk axes widget.  Enabled by default.
 
     Returns
     -------
@@ -131,32 +126,39 @@ def Plot(mesh, **args):
         notebook = False
 
     # create plotting object and add mesh
-    plobj = PlotClass(off_screen=off_screen)
+    plotter = PlotClass(off_screen=off_screen)
+
+    # add axes widget by default
+    if 'show_axes' in args:
+        if args['show_axes']:
+            plboj.AddAxes()
+    else:
+        plotter.AddAxes()
 
     if 'background' in args:
-        plobj.SetBackground(args['background'])
+        plotter.SetBackground(args['background'])
         del args['background']
 
     if isinstance(mesh, np.ndarray):
-        plobj.AddPoints(mesh, **args)
+        plotter.AddPoints(mesh, **args)
     elif isinstance(mesh, list):
         if len(mesh) == 2:  # might be arrows
             if isinstance(mesh[0], np.ndarray) and isinstance(mesh[1], np.ndarray):
-                plobj.AddArrows(mesh[0], mesh[1])
+                plotter.AddArrows(mesh[0], mesh[1])
     else:
-        plobj.AddMesh(mesh, **args)
+        plotter.AddMesh(mesh, **args)
 
     if 'text' in args:
-        plobj.AddText(args['text'])
+        plotter.AddText(args['text'])
 
     if show_bounds:
-        plobj.AddBoundsAxes()
+        plotter.AddBoundsAxes()
 
     # Set camera
     if cpos:
-        plobj.SetCameraPosition(cpos)
+        plotter.SetCameraPosition(cpos)
 
-    cpos = plobj.Plot(window_size=window_size,
+    cpos = plotter.Plot(window_size=window_size,
                       autoclose=False,
                       interactive=interactive,
                       full_screen=full_screen)
@@ -164,12 +166,12 @@ def Plot(mesh, **args):
     # take screenshot
     if filename:
         if filename == True:
-            img = plobj.TakeScreenShot()
+            img = plotter.TakeScreenShot()
         else:
-            img = plobj.TakeScreenShot(filename)
+            img = plotter.TakeScreenShot(filename)
 
     # close and return camera position and maybe image
-    plobj.Close()
+    plotter.Close()
 
     if notebook:
         try:
@@ -229,10 +231,10 @@ class PlotClass(object):
 
     Example
     -------
-    plobj = PlotClass()
-    plobj.AddMesh(mesh, color='red')
-    plobj.AddMesh(another_mesh, color='blue')
-    plobj.Plot()
+    plotter = PlotClass()
+    plotter.AddMesh(mesh, color='red')
+    plotter.AddMesh(another_mesh, color='blue')
+    plotter.Plot()
 
     Parameters
     ----------
@@ -301,6 +303,10 @@ class PlotClass(object):
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
+
+        # track if the camera has been setup
+        self.camera_set = False
+        self.first_time = True
 
     def KeyPressEvent(self, obj, event):
         """ Listens for q key press """
@@ -559,6 +565,10 @@ class PlotClass(object):
 
         return actor, actor.GetProperty()
 
+    @property
+    def camera(self):
+        return self.renderer.GetActiveCamera()
+
     def AddBoundsAxes(self, mesh=None, bounds=None, show_xaxis=True,
                       show_yaxis=True, show_zaxis=True, show_xlabels=True,
                       show_ylabels=True, show_zlabels=True, italic=False,
@@ -665,7 +675,7 @@ class PlotClass(object):
         cubeAxesActor.YAxisMinorTickVisibilityOff()
         cubeAxesActor.ZAxisMinorTickVisibilityOff()
 
-        cubeAxesActor.SetCamera(self.renderer.GetActiveCamera())
+        cubeAxesActor.SetCamera(self.camera)
 
         # set color
         color = ParseColor(color)
@@ -822,7 +832,6 @@ class PlotClass(object):
         """ updates scalars of object (point only for now)
         assumes last inputted mesh if mesh left empty
         """
-
         if mesh is None:
             mesh = self.mesh
 
@@ -874,6 +883,10 @@ class PlotClass(object):
 
     def Close(self):
         """ closes render window """
+
+        # must close out axes marker
+        if hasattr(self, 'axes_widget'):
+            del self.axes_widget
 
         if hasattr(self, 'renWin'):
             self.renWin.Finalize()
@@ -1295,21 +1308,19 @@ class PlotClass(object):
 
     def GetCameraPosition(self):
         """ Returns camera position of active render window """
-        camera = self.renderer.GetActiveCamera()
-        pos = camera.GetPosition()
-        fpt = camera.GetFocalPoint()
-        vup = camera.GetViewUp()
-        return [pos, fpt, vup]
+        return [self.camera.GetPosition(),
+                self.camera.GetFocalPoint(),
+                self.camera.GetViewUp()]
 
     def SetCameraPosition(self, cameraloc):
         """ Set camera position of active render window """
-        camera = self.renderer.GetActiveCamera()
-        camera.SetPosition(cameraloc[0])
-        camera.SetFocalPoint(cameraloc[1])
-        camera.SetViewUp(cameraloc[2])
+        self.camera.SetPosition(cameraloc[0])
+        self.camera.SetFocalPoint(cameraloc[1])
+        self.camera.SetViewUp(cameraloc[2])
 
         # reset clipping range
         self.renderer.ResetCameraClippingRange()
+        self.camera_set = True
 
     def SetBackground(self, color):
         """
@@ -1372,11 +1383,11 @@ class PlotClass(object):
         Examples
         --------
         >>> import vtkInterface as vtki
-        >>> plobj = vtki.PlotClass()
-        >>> plobj.AddMesh(mesh, label='My Mesh')
-        >>> plobj.AddMesh(othermesh, 'k', label='My Other Mesh')
-        >>> plobj.AddLegend()
-        >>> plobj.Plot()
+        >>> plotter = vtki.PlotClass()
+        >>> plotter.AddMesh(mesh, label='My Mesh')
+        >>> plotter.AddMesh(othermesh, 'k', label='My Other Mesh')
+        >>> plotter.AddLegend()
+        >>> plotter.Plot()
 
         Alternative manual example
 
@@ -1384,11 +1395,11 @@ class PlotClass(object):
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> plobj = vtki.PlotClass()
-        >>> plobj.AddMesh(mesh)
-        >>> plobj.AddMesh(othermesh, 'k')
-        >>> plobj.AddLegend(legend_entries)
-        >>> plobj.Plot()
+        >>> plotter = vtki.PlotClass()
+        >>> plotter.AddMesh(mesh)
+        >>> plotter.AddMesh(othermesh, 'k')
+        >>> plotter.AddLegend(legend_entries)
+        >>> plotter.Plot()
 
         """        
         legend = vtk.vtkLegendBoxActor()        
@@ -1540,6 +1551,10 @@ class PlotClass(object):
             List of camera position, focal point, and view up
 
         """
+        # reset unless camera for the first render unless camera is set
+        if self.first_time and not self.camera_set:
+            self.renderer.ResetCamera()
+
         def PlotFun():
             return self._plot(title,
                               window_size=window_size,
@@ -1564,13 +1579,19 @@ class PlotClass(object):
         self.marker = vtk.vtkAxesActor()
         self.renderer.AddActor(self.marker)
 
-        # interactor doesn't work
-        # self.marker = vtk.vtkOrientationMarkerWidget()
-        # self.marker.SetInteractor(self.iren)
-        # self.marker.SetOrientationMarker(axes)
-        # self.marker.SetEnabled(1)
-        # axes = vtk.vtkAxesActor()
-        # widget = vtk.vtkOrientationMarkerWidget()
+    def AddAxes(self):
+        """ adds an interactive axes widget """
+        if hasattr(self, 'axes_widget'):
+            raise Exception('plotter already has axes widget')
+        self.axes_actor = vtk.vtkAxesActor()
+        self.axes_widget = vtk.vtkOrientationMarkerWidget()
+        self.axes_widget.SetOrientationMarker(self.axes_actor)
+        if hasattr(self, 'iren'):
+            self.axes_widget.SetInteractor(self.iren)
+            self.axes_widget.InteractiveOn()
+            self.axes_widget.SetEnabled(1)
+
+    
 
     def TakeScreenShot(self, filename=None, transparent_background=False):
         """
@@ -1621,8 +1642,7 @@ class PlotClass(object):
 
     def SetFocus(self, point):
         """ sets focus to a point """
-        camera = self.renderer.GetActiveCamera()
-        camera.SetFocalPoint(point)
+        self.camera.SetFocalPoint(point)
 
     def __del__(self):
         log.debug('Object collected')
@@ -1675,28 +1695,100 @@ def CreateArrowsActor(pdata):
     return actor
 
 
-def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
-              legend_entries=None):
+def PlotGrids(grids, wFEM=False, style='wireframe', legend_entries=None,
+              **args):
     """
-    Creates a plot of several grids as wireframes.  When wFEM is
-    true, the first grid is a white solid
+    Creates a plot of several grids as wireframes.  Useful for plotting 
+    CFD grids.
 
+    Parameters
+    ----------
+    grids : list
+        List of vtk grids.
+
+    wFEM : bool, optional
+        The first grid is a white solid when true.
+
+    **args : optional
+        See help(vtkInterface.Plot)
+
+    Returns
+    -------
+    cpos : list
+        List of camera position, focal point, and view up.
+
+    img :  numpy.ndarray
+        Array containing pixel RGB and alpha.  Sized:
+        [Window height x Window width x 3] for transparent_background=False
+        [Window height x Window width x 4] for transparent_background=True
+        Returned when screenshot enabled
     """
+
+    if 'off_screen' in args:
+        off_screen = args['off_screen']
+        del args['off_screen']
+    else:
+        off_screen = False
+
+    if 'full_screen' in args:
+        full_screen = args['full_screen']
+        del args['full_screen']
+    else:
+        full_screen = False
+
+    if 'screenshot' in args:
+        filename = args['screenshot']
+        del args['screenshot']
+    else:
+        filename = None
+
+    if 'interactive' in args:
+        interactive = args['interactive']
+        del args['interactive']
+    else:
+        interactive = True
+
+    if 'cpos' in args:
+        cpos = args['cpos']
+        del args['cpos']
+    else:
+        cpos = None
+
+    if 'window_size' in args:
+        window_size = args['window_size']
+        del args['window_size']
+    else:
+        window_size = [1024, 768]
+
+    # add bounds
+    if 'show_bounds' in args:
+        show_bounds = True
+        del args['show_bounds']
+    else:
+        show_bounds = False
 
     # Make grid colors
     N = len(grids)
     HSV_tuples = [(x * 1.0 / N, 0.5, 0.5) for x in range(N)]
     colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples))
 
-    pobj = PlotClass()
+    plotter = PlotClass(off_screen=off_screen)
+
+    if 'show_axes' in args:
+        if args['show_axes']:
+            plotter.AddAxes()
+    else:
+        plotter.AddAxes()
+
+    if 'background' in args:
+        plotter.SetBackground(args['background'])
+        del args['background']
+
     for i in range(len(grids)):
         if not i and wFEM:  # Special plotting for first grid
-            pobj.AddMesh(grids[i])
+            plotter.AddMesh(grids[i])
         else:
-            pobj.AddMesh(grids[i], color=colors[i], style=style)
-
-    # Render plot and delete when finished
-    pobj.SetBackground(background)
+            plotter.AddMesh(grids[i], color=colors[i], style=style)
 
     if legend_entries:
         legend = []
@@ -1707,18 +1799,44 @@ def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
             for i in range(len(legend_entries)):
                 legend.append([legend_entries[i], colors[i]])
 
-        pobj.AddLegend(legend)
+        plotter.AddLegend(legend)
 
-    pobj.Plot()
+    # Set camera
+    if cpos:
+        plotter.SetCameraPosition(cpos)
+
+    if 'axes' in args:
+        if args['axes'] is True:
+            plotter.AddAxes()
+            plotter.camera
+
+    cpos = plotter.Plot(window_size=window_size,
+                      autoclose=False,
+                      interactive=interactive,
+                      full_screen=full_screen)
+
+    # take screenshot
+    if filename:
+        if filename == True:
+            img = plotter.TakeScreenShot()
+        else:
+            img = plotter.TakeScreenShot(filename)
+
+    # close and return camera position and maybe image
+    plotter.Close()
+    if filename:
+        return cpos, img
+    else:
+        return cpos
 
 
 def PlotNormals(mesh, ntype='point', show_mesh=True, mag=1.0, flip=False,
                 use_every=1):
     """ Plot mesh (optional) with normals. """
 
-    pobj = PlotClass()
+    plotter = PlotClass()
     if show_mesh:
-        pobj.AddMesh(mesh)
+        plotter.AddMesh(mesh)
 
     # TODO: Implement visualisation of cell normals
     if ntype == 'point':
@@ -1742,18 +1860,18 @@ def PlotNormals(mesh, ntype='point', show_mesh=True, mag=1.0, flip=False,
     points = points[::use_every]
     normals = normals[::use_every]
 
-    pobj.AddArrows(points, normals, mag=mag)
+    plotter.AddArrows(points, normals, mag=mag)
 
-    return pobj.Plot()
+    return plotter.Plot()
 
 
 def PlotEdges(mesh, angle, width=10):
     """ Plots edges of a mesh """
     edges = vtkInterface.GetEdgePoints(mesh, angle, False)
-    pobj = PlotClass()
-    pobj.AddLines(edges, [0, 1, 1], width)
-    pobj.AddMesh(mesh)
-    pobj.Plot()
+    plotter = PlotClass()
+    plotter.AddLines(edges, [0, 1, 1], width)
+    plotter.AddMesh(mesh)
+    plotter.Plot()
 
 
 def PlotBoundaries(mesh, **args):
@@ -1767,10 +1885,10 @@ def PlotBoundaries(mesh, **args):
     featureEdges.Update()
     edges = vtkInterface.PolyData(featureEdges.GetOutput())
 
-    plobj = PlotClass()
-    plobj.AddMesh(edges, 'r', style='wireframe')
-    plobj.AddMesh(mesh)
-    plobj.Plot()
+    plotter = PlotClass()
+    plotter.AddMesh(edges, 'r', style='wireframe')
+    plotter.AddMesh(mesh)
+    plotter.Plot()
 
 
 def SingleTriangle():
@@ -1797,8 +1915,6 @@ def SinglePoint():
     points[2] = [0.5, 0.707, 0]
     cells = np.array([1, 0, 1, 1, 1, 2], ctypes.c_long)
     return vtki.PolyData(points, cells)
-
-# SinglePoint().Plot()
 
 
 def ParseColor(color):
