@@ -441,8 +441,8 @@ class Common(object):
             cell_arrays[name] = self.GetCellScalars(name)
         return cell_arrays
 
-    def __del__(self):
-        log.debug('Object collected')
+    # def __del__(self):
+        # log.debug('Object collected')
 
 
 def AxisRotation(p, ang, inplace=False, deg=True, axis='z'):

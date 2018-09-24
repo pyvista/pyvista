@@ -1189,7 +1189,7 @@ class PlotClass(object):
             self.points = points
 
         # select color
-        rgb_color = vtkInterface.StringToRGB(color)
+        rgb_color = ParseColor(color)
 
         # legend label
         if label:
@@ -1588,10 +1588,9 @@ class PlotClass(object):
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
             self.axes_widget.SetInteractor(self.iren)
-            self.axes_widget.InteractiveOn()
             self.axes_widget.SetEnabled(1)
+            self.axes_widget.InteractiveOn()
 
-    
 
     def TakeScreenShot(self, filename=None, transparent_background=False):
         """
@@ -1848,7 +1847,7 @@ def PlotNormals(mesh, ntype='point', show_mesh=True, mag=1.0, flip=False,
         else:
             normals = mesh.point_normals
     elif ntype == 'cell':
-        print('Visualization of cell normals not yet implemented. Returning None.')
+        raise Exception('Visualization of cell normals not yet implemented')
         return
 
     # Flip normal orientation
