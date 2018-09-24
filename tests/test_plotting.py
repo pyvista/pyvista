@@ -29,6 +29,7 @@ class TestPlotting(object):
         assert np.any(img)
 
 
+@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
 def test_axes():
     plotter = vtki.PlotClass(off_screen=True)
     plotter.AddAxes()
