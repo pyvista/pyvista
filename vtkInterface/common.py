@@ -222,7 +222,7 @@ class Common(object):
         Returns
         -------
         cpos : list
-            Camera position.
+            Camera position, focal point, and view up.
 
         Examples
         --------

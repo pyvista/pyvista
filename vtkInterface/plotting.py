@@ -309,7 +309,7 @@ class PlotClass(object):
         self.first_time = True
 
     def KeyPressEvent(self, obj, event):
-        """ Listens for q key press """
+        """ Listens for key press event """
         key = self.iren.GetKeySym()
         log.debug('Key %s pressed' % key)
         if key == 'q':
@@ -319,7 +319,6 @@ class PlotClass(object):
                                                   self.OnLeftButtonDown)
 
     def OnLeftButtonDown(self, obj, eventType):
-
         # Get 2D click location on window
         clickPos = self.iren.GetEventPosition()
 
@@ -328,8 +327,7 @@ class PlotClass(object):
         picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
 
-        self.iren.AddObserver('LeftButtonPressEvent',
-                              self.OnLeftButtonDown)
+        # self.iren.AddObserver('LeftButtonPressEvent', self.OnLeftButtonDown)
 
     def Update(self, stime=1, force_redraw=True):
         """
@@ -1026,8 +1024,9 @@ class PlotClass(object):
 
         return actor
 
-    def AddPointLabels(self, points, labels, bold=True, fontsize=16,
-                       textcolor='k', font_family='courier', shadow=False,
+    def AddPointLabels(self, points, labels, italic=False, bold=True,
+                       fontsize=16, textcolor='k',
+                       font_family='courier', shadow=False,
                        showpoints=True, pointcolor='k', pointsize=5):
         """
         Creates a point actor with one label from list labels assigned to
@@ -1036,7 +1035,7 @@ class PlotClass(object):
         Parameters
         ----------
         points : np.ndarray
-            3 x n numpy array of points.
+            n x 3 numpy array of points.
 
         labels : list
             List of labels.  Must be the same length as points.
@@ -1084,7 +1083,6 @@ class PlotClass(object):
             VTK label mapper.  Can be used to change properties of the labels.
 
         """
-
         if len(points) != len(labels):
             raise Exception('There must be one label for each point')
 
@@ -1101,6 +1099,7 @@ class PlotClass(object):
         labelMapper = vtk.vtkLabeledDataMapper()
         labelMapper.SetInputData(vtkpoints)
         textprop = labelMapper.GetLabelTextProperty()
+        textprop.SetItalic(italic)
         textprop.SetBold(bold)
         textprop.SetFontSize(fontsize)
         textprop.SetFontFamily(ParseFontFamily(font_family))
