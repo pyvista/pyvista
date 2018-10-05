@@ -61,6 +61,9 @@ def Plot(mesh, **args):
     show_axes : bool, optional
         Shows a vtk axes widget.  Enabled by default.
 
+    text : str, optional
+        Adds text at the bottom of the plot.
+
     Returns
     -------
     cpos : list
@@ -937,9 +940,25 @@ class PlotClass(object):
 
         return self.textActor
 
-    def OpenMovie(self, filename, framerate=24, codec='libx264',
-                  preset='medium'):
-        """ Establishes a connection to the ffmpeg writer """
+    def OpenMovie(self, filename, framerate=24, codec=None,
+                  preset=None):
+        """
+        Establishes a connection to the ffmpeg writer
+
+        Parameters
+        ----------
+        filename : str
+            Filename of the movie to open.  Filename should end in mp4,
+            but other filetypes may be supported.  See "imagio.get_writer"
+
+        framerate : int, optional
+            Frames per second.
+
+        codec : depreciated
+
+        preset : depreciated
+
+        """
         # Create movie object and check if render window is active
         self.mwriter = imageio.get_writer(filename, fps=framerate)
 
@@ -1505,7 +1524,7 @@ class PlotClass(object):
             try:
                 import IPython
             except ImportError:
-                raise Exception('Install ipython to display image in a notebook')
+                raise Exception('Install iPython to display image in a notebook')
 
             img = self.TakeScreenShot()
             IPython.display.display(PIL.Image.fromarray(img))
