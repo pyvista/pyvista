@@ -2,13 +2,10 @@
 
 Installation
 ============
-Installing vtkInterface itself is quite straightforward as it can be installed using ``pip``.  ``VTK`` itself can also be installed using pip or from a a distribution such as `Anaconda <https://www.continuum.io/downloads>`_. The installation directions are different depending on your OS; see the directions below.
+Installing vtkInterface itself is quite straightforward as it can be installed using ``pip``.
 
 ``vtkInterface`` requires ``numpy``, ``imageio``, and ``VTK`` version 7.0 or newer.
 
-
-Windows Installation
---------------------
 
 Install VTK
 ~~~~~~~~~~~
@@ -35,7 +32,7 @@ Alternatively, you can install the latest version from GitHub by visiting `vtkIn
 
 Test Installation
 -----------------
-Regardless of your OS, you can test your installation by running an example:
+You can test your installation by running an example:
 
 .. code:: python
 
