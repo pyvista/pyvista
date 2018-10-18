@@ -4,16 +4,21 @@ from vtkInterface import examples
 spherefile = examples.spherefile
 
 
-class TestPolyData(object):
-    sphere = vtki.Sphere()
+sphere = vtki.Sphere()
     
-    def test_loadfromfile(self):
-        sphere = vtki.PolyData(spherefile)
-        assert sphere.GetNumberOfPoints()
-        assert sphere.GetNumberOfCells()
-        assert hasattr(sphere, 'points')
+def test_loadfromfile():
+    sphere = vtki.PolyData(spherefile)
+    assert sphere.GetNumberOfPoints()
+    assert sphere.GetNumberOfCells()
+    assert hasattr(sphere, 'points')
 
-    def test_raytrace(self):
-        points, ind = self.sphere.RayTrace([0, 0, 0], [1, 1, 1])
-        assert np.any(points)
-        assert np.any(ind)
+
+def test_raytrace():
+    points, ind = sphere.RayTrace([0, 0, 0], [1, 1, 1])
+    assert np.any(points)
+    assert np.any(ind)
+
+
+def test_plot_curvature():
+    cpos = sphere.PlotCurvature(off_screen=True)
+    assert isinstance(cpos, list)

@@ -3,8 +3,8 @@ import os
 
 import numpy as np
 import pytest
-import vtkInterface as vtki
 
+import vtkInterface as vtki
 from vtkInterface import examples
 from vtkInterface.plotting import RunningXServer
 
@@ -78,4 +78,8 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
     # Close movie and delete object
     plobj.Close()
 
-# test_creatingagifmovie(None, False)
+
+@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
+def test_show_wave():
+    points = examples.ShowWave(wavetime=0.1, off_screen=True)
+    assert isinstance(points, np.ndarray)

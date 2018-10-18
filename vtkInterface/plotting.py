@@ -79,6 +79,8 @@ def Plot(mesh, **args):
     if 'off_screen' in args:
         off_screen = args['off_screen']
         del args['off_screen']
+    elif 'offscreen' in args:
+        raise Exception('Use "off_screen" instead of "offscreen"')
     else:
         off_screen = False
 

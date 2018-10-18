@@ -48,26 +48,32 @@ class Grid(vtki.Common):
     def __init__(self, *args, **kwargs):
         pass
 
-    def PlotCurvature(self, curvtype='mean', rng=None):
+    def PlotCurvature(self, curvtype='mean', **kwargs):
         """
         Plots the curvature of the external surface of the grid
 
         Parameters
         ----------
         curvtype : str, optional
-            One of the following strings indicating curvature type
+            One of the following strings indicating curvature types
 
             - mean
             - gaussian
             - maximum
             - minimum
 
-        rng : list, optional
-            Minimum and maximum limits on curvature plot
+        **kwargs : optional
+            Optional keyword arguments.  See help(vtkInterface.Plot)
+
+        Returns
+        -------
+        cpos : list
+            Camera position, focal point, and view up.  Used for storing and
+            setting camera view.
 
         """
         # extract surface and plot its curvature
-        self.ExtractExteriorTri()[0].PlotCurvature(curvtype, rng)
+        return self.ExtractExteriorTri()[0].PlotCurvature(curvtype, **kwargs)
 
     @property
     def volume(self):

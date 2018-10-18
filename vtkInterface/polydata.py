@@ -1194,9 +1194,6 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Parameters
         ----------
-        mesh : vtkInterface.PolyData
-            Mesh to perform the ray tracing on.
-
         origin : np.ndarray or list
             Start of the line segment.
 
@@ -1212,10 +1209,12 @@ class PolyData(vtkPolyData, vtki.Common):
         Returns
         -------
         intersection_points : np.ndarray
-            Location of the intersection points.  Empty array if no intersections.
+            Location of the intersection points.  Empty array if no 
+            intersections.
 
         intersection_cells : np.ndarray
-            Indices of the intersection cells.  Empty array if no intersections.
+            Indices of the intersection cells.  Empty array if no 
+            intersections.
 
         """
         points = vtk.vtkPoints()
@@ -1243,9 +1242,10 @@ class PolyData(vtkPolyData, vtki.Common):
             plotter.AddMesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.AddLines(segment, 'b', label='Ray Segment')
-            plotter.AddPoints(intersection_points, 'r', psize=10, label='Intersection Points')
+            plotter.AddPoints(intersection_points, 'r', psize=10,
+                              label='Intersection Points')
             plotter.AddLegend()
-            plotter.AddAxesAtOrigin()
+            plotter.AddAxes()
             # if np.any(intersection_points):
             #     if first_point:
             #         plotter.SetFocus(intersection_points)
