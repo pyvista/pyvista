@@ -33,7 +33,7 @@ readme_file = os.path.join(filepath, 'README.rst')
 
 setup(
     name=package_name,
-    packages=[package_name, 'vtkInterface.tests', 'vtkInterface.examples'],
+    packages=[package_name, 'vtkInterface.examples'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=open(readme_file).read(),
