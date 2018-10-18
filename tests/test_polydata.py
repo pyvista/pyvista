@@ -1,9 +1,10 @@
+import pytest
 import numpy as np
 import vtkInterface as vtki
 from vtkInterface import examples
+from vtkInterface.plotting import RunningXServer
+
 spherefile = examples.spherefile
-
-
 sphere = vtki.Sphere()
     
 def test_loadfromfile():
@@ -19,6 +20,7 @@ def test_raytrace():
     assert np.any(ind)
 
 
+@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
 def test_plot_curvature():
     cpos = sphere.PlotCurvature(off_screen=True)
     assert isinstance(cpos, list)
