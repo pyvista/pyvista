@@ -434,7 +434,7 @@ class PlotClass(object):
         ncolors : int, optional
             Number of colors to use when displaying scalars.  Default 256.
 
-        interpolatebeforemap : bool, default False
+        interpolatebeforemap : bool, optional
             Enabling makes for a smoother scalar display.  Default False
 
         colormap : str, optional

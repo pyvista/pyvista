@@ -71,7 +71,7 @@ surf = vtkInterface.GenStructSurf(X, Y, Z)
 # Extract surface of structured grid and plot mean curvature
 #surf = sgrid.ExtractSurface()
 surf.PlotCurvature('Mean')
-surf.GetNumpyPoints()
+surf.points
 
 
 # Take screenshot example

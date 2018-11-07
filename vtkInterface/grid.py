@@ -9,6 +9,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
+# TODO: remove this
 # allow readthedocs to parse objects
 try:
     import vtk
@@ -143,8 +144,8 @@ class Grid(vtki.Common):
 
         """
         # Extract surface mesh
-        surf = self.ExtractSurface(pass_cellid=False)
-        return surf.GetPointScalars('vtkOriginalPointIds')
+        surf = self.ExtractSurface(pass_cellid=True)
+        return surf.point_arrays['vtkOriginalPointIds']
 
     def ExtractEdges(self, feature_angle=30, boundary_edges=True,
                      non_manifold_edges=True, feature_edges=True,
@@ -557,9 +558,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, Grid):
         subgrid = UnstructuredGrid(extractSelection.GetOutput())
 
         # extracts only in float32
-        if self.GetNumpyPoints().dtype is not np.dtype('float32'):
+        if self.points.dtype is not np.dtype('float32'):
             ind = subgrid.GetPointScalars('vtkOriginalPointIds')
-            subgrid.SetNumpyPoints(self.GetNumpyPoints()[ind])
+            subgrid.SetNumpyPoints(self.points[ind])
 
         return subgrid
 

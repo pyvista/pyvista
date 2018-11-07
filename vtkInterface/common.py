@@ -101,8 +101,8 @@ class Common(object):
 
         if vtkarr:
             array = vtk_to_numpy(vtkarr)
-            if array.dtype == np.int8:
-                array = array.astype(np.bool)
+            if array.dtype == np.uint8:
+                array = array.view(np.bool)
             return array
         else:
             return None
@@ -134,7 +134,7 @@ class Common(object):
             raise Exception('Number of scalars must match the number of ' +
                             'points')
         if scalars.dtype == np.bool:
-            scalars = scalars.astype(np.int8)
+            scalars = scalars.astype(np.uint8)
 
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)

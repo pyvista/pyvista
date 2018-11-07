@@ -61,7 +61,7 @@ def PlotAntsPlane():
     # load and shrink airplane
     airplane = vtkInterface.PolyData(planefile)
     airplane.points /= 10
-    # pts = airplane.GetNumpyPoints() # gets pointer to array
+    # pts = airplane.points # gets pointer to array
     # pts /= 10  # shrink
 
     # rotate and translate ant so it is on the plane
