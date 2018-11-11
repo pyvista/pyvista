@@ -218,10 +218,18 @@ def PlotArrows(cent, direction, **kwargs):
 
 
 def RunningXServer():
-    """ Check if x server is running """
-    if os.name != 'posix':  # linux or mac os
-        return False
+    """
+    Check if x server is running
 
+    Returns
+    -------
+    running_xserver : bool
+        True when on Linux and running an xserver.  Returns None when
+        on a non-linux platform.
+
+    """
+    if os.name != 'posix':  # windows or mac os
+        return None
     try:
         p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
         p.communicate()
@@ -272,9 +280,9 @@ class PlotClass(object):
         self._labels = []
 
         # POSIX segfaults without X11
-        if os.name == 'posix':  # linux or mac os
-            if not RunningXServer():
-                raise Exception('Unable to plot without x window system')
+        # if os.name == 'posix':  # linux or mac os
+        # if not RunningXServer():
+            # raise Exception('Unable to plot without x window system')
 
         self.notebook = notebook
         if self.notebook:

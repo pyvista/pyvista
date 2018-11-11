@@ -117,31 +117,10 @@ def MeshfromVF(points, triangles_in, clean=True, deep_points=True):
         triangles = np.empty((triangles_in.shape[0], 4), dtype=ctypes.c_int64)
         triangles[:, -3:] = triangles_in
         triangles[:, 0] = 3
-
     else:
         triangles = triangles_in
 
-    # Data checking
-    if not points.flags['C_CONTIGUOUS']:
-        points = np.ascontiguousarray(points)
-
-    if not triangles.flags['C_CONTIGUOUS'] or triangles.dtype != 'int64':
-        triangles = np.ascontiguousarray(triangles, 'int64')
-
-    # Convert to vtk objects
-    vtkpoints = MakevtkPoints(points, deep=deep_points)
-
-    # Convert to a vtk array
-    vtkcells = vtk.vtkCellArray()
-    vtkcells.SetCells(
-        triangles.shape[0],
-        numpy_to_vtkIdTypeArray(
-            triangles,
-            deep=True))
-
-    mesh = vtkInterface.PolyData()
-    mesh.SetPoints(vtkpoints)
-    mesh.SetPolys(vtkcells)
+    mesh = vtkInterface.PolyData(points, triangles.ravel())
 
     if clean:
         mesh.Clean()
@@ -238,7 +217,7 @@ def ReadG3D(filename):
 
 
 def TransFromMatrix(matrix, rigid=True):
-    """ Convert a vtk MATRIX to a np.array """
+    """ Convert a vtk matrix to a np.array """
     if rigid:
         n = 3
     else:
