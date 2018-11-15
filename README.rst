@@ -8,8 +8,8 @@ vtki
 .. image:: https://travis-ci.org/akaszynski/vtki.svg?branch=master
     :target: https://travis-ci.org/akaszynski/vtki
 
-.. image:: https://readthedocs.org/projects/vtki/badge/?version=latest
-    :target: https://vtki.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/vtkInterface/badge/?version=latest
+    :target: https://vtkInterface.readthedocs.io/en/latest/?badge=latest
 
 vtki is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
@@ -18,7 +18,7 @@ This module can be used for scientific plotting for presentations and research p
 
 Documentation
 -------------
-Refer to the detailed `readthedocs <http://vtki.readthedocs.io/en/latest/index.html>`_ documentation for detailed installation and usage details.
+Refer to the detailed `readthedocs <http://vtkInterface.readthedocs.io/en/latest/index.html>`_ documentation for detailed installation and usage details.
 
 Also see the `wiki <https://github.com/akaszynski/vtki/wiki>`_ for brief code snippets.
 
@@ -30,7 +30,7 @@ Installation is simply::
     
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or `GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
 
-See the `Installation <http://vtki.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details if the installation through pip doesn't work out.
+See the `Installation <http://vtkInterface.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details if the installation through pip doesn't work out.
 
 
 Quick Examples
