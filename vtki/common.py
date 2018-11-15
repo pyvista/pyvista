@@ -1,19 +1,18 @@
 """
 Attributes common to PolyData and Grid Objects
 """
-import numpy as np
-import vtkInterface
 import logging
+from weakref import proxy
+
+import numpy as np
+import vtk
+from vtk.util.numpy_support import vtk_to_numpy
+from vtk.util.numpy_support import numpy_to_vtk
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-try:
-    import vtk
-    from vtk.util.numpy_support import vtk_to_numpy
-    from vtk.util.numpy_support import numpy_to_vtk
-except ImportError:
-    pass
+import vtki
 
 
 class Common(object):
@@ -28,70 +27,15 @@ class Common(object):
         return vtk_to_numpy(self.GetPoints().GetData())
 
     @points.setter
-    def points(self, newpoints):
-        """ set the new points without copying """
-        if not isinstance(newpoints, np.ndarray):
+    def points(self, points):
+        """ set points without copying """
+        if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
-        self.SetNumpyPoints(newpoints, False)
+        vtk_points = vtki.vtk_points(points, False)
+        self.SetPoints(vtk_points)
+        self._point_ref = points
 
-        # keep a reference as pointer might be deleted
-        if not hasattr(self, 'references'):
-            self.references = [newpoints]
-        else:
-            self.references.append(newpoints)
-
-    def GetNumpyPoints(self, dtype=None, deep=False):
-        """
-        Returns points as a numpy array
-
-        This performs the same actions as self.points with default parameters
-
-        Parameters
-        ----------
-        dtype : optional
-            Data type to specify.  Will not copy data if points are already
-            in the specified data type.
-
-        deep : bool, optional
-            Copies points when True
-
-        Returns
-        -------
-        points : np.ndarray
-            Numpy array of points.
-
-        """
-        points = vtk_to_numpy(self.GetPoints().GetData())
-
-        if dtype:
-            if points.dtype != dtype:
-                return points.astype(dtype)
-
-        # Copy if requested
-        if deep:
-            return points.copy()
-        else:
-            return points
-
-    def SetNumpyPoints(self, points, deep=True):
-        """
-        Overwrites existing points with new points.
-
-        Parameters
-        ----------
-        points : np.ndarray
-            Points to set to.
-
-        deep : bool, optional
-            Copies points when True.  When False, does not copy, but
-            a reference to the original points must be kept or else
-            Python will segfault.
-
-        """
-        vtkPoints = vtkInterface.MakevtkPoints(points, deep)
-        self.SetPoints(vtkPoints)
-
-    def GetPointScalars(self, name):
+    def _point_scalar(self, name):
         """
         Returns point scalars of a vtk object
 
@@ -107,16 +51,13 @@ class Common(object):
 
         """
         vtkarr = self.GetPointData().GetArray(name)
+        assert vtkarr is not None, '%s is not a point scalar' % name
+        array = vtk_to_numpy(vtkarr)
+        if array.dtype == np.uint8:
+            array = array.view(np.bool)
+        return array
 
-        if vtkarr:
-            array = vtk_to_numpy(vtkarr)
-            if array.dtype == np.int8:
-                array = array.astype(np.bool)
-            return array
-        else:
-            return None
-
-    def AddPointScalars(self, scalars, name, setactive=False, deep=True):
+    def _add_point_scalar(self, scalars, name, setactive=False, deep=True):
         """
         Adds point scalars to the mesh
 
@@ -136,21 +77,26 @@ class Common(object):
             must be kept to avoid a segfault.
 
         """
-        if scalars.shape[0] != self.GetNumberOfPoints():
+        if not isinstance(scalars, np.ndarray):
+            raise TypeError('Input must be a numpy.ndarray') 
+
+        if scalars.shape[0] != self.number_of_points:
             raise Exception('Number of scalars must match the number of ' +
                             'points')
         if scalars.dtype == np.bool:
-            scalars = scalars.astype(np.int8)
+            scalars = scalars.view(np.uint8)
 
+        # assert scalars.flags.c_contiguous, 'array must be contigious'
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
+
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
         if setactive:
             self.GetPointData().SetActiveScalars(name)
 
-    def Plot(self, **args):
+    def plot(self, **args):
         """
         Adds a vtk unstructured, structured, or polymesh to the plotting object
 
@@ -228,22 +174,22 @@ class Common(object):
         Returns
         -------
         cpos : list
-            Camera position.
+            Camera position, focal point, and view up.
 
         Examples
         --------
         >>> # take screenshot without opening window
-        >>> mesh.Plot(off_screen=True, screenshot='mesh_picture.png')
+        >>> mesh.plot(off_screen=True, screenshot='mesh_picture.png')
 
         """
-        return vtkInterface.Plot(self, **args)
+        return vtki.plot(self, **args)
 
-    def MakeDouble(self):
+    def points_to_double(self):
         """ Makes points double precision """
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
-    def RotateX(self, angle):
+    def rotate_x(self, angle):
         """
         Rotates mesh about the x-axis.
 
@@ -253,9 +199,9 @@ class Common(object):
             Angle in degrees to rotate about the x-axis.
 
         """
-        AxisRotation(self.points, angle, inplace=True, axis='x')
+        axis_rotation(self.points, angle, inplace=True, axis='x')
 
-    def RotateY(self, angle):
+    def rotate_y(self, angle):
         """
         Rotates mesh about the y-axis.
 
@@ -265,9 +211,9 @@ class Common(object):
             Angle in degrees to rotate about the y-axis.
 
         """
-        AxisRotation(self.points, angle, inplace=True, axis='y')
+        axis_rotation(self.points, angle, inplace=True, axis='y')
 
-    def RotateZ(self, angle):
+    def rotate_z(self, angle):
         """
         Rotates mesh about the z-axis.
 
@@ -277,9 +223,9 @@ class Common(object):
             Angle in degrees to rotate about the z-axis.
 
         """
-        AxisRotation(self.points, angle, inplace=True, axis='z')
+        axis_rotation(self.points, angle, inplace=True, axis='z')
 
-    def Translate(self, xyz):
+    def translate(self, xyz):
         """
         Translates the mesh.
 
@@ -291,9 +237,9 @@ class Common(object):
         """
         self.points += np.asarray(xyz)
 
-    def ApplyTransformationInPlace(self, trans):
+    def transform(self, trans):
         """
-        Apply a transformation in place.
+        Compute a transformation in place using a 4x4 transform.
 
         Parameters
         ----------
@@ -301,17 +247,16 @@ class Common(object):
             Accepts a vtk transformation object or a 4x4 transformation matrix.
 
         """
-        # work with mulitple input types
         if isinstance(trans, vtk.vtkMatrix4x4):
-            t = vtkInterface.TransFromMatrix(trans)
+            t = vtki.trans_from_matrix(trans)
         elif isinstance(trans, vtk.vtkTransform):
-            t = vtkInterface.TransFromMatrix(trans.GetMatrix())
+            t = vtki.trans_from_matrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
-            if trans.shape[1] != 4:
-                raise Exception('Invalid input shape')
+            if trans.shape[0] != 4 or trans.shape[1] != 4:
+                raise Exception('Transformation array must be 4x4')
             t = trans
         else:
-            raise Exception('Input transform must be either:\n'
+            raise TypeError('Input transform must be either:\n'
                             + '\tvtk.vtkMatrix4x4\n'
                             + '\tvtk.vtkTransform\n'
                             + '\t4x4 np.ndarray\n')
@@ -325,23 +270,7 @@ class Common(object):
         self.points[:, 1] = y
         self.points[:, 2] = z
 
-    def CheckArrayExists(self, name):
-        """
-        Returns True if a point array exists in a vtk object
-
-        Parameters
-        ----------
-        name : str
-            String of the point scalar to check.
-
-        Returns
-        -------
-        exists : bool
-            True when array exists and False when it does not.
-        """
-        return bool(self.GetPointData().GetArray(name))
-
-    def GetCellScalars(self, name):
+    def _cell_scalar(self, name):
         """
         Returns the cell scalars of a vtk object
 
@@ -357,15 +286,12 @@ class Common(object):
 
         """
         vtkarr = self.GetCellData().GetArray(name)
-        if vtkarr:
-            array = vtk_to_numpy(vtkarr)
-            if array.dtype == np.int8:
-                array = array.astype(np.bool)
-            return array
-        else:
-            return None
+        array = vtk_to_numpy(vtkarr)
+        if array.dtype == np.uint8:
+            array = array.view(np.bool)
+        return array
 
-    def AddCellScalars(self, scalars, name, setactive=True, deep=True):
+    def _add_cell_scalar(self, scalars, name, setactive=False, deep=True):
         """
         Adds cell scalars to the vtk object.
 
@@ -385,14 +311,16 @@ class Common(object):
             must be kept to avoid a segfault.
 
         """
-        if scalars.shape[0] != self.GetNumberOfCells():
-            raise Exception('Number of scalars must match the number of cells')
+        if not isinstance(scalars, np.ndarray):
+            raise TypeError('Input must be a numpy.ndarray')
 
-        if not scalars.flags.c_contiguous:
-            scalars = np.ascontiguousarray(scalars)
+        if scalars.shape[0] != self.number_of_cells:
+            raise Exception('Number of scalars must match the number of cells (%d)'
+                            % self.number_of_cells)
 
+        assert scalars.flags.c_contiguous, 'Array must be contigious'
         if scalars.dtype == np.bool:
-            scalars = scalars.astype(np.int8)
+            scalars = scalars.view(np.uint8)
 
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
@@ -400,7 +328,7 @@ class Common(object):
         if setactive:
             self.GetCellData().SetActiveScalars(name)
 
-    def Copy(self, deep=True):
+    def copy(self, deep=True):
         """
         Returns a copy of the object
 
@@ -422,11 +350,118 @@ class Common(object):
             newobject.ShallowCopy(self)
         return newobject
 
-    def __del__(self):
-        log.debug('Object collected')
+    def _remove_point_scalar(self, key):
+        """ removes point scalars from point data """
+        self.GetPointData().RemoveArray(key)
+
+    @property
+    def point_arrays(self):
+        """ Returns the all point arrays """
+        pdata = self.GetPointData()
+        narr = pdata.GetNumberOfArrays()
+
+        if hasattr(self, '_point_arrays'):
+            if narr == len(self._point_arrays):
+                return self._point_arrays
+
+        # dictionary with callbacks
+        self._point_arrays = PointScalarsDict(self)
+
+        for i in range(narr):
+            name = pdata.GetArrayName(i)
+            self._point_arrays[name] = self._point_scalar(name)
+
+        self._point_arrays.enable_callback()
+        return self._point_arrays
+
+    def _remove_cell_scalar(self, key):
+        """ removes cell scalars """
+        self.GetCellData().RemoveArray(key)
+
+    @property
+    def cell_arrays(self):
+        """ Returns the all cell arrays """
+        cdata = self.GetCellData()
+        narr = cdata.GetNumberOfArrays()
+
+        # sanity check
+        if hasattr(self, '_cell_arrays'):
+            if narr == len(self._cell_arrays):
+                return self._cell_arrays
+
+        # dictionary with callbacks
+        self._cell_arrays = CellScalarsDict(self)
+
+        for i in range(narr):
+            name = cdata.GetArrayName(i)
+            self._cell_arrays[name] = self._cell_scalar(name)
+
+        self._cell_arrays.enable_callback()
+        return self._cell_arrays
+
+    @property
+    def number_of_points(self):
+        return self.GetNumberOfPoints()
+
+    @property
+    def number_of_cells(self):
+        return self.GetNumberOfCells()
+
+    # def __del__(self):
+    #     log.debug('Object collected')
 
 
-def AxisRotation(p, ang, inplace=False, deg=True, axis='z'):
+class CellScalarsDict(dict):
+    """
+    Updates internal cell data when an array is added or removed from
+    the dictionary.
+    """
+
+    def __init__(self, data):
+        self.data = proxy(data)
+        dict.__init__(self)
+        self.callback_enabled = False
+
+    def enable_callback(self):
+        self.callback_enabled = True
+
+    def __setitem__(self, key, val):
+        """ overridden to assure data is contigious """
+        if self.callback_enabled:
+            self.data._add_cell_scalar(val, key, deep=False)
+        dict.__setitem__(self, key, val)
+
+    def __delitem__(self, key):
+        self.data._remove_cell_scalar(key)
+        return dict.__delitem__(self, key)
+
+
+class PointScalarsDict(dict):
+    """
+    Updates internal point data when an array is added or removed from
+    the dictionary.
+    """
+
+    def __init__(self, data):
+        self.data = proxy(data)
+        dict.__init__(self)
+        self.callback_enabled = False
+
+    def enable_callback(self):
+        self.callback_enabled = True
+
+    def __setitem__(self, key, val):
+        """ overridden to assure data is contigious """
+        if self.callback_enabled:
+            self.data._add_point_scalar(val, key, deep=False)
+        dict.__setitem__(self, key, val)
+
+    def __delitem__(self, key):
+        self.data._remove_point_scalar(key)
+        return dict.__delitem__(self, key)
+
+
+def axis_rotation(p, ang, inplace=False, deg=True, axis='z'):
     """ Rotates points p angle ang (in deg) about an axis """
     axis = axis.lower()
 

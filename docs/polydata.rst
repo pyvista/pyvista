@@ -1,6 +1,6 @@
 PolyData Surface
 ================
-The ``vtkInterface.PolyData`` object adds addiction functionality to the vtk.vtkPolyData object, to include direct array access through numpy, one line plotting, and other mesh functions.
+The ``vtki.PolyData`` object adds additional functionality to the vtk.vtkPolyData object, to include direct array access through numpy, one line plotting, and other mesh functions.
 
 
 PolyData Creation
@@ -12,8 +12,8 @@ A polydata object can be initialized with:
 
 .. code:: python
 
-    import vtkInterface
-    grid = vtkInterface.PolyData()
+    import vtki
+    grid = vtki.PolyData()
 
 This creates an empty grid, and is not useful until points and cells are added to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``, but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints`` objects, which need to be populated with values.  Grid creation is simplified by initializing the grid directly from numpy arrays as in the following section.
 
@@ -25,51 +25,52 @@ A PolyData object can be created quickly from numpy arrays.  The vertex array co
 .. code:: python
 	  
     import numpy as np
-    import vtkInterface
+    import vtki
 
     # mesh points
     vertices = np.array([[0, 0, 0],
                          [1, 0, 0],
                          [1, 1, 0],
-                         [0, 1, 0]])
+                         [0, 1, 0],
+			 [0.5, 0.5, -1]])
 
     # mesh faces
     faces = np.hstack([[4, 0, 1, 2, 3],  # square
                        [3, 0, 1, 4],     # triangle
                        [3, 1, 2, 4]])    # triangle
 
-    surf = vtkInterface.PolyData(vertices, faces)
+    surf = vtki.PolyData(vertices, faces)
 
     # plot each face with a different color
-    surf.Plot(scalars=np.arange(3))
+    surf.plot(scalars=np.arange(3))
 
 .. image:: ./images/samplepolydata.png
 
 
 Initialize from a File
 ~~~~~~~~~~~~~~~~~~~~~~
-Both binary and ASCII .ply, .stl, and .vtk files can be read using vtkInterface.  For example, the vtkInterface package contains example meshes and these can be loaded with:
+Both binary and ASCII .ply, .stl, and .vtk files can be read using vtki.  For example, the vtki package contains example meshes and these can be loaded with:
 
 .. code:: python
 
-    import vtkInterface
-    from vtkInterface import examples
+    import vtki
+    from vtki import examples
         
     # Load mesh
-    mesh = vtkInterface.PolyData(examples.planefile)
+    mesh = vtki.PolyData(examples.planefile)
 
 This mesh can then be written to a vtk file using:
 
 .. code:: python
 
-    mesh.WriteMesh('plane.vtk')
+    mesh.save('plane.vtk')
 
 These meshes are identical.
 
 .. code:: python
 
     >>> import numpy as np
-    >>> mesh_from_vtk = vtkInterface.LoadMesh('plane.vtk')    
+    >>> mesh_from_vtk = vtki.PolyData('plane.vtk')    
     >>> print(np.allclose(mesh_from_vtk.points, mesh.points))
     True
 
@@ -80,47 +81,70 @@ Meshes can be directly manipulated using numpy or with the built-in translation 
 
 .. code:: python
 
-    import vtkInterface
-    from vtkInterface import examples
+    import vtki
+    from vtki import examples
     
     # load and shrink airplane
-    airplane = vtkInterface.PolyData(examples.planefile)
-    pts = airplane.GetNumpyPoints() # gets pointer to array
-    pts /= 10 # shrink by 10x
+    airplane = vtki.PolyData(examples.planefile)
+    airplane.points /= 10 # shrink by 10x
     
     # rotate and translate ant so it is on the plane
-    ant = vtkInterface.PolyData(examples.antfile)
-    ant.RotateX(90)
-    ant.Translate([90, 60, 15])
+    ant = vtki.PolyData(examples.antfile)
+    ant.rotate_x(90)
+    ant.translate([90, 60, 15])
     
     # Make a copy and add another ant
-    ant_copy = ant.Copy()
-    ant_copy.Translate([30, 0, -10])
+    ant_copy = ant.copy()
+    ant_copy.translate([30, 0, -10])
 
 To plot more than one mesh a plotting class must be created to manage the plotting.  The following code creates the class and plots the meshes with various colors.
 
 .. code:: python
     
     # Create plotting object
-    plobj = vtkInterface.PlotClass()
-    plobj.AddMesh(ant, 'r')
-    plobj.AddMesh(ant_copy, 'b')
+    plotter = vtki.Plotter()
+    plotter.add_mesh(ant, 'r')
+    plotter.add_mesh(ant_copy, 'b')
 
     # Add airplane mesh and make the color equal to the Y position.  Add a
     # scalar bar associated with this mesh
     plane_scalars = pts[:, 1]
-    plobj.AddMesh(airplane, scalars=plane_scalars, stitle='Airplane Y\nLocation')
+    plotter.add_mesh(airplane, scalars=plane_scalars, stitle='Airplane Y\nLocation')
 
     # Add annotation text
-    plobj.AddText('Ants and Plane Example')
-    plobj.Plot()
+    plotter.add_text('Ants and Plane Example')
+    plotter.plot()
 
 .. image:: ./images/AntsAndPlane.png
 
 
-vtkInterface.PolyData Grid Class Methods
-----------------------------------------
-The following is a description of the methods available to a ``vtkInterface.PolyData`` object.  It inherits all methods from the original vtk object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkPolyData.html>`_.
+Ray Tracing
+-----------
+vtki supports single line segment ray tracing.
 
-.. autoclass:: vtkInterface.PolyData
+.. code:: python
+
+    # Use built-in sphere and test againt a single ray
+    import vtki
+    sphere = vtki.Sphere()
+    points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
+
+.. image:: ./images/intersection_sphere.png
+
+
+Simple Geometric Objects
+------------------------
+vtki includes a few functions to generate simple geometric surfaces.
+
+.. autofunction:: vtki.geometric_objects.Sphere
+.. autofunction:: vtki.geometric_objects.Cylinder
+.. autofunction:: vtki.geometric_objects.Arrow
+.. autofunction:: vtki.geometric_objects.Plane
+
+
+vtki.PolyData Grid Class Methods
+----------------------------------------
+The following is a description of the methods available to a ``vtki.PolyData`` object.  It inherits all methods from the original vtk object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkPolyData.html>`_.
+
+.. autoclass:: vtki.PolyData
     :members:

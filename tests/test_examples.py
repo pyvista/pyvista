@@ -3,15 +3,15 @@ import os
 
 import numpy as np
 import pytest
-import vtkInterface as vtki
 
-from vtkInterface import examples
-from vtkInterface.plotting import RunningXServer
+import vtki
+from vtki import examples
+from vtki.plotting import running_xserver
 
 
-@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_docexample_advancedplottingwithnumpy():
-    import vtkInterface as vtki
+    import vtki
     import numpy as np
 
     # Make a grid
@@ -28,22 +28,20 @@ def test_docexample_advancedplottingwithnumpy():
     direction = np.sin(points)**3
 
     # plot using the plotting class
-    plobj = vtki.PlotClass(off_screen=True)
-    plobj.AddArrows(points, direction, 0.5)
-    plobj.SetBackground([0, 0, 0]) # RGB set to black
-    plobj.Plot(autoclose=False)
-    img = plobj.TakeScreenShot()
-    assert np.any(img)
-    plobj.Close()
+    plotter = vtki.Plotter(off_screen=True)
+    plotter.add_arrows(points, direction, 0.5)
+    plotter.set_background([0, 0, 0]) # RGB set to black
+    plotter.plot(autoclose=False)
+    np.any(plotter.screenshot())
+    plotter.close()
 
-@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_creatingagifmovie(tmpdir, off_screen=True):
     if tmpdir:
         filename = str(tmpdir.mkdir("tmpdir").join('wave.gif'))
     else:
         filename = '/tmp/wave.gif'
-    import vtkInterface as vtki
-    import numpy as np
 
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
@@ -58,24 +56,55 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
     pts = grid.points.copy()
     
     # Start a plotter object and set the scalars to the Z height
-    plobj = vtki.PlotClass(off_screen=off_screen)
-    plobj.AddMesh(grid, scalars=z.ravel())
-    plobj.Plot(autoclose=False)
+    plotter = vtki.Plotter(off_screen=off_screen)
+    plotter.add_mesh(grid, scalars=z.ravel())
+    plotter.plot(autoclose=False)
     
     # Open a gif
-    plobj.OpenGif(filename)
+    plotter.open_gif(filename)
     
     # Update Z and write a frame for each updated position
-    nframe = 15
+    nframe = 5
     for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
         z = np.sin(r + phase)
         pts[:, -1] = z.ravel()
-        plobj.UpdateCoordinates(pts)
-        plobj.UpdateScalars(z.ravel())
-    
-        plobj.WriteFrame()
+        plotter.update_coordinates(pts)
+        plotter.update_scalars(z.ravel())
+        plotter.write_frame()
     
     # Close movie and delete object
-    plobj.Close()
+    plotter.close()
 
-# test_creatingagifmovie(None, False)
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_wave():
+    points = examples.plot_wave(wavetime=0.1, off_screen=True)
+    assert isinstance(points, np.ndarray)
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_beam_example():
+    examples.beam_example(off_screen=True)
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_ants_plane():
+    examples.plot_ants_plane(off_screen=True)
+
+
+def test_load_ant():
+    """ Load ply ant mesh """
+    mesh = examples.load_ant()
+    assert mesh.number_of_points
+
+
+def test_load_airplane():
+    """ Load ply airplane mesh """
+    mesh = examples.load_airplane()
+    assert mesh.number_of_points
+
+
+def test_load_sphere():
+    """ Loads sphere ply mesh """
+    mesh = examples.load_sphere()
+    assert mesh.number_of_points

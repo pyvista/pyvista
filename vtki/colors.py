@@ -318,13 +318,13 @@ color_char_to_word = {
         'w': 'white'}
 
 
-def HexToRGB(h):
+def hex_to_rgb(h):
     """ Returns 0 to 1 rgb from a hex list or tuple """
     h = h.lstrip('#')
     return tuple(int(h[i:i+2], 16)/255. for i in (0, 2 ,4))
 
 
-def StringToRGB(string):
+def string_to_rgb(string):
     """
     Converts a literal color string (i.e. white) to a color rgb.  Also accepts
     hex strings or single characters from the following list.
@@ -357,8 +357,8 @@ def StringToRGB(string):
     # try to convert to hex
     else:
         try:
-            return HexToRGB(string)
+            return hex_to_rgb(string)
         except:
             raise Exception('Invalid color string or hex string.')
 
-    return HexToRGB(colorhex)
+    return hex_to_rgb(colorhex)

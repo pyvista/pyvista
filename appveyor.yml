@@ -33,5 +33,5 @@ build_script:
 # it's not apparent that the root directory changes
 test_script:
   - "cd tests"
-  - "%PYTHON% -m pytest"
+  - "%PYTHON% -m pytest -v"
   - "cd .."

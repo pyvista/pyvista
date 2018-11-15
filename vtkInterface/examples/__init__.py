@@ -1,1 +1,0 @@
-from vtkInterface.examples.examples import *

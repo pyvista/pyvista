@@ -1,47 +1,66 @@
 """
-vtkInterface plotting module
+vtki plotting module
 """
+import time
+import logging
+import ctypes
+import PIL.Image
 from subprocess import Popen, PIPE
 import os
 from multiprocessing import Process
 import colorsys
+
+import vtk
+from vtk.util import numpy_support as VN
+
 import numpy as np
-import vtkInterface
-import vtkInterface as vtki
+import vtki
+import vtki
 import imageio
-import time
-import logging
-import ctypes
+
+
+FONT_KEYS = {'arial': vtk.VTK_ARIAL,
+             'courier': vtk.VTK_COURIER,
+             'times': vtk.VTK_TIMES}
+
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-# for readthedocs
-try:
-    import vtk
-    from vtk.util import numpy_support as VN
-    font_keys = {'arial': vtk.VTK_ARIAL,
-                 'courier': vtk.VTK_COURIER,
-                 'times': vtk.VTK_TIMES}
-except ImportError:
-    pass
+DEFAULT_WINDOW_SIZE = [1024, 768]
+DEFAULT_BACKGROUND = [0.3, 0.3, 0.3]
+
+def _raise_not_matching(scalars, mesh):
+    raise Exception('Number of scalars (%d) ' % scalars.size +
+                    'must match either the number of points ' +
+                    '(%d) ' % mesh.GetNumberOfPoints() +
+                    'or the number of cells ' +
+                    '(%d) ' % mesh.GetNumberOfCells())
 
 
-def Plot(mesh, **args):
+def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
+         interactive=True, cpos=None, window_size=DEFAULT_WINDOW_SIZE,
+         show_bounds=False, show_axes=True, notebook=False, background=None,
+         text='', **kwargs):
     """
-    Convenience plotting function for a vtk object.
+    Convenience plotting function for a vtk or numpy object.
 
     Parameters
     ----------
-    mesh : vtk object
-        vtk object to plot.
+    item : vtk or numpy object
+        VTK object or numpy array to be plotted.
 
-    **args : various, optional
-        See help(vtkInterface.PlotClass.AddMesh)
+    off_screen : bool
+        Plots off screen when True.  Helpful for saving screenshots
+        without a window popping up.
+
+    full_screen : bool, optional
+        Opens window in full screen.  When enabled, ignores window_size.
+        Default False.    
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
-        help(vtkinterface.PlotClass.TakeScreenShot).  Default disabled.
+        help(vtkinterface.Plotter.screenshot).  Default disabled.
 
         When True, takes screenshot and returns numpy array of image.
 
@@ -51,9 +70,18 @@ def Plot(mesh, **args):
     show_bounds : bool, optional
         Shows mesh bounds when True.  Default False.
 
-    full_screen : bool, optional
-        Opens window in full screen.  When enabled, ignores window_size.
-        Default False.
+    notebook : bool, optional
+        When True, the resulting plot is placed inline a jupyter notebook.
+        Assumes a jupyter console is active.
+
+    show_axes : bool, optional
+        Shows a vtk axes widget.  Enabled by default.
+
+    text : str, optional
+        Adds text at the bottom of the plot.
+
+    **kwargs : optional keyword arguments
+        See help(Plotter.add_mesh) for additional options.
 
     Returns
     -------
@@ -64,100 +92,67 @@ def Plot(mesh, **args):
         Array containing pixel RGB and alpha.  Sized:
         [Window height x Window width x 3] for transparent_background=False
         [Window height x Window width x 4] for transparent_background=True
-        Returned when screenshot enabled
+        Returned only when screenshot enabled
 
     """
-    if 'off_screen' in args:
-        off_screen = args['off_screen']
-        del args['off_screen']
+    plotter = Plotter(off_screen=off_screen)
+    if show_axes:
+        plotter.add_axes()
+
+    plotter.set_background(background)
+
+    if isinstance(var_item, list):
+        if len(var_item) == 2:  # might be arrows
+            isarr_0 = isinstance(var_item[0], np.ndarray)
+            isarr_1 = isinstance(var_item[1], np.ndarray)
+            if isarr_0 and isarr_1:
+                plotter.add_arrows(var_item[0], var_item[1])
+            else:
+                for item in var_item:
+                    plotter.add_mesh(item, **kwargs)
+        else:
+            for item in var_item:
+                plotter.add_mesh(item, **kwargs)
     else:
-        off_screen = False
+        plotter.add_mesh(var_item, **kwargs)
 
-    if 'full_screen' in args:
-        full_screen = args['full_screen']
-        del args['full_screen']
-    else:
-        full_screen = False
-
-    if 'screenshot' in args:
-        filename = args['screenshot']
-        del args['screenshot']
-    else:
-        filename = None
-
-    if 'interactive' in args:
-        interactive = args['interactive']
-        del args['interactive']
-    else:
-        interactive = True
-
-    if 'cpos' in args:
-        cpos = args['cpos']
-        del args['cpos']
-    else:
-        cpos = None
-
-    if 'window_size' in args:
-        window_size = args['window_size']
-        del args['window_size']
-    else:
-        window_size = [1024, 768]
-
-    # add bounds
-    if 'show_bounds' in args:
-        show_bounds = True
-        del args['show_bounds']
-    else:
-        show_bounds = False
-
-    # create plotting object and add mesh
-    plobj = PlotClass(off_screen=off_screen)
-
-    if 'background' in args:
-        plobj.SetBackground(args['background'])
-        del args['background']
-
-    if isinstance(mesh, np.ndarray):
-        plobj.AddPoints(mesh, **args)
-    elif isinstance(mesh, list):
-        if len(mesh) == 2:  # might be arrows
-            if isinstance(mesh[0], np.ndarray) and isinstance(mesh[1], np.ndarray):
-                plobj.AddArrows(mesh[0], mesh[1])
-    else:
-        plobj.AddMesh(mesh, **args)
-
-    if 'text' in args:
-        plobj.AddText(args['text'])
+    if text:
+        plotter.add_text(text)
 
     if show_bounds:
-        plobj.AddBoundsAxes()
+        plotter.add_bounds_axes()
 
-    # Set camera
-    if cpos:
-        plobj.SetCameraPosition(cpos)
-
-    cpos = plobj.Plot(window_size=window_size,
-                      autoclose=False,
-                      interactive=interactive,
-                      full_screen=full_screen)
+    plotter.camera_position = cpos
+    cpos = plotter.plot(window_size=window_size,
+                        autoclose=False,
+                        interactive=interactive,
+                        full_screen=full_screen)
 
     # take screenshot
-    if filename:
-        if filename == True:
-            img = plobj.TakeScreenShot()
+    if screenshot:
+        if screenshot == True:
+            img = plotter.screenshot()
         else:
-            img = plobj.TakeScreenShot(filename)
+            img = plotter.screenshot(screenshot)
 
     # close and return camera position and maybe image
-    plobj.Close()
+    plotter.close()
 
-    if filename:
+    if notebook:
+        try:
+            import IPython
+        except ImportError:
+            raise Exception('Install ipython to display image in a notebook')
+
+        IPython.display.display(PIL.Image.fromarray(img))
+
+    if screenshot:
         return cpos, img
     else:
         return cpos
 
 
-def PlotArrows(cent, direction, **kwargs):
+def plot_arrows(cent, direction, **kwargs):
     """
     Plots arrows as vectors
 
@@ -171,22 +166,27 @@ def PlotArrows(cent, direction, **kwargs):
         Must contain the same number of items as cent.
 
     **kwargs : additional arguments, optional
-        See help(vtkInterface.Plot)
+        See help(vtki.Plot)
 
     Returns
     -------
-    Same as Plot.  See help(vtkInterface.Plot)
+    Same as Plot.  See help(vtki.Plot)
 
     """
-    # call general plotting function
-    return Plot([cent, direction], **kwargs)
+    return plot([cent, direction], **kwargs)
 
 
-def RunningXServer():
-    """ Check if x server is running """
-    if os.name != 'posix':  # linux or mac os
-        return False
+def running_xserver():
+    """
+    Check if x server is running
 
+    Returns
+    -------
+    running_xserver : bool
+        True when on Linux and running an xserver.  Returns None when
+        on a non-linux platform.
+
+    """
     try:
         p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
         p.communicate()
@@ -195,28 +195,32 @@ def RunningXServer():
         False
 
 
-class PlotClass(object):
+class Plotter(object):
     """
     Plotting object to display vtk meshes or numpy arrays.
 
     Example
     -------
-    plobj = PlotClass()
-    plobj.AddMesh(mesh, color='red')
-    plobj.AddMesh(another_mesh, color='blue')
-    plobj.Plot()
+    plotter = Plotter()
+    plotter.add_mesh(mesh, color='red')
+    plotter.add_mesh(another_mesh, color='blue')
+    plotter.plot()
 
     Parameters
     ----------
     off_screen : bool, optional
         Renders off screen when False.  Useful for automated screenshots.
 
+    notebook : bool, optional
+        When True, the resulting plot is placed inline a jupyter notebook.
+        Assumes a jupyter console is active.  Automatically enables off_screen.
+
     """
     last_update_time = 0.0
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False):
+    def __init__(self, off_screen=False, notebook=False):
         """
         Initialize a vtk plotting object
         """
@@ -230,34 +234,34 @@ class PlotClass(object):
                 #     return
                 self.iren.TerminateApp()
 
-        # POSIX segfaults without X11
-        if os.name == 'posix':  # linux or mac os
-            if not RunningXServer():
-                raise Exception('Unable to plot without x window system')
+        self._labels = []
 
+        self.notebook = notebook
+        if self.notebook:
+            off_screen = True
         self.off_screen = off_screen
 
         # initialize render window
         self.renderer = vtk.vtkRenderer()
-        self.renWin = vtk.vtkRenderWindow()
-        self.renWin.AddRenderer(self.renderer)
+        self.ren_win = vtk.vtkRenderWindow()
+        self.ren_win.AddRenderer(self.renderer)
 
         if self.off_screen:
-            self.renWin.SetOffScreenRendering(1)
+            self.ren_win.SetOffScreenRendering(1)
         else:  # Allow user to interact
             self.iren = vtk.vtkRenderWindowInteractor()
             self.iren.SetDesiredUpdateRate(30.0)
-            self.iren.SetRenderWindow(self.renWin)
+            self.iren.SetRenderWindow(self.ren_win)
             istyle = vtk.vtkInteractorStyleTrackballCamera()
             self.iren.SetInteractorStyle(istyle)
-            self.iren.AddObserver("KeyPressEvent", self.KeyPressEvent)
+            self.iren.AddObserver("KeyPressEvent", self.key_press_event)
 
         # Set background
-        self.renderer.SetBackground(0.3, 0.3, 0.3)
+        self.set_background(DEFAULT_BACKGROUND)
 
         # initialize image filter
         self.ifilter = vtk.vtkWindowToImageFilter()
-        self.ifilter.SetInput(self.renWin)
+        self.ifilter.SetInput(self.ren_win)
         self.ifilter.SetInputBufferTypeToRGB()
         self.ifilter.ReadFrontBufferOff()
 
@@ -265,18 +269,21 @@ class PlotClass(object):
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
 
-    def KeyPressEvent(self, obj, event):
-        """ Listens for q key press """
+        # track if the camera has been setup
+        self.camera_set = False
+        self.first_time = True
+
+    def key_press_event(self, obj, event):
+        """ Listens for key press event """
         key = self.iren.GetKeySym()
         log.debug('Key %s pressed' % key)
         if key == 'q':
             self.q_pressed = True
         elif key == 'b':
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
-                                                  self.OnLeftButtonDown)
+                                                  self.left_button_down)
 
-    def OnLeftButtonDown(self, obj, eventType):
-
+    def left_button_down(self, obj, eventType):
         # Get 2D click location on window
         clickPos = self.iren.GetEventPosition()
 
@@ -285,10 +292,7 @@ class PlotClass(object):
         picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
 
-        self.iren.AddObserver('LeftButtonPressEvent',
-                              self.OnLeftButtonDown)
-
-    def Update(self, stime=1, force_redraw=True):
+    def update(self, stime=1, force_redraw=True):
         """
         Update window, redraw, process messages query
 
@@ -306,44 +310,36 @@ class PlotClass(object):
             stime = 1
 
         curr_time = time.time()
-        if PlotClass.last_update_time > curr_time:
-            PlotClass.last_update_time = curr_time
+        if Plotter.last_update_time > curr_time:
+            Plotter.last_update_time = curr_time
+
+        if not hasattr(self, 'iren'):
+            return
 
         update_rate = self.iren.GetDesiredUpdateRate()
-        if (curr_time - PlotClass.last_update_time) > (1.0/update_rate):
+        if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
             self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
-            self.Render()
-            PlotClass.last_update_time = curr_time
+            self.render()
+            Plotter.last_update_time = curr_time
         else:
             if force_redraw:
                 self.iren.Render()
 
-    def AddMesh(
-            self,
-            mesh,
-            color=None,
-            style=None,
-            scalars=None,
-            rng=None,
-            stitle=None,
-            showedges=True,
-            psize=5.0,
-            opacity=1,
-            linethick=None,
-            flipscalars=False,
-            lighting=False,
-            ncolors=256,
-            interpolatebeforemap=False,
-            colormap=None,
-            **kwargs):
+    def add_mesh(self, mesh, color=None, style=None,
+                 scalars=None,rng=None, stitle=None, showedges=True,
+                 psize=5.0, opacity=1, linethick=None, flipscalars=False,
+                 lighting=False, ncolors=256, interpolatebeforemap=False,
+                 colormap=None, label=None, **kwargs):
         """
-        Adds a vtk unstructured, structured, or polymesh to the plotting object
+        Adds a unstructured, structured, or surface mesh to the plotting object.
+
+        Also accepts a 3D numpy.ndarray
 
         Parameters
         ----------
-        mesh : vtk unstructured, structured, or polymesh
+        mesh : vtk unstructured, structured, polymesh, or 3D numpy.ndarray
             A vtk unstructured, structured, or polymesh to plot.
 
         color : string or 3 item list, optional, defaults to white
@@ -400,7 +396,7 @@ class PlotClass(object):
         ncolors : int, optional
             Number of colors to use when displaying scalars.  Default 256.
 
-        interpolatebeforemap : bool, default False
+        interpolatebeforemap : bool, optional
             Enabling makes for a smoother scalar display.  Default False
 
         colormap : str, optional
@@ -412,38 +408,37 @@ class PlotClass(object):
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
+        if isinstance(mesh, np.ndarray):
+            mesh = vtki.PolyData(mesh)
+            style = 'points'
+
         # set main values
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
-        actor, prop = self.AddActor(self.mapper)
+        actor, prop = self.add_actor(self.mapper)
 
         # Scalar formatting ===================================================
         if scalars is not None:
-            # convert to numpy array
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
-            # ravel if not 1 dimentional
             if scalars.ndim != 1:
                 scalars = scalars.ravel()
 
             # Scalar interpolation approach
             if scalars.size == mesh.GetNumberOfPoints():
-                self.mesh.AddPointScalars(scalars, '', True)
+                self.mesh._add_point_scalar(scalars, '', True)
                 self.mapper.SetScalarModeToUsePointData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             elif scalars.size == mesh.GetNumberOfCells():
-                self.mesh.AddCellScalars(scalars, '')
+                self.mesh._add_cell_scalar(scalars, '', True)
                 self.mapper.SetScalarModeToUseCellData()
+                self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
             else:
-                raise Exception('Number of scalars (%d) ' % scalars.size +
-                                'must match either the number of points ' +
-                                '(%d) ' % mesh.GetNumberOfPoints() +
-                                'or the number of cells ' +
-                                '(%d) ' % mesh.GetNumberOfCells())
+                _raise_not_matching(scalars, mesh)
 
             # Set scalar range
             if not rng:
@@ -498,8 +493,15 @@ class PlotClass(object):
         # edge display style
         if showedges:
             prop.EdgeVisibilityOn()
-        prop.SetColor(ParseColor(color))
+
+        rgb_color = parse_color(color)
+        prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
+
+        # legend label
+        if label:
+            assert isinstance(label, str), 'Label must be a string'
+            self._labels.append([single_triangle(), label, rgb_color])
 
         # lighting display style
         if lighting is False:
@@ -511,11 +513,11 @@ class PlotClass(object):
 
         # Add scalar bar if available
         if stitle is not None:
-            self.AddScalarBar(stitle)
+            self.add_scalar_bar(stitle)
 
         return actor
 
-    def AddActor(self, uinput):
+    def add_actor(self, uinput):
         """adds an actor to render window.  creates an actor if input is a
         mapper"""
         if isinstance(uinput, vtk.vtkMapper):
@@ -527,13 +529,17 @@ class PlotClass(object):
 
         return actor, actor.GetProperty()
 
-    def AddBoundsAxes(self, mesh=None, bounds=None, show_xaxis=True,
-                      show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                      show_ylabels=True, show_zlabels=True, italic=False,
-                      bold=True, shadow=False, fontsize=16,
-                      font_family='courier', color='w',
-                      xtitle='X Axis', ytitle='Y Axis', ztitle='Z Axis',
-                      use_2dmode=True):
+    @property
+    def camera(self):
+        return self.renderer.GetActiveCamera()
+
+    def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
+                        show_yaxis=True, show_zaxis=True, show_xlabels=True,
+                        show_ylabels=True, show_zlabels=True, italic=False,
+                        bold=True, shadow=False, fontsize=16,
+                        font_family='courier', color='w',
+                        xtitle='X Axis', ytitle='Y Axis', ztitle='Z Axis',
+                        use_2dmode=True):
         """
         Adds bounds axes.  Shows the bounds of the most recent input mesh
         unless mesh is specified.
@@ -633,10 +639,10 @@ class PlotClass(object):
         cubeAxesActor.YAxisMinorTickVisibilityOff()
         cubeAxesActor.ZAxisMinorTickVisibilityOff()
 
-        cubeAxesActor.SetCamera(self.renderer.GetActiveCamera())
+        cubeAxesActor.SetCamera(self.camera)
 
         # set color
-        color = ParseColor(color)
+        color = parse_color(color)
         cubeAxesActor.GetXAxesLinesProperty().SetColor(color)
         cubeAxesActor.GetYAxesLinesProperty().SetColor(color)
         cubeAxesActor.GetZAxesLinesProperty().SetColor(color)
@@ -675,7 +681,7 @@ class PlotClass(object):
             cubeAxesActor.SetAxisLabels(2, empty_str)
 
         # set font
-        font_family = ParseFontFamily(font_family)
+        font_family = parse_font_family(font_family)
         for i in range(3):
             cubeAxesActor.GetTitleTextProperty(i).SetFontSize(fontsize)
             cubeAxesActor.GetTitleTextProperty(i).SetColor(color)
@@ -687,13 +693,13 @@ class PlotClass(object):
             cubeAxesActor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cubeAxesActor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.AddActor(cubeAxesActor)
+        self.add_actor(cubeAxesActor)
         self.cubeAxesActor = cubeAxesActor
         return cubeAxesActor
 
-    def AddScalarBar(self, title=None, nlabels=5, italic=False, bold=True,
-                     title_fontsize=None, label_fontsize=None, color=None,
-                     font_family='courier', shadow=False):
+    def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,
+                       title_fontsize=None, label_fontsize=None, color=None,
+                       font_family='courier', shadow=False):
         """
         Creates scalar bar using the ranges as set by the last input mesh.
 
@@ -745,23 +751,23 @@ class PlotClass(object):
                             'Add a mesh with scalars first.')
 
         # parse color
-        color = ParseColor(color)
+        color = parse_color(color)
 
         # Create scalar bar
-        self.scalarBar = vtk.vtkScalarBarActor()
-        self.scalarBar.SetLookupTable(self.mapper.GetLookupTable())
-        self.scalarBar.SetNumberOfLabels(nlabels)
+        self.scalar_bar = vtk.vtkScalarBarActor()
+        self.scalar_bar.SetLookupTable(self.mapper.GetLookupTable())
+        self.scalar_bar.SetNumberOfLabels(nlabels)
 
         if label_fontsize or title_fontsize:
-            self.scalarBar.UnconstrainedFontSizeOn()
+            self.scalar_bar.UnconstrainedFontSizeOn()
 
         if nlabels:
-            label_text = self.scalarBar.GetLabelTextProperty()
+            label_text = self.scalar_bar.GetLabelTextProperty()
             label_text.SetColor(color)
             label_text.SetShadow(shadow)
 
             # Set font
-            label_text.SetFontFamily(ParseFontFamily(font_family))
+            label_text.SetFontFamily(parse_font_family(font_family))
             label_text.SetItalic(italic)
             label_text.SetBold(bold)
             if label_fontsize:
@@ -769,8 +775,8 @@ class PlotClass(object):
 
         # Set properties
         if title:
-            self.scalarBar.SetTitle(title)
-            title_text = self.scalarBar.GetTitleTextProperty()
+            self.scalar_bar.SetTitle(title)
+            title_text = self.scalar_bar.GetTitleTextProperty()
 
             title_text.SetItalic(italic)
             title_text.SetBold(bold)
@@ -779,58 +785,66 @@ class PlotClass(object):
                 title_text.SetFontSize(title_fontsize)
 
             # Set font
-            title_text.SetFontFamily(ParseFontFamily(font_family))
+            title_text.SetFontFamily(parse_font_family(font_family))
 
             # set color
             title_text.SetColor(color)
 
-        self.renderer.AddActor(self.scalarBar)
+        self.add_actor(self.scalar_bar)
 
-    def UpdateScalars(self, scalars, mesh=None, render=True):
-        """ updates scalars of object (point only for now)
-        assumes last inputted mesh if mesh left empty
+    def update_scalars(self, scalars, mesh=None, render=True):
         """
+        Updates scalars of the an object in the plotter.
 
+        Parameters
+        ----------
+        scalars : np.ndarray
+            Scalars to replace existing scalars.
+
+        mesh : vtk.PolyData or vtk.UnstructuredGrid, optional
+            Object that has already been added to the Plotter.  If
+            None, uses last added mesh.
+
+        render : bool, optional
+            Forces an update to the render window.  Default True.
+
+        """
         if mesh is None:
             mesh = self.mesh
 
-        # get pointer to active point scalars
         if scalars.shape[0] == mesh.GetNumberOfPoints():
-            pointdata = self.mesh.GetPointData()
-            s = VN.vtk_to_numpy(pointdata.GetScalars())
-            s[:] = scalars
-            pointdata.Modified()
-
-        # get pointer to active cell scalars
+            data = mesh.GetPointData()
         elif scalars.shape[0] == mesh.GetNumberOfCells():
-            celldata = self.mesh.GetCellData()
-            s = VN.vtk_to_numpy(celldata.GetScalars())
-            s[:] = scalars
-            celldata.Modified()
+            data = mesh.GetCellData()
+        else:
+            _raise_not_matching(scalars, mesh)
+
+        vtk_scalars = data.GetScalars()
+        if vtk_scalars is None:
+            raise Exception('No active scalars')
+        s = VN.vtk_to_numpy(vtk_scalars)
+        s[:] = scalars
+        data.Modified()
 
         if render:
-            self.Render()
+            self.render()
 
-    def UpdatePointScalars(self, scalars, points=None, render=True):
-        """ updates scalars of object (point only for now)
-        assumes last inputted mesh if mesh left empty
+    def update_coordinates(self, points, mesh=None, render=True):
         """
+        Updates the points of the an object in the plotter.
 
-        if points is None:
-            points = self.points
+        Parameters
+        ----------
+        points : np.ndarray
+            Points to replace existing points.
 
-        # get pointer to active point scalars
-        if scalars.shape[0] == points.GetNumberOfPoints():
-            s = VN.vtk_to_numpy(points.GetPointData().GetScalars())
-            s[:] = scalars
+        mesh : vtk.PolyData or vtk.UnstructuredGrid, optional
+            Object that has already been added to the Plotter.  If
+            None, uses last added mesh.
 
-        if render:
-            self.Render()
+        render : bool, optional
+            Forces an update to the render window.  Default True.
 
-    def UpdateCoordinates(self, points, mesh=None, render=True):
-        """
-        Updates points of object (point only for now)
-        assumes last inputted mesh if mesh left empty
         """
         if mesh is None:
             mesh = self.mesh
@@ -838,14 +852,18 @@ class PlotClass(object):
         mesh.points = points
 
         if render:
-            self.Render()
+            self.render()
 
-    def Close(self):
+    def close(self):
         """ closes render window """
 
-        if hasattr(self, 'renWin'):
-            self.renWin.Finalize()
-            del self.renWin
+        # must close out axes marker
+        if hasattr(self, 'axes_widget'):
+            del self.axes_widget
+
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Finalize()
+            del self.ren_win
 
         if hasattr(self, 'iren'):
             self.iren.RemoveAllObservers()
@@ -864,7 +882,7 @@ class PlotClass(object):
         if hasattr(self, 'ifilter'):
             del self.ifilter
 
-    def AddText(self, text, position=[10, 10], fontsize=50, color=None,
+    def add_text(self, text, position=[10, 10], fontsize=50, color=None,
                 font='courier', shadow=False):
         """
         Adds text to plot object
@@ -886,67 +904,124 @@ class PlotClass(object):
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
         self.textActor.GetTextProperty().SetFontSize(fontsize)
-        self.textActor.GetTextProperty().SetColor(ParseColor(color))
-        self.textActor.GetTextProperty().SetFontFamily(font_keys[font])
+        self.textActor.GetTextProperty().SetColor(parse_color(color))
+        self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
-        self.AddActor(self.textActor)
-
+        self.add_actor(self.textActor)
         return self.textActor
 
-    def OpenMovie(self, filename, framerate=24, codec='libx264',
-                  preset='medium'):
-        """ Establishes a connection to the ffmpeg writer """
-        # Create movie object and check if render window is active
+    def open_movie(self, filename, framerate=24):
+        """
+        Establishes a connection to the ffmpeg writer
+
+        Parameters
+        ----------
+        filename : str
+            Filename of the movie to open.  Filename should end in mp4,
+            but other filetypes may be supported.  See "imagio.get_writer"
+
+        framerate : int, optional
+            Frames per second.
+
+        """
         self.mwriter = imageio.get_writer(filename, fps=framerate)
 
-    def OpenGif(self, filename):
+    def open_gif(self, filename):
+        """
+        Open a gif file.
+
+        Parameters
+        ----------
+        filename : str
+            Filename of the gif to open.  Filename must end in gif.
+
+        """
         if filename[-3:] != 'gif':
-            raise Exception('Unsupported filetype')
+            raise Exception('Unsupported filetype.  Must end in .gif')
         self.mwriter = imageio.get_writer(filename, mode='I')
 
-    def WriteFrame(self):
+    def write_frame(self):
         """ Writes a single frame to the movie file """
-        self.mwriter.append_data(self.GetImage())
+        self.mwriter.append_data(self.image)
 
-    def GetImage(self):
+    @property
+    def image(self):
         """ Returns an image array of current render window """
-        window_size = self.renWin.GetSize()
+        window_size = self.ren_win.GetSize()
 
         # Update filter and grab pixels
         self.ifilter.Modified()
         self.ifilter.Update()
         image = self.ifilter.GetOutput()
-        img_array = vtkInterface.GetPointScalars(image, 'ImageScalars')
+        img_array = vtki.utilities.point_scalar(image, 'ImageScalars')
 
         # Reshape and write
         return img_array.reshape((window_size[1], window_size[0], -1))[::-1]
 
-    def AddLines(self, lines, color=[1, 1, 1], width=5):
-        """ Adds an actor to the renderwindow """
+    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None):
+        """
+        Adds lines to the plotting object.
 
-        if isinstance(lines, np.ndarray):
-            lines = vtkInterface.MakeLine(lines)
+        Parameters
+        ----------
+        lines : np.ndarray or vtki.PolyData
+            Points representing line segments.  For example, two line segments 
+            would be represented as:
+
+            np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.  For example:
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+
+        width : float, optional
+            Thickness of lines
+
+        Returns
+        -------
+        actor : vtk.vtkActor
+            Lines actor.
+
+        """
+        if not isinstance(lines, np.ndarray):
+            raise Exception('Input should be an array of point segments')
+
+        lines = vtki.lines_from_points(lines)
 
         # Create mapper and add lines
         mapper = vtk.vtkDataSetMapper()
-        vtkInterface.SetVTKInput(mapper, lines)
+        mapper.SetInputData(lines)
+
+        rgb_color = parse_color(color)
+
+        # legend label
+        if label:
+            assert isinstance(label, str), 'Label must be a string'
+            # single_line = lines.ExtractSelectionCells([0])
+            self._labels.append([lines, label, rgb_color])
 
         # Create Actor
         actor = vtk.vtkActor()
         actor.SetMapper(mapper)
         actor.GetProperty().SetLineWidth(width)
         actor.GetProperty().EdgeVisibilityOn()
-        actor.GetProperty().SetEdgeColor(color)
-        actor.GetProperty().SetColor(ParseColor(color))
+        actor.GetProperty().SetEdgeColor(rgb_color)
+        actor.GetProperty().SetColor(rgb_color)
         actor.GetProperty().LightingOff()
 
         # Add to renderer
         self.renderer.AddActor(actor)
 
-    def AddPointLabels(self, points, labels, bold=True, fontsize=16,
-                       textcolor='k', font_family='courier', shadow=False,
-                       showpoints=True, pointcolor='k', pointsize=5):
+        return actor
+
+    def add_point_labels(self, points, labels, italic=False, bold=True,
+                         fontsize=16, textcolor='k',
+                         font_family='courier', shadow=False,
+                         showpoints=True, pointcolor='k', pointsize=5):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -954,7 +1029,7 @@ class PlotClass(object):
         Parameters
         ----------
         points : np.ndarray
-            3 x n numpy array of points.
+            n x 3 numpy array of points.
 
         labels : list
             List of labels.  Must be the same length as points.
@@ -1002,27 +1077,26 @@ class PlotClass(object):
             VTK label mapper.  Can be used to change properties of the labels.
 
         """
-
         if len(points) != len(labels):
             raise Exception('There must be one label for each point')
 
-        vtkpoints = vtkInterface.MakePointMesh(points)
+        vtkpoints = vtki.PolyData(points)
 
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')
         for item in labels:
             vtklabels.InsertNextValue(str(item))
-
         vtkpoints.GetPointData().AddArray(vtklabels)
 
         # create label mapper
         labelMapper = vtk.vtkLabeledDataMapper()
         labelMapper.SetInputData(vtkpoints)
         textprop = labelMapper.GetLabelTextProperty()
+        textprop.SetItalic(italic)
         textprop.SetBold(bold)
         textprop.SetFontSize(fontsize)
-        textprop.SetFontFamily(ParseFontFamily(font_family))
-        textprop.SetColor(ParseColor(textcolor))
+        textprop.SetFontFamily(parse_font_family(font_family))
+        textprop.SetColor(parse_color(textcolor))
         textprop.SetShadow(shadow)
         labelMapper.SetLabelModeToLabelFieldData()
         labelMapper.SetFieldDataName('labels')
@@ -1032,101 +1106,21 @@ class PlotClass(object):
 
         # add points
         if showpoints:
-            self.AddMesh(vtkpoints, style='points', color=pointcolor,
-                         psize=pointsize)
+            style = 'points'
         else:
-            self.AddMesh(vtkpoints)
+            style = 'surface'
+        self.add_mesh(vtkpoints, style=style, color=pointcolor,
+                      psize=pointsize)
 
-        self.AddActor(labelActor)
+        self.add_actor(labelActor)
         return labelMapper
 
-    def AddPoints(self, points, color=None, psize=5, scalars=None,
-                  rng=None, name='', opacity=1, stitle='', flipscalars=False,
-                  colormap=None, ncolors=256):
-        """ Adds a point actor or numpy points array to plotting object """
+    def add_points(self, points, **kwargs):
+        """ Add points to a mesh """
+        kwargs['style'] = 'points'
+        self.add_mesh(points, **kwargs)
 
-        # select color
-        if color is None:
-            color = [1, 1, 1]
-        elif isinstance(color, str):
-            color = vtkInterface.StringToRGB(color)
-
-        # Convert to vtk points object if "points" is a numpy array
-        if isinstance(points, np.ndarray):
-            # check size of points
-            if points.ndim != 2 or points.shape[1] != 3:
-                try:
-                    points = points.reshape((-1, 3))
-                except:
-                    raise Exception('Invalid point array shape'
-                                    '%s' % str(points.shape))
-            self.points = vtkInterface.MakeVTKPointsMesh(points)
-        else:
-            self.points = points
-
-        # Create mapper and add lines
-        mapper = vtk.vtkDataSetMapper()
-        mapper.SetInputData(self.points)
-
-        if np.any(scalars):
-            self.points.AddPointScalars(scalars, name, True)
-            mapper.SetScalarModeToUsePointData()
-            mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
-
-            if not rng:
-                rng = [np.min(scalars), np.max(scalars)]
-            elif isinstance(rng, float):
-                rng = [-rng, rng]
-
-            if np.any(rng):
-                mapper.SetScalarRange(rng[0], rng[1])
-
-        # Flip if requested
-        table = mapper.GetLookupTable()
-        if colormap is not None:
-            try:
-                from matplotlib.cm import get_cmap
-            except ImportError:
-                raise Exception('colormap requires matplotlib')
-            cmap = get_cmap(colormap)
-            ctable = cmap(np.linspace(0, 1, ncolors))*255
-            ctable = ctable.astype(np.uint8)
-            if flipscalars:
-                ctable = np.ascontiguousarray(ctable[::-1])
-            table.SetTable(VN.numpy_to_vtk(ctable))
-
-        else:  # no colormap specifide
-            mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
-
-
-        # Create Actor
-        actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
-        actor.GetProperty().SetPointSize(psize)
-        actor.GetProperty().SetColor(color)
-        actor.GetProperty().LightingOff()
-        actor.GetProperty().SetOpacity(opacity)
-
-        self.renderer.AddActor(actor)
-
-        # Add scalar bar
-        if stitle:
-            self.scalarBar = vtk.vtkScalarBarActor()
-            self.scalarBar.SetLookupTable(mapper.GetLookupTable())
-
-            self.scalarBar.GetTitleTextProperty().SetFontFamilyToCourier()
-            self.scalarBar.GetTitleTextProperty().ItalicOff()
-            self.scalarBar.GetTitleTextProperty().BoldOn()
-            self.scalarBar.GetLabelTextProperty().SetFontFamilyToCourier()
-            self.scalarBar.GetLabelTextProperty().ItalicOff()
-            self.scalarBar.GetLabelTextProperty().BoldOn()
-
-            self.scalarBar.SetTitle(stitle)
-            self.scalarBar.SetNumberOfLabels(5)
-
-            self.renderer.AddActor(self.scalarBar)
-
-    def AddArrows(self, cent, direction, mag=1):
+    def add_arrows(self, cent, direction, mag=1):
         """ Adds arrows to plotting object """
 
         if cent.ndim != 2:
@@ -1135,61 +1129,63 @@ class PlotClass(object):
         if direction.ndim != 2:
             direction = direction.reshape((-1, 3))
 
-        pdata = vtkInterface.CreateVectorPolyData(cent, direction * mag)
-        arrows = CreateArrowsActor(pdata)
-        self.AddActor(arrows)
+        pdata = vtki.vector_poly_data(cent, direction * mag)
+        arrows = arrows_actor(pdata)
+        self.add_actor(arrows)
 
         return arrows, pdata
 
-    def AddLineSegments(self, points, edges, color=None, scalars=None,
-                        ncolors=256):
-        """ Adds arrows to plotting object """
+    # def AddLineSegments(self, points, edges, color=None, scalars=None,
+    #                     ncolors=256):
+    #     """ Adds arrows to plotting object """
 
-        cent = (points[edges[:, 0]] + points[edges[:, 1]]) / 2
-        direction = points[edges[:, 1]] - points[edges[:, 0]]
-        # pdata = vtkInterface.CreateVectorPolyData(cent, direction)
-        pdata = vtkInterface.CreateVectorPolyData(cent, direction)
-        arrows, mapper = CreateLineSegmentsActor(pdata)
+    #     cent = (points[edges[:, 0]] + points[edges[:, 1]]) / 2
+    #     direction = points[edges[:, 1]] - points[edges[:, 0]]
+    #     pdata = vtki.vector_poly_data(cent, direction)
+    #     arrows, mapper = line_segments_actor(pdata)
 
-        # set color
-        if isinstance(color, str):
-            color = vtkInterface.StringToRGB(color)
-            mapper.ScalarVisibilityOff()
-            arrows.GetProperty().SetColor(color)
+    #     # set color
+    #     if isinstance(color, str):
+    #         color = vtki.string_to_rgb(color)
+    #         mapper.ScalarVisibilityOff()
+    #         arrows.GetProperty().SetColor(color)
 
-        if scalars is not None:
-            if scalars.size == edges.shape[0]:
-                pdata.AddCellScalars(scalars, '', True)
-                mapper.SetScalarModeToUseCellData()
-                mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
-                # if interpolatebeforemap:
-                    # self.mapper.InterpolateScalarsBeforeMappingOn()
-            else:
-                raise Exception('Number of scalars must match number of edges')
+    #     if scalars is not None:
+    #         if scalars.size == edges.shape[0]:
+    #             pdata.add_cell_scalars(scalars, '', True)
+    #             mapper.SetScalarModeToUseCellData()
+    #             mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
+    #             # if interpolatebeforemap:
+    #                 # self.mapper.InterpolateScalarsBeforeMappingOn()
+    #         else:
+    #             raise Exception('Number of scalars must match number of edges')
 
-        # add to rain class
-        self.AddActor(arrows)
-        return arrows
+    #     # add to rain class
+    #     self.add_actor(arrows)
+    #     return arrows
 
-    def GetCameraPosition(self):
+    @property
+    def camera_position(self):
         """ Returns camera position of active render window """
-        camera = self.renderer.GetActiveCamera()
-        pos = camera.GetPosition()
-        fpt = camera.GetFocalPoint()
-        vup = camera.GetViewUp()
-        return [pos, fpt, vup]
+        return [self.camera.GetPosition(),
+                self.camera.GetFocalPoint(),
+                self.camera.GetViewUp()]
 
-    def SetCameraPosition(self, cameraloc):
+    @camera_position.setter
+    def camera_position(self, cameraloc):
         """ Set camera position of active render window """
-        camera = self.renderer.GetActiveCamera()
-        camera.SetPosition(cameraloc[0])
-        camera.SetFocalPoint(cameraloc[1])
-        camera.SetViewUp(cameraloc[2])
+        if cameraloc is None:
+            return
+
+        self.camera.SetPosition(cameraloc[0])
+        self.camera.SetFocalPoint(cameraloc[1])
+        self.camera.SetViewUp(cameraloc[2])
 
         # reset clipping range
         self.renderer.ResetCameraClippingRange()
+        self.camera_set = True
 
-    def SetBackground(self, color):
+    def set_background(self, color):
         """
         Sets background color
 
@@ -1205,60 +1201,102 @@ class PlotClass(object):
         """
 
         if color is None:
-            color = [1, 1, 1]
+            color = DEFAULT_BACKGROUND
         elif isinstance(color, str):
-            color = vtkInterface.StringToRGB(color)
+            color = vtki.string_to_rgb(color)
 
         self.renderer.SetBackground(color)
 
-    def AddLegend(self, entries, bcolor=[0.5, 0.5, 0.5], border=False,
-                  pos=None):
+    def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
+                   size=None):
         """
-        Adds a legend to render window.  Entries must be a list containing
-        one string and color entry for each item
+        Adds a legend to render window.  Entries must be a list
+        containing one string and color entry for each item.
 
         Parameters
         ----------
-        entries : list
-            List contianing one entry for each item to be added to the legend.
-            Each entry must contain two strings, [label, color], where label is the
-            name of the item to add, and color is the color of the label to add.
+        labels : list, optional
+            When set to None, uses existing labels as specified by 
+
+            - add_mesh
+            - add_lines
+            - add_points
+
+            List contianing one entry for each item to be added to the
+            legend.  Each entry must contain two strings, [label,
+            color], where label is the name of the item to add, and
+            color is the color of the label to add.
 
         bcolor : list or string, optional
-            Background color, either a three item 0 to 1 RGB color list, or a 
-            matplotlib color string (e.g. 'w' or 'white' for a white color).
+            Background color, either a three item 0 to 1 RGB color
+            list, or a matplotlib color string (e.g. 'w' or 'white'
+            for a white color).  If None, legend background is
+            disabled.
 
         border : bool, optional
-            Controls if there will be a border around the legend.  Default False.
+            Controls if there will be a border around the legend.
+            Default False.
 
-        pos : list, optional
+        size : list, optional
             Two float list, each float between 0 and 1.  For example
-            [0.5, 0.5] would put the legend in the middle of the figure.
+            [0.1, 0.1] would make the legend 10% the size of the
+            entire figure window.
+
+        Returns
+        -------
+        legend : vtk.vtkLegendBoxActor
+            Actor for the legend.
 
         Examples
         --------
-        >>> import vtkInterface as vtki
+        >>> import vtki
+        >>> plotter = vtki.Plotter()
+        >>> plotter.add_mesh(mesh, label='My Mesh')
+        >>> plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
+        >>> plotter.add_legend()
+        >>> plotter.plot()
+
+        Alternative manual example
+
+        >>> import vtki
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> plobj = vtki.PlotClass()
-        >>> plobj.AddMesh(mesh)
-        >>> plobj.AddMesh(othermesh, 'k')
-        >>> plobj.AddLegend(legend_entries)
-        >>> plobj.Plot()
+        >>> plotter = vtki.Plotter()
+        >>> plotter.add_mesh(mesh)
+        >>> plotter.add_mesh(othermesh, 'k')
+        >>> plotter.add_legend(legend_entries)
+        >>> plotter.plot()
+        """        
+        legend = vtk.vtkLegendBoxActor()        
 
-        """
-        legend = vtk.vtkLegendBoxActor()
-        legend.SetNumberOfEntries(len(entries))
-        if pos:
-            legend.SetPosition2(pos[0], pos[1])
+        if labels is None:
+            # use existing labels
+            if not self._labels:
+                raise Exception('No labels input.\n\n' +
+                                'Add labels to individual items when adding them to' +
+                                'the plotting object with the "label=" parameter.  ' +
+                                'or enter them as the "labels" parameter.')
 
-        legendface = MakeLegendPoly()
-        for i, (text, color) in enumerate(entries):
-            legend.SetEntry(i, legendface, text, ParseColor(color))
+            legend.SetNumberOfEntries(len(self._labels))
+            for i, (vtk_object, text, color) in enumerate(self._labels):
+                legend.SetEntry(i, vtk_object, text, parse_color(color))
 
-        legend.UseBackgroundOn()
-        legend.SetBackgroundColor(bcolor)
+        else:
+            legend.SetNumberOfEntries(len(labels))
+            legendface = single_triangle()
+            for i, (text, color) in enumerate(labels):
+                legend.SetEntry(i, legendface, text, parse_color(color))
+
+        if size:
+            legend.SetPosition2(size[0], size[1])
+
+        if bcolor is None:
+            legend.UseBackgroundOff()
+        else:
+            legend.UseBackgroundOn()
+            legend.SetBackgroundColor(bcolor)
+
         if border:
             legend.BorderOn()
         else:
@@ -1268,7 +1306,7 @@ class PlotClass(object):
         self.renderer.AddActor(legend)
         return legend
 
-    def _plot(self, title=None, window_size=[1024, 768], interactive=True,
+    def _plot(self, title=None, window_size=DEFAULT_WINDOW_SIZE, interactive=True,
               autoclose=True, interactive_update=False, full_screen=False):
         """
         Creates plotting window
@@ -1303,18 +1341,18 @@ class PlotClass(object):
 
         """
         if title:
-            self.renWin.SetWindowName(title)
+            self.ren_win.SetWindowName(title)
 
         # if full_screen:
         if full_screen:
-            self.renWin.SetFullScreen(True)
-            self.renWin.BordersOn()  # super buggy when disabled
+            self.ren_win.SetFullScreen(True)
+            self.ren_win.BordersOn()  # super buggy when disabled
         else:
-            self.renWin.SetSize(window_size[0], window_size[1])
+            self.ren_win.SetSize(window_size[0], window_size[1])
 
         # Render
         log.debug('Rendering')
-        self.renWin.Render()
+        self.ren_win.Render()
 
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
@@ -1324,18 +1362,27 @@ class PlotClass(object):
                     self.iren.Start()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
-                self.Close()
+                self.close()
                 raise KeyboardInterrupt
 
         # Get camera position before closing
-        cpos = self.GetCameraPosition()
+        cpos = self.camera_position
+
+        if self.notebook:
+            try:
+                import IPython
+            except ImportError:
+                raise Exception('Install iPython to display image in a notebook')
+
+            img = self.screenshot()
+            IPython.display.display(PIL.Image.fromarray(img))
 
         if autoclose:
-            self.Close()
+            self.close()
 
         return cpos
 
-    def Plot(self, title=None, window_size=[1024, 768], interactive=True,
+    def plot(self, title=None, window_size=DEFAULT_WINDOW_SIZE, interactive=True,
              autoclose=True, in_background=False, interactive_update=False,
              full_screen=False):
         """
@@ -1370,6 +1417,10 @@ class PlotClass(object):
             List of camera position, focal point, and view up
 
         """
+        # reset unless camera for the first render unless camera is set
+        if self.first_time and not self.camera_set:
+            self.renderer.ResetCamera()
+
         def PlotFun():
             return self._plot(title,
                               window_size=window_size,
@@ -1386,28 +1437,50 @@ class PlotClass(object):
         else:
             return PlotFun()
 
-    def RemoveActor(self, actor):
+    def remove_actor(self, actor):
+        """
+        Removes an actor from the Plotter.
+
+        Parameters
+        ----------
+        actor : vtk.vtkActor
+            Actor that has previously added to the Plotter.
+        """
         self.renderer.RemoveActor(actor)
 
-    # pass  # causes segfault
-    # def AddAxes(self):
-        # """ Add axes actor at origin """
-        # axes = vtk.vtkAxesActor()
-        # self.marker = vtk.vtkOrientationMarkerWidget()
-        # self.marker.SetInteractor(self.iren)
-        # self.marker.SetOrientationMarker(axes)
-        # self.marker.SetEnabled(1)
-        # axes = vtk.vtkAxesActor()
-        # widget = vtk.vtkOrientationMarkerWidget()
+    def add_axes_at_origin(self):
+        """
+        Add axes actor at origin
 
-    def TakeScreenShot(self, filename=None, transparent_background=False):
+        Returns
+        --------
+        marker_actor : vtk.vtkAxesActor
+            vtkAxesActor actor
+        """
+        self.marker_actor = vtk.vtkAxesActor()
+        self.renderer.AddActor(self.marker_actor)
+        return self.marker_actor
+
+    def add_axes(self):
+        """ Add an interactive axes widget """
+        if hasattr(self, 'axes_widget'):
+            raise Exception('plotter already has axes widget')
+        self.axes_actor = vtk.vtkAxesActor()
+        self.axes_widget = vtk.vtkOrientationMarkerWidget()
+        self.axes_widget.SetOrientationMarker(self.axes_actor)
+        if hasattr(self, 'iren'):
+            self.axes_widget.SetInteractor(self.iren)
+            self.axes_widget.SetEnabled(1)
+            self.axes_widget.InteractiveOn()
+
+    def screenshot(self, filename=None, transparent_background=False):
         """
         Takes screenshot at current camera position
 
         Parameters
         ----------
-        filename : str
-            Location to write image to.
+        filename : str, optional
+            Location to write image to.  If None, no image is written.
 
         transparent_background : bool, optional
             Makes the background transparent.  Default False.
@@ -1419,11 +1492,18 @@ class PlotClass(object):
             [Window height x Window width x 3] for transparent_background=False
             [Window height x Window width x 4] for transparent_background=True
 
+        Examples
+        --------
+        >>> sphere = vtki.Sphere()
+        >>> plotter.Plotter()
+        >>> plotter.add_mesh(sphere)
+        >>> plotter.screenshot('screenshot.png')
         """
-        # check render window exists
-        if not hasattr(self, 'renWin'):
-            raise Exception('Render window has been closed.\n'
-                            'Run again with Plot(autoclose=False)')
+        # remove_ren_win = False
+        # if not hasattr(self, 'ren_win'):
+            # self.plot(auto_close=False, interactive=False)
+            # raise Exception('Render window has been closed.\n'
+                            # 'Run again with plot(autoclose=False)')
 
         # configure image filter
         if transparent_background:
@@ -1432,54 +1512,57 @@ class PlotClass(object):
             self.ifilter.SetInputBufferTypeToRGB()
 
         # this needs to be called twice for some reason,  debug later
-        img = self.GetImage()
-        img = self.GetImage()
+        self.render()
+        img = self.image
+        img = self.image
 
         if not img.size:
-            raise Exception('Empty image.  Have you run Plot first?')
+            raise Exception('Empty image.  Have you run plot() first?')
 
         # write screenshot to file
         if filename:
             imageio.imwrite(filename, img)
 
+        # if remove_ren_win:
+        #     self.close()
+
         return img
 
-    def Render(self):
-        self.renWin.Render()
+    def render(self):
+        self.ren_win.Render()
 
-    def SetFocus(self, point):
+    def set_focus(self, point):
         """ sets focus to a point """
-        camera = self.renderer.GetActiveCamera()
-        camera.SetFocalPoint(point)
+        self.camera.SetFocalPoint(point)
 
-    def __del__(self):
-        log.debug('Object collected')
-
-
-def CreateLineSegmentsActor(pdata):
-
-    # Create arrow object
-    lines_source = vtk.vtkLineSource()
-    lines_source.Update()
-    glyph3D = vtk.vtkGlyph3D()
-    glyph3D.SetSourceData(lines_source.GetOutput())
-    glyph3D.SetInputData(pdata)
-    glyph3D.SetVectorModeToUseVector()
-    glyph3D.Update()
-
-    # Create mapper
-    mapper = vtk.vtkDataSetMapper()
-    mapper.SetInputConnection(glyph3D.GetOutputPort())
-
-    # Create actor
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    actor.GetProperty().LightingOff()
-
-    return actor, mapper
+    # def __del__(self):
+        # print('collected')
+    #     log.debug('Object collected')
 
 
-def CreateArrowsActor(pdata):
+# def line_segments_actor(pdata):
+#     # Create arrow object
+#     lines_source = vtk.vtkLineSource()
+#     lines_source.Update()
+#     glyph3D = vtk.vtkGlyph3D()
+#     glyph3D.SetSourceData(lines_source.GetOutput())
+#     glyph3D.SetInputData(pdata)
+#     glyph3D.SetVectorModeToUseVector()
+#     glyph3D.Update()
+
+#     # Create mapper
+#     mapper = vtk.vtkDataSetMapper()
+#     mapper.SetInputConnection(glyph3D.GetOutputPort())
+
+#     # Create actor
+#     actor = vtk.vtkActor()
+#     actor.SetMapper(mapper)
+#     actor.GetProperty().LightingOff()
+
+#     return actor, mapper
+
+
+def arrows_actor(pdata):
     """ Creates an actor composed of arrows """
 
     # Create arrow object
@@ -1503,119 +1586,21 @@ def CreateArrowsActor(pdata):
     return actor
 
 
-def PlotGrids(grids, wFEM=False, background=[0, 0, 0], style='wireframe',
-              legend_entries=None):
-    """
-    Creates a plot of several grids as wireframes.  When wFEM is
-    true, the first grid is a white solid
-
-    """
-
-    # Make grid colors
-    N = len(grids)
-    HSV_tuples = [(x * 1.0 / N, 0.5, 0.5) for x in range(N)]
-    colors = list(map(lambda x: colorsys.hsv_to_rgb(*x), HSV_tuples))
-
-    pobj = PlotClass()
-    for i in range(len(grids)):
-        if not i and wFEM:  # Special plotting for first grid
-            pobj.AddMesh(grids[i])
-        else:
-            pobj.AddMesh(grids[i], color=colors[i], style=style)
-
-    # Render plot and delete when finished
-    pobj.SetBackground(background)
-
-    if legend_entries:
-        legend = []
-        if isinstance(legend_entries, range):
-            for c, i in enumerate(legend_entries):
-                legend.append([str(legend_entries[i]), colors[c]])
-        else:
-            for i in range(len(legend_entries)):
-                legend.append([legend_entries[i], colors[i]])
-
-        pobj.AddLegend(legend)
-
-    pobj.Plot()
+def single_triangle():
+    """ A single PolyData triangle """
+    points = np.zeros((3, 3))
+    points[1] = [1, 0, 0]
+    points[2] = [0.5, 0.707, 0]
+    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    return vtki.PolyData(points, cells)
 
 
-def PlotNormals(mesh, ntype='point', show_mesh=True, mag=1.0, flip=False,
-                use_every=1):
-    """ Plot mesh (optional) with normals. """
-
-    pobj = PlotClass()
-    if show_mesh:
-        pobj.AddMesh(mesh)
-
-    # TODO: Implement visualisation of cell normals
-    if ntype == 'point':
-        points = mesh.points
-
-        # If normals exist, don't recalculate them
-        if mesh.GetPointData().HasArray('Normals'):
-            normals = VN.vtk_to_numpy(mesh.GetPointData().GetArray('Normals'))
-        else:
-            normals = mesh.point_normals
-    elif ntype == 'cell':
-        print('Visualization of cell normals not yet implemented. Returning None.')
-        return
-
-    # Flip normal orientation
-    if flip:
-        normals = normals.copy()
-        normals *= -1
-
-    # Reduce sampling if needed
-    points = points[::use_every]
-    normals = normals[::use_every]
-
-    pobj.AddArrows(points, normals, mag=mag)
-
-    return pobj.Plot()
-
-
-def PlotEdges(mesh, angle, width=10):
-    """ Plots edges of a mesh """
-    edges = vtkInterface.GetEdgePoints(mesh, angle, False)
-    pobj = PlotClass()
-    pobj.AddLines(edges, [0, 1, 1], width)
-    pobj.AddMesh(mesh)
-    pobj.Plot()
-
-
-def PlotBoundaries(mesh, **args):
-    """ Plots boundaries of a mesh """
-    featureEdges = vtk.vtkFeatureEdges()
-    featureEdges.SetInputData(mesh)
-    featureEdges.FeatureEdgesOff()
-    featureEdges.BoundaryEdgesOn()
-    featureEdges.NonManifoldEdgesOn()
-    featureEdges.ManifoldEdgesOff()
-    featureEdges.Update()
-    edges = vtkInterface.PolyData(featureEdges.GetOutput())
-
-    plobj = PlotClass()
-    plobj.AddMesh(edges, 'r', style='wireframe')
-    plobj.AddMesh(mesh)
-    plobj.Plot()
-
-
-def MakeLegendPoly():
-    """ Creates a legend polydata object """
-    pts = np.zeros((3, 3))
-    pts[1] = [1, 0, 0]
-    pts[2] = [0.5, 0.707, 0]
-    triangles = np.array([[3, 0, 1, 2]], ctypes.c_long)
-    return vtki.PolyData(pts, triangles)
-
-
-def ParseColor(color):
+def parse_color(color):
     """ Parses color into a vtk friendly rgb list """
     if color is None:
         return [1, 1, 1]
     elif isinstance(color, str):
-        return vtkInterface.StringToRGB(color)
+        return vtki.string_to_rgb(color)
     elif len(color) == 3:
         return color
     else:
@@ -1628,7 +1613,7 @@ def ParseColor(color):
         color='#FFFFFF'""")
 
 
-def ParseFontFamily(font_family):
+def parse_font_family(font_family):
     """ checks font name """
     # check font name
     font_family = font_family.lower()
@@ -1636,4 +1621,13 @@ def ParseFontFamily(font_family):
         raise Exception('Font must be either "courier", "times" ' +
                         'or "arial"')
 
-    return font_keys[font_family]
+    return FONT_KEYS[font_family]
+
+
+# def MakeLegendPoly():
+#     """ Creates a legend polydata object """
+#     pts = np.zeros((3, 3))
+#     pts[1] = [1, 0, 0]
+#     pts[2] = [0.5, 0.707, 0]
+#     triangles = np.array([[3, 0, 1, 2]], ctypes.c_long)
+#     return vtki.PolyData(pts, triangles)

@@ -1,6 +1,6 @@
-vtkInterface Overview
-=====================
-``vtkInterface`` is a Python module that simplifies the interface with VTK by using numpy and direct array access and more general classes to work with meshes and plotting.  It's designed to make working with VTK more pythonic and more straightforward.
+vtki Overview
+=============
+``vtki`` is a Python module that simplifies the interface with VTK by using numpy and direct array access and more general classes to work with meshes and plotting.  It's designed to make working with VTK more pythonic and more straightforward.
 
 This module is suited creating engineering plots for presentations and research papers as well as being a supporting module for other mesh dependent Python modules that would like to simplify hundreds of lines of code into just a few lines.
 
@@ -9,9 +9,9 @@ Installation
 ------------
 If you have a working copy of VTK, installation is simply::
 
-    $ pip install vtkInterface
+    $ pip install vtki
     
-You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
+You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or `GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
 
 See :ref:`install_ref` for more details.
 
@@ -67,19 +67,18 @@ Using this `example <http://www.vtk.org/Wiki/VTK/Examples/Python/STLReader>`_, l
     del renWin
 
 
-Plot a Mesh using vtkInterface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The same stl can be loaded and plotted using vtkInterface with:
+Plot a Mesh using vtki
+~~~~~~~~~~~~~~~~~~~~~~
+The same stl can be loaded and plotted using vtki with:
 
 .. code:: python
 
-    import vtkInterface
+    import vtki
     
-    filename = "myfile.stl"
-    mesh = vtkInterface.LoadMesh(filename)
-    mesh.Plot()
+    mesh = vtki.PolyData('myfile.stl')
+    mesh.plot()
 
-The mesh object is more pythonic and the code is much more straightforward.  Garbage collection is taken care automatically and the renderer is cleaned up after the user closes the vtk plotting window.
+The mesh object is more pythonic and the code is much more straightforward.  Garbage collection is taken care of automatically and the renderer is cleaned up after the user closes the vtk plotting window.
 
 
 Advanced Plotting with Numpy
@@ -88,7 +87,7 @@ When combined with numpy, you can make some truly spectacular plots:
 
 .. code:: python
 
-    import vtkInterface as vtki
+    import vtki
     import numpy as np
     
     # Make a grid
@@ -105,10 +104,10 @@ When combined with numpy, you can make some truly spectacular plots:
     direction = np.sin(points)**3
     
     # plot using the plotting class
-    plobj = vtki.PlotClass()
-    plobj.AddArrows(points, direction, 0.5)
-    plobj.SetBackground([0, 0, 0]) # RGB set to black
-    plobj.Plot()
+    plobj = vtki.Plotter()
+    plobj.add_arrows(points, direction, 0.5)
+    plobj.background([0, 0, 0]) # RGB set to black
+    plobj.plot()
 
 .. image:: ./images/vectorfield.png
 
@@ -116,54 +115,58 @@ While not everything can be simplified without losing functionality, many of the
 
 .. code:: python
 
-    submesh = mesh.Subdivide('linear', nsub=3)
+    submesh = mesh.subdivide('linear', nsub=3)
 
-and ``help(mesh.Subdivide)`` yields a useful helpdoc::
+Additionally, ``help(mesh.subdivide)`` yields a useful docstring::
 
-    Help on function Subdivide in module vtkInterface.utilities:
+    Help on method subdivide in module vtki.polydata:
     
-    Subdivide(self, nsub, subfilter='linear'):
+    subdivide(nsub, subfilter='linear', inplace=False) method of vtki.polydata.PolyData instance
         Increase the number of triangles in a single, connected triangular
         mesh.
-
+        
         Uses one of the following vtk subdivision filters to subdivide a mesh.
         vtkButterflySubdivisionFilter
         vtkLoopSubdivisionFilter
         vtkLinearSubdivisionFilter
-
+        
         Linear subdivision results in the fastest mesh subdivision, but it
         does not smooth mesh edges, but rather splits each triangle into 4
         smaller triangles.
-
+        
         Butterfly and loop subdivision perform smoothing when dividing, and may
         introduce artifacts into the mesh when dividing.
-
+        
         Subdivision filter appears to fail for multiple part meshes.  Should
         be one single mesh.
-
-
+        
         Parameters
         ----------
         nsub : int
             Number of subdivisions.  Each subdivision creates 4 new triangles,
             so the number of resulting triangles is nface*4**nsub where nface
             is the current number of faces.
-
+        
         subfilter : string, optional
             Can be one of the following: 'butterfly', 'loop', 'linear'
-
+        
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+        
         Returns
         -------
         mesh : Polydata object
-            vtkInterface polydata object.
-
+            vtki polydata object.  None when inplace=True
+        
         Examples
         --------
-        >>> from vtkInterface import examples
-        >>> import vtkInterface
+        >>> from vtki import examples
+        >>> import vtki
+        >>> mesh = vtki.PolyData(examples.planefile)
+        >>> submesh = mesh.subdivide(1, 'loop')
 
-        >>> mesh = vtkInterface.PolyData(examples.planefile)
-        >>> submesh = mesh.Subdivide(1, 'loop')
+	alternatively, update mesh in-place
+        >>> mesh.subdivide(1, 'loop', inplace=True)
 
 
 Contents

@@ -1,8 +1,8 @@
 """
 associated with examples.rst
 """
-import vtkInterface
-from vtkInterface import examples
+import vtki
+from vtki import examples
 import numpy as np
 
 
@@ -11,8 +11,8 @@ import numpy as np
 #==============================================================================
 
 filename = examples.planefile
-mesh = vtkInterface.LoadMesh(filename)
-cpos = mesh.Plot(screenshot='airplane.png', color='yellow')
+mesh = vtki.LoadMesh(filename)
+cpos = mesh.plot(screenshot='airplane.png', color='yellow')
 
 #==============================================================================
 # Make wave gif
@@ -26,15 +26,15 @@ R = np.sqrt(X**2 + Y**2)
 Z = np.sin(R)
 
 # Create and plot structured grid
-sgrid = vtkInterface.GenStructSurf(X, Y, Z)
+sgrid = vtki.GenStructSurf(X, Y, Z)
 
 # Make deep copy of points
-pts = sgrid.GetNumpyPoints(deep=True)
+pts = sgrid.points.copy()
 
 # Start a plotter object and set the scalars to the Z height
-plobj = vtkInterface.PlotClass()
-plobj.AddMesh(sgrid, scalars=Z.ravel())
-plobj.Plot(autoclose=False)
+plobj = vtki.Plotter()
+plobj.add_mesh(sgrid, scalars=Z.ravel())
+plobj.plot(autoclose=False)
 
 # Open a gif
 plobj.OpenGif('wave.gif')
@@ -65,24 +65,24 @@ R = np.sqrt(X**2 + Y**2)
 Z = np.sin(R)
 
 # Create and plot structured grid
-surf = vtkInterface.GenStructSurf(X, Y, Z)
-#sgrid.Plot()
+surf = vtki.GenStructSurf(X, Y, Z)
+#sgrid.plot()
 
 # Extract surface of structured grid and plot mean curvature
 #surf = sgrid.ExtractSurface()
 surf.PlotCurvature('Mean')
-surf.GetNumpyPoints()
+surf.points
 
 
 # Take screenshot example
-c = vtkInterface.GetCurvature(surf)
+c = vtki.GetCurvature(surf)
 
 # Create plotting class
-plobj = vtkInterface.PlotClass()
+plobj = vtki.Plotter()
 
 # add a surface and plot
-plobj.AddMesh(surf, scalars=c, stitle='Mean\nCurvature')
-plobj.Plot(autoclose=False)
+plobj.add_mesh(surf, scalars=c, stitle='Mean\nCurvature')
+plobj.plot(autoclose=False)
 
 # take a screenshot and close the window when the user presses "q"
 plobj.TakeScreenShot('curvature.png')

@@ -1,5 +1,5 @@
 """
-Installation file for python vtkInterface module
+Installation file for python vtki module
 """
 from setuptools import setup
 from io import open as io_open
@@ -7,7 +7,7 @@ import os
 import sys
 import warnings
 
-package_name = 'vtkInterface'
+package_name = 'vtki'
 
 __version__ = None
 filepath = os.path.dirname(__file__)
@@ -33,7 +33,7 @@ readme_file = os.path.join(filepath, 'README.rst')
 
 setup(
     name=package_name,
-    packages=[package_name, 'vtkInterface.tests', 'vtkInterface.examples'],
+    packages=[package_name, 'vtki.examples'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=open(readme_file).read(),
@@ -49,9 +49,9 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
-    url='https://github.com/akaszynski/vtkInterface',
+    url='https://github.com/akaszynski/vtki',
     keywords='vtk numpy plotting mesh',
-    package_data={'vtkInterface.examples': ['airplane.ply', 'ant.ply',
+    package_data={'vtki.examples': ['airplane.ply', 'ant.ply',
                                             'hexbeam.vtk', 'sphere.ply']},
     install_requires=install_requires,
 )

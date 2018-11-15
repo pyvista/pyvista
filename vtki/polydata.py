@@ -2,30 +2,23 @@
 Sub-classes for vtk.vtkPolyData
 """
 import os
-import numpy as np
-import vtkInterface
 import logging
 import warnings
+
+import vtk
+from vtk import vtkPolyData
+from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
+from vtk.util.numpy_support import numpy_to_vtk
+
+import numpy as np
+import vtki
+
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-# allows readthedocs to autodoc
-try:
-    import vtk
-    from vtk import vtkPolyData
-    from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-    from vtk.util.numpy_support import numpy_to_vtk
 
-except:
-    # create dummy class when readthedocs can't import vtk
-    class vtkPolyData(object):
-        def __init__(self, *args, **kwargs):
-            pass
-    warnings.warn('Unable to import vtk')
-
-
-class PolyData(vtkPolyData, vtkInterface.Common):
+class PolyData(vtkPolyData, vtki.Common):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -33,13 +26,15 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
     - Create an empty mesh
     - Initialize from a vtk.vtkPolyData
-    - Create using vertices and faces
-    - Create from a file
+    - Using vertices
+    - Using vertices and faces
+    - From a file
 
     Examples
     --------
     >>> surf = PolyData()  # Create an empty mesh
     >>> surf = PolyData(vtkobj)  # Initialize from a vtk.vtkPolyData object
+    >>> surf = PolyData(vertices)  # initialize from just vertices
     >>> surf = PolyData(vertices, faces)  # initialize from vertices and face
     >>> surf = PolyData('file.ply')  # initialize from a filename
     """
@@ -47,30 +42,43 @@ class PolyData(vtkPolyData, vtkInterface.Common):
     def __init__(self, *args, **kwargs):
         super(PolyData, self).__init__()
 
+        deep = kwargs.pop('deep', False)
+
         if not args:
             return
         elif len(args) == 1:
             if isinstance(args[0], vtk.vtkPolyData):
-                self.ShallowCopy(args[0])
+                if deep:
+                    self.DeepCopy(args[0])
+                else:
+                    self.ShallowCopy(args[0])
             elif isinstance(args[0], str):
-                self.LoadFile(args[0])
+                self._load_file(args[0])
+            elif isinstance(args[0], np.ndarray):
+                points = args[0]
+                if points.ndim != 2:
+                    points = points.reshape((-1, 3))
+
+                npoints = points.shape[0]
+                cells = np.ones((npoints, 2), dtype=vtki.ID_TYPE)
+                cells[:, 1] = np.arange(npoints, dtype=vtki.ID_TYPE)
+                self._from_arrays(points, cells, deep)
+                
         elif len(args) == 2:
             arg0_is_array = isinstance(args[0], np.ndarray)
             arg1_is_array = isinstance(args[1], np.ndarray)
             if arg0_is_array and arg1_is_array:
-                if 'deep' in kwargs:
-                    deep = kwargs['deep']
-                else:
-                    deep = True
-                self.MakeFromArrays(args[0], args[1], deep)
+                self._from_arrays(args[0], args[1], deep)
+            else:
+                raise TypeError('Invalid input type')
         else:
             raise TypeError('Invalid input type')
 
-    def LoadFile(self, filename):
+    def _load_file(self, filename):
         """
         Load a surface mesh from a mesh file.
 
-        Mesh file may be an ASCII or binary ply, stl, g3d, or vtk mesh file.
+        Mesh file may be an ASCII or binary ply, stl, or vtk mesh file.
 
         Parameters
         ----------
@@ -85,7 +93,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         """
         # test if file exists
         if not os.path.isfile(filename):
-            raise Exception('File {:s} does not exist'.format(filename))
+            raise Exception('File %s does not exist' % filename)
 
         # Get extension
         fext = filename[-3:].lower()
@@ -95,15 +103,10 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             reader = vtk.vtkPLYReader()
         elif fext == 'stl':
             reader = vtk.vtkSTLReader()
-        elif fext == 'g3d':  # Don't use vtk reader
-            v, f = vtkInterface.ReadG3D(filename)
-            v /= 25.4  # convert to inches
-            self.MakeFromArrays(v, f)
         elif fext == 'vtk':
             reader = vtk.vtkPolyDataReader()
         else:
-            raise Exception('Filetype must be either "ply", "stl", "g3d" ' +
-                            'or "vtk"')
+            raise TypeError('Filetype must be either "ply", "stl", or "vtk"')
 
         # Load file
         reader.SetFileName(filename)
@@ -111,27 +114,42 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         self.ShallowCopy(reader.GetOutput())
 
         # sanity check
-        try:
-            self.points
-        except:
-            raise Exception('Cannot access points.  Empty or invalid file')
-        try:
-            self.faces
-        except:
-            raise Exception('Cannot access points.  Empty or invalid file')
+        assert np.any(self.points), 'Empty or invalid file'
 
     @property
     def faces(self):
         """ returns a pointer to the points as a numpy object """
         return vtk_to_numpy(self.GetPolys().GetData())
 
-    @property
-    def lines(self):
-        """ returns a copy of the indices of the lines """
-        lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
-        return np.ascontiguousarray(lines[:, 1:])
+    @faces.setter
+    def faces(self, faces):
+        """ set faces without copying """
+        if faces.dtype != vtki.ID_TYPE:
+            faces = faces.astype(vtki.ID_TYPE)
 
-    def MakeFromArrays(self, vertices, faces, deep=True):
+        # get number of faces
+        if faces.ndim == 1:
+            log.debug('efficiency warning')
+            c = 0
+            nfaces = 0
+            while c < faces.size:
+                c += faces[c] + 1
+                nfaces += 1
+        else:
+            nfaces = faces.shape[0]
+
+        vtkcells = vtk.vtkCellArray()
+        vtkcells.SetCells(nfaces, numpy_to_vtkIdTypeArray(faces, deep=False))
+        self.SetPolys(vtkcells)
+        self._face_ref = faces
+
+    # @property
+    # def lines(self):
+    #     """ returns a copy of the indices of the lines """
+    #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
+    #     return np.ascontiguousarray(lines[:, 1:])
+
+    def _from_arrays(self, vertices, faces, deep=True):
         """
         Set polygons and points from numpy arrays
 
@@ -156,90 +174,94 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         >>> surf = PolyData(vertices, faces)
 
         """
-        vtkpoints = vtk.vtkPoints()
-        vtkpoints.SetData(numpy_to_vtk(vertices, deep=deep))
-        self.SetPoints(vtkpoints)
+        if deep:
+            vtkpoints = vtk.vtkPoints()
+            vtkpoints.SetData(numpy_to_vtk(vertices, deep=deep))
+            self.SetPoints(vtkpoints)
 
-        # Convert to a vtk array
-        vtkcells = vtk.vtkCellArray()
-        if faces.dtype != vtkInterface.ID_TYPE:
-            faces = faces.astype(vtkInterface.ID_TYPE)
+            # Convert to a vtk array
+            vtkcells = vtk.vtkCellArray()
+            if faces.dtype != vtki.ID_TYPE:
+                faces = faces.astype(vtki.ID_TYPE)
 
-        # get number of faces
-        if faces.ndim == 1:
-            c = 0
-            nfaces = 0
-            while c < faces.size:
-                c += faces[c] + 1
-                nfaces += 1
-        else:
-            nfaces = faces.shape[0]
-
-        idarr = numpy_to_vtkIdTypeArray(faces, deep=deep)
-        vtkcells.SetCells(nfaces, idarr)
-        self.SetPolys(vtkcells)
-
-    def GetNumpyFaces(self, force_C_CONTIGUOUS=False, nocut=False, dtype=None):
-        """
-        Returns the faces from a polydata object as a numpy array.  Assumes a
-        triangular mesh.  Array will be sized (-1, 3) unless nocut is True.
-
-        Parameters
-        ----------
-        force_C_CONTIGUOUS : bool, optional
-            Force array to be c contigious.  Default False.
-
-        nocut : bool, optional
-            When true, array will be shaped (-1, 4) with the first row
-            containing only 3.
-
-        dtype : np.dtype, optional
-            Output data type.
-
-        Returns
-        -------
-        f : np.ndarray
-            Array containing triangle point indices.
-        """
-        f = vtk_to_numpy(self.GetPolys().GetData()).reshape((-1, 4))
-
-        # remove triangle size padding
-        if not nocut:
-            f = f[:, 1:]
-
-        if force_C_CONTIGUOUS:
-            if dtype:
-                f = np.ascontiguousarray(f, dtype)
+            # get number of faces
+            if faces.ndim == 1:
+                c = 0
+                nfaces = 0
+                while c < faces.size:
+                    c += faces[c] + 1
+                    nfaces += 1
             else:
-                f = np.ascontiguousarray(f)
-        elif dtype:
-            if f.dtype != dtype:
-                f = f.astype(dtype)
+                nfaces = faces.shape[0]
 
-        return f
+            idarr = numpy_to_vtkIdTypeArray(faces.ravel(), deep=deep)
+            vtkcells.SetCells(nfaces, idarr)
+            self.SetPolys(vtkcells)
+        else:
+            self.points = vertices
+            self.faces = faces
 
-    def SetNumpyFaces(self, f):
-        """
-        Sets mesh polygons.  Assumes a triangular mesh.
+    # def GetNumpyFaces(self, force_C_CONTIGUOUS=False, nocut=False, dtype=None):
+    #     """
+    #     Returns the faces from a polydata object as a numpy array.  Assumes a
+    #     triangular mesh.  Array will be sized (-1, 3) unless nocut is True.
 
-        Parameters
-        ----------
-        f : np.ndarray
-            Face indices.  Array must be (-1, 4)
+    #     Parameters
+    #     ----------
+    #     force_C_CONTIGUOUS : bool, optional
+    #         Force array to be c contigious.  Default False.
 
-        """
-        # Check shape
-        if f.ndim != 2:
-            raise Exception('Faces should be a 2D array')
-        elif f.shape[1] != 4:
-            raise Exception(
-                'First column should contain the number of points per face')
+    #     nocut : bool, optional
+    #         When true, array will be shaped (-1, 4) with the first row
+    #         containing only 3.
 
-        vtkcells = vtk.vtkCellArray()
-        vtkcells.SetCells(f.shape[0], numpy_to_vtkIdTypeArray(f, deep=True))
-        self.SetPolys(vtkcells)
+    #     dtype : np.dtype, optional
+    #         Output data type.
 
-    def GetEdgeMask(self, angle):
+    #     Returns
+    #     -------
+    #     f : np.ndarray
+    #         Array containing triangle point indices.
+    #     """
+    #     f = vtk_to_numpy(self.GetPolys().GetData()).reshape((-1, 4))
+
+    #     # remove triangle size padding
+    #     if not nocut:
+    #         f = f[:, 1:]
+
+    #     if force_C_CONTIGUOUS:
+    #         if dtype:
+    #             f = np.ascontiguousarray(f, dtype)
+    #         else:
+    #             f = np.ascontiguousarray(f)
+    #     elif dtype:
+    #         if f.dtype != dtype:
+    #             f = f.astype(dtype)
+
+    #     return f
+
+    # def SetNumpyFaces(self, f):
+    #     """
+    #     Sets mesh polygons.  Assumes a triangular mesh.
+
+    #     Parameters
+    #     ----------
+    #     f : np.ndarray
+    #         Face indices.  Array must be (-1, 4)
+
+    #     """
+    #     # Check shape
+    #     if f.ndim != 2:
+    #         raise Exception('Faces should be a 2D array')
+    #     elif f.shape[1] != 4:
+    #         raise Exception(
+    #             'First column should contain the number of points per face')
+
+    #     vtkcells = vtk.vtkCellArray()
+    #     vtkcells.SetCells(f.shape[0], numpy_to_vtkIdTypeArray(f, deep=True))
+    #     self.SetPolys(vtkcells)
+
+    def edge_mask(self, angle):
         """
         Returns a mask of the points of a surface mesh that have a surface
         angle greater than angle
@@ -250,6 +272,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             Angle to consider an edge.
 
         """
+        self.point_arrays['point_ind'] = np.arange(self.number_of_points)
         featureEdges = vtk.vtkFeatureEdges()
         featureEdges.SetInputData(self)
         featureEdges.FeatureEdgesOn()
@@ -259,18 +282,26 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         featureEdges.SetFeatureAngle(angle)
         featureEdges.Update()
         edges = featureEdges.GetOutput()
-        origID = vtkInterface.GetPointScalars(edges, 'vtkOriginalPointIds')
+        orig_id = vtki.point_scalar(edges, 'point_ind')
 
-        return np.in1d(self.GetPointScalars('vtkOriginalPointIds'),
-                       origID, assume_unique=True)
+        return np.in1d(self.point_arrays['point_ind'], orig_id,
+                       assume_unique=True)
 
-    def BooleanCut(self, cut, tolerance=1E-5, inplace=False):
+    def __sub__(self, cutting_mesh):
+        """ subtract two meshes """
+        return self.boolean_cut(cutting_mesh)
+
+    @property
+    def number_of_faces(self):
+        return self.number_of_cells
+
+    def boolean_cut(self, cut, tolerance=1E-5, inplace=False):
         """
         Performs a Boolean cut using another mesh.
 
         Parameters
         ----------
-        cut : vtkInterface.PolyData
+        cut : vtki.PolyData
             Mesh making the cut
 
         inplace : bool, optional
@@ -278,12 +309,14 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             The cut mesh when inplace=False
 
         """
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
-        bfilter.SetOperationToIntersection()
+        # bfilter.SetOperationToIntersection()
+        bfilter.SetOperationToDifference()
+        
         bfilter.SetInputData(1, cut)
         bfilter.SetInputData(0, self)
         bfilter.ReorientDifferenceCellsOff()
@@ -291,17 +324,22 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         bfilter.Update()
 
         if inplace:
-            self.Overwrite(bfilter.GetOutput())
+            self.overwrite(bfilter.GetOutput())
         else:
             return PolyData(bfilter.GetOutput())
 
-    def BooleanAdd(self, mesh, inplace=False):
+    def __add__(self, mesh):
+        """ adds two meshes together """
+        return self.boolean_add(mesh)
+
+    def boolean_add(self, mesh, inplace=False):
         """
-        Add a mesh to the current mesh.
+        Add a mesh to the current mesh.  Does not attempt to "join"
+        the meshes.
 
         Parameters
         ----------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             The mesh to add.
 
         inplace : bool, optional
@@ -309,7 +347,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        joinedmesh : vtkInterface.PolyData
+        joinedmesh : vtki.PolyData
             Initial mesh and the new mesh when inplace=False.
 
         """
@@ -319,17 +357,17 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         vtkappend.Update()
 
         if inplace:
-            self.Overwrite(vtkappend.GetOutput())
+            self.overwrite(vtkappend.GetOutput())
         else:
             return PolyData(vtkappend.GetOutput())
 
-    def BooleanUnion(self, mesh, inplace=False):
+    def boolean_union(self, mesh, inplace=False):
         """
-        Returns the mesh in common between the current mesh and the input mesh.
+        Combines two meshes and attempts to create a manifold mesh.
 
         Parameters
         ----------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             The mesh to perform a union against.
 
         inplace : bool, optional
@@ -337,7 +375,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        union : vtkInterface.PolyData
+        union : vtki.PolyData
             The union mesh when inplace=False.
 
         """
@@ -349,11 +387,43 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         bfilter.Update()
 
         if inplace:
-            self.Overwrite(vtkappend.GetOutput())
+            self.overwrite(bfilter.GetOutput())
         else:
-            return PolyData(vtkappend.GetOutput())
+            return PolyData(bfilter.GetOutput())
 
-    def Curvature(self, curvature='mean'):
+
+    def boolean_difference(self, mesh, inplace=False):
+        """
+        Combines two meshes and retains only the volume in common
+        between the meshes.
+
+        Parameters
+        ----------
+        mesh : vtki.PolyData
+            The mesh to perform a union against.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        union : vtki.PolyData
+            The union mesh when inplace=False.
+
+        """
+        bfilter = vtk.vtkBooleanOperationPolyDataFilter()
+        bfilter.SetOperationToDifference()
+        bfilter.SetInputData(1, mesh)
+        bfilter.SetInputData(0, self)
+        bfilter.ReorientDifferenceCellsOff()
+        bfilter.Update()
+
+        if inplace:
+            self.overwrite(bfilter.GetOutput())
+        else:
+            return PolyData(bfilter.GetOutput())
+
+    def curvature(self, curv_type='mean'):
         """
         Returns the pointwise curvature of a mesh
 
@@ -375,108 +445,29 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             Curvature values
 
         """
-        curvature = curvature.lower()
+        curv_type = curv_type.lower()
 
         # Create curve filter and compute curvature
         curvefilter = vtk.vtkCurvatures()
         curvefilter.SetInputData(self)
-        if curvature == 'mean':
+        if curv_type == 'mean':
             curvefilter.SetCurvatureTypeToMean()
-        elif curvature == 'gaussian':
+        elif curv_type == 'gaussian':
             curvefilter.SetCurvatureTypeToGaussian()
-        elif curvature == 'maximum':
+        elif curv_type == 'maximum':
             curvefilter.SetCurvatureTypeToMaximum()
-        elif curvature == 'minimum':
+        elif curv_type == 'minimum':
             curvefilter.SetCurvatureTypeToMinimum()
         else:
-            raise Exception('Curvature must be either "Mean", ' +
+            raise Exception('Curv_Type must be either "Mean", ' +
                             '"Gaussian", "Maximum", or "Minimum"')
         curvefilter.Update()
 
         # Compute and return curvature
-        curves = curvefilter.GetOutput()
-        return vtk_to_numpy(curves.GetPointData().GetScalars())
+        curv = curvefilter.GetOutput()
+        return vtk_to_numpy(curv.GetPointData().GetScalars())
 
-    def RemovePoints(self, remove_mask, mode='all', keepscalars=True, inplace=False):
-        """
-        Rebuild a mesh by removing points that are true in "remove_mask"
-
-        Parameters
-        ----------
-        remove_mask : np.ndarray
-            Points that are True will be removed.
-
-        mode : str, optional
-            When 'all', only faces containing all points flagged for removal
-            will be removed.  Default 'all'
-
-        keepscalars : bool, optional
-            When True, point and cell scalars will be passed on to the new
-            mesh.
-
-        inplace : bool, optional
-            Updates mesh in-place while returning nothing.
-
-        Returns
-        -------
-        mesh : vtkInterface.PolyData
-            Mesh without the points flagged for removal.  Not returned when
-            inplace=False.
-
-        ridx : np.ndarray
-            Indices of new points relative to the original mesh.  Not returned when
-            inplace=False.
-
-        """
-        # Extract points and faces from mesh
-        v = self.points
-        f = self.GetNumpyFaces()
-
-        if remove_mask.size != v.shape[0]:
-            raise Exception('"remove_mask" size is not the same as the ' +
-                            'number of points in the mesh')
-
-        vmask = remove_mask.take(f)
-        if mode == 'all':
-            fmask = np.logical_not(vmask).all(1)
-        else:
-            fmask = np.logical_not(vmask).any(1)
-
-        # Regenerate face and point arrays
-        uni = np.unique(f.compress(fmask, 0), return_inverse=True)
-        v = v.take(uni[0], 0)
-        f = np.reshape(uni[1], (fmask.sum(), 3))
-
-        newmesh = vtkInterface.MeshfromVF(v, f, False)
-        ridx = uni[0]
-
-        # Add scalars back to mesh if requested
-        if keepscalars:
-            # Point data
-            narr = self.GetPointData().GetNumberOfArrays()
-            for i in range(narr):
-                # Extract original array
-                vtkarr = self.GetPointData().GetArray(i)
-
-                # Rearrange the indices and add this to the new polydata
-                adata = vtk_to_numpy(vtkarr)[ridx]
-                newmesh.AddPointScalars(adata, vtkarr.GetName())
-
-            # Cell data
-            narr = self.GetCellData().GetNumberOfArrays()
-            for i in range(narr):
-                # Extract original array
-                vtkarr = self.GetCellData().GetArray(i)
-                adata = vtk_to_numpy(vtkarr)[fmask]
-                newmesh.AddCellScalars(adata, vtkarr.GetName())
-
-        # Return vtk surface and reverse indexing array
-        if inplace:
-            self.Overwrite(newmesh)
-        else:
-            return newmesh, ridx
-
-    def Write(self, filename, ftype=None, binary=True):
+    def save(self, filename, binary=True):
         """
         Writes a surface mesh to disk.
 
@@ -485,23 +476,21 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         Parameters
         ----------
         filename : str
-            Filename of mesh to be written.  Filetype is inferred from the
-            extension of the filename unless overridden with ftype.  Can be
-            one of the following types (.ply, .stl, .vtk)
+            Filename of mesh to be written.  File type is inferred from
+            the extension of the filename unless overridden with
+            ftype.  Can be one of the following types (.ply, .stl,
+            .vtk)
 
-        ftype : str, optional
-            Filetype.  Inferred from filename unless specified with a three
-            character string.  Can be one of the following: 'ply',  'stl', or
-            'vtk'.
+        binary : bool, optional
+            Writes the file as binary when True and ASCII when False.
 
         Notes
         -----
-        Binary files write much faster than ASCII.
+        Binary files write much faster than ASCII and have a smaller
+        file size.
         """
-        if not ftype:
-            ftype = filename[-3:]
-
         # Check filetype
+        ftype = filename[-3:]
         if ftype == 'ply':
             writer = vtk.vtkPLYWriter()
         elif ftype == 'stl':
@@ -509,9 +498,8 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         elif ftype == 'vtk':
             writer = vtk.vtkPolyDataWriter()
         else:
-            raise Exception('Filetype must be either "ply", "stl" or "vtk"')
+            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
 
-        # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
         if binary:
@@ -520,7 +508,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             writer.SetFileTypeToASCII()
         writer.Write()
 
-    def PlotCurvature(self, curvtype='mean', **kwargs):
+    def plot_curvature(self, curv_type='mean', **kwargs):
         """
         Plots curvature
 
@@ -535,20 +523,17 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             - Minimum
 
         **kwargs : optional
-            See help(vtkInterface.Plot)
+            See help(vtki.plot)
 
         Returns
         -------
         cpos : list
             List of camera position, focal point, and view up
         """
-        # Get curvature values and plot
-        c = self.Curvature(curvtype)
+        return self.plot(scalars=self.curvature(curv_type),
+                         stitle='%s\nCurvature' % curv_type, **kwargs)
 
-        # Return camera posision
-        return vtkInterface.Plot(self, scalars=c, stitle='%s\nCurvature' % curvtype, **kwargs)
-
-    def TriFilter(self, inplace=False):
+    def tri_filter(self, inplace=False):
         """
         Returns an all triangle mesh.  More complex polygons will be broken
         down into triangles.
@@ -560,7 +545,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             Mesh containing only triangles.  None when inplace=True
 
         """
@@ -570,11 +555,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         trifilter.PassLinesOff()
         trifilter.Update()
         if inplace:
-            self.Overwrite(trifilter.GetOutput())
+            self.overwrite(trifilter.GetOutput())
         else:
             return PolyData(trifilter.GetOutput())
 
-    def Subdivide(self, nsub, subfilter='linear', inplace=False):
+    def subdivide(self, nsub, subfilter='linear', inplace=False):
         """
         Increase the number of triangles in a single, connected triangular
         mesh.
@@ -610,16 +595,18 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         Returns
         -------
         mesh : Polydata object
-            vtkInterface polydata object.  None when inplace=True
+            vtki polydata object.  None when inplace=True
 
         Examples
         --------
-        >>> from vtkInterface import examples
-        >>> import vtkInterface
-        >>> mesh = vtkInterface.LoadMesh(examples.planefile)
-        >>> submesh = mesh.Subdivide(1, 'loop')
-        >>> mesh.Subdivide(1, 'loop', inplace=True)  # alternatively, update mesh in-place
+        >>> from vtki import examples
+        >>> import vtki
+        >>> mesh = vtki.PolyData(examples.planefile)
+        >>> submesh = mesh.subdivide(1, 'loop')
 
+        alternatively, update mesh in-place
+
+        >>> mesh.subdivide(1, 'loop', inplace=True)
         """
         subfilter = subfilter.lower()
         if subfilter == 'linear':
@@ -638,11 +625,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         sfilter.Update()
         submesh = PolyData(sfilter.GetOutput())
         if inplace:
-            self.Overwrite(submesh)
+            self.overwrite(submesh)
         else:
             return submesh
 
-    def ExtractEdges(self, feature_angle=30, boundary_edges=True,
+    def extract_edges(self, feature_angle=30, boundary_edges=True,
                      non_manifold_edges=True, feature_edges=True,
                      manifold_edges=True):
         """
@@ -674,7 +661,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        edges : vtkInterface.vtkPolyData
+        edges : vtki.vtkPolyData
             Extracted edges
 
         """
@@ -689,7 +676,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         featureEdges.Update()
         return PolyData(featureEdges.GetOutput())
 
-    def Decimate(self, target_reduction, volume_preservation=False,
+    def decimate(self, target_reduction, volume_preservation=False,
                  attribute_error=False, scalars=True, vectors=True,
                  normals=False, tcoords=True, tensors=True, scalars_weight=0.1,
                  vectors_weight=0.1, normals_weight=0.1, tcoords_weight=0.1,
@@ -760,7 +747,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        outmesh : vtkInterface.PolyData
+        outmesh : vtki.PolyData
             Decimated mesh.  None when inplace=True.
 
         """
@@ -785,44 +772,17 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         decimate.Update()
 
         if inplace:
-            self.Overwrite(decimate.GetOutput())
+            self.overwrite(decimate.GetOutput())
         else:
             return PolyData(decimate.GetOutput())
 
-    def FlipNormals(self):
-        """
-        Flip normals of a triangular mesh by reversing the point ordering.
-
-        """
-        if self.faces.size % 4:
-            raise Exception('Can only flip normals on an all triangular mesh')
-
-        f = self.faces.reshape((-1, 4))
-        f[:, 1:] = f[:, 1:][:, ::-1]
-
-    def OverwriteMesh(self, mesh):
-        """
-        Degenerated.  Use Overwrite
-
-        """
-        # copy points and point data
-        self.SetPoints(mesh.GetPoints())
-        self.GetPointData().DeepCopy(mesh.GetPointData())
-
-        # copy cells and cell data
-        self.SetPolys(mesh.GetPolys())
-        self.GetCellData().DeepCopy(mesh.GetCellData())
-
-        # Must rebuild or subsequent operations on this mesh will segfault
-        self.BuildCells()
-
-    def Overwrite(self, mesh):
+    def overwrite(self, mesh):
         """
         Overwrites the old mesh data with the new mesh data
 
         Parameters
         ----------
-        mesh : vtk.vtkPolyData or vtkInterface.PolyData
+        mesh : vtk.vtkPolyData or vtki.PolyData
             The overwriting mesh.
 
         """
@@ -837,7 +797,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         # Must rebuild or subsequent operations on this mesh will segfault
         self.BuildCells()
 
-    def CenterOfMass(self, scalars_weight=False):
+    def center_of_mass(self, scalars_weight=False):
         """
         Returns the coordinates for the center of mass of the mesh.
 
@@ -851,21 +811,18 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         center : np.ndarray, float
             Coordinates for the center of mass.
         """
-
         comfilter = vtk.vtkCenterOfMass()
         comfilter.SetInputData(self)
         comfilter.SetUseScalarsAsWeights(scalars_weight)
         comfilter.Update()
-        center = np.array(comfilter.GetCenter())
+        return np.array(comfilter.GetCenter())
 
-        return center
-
-    def GenerateNormals(self, cell_normals=True, point_normals=True,
+    def compute_normals(self, cell_normals=True, point_normals=True,
                         split_vertices=False, flip_normals=False,
                         consistent_normals=True, auto_orient_normals=False,
                         non_manifold_traversal=True, feature_angle=30.0, inplace=True):
         """
-        Generate point and/or cell normals for a mesh.
+        Compute point and/or cell normals for a mesh.
 
         The filter can reorder polygons to insure consistent orientation across
         polygon neighbors. Sharp edges can be split and points duplicated
@@ -922,7 +879,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             Updated mesh with cell and point normals if inplace=False
 
         Notes
@@ -951,33 +908,30 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         normal.Update()
 
         if inplace:
-            self.Overwrite(normal.GetOutput())
+            self.overwrite(normal.GetOutput())
         else:
             return PolyData(normal.GetOutput())
 
     @property
     def point_normals(self):
-        """ Point normals.  Run with basic settings """
-        mesh = self.GenerateNormals(cell_normals=False, point_normals=True,
-                                    split_vertices=False, flip_normals=False,
-                                    consistent_normals=False, auto_orient_normals=False,
-                                    non_manifold_traversal=False, feature_angle=30.0,
-                                    inplace=False)
-        return mesh.GetPointScalars('Normals')
+        """ Point normals """
+        mesh = self.compute_normals(cell_normals=False, inplace=False)
+        return mesh.point_arrays['Normals']
 
     @property
     def cell_normals(self):
-        """ Point normals.  Run with basic settings """
-        mesh = self.GenerateNormals(cell_normals=True, point_normals=False,
-                                    split_vertices=False, flip_normals=False,
-                                    consistent_normals=False, auto_orient_normals=False,
-                                    non_manifold_traversal=False, feature_angle=30.0,
-                                    inplace=False)
-        return mesh.GetCellScalars('Normals')
+        """ Cell normals  """
+        mesh = self.compute_normals(point_normals=False, inplace=False)
+        return mesh.cell_arrays['Normals']
 
-    def ClipPlane(self, origin, normal, value=0, inplace=True):
+    @property
+    def face_normals(self):
+        """ Cell normals  """
+        return self.cell_normals
+
+    def clip_with_plane(self, origin, normal, value=0, inplace=True):
         """
-        Clip a vtkInterface.PolyData or vtk.vtkPolyData with a plane.
+        Clip a vtki.PolyData or vtk.vtkPolyData with a plane.
 
         Can be used to open a mesh which has been closed along a well-defined
         plane.
@@ -999,7 +953,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             Updated mesh with cell and point normals if inplace=False
 
         Notes
@@ -1022,11 +976,11 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         clip.Update()
 
         if inplace:
-            self.Overwrite(clip.GetOutput())
+            self.overwrite(clip.GetOutput())
         else:
             return PolyData(clip.GetOutput())
 
-    def ExtractLargest(self, inplace=False):
+    def extract_largest(self, inplace=False):
         """
         Extract largest connected set in mesh.
 
@@ -1041,7 +995,7 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             Largest connected set in mesh
 
         """
@@ -1057,13 +1011,13 @@ class PolyData(vtkPolyData, vtkInterface.Common):
         geofilter.Update()
 
         if inplace:
-            self.Overwrite(geofilter.GetOutput())
+            self.overwrite(geofilter.GetOutput())
         else:
             return PolyData(geofilter.GetOutput())
 
-    def FillHoles(self, hole_size, inplace=True):
+    def fill_holes(self, hole_size):  # pragma: no cover
         """
-        Fill holes in a vtkInterface.PolyData or vtk.vtkPolyData object.
+        Fill holes in a vtki.PolyData or vtk.vtkPolyData object.
 
         Holes are identified by locating boundary edges, linking them together
         into loops, and then triangulating the resulting loops. Note that you
@@ -1078,26 +1032,21 @@ class PolyData(vtkPolyData, vtkInterface.Common):
             this is an approximate area; the actual area cannot be computed
             without first triangulating the hole.
 
-        inplace : bool, optional
-            Updates mesh in-place while returning nothing.
-
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             Mesh with holes filled.  None when inplace=True
 
         """
+        warnings.warn('Known to segfault.  Use at your own risk')
         fill = vtk.vtkFillHolesFilter()
         fill.SetHoleSize(hole_size)
         fill.SetInputData(self)
         fill.Update()
+        pdata = PolyData(fill.GetOutput(), deep=True)
+        return pdata
 
-        if inplace:
-            self.OverwriteMesh(fill.GetOutput())
-        else:
-            return PolyData(fill.GetOutput())
-
-    def Clean(self, point_merging=True, mergtol=None, lines_to_points=True,
+    def clean(self, point_merging=True, merge_tol=None, lines_to_points=True,
               polys_to_lines=True, strips_to_polys=True, inplace=True):
         """
         Cleans mesh by merging duplicate points, remove unused
@@ -1128,55 +1077,236 @@ class PolyData(vtkPolyData, vtkInterface.Common):
 
         Returns
         -------
-        mesh : vtkInterface.PolyData
+        mesh : vtki.PolyData
             Cleaned mesh.  None when inplace=True
         """
         clean = vtk.vtkCleanPolyData()
-        if not lines_to_points:
-            clean.ConvertLinesToPointsOff()
-        if not polys_to_lines:
-            clean.ConvertPolysToLinesOff()
-        if not strips_to_polys:
-            clean.ConvertStripsToPolysOff()
-        if mergtol:
+        clean.SetConvertLinesToPoints(lines_to_points)
+        clean.SetConvertPolysToLines(polys_to_lines)
+        clean.SetConvertStripsToPolys(strips_to_polys)
+        if merge_tol:
             clean.ToleranceIsAbsoluteOn()
-            clean.SetAbsoluteTolerance(mergtol)
+            clean.SetAbsoluteTolerance(merge_tol)
         clean.SetInputData(self)
         clean.Update()
 
         if inplace:
-            self.OverwriteMesh(clean.GetOutput())
+            self.overwrite(clean.GetOutput())
         else:
             return PolyData(clean.GetOutput())
-
-    def SurfaceArea(self):
+    
+    @property
+    def area(self):
         """
-        Calculates the surface area of the mesh object based on the sum of
-        triangle areas.
-
-        Note
-        ----
-        Assumes triangulated mesh.
+        Mesh surface area
 
         Returns
         -------
-        area : np.float
+        area : float
             Total area of the mesh.
 
         """
-        from utilities import TriangleArea
+        mprop = vtk.vtkMassProperties()
+        mprop.SetInputData(self)
+        return mprop.GetSurfaceArea()
 
-        faces = self.faces.reshape(-1, 4)[:, 1:4]
-        pts = self.points
+    @property
+    def volume(self):
+        """
+        Mesh volume
 
-        # Get the point coordinates grouped by facet
-        face_coords = np.array([[pts[faces[ii, jj]] for jj in xrange(
-            len(faces[ii]))] for ii in xrange(len(faces))])
+        Returns
+        -------
+        area : float
+            Total area of the mesh.
 
-        # Area as sum of all triangle components
-        area = np.sum([TriangleArea(*face_coords[ii])
-                       for ii in xrange(len(face_coords))])
-        return area
+        """
+        mprop = vtk.vtkMassProperties()
+        mprop.SetInputData(self)
+        return mprop.GetVolume()
 
-    # def __del__(self):
-    #     log.debug('Object collected')
+    @property
+    def obbTree(self):
+        if not hasattr(self, '_obbTree'):
+            self._obbTree = vtk.vtkOBBTree()
+            self._obbTree.SetDataSet(self)
+            self._obbTree.BuildLocator()
+
+        return self._obbTree
+
+    def ray_trace(self, origin, end_point, first_point=False, plot=False,
+                  off_screen=False):
+        """
+        Performs a single ray trace calculation given a mesh and a line segment
+        defined by an origin and end_point.
+
+        Parameters
+        ----------
+        origin : np.ndarray or list
+            Start of the line segment.
+
+        end_point : np.ndarray or list
+            End of the line segment.
+
+        first_point : bool, optional
+            Returns intersection of first point only.
+
+        plot : bool, optional
+            Plots ray trace results
+
+        off_screen : bool, optional
+            Plots off screen.  Used for unit testing.
+
+        Returns
+        -------
+        intersection_points : np.ndarray
+            Location of the intersection points.  Empty array if no 
+            intersections.
+
+        intersection_cells : np.ndarray
+            Indices of the intersection cells.  Empty array if no 
+            intersections.
+
+        """
+        points = vtk.vtkPoints()
+        cellIDs = vtk.vtkIdList()
+        code = self.obbTree.IntersectWithLine(np.array(origin),
+                                              np.array(end_point),
+                                              points, cellIDs) 
+
+        intersection_points = vtk_to_numpy(points.GetData())
+        if first_point and intersection_points.shape[0] >= 1:
+            intersection_points = intersection_points[0]
+
+        intersection_cells = []
+        if intersection_points.any():
+            if first_point:
+                ncells = 1
+            else:
+                ncells = cellIDs.GetNumberOfIds()
+            for i in range(ncells):
+                intersection_cells.append(cellIDs.GetId(i))
+        intersection_cells = np.array(intersection_cells)
+
+        if plot:
+            plotter = vtki.Plotter(off_screen=off_screen)
+            plotter.add_mesh(self, label='Test Mesh')
+            segment = np.array([origin, end_point])
+            plotter.add_lines(segment, 'b', label='Ray Segment')
+            plotter.add_mesh(intersection_points, 'r', psize=10,
+                             label='Intersection Points')
+            plotter.add_legend()
+            plotter.add_axes()
+            plotter.plot()
+
+        return intersection_points, intersection_cells
+
+    def plot_boundaries(self, **kwargs):
+        """ Plots boundaries of a mesh """
+        edges = self.extract_edges(non_manifold_edges=False,
+                                   feature_edges=False,
+                                   manifold_edges=False)
+
+        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
+        plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
+        plotter.add_mesh(self, legend='Mesh', **kwargs)
+        # plotter.add_legend()
+        plotter.plot()
+
+
+    def plot_normals(self, show_mesh=True, mag=1.0, flip=False,
+                     use_every=1, **kwargs):
+        """
+        Plot the point normals of a mesh.
+        """
+        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
+        if show_mesh:
+            plotter.add_mesh(self, **kwargs)
+
+        normals = self.point_normals
+        if flip:
+            normals *= -1
+        plotter.add_arrows(self.points[::use_every],
+                           normals[::use_every], mag=mag)
+        return plotter.plot()
+
+    def remove_points(self, remove, mode='any', keepscalars=True, inplace=False):
+        """
+        Rebuild a mesh by removing points.  Only valid for
+        all-triangle meshes.
+
+        Parameters
+        ----------
+        remove : np.ndarray
+            If remove is a bool array, points that are True will be
+            removed.  Otherwise, it is treated as a list of indices.
+
+        mode : str, optional
+            When 'all', only faces containing all points flagged for
+            removal will be removed.  Default 'all'
+
+        keepscalars : bool, optional
+            When True, point and cell scalars will be passed on to the
+            new mesh.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtki.PolyData
+            Mesh without the points flagged for removal.  Not returned
+            when inplace=False.
+
+        ridx : np.ndarray
+            Indices of new points relative to the original mesh.  Not
+            returned when inplace=False.
+
+        """
+        if isinstance(remove, list):
+            remove = np.asarray(remove)
+
+        if remove.dtype == np.bool:
+            assert_statement = 'Mask different size than number_of_points'
+            assert remove.size == self.number_of_points, assert_statement
+            remove_mask = remove
+        else:
+            remove_mask = np.zeros(self.number_of_points, np.bool)
+            remove_mask[remove] = True
+
+        try:
+            f = self.faces.reshape(-1, 4)[:, 1:]
+        except:
+            raise Exception('Mesh must consist of only triangles')
+
+        vmask = remove_mask.take(f)
+        if mode == 'all':
+            fmask = ~(vmask).all(1)
+        else:
+            fmask = ~(vmask).any(1)
+
+        # Regenerate face and point arrays
+        uni = np.unique(f.compress(fmask, 0), return_inverse=True)
+        new_points = self.points.take(uni[0], 0)
+
+        nfaces = fmask.sum()
+        faces = np.empty((nfaces, 4), dtype=vtki.ID_TYPE)
+        faces[:, 0] = 3
+        faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
+
+        newmesh = PolyData(new_points, faces, deep=True)
+        ridx = uni[0]
+
+        # Add scalars back to mesh if requested
+        if keepscalars:
+            for key in self.point_arrays:
+                newmesh.point_arrays[key] = self.point_arrays[key][ridx]
+
+            for key in self.cell_arrays:
+                newmesh.cell_arrays[key] = self.cell_arrays[key][fmask]
+
+        # Return vtk surface and reverse indexing array
+        if inplace:
+            self.overwrite(newmesh)
+        else:
+            return newmesh, ridx

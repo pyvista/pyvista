@@ -2,83 +2,48 @@
 
 Installation
 ============
-Installing vtkInterface itself is quite straightforward as it can be installed using ``pip``.  ``VTK`` itself can also be installed using pip or from a a distribution such as `Anaconda <https://www.continuum.io/downloads>`_. The installation directions are different depending on your OS; see the directions below.
+Installing vtki itself is quite straightforward as it can be installed using ``pip``.
 
-``vtkInterface`` requires ``numpy`` and ``VTK`` version 7.0 or newer.  Optional modules include ``moviepy`` and ``imageio`` for saving movies or moving gifs.
+``vtki`` requires ``numpy``, ``imageio``, and ``VTK`` version 7.0 or newer.
 
-
-Windows Installation
---------------------
 
 Install VTK
 ~~~~~~~~~~~
-VTK can be installed using pip for Python 3.6::
+VTK can be installed using pip for most versions of Python::
 
   $ pip install vtk
 
-
-Install VTK by installing from a distribution like `Anaconda <https://www.continuum.io/downloads>`_ and then installing VTK for Python 2.7, 3.4, 3.5, and 3.6 by running the following from a command prompt::
+If this command fails, install VTK by installing from a distribution like `Anaconda <https://www.continuum.io/downloads>`_ and then installing VTK for Python 2.7, 3.4, 3.5, and 3.6 by running the following::
 
     conda install -c conda-forge vtk
 
-You can also install VTK from the source by following these `Directions <http://www.vtk.org/Wiki/VTK/Building/Windows>`_.  This is quite difficult.
 
+Install vtki
+~~~~~~~~~~~~
+Install vtki from `PyPi <http://pypi.python.org/pypi/vtki>`_ by running::
 
-Install vtkInterface
-~~~~~~~~~~~~~~~~~~~~
-Install vtkInterface from `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ by running::
+    pip install vtki
 
-    pip install vtkInterface
+Alternatively, you can install the latest version from GitHub by visiting `vtki <https://github.com/akaszynski/vtki>`_, downloading the source, and running::
 
-Alternatively, you can install the latest version from GitHub by visiting `vtkInterface <https://github.com/akaszynski/vtkInterface>`_, downloading the source, and running::
-
-    cd C:\Where\You\Downloaded\vtkInterface
+    cd C:\Where\You\Downloaded\vtki
     pip install .
-    
-
-Linux Installation
-------------------
-
-Install VTK
-~~~~~~~~~~~
-If using Python 3.4 or greater, VTK can be installed from pip with::
-
-    $ pip install vtk --user
-
-Please note that as of the time of this writing, python will not be able to find the dynamic libraries of the vtk install.  This can be fixed by appending the LD_LIBRARY_PATH::
-
-    $ touch pythonvtk.conf
-    $ echo '/home/user/.local/lib/python3.5/site-packages/vtk' >> pythonvtk.conf
-    $ sudo mv pythonvtk.conf /etc/ld.so.conf.d/pythonvtk.conf
-
-This path will vary depending on the user name and if the vtk package has been installed using the ``user`` flag or if it has been installed as root.
-
-Install vtkInterface
-~~~~~~~~~~~~~~~~~~~~
-Install vtkInterface from `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ by running::
-
-    $ pip install vtkInterface --user
-
-You can also install the latest source from 
-`GitHub <https://github.com/akaszynski/vtkInterface>`_ with::
-
-    $ git clone https://github.com/akaszynski/vtkInterface
-    $ cd vtkInterface
-    $ pip install . --user
 
 
 Test Installation
 -----------------
-Regardless of your OS, you can test your installation by running an example from tests:
+You can test your installation by running an example:
 
 .. code:: python
 
-    from vtkInterface import tests
-    tests.ShowWave()
+    from vtki import examples
+    examples.plot_wave()
 
-You can also run examples from:
+See other examples:
 
 .. code:: python
 
-    from vtkInterface import examples
+    from vtki import examples
+
+    # list all examples
     print(dir(examples))

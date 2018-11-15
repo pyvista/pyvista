@@ -32,3 +32,6 @@ wiki/
 .pytest_cache/
 tests/.coverage
 tests/htmlcov/
+
+# windows
+test.bat

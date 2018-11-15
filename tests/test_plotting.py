@@ -1,29 +1,296 @@
 from subprocess import Popen, PIPE
 import os
+import sys
+from weakref import proxy
 
 import numpy as np
+import vtki
+
+from vtki import examples
+from vtki.plotting import running_xserver
+
+if __name__ != '__main__':
+    OFF_SCREEN = 'pytest' in sys.modules
+else:
+    OFF_SCREEN = False
+
 import pytest
-import vtkInterface as vtki
-
-from vtkInterface import examples
-from vtkInterface.plotting import RunningXServer
 
 
-@pytest.mark.skipif(not RunningXServer(), reason="Requires active X Server")
-class TestPlotting(object):
+sphere = vtki.Sphere()
+sphere_b = vtki.Sphere(1.0)
+sphere_c = vtki.Sphere(2.0)
 
-    def test_init(self):
-        plotter = vtki.PlotClass()
-        assert hasattr(plotter, 'renWin')
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot(tmpdir):
+    try:
+        filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
+    except:
+        filename = '/tmp/tmp.png'
 
-    def test_plotarrow(self):
-        cent = np.random.random(3)
-        direction = np.random.random(3)
-        cpos, img = vtki.PlotArrows(cent, direction, off_screen=True, screenshot=True)
-        assert np.any(img)
+    scalars = np.arange(sphere.number_of_points)
+    cpos, img = vtki.plot(sphere,
+                          off_screen=OFF_SCREEN,
+                          full_screen=True,
+                          text='this is a sphere',
+                          show_bounds=True,
+                          color='r',
+                          style='wireframe',
+                          linethick=10,
+                          scalars=scalars,
+                          flipscalars=True,
+                          colormap='bwr',
+                          interpolatebeforemap=True,
+                          screenshot=filename)
+    assert isinstance(cpos, list)
+    assert isinstance(img, np.ndarray)
+    assert os.path.isfile(filename)
 
-    def test_plotarrows(self):
-        cent = np.random.random((100, 3))
-        direction = np.random.random((100, 3))
-        cpos, img = vtki.PlotArrows(cent, direction, off_screen=True, screenshot=True)
-        assert np.any(img)
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_invalid_style():
+    with pytest.raises(Exception):
+        vtki.plot(sphere, style='not a style')
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_invalid_bounds_axes():
+    with pytest.raises(Exception):
+        plotter = vtki.Plotter()
+        plotter.add_bounds_axes()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_no_active_scalars():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    with pytest.raises(Exception):
+        plotter.update_scalars(np.arange(5))
+    with pytest.raises(Exception):
+        plotter.update_scalars(np.arange(sphere.number_of_faces))
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_add_bounds_axes():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.add_bounds_axes(show_xaxis=False,
+                            show_yaxis=False,
+                            show_zaxis=False,
+                            show_xlabels=False,
+                            show_ylabels=False,
+                            show_zlabels=False)
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_add_scalar_bar():
+    plotter = vtki.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_scalar_bar(label_fontsize=10, title_fontsize=20, title='woa')
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_invalid_add_scalar_bar():
+    with pytest.raises(Exception):
+        plotter = vtki.Plotter()
+        plotter.add_scalar_bar()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_list():
+    vtki.plot([sphere, sphere_b],
+              off_screen=OFF_SCREEN,
+              style='points')
+
+    vtki.plot([sphere, sphere_b, sphere_c],
+              off_screen=OFF_SCREEN,
+              style='wireframe')
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_add_lines_invalid():
+    plotter = vtki.Plotter()
+    with pytest.raises(Exception):
+        plotter.add_lines(range(10))
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_open_gif_invalid():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    with pytest.raises(Exception):
+        plotter.open_gif('file.abs')
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_make_movie():
+    try:
+        filename = str(tmpdir.mkdir("tmpdir").join('tmp.mp4'))
+    except:
+        filename = '/tmp/tmp.mp4'
+
+    movie_sphere = sphere.copy()
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.open_movie(filename)
+    actor = plotter.add_axes_at_origin()
+    plotter.remove_actor(actor)
+    plotter.add_mesh(movie_sphere,
+                     scalars=np.random.random(movie_sphere.number_of_faces))
+    plotter.plot(autoclose=False, window_size=[304, 304])
+    plotter.set_focus([0, 0, 0])
+    for i in range(10):
+        plotter.write_frame()
+        random_points = np.random.random(movie_sphere.points.shape)
+        movie_sphere.points = random_points*0.01 + movie_sphere.points*0.99
+        movie_sphere.points -= movie_sphere.points.mean(0)
+        scalars = np.random.random(movie_sphere.number_of_faces)
+        plotter.update_scalars(scalars)
+
+    # checking if plotter closes
+    ref = proxy(plotter)
+    plotter.close()
+
+    try:
+        ref
+    except:
+        raise Exception('Plotter did not close')
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_add_legend():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    with pytest.raises(Exception):
+        plotter.add_legend()
+    legend_labels = [['sphere', 'r']]
+    plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
+                       size=[0.1, 0.1])
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_add_axes_twice():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_axes()
+    with pytest.raises(Exception):
+        plotter.add_axes()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_add_point_labels():
+    n = 10
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    points = np.random.random((n, 3))
+
+    with pytest.raises(Exception):
+        plotter.add_point_labels(points, range(n - 1))
+
+    plotter.set_background('k')
+    plotter.add_point_labels(points, range(n), showpoints=True, pointcolor='r')
+    plotter.add_point_labels(points - 1, range(n), showpoints=False, pointcolor='r')
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_add_points():
+    n = 10
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    points = np.random.random((n, 3))
+    plotter.add_points(points, scalars=np.arange(10), colormap=None, flipscalars=True)
+    plotter.plot()
+
+
+# @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+# def test_plot_as_lin():
+#     n = 10
+#     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+#     points = np.random.random((n, 3))
+#     plotter.add_points(points, scalars=np.arange(10), colormap=None, flipscalars=True)
+#     plotter.plot()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_key_press_event():
+    plotter = vtki.Plotter()
+    plotter.key_press_event(None, None)
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_left_button_down():
+    plotter = vtki.Plotter()
+    plotter.left_button_down(None, None)
+    assert np.allclose(plotter.pickpoint, [0, 0, 0])
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_update():
+    plotter = vtki.Plotter(off_screen=True)
+    plotter.update()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_cell_scalars():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    scalars = np.arange(sphere.number_of_faces)
+    plotter.add_mesh(sphere, interpolatebeforemap=True, scalars=scalars,
+                     ncolors=5, rng=10)
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_invalid_number_of_scalars():
+    with pytest.raises(Exception):
+        plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(sphere, scalars=np.arange(10))
+        plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_arrow():
+    cent = np.random.random(3)
+    direction = np.random.random(3)
+    cpos, img = vtki.plot_arrows(cent, direction, off_screen=True, screenshot=True)
+    assert np.any(img)
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_arrows():
+    cent = np.random.random((100, 3))
+    direction = np.random.random((100, 3))
+    cpos, img = vtki.plot_arrows(cent, direction, off_screen=True, screenshot=True)
+    assert np.any(img)
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_axes():
+    plotter = vtki.Plotter(off_screen=True)
+    plotter.add_axes()
+    plotter.add_mesh(vtki.Sphere())
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_screenshot():
+    plotter = vtki.Plotter(off_screen=True)
+    plotter.add_mesh(vtki.Sphere())
+    img = plotter.screenshot(transparent_background=True)
+    assert np.any(img)
+    img_again = plotter.screenshot()
+    assert np.any(img_again)
+
+    # checking if plotter closes
+    ref = proxy(plotter)
+    plotter.close()
+
+    try:
+        ref
+    except:
+        raise Exception('Plotter did not close')
+
+
+def test_invalid_color():
+    with pytest.raises(Exception):
+        femorph.plotting.parse_color('not a color')
+
+
+def test_invalid_font():
+    with pytest.raises(Exception):
+        femorph.parse_font_family('not a font')

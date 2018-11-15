@@ -1,30 +1,36 @@
-vtkInterface
-============
+vtki
+====
 ..
-   travis ci build badge
-.. image:: https://travis-ci.org/akaszynski/vtkInterface.svg?branch=master
-    :target: https://travis-ci.org/akaszynski/vtkInterface
+   PyPi
+.. image:: https://img.shields.io/pypi/v/vtki.svg
+    :target: https://pypi.org/project/vtki/
 
-vtkInterface is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
+.. image:: https://travis-ci.org/akaszynski/vtki.svg?branch=master
+    :target: https://travis-ci.org/akaszynski/vtki
+
+.. image:: https://readthedocs.org/projects/vtki/badge/?version=latest
+    :target: https://vtki.readthedocs.io/en/latest/?badge=latest
+
+vtki is a VTK helper module that takes a different approach on interfacing with VTK through numpy and direct array access.  This module simplifies mesh creation and plotting by adding functionality to existing VTK objects.
 
 This module can be used for scientific plotting for presentations and research papers as well as a supporting module for other mesh dependent Python modules.
 
 
 Documentation
 -------------
-Refer to the `main documentation page <http://vtkinterface.readthedocs.io/en/latest/index.html>`_ for detailed installation and usage details.
+Refer to the detailed `readthedocs <http://vtki.readthedocs.io/en/latest/index.html>`_ documentation for detailed installation and usage details.
 
-Also see the `wiki <https://github.com/akaszynski/vtkInterface/wiki>`_ for brief code snippets.
+Also see the `wiki <https://github.com/akaszynski/vtki/wiki>`_ for brief code snippets.
 
 Installation
 ------------
 Installation is simply::
 
-    pip install vtkInterface
+    pip install vtki
     
-You can also visit `PyPi <http://pypi.python.org/pypi/vtkInterface>`_ or `GitHub <https://github.com/akaszynski/vtkInterface>`_ to download the source.
+You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or `GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
 
-See the `Installation <http://vtkinterface.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details if the installation through pip doesn't work out.
+See the `Installation <http://vtki.readthedocs.io/en/latest/installation.html#install-ref.>`_ for more details if the installation through pip doesn't work out.
 
 
 Quick Examples
@@ -32,20 +38,20 @@ Quick Examples
 
 Loading and Plotting a Mesh from File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Loading a mesh is trivial
 
 .. code:: python
 
-    import vtkInterface as vtki
+    import vtki
     mesh = vtki.PolyData('airplane.ply')
-    mesh.Plot(color='orange')
-    
-.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/airplane.png
+    mesh.plot(color='orange')
 
-In fact, the code to generate the previous screenshot was created with::
+.. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/airplane.png
+    :width: 500pt
 
-    mesh.Plot(screenshot='airplane.png', color='orange')
+In fact, the code to generate the previous screenshot was created in one line with::
+
+    mesh.plot(screenshot='airplane.png', color='orange')
 
 The points and faces from the mesh are directly accessible as a numpy array:
 
@@ -62,7 +68,8 @@ The points and faces from the mesh are directly accessible as a numpy array:
     
 .. code:: python
 
-    >>> print(mesh.GetNumpyFaces())
+    >>> faces = mesh.faces.reshape(-1, 4)
+    >>> print(faces[:, 1:])
     [[   0    1    2]
      [   0    2    3]
      [   4    5    1]
@@ -78,11 +85,10 @@ This example creates a simple surface grid and plots the resulting grid and its 
 
 .. code:: python
 
-    import vtkInterface as vtki
-
-    # Make data
+    import vtki
     import numpy as np
 
+    # Make data
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -91,12 +97,14 @@ This example creates a simple surface grid and plots the resulting grid and its 
     
     # create and plot structured grid
     grid = vtki.StructuredGrid(x, y, z)
-    grid.Plot()  # basic plot
+    grid.plot()  # basic plot
     
     # Plot mean curvature
-    grid.PlotCurvature()
+    grid.plot_curvature()
 
-.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/curvature.png
+.. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/curvature.png
+    :width: 500pt
+
 
 Generating a structured grid is a one liner in this module, and the points from the resulting surface are also a numpy array:
 
@@ -118,7 +126,7 @@ This example shows the versatility of the plotting object by generating a moving
 
 .. code:: python
     
-    import vtkInterface as vtki
+    import vtki
     import numpy as np
 
     x = np.arange(-10, 10, 0.25)
@@ -126,32 +134,33 @@ This example shows the versatility of the plotting object by generating a moving
     x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
-    
+
     # Create and structured surface
     grid = vtki.StructuredGrid(x, y, z)
-    
-    # Make copy of points
-    pts = grid.points.copy()
-    
-    # Start a plotter object and set the scalars to the Z height
-    plobj = vtki.PlotClass()
-    plobj.AddMesh(grid, scalars=z.ravel())
-    plobj.Plot(autoclose=False)
-    
+
+    # Creat a plotter object and set the scalars to the Z height
+    plotter = vtki.Plotter()
+    plotter.add_mesh(grid, scalars=z.ravel())
+
+    # setup camera and close
+    plotter.plot(autoclose=False)
+
     # Open a gif
-    plobj.OpenGif('wave.gif')
-    
+    plotter.open_gif('wave.gif')
+
+    pts = grid.points.copy()
+
     # Update Z and write a frame for each updated position
     nframe = 15
     for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
         z = np.sin(r + phase)
         pts[:, -1] = z.ravel()
-        plobj.UpdateCoordinates(pts)
-        plobj.UpdateScalars(z.ravel())
-    
-        plobj.WriteFrame()
-    
-    # Close movie and delete object
-    plobj.Close()
+        plotter.update_coordinates(pts)
+        plotter.update_scalars(z.ravel())    
+        plotter.write_frame()
 
-.. image:: https://github.com/akaszynski/vtkInterface/raw/master/docs/images/wave.gif
+    # Close movie and delete object
+    plotter.close()
+
+.. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/wave.gif
+    :width: 500pt

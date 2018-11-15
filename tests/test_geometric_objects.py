@@ -1,5 +1,5 @@
 import numpy as np
-import vtkInterface as vtki
+import vtki
 
 
 def test_cylinder():
@@ -14,3 +14,13 @@ def test_arrow():
     assert np.any(surf.faces)
 
 
+def test_sphere():
+    surf = vtki.Sphere()
+    assert np.any(surf.points)
+    assert np.any(surf.faces)
+
+
+def test_plane():
+    surf = vtki.Plane()
+    assert np.any(surf.points)
+    assert np.any(surf.faces)

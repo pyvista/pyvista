@@ -1,6 +1,6 @@
 Quick Examples
 ==============
-The following examples demonstrate the functionality of ``vtkInterface``.
+The following examples demonstrate the functionality of ``vtki``.
 
 
 Loading and Plotting a Mesh from File
@@ -9,10 +9,10 @@ Loading a mesh is trivial.  The following code block uses a built-in example fil
 
 .. code:: python
 
-    import vtkInterface
-    from vtkInterface import examples
-    mesh = vtkInterface.PolyData(examples.planefile)
-    mesh.Plot(color='orange')
+    import vtki
+    from vtki import examples
+    mesh = vtki.PolyData(examples.planefile)
+    mesh.plot(color='orange')
     
 .. image:: ./images/airplane.png
 
@@ -20,15 +20,15 @@ In fact, the code to generate the previous screenshot was created with:
 
 .. code:: python
 
-    mesh.Plot(screenshot='airplane.png', color='orange')
+    mesh.plot(screenshot='airplane.png', color='orange')
 
-You can also take a screenshot without creating an interactive plot window using the ``PlotClass``:
+You can also take a screenshot without creating an interactive plot window using the ``Plotter``:
 
 .. code:: python
 
-    plotter = vtkInterface.PlotClass(off_screen=True)
-    plotter.AddMesh(mesh, color='orange')
-    img = plotter.Plot(autoclose=False)
+    plotter = vtki.Plotter(off_screen=True)
+    plotter.add_mesh(mesh, color='orange')
+    img = plotter.plot(autoclose=False)
     plotter.TakeScreenShot('airplane.png')
     plotter.Close()
 
@@ -54,7 +54,7 @@ The points and faces from the mesh are directly accessible as a numpy array:
       [ 806.66497803  654.43200684    7.51997995]
       [ 806.66497803  681.5369873     9.48744011]]
     
-    >>> print(mesh.faces)
+    >>> print(mesh.faces.reshape(-1, 4)[:, 1:])
     
      [[   0    1    2]
       [   0    2    3]
@@ -71,7 +71,7 @@ This example creates a simple surface grid and plots the resulting grid and its 
 
 .. code:: python
 
-    import vtkInterface
+    import vtki
 
     # Make data
     import numpy as np
@@ -82,11 +82,11 @@ This example creates a simple surface grid and plots the resulting grid and its 
     z = np.sin(r)
     
     # Create and plot structured grid
-    grid = vtkInterface.StructuredGrid(x, y, z)
-    grid.Plot()
+    grid = vtki.StructuredGrid(x, y, z)
+    grid.plot()
     
     # Plot mean curvature as well
-    grid.PlotCurvature()
+    grid.plot_curvature()
 
 .. image:: ./images/curvature.png
 
@@ -111,39 +111,65 @@ This example shows the versatility of the plotting object by generating a moving
 
 .. code:: python
     
-    import vtkInterface
+    import vtki
     import numpy as np
 
-    # Make data
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
 
-    # Create the structured surface
-    grid = vtkInterface.StructuredGrid(x, y, z)
+    # Create and structured surface
+    grid = vtki.StructuredGrid(x, y, z)
 
-    # Start a plotter object and set the scalars to the Z height
-    plobj = vtkInterface.PlotClass()
-    plobj.AddMesh(grid, scalars=z)
-    plobj.Plot(autoclose=False)
+    # Creat a plotter object and set the scalars to the Z height
+    plotter = vtki.Plotter()
+    plotter.add_mesh(grid, scalars=z.ravel())
+
+    # setup camera and close
+    plotter.plot(autoclose=False)
 
     # Open a gif
-    plobj.OpenGif('wave.gif')
+    plotter.open_gif('wave.gif')
+
+    pts = grid.points.copy()
 
     # Update Z and write a frame for each updated position
-    pts = grid.points.copy()
     nframe = 15
     for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
-        Z = np.sin(r + phase)
-        pts[:, -1] = Z.ravel()
-        plobj.UpdateCoordinates(pts)
-        plobj.UpdateScalars(Z.ravel())
+        z = np.sin(r + phase)
+        pts[:, -1] = z.ravel()
+        plotter.update_coordinates(pts)
+        plotter.update_scalars(z.ravel())    
+        plotter.write_frame()
 
-        plobj.WriteFrame()
-
-    # Close movie
-    plobj.Close()
+    # Close movie and delete object
+    plotter.close()
 
 .. image:: ./images/wave.gif
+
+
+Plotting in a Jupyter Notebook
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Inline plots are possible using a Jupyter notebook.  For example:
+
+
+.. code:: python
+
+    import vtki
+    sphere = vtki.Sphere()
+
+    # short example
+    cpos, image = sphere.plot(notebook=True)
+
+    # long example
+    plotter = vtki.Plotter(notebook=True)
+    plotter.add_mesh(sphere)
+    plotter.plot()
+
+
+.. figure:: ./images/notebook_sphere.png
+    :width: 600pt
+
+    Jupyter Inline Plotting
