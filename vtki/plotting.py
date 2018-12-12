@@ -426,6 +426,9 @@ class Plotter(object):
             if scalars.ndim != 1:
                 scalars = scalars.ravel()
 
+            if scalars.dtype == np.bool:
+                scalars = scalars.astype(np.float)
+
             # Scalar interpolation approach
             if scalars.size == mesh.GetNumberOfPoints():
                 self.mesh._add_point_scalar(scalars, '', True)
@@ -825,6 +828,7 @@ class Plotter(object):
         s = VN.vtk_to_numpy(vtk_scalars)
         s[:] = scalars
         data.Modified()
+        mesh.GetPoints().Modified()
 
         if render:
             self.render()
@@ -1622,12 +1626,3 @@ def parse_font_family(font_family):
                         'or "arial"')
 
     return FONT_KEYS[font_family]
-
-
-# def MakeLegendPoly():
-#     """ Creates a legend polydata object """
-#     pts = np.zeros((3, 3))
-#     pts[1] = [1, 0, 0]
-#     pts[2] = [0.5, 0.707, 0]
-#     triangles = np.array([[3, 0, 1, 2]], ctypes.c_long)
-#     return vtki.PolyData(pts, triangles)

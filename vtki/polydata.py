@@ -1310,3 +1310,14 @@ class PolyData(vtkPolyData, vtki.Common):
             self.overwrite(newmesh)
         else:
             return newmesh, ridx
+
+    def flip_normals(self):
+        """
+        Flip normals of a triangular mesh by reversing the point ordering.
+
+        """
+        if self.faces.size % 4:
+            raise Exception('Can only flip normals on an all triangular mesh')
+
+        f = self.faces.reshape((-1, 4))
+        f[:, 1:] = f[:, 1:][:, ::-1]

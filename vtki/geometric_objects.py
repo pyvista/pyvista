@@ -12,7 +12,6 @@ NEED TO ADD
 -----------
 vtkConeSource
 vtkCubeSource
-vtkCylinderSource
 vtkDiskSource
 vtkLineSource
 vtkRegularPolygonSource

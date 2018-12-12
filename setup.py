@@ -45,13 +45,17 @@ setup(
         'Intended Audience :: Science/Research',
         'Topic :: Scientific/Engineering :: Information Analysis',
         'License :: OSI Approved :: MIT License',
+        'Operating System :: Microsoft :: Windows'
+        'Operating System :: POSIX'
+        'Operating System :: MacOS'
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     url='https://github.com/akaszynski/vtki',
     keywords='vtk numpy plotting mesh',
     package_data={'vtki.examples': ['airplane.ply', 'ant.ply',
-                                            'hexbeam.vtk', 'sphere.ply']},
+                                    'hexbeam.vtk', 'sphere.ply']},
     install_requires=install_requires,
 )
