@@ -1,4 +1,6 @@
-sudo: false
+sudo: required
+
+dist: xenial
 
 os:
 - linux
