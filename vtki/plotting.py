@@ -38,6 +38,19 @@ def _raise_not_matching(scalars, mesh):
                     '(%d) ' % mesh.GetNumberOfCells())
 
 
+def get_default_cam_pos(dataset):
+    """Returns the default focal points and viewup. Position is way too
+    subjective and the renderer's reset should just be called.
+    """
+    bounds = dataset.GetBounds()
+    x = (bounds[1] + bounds[0])/2
+    y = (bounds[3] + bounds[2])/2
+    z = (bounds[5] + bounds[4])/2
+    fp = [x, y, z]
+    vup = [0.45, 0.45, 0.75]
+    return [fp, vup]
+
+
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=DEFAULT_WINDOW_SIZE,
          show_bounds=False, show_axes=True, notebook=False, background=None,
@@ -122,6 +135,8 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     if show_bounds:
         plotter.add_bounds_axes()
 
+    if cpos is None:
+        cpos = get_default_cam_pos(var_item)
     plotter.camera_position = cpos
     cpos = plotter.plot(window_size=window_size,
                         autoclose=False,
@@ -1195,9 +1210,16 @@ class Plotter(object):
         if cameraloc is None:
             return
 
-        self.camera.SetPosition(cameraloc[0])
-        self.camera.SetFocalPoint(cameraloc[1])
-        self.camera.SetViewUp(cameraloc[2])
+        if len(cameraloc) == 3:
+            # everything is set explicitly
+            self.camera.SetPosition(cameraloc[0])
+            self.camera.SetFocalPoint(cameraloc[1])
+            self.camera.SetViewUp(cameraloc[2])
+        else:
+            # Set the focal point ant view up then reset the position
+            self.camera.SetFocalPoint(cameraloc[0])
+            self.camera.SetViewUp(cameraloc[1])
+            self.renderer.ResetCamera()
 
         # reset clipping range
         self.renderer.ResetCameraClippingRange()
