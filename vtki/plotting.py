@@ -429,7 +429,10 @@ class Plotter(object):
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
             if isinstance(scalars, str):
+                tit = scalars
                 scalars = get_scalar(mesh, scalars)
+                if stitle is None:
+                    stitle = tit
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
