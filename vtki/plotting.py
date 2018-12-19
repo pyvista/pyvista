@@ -113,7 +113,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     if notebook:
         off_screen = notebook
-    plotter = Plotter(off_screen=off_screen)
+    plotter = Plotter(off_screen=off_screen, notebook=notebook)
     if show_axes:
         plotter.add_axes()
 
