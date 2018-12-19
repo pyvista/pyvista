@@ -1166,6 +1166,14 @@ class UniformGrid(vtkImageData, Grid):
     def z(self):
         return self.points[:, 2]
 
+    @property
+    def origin(self):
+        return self.GetOrigin()
+
+    @property
+    def spacing(self):
+        return self.GetSpacing()
+
     # @property
     # def quality(self):
     #     """
