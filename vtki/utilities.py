@@ -10,6 +10,8 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
 from vtk.util.numpy_support import numpy_to_vtk
 
+import os
+
 import vtki
 
 
@@ -163,6 +165,7 @@ def wrap(vtkdataset):
         'vtkStructuredGrid' : vtki.StructuredGrid,
         'vtkPolyData' : vtki.PolyData,
         'vtkImageData' : vtki.UniformGrid,
+        'vtkStructuredPoints' : vtki.UniformGrid,
         'vtkMultiBlockDataSet' : vtki.MultiBlock,
         }
     key = vtkdataset.GetClassName()
@@ -171,3 +174,36 @@ def wrap(vtkdataset):
     except:
         raise RuntimeError('VTK data type ({}) is not currently supported.'.format(key))
     return wrapped
+
+def read(filename):
+    """This will read any VTK file! It will figure out what reader to use
+    then wrap the VTK object for use in ``vtki``
+    """
+    def legacy(filename):
+        reader = vtk.vtkDataSetReader()
+        reader.SetFileName(filename)
+        reader.Update()
+        return reader.GetOutputDataObject(0)
+    ext = os.path.splitext(filename)[1]
+    if ext.lower() in '.vtk':
+        # Use a legacy reader and wrap the result
+        return wrap(legacy(filename))
+    else:
+        # From the extension, decide which reader to use
+        if ext.lower() in '.vti': # ImageData
+            return vtki.UniformGrid(filename)
+        elif ext.lower() in '.vtr': # RectilinearGrid
+            return vtki.RectilinearGrid(filename)
+        elif ext.lower() in '.vtu': # UnstructuredGrid
+            return vtki.UnstructuredGrid(filename)
+        elif ext.lower() in '.ply': # PolyData
+            return vtki.PolyData(filename)
+        elif ext.lower() in '.vts': # UnstructuredGrid
+            return vtki.StructuredGrid(filename)
+        else:
+            # Attempt to use the legacy reader...
+            try:
+                return wrap(legacy(filename))
+            except:
+                pass
+    raise IOError("This file was not able to be automatically read by vtki.")

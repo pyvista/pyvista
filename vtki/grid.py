@@ -721,7 +721,7 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         writer.SetFileName(filename)
         writer.SetInputData(self)
         if binary and legacy:
-            writer.SetFileTypeToBinary
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
@@ -848,7 +848,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         z = np.unique(points[:,2])
         # Set the vtk coordinates
         self._from_arrays(x, y, z)
-        self._point_ref = points
+        #self._point_ref = points
 
 
     def _load_file(self, filename):
@@ -926,7 +926,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         writer.SetFileName(filename)
         writer.SetInputData(self)
         if binary and legacy:
-            writer.SetFileTypeToBinary
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
@@ -1073,7 +1073,7 @@ class UniformGrid(vtkImageData, Grid):
         ox, oy, oz = np.min(x), np.min(y), np.min(z)
         # Build the vtk object
         self._from_specs(self, (nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
-        self._point_ref = points
+        #self._point_ref = points
 
 
     def _load_file(self, filename):
@@ -1105,7 +1105,7 @@ class UniformGrid(vtkImageData, Grid):
 
         # Create reader
         if legacy_writer:
-            reader = vtk.vtkImageDataReader()
+            reader = vtk.vtkDataSetReader()
         else:
             reader = vtk.vtkXMLImageDataReader()
 
@@ -1139,7 +1139,7 @@ class UniformGrid(vtkImageData, Grid):
         """
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
-            writer = vtk.vtkImageDataWriter()
+            writer = vtk.vtkDataSetWriter()
             legacy = True
         elif '.vti' in filename:
             writer = vtk.vtkXMLImageDataWriter()
@@ -1151,7 +1151,7 @@ class UniformGrid(vtkImageData, Grid):
         writer.SetFileName(filename)
         writer.SetInputData(self)
         if binary and legacy:
-            writer.SetFileTypeToBinary
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
@@ -1165,6 +1165,14 @@ class UniformGrid(vtkImageData, Grid):
     @property
     def z(self):
         return self.points[:, 2]
+
+    @property
+    def origin(self):
+        return self.GetOrigin()
+
+    @property
+    def spacing(self):
+        return self.GetSpacing()
 
     # @property
     # def quality(self):

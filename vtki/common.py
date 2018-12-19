@@ -35,7 +35,7 @@ class Common(object):
             raise TypeError('Points must be a numpy array')
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
-        self._point_ref = points
+        #self._point_ref = points
 
     def _point_scalar(self, name):
         """
@@ -409,6 +409,10 @@ class Common(object):
     def number_of_cells(self):
         return self.GetNumberOfCells()
 
+    @property
+    def bounds(self):
+        return self.GetBounds()
+
     # def __del__(self):
     #     log.debug('Object collected')
 
@@ -416,7 +420,8 @@ class Common(object):
         arr = get_scalar(self, name)
         return np.nanmin(arr), np.nanmax(arr)
 
-    def get_number_of_scalars(self):
+    @property
+    def number_of_scalars(self):
         return self.GetPointData().GetNumberOfArrays() + self.GetCellData().GetNumberOfArrays()
 
     def _get_attrs(self):
@@ -425,7 +430,7 @@ class Common(object):
         #attrs.append(("Dimensions", self.GetDimensions()))
         attrs.append(("N Cells", self.GetNumberOfCells()))
         attrs.append(("N Points", self.GetNumberOfPoints()))
-        bds = self.GetBounds()
+        bds = self.bounds
         attrs.append(("X Bounds", (bds[0], bds[1])))
         attrs.append(("Y Bounds", (bds[2], bds[3])))
         attrs.append(("Z Bounds", (bds[4], bds[5])))
@@ -434,7 +439,7 @@ class Common(object):
     def _repr_html_(self):
         """A pretty representation for Jupyter notebooks"""
         fmt = ""
-        if self.get_number_of_scalars() > 0:
+        if self.number_of_scalars > 0:
             fmt += "<table>"
             fmt += "<tr><th>Attributes</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
@@ -449,7 +454,7 @@ class Common(object):
 
         fmt += "</table>\n"
         fmt += "\n"
-        if self.get_number_of_scalars() > 0:
+        if self.number_of_scalars > 0:
             fmt += "</td><td>"
             fmt += "\n"
             fmt += "<table>\n"
