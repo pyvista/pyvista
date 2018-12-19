@@ -25,7 +25,7 @@ except:
 
 
 def test_volume():
-    assert beam.volume > 0.0    
+    assert beam.volume > 0.0
 
 
 def test_merge():
@@ -159,7 +159,7 @@ def test_extract_cells():
     mask[:3] = True
     part_beam = beam.extract_cells(mask)
     assert part_beam.number_of_cells == len(ind)
-    assert part_beam.number_of_points < beam.number_of_points    
+    assert part_beam.number_of_points < beam.number_of_points
 
 
 def test_merge():
@@ -237,3 +237,48 @@ def test_load_structured_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
     with pytest.raises(Exception):
         grid = vtki.StructuredGrid(filename)
+
+
+def test_create_rectilinear_grid_from_specs():
+    xrng = np.arange(-10, 10, 2)
+    yrng = np.arange(-10, 10, 5)
+    zrng = np.arange(-10, 10, 1)
+    grid = vtki.RectilinearGrid(xrng, yrng, zrng)
+    assert grid.GetNumberOfCells() == 9*3*19
+    assert grid.GetNumberOfPoints() == 10*4*20
+    assert grid.GetBounds() == (-10.0,8.0, -10.0,5.0, -10.0,9.0)
+
+
+def test_create_rectilinear_grid_from_file():
+    grid = examples.load_rectilinear()
+    assert grid.GetNumberOfCells() == 16146
+    assert grid.GetNumberOfPoints() == 18144
+    assert grid.GetBounds() == (-350.0,1350.0, -400.0,1350.0, -850.0,0.0)
+    assert grid.number_of_scalars == 1
+
+
+def test_create_uniform_grid_from_specs():
+    # create UniformGrid
+    dims = (10, 10, 10)
+    grid = vtki.UniformGrid(dims) # Using default spacing and origin
+    assert grid.GetDimensions() == (10, 10, 10)
+    assert grid.GetOrigin() == (0.0, 0.0, 0.0)
+    assert grid.GetSpacing() == (1.0, 1.0, 1.0)
+    spacing = (2, 1, 5)
+    grid = vtki.UniformGrid(dims, spacing) # Usign default origin
+    assert grid.GetDimensions() == (10, 10, 10)
+    assert grid.GetOrigin() == (0.0, 0.0, 0.0)
+    assert grid.GetSpacing() == (2.0, 1.0, 5.0)
+    origin = (10, 35, 50)
+    grid = vtki.UniformGrid(dims, spacing, origin) # Everything is specified
+    assert grid.GetDimensions() == (10, 10, 10)
+    assert grid.GetOrigin() == (10.0, 35.0, 50.0)
+    assert grid.GetSpacing() == (2.0, 1.0, 5.0)
+
+
+def test_create_uniform_grid_from_file():
+    grid = examples.load_uniform()
+    assert grid.GetNumberOfCells() == 729
+    assert grid.GetNumberOfPoints() == 1000
+    assert grid.GetBounds() == (0.0,9.0, 0.0,9.0, 0.0,9.0)
+    assert grid.number_of_scalars == 2
