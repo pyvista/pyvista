@@ -244,16 +244,16 @@ def test_create_rectilinear_grid_from_specs():
     yrng = np.arange(-10, 10, 5)
     zrng = np.arange(-10, 10, 1)
     grid = vtki.RectilinearGrid(xrng, yrng, zrng)
-    assert grid.GetNumberOfCells() == 9*3*19
-    assert grid.GetNumberOfPoints() == 10*4*20
-    assert grid.GetBounds() == (-10.0,8.0, -10.0,5.0, -10.0,9.0)
+    assert grid.number_of_cells == 9*3*19
+    assert grid.number_of_points == 10*4*20
+    assert grid.bounds == (-10.0,8.0, -10.0,5.0, -10.0,9.0)
 
 
 def test_create_rectilinear_grid_from_file():
     grid = examples.load_rectilinear()
-    assert grid.GetNumberOfCells() == 16146
-    assert grid.GetNumberOfPoints() == 18144
-    assert grid.GetBounds() == (-350.0,1350.0, -400.0,1350.0, -850.0,0.0)
+    assert grid.number_of_cells == 16146
+    assert grid.number_of_points == 18144
+    assert grid.bounds == (-350.0,1350.0, -400.0,1350.0, -850.0,0.0)
     assert grid.number_of_scalars == 1
 
 
@@ -278,7 +278,7 @@ def test_create_uniform_grid_from_specs():
 
 def test_create_uniform_grid_from_file():
     grid = examples.load_uniform()
-    assert grid.GetNumberOfCells() == 729
-    assert grid.GetNumberOfPoints() == 1000
-    assert grid.GetBounds() == (0.0,9.0, 0.0,9.0, 0.0,9.0)
+    assert grid.number_of_cells == 729
+    assert grid.number_of_points == 1000
+    assert grid.bounds == (0.0,9.0, 0.0,9.0, 0.0,9.0)
     assert grid.number_of_scalars == 2

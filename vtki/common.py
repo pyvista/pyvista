@@ -409,6 +409,10 @@ class Common(object):
     def number_of_cells(self):
         return self.GetNumberOfCells()
 
+    @property
+    def bounds(self):
+        return self.GetBounds()
+
     # def __del__(self):
     #     log.debug('Object collected')
 
@@ -426,7 +430,7 @@ class Common(object):
         #attrs.append(("Dimensions", self.GetDimensions()))
         attrs.append(("N Cells", self.GetNumberOfCells()))
         attrs.append(("N Points", self.GetNumberOfPoints()))
-        bds = self.GetBounds()
+        bds = self.bounds
         attrs.append(("X Bounds", (bds[0], bds[1])))
         attrs.append(("Y Bounds", (bds[2], bds[3])))
         attrs.append(("Z Bounds", (bds[4], bds[5])))
