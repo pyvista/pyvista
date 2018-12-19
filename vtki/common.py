@@ -416,7 +416,8 @@ class Common(object):
         arr = get_scalar(self, name)
         return np.nanmin(arr), np.nanmax(arr)
 
-    def get_number_of_scalars(self):
+    @property
+    def number_of_scalars(self):
         return self.GetPointData().GetNumberOfArrays() + self.GetCellData().GetNumberOfArrays()
 
     def _get_attrs(self):
@@ -434,7 +435,7 @@ class Common(object):
     def _repr_html_(self):
         """A pretty representation for Jupyter notebooks"""
         fmt = ""
-        if self.get_number_of_scalars() > 0:
+        if self.number_of_scalars > 0:
             fmt += "<table>"
             fmt += "<tr><th>Attributes</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
@@ -449,7 +450,7 @@ class Common(object):
 
         fmt += "</table>\n"
         fmt += "\n"
-        if self.get_number_of_scalars() > 0:
+        if self.number_of_scalars > 0:
             fmt += "</td><td>"
             fmt += "\n"
             fmt += "<table>\n"
