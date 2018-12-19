@@ -57,6 +57,7 @@ setup(
     url='https://github.com/akaszynski/vtki',
     keywords='vtk numpy plotting mesh',
     package_data={'vtki.examples': ['airplane.ply', 'ant.ply',
-                                    'hexbeam.vtk', 'sphere.ply']},
+                                    'hexbeam.vtk', 'sphere.ply',
+                                    'uniform.vtk', 'rectilinear.vtk']},
     install_requires=install_requires,
 )

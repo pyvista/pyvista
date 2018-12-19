@@ -282,3 +282,29 @@ def test_create_uniform_grid_from_file():
     assert grid.number_of_points == 1000
     assert grid.bounds == (0.0,9.0, 0.0,9.0, 0.0,9.0)
     assert grid.number_of_scalars == 2
+
+
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['vtr', 'vtk'])
+def test_save_rectilinear(extension, binary, tmpdir):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    ogrid = examples.load_rectilinear()
+    ogrid.save(filename, binary)
+
+    grid = vtki.RectilinearGrid(filename)
+    assert grid.number_of_cells == ogrid.number_of_cells
+    assert np.allclose(grid.x, ogrid.x)
+    assert np.allclose(grid.y, ogrid.y)
+    assert np.allclose(grid.z, ogrid.z)
+
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['vti', 'vtk'])
+def test_save_uniform(extension, binary, tmpdir):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    ogrid = examples.load_uniform()
+    ogrid.save(filename, binary)
+
+    grid = vtki.UniformGrid(filename)
+    assert grid.number_of_cells == ogrid.number_of_cells
+    assert grid.origin == ogrid.origin
+    assert grid.spacing == ogrid.spacing
