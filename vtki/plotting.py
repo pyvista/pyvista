@@ -29,6 +29,8 @@ log.setLevel('CRITICAL')
 
 DEFAULT_WINDOW_SIZE = [1024, 768]
 DEFAULT_BACKGROUND = [0.3, 0.3, 0.3]
+DEFAULT_POSITION = [1, 1, 1]
+DEFAULT_VIEWUP = [0, 0, 1]
 
 def _raise_not_matching(scalars, mesh):
     raise Exception('Number of scalars (%d) ' % scalars.size +
@@ -36,19 +38,6 @@ def _raise_not_matching(scalars, mesh):
                     '(%d) ' % mesh.GetNumberOfPoints() +
                     'or the number of cells ' +
                     '(%d) ' % mesh.GetNumberOfCells())
-
-
-def get_default_cam_pos(dataset):
-    """Returns the default focal points and viewup. Position is way too
-    subjective and the renderer's reset should just be called.
-    """
-    bounds = dataset.GetBounds()
-    x = (bounds[1] + bounds[0])/2
-    y = (bounds[3] + bounds[2])/2
-    z = (bounds[5] + bounds[4])/2
-    fp = [x, y, z]
-    vup = [0.45, 0.45, 0.75]
-    return [fp, vup]
 
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
@@ -117,6 +106,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.add_axes()
 
     plotter.set_background(background)
+    plotter._update_bounds(var_item.GetBounds())
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -140,7 +130,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.add_bounds_axes()
 
     if cpos is None:
-        cpos = get_default_cam_pos(var_item)
+        cpos = plotter.get_default_cam_pos()
     plotter.camera_position = cpos
     cpos = plotter.plot(window_size=window_size,
                         autoclose=False,
@@ -291,6 +281,28 @@ class Plotter(object):
         # track if the camera has been setup
         self.camera_set = False
         self.first_time = True
+        self.bounds = [0,1, 0,1, 0,1]
+
+    def _update_bounds(self, bounds):
+        def update_axis(ax):
+            if bounds[ax*2] < self.bounds[ax*2]:
+                self.bounds[ax*2] = bounds[ax*2]
+            if bounds[ax*2+1] > self.bounds[ax*2+1]:
+                self.bounds[ax*2+1] = bounds[ax*2+1]
+        for ax in range(3):
+            update_axis(ax)
+        return
+
+    def get_default_cam_pos(self):
+        """Returns the default focal points and viewup. Uses ResetCamera to
+        make a useful view.
+        """
+        bounds = self.bounds
+        x = (bounds[1] + bounds[0])/2
+        y = (bounds[3] + bounds[2])/2
+        z = (bounds[5] + bounds[4])/2
+        focal_pt = [x, y, z]
+        return [np.array(DEFAULT_POSITION)+np.array(focal_pt), focal_pt, DEFAULT_VIEWUP]
 
     def key_press_event(self, obj, event):
         """ Listens for key press event """
@@ -347,7 +359,7 @@ class Plotter(object):
                 self.iren.Render()
 
     def add_mesh(self, mesh, color=None, style=None,
-                 scalars=None,rng=None, stitle=None, showedges=True,
+                 scalars=None, rng=None, stitle=None, showedges=True,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
                  colormap=None, label=None, **kwargs):
@@ -443,6 +455,7 @@ class Plotter(object):
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper)
+        self._update_bounds(mesh.GetBounds())
 
         # Scalar formatting ===================================================
         if scalars is not None:
@@ -1214,17 +1227,13 @@ class Plotter(object):
         if cameraloc is None:
             return
 
-        if len(cameraloc) == 3:
-            # everything is set explicitly
-            self.camera.SetPosition(cameraloc[0])
-            self.camera.SetFocalPoint(cameraloc[1])
-            self.camera.SetViewUp(cameraloc[2])
-        else:
-            # Set the focal point ant view up then reset the position
-            self.camera.SetFocalPoint(cameraloc[0])
-            self.camera.SetViewUp(cameraloc[1])
-            self.renderer.ResetCamera()
-
+        # everything is set explicitly
+        self.camera.SetPosition(cameraloc[0])
+        self.camera.SetFocalPoint(cameraloc[1])
+        self.camera.SetViewUp(cameraloc[2])
+        # Rest camera so it slides along the vector defined from camera position
+        #   to focal point until all of the actors can be seen.
+        self.renderer.ResetCamera()
         # reset clipping range
         self.renderer.ResetCameraClippingRange()
         self.camera_set = True
@@ -1463,6 +1472,7 @@ class Plotter(object):
         """
         # reset unless camera for the first render unless camera is set
         if self.first_time and not self.camera_set:
+            self.camera_position = self.get_default_cam_pos()
             self.renderer.ResetCamera()
 
         def PlotFun():
