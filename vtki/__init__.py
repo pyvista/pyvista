@@ -11,6 +11,7 @@ from vtki.plotting import *
 from vtki.utilities import *
 from vtki.colors import *
 from vtki.common import Common
+from vtki.container import MultiBlock
 from vtki.polydata import PolyData
 from vtki.grid import UnstructuredGrid
 from vtki.grid import StructuredGrid

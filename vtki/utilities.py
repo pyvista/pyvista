@@ -156,6 +156,7 @@ def wrap(vtkdataset):
         'vtkStructuredGrid' : vtki.StructuredGrid,
         'vtkPolyData' : vtki.PolyData,
         'vtkImageData' : vtki.UniformGrid,
+        'vtkMultiBlockDataSet' : vtki.MultiBlock,
         }
     key = vtkdataset.GetClassName()
     try:

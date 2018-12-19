@@ -16,6 +16,7 @@ from vtk.util import numpy_support as VN
 import numpy as np
 import vtki
 from vtki.utilities import get_scalar, wrap
+from vtki.container import MultiBlock
 import imageio
 
 
@@ -418,6 +419,18 @@ class Plotter(object):
         except:
             # Convert the VTK data object to a vtki wrapped object
             mesh = wrap(mesh)
+
+
+        if isinstance(mesh, MultiBlock):
+            for idx in range(mesh.GetNumberOfBlocks()):
+                data = wrap(mesh.GetBlock(idx))
+                self.add_mesh(data, color=color, style=style,
+                             scalars=scalars, rng=rng, stitle=stitle, showedges=showedges,
+                             psize=psize, opacity=opacity, linethick=linethick, flipscalars=flipscalars,
+                             lighting=lighting, ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
+                             colormap=colormap, label=label, **kwargs)
+            return
+
 
         # set main values
         self.mesh = mesh
