@@ -19,6 +19,23 @@ def point_scalar(mesh, name):
     if vtkarr:
         return vtk_to_numpy(vtkarr)
 
+def cell_scalar(mesh, name):
+    """ Returns cell scalars of a vtk object """
+    vtkarr = mesh.GetCellData().GetArray(name)
+    if vtkarr:
+        return vtk_to_numpy(vtkarr)
+
+def get_scalar(mesh, name):
+    """ Searches both point and cell data for an array """
+    parr = point_scalar(mesh, name)
+    carr = cell_scalar(mesh, name)
+    if all([parr is not None, carr is not None]):
+        raise RuntimeError('Array ({}) found in both point and cell data.'.format(name))
+    if parr is not None:
+        return parr
+    if carr is not None:
+        return carr
+    return None
 
 def vtk_points(points, deep=True):
     """ Convert numpy points to a vtkPoints object """
@@ -36,7 +53,7 @@ def lines_from_points(points):
     Parameters
     ----------
     points : np.ndarray
-        Points representing line segments.  For example, two line segments 
+        Points representing line segments.  For example, two line segments
         would be represented as:
 
         np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
@@ -128,3 +145,19 @@ def trans_from_matrix(matrix):
         for j in range(4):
             t[i, j] = matrix.GetElement(i, j)
     return t
+
+def wrap(vtkdataset):
+    """This is a convenience method to safely wrap any given VTK data object
+    to its appropriate ``vtki`` data object.
+    """
+    wrappers = {
+        'vtkUnstructuredGrid' : vtki.UnstructuredGrid,
+        'vtkStructuredGrid' : vtki.StructuredGrid,
+        'vtkPolyData' : vtki.PolyData,
+        }
+    key = vtkdataset.GetClassName()
+    try:
+        wrapped = wrappers[key](vtkdataset)
+    except:
+        raise RuntimeError('VTK data type ({}) is not currently supported.'.format(key))
+    return wrapped

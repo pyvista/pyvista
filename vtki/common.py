@@ -13,10 +13,12 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 import vtki
+from vtki.utilities import get_scalar
 
 
 class Common(object):
     """ Methods in common to grid and surface objects"""
+    _is_vtki = True
 
     def __init__(self, *args, **kwargs):
         self.references = []
@@ -78,7 +80,7 @@ class Common(object):
 
         """
         if not isinstance(scalars, np.ndarray):
-            raise TypeError('Input must be a numpy.ndarray') 
+            raise TypeError('Input must be a numpy.ndarray')
 
         if scalars.shape[0] != self.number_of_points:
             raise Exception('Number of scalars must match the number of ' +
@@ -409,6 +411,13 @@ class Common(object):
 
     # def __del__(self):
     #     log.debug('Object collected')
+
+    def get_data_range(self, name):
+        arr = get_scalar(self, name)
+        return np.nanmin(arr), np.nanmax(arr)
+
+    def get_number_of_scalars(self):
+        return self.GetPointData().GetNumberOfArrays() + self.GetCellData().GetNumberOfArrays()
 
 
 class CellScalarsDict(dict):

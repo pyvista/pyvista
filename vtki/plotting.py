@@ -15,7 +15,7 @@ from vtk.util import numpy_support as VN
 
 import numpy as np
 import vtki
-import vtki
+from vtki.utilities import get_scalar, wrap
 import imageio
 
 
@@ -56,7 +56,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     full_screen : bool, optional
         Opens window in full screen.  When enabled, ignores window_size.
-        Default False.    
+        Default False.
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
@@ -412,6 +412,13 @@ class Plotter(object):
             mesh = vtki.PolyData(mesh)
             style = 'points'
 
+        try:
+            if mesh._is_vtki:
+                pass
+        except:
+            # Convert the VTK data object to a vtki wrapped object
+            mesh = wrap(mesh)
+
         # set main values
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
@@ -420,6 +427,10 @@ class Plotter(object):
 
         # Scalar formatting ===================================================
         if scalars is not None:
+            # if scalars is a string, then get the first array found with that name
+            if isinstance(scalars, str):
+                scalars = get_scalar(mesh, scalars)
+
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
@@ -970,7 +981,7 @@ class Plotter(object):
         Parameters
         ----------
         lines : np.ndarray or vtki.PolyData
-            Points representing line segments.  For example, two line segments 
+            Points representing line segments.  For example, two line segments
             would be represented as:
 
             np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
@@ -1220,7 +1231,7 @@ class Plotter(object):
         Parameters
         ----------
         labels : list, optional
-            When set to None, uses existing labels as specified by 
+            When set to None, uses existing labels as specified by
 
             - add_mesh
             - add_lines
@@ -1271,8 +1282,8 @@ class Plotter(object):
         >>> plotter.add_mesh(othermesh, 'k')
         >>> plotter.add_legend(legend_entries)
         >>> plotter.plot()
-        """        
-        legend = vtk.vtkLegendBoxActor()        
+        """
+        legend = vtk.vtkLegendBoxActor()
 
         if labels is None:
             # use existing labels
