@@ -152,8 +152,10 @@ def wrap(vtkdataset):
     """
     wrappers = {
         'vtkUnstructuredGrid' : vtki.UnstructuredGrid,
+        'vtkRectilinearGrid' : vtki.RectilinearGrid,
         'vtkStructuredGrid' : vtki.StructuredGrid,
         'vtkPolyData' : vtki.PolyData,
+        'vtkImageData' : vtki.UniformGrid,
         }
     key = vtkdataset.GetClassName()
     try:
