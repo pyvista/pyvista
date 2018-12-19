@@ -53,7 +53,7 @@ def get_default_cam_pos(dataset):
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=DEFAULT_WINDOW_SIZE,
-         show_bounds=False, show_axes=True, notebook=False, background=None,
+         show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
@@ -108,6 +108,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         Returned only when screenshot enabled
 
     """
+    if notebook is None:
+        notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+    if notebook:
+        off_screen = notebook
     plotter = Plotter(off_screen=off_screen)
     if show_axes:
         plotter.add_axes()
@@ -144,9 +148,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
                         full_screen=full_screen)
 
     # take screenshot
+    img = plotter.screenshot()
     if screenshot:
         if screenshot == True:
-            img = plotter.screenshot()
+            pass
         else:
             img = plotter.screenshot(screenshot)
 
@@ -158,8 +163,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
             import IPython
         except ImportError:
             raise Exception('Install ipython to display image in a notebook')
-
-        IPython.display.display(PIL.Image.fromarray(img))
+        return IPython.display.display(PIL.Image.fromarray(img))
 
     if screenshot:
         return cpos, img
