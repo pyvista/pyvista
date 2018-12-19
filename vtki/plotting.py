@@ -229,7 +229,7 @@ class Plotter(object):
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False, notebook=False):
+    def __init__(self, off_screen=False, notebook=None):
         """
         Initialize a vtk plotting object
         """
@@ -245,6 +245,8 @@ class Plotter(object):
 
         self._labels = []
 
+        if notebook is None:
+            notebook = type(get_ipython()).__module__.startswith('ipykernel.')
         self.notebook = notebook
         if self.notebook:
             off_screen = True
@@ -1428,10 +1430,13 @@ class Plotter(object):
                 raise Exception('Install iPython to display image in a notebook')
 
             img = self.screenshot()
-            IPython.display.display(PIL.Image.fromarray(img))
+            disp = IPython.display.display(PIL.Image.fromarray(img))
 
         if autoclose:
             self.close()
+
+        if self.notebook:
+            return disp
 
         return cpos
 
