@@ -29,6 +29,7 @@ log.setLevel('CRITICAL')
 
 DEFAULT_WINDOW_SIZE = [1024, 768]
 DEFAULT_BACKGROUND = [0.3, 0.3, 0.3]
+PV_BACKGROUND = [82/255, 87/255, 110/255]
 DEFAULT_POSITION = [1, 1, 1]
 DEFAULT_VIEWUP = [0, 0, 1]
 
@@ -1270,12 +1271,16 @@ class Plotter(object):
                 color='#FFFFFF'
 
         """
-
         if color is None:
             color = DEFAULT_BACKGROUND
         elif isinstance(color, str):
-            color = vtki.string_to_rgb(color)
-
+            if color.lower() in 'paraview' or color.lower() in 'pv':
+                # Use the default ParaView background color
+                color = PV_BACKGROUND
+            else:
+                print(color)
+                color = vtki.string_to_rgb(color)
+        print(color)
         self.renderer.SetBackground(color)
 
     def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
