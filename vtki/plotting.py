@@ -15,7 +15,7 @@ from vtk.util import numpy_support as VN
 
 import numpy as np
 import vtki
-from vtki.utilities import get_scalar, wrap
+from vtki.utilities import get_scalar, wrap, is_vtki_obj
 from vtki.container import MultiBlock
 import imageio
 
@@ -32,6 +32,16 @@ DEFAULT_WINDOW_SIZE = [1024, 768]
 DEFAULT_BACKGROUND = [0.3, 0.3, 0.3]
 DEFAULT_POSITION = [1, 1, 1]
 DEFAULT_VIEWUP = [0, 0, 1]
+
+
+def run_from_ipython():
+    """ returns True when run from iPython """
+    try:
+        __IPYTHON__
+        return True
+    except NameError:
+        return False
+
 
 def _raise_not_matching(scalars, mesh):
     raise Exception('Number of scalars (%d) ' % scalars.size +
@@ -99,15 +109,18 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     """
     if notebook is None:
-        notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+        if run_from_ipython():
+            notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+
     if notebook:
         off_screen = notebook
-    plotter = Plotter(off_screen=off_screen)
+    plotter = Plotter(off_screen=off_screen, notebook=notebook)
     if show_axes:
         plotter.add_axes()
 
     plotter.set_background(background)
-    plotter._update_bounds(var_item.GetBounds())
+    if is_vtki_obj(var_item):
+        plotter._update_bounds(var_item.GetBounds())
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -148,13 +161,6 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     # close and return camera position and maybe image
     plotter.close()
-
-    if notebook:
-        try:
-            import IPython
-        except ImportError:
-            raise Exception('Install ipython to display image in a notebook')
-        return IPython.display.display(PIL.Image.fromarray(img))
 
     if screenshot:
         return cpos, img
@@ -230,7 +236,7 @@ class Plotter(object):
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False, notebook=False):
+    def __init__(self, off_screen=False, notebook=None):
         """
         Initialize a vtk plotting object
         """
@@ -245,6 +251,10 @@ class Plotter(object):
                 self.iren.TerminateApp()
 
         self._labels = []
+
+        if notebook is None:
+            if run_from_ipython():
+                notebook = type(get_ipython()).__module__.startswith('ipykernel.')
 
         self.notebook = notebook
         if self.notebook:
@@ -295,7 +305,8 @@ class Plotter(object):
         return
 
     def get_default_cam_pos(self):
-        """Returns the default focal points and viewup. Uses ResetCamera to
+        """
+        Returns the default focal points and viewup. Uses ResetCamera to
         make a useful view.
         """
         bounds = self.bounds
@@ -303,7 +314,8 @@ class Plotter(object):
         y = (bounds[3] + bounds[2])/2
         z = (bounds[5] + bounds[4])/2
         focal_pt = [x, y, z]
-        return [np.array(DEFAULT_POSITION)+np.array(focal_pt), focal_pt, DEFAULT_VIEWUP]
+        return [np.array(DEFAULT_POSITION) + np.array(focal_pt),
+                focal_pt, DEFAULT_VIEWUP]
 
     def key_press_event(self, obj, event):
         """ Listens for key press event """
@@ -323,6 +335,8 @@ class Plotter(object):
         picker = vtk.vtkWorldPointPicker()
         picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
+        if np.any(np.isnan(self.pickpoint)):
+            self.pickpoint[:] = 0
 
     def update(self, stime=1, force_redraw=True):
         """
@@ -426,14 +440,17 @@ class Plotter(object):
             Enable or disable view direction lighting.  Default False.
 
         ncolors : int, optional
-            Number of colors to use when displaying scalars.  Default 256.
+            Number of colors to use when displaying scalars.  Default
+            256.
 
         interpolatebeforemap : bool, optional
-            Enabling makes for a smoother scalar display.  Default False
+            Enabling makes for a smoother scalar display.  Default
+            False
 
         colormap : str, optional
-           Colormap string.  See available matplotlib colormaps.  Only applicable for
-           when displaying scalars.  Defaults None (rainbow).  Requires matplotlib.
+           Colormap string.  See available matplotlib colormaps.  Only
+           applicable for when displaying scalars.  Defaults None
+           (rainbow).  Requires matplotlib.
 
         Returns
         -------
@@ -444,11 +461,8 @@ class Plotter(object):
             mesh = vtki.PolyData(mesh)
             style = 'points'
 
-        try:
-            if mesh._is_vtki:
-                pass
-        except:
-            # Convert the VTK data object to a vtki wrapped object
+        # Convert the VTK data object to a vtki wrapped object if neccessary
+        if not is_vtki_obj(mesh):
             mesh = wrap(mesh)
 
 
@@ -468,7 +482,8 @@ class Plotter(object):
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper)
-        self._update_bounds(mesh.GetBounds())
+        if is_vtki_obj(mesh):
+            self._update_bounds(mesh.GetBounds())
 
         # Scalar formatting ===================================================
         if scalars is not None:
@@ -1435,16 +1450,20 @@ class Plotter(object):
         cpos = self.camera_position
 
         if self.notebook:
+            # sanity check
             try:
                 import IPython
             except ImportError:
                 raise Exception('Install iPython to display image in a notebook')
 
-            img = self.screenshot()
-            IPython.display.display(PIL.Image.fromarray(img))
+            img = PIL.Image.fromarray(self.screenshot())
+            disp = IPython.display.display(img)
 
         if autoclose:
             self.close()
+
+        if self.notebook:
+            return disp
 
         return cpos
 

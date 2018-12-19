@@ -13,17 +13,23 @@ from vtk.util.numpy_support import numpy_to_vtk
 import vtki
 
 
+def is_vtki_obj(obj):
+    return isinstance(obj, vtki.Common)
+
+
 def point_scalar(mesh, name):
     """ Returns point scalars of a vtk object """
     vtkarr = mesh.GetPointData().GetArray(name)
     if vtkarr:
         return vtk_to_numpy(vtkarr)
 
+
 def cell_scalar(mesh, name):
     """ Returns cell scalars of a vtk object """
     vtkarr = mesh.GetCellData().GetArray(name)
     if vtkarr:
         return vtk_to_numpy(vtkarr)
+
 
 def get_scalar(mesh, name):
     """ Searches both point and cell data for an array """
@@ -36,6 +42,7 @@ def get_scalar(mesh, name):
     if carr is not None:
         return carr
     return None
+
 
 def vtk_points(points, deep=True):
     """ Convert numpy points to a vtkPoints object """

@@ -848,7 +848,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         z = np.unique(points[:,2])
         # Set the vtk coordinates
         self._from_arrays(x, y, z)
-        # TODO: what is this?
         self._point_ref = points
 
 
@@ -1074,7 +1073,6 @@ class UniformGrid(vtkImageData, Grid):
         ox, oy, oz = np.min(x), np.min(y), np.min(z)
         # Build the vtk object
         self._from_specs(self, (nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
-        # TODO: what is this?
         self._point_ref = points
 
 
