@@ -473,13 +473,16 @@ class Plotter(object):
             self._update_bounds(mesh.GetBounds())
 
         # Scalar formatting ===================================================
+        title = '' if stitle is None else stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
+            append_scalars = True
             if isinstance(scalars, str):
-                tit = scalars
+                title = scalars
                 scalars = get_scalar(mesh, scalars)
                 if stitle is None:
-                    stitle = tit
+                    stitle = title
+                append_scalars = False
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -492,13 +495,13 @@ class Plotter(object):
 
             # Scalar interpolation approach
             if scalars.size == mesh.GetNumberOfPoints():
-                self.mesh._add_point_scalar(scalars, '', True)
+                self.mesh._add_point_scalar(scalars, title, True)
                 self.mapper.SetScalarModeToUsePointData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             elif scalars.size == mesh.GetNumberOfCells():
-                self.mesh._add_cell_scalar(scalars, '', True)
+                self.mesh._add_cell_scalar(scalars, title, True)
                 self.mapper.SetScalarModeToUseCellData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
             else:
