@@ -1,7 +1,9 @@
 """ test vtki.utilities """
 import pytest
 import numpy as np
+import vtki
 from vtki import utilities
+from vtki import examples as ex
 
 
 def test_createvectorpolydata_error():
@@ -25,3 +27,13 @@ def test_createvectorpolydata():
     vdata = utilities.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_arrays['vectors'])
+
+
+def test_read():
+    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
+              ex.uniformfile, ex.rectfile)
+    types = (vtki.PolyData, vtki.PolyData, vtki.UnstructuredGrid,
+             vtki.PolyData, vtki.UniformGrid, vtki.RectilinearGrid)
+    for i, filename in enumerate(fnames):
+        obj = utilities.read(filename)
+        assert isinstance(obj, types[i])
