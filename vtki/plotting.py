@@ -473,7 +473,7 @@ class Plotter(object):
             self._update_bounds(mesh.GetBounds())
 
         # Scalar formatting ===================================================
-        title = '' if stitle is None else stitle
+        title = 'Data' if stitle is None else stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
             append_scalars = True
