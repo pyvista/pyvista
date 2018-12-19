@@ -721,7 +721,7 @@ class StructuredGrid(vtkStructuredGrid, Grid):
         writer.SetFileName(filename)
         writer.SetInputData(self)
         if binary and legacy:
-            writer.SetFileTypeToBinary
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
@@ -926,7 +926,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         writer.SetFileName(filename)
         writer.SetInputData(self)
         if binary and legacy:
-            writer.SetFileTypeToBinary
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
@@ -1105,7 +1105,7 @@ class UniformGrid(vtkImageData, Grid):
 
         # Create reader
         if legacy_writer:
-            reader = vtk.vtkImageDataReader()
+            reader = vtk.vtkDataSetReader()
         else:
             reader = vtk.vtkXMLImageDataReader()
 
@@ -1139,7 +1139,7 @@ class UniformGrid(vtkImageData, Grid):
         """
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
-            writer = vtk.vtkImageDataWriter()
+            writer = vtk.vtkDataSetWriter()
             legacy = True
         elif '.vti' in filename:
             writer = vtk.vtkXMLImageDataWriter()
@@ -1151,7 +1151,7 @@ class UniformGrid(vtkImageData, Grid):
         writer.SetFileName(filename)
         writer.SetInputData(self)
         if binary and legacy:
-            writer.SetFileTypeToBinary
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
