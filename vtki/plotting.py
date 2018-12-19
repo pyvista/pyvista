@@ -30,6 +30,8 @@ log.setLevel('CRITICAL')
 
 DEFAULT_WINDOW_SIZE = [1024, 768]
 DEFAULT_BACKGROUND = [0.3, 0.3, 0.3]
+DEFAULT_POSITION = [1, 1, 1]
+DEFAULT_VIEWUP = [0, 0, 1]
 
 def _raise_not_matching(scalars, mesh):
     raise Exception('Number of scalars (%d) ' % scalars.size +
@@ -41,7 +43,7 @@ def _raise_not_matching(scalars, mesh):
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=DEFAULT_WINDOW_SIZE,
-         show_bounds=False, show_axes=True, notebook=False, background=None,
+         show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
@@ -96,11 +98,16 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         Returned only when screenshot enabled
 
     """
+    if notebook is None:
+        notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+    if notebook:
+        off_screen = notebook
     plotter = Plotter(off_screen=off_screen)
     if show_axes:
         plotter.add_axes()
 
     plotter.set_background(background)
+    plotter._update_bounds(var_item.GetBounds())
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -123,6 +130,8 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     if show_bounds:
         plotter.add_bounds_axes()
 
+    if cpos is None:
+        cpos = plotter.get_default_cam_pos()
     plotter.camera_position = cpos
     cpos = plotter.plot(window_size=window_size,
                         autoclose=False,
@@ -130,9 +139,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
                         full_screen=full_screen)
 
     # take screenshot
+    img = plotter.screenshot()
     if screenshot:
         if screenshot == True:
-            img = plotter.screenshot()
+            pass
         else:
             img = plotter.screenshot(screenshot)
 
@@ -144,8 +154,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
             import IPython
         except ImportError:
             raise Exception('Install ipython to display image in a notebook')
-
-        IPython.display.display(PIL.Image.fromarray(img))
+        return IPython.display.display(PIL.Image.fromarray(img))
 
     if screenshot:
         return cpos, img
@@ -273,6 +282,28 @@ class Plotter(object):
         # track if the camera has been setup
         self.camera_set = False
         self.first_time = True
+        self.bounds = [0,1, 0,1, 0,1]
+
+    def _update_bounds(self, bounds):
+        def update_axis(ax):
+            if bounds[ax*2] < self.bounds[ax*2]:
+                self.bounds[ax*2] = bounds[ax*2]
+            if bounds[ax*2+1] > self.bounds[ax*2+1]:
+                self.bounds[ax*2+1] = bounds[ax*2+1]
+        for ax in range(3):
+            update_axis(ax)
+        return
+
+    def get_default_cam_pos(self):
+        """Returns the default focal points and viewup. Uses ResetCamera to
+        make a useful view.
+        """
+        bounds = self.bounds
+        x = (bounds[1] + bounds[0])/2
+        y = (bounds[3] + bounds[2])/2
+        z = (bounds[5] + bounds[4])/2
+        focal_pt = [x, y, z]
+        return [np.array(DEFAULT_POSITION)+np.array(focal_pt), focal_pt, DEFAULT_VIEWUP]
 
     def key_press_event(self, obj, event):
         """ Listens for key press event """
@@ -329,7 +360,7 @@ class Plotter(object):
                 self.iren.Render()
 
     def add_mesh(self, mesh, color=None, style=None,
-                 scalars=None,rng=None, stitle=None, showedges=True,
+                 scalars=None, rng=None, stitle=None, showedges=True,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
                  colormap=None, label=None, **kwargs):
@@ -437,12 +468,16 @@ class Plotter(object):
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper)
+        self._update_bounds(mesh.GetBounds())
 
         # Scalar formatting ===================================================
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
             if isinstance(scalars, str):
+                tit = scalars
                 scalars = get_scalar(mesh, scalars)
+                if stitle is None:
+                    stitle = tit
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -1205,10 +1240,13 @@ class Plotter(object):
         if cameraloc is None:
             return
 
+        # everything is set explicitly
         self.camera.SetPosition(cameraloc[0])
         self.camera.SetFocalPoint(cameraloc[1])
         self.camera.SetViewUp(cameraloc[2])
-
+        # Rest camera so it slides along the vector defined from camera position
+        #   to focal point until all of the actors can be seen.
+        self.renderer.ResetCamera()
         # reset clipping range
         self.renderer.ResetCameraClippingRange()
         self.camera_set = True
@@ -1447,6 +1485,7 @@ class Plotter(object):
         """
         # reset unless camera for the first render unless camera is set
         if self.first_time and not self.camera_set:
+            self.camera_position = self.get_default_cam_pos()
             self.renderer.ResetCamera()
 
         def PlotFun():
