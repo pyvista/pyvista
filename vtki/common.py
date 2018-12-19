@@ -35,7 +35,7 @@ class Common(object):
             raise TypeError('Points must be a numpy array')
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
-        self._point_ref = points
+        #self._point_ref = points
 
     def _point_scalar(self, name):
         """
