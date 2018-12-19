@@ -13,10 +13,12 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 import vtki
+from vtki.utilities import get_scalar
 
 
 class Common(object):
     """ Methods in common to grid and surface objects"""
+    _is_vtki = True
 
     def __init__(self, *args, **kwargs):
         self.references = []
@@ -78,7 +80,7 @@ class Common(object):
 
         """
         if not isinstance(scalars, np.ndarray):
-            raise TypeError('Input must be a numpy.ndarray') 
+            raise TypeError('Input must be a numpy.ndarray')
 
         if scalars.shape[0] != self.number_of_points:
             raise Exception('Number of scalars must match the number of ' +
@@ -409,6 +411,67 @@ class Common(object):
 
     # def __del__(self):
     #     log.debug('Object collected')
+
+    def get_data_range(self, name):
+        arr = get_scalar(self, name)
+        return np.nanmin(arr), np.nanmax(arr)
+
+    def get_number_of_scalars(self):
+        return self.GetPointData().GetNumberOfArrays() + self.GetCellData().GetNumberOfArrays()
+
+    def _get_attrs(self):
+        """An internal helper for the representation methods"""
+        attrs = []
+        #attrs.append(("Dimensions", self.GetDimensions()))
+        attrs.append(("N Cells", self.GetNumberOfCells()))
+        attrs.append(("N Points", self.GetNumberOfPoints()))
+        bds = self.GetBounds()
+        attrs.append(("X Bounds", (bds[0], bds[1])))
+        attrs.append(("Y Bounds", (bds[2], bds[3])))
+        attrs.append(("Z Bounds", (bds[4], bds[5])))
+        return attrs
+
+    def _repr_html_(self):
+        """A pretty representation for Jupyter notebooks"""
+        fmt = ""
+        if self.get_number_of_scalars() > 0:
+            fmt += "<table>"
+            fmt += "<tr><th>Attributes</th><th>Data Arrays</th></tr>"
+            fmt += "<tr><td>"
+        fmt += "\n"
+        fmt += "<table>\n"
+        fmt += "<tr><th>Attribute</th><th>Values</th></tr>\n"
+        row = "<tr><td>{}</td><td>{}</td></tr>\n"
+
+        # now make a call on the object to get its attributes as a list of len 2 tuples
+        for attr in self._get_attrs():
+            fmt += row.format(attr[0], attr[1])
+
+        fmt += "</table>\n"
+        fmt += "\n"
+        if self.get_number_of_scalars() > 0:
+            fmt += "</td><td>"
+            fmt += "\n"
+            fmt += "<table>\n"
+            row = "<tr><th>{}</th><th>{}</th><th>{}</th><th>{}</th><th>{}</th></tr>\n"
+            fmt += row.format("Name", "Field", "Type", "Min", "Max")
+            row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{:.3e}</td><td>{:.3e}</td></tr>\n"
+
+            def format_array(key, field):
+                arr = get_scalar(self, key)
+                dl, dh = self.get_data_range(key)
+                return row.format(key, field, arr.dtype, dl, dh)
+
+            for i in range(self.GetPointData().GetNumberOfArrays()):
+                key = self.GetPointData().GetArrayName(i)
+                fmt += format_array(key, field='Points')
+            for i in range(self.GetCellData().GetNumberOfArrays()):
+                key = self.GetCellData().GetArrayName(i)
+                fmt += format_array(key, field='Cells')
+            fmt += "</table>\n"
+            fmt += "\n"
+            fmt += "</td></tr> </table>"
+        return fmt
 
 
 class CellScalarsDict(dict):
