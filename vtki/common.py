@@ -412,6 +412,10 @@ class Common(object):
     def bounds(self):
         return self.GetBounds()
 
+    @property
+    def extent(self):
+        return self.GetExtent()
+
     # def __del__(self):
     #     log.debug('Object collected')
 

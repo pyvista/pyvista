@@ -11,14 +11,14 @@ from vtki.plotting import *
 from vtki.utilities import *
 from vtki.colors import *
 from vtki.common import Common
-from vtki.container import MultiBlock
-from vtki.polydata import PolyData
-from vtki.grid import UnstructuredGrid
-from vtki.grid import StructuredGrid
+from vtki.pointset import PolyData
+from vtki.pointset import UnstructuredGrid
+from vtki.pointset import StructuredGrid
 from vtki.grid import Grid
 from vtki.grid import RectilinearGrid
 from vtki.grid import UniformGrid
 from vtki.geometric_objects import *
+from vtki.container import MultiBlock
 
 import numpy as np
 
