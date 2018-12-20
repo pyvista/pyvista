@@ -35,3 +35,6 @@ tests/htmlcov/
 
 # windows
 test.bat
+
+# Jupyter notebook cache
+**/.ipynb_checkpoints

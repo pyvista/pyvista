@@ -19,6 +19,7 @@ from vtki.utilities import get_scalar, wrap, is_vtki_obj
 import imageio
 
 
+PV_BACKGROUND = [82/255, 87/255, 110/255]
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
              'times': vtk.VTK_TIMES}
@@ -27,10 +28,34 @@ FONT_KEYS = {'arial': vtk.VTK_ARIAL,
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-DEFAULT_WINDOW_SIZE = [1024, 768]
-DEFAULT_BACKGROUND = [0.3, 0.3, 0.3]
-DEFAULT_POSITION = [1, 1, 1]
-DEFAULT_VIEWUP = [0, 0, 1]
+
+
+
+plotParams = {
+    'background' : [0.3, 0.3, 0.3],
+    'camera' : {
+        'position' : [1, 1, 1],
+        'viewup' : [0, 0, 1],
+    },
+    'window_size' : [1024, 768],
+    'font' : {
+        'family' : 'courier',
+        'size' : 12,
+        'title_size': None,
+        'label_size' : None,
+        'color' : [1, 1, 1],
+    },
+    'colormap' : 'jet'
+}
+
+def set_plot_theme(theme):
+    """Set the plotting parameters to a predefined theme"""
+    if theme.lower() == 'paraview':
+        plotParams['background'] = PV_BACKGROUND
+        plotParams['colormap'] = 'coolwarm'
+        plotParams['font']['family'] = 'arial'
+        plotParams['font']['label_size'] = 16
+
 
 
 def run_from_ipython():
@@ -51,7 +76,7 @@ def _raise_not_matching(scalars, mesh):
 
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
-         interactive=True, cpos=None, window_size=DEFAULT_WINDOW_SIZE,
+         interactive=True, cpos=None, window_size=plotParams['window_size'],
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', **kwargs):
     """
@@ -113,7 +138,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     if notebook:
         off_screen = notebook
-    plotter = Plotter(off_screen=off_screen)
+    plotter = Plotter(off_screen=off_screen, notebook=notebook)
     if show_axes:
         plotter.add_axes()
 
@@ -276,7 +301,7 @@ class Plotter(object):
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
 
         # Set background
-        self.set_background(DEFAULT_BACKGROUND)
+        self.set_background(plotParams['background'])
 
         # initialize image filter
         self.ifilter = vtk.vtkWindowToImageFilter()
@@ -313,8 +338,8 @@ class Plotter(object):
         y = (bounds[3] + bounds[2])/2
         z = (bounds[5] + bounds[4])/2
         focal_pt = [x, y, z]
-        return [np.array(DEFAULT_POSITION) + np.array(focal_pt),
-                focal_pt, DEFAULT_VIEWUP]
+        return [np.array(plotParams['camera']['position']) + np.array(focal_pt),
+                focal_pt, plotParams['camera']['viewup']]
 
     def key_press_event(self, obj, event):
         """ Listens for key press event """
@@ -473,13 +498,18 @@ class Plotter(object):
             self._update_bounds(mesh.GetBounds())
 
         # Scalar formatting ===================================================
+        if colormap is None:
+            colormap = plotParams['colormap']
+        title = 'Data' if stitle is None else stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
+            append_scalars = True
             if isinstance(scalars, str):
-                tit = scalars
+                title = scalars
                 scalars = get_scalar(mesh, scalars)
                 if stitle is None:
-                    stitle = tit
+                    stitle = title
+                append_scalars = False
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -492,13 +522,13 @@ class Plotter(object):
 
             # Scalar interpolation approach
             if scalars.size == mesh.GetNumberOfPoints():
-                self.mesh._add_point_scalar(scalars, '', True)
+                self.mesh._add_point_scalar(scalars, title, True)
                 self.mapper.SetScalarModeToUsePointData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             elif scalars.size == mesh.GetNumberOfCells():
-                self.mesh._add_cell_scalar(scalars, '', True)
+                self.mesh._add_cell_scalar(scalars, title, True)
                 self.mapper.SetScalarModeToUseCellData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
             else:
@@ -600,8 +630,8 @@ class Plotter(object):
     def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
-                        bold=True, shadow=False, fontsize=16,
-                        font_family='courier', color='w',
+                        bold=True, shadow=False, fontsize=None,
+                        font_family=None, color='w',
                         xtitle='X Axis', ytitle='Y Axis', ztitle='Z Axis',
                         use_2dmode=True):
         """
@@ -677,6 +707,11 @@ class Plotter(object):
             Bounds actor
 
         """
+
+        if font_family is None:
+            font_family = plotParams['font']['family']
+        if fontsize is None:
+            fontsize = plotParams['font']['size']
 
         # Use last input mesh if availble
         if not mesh and not bounds:
@@ -763,7 +798,7 @@ class Plotter(object):
 
     def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,
                        title_fontsize=None, label_fontsize=None, color=None,
-                       font_family='courier', shadow=False):
+                       font_family=None, shadow=False):
         """
         Creates scalar bar using the ranges as set by the last input mesh.
 
@@ -809,6 +844,15 @@ class Plotter(object):
 
 
         """
+        if font_family is None:
+            font_family = plotParams['font']['family']
+        if label_fontsize is None:
+            label_fontsize = plotParams['font']['label_size']
+        if title_fontsize is None:
+            title_fontsize = plotParams['font']['title_size']
+        if color is None:
+            color = plotParams['font']['color']
+
         # check if maper exists
         if not hasattr(self, 'mapper'):
             raise Exception('Mapper does not exist.  ' +
@@ -822,7 +866,12 @@ class Plotter(object):
         self.scalar_bar.SetLookupTable(self.mapper.GetLookupTable())
         self.scalar_bar.SetNumberOfLabels(nlabels)
 
-        if label_fontsize or title_fontsize:
+        # edit the size of the colorbar
+        self.scalar_bar.SetHeight(0.9)
+        self.scalar_bar.SetWidth(0.05)
+        self.scalar_bar.SetPosition(0.90, 0.02)
+
+        if label_fontsize is None or title_fontsize is None:
             self.scalar_bar.UnconstrainedFontSizeOn()
 
         if nlabels:
@@ -948,7 +997,7 @@ class Plotter(object):
             del self.ifilter
 
     def add_text(self, text, position=[10, 10], fontsize=50, color=None,
-                font='courier', shadow=False):
+                font=None, shadow=False):
         """
         Adds text to plot object
 
@@ -966,6 +1015,11 @@ class Plotter(object):
             Text actor added to plot
 
         """
+        if font is None:
+            font = plotParams['font']['family']
+        if fontsize is None:
+            fontsize = plotParams['font']['size']
+
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
         self.textActor.GetTextProperty().SetFontSize(fontsize)
@@ -1084,8 +1138,8 @@ class Plotter(object):
         return actor
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
-                         fontsize=16, textcolor='k',
-                         font_family='courier', shadow=False,
+                         fontsize=None, textcolor='k',
+                         font_family=None, shadow=False,
                          showpoints=True, pointcolor='k', pointsize=5):
         """
         Creates a point actor with one label from list labels assigned to
@@ -1142,6 +1196,11 @@ class Plotter(object):
             VTK label mapper.  Can be used to change properties of the labels.
 
         """
+        if font_family is None:
+            font_family = plotParams['font']['family']
+        if fontsize is None:
+            fontsize = plotParams['font']['size']
+
         if len(points) != len(labels):
             raise Exception('There must be one label for each point')
 
@@ -1267,12 +1326,16 @@ class Plotter(object):
                 color='#FFFFFF'
 
         """
-
         if color is None:
-            color = DEFAULT_BACKGROUND
+            color = plotParams['background']
         elif isinstance(color, str):
-            color = vtki.string_to_rgb(color)
-
+            if color.lower() in 'paraview' or color.lower() in 'pv':
+                # Use the default ParaView background color
+                color = PV_BACKGROUND
+            else:
+                print(color)
+                color = vtki.string_to_rgb(color)
+        print(color)
         self.renderer.SetBackground(color)
 
     def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
@@ -1374,7 +1437,7 @@ class Plotter(object):
         self.renderer.AddActor(legend)
         return legend
 
-    def _plot(self, title=None, window_size=DEFAULT_WINDOW_SIZE, interactive=True,
+    def _plot(self, title=None, window_size=plotParams['window_size'], interactive=True,
               autoclose=True, interactive_update=False, full_screen=False):
         """
         Creates plotting window
@@ -1454,7 +1517,7 @@ class Plotter(object):
 
         return cpos
 
-    def plot(self, title=None, window_size=DEFAULT_WINDOW_SIZE, interactive=True,
+    def plot(self, title=None, window_size=plotParams['window_size'], interactive=True,
              autoclose=True, in_background=False, interactive_update=False,
              full_screen=False):
         """

@@ -12,6 +12,8 @@ antfile = os.path.join(dir_path, 'ant.ply')
 planefile = os.path.join(dir_path, 'airplane.ply')
 hexbeamfile = os.path.join(dir_path, 'hexbeam.vtk')
 spherefile = os.path.join(dir_path, 'sphere.ply')
+uniformfile = os.path.join(dir_path, 'uniform.vtk')
+rectfile = os.path.join(dir_path, 'rectilinear.vtk')
 
 
 # get location of this folder
@@ -31,6 +33,16 @@ def load_airplane():
 def load_sphere():
     """ Loads sphere ply mesh """
     return vtki.PolyData(spherefile)
+
+
+def load_uniform():
+    """ Loads a sample uniform grid """
+    return vtki.UniformGrid(uniformfile)
+
+
+def load_rectilinear():
+    """ Loads a sample uniform grid """
+    return vtki.RectilinearGrid(rectfile)
 
 
 def plot_ants_plane(off_screen=False):
