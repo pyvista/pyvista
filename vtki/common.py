@@ -18,7 +18,6 @@ from vtki.utilities import get_scalar
 
 class Common(object):
     """ Methods in common to grid and surface objects"""
-    _is_vtki = True
 
     def __init__(self, *args, **kwargs):
         self.references = []

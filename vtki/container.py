@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 import vtki
-from vtki.utilities import wrap
+from vtki.utilities import wrap, is_vtki_obj
 
 
 class MultiBlock(vtkMultiBlockDataSet):
@@ -21,8 +21,6 @@ class MultiBlock(vtkMultiBlockDataSet):
 
     This is a very rough prototype... needs a lot of work.
     """
-
-    _is_vtki = True
 
     def __init__(self, *args, **kwargs):
         super(MultiBlock, self).__init__()
@@ -42,13 +40,19 @@ class MultiBlock(vtkMultiBlockDataSet):
         """
         p = vtki.Plotter()
         for idx in range(self.GetNumberOfBlocks()):
-            data = wrap(self.GetBlock(idx))
+            if not is_vtki_obj(self.GetBlock(idx)):
+                data = wrap(self.GetBlock(idx))
+            else:
+                data = self.GetBlock(idx)
             p.add_mesh(data, **args)
         return p.plot()
 
     def __getitem__(self, index):
         """Get a block by its index"""
-        return self.GetBlock(index)
+        data = self.GetBlock(index)
+        if not is_vtki_obj(data):
+            data = wrap(data)
+        return data
 
     def __setitem__(self, index, data):
         """Sets a block with a VTK data object"""
