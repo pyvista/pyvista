@@ -38,3 +38,7 @@ test.bat
 
 # Jupyter notebook cache
 **/.ipynb_checkpoints
+
+# Code coverage results
+htmlcov
+.coverage
