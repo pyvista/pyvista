@@ -430,13 +430,12 @@ class Common(object):
     def _get_attrs(self):
         """An internal helper for the representation methods"""
         attrs = []
-        #attrs.append(("Dimensions", self.GetDimensions()))
-        attrs.append(("N Cells", self.GetNumberOfCells()))
-        attrs.append(("N Points", self.GetNumberOfPoints()))
+        attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
+        attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
-        attrs.append(("X Bounds", (bds[0], bds[1])))
-        attrs.append(("Y Bounds", (bds[2], bds[3])))
-        attrs.append(("Z Bounds", (bds[4], bds[5])))
+        attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3f}, {:.3f}"))
+        attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3f}, {:.3f}"))
+        attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
         return attrs
 
     def _repr_html_(self):
@@ -444,16 +443,19 @@ class Common(object):
         fmt = ""
         if self.number_of_scalars > 0:
             fmt += "<table>"
-            fmt += "<tr><th>Attributes</th><th>Data Arrays</th></tr>"
+            fmt += "<tr><th>Information</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
         fmt += "\n"
         fmt += "<table>\n"
-        fmt += "<tr><th>Attribute</th><th>Values</th></tr>\n"
+        fmt += "<tr><th>{}</th><th>Values</th></tr>\n".format(self.GetClassName())
         row = "<tr><td>{}</td><td>{}</td></tr>\n"
 
         # now make a call on the object to get its attributes as a list of len 2 tuples
         for attr in self._get_attrs():
-            fmt += row.format(attr[0], attr[1])
+            try:
+                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+            except:
+                fmt += row.format(attr[0], attr[2].format(attr[1]))
 
         fmt += "</table>\n"
         fmt += "\n"
