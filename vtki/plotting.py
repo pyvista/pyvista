@@ -492,8 +492,25 @@ class Plotter(object):
 
 
         if isinstance(mesh, MultiBlock):
+            # frist check the scalars
+            if rng is None and scalars is not None:
+                # Get the data range across the array for all blocks if name specified
+                if isinstance(scalars, str):
+                    rng = mesh.get_data_range(scalars)
+                else:
+                    # TODO: an array was given... how do we deal with that? Possibly
+                    #       a 2D arrays or list of arrays  where first index
+                    #       corresponds to the block? This could get complicated real quick.
+                    raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
+            # Now iteratively plot each element of the multiblock dataset
             for idx in range(mesh.GetNumberOfBlocks()):
-                data = wrap(mesh.GetBlock(idx))
+                if not is_vtki_obj(mesh.GetBlock(idx)):
+                    data = wrap(mesh.GetBlock(idx))
+                else:
+                    data = mesh.GetBlock(idx)
+                if data is None:
+                    # Note that a block can exist but be None type
+                    continue
                 self.add_mesh(data, color=color, style=style,
                              scalars=scalars, rng=rng, stitle=stitle, showedges=showedges,
                              psize=psize, opacity=opacity, linethick=linethick, flipscalars=flipscalars,
@@ -507,8 +524,7 @@ class Plotter(object):
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper)
-        if is_vtki_obj(mesh):
-            self._update_bounds(mesh.GetBounds())
+        self._update_bounds(mesh.GetBounds()) # All VTK datasets have bounds
 
         # Scalar formatting ===================================================
         if colormap is None:
@@ -1346,9 +1362,7 @@ class Plotter(object):
                 # Use the default ParaView background color
                 color = PV_BACKGROUND
             else:
-                print(color)
                 color = vtki.string_to_rgb(color)
-        print(color)
         self.renderer.SetBackground(color)
 
     def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
