@@ -38,7 +38,12 @@ class MultiBlock(vtkMultiBlockDataSet):
 
     @property
     def bounds(self):
-        """Finds min/max for bounds across blocks """
+        """Finds min/max for bounds across blocks
+
+        Returns:
+            tuple(float):
+                length 6 tuple of floats containing min/max along each axis
+        """
         bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
 
         def update_bounds(ax, nb, bounds):
