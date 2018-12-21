@@ -294,3 +294,15 @@ def test_invalid_color():
 def test_invalid_font():
     with pytest.raises(Exception):
         femorph.parse_font_family('not a font')
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_scalars_by_name():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    data = examples.load_uniform()
+    plotter.add_mesh(data, scalars='Spatial Cell Data')
+    plotter.plot()
+
+
+def test_themes():
+    vtki.set_plot_theme('paraview')

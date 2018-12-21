@@ -28,6 +28,12 @@ class Grid(vtki.Common):
     def dimensions(self):
         return self.GetDimensions()
 
+    @dimensions.setter
+    def dimensions(self, dims):
+        """Sets the dataset dimensions. Pass a length three tuple of integers"""
+        nx, ny, nz = dims[0], dims[1], dims[2]
+        self.SetDimensions(nx, ny, nz)
+
 
 
 
@@ -318,17 +324,17 @@ class UniformGrid(vtkImageData, Grid):
     def points(self):
         """ returns a pointer to the points as a numpy object """
         # Get grid dimensions
-        nx, ny, nz = self.GetDimensions()
+        nx, ny, nz = self.dimensions
         nx -= 1
         ny -= 1
         nz -= 1
         # get the points and convert to spacings
-        dx, dy, dz = self.GetSpacing()
+        dx, dy, dz = self.spacing
         # Now make the cell arrays
-        ox, oy, oz = self.GetOrigin()
-        x = np.cumsum(np.full(nx, dx)) + ox
-        y = np.cumsum(np.full(ny, dy)) + oy
-        z = np.cumsum(np.full(nz, dz)) + oz
+        ox, oy, oz = self.origin
+        x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
+        y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
+        z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
         xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
         return np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
 
@@ -346,7 +352,7 @@ class UniformGrid(vtkImageData, Grid):
         dx, dy, dz = np.unique(np.diff(x)), np.unique(np.diff(y)), np.unique(np.diff(z))
         ox, oy, oz = np.min(x), np.min(y), np.min(z)
         # Build the vtk object
-        self._from_specs(self, (nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
+        self._from_specs((nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
         #self._point_ref = points
 
 
@@ -444,24 +450,19 @@ class UniformGrid(vtkImageData, Grid):
     def origin(self):
         return self.GetOrigin()
 
+    @origin.setter
+    def origin(self, origin):
+        """Set the origin. Pass a length three tuple of floats"""
+        ox, oy, oz = origin[0], origin[1], origin[2]
+        self.SetOrigin(ox, oy, oz)
+
     @property
     def spacing(self):
         return self.GetSpacing()
 
-    # @property
-    # def quality(self):
-    #     """
-    #     Computes the minimum scaled jacobian of each cell.  Cells that have
-    #     values below 0 are invalid for a finite element analysis.
-    #
-    #     Returns
-    #     -------
-    #     cellquality : np.ndarray
-    #         Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
-    #
-    #     Notes
-    #     -----
-    #     Requires pyansys to be installed.
-    #
-    #     """
-    #     return UnstructuredGrid(self).quality
+    @spacing.setter
+    def spacing(self, spacing):
+        """Set the spacing in each axial direction. Pass a length three tuple of
+        floats"""
+        dx, dy, dz = spacing[0], spacing[1], spacing[2]
+        self.SetSpacing(dx, dy, dz)

@@ -180,3 +180,11 @@ def test_cells_bool():
     assert grid.cell_arrays['bool_arr'].all()
     assert grid._cell_scalar('bool_arr').all()
     assert grid._cell_scalar('bool_arr').dtype == np.bool
+
+
+def test_html_repr():
+    """This just tests to make sure no errors are thrown on the HTML
+    representation method for Common datasets
+    """
+    repr_html = grid._repr_html_()
+    assert repr_html is not None

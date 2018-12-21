@@ -261,19 +261,30 @@ def test_create_uniform_grid_from_specs():
     # create UniformGrid
     dims = (10, 10, 10)
     grid = vtki.UniformGrid(dims) # Using default spacing and origin
-    assert grid.GetDimensions() == (10, 10, 10)
-    assert grid.GetOrigin() == (0.0, 0.0, 0.0)
-    assert grid.GetSpacing() == (1.0, 1.0, 1.0)
+    assert grid.dimensions == (10, 10, 10)
+    assert grid.origin == (0.0, 0.0, 0.0)
+    assert grid.spacing == (1.0, 1.0, 1.0)
     spacing = (2, 1, 5)
     grid = vtki.UniformGrid(dims, spacing) # Usign default origin
-    assert grid.GetDimensions() == (10, 10, 10)
-    assert grid.GetOrigin() == (0.0, 0.0, 0.0)
-    assert grid.GetSpacing() == (2.0, 1.0, 5.0)
+    assert grid.dimensions == (10, 10, 10)
+    assert grid.origin == (0.0, 0.0, 0.0)
+    assert grid.spacing == (2.0, 1.0, 5.0)
     origin = (10, 35, 50)
     grid = vtki.UniformGrid(dims, spacing, origin) # Everything is specified
+    assert grid.dimensions == (10, 10, 10)
+    assert grid.origin == (10.0, 35.0, 50.0)
+    assert grid.spacing == (2.0, 1.0, 5.0)
+    assert grid.dimensions == (10, 10, 10)
+
+
+def test_uniform_setters():
+    grid = vtki.UniformGrid()
+    grid.dimensions = (10, 10, 10)
     assert grid.GetDimensions() == (10, 10, 10)
-    assert grid.GetOrigin() == (10.0, 35.0, 50.0)
-    assert grid.GetSpacing() == (2.0, 1.0, 5.0)
+    grid.spacing = (5, 2, 1)
+    assert grid.GetSpacing() == (5, 2, 1)
+    grid.origin = (6, 27.7, 19.8)
+    assert grid.GetOrigin() == (6, 27.7, 19.8)
 
 
 def test_create_uniform_grid_from_file():
@@ -282,6 +293,7 @@ def test_create_uniform_grid_from_file():
     assert grid.number_of_points == 1000
     assert grid.bounds == (0.0,9.0, 0.0,9.0, 0.0,9.0)
     assert grid.number_of_scalars == 2
+    assert grid.dimensions == (10, 10, 10)
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -296,6 +308,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
     assert np.allclose(grid.x, ogrid.x)
     assert np.allclose(grid.y, ogrid.y)
     assert np.allclose(grid.z, ogrid.z)
+    assert grid.dimensions == ogrid.dimensions
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vti', 'vtk'])
@@ -308,3 +321,30 @@ def test_save_uniform(extension, binary, tmpdir):
     assert grid.number_of_cells == ogrid.number_of_cells
     assert grid.origin == ogrid.origin
     assert grid.spacing == ogrid.spacing
+    assert grid.dimensions == ogrid.dimensions
+
+
+def test_grid_points():
+    """Test the points mehtods on UniformGrid and RectilinearGrid"""
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [1, 1, 0],
+                       [0, 1, 0],
+                       [0, 0, 1],
+                       [1, 0, 1],
+                       [1, 1, 1],
+                       [0, 1, 1]])
+    grid = vtki.UniformGrid()
+    grid.points = points
+    assert grid.dimensions == (2, 2, 2)
+    assert grid.spacing == (1, 1, 1)
+    assert grid.origin == (0., 0., 0.)
+    assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
+    opts = np.c_[grid.x, grid.y, grid.z]
+    assert np.allclose(np.unique(opts, axis=0), np.unique(points, axis=0))
+    # Now test rectilinear grid
+    del grid
+    grid = vtki.RectilinearGrid()
+    grid.points = points
+    assert grid.dimensions == (2, 2, 2)
+    assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
