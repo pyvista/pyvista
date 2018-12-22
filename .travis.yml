@@ -3,23 +3,30 @@ sudo: required
 dist: xenial
 
 os:
-- linux
+  - linux
 
 language: python
 
 python:
-- '2.7'
-- '3.5'
-- '3.6'
-- '3.7'
+  - '2.7'
+  - '3.5'
+  - '3.6'
+  - '3.7'
+
+addons:
+  apt:
+    packages:
+      - xvfb
 
 install:
-- pip install -r requirements.txt
-- pip install pytest-cov
-- pip install .
+  - export DISPLAY=':99.0'
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+  - pip install -r requirements.txt
+  - pip install pytest-cov
+  - pip install .
 
 script:
-- python -m pytest -v
+  - xvfb-run -a python -m pytest -v
 
 cache:
   directories:
