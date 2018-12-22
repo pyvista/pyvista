@@ -18,15 +18,20 @@ addons:
     packages:
       - xvfb
 
+before_script: # configure a headless display to test plot generation
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
+
 install:
-  - export DISPLAY=':99.0'
-  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
   - pip install -r requirements.txt
   - pip install pytest-cov
   - pip install .
+  - which python
+  - python -c "import vtk; print(vtk.VTK_VERSION)"
 
 script:
-  - xvfb-run -a python -m pytest -v
+  - python -m pytest -v #xvfb-run -a 
 
 cache:
   directories:
