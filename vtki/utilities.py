@@ -2,7 +2,7 @@
 Supporting functions for polydata and grid objects
 
 """
-import warnings
+# import warnings # TODO: should we use warnings (see ``wrap``)
 import ctypes
 
 import numpy as np
@@ -16,7 +16,7 @@ import vtki
 
 
 def is_vtki_obj(obj):
-    return isinstance(obj, vtki.Common)
+    return isinstance(obj, (vtki.Common, vtki.MultiBlock))
 
 
 def point_scalar(mesh, name):
@@ -33,12 +33,17 @@ def cell_scalar(mesh, name):
         return vtk_to_numpy(vtkarr)
 
 
-def get_scalar(mesh, name):
+def get_scalar(mesh, name, preference='cell'):
     """ Searches both point and cell data for an array """
+    if preference not in ['cell', 'point']:
+        raise RuntimeError('Data preference ({}) for non-unique names not understood.'.format(preference))
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
     if all([parr is not None, carr is not None]):
-        raise RuntimeError('Array ({}) found in both point and cell data.'.format(name))
+        if preference == 'cell':
+            return carr
+        elif preference == 'point':
+            return parr
     if parr is not None:
         return parr
     if carr is not None:
@@ -166,12 +171,14 @@ def wrap(vtkdataset):
         'vtkPolyData' : vtki.PolyData,
         'vtkImageData' : vtki.UniformGrid,
         'vtkStructuredPoints' : vtki.UniformGrid,
+        'vtkMultiBlockDataSet' : vtki.MultiBlock,
         }
     key = vtkdataset.GetClassName()
     try:
         wrapped = wrappers[key](vtkdataset)
     except:
-        raise RuntimeError('VTK data type ({}) is not currently supported.'.format(key))
+        # warnings.warn('VTK data type ({}) is not currently supported.'.format(key))
+        return vtkdataset # if not supported just passes the VTK data object
     return wrapped
 
 def read(filename):

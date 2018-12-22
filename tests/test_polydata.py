@@ -32,14 +32,14 @@ test_files = [stl_test_file,
 
 def test_init():
     mesh = vtki.PolyData()
-    assert not mesh.number_of_points
-    assert not mesh.number_of_cells
+    assert not mesh.n_points
+    assert not mesh.n_cells
 
 
 def test_init_from_pdata():
     mesh = vtki.PolyData(sphere, deep=True)
-    assert mesh.number_of_points
-    assert mesh.number_of_cells
+    assert mesh.n_points
+    assert mesh.n_cells
     mesh.points[0] += 1
     assert not np.allclose(sphere.points[0], mesh.points[0])
 
@@ -64,8 +64,8 @@ def test_init_from_arrays():
                        [3, 1, 2, 4]]).astype(np.int8)
 
     mesh = vtki.PolyData(vertices, faces)
-    assert mesh.number_of_points == 5
-    assert mesh.number_of_cells == 3
+    assert mesh.n_points == 5
+    assert mesh.n_cells == 3
 
     mesh = vtki.PolyData(vertices, faces, deep=True)
     vertices[0] += 1
@@ -85,13 +85,13 @@ def test_init_from_arrays_triangular():
                        [3, 1, 2, 4]])
 
     mesh = vtki.PolyData(vertices, faces)
-    assert mesh.number_of_points == 5
-    assert mesh.number_of_cells == 3
+    assert mesh.n_points == 5
+    assert mesh.n_cells == 3
 
 
     mesh = vtki.PolyData(vertices, faces, deep=True)
-    assert mesh.number_of_points == 5
-    assert mesh.number_of_cells == 3
+    assert mesh.n_points == 5
+    assert mesh.n_cells == 3
 
 
 def test_init_as_points():
@@ -102,8 +102,8 @@ def test_init_as_points():
                          [0.5, 0.5, -1]])
 
     mesh = vtki.PolyData(vertices)
-    assert mesh.number_of_points == vertices.shape[0]
-    assert mesh.number_of_cells == vertices.shape[0]
+    assert mesh.n_points == vertices.shape[0]
+    assert mesh.n_cells == vertices.shape[0]
 
 
 def test_invalid_init():
@@ -159,60 +159,60 @@ def test_edge_mask():
 def test_boolean_cut_inplace():
     sub_mesh = sphere.copy()
     sub_mesh.boolean_cut(sphere_shifted, inplace=True)
-    assert sub_mesh.number_of_points
-    assert sub_mesh.number_of_cells
+    assert sub_mesh.n_points
+    assert sub_mesh.n_cells
 
 
 def test_subtract():
     sub_mesh = sphere - sphere_shifted
-    assert sub_mesh.number_of_points
-    assert sub_mesh.number_of_cells
+    assert sub_mesh.n_points
+    assert sub_mesh.n_cells
 
 
 def test_add():
     add_mesh = sphere + sphere_shifted
 
-    npoints = sphere.number_of_points + sphere_shifted.number_of_points
-    assert add_mesh.number_of_points == npoints
+    npoints = sphere.n_points + sphere_shifted.n_points
+    assert add_mesh.n_points == npoints
 
-    nfaces = sphere.number_of_cells + sphere_shifted.number_of_cells
-    assert add_mesh.number_of_faces == nfaces
+    nfaces = sphere.n_cells + sphere_shifted.n_cells
+    assert add_mesh.n_faces == nfaces
 
 
 def test_boolean_add_inplace():
     sub_mesh = sphere.copy()
     sub_mesh.boolean_add(sphere_shifted, inplace=True)
-    assert sub_mesh.number_of_points
-    assert sub_mesh.number_of_cells
+    assert sub_mesh.n_points
+    assert sub_mesh.n_cells
 
 
 def test_boolean_union_inplace():
     sub_mesh = sphere.boolean_union(sphere_shifted)
-    assert sub_mesh.number_of_points
-    assert sub_mesh.number_of_cells
+    assert sub_mesh.n_points
+    assert sub_mesh.n_cells
 
     sub_mesh = sphere.copy()
     sub_mesh.boolean_union(sphere_shifted, inplace=True)
-    assert sub_mesh.number_of_points
-    assert sub_mesh.number_of_cells
+    assert sub_mesh.n_points
+    assert sub_mesh.n_cells
 
 
 def test_boolean_difference():
     sub_mesh = sphere.copy()
     sub_mesh.boolean_difference(sphere_shifted, inplace=True)
-    assert sub_mesh.number_of_points
-    assert sub_mesh.number_of_cells
+    assert sub_mesh.n_points
+    assert sub_mesh.n_cells
 
     sub_mesh = sphere.boolean_difference(sphere_shifted)
-    assert sub_mesh.number_of_points
-    assert sub_mesh.number_of_cells
+    assert sub_mesh.n_points
+    assert sub_mesh.n_cells
 
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(curv_type):
     curv = sphere.curvature(curv_type)
     assert np.any(curv)
-    assert curv.size == sphere.number_of_points
+    assert curv.size == sphere.n_points
 
 
 def test_invalid_curvature():
@@ -245,13 +245,13 @@ def test_tri_filter():
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
 def test_subdivision(subfilter):
     mesh = sphere.subdivide(1, subfilter)
-    assert mesh.number_of_points > sphere.number_of_points
-    assert mesh.number_of_faces > sphere.number_of_faces
+    assert mesh.n_points > sphere.n_points
+    assert mesh.n_faces > sphere.n_faces
 
     mesh = sphere.copy()
     mesh.subdivide(1, subfilter, inplace=True)
-    assert mesh.number_of_points > sphere.number_of_points
-    assert mesh.number_of_faces > sphere.number_of_faces
+    assert mesh.n_points > sphere.n_points
+    assert mesh.n_faces > sphere.n_faces
 
 
 def test_invalid_subdivision():
@@ -261,21 +261,21 @@ def test_invalid_subdivision():
 
 def test_extract_edges():
     edges = sphere.extract_edges(90)
-    assert not edges.number_of_points
+    assert not edges.n_points
 
     more_edges = sphere.extract_edges(10)
-    assert more_edges.number_of_points
+    assert more_edges.n_points
 
 
 def test_decimate():
     mesh = sphere.copy()
     mesh.decimate(0.5)
-    assert mesh.number_of_points < sphere.number_of_points
-    assert mesh.number_of_faces < sphere.number_of_faces
+    assert mesh.n_points < sphere.n_points
+    assert mesh.n_faces < sphere.n_faces
 
     mesh = sphere.decimate(0.5, inplace=False)
-    assert mesh.number_of_points < sphere.number_of_points
-    assert mesh.number_of_faces < sphere.number_of_faces
+    assert mesh.n_points < sphere.n_points
+    assert mesh.n_faces < sphere.n_faces
 
 
 def test_center_of_mass():
@@ -288,20 +288,20 @@ def test_compute_normals():
 
     point_normals = sphere_normals.point_arrays['Normals']
     cell_normals = sphere_normals.cell_arrays['Normals']
-    assert point_normals.shape[0] == sphere.number_of_points
-    assert cell_normals.shape[0] == sphere.number_of_cells
+    assert point_normals.shape[0] == sphere.n_points
+    assert cell_normals.shape[0] == sphere.n_cells
 
 
 def test_point_normals():
-    assert sphere.point_normals.shape[0] == sphere.number_of_points
+    assert sphere.point_normals.shape[0] == sphere.n_points
 
 
 def test_cell_normals():
-    assert sphere.cell_normals.shape[0] == sphere.number_of_cells
+    assert sphere.cell_normals.shape[0] == sphere.n_cells
 
 
 def test_face_normals():
-    assert sphere.face_normals.shape[0] == sphere.number_of_faces
+    assert sphere.face_normals.shape[0] == sphere.n_faces
 
 
 def test_clip_plane():
@@ -318,20 +318,20 @@ def test_clip_plane():
 def test_extract_largest():
     mesh = sphere + vtki.Sphere(0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
-    assert largest.number_of_faces == sphere.number_of_faces
+    assert largest.n_faces == sphere.n_faces
 
     mesh.extract_largest(inplace=True)
-    assert mesh.number_of_faces == sphere.number_of_faces
+    assert mesh.n_faces == sphere.n_faces
 
 
 def test_clean():
     mesh = sphere + sphere
-    assert mesh.number_of_points > sphere.number_of_points
+    assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1E-5, inplace=False)
-    assert cleaned.number_of_points == sphere.number_of_points
+    assert cleaned.n_points == sphere.n_points
 
     mesh.clean()
-    assert mesh.number_of_points == sphere.number_of_points
+    assert mesh.n_points == sphere.n_points
 
 
 def test_area():
@@ -356,20 +356,20 @@ def test_plot_normals():
 
 
 def test_remove_points_any():
-    remove_mask = np.zeros(sphere.number_of_points, np.bool)
+    remove_mask = np.zeros(sphere.n_points, np.bool)
     remove_mask[:3] = True
     sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
-    assert sphere_mod.number_of_points + remove_mask.sum() == sphere.number_of_points
+    assert sphere_mod.n_points + remove_mask.sum() == sphere.n_points
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
 def test_remove_points_all():
     sphere_copy = sphere.copy()
-    sphere_copy.cell_arrays['ind'] = np.arange(sphere_copy.number_of_faces)
+    sphere_copy.cell_arrays['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
     sphere_copy.remove_points(remove, inplace=True, mode='all')
-    assert sphere_copy.number_of_points == sphere.number_of_points
-    assert sphere_copy.number_of_faces == sphere.number_of_faces - 1
+    assert sphere_copy.n_points == sphere.n_points
+    assert sphere_copy.n_faces == sphere.n_faces - 1
 
 
 def test_remove_points_fail():

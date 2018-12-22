@@ -16,6 +16,7 @@ from vtk.util import numpy_support as VN
 import numpy as np
 import vtki
 from vtki.utilities import get_scalar, wrap, is_vtki_obj
+from vtki.container import MultiBlock
 import imageio
 
 
@@ -489,13 +490,51 @@ class Plotter(object):
         if not is_vtki_obj(mesh):
             mesh = wrap(mesh)
 
+
+        if isinstance(mesh, MultiBlock):
+            # frist check the scalars
+            if rng is None and scalars is not None:
+                # Get the data range across the array for all blocks if name specified
+                if isinstance(scalars, str):
+                    rng = mesh.get_data_range(scalars)
+                else:
+                    # TODO: an array was given... how do we deal with that? Possibly
+                    #       a 2D arrays or list of arrays  where first index
+                    #       corresponds to the block? This could get complicated real quick.
+                    raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
+            # Now iteratively plot each element of the multiblock dataset
+            for idx in range(mesh.GetNumberOfBlocks()):
+                if mesh[idx] is None:
+                    continue
+                # Get the data object
+                if not is_vtki_obj(mesh[idx]):
+                    data = wrap(mesh.GetBlock(idx))
+                    if not is_vtki_obj(mesh[idx]):
+                        continue # move on if we can't plot it
+                else:
+                    data = mesh.GetBlock(idx)
+                if data is None:
+                    # Note that a block can exist but be None type
+                    continue
+                # Now check that scalars is available for this dataset
+                if get_scalar(data, scalars) is None:
+                    ts = None
+                else:
+                    ts = scalars
+                self.add_mesh(data, color=color, style=style,
+                             scalars=ts, rng=rng, stitle=stitle, showedges=showedges,
+                             psize=psize, opacity=opacity, linethick=linethick, flipscalars=flipscalars,
+                             lighting=lighting, ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
+                             colormap=colormap, label=label, **kwargs)
+            return
+
+
         # set main values
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper)
-        if is_vtki_obj(mesh):
-            self._update_bounds(mesh.GetBounds())
+        self._update_bounds(mesh.GetBounds()) # All VTK datasets have bounds
 
         # Scalar formatting ===================================================
         if colormap is None:

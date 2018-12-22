@@ -285,7 +285,7 @@ class PolyData(vtkPolyData, vtki.Common):
             Angle to consider an edge.
 
         """
-        self.point_arrays['point_ind'] = np.arange(self.number_of_points)
+        self.point_arrays['point_ind'] = np.arange(self.n_points)
         featureEdges = vtk.vtkFeatureEdges()
         featureEdges.SetInputData(self)
         featureEdges.FeatureEdgesOn()
@@ -305,8 +305,8 @@ class PolyData(vtkPolyData, vtki.Common):
         return self.boolean_cut(cutting_mesh)
 
     @property
-    def number_of_faces(self):
-        return self.number_of_cells
+    def n_faces(self):
+        return self.n_cells
 
     def boolean_cut(self, cut, tolerance=1E-5, inplace=False):
         """
@@ -1280,11 +1280,11 @@ class PolyData(vtkPolyData, vtki.Common):
             remove = np.asarray(remove)
 
         if remove.dtype == np.bool:
-            assert_statement = 'Mask different size than number_of_points'
-            assert remove.size == self.number_of_points, assert_statement
+            assert_statement = 'Mask different size than n_points'
+            assert remove.size == self.n_points, assert_statement
             remove_mask = remove
         else:
-            remove_mask = np.zeros(self.number_of_points, np.bool)
+            remove_mask = np.zeros(self.n_points, np.bool)
             remove_mask[remove] = True
 
         try:

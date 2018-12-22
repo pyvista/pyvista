@@ -18,6 +18,7 @@ from vtki.grid import Grid
 from vtki.grid import RectilinearGrid
 from vtki.grid import UniformGrid
 from vtki.geometric_objects import *
+from vtki.container import MultiBlock
 
 import numpy as np
 

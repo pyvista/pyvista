@@ -18,7 +18,6 @@ from vtki.utilities import get_scalar
 
 class Common(object):
     """ Methods in common to grid and surface objects"""
-    _is_vtki = True
 
     def __init__(self, *args, **kwargs):
         self.references = []
@@ -82,7 +81,7 @@ class Common(object):
         if not isinstance(scalars, np.ndarray):
             raise TypeError('Input must be a numpy.ndarray')
 
-        if scalars.shape[0] != self.number_of_points:
+        if scalars.shape[0] != self.n_points:
             raise Exception('Number of scalars must match the number of ' +
                             'points')
         if scalars.dtype == np.bool:
@@ -316,9 +315,9 @@ class Common(object):
         if not isinstance(scalars, np.ndarray):
             raise TypeError('Input must be a numpy.ndarray')
 
-        if scalars.shape[0] != self.number_of_cells:
+        if scalars.shape[0] != self.n_cells:
             raise Exception('Number of scalars must match the number of cells (%d)'
-                            % self.number_of_cells)
+                            % self.n_cells)
 
         assert scalars.flags.c_contiguous, 'Array must be contigious'
         if scalars.dtype == np.bool:
@@ -402,11 +401,11 @@ class Common(object):
         return self._cell_arrays
 
     @property
-    def number_of_points(self):
+    def n_points(self):
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self):
+    def n_cells(self):
         return self.GetNumberOfCells()
 
     @property
@@ -425,40 +424,42 @@ class Common(object):
         return np.nanmin(arr), np.nanmax(arr)
 
     @property
-    def number_of_scalars(self):
+    def n_scalars(self):
         return self.GetPointData().GetNumberOfArrays() + self.GetCellData().GetNumberOfArrays()
 
     def _get_attrs(self):
         """An internal helper for the representation methods"""
         attrs = []
-        #attrs.append(("Dimensions", self.GetDimensions()))
-        attrs.append(("N Cells", self.GetNumberOfCells()))
-        attrs.append(("N Points", self.GetNumberOfPoints()))
+        attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
+        attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
-        attrs.append(("X Bounds", (bds[0], bds[1])))
-        attrs.append(("Y Bounds", (bds[2], bds[3])))
-        attrs.append(("Z Bounds", (bds[4], bds[5])))
+        attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3f}, {:.3f}"))
+        attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3f}, {:.3f}"))
+        attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
         return attrs
 
     def _repr_html_(self):
         """A pretty representation for Jupyter notebooks"""
         fmt = ""
-        if self.number_of_scalars > 0:
+        if self.n_scalars > 0:
             fmt += "<table>"
-            fmt += "<tr><th>Attributes</th><th>Data Arrays</th></tr>"
+            fmt += "<tr><th>Information</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
         fmt += "\n"
         fmt += "<table>\n"
-        fmt += "<tr><th>Attribute</th><th>Values</th></tr>\n"
+        fmt += "<tr><th>{}</th><th>Values</th></tr>\n".format(self.GetClassName())
         row = "<tr><td>{}</td><td>{}</td></tr>\n"
 
         # now make a call on the object to get its attributes as a list of len 2 tuples
         for attr in self._get_attrs():
-            fmt += row.format(attr[0], attr[1])
+            try:
+                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+            except:
+                fmt += row.format(attr[0], attr[2].format(attr[1]))
 
         fmt += "</table>\n"
         fmt += "\n"
-        if self.number_of_scalars > 0:
+        if self.n_scalars > 0:
             fmt += "</td><td>"
             fmt += "\n"
             fmt += "<table>\n"
