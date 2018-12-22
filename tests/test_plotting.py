@@ -28,7 +28,7 @@ def test_plot(tmpdir):
     except:
         filename = '/tmp/tmp.png'
 
-    scalars = np.arange(sphere.number_of_points)
+    scalars = np.arange(sphere.n_points)
     cpos, img = vtki.plot(sphere,
                           off_screen=OFF_SCREEN,
                           full_screen=True,
@@ -67,7 +67,7 @@ def test_plot_no_active_scalars():
     with pytest.raises(Exception):
         plotter.update_scalars(np.arange(5))
     with pytest.raises(Exception):
-        plotter.update_scalars(np.arange(sphere.number_of_faces))
+        plotter.update_scalars(np.arange(sphere.n_faces))
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -134,7 +134,7 @@ def test_make_movie():
     actor = plotter.add_axes_at_origin()
     plotter.remove_actor(actor)
     plotter.add_mesh(movie_sphere,
-                     scalars=np.random.random(movie_sphere.number_of_faces))
+                     scalars=np.random.random(movie_sphere.n_faces))
     plotter.plot(autoclose=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
     for i in range(10):
@@ -142,7 +142,7 @@ def test_make_movie():
         random_points = np.random.random(movie_sphere.points.shape)
         movie_sphere.points = random_points*0.01 + movie_sphere.points*0.99
         movie_sphere.points -= movie_sphere.points.mean(0)
-        scalars = np.random.random(movie_sphere.number_of_faces)
+        scalars = np.random.random(movie_sphere.n_faces)
         plotter.update_scalars(scalars)
 
     # checking if plotter closes
@@ -229,14 +229,14 @@ def test_update():
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_plot_cell_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
-    scalars = np.arange(sphere.number_of_faces)
+    scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolatebeforemap=True, scalars=scalars,
                      ncolors=5, rng=10)
     plotter.plot()
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
-def test_invalid_number_of_scalars():
+def test_invalid_n_scalars():
     with pytest.raises(Exception):
         plotter = vtki.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(sphere, scalars=np.arange(10))
@@ -313,7 +313,7 @@ def test_multi_block_plot():
     multi = vtki.MultiBlock()
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
-    arr = np.random.rand(uni.number_of_cells)
+    arr = np.random.rand(uni.n_cells)
     uni._add_cell_scalar(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
