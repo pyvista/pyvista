@@ -1333,9 +1333,7 @@ class Plotter(object):
                 # Use the default ParaView background color
                 color = PV_BACKGROUND
             else:
-                print(color)
                 color = vtki.string_to_rgb(color)
-        print(color)
         self.renderer.SetBackground(color)
 
     def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
