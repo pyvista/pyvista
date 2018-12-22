@@ -106,21 +106,31 @@ class MultiBlock(vtkMultiBlockDataSet):
         return p.plot()
 
 
+    def get_index_by_name(self, name):
+        # find the actual index based on the name
+        for i in range(self.n_blocks):
+            if self.get_block_name(i) == name:
+                return i
+        raise RuntimeError('Block name ({}) not found'.format(name))
+
+
     def __getitem__(self, index):
         """Get a block by its index or name (if the name is non-unique then
         returns the first occurence)"""
         if isinstance(index, str):
-            # find the actual index based on the name
-            for i in range(self.n_blocks):
-                if self.get_block_name(i) == index:
-                    index = i
-                    break
+            index = self.get_index_by_name(index)
         data = self.GetBlock(index)
         if data is None:
             return data
         if not is_vtki_obj(data):
             data = wrap(data)
         return data
+
+
+    def append(self, data):
+        """Add a data set to the next block index"""
+        index = self.n_blocks # note off by one so ues as index
+        self[index] = data
 
 
     def get(self, index):
@@ -139,7 +149,10 @@ class MultiBlock(vtkMultiBlockDataSet):
 
     def get_block_name(self, index):
         """Returns the string name of the block at the given index"""
-        return self.GetMetaData(index).Get(vtk.vtkCompositeDataSet.NAME())
+        meta = self.GetMetaData(index)
+        if meta is not None:
+            return meta.Get(vtk.vtkCompositeDataSet.NAME())
+        return None
 
 
     def __setitem__(self, index, data):
@@ -160,6 +173,8 @@ class MultiBlock(vtkMultiBlockDataSet):
 
     def __delitem__(self, index):
         """Removes a block at the specified index"""
+        if isinstance(index, str):
+            index = self.get_index_by_name(index)
         self.RemoveBlock(index)
 
 
@@ -170,12 +185,20 @@ class MultiBlock(vtkMultiBlockDataSet):
         return data
 
 
-    def clean(self):
-        """This will remove any null blocks"""
-        for i in range(self.n_blocks):
-            if self[i] is None:
-                self.RemoveBlock(i)
-        return
+    ## TODO: I can't get this to work as expected
+    # def clean(self):
+    #     """This will remove any null blocks"""
+    #     nvalid = 0
+    #     for i in range(self.n_blocks):
+    #         print(i, type(self[i]), self[i], self.get_block_name(i))
+    #         if self[i] is None:
+    #             print('removing', i)
+    #             del self[i]
+    #         else:
+    #             nvalid += 1
+    #     #self.n_blocks = nvalid
+    #     print('nvalid', nvalid)
+    #     return
 
 
     def _get_attrs(self):

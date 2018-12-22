@@ -504,15 +504,25 @@ class Plotter(object):
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
             # Now iteratively plot each element of the multiblock dataset
             for idx in range(mesh.GetNumberOfBlocks()):
-                if not is_vtki_obj(mesh.GetBlock(idx)):
+                if mesh[idx] is None:
+                    continue
+                # Get the data object
+                if not is_vtki_obj(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
+                    if not is_vtki_obj(mesh[idx]):
+                        continue # move on if we can't plot it
                 else:
                     data = mesh.GetBlock(idx)
                 if data is None:
                     # Note that a block can exist but be None type
                     continue
+                # Now check that scalars is available for this dataset
+                if get_scalar(data, scalars) is None:
+                    ts = None
+                else:
+                    ts = scalars
                 self.add_mesh(data, color=color, style=style,
-                             scalars=scalars, rng=rng, stitle=stitle, showedges=showedges,
+                             scalars=ts, rng=rng, stitle=stitle, showedges=showedges,
                              psize=psize, opacity=opacity, linethick=linethick, flipscalars=flipscalars,
                              lighting=lighting, ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
                              colormap=colormap, label=label, **kwargs)

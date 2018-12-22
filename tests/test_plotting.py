@@ -306,3 +306,16 @@ def test_scalars_by_name():
 
 def test_themes():
     vtki.set_plot_theme('paraview')
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_multi_block_plot():
+    multi = vtki.MultiBlock()
+    multi.append(examples.load_rectilinear())
+    uni = examples.load_uniform()
+    arr = np.random.rand(uni.number_of_cells)
+    uni._add_cell_scalar(arr, 'Random Data')
+    multi.append(uni)
+    # And now add a data set without the desired array and a NULL component
+    multi[3] = examples.load_airplane()
+    multi.plot(scalars='Random Data', off_screen=OFF_SCREEN)
