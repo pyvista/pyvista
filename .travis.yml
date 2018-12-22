@@ -32,7 +32,7 @@ install:
   - python -c "import imageio; imageio.plugins.ffmpeg.download()"
 
 script:
-  - pytest --cov vtki --cov-report html -v
+  - pytest --cov vtki -v
 
 cache:
   directories:
