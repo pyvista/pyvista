@@ -16,7 +16,7 @@ import vtki
 
 
 def is_vtki_obj(obj):
-    return isinstance(obj, vtki.Common)
+    return isinstance(obj, (vtki.Common, vtki.MultiBlock))
 
 
 def point_scalar(mesh, name):
@@ -171,6 +171,7 @@ def wrap(vtkdataset):
         'vtkPolyData' : vtki.PolyData,
         'vtkImageData' : vtki.UniformGrid,
         'vtkStructuredPoints' : vtki.UniformGrid,
+        'vtkMultiBlockDataSet' : vtki.MultiBlock,
         }
     key = vtkdataset.GetClassName()
     try:
