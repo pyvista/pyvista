@@ -195,7 +195,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
         if tpast < tdelay and tpast >= 0:
             time.sleep(tdelay - tpast)
 
-        # Print render time and actual FPS
+        # get render time and actual FPS
         rtime = rstop - rstart
         act_fps = 1 / (time.time() - tlast + 1E-10)
         tlast = time.time()
