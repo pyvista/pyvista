@@ -18,9 +18,9 @@ from vtki.utilities import wrap, is_vtki_obj, get_scalar
 
 class MultiBlock(vtkMultiBlockDataSet):
     """
-    A container class to hold a set of data sets which can be iterated over.
-
-    This is a very rough prototype... needs a lot of work.
+    A container class to hold many data sets which can be iterated over.
+    This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
+    easily plot these data sets and use the container in a Pythonic manner.
     """
 
 
@@ -72,6 +72,12 @@ class MultiBlock(vtkMultiBlockDataSet):
         return self.GetNumberOfBlocks()
 
 
+    @n_blocks.setter
+    def n_blocks(self, n):
+        """The total number of blocks set"""
+        self.SetNumberOfBlocks(n)
+
+
     def get_data_range(self, name):
         """Gets the min/max of a scalar given its name across all blocks"""
         mini, maxi = np.inf, -np.inf
@@ -115,6 +121,12 @@ class MultiBlock(vtkMultiBlockDataSet):
         if not is_vtki_obj(data):
             data = wrap(data)
         return data
+
+
+    def get(self, index):
+        """Get a block by its index or name (if the name is non-unique then
+        returns the first occurence)"""
+        return self[index]
 
 
     def set_block_name(self, index, name):
