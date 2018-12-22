@@ -81,7 +81,7 @@ class Common(object):
         if not isinstance(scalars, np.ndarray):
             raise TypeError('Input must be a numpy.ndarray')
 
-        if scalars.shape[0] != self.number_of_points:
+        if scalars.shape[0] != self.n_points:
             raise Exception('Number of scalars must match the number of ' +
                             'points')
         if scalars.dtype == np.bool:
@@ -315,9 +315,9 @@ class Common(object):
         if not isinstance(scalars, np.ndarray):
             raise TypeError('Input must be a numpy.ndarray')
 
-        if scalars.shape[0] != self.number_of_cells:
+        if scalars.shape[0] != self.n_cells:
             raise Exception('Number of scalars must match the number of cells (%d)'
-                            % self.number_of_cells)
+                            % self.n_cells)
 
         assert scalars.flags.c_contiguous, 'Array must be contigious'
         if scalars.dtype == np.bool:
@@ -401,11 +401,11 @@ class Common(object):
         return self._cell_arrays
 
     @property
-    def number_of_points(self):
+    def n_points(self):
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self):
+    def n_cells(self):
         return self.GetNumberOfCells()
 
     @property
@@ -424,7 +424,7 @@ class Common(object):
         return np.nanmin(arr), np.nanmax(arr)
 
     @property
-    def number_of_scalars(self):
+    def n_scalars(self):
         return self.GetPointData().GetNumberOfArrays() + self.GetCellData().GetNumberOfArrays()
 
     def _get_attrs(self):
@@ -441,7 +441,7 @@ class Common(object):
     def _repr_html_(self):
         """A pretty representation for Jupyter notebooks"""
         fmt = ""
-        if self.number_of_scalars > 0:
+        if self.n_scalars > 0:
             fmt += "<table>"
             fmt += "<tr><th>Information</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
@@ -459,7 +459,7 @@ class Common(object):
 
         fmt += "</table>\n"
         fmt += "\n"
-        if self.number_of_scalars > 0:
+        if self.n_scalars > 0:
             fmt += "</td><td>"
             fmt += "\n"
             fmt += "<table>\n"

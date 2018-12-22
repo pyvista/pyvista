@@ -101,7 +101,7 @@ def test_init_from_arrays():
     points = np.vstack((cell1, cell2)).astype(np.int32)
     grid = vtki.UnstructuredGrid(offset, cells, cell_type, points)
 
-    assert grid.number_of_cells == 2
+    assert grid.n_cells == 2
     assert np.allclose(grid.offset, offset)
 
 def test_surface_indices():
@@ -112,10 +112,10 @@ def test_surface_indices():
 
 def test_extract_edges():
     edges = beam.extract_edges(90)
-    assert edges.number_of_points
+    assert edges.n_points
 
     edges = beam.extract_edges(180)
-    assert not edges.number_of_points
+    assert not edges.n_points
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -152,14 +152,14 @@ def test_linear_copy():
 def test_extract_cells():
     ind = [1, 2, 3]
     part_beam = beam.extract_cells(ind)
-    assert part_beam.number_of_cells == len(ind)
-    assert part_beam.number_of_points < beam.number_of_points
+    assert part_beam.n_cells == len(ind)
+    assert part_beam.n_points < beam.n_points
 
-    mask = np.zeros(beam.number_of_cells, np.bool)
+    mask = np.zeros(beam.n_cells, np.bool)
     mask[:3] = True
     part_beam = beam.extract_cells(mask)
-    assert part_beam.number_of_cells == len(ind)
-    assert part_beam.number_of_points < beam.number_of_points
+    assert part_beam.n_cells == len(ind)
+    assert part_beam.n_points < beam.n_points
 
 
 def test_merge():
@@ -168,8 +168,8 @@ def test_merge():
     unmerged = grid.merge(beam, inplace=False, merge_points=False)
 
     grid.merge(beam)
-    assert grid.number_of_points > beam.number_of_points
-    assert grid.number_of_points < unmerged.number_of_points
+    assert grid.n_points > beam.n_points
+    assert grid.n_points < unmerged.n_points
 
 
 def test_merge_not_main():
@@ -179,8 +179,8 @@ def test_merge_not_main():
                           main_has_priority=False)
 
     grid.merge(beam)
-    assert grid.number_of_points > beam.number_of_points
-    assert grid.number_of_points < unmerged.number_of_points
+    assert grid.n_points > beam.n_points
+    assert grid.n_points < unmerged.n_points
 
 
 def test_merge_list():
@@ -191,7 +191,7 @@ def test_merge_list():
     grid_b.points[:, 1] += 1
 
     grid_a.merge([beam, grid_b])
-    assert grid_a.number_of_points > beam.number_of_points
+    assert grid_a.n_points > beam.n_points
 
 
 def test_init_structured():
@@ -226,7 +226,7 @@ def test_save_structured(extension, binary, tmpdir):
 
     grid = vtki.StructuredGrid(filename)
     assert grid.x.shape == sgrid.y.shape
-    assert grid.number_of_cells
+    assert grid.n_cells
     assert grid.points.shape == sgrid.points.shape
 
 
@@ -244,17 +244,17 @@ def test_create_rectilinear_grid_from_specs():
     yrng = np.arange(-10, 10, 5)
     zrng = np.arange(-10, 10, 1)
     grid = vtki.RectilinearGrid(xrng, yrng, zrng)
-    assert grid.number_of_cells == 9*3*19
-    assert grid.number_of_points == 10*4*20
+    assert grid.n_cells == 9*3*19
+    assert grid.n_points == 10*4*20
     assert grid.bounds == (-10.0,8.0, -10.0,5.0, -10.0,9.0)
 
 
 def test_create_rectilinear_grid_from_file():
     grid = examples.load_rectilinear()
-    assert grid.number_of_cells == 16146
-    assert grid.number_of_points == 18144
+    assert grid.n_cells == 16146
+    assert grid.n_points == 18144
     assert grid.bounds == (-350.0,1350.0, -400.0,1350.0, -850.0,0.0)
-    assert grid.number_of_scalars == 1
+    assert grid.n_scalars == 1
 
 
 def test_create_uniform_grid_from_specs():
@@ -289,10 +289,10 @@ def test_uniform_setters():
 
 def test_create_uniform_grid_from_file():
     grid = examples.load_uniform()
-    assert grid.number_of_cells == 729
-    assert grid.number_of_points == 1000
+    assert grid.n_cells == 729
+    assert grid.n_points == 1000
     assert grid.bounds == (0.0,9.0, 0.0,9.0, 0.0,9.0)
-    assert grid.number_of_scalars == 2
+    assert grid.n_scalars == 2
     assert grid.dimensions == (10, 10, 10)
 
 
@@ -304,7 +304,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
     ogrid.save(filename, binary)
 
     grid = vtki.RectilinearGrid(filename)
-    assert grid.number_of_cells == ogrid.number_of_cells
+    assert grid.n_cells == ogrid.n_cells
     assert np.allclose(grid.x, ogrid.x)
     assert np.allclose(grid.y, ogrid.y)
     assert np.allclose(grid.z, ogrid.z)
@@ -318,7 +318,7 @@ def test_save_uniform(extension, binary, tmpdir):
     ogrid.save(filename, binary)
 
     grid = vtki.UniformGrid(filename)
-    assert grid.number_of_cells == ogrid.number_of_cells
+    assert grid.n_cells == ogrid.n_cells
     assert grid.origin == ogrid.origin
     assert grid.spacing == ogrid.spacing
     assert grid.dimensions == ogrid.dimensions

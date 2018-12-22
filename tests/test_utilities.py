@@ -42,11 +42,11 @@ def test_read():
 def test_get_scalar():
     grid = vtki.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
-    carr = np.random.rand(grid.number_of_cells)
+    carr = np.random.rand(grid.n_cells)
     grid._add_cell_scalar(carr, 'test_data')
-    parr = np.random.rand(grid.number_of_points)
+    parr = np.random.rand(grid.n_points)
     grid._add_point_scalar(parr, 'test_data')
-    oarr = np.random.rand(grid.number_of_points)
+    oarr = np.random.rand(grid.n_points)
     grid._add_point_scalar(oarr, 'other')
     assert np.allclose(carr, utilities.get_scalar(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, utilities.get_scalar(grid, 'test_data', preference='point'))

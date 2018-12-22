@@ -9,7 +9,7 @@ grid = vtki.UnstructuredGrid(examples.hexbeamfile)
 
 def test_point_arrays():
     key = 'test_array'
-    grid.point_arrays[key] = np.arange(grid.number_of_points)
+    grid.point_arrays[key] = np.arange(grid.n_points)
     assert key in grid.point_arrays
 
     orig_value = grid.point_arrays[key][0]/1.0
@@ -19,7 +19,7 @@ def test_point_arrays():
     del grid.point_arrays[key]
     assert key not in grid.point_arrays
 
-    grid.point_arrays[key] = np.arange(grid.number_of_points)
+    grid.point_arrays[key] = np.arange(grid.n_points)
     assert key in grid.point_arrays
 
 
@@ -28,12 +28,12 @@ def test_point_arrays_bad_value():
         grid.point_arrays['new_array'] = None
 
     with pytest.raises(Exception):
-        grid.point_arrays['new_array'] = np.arange(grid.number_of_points - 1)
+        grid.point_arrays['new_array'] = np.arange(grid.n_points - 1)
 
 
 def test_cell_arrays():
     key = 'test_array'
-    grid.cell_arrays[key] = np.arange(grid.number_of_cells)
+    grid.cell_arrays[key] = np.arange(grid.n_cells)
     assert key in grid.cell_arrays
 
     orig_value = grid.cell_arrays[key][0]/1.0
@@ -43,7 +43,7 @@ def test_cell_arrays():
     del grid.cell_arrays[key]
     assert key not in grid.cell_arrays
 
-    grid.cell_arrays[key] = np.arange(grid.number_of_cells)
+    grid.cell_arrays[key] = np.arange(grid.n_cells)
     assert key in grid.cell_arrays
 
 
@@ -52,7 +52,7 @@ def test_cell_arrays_bad_value():
         grid.cell_arrays['new_array'] = None
 
     with pytest.raises(Exception):
-        grid.cell_arrays['new_array'] = np.arange(grid.number_of_cells - 1)
+        grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
 
 
 def test_copy():
@@ -165,7 +165,7 @@ def test_invalid_points():
 
 
 def test_points_bool():
-    bool_arr = np.zeros(grid.number_of_points, np.bool)
+    bool_arr = np.zeros(grid.n_points, np.bool)
     grid.point_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.point_arrays['bool_arr'].all()
@@ -174,7 +174,7 @@ def test_points_bool():
 
 
 def test_cells_bool():
-    bool_arr = np.zeros(grid.number_of_cells, np.bool)
+    bool_arr = np.zeros(grid.n_cells, np.bool)
     grid.cell_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.cell_arrays['bool_arr'].all()

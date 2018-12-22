@@ -95,16 +95,16 @@ def test_plot_ants_plane():
 def test_load_ant():
     """ Load ply ant mesh """
     mesh = examples.load_ant()
-    assert mesh.number_of_points
+    assert mesh.n_points
 
 
 def test_load_airplane():
     """ Load ply airplane mesh """
     mesh = examples.load_airplane()
-    assert mesh.number_of_points
+    assert mesh.n_points
 
 
 def test_load_sphere():
     """ Loads sphere ply mesh """
     mesh = examples.load_sphere()
-    assert mesh.number_of_points
+    assert mesh.n_points
