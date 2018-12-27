@@ -308,6 +308,11 @@ class PolyData(vtkPolyData, vtki.Common):
     def n_faces(self):
         return self.n_cells
 
+    @property
+    def number_of_faces(self):
+        """ returns the number of cells """
+        return self.n_cells
+
     def boolean_cut(self, cut, tolerance=1E-5, inplace=False):
         """
         Performs a Boolean cut using another mesh.
