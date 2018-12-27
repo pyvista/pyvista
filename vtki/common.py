@@ -409,6 +409,16 @@ class Common(object):
         return self.GetNumberOfCells()
 
     @property
+    def number_of_points(self):
+        """ returns the number of points """
+        return self.GetNumberOfPoints()
+
+    @property
+    def number_of_cells(self):
+        """ returns the number of cells """
+        return self.GetNumberOfCells()
+
+    @property
     def bounds(self):
         return self.GetBounds()
 
@@ -416,16 +426,14 @@ class Common(object):
     def extent(self):
         return self.GetExtent()
 
-    # def __del__(self):
-    #     log.debug('Object collected')
-
     def get_data_range(self, name):
         arr = get_scalar(self, name)
         return np.nanmin(arr), np.nanmax(arr)
 
     @property
     def n_scalars(self):
-        return self.GetPointData().GetNumberOfArrays() + self.GetCellData().GetNumberOfArrays()
+        return self.GetPointData().GetNumberOfArrays() + \
+               self.GetCellData().GetNumberOfArrays()
 
     def _get_attrs(self):
         """An internal helper for the representation methods"""
