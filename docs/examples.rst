@@ -28,9 +28,9 @@ You can also take a screenshot without creating an interactive plot window using
 
     plotter = vtki.Plotter(off_screen=True)
     plotter.add_mesh(mesh, color='orange')
-    img = plotter.plot(autoclose=False)
-    plotter.TakeScreenShot('airplane.png')
-    plotter.Close()
+    plotter.plot(autoclose=False)
+    img = plotter.screenshot('airplane.png')
+    plotter.close()
 
 The ``img`` array can be used to plot the screenshot in ``matplotlib``:
 
@@ -39,6 +39,25 @@ The ``img`` array can be used to plot the screenshot in ``matplotlib``:
     import matplotlib.pyplot as plt
     plt.imshow(img)
     plt.show()
+
+If you need to setup the camera you can do this by plotting first and getting the camera after running the ``plot`` function:
+
+.. code:: python
+
+    plotter = vtki.Plotter()
+    plotter.add_mesh(mesh)
+    cpos = plotter.plot()
+
+You can then use this cached camera for additional plotting without having to manually interact with the ``vtk`` plot window:
+
+.. code:: python
+
+    plotter = vtki.Plotter(off_screen=True)
+    plotter.add_mesh(mesh, color='orange')
+    plotter.camera_position = cpos
+    plotter.plot(autoclose=False)
+    img = plotter.screenshot('airplane.png')
+    plotter.close()
 
 The points and faces from the mesh are directly accessible as a numpy array:
 

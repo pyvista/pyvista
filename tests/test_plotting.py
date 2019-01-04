@@ -61,6 +61,20 @@ def test_plot_invalid_bounds_axes():
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_set_camera_position():
+    # with pytest.raises(Exception):
+    cpos = [(2.085387555594636, 5.259683527170288, 13.092943022481887),
+            (0.0, 0.0, 0.0),
+            (-0.7611973344707588, -0.5507178512374836, 0.3424740374436883)]
+
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.camera_position = cpos
+    cpos_out = plotter.plot()
+    assert cpos_out == cpos
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_plot_no_active_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)

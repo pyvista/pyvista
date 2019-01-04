@@ -666,6 +666,11 @@ class Plotter(object):
     def camera(self):
         return self.renderer.GetActiveCamera()
 
+    # @setter.property
+    # def camera(self, new_position):
+    #     """ sets camera position """
+    #     camr
+
     def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
@@ -1344,12 +1349,21 @@ class Plotter(object):
         self.camera.SetPosition(cameraloc[0])
         self.camera.SetFocalPoint(cameraloc[1])
         self.camera.SetViewUp(cameraloc[2])
+
         # Rest camera so it slides along the vector defined from camera position
         #   to focal point until all of the actors can be seen.
-        self.renderer.ResetCamera()
+        # self.renderer.ResetCamera()
+
         # reset clipping range
         self.renderer.ResetCameraClippingRange()
         self.camera_set = True
+
+    def reset_camera(self):
+        """
+        Rest camera so it slides along the vector defined from camera
+        position to focal point until all of the actors can be seen.
+        """
+        self.renderer.ResetCamera()
 
     def set_background(self, color):
         """
