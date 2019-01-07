@@ -1,7 +1,6 @@
 import sys
 
 import pytest
-from PyQt5 import Qt
 import numpy as np
 
 import vtki
@@ -10,12 +9,16 @@ from vtki.plotting import running_xserver
 
 try:
     import PyQt5
+    from PyQt5 import Qt
+    from PyQt5.Qt import QMainWindow
     has_pyqt5 = True
 except:
     has_pyqt5 = False
+    class QMainWindow(object):
+        pass
 
 
-class MainWindow(Qt.QMainWindow):
+class MainWindow(QMainWindow):
 
     def __init__(self, parent=None, show=True):
         Qt.QMainWindow.__init__(self, parent)
