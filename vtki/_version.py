@@ -1,3 +1,4 @@
+""" version info for vtki """
 # major, minor, patch
 version_info = 0, 14, 0
 
