@@ -1,10 +1,18 @@
 import sys
 
+import pytest
 from PyQt5 import Qt
 import numpy as np
 
 import vtki
 from vtki import QtInteractor
+from vtki.plotting import running_xserver
+
+try:
+    import PyQt5
+    has_pyqt5 = True
+except:
+    has_pyqt5 = False
 
 
 class MainWindow(Qt.QMainWindow):
@@ -44,6 +52,8 @@ class MainWindow(Qt.QMainWindow):
         self.vtk_widget.reset_camera()
 
 
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
     window = MainWindow(show=False)
     qtbot.addWidget(window)

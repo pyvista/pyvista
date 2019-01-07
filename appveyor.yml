@@ -25,6 +25,8 @@ install:
   - "%PYTHON% -m ensurepip"
   - "%PYTHON% -m pip install -r requirements.txt"
   - "%PYTHON% -m pip install pytest"
+  - "%PYTHON% -m pip install pytest-qt"
+  - "%PYTHON% -m pip install pyqt5"
 
 build_script:
   - "%PYTHON% setup.py sdist"

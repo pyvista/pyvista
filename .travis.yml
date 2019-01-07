@@ -26,8 +26,8 @@ before_script: # configure a headless display to test plot generation
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov
-  - pip install PyQt5
   - pip install pytest-qt
+  - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then pip install PyQt5; fi
   - pip install .
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
