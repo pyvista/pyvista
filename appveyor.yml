@@ -35,7 +35,7 @@ build_script:
 # it's not apparent that the root directory changes
 # test_qt_plotting.py fails to collect in windows
 test_script:
-  - "del /Q tests\test_qt_plotting.py"
+  - "del /Q tests\\test_qt_plotting.py"
   - "cd tests"
   - "%PYTHON% -m pytest -v"
   - "cd .."

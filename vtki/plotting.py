@@ -170,7 +170,11 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()
-    plotter.camera_position = cpos
+        plotter.camera_position = cpos
+        plotter.camera_set = False
+    else:
+        plotter.camera_position = cpos
+
     cpos = plotter.plot(window_size=window_size,
                         autoclose=False,
                         interactive=interactive,
@@ -603,6 +607,7 @@ class BasePlotter(object):
         if stitle is not None:
             self.add_scalar_bar(stitle)
 
+        # self.reset_camera()
         return actor
 
     def add_actor(self, uinput, resetcam=False):
