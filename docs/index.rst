@@ -176,6 +176,7 @@ Contents
 
    installation   
    examples
+   qt_plotting
    common
    polydata
    grids

@@ -1,10 +1,3 @@
-# import numpy
-# with numpy.warnings.catch_warnings():
-#     # numpy.warnings.filterwarnings('ignore', r"== np.dtype(complex).type`.")
-#     numpy.warnings.filterwarnings('ignore')
-#     from vtk.util import numpy_support as VN
-#     VN.numpy_to_vtk(numpy.zeros(10))
-
 import warnings
 from vtki._version import __version__
 from vtki.plotting import *
@@ -19,6 +12,7 @@ from vtki.grid import RectilinearGrid
 from vtki.grid import UniformGrid
 from vtki.geometric_objects import *
 from vtki.container import MultiBlock
+from vtki.qt_plotting import QtInteractor
 
 import numpy as np
 
