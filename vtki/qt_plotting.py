@@ -8,15 +8,21 @@ from vtki.plotting import BasePlotter, plotParams
 # for display bugs due to older intel integrated GPUs
 vtk.qt.QVTKRWIBase = 'QGLWidget'
 
-from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
-
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
 
 
+# dummy reference for when PyQt5 is not installed
 has_pyqt = False
+class QVTKRenderWindowInteractor(object):
+    pass
+
+def pyqtSignal():
+    return
+
 try:
     from PyQt5.QtCore import pyqtSignal
+    from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     has_pyqt = True
 except:
     pass
