@@ -74,9 +74,9 @@ class Common(DataSetFilters):
     def active_scalar(self):
         field, name = self.active_scalar_info
         if field == POINT_DATA_FIELD:
-            return self.GetPointData().GetArray(name)
+            return self._point_scalar(name)
         elif field == CELL_DATA_FIELD:
-            return self.GetCellData().GetArray(name)
+            return self._cell_scalar(name)
 
     def _point_scalar(self, name):
         """

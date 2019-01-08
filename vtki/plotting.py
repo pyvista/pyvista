@@ -499,6 +499,9 @@ class BasePlotter(object):
         # Attempt get the active scalars if no preference given
         if scalars is None and color is None:
             scalars = mesh.active_scalar
+            # Make sure scalar components are not vectors/tuples
+            if scalars.ndim != 1:
+                scalars = None
 
         # Scalar formatting ===================================================
         if colormap is None:
