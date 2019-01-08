@@ -26,7 +26,24 @@ class Common(DataSetFilters):
     def __init__(self, *args, **kwargs):
         self.references = []
 
-    active_scalar_info = [POINT_DATA_FIELD, None] # field and name
+    _active_scalar_info = [POINT_DATA_FIELD, None] # field and name
+
+    @property
+    def active_scalar_info(self):
+        field, name = self._active_scalar_info
+        if name is None:
+            if self.n_scalars < 1:
+                return field, name
+            # find some array in the set field
+            parr = self.GetPointData().GetArrayName(0)
+            carr = self.GetCellData().GetArrayName(0)
+            if parr is not None:
+                self._active_scalar_info = [POINT_DATA_FIELD, parr]
+            elif carr is not None:
+                self._active_scalar_info = [CELL_DATA_FIELD, carr]
+        return self._active_scalar_info
+
+
 
     @property
     def points(self):
@@ -51,11 +68,12 @@ class Common(DataSetFilters):
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) no useable'.format(field))
-        self.active_scalar_info = [field, name]
+        self._active_scalar_info = [field, name]
 
     @property
     def active_scalar(self):
         field, name = self.active_scalar_info
+        print(field, name)
         if field == POINT_DATA_FIELD:
             return self.GetPointData().GetArray(name)
         elif field == CELL_DATA_FIELD:
@@ -121,7 +139,7 @@ class Common(DataSetFilters):
         self.GetPointData().AddArray(vtkarr)
         if setactive:
             self.GetPointData().SetActiveScalars(name)
-            self.active_scalar_info = [POINT_DATA_FIELD, name]
+            self._active_scalar_info = [POINT_DATA_FIELD, name]
 
     def plot(self, **args):
         """
@@ -354,7 +372,12 @@ class Common(DataSetFilters):
         self.GetCellData().AddArray(vtkarr)
         if setactive:
             self.GetCellData().SetActiveScalars(name)
-            self.active_scalar_info = [CELL_DATA_FIELD, name]
+            self._active_scalar_info = [CELL_DATA_FIELD, name]
+
+    def copy_meta_from(self, ido):
+        """Copies vtki meta data onto this object from another object"""
+        self._active_scalar_info = ido.active_scalar_info
+
 
     def copy(self, deep=True):
         """
@@ -376,7 +399,9 @@ class Common(DataSetFilters):
             newobject.DeepCopy(self)
         else:
             newobject.ShallowCopy(self)
+        newobject.copy_meta_from(self)
         return newobject
+
 
     def _remove_point_scalar(self, key):
         """ removes point scalars from point data """

@@ -49,7 +49,7 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0):
     """A helper to get the algorithm's output and copy input's vtki meta info"""
     ido = algorithm.GetInputDataObject(iport, iconnection)
     data = wrap(algorithm.GetOutputDataObject(oport))
-    data.active_scalar_info = ido.active_scalar_info
+    data.copy_meta_from(ido)
     return data
 
 
