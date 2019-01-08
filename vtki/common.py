@@ -14,13 +14,18 @@ log.setLevel('CRITICAL')
 
 import vtki
 from vtki.utilities import get_scalar
+from vtki import DataSetFilters
 
 
-class Common(object):
+POINT_DATA_FIELD = 0
+CELL_DATA_FIELD = 1
+
+class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
 
     def __init__(self, *args, **kwargs):
         self.references = []
+        self.active_scalar_info = [POINT_DATA_FIELD, None] # field and name
 
     @property
     def points(self):
@@ -35,6 +40,25 @@ class Common(object):
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
         #self._point_ref = points
+
+    def set_active_scalar(self, name, preference='cell'):
+        """Finds the scalar by name and appropriately sets it as active"""
+        arr, field = get_scalar(self, name, preference=preference, info=True)
+        if field == POINT_DATA_FIELD:
+            self.GetPointData().SetActiveScalars(name)
+        elif field == CELL_DATA_FIELD:
+            self.GetCellData().SetActiveScalars(name)
+        else:
+            raise RuntimeError('Data field ({}) no useable'.format(field))
+        self.active_scalar_info = [field, name]
+
+    @property
+    def active_scalar(self):
+        field, name = self.active_scalar_info
+        if field == POINT_DATA_FIELD:
+            return self.GetPointData().GetArray(name)
+        elif field == CELL_DATA_FIELD:
+            return self.GetCellData().GetArray(name)
 
     def _point_scalar(self, name):
         """
@@ -96,6 +120,7 @@ class Common(object):
         self.GetPointData().AddArray(vtkarr)
         if setactive:
             self.GetPointData().SetActiveScalars(name)
+            self.active_scalar_info = [POINT_DATA_FIELD, name]
 
     def plot(self, **args):
         """
@@ -328,6 +353,7 @@ class Common(object):
         self.GetCellData().AddArray(vtkarr)
         if setactive:
             self.GetCellData().SetActiveScalars(name)
+            self.active_scalar_info = [CELL_DATA_FIELD, name]
 
     def copy(self, deep=True):
         """
@@ -421,6 +447,10 @@ class Common(object):
     @property
     def bounds(self):
         return self.GetBounds()
+
+    @property
+    def center(self):
+        return self.GetCenter()
 
     @property
     def extent(self):

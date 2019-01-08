@@ -25,13 +25,14 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 import numpy as np
 import vtki
+from vtki import PointSetFilters
 
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PolyData(vtkPolyData, vtki.Common):
+class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -1345,7 +1346,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
 
 
-class PointGrid(vtki.Common):
+class PointGrid(vtki.Common, PointSetFilters):
     """ Class in common with structured and unstructured grids """
 
     def __init__(self, *args, **kwargs):

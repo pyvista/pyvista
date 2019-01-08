@@ -44,6 +44,10 @@ def load_rectilinear():
     """ Loads a sample uniform grid """
     return vtki.RectilinearGrid(rectfile)
 
+def load_hexbean():
+    """ Loads a sample UnstructuredGrid """
+    return vtki.UnstructuredGrid(hexbeamfile)
+
 
 def plot_ants_plane(off_screen=False):
     """
