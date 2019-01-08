@@ -61,6 +61,20 @@ def test_plot_invalid_bounds_axes():
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_set_camera_position():
+    # with pytest.raises(Exception):
+    cpos = [(2.085387555594636, 5.259683527170288, 13.092943022481887),
+            (0.0, 0.0, 0.0),
+            (-0.7611973344707588, -0.5507178512374836, 0.3424740374436883)]
+
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.camera_position = cpos
+    cpos_out = plotter.plot()
+    assert cpos_out == cpos
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_plot_no_active_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -85,7 +99,7 @@ def test_plot_add_bounds_axes():
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_plot_add_scalar_bar():
-    plotter = vtki.Plotter()
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(label_fontsize=10, title_fontsize=20, title='woa')
 
@@ -198,14 +212,6 @@ def test_add_points():
     plotter.add_points(points, scalars=np.arange(10), colormap=None, flipscalars=True)
     plotter.plot()
 
-
-# @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
-# def test_plot_as_lin():
-#     n = 10
-#     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
-#     points = np.random.random((n, 3))
-#     plotter.add_points(points, scalars=np.arange(10), colormap=None, flipscalars=True)
-#     plotter.plot()
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_key_press_event():
