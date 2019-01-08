@@ -392,7 +392,8 @@ class BasePlotter(object):
         scalars : numpy array, optional
             Scalars used to "color" the mesh.  Accepts an array equal to the
             number of cells or the number of points in the mesh.  Array should
-            be sized as a single vector.
+            be sized as a single vector. If both color and scalars are None,
+            then the active scalars are used
 
         rng : 2 item list, optional
             Range of mapper for scalars.  Defaults to minimum and maximum of
@@ -494,6 +495,10 @@ class BasePlotter(object):
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper)
         self._update_bounds(mesh.GetBounds()) # All VTK datasets have bounds
+
+        # Attempt get the active scalars if no preference given
+        if scalars is None and color is None:
+            scalars = mesh.active_scalar
 
         # Scalar formatting ===================================================
         if colormap is None:

@@ -25,7 +25,8 @@ class Common(DataSetFilters):
 
     def __init__(self, *args, **kwargs):
         self.references = []
-        self.active_scalar_info = [POINT_DATA_FIELD, None] # field and name
+
+    active_scalar_info = [POINT_DATA_FIELD, None] # field and name
 
     @property
     def points(self):

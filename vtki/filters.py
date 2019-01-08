@@ -25,7 +25,7 @@ Example:
     >>> # Contour
     >>> iso = dataset.contour()
     >>> iso.plot(scalars='Spatial Point Data')
-    
+
 """
 
 import collections
@@ -43,6 +43,14 @@ NORMALS = {
     '-y': [0, -1, 0],
     '-z': [0, 0, -1],
 }
+
+
+def _get_output(algorithm, iport=0, iconnection=0, oport=0):
+    """A helper to get the algorithm's output and copy input's vtki meta info"""
+    ido = algorithm.GetInputDataObject(iport, iconnection)
+    data = wrap(algorithm.GetOutputDataObject(oport))
+    data.active_scalar_info = ido.active_scalar_info
+    return data
 
 
 def _generate_plane(normal, origin):
@@ -73,7 +81,7 @@ class DataSetFilters(object):
         alg.SetClipFunction(plane) # the the cutter to use the plane we made
         alg.SetInsideOut(invert) # invert the clip if needed
         alg.Update() # Perfrom the Cut
-        return wrap(alg.GetOutputDataObject(0)) # wrap the output
+        return _get_output(alg)
 
 
     def slice(dataset, normal='x', origin=None):
@@ -93,8 +101,7 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
         alg.SetCutFunction(plane) # the the cutter to use the plane we made
         alg.Update() # Perfrom the Cut
-        return wrap(alg.GetOutputDataObject(0)) # wrap the output
-
+        return _get_output(alg)
 
 
     def threshold(dataset, value, scalars=None, invert=False, continuous=False,
@@ -129,12 +136,13 @@ class DataSetFilters(object):
                 alg.ThresholdByUpper(value)
         # Run the threshold
         alg.Update()
-        return wrap(alg.GetOutputDataObject(0)) # port 0
+        return _get_output(alg)
 
 
 
 class PointSetFilters(object):
     """Filters that can be applied to point set data objects"""
+
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, preference='point'):
@@ -168,4 +176,4 @@ class PointSetFilters(object):
         else:
             raise RuntimeError('isosurfaces not understood.')
         alg.Update()
-        return wrap(alg.GetOutputDataObject(0)) # wrap the output
+        return _get_output(alg)
