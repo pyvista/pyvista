@@ -30,8 +30,6 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-
-
 plotParams = {
     'background' : [0.3, 0.3, 0.3],
     'camera' : {
@@ -56,7 +54,6 @@ def set_plot_theme(theme):
         plotParams['colormap'] = 'coolwarm'
         plotParams['font']['family'] = 'arial'
         plotParams['font']['label_size'] = 16
-
 
 
 def run_from_ipython():
@@ -642,7 +639,8 @@ class BasePlotter(object):
         if resetcam:
             self.reset_camera()
         else:
-            self._render()
+            pass
+            # self._render()
 
         return actor, actor.GetProperty()
 
@@ -1542,6 +1540,50 @@ class BasePlotter(object):
         self.renderer.RemoveActor(actor)
         self._render()
 
+    def enable_cell_picking(self, mesh=None, callback=None):
+        """
+        Enables picking of cells.  Press r to enable retangle based
+        selection.  Press "r" again to turn it off.  Selection will be
+        saved to self.picked_cells.
+
+        Uses last input mesh for input
+
+        Parameters
+        ----------
+        mesh : vtk.UnstructuredGrid, optional
+            UnstructuredGrid grid to select cells from.  Uses last
+            input grid by default.
+
+        callback : function, optional
+            When input, calls this function after a selection is made.  
+            The picked_cells are input as the first parameter to this function.
+
+        """
+        if mesh is None:
+            if not hasattr(self, 'mesh'):
+                raise Exception('Input a mesh into the Plotter class first or '
+                                + 'or set it in this function')
+            mesh = self.mesh
+
+        def pick_call_back(picker, event_id):
+            extract = vtk.vtkExtractGeometry()
+            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
+            extract.SetInputData(mesh)
+            extract.SetImplicitFunction(picker.GetFrustum())
+            extract.Update()
+            self.picked_cells = vtki.wrap(extract.GetOutput())
+
+            if callback is not None:
+                callback(self.picked_cells)
+
+        area_picker = vtk.vtkAreaPicker()
+        area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
+
+        style = vtk.vtkInteractorStyleRubberBandPick()
+        self.iren.SetInteractorStyle(style)
+        self.iren.SetPicker(area_picker)
+
+
 
 class Plotter(BasePlotter):
     """
@@ -1599,8 +1641,7 @@ class Plotter(BasePlotter):
             self.iren = vtk.vtkRenderWindowInteractor()
             self.iren.SetDesiredUpdateRate(30.0)
             self.iren.SetRenderWindow(self.ren_win)
-            istyle = vtk.vtkInteractorStyleTrackballCamera()
-            self.iren.SetInteractorStyle(istyle)
+            self.enable_trackball_style()
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
 
         # Set background
@@ -1697,9 +1738,15 @@ class Plotter(BasePlotter):
 
         return cpos
 
-    def plot(self, title=None, window_size=plotParams['window_size'], interactive=True,
-             autoclose=True, in_background=False, interactive_update=False,
-             full_screen=False):
+    def enable_trackball_style(self):
+        """ sets the interacto style to trackball """
+        istyle = vtk.vtkInteractorStyleTrackballCamera()
+        self.iren.SetInteractorStyle(istyle)
+
+
+    def plot(self, title=None, window_size=plotParams['window_size'],
+             interactive=True, autoclose=True, in_background=False,
+             interactive_update=False, full_screen=False):
         """
         Creates plotting window
 

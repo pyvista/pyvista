@@ -1526,6 +1526,29 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             else:
                 raise Exception('All input types must be np.ndarray')
 
+    def overwrite(self, grid):
+        """
+        Overwrites the old grid data with the new grid data
+
+        Parameters
+        ----------
+        mesh : vtk.vtkPolyData or vtki.PolyData
+            The overwriting mesh.
+
+        """
+        self.DeepCopy(grid)
+
+        # # copy points and point data
+        # self.SetPoints(grid.GetPoints())
+        # self.GetPointData().DeepCopy(grid.GetPointData())
+
+        # # copy cells and cell data
+        # # self.SetCells(grid.GetCells())
+        # self.GetCellData().DeepCopy(grid.GetCellData())
+
+        # # Must rebuild or subsequent operations on this grid will segfault
+        # # self.BuildCells()
+
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """
         Create VTK unstructured grid from numpy arrays
