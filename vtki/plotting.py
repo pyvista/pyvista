@@ -500,7 +500,7 @@ class BasePlotter(object):
         if scalars is None and color is None:
             scalars = mesh.active_scalar
             # Make sure scalar components are not vectors/tuples
-            if scalars.ndim != 1:
+            if scalars is None or scalars.ndim != 1:
                 scalars = None
 
         # Scalar formatting ===================================================
