@@ -533,6 +533,8 @@ class Common(DataSetFilters):
             def format_array(key, field):
                 arr = get_scalar(self, key)
                 dl, dh = self.get_data_range(key)
+                if key == self.active_scalar_info[1]:
+                    key = '<b>{}</b>'.format(key)
                 return row.format(key, field, arr.dtype, dl, dh)
 
             for i in range(self.GetPointData().GetNumberOfArrays()):
