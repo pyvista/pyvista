@@ -14,6 +14,7 @@ from vtki.grid import UniformGrid
 from vtki.geometric_objects import *
 from vtki.container import MultiBlock
 from vtki.qt_plotting import QtInteractor
+from vtki.qt_plotting import BackgroundPlotter
 
 import numpy as np
 

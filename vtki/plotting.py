@@ -7,7 +7,7 @@ import ctypes
 import PIL.Image
 from subprocess import Popen, PIPE
 import os
-from multiprocessing import Process
+# from multiprocessing import Process
 import colorsys
 
 import vtk
@@ -351,8 +351,10 @@ class BasePlotter(object):
         update_rate = self.iren.GetDesiredUpdateRate()
         if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
             self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
+
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
+
             self.render()
             Plotter.last_update_time = curr_time
         else:
@@ -654,8 +656,7 @@ class BasePlotter(object):
         if resetcam:
             self.reset_camera()
         else:
-            pass
-            # self._render()
+            self._render()
 
         return actor, actor.GetProperty()
 
@@ -1672,9 +1673,90 @@ class Plotter(BasePlotter):
         self.camera_set = False
         self.first_time = True
 
-    def _plot(self, title=None, window_size=plotParams['window_size'],
-              interactive=True, autoclose=True,
-              interactive_update=False, full_screen=False):
+    # def _plot(self, title=None, window_size=plotParams['window_size'],
+    #           interactive=True, autoclose=True,
+    #           interactive_update=False, full_screen=False):
+    #     """
+    #     Creates plotting window
+
+    #     Parameters
+    #     ----------
+    #     title : string, optional
+    #         Title of plotting window.
+
+    #     window_size : list, optional
+    #         Window size in pixels.  Defaults to [1024, 768]
+
+    #     interactive : bool, optional
+    #         Enabled by default.  Allows user to pan and move figure.
+
+    #     autoclose : bool, optional
+    #         Enabled by default.  Exits plotting session when user closes the
+    #         window when interactive is True.
+
+    #     interactive_update: bool, optional
+    #         Disabled by default.  Allows user to non-blocking draw,
+    #         user should call Update() in each iteration.
+
+    #     full_screen : bool, optional
+    #         Opens window in full screen.  When enabled, ignores window_size.
+    #         Default False.
+
+    #     Returns
+    #     -------
+    #     cpos : list
+    #         List of camera position, focal point, and view up
+
+    #     """
+    #     if title:
+    #         self.ren_win.SetWindowName(title)
+
+    #     # if full_screen:
+    #     if full_screen:
+    #         self.ren_win.SetFullScreen(True)
+    #         self.ren_win.BordersOn()  # super buggy when disabled
+    #     else:
+    #         self.ren_win.SetSize(window_size[0], window_size[1])
+
+    #     # Render
+    #     log.debug('Rendering')
+    #     self.ren_win.Render()
+
+    #     if interactive and (not self.off_screen):
+    #         try:  # interrupts will be caught here
+    #             log.debug('Starting iren')
+    #             self.iren.Initialize()
+    #             if not interactive_update:
+    #                 self.iren.Start()
+    #         except KeyboardInterrupt:
+    #             log.debug('KeyboardInterrupt')
+    #             self.close()
+    #             raise KeyboardInterrupt
+
+    #     # Get camera position before closing
+    #     cpos = self.camera_position
+
+    #     if self.notebook:
+    #         # sanity check
+    #         try:
+    #             import IPython
+    #         except ImportError:
+    #             raise Exception('Install iPython to display image in a notebook')
+
+    #         img = PIL.Image.fromarray(self.screenshot())
+    #         disp = IPython.display.display(img)
+
+    #     if autoclose:
+    #         self.close()
+
+    #     if self.notebook:
+    #         return disp
+
+    #     return cpos
+
+    def plot(self, title=None, window_size=plotParams['window_size'],
+             interactive=True, autoclose=True, interactive_update=False,
+             full_screen=False):
         """
         Creates plotting window
 
@@ -1707,6 +1789,11 @@ class Plotter(BasePlotter):
             List of camera position, focal point, and view up
 
         """
+        # reset unless camera for the first render unless camera is set
+        if self.first_time and not self.camera_set:
+            self.camera_position = self.get_default_cam_pos()
+            self.renderer.ResetCamera()
+
         if title:
             self.ren_win.SetWindowName(title)
 
@@ -1753,63 +1840,8 @@ class Plotter(BasePlotter):
 
         return cpos
 
-    def plot(self, title=None, window_size=plotParams['window_size'],
-             interactive=True, autoclose=True, in_background=False,
-             interactive_update=False, full_screen=False):
-        """
-        Creates plotting window
-
-        Parameters
-        ----------
-        title : string, optional
-            Title of plotting window.
-
-        window_size : list, optional
-            Window size in pixels.  Defaults to [1024, 768]
-
-        interactive : bool, optional
-            Enabled by default.  Allows user to pan and move figure.
-
-        autoclose : bool, optional
-            Enabled by default.  Exits plotting session when user closes the
-            window when interactive is True.
-
-        interactive_update: bool, optional
-            Disabled by default.  Allows user to non-blocking draw,
-            user should call Update() in each iteration.
-
-        full_screen : bool, optional
-            Opens window in full screen.  When enabled, ignores window_size.
-            Default False.
-
-        Returns
-        -------
-        cpos : list
-            List of camera position, focal point, and view up
-
-        """
-        # reset unless camera for the first render unless camera is set
-        if self.first_time and not self.camera_set:
-            self.camera_position = self.get_default_cam_pos()
-            self.renderer.ResetCamera()
-
-        def plotfun():
-            return self._plot(title,
-                              window_size=window_size,
-                              interactive=interactive,
-                              autoclose=autoclose,
-                              interactive_update=interactive_update,
-                              full_screen=full_screen)
-
-        if in_background:
-            log.debug('Starting process')
-            process = Process(target=plotfun)
-            process.start()
-            return process
-        else:
-            return plotfun()
-
     def render(self):
+        """ renders main window """
         self.ren_win.Render()
 
 

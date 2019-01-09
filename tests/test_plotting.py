@@ -325,3 +325,21 @@ def test_multi_block_plot():
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
     multi.plot(scalars='Random Data', off_screen=OFF_SCREEN)
+
+
+# def test_background_plotting():
+
+mesh = sphere.copy()
+
+
+
+# def pl():
+#     plotter = vtki.Plotter()
+#     plotter.add_mesh(mesh)
+#     plotter.plot()
+
+
+# from multiprocessing import Process
+# process = Process(target=pl)
+# process.start()
+

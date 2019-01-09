@@ -1,3 +1,5 @@
+from threading import Thread
+import time
 import logging
 
 import vtk
@@ -11,14 +13,21 @@ vtk.qt.QVTKRWIBase = 'QGLWidget'
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
 
+# from threading import Thread
+# import time
+# import sys
+# from PyQt5 import Qt
+
 
 # dummy reference for when PyQt5 is not installed
 has_pyqt = False
 class QVTKRenderWindowInteractor(object):
     pass
 
+
 def pyqtSignal():
     return
+
 
 try:
     from PyQt5.QtCore import pyqtSignal
@@ -50,8 +59,64 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
         self.iren.Initialize()
+        # self.iren.Start()
 
         # Enter trackball camera mode
         istyle = vtk.vtkInteractorStyleTrackballCamera()
         self.SetInteractorStyle(istyle)
         self.add_axes()
+
+    def closeEvent(self, event):
+        self.close()
+
+
+class BackgroundPlotter(QtInteractor):
+
+    def __init__(self, show=True):
+        assert has_pyqt, 'Requires PyQt5'
+        self.active = True
+
+        from PyQt5.QtWidgets import QApplication
+        app = QApplication.instance()
+        if not app:
+            app = QApplication([''])
+        self.app = app
+
+        QtInteractor.__init__(self)
+        if show:
+            self.show()
+
+        self._spawn_background_rendering()
+
+    def _spawn_background_rendering(self, rate=5.0):
+        """
+        Spawns a thread that updates the render window.
+
+        Sometimes directly modifiying object data doesn't trigger
+        Modified() and upstream objects won't be updated.  This
+        ensures the render window stays updated without consuming too
+        many resources.
+        """
+        self.render_trigger.connect(self.ren_win.Render)
+        twait = rate**-1
+
+        def render():
+            while self.active:
+                time.sleep(twait)
+                self._render()
+
+        self.render_thread = Thread(target=render)
+        self.render_thread.start()
+
+    def closeEvent(self, event):
+        self.active = False
+        self.app.quit()
+        self.close()
+
+    def add_actor(self, actor, resetcam=None):
+        actor, prop = super(BackgroundPlotter, self).add_actor(actor, resetcam)
+        self.reset_camera()
+        return actor, prop
+
+    def __del__(self):
+        self.close()

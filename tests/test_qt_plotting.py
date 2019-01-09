@@ -62,10 +62,20 @@ def test_qt_interactor(qtbot):
     qtbot.addWidget(window)
     window.add_sphere()
     assert np.any(window.vtk_widget.mesh.points)
-    
 
 
-if __name__ == '__main__':
-    app = Qt.QApplication(sys.argv)
-    window = MainWindow()
-    sys.exit(app.exec_())
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting(qtbot):
+    sphere = vtki.Sphere()
+    plotter = vtki.BackgroundPlotter(show=False)
+    plotter.add_mesh(sphere)
+    assert np.any(plotter.mesh.points)
+    assert plotter.close()
+
+
+
+# if __name__ == '__main__':
+#     app = Qt.QApplication(sys.argv)
+#     window = MainWindow()
+#     sys.exit(app.exec_())

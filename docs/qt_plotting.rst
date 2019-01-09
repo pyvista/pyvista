@@ -69,3 +69,19 @@ The following example shows how to create a simple application that adds a spher
     PyQt5 vtki QtInteractor
 
 
+Background Plotting
+~~~~~~~~~~~~~~~~~~~
+Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible to plot in the background and update the plotter in real-time using the ``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears and functions like a normal ``vtki`` ``Plotter`` instance.  For example:
+
+.. code:: python
+
+    import vtki
+
+    sphere = vtki.Sphere()
+
+    plotter = vtki.BackgroundPlotter()
+    plotter.add_mesh(sphere)
+
+    # can now operate on the sphere and have it updated in the background
+    sphere.points *= 0.5
+
