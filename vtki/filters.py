@@ -139,6 +139,13 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
+    def outline(dataset, gen_faces=False):
+        alg = vtk.vtkOutlineFilter()
+        alg.SetInputDataObject(dataset)
+        alg.SetGenerateFaces(gen_faces)
+        alg.Update()
+        return wrap(alg.GetOutputDataObject(0))
+
 
 class PointSetFilters(object):
     """Filters that can be applied to point set data objects"""
@@ -169,7 +176,7 @@ class PointSetFilters(object):
         if isinstance(isosurfaces, int):
             # generate values
             alg.GenerateValues(isosurfaces, dataset.get_data_range(scalars))
-        elif isinstance(value, collections.Iterable):
+        elif isinstance(isosurfaces, collections.Iterable):
             alg.SetNumberOfContours(len(isosurfaces))
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
