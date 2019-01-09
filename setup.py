@@ -21,11 +21,13 @@ install_requires = ['numpy',
                     'imageio']
 
 # add vtk if not windows and 2.7
-if os.name == 'nt' and (int(sys.version[0]) < 3 or '64' not in platform.architecture()[0]):
-    warnings.warn('Will need to install VTK manually')
-elif os.environ.get('READTHEDOCS') == 'True':
-    # don't install for readthedocs
-    pass
+py_ver = int(sys.version[0])
+if os.name == 'nt' and (py_ver < 3 or '64' not in platform.architecture()[0]):
+    warnings.warn('\nYou will need to install VTK manually.' +
+                  '  Try using Anaconda.  See:\n'
+                  + 'https://anaconda.org/anaconda/vtk')
+elif os.environ.get('READTHEDOCS') != 'True':
+    pass  # don't install vtk for readthedocs
 else:
     install_requires.append(['vtk'])
 
