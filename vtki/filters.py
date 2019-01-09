@@ -27,11 +27,9 @@ Example:
     >>> iso.plot(scalars='Spatial Point Data')
 
 """
-
 import collections
 import numpy as np
 import vtk
-
 
 from vtki.utilities import get_scalar, wrap
 
@@ -54,20 +52,24 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0):
 
 
 def _generate_plane(normal, origin):
+    """ Returns a vtk.vtkPlane """
     plane = vtk.vtkPlane()
     plane.SetNormal(normal[0], normal[1], normal[2])
     plane.SetOrigin(origin[0], origin[1], origin[2])
     return plane
 
 
-
 class DataSetFilters(object):
     """A set of common filters that can be applied to any vtkDataSet"""
 
-
     def clip(dataset, normal='x', origin=None, invert=True):
-        """Clip a dataset by a plane by specifying the origin and normal. If no
-        parameters are given the clip will occur in the center of that dataset"""
+        """
+        Clip a dataset by a plane by specifying the origin and normal. If no
+        parameters are given the clip will occur in the center of that dataset
+        
+        dataset : 
+        
+        """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
         # find center of data if origin not specified
@@ -106,9 +108,37 @@ class DataSetFilters(object):
 
     def threshold(dataset, value, scalars=None, invert=False, continuous=False,
                   preference='cell'):
-        """This filter will apply a ``vtkThreshold`` filter to the input dataset and
-        return the resulting object. If scalars is None, the inputs active_scalar
-        is used.
+        """
+        This filter will apply a ``vtkThreshold`` filter to the input dataset and
+        return the resulting object. This extracts cells where scalar value in each
+        cell satisfies threshold criterion.  If scalars is None, the inputs 
+        active_scalar is used.
+
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        value : float or iterable
+            Single value or (min, max) to be used for the data threshold.  If
+            iterable then length must be 2.
+
+        scalars : str
+            Name of scalars.
+
+        invert : bool, optional
+            If value is a single value, when invert is True cells are kept when
+            their values are below parameter "value".  When invert is False
+            cells are kept when their value is above the threshold "value".
+            
+        continuous : bool, optional
+            When True, the continuous interval [minimum cell scalar, 
+            maxmimum cell scalar] will be used to intersect the threshold bound, 
+            rather than the set of discrete scalar values from the vertices.
+            
+        preference : str, optional
+            When scalars is None, this is the perfered scalar type to search for
+            in the dataset.  Must be either 'point' or 'cell'.
 
         """
         alg = vtk.vtkThreshold()
