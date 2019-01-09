@@ -192,3 +192,26 @@ Inline plots are possible using a Jupyter notebook.  For example:
     :width: 600pt
 
     Jupyter Inline Plotting
+
+
+Clearing a Mesh or the Entire Plot
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Removing a single actor:
+
+.. code:: python
+    
+    plotter = vtki.Plotter(notebook=True)
+    actor = plotter.add_mesh(sphere)
+    plotter.remove_actor(actor)
+    plotter.plot()
+
+
+Clearing the entire plotting window:
+
+.. code:: python
+    
+    plotter = vtki.Plotter(notebook=True)
+    plotter.add_mesh(vtki.Sphere())
+    plotter.add_mesh(vtki.Plane())
+    plotter.clear()  # clears all actors
+    plotter.plot()

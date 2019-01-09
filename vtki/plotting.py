@@ -625,7 +625,6 @@ class BasePlotter(object):
         if stitle is not None:
             self.add_scalar_bar(stitle)
 
-        # self.reset_camera()
         return actor
 
     def add_actor(self, uinput, resetcam=False):
