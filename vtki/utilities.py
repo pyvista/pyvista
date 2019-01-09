@@ -33,7 +33,7 @@ def cell_scalar(mesh, name):
         return vtk_to_numpy(vtkarr)
 
 
-def get_scalar(mesh, name, preference='cell'):
+def get_scalar(mesh, name, preference='cell', info=False):
     """ Searches both point and cell data for an array """
     if preference not in ['cell', 'point']:
         raise RuntimeError('Data preference ({}) for non-unique names not understood.'.format(preference))
@@ -44,11 +44,17 @@ def get_scalar(mesh, name, preference='cell'):
             return carr
         elif preference == 'point':
             return parr
+    arr = None
+    field = None
     if parr is not None:
-        return parr
+        arr = parr
+        field = 0
     if carr is not None:
-        return carr
-    return None
+        arr = carr
+        field = 1
+    if info:
+        return arr, field
+    return arr
 
 
 def vtk_points(points, deep=True):

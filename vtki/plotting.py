@@ -394,7 +394,8 @@ class BasePlotter(object):
         scalars : numpy array, optional
             Scalars used to "color" the mesh.  Accepts an array equal to the
             number of cells or the number of points in the mesh.  Array should
-            be sized as a single vector.
+            be sized as a single vector. If both color and scalars are None,
+            then the active scalars are used
 
         rng : 2 item list, optional
             Range of mapper for scalars.  Defaults to minimum and maximum of
@@ -497,6 +498,15 @@ class BasePlotter(object):
         actor, prop = self.add_actor(self.mapper)
         self._update_bounds(mesh.GetBounds()) # All VTK datasets have bounds
 
+        # Attempt get the active scalars if no preference given
+        if scalars is None and color is None:
+            scalars = mesh.active_scalar
+            # Make sure scalar components are not vectors/tuples
+            if scalars is None or scalars.ndim != 1:
+                scalars = None
+            else:
+                stitle = mesh.active_scalar_info[1]
+
         # Scalar formatting ===================================================
         if colormap is None:
             colormap = plotParams['colormap']
@@ -522,13 +532,13 @@ class BasePlotter(object):
 
             # Scalar interpolation approach
             if scalars.size == mesh.GetNumberOfPoints():
-                self.mesh._add_point_scalar(scalars, title, True)
+                self.mesh._add_point_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUsePointData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             elif scalars.size == mesh.GetNumberOfCells():
-                self.mesh._add_cell_scalar(scalars, title, True)
+                self.mesh._add_cell_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUseCellData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
             else:

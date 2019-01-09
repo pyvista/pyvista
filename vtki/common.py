@@ -14,13 +14,36 @@ log.setLevel('CRITICAL')
 
 import vtki
 from vtki.utilities import get_scalar
+from vtki import DataSetFilters
 
 
-class Common(object):
+POINT_DATA_FIELD = 0
+CELL_DATA_FIELD = 1
+
+class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
 
     def __init__(self, *args, **kwargs):
         self.references = []
+
+    _active_scalar_info = [POINT_DATA_FIELD, None] # field and name
+
+    @property
+    def active_scalar_info(self):
+        field, name = self._active_scalar_info
+        if name is None:
+            if self.n_scalars < 1:
+                return field, name
+            # find some array in the set field
+            parr = self.GetPointData().GetArrayName(0)
+            carr = self.GetCellData().GetArrayName(0)
+            if parr is not None:
+                self._active_scalar_info = [POINT_DATA_FIELD, parr]
+            elif carr is not None:
+                self._active_scalar_info = [CELL_DATA_FIELD, carr]
+        return self._active_scalar_info
+
+
 
     @property
     def points(self):
@@ -35,6 +58,27 @@ class Common(object):
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
         #self._point_ref = points
+
+    def set_active_scalar(self, name, preference='cell'):
+        """Finds the scalar by name and appropriately sets it as active"""
+        arr, field = get_scalar(self, name, preference=preference, info=True)
+        if field == POINT_DATA_FIELD:
+            self.GetPointData().SetActiveScalars(name)
+        elif field == CELL_DATA_FIELD:
+            self.GetCellData().SetActiveScalars(name)
+        else:
+            raise RuntimeError('Data field ({}) no useable'.format(field))
+        self._active_scalar_info = [field, name]
+
+    @property
+    def active_scalar(self):
+        field, name = self.active_scalar_info
+        if name is None:
+            return None
+        if field == POINT_DATA_FIELD:
+            return self._point_scalar(name)
+        elif field == CELL_DATA_FIELD:
+            return self._cell_scalar(name)
 
     def _point_scalar(self, name):
         """
@@ -96,6 +140,7 @@ class Common(object):
         self.GetPointData().AddArray(vtkarr)
         if setactive:
             self.GetPointData().SetActiveScalars(name)
+            self._active_scalar_info = [POINT_DATA_FIELD, name]
 
     def plot(self, **args):
         """
@@ -328,6 +373,12 @@ class Common(object):
         self.GetCellData().AddArray(vtkarr)
         if setactive:
             self.GetCellData().SetActiveScalars(name)
+            self._active_scalar_info = [CELL_DATA_FIELD, name]
+
+    def copy_meta_from(self, ido):
+        """Copies vtki meta data onto this object from another object"""
+        self._active_scalar_info = ido.active_scalar_info
+
 
     def copy(self, deep=True):
         """
@@ -349,7 +400,9 @@ class Common(object):
             newobject.DeepCopy(self)
         else:
             newobject.ShallowCopy(self)
+        newobject.copy_meta_from(self)
         return newobject
+
 
     def _remove_point_scalar(self, key):
         """ removes point scalars from point data """
@@ -423,6 +476,10 @@ class Common(object):
         return self.GetBounds()
 
     @property
+    def center(self):
+        return self.GetCenter()
+
+    @property
     def extent(self):
         return self.GetExtent()
 
@@ -478,6 +535,8 @@ class Common(object):
             def format_array(key, field):
                 arr = get_scalar(self, key)
                 dl, dh = self.get_data_range(key)
+                if key == self.active_scalar_info[1]:
+                    key = '<b>{}</b>'.format(key)
                 return row.format(key, field, arr.dtype, dl, dh)
 
             for i in range(self.GetPointData().GetNumberOfArrays()):
