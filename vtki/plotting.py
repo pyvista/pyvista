@@ -247,6 +247,10 @@ class BasePlotter(object):
     def __init__(self):
         self.renderer = vtk.vtkRenderer()
 
+    def clear(self):
+        """ Clears plot by removing all actors and properties """
+        self.renderer.RemoveAllViewProps()
+
     def enable_trackball_style(self):
         """ sets the interacto style to trackball """
         istyle = vtk.vtkInteractorStyleTrackballCamera()
@@ -656,7 +660,8 @@ class BasePlotter(object):
         if resetcam:
             self.reset_camera()
         else:
-            self._render()
+            # self._render()
+            pass
 
         return actor, actor.GetProperty()
 

@@ -327,19 +327,9 @@ def test_multi_block_plot():
     multi.plot(scalars='Random Data', off_screen=OFF_SCREEN)
 
 
-# def test_background_plotting():
-
-mesh = sphere.copy()
-
-
-
-# def pl():
-#     plotter = vtki.Plotter()
-#     plotter.add_mesh(mesh)
-#     plotter.plot()
-
-
-# from multiprocessing import Process
-# process = Process(target=pl)
-# process.start()
-
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_clear():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.clear()
+    plotter.plot()
