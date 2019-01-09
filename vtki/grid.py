@@ -23,7 +23,6 @@ class Grid(vtki.Common):
     def __init__(self, *args, **kwargs):
         pass
 
-
     @property
     def dimensions(self):
         return self.GetDimensions()
@@ -33,8 +32,6 @@ class Grid(vtki.Common):
         """Sets the dataset dimensions. Pass a length three tuple of integers"""
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
-
-
 
 
 class RectilinearGrid(vtkRectilinearGrid, Grid):

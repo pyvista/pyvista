@@ -247,6 +247,11 @@ class BasePlotter(object):
     def __init__(self):
         self.renderer = vtk.vtkRenderer()
 
+    def enable_trackball_style(self):
+        """ sets the interacto style to trackball """
+        istyle = vtk.vtkInteractorStyleTrackballCamera()
+        self.iren.SetInteractorStyle(istyle)
+
     def set_focus(self, point):
         """ sets focus to a point """
         if isinstance(point, np.ndarray):
@@ -266,7 +271,7 @@ class BasePlotter(object):
     def add_axes(self):
         """ Add an interactive axes widget """
         if hasattr(self, 'axes_widget'):
-            raise Exception('plotter already has axes widget')
+            raise Exception('Plotter already has an axes widget')
         self.axes_actor = vtk.vtkAxesActor()
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
@@ -1737,12 +1742,6 @@ class Plotter(BasePlotter):
             return disp
 
         return cpos
-
-    def enable_trackball_style(self):
-        """ sets the interacto style to trackball """
-        istyle = vtk.vtkInteractorStyleTrackballCamera()
-        self.iren.SetInteractorStyle(istyle)
-
 
     def plot(self, title=None, window_size=plotParams['window_size'],
              interactive=True, autoclose=True, in_background=False,
