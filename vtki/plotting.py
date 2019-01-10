@@ -47,7 +47,7 @@ plotParams = {
     'colormap' : 'jet',
     'colorbar' : {
         'width' : 0.60,
-        'height' : 0.05,
+        'height' : 0.08,
         'position_x' : 0.35,
         'position_y' : 0.02,
     },
@@ -90,7 +90,7 @@ def _remove_mapper_from_plotter(plotter, actor):
             plotter._scalar_bar_mappers.pop(name)
             plotter._scalar_bar_ranges.pop(name)
             plotter.remove_actor(plotter._scalar_bar_actors.pop(name), remove_mapper=False)
-            plotter._scalar_bar_slots.insert(0, plotter._scalar_bar_slot_lookup.pop(name))
+            plotter._scalar_bar_slots.add(plotter._scalar_bar_slot_lookup.pop(name))
     return
 
 
@@ -270,7 +270,7 @@ class BasePlotter(object):
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
-        self._scalar_bar_slots = list(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         # This keeps track of scalar names already plotted and their ranges
         self._scalar_bar_ranges = {}
@@ -280,6 +280,11 @@ class BasePlotter(object):
     def clear(self):
         """ Clears plot by removing all actors and properties """
         self.renderer.RemoveAllViewProps()
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slot_lookup = {}
+        self._scalar_bar_ranges = {}
+        self._scalar_bar_mappers = {}
+        self._scalar_bar_actors = {}
 
     def enable_trackball_style(self):
         """ sets the interacto style to trackball """
@@ -970,21 +975,6 @@ class BasePlotter(object):
             width = plotParams['colorbar']['width']
         if height is None:
             height = plotParams['colorbar']['height']
-        # Automatically choose location if not specified
-        if position_x is None or position_y is None:
-            try:
-                slot = self._scalar_bar_slots.pop(0)
-            except:
-                raise RuntimeError('Maximum number of color bars reached.')
-            if position_x is None:
-                position_x = plotParams['colorbar']['position_x']
-            if position_y is None:
-                position_y = plotParams['colorbar']['position_y'] + slot * height
-        # Adjust to make sure on the screen
-        if position_x + width > 1:
-            position_x -= width
-        if position_y + height > 1:
-            position_y -= height
 
         # check if maper exists
         if mapper is None:
@@ -1011,11 +1001,24 @@ class BasePlotter(object):
                 self._scalar_bar_ranges[title] = rng
                 # Color bar already present and ready to be used so returning
                 return
-            else:
-                rng = mapper.GetScalarRange()
-                self._scalar_bar_ranges[title] = rng
-                self._scalar_bar_mappers[title] = [mapper]
-                self._scalar_bar_slot_lookup[title] = slot
+
+        # Automatically choose location if not specified
+        if position_x is None or position_y is None:
+            try:
+                slot = min(self._scalar_bar_slots)
+                self._scalar_bar_slots.remove(slot)
+                print('slot', slot)
+            except:
+                raise RuntimeError('Maximum number of color bars reached.')
+            if position_x is None:
+                position_x = plotParams['colorbar']['position_x']
+            if position_y is None:
+                position_y = plotParams['colorbar']['position_y'] + slot * height
+        # Adjust to make sure on the screen
+        if position_x + width > 1:
+            position_x -= width
+        if position_y + height > 1:
+            position_y -= height
 
         # parse color
         color = parse_color(color)
@@ -1048,6 +1051,11 @@ class BasePlotter(object):
 
         # Set properties
         if title:
+            rng = mapper.GetScalarRange()
+            self._scalar_bar_ranges[title] = rng
+            self._scalar_bar_mappers[title] = [mapper]
+            self._scalar_bar_slot_lookup[title] = slot
+
             self.scalar_bar.SetTitle(title)
             title_text = self.scalar_bar.GetTitleTextProperty()
 
@@ -1140,7 +1148,7 @@ class BasePlotter(object):
             del self.axes_widget
 
         # reset scalar bar stuff
-        self._scalar_bar_slots = list(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
