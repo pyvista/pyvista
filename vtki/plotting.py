@@ -777,11 +777,9 @@ class BasePlotter(object):
         if fontsize is None:
             fontsize = plotParams['font']['size']
 
-        # Use last input mesh if availble
+        # Use the bounds of all data in the rendering window
         if not mesh and not bounds:
-            if not hasattr(self, 'mesh'):
-                raise Exception('Specify bounds or first input a mesh')
-            mesh = self.mesh
+            bounds = self.bounds
 
         # create actor
         cubeAxesActor = vtk.vtkCubeAxesActor()
@@ -790,7 +788,7 @@ class BasePlotter(object):
         # set bounds
         if not bounds:
             bounds = mesh.GetBounds()
-        cubeAxesActor.SetBounds(mesh.GetBounds())
+        cubeAxesActor.SetBounds(bounds)
 
         # show or hide axes
         cubeAxesActor.SetXAxisVisibility(show_xaxis)
