@@ -39,7 +39,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     """
     render_trigger = pyqtSignal()
-
+    allow_quit_keypress = True
     def __init__(self, parent=None):
         """ Initialize Qt interactor """
         assert has_pyqt, 'Requires PyQt5'
@@ -63,7 +63,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         def quit_q(obj, event):
             key = self.iren.GetKeySym().lower()
-            if key == 'q':
+            if key == 'q' and self.allow_quit_keypress:
                 self.iren.TerminateApp()
                 self.close()
 
@@ -72,6 +72,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     def closeEvent(self, event):
         self.close()
+
 
 class BackgroundPlotter(QtInteractor):
 
