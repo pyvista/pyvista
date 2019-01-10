@@ -333,8 +333,8 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
 
         """
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
-        # bfilter.SetOperationToIntersection()
-        bfilter.SetOperationToDifference()
+        bfilter.SetOperationToIntersection()
+        # bfilter.SetOperationToDifference()
 
         bfilter.SetInputData(1, cut)
         bfilter.SetInputData(0, self)

@@ -5,18 +5,13 @@ import logging
 import vtk
 import vtk.qt
 
-from vtki.plotting import BasePlotter, plotParams
+from vtki.plotting import BasePlotter, plotParams, run_from_ipython
 
 # for display bugs due to older intel integrated GPUs
 vtk.qt.QVTKRWIBase = 'QGLWidget'
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
-
-# from threading import Thread
-# import time
-# import sys
-# from PyQt5 import Qt
 
 
 # dummy reference for when PyQt5 is not installed
@@ -66,22 +61,42 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.SetInteractorStyle(istyle)
         self.add_axes()
 
+        def quit_q(obj, event):
+            key = self.iren.GetKeySym().lower()
+            if key == 'q':
+                self.iren.TerminateApp()
+                self.close()
+
+        # QVTKRenderWindowInteractor doesn't have a "q" event
+        self.iren.AddObserver("KeyPressEvent", quit_q)
+
     def closeEvent(self, event):
         self.close()
 
-
 class BackgroundPlotter(QtInteractor):
 
-    def __init__(self, show=True):
+    def __init__(self, show=True, app=None):
         assert has_pyqt, 'Requires PyQt5'
         self.active = True
 
-        from PyQt5.QtWidgets import QApplication
-        app = QApplication.instance()
-        if not app:
-            app = QApplication([''])
-        self.app = app
+        # ipython magic
+        if run_from_ipython():
+            # breakpoint()
+            from IPython import get_ipython
+            ipython = get_ipython()
+            ipython.magic('gui qt')
 
+            from IPython.external.qt_for_kernel import QtGui
+            QtGui.QApplication.instance()
+
+        # run within python
+        if app is None:
+            from PyQt5.QtWidgets import QApplication
+            app = QApplication.instance()
+            if not app:
+                app = QApplication([''])
+
+        self.app = app
         QtInteractor.__init__(self)
         if show:
             self.show()

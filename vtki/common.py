@@ -31,6 +31,12 @@ class Common(DataSetFilters):
     @property
     def active_scalar_info(self):
         field, name = self._active_scalar_info
+
+        # rare error where scalar name isn't a valid scalar
+        if name not in self.point_arrays:
+            if name not in self.cell_arrays:
+                name = None
+
         if name is None:
             if self.n_scalars < 1:
                 return field, name
@@ -42,8 +48,6 @@ class Common(DataSetFilters):
             elif carr is not None:
                 self._active_scalar_info = [CELL_DATA_FIELD, carr]
         return self._active_scalar_info
-
-
 
     @property
     def points(self):
@@ -378,7 +382,6 @@ class Common(DataSetFilters):
     def copy_meta_from(self, ido):
         """Copies vtki meta data onto this object from another object"""
         self._active_scalar_info = ido.active_scalar_info
-
 
     def copy(self, deep=True):
         """
