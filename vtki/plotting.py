@@ -1574,7 +1574,7 @@ class BasePlotter(object):
             input grid by default.
 
         callback : function, optional
-            When input, calls this function after a selection is made.  
+            When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
 
         """
@@ -1676,7 +1676,8 @@ class Plotter(BasePlotter):
         self.camera_set = False
         self.first_time = True
 
-    def plot(self, title=None, window_size=plotParams['window_size'],
+
+    def show(self, title=None, window_size=plotParams['window_size'],
              interactive=True, autoclose=True, interactive_update=False,
              full_screen=False):
         """
@@ -1761,6 +1762,10 @@ class Plotter(BasePlotter):
             return disp
 
         return cpos
+
+    def plot(self, **kwargs):
+        """ Present for backwards compatibility. Use `show()` instead """
+        return self.show(**kwargs)
 
     def render(self):
         """ renders main window """
