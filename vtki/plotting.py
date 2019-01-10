@@ -19,6 +19,7 @@ from vtki.container import MultiBlock
 import imageio
 
 
+MAX_N_COLOR_BARS = 10
 PV_BACKGROUND = [82/255., 87/255., 110/255.]
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
@@ -269,7 +270,7 @@ class BasePlotter(object):
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
-        self._scalar_bar_slots = list(range(10))
+        self._scalar_bar_slots = list(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         # This keeps track of scalar names already plotted and their ranges
         self._scalar_bar_ranges = {}
@@ -1139,7 +1140,7 @@ class BasePlotter(object):
             del self.axes_widget
 
         # reset scalar bar stuff
-        self._scalar_bar_slots = list(range(10))
+        self._scalar_bar_slots = list(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
