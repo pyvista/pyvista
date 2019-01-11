@@ -54,10 +54,9 @@ def test_plot_invalid_style():
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
-def test_plot_invalid_bounds_axes():
-    with pytest.raises(Exception):
-        plotter = vtki.Plotter()
-        plotter.add_bounds_axes()
+def test_plot_bounds_axes_with_no_data():
+    plotter = vtki.Plotter()
+    plotter.add_bounds_axes()
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")

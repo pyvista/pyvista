@@ -80,7 +80,10 @@ def _raise_not_matching(scalars, mesh):
 
 def _remove_mapper_from_plotter(plotter, actor):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
-    mapper = actor.GetMapper()
+    try:
+        mapper = actor.GetMapper()
+    except AttributeError:
+        return
     for name in list(plotter._scalar_bar_mappers.keys()):
         try:
             plotter._scalar_bar_mappers[name].remove(mapper)
@@ -89,7 +92,7 @@ def _remove_mapper_from_plotter(plotter, actor):
         if len(plotter._scalar_bar_mappers[name]) < 1:
             plotter._scalar_bar_mappers.pop(name)
             plotter._scalar_bar_ranges.pop(name)
-            plotter.remove_actor(plotter._scalar_bar_actors.pop(name), remove_mapper=False)
+            plotter.remove_actor(plotter._scalar_bar_actors.pop(name))
             plotter._scalar_bar_slots.add(plotter._scalar_bar_slot_lookup.pop(name))
     return
 
@@ -705,7 +708,7 @@ class BasePlotter(object):
     def camera(self):
         return self.renderer.GetActiveCamera()
 
-    def remove_actor(self, actor, remove_mapper=True):
+    def remove_actor(self, actor):
         """
         Removes an actor from the Plotter.
 
@@ -715,8 +718,7 @@ class BasePlotter(object):
             Actor that has previously added to the Plotter.
         """
         # First remove this actor's mapper from _scalar_bar_mappers
-        if remove_mapper:
-            _remove_mapper_from_plotter(self, actor)
+        _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
 
     def add_axes_at_origin(self):
@@ -1666,11 +1668,10 @@ class BasePlotter(object):
             self.remove_actor(self.legend)
             self._render()
 
-    def remove_actor(self, actor, remove_mapper=True):
+    def remove_actor(self, actor):
         """ removes an actor """
         # First remove this actor's mapper from _scalar_bar_mappers
-        if remove_mapper:
-            _remove_mapper_from_plotter(self, actor)
+        _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
         self._render()
 
