@@ -19,6 +19,7 @@ from vtki.container import MultiBlock
 import imageio
 
 
+MAX_N_COLOR_BARS = 10
 PV_BACKGROUND = [82/255., 87/255., 110/255.]
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
@@ -43,7 +44,13 @@ plotParams = {
         'label_size' : None,
         'color' : [1, 1, 1],
     },
-    'colormap' : 'jet'
+    'colormap' : 'jet',
+    'colorbar' : {
+        'width' : 0.60,
+        'height' : 0.08,
+        'position_x' : 0.35,
+        'position_y' : 0.02,
+    },
 }
 
 def set_plot_theme(theme):
@@ -70,6 +77,24 @@ def _raise_not_matching(scalars, mesh):
                     '(%d) ' % mesh.GetNumberOfPoints() +
                     'or the number of cells ' +
                     '(%d) ' % mesh.GetNumberOfCells())
+
+def _remove_mapper_from_plotter(plotter, actor):
+    """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
+    try:
+        mapper = actor.GetMapper()
+    except AttributeError:
+        return
+    for name in list(plotter._scalar_bar_mappers.keys()):
+        try:
+            plotter._scalar_bar_mappers[name].remove(mapper)
+        except ValueError:
+            pass
+        if len(plotter._scalar_bar_mappers[name]) < 1:
+            plotter._scalar_bar_mappers.pop(name)
+            plotter._scalar_bar_ranges.pop(name)
+            plotter.remove_actor(plotter._scalar_bar_actors.pop(name))
+            plotter._scalar_bar_slots.add(plotter._scalar_bar_slot_lookup.pop(name))
+    return
 
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
@@ -246,9 +271,23 @@ class BasePlotter(object):
     def __init__(self):
         self.renderer = vtk.vtkRenderer()
 
+        # This is a private variable to keep track of how many colorbars exist
+        # This allows us to keep adding colorbars without overlapping
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slot_lookup = {}
+        # This keeps track of scalar names already plotted and their ranges
+        self._scalar_bar_ranges = {}
+        self._scalar_bar_mappers = {}
+        self._scalar_bar_actors = {}
+
     def clear(self):
         """ Clears plot by removing all actors and properties """
         self.renderer.RemoveAllViewProps()
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slot_lookup = {}
+        self._scalar_bar_ranges = {}
+        self._scalar_bar_mappers = {}
+        self._scalar_bar_actors = {}
 
     def enable_trackball_style(self):
         """ sets the interacto style to trackball """
@@ -524,7 +563,7 @@ class BasePlotter(object):
                 scalars = get_scalar(mesh, scalars)
                 if stitle is None:
                     stitle = title
-                append_scalars = False
+                #append_scalars = False
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -546,6 +585,8 @@ class BasePlotter(object):
                 self.mesh._add_cell_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUseCellData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
+                if interpolatebeforemap:
+                    self.mapper.InterpolateScalarsBeforeMappingOn()
             else:
                 _raise_not_matching(scalars, mesh)
 
@@ -676,6 +717,8 @@ class BasePlotter(object):
         actor : vtk.vtkActor
             Actor that has previously added to the Plotter.
         """
+        # First remove this actor's mapper from _scalar_bar_mappers
+        _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
 
     def add_axes_at_origin(self):
@@ -777,11 +820,9 @@ class BasePlotter(object):
         if fontsize is None:
             fontsize = plotParams['font']['size']
 
-        # Use last input mesh if availble
+        # Use the bounds of all data in the rendering window
         if not mesh and not bounds:
-            if not hasattr(self, 'mesh'):
-                raise Exception('Specify bounds or first input a mesh')
-            mesh = self.mesh
+            bounds = self.bounds
 
         # create actor
         cubeAxesActor = vtk.vtkCubeAxesActor()
@@ -790,7 +831,7 @@ class BasePlotter(object):
         # set bounds
         if not bounds:
             bounds = mesh.GetBounds()
-        cubeAxesActor.SetBounds(mesh.GetBounds())
+        cubeAxesActor.SetBounds(bounds)
 
         # show or hide axes
         cubeAxesActor.SetXAxisVisibility(show_xaxis)
@@ -862,7 +903,8 @@ class BasePlotter(object):
 
     def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,
                        title_fontsize=None, label_fontsize=None, color=None,
-                       font_family=None, shadow=False, mapper=None):
+                       font_family=None, shadow=False, mapper=None,
+                       width=None, height=None, position_x=None, position_y=None):
         """
         Creates scalar bar using the ranges as set by the last input mesh.
 
@@ -901,6 +943,20 @@ class BasePlotter(object):
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to False
 
+        width : float, optional
+            The percentage (0 to 1) width of the window fo the colorbar
+
+        height : float, optional
+            The percentage (0 to 1) height of the window for the colorbar
+
+        position_x : float, optional
+            The percentage (0 to 1) along the winow's horizontal direction to
+            place the bottom left corner of the colorbar
+
+        position_y : float, optional
+            The percentage (0 to 1) along the winow's vertical direction to
+            place the bottom left corner of the colorbar
+
         Notes
         -----
         Setting title_fontsize, or label_fontsize disables automatic font
@@ -916,6 +972,11 @@ class BasePlotter(object):
             title_fontsize = plotParams['font']['title_size']
         if color is None:
             color = plotParams['font']['color']
+        # Automatically choose size if not specified
+        if width is None:
+            width = plotParams['colorbar']['width']
+        if height is None:
+            height = plotParams['colorbar']['height']
 
         # check if maper exists
         if mapper is None:
@@ -923,6 +984,43 @@ class BasePlotter(object):
                 raise Exception('Mapper does not exist.  ' +
                                 'Add a mesh with scalars first.')
             mapper = self.mapper
+
+        if title:
+            # Check that this data hasn't already been plotted
+            if title in list(self._scalar_bar_ranges.keys()):
+                rng = list(self._scalar_bar_ranges[title])
+                newrng = mapper.GetScalarRange()
+                oldmappers = self._scalar_bar_mappers[title]
+                # get max for range and reset everything
+                if newrng[0] < rng[0]:
+                    rng[0] = newrng[0]
+                if newrng[1] > rng[1]:
+                    rng[1] = newrng[1]
+                for m in oldmappers:
+                    m.SetScalarRange(rng[0], rng[1])
+                mapper.SetScalarRange(rng[0], rng[1])
+                self._scalar_bar_mappers[title].append(mapper)
+                self._scalar_bar_ranges[title] = rng
+                # Color bar already present and ready to be used so returning
+                return
+
+        # Automatically choose location if not specified
+        if position_x is None or position_y is None:
+            try:
+                slot = min(self._scalar_bar_slots)
+                self._scalar_bar_slots.remove(slot)
+                print('slot', slot)
+            except:
+                raise RuntimeError('Maximum number of color bars reached.')
+            if position_x is None:
+                position_x = plotParams['colorbar']['position_x']
+            if position_y is None:
+                position_y = plotParams['colorbar']['position_y'] + slot * height
+        # Adjust to make sure on the screen
+        if position_x + width > 1:
+            position_x -= width
+        if position_y + height > 1:
+            position_y -= height
 
         # parse color
         color = parse_color(color)
@@ -933,9 +1031,10 @@ class BasePlotter(object):
         self.scalar_bar.SetNumberOfLabels(nlabels)
 
         # edit the size of the colorbar
-        self.scalar_bar.SetHeight(0.9)
-        self.scalar_bar.SetWidth(0.05)
-        self.scalar_bar.SetPosition(0.90, 0.02)
+        self.scalar_bar.SetHeight(height)
+        self.scalar_bar.SetWidth(width)
+        self.scalar_bar.SetPosition(position_x, position_y)
+        self.scalar_bar.SetOrientationToHorizontal()
 
         if label_fontsize is None or title_fontsize is None:
             self.scalar_bar.UnconstrainedFontSizeOn()
@@ -954,8 +1053,15 @@ class BasePlotter(object):
 
         # Set properties
         if title:
+            rng = mapper.GetScalarRange()
+            self._scalar_bar_ranges[title] = rng
+            self._scalar_bar_mappers[title] = [mapper]
+            self._scalar_bar_slot_lookup[title] = slot
+
             self.scalar_bar.SetTitle(title)
             title_text = self.scalar_bar.GetTitleTextProperty()
+
+            title_text.SetJustificationToCentered()
 
             title_text.SetItalic(italic)
             title_text.SetBold(bold)
@@ -968,6 +1074,8 @@ class BasePlotter(object):
 
             # set color
             title_text.SetColor(color)
+
+            self._scalar_bar_actors[title] = self.scalar_bar
 
         self.add_actor(self.scalar_bar)
 
@@ -1040,6 +1148,12 @@ class BasePlotter(object):
         # must close out axes marker
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
+
+        # reset scalar bar stuff
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slot_lookup = {}
+        self._scalar_bar_ranges = {}
+        self._scalar_bar_mappers = {}
 
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
@@ -1556,6 +1670,8 @@ class BasePlotter(object):
 
     def remove_actor(self, actor):
         """ removes an actor """
+        # First remove this actor's mapper from _scalar_bar_mappers
+        _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
         self._render()
 
@@ -1574,7 +1690,7 @@ class BasePlotter(object):
             input grid by default.
 
         callback : function, optional
-            When input, calls this function after a selection is made.  
+            When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
 
         """
@@ -1676,7 +1792,8 @@ class Plotter(BasePlotter):
         self.camera_set = False
         self.first_time = True
 
-    def plot(self, title=None, window_size=plotParams['window_size'],
+
+    def show(self, title=None, window_size=plotParams['window_size'],
              interactive=True, autoclose=True, interactive_update=False,
              full_screen=False):
         """
@@ -1761,6 +1878,10 @@ class Plotter(BasePlotter):
             return disp
 
         return cpos
+
+    def plot(self, **kwargs):
+        """ Present for backwards compatibility. Use `show()` instead """
+        return self.show(**kwargs)
 
     def render(self):
         """ renders main window """
