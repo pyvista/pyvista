@@ -42,3 +42,6 @@ test.bat
 # Code coverage results
 htmlcov
 .coverage
+
+# Mac
+.DS_Store
