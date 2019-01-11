@@ -1009,7 +1009,6 @@ class BasePlotter(object):
             try:
                 slot = min(self._scalar_bar_slots)
                 self._scalar_bar_slots.remove(slot)
-                print('slot', slot)
             except:
                 raise RuntimeError('Maximum number of color bars reached.')
             if position_x is None:
@@ -1878,9 +1877,9 @@ class Plotter(BasePlotter):
 
         return cpos
 
-    def plot(self, **kwargs):
+    def plot(self, *args, **kwargs):
         """ Present for backwards compatibility. Use `show()` instead """
-        return self.show(**kwargs)
+        return self.show(*args, **kwargs)
 
     def render(self):
         """ renders main window """
