@@ -424,8 +424,8 @@ class Common(DataSetFilters):
                 if keys:
                     if self._point_arrays[keys[0]].size == self.n_points:
                         return self._point_arrays
-                    else:
-                        return self._point_arrays
+                else:
+                    return self._point_arrays
 
         # dictionary with callbacks
         self._point_arrays = PointScalarsDict(self)
@@ -454,8 +454,8 @@ class Common(DataSetFilters):
                 if keys:
                     if self._cell_arrays[keys[0]].size == self.n_cells:
                         return self._cell_arrays
-                    else:
-                        return self._cell_arrays
+                else:
+                    return self._cell_arrays
 
         # dictionary with callbacks
         self._cell_arrays = CellScalarsDict(self)
