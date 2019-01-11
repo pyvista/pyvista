@@ -84,7 +84,7 @@ class Common(DataSetFilters):
         elif field == CELL_DATA_FIELD:
             return self._cell_scalar(name)
 
-    def _point_scalar(self, name):
+    def _point_scalar(self, name=None):
         """
         Returns point scalars of a vtk object
 
@@ -99,6 +99,11 @@ class Common(DataSetFilters):
             Numpy array of scalars
 
         """
+        if name is None:
+            # use active scalar array
+            field, name = self.active_scalar_info
+            if field != POINT_DATA_FIELD:
+                raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetArray(name)
         assert vtkarr is not None, '%s is not a point scalar' % name
         array = vtk_to_numpy(vtkarr)
@@ -320,7 +325,7 @@ class Common(DataSetFilters):
         self.points[:, 1] = y
         self.points[:, 2] = z
 
-    def _cell_scalar(self, name):
+    def _cell_scalar(self, name=None):
         """
         Returns the cell scalars of a vtk object
 
@@ -335,6 +340,11 @@ class Common(DataSetFilters):
             Numpy array of scalars
 
         """
+        if name is None:
+            # use active scalar array
+            field, name = self.active_scalar_info
+            if field != CELL_DATA_FIELD:
+                raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetCellData().GetArray(name)
         array = vtk_to_numpy(vtkarr)
         if array.dtype == np.uint8:
@@ -497,7 +507,10 @@ class Common(DataSetFilters):
     def extent(self):
         return self.GetExtent()
 
-    def get_data_range(self, name):
+    def get_data_range(self, name=None):
+        if name is None:
+            # use active scalar array
+            _, name = self.active_scalar_info
         arr = get_scalar(self, name)
         return np.nanmin(arr), np.nanmax(arr)
 
