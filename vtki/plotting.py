@@ -407,7 +407,7 @@ class BasePlotter(object):
                  scalars=None, rng=None, stitle=None, showedges=True,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
-                 colormap=None, label=None, **kwargs):
+                 colormap=None, label=None, scalar_bar_args={}, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -529,9 +529,11 @@ class BasePlotter(object):
                     ts = scalars
                 self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, showedges=showedges,
-                             psize=psize, opacity=opacity, linethick=linethick, flipscalars=flipscalars,
-                             lighting=lighting, ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
-                             colormap=colormap, label=label, **kwargs)
+                             psize=psize, opacity=opacity, linethick=linethick,
+                             flipscalars=flipscalars, lighting=lighting,
+                             ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
+                             colormap=colormap, label=label,
+                             scalar_bar_args=scalar_bar_args, **kwargs)
             return
 
 
@@ -663,7 +665,7 @@ class BasePlotter(object):
 
         # Add scalar bar if available
         if stitle is not None:
-            self.add_scalar_bar(stitle)
+            self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
 
@@ -1111,10 +1113,15 @@ class BasePlotter(object):
         s = VN.vtk_to_numpy(vtk_scalars)
         s[:] = scalars
         data.Modified()
-        mesh.GetPoints().Modified()
+        try:
+            # Why are the points updated here? Not all datasets have points
+            # and only the scalar array is modified by this function...
+            mesh.GetPoints().Modified()
+        except:
+            pass
 
         if render:
-            self.render()
+            self.ren_win.Render()
 
     def update_coordinates(self, points, mesh=None, render=True):
         """
