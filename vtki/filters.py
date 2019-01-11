@@ -66,9 +66,24 @@ class DataSetFilters(object):
         """
         Clip a dataset by a plane by specifying the origin and normal. If no
         parameters are given the clip will occur in the center of that dataset
-        
-        dataset : 
-        
+
+        Parameters
+        ----------
+
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        normal : tuple(float) or str
+            Length 3 tuple for the normal vector direction. Can also be specified
+            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
+            or ``'-x'`` for ``(-1,0,0), etc.
+
+        origin : tuple(float)
+            The center (x,y,z) coordinate of the plane on which the clip occurs
+
+        invert : bool
+            Flag on whether to flip/invert the clip
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -90,6 +105,21 @@ class DataSetFilters(object):
         """Slice a dataset by a plane at the specified origin and normal vector
         orientation. If no origin is specified, the center of the input dataset will
         be used.
+
+        Parameters
+        ----------
+
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        normal : tuple(float) or str
+            Length 3 tuple for the normal vector direction. Can also be specified
+            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
+            or ``'-x'`` for ``(-1,0,0), etc.
+
+        origin : tuple(float)
+            The center (x,y,z) coordinate of the plane on which the slice occurs
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -106,12 +136,12 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def threshold(dataset, value, scalars=None, invert=False, continuous=False,
+    def threshold(dataset, value=None, scalars=None, invert=False, continuous=False,
                   preference='cell'):
         """
         This filter will apply a ``vtkThreshold`` filter to the input dataset and
         return the resulting object. This extracts cells where scalar value in each
-        cell satisfies threshold criterion.  If scalars is None, the inputs 
+        cell satisfies threshold criterion.  If scalars is None, the inputs
         active_scalar is used.
 
         Parameters
@@ -119,26 +149,27 @@ class DataSetFilters(object):
         dataset : vtk.vtkDataSet object
             Input dataset.
 
-        value : float or iterable
+        value : float or iterable, optional
             Single value or (min, max) to be used for the data threshold.  If
-            iterable then length must be 2.
+            iterable, then length must be 2. If no value is specified, the
+            non-NaN data range will be used to remove any NaN values.
 
-        scalars : str
-            Name of scalars.
+        scalars : str, optional
+            Name of scalars to threshold on. Defaults to currently active scalars.
 
         invert : bool, optional
             If value is a single value, when invert is True cells are kept when
             their values are below parameter "value".  When invert is False
             cells are kept when their value is above the threshold "value".
-            
+
         continuous : bool, optional
-            When True, the continuous interval [minimum cell scalar, 
-            maxmimum cell scalar] will be used to intersect the threshold bound, 
+            When True, the continuous interval [minimum cell scalar,
+            maxmimum cell scalar] will be used to intersect the threshold bound,
             rather than the set of discrete scalar values from the vertices.
-            
+
         preference : str, optional
-            When scalars is None, this is the perfered scalar type to search for
-            in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to search
+            for in the dataset.  Must be either 'point' or 'cell'.
 
         """
         alg = vtk.vtkThreshold()
@@ -151,6 +182,9 @@ class DataSetFilters(object):
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set thresholding parameters
         alg.SetUseContinuousCellRange(continuous)
+        # use valid range if no value given
+        if value is None:
+            value = dataset.get_data_range(scalars)
         # check if value is iterable (if so threshold by min max range like ParaView)
         if isinstance(value, collections.Iterable):
             if len(value) != 2:
@@ -170,6 +204,7 @@ class DataSetFilters(object):
 
 
     def outline(dataset, gen_faces=False):
+        """Produces an outline of the full extent for the input dataset"""
         alg = vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
         alg.SetGenerateFaces(gen_faces)
@@ -186,6 +221,31 @@ class PointSetFilters(object):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
         specifying the number of isosurfaces in the data range or an iterable set of
         values for explicitly setting the isosurfaces.
+
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        isosurfaces : int or iterable
+            Number of isosurfaces to compute across valid data range or an
+            iterable of float values to explicitly use as the isosurfaces.
+
+        scalars : str, optional
+            Name of scalars to threshold on. Defaults to currently active scalars.
+
+        compute_normals : bool, optional
+
+        compute_gradients : bool, optional
+            Desc
+
+        compute_scalars : bool, optional
+            Preserves the scalar values that are being contoured
+
+        preference : str, optional
+            When scalars is specified, this is the perfered scalar type to search
+            for in the dataset.  Must be either 'point' or 'cell'.
+
         """
         alg = vtk.vtkContourFilter() #vtkMarchingCubes
         alg.SetInputDataObject(dataset)
