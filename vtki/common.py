@@ -417,9 +417,15 @@ class Common(DataSetFilters):
         pdata = self.GetPointData()
         narr = pdata.GetNumberOfArrays()
 
+        # Update data if necessary
         if hasattr(self, '_point_arrays'):
-            if narr == len(self._point_arrays):
-                return self._point_arrays
+            keys = list(self._point_arrays.keys())
+            if narr == len(keys):
+                if keys:
+                    if self._point_arrays[keys[0]].size == self.n_points:
+                        return self._point_arrays
+                    else:
+                        return self._point_arrays
 
         # dictionary with callbacks
         self._point_arrays = PointScalarsDict(self)
@@ -441,10 +447,15 @@ class Common(DataSetFilters):
         cdata = self.GetCellData()
         narr = cdata.GetNumberOfArrays()
 
-        # sanity check
+        # Update data if necessary
         if hasattr(self, '_cell_arrays'):
-            if narr == len(self._cell_arrays):
-                return self._cell_arrays
+            keys = list(self._cell_arrays.keys())
+            if narr == len(keys):
+                if keys:
+                    if self._cell_arrays[keys[0]].size == self.n_cells:
+                        return self._cell_arrays
+                    else:
+                        return self._cell_arrays
 
         # dictionary with callbacks
         self._cell_arrays = CellScalarsDict(self)

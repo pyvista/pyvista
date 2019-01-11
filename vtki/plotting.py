@@ -1603,7 +1603,6 @@ class BasePlotter(object):
         self.iren.SetPicker(area_picker)
 
 
-
 class Plotter(BasePlotter):
     """
     Plotting object to display vtk meshes or numpy arrays.
