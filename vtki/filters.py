@@ -337,7 +337,7 @@ class DataSetFilters(object):
         """
         alg = vtk.vtkOutlineCornerFilter()
         alg.SetInputDataObject(dataset)
-        alg.SetGenerateFaces(gen_faces)
+        alg.SetCornerFactor(factor)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
