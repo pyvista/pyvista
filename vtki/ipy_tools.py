@@ -7,6 +7,8 @@ from ipywidgets import interact, interactive, fixed, interact_manual
 import ipywidgets as widgets
 import collections
 
+import vtk
+
 import vtki
 from vtki.utilities import is_vtki_obj, wrap
 
@@ -14,7 +16,7 @@ from vtki.utilities import is_vtki_obj, wrap
 class InteractiveTool(object):
     """A backend helper for various interactive ipython tools"""
 
-    def __init__(self, dataset, plotter=None, **kwargs):
+    def __init__(self, dataset, plotter=None, scalars=None, preference='cell', plotParams={}, **kwargs):
         if not is_vtki_obj(dataset):
             dataset = wrap(dataset)
             if not is_vtki_obj(dataset):
@@ -27,6 +29,13 @@ class InteractiveTool(object):
         self.plotter = plotter
 
         self._data_to_update = None
+
+        plotParams.setdefault('rng', self.input_dataset.get_data_range(scalars, preference=preference))
+        plotParams.setdefault('scalars', scalars)
+        plotParams.setdefault('preference', preference)
+        self.plotParams = plotParams
+
+        self._initialize()
 
         self.tool(**kwargs)
 
@@ -75,22 +84,14 @@ class OthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, threshold=True, step=None, scalars=None, preference='cell', plotParams={}):
+    def tool(self, threshold=True, step=None):
         if threshold:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
-        plotParams.setdefault('rng', self.input_dataset.get_data_range(scalars, preference=preference))
-        plotParams.setdefault('scalars', scalars)
-        plotParams.setdefault('preference', preference)
-
-        self._initialize()
-
-
-        # Now set up the widgets
         def update(x, y, z):
             self.plotter.remove_actor(self._data_to_update)
-            self._data_to_update = self.plotter.add_mesh(self.input_dataset.slice_orthogonal(x,y,z), showedges=False, resetcam=False, **plotParams)
+            self._data_to_update = self.plotter.add_mesh(self.input_dataset.slice_orthogonal(x,y,z), showedges=False, resetcam=False, **self.plotParams)
 
         if step is None:
             stepx = 0.05 * (self.input_dataset.bounds[1] - self.input_dataset.bounds[0])
@@ -105,18 +106,22 @@ class OthogonalSlicer(InteractiveTool):
             stepy = step
             stepz = step
 
+        # Now set up the widgets
         xsl = widgets.FloatSlider(min=self.input_dataset.bounds[0]+stepx,
                             max=self.input_dataset.bounds[1]-stepx,
                             step=stepx,
-                            value=self.input_dataset.center[0])
+                            value=self.input_dataset.center[0],
+                            continuous_update=False)
         ysl = widgets.FloatSlider(min=self.input_dataset.bounds[2]+stepy,
                             max=self.input_dataset.bounds[3]-stepy,
                             step=stepy,
-                            value=self.input_dataset.center[1])
+                            value=self.input_dataset.center[1],
+                            continuous_update=False)
         zsl = widgets.FloatSlider(min=self.input_dataset.bounds[4]+stepz,
                             max=self.input_dataset.bounds[5]-stepz,
                             step=stepz,
-                            value=self.input_dataset.center[2])
+                            value=self.input_dataset.center[2],
+                            continuous_update=False)
 
         interact(update, x=xsl, y=ysl, z=zsl)
 
@@ -152,22 +157,91 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, threshold=True, tol=1e-3, scalars=None, preference='cell', plotParams={}):
+    def tool(self, threshold=True, tol=1e-3):
         if threshold:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
-        plotParams.setdefault('rng', self.input_dataset.get_data_range(scalars, preference=preference))
-        plotParams.setdefault('scalars', scalars)
-        plotParams.setdefault('preference', preference)
-
-        self._initialize()
-
-        # Now set up the widgets
         def update(n, axis):
             self.plotter.remove_actor(self._data_to_update)
-            self._data_to_update = self.plotter.add_mesh(self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol), showedges=False, resetcam=False, **plotParams)
+            self._data_to_update = self.plotter.add_mesh(self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol), showedges=False, resetcam=False, **self.plotParams)
 
-        nsl = widgets.IntSlider(min=1, max=25, step=1, value=5)
+        #continuous_update=False
+        nsl = widgets.IntSlider(min=1, max=25, step=1, value=5,
+                                continuous_update=False)
 
         interact(update, n=nsl, axis=['x', 'y', 'z'])
+
+
+class Threshold(InteractiveTool):
+    """Allows user to use slider bars to control the threshold range.
+
+    Parameters
+    ----------
+    dataset : vtki.Common
+        The datset to orthogonalally slice
+
+    plotter : vtki.BasePlotter
+        The active plotter (rendering window) to use
+
+    scalars : str
+        The name of the scalars to plot
+
+    preference : str, optional
+        The preference for data choice when search for the scalar array
+
+    plotParams : dict
+        Any plotting keyword parameters to use
+
+    """
+
+    def tool(self):
+        preference = self.plotParams['preference']
+        # Basically set up two threshold filters
+
+        self.valid_range = self.input_dataset.get_data_range(arr=self.plotParams['scalars'], preference=preference)
+        # Now set up the widgets
+        minsl = widgets.FloatSlider(min=self.valid_range[0],
+                            max=self.valid_range[1],
+                            value=self.valid_range[0],
+                            continuous_update=False)
+        maxsl = widgets.FloatSlider(min=self.valid_range[0],
+                            max=self.valid_range[1],
+                            value=self.valid_range[1],
+                            continuous_update=False)
+
+        def update(dmin, dmax, scalars, invert, continuous):
+            if dmax < dmin:
+                foo = dmax
+                dmax = dmin
+                dmin = foo
+                invert = True
+
+            # Update the sliders if scalar is changed
+            self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
+            minsl.min = self.valid_range[0]
+            minsl.max = self.valid_range[1]
+            maxsl.min = self.valid_range[0]
+            maxsl.max = self.valid_range[1]
+
+            if invert:
+                # raise RuntimeError('Not supported')
+                # Create two thresholds and merge result
+                t1 = self.input_dataset.threshold([self.valid_range[0], dmin], scalars=scalars, continuous=continuous, preference=preference)
+                t2 = self.input_dataset.threshold([dmax, self.valid_range[1]], scalars=scalars, continuous=continuous, preference=preference)
+                appender = vtk.vtkAppendFilter()
+                appender.AddInputData(t1)
+                appender.AddInputData(t2)
+                appender.Update()
+                data = appender.GetOutputDataObject(0)
+            else:
+                data = self.input_dataset.threshold([dmin, dmax], scalars=scalars, continuous=continuous, preference=preference)
+            # Update the plot
+            self.plotParams['scalars'] = scalars
+            self.plotter.remove_actor(self._data_to_update)
+            self._data_to_update = self.plotter.add_mesh(data, **self.plotParams)
+
+
+        interact(update, dmin=minsl, dmax=maxsl,
+                 scalars=self.input_dataset.scalar_names, invert=False,
+                 continuous=False)

@@ -531,6 +531,16 @@ class Common(DataSetFilters):
         return self.GetPointData().GetNumberOfArrays() + \
                self.GetCellData().GetNumberOfArrays()
 
+    @property
+    def scalar_names(self):
+        names = []
+        for i in range(self.GetPointData().GetNumberOfArrays()):
+            names.append(self.GetPointData().GetArrayName(i))
+        for i in range(self.GetCellData().GetNumberOfArrays()):
+            names.append(self.GetCellData().GetArrayName(i))
+        return names
+
+
     def _get_attrs(self):
         """An internal helper for the representation methods"""
         attrs = []

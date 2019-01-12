@@ -19,7 +19,8 @@ from vtki.qt_plotting import BackgroundPlotter
 try:
     from vtki.ipy_tools import OthogonalSlicer
     from vtki.ipy_tools import ManySlicesAlongAxis
-except:
+    from vtki.ipy_tools import Threshold
+except ImportError:
     # Ipython stuff is not always availble
     pass
 
