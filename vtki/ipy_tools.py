@@ -12,6 +12,35 @@ import vtki
 
 def orthographic_slicer(dataset, plotter=None, threshold=True, step=None,
                         scalars=None, preference='cell', plotParams={}):
+    """Within ipython enviornments like Jupyter notebooks, this will create
+    an interactive render window with slider bars in te ipython enviornment to
+    move orthographic slices through the scene.
+
+    Parameters
+    ----------
+    dataset : vtki.Common
+        The datset to orthographically slice
+
+    plotter : vtki.BasePlotter
+        The active plotter (rendering window) to use
+
+    threshold : bool, optional
+        This will apply a threshold on the input dataset to remove any NaN
+        values. Default is True.
+
+    step : float or tuple(float)
+        The increments for the XYZ locations on each of the slider bars
+
+    scalars : str
+        The name of the scalars to plot
+
+    preference : str, optional
+        The preference for data choice when search for the scalar array
+
+    plotParams : dict
+        Any plotting keyword parameters to use
+
+    """
     if threshold:
         # This will clean out the nan values
         dataset = dataset.threshold()
