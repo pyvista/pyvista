@@ -311,7 +311,7 @@ class BasePlotter(object):
             else:
                 self.render()
 
-    def add_axes(self):
+    def add_axes(self, interactive=False):
         """ Add an interactive axes widget """
         if hasattr(self, 'axes_widget'):
             raise Exception('Plotter already has an axes widget')
@@ -321,7 +321,7 @@ class BasePlotter(object):
         if hasattr(self, 'iren'):
             self.axes_widget.SetInteractor(self.iren)
             self.axes_widget.SetEnabled(1)
-            self.axes_widget.InteractiveOn()
+            self.axes_widget.SetInteractive(interactive)
 
     def _update_bounds(self, bounds):
         def update_axis(ax):
