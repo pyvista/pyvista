@@ -98,4 +98,4 @@ def orthogonal_slicer(dataset, plotter=None, threshold=True, step=None,
                         step=stepz,
                         value=dataset.center[2])
 
-    return interact(update_slices, x=xsl, y=ysl, z=zsl);
+    interact(update_slices, x=xsl, y=ysl, z=zsl);
