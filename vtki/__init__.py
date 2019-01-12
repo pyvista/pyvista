@@ -16,11 +16,11 @@ from vtki.container import MultiBlock
 from vtki.qt_plotting import QtInteractor
 from vtki.qt_plotting import BackgroundPlotter
 
-try:
-    from vtki.ipy_tools import orthographic_slicer
-except:
-    # Ipython stuff is not always availble
-    pass
+# try:
+from vtki.ipy_tools import orthogonal_slicer
+# except:
+#     # Ipython stuff is not always availble
+#     pass
 
 import numpy as np
 

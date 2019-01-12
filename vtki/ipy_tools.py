@@ -11,16 +11,16 @@ import vtki
 from vtki.utilities import is_vtki_obj, wrap
 
 
-def orthographic_slicer(dataset, plotter=None, threshold=True, step=None,
+def orthogonal_slicer(dataset, plotter=None, threshold=True, step=None,
                         scalars=None, preference='cell', plotParams={}):
     """Within ipython enviornments like Jupyter notebooks, this will create
     an interactive render window with slider bars in te ipython enviornment to
-    move orthographic slices through the scene.
+    move orthogonal slices through the scene.
 
     Parameters
     ----------
     dataset : vtki.Common
-        The datset to orthographically slice
+        The datset to orthogonalally slice
 
     plotter : vtki.BasePlotter
         The active plotter (rendering window) to use
@@ -42,7 +42,7 @@ def orthographic_slicer(dataset, plotter=None, threshold=True, step=None,
         Any plotting keyword parameters to use
 
     """
-    if not if is_vtki_obj(dataset):
+    if not is_vtki_obj(dataset):
         dataset = wrap(dataset)
         if not is_vtki_obj(dataset):
             raise RuntimeError('Object not supported for plotting in vtki.')
@@ -58,7 +58,7 @@ def orthographic_slicer(dataset, plotter=None, threshold=True, step=None,
 
     # Add dataset to the rendering window
     global slices
-    slices = plotter.add_mesh(dataset.slice_orthographic(), showedges=False, **plotParams)
+    slices = plotter.add_mesh(dataset.slice_orthogonal(), showedges=False, **plotParams)
     outline = plotter.add_mesh(dataset.outline_corners())
     # add the axis labels
     plotter.add_bounds_axes()
@@ -70,7 +70,7 @@ def orthographic_slicer(dataset, plotter=None, threshold=True, step=None,
     def update_slices(x, y, z):
         global slices
         plotter.remove_actor(slices)
-        slices = plotter.add_mesh(dataset.slice_orthographic(x,y,z), showedges=False, **plotParams)
+        slices = plotter.add_mesh(dataset.slice_orthogonal(x,y,z), showedges=False, **plotParams)
 
     if step is None:
         stepx = 0.05 * (dataset.bounds[1] - dataset.bounds[0])

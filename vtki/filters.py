@@ -144,8 +144,8 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def slice_orthographic(dataset, x=None, y=None, z=None):
-        """Creates three orthographic slices through the dataset on the three
+    def slice_orthogonal(dataset, x=None, y=None, z=None):
+        """Creates three orthogonal slices through the dataset on the three
         caresian planes. Yields a MutliBlock dataset of the three slices
 
         Parameters
