@@ -8,6 +8,7 @@ import PIL.Image
 from subprocess import Popen, PIPE
 import os
 import colorsys
+import collections
 
 import vtk
 from vtk.util import numpy_support as VN
@@ -166,7 +167,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     plotter.set_background(background)
     if is_vtki_obj(var_item):
-        plotter._update_bounds(var_item.GetBounds())
+        plotter._update_bounds(var_item.bounds)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -509,6 +510,7 @@ class BasePlotter(object):
                     #       corresponds to the block? This could get complicated real quick.
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
             # Now iteratively plot each element of the multiblock dataset
+            actors = []
             for idx in range(mesh.GetNumberOfBlocks()):
                 if mesh[idx] is None:
                     continue
@@ -527,14 +529,15 @@ class BasePlotter(object):
                     ts = None
                 else:
                     ts = scalars
-                self.add_mesh(data, color=color, style=style,
+                a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, showedges=showedges,
                              psize=psize, opacity=opacity, linethick=linethick,
                              flipscalars=flipscalars, lighting=lighting,
                              ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
                              colormap=colormap, label=label,
                              scalar_bar_args=scalar_bar_args, **kwargs)
-            return
+                actors.append(a)
+            return actors
 
 
         # set main values
@@ -719,6 +722,10 @@ class BasePlotter(object):
         actor : vtk.vtkActor
             Actor that has previously added to the Plotter.
         """
+        if isinstance(actor, collections.Iterable):
+            for a in actor:
+                self.remove_actor(a)
+            return
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
@@ -1676,6 +1683,10 @@ class BasePlotter(object):
 
     def remove_actor(self, actor):
         """ removes an actor """
+        if isinstance(actor, collections.Iterable):
+            for a in actor:
+                self.remove_actor(a)
+            return
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)

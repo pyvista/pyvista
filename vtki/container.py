@@ -97,13 +97,11 @@ class MultiBlock(vtkMultiBlockDataSet):
         return mini, maxi
 
 
-    def plot(self, off_screen=False, notebook=None, **kwargs):
+    def plot(self, **kwargs):
         """
-        Calls ``add_mesh`` for each element in the multiblock dataset
+        Plots all elements in the multiblock dataset
         """
-        p = vtki.Plotter(off_screen=off_screen, notebook=notebook)
-        p.add_mesh(self, **kwargs)
-        return p.plot()
+        return vtki.plot(self, **kwargs)
 
 
     def get_index_by_name(self, name):
