@@ -15,6 +15,10 @@ import os
 import vtki
 
 
+POINT_DATA_FIELD = 0
+CELL_DATA_FIELD = 1
+
+
 def is_vtki_obj(obj):
     return isinstance(obj, (vtki.Common, vtki.MultiBlock))
 
@@ -35,15 +39,22 @@ def cell_scalar(mesh, name):
 
 def get_scalar(mesh, name, preference='cell', info=False):
     """ Searches both point and cell data for an array """
-    if preference not in ['cell', 'point']:
-        raise RuntimeError('Data preference ({}) for non-unique names not understood.'.format(preference))
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
+    if isinstance(preference, str):
+        if preference in ['cell', 'c', 'cells']:
+            preference = CELL_DATA_FIELD
+        elif preference in ['point', 'p', 'points']:
+            preference = POINT_DATA_FIELD
+        else:
+            raise RuntimeError('Data field ({}) not supported.'.format(preference))
     if all([parr is not None, carr is not None]):
-        if preference == 'cell':
+        if preference == CELL_DATA_FIELD:
             return carr
-        elif preference == 'point':
+        elif preference == POINT_DATA_FIELD:
             return parr
+        else:
+            raise RuntimeError('Data field ({}) not supported.'.format(preference))
     arr = None
     field = None
     if parr is not None:

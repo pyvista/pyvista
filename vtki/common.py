@@ -13,12 +13,10 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 import vtki
-from vtki.utilities import get_scalar
+from vtki.utilities import get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD
 from vtki import DataSetFilters
 
 
-POINT_DATA_FIELD = 0
-CELL_DATA_FIELD = 1
 
 class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
@@ -73,6 +71,19 @@ class Common(DataSetFilters):
         else:
             raise RuntimeError('Data field ({}) no useable'.format(field))
         self._active_scalar_info = [field, name]
+
+    def change_scalar_name(self, old_name, new_name, preference='cell'):
+        """Changes array name by searching for the array then renaming it"""
+        _, field = get_scalar(self, old_name, preference=preference, info=True)
+        if field == POINT_DATA_FIELD:
+            self.GetPointData().GetArray(old_name).SetName(new_name)
+        elif field == CELL_DATA_FIELD:
+            self.GetCellData().GetArray(old_name).SetName(new_name)
+        else:
+            raise RuntimeError('Array not found.')
+        if self.active_scalar_info[1] == old_name:
+            self.set_active_scalar(new_name, preference=field)
+
 
     @property
     def active_scalar(self):
