@@ -37,10 +37,15 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     Extends QVTKRenderWindowInteractor class by adding the methods
     available to vtki.Plotter.
 
+    Parameters
+    ----------
+    title : string, optional
+        Title of plotting window.
+
     """
     render_trigger = pyqtSignal()
     allow_quit_keypress = True
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, title=None):
         """ Initialize Qt interactor """
         assert has_pyqt, 'Requires PyQt5'
         QVTKRenderWindowInteractor.__init__(self, parent)
@@ -49,8 +54,11 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.ren_win = self.GetRenderWindow()
         self.ren_win.AddRenderer(self.renderer)
         self.iren = self.ren_win.GetInteractor()
-        
+
         self.background_color = plotParams['background']
+
+        if title:
+            self.setWindowTitle(title)
 
         self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
         self.iren.Initialize()
@@ -76,7 +84,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 class BackgroundPlotter(QtInteractor):
 
-    def __init__(self, show=True, app=None):
+    def __init__(self, show=True, app=None, **kwargs):
         assert has_pyqt, 'Requires PyQt5'
         self.active = True
 
@@ -98,7 +106,7 @@ class BackgroundPlotter(QtInteractor):
                 app = QApplication([''])
 
         self.app = app
-        QtInteractor.__init__(self)
+        QtInteractor.__init__(self, **kwargs)
         if show:
             self.show()
 
@@ -131,7 +139,8 @@ class BackgroundPlotter(QtInteractor):
 
     def add_actor(self, actor, resetcam=None):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor, resetcam)
-        self.reset_camera()
+        if resetcam:
+            self.reset_camera()
         return actor, prop
 
     def __del__(self):

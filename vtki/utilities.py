@@ -2,7 +2,7 @@
 Supporting functions for polydata and grid objects
 
 """
-# import warnings # TODO: should we use warnings (see ``wrap``)
+import logging
 import ctypes
 
 import numpy as np
@@ -13,6 +13,10 @@ from vtk.util.numpy_support import numpy_to_vtk
 import os
 
 import vtki
+
+
+POINT_DATA_FIELD = 0
+CELL_DATA_FIELD = 1
 
 
 def is_vtki_obj(obj):
@@ -35,15 +39,22 @@ def cell_scalar(mesh, name):
 
 def get_scalar(mesh, name, preference='cell', info=False):
     """ Searches both point and cell data for an array """
-    if preference not in ['cell', 'point']:
-        raise RuntimeError('Data preference ({}) for non-unique names not understood.'.format(preference))
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
+    if isinstance(preference, str):
+        if preference in ['cell', 'c', 'cells']:
+            preference = CELL_DATA_FIELD
+        elif preference in ['point', 'p', 'points']:
+            preference = POINT_DATA_FIELD
+        else:
+            raise RuntimeError('Data field ({}) not supported.'.format(preference))
     if all([parr is not None, carr is not None]):
-        if preference == 'cell':
+        if preference == CELL_DATA_FIELD:
             return carr
-        elif preference == 'point':
+        elif preference == POINT_DATA_FIELD:
             return parr
+        else:
+            raise RuntimeError('Data field ({}) not supported.'.format(preference))
     arr = None
     field = None
     if parr is not None:
@@ -183,7 +194,7 @@ def wrap(vtkdataset):
     try:
         wrapped = wrappers[key](vtkdataset)
     except:
-        # warnings.warn('VTK data type ({}) is not currently supported.'.format(key))
+        logging.warning('VTK data type ({}) is not currently supported by vtki.'.format(key))
         return vtkdataset # if not supported just passes the VTK data object
     return wrapped
 

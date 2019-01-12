@@ -13,12 +13,10 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 import vtki
-from vtki.utilities import get_scalar
+from vtki.utilities import get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD
 from vtki import DataSetFilters
 
 
-POINT_DATA_FIELD = 0
-CELL_DATA_FIELD = 1
 
 class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
@@ -26,10 +24,10 @@ class Common(DataSetFilters):
     def __init__(self, *args, **kwargs):
         self.references = []
 
-    _active_scalar_info = [POINT_DATA_FIELD, None] # field and name
-
     @property
     def active_scalar_info(self):
+        if not hasattr(self, '_active_scalar_info'):
+            self._active_scalar_info = [POINT_DATA_FIELD, None] # field and name
         field, name = self._active_scalar_info
 
         # rare error where scalar name isn't a valid scalar
@@ -74,6 +72,19 @@ class Common(DataSetFilters):
             raise RuntimeError('Data field ({}) no useable'.format(field))
         self._active_scalar_info = [field, name]
 
+    def change_scalar_name(self, old_name, new_name, preference='cell'):
+        """Changes array name by searching for the array then renaming it"""
+        _, field = get_scalar(self, old_name, preference=preference, info=True)
+        if field == POINT_DATA_FIELD:
+            self.GetPointData().GetArray(old_name).SetName(new_name)
+        elif field == CELL_DATA_FIELD:
+            self.GetCellData().GetArray(old_name).SetName(new_name)
+        else:
+            raise RuntimeError('Array not found.')
+        if self.active_scalar_info[1] == old_name:
+            self.set_active_scalar(new_name, preference=field)
+
+
     @property
     def active_scalar(self):
         field, name = self.active_scalar_info
@@ -84,7 +95,7 @@ class Common(DataSetFilters):
         elif field == CELL_DATA_FIELD:
             return self._cell_scalar(name)
 
-    def _point_scalar(self, name):
+    def _point_scalar(self, name=None):
         """
         Returns point scalars of a vtk object
 
@@ -99,6 +110,11 @@ class Common(DataSetFilters):
             Numpy array of scalars
 
         """
+        if name is None:
+            # use active scalar array
+            field, name = self.active_scalar_info
+            if field != POINT_DATA_FIELD:
+                raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetArray(name)
         assert vtkarr is not None, '%s is not a point scalar' % name
         array = vtk_to_numpy(vtkarr)
@@ -320,7 +336,7 @@ class Common(DataSetFilters):
         self.points[:, 1] = y
         self.points[:, 2] = z
 
-    def _cell_scalar(self, name):
+    def _cell_scalar(self, name=None):
         """
         Returns the cell scalars of a vtk object
 
@@ -335,6 +351,11 @@ class Common(DataSetFilters):
             Numpy array of scalars
 
         """
+        if name is None:
+            # use active scalar array
+            field, name = self.active_scalar_info
+            if field != CELL_DATA_FIELD:
+                raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetCellData().GetArray(name)
         array = vtk_to_numpy(vtkarr)
         if array.dtype == np.uint8:
@@ -497,14 +518,28 @@ class Common(DataSetFilters):
     def extent(self):
         return self.GetExtent()
 
-    def get_data_range(self, name):
-        arr = get_scalar(self, name)
+    def get_data_range(self, arr=None, preference='cell'):
+        if arr is None:
+            # use active scalar array
+            _, arr = self.active_scalar_info
+        if isinstance(arr, str):
+            arr = get_scalar(self, arr, preference=preference)
         return np.nanmin(arr), np.nanmax(arr)
 
     @property
     def n_scalars(self):
         return self.GetPointData().GetNumberOfArrays() + \
                self.GetCellData().GetNumberOfArrays()
+
+    @property
+    def scalar_names(self):
+        names = []
+        for i in range(self.GetPointData().GetNumberOfArrays()):
+            names.append(self.GetPointData().GetArrayName(i))
+        for i in range(self.GetCellData().GetNumberOfArrays()):
+            names.append(self.GetCellData().GetArrayName(i))
+        return names
+
 
     def _get_attrs(self):
         """An internal helper for the representation methods"""

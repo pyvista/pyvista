@@ -8,6 +8,7 @@ import PIL.Image
 from subprocess import Popen, PIPE
 import os
 import colorsys
+import collections
 
 import vtk
 from vtk.util import numpy_support as VN
@@ -51,15 +52,17 @@ plotParams = {
         'position_x' : 0.35,
         'position_y' : 0.02,
     },
+    'showedges' : True,
 }
 
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
-    if theme.lower() == 'paraview':
+    if theme.lower() in ['paraview', 'pv']:
         plotParams['background'] = PV_BACKGROUND
         plotParams['colormap'] = 'coolwarm'
         plotParams['font']['family'] = 'arial'
         plotParams['font']['label_size'] = 16
+        plotParams['showedges'] = False
 
 
 def run_from_ipython():
@@ -98,7 +101,7 @@ def _remove_mapper_from_plotter(plotter, actor):
 
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
-         interactive=True, cpos=None, window_size=plotParams['window_size'],
+         interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', **kwargs):
     """
@@ -166,7 +169,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
 
     plotter.set_background(background)
     if is_vtki_obj(var_item):
-        plotter._update_bounds(var_item.GetBounds())
+        plotter._update_bounds(var_item.bounds)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -266,10 +269,10 @@ class BasePlotter(object):
     Base plotter class to be used by the Plotter and VtkInteractor
     classes
     """
-    bounds = [0,1, 0,1, 0,1]
 
     def __init__(self):
         self.renderer = vtk.vtkRenderer()
+        self.bounds = [0,1, 0,1, 0,1]
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -310,7 +313,7 @@ class BasePlotter(object):
             else:
                 self.render()
 
-    def add_axes(self):
+    def add_axes(self, interactive=False):
         """ Add an interactive axes widget """
         if hasattr(self, 'axes_widget'):
             raise Exception('Plotter already has an axes widget')
@@ -320,7 +323,7 @@ class BasePlotter(object):
         if hasattr(self, 'iren'):
             self.axes_widget.SetInteractor(self.iren)
             self.axes_widget.SetEnabled(1)
-            self.axes_widget.InteractiveOn()
+            self.axes_widget.SetInteractive(interactive)
 
     def _update_bounds(self, bounds):
         def update_axis(ax):
@@ -404,10 +407,11 @@ class BasePlotter(object):
                 self.iren.Render()
 
     def add_mesh(self, mesh, color=None, style=None,
-                 scalars=None, rng=None, stitle=None, showedges=True,
+                 scalars=None, rng=None, stitle=None, showedges=None,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
-                 colormap=None, label=None, **kwargs):
+                 colormap=None, label=None, resetcam=None, scalar_bar_args={},
+                 **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -496,6 +500,9 @@ class BasePlotter(object):
         if not is_vtki_obj(mesh):
             mesh = wrap(mesh)
 
+        if showedges is None:
+            showedges = plotParams['showedges']
+
 
         if isinstance(mesh, MultiBlock):
             # frist check the scalars
@@ -509,6 +516,7 @@ class BasePlotter(object):
                     #       corresponds to the block? This could get complicated real quick.
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
             # Now iteratively plot each element of the multiblock dataset
+            actors = []
             for idx in range(mesh.GetNumberOfBlocks()):
                 if mesh[idx] is None:
                     continue
@@ -527,19 +535,27 @@ class BasePlotter(object):
                     ts = None
                 else:
                     ts = scalars
-                self.add_mesh(data, color=color, style=style,
+                a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, showedges=showedges,
-                             psize=psize, opacity=opacity, linethick=linethick, flipscalars=flipscalars,
-                             lighting=lighting, ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
-                             colormap=colormap, label=label, **kwargs)
-            return
+                             psize=psize, opacity=opacity, linethick=linethick,
+                             flipscalars=flipscalars, lighting=lighting,
+                             ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
+                             colormap=colormap, label=label,
+                             scalar_bar_args=scalar_bar_args, resetcam=resetcam, **kwargs)
+                actors.append(a)
+                if resetcam is None or resetcam:
+                    cpos = self.get_default_cam_pos()
+                    self.camera_position = cpos
+                    self.camera_set = False
+                    self.reset_camera()
+            return actors
 
 
         # set main values
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
-        actor, prop = self.add_actor(self.mapper)
+        actor, prop = self.add_actor(self.mapper, resetcam=resetcam)
         self._update_bounds(mesh.GetBounds()) # All VTK datasets have bounds
 
         # Attempt get the active scalars if no preference given
@@ -663,7 +679,7 @@ class BasePlotter(object):
 
         # Add scalar bar if available
         if stitle is not None:
-            self.add_scalar_bar(stitle)
+            self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
 
@@ -717,6 +733,10 @@ class BasePlotter(object):
         actor : vtk.vtkActor
             Actor that has previously added to the Plotter.
         """
+        if isinstance(actor, collections.Iterable):
+            for a in actor:
+                self.remove_actor(a)
+            return
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
@@ -1111,10 +1131,15 @@ class BasePlotter(object):
         s = VN.vtk_to_numpy(vtk_scalars)
         s[:] = scalars
         data.Modified()
-        mesh.GetPoints().Modified()
+        try:
+            # Why are the points updated here? Not all datasets have points
+            # and only the scalar array is modified by this function...
+            mesh.GetPoints().Modified()
+        except:
+            pass
 
         if render:
-            self.render()
+            self.ren_win.Render()
 
     def update_coordinates(self, points, mesh=None, render=True):
         """
@@ -1669,6 +1694,10 @@ class BasePlotter(object):
 
     def remove_actor(self, actor):
         """ removes an actor """
+        if isinstance(actor, collections.Iterable):
+            for a in actor:
+                self.remove_actor(a)
+            return
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
@@ -1791,9 +1820,8 @@ class Plotter(BasePlotter):
         self.first_time = True
 
 
-    def show(self, title=None, window_size=plotParams['window_size'],
-             interactive=True, autoclose=True, interactive_update=False,
-             full_screen=False):
+    def show(self, title=None, window_size=None, interactive=True,
+             autoclose=True, interactive_update=False, full_screen=False):
         """
         Creates plotting window
 
@@ -1839,6 +1867,8 @@ class Plotter(BasePlotter):
             self.ren_win.SetFullScreen(True)
             self.ren_win.BordersOn()  # super buggy when disabled
         else:
+            if window_size is None:
+                window_size = plotParams['window_size']
             self.ren_win.SetSize(window_size[0], window_size[1])
 
         # Render
