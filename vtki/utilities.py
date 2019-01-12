@@ -2,7 +2,7 @@
 Supporting functions for polydata and grid objects
 
 """
-# import warnings # TODO: should we use warnings (see ``wrap``)
+import logging
 import ctypes
 
 import numpy as np
@@ -183,7 +183,7 @@ def wrap(vtkdataset):
     try:
         wrapped = wrappers[key](vtkdataset)
     except:
-        # warnings.warn('VTK data type ({}) is not currently supported.'.format(key))
+        logging.warning('VTK data type ({}) is not currently supported by vtki.'.format(key))
         return vtkdataset # if not supported just passes the VTK data object
     return wrapped
 

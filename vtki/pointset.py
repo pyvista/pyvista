@@ -3,7 +3,6 @@ Sub-classes for vtk.vtkPolyData
 """
 import os
 import logging
-import warnings
 
 import vtk
 from vtk import vtkPolyData, vtkUnstructuredGrid, vtkStructuredGrid
@@ -1057,7 +1056,7 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
             Mesh with holes filled.  None when inplace=True
 
         """
-        warnings.warn('Known to segfault.  Use at your own risk')
+        logging.warning('Known to segfault.  Use at your own risk')
         fill = vtk.vtkFillHolesFilter()
         fill.SetHoleSize(hole_size)
         fill.SetInputData(self)
