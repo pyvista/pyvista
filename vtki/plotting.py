@@ -52,15 +52,17 @@ plotParams = {
         'position_x' : 0.35,
         'position_y' : 0.02,
     },
+    'showedges' : True,
 }
 
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
-    if theme.lower() == 'paraview':
+    if theme.lower() in ['paraview', 'pv']:
         plotParams['background'] = PV_BACKGROUND
         plotParams['colormap'] = 'coolwarm'
         plotParams['font']['family'] = 'arial'
         plotParams['font']['label_size'] = 16
+        plotParams['showedges'] = False
 
 
 def run_from_ipython():
@@ -99,7 +101,7 @@ def _remove_mapper_from_plotter(plotter, actor):
 
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
-         interactive=True, cpos=None, window_size=plotParams['window_size'],
+         interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', **kwargs):
     """
@@ -405,7 +407,7 @@ class BasePlotter(object):
                 self.iren.Render()
 
     def add_mesh(self, mesh, color=None, style=None,
-                 scalars=None, rng=None, stitle=None, showedges=True,
+                 scalars=None, rng=None, stitle=None, showedges=None,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
                  colormap=None, label=None, scalar_bar_args={}, **kwargs):
@@ -496,6 +498,9 @@ class BasePlotter(object):
         # Convert the VTK data object to a vtki wrapped object if neccessary
         if not is_vtki_obj(mesh):
             mesh = wrap(mesh)
+
+        if showedges is None:
+            showedges = plotParams['showedges']
 
 
         if isinstance(mesh, MultiBlock):
@@ -1809,9 +1814,8 @@ class Plotter(BasePlotter):
         self.first_time = True
 
 
-    def show(self, title=None, window_size=plotParams['window_size'],
-             interactive=True, autoclose=True, interactive_update=False,
-             full_screen=False):
+    def show(self, title=None, window_size=None, interactive=True,
+             autoclose=True, interactive_update=False, full_screen=False):
         """
         Creates plotting window
 
@@ -1857,6 +1861,8 @@ class Plotter(BasePlotter):
             self.ren_win.SetFullScreen(True)
             self.ren_win.BordersOn()  # super buggy when disabled
         else:
+            if window_size is None:
+                window_size = plotParams['window_size']
             self.ren_win.SetSize(window_size[0], window_size[1])
 
         # Render
