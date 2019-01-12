@@ -32,6 +32,7 @@ import logging
 import numpy as np
 import vtk
 
+import vtki
 from vtki.utilities import get_scalar, wrap
 
 NORMALS = {
@@ -60,6 +61,16 @@ def _generate_plane(normal, origin):
     return plane
 
 
+def _is_inside_bounds(point, bounds):
+    """ Checks if a point is inside a set of bounds """
+    if not (bounds[0] < point[0] < bounds[1]):
+        return False
+    if not (bounds[2] < point[1] < bounds[3]):
+        return False
+    if not (bounds[4] < point[2] < bounds[5]):
+        return False
+    return True
+
 
 class DataSetFilters(object):
     """A set of common filters that can be applied to any vtkDataSet"""
@@ -72,9 +83,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         normal : tuple(float) or str
             Length 3 tuple for the normal vector direction. Can also be specified
             as a string conventional direction such as ``'x'`` for ``(1,0,0)``
@@ -110,9 +118,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         normal : tuple(float) or str
             Length 3 tuple for the normal vector direction. Can also be specified
             as a string conventional direction such as ``'x'`` for ``(1,0,0)``
@@ -127,6 +132,8 @@ class DataSetFilters(object):
         # find center of data if origin not specified
         if origin is None:
             origin = dataset.center
+        if not _is_inside_bounds(origin, dataset.bounds):
+            raise RuntimeError('Slice is outside data bounds.')
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
         # create slice
@@ -135,6 +142,39 @@ class DataSetFilters(object):
         alg.SetCutFunction(plane) # the the cutter to use the plane we made
         alg.Update() # Perfrom the Cut
         return _get_output(alg)
+
+
+    def slice_orthographic(dataset, x=None, y=None, z=None):
+        """Creates three orthographic slices through the dataset on the three
+        caresian planes. Yields a MutliBlock dataset of the three slices
+
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        x : float
+            The X location of the YZ slice
+
+        y : float
+            The Y location of the XZ slice
+
+        z : float
+            The Z location of the XY slice
+
+        """
+        output = vtki.MultiBlock()
+        # Create the three slices
+        if x is None:
+            x = dataset.center[0]
+        if y is None:
+            y = dataset.center[1]
+        if z is None:
+            z = dataset.center[2]
+        output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z])
+        output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z])
+        output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z])
+        return output
 
 
     def threshold(dataset, value=None, scalars=None, invert=False, continuous=False,
@@ -147,9 +187,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         value : float or iterable, optional
             Single value or (min, max) to be used for the data threshold.  If
             iterable, then length must be 2. If no value is specified, the
@@ -217,9 +254,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         percent : float or tuple(float), optional
             The percentage (0,1) to threshold. If value is out of 0 to 1 range,
             then it will be divided by 100 and checked to be in that range.
@@ -281,9 +315,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         gen_faces : bool, optional
             Generate solid faces for the box. This is off by default
 
@@ -299,9 +330,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         factor : float, optional
             controls the relative size of the corners to the length of the
             corresponding bounds
@@ -333,9 +361,6 @@ class PointSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         isosurfaces : int or iterable
             Number of isosurfaces to compute across valid data range or an
             iterable of float values to explicitly use as the isosurfaces.
