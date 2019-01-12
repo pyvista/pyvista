@@ -133,7 +133,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         Load a rectilinear grid from a file.
 
         The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vts will select the VTK
+        extension will use the legacy reader, while .vtr will select the VTK
         XML reader.
 
         Parameters
@@ -176,7 +176,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         filename : str
             Filename of grid to be written.  The file extension will select the
             type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vts" will select the VTK XML writer.
+            ".vtr" will select the VTK XML writer.
 
         binary : bool, optional
             Writes as a binary file by default.  Set to False to write ASCII.
