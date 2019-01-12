@@ -196,7 +196,7 @@ class DataSetFilters(object):
             version = vtk.VTK_VERSION.split('.')
             if invert:
                 if (int(version[0]) <= 8 or int(version[0]) < 2):
-                    logging.warning('invert option is not supported before VTK version 8.2.x. You are running VTK version {}.'.format(vtk.VTK_VERSION))
+                    logging.warning(' invert option for range thresholding is not supported before VTK version 8.2.x. You are running VTK version {}.'.format(vtk.VTK_VERSION))
                 else:
                     alg.SetInvert(invert)
         else:
