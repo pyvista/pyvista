@@ -23,10 +23,11 @@ class Common(DataSetFilters):
 
     def __init__(self, *args, **kwargs):
         self.references = []
-        self._active_scalar_info = [POINT_DATA_FIELD, None] # field and name
 
     @property
     def active_scalar_info(self):
+        if not hasattr(self, '_active_scalar_info'):
+            self._active_scalar_info = [POINT_DATA_FIELD, None] # field and name
         field, name = self._active_scalar_info
 
         # rare error where scalar name isn't a valid scalar
