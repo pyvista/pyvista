@@ -194,10 +194,11 @@ class DataSetFilters(object):
             alg.ThresholdBetween(value[0], value[1])
             # NOTE: Invert for ThresholdBetween is coming in vtk=>8.2.x
             version = vtk.VTK_VERSION.split('.')
-            if invert and (int(version[0]) <= 8 or int(version[0]) < 2):
-                logging.warning('invert option is not supported before VTK version 8.2.x. You are running VTK version {}.'.format(vtk.VTK_VERSION))
-            else:
-                alg.SetInvert(invert)
+            if invert:
+                if (int(version[0]) <= 8 or int(version[0]) < 2):
+                    logging.warning('invert option is not supported before VTK version 8.2.x. You are running VTK version {}.'.format(vtk.VTK_VERSION))
+                else:
+                    alg.SetInvert(invert)
         else:
             # just a single value
             if invert:
