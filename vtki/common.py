@@ -507,11 +507,11 @@ class Common(DataSetFilters):
     def extent(self):
         return self.GetExtent()
 
-    def get_data_range(self, name=None):
+    def get_data_range(self, name=None, preference='cell'):
         if name is None:
             # use active scalar array
             _, name = self.active_scalar_info
-        arr = get_scalar(self, name)
+        arr = get_scalar(self, name, preference=preference)
         return np.nanmin(arr), np.nanmax(arr)
 
     @property
