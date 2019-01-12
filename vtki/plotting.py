@@ -410,7 +410,7 @@ class BasePlotter(object):
                  scalars=None, rng=None, stitle=None, showedges=None,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
-                 colormap=None, label=None, resetcam=False, scalar_bar_args={},
+                 colormap=None, label=None, resetcam=None, scalar_bar_args={},
                  **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
@@ -541,8 +541,13 @@ class BasePlotter(object):
                              flipscalars=flipscalars, lighting=lighting,
                              ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
                              colormap=colormap, label=label,
-                             scalar_bar_args=scalar_bar_args, **kwargs)
+                             scalar_bar_args=scalar_bar_args, resetcam=resetcam, **kwargs)
                 actors.append(a)
+                if resetcam is None or resetcam:
+                    cpos = self.get_default_cam_pos()
+                    self.camera_position = cpos
+                    self.camera_set = False
+                    self.reset_camera()
             return actors
 
 

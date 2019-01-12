@@ -174,6 +174,43 @@ class DataSetFilters(object):
         return output
 
 
+    def slice_along_axis(dataset, n=5, axis='x', tol=1e-5):
+        """Create many slices of the input dataset along a specified axis.
+
+        Parameters
+        ----------
+        n : int
+            The number of slices to create
+
+        axis : str or int
+            The axis to generate the slices along. Perpendicular to the slices.
+            Can be string name (``'x'``, ``'y'``, or ``'z'``) or axis index
+            (``0``, ``1``, or ``2``).
+
+        tol : float, optional
+            The tolerance to the edge of the dataset bounds to create the slices
+
+        """
+        output = vtki.MultiBlock()
+        if isinstance(axis, str):
+            axes = {'x':0, 'y':1, 'z':2}
+            try:
+                ax = axes[axis]
+            except KeyError:
+                raise RuntimeError('Axis ({}) not understood'.format(axis))
+        else:
+            ax = axis
+        # get the locations along that axis
+        rng = np.linspace(dataset.bounds[ax*2]+tol, dataset.bounds[ax*2+1]-tol, n)
+        center = list(dataset.center)
+        # Make each of the slices
+        for i in range(n):
+            center[ax] = rng[i]
+            slc = DataSetFilters.slice(dataset, normal=axis, origin=center)
+            output[i, 'slice%.2d'%i] = slc
+        return output
+
+
     def threshold(dataset, value=None, scalars=None, invert=False, continuous=False,
                   preference='cell'):
         """
