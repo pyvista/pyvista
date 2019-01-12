@@ -281,7 +281,7 @@ class DataSetFilters(object):
             field, tscalars = dataset.active_scalar_info
         else:
             tscalars = scalars
-        dmin, dmax = dataset.get_data_range(name=tscalars, preference=preference)
+        dmin, dmax = dataset.get_data_range(arr=tscalars, preference=preference)
 
         def _check_percent(percent):
             """Make sure percent is between 0 and 1 or fix if between 0 and 100."""
