@@ -28,6 +28,7 @@ Example:
 
 """
 import collections
+import logging
 import numpy as np
 import vtk
 
@@ -59,8 +60,10 @@ def _generate_plane(normal, origin):
     return plane
 
 
+
 class DataSetFilters(object):
     """A set of common filters that can be applied to any vtkDataSet"""
+
 
     def clip(dataset, normal='x', origin=None, invert=True):
         """
@@ -69,7 +72,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-
         dataset : vtk.vtkDataSet object
             Input dataset.
 
@@ -108,7 +110,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-
         dataset : vtk.vtkDataSet object
             Input dataset.
 
@@ -161,6 +162,7 @@ class DataSetFilters(object):
             If value is a single value, when invert is True cells are kept when
             their values are below parameter "value".  When invert is False
             cells are kept when their value is above the threshold "value".
+            Default is False: yielding above the threshold "value".
 
         continuous : bool, optional
             When True, the continuous interval [minimum cell scalar,
@@ -191,7 +193,11 @@ class DataSetFilters(object):
                 raise RuntimeError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
             # NOTE: Invert for ThresholdBetween is coming in vtk=>8.2.x
-            #alg.SetInvert(invert)
+            version = vtk.VTK_VERSION.split('.')
+            if invert and (int(version[0]) <= 8 or int(version[0]) < 2):
+                logging.warning('invert option is not supported before VTK version 8.2.x. You are running VTK version {}.'.format(vtk.VTK_VERSION))
+            else:
+                alg.SetInvert(invert)
         else:
             # just a single value
             if invert:
@@ -203,11 +209,113 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
+    def threshold_percent(dataset, percent=50, scalars=None, invert=False,
+                          continuous=False, preference='cell'):
+        """Thresholds the dataset by a percentage of its range on the active
+        scalar array or as specified
+
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        percent : float or tuple(float), optional
+            The percentage (0,1) to threshold. If value is out of 0 to 1 range,
+            then it will be divided by 100 and checked to be in that range.
+
+        scalars : str, optional
+            Name of scalars to threshold on. Defaults to currently active scalars.
+
+        invert : bool, optional
+            When invert is True cells are kept when their values are below the
+            percentage of the range.  When invert is False, cells are kept when
+            their value is above the percentage of the range.
+            Default is False: yielding above the threshold "value".
+
+        continuous : bool, optional
+            When True, the continuous interval [minimum cell scalar,
+            maxmimum cell scalar] will be used to intersect the threshold bound,
+            rather than the set of discrete scalar values from the vertices.
+
+        preference : str, optional
+            When scalars is specified, this is the perfered scalar type to search
+            for in the dataset.  Must be either 'point' or 'cell'.
+
+        """
+        if scalars is None:
+            field, tscalars = dataset.active_scalar_info
+        else:
+            tscalars = scalars
+        dmin, dmax = dataset.get_data_range(name=tscalars, preference=preference)
+
+        def _check_percent(percent):
+            """Make sure percent is between 0 and 1 or fix if between 0 and 100."""
+            if percent >= 1:
+                percent = float(percent) / 100.0
+                if percent > 1:
+                    raise RuntimeError('Percentage ({}) is out of range (0, 1).'.format(percent))
+            if percent < 1e-10:
+                raise RuntimeError('Percentage ({}) is too close to zero or negative.'.format(percent))
+            return percent
+
+        def _get_val(percent, dmin, dmax):
+            """Gets the value from a percentage of a range"""
+            percent = _check_percent(percent)
+            return dmin + float(percent) * (dmax - dmin)
+
+        # Compute the values
+        if isinstance(percent, collections.Iterable):
+            # Get two values
+            value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
+        else:
+            # Compute one value to threshold
+            value = _get_val(percent, dmin, dmax)
+        # Use the normal thresholding function on these values
+        return DataSetFilters.threshold(dataset, value=value, scalars=scalars,
+                    invert=invert, continuous=continuous, preference=preference)
+
+
     def outline(dataset, gen_faces=False):
-        """Produces an outline of the full extent for the input dataset"""
+        """Produces an outline of the full extent for the input dataset.
+
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        gen_faces : bool, optional
+            Generate solid faces for the box. This is off by default
+
+        """
         alg = vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
         alg.SetGenerateFaces(gen_faces)
+        alg.Update()
+        return wrap(alg.GetOutputDataObject(0))
+
+    def outline_corners(dataset, factor=0.2):
+        """Produces an outline of the corners for the input dataset.
+
+        Parameters
+        ----------
+        dataset : vtk.vtkDataSet object
+            Input dataset.
+
+        factor : float, optional
+            controls the relative size of the corners to the length of the
+            corresponding bounds
+
+        """
+        alg = vtk.vtkOutlineCornerFilter()
+        alg.SetInputDataObject(dataset)
+        alg.SetGenerateFaces(gen_faces)
+        alg.Update()
+        return wrap(alg.GetOutputDataObject(0))
+
+    def extract_geometry(dataset):
+        """Extract the geometry of the dataset as PolyData"""
+        alg = vtk.vtkGeometryFilter()
+        alg.SetInputDataObject(dataset)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
