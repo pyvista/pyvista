@@ -22,6 +22,7 @@ class InteractiveTool(object):
             if not is_vtki_obj(dataset):
                 raise RuntimeError('Object not supported for plotting in vtki.')
         self.input_dataset = dataset
+        self.output_dataset = None
 
         if plotter is None:
             plotter = vtki.BackgroundPlotter()
@@ -91,7 +92,8 @@ class OthogonalSlicer(InteractiveTool):
 
         def update(x, y, z):
             self.plotter.remove_actor(self._data_to_update)
-            self._data_to_update = self.plotter.add_mesh(self.input_dataset.slice_orthogonal(x,y,z), showedges=False, resetcam=False, **self.plotParams)
+            self.output_dataset = self.input_dataset.slice_orthogonal(x,y,z)
+            self._data_to_update = self.plotter.add_mesh(self.output_dataset, showedges=False, resetcam=False, **self.plotParams)
 
         if step is None:
             stepx = 0.05 * (self.input_dataset.bounds[1] - self.input_dataset.bounds[0])
@@ -164,7 +166,8 @@ class ManySlicesAlongAxis(InteractiveTool):
 
         def update(n, axis):
             self.plotter.remove_actor(self._data_to_update)
-            self._data_to_update = self.plotter.add_mesh(self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol), showedges=False, resetcam=False, **self.plotParams)
+            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol)
+            self._data_to_update = self.plotter.add_mesh(self.output_dataset, showedges=False, resetcam=False, **self.plotParams)
 
         #continuous_update=False
         nsl = widgets.IntSlider(min=1, max=25, step=1, value=5,
@@ -233,13 +236,13 @@ class Threshold(InteractiveTool):
                 appender.AddInputData(t1)
                 appender.AddInputData(t2)
                 appender.Update()
-                data = appender.GetOutputDataObject(0)
+                self.output_dataset =  appender.GetOutputDataObject(0)
             else:
-                data = self.input_dataset.threshold([dmin, dmax], scalars=scalars, continuous=continuous, preference=preference)
+                self.output_dataset = self.input_dataset.threshold([dmin, dmax], scalars=scalars, continuous=continuous, preference=preference)
             # Update the plot
             self.plotParams['scalars'] = scalars
             self.plotter.remove_actor(self._data_to_update)
-            self._data_to_update = self.plotter.add_mesh(data, **self.plotParams)
+            self._data_to_update = self.plotter.add_mesh(self.output_dataset, **self.plotParams)
 
 
         interact(update, dmin=minsl, dmax=maxsl,
