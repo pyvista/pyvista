@@ -150,9 +150,6 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset : vtk.vtkDataSet object
-            Input dataset.
-
         x : float
             The X location of the YZ slice
 
