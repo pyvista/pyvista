@@ -22,7 +22,7 @@ class Grid(vtki.Common):
     """A class full of common methods for non-pointset grids """
 
     def __init__(self, *args, **kwargs):
-        pass
+        super(Grid, self).__init__()
 
     @property
     def dimensions(self):

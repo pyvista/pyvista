@@ -267,10 +267,10 @@ class BasePlotter(object):
     Base plotter class to be used by the Plotter and VtkInteractor
     classes
     """
-    bounds = [0,1, 0,1, 0,1]
 
     def __init__(self):
         self.renderer = vtk.vtkRenderer()
+        self.bounds = [0,1, 0,1, 0,1]
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
