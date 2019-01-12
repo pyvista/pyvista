@@ -258,9 +258,9 @@ class PointSetFilters(object):
             field, scalars = dataset.active_scalar_info
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
-        # NOTE: only point data is allowed
-        if field != 0:
-            raise RuntimeError('Can only contour by Point data at this time.')
+        # NOTE: only point data is allowed? well cells works but seems buggy?
+        # if field != 0:
+        #     raise RuntimeError('Can only contour by Point data at this time.')
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
