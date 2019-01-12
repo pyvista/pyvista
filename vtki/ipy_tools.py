@@ -8,6 +8,7 @@ import ipywidgets as widgets
 import collections
 
 import vtki
+from vtki.utilities import is_vtki_obj, wrap
 
 
 def orthographic_slicer(dataset, plotter=None, threshold=True, step=None,
@@ -41,6 +42,10 @@ def orthographic_slicer(dataset, plotter=None, threshold=True, step=None,
         Any plotting keyword parameters to use
 
     """
+    if not if is_vtki_obj(dataset):
+        dataset = wrap(dataset)
+        if not is_vtki_obj(dataset):
+            raise RuntimeError('Object not supported for plotting in vtki.')
     if threshold:
         # This will clean out the nan values
         dataset = dataset.threshold()
