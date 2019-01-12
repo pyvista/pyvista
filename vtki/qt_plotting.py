@@ -139,7 +139,8 @@ class BackgroundPlotter(QtInteractor):
 
     def add_actor(self, actor, resetcam=None):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor, resetcam)
-        self.reset_camera()
+        if resetcam:
+            self.reset_camera()
         return actor, prop
 
     def __del__(self):

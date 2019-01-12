@@ -65,12 +65,13 @@ def orthogonal_slicer(dataset, plotter=None, threshold=True, step=None,
     cpos = plotter.get_default_cam_pos()
     plotter.camera_position = cpos
     plotter.reset_camera()
+    plotter.camera_set = True
 
     # Now set up the widgets
     def update_slices(x, y, z):
         global slices
         plotter.remove_actor(slices)
-        slices = plotter.add_mesh(dataset.slice_orthogonal(x,y,z), showedges=False, **plotParams)
+        slices = plotter.add_mesh(dataset.slice_orthogonal(x,y,z), showedges=False, resetcam=False, **plotParams)
 
     if step is None:
         stepx = 0.05 * (dataset.bounds[1] - dataset.bounds[0])

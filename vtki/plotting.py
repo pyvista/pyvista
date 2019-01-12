@@ -410,7 +410,8 @@ class BasePlotter(object):
                  scalars=None, rng=None, stitle=None, showedges=None,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
-                 colormap=None, label=None, scalar_bar_args={}, **kwargs):
+                 colormap=None, label=None, resetcam=False, scalar_bar_args={},
+                 **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -549,7 +550,7 @@ class BasePlotter(object):
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
-        actor, prop = self.add_actor(self.mapper)
+        actor, prop = self.add_actor(self.mapper, resetcam=resetcam)
         self._update_bounds(mesh.GetBounds()) # All VTK datasets have bounds
 
         # Attempt get the active scalars if no preference given
