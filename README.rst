@@ -215,6 +215,7 @@ an interactive rendering scene:
 
 .. code:: python
 
+    import vtki
     from vtki import examples
     dataset = examples.load_uniform()
 
