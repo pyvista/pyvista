@@ -171,5 +171,56 @@ gif:
     # Close movie and delete object
     plotter.close()
 
+
 .. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/wave.gif
-    :width: 500pt
+   :width: 500pt
+
+
+Using Common Filters
+--------------------
+
+``vtki`` wrapped data objects have a suite of common filters ready for immediate
+use directly on the object. These filters include:
+
+* ``slice``: creates a single slice through the input dataset on a user defined plane
+* ``slice_orthogonal``: creates a ``MultiBlock`` dataset of three orthogonal slices
+* ``slice_along_axis``: creates a ``MultiBlock`` dataset of many slices along a specified axis
+* ``threshold``: Thresholds a dataset by a single value or range of values
+* ``threshold_percent``: Threshold by percentages of the scalar range
+* ``clip``: Clips the dataset by a user defined plane
+* ``outline_corners``: Outlines the corners of the data extent
+* ``extract_geometry``: Extract surface geometry
+
+
+To use these filter, call the method of your choice directly on your data object:
+
+
+.. code:: python
+
+    from vtki import examples
+    dataset = examples.load_uniform()
+
+    # Apply a threshold over a data range
+    dataset.threshold([300, 500])
+
+
+
+iPython Interactive Plotting Tools
+----------------------------------
+
+``vtki`` comes packed with several interactive plotting tools to make using the
+filters a bit more intuitive. If in an iPython environment, call one of the
+tools on an input dataset to yield widgets that will control a filter or task in
+an interactive rendering scene:
+
+.. code:: python
+
+    from vtki import examples
+    dataset = examples.load_uniform()
+
+    # Use the slicer tool
+    slicer = vtki.OthogonalSlicer(dataset)
+
+
+.. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/slicer-tool.gif
+   :width: 500pt
