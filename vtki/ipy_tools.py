@@ -90,10 +90,33 @@ class OthogonalSlicer(InteractiveTool):
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
+        x, y, z = self.input_dataset.center
+
+        self._data_to_update = [None, None, None]
+
+        self._old_x = None
+        self._old_y = None
+        self._old_z = None
+
         def update(x, y, z):
-            self.plotter.remove_actor(self._data_to_update)
-            self.output_dataset = self.input_dataset.slice_orthogonal(x,y,z)
-            self._data_to_update = self.plotter.add_mesh(self.output_dataset, showedges=False, resetcam=False, **self.plotParams)
+            if x != self._old_x:
+                self.plotter.remove_actor(self._data_to_update[0])
+                self.slice_yz = self.input_dataset.slice(normal='x', origin=[x,y,z])
+                self._data_to_update[0] = self.plotter.add_mesh(self.slice_yz,
+                        showedges=False, resetcam=False, **self.plotParams)
+                self._old_x = x
+            if y != self._old_y:
+                self.plotter.remove_actor(self._data_to_update[1])
+                self.slice_xz = self.input_dataset.slice(normal='y', origin=[x,y,z])
+                self._data_to_update[1] = self.plotter.add_mesh(self.slice_xz,
+                        showedges=False, resetcam=False, **self.plotParams)
+                self._old_y = y
+            if z != self._old_z:
+                self.plotter.remove_actor(self._data_to_update[2])
+                self.slice_xy = self.input_dataset.slice(normal='z', origin=[x,y,z])
+                self._data_to_update[2] = self.plotter.add_mesh(self.slice_xy,
+                        showedges=False, resetcam=False, **self.plotParams)
+                self._old_z = z
 
         if step is None:
             stepx = 0.05 * (self.input_dataset.bounds[1] - self.input_dataset.bounds[0])
