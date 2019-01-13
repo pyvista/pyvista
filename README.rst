@@ -220,7 +220,7 @@ an interactive rendering scene:
     dataset = examples.load_uniform()
 
     # Use the slicer tool
-    vtki.OthogonalSlicer(dataset)
+    vtki.OrthogonalSlicer(dataset)
 
 
 .. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/slicer-tool.gif

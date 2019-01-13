@@ -102,7 +102,7 @@ class InteractiveTool(object):
 
 
 
-class OthogonalSlicer(InteractiveTool):
+class OrthogonalSlicer(InteractiveTool):
     """Within ipython enviornments like Jupyter notebooks, this will create
     an interactive render window with slider bars in te ipython enviornment to
     move orthogonal slices through the scene.
