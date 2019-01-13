@@ -230,7 +230,7 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, threshold=True, tol=1e-3):
+    def tool(self, threshold=True, tol=None):
         if threshold:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
