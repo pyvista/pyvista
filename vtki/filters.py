@@ -245,13 +245,30 @@ class DataSetFilters(object):
             for in the dataset.  Must be either 'point' or 'cell'.
 
         """
-        alg = vtk.vtkThreshold()
-        alg.SetInputDataObject(dataset)
         # set the scalaras to threshold on
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         else:
-            _, field = get_scalar(dataset, scalars, preference=preference, info=True)
+            arr, field = get_scalar(dataset, scalars, preference=preference, info=True)
+
+        # If using an inverted range, merge the result of two fitlers:
+        if isinstance(value, collections.Iterable) and invert:
+            valid_range = [np.nanmin(arr), np.nanmax(arr)]
+            # Create two thresholds
+            t1 = dataset.threshold([valid_range[0], value[0]], scalars=scalars,
+                    continuous=continuous, preference=preference, invert=False)
+            t2 = dataset.threshold([value[1], valid_range[1]], scalars=scalars,
+                    continuous=continuous, preference=preference, invert=False)
+            # Use an AppendFilter to merge the two results
+            appender = vtk.vtkAppendFilter()
+            appender.AddInputData(t1)
+            appender.AddInputData(t2)
+            appender.Update()
+            return _get_output(appender)
+
+        # Run a standard threshold algorithm
+        alg = vtk.vtkThreshold()
+        alg.SetInputDataObject(dataset)
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set thresholding parameters
         alg.SetUseContinuousCellRange(continuous)
@@ -263,13 +280,6 @@ class DataSetFilters(object):
             if len(value) != 2:
                 raise RuntimeError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
-            # NOTE: Invert for ThresholdBetween is coming in vtk=>8.2.x
-            version = vtk.VTK_VERSION.split('.')
-            if invert:
-                if (int(version[0]) <= 8 or int(version[0]) < 2):
-                    logging.warning(' invert option for range thresholding is not supported before VTK version 8.2.x. You are running VTK version {}.'.format(vtk.VTK_VERSION))
-                else:
-                    alg.SetInvert(invert)
         else:
             # just a single value
             if invert:
