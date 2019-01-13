@@ -1118,6 +1118,23 @@ class BasePlotter(object):
         if mesh is None:
             mesh = self.mesh
 
+        if isinstance(mesh, (collections.Iterable, vtki.MultiBlock)):
+            # Recursive if need to update scalars on many meshes
+            for m in mesh:
+                self.update_scalars(scalars, mesh=m, render=False)
+            if render:
+                self.ren_win.Render()
+            return
+
+        if isinstance(scalars, str):
+            # Grab scalar array if name given
+            scalars = get_scalar(mesh, scalars)
+
+        if scalars is None:
+            if render:
+                self.ren_win.Render()
+            return
+
         if scalars.shape[0] == mesh.GetNumberOfPoints():
             data = mesh.GetPointData()
         elif scalars.shape[0] == mesh.GetNumberOfCells():
