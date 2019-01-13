@@ -279,8 +279,8 @@ class Threshold(InteractiveTool):
 
     def tool(self):
         preference = self.plotParams['preference']
-        lowstart = (self.valid_range[1] - self.valid_range[0]) * 0.25
-        highstart = (self.valid_range[1] - self.valid_range[0]) * 0.75
+        lowstart = ((self.valid_range[1] - self.valid_range[0]) * 0.25) + self.valid_range[0]
+        highstart = ((self.valid_range[1] - self.valid_range[0]) * 0.75) + self.valid_range[0]
 
         # Now set up the widgets
         minsl = widgets.FloatSlider(min=self.valid_range[0],
