@@ -141,7 +141,7 @@ class OrthogonalSlicer(InteractiveTool):
         x, y, z = self.input_dataset.center
 
         self._data_to_update = [None, None, None]
-        self.output_dataset = [None, None, None]
+        self.output_dataset = vtki.MultiBlock()
         self._old = [None, None, None]
 
         axes = ['x', 'y', 'z']
