@@ -63,4 +63,7 @@ setup(
                                     'hexbeam.vtk', 'sphere.ply',
                                     'uniform.vtk', 'rectilinear.vtk']},
     install_requires=install_requires,
+    extras_require={
+        'ipy_tools': ['ipython', ''],
+    },
 )
