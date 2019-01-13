@@ -64,6 +64,6 @@ setup(
                                     'uniform.vtk', 'rectilinear.vtk']},
     install_requires=install_requires,
     extras_require={
-        'ipy_tools': ['ipython', ''],
+        'ipy_tools': ['ipython', 'ipywidgets'],
     },
 )
