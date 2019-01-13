@@ -26,7 +26,8 @@ class InteractiveTool(object):
     """
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
-                 show_bounds=False, reset_camera=True, plotParams={}, **kwargs):
+                 show_bounds=False, reset_camera=True, plotParams={},
+                 defaultParams={}, **kwargs):
         if not run_from_ipython() or not ipy_available:
             raise RuntimeError('Interactive plotting tools require iPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
@@ -61,7 +62,7 @@ class InteractiveTool(object):
         self._initialize(show_bounds, reset_camera)
 
         # Run the tool
-        self.tool(**kwargs)
+        self.tool(defaultParams=defaultParams, **kwargs)
 
 
     def tool(**kwargs):
@@ -133,7 +134,7 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, threshold=True, step=None):
+    def tool(self, threshold=True, step=None, defaultParams={}):
         if threshold:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -230,7 +231,7 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, threshold=True, tol=None):
+    def tool(self, threshold=True, tol=None, defaultParams={}):
         if threshold:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -277,7 +278,7 @@ class Threshold(InteractiveTool):
 
     """
 
-    def tool(self):
+    def tool(self, defaultParams={}):
         preference = self.plotParams['preference']
         lowstart = ((self.valid_range[1] - self.valid_range[0]) * 0.25) + self.valid_range[0]
         highstart = ((self.valid_range[1] - self.valid_range[0]) * 0.75) + self.valid_range[0]
@@ -319,5 +320,6 @@ class Threshold(InteractiveTool):
 
         # Create/display the widgets
         interact(update, dmin=minsl, dmax=maxsl,
-                 scalars=self.input_dataset.scalar_names, invert=False,
+                 scalars=self.input_dataset.scalar_names,
+                 invert=defaultParams.get('invert', False),
                  continuous=False)
