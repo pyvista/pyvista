@@ -530,6 +530,10 @@ class Common(DataSetFilters):
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
+    def get_scalar(self, name, preference='cell', info=False):
+        """ Searches both point and cell data for an array """
+        return get_scalar(self, name, preference=preference, info=info)
+
     @property
     def n_scalars(self):
         return self.GetPointData().GetNumberOfArrays() + \
