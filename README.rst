@@ -201,7 +201,7 @@ To use these filter, call the method of your choice directly on your data object
     dataset = examples.load_uniform()
 
     # Apply a threshold over a data range
-    dataset.threshold([300, 500])
+    result = dataset.threshold([300, 500])
 
 
 
@@ -220,7 +220,7 @@ an interactive rendering scene:
     dataset = examples.load_uniform()
 
     # Use the slicer tool
-    slicer = vtki.OthogonalSlicer(dataset)
+    vtki.OthogonalSlicer(dataset)
 
 
 .. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/slicer-tool.gif
