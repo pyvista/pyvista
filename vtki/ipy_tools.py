@@ -26,7 +26,7 @@ class InteractiveTool(object):
     """
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
-                 show_bounds=True, reset_camera=True, plotParams={}, **kwargs):
+                 show_bounds=False, reset_camera=True, plotParams={}, **kwargs):
         if not run_from_ipython() or not ipy_available:
             raise RuntimeError('Interactive plotting tools require iPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
