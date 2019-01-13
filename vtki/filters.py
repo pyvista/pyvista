@@ -174,7 +174,7 @@ class DataSetFilters(object):
         return output
 
 
-    def slice_along_axis(dataset, n=5, axis='x', tol=1e-5):
+    def slice_along_axis(dataset, n=5, axis='x', tol=None):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -201,6 +201,8 @@ class DataSetFilters(object):
         else:
             ax = axis
         # get the locations along that axis
+        if tol is None:
+            tol = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
         rng = np.linspace(dataset.bounds[ax*2]+tol, dataset.bounds[ax*2+1]-tol, n)
         center = list(dataset.center)
         # Make each of the slices
