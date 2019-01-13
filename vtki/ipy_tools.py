@@ -2,15 +2,21 @@
 A set of useful plotting tools and widgets that can be used in a Jupyter
 notebook
 """
+ipy_available = False
+try:
+    from ipywidgets import interact, interactive, fixed, interact_manual
+    import ipywidgets as widgets
+    ipy_available = True
+except:
+    pass
 
-from ipywidgets import interact, interactive, fixed, interact_manual
-import ipywidgets as widgets
 import collections
 
 import vtk
 
 import vtki
 from vtki.utilities import is_vtki_obj, wrap
+from vtki.plotting import run_from_ipython
 
 
 class InteractiveTool(object):
@@ -21,6 +27,8 @@ class InteractiveTool(object):
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=True, reset_camera=True, plotParams={}, **kwargs):
+        if not run_from_ipython() or not ipy_available:
+            raise RuntimeError('Interactive plotting tools require iPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_vtki_obj(dataset):
             dataset = wrap(dataset)
