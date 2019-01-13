@@ -524,6 +524,10 @@ class Common(DataSetFilters):
             _, arr = self.active_scalar_info
         if isinstance(arr, str):
             arr = get_scalar(self, arr, preference=preference)
+        # If array has no tuples return a NaN range
+        if arr.size == 0:
+            return (np.nan, np.nan)
+        # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
 
     @property
@@ -547,9 +551,9 @@ class Common(DataSetFilters):
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
-        attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3f}, {:.3f}"))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3f}, {:.3f}"))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
+        attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3e}, {:.3e}"))
+        attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3e}, {:.3e}"))
+        attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
         return attrs
 
     def _repr_html_(self):
