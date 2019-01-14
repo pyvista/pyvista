@@ -116,9 +116,9 @@ class OrthogonalSlicer(InteractiveTool):
     plotter : vtki.BasePlotter
         The active plotter (rendering window) to use
 
-    threshold : bool, optional
+    clean : bool, optional
         This will apply a threshold on the input dataset to remove any NaN
-        values. Default is False.
+        values. Default is True if active scalar present.
 
     step : float or tuple(float)
         The increments for the XYZ locations on each of the slider bars
@@ -134,8 +134,8 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, threshold=False, step=None, defaultParams={}):
-        if threshold:
+    def tool(self, clean=True, step=None, defaultParams={}):
+        if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
@@ -213,9 +213,9 @@ class ManySlicesAlongAxis(InteractiveTool):
     plotter : vtki.BasePlotter
         The active plotter (rendering window) to use
 
-    threshold : bool, optional
+    clean : bool, optional
         This will apply a threshold on the input dataset to remove any NaN
-        values. Default is False.
+        values. Default is True if active scalar present.
 
     tol : float, optional
         The tolerance to the edge of the dataset bounds to create the slices
@@ -231,8 +231,8 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, threshold=False, tol=None, defaultParams={}):
-        if threshold:
+    def tool(self, clean=True, tol=None, defaultParams={}):
+        if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
