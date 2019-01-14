@@ -765,6 +765,8 @@ class BasePlotter(object):
             return
         if actor is None:
             return
+        if isinstance(actor, int):
+            actor = self._actors[actor]
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
