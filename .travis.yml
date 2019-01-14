@@ -16,10 +16,10 @@ python:
 services:
   - xvfb
 
-addons:
-  apt:
-    packages:
-      - xvfb
+# addons:
+#   apt:
+#     packages:
+#       - xvfb
 
 before_script: # configure a headless display to test plot generation
   - "export DISPLAY=:99.0"
