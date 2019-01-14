@@ -283,7 +283,7 @@ class BasePlotter(object):
         self.camera_set = False
         self.first_time = True
         # Keep track of the scale
-        self.scale = [1.0, 1.0, 2.0] # TODO
+        self.scale = [1.0, 1.0, 1.0]
 
 
     def update_bounds_axes(self):
