@@ -29,7 +29,7 @@ class InteractiveTool(object):
                  show_bounds=False, reset_camera=True, plotParams={},
                  defaultParams={}, **kwargs):
         if not run_from_ipython() or not ipy_available:
-            raise RuntimeError('Interactive plotting tools require iPython and the ``ipywidgets`` package.')
+            raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_vtki_obj(dataset):
             dataset = wrap(dataset)

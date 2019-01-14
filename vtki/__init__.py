@@ -16,7 +16,7 @@ from vtki.container import MultiBlock
 from vtki.qt_plotting import QtInteractor
 from vtki.qt_plotting import BackgroundPlotter
 
-# iPython interactive tools
+# IPython interactive tools
 from vtki.ipy_tools import OrthogonalSlicer
 from vtki.ipy_tools import ManySlicesAlongAxis
 from vtki.ipy_tools import Threshold
