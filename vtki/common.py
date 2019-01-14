@@ -525,7 +525,7 @@ class Common(DataSetFilters):
         if isinstance(arr, str):
             arr = get_scalar(self, arr, preference=preference)
         # If array has no tuples return a NaN range
-        if arr.size == 0:
+        if arr is None or arr.size == 0:
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
