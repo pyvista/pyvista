@@ -1709,17 +1709,6 @@ class BasePlotter(object):
             self.remove_actor(self.legend)
             self._render()
 
-    def remove_actor(self, actor):
-        """ removes an actor """
-        if isinstance(actor, collections.Iterable):
-            for a in actor:
-                self.remove_actor(a)
-            return
-        # First remove this actor's mapper from _scalar_bar_mappers
-        _remove_mapper_from_plotter(self, actor)
-        self.renderer.RemoveActor(actor)
-        self._render()
-
     def enable_cell_picking(self, mesh=None, callback=None):
         """
         Enables picking of cells.  Press r to enable retangle based
