@@ -770,7 +770,11 @@ class BasePlotter(object):
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
-        self._actors.remove(actor)
+        try:
+            self._actors.remove(actor)
+        except ValueError:
+            # Hm, this sometimes happens. Might need a better solution
+            pass
         self.update_bounds_axes()
         if resetcam:
             self.reset_camera()
