@@ -282,6 +282,8 @@ class BasePlotter(object):
         # track if the camera has been setup
         self.camera_set = False
         self.first_time = True
+        # Keep track of the scale
+        self.scale = [1.0, 1.0, 2.0] # TODO
 
 
     def update_bounds_axes(self):
@@ -732,6 +734,10 @@ class BasePlotter(object):
             actor.SetMapper(uinput)
         else:
             actor = uinput
+
+        # Make sure scale is consistent with rest of scene
+        actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
+
         self.renderer.AddActor(actor)
         self._actors.append(actor)
 
@@ -890,6 +896,7 @@ class BasePlotter(object):
         # create actor
         cubeAxesActor = vtk.vtkCubeAxesActor()
         cubeAxesActor.SetUse2DMode(False)
+        cubeAxesActor.SetScale(self.scale[0], self.scale[1], self.scale[2])
 
         # set bounds
         if not bounds:
@@ -969,6 +976,7 @@ class BasePlotter(object):
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
         """
+        self.scale = [xscale, yscale, zscale]
         for actor in self._actors:
             actor.SetScale(xscale, yscale, zscale)
         self.update_bounds_axes()
