@@ -1723,6 +1723,15 @@ class BasePlotter(object):
         self.renderer.ResetCamera()
         self._render()
 
+    def isometric_view(self):
+        """
+        Resets the camera to a default isometric view showing all daa actros in
+        the scene.
+        """
+        self.camera_position = self.get_default_cam_pos()
+        self.camera_set = False
+        return self.reset_camera()
+
     def set_background(self, color):
         """
         Sets background color
