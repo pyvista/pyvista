@@ -735,7 +735,9 @@ class BasePlotter(object):
         self.renderer.AddActor(actor)
         self._actors.append(actor)
 
-        if resetcam or not self.camera_set:
+        if resetcam:
+            self.reset_camera()
+        elif not self.camera_set and resetcam is None:
             self.reset_camera()
         else:
             self._render()
@@ -748,7 +750,7 @@ class BasePlotter(object):
     def camera(self):
         return self.renderer.GetActiveCamera()
 
-    def remove_actor(self, actor, resetcam=False):
+    def remove_actor(self, actor, resetcam=None):
         """
         Removes an actor from the Plotter.
 
@@ -768,7 +770,9 @@ class BasePlotter(object):
         self.renderer.RemoveActor(actor)
         self._actors.remove(actor)
         self.update_bounds_axes()
-        if resetcam or not self.camera_set:
+        if resetcam:
+            self.reset_camera()
+        elif not self.camera_set and resetcam is None:
             self.reset_camera()
         else:
             self._render()
