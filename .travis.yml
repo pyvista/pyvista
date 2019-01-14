@@ -19,10 +19,11 @@ addons:
       - xvfb
 
 before_script: # configure a headless display to test plot generation
-  - "export DISPLAY=:99.0"
-  - "ls -l /etc/init.d/"
-  # - "which Xvfb"
-  - "sh -e /etc/init.d/xvfb start"
+  - export DISPLAY=:99.0
+  - ls -l /etc/init.d/
+  # - which Xvfb
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+  #- sh -e /etc/init.d/xvfb start
   - sleep 3 # give xvfb some time to start
 
 install:
