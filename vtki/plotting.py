@@ -788,6 +788,7 @@ class BasePlotter(object):
         """
         self.marker_actor = vtk.vtkAxesActor()
         self.renderer.AddActor(self.marker_actor)
+        self._actors.append(self.marker_actor)
         return self.marker_actor
 
     def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
