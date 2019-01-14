@@ -168,8 +168,6 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.add_axes()
 
     plotter.set_background(background)
-    if is_vtki_obj(var_item):
-        plotter._update_bounds(var_item.bounds)
 
     if isinstance(var_item, list):
         if len(var_item) == 2:  # might be arrows
@@ -272,8 +270,6 @@ class BasePlotter(object):
 
     def __init__(self):
         self.renderer = vtk.vtkRenderer()
-        self.bounds = [0,1, 0,1, 0,1]
-
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
@@ -282,6 +278,42 @@ class BasePlotter(object):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
+        self._actors = []
+        # track if the camera has been setup
+        self.camera_set = False
+        self.first_time = True
+
+
+    def update_bounds_axes(self):
+        """Update the bounds axes of the render window """
+        # Update the bounds for the axes labels if present
+        if hasattr(self, 'cubeAxesActor'):
+            self.cubeAxesActor.SetBounds(self.bounds)
+        return
+
+    @property
+    def bounds(self):
+        """ Bounds of all actors present in the rendering window """
+        the_bounds = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf]
+
+        def _update_bounds(bounds):
+            def update_axis(ax):
+                if bounds[ax*2] < the_bounds[ax*2]:
+                    the_bounds[ax*2] = bounds[ax*2]
+                if bounds[ax*2+1] > the_bounds[ax*2+1]:
+                    the_bounds[ax*2+1] = bounds[ax*2+1]
+            for ax in range(3):
+                update_axis(ax)
+            return
+
+        for actor in self._actors:
+            if isinstance(actor, vtk.vtkCubeAxesActor):
+                continue
+            if hasattr(actor, 'GetBounds') and actor.GetBounds() is not None:
+                _update_bounds(actor.GetBounds())
+
+        return the_bounds
+
 
     def clear(self):
         """ Clears plot by removing all actors and properties """
@@ -325,15 +357,6 @@ class BasePlotter(object):
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
 
-    def _update_bounds(self, bounds):
-        def update_axis(ax):
-            if bounds[ax*2] < self.bounds[ax*2]:
-                self.bounds[ax*2] = bounds[ax*2]
-            if bounds[ax*2+1] > self.bounds[ax*2+1]:
-                self.bounds[ax*2+1] = bounds[ax*2+1]
-        for ax in range(3):
-            update_axis(ax)
-        return
 
     def get_default_cam_pos(self):
         """
@@ -556,7 +579,6 @@ class BasePlotter(object):
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper, resetcam=resetcam)
-        self._update_bounds(mesh.GetBounds()) # All VTK datasets have bounds
 
         # Attempt get the active scalars if no preference given
         if scalars is None and color is None:
@@ -711,12 +733,14 @@ class BasePlotter(object):
         else:
             actor = uinput
         self.renderer.AddActor(actor)
+        self._actors.append(actor)
 
-        if resetcam:
+        if resetcam or not self.camera_set:
             self.reset_camera()
         else:
-            # self._render()
-            pass
+            self._render()
+
+        self.update_bounds_axes()
 
         return actor, actor.GetProperty()
 
@@ -724,7 +748,7 @@ class BasePlotter(object):
     def camera(self):
         return self.renderer.GetActiveCamera()
 
-    def remove_actor(self, actor):
+    def remove_actor(self, actor, resetcam=False):
         """
         Removes an actor from the Plotter.
 
@@ -737,9 +761,17 @@ class BasePlotter(object):
             for a in actor:
                 self.remove_actor(a)
             return
+        if actor is None:
+            return
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor)
         self.renderer.RemoveActor(actor)
+        self._actors.remove(actor)
+        self.update_bounds_axes()
+        if resetcam or not self.camera_set:
+            self.reset_camera()
+        else:
+            self._render()
 
     def add_axes_at_origin(self):
         """
