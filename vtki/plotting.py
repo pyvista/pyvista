@@ -1821,10 +1821,6 @@ class Plotter(BasePlotter):
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
 
-        # track if the camera has been setup
-        self.camera_set = False
-        self.first_time = True
-
 
     def show(self, title=None, window_size=None, interactive=True,
              autoclose=True, interactive_update=False, full_screen=False):
