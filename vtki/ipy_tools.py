@@ -11,6 +11,7 @@ except:
     pass
 
 import collections
+import numpy as np
 
 import vtk
 
@@ -304,6 +305,13 @@ class Threshold(InteractiveTool):
 
             # Update the sliders if scalar is changed
             self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
+            # First change the range to infinite so no errors are thrown when
+            # changing ranges
+            minsl.min = -np.inf
+            minsl.max = np.inf
+            maxsl.min = -np.inf
+            maxsl.max = np.inf
+            # Upsate to the new range
             minsl.min = self.valid_range[0]
             minsl.max = self.valid_range[1]
             maxsl.min = self.valid_range[0]
@@ -321,8 +329,17 @@ class Threshold(InteractiveTool):
                     resetcam=False, **self.plotParams)
             self._need_to_update = False
 
+
+        # Only give scalar options that have a varying range
+        names = []
+        for name in self.input_dataset.scalar_names:
+            arr = self.input_dataset.get_scalar(name)
+            rng = self.input_dataset.get_data_range(name)
+            if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
+                names.append(name)
+
         # Create/display the widgets
         interact(update, dmin=minsl, dmax=maxsl,
-                 scalars=self.input_dataset.scalar_names,
+                 scalars=names,
                  invert=defaultParams.get('invert', False),
                  continuous=False)
