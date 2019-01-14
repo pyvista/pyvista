@@ -1695,7 +1695,7 @@ class BasePlotter(object):
 
     def reset_camera(self):
         """
-        Rest camera so it slides along the vector defined from camera
+        Reset camera so it slides along the vector defined from camera
         position to focal point until all of the actors can be seen.
         """
         self.renderer.ResetCamera()
