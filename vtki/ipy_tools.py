@@ -179,7 +179,6 @@ class OrthogonalSlicer(InteractiveTool):
             stepz = step
 
         # Now set up the widgets
-        print(self.input_dataset.bounds, stepx, self.input_dataset.center)
         xsl = widgets.FloatSlider(min=self.input_dataset.bounds[0]+stepx,
                             max=self.input_dataset.bounds[1]-stepx,
                             step=stepx,
