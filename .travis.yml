@@ -13,19 +13,15 @@ python:
   - '3.6'
   - '3.7'
 
-# services:
-#   - xvfb
-
-# addons:
-#   apt:
-#     packages:
-#       - xvfb
+addons:
+  apt:
+    packages:
+      - xvfb
 
 before_script: # configure a headless display to test plot generation
   - "export DISPLAY=:99.0"
   - "ls -l /etc/init.d/"
-  - "which Xvfb"
-  - "Xvfb -h"
+  # - "which Xvfb"
   - "sh -e /etc/init.d/xvfb start"
   - sleep 3 # give xvfb some time to start
 
