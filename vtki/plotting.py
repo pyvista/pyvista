@@ -736,7 +736,8 @@ class BasePlotter(object):
             actor = uinput
 
         # Make sure scale is consistent with rest of scene
-        actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
+        if hasattr(actor, 'SetScale'):
+            actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
 
         self.renderer.AddActor(actor)
         self._actors.append(actor)
@@ -978,7 +979,8 @@ class BasePlotter(object):
         """
         self.scale = [xscale, yscale, zscale]
         for actor in self._actors:
-            actor.SetScale(xscale, yscale, zscale)
+            if hasattr(actor, 'SetScale'):
+                actor.SetScale(xscale, yscale, zscale)
         self.update_bounds_axes()
         self._render()
 
