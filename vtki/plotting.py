@@ -964,6 +964,16 @@ class BasePlotter(object):
         self.cubeAxesActor = cubeAxesActor
         return cubeAxesActor
 
+    def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0):
+        """Scale all the datasets in the scene.
+        Scaling in performed independently on the X, Y and Z axis.
+        A scale of zero is illegal and will be replaced with one.
+        """
+        for actor in self._actors:
+            actor.SetScale(xscale, yscale, zscale)
+        self.update_bounds_axes()
+        self._render()
+
     def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,
                        title_fontsize=None, label_fontsize=None, color=None,
                        font_family=None, shadow=False, mapper=None,
