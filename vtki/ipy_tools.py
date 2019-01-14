@@ -26,8 +26,8 @@ class InteractiveTool(object):
     """
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
-                 show_bounds=False, reset_camera=True, plotParams={},
-                 defaultParams={}, **kwargs):
+                 show_bounds=False, reset_camera=True, outline=None,
+                 plotParams={}, defaultParams={}, **kwargs):
         if not run_from_ipython() or not ipy_available:
             raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
@@ -59,7 +59,7 @@ class InteractiveTool(object):
         self._need_to_update = True
 
         # Add some intital plotting stuff to the scene
-        self._initialize(show_bounds, reset_camera)
+        self._initialize(show_bounds, reset_camera, outline)
 
         # Run the tool
         self.tool(defaultParams=defaultParams, **kwargs)
@@ -71,9 +71,12 @@ class InteractiveTool(object):
         raise NotImplementedError('This method has not been implemented')
 
 
-    def _initialize(self, show_bounds, reset_camera):
+    def _initialize(self, show_bounds, reset_camera, outline):
         """Outlines the input dataset and sets up the scene"""
-        outline = self.plotter.add_mesh(self.input_dataset.outline_corners())
+        if outline is None:
+            self.plotter.add_mesh(self.input_dataset.outline_corners())
+        elif outline:
+            self.plotter.add_mesh(self.input_dataset.outline())
         # add the axis labels
         if show_bounds:
             self.plotter.add_bounds_axes()
