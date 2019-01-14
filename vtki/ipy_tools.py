@@ -118,7 +118,7 @@ class OrthogonalSlicer(InteractiveTool):
 
     threshold : bool, optional
         This will apply a threshold on the input dataset to remove any NaN
-        values. Default is True.
+        values. Default is False.
 
     step : float or tuple(float)
         The increments for the XYZ locations on each of the slider bars
@@ -134,7 +134,7 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, threshold=True, step=None, defaultParams={}):
+    def tool(self, threshold=False, step=None, defaultParams={}):
         if threshold:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -179,6 +179,7 @@ class OrthogonalSlicer(InteractiveTool):
             stepz = step
 
         # Now set up the widgets
+        print(self.input_dataset.bounds, stepx, self.input_dataset.center)
         xsl = widgets.FloatSlider(min=self.input_dataset.bounds[0]+stepx,
                             max=self.input_dataset.bounds[1]-stepx,
                             step=stepx,
@@ -215,7 +216,7 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     threshold : bool, optional
         This will apply a threshold on the input dataset to remove any NaN
-        values. Default is True.
+        values. Default is False.
 
     tol : float, optional
         The tolerance to the edge of the dataset bounds to create the slices
@@ -231,7 +232,7 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, threshold=True, tol=None, defaultParams={}):
+    def tool(self, threshold=False, tol=None, defaultParams={}):
         if threshold:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
