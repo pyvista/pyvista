@@ -49,6 +49,16 @@ def load_hexbeam():
     return vtki.UnstructuredGrid(hexbeamfile)
 
 
+def load_structured():
+    """ Loads a simple StructuredGrid """
+    x = np.arange(-10, 10, 0.25)
+    y = np.arange(-10, 10, 0.25)
+    x, y = np.meshgrid(x, y)
+    r = np.sqrt(x**2 + y**2)
+    z = np.sin(r)
+    return vtki.StructuredGrid(x, y, z)
+
+
 def plot_ants_plane(off_screen=False):
     """
     Demonstrate how to create a plot class to plot multiple meshes while
