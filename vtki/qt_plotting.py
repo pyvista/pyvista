@@ -179,8 +179,7 @@ class BackgroundPlotter(QtInteractor):
         return actor, prop
 
     def update_app_icon(self):
-        """Update the app icon if it has been at least one second and the user
-        is not trying to resize the window.
+        """Update the app icon if the user is not trying to resize the window.
         """
         cur_time = time.time()
         if self._last_window_size != self.window_size:
