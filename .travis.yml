@@ -28,10 +28,11 @@ before_script: # configure a headless display to test plot generation
 
 install:
   - pip install -r requirements.txt
-  - pip install PyQt5
   - pip install pytest-cov
-  - pip install nbval # For testing the notebooks
-  - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then pip install PyQt5 pytest-qt; fi
+  - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
+        pip install PyQt5 pytest-qt;
+        pip install nbval; # For testing the notebooks
+    fi
   - pip install -e .
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
@@ -40,7 +41,9 @@ install:
 script:
   - pytest --cov vtki -v
   # Now make sure notebooks are running
-  - pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb
+  - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
+        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb
+    fi
 
 cache:
   directories:
