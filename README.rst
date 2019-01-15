@@ -198,6 +198,7 @@ To use these filter, call the method of your choice directly on your data object
 .. code:: python
 
     from vtki import examples
+
     dataset = examples.load_uniform()
 
     # Apply a threshold over a data range
@@ -217,7 +218,8 @@ an interactive rendering scene:
 
     import vtki
     from vtki import examples
-    dataset = examples.load_uniform()
+
+    dataset = examples.load_hexbeam()
 
     # Use the slicer tool
     vtki.OrthogonalSlicer(dataset)
