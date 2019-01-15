@@ -297,8 +297,6 @@ class Threshold(InteractiveTool):
                             value=highstart,
                             continuous_update=False)
 
-        self.minsl = minsl
-
         def update(dmin, dmax, invert, continuous, **kwargs):
             if dmax < dmin:
                 # If user chooses a min that is more than max, correct them:
