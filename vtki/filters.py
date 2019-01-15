@@ -251,8 +251,10 @@ class DataSetFilters(object):
         # set the scalaras to threshold on
         if scalars is None:
             field, scalars = dataset.active_scalar_info
-        else:
-            arr, field = get_scalar(dataset, scalars, preference=preference, info=True)
+        arr, field = get_scalar(dataset, scalars, preference=preference, info=True)
+
+        if arr is None:
+            raise RuntimeError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two fitlers:
         if isinstance(value, collections.Iterable) and invert:
@@ -294,7 +296,7 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def threshold_percent(dataset, percent=50, scalars=None, invert=False,
+    def threshold_percent(dataset, percent=0.50, scalars=None, invert=False,
                           continuous=False, preference='cell'):
         """Thresholds the dataset by a percentage of its range on the active
         scalar array or as specified

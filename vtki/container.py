@@ -176,6 +176,21 @@ class MultiBlock(vtkMultiBlockDataSet):
         self.RemoveBlock(index)
 
 
+    def __iter__(self):
+        self._iter_n = 0
+        return self
+
+    def next(self):
+        if self._iter_n < self.n_blocks:
+            result = self[self._iter_n]
+            self._iter_n += 1
+            return result
+        else:
+            raise StopIteration
+
+    __next__ = next
+
+
     def pop(self, index):
         """Pops off a block at the specified index"""
         data = self[index]
