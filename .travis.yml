@@ -39,7 +39,7 @@ install:
 script:
   - pytest --cov vtki -v
   # Now make sure notebooks are running
-  - pytest --nbval-lax notebooks/*.ipynb
+  - pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb
 
 cache:
   directories:
