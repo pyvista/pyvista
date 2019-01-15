@@ -19,15 +19,18 @@ addons:
       - xvfb
 
 before_script: # configure a headless display to test plot generation
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
+  - export DISPLAY=:99.0
+  - which Xvfb
+  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+  # - ls -l /etc/init.d/
+  # - sh -e /etc/init.d/xvfb start
   - sleep 3 # give xvfb some time to start
 
 install:
   - pip install -r requirements.txt
   - pip install pytest-cov
   - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then pip install PyQt5 pytest-qt; fi
-  - pip install .
+  - pip install -e .
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
   - python -c "import imageio; imageio.plugins.ffmpeg.download()"

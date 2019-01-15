@@ -66,7 +66,7 @@ def set_plot_theme(theme):
 
 
 def run_from_ipython():
-    """ returns True when run from iPython """
+    """ returns True when run from IPython """
     try:
         __IPYTHON__
         return True
@@ -1968,7 +1968,7 @@ class Plotter(BasePlotter):
             try:
                 import IPython
             except ImportError:
-                raise Exception('Install iPython to display image in a notebook')
+                raise Exception('Install IPython to display image in a notebook')
 
             img = PIL.Image.fromarray(self.screenshot())
             disp = IPython.display.display(img)

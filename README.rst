@@ -205,11 +205,11 @@ To use these filter, call the method of your choice directly on your data object
 
 
 
-iPython Interactive Plotting Tools
+IPython Interactive Plotting Tools
 ----------------------------------
 
 ``vtki`` comes packed with several interactive plotting tools to make using the
-filters a bit more intuitive. If in an iPython environment, call one of the
+filters a bit more intuitive. If in an IPython environment, call one of the
 tools on an input dataset to yield widgets that will control a filter or task in
 an interactive rendering scene:
 

@@ -27,10 +27,10 @@ class InteractiveTool(object):
     """
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
-                 show_bounds=False, reset_camera=True, plotParams={},
-                 defaultParams={}, **kwargs):
+                 show_bounds=False, reset_camera=True, outline=None,
+                 plotParams={}, defaultParams={}, **kwargs):
         if not run_from_ipython() or not ipy_available:
-            raise RuntimeError('Interactive plotting tools require iPython and the ``ipywidgets`` package.')
+            raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_vtki_obj(dataset):
             dataset = wrap(dataset)
@@ -60,7 +60,7 @@ class InteractiveTool(object):
         self._need_to_update = True
 
         # Add some intital plotting stuff to the scene
-        self._initialize(show_bounds, reset_camera)
+        self._initialize(show_bounds, reset_camera, outline)
 
         # Run the tool
         self.tool(defaultParams=defaultParams, **kwargs)
@@ -72,9 +72,12 @@ class InteractiveTool(object):
         raise NotImplementedError('This method has not been implemented')
 
 
-    def _initialize(self, show_bounds, reset_camera):
+    def _initialize(self, show_bounds, reset_camera, outline):
         """Outlines the input dataset and sets up the scene"""
-        outline = self.plotter.add_mesh(self.input_dataset.outline_corners())
+        if outline is None:
+            self.plotter.add_mesh(self.input_dataset.outline_corners())
+        elif outline:
+            self.plotter.add_mesh(self.input_dataset.outline())
         # add the axis labels
         if show_bounds:
             self.plotter.add_bounds_axes()
@@ -117,9 +120,9 @@ class OrthogonalSlicer(InteractiveTool):
     plotter : vtki.BasePlotter
         The active plotter (rendering window) to use
 
-    threshold : bool, optional
+    clean : bool, optional
         This will apply a threshold on the input dataset to remove any NaN
-        values. Default is False.
+        values. Default is True if active scalar present.
 
     step : float or tuple(float)
         The increments for the XYZ locations on each of the slider bars
@@ -135,8 +138,8 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, threshold=False, step=None, defaultParams={}):
-        if threshold:
+    def tool(self, clean=True, step=None, defaultParams={}):
+        if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
@@ -214,9 +217,9 @@ class ManySlicesAlongAxis(InteractiveTool):
     plotter : vtki.BasePlotter
         The active plotter (rendering window) to use
 
-    threshold : bool, optional
+    clean : bool, optional
         This will apply a threshold on the input dataset to remove any NaN
-        values. Default is False.
+        values. Default is True if active scalar present.
 
     tol : float, optional
         The tolerance to the edge of the dataset bounds to create the slices
@@ -232,8 +235,8 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, threshold=False, tol=None, defaultParams={}):
-        if threshold:
+    def tool(self, clean=True, tol=None, defaultParams={}):
+        if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
