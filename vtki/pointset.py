@@ -76,6 +76,8 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
                 cells = np.ones((npoints, 2), dtype=vtki.ID_TYPE)
                 cells[:, 1] = np.arange(npoints, dtype=vtki.ID_TYPE)
                 self._from_arrays(points, cells, deep)
+            else:
+                raise TypeError('Invalid input type')
 
         elif len(args) == 2:
             arg0_is_array = isinstance(args[0], np.ndarray)
