@@ -30,8 +30,8 @@ install:
   - pip install -r requirements.txt
   - pip install pytest-cov
   - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-        pip install PyQt5 pytest-qt;
-        pip install nbval; # For testing the notebooks
+      pip install PyQt5 pytest-qt;
+      pip install nbval; # For testing the notebooks
     fi
   - pip install -e .
   - which python
@@ -42,7 +42,7 @@ script:
   - pytest --cov vtki -v
   # Now make sure notebooks are running
   - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb
+      pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
     fi
 
 cache:
