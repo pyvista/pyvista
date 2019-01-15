@@ -393,7 +393,7 @@ class DataSetFilters(object):
         alg = vtk.vtkGeometryFilter()
         alg.SetInputDataObject(dataset)
         alg.Update()
-        return wrap(alg.GetOutputDataObject(0))
+        return _get_output(alg)
 
     def extract_edges(dataset):
         """Extract all the internal/external edges of the dataset as PolyData.
@@ -402,7 +402,7 @@ class DataSetFilters(object):
         alg = vtk.vtkExtractEdges()
         alg.SetInputDataObject(dataset)
         alg.Update()
-        return wrap(alg.GetOutputDataObject(0))
+        return _get_output(alg)
 
     def wireframe(dataset):
         """An alias for ``extract_edges()`` which produces a full wireframe
