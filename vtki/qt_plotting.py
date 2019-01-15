@@ -1,6 +1,7 @@
 from threading import Thread
 import time
 import logging
+import numpy as np
 
 import vtk
 import vtk.qt
@@ -30,6 +31,33 @@ try:
     has_pyqt = True
 except:
     pass
+
+
+
+def resample_image(arr, max_size=400):
+    """Resamples a square image to an image of max_size"""
+    dim = np.max(arr.shape[0:2])
+    if dim < max_size:
+        max_size = dim
+    x, y, _ = arr.shape
+    sx = int(np.ceil(x / max_size))
+    sy = int(np.ceil(y / max_size))
+    img = np.zeros((max_size, max_size, 3), dtype=arr.dtype)
+    arr = arr[0:-1:sx, 0:-1:sy, :]
+    xl = (max_size - arr.shape[0]) // 2
+    yl = (max_size - arr.shape[1]) // 2
+    img[xl:arr.shape[0]+xl, yl:arr.shape[1]+yl, :] = arr
+    return img
+
+
+def pad_image(arr, max_size=400):
+    """Pads an image to a square then resamples to max_size"""
+    dim = np.max(arr.shape)
+    img = np.zeros((dim, dim, 3), dtype=arr.dtype)
+    xl = (dim - arr.shape[0]) // 2
+    yl = (dim - arr.shape[1]) // 2
+    img[xl:arr.shape[0]+xl, yl:arr.shape[1]+yl, :] = arr
+    return resample_image(img, max_size=max_size)
 
 
 class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
@@ -84,6 +112,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 class BackgroundPlotter(QtInteractor):
 
+    ICON_TIME_STEP = 5.0
+
     def __init__(self, show=True, app=None, **kwargs):
         assert has_pyqt, 'Requires PyQt5'
         self.active = True
@@ -111,6 +141,10 @@ class BackgroundPlotter(QtInteractor):
             self.show()
 
         self._spawn_background_rendering()
+
+        self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
+        self._last_window_size = self.window_size
+        self._last_camera_pos = self.camera_position
 
     def _spawn_background_rendering(self, rate=5.0):
         """
@@ -141,7 +175,38 @@ class BackgroundPlotter(QtInteractor):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor, resetcam)
         if resetcam:
             self.reset_camera()
+        self.update_app_icon()
         return actor, prop
+
+    def update_app_icon(self):
+        """Update the app icon if the user is not trying to resize the window.
+        """
+        cur_time = time.time()
+        if self._last_window_size != self.window_size:
+            # Window size hasn't remained constant since last render.
+            # This means the user is resizing it so ignore update.
+            pass
+        elif ((cur_time - self._last_update_time > BackgroundPlotter.ICON_TIME_STEP)
+                and self._last_camera_pos != self.camera_position):
+            # its been a while since last update OR
+            #   the camera position has changed and its been at leat one second
+            from PyQt5 import QtGui
+            # Update app icon as preview of the window
+            img = pad_image(self.image)
+            qimage = QtGui.QImage(img.copy(), img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
+            icon = QtGui.QIcon(QtGui.QPixmap.fromImage(qimage))
+            self.app.setWindowIcon(icon)
+            # Update trackers
+            self._last_update_time = cur_time
+            self._last_camera_pos = self.camera_position
+        # Update trackers
+        self._last_window_size = self.window_size
+
+
+    def _render(self):
+        super(BackgroundPlotter, self)._render()
+        self.update_app_icon()
+        return
 
     def __del__(self):
         self.close()
