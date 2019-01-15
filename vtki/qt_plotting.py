@@ -35,21 +35,28 @@ except:
 
 
 def resample_image(arr, max_size=400):
-    """Resamples a square image to an image that will fit inside max size"""
+    """Resamples a square image to an image of max_size"""
     dim = np.max(arr.shape[0:2])
     if dim < max_size:
         max_size = dim
     x, y, _ = arr.shape
     sx = int(np.ceil(x / max_size))
     sy = int(np.ceil(y / max_size))
-    return arr[0:-1:sx, 0:-1:sy, :]
+    img = np.zeros((max_size, max_size, 3), dtype=arr.dtype)
+    arr = arr[0:-1:sx, 0:-1:sy, :]
+    xl = (max_size - arr.shape[0]) // 2
+    yl = (max_size - arr.shape[1]) // 2
+    img[xl:arr.shape[0]+xl, yl:arr.shape[1]+yl, :] = arr
+    return img
 
 
 def pad_image(arr, max_size=400):
     """Pads an image to a square then resamples to max_size"""
     dim = np.max(arr.shape)
-    img = np.zeros((dim,dim,3), dtype=arr.dtype)
-    img[0:arr.shape[0], 0:arr.shape[1], :] = arr
+    img = np.zeros((dim, dim, 3), dtype=arr.dtype)
+    xl = (dim - arr.shape[0]) // 2
+    yl = (dim - arr.shape[1]) // 2
+    img[xl:arr.shape[0]+xl, yl:arr.shape[1]+yl, :] = arr
     return resample_image(img, max_size=max_size)
 
 
@@ -135,6 +142,7 @@ class BackgroundPlotter(QtInteractor):
         self._spawn_background_rendering()
 
         self._last_window_size = self.window_size
+        self._last_camera_pos = self.camera_position
 
     def _spawn_background_rendering(self, rate=5.0):
         """
@@ -165,14 +173,17 @@ class BackgroundPlotter(QtInteractor):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor, resetcam)
         if resetcam:
             self.reset_camera()
+        self.update_app_icon()
         return actor, prop
 
-    def _render(self):
-        super(BackgroundPlotter, self)._render()
-        # Now update the app icon if its been at least one second and the user
-        #   is not trying to resize the window
+    def update_app_icon(self):
+        """Update the app icon if it has been at least one second and the user
+        is not trying to resize the window.
+        """
         cur_time = time.time()
-        if (cur_time - self._last_update_time > 1.0) and (self._last_window_size == self.window_size):
+        if ((cur_time - self._last_update_time > 1.0) and
+                self._last_window_size == self.window_size and
+                self._last_camera_pos != self.camera_position):
             from PyQt5 import QtGui
             # Update app icon as preview of the window
             img = pad_image(self.image)
@@ -181,8 +192,14 @@ class BackgroundPlotter(QtInteractor):
             self.app.setWindowIcon(icon)
             # Update trackers
             self._last_update_time = cur_time
+            self._last_camera_pos = self.camera_position
         # Update trackers
         self._last_window_size = self.window_size
+
+
+    def _render(self):
+        super(BackgroundPlotter, self)._render()
+        self.update_app_icon()
         return
 
     def __del__(self):
