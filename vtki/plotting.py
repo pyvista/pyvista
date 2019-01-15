@@ -1293,6 +1293,8 @@ class BasePlotter(object):
     @property
     def image(self):
         """ Returns an image array of current render window """
+        if not hasattr(self, 'ifilter'):
+            self.start_image_filter()
         # Update filter and grab pixels
         self.ifilter.Modified()
         self.ifilter.Update()
@@ -1513,6 +1515,8 @@ class BasePlotter(object):
         >>> plotter.add_mesh(sphere)
         >>> plotter.screenshot('screenshot.png')
         """
+        if not hasattr(self, 'ifilter'):
+            self.start_image_filter()
         # configure image filter
         if transparent_background:
             self.ifilter.SetInputBufferTypeToRGBA()
@@ -1520,7 +1524,11 @@ class BasePlotter(object):
             self.ifilter.SetInputBufferTypeToRGB()
 
         # this needs to be called twice for some reason,  debug later
-        self.render()
+        if isinstance(self, Plotter):
+            # TODO: we need a consistent rendering function
+            self.render()
+        else:
+            self._render()
         img = self.image
         img = self.image
 
@@ -1825,8 +1833,6 @@ class Plotter(BasePlotter):
 
         # Set background
         self.set_background(plotParams['background'])
-
-        self.start_image_filter()
 
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
