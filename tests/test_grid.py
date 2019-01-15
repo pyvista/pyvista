@@ -37,14 +37,8 @@ def test_merge():
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_struct_example():
-    x = np.arange(-10, 10, 0.25)
-    y = np.arange(-10, 10, 0.25)
-    x, y = np.meshgrid(x, y)
-    r = np.sqrt(x**2 + y**2)
-    z = np.sin(r)
-
     # create and plot structured grid
-    grid = vtki.StructuredGrid(x, y, z)
+    grid = examples.load_structured()
     cpos = grid.plot(off_screen=True)  # basic plot
     assert isinstance(cpos, list)
 
