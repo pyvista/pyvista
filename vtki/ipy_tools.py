@@ -297,6 +297,8 @@ class Threshold(InteractiveTool):
                             value=highstart,
                             continuous_update=False)
 
+        self.minsl = minsl
+
         def update(dmin, dmax, invert, continuous, **kwargs):
             if dmax < dmin:
                 # If user chooses a min that is more than max, correct them:
@@ -308,17 +310,15 @@ class Threshold(InteractiveTool):
 
             # Update the sliders if scalar is changed
             self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
-            # First change the range to infinite so no errors are thrown when
-            # changing ranges
-            minsl.min = -np.inf
-            minsl.max = np.inf
-            maxsl.min = -np.inf
-            maxsl.max = np.inf
-            # Upsate to the new range
-            minsl.min = self.valid_range[0]
-            minsl.max = self.valid_range[1]
-            maxsl.min = self.valid_range[0]
-            maxsl.max = self.valid_range[1]
+            if self._last_scalars != scalars:
+                self._last_scalars = scalars
+                kwargs['scalars'] = scalars
+                # Update to the new range
+                minsl.min = self.valid_range[0]
+                minsl.max = self.valid_range[1]
+                maxsl.min = self.valid_range[0]
+                maxsl.max = self.valid_range[1]
+                return update(dmin, dmax, invert, continuous, **kwargs)
 
             # Run the threshold
             self.output_dataset = self.input_dataset.threshold([dmin, dmax],
@@ -328,8 +328,12 @@ class Threshold(InteractiveTool):
             # Update the plotter
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, resetcam=False)
-            self._data_to_update = self.plotter.add_mesh(self.output_dataset,
+            if self.output_dataset.n_points == 0 and self.output_dataset.n_cells == 0:
+                pass
+            else:
+                self._data_to_update = self.plotter.add_mesh(self.output_dataset,
                     resetcam=False, **self.plotParams)
+
             self._need_to_update = False
 
 
@@ -340,6 +344,8 @@ class Threshold(InteractiveTool):
             rng = self.input_dataset.get_data_range(name)
             if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
                 names.append(name)
+
+        self._last_scalars = names[0]
 
         # Create/display the widgets
         interact(update, dmin=minsl, dmax=maxsl,
