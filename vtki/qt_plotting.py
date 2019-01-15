@@ -112,10 +112,11 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 class BackgroundPlotter(QtInteractor):
 
+    ICON_TIME_STEP = 5.0
+
     def __init__(self, show=True, app=None, **kwargs):
         assert has_pyqt, 'Requires PyQt5'
         self.active = True
-        self._last_update_time = time.time()
 
         # ipython magic
         if run_from_ipython():
@@ -141,6 +142,7 @@ class BackgroundPlotter(QtInteractor):
 
         self._spawn_background_rendering()
 
+        self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
 
@@ -181,9 +183,14 @@ class BackgroundPlotter(QtInteractor):
         is not trying to resize the window.
         """
         cur_time = time.time()
-        if ((cur_time - self._last_update_time > 1.0) and
-                self._last_window_size == self.window_size and
-                self._last_camera_pos != self.camera_position):
+        if self._last_window_size != self.window_size:
+            # Window size hasn't remained constant since last render.
+            # This means the user is resizing it so ignore update.
+            pass
+        elif ((cur_time - self._last_update_time > BackgroundPlotter.ICON_TIME_STEP)
+                and self._last_camera_pos != self.camera_position):
+            # its been a while since last update OR
+            #   the camera position has changed and its been at leat one second
             from PyQt5 import QtGui
             # Update app icon as preview of the window
             img = pad_image(self.image)
