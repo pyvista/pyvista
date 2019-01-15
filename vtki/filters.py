@@ -9,22 +9,23 @@ Example:
     >>> from vtki import examples
     >>> dataset = examples.load_uniform()
     >>> dataset.set_active_scalar('Spatial Point Data') # Array the filters will use
+    >>> dataset.plot() # Inspect the starting dataset
 
     >>> # Threshold
     >>> thresh = dataset.threshold([100, 500])
-    >>> thresh.plot(scalars='Spatial Point Data')
+    >>> thresh.plot()
 
     >>> # Slice
     >>> slc = dataset.slice()
-    >>> slc.plot(scalars='Spatial Point Data')
+    >>> slc.plot()
 
     >>> # Clip
     >>> clp = dataset.clip(invert=True)
-    >>> clp.plot(scalars='Spatial Point Data')
+    >>> clp.plot()
 
     >>> # Contour
     >>> iso = dataset.contour()
-    >>> iso.plot(scalars='Spatial Point Data')
+    >>> iso.plot()
 
 """
 import collections
@@ -393,6 +394,21 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
+
+    def extract_edges(dataset):
+        """Extract all the internal/external edges of the dataset as PolyData.
+        This produces a full wireframe representation of the input dataset.
+        """
+        alg = vtk.vtkExtractEdges()
+        alg.SetInputDataObject(dataset)
+        alg.Update()
+        return wrap(alg.GetOutputDataObject(0))
+
+    def wireframe(dataset):
+        """An alias for ``extract_edges()`` which produces a full wireframe
+        representation of the input dataset.
+        """
+        return DataSetFilters.extract_edges(dataset)
 
 
 class PointSetFilters(object):
