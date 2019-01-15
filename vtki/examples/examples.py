@@ -44,7 +44,7 @@ def load_rectilinear():
     """ Loads a sample uniform grid """
     return vtki.RectilinearGrid(rectfile)
 
-def load_hexbean():
+def load_hexbeam():
     """ Loads a sample UnstructuredGrid """
     return vtki.UnstructuredGrid(hexbeamfile)
 
