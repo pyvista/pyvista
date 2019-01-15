@@ -28,6 +28,7 @@ before_script: # configure a headless display to test plot generation
 
 install:
   - pip install -r requirements.txt
+  - pip install PyQt5
   - pip install pytest-cov
   - pip install nbval # For testing the notebooks
   - if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then pip install PyQt5 pytest-qt; fi
