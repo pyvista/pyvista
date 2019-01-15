@@ -31,7 +31,7 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-plotParams = {
+rcParams = {
     'background' : [0.3, 0.3, 0.3],
     'camera' : {
         'position' : [1, 1, 1],
@@ -58,11 +58,11 @@ plotParams = {
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
     if theme.lower() in ['paraview', 'pv']:
-        plotParams['background'] = PV_BACKGROUND
-        plotParams['colormap'] = 'coolwarm'
-        plotParams['font']['family'] = 'arial'
-        plotParams['font']['label_size'] = 16
-        plotParams['showedges'] = False
+        rcParams['background'] = PV_BACKGROUND
+        rcParams['colormap'] = 'coolwarm'
+        rcParams['font']['family'] = 'arial'
+        rcParams['font']['label_size'] = 16
+        rcParams['showedges'] = False
 
 
 def run_from_ipython():
@@ -370,8 +370,8 @@ class BasePlotter(object):
         y = (bounds[3] + bounds[2])/2
         z = (bounds[5] + bounds[4])/2
         focal_pt = [x, y, z]
-        return [np.array(plotParams['camera']['position']) + np.array(focal_pt),
-                focal_pt, plotParams['camera']['viewup']]
+        return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
+                focal_pt, rcParams['camera']['viewup']]
 
     def key_press_event(self, obj, event):
         """ Listens for key press event """
@@ -526,7 +526,7 @@ class BasePlotter(object):
             mesh = wrap(mesh)
 
         if showedges is None:
-            showedges = plotParams['showedges']
+            showedges = rcParams['showedges']
 
 
         if isinstance(mesh, MultiBlock):
@@ -593,7 +593,7 @@ class BasePlotter(object):
 
         # Scalar formatting ===================================================
         if colormap is None:
-            colormap = plotParams['colormap']
+            colormap = rcParams['colormap']
         title = 'Data' if stitle is None else stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
@@ -886,9 +886,9 @@ class BasePlotter(object):
         """
 
         if font_family is None:
-            font_family = plotParams['font']['family']
+            font_family = rcParams['font']['family']
         if fontsize is None:
-            fontsize = plotParams['font']['size']
+            fontsize = rcParams['font']['size']
 
         # Use the bounds of all data in the rendering window
         if not mesh and not bounds:
@@ -1048,18 +1048,18 @@ class BasePlotter(object):
 
         """
         if font_family is None:
-            font_family = plotParams['font']['family']
+            font_family = rcParams['font']['family']
         if label_fontsize is None:
-            label_fontsize = plotParams['font']['label_size']
+            label_fontsize = rcParams['font']['label_size']
         if title_fontsize is None:
-            title_fontsize = plotParams['font']['title_size']
+            title_fontsize = rcParams['font']['title_size']
         if color is None:
-            color = plotParams['font']['color']
+            color = rcParams['font']['color']
         # Automatically choose size if not specified
         if width is None:
-            width = plotParams['colorbar']['width']
+            width = rcParams['colorbar']['width']
         if height is None:
-            height = plotParams['colorbar']['height']
+            height = rcParams['colorbar']['height']
 
         # check if maper exists
         if mapper is None:
@@ -1095,9 +1095,9 @@ class BasePlotter(object):
             except:
                 raise RuntimeError('Maximum number of color bars reached.')
             if position_x is None:
-                position_x = plotParams['colorbar']['position_x']
+                position_x = rcParams['colorbar']['position_x']
             if position_y is None:
-                position_y = plotParams['colorbar']['position_y'] + slot * height
+                position_y = rcParams['colorbar']['position_y'] + slot * height
         # Adjust to make sure on the screen
         if position_x + width > 1:
             position_x -= width
@@ -1300,9 +1300,9 @@ class BasePlotter(object):
 
         """
         if font is None:
-            font = plotParams['font']['family']
+            font = rcParams['font']['family']
         if fontsize is None:
-            fontsize = plotParams['font']['size']
+            fontsize = rcParams['font']['size']
 
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
@@ -1490,9 +1490,9 @@ class BasePlotter(object):
 
         """
         if font_family is None:
-            font_family = plotParams['font']['family']
+            font_family = rcParams['font']['family']
         if fontsize is None:
-            fontsize = plotParams['font']['size']
+            fontsize = rcParams['font']['size']
 
         if len(points) != len(labels):
             raise Exception('There must be one label for each point')
@@ -1757,7 +1757,7 @@ class BasePlotter(object):
 
         """
         if color is None:
-            color = plotParams['background']
+            color = rcParams['background']
         elif isinstance(color, str):
             if color.lower() in 'paraview' or color.lower() in 'pv':
                 # Use the default ParaView background color
@@ -1893,7 +1893,7 @@ class Plotter(BasePlotter):
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
 
         # Set background
-        self.set_background(plotParams['background'])
+        self.set_background(rcParams['background'])
 
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
@@ -1948,7 +1948,7 @@ class Plotter(BasePlotter):
             self.ren_win.BordersOn()  # super buggy when disabled
         else:
             if window_size is None:
-                window_size = plotParams['window_size']
+                window_size = rcParams['window_size']
             self.ren_win.SetSize(window_size[0], window_size[1])
 
         # Render

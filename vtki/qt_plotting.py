@@ -6,7 +6,7 @@ import numpy as np
 import vtk
 import vtk.qt
 
-from vtki.plotting import BasePlotter, plotParams, run_from_ipython
+from vtki.plotting import BasePlotter, rcParams, run_from_ipython
 
 # for display bugs due to older intel integrated GPUs
 vtk.qt.QVTKRWIBase = 'QGLWidget'
@@ -83,7 +83,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.ren_win.AddRenderer(self.renderer)
         self.iren = self.ren_win.GetInteractor()
 
-        self.background_color = plotParams['background']
+        self.background_color = rcParams['background']
 
         if title:
             self.setWindowTitle(title)
