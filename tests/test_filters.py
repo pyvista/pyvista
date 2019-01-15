@@ -8,7 +8,7 @@ from vtki import examples
 datasets = [
     examples.load_uniform(), # UniformGrid
     examples.load_rectilinear(), # RectilinearGrid
-    examples.load_hexbean(), # UnstructuredGrid
+    examples.load_hexbeam(), # UnstructuredGrid
     examples.load_airplane(), # PolyData
     examples.load_structured(), # StructuredGrid
 ]
