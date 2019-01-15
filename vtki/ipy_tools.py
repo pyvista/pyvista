@@ -28,7 +28,7 @@ class InteractiveTool(object):
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
-                 plotParams={}, defaultParams={}, **kwargs):
+                 displayParams={}, defaultParams={}, **kwargs):
         if not run_from_ipython() or not ipy_available:
             raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
@@ -51,10 +51,10 @@ class InteractiveTool(object):
 
         # Intialize plotting parameters
         self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
-        plotParams.setdefault('rng', self.valid_range)
-        plotParams.setdefault('scalars', scalars)
-        plotParams.setdefault('preference', preference)
-        self.plotParams = plotParams
+        displayParams.setdefault('rng', self.valid_range)
+        displayParams.setdefault('scalars', scalars)
+        displayParams.setdefault('preference', preference)
+        self.displayParams = displayParams
 
         # Set the tool status
         self._need_to_update = True
@@ -94,16 +94,16 @@ class InteractiveTool(object):
         """
         scalars = kwargs.get('scalars', None)
         if scalars is not None:
-            old = self.plotParams['scalars']
-            self.plotParams['scalars'] = scalars
+            old = self.displayParams['scalars']
+            self.displayParams['scalars'] = scalars
             if old != scalars:
                 self.plotter.remove_actor(self._data_to_update, resetcam=False)
                 self._need_to_update = True
         if hasattr(self, 'valid_range'):
-            self.plotParams['rng'] = self.valid_range
+            self.displayParams['rng'] = self.valid_range
         colormap = kwargs.get('colormap', None)
         if colormap is not None:
-            self.plotParams['colormap'] = colormap
+            self.displayParams['colormap'] = colormap
 
 
 
@@ -133,7 +133,7 @@ class OrthogonalSlicer(InteractiveTool):
     preference : str, optional
         The preference for data choice when search for the scalar array
 
-    plotParams : dict
+    displayParams : dict
         Any plotting keyword parameters to use
 
     """
@@ -155,7 +155,7 @@ class OrthogonalSlicer(InteractiveTool):
             self.plotter.remove_actor(self._data_to_update[index], resetcam=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index], origin=[x,y,z])
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
-                    showedges=False, resetcam=False, **self.plotParams)
+                    showedges=False, resetcam=False, **self.displayParams)
             self._old[index] = [x,y,z][index]
 
         def update(x, y, z, **kwargs):
@@ -230,7 +230,7 @@ class ManySlicesAlongAxis(InteractiveTool):
     preference : str, optional
         The preference for data choice when search for the scalar array
 
-    plotParams : dict
+    displayParams : dict
         Any plotting keyword parameters to use
 
     """
@@ -250,7 +250,7 @@ class ManySlicesAlongAxis(InteractiveTool):
             self.plotter.remove_actor(self._data_to_update, resetcam=False)
             self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                showedges=False, resetcam=False, **self.plotParams)
+                showedges=False, resetcam=False, **self.displayParams)
             self._need_to_update = False
 
         # Create/display the widgets
@@ -277,13 +277,13 @@ class Threshold(InteractiveTool):
     preference : str, optional
         The preference for data choice when search for the scalar array
 
-    plotParams : dict
+    displayParams : dict
         Any plotting keyword parameters to use
 
     """
 
     def tool(self, defaultParams={}):
-        preference = self.plotParams['preference']
+        preference = self.displayParams['preference']
         lowstart = ((self.valid_range[1] - self.valid_range[0]) * 0.25) + self.valid_range[0]
         highstart = ((self.valid_range[1] - self.valid_range[0]) * 0.75) + self.valid_range[0]
 
@@ -330,7 +330,7 @@ class Threshold(InteractiveTool):
                 pass
             else:
                 self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                    resetcam=False, **self.plotParams)
+                    resetcam=False, **self.displayParams)
 
             self._need_to_update = False
 
