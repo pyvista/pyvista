@@ -11,6 +11,7 @@ except:
     pass
 
 import collections
+import numpy as np
 
 import vtk
 
@@ -96,7 +97,7 @@ class InteractiveTool(object):
             old = self.plotParams['scalars']
             self.plotParams['scalars'] = scalars
             if old != scalars:
-                self.plotter.remove_actor(self._data_to_update)
+                self.plotter.remove_actor(self._data_to_update, resetcam=False)
                 self._need_to_update = True
         if hasattr(self, 'valid_range'):
             self.plotParams['rng'] = self.valid_range
@@ -151,7 +152,7 @@ class OrthogonalSlicer(InteractiveTool):
         axes = ['x', 'y', 'z']
 
         def _update_slice(index, x, y, z):
-            self.plotter.remove_actor(self._data_to_update[index])
+            self.plotter.remove_actor(self._data_to_update[index], resetcam=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index], origin=[x,y,z])
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
                     showedges=False, resetcam=False, **self.plotParams)
@@ -246,7 +247,7 @@ class ManySlicesAlongAxis(InteractiveTool):
             if n >= nsl.max:
                 nsl.max *= 2
             self._update_plotting_params(**kwargs)
-            self.plotter.remove_actor(self._data_to_update)
+            self.plotter.remove_actor(self._data_to_update, resetcam=False)
             self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
                 showedges=False, resetcam=False, **self.plotParams)
@@ -307,22 +308,41 @@ class Threshold(InteractiveTool):
 
             # Update the sliders if scalar is changed
             self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
+            # First change the range to infinite so no errors are thrown when
+            # changing ranges
+            minsl.min = -np.inf
+            minsl.max = np.inf
+            maxsl.min = -np.inf
+            maxsl.max = np.inf
+            # Upsate to the new range
             minsl.min = self.valid_range[0]
             minsl.max = self.valid_range[1]
             maxsl.min = self.valid_range[0]
             maxsl.max = self.valid_range[1]
 
             # Run the threshold
-            self.output_dataset = self.input_dataset.threshold([dmin, dmax], scalars=scalars, continuous=continuous, preference=preference, invert=invert)
+            self.output_dataset = self.input_dataset.threshold([dmin, dmax],
+                    scalars=scalars, continuous=continuous, preference=preference,
+                    invert=invert)
 
             # Update the plotter
             self._update_plotting_params(**kwargs)
-            self.plotter.remove_actor(self._data_to_update)
-            self._data_to_update = self.plotter.add_mesh(self.output_dataset, **self.plotParams)
+            self.plotter.remove_actor(self._data_to_update, resetcam=False)
+            self._data_to_update = self.plotter.add_mesh(self.output_dataset,
+                    resetcam=False, **self.plotParams)
             self._need_to_update = False
+
+
+        # Only give scalar options that have a varying range
+        names = []
+        for name in self.input_dataset.scalar_names:
+            arr = self.input_dataset.get_scalar(name)
+            rng = self.input_dataset.get_data_range(name)
+            if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
+                names.append(name)
 
         # Create/display the widgets
         interact(update, dmin=minsl, dmax=maxsl,
-                 scalars=self.input_dataset.scalar_names,
+                 scalars=names,
                  invert=defaultParams.get('invert', False),
                  continuous=False)
