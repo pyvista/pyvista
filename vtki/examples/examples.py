@@ -59,7 +59,7 @@ def load_structured():
     return vtki.StructuredGrid(x, y, z)
 
 
-def plot_ants_plane(off_screen=False):
+def plot_ants_plane(off_screen=False, notebook=None):
     """
     Demonstrate how to create a plot class to plot multiple meshes while
     adding scalars and text.
@@ -83,7 +83,7 @@ def plot_ants_plane(off_screen=False):
     ant_copy.translate([30, 0, -10])
 
     # Create plotting object
-    plotter = vtki.Plotter(off_screen=off_screen)
+    plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(ant, 'r')
     plotter.add_mesh(ant_copy, 'b')
 
@@ -94,7 +94,7 @@ def plot_ants_plane(off_screen=False):
     plotter.plot()
 
 
-def beam_example(off_screen=False):
+def beam_example(off_screen=False, notebook=None):
     # Load module and example file
     hexfile = hexbeamfile
 
@@ -117,7 +117,7 @@ def beam_example(off_screen=False):
         colormap = None
 
     # plot this displaced beam
-    plotter = vtki.Plotter(off_screen=off_screen)
+    plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(grid, scalars=d, stitle='Y Displacement',
                      rng=[-d.max(), d.max()], colormap=colormap)
     plotter.camera_position = cpos
@@ -128,7 +128,7 @@ def beam_example(off_screen=False):
 
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
-              off_screen=False):
+              off_screen=False, notebook=None):
     """
     Plot a 3D moving wave in a render window.
 
@@ -176,7 +176,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     points = sgrid.points.copy()
 
     # Start a plotter object and set the scalars to the Z height
-    plotter = vtki.Plotter(off_screen=off_screen)
+    plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(sgrid, scalars=Z.ravel())
     plotter.camera_position = cpos
     plotter.plot(title='Wave Example', window_size=[800, 600],

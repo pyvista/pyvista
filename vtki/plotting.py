@@ -1271,13 +1271,21 @@ class BasePlotter(object):
         if hasattr(self, 'ifilter'):
             del self.ifilter
 
-    def add_text(self, text, position=[10, 10], fontsize=50, color=None,
+    def add_text(self, text, position=None, fontsize=50, color=None,
                 font=None, shadow=False):
         """
-        Adds text to plot object
+        Adds text to plot object in the top left corner by default
 
         Parameters
         ----------
+        text : str
+            The text to add the the rendering
+
+        position : tuple(float)
+            Length 2 tuple of the pixelwise position to place the bottom
+            left corner of the text box. Default is to find the top right corner
+            of the renderering window and place text box up there.
+
         font : string, optional
             Font name may be courier, times, or arial
 
@@ -1294,6 +1302,14 @@ class BasePlotter(object):
             font = rcParams['font']['family']
         if fontsize is None:
             fontsize = rcParams['font']['size']
+        if position is None:
+            # Set the position of the text to the top left corner
+            window_size = self.window_size
+            if self.first_time:
+                window_size = rcParams['window_size']
+            x = window_size[0] * 0.02
+            y = window_size[1] * 0.90
+            position = [x, y]
 
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
@@ -1930,6 +1946,7 @@ class Plotter(BasePlotter):
         if self.first_time and not self.camera_set:
             self.camera_position = self.get_default_cam_pos()
             self.renderer.ResetCamera()
+            self.first_time = False
 
         if title:
             self.ren_win.SetWindowName(title)
