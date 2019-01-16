@@ -2,6 +2,7 @@ from threading import Thread
 import time
 import logging
 import numpy as np
+import os
 
 import vtk
 import vtk.qt
@@ -140,11 +141,11 @@ class BackgroundPlotter(QtInteractor):
         if show:
             self.show()
 
-        self._spawn_background_rendering()
-
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
+
+        self._spawn_background_rendering()
 
     def _spawn_background_rendering(self, rate=5.0):
         """
@@ -181,6 +182,9 @@ class BackgroundPlotter(QtInteractor):
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window.
         """
+        if os.name == 'nt':
+            # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
+            return
         cur_time = time.time()
         if self._last_window_size != self.window_size:
             # Window size hasn't remained constant since last render.

@@ -197,26 +197,17 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     else:
         plotter.camera_position = cpos
 
-    cpos = plotter.plot(window_size=window_size,
+    result = plotter.show(window_size=window_size,
                         autoclose=False,
                         interactive=interactive,
-                        full_screen=full_screen)
-
-    # take screenshot
-    img = plotter.screenshot()
-    if screenshot:
-        if screenshot == True:
-            pass
-        else:
-            img = plotter.screenshot(screenshot)
+                        full_screen=full_screen,
+                        screenshot=screenshot)
 
     # close and return camera position and maybe image
     plotter.close()
 
-    if screenshot:
-        return cpos, img
-    else:
-        return cpos
+    # Result will be handled by plotter.show(): cpos or [cpos, img]
+    return result
 
 
 def plot_arrows(cent, direction, **kwargs):
@@ -1917,7 +1908,8 @@ class Plotter(BasePlotter):
 
 
     def show(self, title=None, window_size=None, interactive=True,
-             autoclose=True, interactive_update=False, full_screen=False):
+             autoclose=True, interactive_update=False, full_screen=False,
+             screenshot=False):
         """
         Creates plotting window
 
@@ -1996,11 +1988,21 @@ class Plotter(BasePlotter):
             img = PIL.Image.fromarray(self.screenshot())
             disp = IPython.display.display(img)
 
+        # take screenshot
+        if screenshot:
+            if screenshot == True:
+                img = self.screenshot()
+            else:
+                img = self.screenshot(screenshot)
+
         if autoclose:
             self.close()
 
         if self.notebook:
             return disp
+
+        if screenshot:
+            return cpos, img
 
         return cpos
 

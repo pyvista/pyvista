@@ -1,14 +1,22 @@
 vtki
 ====
 
-.. image:: https://img.shields.io/pypi/v/vtki.svg
+
+.. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
-.. image:: https://travis-ci.org/akaszynski/vtki.svg?branch=master
+.. image:: https://img.shields.io/travis/akaszynski/vtki/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/akaszynski/vtki
 
-.. image:: https://readthedocs.org/projects/vtkinterface/badge/?version=latest
+.. image:: https://img.shields.io/appveyor/ci/akaszynski/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
+   :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
+
+.. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
    :target: https://vtkinterface.readthedocs.io/en/latest/?badge=latest
+
+.. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
+   :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
+
 
 ``vtki`` is a VTK helper module that takes a different approach on interfacing
 with VTK through numpy and direct array access.  This module simplifies mesh
