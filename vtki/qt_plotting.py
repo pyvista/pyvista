@@ -140,11 +140,11 @@ class BackgroundPlotter(QtInteractor):
         if show:
             self.show()
 
-        self._spawn_background_rendering()
-
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
+
+        self._spawn_background_rendering()
 
     def _spawn_background_rendering(self, rate=5.0):
         """
@@ -161,7 +161,7 @@ class BackgroundPlotter(QtInteractor):
         def render():
             while self.active:
                 time.sleep(twait)
-                self._render()
+                self._render(icon=False)
 
         self.render_thread = Thread(target=render)
         self.render_thread.start()
@@ -203,9 +203,10 @@ class BackgroundPlotter(QtInteractor):
         self._last_window_size = self.window_size
 
 
-    def _render(self):
+    def _render(self, icon=True):
         super(BackgroundPlotter, self)._render()
-        self.update_app_icon()
+        if icon:
+            self.update_app_icon()
         return
 
     def __del__(self):
