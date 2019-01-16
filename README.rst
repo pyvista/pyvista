@@ -7,7 +7,7 @@ vtki
 .. image:: https://travis-ci.org/akaszynski/vtki.svg?branch=master
    :target: https://travis-ci.org/akaszynski/vtki
 
-.. image:: http://ci.appveyor.com/api/projects/status/akaszynski/vtkinterface/?svg=true
+.. image:: http://ci.appveyor.com/api/projects/status/akaszynski/vtkinterface/
    :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
 
 .. image:: https://readthedocs.org/projects/vtkinterface/badge/?version=latest
