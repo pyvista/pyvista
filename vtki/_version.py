@@ -1,6 +1,6 @@
 """ version info for vtki """
 # major, minor, patch
-version_info = 0, 14, 4
+version_info = 0, 15, 0
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))
