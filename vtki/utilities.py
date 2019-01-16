@@ -230,3 +230,12 @@ def read(filename):
             except:
                 pass
     raise IOError("This file was not able to be automatically read by vtki.")
+
+
+def setErrorOutputFile(filename):
+    """Sets a file to write out the VTK errors"""
+    fileOutputWindow = vtk.vtkFileOutputWindow()
+    fileOutputWindow.SetFileName(filename)
+    outputWindow = vtk.vtkOutputWindow()
+    outputWindow.SetInstance(fileOutputWindow)
+    return fileOutputWindow, outputWindow
