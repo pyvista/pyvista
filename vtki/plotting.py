@@ -197,16 +197,15 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     else:
         plotter.camera_position = cpos
 
-    cpos = plotter.plot(window_size=window_size,
+    cpos = plotter.show(window_size=window_size,
                         autoclose=False,
                         interactive=interactive,
                         full_screen=full_screen)
 
     # take screenshot
-    img = plotter.screenshot()
     if screenshot:
         if screenshot == True:
-            pass
+            img = plotter.screenshot()
         else:
             img = plotter.screenshot(screenshot)
 
