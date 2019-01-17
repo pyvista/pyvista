@@ -424,7 +424,7 @@ class BasePlotter(object):
 
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
-                 psize=5.0, opacity=1, linethick=None, flip_scalars=False,
+                 psize=5.0, opacity=1, linewidth=None, flip_scalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args={},
                  **kwargs):
@@ -480,7 +480,7 @@ class BasePlotter(object):
         opacity : float, optional
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0
 
-        linethick : float, optional
+        linewidth : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default None.
 
@@ -553,7 +553,7 @@ class BasePlotter(object):
                     ts = scalars
                 a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
-                             psize=psize, opacity=opacity, linethick=linethick,
+                             psize=psize, opacity=opacity, linewidth=linewidth,
                              flip_scalars=flip_scalars, lighting=lighting,
                              ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
                              cmap=cmap, label=label,
@@ -689,8 +689,8 @@ class BasePlotter(object):
             prop.LightingOff()
 
         # set line thickness
-        if linethick:
-            prop.SetLineWidth(linethick)
+        if linewidth:
+            prop.SetLineWidth(linewidth)
 
         # Add scalar bar if available
         if stitle is not None:

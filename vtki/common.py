@@ -219,7 +219,7 @@ class Common(DataSetFilters):
         opacity : float, optional
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0
 
-        linethick : float, optional
+        linewidth : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default None.
 
