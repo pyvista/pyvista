@@ -1442,7 +1442,7 @@ class BasePlotter(object):
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          fontsize=None, textcolor='k',
                          fontfamily=None, shadow=False,
-                         show_points=True, pointcolor='k', pointsize=5):
+                         show_points=True, point_color='k', pointsize=5):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -1481,7 +1481,7 @@ class BasePlotter(object):
         show_points : bool, optional
             Controls if points are visible.  Default True
 
-        pointcolor : string or 3 item list, optional, defaults to black
+        point_color : string or 3 item list, optional, defaults to black
             Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
                 textcolor='white'
@@ -1535,7 +1535,7 @@ class BasePlotter(object):
             style = 'points'
         else:
             style = 'surface'
-        self.add_mesh(vtkpoints, style=style, color=pointcolor,
+        self.add_mesh(vtkpoints, style=style, color=point_color,
                       psize=pointsize)
 
         self.add_actor(labelActor)
