@@ -52,7 +52,7 @@ rcParams = {
         'position_x' : 0.35,
         'position_y' : 0.02,
     },
-    'showedges' : True,
+    'show_edges' : True,
 }
 
 def set_plot_theme(theme):
@@ -62,7 +62,7 @@ def set_plot_theme(theme):
         rcParams['colormap'] = 'coolwarm'
         rcParams['font']['family'] = 'arial'
         rcParams['font']['label_size'] = 16
-        rcParams['showedges'] = False
+        rcParams['show_edges'] = False
 
 
 def run_from_ipython():
@@ -423,7 +423,7 @@ class BasePlotter(object):
                 self.iren.Render()
 
     def add_mesh(self, mesh, color=None, style=None,
-                 scalars=None, rng=None, stitle=None, showedges=None,
+                 scalars=None, rng=None, stitle=None, show_edges=None,
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
                  colormap=None, label=None, resetcam=None, scalar_bar_args={},
@@ -470,7 +470,7 @@ class BasePlotter(object):
             this creates the legend bar and adds a title to it.  To create a
             bar with no title, use an empty string (i.e. '').
 
-        showedges : bool, optional
+        show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
@@ -516,8 +516,8 @@ class BasePlotter(object):
         if not is_vtki_obj(mesh):
             mesh = wrap(mesh)
 
-        if showedges is None:
-            showedges = rcParams['showedges']
+        if show_edges is None:
+            show_edges = rcParams['show_edges']
 
 
         if isinstance(mesh, MultiBlock):
@@ -552,7 +552,7 @@ class BasePlotter(object):
                 else:
                     ts = scalars
                 a = self.add_mesh(data, color=color, style=style,
-                             scalars=ts, rng=rng, stitle=stitle, showedges=showedges,
+                             scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
                              psize=psize, opacity=opacity, linethick=linethick,
                              flipscalars=flipscalars, lighting=lighting,
                              ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
@@ -672,7 +672,7 @@ class BasePlotter(object):
         prop.SetPointSize(psize)
 
         # edge display style
-        if showedges:
+        if show_edges:
             prop.EdgeVisibilityOn()
 
         rgb_color = parse_color(color)

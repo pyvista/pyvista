@@ -155,7 +155,7 @@ class OrthogonalSlicer(InteractiveTool):
             self.plotter.remove_actor(self._data_to_update[index], resetcam=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index], origin=[x,y,z])
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
-                    showedges=False, resetcam=False, **self.displayParams)
+                    show_edges=False, resetcam=False, **self.displayParams)
             self._old[index] = [x,y,z][index]
 
         def update(x, y, z, **kwargs):
@@ -250,7 +250,7 @@ class ManySlicesAlongAxis(InteractiveTool):
             self.plotter.remove_actor(self._data_to_update, resetcam=False)
             self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                showedges=False, resetcam=False, **self.displayParams)
+                show_edges=False, resetcam=False, **self.displayParams)
             self._need_to_update = False
 
         # Create/display the widgets

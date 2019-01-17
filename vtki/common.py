@@ -209,7 +209,7 @@ class Common(DataSetFilters):
             this creates the legend bar and adds a title to it.  To create a
             bar with no title, use an empty string (i.e. '').
 
-        showedges : bool, optional
+        show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
