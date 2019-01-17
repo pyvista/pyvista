@@ -223,7 +223,7 @@ class Common(DataSetFilters):
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default None.
 
-        flipscalars : bool, optional
+        flip_scalars : bool, optional
             Flip scalar display approach.  Default is red is minimum and blue
             is maximum.
 

@@ -38,7 +38,7 @@ def test_plot(tmpdir):
                           style='wireframe',
                           linethick=10,
                           scalars=scalars,
-                          flipscalars=True,
+                          flip_scalars=True,
                           colormap='bwr',
                           interpolatebeforemap=True,
                           screenshot=filename)
@@ -208,7 +208,7 @@ def test_add_points():
     n = 10
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     points = np.random.random((n, 3))
-    plotter.add_points(points, scalars=np.arange(10), colormap=None, flipscalars=True)
+    plotter.add_points(points, scalars=np.arange(10), colormap=None, flip_scalars=True)
     plotter.plot()
 
 

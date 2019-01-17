@@ -424,7 +424,7 @@ class BasePlotter(object):
 
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
-                 psize=5.0, opacity=1, linethick=None, flipscalars=False,
+                 psize=5.0, opacity=1, linethick=None, flip_scalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
                  colormap=None, label=None, resetcam=None, scalar_bar_args={},
                  **kwargs):
@@ -484,7 +484,7 @@ class BasePlotter(object):
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default None.
 
-        flipscalars : bool, optional
+        flip_scalars : bool, optional
             Flip direction of colormap.
 
         lighting : bool, optional
@@ -554,7 +554,7 @@ class BasePlotter(object):
                 a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
                              psize=psize, opacity=opacity, linethick=linethick,
-                             flipscalars=flipscalars, lighting=lighting,
+                             flip_scalars=flip_scalars, lighting=lighting,
                              ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
                              colormap=colormap, label=label,
                              scalar_bar_args=scalar_bar_args, resetcam=resetcam, **kwargs)
@@ -640,12 +640,12 @@ class BasePlotter(object):
                 cmap = get_cmap(colormap)
                 ctable = cmap(np.linspace(0, 1, ncolors))*255
                 ctable = ctable.astype(np.uint8)
-                if flipscalars:
+                if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
 
             else:  # no colormap specified
-                if flipscalars:
+                if flip_scalars:
                     self.mapper.GetLookupTable().SetHueRange(0.0, 0.66667)
                 else:
                     self.mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
