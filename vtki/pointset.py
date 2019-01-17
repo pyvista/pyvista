@@ -73,8 +73,9 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
                     points = points.reshape((-1, 3))
 
                 npoints = points.shape[0]
-                cells = np.ones((npoints, 2), dtype=vtki.ID_TYPE)
-                cells[:, 1] = np.arange(npoints, dtype=vtki.ID_TYPE)
+                cells = np.hstack((np.ones((npoints, 1)),
+                                   np.arange(npoints).reshape(-1, 1)))
+                cells = np.ascontiguousarray(cells, dtype=vtki.ID_TYPE)
                 self._from_arrays(points, cells, deep)
             else:
                 raise TypeError('Invalid input type')
@@ -155,7 +156,10 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
 
         vtkcells = vtk.vtkCellArray()
         vtkcells.SetCells(nfaces, numpy_to_vtkIdTypeArray(faces, deep=False))
-        self.SetPolys(vtkcells)
+        if faces.ndim > 1 and faces.shape[1] == 2:
+            self.SetVerts(vtkcells)
+        else:
+            self.SetPolys(vtkcells)
         self._face_ref = faces
 
     # @property
@@ -211,7 +215,10 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
 
             idarr = numpy_to_vtkIdTypeArray(faces.ravel(), deep=deep)
             vtkcells.SetCells(nfaces, idarr)
-            self.SetPolys(vtkcells)
+            if faces.ndim > 1 and faces.shape[1] == 2:
+                self.SetVerts(vtkcells)
+            else:
+                self.SetPolys(vtkcells)
         else:
             self.points = vertices
             self.faces = faces
