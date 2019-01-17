@@ -112,14 +112,14 @@ def beam_example(off_screen=False, notebook=None):
 
     try:
         import matplotlib
-        colormap = 'bwr'
+        cmap = 'bwr'
     except ImportError:
-        colormap = None
+        cmap = None
 
     # plot this displaced beam
     plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(grid, scalars=d, stitle='Y Displacement',
-                     rng=[-d.max(), d.max()], colormap=colormap)
+                     rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
     cpos = plotter.plot(auto_close=False)  # store camera position

@@ -39,7 +39,7 @@ def test_plot(tmpdir):
                           linethick=10,
                           scalars=scalars,
                           flip_scalars=True,
-                          colormap='bwr',
+                          cmap='bwr',
                           interpolatebeforemap=True,
                           screenshot=filename)
     assert isinstance(cpos, list)
@@ -208,7 +208,7 @@ def test_add_points():
     n = 10
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     points = np.random.random((n, 3))
-    plotter.add_points(points, scalars=np.arange(10), colormap=None, flip_scalars=True)
+    plotter.add_points(points, scalars=np.arange(10), cmap=None, flip_scalars=True)
     plotter.plot()
 
 

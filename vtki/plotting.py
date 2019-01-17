@@ -45,7 +45,7 @@ rcParams = {
         'label_size' : None,
         'color' : [1, 1, 1],
     },
-    'colormap' : 'jet',
+    'cmap' : 'jet',
     'colorbar' : {
         'width' : 0.60,
         'height' : 0.08,
@@ -59,7 +59,7 @@ def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
     if theme.lower() in ['paraview', 'pv']:
         rcParams['background'] = PV_BACKGROUND
-        rcParams['colormap'] = 'coolwarm'
+        rcParams['cmap'] = 'coolwarm'
         rcParams['font']['family'] = 'arial'
         rcParams['font']['label_size'] = 16
         rcParams['show_edges'] = False
@@ -426,7 +426,7 @@ class BasePlotter(object):
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  psize=5.0, opacity=1, linethick=None, flip_scalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
-                 colormap=None, label=None, resetcam=None, scalar_bar_args={},
+                 cmap=None, label=None, resetcam=None, scalar_bar_args={},
                  **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
@@ -485,7 +485,7 @@ class BasePlotter(object):
             representations.  Default None.
 
         flip_scalars : bool, optional
-            Flip direction of colormap.
+            Flip direction of cmap.
 
         lighting : bool, optional
             Enable or disable view direction lighting.  Default False.
@@ -498,8 +498,8 @@ class BasePlotter(object):
             Enabling makes for a smoother scalar display.  Default
             False
 
-        colormap : str, optional
-           Colormap string.  See available matplotlib colormaps.  Only
+        cmap : str, optional
+           cmap string.  See available matplotlib cmaps.  Only
            applicable for when displaying scalars.  Defaults None
            (rainbow).  Requires matplotlib.
 
@@ -556,7 +556,7 @@ class BasePlotter(object):
                              psize=psize, opacity=opacity, linethick=linethick,
                              flip_scalars=flip_scalars, lighting=lighting,
                              ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
-                             colormap=colormap, label=label,
+                             cmap=cmap, label=label,
                              scalar_bar_args=scalar_bar_args, resetcam=resetcam, **kwargs)
                 actors.append(a)
                 if resetcam is None or resetcam:
@@ -583,8 +583,8 @@ class BasePlotter(object):
                 stitle = mesh.active_scalar_info[1]
 
         # Scalar formatting ===================================================
-        if colormap is None:
-            colormap = rcParams['colormap']
+        if cmap is None:
+            cmap = rcParams['cmap']
         title = 'Data' if stitle is None else stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
@@ -632,19 +632,19 @@ class BasePlotter(object):
 
             # Flip if requested
             table = self.mapper.GetLookupTable()
-            if colormap is not None:
+            if cmap is not None:
                 try:
                     from matplotlib.cm import get_cmap
                 except ImportError:
-                    raise Exception('colormap requires matplotlib')
-                cmap = get_cmap(colormap)
+                    raise Exception('cmap requires matplotlib')
+                cmap = get_cmap(cmap)
                 ctable = cmap(np.linspace(0, 1, ncolors))*255
                 ctable = ctable.astype(np.uint8)
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
 
-            else:  # no colormap specified
+            else:  # no cmap specified
                 if flip_scalars:
                     self.mapper.GetLookupTable().SetHueRange(0.0, 0.66667)
                 else:

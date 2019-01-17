@@ -101,9 +101,9 @@ class InteractiveTool(object):
                 self._need_to_update = True
         if hasattr(self, 'valid_range'):
             self.displayParams['rng'] = self.valid_range
-        colormap = kwargs.get('colormap', None)
-        if colormap is not None:
-            self.displayParams['colormap'] = colormap
+        cmap = kwargs.get('cmap', None)
+        if cmap is not None:
+            self.displayParams['cmap'] = cmap
 
 
 
