@@ -426,7 +426,7 @@ class BasePlotter(object):
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  psize=5.0, opacity=1, linethick=None, flip_scalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
-                 cmap=None, label=None, resetcam=None, scalar_bar_args={},
+                 cmap=None, label=None, reset_camera=None, scalar_bar_args={},
                  **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
@@ -557,9 +557,9 @@ class BasePlotter(object):
                              flip_scalars=flip_scalars, lighting=lighting,
                              ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
                              cmap=cmap, label=label,
-                             scalar_bar_args=scalar_bar_args, resetcam=resetcam, **kwargs)
+                             scalar_bar_args=scalar_bar_args, reset_camera=reset_camera, **kwargs)
                 actors.append(a)
-                if resetcam is None or resetcam:
+                if reset_camera is None or reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
                     self.camera_set = False
@@ -571,7 +571,7 @@ class BasePlotter(object):
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
-        actor, prop = self.add_actor(self.mapper, resetcam=resetcam)
+        actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera)
 
         # Attempt get the active scalars if no preference given
         if scalars is None and color is None:
@@ -698,7 +698,7 @@ class BasePlotter(object):
 
         return actor
 
-    def add_actor(self, uinput, resetcam=False):
+    def add_actor(self, uinput, reset_camera=False):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -708,7 +708,7 @@ class BasePlotter(object):
         uinput : vtk.vtkMapper or vtk.vtkActor
             vtk mapper or vtk actor to be added.
 
-        resetcam : bool, optional
+        reset_camera : bool, optional
             Resets the camera when true.
 
         Returns
@@ -733,9 +733,9 @@ class BasePlotter(object):
         self.renderer.AddActor(actor)
         self._actors.append(actor)
 
-        if resetcam:
+        if reset_camera:
             self.reset_camera()
-        elif not self.camera_set and resetcam is None:
+        elif not self.camera_set and reset_camera is None:
             self.reset_camera()
         else:
             self._render()
@@ -748,7 +748,7 @@ class BasePlotter(object):
     def camera(self):
         return self.renderer.GetActiveCamera()
 
-    def remove_actor(self, actor, resetcam=None):
+    def remove_actor(self, actor, reset_camera=None):
         """
         Removes an actor from the Plotter.
 
@@ -774,9 +774,9 @@ class BasePlotter(object):
             # Hm, this sometimes happens. Might need a better solution
             pass
         self.update_bounds_axes()
-        if resetcam:
+        if reset_camera:
             self.reset_camera()
-        elif not self.camera_set and resetcam is None:
+        elif not self.camera_set and reset_camera is None:
             self.reset_camera()
         else:
             self._render()
@@ -963,7 +963,7 @@ class BasePlotter(object):
         self.cubeAxesActor = cubeAxesActor
         return cubeAxesActor
 
-    def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0, resetcam=True):
+    def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0, reset_camera=True):
         """Scale all the datasets in the scene.
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
@@ -974,7 +974,7 @@ class BasePlotter(object):
                 actor.SetScale(xscale, yscale, zscale)
         self.update_bounds_axes()
         self._render()
-        if resetcam:
+        if reset_camera:
             self.reset_camera()
 
     def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,

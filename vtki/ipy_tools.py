@@ -97,7 +97,7 @@ class InteractiveTool(object):
             old = self.displayParams['scalars']
             self.displayParams['scalars'] = scalars
             if old != scalars:
-                self.plotter.remove_actor(self._data_to_update, resetcam=False)
+                self.plotter.remove_actor(self._data_to_update, reset_camera=False)
                 self._need_to_update = True
         if hasattr(self, 'valid_range'):
             self.displayParams['rng'] = self.valid_range
@@ -152,10 +152,10 @@ class OrthogonalSlicer(InteractiveTool):
         axes = ['x', 'y', 'z']
 
         def _update_slice(index, x, y, z):
-            self.plotter.remove_actor(self._data_to_update[index], resetcam=False)
+            self.plotter.remove_actor(self._data_to_update[index], reset_camera=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index], origin=[x,y,z])
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
-                    show_edges=False, resetcam=False, **self.displayParams)
+                    show_edges=False, reset_camera=False, **self.displayParams)
             self._old[index] = [x,y,z][index]
 
         def update(x, y, z, **kwargs):
@@ -247,10 +247,10 @@ class ManySlicesAlongAxis(InteractiveTool):
             if n >= nsl.max:
                 nsl.max *= 2
             self._update_plotting_params(**kwargs)
-            self.plotter.remove_actor(self._data_to_update, resetcam=False)
+            self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                show_edges=False, resetcam=False, **self.displayParams)
+                show_edges=False, reset_camera=False, **self.displayParams)
             self._need_to_update = False
 
         # Create/display the widgets
@@ -325,12 +325,12 @@ class Threshold(InteractiveTool):
 
             # Update the plotter
             self._update_plotting_params(**kwargs)
-            self.plotter.remove_actor(self._data_to_update, resetcam=False)
+            self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             if self.output_dataset.n_points == 0 and self.output_dataset.n_cells == 0:
                 pass
             else:
                 self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                    resetcam=False, **self.displayParams)
+                    reset_camera=False, **self.displayParams)
 
             self._need_to_update = False
 
