@@ -230,7 +230,7 @@ class Common(DataSetFilters):
         lighting : bool, optional
             Enable or disable Z direction lighting.  True by default.
 
-        ncolors : int, optional
+        n_colors : int, optional
             Number of colors to use when displaying scalars.
 
         interpolatebeforemap : bool, default False

@@ -236,7 +236,7 @@ def test_plot_cell_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolatebeforemap=True, scalars=scalars,
-                     ncolors=5, rng=10)
+                     n_colors=5, rng=10)
     plotter.plot()
 
 

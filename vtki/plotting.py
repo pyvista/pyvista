@@ -425,7 +425,7 @@ class BasePlotter(object):
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  psize=5.0, opacity=1, linewidth=None, flip_scalars=False,
-                 lighting=False, ncolors=256, interpolatebeforemap=False,
+                 lighting=False, n_colors=256, interpolatebeforemap=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args={},
                  **kwargs):
         """
@@ -490,7 +490,7 @@ class BasePlotter(object):
         lighting : bool, optional
             Enable or disable view direction lighting.  Default False.
 
-        ncolors : int, optional
+        n_colors : int, optional
             Number of colors to use when displaying scalars.  Default
             256.
 
@@ -555,7 +555,7 @@ class BasePlotter(object):
                              scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
                              psize=psize, opacity=opacity, linewidth=linewidth,
                              flip_scalars=flip_scalars, lighting=lighting,
-                             ncolors=ncolors, interpolatebeforemap=interpolatebeforemap,
+                             n_colors=n_colors, interpolatebeforemap=interpolatebeforemap,
                              cmap=cmap, label=label,
                              scalar_bar_args=scalar_bar_args, reset_camera=reset_camera, **kwargs)
                 actors.append(a)
@@ -609,13 +609,13 @@ class BasePlotter(object):
             if scalars.size == mesh.GetNumberOfPoints():
                 self.mesh._add_point_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUsePointData()
-                self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
+                self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             elif scalars.size == mesh.GetNumberOfCells():
                 self.mesh._add_cell_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUseCellData()
-                self.mapper.GetLookupTable().SetNumberOfTableValues(ncolors)
+                self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
                 if interpolatebeforemap:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             else:
@@ -638,7 +638,7 @@ class BasePlotter(object):
                 except ImportError:
                     raise Exception('cmap requires matplotlib')
                 cmap = get_cmap(cmap)
-                ctable = cmap(np.linspace(0, 1, ncolors))*255
+                ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
