@@ -26,6 +26,7 @@ class Common(DataSetFilters):
 
     @property
     def active_scalar_info(self):
+        """Return the active scalar's field and name: [field, name]"""
         if not hasattr(self, '_active_scalar_info'):
             self._active_scalar_info = [POINT_DATA_FIELD, None] # field and name
         field, name = self._active_scalar_info
@@ -46,6 +47,11 @@ class Common(DataSetFilters):
             elif carr is not None:
                 self._active_scalar_info = [CELL_DATA_FIELD, carr]
         return self._active_scalar_info
+
+    @property
+    def active_scalar_name(self):
+        """Returns the active scalar's name"""
+        return self.active_scalar_info[1]
 
     @property
     def points(self):
@@ -87,6 +93,7 @@ class Common(DataSetFilters):
 
     @property
     def active_scalar(self):
+        """Returns the active scalar as an array"""
         field, name = self.active_scalar_info
         if name is None:
             return None
