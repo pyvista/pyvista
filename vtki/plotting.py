@@ -799,7 +799,7 @@ class BasePlotter(object):
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
                         bold=True, shadow=False, fontsize=None,
-                        font_family=None, color='w',
+                        fontfamily=None, color='w',
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2dmode=True):
         """
@@ -845,7 +845,7 @@ class BasePlotter(object):
         fontsize : float, optional
             Sets the size of the label font.  Defaults to 16.
 
-        font_family : string, optional
+        fontfamily : string, optional
             Font family.  Must be either courier, times, or arial.
 
         color : string or 3 item list, optional
@@ -876,8 +876,8 @@ class BasePlotter(object):
 
         """
 
-        if font_family is None:
-            font_family = rcParams['font']['family']
+        if fontfamily is None:
+            fontfamily = rcParams['font']['family']
         if fontsize is None:
             fontsize = rcParams['font']['size']
 
@@ -947,16 +947,16 @@ class BasePlotter(object):
             cubeAxesActor.SetAxisLabels(2, empty_str)
 
         # set font
-        font_family = parse_font_family(font_family)
+        fontfamily = parse_fontfamily(fontfamily)
         for i in range(3):
             cubeAxesActor.GetTitleTextProperty(i).SetFontSize(fontsize)
             cubeAxesActor.GetTitleTextProperty(i).SetColor(color)
-            cubeAxesActor.GetTitleTextProperty(i).SetFontFamily(font_family)
+            cubeAxesActor.GetTitleTextProperty(i).SetFontFamily(fontfamily)
             cubeAxesActor.GetTitleTextProperty(i).SetBold(bold)
 
             cubeAxesActor.GetLabelTextProperty(i).SetFontSize(fontsize)
             cubeAxesActor.GetLabelTextProperty(i).SetColor(color)
-            cubeAxesActor.GetLabelTextProperty(i).SetFontFamily(font_family)
+            cubeAxesActor.GetLabelTextProperty(i).SetFontFamily(fontfamily)
             cubeAxesActor.GetLabelTextProperty(i).SetBold(bold)
 
         self.add_actor(cubeAxesActor)
@@ -979,7 +979,7 @@ class BasePlotter(object):
 
     def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,
                        title_fontsize=None, label_fontsize=None, color=None,
-                       font_family=None, shadow=False, mapper=None,
+                       fontfamily=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None, position_y=None):
         """
         Creates scalar bar using the ranges as set by the last input mesh.
@@ -1013,7 +1013,7 @@ class BasePlotter(object):
                 color=[1, 1, 1]
                 color='#FFFFFF'
 
-        font_family : string, optional
+        fontfamily : string, optional
             Font family.  Must be either courier, times, or arial.
 
         shadow : bool, optional
@@ -1040,8 +1040,8 @@ class BasePlotter(object):
 
 
         """
-        if font_family is None:
-            font_family = rcParams['font']['family']
+        if fontfamily is None:
+            fontfamily = rcParams['font']['family']
         if label_fontsize is None:
             label_fontsize = rcParams['font']['label_size']
         if title_fontsize is None:
@@ -1120,7 +1120,7 @@ class BasePlotter(object):
             label_text.SetShadow(shadow)
 
             # Set font
-            label_text.SetFontFamily(parse_font_family(font_family))
+            label_text.SetFontFamily(parse_fontfamily(fontfamily))
             label_text.SetItalic(italic)
             label_text.SetBold(bold)
             if label_fontsize:
@@ -1145,7 +1145,7 @@ class BasePlotter(object):
                 title_text.SetFontSize(title_fontsize)
 
             # Set font
-            title_text.SetFontFamily(parse_font_family(font_family))
+            title_text.SetFontFamily(parse_fontfamily(fontfamily))
 
             # set color
             title_text.SetColor(color)
@@ -1441,7 +1441,7 @@ class BasePlotter(object):
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          fontsize=None, textcolor='k',
-                         font_family=None, shadow=False,
+                         fontfamily=None, shadow=False,
                          showpoints=True, pointcolor='k', pointsize=5):
         """
         Creates a point actor with one label from list labels assigned to
@@ -1472,7 +1472,7 @@ class BasePlotter(object):
                 textcolor=[1, 1, 1]
                 textcolor='#FFFFFF'
 
-        font_family : string, optional
+        fontfamily : string, optional
             Font family.  Must be either courier, times, or arial.
 
         shadow : bool, optional
@@ -1498,8 +1498,8 @@ class BasePlotter(object):
             VTK label mapper.  Can be used to change properties of the labels.
 
         """
-        if font_family is None:
-            font_family = rcParams['font']['family']
+        if fontfamily is None:
+            fontfamily = rcParams['font']['family']
         if fontsize is None:
             fontsize = rcParams['font']['size']
 
@@ -1521,7 +1521,7 @@ class BasePlotter(object):
         textprop.SetItalic(italic)
         textprop.SetBold(bold)
         textprop.SetFontSize(fontsize)
-        textprop.SetFontFamily(parse_font_family(font_family))
+        textprop.SetFontFamily(parse_fontfamily(fontfamily))
         textprop.SetColor(parse_color(textcolor))
         textprop.SetShadow(shadow)
         labelMapper.SetLabelModeToLabelFieldData()
@@ -2068,12 +2068,12 @@ def parse_color(color):
         color='#FFFFFF'""")
 
 
-def parse_font_family(font_family):
+def parse_fontfamily(fontfamily):
     """ checks font name """
     # check font name
-    font_family = font_family.lower()
-    if font_family not in ['courier', 'times', 'arial']:
+    fontfamily = fontfamily.lower()
+    if fontfamily not in ['courier', 'times', 'arial']:
         raise Exception('Font must be either "courier", "times" ' +
                         'or "arial"')
 
-    return FONT_KEYS[font_family]
+    return FONT_KEYS[fontfamily]

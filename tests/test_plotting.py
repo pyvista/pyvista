@@ -298,7 +298,7 @@ def test_invalid_color():
 
 def test_invalid_font():
     with pytest.raises(Exception):
-        femorph.parse_font_family('not a font')
+        femorph.parse_fontfamily('not a font')
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
