@@ -1442,7 +1442,7 @@ class BasePlotter(object):
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          fontsize=None, textcolor='k',
                          fontfamily=None, shadow=False,
-                         showpoints=True, pointcolor='k', pointsize=5):
+                         show_points=True, pointcolor='k', pointsize=5):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -1478,7 +1478,7 @@ class BasePlotter(object):
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to False
 
-        showpoints : bool, optional
+        show_points : bool, optional
             Controls if points are visible.  Default True
 
         pointcolor : string or 3 item list, optional, defaults to black
@@ -1531,7 +1531,7 @@ class BasePlotter(object):
         labelActor.SetMapper(labelMapper)
 
         # add points
-        if showpoints:
+        if show_points:
             style = 'points'
         else:
             style = 'surface'

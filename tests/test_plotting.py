@@ -198,8 +198,8 @@ def test_add_point_labels():
         plotter.add_point_labels(points, range(n - 1))
 
     plotter.set_background('k')
-    plotter.add_point_labels(points, range(n), showpoints=True, pointcolor='r')
-    plotter.add_point_labels(points - 1, range(n), showpoints=False, pointcolor='r')
+    plotter.add_point_labels(points, range(n), show_points=True, pointcolor='r')
+    plotter.add_point_labels(points - 1, range(n), show_points=False, pointcolor='r')
     plotter.plot()
 
 
