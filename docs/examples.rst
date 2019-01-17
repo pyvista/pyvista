@@ -28,7 +28,7 @@ You can also take a screenshot without creating an interactive plot window using
 
     plotter = vtki.Plotter(off_screen=True)
     plotter.add_mesh(mesh, color='orange')
-    plotter.plot(autoclose=False)
+    plotter.plot(auto_close=False)
     img = plotter.screenshot('airplane.png')
     plotter.close()
 
@@ -55,7 +55,7 @@ You can then use this cached camera for additional plotting without having to ma
     plotter = vtki.Plotter(off_screen=True)
     plotter.add_mesh(mesh, color='orange')
     plotter.camera_position = cpos
-    plotter.plot(autoclose=False)
+    plotter.plot(auto_close=False)
     img = plotter.screenshot('airplane.png')
     plotter.close()
 
@@ -147,7 +147,7 @@ This example shows the versatility of the plotting object by generating a moving
     plotter.add_mesh(grid, scalars=z.ravel())
 
     # setup camera and close
-    plotter.plot(autoclose=False)
+    plotter.plot(auto_close=False)
 
     # Open a gif
     plotter.open_gif('wave.gif')

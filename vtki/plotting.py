@@ -198,7 +198,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.camera_position = cpos
 
     result = plotter.show(window_size=window_size,
-                        autoclose=False,
+                        auto_close=False,
                         interactive=interactive,
                         full_screen=full_screen,
                         screenshot=screenshot)
@@ -1910,7 +1910,7 @@ class Plotter(BasePlotter):
 
 
     def show(self, title=None, window_size=None, interactive=True,
-             autoclose=True, interactive_update=False, full_screen=False,
+             auto_close=True, interactive_update=False, full_screen=False,
              screenshot=False):
         """
         Creates plotting window
@@ -1926,7 +1926,7 @@ class Plotter(BasePlotter):
         interactive : bool, optional
             Enabled by default.  Allows user to pan and move figure.
 
-        autoclose : bool, optional
+        auto_close : bool, optional
             Enabled by default.  Exits plotting session when user closes the
             window when interactive is True.
 
@@ -1997,7 +1997,7 @@ class Plotter(BasePlotter):
             else:
                 img = self.screenshot(screenshot)
 
-        if autoclose:
+        if auto_close:
             self.close()
 
         if self.notebook:

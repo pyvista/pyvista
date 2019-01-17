@@ -148,7 +148,7 @@ def test_make_movie():
     plotter.remove_actor(actor)
     plotter.add_mesh(movie_sphere,
                      scalars=np.random.random(movie_sphere.n_faces))
-    plotter.plot(autoclose=False, window_size=[304, 304])
+    plotter.plot(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
     for i in range(10):
         plotter.write_frame()

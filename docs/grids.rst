@@ -192,7 +192,7 @@ A more complex plot can be created using:
     plotter.camera_position(cpos)
     
     # Don't let it close automatically so we can take a screenshot
-    cpos = plotter.plot(autoclose=False)
+    cpos = plotter.plot(auto_close=False)
     plotter.screenshot('beam.png')
     plotter.close()
 
@@ -209,11 +209,11 @@ You can animate the motion of the beam by updating the positions and scalars of 
     plotter.add_axes()
     plotter.camera_position(cpos)
     
-You then open the render window by plotting before opening movie file.  Set autoclose to False so the plotter does not close automatically.  Disabling interactive means the plot will automatically continue without waiting for the user to exit the window.
+You then open the render window by plotting before opening movie file.  Set auto_close to False so the plotter does not close automatically.  Disabling interactive means the plot will automatically continue without waiting for the user to exit the window.
 
 .. code:: python
 
-    plotter.plot(interactive=False, autoclose=False, window_size=[800, 600])
+    plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
     
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
     plotter.open_gif('beam.gif')  # or beam.mp4
@@ -241,7 +241,7 @@ You can also render the beam as as a wire-frame object:
                   style='wireframe')
     plotter.AddAxes()
     plotter.SetCameraPosition(cpos)
-    plotter.plot(interactive=False, autoclose=False, window_size=[800, 600])
+    plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
     
     #plotter.OpenMovie('beam.mp4')
     plotter.OpenGif('beam_wireframe.gif')
