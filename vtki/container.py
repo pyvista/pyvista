@@ -14,6 +14,7 @@ log.setLevel('CRITICAL')
 
 import vtki
 from vtki.utilities import wrap, is_vtki_obj, get_scalar
+from vtki import plot
 
 
 class MultiBlock(vtkMultiBlockDataSet):
@@ -34,6 +35,9 @@ class MultiBlock(vtkMultiBlockDataSet):
                     self.DeepCopy(args[0])
                 else:
                     self.ShallowCopy(args[0])
+
+    # Simply bind vtki.plotting.plot to the object
+    plot = plot
 
 
     @property
@@ -95,13 +99,6 @@ class MultiBlock(vtkMultiBlockDataSet):
             if tma > maxi:
                 maxi = tma
         return mini, maxi
-
-
-    def plot(self, **kwargs):
-        """
-        Plots all elements in the multiblock dataset
-        """
-        return vtki.plot(self, **kwargs)
 
 
     def get_index_by_name(self, name):

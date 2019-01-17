@@ -15,6 +15,7 @@ log.setLevel('CRITICAL')
 import vtki
 from vtki.utilities import get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD
 from vtki import DataSetFilters
+from vtki import plot
 
 
 
@@ -23,6 +24,9 @@ class Common(DataSetFilters):
 
     def __init__(self, *args, **kwargs):
         self.references = []
+
+    # Simply bind vtki.plotting.plot to the object
+    plot = plot
 
     @property
     def active_scalar_info(self):
@@ -169,93 +173,6 @@ class Common(DataSetFilters):
             self.GetPointData().SetActiveScalars(name)
             self._active_scalar_info = [POINT_DATA_FIELD, name]
 
-    def plot(self, **args):
-        """
-        Adds a vtk unstructured, structured, or polymesh to the plotting object
-
-        Parameters
-        ----------
-        mesh : vtk unstructured, structured, or polymesh
-            A vtk unstructured, structured, or polymesh to plot.
-
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
-
-            Color will be overridden when scalars are input.
-
-        style : string, optional
-            Visualization style of the vtk mesh.  One for the following:
-                style='surface'
-                style='wireframe'
-                style='points'
-
-            Defaults to 'surface'
-
-        scalars : numpy array, optional
-            Scalars used to "color" the mesh.  Accepts an array equal to the
-            number of cells or the number of points in the mesh.  Array should
-            be sized as a single vector.
-
-        rng : 2 item list, optional
-            Range of mapper for scalars.  Defaults to minimum and maximum of
-            scalars array.  Example: [-1, 2]
-
-        stitle : string, optional
-            Scalar title.  By default there is no scalar legend bar.  Setting
-            this creates the legend bar and adds a title to it.  To create a
-            bar with no title, use an empty string (i.e. '').
-
-        show_edges : bool, optional
-            Shows the edges of a mesh.  Does not apply to a wireframe
-            representation.
-
-        pointsize : float, optional
-            Point size.  Applicable when style='points'.  Default 5.0
-
-        opacity : float, optional
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
-
-        linewidth : float, optional
-            Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default None.
-
-        flip_scalars : bool, optional
-            Flip scalar display approach.  Default is red is minimum and blue
-            is maximum.
-
-        lighting : bool, optional
-            Enable or disable Z direction lighting.  True by default.
-
-        n_colors : int, optional
-            Number of colors to use when displaying scalars.
-
-        interpolatebeforemap : bool, default False
-            Enabling makes for a smoother scalar display.  Default False
-
-        screenshot : str, default None
-            Takes a screenshot when window is closed when a filename is
-            entered as this parameter.
-
-        full_screen : bool, optional
-            Opens window in full screen.  When enabled, ignores window_size.
-            Default False.
-
-        Returns
-        -------
-        cpos : list
-            Camera position, focal point, and view up.
-
-        Examples
-        --------
-        >>> # take screenshot without opening window
-        >>> mesh.plot(off_screen=True, screenshot='mesh_picture.png')
-
-        """
-        return vtki.plot(self, **args)
 
     def points_to_double(self):
         """ Makes points double precision """
