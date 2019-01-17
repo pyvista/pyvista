@@ -977,7 +977,7 @@ class BasePlotter(object):
         if reset_camera:
             self.reset_camera()
 
-    def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,
+    def add_scalar_bar(self, title=None, n_labels=5, italic=False, bold=True,
                        title_fontsize=None, label_fontsize=None, color=None,
                        fontfamily=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None, position_y=None):
@@ -989,7 +989,7 @@ class BasePlotter(object):
         title : string, optional
             Title of the scalar bar.  Default None
 
-        nlabels : int, optional
+        n_labels : int, optional
             Number of labels to use for the scalar bar.
 
         italic : bool, optional
@@ -1103,7 +1103,7 @@ class BasePlotter(object):
         # Create scalar bar
         self.scalar_bar = vtk.vtkScalarBarActor()
         self.scalar_bar.SetLookupTable(mapper.GetLookupTable())
-        self.scalar_bar.SetNumberOfLabels(nlabels)
+        self.scalar_bar.SetNumberOfLabels(n_labels)
 
         # edit the size of the colorbar
         self.scalar_bar.SetHeight(height)
@@ -1114,7 +1114,7 @@ class BasePlotter(object):
         if label_fontsize is None or title_fontsize is None:
             self.scalar_bar.UnconstrainedFontSizeOn()
 
-        if nlabels:
+        if n_labels:
             label_text = self.scalar_bar.GetLabelTextProperty()
             label_text.SetColor(color)
             label_text.SetShadow(shadow)
