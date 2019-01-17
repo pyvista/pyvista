@@ -424,7 +424,7 @@ class BasePlotter(object):
 
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
-                 psize=5.0, opacity=1, linewidth=None, flip_scalars=False,
+                 pointsize=5.0, opacity=1, linewidth=None, flip_scalars=False,
                  lighting=False, n_colors=256, interpolatebeforemap=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args={},
                  **kwargs):
@@ -474,7 +474,7 @@ class BasePlotter(object):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        psize : float, optional
+        pointsize : float, optional
             Point size.  Applicable when style='points'.  Default 5.0
 
         opacity : float, optional
@@ -553,7 +553,7 @@ class BasePlotter(object):
                     ts = scalars
                 a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
-                             psize=psize, opacity=opacity, linewidth=linewidth,
+                             pointsize=pointsize, opacity=opacity, linewidth=linewidth,
                              flip_scalars=flip_scalars, lighting=lighting,
                              n_colors=n_colors, interpolatebeforemap=interpolatebeforemap,
                              cmap=cmap, label=label,
@@ -669,7 +669,7 @@ class BasePlotter(object):
                             '\t"wireframe"\n' +
                             '\t"points"\n')
 
-        prop.SetPointSize(psize)
+        prop.SetPointSize(pointsize)
 
         # edge display style
         if show_edges:
@@ -1536,7 +1536,7 @@ class BasePlotter(object):
         else:
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
-                      psize=pointsize)
+                      pointsize=pointsize)
 
         self.add_actor(labelActor)
         return labelMapper

@@ -1220,7 +1220,7 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.add_lines(segment, 'b', label='Ray Segment')
-            plotter.add_mesh(intersection_points, 'r', psize=10,
+            plotter.add_mesh(intersection_points, 'r', pointsize=10,
                              label='Intersection Points')
             plotter.add_legend()
             plotter.add_axes()

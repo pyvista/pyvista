@@ -213,7 +213,7 @@ class Common(DataSetFilters):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        psize : float, optional
+        pointsize : float, optional
             Point size.  Applicable when style='points'.  Default 5.0
 
         opacity : float, optional
