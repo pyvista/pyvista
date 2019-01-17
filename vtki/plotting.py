@@ -800,7 +800,7 @@ class BasePlotter(object):
                         show_ylabels=True, show_zlabels=True, italic=False,
                         bold=True, shadow=False, fontsize=None,
                         font_family=None, color='w',
-                        xtitle='X Axis', ytitle='Y Axis', ztitle='Z Axis',
+                        xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2dmode=True):
         """
         Adds bounds axes.  Shows the bounds of the most recent input mesh
@@ -856,13 +856,13 @@ class BasePlotter(object):
                 color=[1, 1, 1]
                 color='#FFFFFF'
 
-        xtitle : string, optional
+        xlabel : string, optional
             Title of the x axis.  Default "X Axis"
 
-        ytitle : string, optional
+        ylabel : string, optional
             Title of the y axis.  Default "Y Axis"
 
-        ztitle : string, optional
+        zlabel : string, optional
             Title of the z axis.  Default "Z Axis"
 
         use_2dmode : bool, optional
@@ -919,19 +919,19 @@ class BasePlotter(object):
 
         # show lines
         if show_xaxis:
-            cubeAxesActor.SetXTitle(xtitle)
+            cubeAxesActor.SetXTitle(xlabel)
         else:
             cubeAxesActor.SetXTitle('')
             cubeAxesActor.SetAxisLabels(0, empty_str)
 
         if show_yaxis:
-            cubeAxesActor.SetYTitle(ytitle)
+            cubeAxesActor.SetYTitle(ylabel)
         else:
             cubeAxesActor.SetYTitle('')
             cubeAxesActor.SetAxisLabels(1, empty_str)
 
         if show_zaxis:
-            cubeAxesActor.SetZTitle(ztitle)
+            cubeAxesActor.SetZTitle(zlabel)
         else:
             cubeAxesActor.SetZTitle('')
             cubeAxesActor.SetAxisLabels(2, empty_str)
