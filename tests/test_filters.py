@@ -125,3 +125,34 @@ def test_contour():
     assert iso is not None
     iso = dataset.contour(isosurfaces=[100, 300, 500])
     assert iso is not None
+
+
+def test_elevation():
+    dataset = examples.load_uniform()
+    # Test default params
+    elev = dataset.elevation()
+    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' == elev.active_scalar_name
+    assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
+    # test vector args
+    c = list(dataset.center)
+    t = list(c) # cast so it doesnt point to `c`
+    t[2] = dataset.bounds[-1]
+    elev = dataset.elevation(low_point=c, high_point=t)
+    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' == elev.active_scalar_name
+    assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
+    # Test not setting active
+    elev = dataset.elevation(set_active=False)
+    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' != elev.active_scalar_name
+    # Set use a range by scalar name
+    elev = dataset.elevation(scalar_range='Spatial Point Data')
+    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' == elev.active_scalar_name
+    assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
+    # Set use a user defined range
+    elev = dataset.elevation(scalar_range=[1.0, 100.0])
+    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' == elev.active_scalar_name
+    assert elev.get_data_range('Elevation') == (1.0, 100.0)
