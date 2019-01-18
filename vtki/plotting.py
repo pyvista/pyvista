@@ -16,7 +16,6 @@ from vtk.util import numpy_support as VN
 import numpy as np
 import vtki
 from vtki.utilities import get_scalar, wrap, is_vtki_obj
-from vtki.container import MultiBlock
 import imageio
 
 
@@ -520,7 +519,7 @@ class BasePlotter(object):
             showedges = rcParams['showedges']
 
 
-        if isinstance(mesh, MultiBlock):
+        if isinstance(mesh, vtki.MultiBlock):
             # frist check the scalars
             if rng is None and scalars is not None:
                 # Get the data range across the array for all blocks if name specified
@@ -963,7 +962,7 @@ class BasePlotter(object):
         self.cubeAxesActor = cubeAxesActor
         return cubeAxesActor
 
-    def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0):
+    def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0, resetcam=True):
         """Scale all the datasets in the scene.
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
@@ -974,6 +973,8 @@ class BasePlotter(object):
                 actor.SetScale(xscale, yscale, zscale)
         self.update_bounds_axes()
         self._render()
+        if resetcam:
+            self.reset_camera()
 
     def add_scalar_bar(self, title=None, nlabels=5, italic=False, bold=True,
                        title_fontsize=None, label_fontsize=None, color=None,
