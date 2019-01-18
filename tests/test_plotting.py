@@ -323,7 +323,7 @@ def test_multi_block_plot():
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
-    multi.plot(scalars='Random Data', off_screen=OFF_SCREEN)
+    multi.plot(scalars='Random Data', off_screen=OFF_SCREEN, multi_colors=True)
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
