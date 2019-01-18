@@ -800,7 +800,7 @@ class BasePlotter(object):
                         bold=True, shadow=False, font_size=None,
                         font_family=None, color='w',
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2dmode=True):
+                        use_2d=True):
         """
         Adds bounds axes.  Shows the bounds of the most recent input mesh
         unless mesh is specified.
@@ -864,7 +864,7 @@ class BasePlotter(object):
         zlabel : string, optional
             Title of the z axis.  Default "Z Axis"
 
-        use_2dmode : bool, optional
+        use_2d : bool, optional
             A bug with vtk 6.3 in Windows seems to cause this function to crash
             this can be enabled for smoother plotting for other enviornments.
 
