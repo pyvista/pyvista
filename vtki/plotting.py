@@ -1439,7 +1439,7 @@ class BasePlotter(object):
             self.remove_actor(self.scalar_bar)
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
-                         font_size=None, textcolor='k',
+                         font_size=None, text_color='k',
                          font_family=None, shadow=False,
                          show_points=True, point_color='k', point_size=5):
         """
@@ -1463,13 +1463,13 @@ class BasePlotter(object):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
-        textcolor : string or 3 item list, optional, defaults to black
+        text_color : string or 3 item list, optional, defaults to black
             Color of text.
             Either a string, rgb list, or hex color string.  For example:
-                textcolor='white'
-                textcolor='w'
-                textcolor=[1, 1, 1]
-                textcolor='#FFFFFF'
+                text_color='white'
+                text_color='w'
+                text_color=[1, 1, 1]
+                text_color='#FFFFFF'
 
         font_family : string, optional
             Font family.  Must be either courier, times, or arial.
@@ -1483,10 +1483,10 @@ class BasePlotter(object):
         point_color : string or 3 item list, optional, defaults to black
             Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
-                textcolor='white'
-                textcolor='w'
-                textcolor=[1, 1, 1]
-                textcolor='#FFFFFF'
+                text_color='white'
+                text_color='w'
+                text_color=[1, 1, 1]
+                text_color='#FFFFFF'
 
         point_size : float, optional
             Size of points (if visible)
@@ -1521,7 +1521,7 @@ class BasePlotter(object):
         textprop.SetBold(bold)
         textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_font_family(font_family))
-        textprop.SetColor(parse_color(textcolor))
+        textprop.SetColor(parse_color(text_color))
         textprop.SetShadow(shadow)
         labelMapper.SetLabelModeToLabelFieldData()
         labelMapper.SetFieldDataName('labels')
