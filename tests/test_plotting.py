@@ -36,7 +36,7 @@ def test_plot(tmpdir):
                           show_bounds=True,
                           color='r',
                           style='wireframe',
-                          linewidth=10,
+                          line_width=10,
                           scalars=scalars,
                           flip_scalars=True,
                           cmap='bwr',
