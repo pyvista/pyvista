@@ -426,7 +426,7 @@ class BasePlotter(object):
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
                  lighting=False, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args={},
-                 **kwargs):
+                 multi_colors=False, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -502,6 +502,10 @@ class BasePlotter(object):
            applicable for when displaying scalars.  Defaults None
            (rainbow).  Requires matplotlib.
 
+        multi_colors : bool, optional
+            If a ``MultiBlock`` dataset is given this will color each block by
+            a solid color using matplotlib's color cycler.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -530,6 +534,12 @@ class BasePlotter(object):
                     #       a 2D arrays or list of arrays  where first index
                     #       corresponds to the block? This could get complicated real quick.
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
+            if multi_colors:
+                # Compute unique colors for each index of the block
+                import matplotlib as mpl
+                from itertools import cycle
+                cycler = mpl.rcParams['axes.prop_cycle']
+                colors = cycle(cycler)
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(mesh.GetNumberOfBlocks()):
@@ -550,6 +560,8 @@ class BasePlotter(object):
                     ts = None
                 else:
                     ts = scalars
+                if multi_colors:
+                    color = next(colors)['color']
                 a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
                              point_size=point_size, opacity=opacity, line_width=line_width,
