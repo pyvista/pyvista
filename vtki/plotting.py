@@ -797,7 +797,7 @@ class BasePlotter(object):
     def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
-                        bold=True, shadow=False, fontsize=None,
+                        bold=True, shadow=False, font_size=None,
                         fontfamily=None, color='w',
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2dmode=True):
@@ -841,7 +841,7 @@ class BasePlotter(object):
         shadow : bool, optional
             Adds a black shadow to the text.  Default False.
 
-        fontsize : float, optional
+        font_size : float, optional
             Sets the size of the label font.  Defaults to 16.
 
         fontfamily : string, optional
@@ -877,8 +877,8 @@ class BasePlotter(object):
 
         if fontfamily is None:
             fontfamily = rcParams['font']['family']
-        if fontsize is None:
-            fontsize = rcParams['font']['size']
+        if font_size is None:
+            font_size = rcParams['font']['size']
 
         # Use the bounds of all data in the rendering window
         if not mesh and not bounds:
@@ -948,12 +948,12 @@ class BasePlotter(object):
         # set font
         fontfamily = parse_fontfamily(fontfamily)
         for i in range(3):
-            cubeAxesActor.GetTitleTextProperty(i).SetFontSize(fontsize)
+            cubeAxesActor.GetTitleTextProperty(i).SetFontSize(font_size)
             cubeAxesActor.GetTitleTextProperty(i).SetColor(color)
             cubeAxesActor.GetTitleTextProperty(i).SetFontFamily(fontfamily)
             cubeAxesActor.GetTitleTextProperty(i).SetBold(bold)
 
-            cubeAxesActor.GetLabelTextProperty(i).SetFontSize(fontsize)
+            cubeAxesActor.GetLabelTextProperty(i).SetFontSize(font_size)
             cubeAxesActor.GetLabelTextProperty(i).SetColor(color)
             cubeAxesActor.GetLabelTextProperty(i).SetFontFamily(fontfamily)
             cubeAxesActor.GetLabelTextProperty(i).SetBold(bold)
@@ -977,7 +977,7 @@ class BasePlotter(object):
             self.reset_camera()
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False, bold=True,
-                       title_fontsize=None, label_fontsize=None, color=None,
+                       title_font_size=None, label_font_size=None, color=None,
                        fontfamily=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None, position_y=None):
         """
@@ -997,11 +997,11 @@ class BasePlotter(object):
         bold  : bool, optional
             Bolds title and bar labels.  Default True
 
-        title_fontsize : float, optional
+        title_font_size : float, optional
             Sets the size of the title font.  Defaults to None and is sized
             automatically.
 
-        label_fontsize : float, optional
+        label_font_size : float, optional
             Sets the size of the title font.  Defaults to None and is sized
             automatically.
 
@@ -1034,17 +1034,17 @@ class BasePlotter(object):
 
         Notes
         -----
-        Setting title_fontsize, or label_fontsize disables automatic font
+        Setting title_font_size, or label_font_size disables automatic font
         sizing for both the title and label.
 
 
         """
         if fontfamily is None:
             fontfamily = rcParams['font']['family']
-        if label_fontsize is None:
-            label_fontsize = rcParams['font']['label_size']
-        if title_fontsize is None:
-            title_fontsize = rcParams['font']['title_size']
+        if label_font_size is None:
+            label_font_size = rcParams['font']['label_size']
+        if title_font_size is None:
+            title_font_size = rcParams['font']['title_size']
         if color is None:
             color = rcParams['font']['color']
         # Automatically choose size if not specified
@@ -1110,7 +1110,7 @@ class BasePlotter(object):
         self.scalar_bar.SetPosition(position_x, position_y)
         self.scalar_bar.SetOrientationToHorizontal()
 
-        if label_fontsize is None or title_fontsize is None:
+        if label_font_size is None or title_font_size is None:
             self.scalar_bar.UnconstrainedFontSizeOn()
 
         if n_labels:
@@ -1122,8 +1122,8 @@ class BasePlotter(object):
             label_text.SetFontFamily(parse_fontfamily(fontfamily))
             label_text.SetItalic(italic)
             label_text.SetBold(bold)
-            if label_fontsize:
-                label_text.SetFontSize(label_fontsize)
+            if label_font_size:
+                label_text.SetFontSize(label_font_size)
 
         # Set properties
         if title:
@@ -1140,8 +1140,8 @@ class BasePlotter(object):
             title_text.SetItalic(italic)
             title_text.SetBold(bold)
             title_text.SetShadow(shadow)
-            if title_fontsize:
-                title_text.SetFontSize(title_fontsize)
+            if title_font_size:
+                title_text.SetFontSize(title_font_size)
 
             # Set font
             title_text.SetFontFamily(parse_fontfamily(fontfamily))
@@ -1272,7 +1272,7 @@ class BasePlotter(object):
         if hasattr(self, 'ifilter'):
             del self.ifilter
 
-    def add_text(self, text, position=None, fontsize=50, color=None,
+    def add_text(self, text, position=None, font_size=50, color=None,
                 font=None, shadow=False):
         """
         Adds text to plot object in the top left corner by default
@@ -1301,8 +1301,8 @@ class BasePlotter(object):
         """
         if font is None:
             font = rcParams['font']['family']
-        if fontsize is None:
-            fontsize = rcParams['font']['size']
+        if font_size is None:
+            font_size = rcParams['font']['size']
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
@@ -1314,7 +1314,7 @@ class BasePlotter(object):
 
         self.textActor = vtk.vtkTextActor()
         self.textActor.SetPosition(position)
-        self.textActor.GetTextProperty().SetFontSize(fontsize)
+        self.textActor.GetTextProperty().SetFontSize(font_size)
         self.textActor.GetTextProperty().SetColor(parse_color(color))
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
@@ -1439,7 +1439,7 @@ class BasePlotter(object):
             self.remove_actor(self.scalar_bar)
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
-                         fontsize=None, textcolor='k',
+                         font_size=None, textcolor='k',
                          fontfamily=None, shadow=False,
                          show_points=True, point_color='k', point_size=5):
         """
@@ -1460,7 +1460,7 @@ class BasePlotter(object):
         bold : bool, optional
             Bolds title and bar labels.  Default True
 
-        fontsize : float, optional
+        font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
         textcolor : string or 3 item list, optional, defaults to black
@@ -1499,8 +1499,8 @@ class BasePlotter(object):
         """
         if fontfamily is None:
             fontfamily = rcParams['font']['family']
-        if fontsize is None:
-            fontsize = rcParams['font']['size']
+        if font_size is None:
+            font_size = rcParams['font']['size']
 
         if len(points) != len(labels):
             raise Exception('There must be one label for each point')
@@ -1519,7 +1519,7 @@ class BasePlotter(object):
         textprop = labelMapper.GetLabelTextProperty()
         textprop.SetItalic(italic)
         textprop.SetBold(bold)
-        textprop.SetFontSize(fontsize)
+        textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_fontfamily(fontfamily))
         textprop.SetColor(parse_color(textcolor))
         textprop.SetShadow(shadow)

@@ -296,7 +296,7 @@ This example is similar and shows how labels can be combined with a scalar bar t
 
     # Add labels to points on the yz plane (where x == 0)
     mask = grid.points[:, 0] == 0
-    plotter.AddPointLabels(points[mask], values[mask].tolist(), fontsize=24)
+    plotter.AddPointLabels(points[mask], values[mask].tolist(), font_size=24)
 
     # add some text to the plot
     plotter.AddText('Example showing plot labels')

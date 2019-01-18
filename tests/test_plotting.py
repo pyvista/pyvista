@@ -100,7 +100,7 @@ def test_plot_add_bounds_axes():
 def test_plot_add_scalar_bar():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.add_scalar_bar(label_fontsize=10, title_fontsize=20, title='woa')
+    plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa')
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
