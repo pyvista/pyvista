@@ -1719,15 +1719,15 @@ class BasePlotter(object):
                 self.camera.GetViewUp()]
 
     @camera_position.setter
-    def camera_position(self, cameraloc):
+    def camera_position(self, camera_location):
         """ Set camera position of active render window """
-        if cameraloc is None:
+        if camera_location is None:
             return
 
         # everything is set explicitly
-        self.camera.SetPosition(cameraloc[0])
-        self.camera.SetFocalPoint(cameraloc[1])
-        self.camera.SetViewUp(cameraloc[2])
+        self.camera.SetPosition(camera_location[0])
+        self.camera.SetFocalPoint(camera_location[1])
+        self.camera.SetViewUp(camera_location[2])
 
         # reset clipping range
         self.renderer.ResetCameraClippingRange()
