@@ -400,7 +400,7 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def extract_edges(dataset):
+    def wireframe(dataset):
         """Extract all the internal/external edges of the dataset as PolyData.
         This produces a full wireframe representation of the input dataset.
         """
@@ -408,12 +408,6 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
-
-    def wireframe(dataset):
-        """An alias for ``extract_edges()`` which produces a full wireframe
-        representation of the input dataset.
-        """
-        return DataSetFilters.extract_edges(dataset)
 
 
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
