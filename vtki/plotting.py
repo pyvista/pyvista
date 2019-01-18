@@ -851,6 +851,7 @@ class BasePlotter(object):
         color : string or 3 item list, optional
             Color of all labels and axis titles.  Default white.
             Either a string, rgb list, or hex color string.  For example:
+
                 color='white'
                 color='w'
                 color=[1, 1, 1]
@@ -1465,6 +1466,7 @@ class BasePlotter(object):
         textcolor : string or 3 item list, optional, defaults to black
             Color of text.
             Either a string, rgb list, or hex color string.  For example:
+
                 textcolor='white'
                 textcolor='w'
                 textcolor=[1, 1, 1]
@@ -1482,6 +1484,7 @@ class BasePlotter(object):
         pointcolor : string or 3 item list, optional, defaults to black
             Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
+
                 textcolor='white'
                 textcolor='w'
                 textcolor=[1, 1, 1]

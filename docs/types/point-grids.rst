@@ -1,5 +1,6 @@
-Structured and Unstructured Grids
-=================================
+Point-Based Grids
+=================
+
 Structured and unstructured grids are designed to manage cells whereas a polydata object manage surfaces.  The ``vtk.UnstructuredGrid`` is derived class from ``vtk.vtkUnstructuredGrid`` designed to make creation, array access, and plotting more straightforward than using the vtk object.  The same goes with a ``vtk.StructuredGrid``.
 
 
@@ -68,7 +69,7 @@ An unstructured grid can be created directly from numpy arrays.  This is useful 
 ..
    The resulting plot can be found in :numref:`twocubes`.
 
-.. image:: ./images/twocubes.png
+.. image:: ../images/twocubes.png
 
 Loading from File
 ~~~~~~~~~~~~~~~~~
@@ -105,7 +106,7 @@ This creates an empty grid, and is not useful until points are added to it and t
     z = np.arange(-10, 10, 0.25)
     x, y, z = np.meshgrid(x, y, z)
 
-    # convert 
+    # convert
     points = np.empty((x.size, 3))
     points[:, 0] = x.ravel('F')
     points[:, 1] = y.ravel('F')
@@ -134,7 +135,7 @@ A structured grid can be created directly from numpy arrays.  This is useful whe
     grid = vtki.StructuredGrid(x, y, z)
     grid.plot()
 
-.. image:: ./images/structured_cube.png
+.. image:: ../images/structured_cube.png
 
 
 Loading from File
@@ -156,14 +157,14 @@ This example shows how you can load an unstructured grid from a vtk file and cre
     import vtki
     from vtki import examples
     import numpy as np
-    
+
     # Load example beam grid
     grid = vtki.UnstructuredGrid(examples.hexbeamfile)
-    
+
     # Create fictitious displacements as a function of Z location
     d = np.zeros_like(grid.points)
     d[:, 1] = grid.points[:, 2]**3/250
-    
+
     # Displace original grid
     grid.points += d
 
@@ -183,52 +184,52 @@ A more complex plot can be created using:
     cpos = [(11.915126303095157, 6.11392754955802, 3.6124956735471914),
             (0.0, 0.375, 2.0),
             (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
-    
+
     # plot this displaced beam
     plotter = vtki.Plotter()
-    plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', 
+    plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position(cpos)
-    
+
     # Don't let it close automatically so we can take a screenshot
     cpos = plotter.plot(autoclose=False)
     plotter.screenshot('beam.png')
     plotter.close()
 
-.. image:: ./images/beam.png
+.. image:: ../images/beam.png
 
 You can animate the motion of the beam by updating the positions and scalars of the grid copied to the plotting object.  First you have to setup the plotting object:
 
 .. code:: python
 
     plotter = vtki.Plotter()
-    plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', 
-                  showedges=True, rng=[-d.max(), d.max()], 
+    plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
+                  showedges=True, rng=[-d.max(), d.max()],
                   interpolatebeforemap=True)
     plotter.add_axes()
     plotter.camera_position(cpos)
-    
+
 You then open the render window by plotting before opening movie file.  Set autoclose to False so the plotter does not close automatically.  Disabling interactive means the plot will automatically continue without waiting for the user to exit the window.
 
 .. code:: python
 
     plotter.plot(interactive=False, autoclose=False, window_size=[800, 600])
-    
+
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
     plotter.open_gif('beam.gif')  # or beam.mp4
-    
+
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
     for phase in np.linspace(0, 2*np.pi, 20):
         plotter.update_coordinates(pts + d*np.cos(phase))
         plotter.update_scalars(d[:, 1]*np.cos(phase))
         plotter.write_frame()
-    
+
     # Close the movie and plot
     plotter.close()
-    
-.. image:: ./images/beam.gif
+
+.. image:: ../images/beam.gif
 
 You can also render the beam as as a wire-frame object:
 
@@ -242,7 +243,7 @@ You can also render the beam as as a wire-frame object:
     plotter.AddAxes()
     plotter.SetCameraPosition(cpos)
     plotter.plot(interactive=False, autoclose=False, window_size=[800, 600])
-    
+
     #plotter.OpenMovie('beam.mp4')
     plotter.OpenGif('beam_wireframe.gif')
     for phase in np.linspace(0, 2*np.pi, 20):
@@ -250,10 +251,10 @@ You can also render the beam as as a wire-frame object:
         plotter.UpdateScalars(d[:, 1]*np.cos(phase), render=False)
         plotter.Render()
         plotter.WriteFrame()
-    
+
     plotter.Close()
-    
-.. image:: ./images/beam_wireframe.gif
+
+.. image:: ../images/beam_wireframe.gif
 
 
 Adding Labels to a Plot
@@ -280,7 +281,7 @@ Labels can be added to a plot using the ``AddPointLabels`` function within the `
 
     plotter.plot()
 
-.. image:: ./images/labels0.png
+.. image:: ../images/labels0.png
 
 This example is similar and shows how labels can be combined with a scalar bar to show the exact value of certain points.
 
@@ -303,7 +304,7 @@ This example is similar and shows how labels can be combined with a scalar bar t
 
     plotter.plot()
 
-.. image:: ./images/labels1.png
+.. image:: ../images/labels1.png
 
 
 
