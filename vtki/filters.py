@@ -178,7 +178,7 @@ class DataSetFilters(object):
         return output
 
 
-    def slice_along_axis(dataset, n=5, axis='x', tol=None):
+    def slice_along_axis(dataset, n=5, axis='x', tolerance=None):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -191,8 +191,8 @@ class DataSetFilters(object):
             Can be string name (``'x'``, ``'y'``, or ``'z'``) or axis index
             (``0``, ``1``, or ``2``).
 
-        tol : float, optional
-            The tolerance to the edge of the dataset bounds to create the slices
+        tolerance : float, optional
+            The toleranceerance to the edge of the dataset bounds to create the slices
 
         """
         output = vtki.MultiBlock()
@@ -205,9 +205,9 @@ class DataSetFilters(object):
         else:
             ax = axis
         # get the locations along that axis
-        if tol is None:
-            tol = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
-        rng = np.linspace(dataset.bounds[ax*2]+tol, dataset.bounds[ax*2+1]-tol, n)
+        if tolerance is None:
+            tolerance = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
+        rng = np.linspace(dataset.bounds[ax*2]+tolerance, dataset.bounds[ax*2+1]-tolerance, n)
         center = list(dataset.center)
         # Make each of the slices
         for i in range(n):
