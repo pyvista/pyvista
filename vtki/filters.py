@@ -362,18 +362,18 @@ class DataSetFilters(object):
                     invert=invert, continuous=continuous, preference=preference)
 
 
-    def outline(dataset, gen_faces=False):
+    def outline(dataset, generate_faces=False):
         """Produces an outline of the full extent for the input dataset.
 
         Parameters
         ----------
-        gen_faces : bool, optional
+        generate_faces : bool, optional
             Generate solid faces for the box. This is off by default
 
         """
         alg = vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
-        alg.SetGenerateFaces(gen_faces)
+        alg.SetGenerateFaces(generate_faces)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
