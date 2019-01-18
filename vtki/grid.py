@@ -1,5 +1,5 @@
 """
-Sub-classes for vtk.vtkUnstructuredGrid and vtk.vtkStructuredGrid
+Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData
 """
 import os
 import logging
@@ -49,12 +49,12 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     Examples
     --------
-    >>> grid = RectilinearGrid()  # Create empty grid
-    >>> grid = RectilinearGrid(vtkgrid)  # Initialize from a vtk.vtkRectilinearGrid object
-    >>> xrng = np.arange(-10, 10, 2)
-    >>> yrng = np.arange(-10, 10, 5)
-    >>> zrng = np.arange(-10, 10, 1)
-    >>> grid = vtki.RectilinearGrid(xrng, yrng, zrng)
+    grid = RectilinearGrid()  # Create empty grid
+    grid = RectilinearGrid(vtkgrid)  # Initialize from a vtk.vtkRectilinearGrid object
+    xrng = np.arange(-10, 10, 2)
+    yrng = np.arange(-10, 10, 5)
+    zrng = np.arange(-10, 10, 1)
+    grid = vtki.RectilinearGrid(xrng, yrng, zrng)
 
 
     """
@@ -254,14 +254,14 @@ class UniformGrid(vtkImageData, Grid, PointSetFilters):
 
     Examples
     --------
-    >>> grid = UniformGrid()  # Create empty grid
-    >>> grid = UniformGrid(vtkgrid)  # Initialize from a vtk.vtkImageData object
-    >>> dims = (10, 10, 10)
-    >>> grid = vtki.UniformGrid(dims) # Using default spacing and origin
-    >>> spacing = (2, 1, 5)
-    >>> grid = vtki.UniformGrid(dims, spacing) # Usign default origin
-    >>> origin = (10, 35, 50)
-    >>> grid = vtki.UniformGrid(dims, spacing, origin) # Everything is specified
+    grid = UniformGrid()  # Create empty grid
+    grid = UniformGrid(vtkgrid)  # Initialize from a vtk.vtkImageData object
+    dims = (10, 10, 10)
+    grid = vtki.UniformGrid(dims) # Using default spacing and origin
+    spacing = (2, 1, 5)
+    grid = vtki.UniformGrid(dims, spacing) # Usign default origin
+    origin = (10, 35, 50)
+    grid = vtki.UniformGrid(dims, spacing, origin) # Everything is specified
 
     """
 

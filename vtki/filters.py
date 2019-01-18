@@ -88,12 +88,12 @@ class DataSetFilters(object):
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be specified
-            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
-            or ``'-x'`` for ``(-1,0,0), etc.
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
-        origin : tuple(float)
-            The center (x,y,z) coordinate of the plane on which the clip occurs
+            The center ``(x,y,z)`` coordinate of the plane on which the clip
+            occurs
 
         invert : bool
             Flag on whether to flip/invert the clip
@@ -123,9 +123,9 @@ class DataSetFilters(object):
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be specified
-            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
-            or ``'-x'`` for ``(-1,0,0), etc.
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)```, etc.
 
         origin : tuple(float)
             The center (x,y,z) coordinate of the plane on which the slice occurs
