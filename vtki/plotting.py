@@ -424,7 +424,7 @@ class BasePlotter(object):
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
-                 lighting=False, n_colors=256, interpolatebeforemap=False,
+                 lighting=False, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args={},
                  **kwargs):
         """
@@ -493,7 +493,7 @@ class BasePlotter(object):
             Number of colors to use when displaying scalars.  Default
             256.
 
-        interpolatebeforemap : bool, optional
+        interpolate_before_map : bool, optional
             Enabling makes for a smoother scalar display.  Default
             False
 
@@ -554,7 +554,7 @@ class BasePlotter(object):
                              scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
                              point_size=point_size, opacity=opacity, line_width=line_width,
                              flip_scalars=flip_scalars, lighting=lighting,
-                             n_colors=n_colors, interpolatebeforemap=interpolatebeforemap,
+                             n_colors=n_colors, interpolate_before_map=interpolate_before_map,
                              cmap=cmap, label=label,
                              scalar_bar_args=scalar_bar_args, reset_camera=reset_camera, **kwargs)
                 actors.append(a)
@@ -609,13 +609,13 @@ class BasePlotter(object):
                 self.mesh._add_point_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUsePointData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-                if interpolatebeforemap:
+                if interpolate_before_map:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             elif scalars.size == mesh.GetNumberOfCells():
                 self.mesh._add_cell_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUseCellData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-                if interpolatebeforemap:
+                if interpolate_before_map:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             else:
                 _raise_not_matching(scalars, mesh)

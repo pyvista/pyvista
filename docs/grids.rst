@@ -205,7 +205,7 @@ You can animate the motion of the beam by updating the positions and scalars of 
     plotter = vtki.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', 
                   show_edges=True, rng=[-d.max(), d.max()], 
-                  interpolatebeforemap=True)
+                  interpolate_before_map=True)
     plotter.add_axes()
     plotter.camera_position(cpos)
     
@@ -237,7 +237,7 @@ You can also render the beam as as a wire-frame object:
     # Animate plot as a wire-frame
     plotter = vtki.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', show_edges=True,
-                  rng=[-d.max(), d.max()], interpolatebeforemap=True,
+                  rng=[-d.max(), d.max()], interpolate_before_map=True,
                   style='wireframe')
     plotter.AddAxes()
     plotter.SetCameraPosition(cpos)

@@ -40,7 +40,7 @@ def test_plot(tmpdir):
                           scalars=scalars,
                           flip_scalars=True,
                           cmap='bwr',
-                          interpolatebeforemap=True,
+                          interpolate_before_map=True,
                           screenshot=filename)
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
@@ -235,7 +235,7 @@ def test_update():
 def test_plot_cell_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
-    plotter.add_mesh(sphere, interpolatebeforemap=True, scalars=scalars,
+    plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
                      n_colors=5, rng=10)
     plotter.plot()
 
