@@ -485,7 +485,7 @@ class Common(DataSetFilters):
         return attrs
 
 
-    def head(self, display=True):
+    def head(self, display=True, html=None):
         """Return the header stats of this dataset. If in IPython, this will
         be formatted to HTML. Otherwise returns a console friendly string"""
         try:
@@ -493,6 +493,11 @@ class Common(DataSetFilters):
             ipy = True
         except NameError:
             ipy = False
+        if html == True:
+            ipy = True
+        elif html == False:
+            ipy = False
+        # Generate the output
         if ipy:
             fmt = ""
             # HTML version
@@ -536,7 +541,7 @@ class Common(DataSetFilters):
             fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
         # Get the header info
-        fmt += self.head(display=False)
+        fmt += self.head(display=False, html=True)
         # Fill out scalar arrays
         if self.n_scalars > 0:
             fmt += "</td><td>"
