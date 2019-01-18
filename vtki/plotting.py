@@ -373,7 +373,7 @@ class BasePlotter(object):
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
                                                   self.left_button_down)
 
-    def left_button_down(self, obj, eventType):
+    def left_button_down(self, obj, event_type):
         # Get 2D click location on window
         clickPos = self.iren.GetEventPosition()
 
