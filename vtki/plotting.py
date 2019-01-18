@@ -426,7 +426,7 @@ class BasePlotter(object):
                  psize=5.0, opacity=1, linethick=None, flipscalars=False,
                  lighting=False, ncolors=256, interpolatebeforemap=False,
                  colormap=None, label=None, resetcam=None, scalar_bar_args={},
-                 **kwargs):
+                 multi_index=False, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -502,6 +502,10 @@ class BasePlotter(object):
            applicable for when displaying scalars.  Defaults None
            (rainbow).  Requires matplotlib.
 
+        multi_index : bool, optional
+            If a MultiBlock dataset is given this will color each block by its
+            block index rather than the active scalars.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -530,6 +534,12 @@ class BasePlotter(object):
                     #       a 2D arrays or list of arrays  where first index
                     #       corresponds to the block? This could get complicated real quick.
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
+            if multi_index:
+                # Compute unique colors for each index of the block
+                import matplotlib as mpl
+                from itertools import cycle
+                cycler = mpl.rcParams['axes.prop_cycle']
+                colors = cycle(cycler)
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(mesh.GetNumberOfBlocks()):
@@ -550,6 +560,8 @@ class BasePlotter(object):
                     ts = None
                 else:
                     ts = scalars
+                if multi_index:
+                    color = next(colors)['color']
                 a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, showedges=showedges,
                              psize=psize, opacity=opacity, linethick=linethick,
