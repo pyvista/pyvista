@@ -423,7 +423,7 @@ class BasePlotter(object):
 
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
-                 pointsize=5.0, opacity=1, linewidth=None, flip_scalars=False,
+                 point_size=5.0, opacity=1, linewidth=None, flip_scalars=False,
                  lighting=False, n_colors=256, interpolatebeforemap=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args={},
                  **kwargs):
@@ -473,7 +473,7 @@ class BasePlotter(object):
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        pointsize : float, optional
+        point_size : float, optional
             Point size.  Applicable when style='points'.  Default 5.0
 
         opacity : float, optional
@@ -552,7 +552,7 @@ class BasePlotter(object):
                     ts = scalars
                 a = self.add_mesh(data, color=color, style=style,
                              scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
-                             pointsize=pointsize, opacity=opacity, linewidth=linewidth,
+                             point_size=point_size, opacity=opacity, linewidth=linewidth,
                              flip_scalars=flip_scalars, lighting=lighting,
                              n_colors=n_colors, interpolatebeforemap=interpolatebeforemap,
                              cmap=cmap, label=label,
@@ -668,7 +668,7 @@ class BasePlotter(object):
                             '\t"wireframe"\n' +
                             '\t"points"\n')
 
-        prop.SetPointSize(pointsize)
+        prop.SetPointSize(point_size)
 
         # edge display style
         if show_edges:
@@ -1441,7 +1441,7 @@ class BasePlotter(object):
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          fontsize=None, textcolor='k',
                          fontfamily=None, shadow=False,
-                         show_points=True, point_color='k', pointsize=5):
+                         show_points=True, point_color='k', point_size=5):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -1488,7 +1488,7 @@ class BasePlotter(object):
                 textcolor=[1, 1, 1]
                 textcolor='#FFFFFF'
 
-        pointsize : float, optional
+        point_size : float, optional
             Size of points (if visible)
 
         Returns
@@ -1535,7 +1535,7 @@ class BasePlotter(object):
         else:
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
-                      pointsize=pointsize)
+                      point_size=point_size)
 
         self.add_actor(labelActor)
         return labelMapper
