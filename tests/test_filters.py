@@ -109,11 +109,8 @@ def test_extract_geometry():
         assert outline is not None
         assert isinstance(outline, vtki.PolyData)
 
-def test_extract_edges():
+def test_wireframe():
     for i, dataset in enumerate(datasets):
-        wire = dataset.extract_geometry()
-        assert wire is not None
-        assert isinstance(wire, vtki.PolyData)
         wire = dataset.wireframe()
         assert wire is not None
         assert isinstance(wire, vtki.PolyData)

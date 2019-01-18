@@ -484,27 +484,65 @@ class Common(DataSetFilters):
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
         return attrs
 
-    def _repr_html_(self):
-        """A pretty representation for Jupyter notebooks"""
-        fmt = ""
-        if self.n_scalars > 0:
-            fmt += "<table>"
-            fmt += "<tr><th>Information</th><th>Data Arrays</th></tr>"
-            fmt += "<tr><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        fmt += "<tr><th>{}</th><th>Values</th></tr>\n".format(self.GetClassName())
-        row = "<tr><td>{}</td><td>{}</td></tr>\n"
 
+    def head(self, display=True, html=None):
+        """Return the header stats of this dataset. If in IPython, this will
+        be formatted to HTML. Otherwise returns a console friendly string"""
+        try:
+            __IPYTHON__
+            ipy = True
+        except NameError:
+            ipy = False
+        if html == True:
+            ipy = True
+        elif html == False:
+            ipy = False
+        # Generate the output
+        if ipy:
+            fmt = ""
+            # HTML version
+            fmt += "\n"
+            fmt += "<table>\n"
+            fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(self.GetClassName())
+            row = "<tr><td>{}</td><td>{}</td></tr>\n"
+            # now make a call on the object to get its attributes as a list of len 2 tuples
+            for attr in self._get_attrs():
+                try:
+                    fmt += row.format(attr[0], attr[2].format(*attr[1]))
+                except:
+                    fmt += row.format(attr[0], attr[2].format(attr[1]))
+            fmt += row.format('N Scalars', self.n_scalars)
+            fmt += "</table>\n"
+            fmt += "\n"
+            if display:
+                from IPython.display import display, HTML
+                display(HTML(fmt))
+                return
+            return fmt
+        # Otherwise return a string that is Python console friendly
+        fmt = "{} ({})\n".format(self.GetClassName(), hex(id(self)))
         # now make a call on the object to get its attributes as a list of len 2 tuples
+        row = "  {}:\t{}\n"
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
+        fmt += row.format('N Scalars', self.n_scalars)
+        return fmt
 
-        fmt += "</table>\n"
-        fmt += "\n"
+
+    def _repr_html_(self):
+        """A pretty representation for Jupyter notebooks that includes header
+        details and information about all scalar arrays"""
+        fmt = ""
+        if self.n_scalars > 0:
+            fmt += "<table>"
+            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
+            fmt += "<tr><td>"
+        # Get the header info
+        fmt += self.head(display=False, html=True)
+        # Fill out scalar arrays
         if self.n_scalars > 0:
             fmt += "</td><td>"
             fmt += "\n"

@@ -88,12 +88,12 @@ class DataSetFilters(object):
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be specified
-            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
-            or ``'-x'`` for ``(-1,0,0), etc.
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
-        origin : tuple(float)
-            The center (x,y,z) coordinate of the plane on which the clip occurs
+            The center ``(x,y,z)`` coordinate of the plane on which the clip
+            occurs
 
         invert : bool
             Flag on whether to flip/invert the clip
@@ -123,9 +123,9 @@ class DataSetFilters(object):
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be specified
-            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
-            or ``'-x'`` for ``(-1,0,0), etc.
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)```, etc.
 
         origin : tuple(float)
             The center (x,y,z) coordinate of the plane on which the slice occurs
@@ -400,7 +400,7 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def extract_edges(dataset):
+    def wireframe(dataset):
         """Extract all the internal/external edges of the dataset as PolyData.
         This produces a full wireframe representation of the input dataset.
         """
@@ -408,12 +408,6 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
-
-    def wireframe(dataset):
-        """An alias for ``extract_edges()`` which produces a full wireframe
-        representation of the input dataset.
-        """
-        return DataSetFilters.extract_edges(dataset)
 
 
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
