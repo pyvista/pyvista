@@ -28,7 +28,7 @@ class InteractiveTool(object):
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
-                 display_params={}, defaultParams={}, **kwargs):
+                 display_params={}, default_params={}, **kwargs):
         if not run_from_ipython() or not ipy_available:
             raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
@@ -63,7 +63,7 @@ class InteractiveTool(object):
         self._initialize(show_bounds, reset_camera, outline)
 
         # Run the tool
-        self.tool(defaultParams=defaultParams, **kwargs)
+        self.tool(default_params=default_params, **kwargs)
 
 
     def tool(**kwargs):
@@ -138,7 +138,7 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, step=None, defaultParams={}):
+    def tool(self, clean=True, step=None, default_params={}):
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -235,7 +235,7 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, tol=None, defaultParams={}):
+    def tool(self, clean=True, tol=None, default_params={}):
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -282,7 +282,7 @@ class Threshold(InteractiveTool):
 
     """
 
-    def tool(self, defaultParams={}):
+    def tool(self, default_params={}):
         preference = self.display_params['preference']
         lowstart = ((self.valid_range[1] - self.valid_range[0]) * 0.25) + self.valid_range[0]
         highstart = ((self.valid_range[1] - self.valid_range[0]) * 0.75) + self.valid_range[0]
@@ -348,5 +348,5 @@ class Threshold(InteractiveTool):
         # Create/display the widgets
         interact(update, dmin=minsl, dmax=maxsl,
                  scalars=names,
-                 invert=defaultParams.get('invert', False),
+                 invert=default_params.get('invert', False),
                  continuous=False)
