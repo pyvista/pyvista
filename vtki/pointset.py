@@ -1257,7 +1257,7 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
                            normals[::use_every], mag=mag)
         return plotter.plot()
 
-    def remove_points(self, remove, mode='any', keepscalars=True, inplace=False):
+    def remove_points(self, remove, mode='any', keep_scalars=True, inplace=False):
         """
         Rebuild a mesh by removing points.  Only valid for
         all-triangle meshes.
@@ -1272,7 +1272,7 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
             When 'all', only faces containing all points flagged for
             removal will be removed.  Default 'all'
 
-        keepscalars : bool, optional
+        keep_scalars : bool, optional
             When True, point and cell scalars will be passed on to the
             new mesh.
 
@@ -1325,7 +1325,7 @@ class PolyData(vtkPolyData, vtki.Common, PointSetFilters):
         ridx = uni[0]
 
         # Add scalars back to mesh if requested
-        if keepscalars:
+        if keep_scalars:
             for key in self.point_arrays:
                 newmesh.point_arrays[key] = self.point_arrays[key][ridx]
 
