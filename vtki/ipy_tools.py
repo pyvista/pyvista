@@ -75,12 +75,12 @@ class InteractiveTool(object):
     def _initialize(self, show_bounds, reset_camera, outline):
         """Outlines the input dataset and sets up the scene"""
         if outline is None:
-            self.plotter.add_mesh(self.input_dataset.outline_corners())
+            self.plotter.add_mesh(self.input_dataset.outline_corners(), reset_camera=False)
         elif outline:
-            self.plotter.add_mesh(self.input_dataset.outline())
+            self.plotter.add_mesh(self.input_dataset.outline(), reset_camera=False)
         # add the axis labels
         if show_bounds:
-            self.plotter.add_bounds_axes()
+            self.plotter.add_bounds_axes(reset_camera=False)
         if reset_camera:
             cpos = self.plotter.get_default_cam_pos()
             self.plotter.camera_position = cpos

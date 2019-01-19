@@ -80,7 +80,7 @@ def _raise_not_matching(scalars, mesh):
                     'or the number of cells ' +
                     '(%d) ' % mesh.GetNumberOfCells())
 
-def _remove_mapper_from_plotter(plotter, actor):
+def _remove_mapper_from_plotter(plotter, actor, reset_camera=None):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
     try:
         mapper = actor.GetMapper()
@@ -94,7 +94,7 @@ def _remove_mapper_from_plotter(plotter, actor):
         if len(plotter._scalar_bar_mappers[name]) < 1:
             plotter._scalar_bar_mappers.pop(name)
             plotter._scalar_bar_ranges.pop(name)
-            plotter.remove_actor(plotter._scalar_bar_actors.pop(name))
+            plotter.remove_actor(plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera)
             plotter._scalar_bar_slots.add(plotter._scalar_bar_slot_lookup.pop(name))
     return
 
@@ -770,14 +770,14 @@ class BasePlotter(object):
         """
         if isinstance(actor, collections.Iterable):
             for a in actor:
-                self.remove_actor(a)
+                self.remove_actor(a, reset_camera=reset_camera)
             return
         if actor is None:
             return
         if isinstance(actor, int):
             actor = self._actors[actor]
         # First remove this actor's mapper from _scalar_bar_mappers
-        _remove_mapper_from_plotter(self, actor)
+        _remove_mapper_from_plotter(self, actor, reset_camera=False)
         self.renderer.RemoveActor(actor)
         try:
             self._actors.remove(actor)
@@ -971,7 +971,7 @@ class BasePlotter(object):
             cubeAxesActor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cubeAxesActor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cubeAxesActor)
+        self.add_actor(cubeAxesActor, reset_camera=False)
         self.cubeAxesActor = cubeAxesActor
         return cubeAxesActor
 
@@ -1164,7 +1164,7 @@ class BasePlotter(object):
 
             self._scalar_bar_actors[title] = self.scalar_bar
 
-        self.add_actor(self.scalar_bar)
+        self.add_actor(self.scalar_bar, reset_camera=False)
 
     def update_scalars(self, scalars, mesh=None, render=True):
         """
@@ -1332,7 +1332,7 @@ class BasePlotter(object):
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
-        self.add_actor(self.textActor)
+        self.add_actor(self.textActor, reset_camera=False)
         return self.textActor
 
     def open_movie(self, filename, framerate=24):
@@ -1443,13 +1443,13 @@ class BasePlotter(object):
         self.scalar_bar.GetProperty().LightingOff()
 
         # Add to renderer
-        self.add_actor(self.scalar_bar)
+        self.add_actor(self.scalar_bar, reset_camera=False)
         return self.scalar_bar
 
     def remove_scalar_bar(self):
         """ Removes scalar bar """
         if hasattr(self, 'scalar_bar'):
-            self.remove_actor(self.scalar_bar)
+            self.remove_actor(self.scalar_bar, reset_camera=False)
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          font_size=None, text_color='k',
@@ -1552,7 +1552,7 @@ class BasePlotter(object):
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size)
 
-        self.add_actor(labelActor)
+        self.add_actor(labelActor, reset_camera=False)
         return labelMapper
 
     def add_points(self, points, **kwargs):
@@ -1560,7 +1560,7 @@ class BasePlotter(object):
         kwargs['style'] = 'points'
         self.add_mesh(points, **kwargs)
 
-    def add_arrows(self, cent, direction, mag=1):
+    def add_arrows(self, cent, direction, mag=1, reset_camera=None):
         """ Adds arrows to plotting object """
 
         if cent.ndim != 2:
@@ -1571,7 +1571,7 @@ class BasePlotter(object):
 
         pdata = vtki.vector_poly_data(cent, direction * mag)
         arrows = arrows_actor(pdata)
-        self.add_actor(arrows)
+        self.add_actor(arrows, reset_camera=reset_camera)
 
         return arrows, pdata
 
@@ -1723,7 +1723,7 @@ class BasePlotter(object):
             self.legend.BorderOff()
 
         # Add to renderer
-        self.add_actor(self.legend)
+        self.add_actor(self.legend, reset_camera=False)
         return self.legend
 
     @property
@@ -1809,7 +1809,7 @@ class BasePlotter(object):
     def remove_legend(self):
         """ Removes legend actor """
         if hasattr(self, 'legend'):
-            self.remove_actor(self.legend)
+            self.remove_actor(self.legend, reset_camera=False)
             self._render()
 
     def enable_cell_picking(self, mesh=None, callback=None):
