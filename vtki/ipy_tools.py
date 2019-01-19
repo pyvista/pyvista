@@ -136,12 +136,16 @@ class OrthogonalSlicer(InteractiveTool):
     preference : str, optional
         The preference for data choice when search for the scalar array
 
+    generate_triangles: bool, optional
+        If this is enabled (``False`` by default), the output will be
+        triangles otherwise, the output will be the intersection polygons.
+
     display_params : dict
         Any plotting keyword parameters to use
 
     """
 
-    def tool(self, clean=True, step=None, default_params={}):
+    def tool(self, clean=True, step=None, generate_triangles=False, default_params={}):
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -156,7 +160,8 @@ class OrthogonalSlicer(InteractiveTool):
 
         def _update_slice(index, x, y, z):
             self.plotter.remove_actor(self._data_to_update[index], reset_camera=False)
-            self.output_dataset[index] = self.input_dataset.slice(normal=axes[index], origin=[x,y,z])
+            self.output_dataset[index] = self.input_dataset.slice(normal=axes[index],
+                    origin=[x,y,z], generate_triangles=generate_triangles)
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
                     reset_camera=False, **self.display_params)
             self._old[index] = [x,y,z][index]
@@ -233,12 +238,16 @@ class ManySlicesAlongAxis(InteractiveTool):
     preference : str, optional
         The preference for data choice when search for the scalar array
 
+    generate_triangles: bool, optional
+        If this is enabled (``False`` by default), the output will be
+        triangles otherwise, the output will be the intersection polygons.
+
     display_params : dict
         Any plotting keyword parameters to use
 
     """
 
-    def tool(self, clean=True, tolerance=None, default_params={}):
+    def tool(self, clean=True, tolerance=None, generate_triangles=False, default_params={}):
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -251,7 +260,7 @@ class ManySlicesAlongAxis(InteractiveTool):
                 nsl.max *= 2
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
-            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance)
+            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance, generate_triangles=generate_triangles)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
                 reset_camera=False, **self.display_params)
             self._need_to_update = False

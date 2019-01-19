@@ -115,7 +115,7 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def slice(dataset, normal='x', origin=None):
+    def slice(dataset, normal='x', origin=None, generate_triangles=False):
         """Slice a dataset by a plane at the specified origin and normal vector
         orientation. If no origin is specified, the center of the input dataset will
         be used.
@@ -129,6 +129,10 @@ class DataSetFilters(object):
 
         origin : tuple(float)
             The center (x,y,z) coordinate of the plane on which the slice occurs
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
 
         """
         if isinstance(normal, str):
@@ -144,11 +148,13 @@ class DataSetFilters(object):
         alg = vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
         alg.SetCutFunction(plane) # the the cutter to use the plane we made
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
         alg.Update() # Perfrom the Cut
         return _get_output(alg)
 
 
-    def slice_orthogonal(dataset, x=None, y=None, z=None):
+    def slice_orthogonal(dataset, x=None, y=None, z=None, generate_triangles=False):
         """Creates three orthogonal slices through the dataset on the three
         caresian planes. Yields a MutliBlock dataset of the three slices
 
@@ -163,6 +169,10 @@ class DataSetFilters(object):
         z : float
             The Z location of the XY slice
 
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
         """
         output = vtki.MultiBlock()
         # Create the three slices
@@ -172,13 +182,13 @@ class DataSetFilters(object):
             y = dataset.center[1]
         if z is None:
             z = dataset.center[2]
-        output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z])
-        output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z])
-        output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z])
+        output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z], generate_triangles=generate_triangles)
+        output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z], generate_triangles=generate_triangles)
+        output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z], generate_triangles=generate_triangles)
         return output
 
 
-    def slice_along_axis(dataset, n=5, axis='x', tolerance=None):
+    def slice_along_axis(dataset, n=5, axis='x', tolerance=None, generate_triangles=False):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -193,6 +203,10 @@ class DataSetFilters(object):
 
         tolerance : float, optional
             The toleranceerance to the edge of the dataset bounds to create the slices
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
 
         """
         output = vtki.MultiBlock()
@@ -212,7 +226,7 @@ class DataSetFilters(object):
         # Make each of the slices
         for i in range(n):
             center[ax] = rng[i]
-            slc = DataSetFilters.slice(dataset, normal=axis, origin=center)
+            slc = DataSetFilters.slice(dataset, normal=axis, origin=center, generate_triangles=generate_triangles)
             output[i, 'slice%.2d'%i] = slc
         return output
 
