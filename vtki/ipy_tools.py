@@ -221,7 +221,7 @@ class ManySlicesAlongAxis(InteractiveTool):
         This will apply a threshold on the input dataset to remove any NaN
         values. Default is True if active scalar present.
 
-    tol : float, optional
+    tolerance : float, optional
         The tolerance to the edge of the dataset bounds to create the slices
 
     scalars : str
@@ -235,7 +235,7 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, tol=None, default_params={}):
+    def tool(self, clean=True, tolerance=None, default_params={}):
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -248,7 +248,7 @@ class ManySlicesAlongAxis(InteractiveTool):
                 nsl.max *= 2
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
-            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tol=tol)
+            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
                 show_edges=False, reset_camera=False, **self.display_params)
             self._need_to_update = False
