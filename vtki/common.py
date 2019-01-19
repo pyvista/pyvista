@@ -133,7 +133,7 @@ class Common(DataSetFilters):
             array = array.view(np.bool)
         return array
 
-    def _add_point_scalar(self, scalars, name, setactive=False, deep=True):
+    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
         """
         Adds point scalars to the mesh
 
@@ -145,7 +145,7 @@ class Common(DataSetFilters):
         name : str
             Name of point scalars to add.
 
-        setactive : bool, optional
+        set_active : bool, optional
             Sets the scalars to the active plotting scalars.  Default False.
 
         deep : bool, optional
@@ -169,7 +169,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
-        if setactive:
+        if set_active:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalar_info = [POINT_DATA_FIELD, name]
 
@@ -286,7 +286,7 @@ class Common(DataSetFilters):
             array = array.view(np.bool)
         return array
 
-    def _add_cell_scalar(self, scalars, name, setactive=False, deep=True):
+    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
         """
         Adds cell scalars to the vtk object.
 
@@ -298,7 +298,7 @@ class Common(DataSetFilters):
         name : str
             Name of point scalars to add.
 
-        setactive : bool, optional
+        set_active : bool, optional
             Sets the scalars to the active plotting scalars.  Default False.
 
         deep : bool, optional
@@ -320,7 +320,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetCellData().AddArray(vtkarr)
-        if setactive:
+        if set_active:
             self.GetCellData().SetActiveScalars(name)
             self._active_scalar_info = [CELL_DATA_FIELD, name]
 

@@ -34,7 +34,7 @@ pts = sgrid.points.copy()
 # Start a plotter object and set the scalars to the Z height
 plobj = vtki.Plotter()
 plobj.add_mesh(sgrid, scalars=Z.ravel())
-plobj.plot(autoclose=False)
+plobj.plot(auto_close=False)
 
 # Open a gif
 plobj.OpenGif('wave.gif')
@@ -82,7 +82,7 @@ plobj = vtki.Plotter()
 
 # add a surface and plot
 plobj.add_mesh(surf, scalars=c, stitle='Mean\nCurvature')
-plobj.plot(autoclose=False)
+plobj.plot(auto_close=False)
 
 # take a screenshot and close the window when the user presses "q"
 plobj.TakeScreenShot('curvature.png')
