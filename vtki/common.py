@@ -465,11 +465,15 @@ class Common(DataSetFilters):
 
     @property
     def scalar_names(self):
+        """A list of scalar names for the dataset. This makes
+        sure to put the active scalar's name first in the list."""
         names = []
         for i in range(self.GetPointData().GetNumberOfArrays()):
             names.append(self.GetPointData().GetArrayName(i))
         for i in range(self.GetCellData().GetNumberOfArrays()):
             names.append(self.GetCellData().GetArrayName(i))
+        names.remove(self.active_scalar_name)
+        names.insert(0, self.active_scalar_name)
         return names
 
 
