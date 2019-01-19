@@ -1,5 +1,7 @@
 """
-Containers to mimic multi block datasets
+Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
+VTK datasets in one object that can be passed to VTK algorithms and ``vtki``
+filtering/plotting routines.
 """
 import logging
 from weakref import proxy
@@ -102,7 +104,7 @@ class MultiBlock(vtkMultiBlockDataSet):
 
 
     def get_index_by_name(self, name):
-        # find the actual index based on the name
+        """Find the index number by block name"""
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
