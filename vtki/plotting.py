@@ -507,7 +507,9 @@ class BasePlotter(object):
             a solid color using matplotlib's color cycler.
 
         name : str, optional
-            A name for the added mesh/actor so that it can be easily updated
+            The name for the added mesh/actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
 
         Returns
         -------
