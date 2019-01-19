@@ -14,6 +14,10 @@ vtki Overview
 .. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
    :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
 
+.. image:: https://img.shields.io/github/stars/akaszynski/vtki.svg?style=social&label=Stars
+  :target: https://github.com/akaszynski/vtki
+  :alt: GitHub
+
 
 ``vtki`` is a helper module for the Visualization Toolkit (VTK) that takes a
 different approach on interfacing with VTK through NumPy and direct array access.
