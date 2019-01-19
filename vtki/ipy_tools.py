@@ -54,6 +54,9 @@ class InteractiveTool(object):
         display_params.setdefault('rng', self.valid_range)
         display_params.setdefault('scalars', scalars)
         display_params.setdefault('preference', preference)
+        display_params.setdefault('show_edges', False)
+        # Make sure to remove the reset_camera parameter if present
+        display_params.pop('reset_camera', None)
         self.display_params = display_params
 
         # Set the tool status
@@ -155,7 +158,7 @@ class OrthogonalSlicer(InteractiveTool):
             self.plotter.remove_actor(self._data_to_update[index], reset_camera=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index], origin=[x,y,z])
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
-                    show_edges=False, reset_camera=False, **self.display_params)
+                    reset_camera=False, **self.display_params)
             self._old[index] = [x,y,z][index]
 
         def update(x, y, z, **kwargs):
@@ -250,7 +253,7 @@ class ManySlicesAlongAxis(InteractiveTool):
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                show_edges=False, reset_camera=False, **self.display_params)
+                reset_camera=False, **self.display_params)
             self._need_to_update = False
 
         # Create/display the widgets
