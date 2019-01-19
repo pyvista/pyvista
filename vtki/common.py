@@ -472,8 +472,11 @@ class Common(DataSetFilters):
             names.append(self.GetPointData().GetArrayName(i))
         for i in range(self.GetCellData().GetNumberOfArrays()):
             names.append(self.GetCellData().GetArrayName(i))
-        names.remove(self.active_scalar_name)
-        names.insert(0, self.active_scalar_name)
+        try:
+            names.remove(self.active_scalar_name)
+            names.insert(0, self.active_scalar_name)
+        except ValueError:
+            pass
         return names
 
 
