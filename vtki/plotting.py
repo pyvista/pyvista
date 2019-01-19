@@ -268,7 +268,7 @@ class BasePlotter(object):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
-        self._actors = []
+        self._actors = {}
         # track if the camera has been setup
         self.camera_set = False
         self.first_time = True
@@ -298,7 +298,7 @@ class BasePlotter(object):
                 update_axis(ax)
             return
 
-        for actor in self._actors:
+        for name, actor in self._actors.items():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
             if hasattr(actor, 'GetBounds') and actor.GetBounds() is not None:
@@ -426,7 +426,7 @@ class BasePlotter(object):
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
                  lighting=False, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args={},
-                 multi_colors=False, **kwargs):
+                 multi_colors=False, name=None, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -506,6 +506,9 @@ class BasePlotter(object):
             If a ``MultiBlock`` dataset is given this will color each block by
             a solid color using matplotlib's color cycler.
 
+        name : str, optional
+            A name for the added mesh/actor so that it can be easily updated
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -582,7 +585,7 @@ class BasePlotter(object):
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
-        actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera)
+        actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
         # Attempt get the active scalars if no preference given
         if scalars is None and color is None:
@@ -709,7 +712,7 @@ class BasePlotter(object):
 
         return actor
 
-    def add_actor(self, uinput, reset_camera=False):
+    def add_actor(self, uinput, reset_camera=False, name=None):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -742,7 +745,11 @@ class BasePlotter(object):
             actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
 
         self.renderer.AddActor(actor)
-        self._actors.append(actor)
+        if name is None:
+            name = str(hex(id(actor)))
+        # Remove actor by that name if present
+        self.remove_actor(name)
+        self._actors[name] = actor
 
         if reset_camera:
             self.reset_camera()
@@ -768,22 +775,28 @@ class BasePlotter(object):
         actor : vtk.vtkActor
             Actor that has previously added to the Plotter.
         """
+        name = None
+        if isinstance(actor, str):
+            name = actor
+            try:
+                actor = self._actors[name]
+            except KeyError:
+                # If actor of that name is not present then return success
+                return
         if isinstance(actor, collections.Iterable):
             for a in actor:
                 self.remove_actor(a, reset_camera=reset_camera)
             return
         if actor is None:
             return
-        if isinstance(actor, int):
-            actor = self._actors[actor]
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor, reset_camera=False)
         self.renderer.RemoveActor(actor)
-        try:
-            self._actors.remove(actor)
-        except ValueError:
-            # Hm, this sometimes happens. Might need a better solution
-            pass
+        if name is None:
+            for k, v in self._actors.items():
+                if v == actor:
+                    name = k
+        self._actors.pop(name, None)
         self.update_bounds_axes()
         if reset_camera:
             self.reset_camera()
@@ -803,7 +816,7 @@ class BasePlotter(object):
         """
         self.marker_actor = vtk.vtkAxesActor()
         self.renderer.AddActor(self.marker_actor)
-        self._actors.append(self.marker_actor)
+        self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
     def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
@@ -981,7 +994,7 @@ class BasePlotter(object):
         A scale of zero is illegal and will be replaced with one.
         """
         self.scale = [xscale, yscale, zscale]
-        for actor in self._actors:
+        for name, actor in self._actors.items():
             if hasattr(actor, 'SetScale'):
                 actor.SetScale(xscale, yscale, zscale)
         self.update_bounds_axes()
