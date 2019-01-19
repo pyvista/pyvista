@@ -329,5 +329,5 @@ Methods in Common with Structured and Unstructured Grids
 --------------------------------------------------------
 These methods are in common to both ``vtki.StructuredGrid`` and ``vtki.UnstructuredGrid`` objects.
 
-.. autoclass:: vtki.Grid
+.. autoclass:: vtki.PointGrid
     :members:

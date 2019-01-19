@@ -5,6 +5,7 @@ from vtki.utilities import *
 from vtki.colors import *
 from vtki.filters import DataSetFilters, PointSetFilters
 from vtki.common import Common
+from vtki.pointset import PointGrid
 from vtki.pointset import PolyData
 from vtki.pointset import UnstructuredGrid
 from vtki.pointset import StructuredGrid

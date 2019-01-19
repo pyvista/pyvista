@@ -26,6 +26,7 @@ class Grid(vtki.Common):
 
     @property
     def dimensions(self):
+        """Returns a length 3 tuple of the grid's dimensions"""
         return self.GetDimensions()
 
     @dimensions.setter
@@ -208,15 +209,34 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @property
     def x(self):
+        """Get the coordinates along the X-direction"""
         return vtk_to_numpy(self.GetXCoordinates())
+
+    @x.setter
+    def x(self, coords):
+        """Set the coordinates along the X-direction"""
+        self.SetXCoordinates(numpy_to_vtk(coords))
 
     @property
     def y(self):
+        """Get the coordinates along the Y-direction"""
         return vtk_to_numpy(self.GetYCoordinates())
+
+    @y.setter
+    def y(self, coords):
+        """Set the coordinates along the Y-direction"""
+        self.SetYCoordinates(numpy_to_vtk(coords))
 
     @property
     def z(self):
+        """Get the coordinates along the Z-direction"""
         return vtk_to_numpy(self.GetZCoordinates())
+
+
+    @z.setter
+    def z(self, coords):
+        """Set the coordinates along the Z-direction"""
+        self.SetZCoordinates(numpy_to_vtk(coords))
 
 
     # @property
@@ -446,6 +466,7 @@ class UniformGrid(vtkImageData, Grid, PointSetFilters):
 
     @property
     def origin(self):
+        """The origins of the grid"""
         return self.GetOrigin()
 
     @origin.setter
@@ -456,6 +477,7 @@ class UniformGrid(vtkImageData, Grid, PointSetFilters):
 
     @property
     def spacing(self):
+        """Get the spacing for each axial direction."""
         return self.GetSpacing()
 
     @spacing.setter
