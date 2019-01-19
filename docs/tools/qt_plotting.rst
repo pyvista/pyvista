@@ -29,7 +29,7 @@ The following example shows how to create a simple application that adds a spher
 	    # add the vtki interactor object
             self.vtk_widget = vtki.QtInteractor(self.frame)
             vlayout.addWidget(self.vtk_widget)
-    
+
             self.frame.setLayout(vlayout)
             self.setCentralWidget(self.frame)
 
@@ -46,10 +46,10 @@ The following example shows how to create a simple application that adds a spher
             self.add_sphere_action = Qt.QAction('Add Sphere', self)
             self.add_sphere_action.triggered.connect(self.add_sphere)
             meshMenu.addAction(self.add_sphere_action)
-    
+
             if show:
                 self.show()
-    
+
         def add_sphere(self):
 	    """ add a sphere to the pyqt frame """
             sphere = vtki.Sphere()
@@ -62,8 +62,8 @@ The following example shows how to create a simple application that adds a spher
         window = MainWindow()
         sys.exit(app.exec_())
 
-    
-.. figure:: ./images/qt_plotting_sphere.png
+
+.. figure:: ../images/qt_plotting_sphere.png
     :width: 600pt
 
     PyQt5 vtki QtInteractor
@@ -84,4 +84,3 @@ Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible t
 
     # can now operate on the sphere and have it updated in the background
     sphere.points *= 0.5
-
