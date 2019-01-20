@@ -57,6 +57,8 @@ class InteractiveTool(object):
         display_params.setdefault('show_edges', False)
         # Make sure to remove the reset_camera parameter if present
         display_params.pop('reset_camera', None)
+        # Make sure to remove the name parameter if present
+        display_params.pop('name', None) # TODO: we should allow names in the future
         self.display_params = display_params
 
         # Set the tool status
