@@ -527,11 +527,14 @@ class BasePlotter(object):
         if show_edges is None:
             show_edges = rcParams['show_edges']
 
+        if name is None:
+            name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+
 
         if isinstance(mesh, vtki.MultiBlock):
             # frist check the scalars
             if rng is None and scalars is not None:
-                # Get the data range across the array for all blocks if name specified
+                # Get the data range across the array for all blocks if scalar specified
                 if isinstance(scalars, str):
                     rng = mesh.get_data_range(scalars)
                 else:
@@ -550,6 +553,8 @@ class BasePlotter(object):
             for idx in range(mesh.GetNumberOfBlocks()):
                 if mesh[idx] is None:
                     continue
+                # Get a good name to use
+                nm = '{}-{}'.format(name, idx)
                 # Get the data object
                 if not is_vtki_obj(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
@@ -573,7 +578,8 @@ class BasePlotter(object):
                              flip_scalars=flip_scalars, lighting=lighting,
                              n_colors=n_colors, interpolate_before_map=interpolate_before_map,
                              cmap=cmap, label=label,
-                             scalar_bar_args=scalar_bar_args, reset_camera=reset_camera, **kwargs)
+                             scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
+                             name=nm, **kwargs)
                 actors.append(a)
                 if reset_camera is None or reset_camera:
                     cpos = self.get_default_cam_pos()
