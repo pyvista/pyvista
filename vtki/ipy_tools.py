@@ -49,6 +49,8 @@ class InteractiveTool(object):
         # This is the actor that will be removed and re-added to the plotter
         self._data_to_update = None
 
+        self._last_scalars = None
+
         # Intialize plotting parameters
         self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
         display_params.setdefault('rng', self.valid_range)
@@ -67,6 +69,18 @@ class InteractiveTool(object):
 
         # Run the tool
         self.tool(default_params=default_params, **kwargs)
+
+
+    def _get_scalar_names(self):
+        """Only give scalar options that have a varying range"""
+        names = []
+        for name in self.input_dataset.scalar_names:
+            arr = self.input_dataset.get_scalar(name)
+            rng = self.input_dataset.get_data_range(name)
+            if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
+                names.append(name)
+        self._last_scalars = names[0]
+        return names
 
 
     def tool(**kwargs):
@@ -102,8 +116,8 @@ class InteractiveTool(object):
             if old != scalars:
                 self.plotter.remove_actor(self._data_to_update, reset_camera=False)
                 self._need_to_update = True
-        if hasattr(self, 'valid_range'):
-            self.display_params['rng'] = self.valid_range
+                self.valid_range = self.input_dataset.get_data_range(scalars)
+                self.display_params['rng'] = self.valid_range
         cmap = kwargs.get('cmap', None)
         if cmap is not None:
             self.display_params['cmap'] = cmap
@@ -209,7 +223,7 @@ class OrthogonalSlicer(InteractiveTool):
 
         # Create/display the widgets
         interact(update, x=xsl, y=ysl, z=zsl,
-                 scalars=self.input_dataset.scalar_names)
+                 scalars=self._get_scalar_names())
 
 
 class ManySlicesAlongAxis(InteractiveTool):
@@ -267,7 +281,7 @@ class ManySlicesAlongAxis(InteractiveTool):
 
         # Create/display the widgets
         interact(update, n=nsl, axis=['x', 'y', 'z'],
-                 scalars=self.input_dataset.scalar_names)
+                 scalars=self._get_scalar_names())
 
 
 class Threshold(InteractiveTool):
@@ -347,18 +361,8 @@ class Threshold(InteractiveTool):
             self._need_to_update = False
 
 
-        # Only give scalar options that have a varying range
-        names = []
-        for name in self.input_dataset.scalar_names:
-            arr = self.input_dataset.get_scalar(name)
-            rng = self.input_dataset.get_data_range(name)
-            if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
-                names.append(name)
-
-        self._last_scalars = names[0]
-
         # Create/display the widgets
         interact(update, dmin=minsl, dmax=maxsl,
-                 scalars=names,
+                 scalars=self._get_scalar_names(),
                  invert=default_params.get('invert', False),
                  continuous=False)
