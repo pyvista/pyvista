@@ -16,6 +16,7 @@ from vtk.util import numpy_support as VN
 import numpy as np
 import vtki
 from vtki.utilities import get_scalar, wrap, is_vtki_obj
+from vtki.export import export_render_view
 import imageio
 
 
@@ -582,6 +583,8 @@ class BasePlotter(object):
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
+        if isinstance(scalars, str):
+            self.mapper.SetArrayName(scalars)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera)
 
         # Attempt get the active scalars if no preference given
@@ -1854,6 +1857,12 @@ class BasePlotter(object):
         style = vtk.vtkInteractorStyleRubberBandPick()
         self.iren.SetInteractorStyle(style)
         self.iren.SetPicker(area_picker)
+
+
+    def export_vtkjs(self, filename, compress_arrays=False):
+        """Export the current rendering scene as a VTKjs scene for rendering
+        in a web browser"""
+        return export_render_view(self, filename, compress_arrays=compress_arrays)
 
 
 class Plotter(BasePlotter):
