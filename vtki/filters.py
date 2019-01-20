@@ -497,12 +497,6 @@ class DataSetFilters(object):
         return _get_output(alg, active_scalar=name, active_scalar_field='point')
 
 
-
-
-class PointSetFilters(object):
-    """Filters that can be applied to point set data objects"""
-
-
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, preference='point'):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
@@ -531,20 +525,19 @@ class PointSetFilters(object):
             for in the dataset.  Must be either 'point' or 'cell'.
 
         """
-        alg = vtk.vtkContourFilter() #vtkMarchingCubes
+        alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
-        #dataset.set_active_scalar(scalars, preference=preference)
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        # if field != 0:
-        #     raise RuntimeError('Can only contour by Point data at this time.')
+        if field != 0:
+            raise RuntimeError('Contour only works on Point data.')
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
