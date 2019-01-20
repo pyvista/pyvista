@@ -73,7 +73,7 @@ def test_threshold():
     assert thresh is not None
     assert isinstance(thresh, vtki.UnstructuredGrid)
     # Now test datasets without arrays
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AssertionError):
         for i, dataset in enumerate(datasets[3:-1]):
             thresh = dataset.threshold()
             assert thresh is not None
