@@ -165,7 +165,9 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, step=None, generate_triangles=False, default_params={}):
+    def tool(self, clean=True, step=None, generate_triangles=False, default_params=None):
+        if default_params is None:
+            default_params = {}
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -269,7 +271,9 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, tolerance=None, generate_triangles=False, default_params={}):
+    def tool(self, clean=True, tolerance=None, generate_triangles=False, default_params=None):
+        if default_params is None:
+            default_params = {}
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -316,7 +320,9 @@ class Threshold(InteractiveTool):
 
     """
 
-    def tool(self, default_params={}):
+    def tool(self, default_params=None):
+        if default_params is None:
+            default_params = {}
         preference = self.display_params['preference']
 
         def _calc_start_values(rng):

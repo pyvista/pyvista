@@ -425,7 +425,7 @@ class BasePlotter(object):
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
                  lighting=False, n_colors=256, interpolate_before_map=False,
-                 cmap=None, label=None, reset_camera=None, scalar_bar_args={},
+                 cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
@@ -516,6 +516,9 @@ class BasePlotter(object):
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
+        if scalar_bar_args is None:
+            scalar_bar_args = {}
+
         if isinstance(mesh, np.ndarray):
             mesh = vtki.PolyData(mesh)
             style = 'points'
