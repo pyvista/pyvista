@@ -1343,8 +1343,6 @@ class BasePlotter(object):
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
-            if self.first_time:
-                window_size = rcParams['window_size']
             x = window_size[0] * 0.02
             y = window_size[1] * 0.90
             position = [x, y]

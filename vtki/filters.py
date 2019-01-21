@@ -141,7 +141,7 @@ class DataSetFilters(object):
         if origin is None:
             origin = dataset.center
         if not _is_inside_bounds(origin, dataset.bounds):
-            raise RuntimeError('Slice is outside data bounds.')
+            raise AssertionError('Slice is outside data bounds.')
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
         # create slice
@@ -271,7 +271,7 @@ class DataSetFilters(object):
         arr, field = get_scalar(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
-            raise RuntimeError('No arrays present to threshold.')
+            raise AssertionError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two fitlers:
         if isinstance(value, collections.Iterable) and invert:
@@ -300,7 +300,7 @@ class DataSetFilters(object):
         # check if value is iterable (if so threshold by min max range like ParaView)
         if isinstance(value, collections.Iterable):
             if len(value) != 2:
-                raise RuntimeError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
+                raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
         else:
             # just a single value
@@ -497,12 +497,6 @@ class DataSetFilters(object):
         return _get_output(alg, active_scalar=name, active_scalar_field='point')
 
 
-
-
-class PointSetFilters(object):
-    """Filters that can be applied to point set data objects"""
-
-
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, preference='point'):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
@@ -531,20 +525,22 @@ class PointSetFilters(object):
             for in the dataset.  Must be either 'point' or 'cell'.
 
         """
-        alg = vtk.vtkContourFilter() #vtkMarchingCubes
+        # Make sure the input has scalars to contour on
+        if dataset.n_scalars < 1:
+            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+        alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
-        #dataset.set_active_scalar(scalars, preference=preference)
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        # if field != 0:
-        #     raise RuntimeError('Can only contour by Point data at this time.')
+        if field != 0:
+            raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):

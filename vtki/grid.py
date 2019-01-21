@@ -12,7 +12,6 @@ from vtk.util.numpy_support import numpy_to_vtk
 import numpy as np
 
 import vtki
-from vtki import PointSetFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -260,7 +259,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
 
-class UniformGrid(vtkImageData, Grid, PointSetFilters):
+class UniformGrid(vtkImageData, Grid):
     """
     Extends the functionality of a vtk.vtkImageData object
     Can be initialized in several ways:
