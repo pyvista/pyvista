@@ -535,6 +535,7 @@ class BasePlotter(object):
 
 
         if isinstance(mesh, vtki.MultiBlock):
+            self.remove_actor(name)
             # frist check the scalars
             if rng is None and scalars is not None:
                 # Get the data range across the array for all blocks if scalar specified
@@ -789,6 +790,13 @@ class BasePlotter(object):
         name = None
         if isinstance(actor, str):
             name = actor
+            keys = list(self._actors.keys())
+            names = []
+            for k in keys:
+                if k.startswith('{}-'.format(name)):
+                    names.append(k)
+            if len(names) > 0:
+                self.remove_actor(names)
             try:
                 actor = self._actors[name]
             except KeyError:
