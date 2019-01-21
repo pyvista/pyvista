@@ -41,14 +41,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
 import hashlib
-import argparse
 import shutil
 import gzip
-import math
 import json
 import errno
 import time
-import re
 import os
 import sys
 import vtk
