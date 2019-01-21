@@ -1310,7 +1310,7 @@ class BasePlotter(object):
             del self.ifilter
 
     def add_text(self, text, position=None, font_size=50, color=None,
-                font=None, shadow=False):
+                font=None, shadow=False, name=None):
         """
         Adds text to plot object in the top left corner by default
 
@@ -1329,6 +1329,11 @@ class BasePlotter(object):
 
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to False
+
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
 
         Returns
         -------
@@ -1354,7 +1359,7 @@ class BasePlotter(object):
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
-        self.add_actor(self.textActor, reset_camera=False)
+        self.add_actor(self.textActor, reset_camera=False, name=name)
         return self.textActor
 
     def open_movie(self, filename, framerate=24):
@@ -1411,7 +1416,7 @@ class BasePlotter(object):
         tgt_size = (self.window_size[1], self.window_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None):
+    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None, name=None):
         """
         Adds lines to the plotting object.
 
@@ -1432,6 +1437,11 @@ class BasePlotter(object):
 
         width : float, optional
             Thickness of lines
+
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
 
         Returns
         -------
@@ -1465,7 +1475,7 @@ class BasePlotter(object):
         self.scalar_bar.GetProperty().LightingOff()
 
         # Add to renderer
-        self.add_actor(self.scalar_bar, reset_camera=False)
+        self.add_actor(self.scalar_bar, reset_camera=False, name=name)
         return self.scalar_bar
 
     def remove_scalar_bar(self):
@@ -1476,7 +1486,8 @@ class BasePlotter(object):
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          font_size=None, text_color='k',
                          font_family=None, shadow=False,
-                         show_points=True, point_color='k', point_size=5):
+                         show_points=True, point_color='k', point_size=5,
+                         name=None):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -1528,6 +1539,11 @@ class BasePlotter(object):
         point_size : float, optional
             Size of points (if visible)
 
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
+
         Returns
         -------
         labelMapper : vtk.vtkvtkLabeledDataMapper
@@ -1574,7 +1590,7 @@ class BasePlotter(object):
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size)
 
-        self.add_actor(labelActor, reset_camera=False)
+        self.add_actor(labelActor, reset_camera=False, name=name)
         return labelMapper
 
     def add_points(self, points, **kwargs):
@@ -1582,7 +1598,7 @@ class BasePlotter(object):
         kwargs['style'] = 'points'
         self.add_mesh(points, **kwargs)
 
-    def add_arrows(self, cent, direction, mag=1, reset_camera=None):
+    def add_arrows(self, cent, direction, mag=1, reset_camera=None, name=None):
         """ Adds arrows to plotting object """
 
         if cent.ndim != 2:
@@ -1593,7 +1609,7 @@ class BasePlotter(object):
 
         pdata = vtki.vector_poly_data(cent, direction * mag)
         arrows = arrows_actor(pdata)
-        self.add_actor(arrows, reset_camera=reset_camera)
+        self.add_actor(arrows, reset_camera=reset_camera, name=name)
 
         return arrows, pdata
 
@@ -1650,7 +1666,7 @@ class BasePlotter(object):
         return img
 
     def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
-                   size=None):
+                   size=None, name=None):
         """
         Adds a legend to render window.  Entries must be a list
         containing one string and color entry for each item.
@@ -1683,6 +1699,11 @@ class BasePlotter(object):
             Two float list, each float between 0 and 1.  For example
             [0.1, 0.1] would make the legend 10% the size of the
             entire figure window.
+
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
 
         Returns
         -------
@@ -1745,7 +1766,7 @@ class BasePlotter(object):
             self.legend.BorderOff()
 
         # Add to renderer
-        self.add_actor(self.legend, reset_camera=False)
+        self.add_actor(self.legend, reset_camera=False, name=name)
         return self.legend
 
     @property
