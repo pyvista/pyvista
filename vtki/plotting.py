@@ -16,7 +16,7 @@ from vtk.util import numpy_support as VN
 import numpy as np
 import vtki
 from vtki.utilities import get_scalar, wrap, is_vtki_obj
-from vtki.export import export_render_view
+from vtki.export import export_plotter_vtkjs
 import imageio
 
 
@@ -1862,7 +1862,7 @@ class BasePlotter(object):
     def export_vtkjs(self, filename, compress_arrays=False):
         """Export the current rendering scene as a VTKjs scene for rendering
         in a web browser"""
-        return export_render_view(self, filename, compress_arrays=compress_arrays)
+        return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
 
 class Plotter(BasePlotter):

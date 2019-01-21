@@ -403,7 +403,7 @@ def mkdir_p(path):
             raise
 
 
-def export_render_view(plotter, filename, compress_arrays=False):
+def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     """Export a plotter's rendering window to the VTKjs format.
     """
     sceneName = filename
