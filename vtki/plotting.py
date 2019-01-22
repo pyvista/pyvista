@@ -514,7 +514,9 @@ class BasePlotter(object):
         texture : vtk.vtkTexture or np.ndarray or boolean, optional
             A texture to apply if the input mesh has texture coordinates.
             This will not work with MultiBlock datasets. If set to ``True``,
-            the first avaialble texture on the object will be used.
+            the first avaialble texture on the object will be used. If a string
+            name is given, it will pull a texture with that name associated to
+            the input mesh.
 
         Returns
         -------
@@ -616,6 +618,13 @@ class BasePlotter(object):
                 # Be sure to set the tcoords if present
                 if tname in mesh.scalar_names:
                     mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(tname))
+        elif isinstance(texture, str):
+            # Grab a texture by name
+            try:
+                texture = mesh.textures[texture]
+            except KeyError:
+                logging.warning('Texture ({}) not associated with this dataset'.format(texture))
+                texture = None
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
