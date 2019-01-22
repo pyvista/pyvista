@@ -268,7 +268,7 @@ class BasePlotter(object):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
-        self._actors = []
+        self._actors = {}
         # track if the camera has been setup
         self.camera_set = False
         self.first_time = True
@@ -298,7 +298,7 @@ class BasePlotter(object):
                 update_axis(ax)
             return
 
-        for actor in self._actors:
+        for name, actor in self._actors.items():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
             if hasattr(actor, 'GetBounds') and actor.GetBounds() is not None:
@@ -425,8 +425,8 @@ class BasePlotter(object):
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
                  lighting=False, n_colors=256, interpolate_before_map=False,
-                 cmap=None, label=None, reset_camera=None, scalar_bar_args={},
-                 multi_colors=False, **kwargs):
+                 cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
+                 multi_colors=False, name=None, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -506,11 +506,19 @@ class BasePlotter(object):
             If a ``MultiBlock`` dataset is given this will color each block by
             a solid color using matplotlib's color cycler.
 
+        name : str, optional
+            The name for the added mesh/actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
+
         Returns
         -------
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
+        if scalar_bar_args is None:
+            scalar_bar_args = {}
+
         if isinstance(mesh, np.ndarray):
             mesh = vtki.PolyData(mesh)
             style = 'points'
@@ -522,11 +530,15 @@ class BasePlotter(object):
         if show_edges is None:
             show_edges = rcParams['show_edges']
 
+        if name is None:
+            name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+
 
         if isinstance(mesh, vtki.MultiBlock):
+            self.remove_actor(name)
             # frist check the scalars
             if rng is None and scalars is not None:
-                # Get the data range across the array for all blocks if name specified
+                # Get the data range across the array for all blocks if scalar specified
                 if isinstance(scalars, str):
                     rng = mesh.get_data_range(scalars)
                 else:
@@ -545,6 +557,8 @@ class BasePlotter(object):
             for idx in range(mesh.GetNumberOfBlocks()):
                 if mesh[idx] is None:
                     continue
+                # Get a good name to use
+                nm = '{}-{}'.format(name, idx)
                 # Get the data object
                 if not is_vtki_obj(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
@@ -568,7 +582,8 @@ class BasePlotter(object):
                              flip_scalars=flip_scalars, lighting=lighting,
                              n_colors=n_colors, interpolate_before_map=interpolate_before_map,
                              cmap=cmap, label=label,
-                             scalar_bar_args=scalar_bar_args, reset_camera=reset_camera, **kwargs)
+                             scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
+                             name=nm, **kwargs)
                 actors.append(a)
                 if reset_camera is None or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -582,7 +597,7 @@ class BasePlotter(object):
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
-        actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera)
+        actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
         # Attempt get the active scalars if no preference given
         if scalars is None and color is None:
@@ -709,7 +724,7 @@ class BasePlotter(object):
 
         return actor
 
-    def add_actor(self, uinput, reset_camera=False):
+    def add_actor(self, uinput, reset_camera=False, name=None):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -742,7 +757,11 @@ class BasePlotter(object):
             actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
 
         self.renderer.AddActor(actor)
-        self._actors.append(actor)
+        if name is None:
+            name = str(hex(id(actor)))
+        # Remove actor by that name if present
+        self.remove_actor(name)
+        self._actors[name] = actor
 
         if reset_camera:
             self.reset_camera()
@@ -768,22 +787,35 @@ class BasePlotter(object):
         actor : vtk.vtkActor
             Actor that has previously added to the Plotter.
         """
+        name = None
+        if isinstance(actor, str):
+            name = actor
+            keys = list(self._actors.keys())
+            names = []
+            for k in keys:
+                if k.startswith('{}-'.format(name)):
+                    names.append(k)
+            if len(names) > 0:
+                self.remove_actor(names)
+            try:
+                actor = self._actors[name]
+            except KeyError:
+                # If actor of that name is not present then return success
+                return
         if isinstance(actor, collections.Iterable):
             for a in actor:
                 self.remove_actor(a, reset_camera=reset_camera)
             return
         if actor is None:
             return
-        if isinstance(actor, int):
-            actor = self._actors[actor]
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self, actor, reset_camera=False)
         self.renderer.RemoveActor(actor)
-        try:
-            self._actors.remove(actor)
-        except ValueError:
-            # Hm, this sometimes happens. Might need a better solution
-            pass
+        if name is None:
+            for k, v in self._actors.items():
+                if v == actor:
+                    name = k
+        self._actors.pop(name, None)
         self.update_bounds_axes()
         if reset_camera:
             self.reset_camera()
@@ -803,7 +835,7 @@ class BasePlotter(object):
         """
         self.marker_actor = vtk.vtkAxesActor()
         self.renderer.AddActor(self.marker_actor)
-        self._actors.append(self.marker_actor)
+        self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
     def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
@@ -984,7 +1016,7 @@ class BasePlotter(object):
         A scale of zero is illegal and will be replaced with one.
         """
         self.scale = [xscale, yscale, zscale]
-        for actor in self._actors:
+        for name, actor in self._actors.items():
             if hasattr(actor, 'SetScale'):
                 actor.SetScale(xscale, yscale, zscale)
         self.update_bounds_axes()
@@ -1289,7 +1321,7 @@ class BasePlotter(object):
             del self.ifilter
 
     def add_text(self, text, position=None, font_size=50, color=None,
-                font=None, shadow=False):
+                font=None, shadow=False, name=None):
         """
         Adds text to plot object in the top left corner by default
 
@@ -1308,6 +1340,11 @@ class BasePlotter(object):
 
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to False
+
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
 
         Returns
         -------
@@ -1333,7 +1370,7 @@ class BasePlotter(object):
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
-        self.add_actor(self.textActor, reset_camera=False)
+        self.add_actor(self.textActor, reset_camera=False, name=name)
         return self.textActor
 
     def open_movie(self, filename, framerate=24):
@@ -1390,7 +1427,7 @@ class BasePlotter(object):
         tgt_size = (self.window_size[1], self.window_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None):
+    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None, name=None):
         """
         Adds lines to the plotting object.
 
@@ -1411,6 +1448,11 @@ class BasePlotter(object):
 
         width : float, optional
             Thickness of lines
+
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
 
         Returns
         -------
@@ -1444,7 +1486,7 @@ class BasePlotter(object):
         self.scalar_bar.GetProperty().LightingOff()
 
         # Add to renderer
-        self.add_actor(self.scalar_bar, reset_camera=False)
+        self.add_actor(self.scalar_bar, reset_camera=False, name=name)
         return self.scalar_bar
 
     def remove_scalar_bar(self):
@@ -1455,7 +1497,8 @@ class BasePlotter(object):
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          font_size=None, text_color='k',
                          font_family=None, shadow=False,
-                         show_points=True, point_color='k', point_size=5):
+                         show_points=True, point_color='k', point_size=5,
+                         name=None):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -1507,6 +1550,11 @@ class BasePlotter(object):
         point_size : float, optional
             Size of points (if visible)
 
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
+
         Returns
         -------
         labelMapper : vtk.vtkvtkLabeledDataMapper
@@ -1553,7 +1601,7 @@ class BasePlotter(object):
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size)
 
-        self.add_actor(labelActor, reset_camera=False)
+        self.add_actor(labelActor, reset_camera=False, name=name)
         return labelMapper
 
     def add_points(self, points, **kwargs):
@@ -1561,7 +1609,7 @@ class BasePlotter(object):
         kwargs['style'] = 'points'
         self.add_mesh(points, **kwargs)
 
-    def add_arrows(self, cent, direction, mag=1, reset_camera=None):
+    def add_arrows(self, cent, direction, mag=1, reset_camera=None, name=None):
         """ Adds arrows to plotting object """
 
         if cent.ndim != 2:
@@ -1572,7 +1620,7 @@ class BasePlotter(object):
 
         pdata = vtki.vector_poly_data(cent, direction * mag)
         arrows = arrows_actor(pdata)
-        self.add_actor(arrows, reset_camera=reset_camera)
+        self.add_actor(arrows, reset_camera=reset_camera, name=name)
 
         return arrows, pdata
 
@@ -1629,7 +1677,7 @@ class BasePlotter(object):
         return img
 
     def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
-                   size=None):
+                   size=None, name=None):
         """
         Adds a legend to render window.  Entries must be a list
         containing one string and color entry for each item.
@@ -1662,6 +1710,11 @@ class BasePlotter(object):
             Two float list, each float between 0 and 1.  For example
             [0.1, 0.1] would make the legend 10% the size of the
             entire figure window.
+
+        name : str, optional
+            The name for the added actor so that it can be easily updated.
+            If an actor of this name already exists in the rendering window, it
+            will be replaced by the new actor.
 
         Returns
         -------
@@ -1724,7 +1777,7 @@ class BasePlotter(object):
             self.legend.BorderOff()
 
         # Add to renderer
-        self.add_actor(self.legend, reset_camera=False)
+        self.add_actor(self.legend, reset_camera=False, name=name)
         return self.legend
 
     @property

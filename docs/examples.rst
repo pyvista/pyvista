@@ -215,3 +215,15 @@ Clearing the entire plotting window:
     plotter.add_mesh(vtki.Plane())
     plotter.clear()  # clears all actors
     plotter.plot()
+
+
+Or you can give any actor a ``name`` when adding it and if an actor is added
+with that same name at a later time, it will replace the previous actor:
+
+.. code-block:: python
+
+    import vtki
+    plotter = vtki.Plotter(notebook=True)
+    plotter.add_mesh(vtki.Sphere(), name='mydata')
+    plotter.add_mesh(vtki.Plane(), name='mydata')
+    # Only the Plane is shown!
