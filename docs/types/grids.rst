@@ -9,6 +9,7 @@ are encompassed int their shared inheritance of :class:`vtki.Grid`
 
 
 .. autoclass:: vtki.Grid
+   :show-inheritance:
    :members:
    :undoc-members:
 
@@ -17,6 +18,7 @@ Rectilinear Grid
 ----------------
 
 .. autoclass:: vtki.RectilinearGrid
+   :show-inheritance:
    :members:
    :undoc-members:
 
@@ -28,5 +30,6 @@ Uniform Grid
 `vtki`'s definition of a uniform grid is an extension of VTK's ``vtkImageData``
 
 .. autoclass:: vtki.UniformGrid
+   :show-inheritance:
    :members:
    :undoc-members:

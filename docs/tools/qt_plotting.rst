@@ -1,3 +1,5 @@
+.. _qt_ref:
+
 vtki PyQt Interface
 ===================
 ``vtki`` has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``vtki.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
@@ -89,3 +91,4 @@ Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible t
 .. autoclass:: vtki.BackgroundPlotter
    :members:
    :undoc-members:
+   :show-inheritance:

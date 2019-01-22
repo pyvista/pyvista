@@ -314,7 +314,9 @@ vtki.Unstructured Grid Class Methods
 The following is a description of the methods available to a ``vtki.UnstructuredGrid`` object.  It inherits all methods from the original vtk object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
 
 .. autoclass:: vtki.UnstructuredGrid
-    :members:
+   :show-inheritance:
+   :members:
+   :undoc-members:
 
 
 vtki.Structured Grid Class Methods
@@ -322,7 +324,9 @@ vtki.Structured Grid Class Methods
 The following is a description of the methods available to a ``vtki.StructuredGrid`` object.  It inherits all methods from the original vtk object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
 
 .. autoclass:: vtki.StructuredGrid
-    :members:
+   :show-inheritance:
+   :members:
+   :undoc-members:
 
 
 Methods in Common with Structured and Unstructured Grids
@@ -330,4 +334,6 @@ Methods in Common with Structured and Unstructured Grids
 These methods are in common to both ``vtki.StructuredGrid`` and ``vtki.UnstructuredGrid`` objects.
 
 .. autoclass:: vtki.PointGrid
-    :members:
+   :show-inheritance:
+   :members:
+   :undoc-members:
