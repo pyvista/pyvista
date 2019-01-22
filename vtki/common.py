@@ -93,6 +93,16 @@ class Common(DataSetFilters):
         self.GetPointData().SetTCoords(vtkarr)
         return
 
+    @property
+    def textures(self):
+        """A dictionary to hold ``vtk.vtkTexture`` objects that can be
+        associated with this dataset. When casting back to a VTK dataset or
+        filtering this dataset, these textures will not be passed.
+        """
+        if not hasattr(self, '_textures'):
+            self._textures = {}
+        return self._textures
+
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
         arr, field = get_scalar(self, name, preference=preference, info=True)
