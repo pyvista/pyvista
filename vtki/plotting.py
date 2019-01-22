@@ -512,7 +512,7 @@ class BasePlotter(object):
             will be replaced by the new actor.
 
         texture : vtk.vtkTexture, optional
-            A teture to apply if the input mesh has texture coordinates.
+            A texture to apply if the input mesh has texture coordinates.
             This will not work with MultiBlock datasets.
 
         Returns
