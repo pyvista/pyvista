@@ -267,7 +267,7 @@ def numpy_to_texture(image):
     if image.ndim != 3 or image.shape[2] != 3:
         raise AssertionError('Input image must be nn by nm by RGB')
     grid = vtki.UniformGrid((image.shape[1], image.shape[0], 1))
-    grid.point_arrays['Image'] = image.swapaxes(0,1).reshape((-1, 3), order='F')
+    grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
     grid.set_active_scalar('Image')
     vtex = vtk.vtkTexture()
     vtex.SetInputDataObject(grid)
