@@ -511,9 +511,10 @@ class BasePlotter(object):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        texture : vtk.vtkTexture or np.ndarray, optional
+        texture : vtk.vtkTexture or np.ndarray or boolean, optional
             A texture to apply if the input mesh has texture coordinates.
-            This will not work with MultiBlock datasets.
+            This will not work with MultiBlock datasets. If set to ``True``,
+            the first avaialble texture on the object will be used.
 
         Returns
         -------
@@ -602,6 +603,18 @@ class BasePlotter(object):
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
+
+        if texture == True:
+            # Grab the first texture availabe
+            try:
+                tname = list(mesh.textures.keys())[0]
+                texture = mesh.textures[tname]
+                # Be sure to set the tcoords if present
+                if tname in mesh.scalar_names:
+                    mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(tname))
+            except IndexError:
+                logging.warning('No textures associated with input mesh.')
+                texture = None
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
