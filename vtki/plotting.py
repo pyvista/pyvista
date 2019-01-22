@@ -15,7 +15,7 @@ from vtk.util import numpy_support as VN
 
 import numpy as np
 import vtki
-from vtki.utilities import get_scalar, wrap, is_vtki_obj
+from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
 import imageio
 
 
@@ -426,7 +426,7 @@ class BasePlotter(object):
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
                  lighting=False, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
-                 multi_colors=False, name=None, **kwargs):
+                 multi_colors=False, name=None, texture=None, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -511,6 +511,10 @@ class BasePlotter(object):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
+        texture : vtk.vtkTexture or np.ndarray, optional
+            A texture to apply if the input mesh has texture coordinates.
+            This will not work with MultiBlock datasets.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -583,7 +587,7 @@ class BasePlotter(object):
                              n_colors=n_colors, interpolate_before_map=interpolate_before_map,
                              cmap=cmap, label=label,
                              scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
-                             name=nm, **kwargs)
+                             name=nm, texture=None, **kwargs)
                 actors.append(a)
                 if reset_camera is None or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -599,8 +603,18 @@ class BasePlotter(object):
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
+        if texture is not None:
+            if isinstance(texture, np.ndarray):
+                texture = numpy_to_texture(texture)
+            if not isinstance(texture, vtk.vtkTexture):
+                raise TypeError('Invalid texture type ({})'.format(type(texture)))
+            if mesh.GetPointData().GetTCoords() is None:
+                raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
+            actor.SetTexture(texture)
+
+
         # Attempt get the active scalars if no preference given
-        if scalars is None and color is None:
+        if scalars is None and color is None and texture is None:
             scalars = mesh.active_scalar
             # Make sure scalar components are not vectors/tuples
             if scalars is None or scalars.ndim != 1:

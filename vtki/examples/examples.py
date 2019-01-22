@@ -3,6 +3,8 @@ import sys
 import os
 import time
 
+import vtk
+
 import vtki
 import numpy as np
 
@@ -14,7 +16,8 @@ hexbeamfile = os.path.join(dir_path, 'hexbeam.vtk')
 spherefile = os.path.join(dir_path, 'sphere.ply')
 uniformfile = os.path.join(dir_path, 'uniform.vtk')
 rectfile = os.path.join(dir_path, 'rectilinear.vtk')
-
+globefile = os.path.join(dir_path, 'globe.vtk')
+mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 
 # get location of this folder
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -58,6 +61,13 @@ def load_structured():
     z = np.sin(r)
     return vtki.StructuredGrid(x, y, z)
 
+def load_globe():
+    """ Loads a globe source """
+    return vtki.PolyData(globefile)
+
+def load_globe_texture():
+    """ Loads a vtk.vtkTexture that can be applied to the globe source """
+    return vtki.load_texture(mapfile)
 
 def plot_ants_plane(off_screen=False, notebook=None):
     """
