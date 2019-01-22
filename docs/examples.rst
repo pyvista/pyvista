@@ -5,7 +5,8 @@ The following examples demonstrate the functionality of ``vtki``.
 
 Loading and Plotting a Mesh from File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Loading a mesh is trivial.  The following code block uses a built-in example file and displays an airplane mesh.
+Loading a mesh is trivial.  The following code block uses a built-in example
+file and displays an airplane mesh.
 
 .. code:: python
 
@@ -22,7 +23,8 @@ In fact, the code to generate the previous screenshot was created with:
 
     mesh.plot(screenshot='airplane.png', color='orange')
 
-You can also take a screenshot without creating an interactive plot window using the ``Plotter``:
+You can also take a screenshot without creating an interactive plot window using
+the ``Plotter``:
 
 .. code:: python
 
@@ -40,7 +42,8 @@ The ``img`` array can be used to plot the screenshot in ``matplotlib``:
     plt.imshow(img)
     plt.show()
 
-If you need to setup the camera you can do this by plotting first and getting the camera after running the ``plot`` function:
+If you need to setup the camera you can do this by plotting first and getting
+the camera after running the ``plot`` function:
 
 .. code:: python
 
@@ -48,7 +51,8 @@ If you need to setup the camera you can do this by plotting first and getting th
     plotter.add_mesh(mesh)
     cpos = plotter.plot()
 
-You can then use this cached camera for additional plotting without having to manually interact with the ``vtk`` plot window:
+You can then use this cached camera for additional plotting without having to
+manually interact with the ``vtk`` plot window:
 
 .. code:: python
 
@@ -59,7 +63,7 @@ You can then use this cached camera for additional plotting without having to ma
     img = plotter.screenshot('airplane.png')
     plotter.close()
 
-The points and faces from the mesh are directly accessible as a numpy array:
+The points and faces from the mesh are directly accessible as a NumPy array:
 
 .. code:: python
 
@@ -86,7 +90,8 @@ The points and faces from the mesh are directly accessible as a numpy array:
 
 Creating a Structured Surface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-This example creates a simple surface grid and plots the resulting grid and its curvature:
+This example creates a simple surface grid and plots the resulting grid and its
+curvature:
 
 .. code:: python
 
@@ -109,7 +114,8 @@ This example creates a simple surface grid and plots the resulting grid and its 
 
 .. image:: ./images/curvature.png
 
-Generating a structured grid is a one liner in this module, and the points from the resulting surface can be accessed as a numpy array:
+Generating a structured grid is a one liner in this module, and the points from
+the resulting surface can be accessed as a NumPy array:
 
 .. code:: python
 
@@ -126,7 +132,8 @@ Generating a structured grid is a one liner in this module, and the points from 
 
 Creating a GIF Movie
 ~~~~~~~~~~~~~~~~~~~~
-This example shows the versatility of the plotting object by generating a moving gif:
+This example shows the versatility of the plotting object by generating a moving
+gif:
 
 .. code:: python
 
@@ -171,7 +178,7 @@ This example shows the versatility of the plotting object by generating a moving
 
 Plotting in a Jupyter Notebook
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Inline plots are possible using a Jupyter notebook.  THe code snippet below
+Inline plots are possible using a Jupyter notebook.  The code snippet below
 will create a static screenshot of the rendering and display it in the Jupyter
 notebook:
 
@@ -279,7 +286,7 @@ use directly on the object (see :ref:`filters_ref`). These filters include:
 * ``extract_geometry``: Extract surface geometry
 
 
-To use these filter, call the method of your choice directly on your data object:
+To use these filters, call the method of your choice directly on your data object:
 
 
 .. code:: python
