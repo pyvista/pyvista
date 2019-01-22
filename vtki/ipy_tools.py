@@ -28,7 +28,7 @@ class InteractiveTool(object):
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
-                 display_params={}, default_params={}, **kwargs):
+                 display_params=None, default_params=None, **kwargs):
         if not run_from_ipython() or not ipy_available:
             raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
@@ -53,12 +53,18 @@ class InteractiveTool(object):
 
         # Intialize plotting parameters
         self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
+        if display_params is None:
+            display_params = {}
+        if default_params is None:
+            default_params = {}
         display_params.setdefault('rng', self.valid_range)
         display_params.setdefault('scalars', scalars)
         display_params.setdefault('preference', preference)
         display_params.setdefault('show_edges', False)
         # Make sure to remove the reset_camera parameter if present
         display_params.pop('reset_camera', None)
+        # Make a name
+        display_params.setdefault('name', '{}({})'.format(type(self).__name__, str(hex(id(self)))))
         self.display_params = display_params
 
         # Set the tool status
@@ -159,7 +165,9 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, step=None, generate_triangles=False, default_params={}):
+    def tool(self, clean=True, step=None, generate_triangles=False, default_params=None):
+        if default_params is None:
+            default_params = {}
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -173,12 +181,14 @@ class OrthogonalSlicer(InteractiveTool):
         axes = ['x', 'y', 'z']
 
         def _update_slice(index, x, y, z):
+            name = self.display_params.pop('name')
             self.plotter.remove_actor(self._data_to_update[index], reset_camera=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index],
                     origin=[x,y,z], generate_triangles=generate_triangles)
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
-                    reset_camera=False, **self.display_params)
+                    reset_camera=False, name='{}-{}'.format(name, index), **self.display_params)
             self._old[index] = [x,y,z][index]
+            self.display_params['name'] = name
 
         def update(x, y, z, **kwargs):
             self._update_plotting_params(**kwargs)
@@ -261,7 +271,9 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, tolerance=None, generate_triangles=False, default_params={}):
+    def tool(self, clean=True, tolerance=None, generate_triangles=False, default_params=None):
+        if default_params is None:
+            default_params = {}
         if clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
@@ -308,7 +320,9 @@ class Threshold(InteractiveTool):
 
     """
 
-    def tool(self, default_params={}):
+    def tool(self, default_params=None):
+        if default_params is None:
+            default_params = {}
         preference = self.display_params['preference']
 
         def _calc_start_values(rng):
