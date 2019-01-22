@@ -34,7 +34,7 @@ import numpy as np
 import vtk
 
 import vtki
-from vtki.utilities import get_scalar, wrap
+from vtki.utilities import get_scalar, wrap, is_inside_bounds
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -64,16 +64,6 @@ def _generate_plane(normal, origin):
     plane.SetOrigin(origin[0], origin[1], origin[2])
     return plane
 
-
-def _is_inside_bounds(point, bounds):
-    """ Checks if a point is inside a set of bounds """
-    if not (bounds[0] < point[0] < bounds[1]):
-        return False
-    if not (bounds[2] < point[1] < bounds[3]):
-        return False
-    if not (bounds[4] < point[2] < bounds[5]):
-        return False
-    return True
 
 
 class DataSetFilters(object):
@@ -140,7 +130,7 @@ class DataSetFilters(object):
         # find center of data if origin not specified
         if origin is None:
             origin = dataset.center
-        if not _is_inside_bounds(origin, dataset.bounds):
+        if not is_inside_bounds(origin, dataset.bounds):
             raise AssertionError('Slice is outside data bounds.')
         # create the plane for clipping
         plane = _generate_plane(normal, origin)

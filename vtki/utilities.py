@@ -275,3 +275,14 @@ def numpy_to_texture(image):
     vtex.SetInputDataObject(grid)
     vtex.Update()
     return vtex
+
+
+def is_inside_bounds(point, bounds):
+    """ Checks if a point is inside a set of bounds """
+    if not (bounds[0] < point[0] < bounds[1]):
+        return False
+    if not (bounds[2] < point[1] < bounds[3]):
+        return False
+    if not (bounds[4] < point[2] < bounds[5]):
+        return False
+    return True
