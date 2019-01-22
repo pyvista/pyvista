@@ -28,7 +28,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 Documentation
 -------------
-Refer to the detailed `Read the Docs <http://vtkInterface.readthedocs.io/en/latest/index.html>`_
+Refer to the `Read the Docs <http://vtkInterface.readthedocs.io/en/latest/index.html>`_
 documentation for detailed installation and usage details.
 
 Also see the `wiki <https://github.com/akaszynski/vtki/wiki>`_ for brief code
