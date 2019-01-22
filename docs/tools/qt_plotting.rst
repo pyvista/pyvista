@@ -84,3 +84,8 @@ Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible t
 
     # can now operate on the sphere and have it updated in the background
     sphere.points *= 0.5
+
+
+.. autoclass:: vtki.BackgroundPlotter
+   :members:
+   :undoc-members:
