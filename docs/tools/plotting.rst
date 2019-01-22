@@ -16,6 +16,8 @@ The base plotter class that all ``vtki`` plotters inherit. Please note that the
 
 .. autoclass:: vtki.BasePlotter
    :show-inheritance:
+   :members:
+   :undoc-members:
 
 
 Plotter
@@ -23,6 +25,8 @@ Plotter
 
 .. autoclass:: vtki.Plotter
    :show-inheritance:
+   :members:
+   :undoc-members:
 
 
 Convenience Functions
