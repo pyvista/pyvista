@@ -4,6 +4,7 @@ Supporting functions for polydata and grid objects
 """
 import logging
 import ctypes
+import imageio
 
 import numpy as np
 import vtk
@@ -251,7 +252,8 @@ def load_texture(filename):
     elif ext in ['.png']:
         reader = vtk.vtkPNGReader()
     else:
-        raise RuntimeError('Extension ({}) not understood.'.format(ext))
+        # Otherwise, use the imageio reader
+        return numpy_to_texture(imagio.imread(filename))
     reader.SetFileName(filename)
     reader.Update()
     texture = vtk.vtkTexture()
