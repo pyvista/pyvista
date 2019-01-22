@@ -609,12 +609,13 @@ class BasePlotter(object):
             try:
                 tname = list(mesh.textures.keys())[0]
                 texture = mesh.textures[tname]
-                # Be sure to set the tcoords if present
-                if tname in mesh.scalar_names:
-                    mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(tname))
             except IndexError:
                 logging.warning('No textures associated with input mesh.')
                 texture = None
+            else:
+                # Be sure to set the tcoords if present
+                if tname in mesh.scalar_names:
+                    mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(tname))
 
         if texture is not None:
             if isinstance(texture, np.ndarray):

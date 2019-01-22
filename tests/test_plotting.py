@@ -342,3 +342,11 @@ def test_plot_texture():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=texture)
     plotter.plot()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_texture_associated():
+    """"Test adding a texture to a plot"""
+    globe = examples.load_globe()
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(globe, texture=True)
+    plotter.plot()
