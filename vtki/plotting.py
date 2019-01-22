@@ -887,6 +887,9 @@ class BasePlotter(object):
             Bounds actor
 
         """
+        # If one is already present, just use that one
+        if hasattr(self, 'cubeAxesActor'):
+            return
 
         if font_family is None:
             font_family = rcParams['font']['family']
