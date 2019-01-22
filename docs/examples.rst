@@ -252,8 +252,9 @@ Removing a single actor:
 
 .. code:: python
 
+    import vtki
     plotter = vtki.Plotter(notebook=True)
-    actor = plotter.add_mesh(sphere)
+    actor = plotter.add_mesh(vtki.Sphere())
     plotter.remove_actor(actor)
     plotter.plot()
 
@@ -262,6 +263,7 @@ Clearing the entire plotting window:
 
 .. code:: python
 
+    import vtki
     plotter = vtki.Plotter(notebook=True)
     plotter.add_mesh(vtki.Sphere())
     plotter.add_mesh(vtki.Plane())
