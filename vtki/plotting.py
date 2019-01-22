@@ -621,10 +621,15 @@ class BasePlotter(object):
         elif isinstance(texture, str):
             # Grab a texture by name
             try:
-                texture = mesh.textures[texture]
+                tname = texture
+                texture = mesh.textures[tname]
             except KeyError:
                 logging.warning('Texture ({}) not associated with this dataset'.format(texture))
                 texture = None
+            else:
+                # Be sure to set the tcoords if present
+                if tname in mesh.scalar_names:
+                    mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(tname))
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
