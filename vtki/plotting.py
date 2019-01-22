@@ -15,7 +15,7 @@ from vtk.util import numpy_support as VN
 
 import numpy as np
 import vtki
-from vtki.utilities import get_scalar, wrap, is_vtki_obj
+from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
 import imageio
 
 
@@ -511,7 +511,7 @@ class BasePlotter(object):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
-        texture : vtk.vtkTexture, optional
+        texture : vtk.vtkTexture or np.ndarray, optional
             A texture to apply if the input mesh has texture coordinates.
             This will not work with MultiBlock datasets.
 
@@ -604,6 +604,8 @@ class BasePlotter(object):
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
         if texture is not None:
+            if isinstance(texture, np.ndarray):
+                texture = numpy_to_texture(texture)
             if not isinstance(texture, vtk.vtkTexture):
                 raise TypeError('Invalid texture type ({})'.format(type(texture)))
             if mesh.GetPointData().GetTCoords() is None:

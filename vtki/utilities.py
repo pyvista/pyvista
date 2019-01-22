@@ -258,3 +258,18 @@ def load_texture(filename):
     texture.SetInputDataObject(reader.GetOutputDataObject(0))
     texture.Update()
     return texture
+
+
+def numpy_to_texture(image):
+    """Convert a NumPy image array to a vtk.vtkTexture"""
+    if not isinstance(image, np.ndarray):
+        raise TypeError('Unknown input type ({})'.format(type(image)))
+    if image.ndim != 3 or image.shape[2] != 3:
+        raise AssertionError('Input image must be nn by nm by RGB')
+    grid = vtki.UniformGrid((image.shape[0], image.shape[1], 1))
+    grid.point_arrays['Image'] = image.reshape((-1, 3), order='F')
+    grid.set_active_scalar('Image')
+    vtex = vtk.vtkTexture()
+    vtex.SetInputDataObject(grid)
+    vtex.Update()
+    return vtex
