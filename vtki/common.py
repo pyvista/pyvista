@@ -71,6 +71,28 @@ class Common(DataSetFilters):
         self.SetPoints(vtk_points)
         #self._point_ref = points
 
+    @property
+    def t_coords(self):
+        return vtk_to_numpy(self.GetPointData().GetTCoords())
+
+    @t_coords.setter
+    def t_coords(self, t_coords):
+        if not isinstance(t_coords, np.ndarray):
+            raise TypeError('Texture coordinates must be a numpy array')
+        if t_coords.ndim != 2:
+            raise AssertionError('Texture coordinates must by a 2-dimensional array')
+        if t_coords.shape[0] != self.n_points:
+            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
+        if t_coords.shape[1] != 2:
+            raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
+        if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
+            raise AssertionError('Texture coordinates must be within (0, 1) range.')
+        # convert the array
+        vtkarr = numpy_to_vtk(t_coords)
+        vtkarr.SetName('Texture Coordinates')
+        self.GetPointData().SetTCoords(vtkarr)
+        return
+
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
         arr, field = get_scalar(self, name, preference=preference, info=True)

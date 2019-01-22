@@ -239,3 +239,22 @@ def setErrorOutputFile(filename):
     outputWindow = vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
+
+
+def load_texture(filename):
+    """Loads a ``vtkTexture`` from an image file."""
+    ext = os.path.splitext(filename)[1].lower()
+    if ext in ['.jpg', '.jpeg']:
+        reader = vtk.vtkJPEGReader()
+    elif ext in ['.tif', '.tiff']:
+        reader = vtk.vtkTIFFReader()
+    elif ext in ['.png']:
+        reader = vtk.vtkPNGReader()
+    else:
+        raise RuntimeError('Extension ({}) not understood.'.format(ext))
+    reader.SetFileName(filename)
+    reader.Update()
+    texture = vtk.vtkTexture()
+    texture.SetInputDataObject(reader.GetOutputDataObject(0))
+    texture.Update()
+    return texture

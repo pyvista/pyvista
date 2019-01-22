@@ -188,3 +188,29 @@ def test_html_repr():
     """
     repr_html = grid._repr_html_()
     assert repr_html is not None
+
+
+def test_texture():
+    """Test adding texture coordinates"""
+    # create a rectangle vertices
+    vertices = np.array([[0, 0, 0],
+                         [1, 0, 0],
+                         [1, 0.5, 0],
+                         [0, 0.5, 0],])
+
+    # mesh faces
+    faces = np.hstack([[3, 0, 1, 2],
+                       [3, 0, 3, 2]]).astype(np.int8)
+
+    # Create simple texture coordinates
+    t_coords = np.array([[0, 0],
+                        [1, 0],
+                        [1, 1],
+                        [0, 1]])
+    # Create the poly data
+    mesh = vtki.PolyData(vertices, faces)
+    # Attempt setting the texture coordinates
+    mesh.t_coords = t_coords
+    # now grab the texture coordinates
+    foo = mesh.t_coords
+    assert np.allclose(foo, t_coords)
