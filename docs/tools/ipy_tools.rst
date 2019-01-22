@@ -34,6 +34,7 @@ slider bars directly in a Jupyter notebook:
 
 
 .. autoclass:: vtki.OrthogonalSlicer
+   :show-inheritance:
 
 
 
@@ -62,6 +63,7 @@ of a Jupyter notebook cell:
 
 
 .. autoclass:: vtki.Threshold
+   :show-inheritance:
 
 
 
@@ -88,6 +90,7 @@ down menu in the Jupyter notebook cell output:
    :width: 500pt
 
 .. autoclass:: vtki.ManySlicesAlongAxis
+   :show-inheritance:
 
 
 

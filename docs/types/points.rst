@@ -162,4 +162,6 @@ object.  It inherits all methods from the original vtk object,
 `vtk.vtkPolyData <https://www.vtk.org/doc/nightly/html/classvtkPolyData.html>`_.
 
 .. autoclass:: vtki.PolyData
-    :members:
+   :show-inheritance:
+   :members:
+   :undoc-members:
