@@ -63,7 +63,9 @@ def load_structured():
 
 def load_globe():
     """ Loads a globe source """
-    return vtki.PolyData(globefile)
+    globe = vtki.PolyData(globefile)
+    globe.textures['2k_earth_daymap'] = load_globe_texture()
+    return globe
 
 def load_globe_texture():
     """ Loads a vtk.vtkTexture that can be applied to the globe source """
