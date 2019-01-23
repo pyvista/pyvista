@@ -156,9 +156,12 @@ class MultiBlock(vtkMultiBlockDataSet):
         """Sets a block with a VTK data object. To set the name simultaneously,
         pass a string name as the 2nd index.
 
-        Example:
-            >>> multi[0] = vtki.PolyData()
-            >>> multi[1, 'foo'] = vtki.UnstructuredGrid()
+        Example
+        -------
+        >>> import vtki
+        >>> multi = vtki.MultiBlock()
+        >>> multi[0] = vtki.PolyData()
+        >>> multi[1, 'foo'] = vtki.UnstructuredGrid()
         """
         if isinstance(index, collections.Iterable):
             i, name = index[0], index[1]

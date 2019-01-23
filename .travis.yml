@@ -28,6 +28,7 @@ before_script: # configure a headless display to test plot generation
 
 install:
   - pip install -r requirements.txt
+  - pip install -r requirements_docs.txt
   - pip install pytest-cov
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
@@ -40,12 +41,19 @@ install:
   - python -c "import imageio; imageio.plugins.ffmpeg.download()"
 
 script:
-  - pytest --cov vtki -v
+  # Run the test suite and generate coverage report
+  - pytest -v --cov vtki
+  # Run all code examples in the docstrings
+  - pytest -v --doctest-modules vtki
   # Now make sure notebooks are running
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
       pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
     fi
+  # And test the documentation
+  - cd ./docs/
+  - make doctest
+  - make html
 
 cache:
   directories:

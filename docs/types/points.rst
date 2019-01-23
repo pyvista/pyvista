@@ -12,7 +12,7 @@ Empty Object
 ~~~~~~~~~~~~
 A polydata object can be initialized with:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     grid = vtki.PolyData()
@@ -31,7 +31,7 @@ A PolyData object can be created quickly from numpy arrays.  The vertex array
 contains the locations of the points of the mesh and the face array contains the
 number of points for each face and the indices of each of those faces.
 
-.. code:: python
+.. testcode:: python
 
     import numpy as np
     import vtki
@@ -61,7 +61,7 @@ Initialize from a File
 Both binary and ASCII .ply, .stl, and .vtk files can be read using vtki.
 For example, the vtki package contains example meshes and these can be loaded with:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
@@ -71,7 +71,7 @@ For example, the vtki package contains example meshes and these can be loaded wi
 
 This mesh can then be written to a vtk file using:
 
-.. code:: python
+.. testcode:: python
 
     mesh.save('plane.vtk')
 
@@ -79,11 +79,18 @@ These meshes are identical.
 
 .. code:: python
 
-    >>> import numpy as np
-    >>> mesh_from_vtk = vtki.PolyData('plane.vtk')
-    >>> print(np.allclose(mesh_from_vtk.points, mesh.points))
-    True
+    import numpy as np
 
+    mesh_from_vtk = vtki.PolyData('plane.vtk')
+    print(np.allclose(mesh_from_vtk.points, mesh.points))
+
+.. testcleanup:: python
+
+   import os
+   try:
+       os.remove('plane.vtk')
+   except FileNotFoundError:
+       pass
 
 Mesh Manipulation and Plotting
 ------------------------------
@@ -91,7 +98,7 @@ Meshes can be directly manipulated using numpy or with the built-in translation
 and rotation routines.
 This example loads two meshes and moves, scales, and copies them.
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
@@ -112,7 +119,7 @@ This example loads two meshes and moves, scales, and copies them.
 To plot more than one mesh a plotting class must be created to manage the plotting.
 The following code creates the class and plots the meshes with various colors.
 
-.. code:: python
+.. testcode:: python
 
     # Create plotting object
     plotter = vtki.Plotter()
@@ -121,7 +128,7 @@ The following code creates the class and plots the meshes with various colors.
 
     # Add airplane mesh and make the color equal to the Y position.  Add a
     # scalar bar associated with this mesh
-    plane_scalars = pts[:, 1]
+    plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(airplane, scalars=plane_scalars, stitle='Airplane Y\nLocation')
 
     # Add annotation text
@@ -135,7 +142,7 @@ Ray Tracing
 -----------
 vtki supports single line segment ray tracing.
 
-.. code:: python
+.. testcode:: python
 
     # Use built-in sphere and test againt a single ray
     import vtki
@@ -162,4 +169,6 @@ object.  It inherits all methods from the original vtk object,
 `vtk.vtkPolyData <https://www.vtk.org/doc/nightly/html/classvtkPolyData.html>`_.
 
 .. autoclass:: vtki.PolyData
-    :members:
+   :show-inheritance:
+   :members:
+   :undoc-members:

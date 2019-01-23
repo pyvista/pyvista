@@ -71,6 +71,73 @@ class Common(DataSetFilters):
         self.SetPoints(vtk_points)
         #self._point_ref = points
 
+    @property
+    def t_coords(self):
+        return vtk_to_numpy(self.GetPointData().GetTCoords())
+
+    @t_coords.setter
+    def t_coords(self, t_coords):
+        if not isinstance(t_coords, np.ndarray):
+            raise TypeError('Texture coordinates must be a numpy array')
+        if t_coords.ndim != 2:
+            raise AssertionError('Texture coordinates must by a 2-dimensional array')
+        if t_coords.shape[0] != self.n_points:
+            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
+        if t_coords.shape[1] != 2:
+            raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
+        if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
+            raise AssertionError('Texture coordinates must be within (0, 1) range.')
+        # convert the array
+        vtkarr = numpy_to_vtk(t_coords)
+        vtkarr.SetName('Texture Coordinates')
+        self.GetPointData().SetTCoords(vtkarr)
+        return
+
+    @property
+    def textures(self):
+        """A dictionary to hold ``vtk.vtkTexture`` objects that can be
+        associated with this dataset. When casting back to a VTK dataset or
+        filtering this dataset, these textures will not be passed.
+        """
+        if not hasattr(self, '_textures'):
+            self._textures = {}
+        return self._textures
+
+    def _activate_texture(mesh, name):
+        """Grab a texture and update the active texture coordinates. This makes
+        sure to not destroy onld texture coordinates
+
+        Parameters
+        ----------
+        name : str
+            The name of the texture and texture coordinates to activate
+
+        Return
+        ------
+        vtk.vtkTexture : The active texture
+        """
+        if name == True:
+            # Grab the first name availabe if True
+            try:
+                name = list(mesh.textures.keys())[0]
+            except IndexError:
+                logging.warning('No textures associated with input mesh.')
+                return None
+        # Grab the texture object by name
+        try:
+            texture = mesh.textures[name]
+        except KeyError:
+            logging.warning('Texture ({}) not associated with this dataset'.format(name))
+            texture = None
+        else:
+            # Be sure to reset the tcoords if present
+            # Grab old coordinates
+            if name in mesh.scalar_names:
+                old_tcoord = mesh.GetPointData().GetTCoords()
+                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(name))
+                mesh.GetPointData().AddArray(old_tcoord)
+        return texture
+
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
         arr, field = get_scalar(self, name, preference=preference, info=True)

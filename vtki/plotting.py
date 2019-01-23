@@ -15,7 +15,7 @@ from vtk.util import numpy_support as VN
 
 import numpy as np
 import vtki
-from vtki.utilities import get_scalar, wrap, is_vtki_obj
+from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
 from vtki.export import export_plotter_vtkjs
 import imageio
 
@@ -81,7 +81,7 @@ def _raise_not_matching(scalars, mesh):
                     'or the number of cells ' +
                     '(%d) ' % mesh.GetNumberOfCells())
 
-def _remove_mapper_from_plotter(plotter, actor, reset_camera=None):
+def _remove_mapper_from_plotter(plotter, actor, reset_camera):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
     try:
         mapper = actor.GetMapper()
@@ -275,6 +275,7 @@ class BasePlotter(object):
         self.first_time = True
         # Keep track of the scale
         self.scale = [1.0, 1.0, 1.0]
+        self._labels = []
 
 
     def update_bounds_axes(self):
@@ -425,9 +426,11 @@ class BasePlotter(object):
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
-                 lighting=False, n_colors=256, interpolate_before_map=False,
+                 lighting=True, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
-                 multi_colors=False, name=None, **kwargs):
+                 multi_colors=False, name=None, texture=None,
+                 render_points_as_spheres=False, render_lines_as_tubes=False,
+                 edge_color='black', **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -463,7 +466,7 @@ class BasePlotter(object):
 
         rng : 2 item list, optional
             Range of mapper for scalars.  Defaults to minimum and maximum of
-            scalars array.  Example: [-1, 2]
+            scalars array.  Example: ``[-1, 2]``
 
         stitle : string, optional
             Scalar title.  By default there is no scalar legend bar.  Setting
@@ -512,6 +515,13 @@ class BasePlotter(object):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
+        texture : vtk.vtkTexture or np.ndarray or boolean, optional
+            A texture to apply if the input mesh has texture coordinates.
+            This will not work with MultiBlock datasets. If set to ``True``,
+            the first avaialble texture on the object will be used. If a string
+            name is given, it will pull a texture with that name associated to
+            the input mesh.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -536,7 +546,7 @@ class BasePlotter(object):
 
 
         if isinstance(mesh, vtki.MultiBlock):
-            self.remove_actor(name)
+            self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
             if rng is None and scalars is not None:
                 # Get the data range across the array for all blocks if scalar specified
@@ -584,9 +594,11 @@ class BasePlotter(object):
                              n_colors=n_colors, interpolate_before_map=interpolate_before_map,
                              cmap=cmap, label=label,
                              scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
-                             name=nm, **kwargs)
+                             name=nm, texture=None,
+                             render_points_as_spheres=render_points_as_spheres, render_lines_as_tubes=render_lines_as_tubes,
+                             edge_color=edge_color, **kwargs)
                 actors.append(a)
-                if reset_camera is None or reset_camera:
+                if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
                     self.camera_set = False
@@ -602,14 +614,28 @@ class BasePlotter(object):
             self.mapper.SetArrayName(scalars)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
+        if texture == True or isinstance(texture, str):
+            texture = mesh._activate_texture(texture)
+
+        if texture is not None:
+            if isinstance(texture, np.ndarray):
+                texture = numpy_to_texture(texture)
+            if not isinstance(texture, vtk.vtkTexture):
+                raise TypeError('Invalid texture type ({})'.format(type(texture)))
+            if mesh.GetPointData().GetTCoords() is None:
+                raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
+            actor.SetTexture(texture)
+
+
         # Attempt get the active scalars if no preference given
-        if scalars is None and color is None:
+        if scalars is None and color is None and texture is None:
             scalars = mesh.active_scalar
             # Make sure scalar components are not vectors/tuples
             if scalars is None or scalars.ndim != 1:
                 scalars = None
             else:
-                stitle = mesh.active_scalar_info[1]
+                if stitle is None:
+                    stitle = mesh.active_scalar_info[1]
 
         # Scalar formatting ===================================================
         if cmap is None:
@@ -707,6 +733,12 @@ class BasePlotter(object):
         rgb_color = parse_color(color)
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
+        prop.SetEdgeColor(parse_color(edge_color))
+
+        if render_points_as_spheres:
+            prop.SetRenderPointsAsSpheres(render_points_as_spheres)
+        if render_lines_as_tubes:
+            pro.SetRenderLinesAsTubes(render_lines_as_tubes)
 
         # legend label
         if label:
@@ -763,12 +795,12 @@ class BasePlotter(object):
         if name is None:
             name = str(hex(id(actor)))
         # Remove actor by that name if present
-        self.remove_actor(name)
+        rv = self.remove_actor(name, reset_camera=False)
         self._actors[name] = actor
 
         if reset_camera:
             self.reset_camera()
-        elif not self.camera_set and reset_camera is None:
+        elif not self.camera_set and reset_camera is None and not rv:
             self.reset_camera()
         else:
             self._render()
@@ -781,7 +813,7 @@ class BasePlotter(object):
     def camera(self):
         return self.renderer.GetActiveCamera()
 
-    def remove_actor(self, actor, reset_camera=None):
+    def remove_actor(self, actor, reset_camera=False):
         """
         Removes an actor from the Plotter.
 
@@ -799,20 +831,23 @@ class BasePlotter(object):
                 if k.startswith('{}-'.format(name)):
                     names.append(k)
             if len(names) > 0:
-                self.remove_actor(names)
+                self.remove_actor(names, reset_camera=reset_camera)
             try:
                 actor = self._actors[name]
             except KeyError:
                 # If actor of that name is not present then return success
-                return
+                return False
         if isinstance(actor, collections.Iterable):
+            success = False
             for a in actor:
-                self.remove_actor(a, reset_camera=reset_camera)
-            return
+                rv = self.remove_actor(a, reset_camera=reset_camera)
+                if rv or success:
+                    success = True
+            return success
         if actor is None:
-            return
+            return False
         # First remove this actor's mapper from _scalar_bar_mappers
-        _remove_mapper_from_plotter(self, actor, reset_camera=False)
+        _remove_mapper_from_plotter(self, actor, False)
         self.renderer.RemoveActor(actor)
         if name is None:
             for k, v in self._actors.items():
@@ -826,6 +861,7 @@ class BasePlotter(object):
             self.reset_camera()
         else:
             self._render()
+        return True
 
     def add_axes_at_origin(self):
         """
@@ -1648,10 +1684,11 @@ class BasePlotter(object):
 
         Examples
         --------
+        >>> import vtki
         >>> sphere = vtki.Sphere()
-        >>> plotter.Plotter()
-        >>> plotter.add_mesh(sphere)
-        >>> plotter.screenshot('screenshot.png')
+        >>> plotter = vtki.Plotter()
+        >>> _ = plotter.add_mesh(sphere)
+        >>> _ = plotter.screenshot('screenshot.png') # doctest:+SKIP
         """
         if not hasattr(self, 'ifilter'):
             self.start_image_filter()
@@ -1727,23 +1764,29 @@ class BasePlotter(object):
         Examples
         --------
         >>> import vtki
+        >>> from vtki import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> othermesh = examples.load_uniform()
         >>> plotter = vtki.Plotter()
-        >>> plotter.add_mesh(mesh, label='My Mesh')
-        >>> plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
-        >>> plotter.add_legend()
-        >>> plotter.plot()
+        >>> _ = plotter.add_mesh(mesh, label='My Mesh')
+        >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
+        >>> _ = plotter.add_legend()
+        >>> plotter.show() # doctest:+SKIP
 
         Alternative manual example
 
         >>> import vtki
+        >>> from vtki import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> othermesh = examples.load_uniform()
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
         >>> plotter = vtki.Plotter()
-        >>> plotter.add_mesh(mesh)
-        >>> plotter.add_mesh(othermesh, 'k')
-        >>> plotter.add_legend(legend_entries)
-        >>> plotter.plot()
+        >>> _ = plotter.add_mesh(mesh)
+        >>> _ = plotter.add_mesh(othermesh, 'k')
+        >>> _ = plotter.add_legend(legend_entries)
+        >>> plotter.show() # doctest:+SKIP
         """
         self.legend = vtk.vtkLegendBoxActor()
 
@@ -1925,10 +1968,14 @@ class Plotter(BasePlotter):
 
     Example
     -------
-    plotter = Plotter()
-    plotter.add_mesh(mesh, color='red')
-    plotter.add_mesh(another_mesh, color='blue')
-    plotter.plot()
+    >>> import vtki
+    >>> from vtki import examples
+    >>> mesh = examples.load_hexbeam()
+    >>> another_mesh = examples.load_uniform()
+    >>> plotter = vtki.Plotter()
+    >>> _ = plotter.add_mesh(mesh, color='red')
+    >>> _ = plotter.add_mesh(another_mesh, color='blue')
+    >>> plotter.show() # doctest:+SKIP
 
     Parameters
     ----------
@@ -1954,7 +2001,8 @@ class Plotter(BasePlotter):
             if 'TimerEvent' == eventId:
                 self.iren.TerminateApp()
 
-        self._labels = []
+        if vtki.TESTING_OFFSCREEN:
+            off_screen = True
 
         if notebook is None:
             if run_from_ipython():

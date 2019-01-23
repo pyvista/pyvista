@@ -3,29 +3,24 @@ These classes hold methods to apply general filters to any data type.
 By inherritting these classes into the wrapped VTK data structures, a user
 can easily apply common filters in an intuitive manner.
 
-.. code-block:: python
+Example
+-------
 
-    import vtki
-    from vtki import examples
-    dataset = examples.load_uniform()
-    dataset.set_active_scalar('Spatial Point Data') # Array the filters will use
-    dataset.plot() # Inspect the starting dataset
+>>> import vtki
+>>> from vtki import examples
+>>> dataset = examples.load_uniform()
 
-    # Threshold
-    thresh = dataset.threshold([100, 500])
-    thresh.plot()
+>>> # Threshold
+>>> thresh = dataset.threshold([100, 500])
 
-    # Slice
-    slc = dataset.slice()
-    slc.plot()
+>>> # Slice
+>>> slc = dataset.slice()
 
-    # Clip
-    clp = dataset.clip(invert=True)
-    clp.plot()
+>>> # Clip
+>>> clp = dataset.clip(invert=True)
 
-    # Contour
-    iso = dataset.contour()
-    iso.plot()
+>>> # Contour
+>>> iso = dataset.contour()
 
 """
 import collections
@@ -34,7 +29,7 @@ import numpy as np
 import vtk
 
 import vtki
-from vtki.utilities import get_scalar, wrap
+from vtki.utilities import get_scalar, wrap, is_inside_bounds
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -64,16 +59,6 @@ def _generate_plane(normal, origin):
     plane.SetOrigin(origin[0], origin[1], origin[2])
     return plane
 
-
-def _is_inside_bounds(point, bounds):
-    """ Checks if a point is inside a set of bounds """
-    if not (bounds[0] < point[0] < bounds[1]):
-        return False
-    if not (bounds[2] < point[1] < bounds[3]):
-        return False
-    if not (bounds[4] < point[2] < bounds[5]):
-        return False
-    return True
 
 
 class DataSetFilters(object):
@@ -140,7 +125,7 @@ class DataSetFilters(object):
         # find center of data if origin not specified
         if origin is None:
             origin = dataset.center
-        if not _is_inside_bounds(origin, dataset.bounds):
+        if not is_inside_bounds(origin, dataset.bounds):
             raise AssertionError('Slice is outside data bounds.')
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
@@ -554,3 +539,52 @@ class DataSetFilters(object):
             raise RuntimeError('isosurfaces not understood.')
         alg.Update()
         return _get_output(alg)
+
+
+    def texture_map_to_plane(dataset, origin, point_u, point_v, inplace=False,
+                             name='Texture Coordinates'):
+        """Texture map this dataset to a user defined plane. This is often used
+        to define a plane to texture map an image to this dataset. The plane
+        defines the spatial reference and extent of that image.
+
+        Parameters
+        ----------
+        origin : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            BOTTOM LEFT CORNER of the plane
+
+        point_u : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            BOTTOM RIGHT CORNER of the plane
+
+        point_v : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            TOP LEFT CORNER of the plane
+
+        inplace : bool, optional
+            If True, the new texture coordinates will be added to the dataset
+            inplace. If False (default), a new dataset is returned with the
+            textures coordinates
+
+        name : str, optional
+            The string name to give the new texture coordinates if applying
+            the filter inplace.
+
+        """
+        alg = vtk.vtkTextureMapToPlane()
+        alg.SetOrigin(origin) # BOTTOM LEFT CORNER
+        alg.SetPoint1(point_u) # BOTTOM RIGHT CORNER
+        alg.SetPoint2(point_v) # TOP LEFT CORNER
+        alg.SetInputDataObject(dataset)
+        alg.Update()
+        output = _get_output(alg)
+        if not inplace:
+            return output
+        t_coords = output.GetPointData().GetTCoords()
+        t_coords.SetName(name)
+        otc = dataset.GetPointData().GetTCoords()
+        dataset.GetPointData().SetTCoords(t_coords)
+        dataset.GetPointData().AddArray(t_coords)
+        # CRITICAL:
+        dataset.GetPointData().AddArray(otc) # Add old ones back at the end
+        return # No return type because it is inplace
