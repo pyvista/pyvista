@@ -84,6 +84,10 @@ These meshes are identical.
     mesh_from_vtk = vtki.PolyData('plane.vtk')
     print(np.allclose(mesh_from_vtk.points, mesh.points))
 
+.. testcleanup::
+
+   import os
+   os.remove('plane.vtk')
 
 Mesh Manipulation and Plotting
 ------------------------------

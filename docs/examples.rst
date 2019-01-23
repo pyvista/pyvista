@@ -6,22 +6,21 @@ The following examples demonstrate the functionality of ``vtki``.
 Loading and Plotting a Mesh from File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Loading a mesh is trivial.  The following code block uses a built-in example
-file and displays an airplane mesh.
+file, displays an airplane mesh, saves a screenshot, and returns the camera's
+positon:
 
 .. testcode:: python
 
     import vtki
     from vtki import examples
-    mesh = vtki.PolyData(examples.planefile)
-    mesh.plot(color='orange')
+    import numpy as np
+
+    filename = examples.planefile
+    mesh = vtki.read(filename)
+    cpos = mesh.plot(screenshot='./images/airplane.png', color='yellow')
 
 .. image:: ./images/airplane.png
 
-In fact, the code to generate the previous screenshot was created with:
-
-.. testcode:: python
-
-    mesh.plot(screenshot='./images/airplane.png', color='orange')
 
 You can also take a screenshot without creating an interactive plot window using
 the ``Plotter``:
@@ -29,9 +28,9 @@ the ``Plotter``:
 .. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='orange')
+    plotter.add_mesh(mesh, color='yellow')
     plotter.plot(auto_close=False)
-    img = plotter.screenshot('airplane.png')
+    img = plotter.screenshot('./images/airplane.png')
     plotter.close()
 
 The ``img`` array can be used to plot the screenshot in ``matplotlib``:
@@ -57,10 +56,10 @@ manually interact with the ``vtk`` plot window:
 .. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='orange')
+    plotter.add_mesh(mesh, color='yellow')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
-    img = plotter.screenshot('airplane.png')
+    img = plotter.screenshot('./images/airplane.png')
     plotter.close()
 
 The points and faces from the mesh are directly accessible as a NumPy array:
@@ -96,9 +95,9 @@ curvature:
 .. testcode:: python
 
     import vtki
+    import numpy as np
 
     # Make data
-    import numpy as np
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -110,7 +109,7 @@ curvature:
     grid.plot()
 
     # Plot mean curvature as well
-    grid.plot_curvature()
+    grid.plot_curvature(screenshot='./images/curvature.png')
 
 .. image:: ./images/curvature.png
 
@@ -157,7 +156,7 @@ gif:
     plotter.plot(auto_close=False)
 
     # Open a gif
-    plotter.open_gif('wave.gif')
+    plotter.open_gif('./images/wave.gif')
 
     pts = grid.points.copy()
 

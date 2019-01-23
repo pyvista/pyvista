@@ -250,7 +250,7 @@ You can also render the beam as as a wire-frame object:
     plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
 
     #plotter.OpenMovie('beam.mp4')
-    plotter.open_gif('beam_wireframe.gif')
+    plotter.open_gif('./images/beam_wireframe.gif')
     for phase in np.linspace(0, 2*np.pi, 20):
         plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
         plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
