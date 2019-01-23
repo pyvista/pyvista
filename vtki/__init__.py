@@ -41,3 +41,6 @@ if vtk.vtkVersion().GetVTKMajorVersion() < 5:
 # vtk/util/numpy_support.py:135: FutureWarning: Conversion of the second argument of issubdtype from `complex` to `np.complexfloating` is deprecated. In future, it will be treated as `np.complex128 == np.dtype(complex).type`.
 #   assert not numpy.issubdtype(z.dtype, complex), \
 warnings.simplefilter(action='ignore', category=FutureWarning)
+
+# A simple flag to set when generating the documentation
+TESTING_OFFSCREEN = False

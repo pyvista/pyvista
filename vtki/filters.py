@@ -3,29 +3,24 @@ These classes hold methods to apply general filters to any data type.
 By inherritting these classes into the wrapped VTK data structures, a user
 can easily apply common filters in an intuitive manner.
 
-.. code-block:: python
+Example
+-------
 
-    import vtki
-    from vtki import examples
-    dataset = examples.load_uniform()
-    dataset.set_active_scalar('Spatial Point Data') # Array the filters will use
-    dataset.plot() # Inspect the starting dataset
+>>> import vtki
+>>> from vtki import examples
+>>> dataset = examples.load_uniform()
 
-    # Threshold
-    thresh = dataset.threshold([100, 500])
-    thresh.plot()
+>>> # Threshold
+>>> thresh = dataset.threshold([100, 500])
 
-    # Slice
-    slc = dataset.slice()
-    slc.plot()
+>>> # Slice
+>>> slc = dataset.slice()
 
-    # Clip
-    clp = dataset.clip(invert=True)
-    clp.plot()
+>>> # Clip
+>>> clp = dataset.clip(invert=True)
 
-    # Contour
-    iso = dataset.contour()
-    iso.plot()
+>>> # Contour
+>>> iso = dataset.contour()
 
 """
 import collections
