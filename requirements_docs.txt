@@ -3,4 +3,4 @@ sphinx-autobuild
 sphinx-rtd-theme
 sphinxcontrib-napoleon
 sphinxcontrib-websupport
-sphinxcontrib-doctest
+pytest-sphinx
