@@ -103,6 +103,41 @@ class Common(DataSetFilters):
             self._textures = {}
         return self._textures
 
+    def _activate_texture(mesh, name):
+        """Grab a texture and update the active texture coordinates. This makes
+        sure to not destroy onld texture coordinates
+
+        Parameters
+        ----------
+        name : str
+            The name of the texture and texture coordinates to activate
+
+        Return
+        ------
+        vtk.vtkTexture : The active texture
+        """
+        if name == True:
+            # Grab the first name availabe if True
+            try:
+                name = list(mesh.textures.keys())[0]
+            except IndexError:
+                logging.warning('No textures associated with input mesh.')
+                return None
+        # Grab the texture object by name
+        try:
+            texture = mesh.textures[name]
+        except KeyError:
+            logging.warning('Texture ({}) not associated with this dataset'.format(texture))
+            texture = None
+        else:
+            # Be sure to reset the tcoords if present
+            # Grab old coordinates
+            if name in mesh.scalar_names:
+                old_tcoord = mesh.GetPointData().GetTCoords()
+                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(name))
+                mesh.GetPointData().AddArray(old_tcoord)
+        return texture
+
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
         arr, field = get_scalar(self, name, preference=preference, info=True)

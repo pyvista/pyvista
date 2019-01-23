@@ -606,30 +606,8 @@ class BasePlotter(object):
         self.mapper.SetInputData(self.mesh)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
-        if texture == True:
-            # Grab the first texture availabe
-            try:
-                tname = list(mesh.textures.keys())[0]
-                texture = mesh.textures[tname]
-            except IndexError:
-                logging.warning('No textures associated with input mesh.')
-                texture = None
-            else:
-                # Be sure to set the tcoords if present
-                if tname in mesh.scalar_names:
-                    mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(tname))
-        elif isinstance(texture, str):
-            # Grab a texture by name
-            try:
-                tname = texture
-                texture = mesh.textures[tname]
-            except KeyError:
-                logging.warning('Texture ({}) not associated with this dataset'.format(texture))
-                texture = None
-            else:
-                # Be sure to set the tcoords if present
-                if tname in mesh.scalar_names:
-                    mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(tname))
+        if texture == True or isinstance(texture, str):
+            texture = mesh._activate_texture(texture)
 
         if texture is not None:
             if isinstance(texture, np.ndarray):
