@@ -274,6 +274,7 @@ class BasePlotter(object):
         self.first_time = True
         # Keep track of the scale
         self.scale = [1.0, 1.0, 1.0]
+        self._labels = []
 
 
     def update_bounds_axes(self):
@@ -630,7 +631,8 @@ class BasePlotter(object):
             if scalars is None or scalars.ndim != 1:
                 scalars = None
             else:
-                stitle = mesh.active_scalar_info[1]
+                if stitle is None:
+                    stitle = mesh.active_scalar_info[1]
 
         # Scalar formatting ===================================================
         if cmap is None:
@@ -1992,8 +1994,6 @@ class Plotter(BasePlotter):
 
         if vtki.TESTING_OFFSCREEN:
             off_screen = True
-
-        self._labels = []
 
         if notebook is None:
             if run_from_ipython():
