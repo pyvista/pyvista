@@ -87,7 +87,10 @@ These meshes are identical.
 .. testcleanup::
 
    import os
-   os.remove('plane.vtk')
+   try:
+       os.remove('plane.vtk')
+   except FileNotFoundError:
+       pass
 
 Mesh Manipulation and Plotting
 ------------------------------
