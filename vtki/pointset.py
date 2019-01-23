@@ -200,13 +200,13 @@ class PolyData(vtkPolyData, vtki.Common):
         >>> import numpy as np
         >>> import vtki
         >>> vertices = np.array([[0, 0, 0],
-                                 [1, 0, 0],
-                                 [1, 1, 0],
-                                 [0, 1, 0],
-                                 [0.5, 0.5, 1]])
+        ...                      [1, 0, 0],
+        ...                      [1, 1, 0],
+        ...                      [0, 1, 0],
+        ...                      [0.5, 0.5, 1]])
         >>> faces = np.hstack([[4, 0, 1, 2, 3],
-                               [3, 0, 1, 4],
-                               [3, 1, 2, 4]])  # one square and two triangles
+        ...                    [3, 0, 1, 4],
+        ...                    [3, 1, 2, 4]])  # one square and two triangles
         >>> surf = vtki.PolyData(vertices, faces)
 
         """
@@ -1618,22 +1618,22 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
 
         >>> cell1 = np.array([[0, 0, 0],
-                              [1, 0, 0],
-                              [1, 1, 0],
-                              [0, 1, 0],
-                              [0, 0, 1],
-                              [1, 0, 1],
-                              [1, 1, 1],
-                              [0, 1, 1]])
+        ...                   [1, 0, 0],
+        ...                   [1, 1, 0],
+        ...                   [0, 1, 0],
+        ...                   [0, 0, 1],
+        ...                   [1, 0, 1],
+        ...                   [1, 1, 1],
+        ...                   [0, 1, 1]])
 
         >>> cell2 = np.array([[0, 0, 2],
-                              [1, 0, 2],
-                              [1, 1, 2],
-                              [0, 1, 2],
-                              [0, 0, 3],
-                              [1, 0, 3],
-                              [1, 1, 3],
-                              [0, 1, 3]])
+        ...                   [1, 0, 2],
+        ...                   [1, 1, 2],
+        ...                   [0, 1, 2],
+        ...                   [0, 0, 3],
+        ...                   [1, 0, 3],
+        ...                   [1, 1, 3],
+        ...                   [0, 1, 3]])
 
         >>> points = np.vstack((cell1, cell2))
 
