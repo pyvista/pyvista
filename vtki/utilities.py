@@ -100,9 +100,10 @@ def lines_from_points(points):
     This example plots two line segments at right angles to each other line.
 
     >>> import vtki
+    >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> lines = vtki.MakeLine(points)
-    >>> lines.plot()
+    >>> lines = vtki.lines_from_points(points)
+    >>> lines.plot() # doctest:+SKIP
 
     """
     # Assuming ordered points, create array defining line order

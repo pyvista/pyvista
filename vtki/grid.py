@@ -49,12 +49,22 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     Examples
     --------
-    grid = RectilinearGrid()  # Create empty grid
-    grid = RectilinearGrid(vtkgrid)  # Initialize from a vtk.vtkRectilinearGrid object
-    xrng = np.arange(-10, 10, 2)
-    yrng = np.arange(-10, 10, 5)
-    zrng = np.arange(-10, 10, 1)
-    grid = vtki.RectilinearGrid(xrng, yrng, zrng)
+    >>> import vtki
+    >>> import vtk
+    >>> import numpy as np
+
+    >>> # Create empty grid
+    >>> grid = vtki.RectilinearGrid()
+
+    >>> # Initialize from a vtk.vtkRectilinearGrid object
+    >>> vtkgrid = vtk.vtkRectilinearGrid()
+    >>> grid = vtki.RectilinearGrid(vtkgrid)
+
+    >>> # Creat from NumPy arrays
+    >>> xrng = np.arange(-10, 10, 2)
+    >>> yrng = np.arange(-10, 10, 5)
+    >>> zrng = np.arange(-10, 10, 1)
+    >>> grid = vtki.RectilinearGrid(xrng, yrng, zrng)
 
 
     """
@@ -273,14 +283,28 @@ class UniformGrid(vtkImageData, Grid):
 
     Examples
     --------
-    grid = UniformGrid()  # Create empty grid
-    grid = UniformGrid(vtkgrid)  # Initialize from a vtk.vtkImageData object
-    dims = (10, 10, 10)
-    grid = vtki.UniformGrid(dims) # Using default spacing and origin
-    spacing = (2, 1, 5)
-    grid = vtki.UniformGrid(dims, spacing) # Usign default origin
-    origin = (10, 35, 50)
-    grid = vtki.UniformGrid(dims, spacing, origin) # Everything is specified
+    >>> import vtki
+    >>> import vtk
+    >>> import numpy as np
+
+    >>> # Create empty grid
+    >>> grid = vtki.UniformGrid()
+
+    >>> # Initialize from a vtk.vtkImageData object
+    >>> vtkgrid = vtk.vtkImageData()
+    >>> grid = vtki.UniformGrid(vtkgrid)
+
+    >>> # Using just the grid dimensions
+    >>> dims = (10, 10, 10)
+    >>> grid = vtki.UniformGrid(dims)
+
+    >>> # Using dimensions and spacing
+    >>> spacing = (2, 1, 5)
+    >>> grid = vtki.UniformGrid(dims, spacing)
+
+    >>> # Using dimensions, spacing, and an origin
+    >>> origin = (10, 35, 50)
+    >>> grid = vtki.UniformGrid(dims, spacing, origin)
 
     """
 

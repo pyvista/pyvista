@@ -1,6 +1,7 @@
 import sphinx_rtd_theme
 
 import vtki
+vtki.TESTING_OFFSCREEN = True
 
 # -- General configuration ------------------------------------------------
 numfig = True
@@ -9,7 +10,7 @@ numfig_format = {'figure': 'Figure %s', 'table': 'Table %s', 'code-block': 'My c
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.doctest']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

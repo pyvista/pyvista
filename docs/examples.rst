@@ -6,37 +6,36 @@ The following examples demonstrate the functionality of ``vtki``.
 Loading and Plotting a Mesh from File
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Loading a mesh is trivial.  The following code block uses a built-in example
-file and displays an airplane mesh.
+file, displays an airplane mesh, saves a screenshot, and returns the camera's
+positon:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
-    mesh = vtki.PolyData(examples.planefile)
-    mesh.plot(color='orange')
+    import numpy as np
+
+    filename = examples.planefile
+    mesh = vtki.read(filename)
+    cpos = mesh.plot(screenshot='./images/airplane.png', color='yellow')
 
 .. image:: ./images/airplane.png
 
-In fact, the code to generate the previous screenshot was created with:
-
-.. code:: python
-
-    mesh.plot(screenshot='airplane.png', color='orange')
 
 You can also take a screenshot without creating an interactive plot window using
 the ``Plotter``:
 
-.. code:: python
+.. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='orange')
+    plotter.add_mesh(mesh, color='yellow')
     plotter.plot(auto_close=False)
-    img = plotter.screenshot('airplane.png')
+    img = plotter.screenshot('./images/airplane.png')
     plotter.close()
 
 The ``img`` array can be used to plot the screenshot in ``matplotlib``:
 
-.. code:: python
+.. code-block:: python
 
     import matplotlib.pyplot as plt
     plt.imshow(img)
@@ -45,7 +44,7 @@ The ``img`` array can be used to plot the screenshot in ``matplotlib``:
 If you need to setup the camera you can do this by plotting first and getting
 the camera after running the ``plot`` function:
 
-.. code:: python
+.. testcode:: python
 
     plotter = vtki.Plotter()
     plotter.add_mesh(mesh)
@@ -54,13 +53,13 @@ the camera after running the ``plot`` function:
 You can then use this cached camera for additional plotting without having to
 manually interact with the ``vtk`` plot window:
 
-.. code:: python
+.. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='orange')
+    plotter.add_mesh(mesh, color='yellow')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
-    img = plotter.screenshot('airplane.png')
+    img = plotter.screenshot('./images/airplane.png')
     plotter.close()
 
 The points and faces from the mesh are directly accessible as a NumPy array:
@@ -93,12 +92,12 @@ Creating a Structured Surface
 This example creates a simple surface grid and plots the resulting grid and its
 curvature:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
+    import numpy as np
 
     # Make data
-    import numpy as np
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -110,7 +109,7 @@ curvature:
     grid.plot()
 
     # Plot mean curvature as well
-    grid.plot_curvature()
+    grid.plot_curvature(screenshot='./images/curvature.png')
 
 .. image:: ./images/curvature.png
 
@@ -135,7 +134,7 @@ Creating a GIF Movie
 This example shows the versatility of the plotting object by generating a moving
 gif:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     import numpy as np
@@ -157,7 +156,7 @@ gif:
     plotter.plot(auto_close=False)
 
     # Open a gif
-    plotter.open_gif('wave.gif')
+    plotter.open_gif('./images/wave.gif')
 
     pts = grid.points.copy()
 
@@ -256,7 +255,7 @@ Removing a single actor:
     plotter = vtki.Plotter(notebook=True)
     actor = plotter.add_mesh(vtki.Sphere())
     plotter.remove_actor(actor)
-    plotter.plot()
+    plotter.show()
 
 
 Clearing the entire plotting window:
@@ -268,13 +267,13 @@ Clearing the entire plotting window:
     plotter.add_mesh(vtki.Sphere())
     plotter.add_mesh(vtki.Plane())
     plotter.clear()  # clears all actors
-    plotter.plot()
+    plotter.show()
 
 
 Or you can give any actor a ``name`` when adding it and if an actor is added
 with that same name at a later time, it will replace the previous actor:
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     plotter = vtki.Plotter(notebook=True)
@@ -302,7 +301,7 @@ use directly on the object (see :ref:`filters_ref`). These filters include:
 To use these filters, call the method of your choice directly on your data object:
 
 
-.. code:: python
+.. testcode:: python
 
     from vtki import examples
 
