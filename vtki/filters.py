@@ -544,3 +544,52 @@ class DataSetFilters(object):
             raise RuntimeError('isosurfaces not understood.')
         alg.Update()
         return _get_output(alg)
+
+
+    def texture_map_to_plane(dataset, origin, point_u, point_v, inplace=False,
+                             name='Texture Coordinates'):
+        """Texture map this dataset to a user defined plane. This is often used
+        to define a plane to texture map an image to this dataset. The plane
+        defines the spatial reference and extent of that image.
+
+        Parameters
+        ----------
+        origin : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            BOTTOM LEFT CORNER of the plane
+
+        point_u : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            BOTTOM RIGHT CORNER of the plane
+
+        point_v : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            TOP LEFT CORNER of the plane
+
+        inplace : bool, optional
+            If True, the new texture coordinates will be added to the dataset
+            inplace. If False (default), a new dataset is returned with the
+            textures coordinates
+
+        name : str, optional
+            The string name to give the new texture coordinates if applying
+            the filter inplace.
+
+        """
+        alg = vtk.vtkTextureMapToPlane()
+        alg.SetOrigin(origin) # BOTTOM LEFT CORNER
+        alg.SetPoint1(point_u) # BOTTOM RIGHT CORNER
+        alg.SetPoint2(point_v) # TOP LEFT CORNER
+        alg.SetInputDataObject(dataset)
+        alg.Update()
+        output = _get_output(alg)
+        if not inplace:
+            return output
+        t_coords = output.GetPointData().GetTCoords()
+        t_coords.SetName(name)
+        otc = dataset.GetPointData().GetTCoords()
+        dataset.GetPointData().SetTCoords(t_coords)
+        dataset.GetPointData().AddArray(t_coords)
+        # CRITICAL:
+        dataset.GetPointData().AddArray(otc) # Add old ones back at the end
+        return # No return type because it is inplace
