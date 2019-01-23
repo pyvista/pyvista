@@ -7,6 +7,19 @@ Plotting
 .. automodule:: vtki.plotting
 
 
+Convenience Functions
+---------------------
+
+
+.. autofunction:: vtki.plot
+
+
+.. autofunction:: vtki.plot_arrows
+
+
+.. autofunction:: vtki.set_plot_theme
+
+
 Base Plotter
 ------------
 
@@ -27,16 +40,3 @@ Plotter
    :show-inheritance:
    :members:
    :undoc-members:
-
-
-Convenience Functions
----------------------
-
-
-.. autofunction:: vtki.plot
-
-
-.. autofunction:: vtki.plot_arrows
-
-
-.. autofunction:: vtki.set_plot_theme

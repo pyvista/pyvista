@@ -74,9 +74,11 @@ def Cylinder(center, direction, radius, height, resolution=100, cap_ends=True):
 
     Examples
     --------
-    >>> cylinder = Cylinder(1, 1, center=np.array([1, 2, 3]))
-    >>> cylinder.plot()
-    
+    >>> import vtki
+    >>> import numpy as np
+    >>> cylinder = vtki.Cylinder(np.array([1, 2, 3]), np.array([1, 1, 1]), 1, 1)
+    >>> cylinder.plot() # doctest:+SKIP
+
     """
     cylinderSource = vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
@@ -141,7 +143,7 @@ def Sphere(radius=0.5, center=[0, 0, 0], direction=[0, 0, 1], theta_resolution=3
     ----------
     radius : float, optional
         Sphere radius
-    
+
     center : np.ndarray or list, optional
         Center in [x, y, z]
 
@@ -149,7 +151,7 @@ def Sphere(radius=0.5, center=[0, 0, 0], direction=[0, 0, 1], theta_resolution=3
         Direction the top of the sphere points to in [x, y, z]
 
     theta_resolution: int , optional
-        Set the number of points in the longitude direction (ranging from 
+        Set the number of points in the longitude direction (ranging from
         start_theta to end theta).
 
     phi_resolution : int, optional

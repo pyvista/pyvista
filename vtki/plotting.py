@@ -462,7 +462,7 @@ class BasePlotter(object):
 
         rng : 2 item list, optional
             Range of mapper for scalars.  Defaults to minimum and maximum of
-            scalars array.  Example: [-1, 2]
+            scalars array.  Example: ``[-1, 2]``
 
         stitle : string, optional
             Scalar title.  By default there is no scalar legend bar.  Setting
@@ -1687,10 +1687,11 @@ class BasePlotter(object):
 
         Examples
         --------
+        >>> import vtki
         >>> sphere = vtki.Sphere()
-        >>> plotter.Plotter()
-        >>> plotter.add_mesh(sphere)
-        >>> plotter.screenshot('screenshot.png')
+        >>> plotter = vtki.Plotter()
+        >>> _ = plotter.add_mesh(sphere)
+        >>> _ = plotter.screenshot('screenshot.png') # doctest:+SKIP
         """
         if not hasattr(self, 'ifilter'):
             self.start_image_filter()
@@ -1766,23 +1767,29 @@ class BasePlotter(object):
         Examples
         --------
         >>> import vtki
+        >>> from vtki import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> othermesh = examples.load_uniform()
         >>> plotter = vtki.Plotter()
-        >>> plotter.add_mesh(mesh, label='My Mesh')
-        >>> plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
-        >>> plotter.add_legend()
-        >>> plotter.plot()
+        >>> _ = plotter.add_mesh(mesh, label='My Mesh')
+        >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
+        >>> _ = plotter.add_legend()
+        >>> plotter.show() # doctest:+SKIP
 
         Alternative manual example
 
         >>> import vtki
+        >>> from vtki import examples
+        >>> mesh = examples.load_hexbeam()
+        >>> othermesh = examples.load_uniform()
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
         >>> plotter = vtki.Plotter()
-        >>> plotter.add_mesh(mesh)
-        >>> plotter.add_mesh(othermesh, 'k')
-        >>> plotter.add_legend(legend_entries)
-        >>> plotter.plot()
+        >>> _ = plotter.add_mesh(mesh)
+        >>> _ = plotter.add_mesh(othermesh, 'k')
+        >>> _ = plotter.add_legend(legend_entries)
+        >>> plotter.show() # doctest:+SKIP
         """
         self.legend = vtk.vtkLegendBoxActor()
 
@@ -1958,10 +1965,14 @@ class Plotter(BasePlotter):
 
     Example
     -------
-    plotter = Plotter()
-    plotter.add_mesh(mesh, color='red')
-    plotter.add_mesh(another_mesh, color='blue')
-    plotter.plot()
+    >>> import vtki
+    >>> from vtki import examples
+    >>> mesh = examples.load_hexbeam()
+    >>> another_mesh = examples.load_uniform()
+    >>> plotter = vtki.Plotter()
+    >>> _ = plotter.add_mesh(mesh, color='red')
+    >>> _ = plotter.add_mesh(another_mesh, color='blue')
+    >>> plotter.show() # doctest:+SKIP
 
     Parameters
     ----------
@@ -1986,6 +1997,9 @@ class Plotter(BasePlotter):
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:
                 self.iren.TerminateApp()
+
+        if vtki.TESTING_OFFSCREEN:
+            off_screen = True
 
         self._labels = []
 

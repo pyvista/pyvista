@@ -28,6 +28,7 @@ before_script: # configure a headless display to test plot generation
 
 install:
   - pip install -r requirements.txt
+  - pip install -r requirements_docs.txt
   - pip install pytest-cov
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
@@ -46,6 +47,10 @@ script:
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
       pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
     fi
+  # And test the documentation
+  - cd ./docs/
+  - make doctest
+  - make html
 
 cache:
   directories:

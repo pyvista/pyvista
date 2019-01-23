@@ -37,15 +37,15 @@ plobj.add_mesh(sgrid, scalars=Z.ravel())
 plobj.plot(auto_close=False)
 
 # Open a gif
-plobj.OpenGif('wave.gif')
+plobj.open_gif('wave.gif')
 
 # Update Z and write a frame for each updated position
 nframe = 15
 for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
     Z = np.sin(R + phase)
     pts[:, -1] = Z.ravel()
-    plobj.UpdateCoordinates(pts)
-    plobj.UpdateScalars(Z.ravel())
+    plobj.update_coordinates(pts)
+    plobj.update_scalars(Z.ravel())
 
     plobj.WriteFrame()
 
@@ -90,5 +90,5 @@ plobj.Close()
 del plobj
 
 #==============================================================================
-# 
+#
 #==============================================================================

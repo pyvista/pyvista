@@ -11,7 +11,7 @@ Empty Object
 ~~~~~~~~~~~~
 An unstructured grid can be initialized with:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     grid = vtki.UnstructuredGrid()
@@ -23,10 +23,11 @@ Creating from Numpy Arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 An unstructured grid can be created directly from numpy arrays.  This is useful when creating a grid from scratch or copying it from another format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_ for available cell types and their descriptions.
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     import vtk
+    import numpy as np
 
     # offset array.  Identifies the start of each cell in the cells array
     offset = np.array([0, 9])
@@ -75,9 +76,12 @@ Loading from File
 ~~~~~~~~~~~~~~~~~
 Unstructured grids can be loaded from a vtk file.
 
-.. code:: python
+.. testcode:: python
 
-    grid = vtki.UnstructuredGrid(filename)
+    import vtki
+    from vtki import examples
+
+    grid = vtki.UnstructuredGrid(examples.hexbeamfile)
 
 
 Structured Grid Creation
@@ -87,7 +91,7 @@ Empty Object
 ~~~~~~~~~~~~
 A structured grid can be initialized with:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     grid = vtki.StructuredGrid()
@@ -95,10 +99,10 @@ A structured grid can be initialized with:
 This creates an empty grid, and is not useful until points are added to it and the shape set using ``SetPoints`` and ``SetDimensions``.  This can be done with:
 
 
-.. code:: python
+.. testcode:: python
 
-    import numpy as np
     import vtki
+    import numpy as np
 
     # create a cube of points
     x = np.arange(-10, 10, 0.25)
@@ -122,9 +126,10 @@ Creating from Numpy Arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 A structured grid can be created directly from numpy arrays.  This is useful when creating a grid from scratch or copying it from another format.
 
-.. code:: python
+.. testcode:: python
 
     import vtki
+    import numpy as np
 
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
@@ -151,7 +156,7 @@ Plotting Grids
 --------------
 This example shows how you can load an unstructured grid from a vtk file and create a plot and gif movie by updating the plotting object.
 
-.. code:: python
+.. testcode:: python
 
     # Load module and example file
     import vtki
@@ -170,13 +175,13 @@ This example shows how you can load an unstructured grid from a vtk file and cre
 
 A simple plot can be created by using:
 
-.. code:: python
+.. testcode:: python
 
     grid.plot(scalars=d[:, 1], stitle='Y Displacement')
 
 A more complex plot can be created using:
 
-.. code:: python
+.. testcode:: python
 
     # Store Camera position.  This can be obtained manually by getting the
     # output of grid.plot()
@@ -190,25 +195,25 @@ A more complex plot can be created using:
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   rng=[-d.max(), d.max()])
     plotter.add_axes()
-    plotter.camera_position(cpos)
+    plotter.camera_position = cpos
 
     # Don't let it close automatically so we can take a screenshot
     cpos = plotter.plot(auto_close=False)
-    plotter.screenshot('beam.png')
+    plotter.screenshot('./images/beam.png')
     plotter.close()
 
 .. image:: ../images/beam.png
 
 You can animate the motion of the beam by updating the positions and scalars of the grid copied to the plotting object.  First you have to setup the plotting object:
 
-.. code:: python
+.. testcode:: python
 
     plotter = vtki.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   show_edges=True, rng=[-d.max(), d.max()],
                   interpolate_before_map=True)
     plotter.add_axes()
-    plotter.camera_position(cpos)
+    plotter.camera_position = cpos
 
 You then open the render window by plotting before opening movie file.  Set auto_close to False so the plotter does not close automatically.  Disabling interactive means the plot will automatically continue without waiting for the user to exit the window.
 
@@ -217,7 +222,7 @@ You then open the render window by plotting before opening movie file.  Set auto
     plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
 
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
-    plotter.open_gif('beam.gif')  # or beam.mp4
+    plotter.open_gif('./images/beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
@@ -233,35 +238,35 @@ You then open the render window by plotting before opening movie file.  Set auto
 
 You can also render the beam as as a wire-frame object:
 
-.. code:: python
+.. testcode:: python
 
     # Animate plot as a wire-frame
     plotter = vtki.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', show_edges=True,
                   rng=[-d.max(), d.max()], interpolate_before_map=True,
                   style='wireframe')
-    plotter.AddAxes()
-    plotter.SetCameraPosition(cpos)
+    plotter.add_axes()
+    plotter.camera_position = cpos
     plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
 
     #plotter.OpenMovie('beam.mp4')
-    plotter.OpenGif('beam_wireframe.gif')
+    plotter.open_gif('beam_wireframe.gif')
     for phase in np.linspace(0, 2*np.pi, 20):
-        plotter.UpdateCoordinates(pts + d*np.cos(phase), render=False)
-        plotter.UpdateScalars(d[:, 1]*np.cos(phase), render=False)
-        plotter.Render()
-        plotter.WriteFrame()
+        plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
+        plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
+        plotter.render()
+        plotter.write_frame()
 
-    plotter.Close()
+    plotter.close()
 
 .. image:: ../images/beam_wireframe.gif
 
 
 Adding Labels to a Plot
 -----------------------
-Labels can be added to a plot using the ``AddPointLabels`` function within the ``Plotter`` object.  The following example loads the included example beam, generates a plotting class, and sub-selects points along the y-z plane and labels their coordinates.  ``AddPointLabels`` requires that the number of labels matches the number of points, and that labels is a list containing one entry per point.  The code automatically converts each item in the list to a string.
+Labels can be added to a plot using the ``add_point_labels`` function within the ``Plotter`` object.  The following example loads the included example beam, generates a plotting class, and sub-selects points along the y-z plane and labels their coordinates.  ``add_point_labels`` requires that the number of labels matches the number of points, and that labels is a list containing one entry per point.  The code automatically converts each item in the list to a string.
 
-.. code:: python
+.. testcode:: python
 
     # Load module and example file
     import vtki
@@ -275,9 +280,9 @@ Labels can be added to a plot using the ``AddPointLabels`` function within the `
     plotter.add_mesh(grid)
 
     # Add labels to points on the yz plane (where x == 0)
-    points = grid.GetNumpyPoints()
+    points = grid.points
     mask = points[:, 0] == 0
-    plotter.AddPointLabels(points[mask], points[mask].tolist())
+    plotter.add_point_labels(points[mask], points[mask].tolist())
 
     plotter.plot()
 
@@ -285,22 +290,21 @@ Labels can be added to a plot using the ``AddPointLabels`` function within the `
 
 This example is similar and shows how labels can be combined with a scalar bar to show the exact value of certain points.
 
-.. code:: python
+.. testcode:: python
 
     # Label the Z position
     values = grid.points[:, 2]
 
     # Create plotting class and add the unstructured grid
     plotter = vtki.Plotter()
-    plotter.add_mesh(grid, scalars=values) # color mesh according to z value
-    plotter.AddScalarBar(title='Z Position')
+    plotter.add_mesh(grid, scalars=values, stitle='Z Position') # color mesh according to z value
 
     # Add labels to points on the yz plane (where x == 0)
     mask = grid.points[:, 0] == 0
-    plotter.AddPointLabels(points[mask], values[mask].tolist(), font_size=24)
+    plotter.add_point_labels(points[mask], values[mask].tolist(), font_size=24)
 
     # add some text to the plot
-    plotter.AddText('Example showing plot labels')
+    plotter.add_text('Example showing plot labels')
 
     plotter.plot()
 

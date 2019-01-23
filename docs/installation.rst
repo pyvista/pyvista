@@ -44,7 +44,7 @@ Test Installation
 
 You can test your installation by running an example:
 
-.. code:: python
+.. testcode:: python
 
     from vtki import examples
     examples.plot_wave()

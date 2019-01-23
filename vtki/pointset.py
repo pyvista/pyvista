@@ -44,11 +44,27 @@ class PolyData(vtkPolyData, vtki.Common):
 
     Examples
     --------
-    >>> surf = PolyData()  # Create an empty mesh
-    >>> surf = PolyData(vtkobj)  # Initialize from a vtk.vtkPolyData object
-    >>> surf = PolyData(vertices)  # initialize from just vertices
-    >>> surf = PolyData(vertices, faces)  # initialize from vertices and face
-    >>> surf = PolyData('file.ply')  # initialize from a filename
+    >>> import vtki
+    >>> from vtki import examples
+    >>> import vtk
+    >>> import numpy as np
+
+    >>> surf = vtki.PolyData()  # Create an empty mesh
+
+    >>> # Initialize from a vtk.vtkPolyData object
+    >>> vtkobj = vtk.vtkPolyData()
+    >>> surf = vtki.PolyData(vtkobj)
+
+    >>> # initialize from just vertices
+    >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0],])
+    >>> surf = vtki.PolyData(vertices)
+
+    >>> # initialize from vertices and faces
+    >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
+    >>> surf = vtki.PolyData(vertices, faces)
+
+    >>>  # initialize from a filename
+    >>> surf = vtki.PolyData(examples.antfile)
     """
 
     def __init__(self, *args, **kwargs):
@@ -181,6 +197,8 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Examples
         --------
+        >>> import numpy as np
+        >>> import vtki
         >>> vertices = np.array([[0, 0, 0],
                                  [1, 0, 0],
                                  [1, 1, 0],
@@ -189,7 +207,7 @@ class PolyData(vtkPolyData, vtki.Common):
         >>> faces = np.hstack([[4, 0, 1, 2, 3],
                                [3, 0, 1, 4],
                                [3, 1, 2, 4]])  # one square and two triangles
-        >>> surf = PolyData(vertices, faces)
+        >>> surf = vtki.PolyData(vertices, faces)
 
         """
         if deep:
@@ -628,11 +646,11 @@ class PolyData(vtkPolyData, vtki.Common):
         >>> from vtki import examples
         >>> import vtki
         >>> mesh = vtki.PolyData(examples.planefile)
-        >>> submesh = mesh.subdivide(1, 'loop')
+        >>> submesh = mesh.subdivide(1, 'loop') # doctest:+SKIP
 
         alternatively, update mesh in-place
 
-        >>> mesh.subdivide(1, 'loop', inplace=True)
+        >>> mesh.subdivide(1, 'loop', inplace=True) # doctest:+SKIP
         """
         subfilter = subfilter.lower()
         if subfilter == 'linear':
@@ -1492,10 +1510,22 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
     Examples
     --------
-    >>> grid = UnstructuredGrid()
-    >>> grid = UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
-    >>> grid = UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)  # from arrays
-    >>> grid = UnstructuredGrid(filename)  # from a file
+    >>> import vtki
+    >>> from vtki import examples
+    >>> import vtk
+
+    >>> # Create an empy grid
+    >>> grid = vtki.UnstructuredGrid()
+
+    >>> # Copy a vtkUnstructuredGrid
+    >>> vtkgrid = vtk.vtkUnstructuredGrid()
+    >>> grid = vtki.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
+
+    >>> # from arrays
+    >>> #grid = vtki.UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)
+
+    >>> # From a string filename
+    >>> grid = vtki.UnstructuredGrid(examples.hexbeamfile)
 
     """
 
@@ -1580,6 +1610,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         Examples
         --------
+        >>> import numpy
+        >>> import vtk
+        >>> import vtki
         >>> offset = np.array([0, 9])
         >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
         >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
@@ -1931,8 +1964,18 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     Examples
     --------
-    >>> grid = StructuredGrid()  # Create empty grid
-    >>> grid = StructuredGrid(vtkgrid)  # Initialize from a vtk.vtkStructuredGrid object
+    >>> import vtki
+    >>> import vtk
+    >>> import numpy as np
+
+    >>> # Create empty grid
+    >>> grid = vtki.StructuredGrid()
+
+    >>> # Initialize from a vtk.vtkStructuredGrid object
+    >>> vtkgrid = vtk.vtkStructuredGrid()
+    >>> grid = vtki.StructuredGrid(vtkgrid)
+
+    >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 2)
     >>> zrng = np.arange(-10, 10, 2)
