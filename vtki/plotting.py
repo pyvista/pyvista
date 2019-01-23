@@ -424,9 +424,11 @@ class BasePlotter(object):
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
-                 lighting=False, n_colors=256, interpolate_before_map=False,
+                 lighting=True, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
-                 multi_colors=False, name=None, texture=None, **kwargs):
+                 multi_colors=False, name=None, texture=None,
+                 render_points_as_spheres=False, render_lines_as_tubes=False,
+                 edge_color='black', **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -590,7 +592,9 @@ class BasePlotter(object):
                              n_colors=n_colors, interpolate_before_map=interpolate_before_map,
                              cmap=cmap, label=label,
                              scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
-                             name=nm, texture=None, **kwargs)
+                             name=nm, texture=None,
+                             render_points_as_spheres=render_points_as_spheres, render_lines_as_tubes=render_lines_as_tubes,
+                             edge_color=edge_color, **kwargs)
                 actors.append(a)
                 if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -724,6 +728,12 @@ class BasePlotter(object):
         rgb_color = parse_color(color)
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
+        prop.SetEdgeColor(parse_color(edge_color))
+
+        if render_points_as_spheres:
+            prop.SetRenderPointsAsSpheres(render_points_as_spheres)
+        if render_lines_as_tubes:
+            pro.SetRenderLinesAsTubes(render_lines_as_tubes)
 
         # legend label
         if label:
