@@ -80,7 +80,7 @@ def _raise_not_matching(scalars, mesh):
                     'or the number of cells ' +
                     '(%d) ' % mesh.GetNumberOfCells())
 
-def _remove_mapper_from_plotter(plotter, actor, reset_camera=None):
+def _remove_mapper_from_plotter(plotter, actor, reset_camera):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
     try:
         mapper = actor.GetMapper()
@@ -544,7 +544,7 @@ class BasePlotter(object):
 
 
         if isinstance(mesh, vtki.MultiBlock):
-            self.remove_actor(name)
+            self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
             if rng is None and scalars is not None:
                 # Get the data range across the array for all blocks if scalar specified
@@ -790,12 +790,12 @@ class BasePlotter(object):
         if name is None:
             name = str(hex(id(actor)))
         # Remove actor by that name if present
-        self.remove_actor(name)
+        rv = self.remove_actor(name, reset_camera=False)
         self._actors[name] = actor
 
         if reset_camera:
             self.reset_camera()
-        elif not self.camera_set and reset_camera is None:
+        elif not self.camera_set and reset_camera is None and not rv:
             self.reset_camera()
         else:
             self._render()
@@ -808,7 +808,7 @@ class BasePlotter(object):
     def camera(self):
         return self.renderer.GetActiveCamera()
 
-    def remove_actor(self, actor, reset_camera=None):
+    def remove_actor(self, actor, reset_camera=False):
         """
         Removes an actor from the Plotter.
 
@@ -826,20 +826,23 @@ class BasePlotter(object):
                 if k.startswith('{}-'.format(name)):
                     names.append(k)
             if len(names) > 0:
-                self.remove_actor(names)
+                self.remove_actor(names, reset_camera=reset_camera)
             try:
                 actor = self._actors[name]
             except KeyError:
                 # If actor of that name is not present then return success
-                return
+                return False
         if isinstance(actor, collections.Iterable):
+            success = False
             for a in actor:
-                self.remove_actor(a, reset_camera=reset_camera)
-            return
+                rv = self.remove_actor(a, reset_camera=reset_camera)
+                if rv or success:
+                    success = True
+            return success
         if actor is None:
-            return
+            return False
         # First remove this actor's mapper from _scalar_bar_mappers
-        _remove_mapper_from_plotter(self, actor, reset_camera=False)
+        _remove_mapper_from_plotter(self, actor, False)
         self.renderer.RemoveActor(actor)
         if name is None:
             for k, v in self._actors.items():
@@ -853,6 +856,7 @@ class BasePlotter(object):
             self.reset_camera()
         else:
             self._render()
+        return True
 
     def add_axes_at_origin(self):
         """
