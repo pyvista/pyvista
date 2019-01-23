@@ -11,7 +11,7 @@ import numpy as np
 #==============================================================================
 
 filename = examples.planefile
-mesh = vtki.LoadMesh(filename)
+mesh = vtki.read(filename)
 cpos = mesh.plot(screenshot='airplane.png', color='yellow')
 
 #==============================================================================
@@ -26,7 +26,7 @@ R = np.sqrt(X**2 + Y**2)
 Z = np.sin(R)
 
 # Create and plot structured grid
-sgrid = vtki.GenStructSurf(X, Y, Z)
+sgrid = vtki.StructuredGrid(X, Y, Z)
 
 # Make deep copy of points
 pts = sgrid.points.copy()
@@ -47,10 +47,10 @@ for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
     plobj.update_coordinates(pts)
     plobj.update_scalars(Z.ravel())
 
-    plobj.WriteFrame()
+    plobj.write_frame()
 
 # Close movie and delete object
-plobj.Close()
+plobj.close()
 del plobj
 
 
@@ -65,17 +65,17 @@ R = np.sqrt(X**2 + Y**2)
 Z = np.sin(R)
 
 # Create and plot structured grid
-surf = vtki.GenStructSurf(X, Y, Z)
+surf = vtki.StructuredGrid(X, Y, Z)
 #sgrid.plot()
 
 # Extract surface of structured grid and plot mean curvature
 #surf = sgrid.ExtractSurface()
-surf.PlotCurvature('Mean')
+surf.plot_curvature('Mean')
 surf.points
 
 
 # Take screenshot example
-c = vtki.GetCurvature(surf)
+c = surf.extract_surface().tri_filter().curvature('mean')
 
 # Create plotting class
 plobj = vtki.Plotter()
@@ -85,8 +85,8 @@ plobj.add_mesh(surf, scalars=c, stitle='Mean\nCurvature')
 plobj.plot(auto_close=False)
 
 # take a screenshot and close the window when the user presses "q"
-plobj.TakeScreenShot('curvature.png')
-plobj.Close()
+plobj.screenshot('curvature.png')
+plobj.close()
 del plobj
 
 #==============================================================================
