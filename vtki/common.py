@@ -127,7 +127,7 @@ class Common(DataSetFilters):
         try:
             texture = mesh.textures[name]
         except KeyError:
-            logging.warning('Texture ({}) not associated with this dataset'.format(texture))
+            logging.warning('Texture ({}) not associated with this dataset'.format(name))
             texture = None
         else:
             # Be sure to reset the tcoords if present
