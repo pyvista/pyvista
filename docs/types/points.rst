@@ -79,10 +79,10 @@ These meshes are identical.
 
 .. code:: python
 
-    >>> import numpy as np
-    >>> mesh_from_vtk = vtki.PolyData('plane.vtk')
-    >>> print(np.allclose(mesh_from_vtk.points, mesh.points))
-    True
+    import numpy as np
+
+    mesh_from_vtk = vtki.PolyData('plane.vtk')
+    print(np.allclose(mesh_from_vtk.points, mesh.points))
 
 
 Mesh Manipulation and Plotting
