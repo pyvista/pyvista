@@ -28,7 +28,8 @@ class InteractiveTool(object):
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
-                 display_params=None, default_params=None, **kwargs):
+                 display_params=None, default_params=None,
+                 continuous_update=False, **kwargs):
         if not run_from_ipython() or not ipy_available:
             raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
@@ -40,6 +41,8 @@ class InteractiveTool(object):
         # Make the input/output of this tool available
         self.input_dataset = dataset
         self.output_dataset = None
+
+        self.continuous_update = continuous_update
 
         if plotter is None:
             plotter = vtki.BackgroundPlotter()
@@ -222,17 +225,17 @@ class OrthogonalSlicer(InteractiveTool):
                             max=self.input_dataset.bounds[1]-stepx,
                             step=stepx,
                             value=self.input_dataset.center[0],
-                            continuous_update=False)
+                            continuous_update=self.continuous_update)
         ysl = widgets.FloatSlider(min=self.input_dataset.bounds[2]+stepy,
                             max=self.input_dataset.bounds[3]-stepy,
                             step=stepy,
                             value=self.input_dataset.center[1],
-                            continuous_update=False)
+                            continuous_update=self.continuous_update)
         zsl = widgets.FloatSlider(min=self.input_dataset.bounds[4]+stepz,
                             max=self.input_dataset.bounds[5]-stepz,
                             step=stepz,
                             value=self.input_dataset.center[2],
-                            continuous_update=False)
+                            continuous_update=self.continuous_update)
 
         # Create/display the widgets
         interact(update, x=xsl, y=ysl, z=zsl,
@@ -282,7 +285,7 @@ class ManySlicesAlongAxis(InteractiveTool):
             self.input_dataset = self.input_dataset.threshold()
 
         nsl = widgets.IntSlider(min=1, max=10, step=1, value=5,
-                                continuous_update=False)
+                                continuous_update=self.continuous_update)
 
         def update(n, axis, **kwargs):
             if n >= nsl.max:
@@ -338,11 +341,11 @@ class Threshold(InteractiveTool):
         minsl = widgets.FloatSlider(min=self.valid_range[0],
                             max=self.valid_range[1],
                             value=lowstart,
-                            continuous_update=False)
+                            continuous_update=self.continuous_update)
         maxsl = widgets.FloatSlider(min=self.valid_range[0],
                             max=self.valid_range[1],
                             value=highstart,
-                            continuous_update=False)
+                            continuous_update=self.continuous_update)
 
         def _update_slider_ranges(new_rng):
             vmin, vmax = np.nanmin([new_rng[0], minsl.min]), np.nanmax([new_rng[1], minsl.max])
@@ -445,7 +448,7 @@ class Clip(InteractiveTool):
         locsl = widgets.FloatSlider(min=bnds[0],
                             max=bnds[1],
                             value=center[0],
-                            continuous_update=False)
+                            continuous_update=self.continuous_update)
 
         def _update_slider_ranges(normal):
             ax = axchoices.index(normal)
