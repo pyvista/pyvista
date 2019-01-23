@@ -399,3 +399,81 @@ class Threshold(InteractiveTool):
                  scalars=self._get_scalar_names(),
                  invert=default_params.get('invert', False),
                  continuous=False)
+
+
+class Clip(InteractiveTool):
+    """Clips a dataset along an axis.
+
+    Within ipython enviornments like Jupyter notebooks, this will create
+    an interactive render window with slider bars in te ipython enviornment to
+    create clip a dataset.
+
+    Parameters
+    ----------
+    dataset : vtki.Common
+        The datset to orthogonalally slice
+
+    plotter : vtki.BasePlotter
+        The active plotter (rendering window) to use
+
+    clean : bool, optional
+        This will apply a threshold on the input dataset to remove any NaN
+        values. Default is True if active scalar present.
+
+    scalars : str
+        The name of the scalars to plot
+
+    preference : str, optional
+        The preference for data choice when search for the scalar array
+
+    display_params : dict
+        Any plotting keyword parameters to use
+
+    """
+
+    def tool(self, clean=True, default_params=None):
+        if default_params is None:
+            default_params = {}
+        if clean and self.input_dataset.active_scalar is not None:
+            # This will clean out the nan values
+            self.input_dataset = self.input_dataset.threshold()
+
+        bnds = self.input_dataset.bounds
+        center = self.input_dataset.center
+        axchoices = ['x', 'y', 'z']
+
+        locsl = widgets.FloatSlider(min=bnds[0],
+                            max=bnds[1],
+                            value=center[0],
+                            continuous_update=False)
+
+        def _update_slider_ranges(normal):
+            ax = axchoices.index(normal)
+            new_rng = bnds[2*ax:2*ax+2]
+            vmin, vmax = np.nanmin([new_rng[0], locsl.min]), np.nanmax([new_rng[1], locsl.max])
+            # Update to the total range
+            locsl.min = vmin
+            locsl.max = vmax
+            locsl.value = center[ax]
+            locsl.min = new_rng[0]
+            locsl.max = new_rng[1]
+            return
+
+        def update(location, normal, invert, **kwargs):
+            if self._last_normal != normal:
+                self._last_normal = normal
+                _update_slider_ranges(normal)
+                return update(locsl.value, normal, invert, **kwargs)
+            self._update_plotting_params(**kwargs)
+            self.plotter.remove_actor(self._data_to_update, reset_camera=False)
+            origin = list(self.input_dataset.center)
+            origin[axchoices.index(normal)] = location
+            self.output_dataset = self.input_dataset.clip(normal=normal, origin=origin, invert=invert)
+            self._data_to_update = self.plotter.add_mesh(self.output_dataset,
+                reset_camera=False, **self.display_params)
+            self._need_to_update = False
+
+        # Create/display the widgets
+        self._last_normal = 'x'
+        interact(update, location=locsl, normal=axchoices, invert=True,
+                 scalars=self._get_scalar_names())

@@ -21,6 +21,7 @@ from vtki.qt_plotting import BackgroundPlotter
 from vtki.ipy_tools import OrthogonalSlicer
 from vtki.ipy_tools import ManySlicesAlongAxis
 from vtki.ipy_tools import Threshold
+from vtki.ipy_tools import Clip
 
 import numpy as np
 
