@@ -592,7 +592,7 @@ class BasePlotter(object):
                              scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
                              name=nm, texture=None, **kwargs)
                 actors.append(a)
-                if reset_camera is None or reset_camera:
+                if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
                     self.camera_set = False
