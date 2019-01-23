@@ -85,7 +85,10 @@ class InteractiveTool(object):
             rng = self.input_dataset.get_data_range(name)
             if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
                 names.append(name)
-        self._last_scalars = names[0]
+        try:
+            self._last_scalars = names[0]
+        except IndexError:
+            pass
         return names
 
 
