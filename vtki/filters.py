@@ -77,6 +77,7 @@ class DataSetFilters(object):
             specified as a string conventional direction such as ``'x'`` for
             ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
+        origin : tuple(float)
             The center ``(x,y,z)`` coordinate of the plane on which the clip
             occurs
 
@@ -393,7 +394,10 @@ class DataSetFilters(object):
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(dataset):
-        """Extract the geometry of the dataset as PolyData"""
+        """Extract the outer surface of a volume or structured grid dataset as
+        PolyData. This will extract all 0D, 1D, and 2D cells producing the
+        boundary faces of the dataset.
+        """
         alg = vtk.vtkGeometryFilter()
         alg.SetInputDataObject(dataset)
         alg.Update()
