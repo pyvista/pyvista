@@ -735,7 +735,7 @@ class BasePlotter(object):
         if render_points_as_spheres:
             prop.SetRenderPointsAsSpheres(render_points_as_spheres)
         if render_lines_as_tubes:
-            pro.SetRenderLinesAsTubes(render_lines_as_tubes)
+            prop.SetRenderLinesAsTubes(render_lines_as_tubes)
 
         # legend label
         if label:
