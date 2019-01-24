@@ -335,7 +335,7 @@ class BasePlotter(object):
         if hasattr(self, 'ren_win'):
             if hasattr(self, 'render_trigger'):
                 self.render_trigger.emit()
-            else:
+            elif not self.first_time:
                 self.render()
 
     def add_axes(self, interactive=False):
