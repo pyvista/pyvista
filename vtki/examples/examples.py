@@ -3,6 +3,8 @@ import sys
 import os
 import time
 
+import vtk
+
 import vtki
 import numpy as np
 
@@ -14,7 +16,8 @@ hexbeamfile = os.path.join(dir_path, 'hexbeam.vtk')
 spherefile = os.path.join(dir_path, 'sphere.ply')
 uniformfile = os.path.join(dir_path, 'uniform.vtk')
 rectfile = os.path.join(dir_path, 'rectilinear.vtk')
-
+globefile = os.path.join(dir_path, 'globe.vtk')
+mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 
 # get location of this folder
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -58,6 +61,15 @@ def load_structured():
     z = np.sin(r)
     return vtki.StructuredGrid(x, y, z)
 
+def load_globe():
+    """ Loads a globe source """
+    globe = vtki.PolyData(globefile)
+    globe.textures['2k_earth_daymap'] = load_globe_texture()
+    return globe
+
+def load_globe_texture():
+    """ Loads a vtk.vtkTexture that can be applied to the globe source """
+    return vtki.load_texture(mapfile)
 
 def plot_ants_plane(off_screen=False, notebook=None):
     """
@@ -112,17 +124,17 @@ def beam_example(off_screen=False, notebook=None):
 
     try:
         import matplotlib
-        colormap = 'bwr'
+        cmap = 'bwr'
     except ImportError:
-        colormap = None
+        cmap = None
 
     # plot this displaced beam
     plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(grid, scalars=d, stitle='Y Displacement',
-                     rng=[-d.max(), d.max()], colormap=colormap)
+                     rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
-    cpos = plotter.plot(autoclose=False)  # store camera position
+    cpos = plotter.plot(auto_close=False)  # store camera position
     # plotter.TakeScreenShot('beam.png')
     plotter.close()
 
@@ -180,8 +192,8 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     plotter.add_mesh(sgrid, scalars=Z.ravel())
     plotter.camera_position = cpos
     plotter.plot(title='Wave Example', window_size=[800, 600],
-                 # autoclose=False, interactive=interactive)
-                 autoclose=False, interactive_update=True)
+                 # auto_close=False, interactive=interactive)
+                 auto_close=False, interactive_update=True)
 
     # Update Z and display a frame for each updated position
     tdelay = 1. / fps

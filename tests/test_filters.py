@@ -73,7 +73,7 @@ def test_threshold():
     assert thresh is not None
     assert isinstance(thresh, vtki.UnstructuredGrid)
     # Now test datasets without arrays
-    with pytest.raises(RuntimeError):
+    with pytest.raises(AssertionError):
         for i, dataset in enumerate(datasets[3:-1]):
             thresh = dataset.threshold()
             assert thresh is not None
@@ -109,11 +109,8 @@ def test_extract_geometry():
         assert outline is not None
         assert isinstance(outline, vtki.PolyData)
 
-def test_extract_edges():
+def test_wireframe():
     for i, dataset in enumerate(datasets):
-        wire = dataset.extract_geometry()
-        assert wire is not None
-        assert isinstance(wire, vtki.PolyData)
         wire = dataset.wireframe()
         assert wire is not None
         assert isinstance(wire, vtki.PolyData)

@@ -1,5 +1,7 @@
 """
-Containers to mimic multi block datasets
+Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
+VTK datasets in one object that can be passed to VTK algorithms and ``vtki``
+filtering/plotting routines.
 """
 import logging
 from weakref import proxy
@@ -14,6 +16,7 @@ log.setLevel('CRITICAL')
 
 import vtki
 from vtki.utilities import wrap, is_vtki_obj, get_scalar
+from vtki import plot
 
 
 class MultiBlock(vtkMultiBlockDataSet):
@@ -34,6 +37,9 @@ class MultiBlock(vtkMultiBlockDataSet):
                     self.DeepCopy(args[0])
                 else:
                     self.ShallowCopy(args[0])
+
+    # Simply bind vtki.plotting.plot to the object
+    plot = plot
 
 
     @property
@@ -97,15 +103,8 @@ class MultiBlock(vtkMultiBlockDataSet):
         return mini, maxi
 
 
-    def plot(self, **kwargs):
-        """
-        Plots all elements in the multiblock dataset
-        """
-        return vtki.plot(self, **kwargs)
-
-
     def get_index_by_name(self, name):
-        # find the actual index based on the name
+        """Find the index number by block name"""
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
@@ -157,9 +156,12 @@ class MultiBlock(vtkMultiBlockDataSet):
         """Sets a block with a VTK data object. To set the name simultaneously,
         pass a string name as the 2nd index.
 
-        Example:
-            >>> multi[0] = vtki.PolyData()
-            >>> multi[1, 'foo'] = vtki.UnstructuredGrid()
+        Example
+        -------
+        >>> import vtki
+        >>> multi = vtki.MultiBlock()
+        >>> multi[0] = vtki.PolyData()
+        >>> multi[1, 'foo'] = vtki.UnstructuredGrid()
         """
         if isinstance(index, collections.Iterable):
             i, name = index[0], index[1]

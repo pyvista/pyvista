@@ -15,6 +15,7 @@ log.setLevel('CRITICAL')
 import vtki
 from vtki.utilities import get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD
 from vtki import DataSetFilters
+from vtki import plot
 
 
 
@@ -23,6 +24,9 @@ class Common(DataSetFilters):
 
     def __init__(self, *args, **kwargs):
         self.references = []
+
+    # Simply bind vtki.plotting.plot to the object
+    plot = plot
 
     @property
     def active_scalar_info(self):
@@ -66,6 +70,73 @@ class Common(DataSetFilters):
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
         #self._point_ref = points
+
+    @property
+    def t_coords(self):
+        return vtk_to_numpy(self.GetPointData().GetTCoords())
+
+    @t_coords.setter
+    def t_coords(self, t_coords):
+        if not isinstance(t_coords, np.ndarray):
+            raise TypeError('Texture coordinates must be a numpy array')
+        if t_coords.ndim != 2:
+            raise AssertionError('Texture coordinates must by a 2-dimensional array')
+        if t_coords.shape[0] != self.n_points:
+            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
+        if t_coords.shape[1] != 2:
+            raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
+        if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
+            raise AssertionError('Texture coordinates must be within (0, 1) range.')
+        # convert the array
+        vtkarr = numpy_to_vtk(t_coords)
+        vtkarr.SetName('Texture Coordinates')
+        self.GetPointData().SetTCoords(vtkarr)
+        return
+
+    @property
+    def textures(self):
+        """A dictionary to hold ``vtk.vtkTexture`` objects that can be
+        associated with this dataset. When casting back to a VTK dataset or
+        filtering this dataset, these textures will not be passed.
+        """
+        if not hasattr(self, '_textures'):
+            self._textures = {}
+        return self._textures
+
+    def _activate_texture(mesh, name):
+        """Grab a texture and update the active texture coordinates. This makes
+        sure to not destroy onld texture coordinates
+
+        Parameters
+        ----------
+        name : str
+            The name of the texture and texture coordinates to activate
+
+        Return
+        ------
+        vtk.vtkTexture : The active texture
+        """
+        if name == True:
+            # Grab the first name availabe if True
+            try:
+                name = list(mesh.textures.keys())[0]
+            except IndexError:
+                logging.warning('No textures associated with input mesh.')
+                return None
+        # Grab the texture object by name
+        try:
+            texture = mesh.textures[name]
+        except KeyError:
+            logging.warning('Texture ({}) not associated with this dataset'.format(name))
+            texture = None
+        else:
+            # Be sure to reset the tcoords if present
+            # Grab old coordinates
+            if name in mesh.scalar_names:
+                old_tcoord = mesh.GetPointData().GetTCoords()
+                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(name))
+                mesh.GetPointData().AddArray(old_tcoord)
+        return texture
 
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
@@ -129,7 +200,7 @@ class Common(DataSetFilters):
             array = array.view(np.bool)
         return array
 
-    def _add_point_scalar(self, scalars, name, setactive=False, deep=True):
+    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
         """
         Adds point scalars to the mesh
 
@@ -141,7 +212,7 @@ class Common(DataSetFilters):
         name : str
             Name of point scalars to add.
 
-        setactive : bool, optional
+        set_active : bool, optional
             Sets the scalars to the active plotting scalars.  Default False.
 
         deep : bool, optional
@@ -165,97 +236,10 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
-        if setactive:
+        if set_active:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalar_info = [POINT_DATA_FIELD, name]
 
-    def plot(self, **args):
-        """
-        Adds a vtk unstructured, structured, or polymesh to the plotting object
-
-        Parameters
-        ----------
-        mesh : vtk unstructured, structured, or polymesh
-            A vtk unstructured, structured, or polymesh to plot.
-
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
-
-            Color will be overridden when scalars are input.
-
-        style : string, optional
-            Visualization style of the vtk mesh.  One for the following:
-                style='surface'
-                style='wireframe'
-                style='points'
-
-            Defaults to 'surface'
-
-        scalars : numpy array, optional
-            Scalars used to "color" the mesh.  Accepts an array equal to the
-            number of cells or the number of points in the mesh.  Array should
-            be sized as a single vector.
-
-        rng : 2 item list, optional
-            Range of mapper for scalars.  Defaults to minimum and maximum of
-            scalars array.  Example: [-1, 2]
-
-        stitle : string, optional
-            Scalar title.  By default there is no scalar legend bar.  Setting
-            this creates the legend bar and adds a title to it.  To create a
-            bar with no title, use an empty string (i.e. '').
-
-        showedges : bool, optional
-            Shows the edges of a mesh.  Does not apply to a wireframe
-            representation.
-
-        psize : float, optional
-            Point size.  Applicable when style='points'.  Default 5.0
-
-        opacity : float, optional
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
-
-        linethick : float, optional
-            Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default None.
-
-        flipscalars : bool, optional
-            Flip scalar display approach.  Default is red is minimum and blue
-            is maximum.
-
-        lighting : bool, optional
-            Enable or disable Z direction lighting.  True by default.
-
-        ncolors : int, optional
-            Number of colors to use when displaying scalars.
-
-        interpolatebeforemap : bool, default False
-            Enabling makes for a smoother scalar display.  Default False
-
-        screenshot : str, default None
-            Takes a screenshot when window is closed when a filename is
-            entered as this parameter.
-
-        full_screen : bool, optional
-            Opens window in full screen.  When enabled, ignores window_size.
-            Default False.
-
-        Returns
-        -------
-        cpos : list
-            Camera position, focal point, and view up.
-
-        Examples
-        --------
-        >>> # take screenshot without opening window
-        >>> mesh.plot(off_screen=True, screenshot='mesh_picture.png')
-
-        """
-        return vtki.plot(self, **args)
 
     def points_to_double(self):
         """ Makes points double precision """
@@ -369,7 +353,7 @@ class Common(DataSetFilters):
             array = array.view(np.bool)
         return array
 
-    def _add_cell_scalar(self, scalars, name, setactive=False, deep=True):
+    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
         """
         Adds cell scalars to the vtk object.
 
@@ -381,7 +365,7 @@ class Common(DataSetFilters):
         name : str
             Name of point scalars to add.
 
-        setactive : bool, optional
+        set_active : bool, optional
             Sets the scalars to the active plotting scalars.  Default False.
 
         deep : bool, optional
@@ -403,7 +387,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetCellData().AddArray(vtkarr)
-        if setactive:
+        if set_active:
             self.GetCellData().SetActiveScalars(name)
             self._active_scalar_info = [CELL_DATA_FIELD, name]
 
@@ -548,11 +532,18 @@ class Common(DataSetFilters):
 
     @property
     def scalar_names(self):
+        """A list of scalar names for the dataset. This makes
+        sure to put the active scalar's name first in the list."""
         names = []
         for i in range(self.GetPointData().GetNumberOfArrays()):
             names.append(self.GetPointData().GetArrayName(i))
         for i in range(self.GetCellData().GetNumberOfArrays()):
             names.append(self.GetCellData().GetArrayName(i))
+        try:
+            names.remove(self.active_scalar_name)
+            names.insert(0, self.active_scalar_name)
+        except ValueError:
+            pass
         return names
 
 
@@ -567,27 +558,65 @@ class Common(DataSetFilters):
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
         return attrs
 
-    def _repr_html_(self):
-        """A pretty representation for Jupyter notebooks"""
-        fmt = ""
-        if self.n_scalars > 0:
-            fmt += "<table>"
-            fmt += "<tr><th>Information</th><th>Data Arrays</th></tr>"
-            fmt += "<tr><td>"
-        fmt += "\n"
-        fmt += "<table>\n"
-        fmt += "<tr><th>{}</th><th>Values</th></tr>\n".format(self.GetClassName())
-        row = "<tr><td>{}</td><td>{}</td></tr>\n"
 
+    def head(self, display=True, html=None):
+        """Return the header stats of this dataset. If in IPython, this will
+        be formatted to HTML. Otherwise returns a console friendly string"""
+        try:
+            __IPYTHON__
+            ipy = True
+        except NameError:
+            ipy = False
+        if html == True:
+            ipy = True
+        elif html == False:
+            ipy = False
+        # Generate the output
+        if ipy:
+            fmt = ""
+            # HTML version
+            fmt += "\n"
+            fmt += "<table>\n"
+            fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(self.GetClassName())
+            row = "<tr><td>{}</td><td>{}</td></tr>\n"
+            # now make a call on the object to get its attributes as a list of len 2 tuples
+            for attr in self._get_attrs():
+                try:
+                    fmt += row.format(attr[0], attr[2].format(*attr[1]))
+                except:
+                    fmt += row.format(attr[0], attr[2].format(attr[1]))
+            fmt += row.format('N Scalars', self.n_scalars)
+            fmt += "</table>\n"
+            fmt += "\n"
+            if display:
+                from IPython.display import display, HTML
+                display(HTML(fmt))
+                return
+            return fmt
+        # Otherwise return a string that is Python console friendly
+        fmt = "{} ({})\n".format(self.GetClassName(), hex(id(self)))
         # now make a call on the object to get its attributes as a list of len 2 tuples
+        row = "  {}:\t{}\n"
         for attr in self._get_attrs():
             try:
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
+        fmt += row.format('N Scalars', self.n_scalars)
+        return fmt
 
-        fmt += "</table>\n"
-        fmt += "\n"
+
+    def _repr_html_(self):
+        """A pretty representation for Jupyter notebooks that includes header
+        details and information about all scalar arrays"""
+        fmt = ""
+        if self.n_scalars > 0:
+            fmt += "<table>"
+            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
+            fmt += "<tr><td>"
+        # Get the header info
+        fmt += self.head(display=False, html=True)
+        # Fill out scalar arrays
         if self.n_scalars > 0:
             fmt += "</td><td>"
             fmt += "\n"

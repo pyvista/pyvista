@@ -1,0 +1,6 @@
+Sphinx
+sphinx-autobuild
+sphinx-rtd-theme
+sphinxcontrib-napoleon
+sphinxcontrib-websupport
+pytest-sphinx

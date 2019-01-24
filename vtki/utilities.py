@@ -4,6 +4,7 @@ Supporting functions for polydata and grid objects
 """
 import logging
 import ctypes
+import imageio
 
 import numpy as np
 import vtk
@@ -99,9 +100,10 @@ def lines_from_points(points):
     This example plots two line segments at right angles to each other line.
 
     >>> import vtki
+    >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> lines = vtki.MakeLine(points)
-    >>> lines.plot()
+    >>> lines = vtki.lines_from_points(points)
+    >>> lines.plot() # doctest:+SKIP
 
     """
     # Assuming ordered points, create array defining line order
@@ -239,3 +241,49 @@ def setErrorOutputFile(filename):
     outputWindow = vtk.vtkOutputWindow()
     outputWindow.SetInstance(fileOutputWindow)
     return fileOutputWindow, outputWindow
+
+
+def load_texture(filename):
+    """Loads a ``vtkTexture`` from an image file."""
+    ext = os.path.splitext(filename)[1].lower()
+    if ext in ['.jpg', '.jpeg']:
+        reader = vtk.vtkJPEGReader()
+    elif ext in ['.tif', '.tiff']:
+        reader = vtk.vtkTIFFReader()
+    elif ext in ['.png']:
+        reader = vtk.vtkPNGReader()
+    else:
+        # Otherwise, use the imageio reader
+        return numpy_to_texture(imagio.imread(filename))
+    reader.SetFileName(filename)
+    reader.Update()
+    texture = vtk.vtkTexture()
+    texture.SetInputDataObject(reader.GetOutputDataObject(0))
+    texture.Update()
+    return texture
+
+
+def numpy_to_texture(image):
+    """Convert a NumPy image array to a vtk.vtkTexture"""
+    if not isinstance(image, np.ndarray):
+        raise TypeError('Unknown input type ({})'.format(type(image)))
+    if image.ndim != 3 or image.shape[2] != 3:
+        raise AssertionError('Input image must be nn by nm by RGB')
+    grid = vtki.UniformGrid((image.shape[1], image.shape[0], 1))
+    grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
+    grid.set_active_scalar('Image')
+    vtex = vtk.vtkTexture()
+    vtex.SetInputDataObject(grid)
+    vtex.Update()
+    return vtex
+
+
+def is_inside_bounds(point, bounds):
+    """ Checks if a point is inside a set of bounds """
+    if not (bounds[0] < point[0] < bounds[1]):
+        return False
+    if not (bounds[2] < point[1] < bounds[3]):
+        return False
+    if not (bounds[4] < point[2] < bounds[5]):
+        return False
+    return True

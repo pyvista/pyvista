@@ -61,7 +61,8 @@ setup(
     keywords='vtk numpy plotting mesh',
     package_data={'vtki.examples': ['airplane.ply', 'ant.ply',
                                     'hexbeam.vtk', 'sphere.ply',
-                                    'uniform.vtk', 'rectilinear.vtk']},
+                                    'uniform.vtk', 'rectilinear.vtk',
+                                    'globe.vtk', '2k_earth_daymap.jpg']},
     install_requires=install_requires,
     extras_require={
         'ipy_tools': ['ipython', 'ipywidgets'],

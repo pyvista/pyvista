@@ -36,11 +36,11 @@ def test_plot(tmpdir):
                           show_bounds=True,
                           color='r',
                           style='wireframe',
-                          linethick=10,
+                          line_width=10,
                           scalars=scalars,
-                          flipscalars=True,
-                          colormap='bwr',
-                          interpolatebeforemap=True,
+                          flip_scalars=True,
+                          cmap='bwr',
+                          interpolate_before_map=True,
                           screenshot=filename)
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
@@ -100,7 +100,7 @@ def test_plot_add_bounds_axes():
 def test_plot_add_scalar_bar():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.add_scalar_bar(label_fontsize=10, title_fontsize=20, title='woa')
+    plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa')
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -148,7 +148,7 @@ def test_make_movie():
     plotter.remove_actor(actor)
     plotter.add_mesh(movie_sphere,
                      scalars=np.random.random(movie_sphere.n_faces))
-    plotter.plot(autoclose=False, window_size=[304, 304])
+    plotter.plot(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
     for i in range(10):
         plotter.write_frame()
@@ -198,8 +198,8 @@ def test_add_point_labels():
         plotter.add_point_labels(points, range(n - 1))
 
     plotter.set_background('k')
-    plotter.add_point_labels(points, range(n), showpoints=True, pointcolor='r')
-    plotter.add_point_labels(points - 1, range(n), showpoints=False, pointcolor='r')
+    plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
+    plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
     plotter.plot()
 
 
@@ -208,7 +208,7 @@ def test_add_points():
     n = 10
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     points = np.random.random((n, 3))
-    plotter.add_points(points, scalars=np.arange(10), colormap=None, flipscalars=True)
+    plotter.add_points(points, scalars=np.arange(10), cmap=None, flip_scalars=True)
     plotter.plot()
 
 
@@ -235,8 +235,8 @@ def test_update():
 def test_plot_cell_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
-    plotter.add_mesh(sphere, interpolatebeforemap=True, scalars=scalars,
-                     ncolors=5, rng=10)
+    plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
+                     n_colors=5, rng=10)
     plotter.plot()
 
 
@@ -323,7 +323,7 @@ def test_multi_block_plot():
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
-    multi.plot(scalars='Random Data', off_screen=OFF_SCREEN)
+    multi.plot(scalars='Random Data', off_screen=OFF_SCREEN, multi_colors=True)
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -331,4 +331,22 @@ def test_clear():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.clear()
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_texture():
+    """"Test adding a texture to a plot"""
+    globe = examples.load_globe()
+    texture = examples.load_globe_texture()
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(globe, texture=texture)
+    plotter.plot()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_texture_associated():
+    """"Test adding a texture to a plot"""
+    globe = examples.load_globe()
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(globe, texture=True)
     plotter.plot()

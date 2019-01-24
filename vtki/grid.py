@@ -1,5 +1,5 @@
 """
-Sub-classes for vtk.vtkUnstructuredGrid and vtk.vtkStructuredGrid
+Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData
 """
 import os
 import logging
@@ -12,7 +12,6 @@ from vtk.util.numpy_support import numpy_to_vtk
 import numpy as np
 
 import vtki
-from vtki import PointSetFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -26,6 +25,7 @@ class Grid(vtki.Common):
 
     @property
     def dimensions(self):
+        """Returns a length 3 tuple of the grid's dimensions"""
         return self.GetDimensions()
 
     @dimensions.setter
@@ -49,8 +49,18 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     Examples
     --------
-    >>> grid = RectilinearGrid()  # Create empty grid
-    >>> grid = RectilinearGrid(vtkgrid)  # Initialize from a vtk.vtkRectilinearGrid object
+    >>> import vtki
+    >>> import vtk
+    >>> import numpy as np
+
+    >>> # Create empty grid
+    >>> grid = vtki.RectilinearGrid()
+
+    >>> # Initialize from a vtk.vtkRectilinearGrid object
+    >>> vtkgrid = vtk.vtkRectilinearGrid()
+    >>> grid = vtki.RectilinearGrid(vtkgrid)
+
+    >>> # Creat from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
@@ -208,15 +218,34 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @property
     def x(self):
+        """Get the coordinates along the X-direction"""
         return vtk_to_numpy(self.GetXCoordinates())
+
+    @x.setter
+    def x(self, coords):
+        """Set the coordinates along the X-direction"""
+        self.SetXCoordinates(numpy_to_vtk(coords))
 
     @property
     def y(self):
+        """Get the coordinates along the Y-direction"""
         return vtk_to_numpy(self.GetYCoordinates())
+
+    @y.setter
+    def y(self, coords):
+        """Set the coordinates along the Y-direction"""
+        self.SetYCoordinates(numpy_to_vtk(coords))
 
     @property
     def z(self):
+        """Get the coordinates along the Z-direction"""
         return vtk_to_numpy(self.GetZCoordinates())
+
+
+    @z.setter
+    def z(self, coords):
+        """Set the coordinates along the Z-direction"""
+        self.SetZCoordinates(numpy_to_vtk(coords))
 
 
     # @property
@@ -240,7 +269,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
 
-class UniformGrid(vtkImageData, Grid, PointSetFilters):
+class UniformGrid(vtkImageData, Grid):
     """
     Extends the functionality of a vtk.vtkImageData object
     Can be initialized in several ways:
@@ -254,14 +283,28 @@ class UniformGrid(vtkImageData, Grid, PointSetFilters):
 
     Examples
     --------
-    >>> grid = UniformGrid()  # Create empty grid
-    >>> grid = UniformGrid(vtkgrid)  # Initialize from a vtk.vtkImageData object
+    >>> import vtki
+    >>> import vtk
+    >>> import numpy as np
+
+    >>> # Create empty grid
+    >>> grid = vtki.UniformGrid()
+
+    >>> # Initialize from a vtk.vtkImageData object
+    >>> vtkgrid = vtk.vtkImageData()
+    >>> grid = vtki.UniformGrid(vtkgrid)
+
+    >>> # Using just the grid dimensions
     >>> dims = (10, 10, 10)
-    >>> grid = vtki.UniformGrid(dims) # Using default spacing and origin
+    >>> grid = vtki.UniformGrid(dims)
+
+    >>> # Using dimensions and spacing
     >>> spacing = (2, 1, 5)
-    >>> grid = vtki.UniformGrid(dims, spacing) # Usign default origin
+    >>> grid = vtki.UniformGrid(dims, spacing)
+
+    >>> # Using dimensions, spacing, and an origin
     >>> origin = (10, 35, 50)
-    >>> grid = vtki.UniformGrid(dims, spacing, origin) # Everything is specified
+    >>> grid = vtki.UniformGrid(dims, spacing, origin)
 
     """
 
@@ -446,6 +489,7 @@ class UniformGrid(vtkImageData, Grid, PointSetFilters):
 
     @property
     def origin(self):
+        """The origins of the grid"""
         return self.GetOrigin()
 
     @origin.setter
@@ -456,6 +500,7 @@ class UniformGrid(vtkImageData, Grid, PointSetFilters):
 
     @property
     def spacing(self):
+        """Get the spacing for each axial direction."""
         return self.GetSpacing()
 
     @spacing.setter

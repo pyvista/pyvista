@@ -3,29 +3,24 @@ These classes hold methods to apply general filters to any data type.
 By inherritting these classes into the wrapped VTK data structures, a user
 can easily apply common filters in an intuitive manner.
 
-Example:
+Example
+-------
 
-    >>> import vtki
-    >>> from vtki import examples
-    >>> dataset = examples.load_uniform()
-    >>> dataset.set_active_scalar('Spatial Point Data') # Array the filters will use
-    >>> dataset.plot() # Inspect the starting dataset
+>>> import vtki
+>>> from vtki import examples
+>>> dataset = examples.load_uniform()
 
-    >>> # Threshold
-    >>> thresh = dataset.threshold([100, 500])
-    >>> thresh.plot()
+>>> # Threshold
+>>> thresh = dataset.threshold([100, 500])
 
-    >>> # Slice
-    >>> slc = dataset.slice()
-    >>> slc.plot()
+>>> # Slice
+>>> slc = dataset.slice()
 
-    >>> # Clip
-    >>> clp = dataset.clip(invert=True)
-    >>> clp.plot()
+>>> # Clip
+>>> clp = dataset.clip(invert=True)
 
-    >>> # Contour
-    >>> iso = dataset.contour()
-    >>> iso.plot()
+>>> # Contour
+>>> iso = dataset.contour()
 
 """
 import collections
@@ -34,7 +29,7 @@ import numpy as np
 import vtk
 
 import vtki
-from vtki.utilities import get_scalar, wrap
+from vtki.utilities import get_scalar, wrap, is_inside_bounds
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -65,16 +60,6 @@ def _generate_plane(normal, origin):
     return plane
 
 
-def _is_inside_bounds(point, bounds):
-    """ Checks if a point is inside a set of bounds """
-    if not (bounds[0] < point[0] < bounds[1]):
-        return False
-    if not (bounds[2] < point[1] < bounds[3]):
-        return False
-    if not (bounds[4] < point[2] < bounds[5]):
-        return False
-    return True
-
 
 class DataSetFilters(object):
     """A set of common filters that can be applied to any vtkDataSet"""
@@ -88,12 +73,13 @@ class DataSetFilters(object):
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be specified
-            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
-            or ``'-x'`` for ``(-1,0,0), etc.
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
         origin : tuple(float)
-            The center (x,y,z) coordinate of the plane on which the clip occurs
+            The center ``(x,y,z)`` coordinate of the plane on which the clip
+            occurs
 
         invert : bool
             Flag on whether to flip/invert the clip
@@ -115,7 +101,7 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def slice(dataset, normal='x', origin=None):
+    def slice(dataset, normal='x', origin=None, generate_triangles=False):
         """Slice a dataset by a plane at the specified origin and normal vector
         orientation. If no origin is specified, the center of the input dataset will
         be used.
@@ -123,12 +109,16 @@ class DataSetFilters(object):
         Parameters
         ----------
         normal : tuple(float) or str
-            Length 3 tuple for the normal vector direction. Can also be specified
-            as a string conventional direction such as ``'x'`` for ``(1,0,0)``
-            or ``'-x'`` for ``(-1,0,0), etc.
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)```, etc.
 
         origin : tuple(float)
             The center (x,y,z) coordinate of the plane on which the slice occurs
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
 
         """
         if isinstance(normal, str):
@@ -136,19 +126,21 @@ class DataSetFilters(object):
         # find center of data if origin not specified
         if origin is None:
             origin = dataset.center
-        if not _is_inside_bounds(origin, dataset.bounds):
-            raise RuntimeError('Slice is outside data bounds.')
+        if not is_inside_bounds(origin, dataset.bounds):
+            raise AssertionError('Slice is outside data bounds.')
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
         # create slice
         alg = vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
         alg.SetCutFunction(plane) # the the cutter to use the plane we made
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
         alg.Update() # Perfrom the Cut
         return _get_output(alg)
 
 
-    def slice_orthogonal(dataset, x=None, y=None, z=None):
+    def slice_orthogonal(dataset, x=None, y=None, z=None, generate_triangles=False):
         """Creates three orthogonal slices through the dataset on the three
         caresian planes. Yields a MutliBlock dataset of the three slices
 
@@ -163,6 +155,10 @@ class DataSetFilters(object):
         z : float
             The Z location of the XY slice
 
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
         """
         output = vtki.MultiBlock()
         # Create the three slices
@@ -172,13 +168,13 @@ class DataSetFilters(object):
             y = dataset.center[1]
         if z is None:
             z = dataset.center[2]
-        output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z])
-        output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z])
-        output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z])
+        output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z], generate_triangles=generate_triangles)
+        output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z], generate_triangles=generate_triangles)
+        output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z], generate_triangles=generate_triangles)
         return output
 
 
-    def slice_along_axis(dataset, n=5, axis='x', tol=None):
+    def slice_along_axis(dataset, n=5, axis='x', tolerance=None, generate_triangles=False):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -191,8 +187,12 @@ class DataSetFilters(object):
             Can be string name (``'x'``, ``'y'``, or ``'z'``) or axis index
             (``0``, ``1``, or ``2``).
 
-        tol : float, optional
-            The tolerance to the edge of the dataset bounds to create the slices
+        tolerance : float, optional
+            The toleranceerance to the edge of the dataset bounds to create the slices
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
 
         """
         output = vtki.MultiBlock()
@@ -205,14 +205,14 @@ class DataSetFilters(object):
         else:
             ax = axis
         # get the locations along that axis
-        if tol is None:
-            tol = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
-        rng = np.linspace(dataset.bounds[ax*2]+tol, dataset.bounds[ax*2+1]-tol, n)
+        if tolerance is None:
+            tolerance = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
+        rng = np.linspace(dataset.bounds[ax*2]+tolerance, dataset.bounds[ax*2+1]-tolerance, n)
         center = list(dataset.center)
         # Make each of the slices
         for i in range(n):
             center[ax] = rng[i]
-            slc = DataSetFilters.slice(dataset, normal=axis, origin=center)
+            slc = DataSetFilters.slice(dataset, normal=axis, origin=center, generate_triangles=generate_triangles)
             output[i, 'slice%.2d'%i] = slc
         return output
 
@@ -257,7 +257,7 @@ class DataSetFilters(object):
         arr, field = get_scalar(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
-            raise RuntimeError('No arrays present to threshold.')
+            raise AssertionError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two fitlers:
         if isinstance(value, collections.Iterable) and invert:
@@ -286,7 +286,7 @@ class DataSetFilters(object):
         # check if value is iterable (if so threshold by min max range like ParaView)
         if isinstance(value, collections.Iterable):
             if len(value) != 2:
-                raise RuntimeError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
+                raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
         else:
             # just a single value
@@ -362,18 +362,18 @@ class DataSetFilters(object):
                     invert=invert, continuous=continuous, preference=preference)
 
 
-    def outline(dataset, gen_faces=False):
+    def outline(dataset, generate_faces=False):
         """Produces an outline of the full extent for the input dataset.
 
         Parameters
         ----------
-        gen_faces : bool, optional
+        generate_faces : bool, optional
             Generate solid faces for the box. This is off by default
 
         """
         alg = vtk.vtkOutlineFilter()
         alg.SetInputDataObject(dataset)
-        alg.SetGenerateFaces(gen_faces)
+        alg.SetGenerateFaces(generate_faces)
         alg.Update()
         return wrap(alg.GetOutputDataObject(0))
 
@@ -394,13 +394,16 @@ class DataSetFilters(object):
         return wrap(alg.GetOutputDataObject(0))
 
     def extract_geometry(dataset):
-        """Extract the geometry of the dataset as PolyData"""
+        """Extract the outer surface of a volume or structured grid dataset as
+        PolyData. This will extract all 0D, 1D, and 2D cells producing the
+        boundary faces of the dataset.
+        """
         alg = vtk.vtkGeometryFilter()
         alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
 
-    def extract_edges(dataset):
+    def wireframe(dataset):
         """Extract all the internal/external edges of the dataset as PolyData.
         This produces a full wireframe representation of the input dataset.
         """
@@ -408,12 +411,6 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
-
-    def wireframe(dataset):
-        """An alias for ``extract_edges()`` which produces a full wireframe
-        representation of the input dataset.
-        """
-        return DataSetFilters.extract_edges(dataset)
 
 
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
@@ -489,12 +486,6 @@ class DataSetFilters(object):
         return _get_output(alg, active_scalar=name, active_scalar_field='point')
 
 
-
-
-class PointSetFilters(object):
-    """Filters that can be applied to point set data objects"""
-
-
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, preference='point'):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
@@ -523,20 +514,22 @@ class PointSetFilters(object):
             for in the dataset.  Must be either 'point' or 'cell'.
 
         """
-        alg = vtk.vtkContourFilter() #vtkMarchingCubes
+        # Make sure the input has scalars to contour on
+        if dataset.n_scalars < 1:
+            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+        alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
-        #dataset.set_active_scalar(scalars, preference=preference)
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        # if field != 0:
-        #     raise RuntimeError('Can only contour by Point data at this time.')
+        if field != 0:
+            raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
@@ -550,3 +543,52 @@ class PointSetFilters(object):
             raise RuntimeError('isosurfaces not understood.')
         alg.Update()
         return _get_output(alg)
+
+
+    def texture_map_to_plane(dataset, origin, point_u, point_v, inplace=False,
+                             name='Texture Coordinates'):
+        """Texture map this dataset to a user defined plane. This is often used
+        to define a plane to texture map an image to this dataset. The plane
+        defines the spatial reference and extent of that image.
+
+        Parameters
+        ----------
+        origin : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            BOTTOM LEFT CORNER of the plane
+
+        point_u : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            BOTTOM RIGHT CORNER of the plane
+
+        point_v : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            TOP LEFT CORNER of the plane
+
+        inplace : bool, optional
+            If True, the new texture coordinates will be added to the dataset
+            inplace. If False (default), a new dataset is returned with the
+            textures coordinates
+
+        name : str, optional
+            The string name to give the new texture coordinates if applying
+            the filter inplace.
+
+        """
+        alg = vtk.vtkTextureMapToPlane()
+        alg.SetOrigin(origin) # BOTTOM LEFT CORNER
+        alg.SetPoint1(point_u) # BOTTOM RIGHT CORNER
+        alg.SetPoint2(point_v) # TOP LEFT CORNER
+        alg.SetInputDataObject(dataset)
+        alg.Update()
+        output = _get_output(alg)
+        if not inplace:
+            return output
+        t_coords = output.GetPointData().GetTCoords()
+        t_coords.SetName(name)
+        otc = dataset.GetPointData().GetTCoords()
+        dataset.GetPointData().SetTCoords(t_coords)
+        dataset.GetPointData().AddArray(t_coords)
+        # CRITICAL:
+        dataset.GetPointData().AddArray(otc) # Add old ones back at the end
+        return # No return type because it is inplace
