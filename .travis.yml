@@ -54,6 +54,8 @@ script:
   - cd ./docs/
   - make doctest
   - make html
+  # And then clean up and changes from running examples with fileio
+  - git reset --hard # removes staged and working directory changes
 
 cache:
   directories:
