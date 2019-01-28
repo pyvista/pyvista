@@ -640,12 +640,6 @@ def get_vtkjs_url(*args):
         host (str): the name of the file hosting service.
         inURL (str): the web URL to the ``.vtkjs`` file.
 
-    Example:
-        >>> import vtki
-        >>> # A Dropbox hosted file:
-        >>> vtki.get_vtkjs_url('dropbox', 'https://www.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs\?dl\=0')
-        'http://viewer.pvgeo.org/?fileURL=https://dl.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs\\?dl\\=0'
-
     """
     if len(args) == 1:
         host = 'dropbox'
