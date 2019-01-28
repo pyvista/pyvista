@@ -30,9 +30,8 @@ class QSlider(object):
     pass
 
 
-def pyqtSignal():
-    return
-
+def pyqtSignal(*args, **kwargs):
+    pass
 
 try:
     from PyQt5.QtCore import pyqtSignal
