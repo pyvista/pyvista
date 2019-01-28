@@ -164,7 +164,7 @@ def test_invalid_points():
         grid.points = None
 
 
-def test_points_bool():
+def test_points_np_bool():
     bool_arr = np.zeros(grid.n_points, np.bool)
     grid.point_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
@@ -173,7 +173,7 @@ def test_points_bool():
     assert grid._point_scalar('bool_arr').dtype == np.bool
 
 
-def test_cells_bool():
+def test_cells_np_bool():
     bool_arr = np.zeros(grid.n_cells, np.bool)
     grid.cell_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
@@ -182,9 +182,54 @@ def test_cells_bool():
     assert grid._cell_scalar('bool_arr').dtype == np.bool
 
 
+def test_cells_uint8():
+    arr = np.zeros(grid.n_cells, np.uint8)
+    grid.cell_arrays['arr'] = arr
+    arr[:] = np.arange(grid.n_cells)
+    assert np.allclose(grid.cell_arrays['arr'], np.arange(grid.n_cells))
+
+
+def test_points_uint8():
+    arr = np.zeros(grid.n_points, np.uint8)
+    grid.point_arrays['arr'] = arr
+    arr[:] = np.arange(grid.n_points)
+    assert np.allclose(grid.point_arrays['arr'], np.arange(grid.n_points))
+
+
+def test_bitarray_points():
+    n = grid.n_points
+    vtk_array = vtk.vtkBitArray()
+    np_array = np.empty(n, np.bool)
+    vtk_array.SetNumberOfTuples(n)
+    vtk_array.SetName('bint_arr')
+    for i in range(n):
+        value = i%2
+        vtk_array.SetValue(i, value)
+        np_array[i] = value
+
+    grid.GetPointData().AddArray(vtk_array)
+    assert np.allclose(grid.point_arrays['bint_arr'], np_array)
+
+
+def test_bitarray_cells():
+    n = grid.n_cells
+    vtk_array = vtk.vtkBitArray()
+    np_array = np.empty(n, np.bool)
+    vtk_array.SetNumberOfTuples(n)
+    vtk_array.SetName('bint_arr')
+    for i in range(n):
+        value = i%2
+        vtk_array.SetValue(i, value)
+        np_array[i] = value
+
+    grid.GetCellData().AddArray(vtk_array)
+    assert np.allclose(grid.cell_arrays['bint_arr'], np_array)
+
+
 def test_html_repr():
-    """This just tests to make sure no errors are thrown on the HTML
-    representation method for Common datasets
+    """
+    This just tests to make sure no errors are thrown on the HTML
+    representation method for Common datasets.
     """
     repr_html = grid._repr_html_()
     assert repr_html is not None

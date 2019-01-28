@@ -240,66 +240,6 @@ class PolyData(vtkPolyData, vtki.Common):
             self.points = vertices
             self.faces = faces
 
-    # def GetNumpyFaces(self, force_C_CONTIGUOUS=False, nocut=False, dtype=None):
-    #     """
-    #     Returns the faces from a polydata object as a numpy array.  Assumes a
-    #     triangular mesh.  Array will be sized (-1, 3) unless nocut is True.
-
-    #     Parameters
-    #     ----------
-    #     force_C_CONTIGUOUS : bool, optional
-    #         Force array to be c contigious.  Default False.
-
-    #     nocut : bool, optional
-    #         When true, array will be shaped (-1, 4) with the first row
-    #         containing only 3.
-
-    #     dtype : np.dtype, optional
-    #         Output data type.
-
-    #     Returns
-    #     -------
-    #     f : np.ndarray
-    #         Array containing triangle point indices.
-    #     """
-    #     f = vtk_to_numpy(self.GetPolys().GetData()).reshape((-1, 4))
-
-    #     # remove triangle size padding
-    #     if not nocut:
-    #         f = f[:, 1:]
-
-    #     if force_C_CONTIGUOUS:
-    #         if dtype:
-    #             f = np.ascontiguousarray(f, dtype)
-    #         else:
-    #             f = np.ascontiguousarray(f)
-    #     elif dtype:
-    #         if f.dtype != dtype:
-    #             f = f.astype(dtype)
-
-    #     return f
-
-    # def SetNumpyFaces(self, f):
-    #     """
-    #     Sets mesh polygons.  Assumes a triangular mesh.
-
-    #     Parameters
-    #     ----------
-    #     f : np.ndarray
-    #         Face indices.  Array must be (-1, 4)
-
-    #     """
-    #     # Check shape
-    #     if f.ndim != 2:
-    #         raise Exception('Faces should be a 2D array')
-    #     elif f.shape[1] != 4:
-    #         raise Exception(
-    #             'First column should contain the number of points per face')
-
-    #     vtkcells = vtk.vtkCellArray()
-    #     vtkcells.SetCells(f.shape[0], numpy_to_vtkIdTypeArray(f, deep=True))
-    #     self.SetPolys(vtkcells)
-
     def edge_mask(self, angle):
         """
         Returns a mask of the points of a surface mesh that have a surface
@@ -434,7 +374,6 @@ class PolyData(vtkPolyData, vtki.Common):
             self.overwrite(bfilter.GetOutput())
         else:
             return PolyData(bfilter.GetOutput())
-
 
     def boolean_difference(self, mesh, inplace=False):
         """
@@ -1369,15 +1308,11 @@ class PolyData(vtkPolyData, vtki.Common):
         f[:, 1:] = f[:, 1:][:, ::-1]
 
 
-
-
-
-
 class PointGrid(vtki.Common):
     """ Class in common with structured and unstructured grids """
 
     def __init__(self, *args, **kwargs):
-        pass
+        super(PointGrid, self).__init__()
 
     def plot_curvature(self, curv_type='mean', **kwargs):
         """

@@ -20,6 +20,13 @@ POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
 
 
+def vtk_bit_array_to_char(vtkarr_bint):
+    """ Cast vtk bit array to a char array """
+    vtkarr = vtk.vtkCharArray()
+    vtkarr.DeepCopy(vtkarr_bint)
+    return vtkarr
+
+
 def is_vtki_obj(obj):
     return isinstance(obj, (vtki.Common, vtki.MultiBlock))
 
@@ -28,6 +35,8 @@ def point_scalar(mesh, name):
     """ Returns point scalars of a vtk object """
     vtkarr = mesh.GetPointData().GetArray(name)
     if vtkarr:
+        if isinstance(vtkarr, vtk.vtkBitArray):
+            vtkarr = vtk_bit_array_to_char(vtkarr)
         return vtk_to_numpy(vtkarr)
 
 
@@ -35,6 +44,8 @@ def cell_scalar(mesh, name):
     """ Returns cell scalars of a vtk object """
     vtkarr = mesh.GetCellData().GetArray(name)
     if vtkarr:
+        if isinstance(vtkarr, vtk.vtkBitArray):
+            vtkarr = vtk_bit_array_to_char(vtkarr)
         return vtk_to_numpy(vtkarr)
 
 

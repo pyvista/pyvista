@@ -9,24 +9,26 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 from vtk.util.numpy_support import numpy_to_vtk
 
-log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
-
 import vtki
-from vtki.utilities import get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD
+from vtki.utilities import (get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD,
+                            vtk_bit_array_to_char)
 from vtki import DataSetFilters
 from vtki import plot
 
+log = logging.getLogger(__name__)
+log.setLevel('CRITICAL')
 
 
 class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
 
-    def __init__(self, *args, **kwargs):
-        self.references = []
-
     # Simply bind vtki.plotting.plot to the object
     plot = plot
+
+    def __init__(self, *args, **kwargs):
+        self.references = []
+        self._point_bool_array_names = []
+        self._cell_bool_array_names = []
 
     @property
     def active_scalar_info(self):
@@ -69,7 +71,6 @@ class Common(DataSetFilters):
             raise TypeError('Points must be a numpy array')
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
-        #self._point_ref = points
 
     @property
     def t_coords(self):
@@ -197,8 +198,15 @@ class Common(DataSetFilters):
                 raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetArray(name)
         assert vtkarr is not None, '%s is not a point scalar' % name
+
+        # numpy does not support bit array data types
+        if isinstance(vtkarr, vtk.vtkBitArray):
+            vtkarr = vtk_bit_array_to_char(vtkarr)
+            if name not in self._point_bool_array_names:
+                self._point_bool_array_names.append(name)
+
         array = vtk_to_numpy(vtkarr)
-        if array.dtype == np.uint8:
+        if array.dtype == np.uint8 and name in self._point_bool_array_names:
             array = array.view(np.bool)
         return array
 
@@ -228,10 +236,14 @@ class Common(DataSetFilters):
         if scalars.shape[0] != self.n_points:
             raise Exception('Number of scalars must match the number of ' +
                             'points')
+
+        # need to track which arrays are boolean as all boolean arrays
+        # must be stored as uint8
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
+            if name not in self._point_bool_array_names:
+                self._point_bool_array_names.append(name)
 
-        # assert scalars.flags.c_contiguous, 'array must be contigious'
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
 
@@ -241,7 +253,6 @@ class Common(DataSetFilters):
         if set_active:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalar_info = [POINT_DATA_FIELD, name]
-
 
     def points_to_double(self):
         """ Makes points double precision """
@@ -349,9 +360,18 @@ class Common(DataSetFilters):
             field, name = self.active_scalar_info
             if field != CELL_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
+
         vtkarr = self.GetCellData().GetArray(name)
+        assert vtkarr is not None, '%s is not a cell scalar' % name
+
+        # numpy does not support bit array data types
+        if isinstance(vtkarr, vtk.vtkBitArray):
+            vtkarr = vtk_bit_array_to_char(vtkarr)
+            if name not in self._cell_bool_array_names:
+                self._cell_bool_array_names.append(name)
+
         array = vtk_to_numpy(vtkarr)
-        if array.dtype == np.uint8:
+        if array.dtype == np.uint8 and name in self._cell_bool_array_names:
             array = array.view(np.bool)
         return array
 
@@ -385,6 +405,7 @@ class Common(DataSetFilters):
         assert scalars.flags.c_contiguous, 'Array must be contigious'
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
+            self._cell_bool_array_names.append(name)
 
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
