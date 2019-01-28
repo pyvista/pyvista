@@ -16,6 +16,7 @@ from vtk.util import numpy_support as VN
 import numpy as np
 import vtki
 from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
+from vtki.export import export_plotter_vtkjs
 import imageio
 
 
@@ -416,7 +417,7 @@ class BasePlotter(object):
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
 
-            self.render()
+            self._render()
             Plotter.last_update_time = curr_time
         else:
             if force_redraw:
@@ -609,6 +610,8 @@ class BasePlotter(object):
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
+        if isinstance(scalars, str):
+            self.mapper.SetArrayName(scalars)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
         if texture == True or isinstance(texture, str):
@@ -1320,7 +1323,7 @@ class BasePlotter(object):
         mesh.points = points
 
         if render:
-            self.render()
+            self._render()
 
     def close(self):
         """ closes render window """
@@ -1951,6 +1954,12 @@ class BasePlotter(object):
         style = vtk.vtkInteractorStyleRubberBandPick()
         self.iren.SetInteractorStyle(style)
         self.iren.SetPicker(area_picker)
+
+
+    def export_vtkjs(self, filename, compress_arrays=False):
+        """Export the current rendering scene as a VTKjs scene for rendering
+        in a web browser"""
+        return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
 
 class Plotter(BasePlotter):
