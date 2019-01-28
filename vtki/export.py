@@ -611,11 +611,6 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 def convert_dropbox_url(url):
     return url.replace("https://www.dropbox.com", "https://dl.dropbox.com")
 
-def convert_git_hub_url(url):
-    #url = url.replace("https://github.com", "https://raw.githubusercontent.com")
-    url = url.replace("blob/", "raw/")
-    return url
-
 def generate_viewer_url(dataURL):
     viewerURL = "http://viewer.pvgeo.org/"
     return viewerURL + '%s%s' % ("?fileURL=", dataURL)
@@ -629,8 +624,8 @@ def get_vtkjs_url(*args):
     .. _PVGeo VTKjs viewer: http://viewer.pvgeo.org
 
     **Current file hosts supported:**
+
     - Dropbox
-    - GitHub
 
     Args:
         host (str): the name of the file hosting service.
@@ -647,8 +642,6 @@ def get_vtkjs_url(*args):
         raise RuntimeError('Arguments not understood.')
     if host.lower() == "dropbox":
         convertURL = convert_dropbox_url(inURL)
-    elif host.lower() == "github":
-        convertURL = convert_git_hub_url(inURL)
     else:
         print("--> Warning: Web host not specified or supported. URL is simply appended to standalone scene loader link.")
         convertURL = inURL
