@@ -417,7 +417,7 @@ class BasePlotter(object):
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
 
-            self.render()
+            self._render()
             Plotter.last_update_time = curr_time
         else:
             if force_redraw:
@@ -1323,7 +1323,7 @@ class BasePlotter(object):
         mesh.points = points
 
         if render:
-            self.render()
+            self._render()
 
     def close(self):
         """ closes render window """
