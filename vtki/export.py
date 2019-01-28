@@ -54,11 +54,6 @@ import zipfile
 
 FILENAME_EXTENSION = '.vtkjs'
 
-EXPORT_DIRECTORY = '${USER_HOME}/Dropbox/vtkjs'
-USER_HOME = os.path.expanduser('~')
-ROOT_OUTPUT_DIRECTORY = EXPORT_DIRECTORY.replace('${USER_HOME}', USER_HOME)
-ROOT_OUTPUT_DIRECTORY = os.path.normpath(ROOT_OUTPUT_DIRECTORY)
-
 arrayTypesMapping = '  bBhHiIlLfdL'  # last one is idtype
 
 jsMapping = {
@@ -408,7 +403,8 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     # Generate timestamp and use it to make subdirectory within the top level output dir
     timeStamp = time.strftime("%a-%d-%b-%Y-%H-%M-%S")
-    outputDir = os.path.join(ROOT_OUTPUT_DIRECTORY, timeStamp)
+    root_output_directory = os.path.split(filename)[0]
+    outputDir = os.path.join(root_output_directory, timeStamp)
     mkdir_p(outputDir)
 
     renderers = plotter.ren_win.GetRenderers()
@@ -586,7 +582,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     # Now zip up the results and get rid of the temp directory
     sceneFileName = os.path.join(
-        ROOT_OUTPUT_DIRECTORY, '%s%s' % (sceneName, FILENAME_EXTENSION))
+        root_output_directory, '%s%s' % (sceneName, FILENAME_EXTENSION))
 
     try:
         import zlib
