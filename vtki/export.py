@@ -438,7 +438,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     dataset = mapper.GetInput()
 
                 if dataset and not isinstance(dataset, (vtk.vtkPolyData, vtk.vtkImageData)):
-                    # All dats must be PolyData surfaces
+                    # All data must be PolyData surfaces
                     gf = vtk.vtkGeometryFilter()
                     gf.SetInputData(dataset)
                     gf.Update()
@@ -450,7 +450,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                         rIdx, rpIdx)  # getComponentName(renProp)
                     scalarVisibility = mapper.GetScalarVisibility()
                     arrayAccessMode = mapper.GetArrayAccessMode()
-                    colorArrayName = mapper.GetArrayName() # TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
+                    #colorArrayName = mapper.GetArrayName() #TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
                     colorMode = mapper.GetColorMode()
                     scalarMode = mapper.GetScalarMode()
                     lookupTable = mapper.GetLookupTable()
@@ -471,7 +471,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     dataArray = None
 
                     if dsAttrs:
-                        dataArray = dsAttrs.GetArray(colorArrayName)
+                        dataArray = dsAttrs.GetArray(0) # Force getting the active array
 
                     if dataArray:
                         # component = -1 => let specific instance get scalar from vector before mapping
