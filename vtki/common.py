@@ -73,7 +73,9 @@ class Common(DataSetFilters):
 
     @property
     def t_coords(self):
-        return vtk_to_numpy(self.GetPointData().GetTCoords())
+        if self.GetPointData().GetTCoords() is not None:
+            return vtk_to_numpy(self.GetPointData().GetTCoords())
+        return None
 
     @t_coords.setter
     def t_coords(self, t_coords):

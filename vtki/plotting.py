@@ -336,7 +336,7 @@ class BasePlotter(object):
         if hasattr(self, 'ren_win'):
             if hasattr(self, 'render_trigger'):
                 self.render_trigger.emit()
-            else:
+            elif not self.first_time:
                 self.render()
 
     def add_axes(self, interactive=False):
@@ -617,7 +617,7 @@ class BasePlotter(object):
         if texture == True or isinstance(texture, str):
             texture = mesh._activate_texture(texture)
 
-        if texture is not None:
+        if texture:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, vtk.vtkTexture):
@@ -738,7 +738,7 @@ class BasePlotter(object):
         if render_points_as_spheres:
             prop.SetRenderPointsAsSpheres(render_points_as_spheres)
         if render_lines_as_tubes:
-            pro.SetRenderLinesAsTubes(render_lines_as_tubes)
+            prop.SetRenderLinesAsTubes(render_lines_as_tubes)
 
         # legend label
         if label:

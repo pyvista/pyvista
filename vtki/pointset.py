@@ -1254,9 +1254,7 @@ class PolyData(vtkPolyData, vtki.Common):
         plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
         plotter.add_mesh(self, legend='Mesh', **kwargs)
-        # plotter.add_legend()
         plotter.plot()
-
 
     def plot_normals(self, show_mesh=True, mag=1.0, flip=False,
                      use_every=1, **kwargs):
@@ -1347,7 +1345,11 @@ class PolyData(vtkPolyData, vtki.Common):
                 newmesh.point_arrays[key] = self.point_arrays[key][ridx]
 
             for key in self.cell_arrays:
-                newmesh.cell_arrays[key] = self.cell_arrays[key][fmask]
+                try:
+                    newmesh.cell_arrays[key] = self.cell_arrays[key][fmask]
+                except:
+                    log.warning('Unable to pass cell key %s onto reduced mesh' %
+                                key)
 
         # Return vtk surface and reverse indexing array
         if inplace:

@@ -3,8 +3,28 @@
 Plotting
 ========
 
+When plotting with the interactive rendering windows in VTK, several keyboard
+shortcuts are available:
 
-.. automodule:: vtki.plotting
++-----------------+-----------------------------------------------------+
+| Key             | Action                                              |
++-----------------+-----------------------------------------------------+
+| ``q``           | Close the rendering window                          |
++-----------------+-----------------------------------------------------+
+| ``w``           | Switch all datasets to a `wireframe` representation |
++-----------------+-----------------------------------------------------+
+| ``r``           | Reset the camera to view all datasets               |
++-----------------+-----------------------------------------------------+
+| ``s``           | Switch all datasets to a `surface` representation   |
++-----------------+-----------------------------------------------------+
+| ``shift+click`` | Pan the rendering scene                             |
++-----------------+-----------------------------------------------------+
+| ``cmd+click``   | Rotate the rendering scene                          |
++-----------------+-----------------------------------------------------+
+| ``ctl+click``   | Continuously zoom the rendering scene               |
++-----------------+-----------------------------------------------------+
+
+
 
 
 Convenience Functions
