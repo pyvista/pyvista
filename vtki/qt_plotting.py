@@ -22,6 +22,10 @@ class QVTKRenderWindowInteractor(object):
     pass
 
 
+# class QDialog(object):
+#     pass
+
+
 def pyqtSignal():
     return
 
@@ -29,10 +33,100 @@ def pyqtSignal():
 try:
     from PyQt5.QtCore import pyqtSignal
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
+    from PyQt5 import QtGui
+    from PyQt5 import Qt
+    from PyQt5 import QtCore
+    from PyQt5.QtWidgets import (QMenuBar, QHBoxLayout, QFrame, QMainWindow,
+                                 QSlider, QDialog, QFormLayout, QGroupBox)
     has_pyqt = True
 except:
     pass
 
+
+class DoubleSlider(QSlider):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.decimals = 5
+        self._max_int = 10 ** self.decimals
+
+        super().setMinimum(0)
+        super().setMaximum(self._max_int)
+
+        self._min_value = 0.0
+        self._max_value = 1.0
+
+    @property
+    def _value_range(self):
+        return self._max_value - self._min_value
+
+    def value(self):
+        return float(super().value()) / self._max_int * self._value_range + self._min_value
+
+    def setValue(self, value):
+        super().setValue(int((value - self._min_value) / self._value_range * self._max_int))
+
+    def setMinimum(self, value):
+        if value > self._max_value:
+            raise ValueError("Minimum limit cannot be higher than maximum")
+
+        self._min_value = value
+        self.setValue(self.value())
+
+    def setMaximum(self, value):
+        if value < self._min_value:
+            raise ValueError("Minimum limit cannot be higher than maximum")
+
+        self._max_value = value
+        self.setValue(self.value())
+
+    def minimum(self):
+        return self._min_value
+
+    def maximum(self):
+        return self._max_value
+
+
+class ScaleAxesDialog(QDialog):
+    accepted = pyqtSignal(float)
+    signal_close = pyqtSignal()
+
+    def __init__(self, parent, plotter, show=True):
+        super(ScaleAxesDialog, self).__init__(parent)
+        self.setGeometry(300, 300, 50, 50)
+        self.setMinimumWidth(500)
+        self.signal_close.connect(self.close)
+        self.plotter = plotter
+
+        # setup sliders
+        def make_slider():
+            slider = DoubleSlider(QtCore.Qt.Horizontal)
+            slider.setTickInterval(0.1)
+            slider.setMinimum(0)
+            slider.setMaximum(1)
+            slider.setValue(1)
+            slider.valueChanged.connect(self.update_scale)
+            return slider
+
+        self.x_slider = make_slider()
+        self.y_slider = make_slider()
+        self.z_slider = make_slider()
+
+        form_layout = QFormLayout(self)
+        form_layout.addRow('X Scale', self.x_slider)
+        form_layout.addRow('Y Scale', self.y_slider)
+        form_layout.addRow('Z Scale', self.z_slider)
+
+        self.setLayout(form_layout)
+
+        if show:
+            self.show()
+
+    def update_scale(self, value):
+        """ updates the scale of all actors in the plotter """
+        self.plotter.set_scale(self.x_slider.value(),
+                               self.y_slider.value(),
+                               self.z_slider.value())
 
 
 def resample_image(arr, max_size=400):
@@ -68,16 +162,21 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     Parameters
     ----------
+    parent : 
+
     title : string, optional
         Title of plotting window.
 
     """
     render_trigger = pyqtSignal()
     allow_quit_keypress = True
+    signal_close = pyqtSignal()
+
     def __init__(self, parent=None, title=None):
         """ Initialize Qt interactor """
         assert has_pyqt, 'Requires PyQt5'
         QVTKRenderWindowInteractor.__init__(self, parent)
+        self.parent = parent
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -91,24 +190,25 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
         self.iren.Initialize()
-        # self.iren.Start()
 
         # Enter trackball camera mode
         istyle = vtk.vtkInteractorStyleTrackballCamera()
         self.SetInteractorStyle(istyle)
         self.add_axes()
 
-        def quit_q(obj, event):
+        # QVTKRenderWindowInteractor doesn't have a "q" quit event
+        self.iren.AddObserver("KeyPressEvent", self.quit)
+
+    def quit(self, obj=None, event=None):
+        try:
             key = self.iren.GetKeySym().lower()
-            if key == 'q' and self.allow_quit_keypress:
-                self.iren.TerminateApp()
-                self.close()
+        except AttributeError:
+            key = 'q'
 
-        # QVTKRenderWindowInteractor doesn't have a "q" event
-        self.iren.AddObserver("KeyPressEvent", quit_q)
-
-    def closeEvent(self, event):
-        self.close()
+        if key == 'q' and self.allow_quit_keypress:
+            self.iren.TerminateApp()
+            self.close()
+            self.signal_close.emit()
 
 
 class BackgroundPlotter(QtInteractor):
@@ -118,6 +218,7 @@ class BackgroundPlotter(QtInteractor):
     def __init__(self, show=True, app=None, **kwargs):
         assert has_pyqt, 'Requires PyQt5'
         self.active = True
+        self.saved_camera_positions = []
 
         # ipython magic
         if run_from_ipython():
@@ -137,8 +238,37 @@ class BackgroundPlotter(QtInteractor):
                 app = QApplication([''])
 
         self.app = app
-        QtInteractor.__init__(self, **kwargs)
+        self.app_window = QMainWindow()
+
+        self.frame = Qt.QFrame()
+        self.frame.setFrameStyle(Qt.QFrame.NoFrame)
+
+        QtInteractor.__init__(self, parent=self.frame, **kwargs)
+        self.signal_close.connect(self.app_window.close)
+
+        # build main menu
+        main_menu = self.app_window.menuBar()
+
+        fileMenu = main_menu.addMenu('File')
+        fileMenu.addAction('Exit', self.quit)
+
+        view_menu = main_menu.addMenu('View')
+        view_menu.addAction('Reset Camera', self.reset_camera)
+        view_menu.addAction('Isometric View', self.isometric_view)
+        view_menu.addAction('Save Current Camera Position', self.save_camera_position)
+        view_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
+        view_menu.addAction('Scale Axes', self.scale_axes_dialog)
+
+        self.saved_camera_menu = main_menu.addMenu('Camera Positions')        
+
+        vlayout = Qt.QVBoxLayout()        
+        vlayout.addWidget(self)
+
+        self.frame.setLayout(vlayout)
+        self.app_window.setCentralWidget(self.frame)        
+
         if show:
+            self.app_window.show()
             self.show()
 
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
@@ -146,6 +276,26 @@ class BackgroundPlotter(QtInteractor):
         self._last_camera_pos = self.camera_position
 
         self._spawn_background_rendering()
+
+    def scale_axes_dialog(self):
+        ScaleAxesDialog(self.app_window, self)
+
+    def clear_camera_positions(self):
+        """ clears all camera positions """
+        for action in self.saved_camera_menu.actions():
+            self.saved_camera_menu.removeAction(action)
+
+    def save_camera_position(self):
+        """ Saves camera position to saved camera menu for recall """
+        self.saved_camera_positions.append(self.camera_position)
+        ncam = len(self.saved_camera_positions)
+        camera_position = self.camera_position[:]  # py2.7 copy compatibility
+
+        def load_camera_position():
+            self.camera_position = camera_position
+
+        self.saved_camera_menu.addAction('Camera Position %2d' % ncam,
+                                         load_camera_position)
 
     def _spawn_background_rendering(self, rate=5.0):
         """
@@ -180,7 +330,8 @@ class BackgroundPlotter(QtInteractor):
         return actor, prop
 
     def update_app_icon(self):
-        """Update the app icon if the user is not trying to resize the window.
+        """
+        Update the app icon if the user is not trying to resize the window.
         """
         if os.name == 'nt':
             # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
@@ -194,18 +345,20 @@ class BackgroundPlotter(QtInteractor):
                 and self._last_camera_pos != self.camera_position):
             # its been a while since last update OR
             #   the camera position has changed and its been at leat one second
-            from PyQt5 import QtGui
+
             # Update app icon as preview of the window
             img = pad_image(self.image)
-            qimage = QtGui.QImage(img.copy(), img.shape[1], img.shape[0], QtGui.QImage.Format_RGB888)
+            qimage = QtGui.QImage(img.copy(), img.shape[1],
+                                  img.shape[0], QtGui.QImage.Format_RGB888)
             icon = QtGui.QIcon(QtGui.QPixmap.fromImage(qimage))
+
             self.app.setWindowIcon(icon)
+
             # Update trackers
             self._last_update_time = cur_time
             self._last_camera_pos = self.camera_position
         # Update trackers
         self._last_window_size = self.window_size
-
 
     def _render(self):
         super(BackgroundPlotter, self)._render()

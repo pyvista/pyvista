@@ -1050,7 +1050,8 @@ class BasePlotter(object):
         return cubeAxesActor
 
     def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0, reset_camera=True):
-        """Scale all the datasets in the scene.
+        """
+        Scale all the datasets in the scene.
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
         """
@@ -1858,8 +1859,8 @@ class BasePlotter(object):
 
     def isometric_view(self):
         """
-        Resets the camera to a default isometric view showing all daa actros in
-        the scene.
+        Resets the camera to a default isometric view showing all the
+        actors in the scene.
         """
         self.camera_position = self.get_default_cam_pos()
         self.camera_set = False
