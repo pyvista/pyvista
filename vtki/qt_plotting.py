@@ -16,14 +16,18 @@ log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
 
 
-# dummy reference for when PyQt5 is not installed
+# dummy reference for when PyQt5 is not installed (i.e. readthedocs)
 has_pyqt = False
 class QVTKRenderWindowInteractor(object):
     pass
 
 
-# class QDialog(object):
-#     pass
+class QDialog(object):
+    pass
+
+
+class QSlider(object):
+    pass
 
 
 def pyqtSignal():
@@ -44,7 +48,10 @@ except:
 
 
 class DoubleSlider(QSlider):
-
+    """
+    Double precision slider from:
+    https://gist.github.com/dennis-tra/994a65d6165a328d4eabaadbaedac2cc
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.decimals = 5
@@ -88,6 +95,7 @@ class DoubleSlider(QSlider):
 
 
 class ScaleAxesDialog(QDialog):
+    """ Dialog to control axes scaling """
     accepted = pyqtSignal(float)
     signal_close = pyqtSignal()
 
