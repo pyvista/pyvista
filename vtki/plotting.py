@@ -614,7 +614,7 @@ class BasePlotter(object):
         if texture == True or isinstance(texture, str):
             texture = mesh._activate_texture(texture)
 
-        if texture is not None:
+        if texture:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, vtk.vtkTexture):
