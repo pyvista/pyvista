@@ -1453,7 +1453,7 @@ class BasePlotter(object):
     @property
     def window_size(self):
         """ returns render window size """
-        return self.ren_win.GetSize()
+        return list(self.ren_win.GetSize())
 
     @property
     def image(self):

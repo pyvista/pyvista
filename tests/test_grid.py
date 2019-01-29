@@ -240,54 +240,57 @@ def test_create_rectilinear_grid_from_specs():
     grid = vtki.RectilinearGrid(xrng, yrng, zrng)
     assert grid.n_cells == 9*3*19
     assert grid.n_points == 10*4*20
-    assert grid.bounds == (-10.0,8.0, -10.0,5.0, -10.0,9.0)
+    assert grid.bounds == [-10.0,8.0, -10.0,5.0, -10.0,9.0]
 
 
 def test_create_rectilinear_grid_from_file():
     grid = examples.load_rectilinear()
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
-    assert grid.bounds == (-350.0,1350.0, -400.0,1350.0, -850.0,0.0)
+    assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
     assert grid.n_scalars == 1
 
 
 def test_create_uniform_grid_from_specs():
     # create UniformGrid
-    dims = (10, 10, 10)
+    dims = [10, 10, 10]
     grid = vtki.UniformGrid(dims) # Using default spacing and origin
-    assert grid.dimensions == (10, 10, 10)
-    assert grid.origin == (0.0, 0.0, 0.0)
-    assert grid.spacing == (1.0, 1.0, 1.0)
-    spacing = (2, 1, 5)
+    assert grid.dimensions == [10, 10, 10]
+    assert grid.origin == [0.0, 0.0, 0.0]
+    assert grid.spacing == [1.0, 1.0, 1.0]
+    spacing = [2, 1, 5]
     grid = vtki.UniformGrid(dims, spacing) # Usign default origin
-    assert grid.dimensions == (10, 10, 10)
-    assert grid.origin == (0.0, 0.0, 0.0)
-    assert grid.spacing == (2.0, 1.0, 5.0)
-    origin = (10, 35, 50)
+    assert grid.dimensions == [10, 10, 10]
+    assert grid.origin == [0.0, 0.0, 0.0]
+    assert grid.spacing == [2.0, 1.0, 5.0]
+    origin = [10, 35, 50]
     grid = vtki.UniformGrid(dims, spacing, origin) # Everything is specified
-    assert grid.dimensions == (10, 10, 10)
-    assert grid.origin == (10.0, 35.0, 50.0)
-    assert grid.spacing == (2.0, 1.0, 5.0)
-    assert grid.dimensions == (10, 10, 10)
+    assert grid.dimensions == [10, 10, 10]
+    assert grid.origin == [10.0, 35.0, 50.0]
+    assert grid.spacing == [2.0, 1.0, 5.0]
+    assert grid.dimensions == [10, 10, 10]
 
 
 def test_uniform_setters():
     grid = vtki.UniformGrid()
-    grid.dimensions = (10, 10, 10)
+    grid.dimensions = [10, 10, 10]
     assert grid.GetDimensions() == (10, 10, 10)
-    grid.spacing = (5, 2, 1)
+    assert grid.dimensions == [10, 10, 10]
+    grid.spacing = [5, 2, 1]
     assert grid.GetSpacing() == (5, 2, 1)
-    grid.origin = (6, 27.7, 19.8)
+    assert grid.spacing == [5, 2, 1]
+    grid.origin = [6, 27.7, 19.8]
     assert grid.GetOrigin() == (6, 27.7, 19.8)
+    assert grid.origin == [6, 27.7, 19.8]
 
 
 def test_create_uniform_grid_from_file():
     grid = examples.load_uniform()
     assert grid.n_cells == 729
     assert grid.n_points == 1000
-    assert grid.bounds == (0.0,9.0, 0.0,9.0, 0.0,9.0)
+    assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
     assert grid.n_scalars == 2
-    assert grid.dimensions == (10, 10, 10)
+    assert grid.dimensions == [10, 10, 10]
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -330,9 +333,9 @@ def test_grid_points():
                        [0, 1, 1]])
     grid = vtki.UniformGrid()
     grid.points = points
-    assert grid.dimensions == (2, 2, 2)
-    assert grid.spacing == (1, 1, 1)
-    assert grid.origin == (0., 0., 0.)
+    assert grid.dimensions == [2, 2, 2]
+    assert grid.spacing == [1, 1, 1]
+    assert grid.origin == [0., 0., 0.]
     assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
     opts = np.c_[grid.x, grid.y, grid.z]
     assert np.allclose(np.unique(opts, axis=0), np.unique(points, axis=0))
@@ -340,5 +343,5 @@ def test_grid_points():
     del grid
     grid = vtki.RectilinearGrid()
     grid.points = points
-    assert grid.dimensions == (2, 2, 2)
+    assert grid.dimensions == [2, 2, 2]
     assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
