@@ -100,6 +100,22 @@ class DataSetFilters(object):
         alg.Update() # Perfrom the Cut
         return _get_output(alg)
 
+    def clip_box(dataset, bounds):
+        """Clips a dataset by a bounding box defined by the bounds
+
+        Parameters
+        ----------
+        bounds : tuple(float)
+            Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax)
+
+        """
+        if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
+            raise AssertionError('Bounds must be a length 6 iterable of floats')
+        alg = vtk.vtkBoxClipDataSet()
+        alg.SetBoxClip(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5])
+        alg.SetInputDataObject(dataset)
+        alg.Update()
+        return _get_output(alg)
 
     def slice(dataset, normal='x', origin=None, generate_triangles=False):
         """Slice a dataset by a plane at the specified origin and normal vector
@@ -545,8 +561,8 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def texture_map_to_plane(dataset, origin, point_u, point_v, inplace=False,
-                             name='Texture Coordinates'):
+    def texture_map_to_plane(dataset, origin=None, point_u=None, point_v=None,
+                             inplace=False, name='Texture Coordinates'):
         """Texture map this dataset to a user defined plane. This is often used
         to define a plane to texture map an image to this dataset. The plane
         defines the spatial reference and extent of that image.
@@ -576,9 +592,12 @@ class DataSetFilters(object):
 
         """
         alg = vtk.vtkTextureMapToPlane()
-        alg.SetOrigin(origin) # BOTTOM LEFT CORNER
-        alg.SetPoint1(point_u) # BOTTOM RIGHT CORNER
-        alg.SetPoint2(point_v) # TOP LEFT CORNER
+        if origin is None or point_u is None or point_v is None:
+            alg.SetAutomaticPlaneGeneration(True)
+        else:
+            alg.SetOrigin(origin) # BOTTOM LEFT CORNER
+            alg.SetPoint1(point_u) # BOTTOM RIGHT CORNER
+            alg.SetPoint2(point_v) # TOP LEFT CORNER
         alg.SetInputDataObject(dataset)
         alg.Update()
         output = _get_output(alg)
