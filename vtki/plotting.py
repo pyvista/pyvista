@@ -308,6 +308,13 @@ class BasePlotter(object):
 
         return the_bounds
 
+    @property
+    def center(self):
+        bounds = self.bounds
+        x = (bounds[1] + bounds[0])/2
+        y = (bounds[3] + bounds[2])/2
+        z = (bounds[5] + bounds[4])/2
+        return [x, y, z]
 
     def clear(self):
         """ Clears plot by removing all actors and properties """
@@ -357,11 +364,7 @@ class BasePlotter(object):
         Returns the default focal points and viewup. Uses ResetCamera to
         make a useful view.
         """
-        bounds = self.bounds
-        x = (bounds[1] + bounds[0])/2
-        y = (bounds[3] + bounds[2])/2
-        z = (bounds[5] + bounds[4])/2
-        focal_pt = [x, y, z]
+        focal_pt = self.center
         return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
                 focal_pt, rcParams['camera']['viewup']]
 
