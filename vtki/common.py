@@ -522,15 +522,15 @@ class Common(DataSetFilters):
 
     @property
     def bounds(self):
-        return self.GetBounds()
+        return list(self.GetBounds())
 
     @property
     def center(self):
-        return self.GetCenter()
+        return list(self.GetCenter())
 
     @property
     def extent(self):
-        return self.GetExtent()
+        return list(self.GetExtent())
 
     def get_data_range(self, arr=None, preference='cell'):
         if arr is None:
