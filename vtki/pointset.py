@@ -24,6 +24,7 @@ from vtk import VTK_QUADRATIC_HEXAHEDRON
 
 import numpy as np
 import vtki
+from vtki.filters import _get_output
 
 
 log = logging.getLogger(__name__)
@@ -1306,6 +1307,14 @@ class PolyData(vtkPolyData, vtki.Common):
 
         f = self.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
+
+    def delauney_2d(self):
+        """Apply a Delauney 2D filter along the best fitting plane"""
+        alg = vtk.vtkDelaunay2D()
+        alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
+        alg.SetInputDataObject(self)
+        alg.Update()
+        return _get_output(alg)
 
 
 class PointGrid(vtki.Common):
