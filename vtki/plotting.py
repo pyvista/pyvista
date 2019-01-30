@@ -52,7 +52,7 @@ rcParams = {
         'position_x' : 0.35,
         'position_y' : 0.02,
     },
-    'show_edges' : True,
+    'show_edges' : False,
 }
 
 def set_plot_theme(theme):
