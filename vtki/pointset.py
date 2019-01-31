@@ -128,15 +128,17 @@ class PolyData(vtkPolyData, vtki.Common):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        fext = filename[-3:].lower()
+        ext = os.path.splitext(filename)[1].lower()
 
         # Select reader
-        if fext == 'ply':
+        if ext == '.ply':
             reader = vtk.vtkPLYReader()
-        elif fext == 'stl':
+        elif ext == '.stl':
             reader = vtk.vtkSTLReader()
-        elif fext == 'vtk':
+        elif ext == '.vtk':
             reader = vtk.vtkPolyDataReader()
+        elif ext == '.obj':
+            reader = vtk.vtkOBJReader()
         else:
             raise TypeError('Filetype must be either "ply", "stl", or "vtk"')
 

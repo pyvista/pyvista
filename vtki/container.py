@@ -6,6 +6,7 @@ filtering/plotting routines.
 import logging
 from weakref import proxy
 import collections
+import os
 
 import numpy as np
 import vtk
@@ -37,6 +38,81 @@ class MultiBlock(vtkMultiBlockDataSet):
                     self.DeepCopy(args[0])
                 else:
                     self.ShallowCopy(args[0])
+            elif isinstance(args[0], (list, tuple)):
+                for block in args[0]:
+                    self.append(block)
+            elif isinstance(args[0], str):
+                self._load_file(args[0])
+            elif isinstance(args[0], dict):
+                idx = 0
+                for key, block in args[0].items():
+                    self[idx, key] = block
+                    idx += 1
+
+
+    def _load_file(self, filename):
+        """Load a vtkMultiBlockDataSet from a file (extension ``.vtm`` or
+        ``.vtmb``)
+        """
+        # test if file exists
+        if not os.path.isfile(filename):
+            raise Exception('File %s does not exist' % filename)
+
+        # Get extension
+        ext = os.path.splitext(filename)[1].lower()
+        # Extensions: .vtm and .vtmb
+
+        # Select reader
+        if ext in ['.vtm', '.vtmb']:
+            reader = vtk.vtkXMLMultiBlockDataReader()
+        else:
+            raise TypeError('File extension must be either "vtm" or "vtmb"')
+
+        # Load file
+        reader.SetFileName(filename)
+        reader.Update()
+        self.ShallowCopy(reader.GetOutput())
+
+        # sanity check
+        if self.n_blocks < 1:
+            raise AssertionError('MultiBlock file ({}) returned no blocks'.format(filename))
+
+
+    def save(self, filename, binary=True):
+        """
+        Writes a surface mesh to disk.
+
+        Written file may be an ASCII or binary ply, stl, or vtk mesh file.
+
+        Parameters
+        ----------
+        filename : str
+            Filename of mesh to be written.  File type is inferred from
+            the extension of the filename unless overridden with
+            ftype.  Can be one of the following types (.ply, .stl,
+            .vtk)
+
+        binary : bool, optional
+            Writes the file as binary when True and ASCII when False.
+
+        Notes
+        -----
+        Binary files write much faster than ASCII and have a smaller
+        file size.
+        """
+        ext = os.path.splitext(filename)[1].lower()
+        if ext in ['.vtm', '.vtmb']:
+            writer = vtk.vtkXMLMultiBlockDataWriter()
+        else:
+            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
+
+        writer.SetFileName(filename)
+        writer.SetInputData(self)
+        if binary:
+            writer.SetDataModeToBinary()
+        else:
+            writer.SetDataModeToASCII()
+        writer.Write()
 
     # Simply bind vtki.plotting.plot to the object
     plot = plot
@@ -119,7 +195,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         data = self.GetBlock(index)
         if data is None:
             return data
-        if not is_vtki_obj(data):
+        if data is not None and not is_vtki_obj(data):
             data = wrap(data)
         return data
 
@@ -167,6 +243,10 @@ class MultiBlock(vtkMultiBlockDataSet):
             i, name = index[0], index[1]
         else:
             i, name = index, None
+        if name is None:
+            name = 'Block-{0:02}'.format(i)
+        if data is not None and not is_vtki_obj(data):
+            data = wrap(data)
         self.SetBlock(i, data)
         self.set_block_name(i, name) # Note that this calls self.Modified()
 
@@ -235,7 +315,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         fmt += "<tr><td>"
         fmt += "\n"
         fmt += "<table>\n"
-        fmt += "<tr><th>{}</th><th>Values</th></tr>\n".format(self.GetClassName())
+        fmt += "<tr><th>{}</th><th>Values</th></tr>\n".format(type(self).__name__)
         row = "<tr><td>{}</td><td>{}</td></tr>\n"
 
         # now make a call on the object to get its attributes as a list of len 2 tuples
@@ -255,10 +335,7 @@ class MultiBlock(vtkMultiBlockDataSet):
 
         for i in range(self.n_blocks):
             data = self[i]
-            if data is None:
-                fmt += row.format(i, None, None)
-            else:
-                fmt += row.format(i, self.get_block_name(i), data.GetClassName())
+            fmt += row.format(i, self.get_block_name(i), type(data).__name__)
 
         fmt += "</table>\n"
         fmt += "\n"

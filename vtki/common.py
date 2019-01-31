@@ -600,7 +600,7 @@ class Common(DataSetFilters):
             # HTML version
             fmt += "\n"
             fmt += "<table>\n"
-            fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(self.GetClassName())
+            fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(type(self).__name__)
             row = "<tr><td>{}</td><td>{}</td></tr>\n"
             # now make a call on the object to get its attributes as a list of len 2 tuples
             for attr in self._get_attrs():
@@ -617,7 +617,7 @@ class Common(DataSetFilters):
                 return
             return fmt
         # Otherwise return a string that is Python console friendly
-        fmt = "{} ({})\n".format(self.GetClassName(), hex(id(self)))
+        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
         # now make a call on the object to get its attributes as a list of len 2 tuples
         row = "  {}:\t{}\n"
         for attr in self._get_attrs():
