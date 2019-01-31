@@ -31,11 +31,11 @@ class ScaledPlotter(vtki.BackgroundPlotter):
         vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
         self.continuous_update = continuous_update
-        self.xslider = widgets.FloatSlider(min=0, max=xscale*10, value=xscale,
+        self.xslider = widgets.FloatSlider(min=0, max=xscale*2, value=xscale,
                                 continuous_update=self.continuous_update)
-        self.yslider = widgets.FloatSlider(min=0, max=yscale*10, value=yscale,
+        self.yslider = widgets.FloatSlider(min=0, max=yscale*2, value=yscale,
                                 continuous_update=self.continuous_update)
-        self.zslider = widgets.FloatSlider(min=0, max=zscale*10, value=zscale,
+        self.zslider = widgets.FloatSlider(min=0, max=zscale*2, value=zscale,
                                 continuous_update=self.continuous_update)
 
         def update(xscale, yscale, zscale):
@@ -47,11 +47,11 @@ class ScaledPlotter(vtki.BackgroundPlotter):
             if zscale >= self.zslider.max:
                 self.zslider.max *= 2
             # reset max range if needed
-            if xscale < self.xslider.max * 0.10:
+            if xscale < self.xslider.max * 0.10 and xscale > 1.0:
                 self.xslider.max /= 2
-            if yscale < self.yslider.max * 0.10:
+            if yscale < self.yslider.max * 0.10 and yscale > 1.0:
                 self.yslider.max /= 2
-            if zscale < self.zslider.max * 0.10:
+            if zscale < self.zslider.max * 0.10 and zscale > 1.0:
                 self.zslider.max /= 2
             self.set_scale(xscale, yscale, zscale)
 
