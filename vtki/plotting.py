@@ -584,7 +584,7 @@ class BasePlotter(object):
                     # Note that a block can exist but be None type
                     continue
                 # Now check that scalars is available for this dataset
-                if get_scalar(data, scalars) is None:
+                if isinstance(data, vtk.vtkMultiBlockDataSet) or get_scalar(data, scalars) is None:
                     ts = None
                 else:
                     ts = scalars
