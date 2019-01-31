@@ -215,6 +215,7 @@ def read(filename):
     """This will read any VTK file! It will figure out what reader to use
     then wrap the VTK object for use in ``vtki``
     """
+    filename = os.path.abspath(os.path.expanduser(filename))
     def legacy(filename):
         reader = vtk.vtkDataSetReader()
         reader.SetFileName(filename)
@@ -249,6 +250,7 @@ def read(filename):
 
 def setErrorOutputFile(filename):
     """Sets a file to write out the VTK errors"""
+    filename = os.path.abspath(os.path.expanduser(filename))
     fileOutputWindow = vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
     outputWindow = vtk.vtkOutputWindow()
@@ -258,6 +260,7 @@ def setErrorOutputFile(filename):
 
 def load_texture(filename):
     """Loads a ``vtkTexture`` from an image file."""
+    filename = os.path.abspath(os.path.expanduser(filename))
     ext = os.path.splitext(filename)[1].lower()
     if ext in ['.jpg', '.jpeg']:
         reader = vtk.vtkJPEGReader()
