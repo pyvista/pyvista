@@ -37,10 +37,10 @@ try:
     from PyQt5.QtCore import pyqtSignal
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
-    from PyQt5 import Qt
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import (QMenuBar, QHBoxLayout, QFrame, QMainWindow,
-                                 QSlider, QDialog, QFormLayout, QGroupBox)
+    from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout,
+                                 QFrame, QMainWindow, QSlider,
+                                 QDialog, QFormLayout, QGroupBox)
     has_pyqt = True
 except:
     pass
@@ -247,8 +247,8 @@ class BackgroundPlotter(QtInteractor):
         self.app = app
         self.app_window = QMainWindow()
 
-        self.frame = Qt.QFrame()
-        self.frame.setFrameStyle(Qt.QFrame.NoFrame)
+        self.frame = QFrame()
+        self.frame.setFrameStyle(QFrame.NoFrame)
 
         QtInteractor.__init__(self, parent=self.frame, **kwargs)
         self.signal_close.connect(self.app_window.close)
@@ -268,7 +268,7 @@ class BackgroundPlotter(QtInteractor):
 
         self.saved_camera_menu = main_menu.addMenu('Camera Positions')        
 
-        vlayout = Qt.QVBoxLayout()        
+        vlayout = QVBoxLayout()        
         vlayout.addWidget(self)
 
         self.frame.setLayout(vlayout)
