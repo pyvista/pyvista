@@ -20,6 +20,47 @@ from vtki.utilities import is_vtki_obj, wrap
 from vtki.plotting import run_from_ipython
 
 
+class ScaledPlotter(vtki.BackgroundPlotter):
+    """An extension of the ``vtki.BackgroundPlotter`` that has interactive
+    widgets for scaling the axes in the rendering scene.
+    """
+    def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
+                 continuous_update=False, **kwargs):
+        if not run_from_ipython() or not ipy_available:
+            raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
+        vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
+        # Now set up the IPython scaling widgets
+        self.continuous_update = continuous_update
+        self.xslider = widgets.FloatSlider(min=0, max=xscale*10, value=xscale,
+                                continuous_update=self.continuous_update)
+        self.yslider = widgets.FloatSlider(min=0, max=yscale*10, value=yscale,
+                                continuous_update=self.continuous_update)
+        self.zslider = widgets.FloatSlider(min=0, max=zscale*10, value=zscale,
+                                continuous_update=self.continuous_update)
+
+        def update(xscale, yscale, zscale):
+            # Update max range if needed
+            if xscale >= self.xslider.max:
+                self.xslider.max *= 2
+            if yscale >= self.yslider.max:
+                self.yslider.max *= 2
+            if zscale >= self.zslider.max:
+                self.zslider.max *= 2
+            # reset max range if needed
+            if xscale < self.xslider.max * 0.10:
+                self.xslider.max /= 2
+            if yscale < self.yslider.max * 0.10:
+                self.yslider.max /= 2
+            if zscale < self.zslider.max * 0.10:
+                self.zslider.max /= 2
+            self.set_scale(xscale, yscale, zscale)
+
+        # Create/display the widgets
+        interact(update, xscale=self.xslider, yscale=self.yslider,
+                 zscale=self.zslider, **kwargs)
+
+
+
 class InteractiveTool(object):
     """A backend helper for various interactive ipython tools.
     This tool can be added to an active plotter in the background if passed as
