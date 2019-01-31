@@ -123,6 +123,7 @@ class PolyData(vtkPolyData, vtki.Common):
         Binary files load much faster than ASCII.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # test if file exists
         if not os.path.isfile(filename):
             raise Exception('File %s does not exist' % filename)
@@ -475,6 +476,7 @@ class PolyData(vtkPolyData, vtki.Common):
         Binary files write much faster than ASCII and have a smaller
         file size.
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Check filetype
         ftype = filename[-3:]
         if ftype == 'ply':
@@ -1634,6 +1636,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         filename : str
             Filename of grid to be loaded.
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
             raise Exception('%s does not exist' % filename)
@@ -1673,6 +1676,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         one system may not be readable on other systems.  Binary can be used
         only ".vtk" files
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkUnstructuredGridWriter()
@@ -1997,6 +2001,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             Filename of grid to be loaded.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
             raise Exception('%s does not exist')
@@ -2044,6 +2049,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         only with the legacy writer.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkStructuredGridWriter()
