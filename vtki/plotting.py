@@ -52,7 +52,7 @@ rcParams = {
         'position_x' : 0.35,
         'position_y' : 0.02,
     },
-    'show_edges' : True,
+    'show_edges' : False,
 }
 
 def set_plot_theme(theme):
@@ -308,6 +308,13 @@ class BasePlotter(object):
 
         return the_bounds
 
+    @property
+    def center(self):
+        bounds = self.bounds
+        x = (bounds[1] + bounds[0])/2
+        y = (bounds[3] + bounds[2])/2
+        z = (bounds[5] + bounds[4])/2
+        return [x, y, z]
 
     def clear(self):
         """ Clears plot by removing all actors and properties """
@@ -357,11 +364,7 @@ class BasePlotter(object):
         Returns the default focal points and viewup. Uses ResetCamera to
         make a useful view.
         """
-        bounds = self.bounds
-        x = (bounds[1] + bounds[0])/2
-        y = (bounds[3] + bounds[2])/2
-        z = (bounds[5] + bounds[4])/2
-        focal_pt = [x, y, z]
+        focal_pt = self.center
         return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
                 focal_pt, rcParams['camera']['viewup']]
 
@@ -581,7 +584,7 @@ class BasePlotter(object):
                     # Note that a block can exist but be None type
                     continue
                 # Now check that scalars is available for this dataset
-                if get_scalar(data, scalars) is None:
+                if isinstance(data, vtk.vtkMultiBlockDataSet) or get_scalar(data, scalars) is None:
                     ts = None
                 else:
                     ts = scalars
@@ -1450,7 +1453,7 @@ class BasePlotter(object):
     @property
     def window_size(self):
         """ returns render window size """
-        return self.ren_win.GetSize()
+        return list(self.ren_win.GetSize())
 
     @property
     def image(self):

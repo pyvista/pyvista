@@ -220,22 +220,24 @@ def read(filename):
         reader.SetFileName(filename)
         reader.Update()
         return reader.GetOutputDataObject(0)
-    ext = os.path.splitext(filename)[1]
-    if ext.lower() in '.vtk':
+    ext = os.path.splitext(filename)[1].lower()
+    if ext in '.vtk':
         # Use a legacy reader and wrap the result
         return wrap(legacy(filename))
     else:
         # From the extension, decide which reader to use
-        if ext.lower() in '.vti': # ImageData
+        if ext in '.vti': # ImageData
             return vtki.UniformGrid(filename)
-        elif ext.lower() in '.vtr': # RectilinearGrid
+        elif ext in '.vtr': # RectilinearGrid
             return vtki.RectilinearGrid(filename)
-        elif ext.lower() in '.vtu': # UnstructuredGrid
+        elif ext in '.vtu': # UnstructuredGrid
             return vtki.UnstructuredGrid(filename)
-        elif ext.lower() in '.ply': # PolyData
+        elif ext in ['.ply', '.obj', '.stl']: # PolyData
             return vtki.PolyData(filename)
-        elif ext.lower() in '.vts': # UnstructuredGrid
+        elif ext in '.vts': # UnstructuredGrid
             return vtki.StructuredGrid(filename)
+        elif ext in ['.vtm', '.vtmb']:
+            return vtki.MultiBlock(filename)
         else:
             # Attempt to use the legacy reader...
             try:

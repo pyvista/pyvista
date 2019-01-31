@@ -26,7 +26,7 @@ class Grid(vtki.Common):
     @property
     def dimensions(self):
         """Returns a length 3 tuple of the grid's dimensions"""
-        return self.GetDimensions()
+        return list(self.GetDimensions())
 
     @dimensions.setter
     def dimensions(self, dims):
@@ -490,7 +490,7 @@ class UniformGrid(vtkImageData, Grid):
     @property
     def origin(self):
         """The origins of the grid"""
-        return self.GetOrigin()
+        return list(self.GetOrigin())
 
     @origin.setter
     def origin(self, origin):
@@ -501,7 +501,7 @@ class UniformGrid(vtkImageData, Grid):
     @property
     def spacing(self):
         """Get the spacing for each axial direction."""
-        return self.GetSpacing()
+        return list(self.GetSpacing())
 
     @spacing.setter
     def spacing(self, spacing):
