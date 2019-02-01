@@ -784,6 +784,9 @@ class BasePlotter(object):
             Actor properties.
 
         """
+        # Remove actor by that name if present
+        rv = self.remove_actor(name, reset_camera=False)
+
         if isinstance(uinput, vtk.vtkMapper):
             actor = vtk.vtkActor()
             actor.SetMapper(uinput)
@@ -797,8 +800,7 @@ class BasePlotter(object):
         self.renderer.AddActor(actor)
         if name is None:
             name = str(hex(id(actor)))
-        # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False)
+
         self._actors[name] = actor
 
         if reset_camera:
