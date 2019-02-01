@@ -100,7 +100,7 @@ class DataSetFilters(object):
         alg.Update() # Perfrom the Cut
         return _get_output(alg)
 
-    def clip_box(dataset, bounds):
+    def clip_box(dataset, bounds, invert=False):
         """Clips a dataset by a bounding box defined by the bounds
 
         Parameters
@@ -108,12 +108,18 @@ class DataSetFilters(object):
         bounds : tuple(float)
             Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax)
 
+        invert : bool
+            Flag on whether to flip/invert the clip
+
         """
         if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
             raise AssertionError('Bounds must be a length 6 iterable of floats')
-        alg = vtk.vtkBoxClipDataSet()
-        alg.SetBoxClip(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5])
+        box = vtk.vtkBox()
+        box.SetBounds(bounds)
+        alg = vtk.vtkClipDataSet()
         alg.SetInputDataObject(dataset)
+        alg.SetClipFunction(box) # the the cutter to use the box we made
+        alg.SetInsideOut(invert) # invert the clip if needed
         alg.Update()
         return _get_output(alg)
 
