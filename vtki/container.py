@@ -27,6 +27,8 @@ class MultiBlock(vtkMultiBlockDataSet):
     easily plot these data sets and use the container in a Pythonic manner.
     """
 
+    # Bind vtki.plotting.plot to the object
+    plot = plot
 
     def __init__(self, *args, **kwargs):
         super(MultiBlock, self).__init__()
@@ -48,7 +50,6 @@ class MultiBlock(vtkMultiBlockDataSet):
                 for key, block in args[0].items():
                     self[idx, key] = block
                     idx += 1
-
 
     def _load_file(self, filename):
         """Load a vtkMultiBlockDataSet from a file (extension ``.vtm`` or
@@ -115,10 +116,6 @@ class MultiBlock(vtkMultiBlockDataSet):
         else:
             writer.SetDataModeToASCII()
         writer.Write()
-
-    # Simply bind vtki.plotting.plot to the object
-    plot = plot
-
 
     @property
     def bounds(self):
