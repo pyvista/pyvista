@@ -152,6 +152,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             Filename of grid to be loaded.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
             raise Exception('%s does not exist')
@@ -199,6 +200,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         only with the legacy writer.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkRectilinearGridWriter()
@@ -411,6 +413,7 @@ class UniformGrid(vtkImageData, Grid):
             Filename of grid to be loaded.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
             raise Exception('%s does not exist')
@@ -458,6 +461,7 @@ class UniformGrid(vtkImageData, Grid):
         only with the legacy writer.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkDataSetWriter()

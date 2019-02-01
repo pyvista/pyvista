@@ -23,6 +23,7 @@ from vtki.ipy_tools import OrthogonalSlicer
 from vtki.ipy_tools import ManySlicesAlongAxis
 from vtki.ipy_tools import Threshold
 from vtki.ipy_tools import Clip
+from vtki.ipy_tools import ScaledPlotter
 
 import numpy as np
 

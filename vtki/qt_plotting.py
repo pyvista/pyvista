@@ -60,7 +60,7 @@ class DoubleSlider(QSlider):
         super().setMaximum(self._max_int)
 
         self._min_value = 0.0
-        self._max_value = 1.0
+        self._max_value = 20.0
 
     @property
     def _value_range(self):
@@ -110,7 +110,7 @@ class ScaleAxesDialog(QDialog):
             slider = DoubleSlider(QtCore.Qt.Horizontal)
             slider.setTickInterval(0.1)
             slider.setMinimum(0)
-            slider.setMaximum(1)
+            slider.setMaximum(20)
             slider.setValue(1)
             slider.valueChanged.connect(self.update_scale)
             return slider
@@ -169,7 +169,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     Parameters
     ----------
-    parent : 
+    parent :
 
     title : string, optional
         Title of plotting window.
@@ -265,14 +265,15 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addAction('Save Current Camera Position', self.save_camera_position)
         view_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
+        view_menu.addAction('Add Bounds Axes', self.add_bounds_axes)
 
-        self.saved_camera_menu = main_menu.addMenu('Camera Positions')        
+        self.saved_camera_menu = main_menu.addMenu('Camera Positions')
 
-        vlayout = QVBoxLayout()        
+        vlayout = QVBoxLayout()
         vlayout.addWidget(self)
 
         self.frame.setLayout(vlayout)
-        self.app_window.setCentralWidget(self.frame)        
+        self.app_window.setCentralWidget(self.frame)
 
         if show:
             self.app_window.show()

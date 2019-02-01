@@ -123,6 +123,7 @@ class PolyData(vtkPolyData, vtki.Common):
         Binary files load much faster than ASCII.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # test if file exists
         if not os.path.isfile(filename):
             raise Exception('File %s does not exist' % filename)
@@ -475,6 +476,7 @@ class PolyData(vtkPolyData, vtki.Common):
         Binary files write much faster than ASCII and have a smaller
         file size.
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Check filetype
         ftype = filename[-3:]
         if ftype == 'ply':
@@ -544,6 +546,53 @@ class PolyData(vtkPolyData, vtki.Common):
             self.overwrite(trifilter.GetOutput())
         else:
             return PolyData(trifilter.GetOutput())
+
+    def tube(self, radius=None, scalars=None, capping=True, n_sides=20,
+             radius_factor=10, preference='point'):
+        """Generate a tube around each input line. The radius of the tube can be
+        set to linearly vary with a scalar value.
+
+        Parameters
+        ----------
+        radius : float
+            Minimum tube radius (minimum because the tube radius may vary).
+
+        scalars : str, optional
+            Scalar array by which the radius varies
+
+        capping : bool
+            Turn on/off whether to cap the ends with polygons. Default True.
+
+        n_sides : int
+            Set the number of sides for the tube. Minimum of 3.
+
+        radius_factor : float
+            Maximum tube radius in terms of a multiple of the minimum radius.
+
+        preference : str
+            The field preference when searching for the scalar array by name
+        """
+        if n_sides < 3:
+            n_sides = 3
+        tube = vtk.vtkTubeFilter()
+        tube.SetInputDataObject(self)
+        # User Defined Parameters
+        tube.SetCapping(capping)
+        if radius is not None:
+            tube.SetRadius(radius)
+        tube.SetNumberOfSides(n_sides)
+        tube.SetRadiusFactor(radius_factor)
+        # Check if scalar array given
+        if scalars is not None:
+            if not isinstance(scalars, str):
+                raise TypeError('Scalar array must be given as a string name')
+            _, field = self.get_scalar(scalars, preference=preference, info=True)
+            # args: (idx, port, connection, field, name)
+            tube.SetInputArrayToProcess(0, 0, 0, field, scalars)
+            tube.SetVaryRadiusToVaryRadiusByScalar()
+        # Apply the filter
+        tube.Update()
+        return _get_output(tube)
 
     def subdivide(self, nsub, subfilter='linear', inplace=False):
         """
@@ -1634,6 +1683,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         filename : str
             Filename of grid to be loaded.
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
             raise Exception('%s does not exist' % filename)
@@ -1673,6 +1723,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         one system may not be readable on other systems.  Binary can be used
         only ".vtk" files
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkUnstructuredGridWriter()
@@ -1997,6 +2048,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             Filename of grid to be loaded.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
             raise Exception('%s does not exist')
@@ -2044,6 +2096,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         only with the legacy writer.
 
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkStructuredGridWriter()

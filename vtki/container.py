@@ -55,6 +55,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         """Load a vtkMultiBlockDataSet from a file (extension ``.vtm`` or
         ``.vtmb``)
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         # test if file exists
         if not os.path.isfile(filename):
             raise Exception('File %s does not exist' % filename)
@@ -101,6 +102,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         Binary files write much faster than ASCII and have a smaller
         file size.
         """
+        filename = os.path.abspath(os.path.expanduser(filename))
         ext = os.path.splitext(filename)[1].lower()
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
