@@ -32,10 +32,13 @@ class ScaledPlotter(vtki.BackgroundPlotter):
         # Now set up the IPython scaling widgets
         self.continuous_update = continuous_update
         self.xslider = widgets.FloatSlider(min=0, max=xscale*2, value=xscale,
+                                description='X Scale:',
                                 continuous_update=self.continuous_update)
         self.yslider = widgets.FloatSlider(min=0, max=yscale*2, value=yscale,
+                                description='Y Scale:',
                                 continuous_update=self.continuous_update)
         self.zslider = widgets.FloatSlider(min=0, max=zscale*2, value=zscale,
+                                description='Z Scale:',
                                 continuous_update=self.continuous_update)
 
         def update(xscale, yscale, zscale):
@@ -89,6 +92,7 @@ class InteractiveTool(object):
             plotter = vtki.BackgroundPlotter()
             plotter.setWindowTitle(type(self).__name__)
         self.plotter = plotter
+        self._tool_widget = None
 
         # This is the actor that will be removed and re-added to the plotter
         self._data_to_update = None
@@ -97,19 +101,11 @@ class InteractiveTool(object):
 
         # Intialize plotting parameters
         self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
-        if display_params is None:
-            display_params = {}
         if default_params is None:
             default_params = {}
-        display_params.setdefault('rng', self.valid_range)
-        display_params.setdefault('scalars', scalars)
-        display_params.setdefault('preference', preference)
-        display_params.setdefault('show_edges', False)
-        # Make sure to remove the reset_camera parameter if present
-        display_params.pop('reset_camera', None)
-        # Make a name
-        display_params.setdefault('name', '{}({})'.format(type(self).__name__, str(hex(id(self)))))
-        self.display_params = display_params
+
+        self.__generate_display_params(display_params, preference)
+
 
         # Set the tool status
         self._need_to_update = True
@@ -119,6 +115,97 @@ class InteractiveTool(object):
 
         # Run the tool
         self.tool(default_params=default_params, **kwargs)
+
+
+    def __generate_display_params(self, default_display_params=None, preference='cell'):
+        """Internal method to intialize the display parameters"""
+        if default_display_params is None:
+            default_display_params = {}
+
+        # Display parameters that the user does not adjust
+        default_display_params.setdefault('rng', self.valid_range)
+        default_display_params.setdefault('preference', preference)
+        # Make sure to remove the reset_camera parameter if present
+        default_display_params.pop('reset_camera', None)
+        # Make a name
+        default_display_params.setdefault('name', '{}({})'.format(type(self).__name__, str(hex(id(self)))))
+        self.default_display_params = default_display_params
+
+        def _update_display_params(**kwargs):
+            """Some plotting parameters can be changed through the tool; this
+            updataes those plotting parameters.
+            """
+            scalars = kwargs.pop('scalars', None)
+            # Now merge the rest of the arguments
+            self.display_params = {**self.default_display_params, **kwargs}
+            # Update scalars in a unique way
+            if scalars is not None:
+                self.display_params['scalars'] = scalars
+                if self._last_scalars != scalars:
+                    self.plotter.remove_actor(self._data_to_update, reset_camera=False)
+                    self.valid_range = self.input_dataset.get_data_range(scalars)
+                    self.display_params['rng'] = self.valid_range
+                    self._last_scalars = scalars
+            self._need_to_update = True
+            if self._tool_widget is not None:
+                self._tool_widget.widget.update()
+
+
+        # Create interactive display parameters
+        sl_opacity = widgets.FloatSlider(min=0.0, max=1.0, value=1.0,
+                                description='Opacity:',
+                                continuous_update=self.continuous_update)
+        w_psize = widgets.FloatText(
+                    value=5.0,
+                    description='Point Size:',
+                    disabled=False
+                )
+        w_lwidth = widgets.FloatText(
+                    value=2.0,
+                    description='Line Width:',
+                    disabled=False
+                )
+        w_scalars = widgets.Dropdown(
+            # Add none to scalar name choices so use can plot by solid color
+            options=self._get_scalar_names() + [None],
+            description='Color by:',
+            disabled=False,
+        )
+        w_style = widgets.Dropdown(
+            # Add none to scalar name choices so use can plot by solid color
+            options=['surface','wireframe','points'],
+            description='Style:',
+            disabled=False,
+        )
+
+        # Set up the plotting parameters
+        i_display_params = dict(
+            style=w_style,
+            scalars=w_scalars,
+            opacity=sl_opacity,
+            point_size=w_psize,
+            line_width=w_lwidth,
+            #TODO: flip_scalars=False, # this doesn't update scalar bar
+            show_edges=False,
+            lighting=True,
+            interpolate_before_map=False,
+            texture=False,
+            render_lines_as_tubes=False,
+            render_points_as_spheres=False,
+        )
+
+        # # Get colormaps
+        # try:
+        #     import matplotlib.pyplot as plt
+        #     cmaps = plt.colormaps()
+        #     # Now shuffle the defaule map to the front of the list
+        #     # TODO:
+        #     i_display_params['cmap'] = cmaps
+        # except ImportError:
+        #     pass
+
+        # Create/display the widgets
+        self._display_widget = interact(_update_display_params, **i_display_params)
 
 
     def _get_scalar_names(self):
@@ -136,10 +223,26 @@ class InteractiveTool(object):
         return names
 
 
-    def tool(**kwargs):
+    def tool(self, **kwargs):
         """This method is implemented for each tool to perfrom the data
         filtering and setting up the widgets"""
-        raise NotImplementedError('This method has not been implemented')
+        if kwargs.get('clean', True) and self.input_dataset.active_scalar is not None:
+            # This will clean out the nan values
+            self.input_dataset = self.input_dataset.threshold()
+
+        class dummy_widget(object):
+            def update(dummy):
+                self.plotter.remove_actor(self._data_to_update, reset_camera=False)
+                self._data_to_update = self.plotter.add_mesh(self.input_dataset,
+                    reset_camera=False, **self.display_params)
+                self._need_to_update = False
+
+        class dummy_interactor(object):
+            def __init__(inter):
+                inter.widget = dummy_widget()
+
+        self._tool_widget = dummy_interactor()
+        self._tool_widget.widget.update()
 
 
     def _initialize(self, show_bounds, reset_camera, outline):
@@ -158,22 +261,13 @@ class InteractiveTool(object):
             self.plotter.camera_set = False
 
 
-    def _update_plotting_params(self, **kwargs):
-        """Some plotting parameters can be changed through the tool; this
-        updataes those plotting parameters.
-        """
-        scalars = kwargs.get('scalars', None)
-        if scalars is not None:
-            old = self.display_params['scalars']
-            self.display_params['scalars'] = scalars
-            if old != scalars:
-                self.plotter.remove_actor(self._data_to_update, reset_camera=False)
-                self._need_to_update = True
-                self.valid_range = self.input_dataset.get_data_range(scalars)
-                self.display_params['rng'] = self.valid_range
-        cmap = kwargs.get('cmap', None)
-        if cmap is not None:
-            self.display_params['cmap'] = cmap
+
+"""A tool for adding a dataset to an active ``BackgroundPlotter`` in IPython
+environments that allows users to control plotting parameters for that
+dataset. This is quite similar to ParaView's properties panel
+"""
+
+
 
 
 
@@ -237,8 +331,7 @@ class OrthogonalSlicer(InteractiveTool):
             self._old[index] = [x,y,z][index]
             self.display_params['name'] = name
 
-        def update(x, y, z, **kwargs):
-            self._update_plotting_params(**kwargs)
+        def update(x, y, z):
             if x != self._old[0] or self._need_to_update:
                 _update_slice(0, x, y, z)
             if y != self._old[1] or self._need_to_update:
@@ -263,24 +356,26 @@ class OrthogonalSlicer(InteractiveTool):
 
         # Now set up the widgets
         xsl = widgets.FloatSlider(min=self.input_dataset.bounds[0]+stepx,
+                            description='X Location:',
                             max=self.input_dataset.bounds[1]-stepx,
                             step=stepx,
                             value=self.input_dataset.center[0],
                             continuous_update=self.continuous_update)
         ysl = widgets.FloatSlider(min=self.input_dataset.bounds[2]+stepy,
+                            description='Y Location:',
                             max=self.input_dataset.bounds[3]-stepy,
                             step=stepy,
                             value=self.input_dataset.center[1],
                             continuous_update=self.continuous_update)
         zsl = widgets.FloatSlider(min=self.input_dataset.bounds[4]+stepz,
+                            description='Z Location:',
                             max=self.input_dataset.bounds[5]-stepz,
                             step=stepz,
                             value=self.input_dataset.center[2],
                             continuous_update=self.continuous_update)
 
         # Create/display the widgets
-        interact(update, x=xsl, y=ysl, z=zsl,
-                 scalars=self._get_scalar_names())
+        self._tool_widget = interact(update, x=xsl, y=ysl, z=zsl)
 
 
 class ManySlicesAlongAxis(InteractiveTool):
@@ -326,12 +421,12 @@ class ManySlicesAlongAxis(InteractiveTool):
             self.input_dataset = self.input_dataset.threshold()
 
         nsl = widgets.IntSlider(min=1, max=10, step=1, value=5,
+                                description='Number of Slices:',
                                 continuous_update=self.continuous_update)
 
-        def update(n, axis, **kwargs):
+        def update(n, axis):
             if n >= nsl.max:
                 nsl.max *= 2
-            self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance, generate_triangles=generate_triangles)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
@@ -339,8 +434,7 @@ class ManySlicesAlongAxis(InteractiveTool):
             self._need_to_update = False
 
         # Create/display the widgets
-        interact(update, n=nsl, axis=['x', 'y', 'z'],
-                 scalars=self._get_scalar_names())
+        self._tool_widget = interact(update, n=nsl, axis=['x', 'y', 'z'])
 
 
 class Threshold(InteractiveTool):
@@ -371,6 +465,7 @@ class Threshold(InteractiveTool):
         if default_params is None:
             default_params = {}
         preference = self.display_params['preference']
+        self._last_scalars_thresh = None
 
         def _calc_start_values(rng):
             lowstart = ((rng[1] - rng[0]) * 0.25) + rng[0]
@@ -382,10 +477,12 @@ class Threshold(InteractiveTool):
         minsl = widgets.FloatSlider(min=self.valid_range[0],
                             max=self.valid_range[1],
                             value=lowstart,
+                            description='Minimum:',
                             continuous_update=self.continuous_update)
         maxsl = widgets.FloatSlider(min=self.valid_range[0],
                             max=self.valid_range[1],
                             value=highstart,
+                            description='Maximum:',
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(new_rng):
@@ -412,14 +509,14 @@ class Threshold(InteractiveTool):
                 dmax = dmin + (self.valid_range[1] - self.valid_range[0]) * 0.01
                 maxsl.value = dmax
 
-            scalars = kwargs.get('scalars')
+            scalars = kwargs.get('thresh_by')
 
             # Update the sliders if scalar is changed
-            self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
-            if self._last_scalars != scalars:
-                self._last_scalars = scalars
+            self.valid_range_thresh = self.input_dataset.get_data_range(arr=scalars, preference=preference)
+            if self._last_scalars_thresh != scalars:
+                self._last_scalars_thresh = scalars
                 # Update to the new range
-                dmin, dmax = _update_slider_ranges(self.input_dataset.get_data_range(scalars))
+                dmin, dmax = _update_slider_ranges(self.valid_range_thresh)
 
             # Run the threshold
             self.output_dataset = self.input_dataset.threshold([dmin, dmax],
@@ -427,7 +524,6 @@ class Threshold(InteractiveTool):
                     invert=invert)
 
             # Update the plotter
-            self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             if self.output_dataset.n_points == 0 and self.output_dataset.n_cells == 0:
                 pass
@@ -437,10 +533,16 @@ class Threshold(InteractiveTool):
 
             self._need_to_update = False
 
+        w_thresh_by = widgets.Dropdown(
+            options=self._get_scalar_names(),
+            description='Threshold by:',
+            disabled=False,
+        )
+
 
         # Create/display the widgets
-        interact(update, dmin=minsl, dmax=maxsl,
-                 scalars=self._get_scalar_names(),
+        self._tool_widget = interact(update, dmin=minsl, dmax=maxsl,
+                 thresh_by=w_thresh_by,
                  invert=default_params.get('invert', False),
                  continuous=False)
 
@@ -489,6 +591,7 @@ class Clip(InteractiveTool):
         locsl = widgets.FloatSlider(min=bnds[0],
                             max=bnds[1],
                             value=center[0],
+                            description='Location:',
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(normal):
@@ -503,12 +606,11 @@ class Clip(InteractiveTool):
             locsl.max = new_rng[1]
             return
 
-        def update(location, normal, invert, **kwargs):
+        def update(location, normal, invert):
             if self._last_normal != normal:
                 self._last_normal = normal
                 _update_slider_ranges(normal)
-                return update(locsl.value, normal, invert, **kwargs)
-            self._update_plotting_params(**kwargs)
+                return update(locsl.value, normal, invert)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             origin = list(self.input_dataset.center)
             origin[axchoices.index(normal)] = location
@@ -519,5 +621,4 @@ class Clip(InteractiveTool):
 
         # Create/display the widgets
         self._last_normal = 'x'
-        interact(update, location=locsl, normal=axchoices, invert=True,
-                 scalars=self._get_scalar_names())
+        self._tool_widget = interact(update, location=locsl, normal=axchoices, invert=True)

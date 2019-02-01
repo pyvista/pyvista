@@ -19,6 +19,7 @@ from vtki.qt_plotting import BackgroundPlotter
 from vtki.export import export_plotter_vtkjs, get_vtkjs_url
 
 # IPython interactive tools
+from vtki.ipy_tools import InteractiveTool
 from vtki.ipy_tools import OrthogonalSlicer
 from vtki.ipy_tools import ManySlicesAlongAxis
 from vtki.ipy_tools import Threshold
