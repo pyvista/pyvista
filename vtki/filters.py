@@ -428,7 +428,6 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
                   preference='point', set_active=True):
         """Generate scalar values on a dataset.  The scalar values lie within a
@@ -468,7 +467,7 @@ class DataSetFilters(object):
         Warning
         -------
         This will create a scalar array named `Elevation` on the point data of
-        the input dataset and overwrite an array named `Elevation` if present.
+        the input dataset and overasdf write an array named `Elevation` if present.
 
         """
         # Fix the projection line:
