@@ -137,7 +137,8 @@ class InteractiveTool(object):
             """
             scalars = kwargs.pop('scalars', None)
             # Now merge the rest of the arguments
-            self.display_params = {**self.default_display_params, **kwargs}
+            self.display_params = self.default_display_params.copy()
+            self.display_params.update(kwargs)
             # Update scalars in a unique way
             if scalars is not None:
                 self.display_params['scalars'] = scalars
