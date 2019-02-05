@@ -1759,8 +1759,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     def linear_copy(self, deep=False):
         """
         Returns a copy of the input unstructured grid containing only
-        linear cells.  Converts the following cell types to their linear
-        equivalents.
+        linear cells.  Converts the following cell types to their
+        linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
         - VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID
@@ -1770,7 +1770,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         Parameters
         ----------
         deep : bool
-            When True, makes a copy of the points array.  Default False.
+            When True, makes a copy of the points array.  Default
+            False.  Cells and cell types are always copied.
 
         Returns
         -------
@@ -1787,8 +1788,33 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         celltype[celltype == VTK_QUADRATIC_WEDGE] = VTK_WEDGE
         celltype[celltype == VTK_QUADRATIC_HEXAHEDRON] = VTK_HEXAHEDRON
 
+        # track quad mask for later
+        quad_quad_mask = celltype == VTK_QUADRATIC_QUAD
+        celltype[quad_quad_mask] = VTK_QUAD
+
+        quad_tri_mask = celltype == VTK_QUADRATIC_TRIANGLE
+        celltype[quad_tri_mask] = VTK_TRIANGLE
+
         vtk_offset = self.GetCellLocationsArray()
-        lgrid.SetCells(vtk_cell_type, vtk_offset, self.GetCells())
+        cells = vtk.vtkCellArray()
+        cells.DeepCopy(self.GetCells())
+        lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
+
+        # fixing bug with display of quad cells
+        if np.any(quad_quad_mask):
+            quad_offset = lgrid.offset[quad_quad_mask]
+            base_point = lgrid.cells[quad_offset + 1]
+            lgrid.cells[quad_offset + 5] = base_point
+            lgrid.cells[quad_offset + 6] = base_point
+            lgrid.cells[quad_offset + 7] = base_point
+            lgrid.cells[quad_offset + 8] = base_point
+
+        if np.any(quad_tri_mask):
+            tri_offset = lgrid.offset[quad_tri_mask]
+            base_point = lgrid.cells[tri_offset + 1]
+            lgrid.cells[tri_offset + 4] = base_point
+            lgrid.cells[tri_offset + 5] = base_point
+            lgrid.cells[tri_offset + 6] = base_point
 
         return lgrid
 

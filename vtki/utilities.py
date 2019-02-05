@@ -190,6 +190,7 @@ def trans_from_matrix(matrix):
             t[i, j] = matrix.GetElement(i, j)
     return t
 
+
 def wrap(vtkdataset):
     """This is a convenience method to safely wrap any given VTK data object
     to its appropriate ``vtki`` data object.
