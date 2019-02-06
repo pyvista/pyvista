@@ -120,8 +120,9 @@ def test_multi_block_io(extension, binary, tmpdir):
     multi.append(ex.load_sphere())
     multi.append(ex.load_uniform())
     multi.append(ex.load_airplane())
+    multi.append(ex.load_globe())
     # Now check everything
-    assert multi.n_blocks == 4
+    assert multi.n_blocks == 5
     # Save it out
     multi.save(filename, binary)
     foo = vtki.MultiBlock(filename)

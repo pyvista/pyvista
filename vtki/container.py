@@ -109,12 +109,13 @@ class MultiBlock(vtkMultiBlockDataSet):
             raise Exception('Filetype must be either "ply", "stl", or "vtk"')
 
         writer.SetFileName(filename)
-        writer.SetInputData(self)
+        writer.SetInputDataObject(self)
         if binary:
             writer.SetDataModeToBinary()
         else:
             writer.SetDataModeToAscii()
         writer.Write()
+        return
 
     @property
     def bounds(self):
