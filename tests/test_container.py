@@ -108,3 +108,21 @@ def test_multi_block_repr():
     # Now check everything
     assert multi.n_blocks == 5
     assert multi._repr_html_() is not None
+
+
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
+def test_multi_block_io(extension, binary, tmpdir):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    multi = vtki.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    # Now check everything
+    assert multi.n_blocks == 4
+    # Save it out
+    multi.save(filename, binary)
+    foo = vtki.MultiBlock(filename)
+    assert foo.n_blocks == multi.n_blocks

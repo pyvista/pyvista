@@ -82,17 +82,16 @@ class MultiBlock(vtkMultiBlockDataSet):
 
     def save(self, filename, binary=True):
         """
-        Writes a surface mesh to disk.
+        Writes a ``MultiBlock`` dataset to disk.
 
-        Written file may be an ASCII or binary ply, stl, or vtk mesh file.
+        Written file may be an ASCII or binary vtm file.
 
         Parameters
         ----------
         filename : str
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
-            ftype.  Can be one of the following types (.ply, .stl,
-            .vtk)
+            ftype.  Can be one of the following types (.vtm or .vtmb)
 
         binary : bool, optional
             Writes the file as binary when True and ASCII when False.
@@ -114,7 +113,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         if binary:
             writer.SetDataModeToBinary()
         else:
-            writer.SetDataModeToASCII()
+            writer.SetDataModeToAscii()
         writer.Write()
 
     @property
