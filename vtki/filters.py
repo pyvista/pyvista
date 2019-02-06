@@ -616,3 +616,28 @@ class DataSetFilters(object):
         # CRITICAL:
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
         return # No return type because it is inplace
+
+    def compute_cell_sizes(dataset, length=False, area=True, volume=True):
+        """This filter computes sizes for 1D (length), 2D (area) and 3D (volume)
+        cells.
+
+        Parameters
+        ----------
+        length : bool
+            Specify whether or not to compute the length of 1D cells.
+
+        area : bool
+            Specify whether or not to compute the area of 2D cells.
+
+        volume : bool
+            Specify whether or not to compute the volume of 3D cells.
+
+        """
+        alg = vtk.vtkCellSizeFilter()
+        alg.SetInputDataObject(dataset)
+        alg.SetComputeArea(area)
+        alg.SetComputeVolume(volume)
+        alg.SetComputeLength(length)
+        alg.SetComputeVertexCount(False)
+        alg.Update()
+        return _get_output(alg)
