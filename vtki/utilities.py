@@ -249,7 +249,7 @@ def read(filename):
     raise IOError("This file was not able to be automatically read by vtki.")
 
 
-def setErrorOutputFile(filename):
+def set_error_output_file(filename):
     """Sets a file to write out the VTK errors"""
     filename = os.path.abspath(os.path.expanduser(filename))
     fileOutputWindow = vtk.vtkFileOutputWindow()
