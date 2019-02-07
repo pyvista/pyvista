@@ -17,9 +17,9 @@ positon:
 
     filename = examples.planefile
     mesh = vtki.read(filename)
-    cpos = mesh.plot(screenshot='./images/airplane.png', color='yellow')
+    cpos = mesh.plot(screenshot='../../images/airplane.png', color='yellow')
 
-.. image:: ./images/airplane.png
+.. image:: ../../images/airplane.png
 
 
 You can also take a screenshot without creating an interactive plot window using
@@ -30,7 +30,7 @@ the ``Plotter``:
     plotter = vtki.Plotter(off_screen=True)
     plotter.add_mesh(mesh, color='yellow')
     plotter.plot(auto_close=False)
-    img = plotter.screenshot('./images/airplane.png')
+    img = plotter.screenshot('../../images/airplane.png')
     plotter.close()
 
 The ``img`` array can be used to plot the screenshot in ``matplotlib``:
@@ -59,7 +59,7 @@ manually interact with the ``vtk`` plot window:
     plotter.add_mesh(mesh, color='yellow')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
-    img = plotter.screenshot('./images/airplane.png')
+    img = plotter.screenshot('../../images/airplane.png')
     plotter.close()
 
 The points and faces from the mesh are directly accessible as a NumPy array:
@@ -109,9 +109,9 @@ curvature:
     grid.plot()
 
     # Plot mean curvature as well
-    grid.plot_curvature(screenshot='./images/curvature.png')
+    grid.plot_curvature(screenshot='../../images/curvature.png')
 
-.. image:: ./images/curvature.png
+.. image:: ../../images/curvature.png
 
 Generating a structured grid is a one liner in this module, and the points from
 the resulting surface can be accessed as a NumPy array:
@@ -156,7 +156,7 @@ gif:
     plotter.plot(auto_close=False)
 
     # Open a gif
-    plotter.open_gif('./images/wave.gif')
+    plotter.open_gif('../../images/wave.gif')
 
     pts = grid.points.copy()
 
@@ -172,7 +172,7 @@ gif:
     # Close movie and delete object
     plotter.close()
 
-.. image:: ./images/wave.gif
+.. image:: ../../images/wave.gif
 
 
 Plotting in a Jupyter Notebook
@@ -196,7 +196,7 @@ notebook:
     plotter.plot()
 
 
-.. figure:: ./images/notebook_sphere.png
+.. figure:: ../../images/notebook_sphere.png
     :width: 600pt
 
     Jupyter Inline Plotting
