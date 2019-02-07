@@ -963,9 +963,11 @@ class BasePlotter(object):
             of the axes actor.
 
         location : str, optional
-            Set how the axes are drawn: either static, closest triad, furthest
-            triad or outer edges in relation to the camera position. Options
-            include: ``'all', 'origin', 'outer', 'front', 'back'``
+            Set how the axes are drawn: either static (``'all'``), closest triad
+            (``front``), furthest triad (``'back'``), static closest to the
+            origin (``'origin'``), or outer edges (``'outer'``) in relation to
+            the camera position. Options include:
+            ``'all', 'front', 'back', 'origin', 'outer'``
 
         ticks : str, option
             Set how the ticks are drawn on the axes grid. Options include:
