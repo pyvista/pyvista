@@ -157,6 +157,7 @@ class MultiBlock(vtkMultiBlockDataSet):
     def n_blocks(self, n):
         """The total number of blocks set"""
         self.SetNumberOfBlocks(n)
+        self.Modified()
 
 
     def get_data_range(self, name):

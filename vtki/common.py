@@ -71,6 +71,8 @@ class Common(DataSetFilters):
             raise TypeError('Points must be a numpy array')
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
+        self.GetPoints().Modified()
+        self.Modified()
 
     @property
     def t_coords(self):
@@ -94,6 +96,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(t_coords)
         vtkarr.SetName('Texture Coordinates')
         self.GetPointData().SetTCoords(vtkarr)
+        self.GetPointData().Modified()
         return
 
     @property
@@ -686,6 +689,8 @@ class CellScalarsDict(dict):
         if self.callback_enabled:
             self.data._add_cell_scalar(val, key, deep=False)
         dict.__setitem__(self, key, val)
+        self.data.GetCellData().Modified()
+        # self.data.Modified()
 
     def __delitem__(self, key):
         self.data._remove_cell_scalar(key)
@@ -711,6 +716,8 @@ class PointScalarsDict(dict):
         if self.callback_enabled:
             self.data._add_point_scalar(val, key, deep=False)
         dict.__setitem__(self, key, val)
+        self.data.GetPointData().Modified()
+        # self.data.Modified()
 
     def __delitem__(self, key):
         self.data._remove_point_scalar(key)

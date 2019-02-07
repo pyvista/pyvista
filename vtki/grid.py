@@ -33,6 +33,7 @@ class Grid(vtki.Common):
         """Sets the dataset dimensions. Pass a length three tuple of integers"""
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
+        self.Modified()
 
 
 class RectilinearGrid(vtkRectilinearGrid, Grid):
@@ -136,6 +137,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         # Set the vtk coordinates
         self._from_arrays(x, y, z)
         #self._point_ref = points
+        self.Modified()
 
 
     def _load_file(self, filename):
@@ -227,6 +229,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     def x(self, coords):
         """Set the coordinates along the X-direction"""
         self.SetXCoordinates(numpy_to_vtk(coords))
+        self.Modified()
 
     @property
     def y(self):
@@ -237,6 +240,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     def y(self, coords):
         """Set the coordinates along the Y-direction"""
         self.SetYCoordinates(numpy_to_vtk(coords))
+        self.Modified()
 
     @property
     def z(self):
@@ -248,6 +252,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     def z(self, coords):
         """Set the coordinates along the Z-direction"""
         self.SetZCoordinates(numpy_to_vtk(coords))
+        self.Modified()
 
 
     # @property
@@ -397,6 +402,7 @@ class UniformGrid(vtkImageData, Grid):
         # Build the vtk object
         self._from_specs((nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
         #self._point_ref = points
+        self.Modified()
 
 
     def _load_file(self, filename):
@@ -501,6 +507,7 @@ class UniformGrid(vtkImageData, Grid):
         """Set the origin. Pass a length three tuple of floats"""
         ox, oy, oz = origin[0], origin[1], origin[2]
         self.SetOrigin(ox, oy, oz)
+        self.Modified()
 
     @property
     def spacing(self):
@@ -513,3 +520,4 @@ class UniformGrid(vtkImageData, Grid):
         floats"""
         dx, dy, dz = spacing[0], spacing[1], spacing[2]
         self.SetSpacing(dx, dy, dz)
+        self.Modified()

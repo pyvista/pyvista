@@ -180,6 +180,7 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             self.SetPolys(vtkcells)
         self._face_ref = faces
+        self.Modified()
 
     # @property
     # def lines(self):
