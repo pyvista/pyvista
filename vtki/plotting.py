@@ -281,8 +281,8 @@ class BasePlotter(object):
     def update_bounds_axes(self):
         """Update the bounds axes of the render window """
         # Update the bounds for the axes labels if present
-        if hasattr(self, 'cubeAxesActor'):
-            self.cubeAxesActor.SetBounds(self.bounds)
+        if hasattr(self, 'cube_axes_actor'):
+            self.cube_axes_actor.SetBounds(self.bounds)
         return
 
     @property
@@ -301,7 +301,7 @@ class BasePlotter(object):
             return
 
         for name, actor in self._actors.items():
-            if isinstance(actor, vtk.vtkCubeAxesActor):
+            if isinstance(actor, vtk.vtkcube_axes_actor):
                 continue
             if hasattr(actor, 'GetBounds') and actor.GetBounds() is not None:
                 _update_bounds(actor.GetBounds())
@@ -888,7 +888,7 @@ class BasePlotter(object):
                         bold=True, shadow=False, font_size=None,
                         font_family=None, color='w',
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=True):
+                        use_2d=True, grid=None, location='closest', ticks=None):
         """
         Adds bounds axes.  Shows the bounds of the most recent input mesh
         unless mesh is specified.
@@ -957,15 +957,30 @@ class BasePlotter(object):
             A bug with vtk 6.3 in Windows seems to cause this function to crash
             this can be enabled for smoother plotting for other enviornments.
 
+        grid : bool or str, optional
+            Add grid lines to the backface (``True``, ``'back'``, or
+            ``'backface'``) or to the frontface (``'front'``, ``'frontface'``)
+            of the axes actor.
+
+        location : str, optional
+            Set how the axes are drawn: either static, closest triad, furthest
+            triad or outer edges in relation to the camera position. Options
+            include: ``'all', 'origin', 'outer', 'front', 'back'``
+
+        ticks : str, option
+            Set how the ticks are drawn on the axes grid. Options include:
+            ``'inside', 'outside', 'both'``
+
         Returns
         -------
-        cubeAxesActor : vtk.vtkCubeAxesActor
+        cube_axes_actor : vtk.vtkcube_axes_actor
             Bounds actor
 
         """
         # If one is already present, just use that one
-        if hasattr(self, 'cubeAxesActor'):
-            return
+        if hasattr(self, 'cube_axes_actor'):
+            self.remove_actor(self.cube_axes_actor)
+            del self.cube_axes_actor
 
         if font_family is None:
             font_family = rcParams['font']['family']
@@ -977,32 +992,69 @@ class BasePlotter(object):
             bounds = self.bounds
 
         # create actor
-        cubeAxesActor = vtk.vtkCubeAxesActor()
-        cubeAxesActor.SetUse2DMode(False)
-        cubeAxesActor.SetScale(self.scale[0], self.scale[1], self.scale[2])
+        cube_axes_actor = vtk.vtkcube_axes_actor()
+        cube_axes_actor.SetUse2DMode(False)
+        cube_axes_actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
+
+        if grid:
+            if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
+            if isinstance(grid, str) and grid.lower() in ('both', 'all'):
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
+            else:
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
+            cube_axes_actor.DrawXGridlinesOn()
+            cube_axes_actor.DrawYGridlinesOn()
+            cube_axes_actor.DrawZGridlinesOn()
+
+        if isinstance(ticks, str):
+            ticks = ticks.lower()
+            if ticks in ('inside'):
+                cube_axes_actor.SetTickLocationToInside()
+            elif ticks in ('outside'):
+                cube_axes_actor.SetTickLocationToOutside()
+            elif ticks in ('both'):
+                cube_axes_actor.SetTickLocationToBoth()
+            else:
+                raise ValueError('Value of ticks ({}) not understood.'.format(ticks))
+
+        if isinstance(location, str):
+            location = location.lower()
+            if location in ('all'):
+                cube_axes_actor.SetFlyModeToStaticEdges()
+            elif location in ('origin'):
+                cube_axes_actor.SetFlyModeToStaticTriad()
+            elif location in ('outer'):
+                cube_axes_actor.SetFlyModeToOuterEdges()
+            elif location in ('default', 'closest', 'front'):
+                cube_axes_actor.SetFlyModeToClosestTriad()
+            elif location in ('furthest', 'back'):
+                cube_axes_actor.SetFlyModeToFurthestTriad()
+            else:
+                raise ValueError('Value of location ({}) not understood.'.format(location))
 
         # set bounds
         if not bounds:
             bounds = mesh.GetBounds()
-        cubeAxesActor.SetBounds(bounds)
+        cube_axes_actor.SetBounds(bounds)
 
         # show or hide axes
-        cubeAxesActor.SetXAxisVisibility(show_xaxis)
-        cubeAxesActor.SetYAxisVisibility(show_yaxis)
-        cubeAxesActor.SetZAxisVisibility(show_zaxis)
+        cube_axes_actor.SetXAxisVisibility(show_xaxis)
+        cube_axes_actor.SetYAxisVisibility(show_yaxis)
+        cube_axes_actor.SetZAxisVisibility(show_zaxis)
 
         # disable minor ticks
-        cubeAxesActor.XAxisMinorTickVisibilityOff()
-        cubeAxesActor.YAxisMinorTickVisibilityOff()
-        cubeAxesActor.ZAxisMinorTickVisibilityOff()
+        cube_axes_actor.XAxisMinorTickVisibilityOff()
+        cube_axes_actor.YAxisMinorTickVisibilityOff()
+        cube_axes_actor.ZAxisMinorTickVisibilityOff()
 
-        cubeAxesActor.SetCamera(self.camera)
+        cube_axes_actor.SetCamera(self.camera)
 
         # set color
         color = parse_color(color)
-        cubeAxesActor.GetXAxesLinesProperty().SetColor(color)
-        cubeAxesActor.GetYAxesLinesProperty().SetColor(color)
-        cubeAxesActor.GetZAxesLinesProperty().SetColor(color)
+        cube_axes_actor.GetXAxesLinesProperty().SetColor(color)
+        cube_axes_actor.GetYAxesLinesProperty().SetColor(color)
+        cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
 
         # empty arr
         empty_str = vtk.vtkStringArray()
@@ -1010,49 +1062,49 @@ class BasePlotter(object):
 
         # show lines
         if show_xaxis:
-            cubeAxesActor.SetXTitle(xlabel)
+            cube_axes_actor.SetXTitle(xlabel)
         else:
-            cubeAxesActor.SetXTitle('')
-            cubeAxesActor.SetAxisLabels(0, empty_str)
+            cube_axes_actor.SetXTitle('')
+            cube_axes_actor.SetAxisLabels(0, empty_str)
 
         if show_yaxis:
-            cubeAxesActor.SetYTitle(ylabel)
+            cube_axes_actor.SetYTitle(ylabel)
         else:
-            cubeAxesActor.SetYTitle('')
-            cubeAxesActor.SetAxisLabels(1, empty_str)
+            cube_axes_actor.SetYTitle('')
+            cube_axes_actor.SetAxisLabels(1, empty_str)
 
         if show_zaxis:
-            cubeAxesActor.SetZTitle(zlabel)
+            cube_axes_actor.SetZTitle(zlabel)
         else:
-            cubeAxesActor.SetZTitle('')
-            cubeAxesActor.SetAxisLabels(2, empty_str)
+            cube_axes_actor.SetZTitle('')
+            cube_axes_actor.SetAxisLabels(2, empty_str)
 
         # show labels
         if not show_xlabels:
-            cubeAxesActor.SetAxisLabels(0, empty_str)
+            cube_axes_actor.SetAxisLabels(0, empty_str)
 
         if not show_ylabels:
-            cubeAxesActor.SetAxisLabels(1, empty_str)
+            cube_axes_actor.SetAxisLabels(1, empty_str)
 
         if not show_zlabels:
-            cubeAxesActor.SetAxisLabels(2, empty_str)
+            cube_axes_actor.SetAxisLabels(2, empty_str)
 
         # set font
         font_family = parse_font_family(font_family)
         for i in range(3):
-            cubeAxesActor.GetTitleTextProperty(i).SetFontSize(font_size)
-            cubeAxesActor.GetTitleTextProperty(i).SetColor(color)
-            cubeAxesActor.GetTitleTextProperty(i).SetFontFamily(font_family)
-            cubeAxesActor.GetTitleTextProperty(i).SetBold(bold)
+            cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
+            cube_axes_actor.GetTitleTextProperty(i).SetColor(color)
+            cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
+            cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
 
-            cubeAxesActor.GetLabelTextProperty(i).SetFontSize(font_size)
-            cubeAxesActor.GetLabelTextProperty(i).SetColor(color)
-            cubeAxesActor.GetLabelTextProperty(i).SetFontFamily(font_family)
-            cubeAxesActor.GetLabelTextProperty(i).SetBold(bold)
+            cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
+            cube_axes_actor.GetLabelTextProperty(i).SetColor(color)
+            cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
+            cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cubeAxesActor, reset_camera=False)
-        self.cubeAxesActor = cubeAxesActor
-        return cubeAxesActor
+        self.add_actor(cube_axes_actor, reset_camera=False)
+        self.cube_axes_actor = cube_axes_actor
+        return cube_axes_actor
 
     def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0, reset_camera=True):
         """
