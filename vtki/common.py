@@ -71,6 +71,7 @@ class Common(DataSetFilters):
             raise TypeError('Points must be a numpy array')
         vtk_points = vtki.vtk_points(points, False)
         self.SetPoints(vtk_points)
+        self.GetPoints().Modified()
 
     @property
     def t_coords(self):
@@ -94,6 +95,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(t_coords)
         vtkarr.SetName('Texture Coordinates')
         self.GetPointData().SetTCoords(vtkarr)
+        self.GetPointData().Modified()
         return
 
     @property
