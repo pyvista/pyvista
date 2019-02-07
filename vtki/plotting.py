@@ -301,7 +301,7 @@ class BasePlotter(object):
             return
 
         for name, actor in self._actors.items():
-            if isinstance(actor, vtk.vtkcube_axes_actor):
+            if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
             if hasattr(actor, 'GetBounds') and actor.GetBounds() is not None:
                 _update_bounds(actor.GetBounds())
@@ -975,7 +975,7 @@ class BasePlotter(object):
 
         Returns
         -------
-        cube_axes_actor : vtk.vtkcube_axes_actor
+        cube_axes_actor : vtk.vtkCubeAxesActor
             Bounds actor
 
         """
@@ -994,7 +994,7 @@ class BasePlotter(object):
             bounds = self.bounds
 
         # create actor
-        cube_axes_actor = vtk.vtkcube_axes_actor()
+        cube_axes_actor = vtk.vtkCubeAxesActor()
         cube_axes_actor.SetUse2DMode(False)
         cube_axes_actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
 
