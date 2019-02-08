@@ -886,7 +886,7 @@ class BasePlotter(object):
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
                         bold=True, shadow=False, font_size=None,
-                        font_family=None, color='w',
+                        font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=True, grid=None, location='closest', ticks=None):
         """
@@ -988,6 +988,8 @@ class BasePlotter(object):
             font_family = rcParams['font']['family']
         if font_size is None:
             font_size = rcParams['font']['size']
+        if color is None:
+            color = rcParams['font']['color']
 
         # Use the bounds of all data in the rendering window
         if not mesh and not bounds:
