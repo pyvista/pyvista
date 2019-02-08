@@ -4,7 +4,7 @@ Clearing a Mesh or the Entire Plot
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Removing a single actor:
 
-.. code:: python
+.. code-block:: python
 
     import vtki
     plotter = vtki.Plotter(notebook=True)
@@ -15,7 +15,7 @@ Removing a single actor:
 
 Clearing the entire plotting window:
 
-.. code:: python
+.. code-block:: python
 
     import vtki
     plotter = vtki.Plotter(notebook=True)
@@ -28,7 +28,7 @@ Clearing the entire plotting window:
 Or you can give any actor a ``name`` when adding it and if an actor is added
 with that same name at a later time, it will replace the previous actor:
 
-.. testcode:: python
+.. code-block:: python
 
     import vtki
     plotter = vtki.Plotter(notebook=True)

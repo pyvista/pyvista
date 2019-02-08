@@ -26,7 +26,7 @@ gif:
     plotter.plot(auto_close=False)
 
     # Open a gif
-    plotter.open_gif('../../images/wave.gif')
+    plotter.open_gif('./images/wave.gif')
 
     pts = grid.points.copy()
 

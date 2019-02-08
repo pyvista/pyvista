@@ -22,7 +22,7 @@ curvature:
     grid.plot()
 
     # Plot mean curvature as well
-    grid.plot_curvature(screenshot='../../images/curvature.png')
+    grid.plot_curvature(screenshot='./images/curvature.png')
 
 .. image:: ../../images/curvature.png
 
