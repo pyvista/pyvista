@@ -1,10 +1,10 @@
 Basic API Usage
 ===============
 
-``vtki`` provides tools to easily get started with just about any VTK dataset
-and wrap access to that object into an easily accesible data object.
-Whether you are new to the VTK library or a power user, the best place to get
-started is with ``vtki``'s :func:`vtki.wrap` and :func:`vtk.read`
+``vtki`` provides tools to get started with just about any VTK dataset
+and wrap that object into an easily accesible data object.
+Whether you are new to the VTK library or a power user, the best place to
+get started is with ``vtki``'s :func:`vtki.wrap` and :func:`vtk.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
 
@@ -160,4 +160,4 @@ Be sure to check out all the available plotters for your use case:
 
 * :class:`vtki.Plotter`: The standard plotter that pauses the code until closed
 * :class:`vtki.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution
-* :class:`vtki.ScaledPlotter`: An IPython extension of the :class:`vtki.BackgroundPlotter`` that has interactive widgets for scaling the axes in the rendering scene.
+* :class:`vtki.ScaledPlotter`: An IPython extension of the :class:`vtki.BackgroundPlotter` that has interactive widgets for scaling the axes in the rendering scene.

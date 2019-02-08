@@ -4,9 +4,13 @@ Installation
 ============
 
 Installing ``vtki`` itself is quite straightforward as it can be installed
-using ``pip``.
+using ``pip``::
 
-``vtki`` requires ``numpy``, ``imageio``, and ``VTK`` version 7.0 or newer.
+  pip install vtki
+
+``vtki`` requires ``numpy``, ``imageio``, and ``VTK`` version 7.0 or newer
+which should be installed by pip automatically. If you experience issues
+installing VTK, please continue reading the next section.
 
 
 Install the Visualization Toolkit
@@ -15,7 +19,7 @@ Install the Visualization Toolkit
 The Visualization Toolkit (VTK) can be installed using pip for most versions of
 Python::
 
-  $ pip install vtk
+  pip install vtk
 
 If this command fails, install VTK by installing from a distribution like
 `Anaconda <https://www.continuum.io/downloads>`_ and then installing VTK for
