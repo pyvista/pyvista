@@ -77,20 +77,27 @@ Here are a few open-source projects that leverage ``vtki``:
    :maxdepth: 2
    :caption: Getting Started
 
-   installation
-   examples
+   getting-started/installation
+   getting-started/simple
 
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: vtki Data Types
+   :caption: Data Types
 
    types/common
    types/points
    types/point-grids
    types/grids
    types/container
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+
+   examples/index
 
 
 

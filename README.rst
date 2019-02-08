@@ -12,7 +12,7 @@ vtki
    :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
 
 .. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
-   :target: https://vtkinterface.readthedocs.io/en/latest/?badge=latest
+   :target: https://vtkinterface.readthedocs.io/en/latest/
 
 .. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
    :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
