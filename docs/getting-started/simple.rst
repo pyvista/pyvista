@@ -3,7 +3,7 @@ Basic API Usage
 
 ``vtki`` provides tools to easily get started with just about any VTK dataset
 and wrap access to that object into an easily accesible data object.
-Whether your new to the VTK library or a power user, the best place to get
+Whether you are new to the VTK library or a power user, the best place to get
 started is with ``vtki``'s :func:`vtki.wrap` and :func:`vtk.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
@@ -49,10 +49,10 @@ Accessing the Wrapped Data Object
 
 Now that you have a wrapped VTK data object, you can start accessing and
 modifying the data! Some of the most common properties to access include the
-points and point/cell data (the data attribute assigned to the nodes or faces
+points and point/cell data (the data attributes assigned to the nodes or cells
 of the mesh respectively).
 
-First, lets check out some common meta data properties:
+First, check out some common meta data properties:
 
 .. code-block:: python
 
@@ -81,7 +81,7 @@ First, lets check out some common meta data properties:
 
 
 
-Accessing the points is easy! Simply call the ``.points`` attribute on any
+Access the points by fetching the ``.points`` attribute on any
 ``vtki`` data object:
 
 .. code-block:: python
@@ -91,8 +91,9 @@ Accessing the points is easy! Simply call the ``.points`` attribute on any
     True
 
 Accessing the different data attributes on the points and cells of the data
-object is also easy! The ``vtki`` data objects have a dictionary of the
-different point and cell arrays that you can directly access and modify.
+object is interfaces via dictionaries with callbacks to the VTK object.
+These dictionaries of the different point and cell arrays can be directly
+accessed and modified.
 
 .. code-block:: python
 
