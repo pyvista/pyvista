@@ -1,5 +1,5 @@
 Creating a Uniform Grid
-~~~~~~~~~~~~~~~~~~~~~~~
+=======================
 
 This example creates a simple uniform grid from a 3D NumPy array of values.
 

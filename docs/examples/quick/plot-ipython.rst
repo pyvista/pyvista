@@ -1,5 +1,6 @@
 Plotting in a Jupyter Notebook
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==============================
+
 Inline plots are possible using a Jupyter notebook.  The code snippet below
 will create a static screenshot of the rendering and display it in the Jupyter
 notebook:

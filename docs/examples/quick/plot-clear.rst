@@ -1,7 +1,9 @@
 
 
 Clearing a Mesh or the Entire Plot
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==================================
+
+
 Removing a single actor:
 
 .. code-block:: python

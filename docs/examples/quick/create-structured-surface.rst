@@ -1,6 +1,6 @@
 
 Creating a Structured Surface
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+=============================
 
 This example creates a simple surface grid and plots the resulting grid and its
 curvature:
