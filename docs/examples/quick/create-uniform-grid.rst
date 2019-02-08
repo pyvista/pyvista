@@ -35,6 +35,10 @@ axis corresponds to the XYZ cartesian axes. This example will create a
     grid.plot(show_edges=True)
 
 
+.. image:: ../../images/uniform-grid.png
+
+
+
 Don't like cell data? You could also add the NumPy array to the point data of a
 :class:`vtki.UniformGrid`. Take note of the subtle difference when setting the
 grid dimensions upon initialization.
