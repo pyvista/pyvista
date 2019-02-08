@@ -78,7 +78,6 @@ Here are a few open-source projects that leverage ``vtki``:
    :caption: Getting Started
 
    getting-started/installation
-   getting-started/mesh-types
    getting-started/simple
 
 
@@ -87,6 +86,7 @@ Here are a few open-source projects that leverage ``vtki``:
    :maxdepth: 2
    :caption: Data Types
 
+   types/mesh-types
    types/common
    types/points
    types/point-grids
