@@ -105,3 +105,58 @@ different point and cell arrays that you can directly access and modify.
     >>> foo = data.get_scalar('foo')
     >>> isinstance(foo, np.ndarray)
     True
+
+
+Plotting
+~~~~~~~~
+
+``vtki`` includes numerous plotting routines that are intended to be intuitive
+and highly controllable with ``matplotlib`` similar syntax and keyword
+arguments.
+To get started, try out the :func:`vtki.plot` convenience method that is binded
+to each ``vtki`` data object:
+
+
+.. code-block:: python
+
+    import vtki
+    from vtki import examples
+
+    data = examples.load_airplane()
+    data.plot()
+
+You can also create the plotter to highly control the scene. First, instantiate
+a plotter such as :class:`vtki.Plotter` or :class:`vtki.BackgroundPlotter`:
+
+The :class:`vtki.Plotter` will create a rendering window that will pause the
+execution of the code after calling ``show``.
+
+.. code-block:: python
+
+    plotter = vtki.Plotter()  # instantiate the plotter
+    plotter.add_mesh(data)    # add a dataset to the scene
+    cpos = plotter.show()     # show the rendering window
+
+
+Note that the ``show`` method will return the last used camera position of the
+rendering window incase you want to chose a camera position and use it agian
+later.
+
+You can then use this cached camera for additional plotting without having to
+manually interact with the plotting window:
+
+.. code-block:: python
+
+    plotter = vtki.Plotter(off_screen=True)
+    plotter.add_mesh(mesh, color='yellow')
+    plotter.camera_position = cpos
+    plotter.plot(auto_close=False)
+    # img = plotter.screenshot('airplane.png')
+    plotter.close()
+
+
+Be sure to check out all the available plotters for your use case:
+
+* :class:`vtki.Plotter`: The standard plotter that pauses the code until closed
+* :class:`vtki.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution
+* :class:`vtki.ScaledPlotter`: An IPython extension of the :class:`vtki.BackgroundPlotter`` that has interactive widgets for scaling the axes in the rendering scene.

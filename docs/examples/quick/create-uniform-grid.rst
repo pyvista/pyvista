@@ -37,7 +37,7 @@ axis corresponds to the XYZ cartesian axes. This example will create a
 
 Don't like cell data? You could also add the NumPy array to the point data of a
 :class:`vtki.UniformGrid`. Take note of the subtle difference when setting the
-grid dimensions upon inti
+grid dimensions upon initialization.
 
 .. code-block:: python
 

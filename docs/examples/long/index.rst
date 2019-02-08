@@ -2,8 +2,8 @@ Long Examples
 *************
 
 Do you have a technical processing workflow or visualization routine you would
-like to share? If so, please consider sharing your this code a *Long Example*
-for the ``vtki`` documentation. 
+like to share? If so, please consider sharing your this code as a *Long Example*
+for the ``vtki`` documentation.
 
 .. toctree::
    :maxdepth: 2

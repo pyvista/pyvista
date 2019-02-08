@@ -3,7 +3,8 @@ Using Common Filters
 ~~~~~~~~~~~~~~~~~~~~
 
 ``vtki`` wrapped data objects have a suite of common filters ready for immediate
-use directly on the object (see :ref:`filters_ref`). These filters include:
+use directly on the object. These filters include the following
+(see :ref:`filters_ref` for a complete list):
 
 * ``slice``: creates a single slice through the input dataset on a user defined plane
 * ``slice_orthogonal``: creates a ``MultiBlock`` dataset of three orthogonal slices
@@ -15,7 +16,8 @@ use directly on the object (see :ref:`filters_ref`). These filters include:
 * ``extract_geometry``: Extract surface geometry
 
 
-To use these filters, call the method of your choice directly on your data object:
+To use these filters, call the method of your choice directly on your data
+object:
 
 
 .. testcode:: python

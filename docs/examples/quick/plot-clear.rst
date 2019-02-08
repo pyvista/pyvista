@@ -35,3 +35,4 @@ with that same name at a later time, it will replace the previous actor:
     plotter.add_mesh(vtki.Sphere(), name='mydata')
     plotter.add_mesh(vtki.Plane(), name='mydata')
     # Only the Plane is shown!
+    plotter.show()

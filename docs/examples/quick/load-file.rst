@@ -2,7 +2,7 @@ Load and Plot from a File
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Loading a mesh is trivial.  The following code block uses a built-in example
 file, displays an airplane mesh, saves a screenshot, and returns the camera's
-positon:
+position:
 
 .. testcode:: python
 
