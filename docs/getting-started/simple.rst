@@ -1,10 +1,10 @@
 Basic API Usage
 ===============
 
-``vtki`` provides tools to easily get started with just about any VTK dataset
-and wrap access to that object into an easily accesible data object.
-Whether you are new to the VTK library or a power user, the best place to get
-started is with ``vtki``'s :func:`vtki.wrap` and :func:`vtk.read`
+``vtki`` provides tools to get started with just about any VTK dataset
+and wrap that object into an easily accesible data object.
+Whether you are new to the VTK library or a power user, the best place to
+get started is with ``vtki``'s :func:`vtki.wrap` and :func:`vtk.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
 
