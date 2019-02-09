@@ -46,6 +46,7 @@ rcParams = {
         'color' : [1, 1, 1],
     },
     'cmap' : 'jet',
+    'color' : 'white',
     'colorbar' : {
         'width' : 0.60,
         'height' : 0.08,
@@ -63,6 +64,14 @@ def set_plot_theme(theme):
         rcParams['font']['family'] = 'arial'
         rcParams['font']['label_size'] = 16
         rcParams['show_edges'] = False
+    elif theme.lower() in ['document', 'doc', 'paper', 'report']:
+        rcParams['background'] = 'white'
+        rcParams['cmap'] = 'coolwarm'
+        rcParams['font']['family'] = 'arial'
+        rcParams['font']['label_size'] = 16
+        rcParams['font']['color'] = 'black'
+        rcParams['show_edges'] = False
+        rcParams['color'] = 'yellow'
 
 
 def run_from_ipython():
@@ -991,6 +1000,8 @@ class BasePlotter(object):
         if color is None:
             color = rcParams['font']['color']
 
+        color = parse_color(color)
+
         # Use the bounds of all data in the rendering window
         if not mesh and not bounds:
             bounds = self.bounds
@@ -1010,6 +1021,10 @@ class BasePlotter(object):
             cube_axes_actor.DrawXGridlinesOn()
             cube_axes_actor.DrawYGridlinesOn()
             cube_axes_actor.DrawZGridlinesOn()
+            # Set the colors
+            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color)
+            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color)
+            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color)
 
         if isinstance(ticks, str):
             ticks = ticks.lower()
@@ -1055,7 +1070,6 @@ class BasePlotter(object):
         cube_axes_actor.SetCamera(self.camera)
 
         # set color
-        color = parse_color(color)
         cube_axes_actor.GetXAxesLinesProperty().SetColor(color)
         cube_axes_actor.GetYAxesLinesProperty().SetColor(color)
         cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
@@ -2240,8 +2254,8 @@ def single_triangle():
 def parse_color(color):
     """ Parses color into a vtk friendly rgb list """
     if color is None:
-        return [1, 1, 1]
-    elif isinstance(color, str):
+        color = rcParams['color']
+    if isinstance(color, str):
         return vtki.string_to_rgb(color)
     elif len(color) == 3:
         return color
