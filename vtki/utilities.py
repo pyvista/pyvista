@@ -156,6 +156,7 @@ def vector_poly_data(orig, vec):
 
     if cells.dtype != ctypes.c_int64 or cells.flags.c_contiguous:
         cells = np.ascontiguousarray(cells, ctypes.c_int64)
+    cells = np.reshape(cells, (2*npts))
     vcells = vtk.vtkCellArray()
     vcells.SetCells(npts, numpy_to_vtkIdTypeArray(cells, deep=True))
 

@@ -92,6 +92,7 @@ class PolyData(vtkPolyData, vtki.Common):
                 cells = np.hstack((np.ones((npoints, 1)),
                                    np.arange(npoints).reshape(-1, 1)))
                 cells = np.ascontiguousarray(cells, dtype=vtki.ID_TYPE)
+                cells = np.reshape(cells, (2*npoints))
                 self._from_arrays(points, cells, deep)
             else:
                 raise TypeError('Invalid input type')
