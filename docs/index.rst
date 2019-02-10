@@ -64,6 +64,12 @@ Here are a few open-source projects that leverage ``vtki``:
 .. _omfvtk: https://github.com/OpenGeoVis/omfvtk
 
 
+Authors
+-------
+
+.. include:: ../AUTHORS.rst
+
+
 
 .. toctree::
    :hidden:

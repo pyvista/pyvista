@@ -114,53 +114,6 @@ That way, subdivision can be performed with:
 
     submesh = mesh.subdivide('linear', nsub=3)
 
-Additionally, ``help(mesh.subdivide)`` yields a useful docstring::
-
-    Help on method subdivide in module vtki.polydata:
-
-    subdivide(nsub, subfilter='linear', inplace=False) method of vtki.polydata.PolyData instance
-        Increase the number of triangles in a single, connected triangular
-        mesh.
-
-        Uses one of the following vtk subdivision filters to subdivide a mesh.
-        vtkButterflySubdivisionFilter
-        vtkLoopSubdivisionFilter
-        vtkLinearSubdivisionFilter
-
-        Linear subdivision results in the fastest mesh subdivision, but it
-        does not smooth mesh edges, but rather splits each triangle into 4
-        smaller triangles.
-
-        Butterfly and loop subdivision perform smoothing when dividing, and may
-        introduce artifacts into the mesh when dividing.
-
-        Subdivision filter appears to fail for multiple part meshes.  Should
-        be one single mesh.
-
-        Parameters
-        ----------
-        nsub : int
-            Number of subdivisions.  Each subdivision creates 4 new triangles,
-            so the number of resulting triangles is nface*4**nsub where nface
-            is the current number of faces.
-
-        subfilter : string, optional
-            Can be one of the following: 'butterfly', 'loop', 'linear'
-
-        inplace : bool, optional
-            Updates mesh in-place while returning nothing.
-
-        Returns
-        -------
-        mesh : Polydata object
-            vtki polydata object.  None when inplace=True
-
-        Examples
-        --------
-        >>> from vtki import examples
-        >>> import vtki
-        >>> mesh = vtki.PolyData(examples.planefile)
-        >>> submesh = mesh.subdivide(1, 'loop')
-
-	alternatively, update mesh in-place
-        >>> mesh.subdivide(1, 'loop', inplace=True)
+Additionally, ``vtki`` provides insightful documentation on the wrapped VTK data
+structures and algorithms to encourage rapid data exploration and analysis using
+the VTK software library.
