@@ -129,6 +129,21 @@ def test_multi_block_io(extension, binary, tmpdir):
     assert foo.n_blocks == multi.n_blocks
 
 
+def test_extract_geometry():
+    multi = vtki.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(ex.load_globe())
+    # Now check everything
+    assert multi.n_blocks == 5
+    # Now apply the geometry filter to combine a plethora of data blocks
+    geom = multi.extract_geometry()
+    assert isinstance(geom, vtki.PolyData)
+
+
 def test_combine_filter():
     multi = vtki.MultiBlock()
     # Add examples
@@ -141,4 +156,4 @@ def test_combine_filter():
     assert multi.n_blocks == 5
     # Now apply the geometry filter to combine a plethora of data blocks
     geom = multi.combine()
-    assert isinstance(geom, vtki.PolyData)
+    assert isinstance(geom, vtki.UnstructuredGrid)
