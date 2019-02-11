@@ -100,8 +100,9 @@ class DataSetFilters(object):
         alg.Update() # Perfrom the Cut
         return _get_output(alg)
 
-    def clip_box(dataset, bounds, invert=False):
-        """Clips a dataset by a bounding box defined by the bounds
+    def clip_box(dataset, bounds=None, invert=True, factor=0.35):
+        """Clips a dataset by a bounding box defined by the bounds. If no bounds
+        are given, a corner of the dataset bounds will be removed.
 
         Parameters
         ----------
@@ -111,17 +112,33 @@ class DataSetFilters(object):
         invert : bool
             Flag on whether to flip/invert the clip
 
+        factor : float, optional
+            If bounds are not given this is the factor along each axis to
+            extract the default box.
+
         """
+        if bounds is None:
+            def _get_quarter(dmin, dmax):
+                return dmax - ((dmax - dmin) * factor)
+            xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
+            xmin = _get_quarter(xmin, xmax)
+            ymin = _get_quarter(ymin, ymax)
+            zmin = _get_quarter(zmin, zmax)
+            bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+            print(bounds)
         if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
             raise AssertionError('Bounds must be a length 6 iterable of floats')
-        box = vtk.vtkBox()
-        box.SetBounds(bounds)
-        alg = vtk.vtkClipDataSet()
+        xmin, xmax, ymin, ymax, zmin, zmax = bounds
+        alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(dataset)
-        alg.SetClipFunction(box) # the the cutter to use the box we made
-        alg.SetInsideOut(invert) # invert the clip if needed
+        alg.SetBoxClip(xmin, xmax, ymin, ymax, zmin, zmax)
+        port = 0
+        if invert:
+            # invert the clip if needed
+            port = 1
+            alg.GenerateClippedOutputOn()
         alg.Update()
-        return _get_output(alg)
+        return _get_output(alg, oport=port)
 
     def slice(dataset, normal='x', origin=None, generate_triangles=False):
         """Slice a dataset by a plane at the specified origin and normal vector

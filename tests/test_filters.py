@@ -15,15 +15,6 @@ datasets = [
 normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 
 
-def _corner_bounds(bounds):
-    def _get_quarter(dmin, dmax):
-        return ((dmax - dmin) * 0.25) + dmin
-    xmin, xmax, ymin, ymax, zmin, zmax = bounds
-    xmax = _get_quarter(xmin, xmax)
-    ymax = _get_quarter(ymin, ymax)
-    zmax = _get_quarter(zmin, zmax)
-    return [xmin, xmax, ymin, ymax, zmin, zmax]
-
 
 def test_clip_filter():
     """This tests the clip filter on all datatypes avaialble filters"""
@@ -34,8 +25,7 @@ def test_clip_filter():
 
 def test_clip_box():
     for i, dataset in enumerate(datasets):
-        bounds = _corner_bounds(dataset.bounds)
-        clp = dataset.clip_box(bounds=bounds, invert=True)
+        clp = dataset.clip_box(invert=True)
         assert clp is not None
         assert isinstance(clp, vtki.UnstructuredGrid)
 
