@@ -97,6 +97,30 @@ def test_plot_add_bounds_axes():
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
+@pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
+def test_plot_add_bounds_axes_params(grid, location):
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.add_bounds_axes(grid=grid, ticks='inside', location=location)
+    plotter.add_bounds_axes(grid=grid, ticks='outside', location=location)
+    plotter.add_bounds_axes(grid=grid, ticks='both', location=location)
+    plotter.show()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plotter_scale():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.set_scale(10, 10, 10)
+    plotter.set_scale(5.0)
+    plotter.set_scale(yscale=6.0)
+    plotter.set_scale(zscale=9.0)
+    assert plotter.scale == [5.0, 6.0, 9.0]
+    plotter.show()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_plot_add_scalar_bar():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -350,3 +374,12 @@ def test_plot_texture_associated():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=True)
     plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_camera():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.isometric_view()
+    plotter.reset_camera()
+    plotter.show()

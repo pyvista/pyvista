@@ -1124,12 +1124,18 @@ class BasePlotter(object):
         self.cube_axes_actor = cube_axes_actor
         return cube_axes_actor
 
-    def set_scale(self, xscale=1.0, yscale=1.0, zscale=1.0, reset_camera=True):
+    def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """
         Scale all the datasets in the scene.
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
         """
+        if xscale is None:
+            xscale = self.scale[0]
+        if yscale is None:
+            yscale = self.scale[1]
+        if zscale is None:
+            zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
         for name, actor in self._actors.items():
             if hasattr(actor, 'SetScale'):
