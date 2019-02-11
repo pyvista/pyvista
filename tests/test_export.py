@@ -46,3 +46,44 @@ def test_export_multi(tmpdir):
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile('{}.vtkjs'.format(filename))
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_export_texture(tmpdir):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    data = ex.load_globe()
+    # Create the scene
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(data)
+    plotter.export_vtkjs(filename)
+    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.close()
+    # Now make sure the file is there
+    assert os.path.isfile('{}.vtkjs'.format(filename))
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_export_verts(tmpdir):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    data = vtki.PolyData(np.random.rand(100, 3))
+    # Create the scene
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(data)
+    plotter.export_vtkjs(filename)
+    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.close()
+    # Now make sure the file is there
+    assert os.path.isfile('{}.vtkjs'.format(filename))
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_export_color(tmpdir):
+    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    data = ex.load_airplane()
+    # Create the scene
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(data, color='yellow')
+    plotter.export_vtkjs(filename)
+    cpos_out = plotter.show() # Export must be called before showing!
+    plotter.close()
+    # Now make sure the file is there
+    assert os.path.isfile('{}.vtkjs'.format(filename))
