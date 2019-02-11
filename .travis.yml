@@ -49,6 +49,7 @@ script:
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
       pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+      pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
     fi
   # And test the documentation
   - cd ./docs/
