@@ -57,6 +57,8 @@ rcParams = {
     'lighting': True,
 }
 
+DEFAULT_THEME = dict(rcParams)
+
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
     if theme.lower() in ['paraview', 'pv']:
@@ -68,11 +70,12 @@ def set_plot_theme(theme):
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
         rcParams['cmap'] = 'coolwarm'
-        rcParams['font']['family'] = 'arial'
-        rcParams['font']['label_size'] = 16
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
-        rcParams['color'] = 'yellow'
+        rcParams['color'] = 'orange'
+    elif theme.lower() in ['default']:
+        for k,v in DEFAULT_THEME.items():
+            rcParams[k] = v
 
 
 def run_from_ipython():
