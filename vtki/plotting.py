@@ -54,6 +54,7 @@ rcParams = {
         'position_y' : 0.02,
     },
     'show_edges' : False,
+    'lighting': True,
 }
 
 def set_plot_theme(theme):
@@ -438,7 +439,7 @@ class BasePlotter(object):
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
-                 lighting=True, n_colors=256, interpolate_before_map=False,
+                 lighting=None, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=False, render_lines_as_tubes=False,
@@ -552,6 +553,9 @@ class BasePlotter(object):
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
+
+        if lighting is None:
+            lighting = rcParams['lighting']
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
