@@ -442,7 +442,7 @@ class BasePlotter(object):
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
                  lighting=True, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
-                 multi_colors=False, name=None, texture=None,
+                 show_scalar_bar=True, multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=False, render_lines_as_tubes=False,
                  edge_color='black', **kwargs):
         """
@@ -608,7 +608,7 @@ class BasePlotter(object):
                              n_colors=n_colors, interpolate_before_map=interpolate_before_map,
                              cmap=cmap, label=label,
                              scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
-                             name=nm, texture=None,
+                             name=nm, texture=None, show_scalar_bar=show_scalar_bar,
                              render_points_as_spheres=render_points_as_spheres, render_lines_as_tubes=render_lines_as_tubes,
                              edge_color=edge_color, **kwargs)
                 actors.append(a)
@@ -768,7 +768,7 @@ class BasePlotter(object):
             prop.SetLineWidth(line_width)
 
         # Add scalar bar if available
-        if stitle is not None:
+        if stitle is not None and show_scalar_bar:
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
