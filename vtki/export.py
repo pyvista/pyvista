@@ -445,7 +445,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     dataset = gf.GetOutputDataObject(0)
 
 
-                if dataset and dataset.GetPoints():
+                if dataset:# and dataset.GetPoints(): # NOTE: vtkImageData does not have points
                     componentName = 'data_%d_%d' % (
                         rIdx, rpIdx)  # getComponentName(renProp)
                     scalarVisibility = mapper.GetScalarVisibility()
