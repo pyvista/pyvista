@@ -67,6 +67,8 @@ Here are a few open-source projects that leverage ``vtki``:
 Authors
 -------
 
+.. _authors_ref:
+
 .. include:: ../AUTHORS.rst
 
 

@@ -79,3 +79,13 @@ Here are a few open-source projects that leverage ``vtki``:
 
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvtk: https://github.com/OpenGeoVis/omfvtk
+
+
+Authors
+-------
+
+Please take a look at the `contributors page`_ and the active `list of authors`_
+to learn more about the developers of ``vtki``.
+
+.. _contributors page: https://GitHub.com/akaszynski/vtki/graphs/contributors/
+.. _list of authors: https://vtkinterface.readthedocs.io/en/latest/#authors
