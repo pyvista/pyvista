@@ -278,6 +278,7 @@ class BasePlotter(object):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
         self._actors = {}
         # track if the camera has been setup
         self.camera_set = False
@@ -333,6 +334,7 @@ class BasePlotter(object):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
 
     def enable_trackball_style(self):
         """ sets the interacto style to trackball """
@@ -1147,8 +1149,9 @@ class BasePlotter(object):
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False, bold=True,
                        title_font_size=None, label_font_size=None, color=None,
-                       font_family=None, shadow=False, mapper=None,
-                       width=None, height=None, position_x=None, position_y=None):
+                       font_family=None, shadow=False, mapper=None, width=None,
+                       height=None, position_x=None, position_y=None,
+                       vertical=None, interactive=False):
         """
         Creates scalar bar using the ranges as set by the last input mesh.
 
@@ -1200,6 +1203,9 @@ class BasePlotter(object):
         position_y : float, optional
             The percentage (0 to 1) along the winow's vertical direction to
             place the bottom left corner of the colorbar
+
+        interactive : bool, optional
+            Use a widget to control the size and location of the scalar bar.
 
         Notes
         -----
@@ -1277,7 +1283,11 @@ class BasePlotter(object):
         self.scalar_bar.SetHeight(height)
         self.scalar_bar.SetWidth(width)
         self.scalar_bar.SetPosition(position_x, position_y)
-        self.scalar_bar.SetOrientationToHorizontal()
+
+        if vertical:
+            self.scalar_bar.SetOrientationToVertical()
+        else:
+            self.scalar_bar.SetOrientationToHorizontal()
 
         if label_font_size is None or title_font_size is None:
             self.scalar_bar.UnconstrainedFontSizeOn()
@@ -1319,6 +1329,19 @@ class BasePlotter(object):
             title_text.SetColor(color)
 
             self._scalar_bar_actors[title] = self.scalar_bar
+
+        if interactive and hasattr(self, 'iren'):
+            self.scalar_widget = vtk.vtkScalarBarWidget()
+            self.scalar_widget.SetScalarBarActor(self.scalar_bar)
+            self.scalar_widget.SetInteractor(self.iren)
+            self.scalar_widget.SetEnabled(1)
+            rep = self.scalar_widget.GetRepresentation()
+            # self.scalar_widget.On()
+            if vertical is True or vertical is None:
+                rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
+            else:
+                rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
+            self._scalar_bar_widgets[title] = self.scalar_widget
 
         self.add_actor(self.scalar_bar, reset_camera=False)
 
