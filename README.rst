@@ -43,7 +43,7 @@ Installation is simply::
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
 `GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
 
-See the `Installation <http://vtkInterface.readthedocs.io/en/latest/installation.html#install-ref.>`_
+See the `Installation <http://vtkInterface.readthedocs.io/en/latest/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
 
@@ -53,7 +53,7 @@ Highlights
 Head over to the `Quick Examples`_ page in the docs to learn more about using
 ``vtki``.
 
-.. _Quick Examples: https://vtkinterface.readthedocs.io/en/latest/examples.html
+.. _Quick Examples: https://vtkinterface.readthedocs.io/en/latest/examples/quick/index.html
 
 * Pythonic interface to VTK's Python-C++ bindings
 * Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)

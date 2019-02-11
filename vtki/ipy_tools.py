@@ -12,6 +12,7 @@ except:
 
 import collections
 import numpy as np
+import logging
 
 import vtk
 
@@ -27,7 +28,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
         if not run_from_ipython() or not ipy_available:
-            raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
+            logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
         self.continuous_update = continuous_update
@@ -57,7 +58,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
 
         # Create/display the widgets
         interact(update, xscale=self.xslider, yscale=self.yslider,
-                 zscale=self.zslider, **kwargs)
+                        zscale=self.zslider, **kwargs)
 
 
 
@@ -72,7 +73,7 @@ class InteractiveTool(object):
                  display_params=None, default_params=None,
                  continuous_update=False, **kwargs):
         if not run_from_ipython() or not ipy_available:
-            raise RuntimeError('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
+            logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_vtki_obj(dataset):
             dataset = wrap(dataset)
@@ -86,7 +87,7 @@ class InteractiveTool(object):
         self.continuous_update = continuous_update
 
         if plotter is None:
-            plotter = vtki.BackgroundPlotter()
+            plotter = vtki.BackgroundPlotter(**kwargs)
             plotter.setWindowTitle(type(self).__name__)
         self.plotter = plotter
 
@@ -212,7 +213,8 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, step=None, generate_triangles=False, default_params=None):
+    def tool(self, clean=True, step=None, generate_triangles=False,
+             default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         if clean and self.input_dataset.active_scalar is not None:
@@ -279,8 +281,8 @@ class OrthogonalSlicer(InteractiveTool):
                             continuous_update=self.continuous_update)
 
         # Create/display the widgets
-        interact(update, x=xsl, y=ysl, z=zsl,
-                 scalars=self._get_scalar_names())
+        return interact(update, x=xsl, y=ysl, z=zsl,
+                        scalars=self._get_scalar_names())
 
 
 class ManySlicesAlongAxis(InteractiveTool):
@@ -318,7 +320,8 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, tolerance=None, generate_triangles=False, default_params=None):
+    def tool(self, clean=True, tolerance=None, generate_triangles=False,
+             default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         if clean and self.input_dataset.active_scalar is not None:
@@ -339,8 +342,8 @@ class ManySlicesAlongAxis(InteractiveTool):
             self._need_to_update = False
 
         # Create/display the widgets
-        interact(update, n=nsl, axis=['x', 'y', 'z'],
-                 scalars=self._get_scalar_names())
+        return interact(update, n=nsl, axis=['x', 'y', 'z'],
+                        scalars=self._get_scalar_names())
 
 
 class Threshold(InteractiveTool):
@@ -367,7 +370,7 @@ class Threshold(InteractiveTool):
 
     """
 
-    def tool(self, default_params=None):
+    def tool(self, default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         preference = self.display_params['preference']
@@ -439,10 +442,10 @@ class Threshold(InteractiveTool):
 
 
         # Create/display the widgets
-        interact(update, dmin=minsl, dmax=maxsl,
-                 scalars=self._get_scalar_names(),
-                 invert=default_params.get('invert', False),
-                 continuous=False)
+        return interact(update, dmin=minsl, dmax=maxsl,
+                        scalars=self._get_scalar_names(),
+                        invert=default_params.get('invert', False),
+                        continuous=False)
 
 
 class Clip(InteractiveTool):
@@ -475,7 +478,7 @@ class Clip(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, default_params=None):
+    def tool(self, clean=True, default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         if clean and self.input_dataset.active_scalar is not None:
@@ -519,5 +522,5 @@ class Clip(InteractiveTool):
 
         # Create/display the widgets
         self._last_normal = 'x'
-        interact(update, location=locsl, normal=axchoices, invert=True,
-                 scalars=self._get_scalar_names())
+        return interact(update, location=locsl, normal=axchoices, invert=True,
+                        scalars=self._get_scalar_names())
