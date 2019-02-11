@@ -359,7 +359,9 @@ class BasePlotter(object):
     def add_axes(self, interactive=False):
         """ Add an interactive axes widget """
         if hasattr(self, 'axes_widget'):
-            raise Exception('Plotter already has an axes widget')
+            self.axes_widget.SetInteractive(interactive)
+            # raise Exception('Plotter already has an axes widget')
+            return
         self.axes_actor = vtk.vtkAxesActor()
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
