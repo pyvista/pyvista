@@ -1774,7 +1774,8 @@ class BasePlotter(object):
 
         return arrows, pdata
 
-    def screenshot(self, filename=None, transparent_background=False):
+    def screenshot(self, filename=None, transparent_background=False,
+                   return_img=None):
         """
         Takes screenshot at current camera position
 
@@ -1785,6 +1786,10 @@ class BasePlotter(object):
 
         transparent_background : bool, optional
             Makes the background transparent.  Default False.
+
+        return_img : bool, optional
+            If a string filename is given and this is true, a NumPy array of
+            the image will be returned.
 
         Returns
         -------
@@ -1798,8 +1803,8 @@ class BasePlotter(object):
         >>> import vtki
         >>> sphere = vtki.Sphere()
         >>> plotter = vtki.Plotter()
-        >>> _ = plotter.add_mesh(sphere)
-        >>> _ = plotter.screenshot('screenshot.png') # doctest:+SKIP
+        >>> actor = plotter.add_mesh(sphere)
+        >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
         """
         if not hasattr(self, 'ifilter'):
             self.start_image_filter()
@@ -1823,6 +1828,8 @@ class BasePlotter(object):
 
         # write screenshot to file
         if filename:
+            if not return_img:
+                return imageio.imwrite(filename, img)
             imageio.imwrite(filename, img)
 
         return img
@@ -2231,9 +2238,9 @@ class Plotter(BasePlotter):
         # take screenshot
         if screenshot:
             if screenshot == True:
-                img = self.screenshot()
+                img = self.screenshot(return_img=True)
             else:
-                img = self.screenshot(screenshot)
+                img = self.screenshot(screenshot, return_img=True)
 
         if auto_close:
             self.close()
