@@ -47,10 +47,10 @@ script:
   # Run all code examples in the docstrings
   - pytest -v --doctest-modules vtki
   # Now make sure notebooks are running
+  # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
       pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-      pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
     fi
   # And test the documentation
   - cd ./docs/
