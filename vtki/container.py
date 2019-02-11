@@ -51,6 +51,19 @@ class MultiBlock(vtkMultiBlockDataSet):
                     self[idx, key] = block
                     idx += 1
 
+
+    def combine(self):
+        """Combines the geomertry of all blocks into a single ``PolyData``
+        object. Place this filter at the end of a pipeline before a polydata
+        consumer such as a polydata mapper to extract geometry from all blocks
+        and append them to one polydata object.
+        """
+        gf = vtk.vtkCompositeDataGeometryFilter()
+        gf.SetInputData(self)
+        gf.Update()
+        return wrap(gf.GetOutputDataObject(0))
+
+
     def _load_file(self, filename):
         """Load a vtkMultiBlockDataSet from a file (extension ``.vtm`` or
         ``.vtmb``)
