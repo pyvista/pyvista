@@ -125,7 +125,6 @@ class DataSetFilters(object):
             ymin = _get_quarter(ymin, ymax)
             zmin = _get_quarter(zmin, zmax)
             bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
-            print(bounds)
         if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
             raise AssertionError('Bounds must be a length 6 iterable of floats')
         xmin, xmax, ymin, ymax, zmin, zmax = bounds
