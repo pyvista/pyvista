@@ -47,6 +47,7 @@ rcParams = {
     },
     'cmap' : 'jet',
     'color' : 'white',
+    'outline_color' : 'white',
     'colorbar' : {
         'width' : 0.60,
         'height' : 0.08,
@@ -73,6 +74,7 @@ def set_plot_theme(theme):
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
         rcParams['color'] = 'orange'
+        rcParams['outline_color'] = 'black'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
@@ -359,10 +361,24 @@ class BasePlotter(object):
             elif not self.first_time:
                 self.render()
 
-    def add_axes(self, interactive=False):
+    def _updatae_axes_color(self, color):
+        """Internal helper to set the axes label color"""
+        prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
+        if color is None:
+            color = rcParams['font']['color']
+        color = parse_color(color)
+        for prop in [prop_x, prop_y, prop_z]:
+            prop.SetColor(color[0], color[1], color[2])
+            prop.SetShadow(False)
+        return
+
+    def add_axes(self, interactive=False, color=None):
         """ Add an interactive axes widget """
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
+            self._updatae_axes_color(color)
             # raise Exception('Plotter already has an axes widget')
             return
         self.axes_actor = vtk.vtkAxesActor()
@@ -372,6 +388,8 @@ class BasePlotter(object):
             self.axes_widget.SetInteractor(self.iren)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
+        # Set the color
+        self._updatae_axes_color(color)
 
 
     def get_default_cam_pos(self):
@@ -735,6 +753,8 @@ class BasePlotter(object):
         style = style.lower()
         if style == 'wireframe':
             prop.SetRepresentationToWireframe()
+            if color is None:
+                color = rcParams['outline_color']
         elif style == 'points':
             prop.SetRepresentationToPoints()
         elif style == 'surface':
