@@ -60,7 +60,7 @@ def test_ipy_threshold(qtbot):
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_clip(qtbot):
     data = examples.load_uniform()
-    tool = vtki.Clip(data)
+    tool = vtki.Clip(data, show=False)
     g = tool.tool()
     g.widget.update()
     tool.plotter.close()
@@ -68,9 +68,9 @@ def test_ipy_clip(qtbot):
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
-def test_ipy_clip(qtbot):
+def test_ipy_integrated(qtbot):
     data = examples.load_uniform()
-    p = vtki.ScaledPlotter()
+    p = vtki.ScaledPlotter(show=False)
     p.add_mesh(data)
     slicer = vtki.OrthogonalSlicer(data, plotter=p)
     many = vtki.ManySlicesAlongAxis(data, plotter=p)
