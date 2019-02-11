@@ -1133,6 +1133,18 @@ class BasePlotter(object):
         self.cube_axes_actor = cube_axes_actor
         return cube_axes_actor
 
+    def grid(self, **kwargs):
+        """A wrapped implementation of ``add_bounds_axes`` to change default
+        behaviour to use gridlines and showing the axes labels on the outer
+        edges. This is intended to be silimar to ``matplotlib``'s ``grid``
+        function.
+        """
+        kwargs.setdefault('grid', 'back')
+        kwargs.setdefault('location', 'outer')
+        kwargs.setdefault('ticks', 'both')
+        return self.add_bounds_axes(**kwargs)
+
+
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """
         Scale all the datasets in the scene.
