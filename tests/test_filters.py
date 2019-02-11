@@ -15,6 +15,15 @@ datasets = [
 normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 
 
+def _corner_bounds(bounds):
+    def _get_quarter(dmin, dmax):
+        return ((dmax - dmin) * 0.25) + dmin
+    xmin, xmax, ymin, ymax, zmin, zmax = bounds
+    xmax = _get_quarter(xmin, xmax)
+    ymax = _get_quarter(ymin, ymax)
+    zmax = _get_quarter(zmin, zmax)
+    return [xmin, xmax, ymin, ymax, zmin, zmax]
+
 
 def test_clip_filter():
     """This tests the clip filter on all datatypes avaialble filters"""
@@ -23,6 +32,12 @@ def test_clip_filter():
         assert clp is not None
         assert isinstance(clp, vtki.UnstructuredGrid)
 
+def test_clip_box():
+    for i, dataset in enumerate(datasets):
+        bounds = _corner_bounds(dataset.bounds)
+        clp = dataset.clip_box(bounds=bounds, invert=True)
+        assert clp is not None
+        assert isinstance(clp, vtki.UnstructuredGrid)
 
 def test_slice_filter():
     """This tests the slice filter on all datatypes avaialble filters"""
@@ -153,3 +168,31 @@ def test_elevation():
     assert 'Elevation' in elev.scalar_names
     assert 'Elevation' == elev.active_scalar_name
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
+
+
+def test_texture_map_to_plane():
+    dataset = examples.load_airplane()
+    # Automatically decide plane
+    out = dataset.texture_map_to_plane(inplace=False)
+    assert isinstance(out, type(dataset))
+    # Define the plane explicitly
+    bnds = dataset.bounds
+    origin = bnds[0::2]
+    point_u = (bnds[1], bnds[2], bnds[4])
+    point_v = (bnds[0], bnds[3], bnds[4])
+    out = dataset.texture_map_to_plane(origin=origin, point_u=point_u, point_v=point_v)
+    assert isinstance(out, type(dataset))
+    assert 'Texture Coordinates' in out.scalar_names
+    # FINAL: Test in place modifiacation
+    dataset.texture_map_to_plane(inplace=True)
+    assert 'Texture Coordinates' in dataset.scalar_names
+
+
+
+def test_compute_cell_sizes():
+    for i, dataset in enumerate(datasets):
+        result = dataset.compute_cell_sizes()
+        assert result is not None
+        assert isinstance(result, type(dataset))
+        assert 'Area' in result.scalar_names
+        assert 'Volume' in result.scalar_names
