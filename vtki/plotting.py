@@ -1040,8 +1040,7 @@ class BasePlotter(object):
         >>> plotter = vtki.Plotter()
         >>> plotter.add_mesh(mesh)
         >>> plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
-        >>> plotter.show()
-
+        >>> plotter.show() # doctest:+SKIP
         """
         if font_family is None:
             font_family = rcParams['font']['family']
