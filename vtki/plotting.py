@@ -291,6 +291,7 @@ class BasePlotter(object):
         # Keep track of the scale
         self.scale = [1.0, 1.0, 1.0]
         self._labels = []
+        self.bounding_box_actor = None
 
 
     @property
@@ -311,7 +312,8 @@ class BasePlotter(object):
         for name, actor in self._actors.items():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
-            if hasattr(actor, 'GetBounds') and actor.GetBounds() is not None:
+            if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
+                 and id(actor) != id(self.bounding_box_actor)):
                 _update_bounds(actor.GetBounds())
 
         return the_bounds
@@ -1195,27 +1197,30 @@ class BasePlotter(object):
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.SetCornerFactor(corner_factor)
         self._bounding_box.Update()
-        box = wrap(self._bounding_box.GetOutput())
-        self.bounding_box_actor = self.add_mesh(box, color=color)
+        self._box_object = wrap(self._bounding_box.GetOutput())
+        name = 'BoundingBox({})'.format(hex(id(self._box_object)))
+        self.bounding_box_actor = self.add_mesh(self._box_object, color=color, name=name)
         return self.bounding_box_actor
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window """
+        if hasattr(self, '_box_object'):
+            if not np.allclose(self._box_object.bounds, self.bounds):
+                color = self.bounding_box_actor.GetProperty().GetColor()
+                self.remove_bounding_box()
+                self.add_bounding_box(color=color)
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
                 self.cube_axes_actor.SetUse2DMode(True)
             else:
                 self.cube_axes_actor.SetUse2DMode(False)
-        if hasattr(self, 'bounding_box_actor'):
-            color = self.bounding_box_actor.GetProperty().GetColor()
-            self.remove_bounding_box()
-            self.add_bounding_box(color=color)
 
     def remove_bounding_box(self):
-        if hasattr(self, 'bounding_box_actor'):
+        if hasattr(self, '_box_object'):
             actor = self.bounding_box_actor
-            del self.bounding_box_actor
+            self.bounding_box_actor = None
+            del self._box_object
             self.remove_actor(actor, reset_camera=False)
 
     def show_grid(self, **kwargs):
