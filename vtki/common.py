@@ -13,7 +13,6 @@ import vtki
 from vtki.utilities import (get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD,
                             vtk_bit_array_to_char)
 from vtki import DataSetFilters
-from vtki import plot
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -23,7 +22,7 @@ class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
 
     # Simply bind vtki.plotting.plot to the object
-    plot = plot
+    plot = vtki.plot
 
     def __init__(self, *args, **kwargs):
         self.references = []
@@ -62,7 +61,9 @@ class Common(DataSetFilters):
     @property
     def points(self):
         """ returns a pointer to the points as a numpy object """
-        return vtk_to_numpy(self.GetPoints().GetData())
+        vtk_data = self.GetPoints().GetData()
+        arr = vtk_to_numpy(vtk_data)
+        return vtki_ndarray(arr, vtk_data)
 
     @points.setter
     def points(self, points):
@@ -166,7 +167,6 @@ class Common(DataSetFilters):
             raise RuntimeError('Array not found.')
         if self.active_scalar_info[1] == old_name:
             self.set_active_scalar(new_name, preference=field)
-
 
     @property
     def active_scalar(self):
@@ -690,7 +690,6 @@ class CellScalarsDict(dict):
             self.data._add_cell_scalar(val, key, deep=False)
         dict.__setitem__(self, key, val)
         self.data.GetCellData().Modified()
-        # self.data.Modified()
 
     def __delitem__(self, key):
         self.data._remove_cell_scalar(key)
@@ -717,7 +716,6 @@ class PointScalarsDict(dict):
             self.data._add_point_scalar(val, key, deep=False)
         dict.__setitem__(self, key, val)
         self.data.GetPointData().Modified()
-        # self.data.Modified()
 
     def __delitem__(self, key):
         self.data._remove_point_scalar(key)
@@ -756,3 +754,27 @@ def axis_rotation(p, ang, inplace=False, deg=True, axis='z'):
 
     if not inplace:
         return p
+
+
+class vtki_ndarray(np.ndarray):
+    """
+    Links a numpy array with the vtk object the data is attached to.
+
+    When the array is changed it triggers "Modified()" which updates
+    all upstream objects, including any render windows holding the
+    object.
+
+    """
+
+    def __new__(cls, input_array, proxy):
+        obj = np.asarray(input_array).view(cls)
+        cls.proxy = proxy
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None: return
+
+    def __setitem__(self, coords, value):
+        """ Update the array and update the vtk object """
+        super(vtki_ndarray, self).__setitem__(coords, value)
+        self.proxy.Modified()
