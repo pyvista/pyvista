@@ -106,7 +106,7 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'vtki.tex', u'vtki Documentation',
-     u'Alex Kaszynski', 'manual'),
+     author, 'manual'),
 ]
 
 
