@@ -1,5 +1,5 @@
 Quick Examples
-==============
+**************
 
 The following examples demonstrate the functionality of ``vtki``.
 
@@ -17,7 +17,7 @@ The following examples demonstrate the functionality of ``vtki``.
 
 
 Long Examples
-=============
+*************
 
 Do you have a technical processing workflow or visualization routine you would
 like to share? If so, please consider sharing your code as a *Long Example*

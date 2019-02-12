@@ -1,5 +1,6 @@
+#############
 vtki Overview
-=============
+#############
 
 
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
@@ -29,7 +30,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 
 Installation
-------------
+============
 If you have a working copy of VTK, installation is simply::
 
     $ pip install vtki
@@ -41,7 +42,7 @@ See :ref:`install_ref` for more details.
 
 
 Highlights
-----------
+==========
 
 * Pythonic interface to VTK's Python-C++ bindings
 * Filtering/plotting tools built for interactivity in Jupyter notebooks (see :ref:`ipy_tools_ref`)
@@ -50,7 +51,7 @@ Highlights
 
 
 Connections
------------
+===========
 
 ``vtki`` is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
@@ -100,6 +101,8 @@ Here are a few open-source projects that leverage ``vtki``:
    examples/index
 
 
+Tools
+*****
 
 .. toctree::
    :maxdepth: 2
@@ -113,9 +116,9 @@ Here are a few open-source projects that leverage ``vtki``:
 
 
 
-..
-   Indices and tables
-   ==================
-   * :ref:`genindex`
-   * :ref:`modindex`
-   * :ref:`search`
+Project Index & Search
+**********************
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`

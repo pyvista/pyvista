@@ -1,5 +1,5 @@
-Common
-======
+Data Types
+**********
 
 The `Visualization Toolkit`_ (VTK), developed by Kitware_, has many mesh data
 types that ``vtki`` wraps.
@@ -10,7 +10,7 @@ side to help new users understand which data types to use.
 .. _Kitware: https://www.kitware.com
 
 Datasets
---------
+========
 
 Datasets are any spatially reference information and usually consist of
 geometrical representations of a surface or volume in 3D space.
@@ -30,7 +30,7 @@ set of common functionality which we wrap into the base class
 
 
 PolyData
-~~~~~~~~
+--------
 
 :class:`vtki.PolyData` consists of any 1D or 2D geometries to construct
 vertices, lines, polygons, and triangles.
@@ -40,7 +40,7 @@ The :class:`vtki.PolyData` class is an extension of ``vtk.vtkPolyData``.
 
 
 UnstructuredGrid
-~~~~~~~~~~~~~~~~
+----------------
 
 An :class:`vtki.UnstructuredGrid` is the most general dataset type that can hold
 any 1D, 2D, or 3D cell geometries.
@@ -54,7 +54,7 @@ The :class:`vtki.UnstructuredGrid` class is an extension of
 
 
 StructuredGrid
-~~~~~~~~~~~~~~
+--------------
 
 A :class:`vtki.StructuredGrid` is a regular lattice of points aligned with an
 internal coordinate axes such that the connectivity can be defined by a grid
@@ -66,7 +66,7 @@ The :class:`vtki.StructuredGrid` class is an extension of
 
 
 RectilinearGrid
-~~~~~~~~~~~~~~~
+---------------
 
 A :class:`vtki.RectilinearGrid` defines meshes with implicit geometries along the axes
 directions that are rectangular and regular.
@@ -75,7 +75,7 @@ The :class:`vtki.RectilinearGrid` class is an extension of
 
 
 ImageData
-~~~~~~~~~
+---------
 
 Image data, commonly referenced to as uniform grids, and defined by the
 :class:`vtki.UniformGrid` class are meshes with implicit geometries where cell
@@ -85,7 +85,7 @@ The :class:`vtki.UniformGrid` class is an extension of ``vtk.vtkImageData``.
 
 
 MultiBlock
-~~~~~~~~~~
+----------
 
 :class:`vtki.MultiBlock` datasets are containers to hold several VTK datasets in
 one accessible and spatially referenced object.
@@ -94,7 +94,7 @@ The :class:`vtki.MultiBlock` class is an extension of
 
 
 The Dataset Model
------------------
+=================
 
 The :class:`vtki.Common` class holds attributes that are *common* to all
 spatially referenced datasets in ``vtki``.
