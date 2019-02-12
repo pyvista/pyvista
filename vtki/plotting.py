@@ -1168,7 +1168,7 @@ class BasePlotter(object):
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
-            self.add_bounding_box()
+            self.add_bounding_box(color=color)
 
         return cube_axes_actor
 
