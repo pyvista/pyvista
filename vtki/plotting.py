@@ -1052,7 +1052,10 @@ class BasePlotter(object):
 
         # create actor
         cube_axes_actor = vtk.vtkCubeAxesActor()
-        cube_axes_actor.SetUse2DMode(False)
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            cube_axes_actor.SetUse2DMode(True)
+        else:
+            cube_axes_actor.SetUse2DMode(False)
 
         if grid:
             if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
@@ -1197,6 +1200,10 @@ class BasePlotter(object):
         """Update the bounds axes of the render window """
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
+            if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+                self.cube_axes_actor.SetUse2DMode(True)
+            else:
+                self.cube_axes_actor.SetUse2DMode(False)
         if hasattr(self, 'bounding_box_actor'):
             color = self.bounding_box_actor.GetProperty().GetColor()
             self.remove_bounding_box()
@@ -1241,6 +1248,7 @@ class BasePlotter(object):
         cam.SetModelTransformMatrix(transform.GetMatrix())
         self._render()
         if reset_camera:
+            self.update_bounds_axes()
             self.reset_camera()
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False, bold=True,
