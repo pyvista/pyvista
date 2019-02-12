@@ -24,7 +24,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'vtki'
 copyright = u'2017-2019, Alex Kaszynski'
-author = u'Alex Kaszynski & Bane Sullivan'
+author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
