@@ -1038,8 +1038,8 @@ class BasePlotter(object):
         >>> from vtki import examples
         >>> mesh = vtki.Sphere()
         >>> plotter = vtki.Plotter()
-        >>> plotter.add_mesh(mesh)
-        >>> plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> _ = plotter.add_mesh(mesh)
+        >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
         if font_family is None:
