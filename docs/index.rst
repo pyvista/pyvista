@@ -19,6 +19,8 @@ vtki Overview
   :target: https://github.com/akaszynski/vtki
   :alt: GitHub
 
+About
+*****
 
 ``vtki`` is a helper module for the Visualization Toolkit (VTK) that takes a
 different approach on interfacing with VTK through NumPy and direct array access.
@@ -35,7 +37,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
    why
 
 Connections
-***********
+===========
 
 ``vtki`` is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
