@@ -1041,6 +1041,9 @@ class BasePlotter(object):
         >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
+        if hasattr(self, 'cube_axes_actor'):
+            self.remove_actor(self.cube_axes_actor)
+
         if font_family is None:
             font_family = rcParams['font']['family']
         if font_size is None:
