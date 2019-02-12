@@ -28,9 +28,14 @@ existing VTK objects.
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
+.. toctree::
+   :hidden:
+
+   self
+   why
 
 Installation
-============
+************
 If you have a working copy of VTK, installation is simply::
 
     $ pip install vtki
@@ -41,17 +46,18 @@ You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
 See :ref:`install_ref` for more details.
 
 
-Highlights
-==========
 
-* Pythonic interface to VTK's Python-C++ bindings
-* Filtering/plotting tools built for interactivity in Jupyter notebooks (see :ref:`ipy_tools_ref`)
-* Direct access to common VTK filters (see :ref:`filters_ref`)
-* Intuitive plotting routines with ``matplotlib`` similar syntax (see :ref:`plotting_ref`)
+.. toctree::
+  :maxdepth: 2
+  :caption: Getting Started
+  :hidden:
+
+  getting-started/installation
+  getting-started/simple
 
 
 Connections
-===========
+***********
 
 ``vtki`` is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
@@ -66,26 +72,11 @@ Here are a few open-source projects that leverage ``vtki``:
 
 
 
-.. toctree::
-   :hidden:
-
-   self
-   why
-
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Getting Started
-
-   getting-started/installation
-   getting-started/simple
-
-
 
 .. toctree::
    :maxdepth: 2
    :caption: Data Types
+   :hidden:
 
    types/common
    types/points
@@ -97,6 +88,7 @@ Here are a few open-source projects that leverage ``vtki``:
 .. toctree::
    :maxdepth: 2
    :caption: Examples
+   :hidden:
 
    examples/index
 
@@ -104,9 +96,15 @@ Here are a few open-source projects that leverage ``vtki``:
 Tools
 *****
 
+* Pythonic interface to VTK's Python-C++ bindings
+* Filtering/plotting tools built for interactivity in Jupyter notebooks (see :ref:`ipy_tools_ref`)
+* Direct access to common VTK filters (see :ref:`filters_ref`)
+* Intuitive plotting routines with ``matplotlib`` similar syntax (see :ref:`plotting_ref`)
+
 .. toctree::
    :maxdepth: 2
    :caption: Tools
+   :hidden:
 
    tools/plotting
    tools/filters
