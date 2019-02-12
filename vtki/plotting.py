@@ -47,6 +47,7 @@ rcParams = {
     },
     'cmap' : 'jet',
     'color' : 'white',
+    'outline_color' : 'white',
     'colorbar' : {
         'width' : 0.60,
         'height' : 0.08,
@@ -73,6 +74,7 @@ def set_plot_theme(theme):
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
         rcParams['color'] = 'orange'
+        rcParams['outline_color'] = 'black'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
@@ -289,14 +291,12 @@ class BasePlotter(object):
         # Keep track of the scale
         self.scale = [1.0, 1.0, 1.0]
         self._labels = []
-
+        self.cube_axes_actors = []
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window """
-        # Update the bounds for the axes labels if present
-        if hasattr(self, 'cube_axes_actor'):
-            self.cube_axes_actor.SetBounds(self.bounds)
-        return
+        for actor in self.cube_axes_actors:
+            actor.SetBounds(self.bounds)
 
     @property
     def bounds(self):
@@ -359,10 +359,24 @@ class BasePlotter(object):
             elif not self.first_time:
                 self.render()
 
-    def add_axes(self, interactive=False):
+    def _updatae_axes_color(self, color):
+        """Internal helper to set the axes label color"""
+        prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
+        if color is None:
+            color = rcParams['font']['color']
+        color = parse_color(color)
+        for prop in [prop_x, prop_y, prop_z]:
+            prop.SetColor(color[0], color[1], color[2])
+            prop.SetShadow(False)
+        return
+
+    def add_axes(self, interactive=False, color=None):
         """ Add an interactive axes widget """
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
+            self._updatae_axes_color(color)
             # raise Exception('Plotter already has an axes widget')
             return
         self.axes_actor = vtk.vtkAxesActor()
@@ -372,6 +386,8 @@ class BasePlotter(object):
             self.axes_widget.SetInteractor(self.iren)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
+        # Set the color
+        self._updatae_axes_color(color)
 
 
     def get_default_cam_pos(self):
@@ -448,7 +464,7 @@ class BasePlotter(object):
                  cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=False, render_lines_as_tubes=False,
-                 edge_color='black', **kwargs):
+                 edge_color='black', ambient=0.2, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -540,6 +556,11 @@ class BasePlotter(object):
             name is given, it will pull a texture with that name associated to
             the input mesh.
 
+        ambient : float, optional
+            When lighting is enabled, this is the amount of light from
+            0 to 1 that reaches the actor when not directed at the
+            light source emitted from the viewer.  Default 0.2.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -609,15 +630,20 @@ class BasePlotter(object):
                 if multi_colors:
                     color = next(colors)['color']
                 a = self.add_mesh(data, color=color, style=style,
-                             scalars=ts, rng=rng, stitle=stitle, show_edges=show_edges,
-                             point_size=point_size, opacity=opacity, line_width=line_width,
-                             flip_scalars=flip_scalars, lighting=lighting,
-                             n_colors=n_colors, interpolate_before_map=interpolate_before_map,
-                             cmap=cmap, label=label,
-                             scalar_bar_args=scalar_bar_args, reset_camera=reset_camera,
-                             name=nm, texture=None,
-                             render_points_as_spheres=render_points_as_spheres, render_lines_as_tubes=render_lines_as_tubes,
-                             edge_color=edge_color, **kwargs)
+                                  scalars=ts, rng=rng, stitle=stitle,
+                                  show_edges=show_edges,
+                                  point_size=point_size, opacity=opacity,
+                                  line_width=line_width,
+                                  flip_scalars=flip_scalars,
+                                  lighting=lighting, n_colors=n_colors,
+                                  interpolate_before_map=interpolate_before_map,
+                                  cmap=cmap, label=label,
+                                  scalar_bar_args=scalar_bar_args,
+                                  reset_camera=reset_camera, name=nm,
+                                  texture=None,
+                                  render_points_as_spheres=render_points_as_spheres,
+                                  render_lines_as_tubes=render_lines_as_tubes,
+                                  edge_color=edge_color, **kwargs)
                 actors.append(a)
                 if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -735,6 +761,8 @@ class BasePlotter(object):
         style = style.lower()
         if style == 'wireframe':
             prop.SetRepresentationToWireframe()
+            if color is None:
+                color = rcParams['outline_color']
         elif style == 'points':
             prop.SetRepresentationToPoints()
         elif style == 'surface':
@@ -746,7 +774,7 @@ class BasePlotter(object):
                             '\t"points"\n')
 
         prop.SetPointSize(point_size)
-
+        prop.SetAmbient(ambient)
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
@@ -906,10 +934,11 @@ class BasePlotter(object):
                         bold=True, shadow=False, font_size=None,
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=True, grid=None, location='closest', ticks=None):
+                        use_2d=True, grid=None, location='closest', ticks=None,
+                        all_edges=False):
         """
-        Adds bounds axes.  Shows the bounds of the most recent input mesh
-        unless mesh is specified.
+        Adds bounds axes.  Shows the bounds of the most recent input
+        mesh unless mesh is specified.
 
         Parameters
         ----------
@@ -941,7 +970,7 @@ class BasePlotter(object):
         italic : bool, optional
             Italicises axis labels and numbers.  Default False.
 
-        bold  : bool, optional
+        bold : bool, optional
             Bolds axis labels and numbers.  Default True.
 
         shadow : bool, optional
@@ -972,36 +1001,48 @@ class BasePlotter(object):
             Title of the z axis.  Default "Z Axis"
 
         use_2d : bool, optional
-            A bug with vtk 6.3 in Windows seems to cause this function to crash
-            this can be enabled for smoother plotting for other enviornments.
+            A bug with vtk 6.3 in Windows seems to cause this function
+            to crash this can be enabled for smoother plotting for
+            other enviornments.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
-            ``'backface'``) or to the frontface (``'front'``, ``'frontface'``)
-            of the axes actor.
+            ``'backface'``) or to the frontface (``'front'``,
+            ``'frontface'``) of the axes actor.
 
         location : str, optional
-            Set how the axes are drawn: either static (``'all'``), closest triad
-            (``front``), furthest triad (``'back'``), static closest to the
-            origin (``'origin'``), or outer edges (``'outer'``) in relation to
-            the camera position. Options include:
-            ``'all', 'front', 'back', 'origin', 'outer'``
+            Set how the axes are drawn: either static (``'all'``),
+            closest triad (``front``), furthest triad (``'back'``),
+            static closest to the origin (``'origin'``), or outer
+            edges (``'outer'``) in relation to the camera
+            position. Options include: ``'all', 'front', 'back',
+            'origin', 'outer'``
 
-        ticks : str, option
+        ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
             ``'inside', 'outside', 'both'``
+
+        all_edges : bool, optional
+            Adds an unlabeled and unticked box at the boundaries of
+            plot.  Useful for when wanting to plot outer grids while
+            still retaining all edges of the boundary.
 
         Returns
         -------
         cube_axes_actor : vtk.vtkCubeAxesActor
             Bounds actor
 
-        """
-        # If one is already present, just use that one
-        if hasattr(self, 'cube_axes_actor'):
-            self.remove_actor(self.cube_axes_actor)
-            del self.cube_axes_actor
+        Examples
+        --------
+        >>> import vtki
+        >>> from vtki import examples
+        >>> mesh = vtki.Sphere()
+        >>> plotter = vtki.Plotter()
+        >>> plotter.add_mesh(mesh)
+        >>> plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> plotter.show()
 
+        """
         if font_family is None:
             font_family = rcParams['font']['family']
         if font_size is None:
@@ -1130,11 +1171,22 @@ class BasePlotter(object):
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
         self.add_actor(cube_axes_actor, reset_camera=False)
-        self.cube_axes_actor = cube_axes_actor
+        self.cube_axes_actors.append(cube_axes_actor)
+
+        if all_edges:
+            self.add_bounds_axes(location='all',
+                                 show_xlabels=False,
+                                 show_ylabels=False,
+                                 show_zlabels=False,
+                                 xlabel='',
+                                 ylabel='',
+                                 zlabel='',
+                                 color=color)
         return cube_axes_actor
 
-    def grid(self, **kwargs):
-        """A wrapped implementation of ``add_bounds_axes`` to change default
+    def show_grid(self, **kwargs):
+        """
+        A wrapped implementation of ``add_bounds_axes`` to change default
         behaviour to use gridlines and showing the axes labels on the outer
         edges. This is intended to be silimar to ``matplotlib``'s ``grid``
         function.
@@ -1142,8 +1194,13 @@ class BasePlotter(object):
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
         kwargs.setdefault('ticks', 'both')
+        kwargs.setdefault('all_edges', True)
         return self.add_bounds_axes(**kwargs)
 
+    def clear_cube_axes(self):
+        for actor in self.cube_axes_actors:
+            self.remove_actor(actor)
+        self.cube_axes_actors = []
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """
@@ -1766,7 +1823,8 @@ class BasePlotter(object):
 
         return arrows, pdata
 
-    def screenshot(self, filename=None, transparent_background=False):
+    def screenshot(self, filename=None, transparent_background=False,
+                   return_img=None):
         """
         Takes screenshot at current camera position
 
@@ -1777,6 +1835,10 @@ class BasePlotter(object):
 
         transparent_background : bool, optional
             Makes the background transparent.  Default False.
+
+        return_img : bool, optional
+            If a string filename is given and this is true, a NumPy array of
+            the image will be returned.
 
         Returns
         -------
@@ -1790,8 +1852,8 @@ class BasePlotter(object):
         >>> import vtki
         >>> sphere = vtki.Sphere()
         >>> plotter = vtki.Plotter()
-        >>> _ = plotter.add_mesh(sphere)
-        >>> _ = plotter.screenshot('screenshot.png') # doctest:+SKIP
+        >>> actor = plotter.add_mesh(sphere)
+        >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
         """
         if not hasattr(self, 'ifilter'):
             self.start_image_filter()
@@ -1815,6 +1877,8 @@ class BasePlotter(object):
 
         # write screenshot to file
         if filename:
+            if not return_img:
+                return imageio.imwrite(filename, img)
             imageio.imwrite(filename, img)
 
         return img
@@ -1984,7 +2048,7 @@ class BasePlotter(object):
         """
         if color is None:
             color = rcParams['background']
-        elif isinstance(color, str):
+        if isinstance(color, str):
             if color.lower() in 'paraview' or color.lower() in 'pv':
                 # Use the default ParaView background color
                 color = PV_BACKGROUND
@@ -2223,9 +2287,9 @@ class Plotter(BasePlotter):
         # take screenshot
         if screenshot:
             if screenshot == True:
-                img = self.screenshot()
+                img = self.screenshot(return_img=True)
             else:
-                img = self.screenshot(screenshot)
+                img = self.screenshot(screenshot, return_img=True)
 
         if auto_close:
             self.close()
