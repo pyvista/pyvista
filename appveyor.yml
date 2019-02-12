@@ -25,7 +25,7 @@ install:
   - "%PYTHON% -m ensurepip"
   - "%PYTHON% -m pip install -r requirements.txt"
   - "%PYTHON% -m pip install pytest"
-  - "%PYTHON% -m pip install 'pyqt5<5.12'"
+  - "%PYTHON% -m pip install pyqt5==5.11.3"
   - "%PYTHON% -m pip install pytest-qt"
 
 build_script:
