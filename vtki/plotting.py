@@ -929,7 +929,8 @@ class BasePlotter(object):
                         bold=True, shadow=False, font_size=None,
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=True, grid=None, location='closest', ticks=None):
+                        use_2d=True, grid=None, location='closest', ticks=None,
+                        all_edges=False):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1015,6 +1016,11 @@ class BasePlotter(object):
         ticks : str, optional
             Set how the ticks are drawn on the axes grid. Options include:
             ``'inside', 'outside', 'both'``
+
+        all_edges : bool, optional
+            Adds an unlabeled and unticked box at the boundaries of
+            plot. Useful for when wanting to plot outer grids while
+            still retaining all edges of the boundary.
 
         Returns
         -------
@@ -1160,6 +1166,9 @@ class BasePlotter(object):
 
         self.add_actor(cube_axes_actor, reset_camera=False)
         self.cube_axes_actor = cube_axes_actor
+
+        if all_edges:
+            self.add_bounding_box()
 
         return cube_axes_actor
 
