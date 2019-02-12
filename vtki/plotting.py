@@ -1999,7 +1999,7 @@ class BasePlotter(object):
         """
         if color is None:
             color = rcParams['background']
-        elif isinstance(color, str):
+        if isinstance(color, str):
             if color.lower() in 'paraview' or color.lower() in 'pv':
                 # Use the default ParaView background color
                 color = PV_BACKGROUND
