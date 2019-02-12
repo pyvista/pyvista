@@ -839,10 +839,6 @@ class BasePlotter(object):
         else:
             actor = uinput
 
-        # Make sure scale is consistent with rest of scene
-        if hasattr(actor, 'SetScale'):
-            actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
-
         self.renderer.AddActor(actor)
         if name is None:
             name = str(hex(id(actor)))
@@ -1059,7 +1055,6 @@ class BasePlotter(object):
         # create actor
         cube_axes_actor = vtk.vtkCubeAxesActor()
         cube_axes_actor.SetUse2DMode(False)
-        cube_axes_actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
 
         if grid:
             if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
@@ -1202,10 +1197,11 @@ class BasePlotter(object):
         if zscale is None:
             zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
-        for name, actor in self._actors.items():
-            if hasattr(actor, 'SetScale'):
-                actor.SetScale(xscale, yscale, zscale)
-        self.update_bounds_axes()
+        # Update the camera's coordinate system
+        cam = self.renderer.GetActiveCamera()
+        transform = vtk.vtkTransform()
+        transform.Scale(xscale, yscale, zscale)
+        cam.SetModelTransformMatrix(transform.GetMatrix())
         self._render()
         if reset_camera:
             self.reset_camera()
