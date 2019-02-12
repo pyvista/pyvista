@@ -208,8 +208,7 @@ def test_add_legend():
 def test_add_axes_twice():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_axes()
-    with pytest.raises(Exception):
-        plotter.add_axes()
+    plotter.add_axes(interactive=True)
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")

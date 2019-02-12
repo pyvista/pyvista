@@ -47,6 +47,7 @@ rcParams = {
     },
     'cmap' : 'jet',
     'color' : 'white',
+    'outline_color' : 'white',
     'colorbar' : {
         'width' : 0.60,
         'height' : 0.08,
@@ -54,7 +55,10 @@ rcParams = {
         'position_y' : 0.02,
     },
     'show_edges' : False,
+    'lighting': True,
 }
+
+DEFAULT_THEME = dict(rcParams)
 
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
@@ -67,11 +71,13 @@ def set_plot_theme(theme):
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
         rcParams['cmap'] = 'coolwarm'
-        rcParams['font']['family'] = 'arial'
-        rcParams['font']['label_size'] = 16
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
-        rcParams['color'] = 'yellow'
+        rcParams['color'] = 'orange'
+        rcParams['outline_color'] = 'black'
+    elif theme.lower() in ['default']:
+        for k,v in DEFAULT_THEME.items():
+            rcParams[k] = v
 
 
 def run_from_ipython():
@@ -355,10 +361,26 @@ class BasePlotter(object):
             elif not self.first_time:
                 self.render()
 
-    def add_axes(self, interactive=False):
+    def _updatae_axes_color(self, color):
+        """Internal helper to set the axes label color"""
+        prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
+        if color is None:
+            color = rcParams['font']['color']
+        color = parse_color(color)
+        for prop in [prop_x, prop_y, prop_z]:
+            prop.SetColor(color[0], color[1], color[2])
+            prop.SetShadow(False)
+        return
+
+    def add_axes(self, interactive=False, color=None):
         """ Add an interactive axes widget """
         if hasattr(self, 'axes_widget'):
-            raise Exception('Plotter already has an axes widget')
+            self.axes_widget.SetInteractive(interactive)
+            self._updatae_axes_color(color)
+            # raise Exception('Plotter already has an axes widget')
+            return
         self.axes_actor = vtk.vtkAxesActor()
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
@@ -366,6 +388,8 @@ class BasePlotter(object):
             self.axes_widget.SetInteractor(self.iren)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
+        # Set the color
+        self._updatae_axes_color(color)
 
 
     def get_default_cam_pos(self):
@@ -438,7 +462,7 @@ class BasePlotter(object):
     def add_mesh(self, mesh, color=None, style=None,
                  scalars=None, rng=None, stitle=None, show_edges=None,
                  point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
-                 lighting=True, n_colors=256, interpolate_before_map=False,
+                 lighting=None, n_colors=256, interpolate_before_map=False,
                  cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=False, render_lines_as_tubes=False,
@@ -552,6 +576,9 @@ class BasePlotter(object):
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
+
+        if lighting is None:
+            lighting = rcParams['lighting']
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
@@ -726,6 +753,8 @@ class BasePlotter(object):
         style = style.lower()
         if style == 'wireframe':
             prop.SetRepresentationToWireframe()
+            if color is None:
+                color = rcParams['outline_color']
         elif style == 'points':
             prop.SetRepresentationToPoints()
         elif style == 'surface':
@@ -1745,7 +1774,8 @@ class BasePlotter(object):
 
         return arrows, pdata
 
-    def screenshot(self, filename=None, transparent_background=False):
+    def screenshot(self, filename=None, transparent_background=False,
+                   return_img=None):
         """
         Takes screenshot at current camera position
 
@@ -1756,6 +1786,10 @@ class BasePlotter(object):
 
         transparent_background : bool, optional
             Makes the background transparent.  Default False.
+
+        return_img : bool, optional
+            If a string filename is given and this is true, a NumPy array of
+            the image will be returned.
 
         Returns
         -------
@@ -1769,8 +1803,8 @@ class BasePlotter(object):
         >>> import vtki
         >>> sphere = vtki.Sphere()
         >>> plotter = vtki.Plotter()
-        >>> _ = plotter.add_mesh(sphere)
-        >>> _ = plotter.screenshot('screenshot.png') # doctest:+SKIP
+        >>> actor = plotter.add_mesh(sphere)
+        >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
         """
         if not hasattr(self, 'ifilter'):
             self.start_image_filter()
@@ -1794,6 +1828,8 @@ class BasePlotter(object):
 
         # write screenshot to file
         if filename:
+            if not return_img:
+                return imageio.imwrite(filename, img)
             imageio.imwrite(filename, img)
 
         return img
@@ -2202,9 +2238,9 @@ class Plotter(BasePlotter):
         # take screenshot
         if screenshot:
             if screenshot == True:
-                img = self.screenshot()
+                img = self.screenshot(return_img=True)
             else:
-                img = self.screenshot(screenshot)
+                img = self.screenshot(screenshot, return_img=True)
 
         if auto_close:
             self.close()

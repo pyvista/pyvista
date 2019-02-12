@@ -53,7 +53,7 @@ Highlights
 Head over to the `Quick Examples`_ page in the docs to learn more about using
 ``vtki``.
 
-.. _Quick Examples: https://vtkinterface.readthedocs.io/en/latest/examples/quick/index.html
+.. _Quick Examples: https://vtkinterface.readthedocs.io/en/latest/examples/index.html
 
 * Pythonic interface to VTK's Python-C++ bindings
 * Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
