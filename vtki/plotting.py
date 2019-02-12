@@ -930,7 +930,7 @@ class BasePlotter(object):
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=True, grid=None, location='closest', ticks=None,
-                        all_edges=False):
+                        all_edges=False, corner_factor=0.5):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1021,6 +1021,10 @@ class BasePlotter(object):
             Adds an unlabeled and unticked box at the boundaries of
             plot. Useful for when wanting to plot outer grids while
             still retaining all edges of the boundary.
+
+        corner_factor : float, optional
+            If ``all_edges````, this is the factor along each axis to
+            draw the default box. Dafuault is 0.5 to show the full box.
 
         Returns
         -------
@@ -1168,20 +1172,27 @@ class BasePlotter(object):
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
-            self.add_bounding_box(color=color)
+            self.add_bounding_box(color=color, corner_factor=corner_factor)
 
         return cube_axes_actor
 
-    def add_bounding_box(self, color=None):
+    def add_bounding_box(self, color=None, corner_factor=0.5):
         """Adds an unlabeled and unticked box at the boundaries of
         plot.  Useful for when wanting to plot outer grids while
         still retaining all edges of the boundary.
+
+        Parameters
+        ----------
+        corner_factor : float, optional
+            If ``all_edges````, this is the factor along each axis to
+            draw the default box. Dafuault is 0.5 to show the full box.
         """
         self.remove_bounding_box()
         if color is None:
             color = rcParams['font']['color']
-        self._bounding_box = vtk.vtkOutlineSource()
+        self._bounding_box = vtk.vtkOutlineCornerSource()
         self._bounding_box.SetBounds(self.bounds)
+        self._bounding_box.SetCornerFactor(corner_factor)
         self._bounding_box.Update()
         box = wrap(self._bounding_box.GetOutput())
         self.bounding_box_actor = self.add_mesh(box, color=color)
