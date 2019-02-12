@@ -1,14 +1,3 @@
-Data Types
-**********
-
-The `Visualization Toolkit`_ (VTK), developed by Kitware_, has many mesh data
-types that ``vtki`` wraps.
-This page is intended to be a guide to these different mesh types on the VTK
-side to help new users understand which data types to use.
-
-.. _Visualization Toolkit: https://vtk.org
-.. _Kitware: https://www.kitware.com
-
 Datasets
 ========
 
