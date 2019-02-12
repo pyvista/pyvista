@@ -291,12 +291,7 @@ class BasePlotter(object):
         # Keep track of the scale
         self.scale = [1.0, 1.0, 1.0]
         self._labels = []
-        self.cube_axes_actors = []
 
-    def update_bounds_axes(self):
-        """Update the bounds axes of the render window """
-        for actor in self.cube_axes_actors:
-            actor.SetBounds(self.bounds)
 
     @property
     def bounds(self):
@@ -935,7 +930,7 @@ class BasePlotter(object):
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=True, grid=None, location='closest', ticks=None,
-                        all_edges=False):
+                        all_edges=False, corner_factor=0.5):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1024,8 +1019,12 @@ class BasePlotter(object):
 
         all_edges : bool, optional
             Adds an unlabeled and unticked box at the boundaries of
-            plot.  Useful for when wanting to plot outer grids while
+            plot. Useful for when wanting to plot outer grids while
             still retaining all edges of the boundary.
+
+        corner_factor : float, optional
+            If ``all_edges````, this is the factor along each axis to
+            draw the default box. Dafuault is 0.5 to show the full box.
 
         Returns
         -------
@@ -1038,10 +1037,9 @@ class BasePlotter(object):
         >>> from vtki import examples
         >>> mesh = vtki.Sphere()
         >>> plotter = vtki.Plotter()
-        >>> plotter.add_mesh(mesh)
-        >>> plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
-        >>> plotter.show()
-
+        >>> _ = plotter.add_mesh(mesh)
+        >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> plotter.show() # doctest:+SKIP
         """
         if font_family is None:
             font_family = rcParams['font']['family']
@@ -1171,23 +1169,62 @@ class BasePlotter(object):
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
         self.add_actor(cube_axes_actor, reset_camera=False)
-        self.cube_axes_actors.append(cube_axes_actor)
+        self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
-            self.add_bounds_axes(location='all',
-                                 show_xlabels=False,
-                                 show_ylabels=False,
-                                 show_zlabels=False,
-                                 xlabel='',
-                                 ylabel='',
-                                 zlabel='',
-                                 color=color)
+            self.add_bounding_box(color=color, corner_factor=corner_factor)
+
         return cube_axes_actor
 
-    def clear_cube_axes(self):
-        for actor in self.cube_axes_actors:
-            self.remove_actor(actor)
-        self.cube_axes_actors = []
+    def add_bounding_box(self, color=None, corner_factor=0.5):
+        """Adds an unlabeled and unticked box at the boundaries of
+        plot.  Useful for when wanting to plot outer grids while
+        still retaining all edges of the boundary.
+
+        Parameters
+        ----------
+        corner_factor : float, optional
+            If ``all_edges````, this is the factor along each axis to
+            draw the default box. Dafuault is 0.5 to show the full box.
+        """
+        self.remove_bounding_box()
+        if color is None:
+            color = rcParams['font']['color']
+        self._bounding_box = vtk.vtkOutlineCornerSource()
+        self._bounding_box.SetBounds(self.bounds)
+        self._bounding_box.SetCornerFactor(corner_factor)
+        self._bounding_box.Update()
+        box = wrap(self._bounding_box.GetOutput())
+        self.bounding_box_actor = self.add_mesh(box, color=color)
+        return self.bounding_box_actor
+
+    def update_bounds_axes(self):
+        """Update the bounds axes of the render window """
+        if hasattr(self, 'cube_axes_actor'):
+            self.cube_axes_actor.SetBounds(self.bounds)
+        if hasattr(self, 'bounding_box_actor'):
+            color = self.bounding_box_actor.GetProperty().GetColor()
+            self.remove_bounding_box()
+            self.add_bounding_box(color=color)
+
+    def remove_bounding_box(self):
+        if hasattr(self, 'bounding_box_actor'):
+            actor = self.bounding_box_actor
+            del self.bounding_box_actor
+            self.remove_actor(actor, reset_camera=False)
+
+    def show_grid(self, **kwargs):
+        """
+        A wrapped implementation of ``add_bounds_axes`` to change default
+        behaviour to use gridlines and showing the axes labels on the outer
+        edges. This is intended to be silimar to ``matplotlib``'s ``grid``
+        function.
+        """
+        kwargs.setdefault('grid', 'back')
+        kwargs.setdefault('location', 'outer')
+        kwargs.setdefault('ticks', 'both')
+        kwargs.setdefault('all_edges', True)
+        return self.add_bounds_axes(**kwargs)
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """
