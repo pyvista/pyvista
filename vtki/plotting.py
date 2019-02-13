@@ -1840,20 +1840,34 @@ class BasePlotter(object):
         kwargs['style'] = 'points'
         self.add_mesh(points, **kwargs)
 
-    def add_arrows(self, cent, direction, mag=1, reset_camera=None, name=None):
+    def add_arrows(self, cent, direction, mag=1, **kwargs):
         """ Adds arrows to plotting object """
-
+        direction = direction.copy()
         if cent.ndim != 2:
             cent = cent.reshape((-1, 3))
 
         if direction.ndim != 2:
             direction = direction.reshape((-1, 3))
 
-        pdata = vtki.vector_poly_data(cent, direction * mag)
-        arrows = arrows_actor(pdata)
-        self.add_actor(arrows, reset_camera=reset_camera, name=name)
+        direction[:,0] *= mag
+        direction[:,1] *= mag
+        direction[:,2] *= mag
 
-        return arrows, pdata
+        pdata = vtki.vector_poly_data(cent, direction)
+        # arrows = arrows_actor(pdata)
+        # self.add_actor(arrows, reset_camera=reset_camera, name=name)
+        # Create arrow object
+        arrow = vtk.vtkArrowSource()
+        arrow.Update()
+        glyph3D = vtk.vtkGlyph3D()
+        glyph3D.SetSourceData(arrow.GetOutput())
+        glyph3D.SetInputData(pdata)
+        glyph3D.SetVectorModeToUseVector()
+        glyph3D.Update()
+
+        arrows = wrap(glyph3D.GetOutput())
+
+        return self.add_mesh(arrows, **kwargs)
 
     def screenshot(self, filename=None, transparent_background=False,
                    return_img=None):

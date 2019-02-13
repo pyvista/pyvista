@@ -657,3 +657,55 @@ class DataSetFilters(object):
         alg.SetComputeVertexCount(False)
         alg.Update()
         return _get_output(alg)
+
+    def cell_centers(self, vertex=True):
+        """Generate points at the center of the cells in this dataset.
+        These points can be used for placing glyphs / vectors.
+
+        Parameters
+        ----------
+        vertex : bool
+            Enable/disable the generation of vertex cells.
+        """
+        alg = vtk.vtkCellCenters()
+        alg.SetInputDataObject(self)
+        alg.SetVertexCells(vertex)
+        alg.Update()
+        output = _get_output(alg)
+        return output
+
+
+    def glyph(self, orient=True, scale=True, factor=1.0, geom=None):
+        """Copies a geometric representation (called a glyph) to every point in
+        the input dataset.  The glyph may be oriented along the input vectors,
+        and it may be scaled according to scalar data or vector magnitude.
+
+        Parameters
+        ----------
+        orient : bool
+            Use the active vecotrs array to orient the the glyphs
+
+        scale : bool
+            Use the active scalars to scale the glyphs
+
+        factor : float
+            Scale factor applied to sclaing array
+
+        geom : vtk.vtkDataSet
+            The geometry to use for the glyph
+        """
+        centers = self.cell_centers(vertex=False)
+        if geom is None:
+            arrow = vtk.vtkArrowSource()
+            arrow.Update()
+            geom = arrow.GetOutput()
+        alg = vtk.vtkGlyph3D()
+        alg.SetSourceData(geom)
+        if scale:
+            alg.SetScaleModeToScaleByScalar()
+        alg.SetOrient(orient)
+        alg.SetInputData(centers)
+        alg.SetVectorModeToUseVector()
+        alg.SetScaleFactor(factor)
+        alg.Update()
+        return _get_output(alg)
