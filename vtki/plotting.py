@@ -836,10 +836,6 @@ class BasePlotter(object):
         else:
             actor = uinput
 
-        # Make sure scale is consistent with rest of scene
-        if hasattr(actor, 'SetScale'):
-            actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
-
         self.renderer.AddActor(actor)
         if name is None:
             name = str(hex(id(actor)))
@@ -1061,8 +1057,10 @@ class BasePlotter(object):
 
         # create actor
         cube_axes_actor = vtk.vtkCubeAxesActor()
-        cube_axes_actor.SetUse2DMode(False)
-        cube_axes_actor.SetScale(self.scale[0], self.scale[1], self.scale[2])
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            cube_axes_actor.SetUse2DMode(True)
+        else:
+            cube_axes_actor.SetUse2DMode(False)
 
         if grid:
             if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
@@ -1213,6 +1211,10 @@ class BasePlotter(object):
                 self.add_bounding_box(color=color)
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
+            if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+                self.cube_axes_actor.SetUse2DMode(True)
+            else:
+                self.cube_axes_actor.SetUse2DMode(False)
 
     def remove_bounding_box(self):
         if hasattr(self, '_box_object'):
@@ -1247,12 +1249,14 @@ class BasePlotter(object):
         if zscale is None:
             zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
-        for name, actor in self._actors.items():
-            if hasattr(actor, 'SetScale'):
-                actor.SetScale(xscale, yscale, zscale)
-        self.update_bounds_axes()
+        # Update the camera's coordinate system
+        cam = self.renderer.GetActiveCamera()
+        transform = vtk.vtkTransform()
+        transform.Scale(xscale, yscale, zscale)
+        cam.SetModelTransformMatrix(transform.GetMatrix())
         self._render()
         if reset_camera:
+            self.update_bounds_axes()
             self.reset_camera()
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False, bold=True,
