@@ -16,6 +16,7 @@ The following examples demonstrate the functionality of ``vtki``.
    quick/create-uniform-grid
    quick/create-gif
    quick/plot-clear
+   quick/plot-glyphs
 
 
 Long Examples

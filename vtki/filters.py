@@ -694,17 +694,22 @@ class DataSetFilters(object):
         geom : vtk.vtkDataSet
             The geometry to use for the glyph
         """
-        centers = self.cell_centers(vertex=False)
         if geom is None:
             arrow = vtk.vtkArrowSource()
             arrow.Update()
             geom = arrow.GetOutput()
         alg = vtk.vtkGlyph3D()
         alg.SetSourceData(geom)
+        if isinstance(scale, str):
+            self.active_scalar_name = scale
+            scale = True
         if scale:
             alg.SetScaleModeToScaleByScalar()
+        if isinstance(orient, str):
+            self.active_vectors_name = orient
+            orient = True
         alg.SetOrient(orient)
-        alg.SetInputData(centers)
+        alg.SetInputData(self)
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.Update()

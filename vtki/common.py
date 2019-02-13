@@ -49,8 +49,10 @@ class Common(DataSetFilters):
             carr = self.GetCellData().GetArrayName(0)
             if parr is not None:
                 self._active_scalar_info = [POINT_DATA_FIELD, parr]
+                self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
                 self._active_scalar_info = [CELL_DATA_FIELD, carr]
+                self.GetCellData().SetActiveScalars(carr)
         return self._active_scalar_info
 
     @property
