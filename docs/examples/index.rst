@@ -17,6 +17,7 @@ The following examples demonstrate the functionality of ``vtki``.
    quick/create-gif
    quick/plot-clear
    quick/plot-glyphs
+   quick/plot-time-lapse
 
 
 Long Examples

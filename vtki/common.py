@@ -300,7 +300,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
-        if set_active:
+        if set_active or self.active_scalar_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalar_info = [POINT_DATA_FIELD, name]
 
@@ -460,7 +460,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetCellData().AddArray(vtkarr)
-        if set_active:
+        if set_active or self.active_scalar_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
             self._active_scalar_info = [CELL_DATA_FIELD, name]
 
