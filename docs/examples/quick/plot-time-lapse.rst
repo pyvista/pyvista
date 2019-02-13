@@ -33,3 +33,6 @@ values change through time:
 
     thread = Thread(target=shrink)
     thread.start()
+
+
+.. figure:: ../../images/shrink-globe.gif
