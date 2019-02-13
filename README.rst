@@ -1,5 +1,5 @@
 vtki
-====
+****
 
 
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
@@ -27,7 +27,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 
 Documentation
--------------
+=============
 Refer to the `Read the Docs <http://www.vtki.org/>`_
 documentation for detailed installation and usage details.
 
@@ -35,7 +35,7 @@ Also see the `wiki <https://github.com/akaszynski/vtki/wiki>`_ for brief code
 snippets.
 
 Installation
-------------
+============
 Installation is simply::
 
     pip install vtki
@@ -48,7 +48,7 @@ for more details if the installation through pip doesn't work out.
 
 
 Highlights
-----------
+==========
 
 Head over to the `Quick Examples`_ page in the docs to learn more about using
 ``vtki``.
