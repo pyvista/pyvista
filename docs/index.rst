@@ -45,7 +45,7 @@ Here are a few open-source projects that leverage ``vtki``:
 
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. ``vtki`` is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvtk_: 3D visualization for the Open Mining Format (omf). ``vtki`` provides the foundation for this libraries visualization.
-* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``vtki`` data versions of their data types for `creating compelling visualizations`_.
+* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``vtki`` versions of their data types for `creating compelling visualizations`_.
 
 
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
