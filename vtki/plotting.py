@@ -1179,7 +1179,9 @@ class BasePlotter(object):
 
         return cube_axes_actor
 
-    def add_bounding_box(self, color=None, corner_factor=0.5):
+    def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
+            opacity=1.0, render_lines_as_tubes=False, lighting=None,
+            reset_camera=None):
         """Adds an unlabeled and unticked box at the boundaries of
         plot.  Useful for when wanting to plot outer grids while
         still retaining all edges of the boundary.
@@ -1190,21 +1192,45 @@ class BasePlotter(object):
             If ``all_edges````, this is the factor along each axis to
             draw the default box. Dafuault is 0.5 to show the full box.
         """
+        if lighting is None:
+            lighting = rcParams['lighting']
+
         self.remove_bounding_box()
         if color is None:
             color = rcParams['font']['color']
+        rgb_color = parse_color(color)
         self._bounding_box = vtk.vtkOutlineCornerSource()
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.SetCornerFactor(corner_factor)
         self._bounding_box.Update()
         self._box_object = wrap(self._bounding_box.GetOutput())
         name = 'BoundingBox({})'.format(hex(id(self._box_object)))
-        self.bounding_box_actor = self.add_mesh(self._box_object, color=color, name=name)
+
+        mapper = vtk.vtkDataSetMapper()
+        mapper.SetInputData(self._box_object)
+        self.bounding_box_actor, prop = self.add_actor(mapper, reset_camera=reset_camera, name=name)
+
+        prop.SetColor(rgb_color)
+        prop.SetOpacity(opacity)
+        if render_lines_as_tubes:
+            prop.SetRenderLinesAsTubes(render_lines_as_tubes)
+
+        # lighting display style
+        if lighting is False:
+            prop.LightingOff()
+
+        # set line thickness
+        if line_width:
+            prop.SetLineWidth(line_width)
+
+        prop.SetRepresentationToSurface()
+
         return self.bounding_box_actor
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window """
-        if hasattr(self, '_box_object'):
+        if (hasattr(self, '_box_object') and self._box_object is not None
+                and self.bounding_box_actor is not None):
             if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
