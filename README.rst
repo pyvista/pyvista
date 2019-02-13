@@ -43,7 +43,7 @@ Installation is simply::
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
 `GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
 
-See the `Installation <http://www.vtki.org/latest/getting-started/installation.html#install-ref.>`_
+See the `Installation <http://www.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
 
