@@ -10,8 +10,6 @@ from vtki import examples
 
 try:
     import PyQt5
-    from PyQt5 import Qt
-    from PyQt5.Qt import QMainWindow
     has_pyqt5 = True
 except:
     has_pyqt5 = False
