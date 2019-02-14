@@ -57,7 +57,8 @@ script:
   - cd ./docs/
   - make doctest
   - make html
-  #- codecov --token=TODO
+  # report code coverage
+  - codecov
   # And then clean up and changes from running examples with fileio
   - cd ..
   - git reset --hard # removes staged and working directory changes

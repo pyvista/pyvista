@@ -454,14 +454,16 @@ class BasePlotter(object):
             if force_redraw:
                 self.iren.Render()
 
-    def add_mesh(self, mesh, color=None, style=None,
-                 scalars=None, rng=None, stitle=None, show_edges=None,
-                 point_size=5.0, opacity=1, line_width=None, flip_scalars=False,
-                 lighting=None, n_colors=256, interpolate_before_map=False,
-                 cmap=None, label=None, reset_camera=None, scalar_bar_args=None,
+    def add_mesh(self, mesh, color=None, style=None, scalars=None,
+                 rng=None, stitle=None, show_edges=None,
+                 point_size=5.0, opacity=1, line_width=None,
+                 flip_scalars=False, lighting=None, n_colors=256,
+                 interpolate_before_map=False, cmap=None, label=None,
+                 reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=False, render_lines_as_tubes=False,
-                 edge_color='black', ambient=0.2, **kwargs):
+                 render_points_as_spheres=False,
+                 render_lines_as_tubes=False, edge_color='black',
+                 ambient=0.2, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -588,13 +590,16 @@ class BasePlotter(object):
             self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
             if rng is None and scalars is not None:
-                # Get the data range across the array for all blocks if scalar specified
+                # Get the data range across the array for all blocks
+                # if scalar specified
                 if isinstance(scalars, str):
                     rng = mesh.get_data_range(scalars)
                 else:
-                    # TODO: an array was given... how do we deal with that? Possibly
-                    #       a 2D arrays or list of arrays  where first index
-                    #       corresponds to the block? This could get complicated real quick.
+                    # TODO: an array was given... how do we deal with
+                    #       that? Possibly a 2D arrays or list of
+                    #       arrays where first index corresponds to
+                    #       the block? This could get complicated real
+                    #       quick.
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
             if multi_colors:
                 # Compute unique colors for each index of the block
