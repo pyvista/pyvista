@@ -261,6 +261,25 @@ def test_texture():
     assert np.allclose(foo, t_coords)
 
 
+def test_invalid_vector():
+    with pytest.raises(AssertionError):
+        grid.vectors = np.empty(10)
+
+    with pytest.raises(RuntimeError):
+        grid.vectors = np.empty((3, 2))
+    
+    with pytest.raises(RuntimeError):
+        grid.vectors = np.empty((3, 3))
+
+
+def test_no_t_coords():
+    assert grid.t_coords is None
+
+
+def test_no_arrows():
+    assert grid.arrows is None
+
+
 def test_arrows():
     sphere = vtki.Sphere(radius=3.14)
 
@@ -280,6 +299,8 @@ def test_arrows():
     assert isinstance(arrows, vtki.PolyData)
     assert np.any(arrows.points)
     sphere.set_active_vectors('_vectors')
+    sphere.active_vectors_name == '_vectors'
+
 
 def test_set_active_vectors_name():
     with pytest.raises(RuntimeError):
@@ -328,18 +349,56 @@ def test_set_active_scalars():
     with pytest.raises(RuntimeError):
         grid_copy.set_active_scalar(None)
 
+def test_set_active_scalar_name():
+    point_keys = list(grid.point_arrays.keys())
+    grid.set_active_scalar_name = point_keys[0]
+
 
 def test_change_scalar_name_point():
     point_keys = list(grid.point_arrays.keys())
-    new_name = 'changed'
-    grid.change_scalar_name(point_keys[0], new_name)
+    old_name = point_keys[0]
+    grid.set_active_scalar(old_name, 'point')
+    new_name = 'point changed'
+    grid.change_scalar_name(old_name, new_name)
     assert new_name in grid.point_arrays
+
+    grid._point_scalar()
 
 
 def test_change_scalar_name_cell():
     cell_keys = list(grid.cell_arrays.keys())
-    new_name = 'changed'
+    new_name = 'cell changed'
     grid.change_scalar_name(cell_keys[0], new_name)
     assert new_name in grid.cell_arrays
 
 
+def test_change_name_fail():
+    with pytest.raises(RuntimeError):
+        grid.change_scalar_name('not a key', '')
+
+
+def test_get_cell_scalar_fail():
+    sphere = vtki.Sphere()
+    with pytest.raises(RuntimeError):
+        sphere._cell_scalar(name=None)
+
+
+def test_extent():
+    assert grid.extent is None
+
+
+
+def set_cell_vectors():
+    grid.cell_arrays['_cell_vectors'] = np.random.random((grid.n_cells, 3))
+    grid.set_active_vectors('_cell_vectors')
+
+
+def test_axis_rotation_invalid():
+    with pytest.raises(Exception):
+        vtki.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+
+
+def test_axis_rotation_not_in_place():
+    p = np.eye(3)
+    p_out = vtki.common.axis_rotation(p, 1, False, axis='x')
+    assert not np.allclose(p, p_out)
