@@ -1,5 +1,6 @@
 Plotting Glyphs
 ===============
+
 Using vectors in a dataset to plot and orient glyphs can be done via the
 :func:`vtki.DataSetFilters.glyph` filter:
 
@@ -64,3 +65,4 @@ Another approach is to load the vectors directly to the grid object and then acc
 .. image:: ../../images/sphere_vectorfield.png
 
 .. image:: ../../images/sphere_vectorfield_w_sphere.png
+
