@@ -676,14 +676,16 @@ class DataSetFilters(object):
 
 
     def glyph(self, orient=True, scale=True, factor=1.0, geom=None):
-        """Copies a geometric representation (called a glyph) to every point in
-        the input dataset.  The glyph may be oriented along the input vectors,
-        and it may be scaled according to scalar data or vector magnitude.
+        """
+        Copies a geometric representation (called a glyph) to every
+        point in the input dataset.  The glyph may be oriented along
+        the input vectors, and it may be scaled according to scalar
+        data or vector magnitude.
 
         Parameters
         ----------
         orient : bool
-            Use the active vecotrs array to orient the the glyphs
+            Use the active vectors array to orient the the glyphs
 
         scale : bool
             Use the active scalars to scale the glyphs

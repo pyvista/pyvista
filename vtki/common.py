@@ -17,6 +17,9 @@ from vtki import DataSetFilters
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
+# vector array names
+DEFAULT_VECTOR_KEY = '_vectors'
+
 
 class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
@@ -72,10 +75,11 @@ class Common(DataSetFilters):
     @property
     def active_vectors(self):
         field, name = self.active_vectors_info
-        if field is POINT_DATA_FIELD:
-            return self.point_arrays[name]
-        if field is CELL_DATA_FIELD:
-            return self.cell_arrays[name]
+        if name:
+            if field is POINT_DATA_FIELD:
+                return self.point_arrays[name]
+            if field is CELL_DATA_FIELD:
+                return self.cell_arrays[name]
 
     @property
     def active_vectors_name(self):
@@ -112,6 +116,52 @@ class Common(DataSetFilters):
         self.Modified()
 
     @property
+    def arrows(self):
+        """
+        Returns a glyph representation of the active vector data as
+        arrows.  Arrows will be located at the points of the mesh and
+        their size will be dependent on the length of the vector.
+        Their direction will be the "direction" of the vector
+
+        Returns
+        -------
+        arrows : vtki.PolyData
+            Active scalars represented as arrows.
+        """
+        if self.active_vectors is None:
+            return
+
+        arrow = vtk.vtkArrowSource()
+        arrow.Update()
+
+        alg = vtk.vtkGlyph3D()
+        alg.SetSourceData(arrow.GetOutput())
+        alg.SetOrient(True)
+        alg.SetInputData(self)
+        alg.SetVectorModeToUseVector()
+        alg.SetScaleModeToScaleByVector()
+        alg.Update()
+        return vtki.wrap(alg.GetOutput())
+
+    @property
+    def vectors(self):
+        """ Returns active vectors """
+        return self.active_vectors
+
+    @vectors.setter
+    def vectors(self, array):
+        """ Sets the active vector  """
+        if array.ndim != 2:
+            raise AssertionError('vector array must be a 2-dimensional array')
+        elif array.shape[1] != 3:
+            raise RuntimeError('vector array must be 3D')
+        elif array.shape[0] != self.n_points:
+            raise RuntimeError('Number of vectors be the same as the number of points')
+
+        self.point_arrays[DEFAULT_VECTOR_KEY] = array
+        self.active_vectors_name = DEFAULT_VECTOR_KEY
+
+    @property
     def t_coords(self):
         if self.GetPointData().GetTCoords() is not None:
             return vtk_to_numpy(self.GetPointData().GetTCoords())
@@ -122,7 +172,7 @@ class Common(DataSetFilters):
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
-            raise AssertionError('Texture coordinates must by a 2-dimensional array')
+            raise AssertionError('Texture coordinates must be a 2-dimensional array')
         if t_coords.shape[0] != self.n_points:
             raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
         if t_coords.shape[1] != 2:
@@ -189,7 +239,7 @@ class Common(DataSetFilters):
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveScalars(name)
         else:
-            raise RuntimeError('Data field ({}) no useable'.format(field))
+            raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_scalar_info = [field, name]
 
     def set_active_vectors(self, name, preference='cell'):
@@ -200,7 +250,7 @@ class Common(DataSetFilters):
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveVectors(name)
         else:
-            raise RuntimeError('Data field ({}) no useable'.format(field))
+            raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_vectors_info = [field, name]
 
     def change_scalar_name(self, old_name, new_name, preference='cell'):
@@ -208,8 +258,10 @@ class Common(DataSetFilters):
         _, field = get_scalar(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().GetArray(old_name).SetName(new_name)
+            self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == CELL_DATA_FIELD:
             self.GetCellData().GetArray(old_name).SetName(new_name)
+            self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
         if self.active_scalar_info[1] == old_name:
@@ -562,12 +614,12 @@ class Common(DataSetFilters):
         return self.GetNumberOfCells()
 
     @property
-    def number_of_points(self):
+    def number_of_points(self):  # pragma: no cover
         """ returns the number of points """
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self):
+    def number_of_cells(self):  # pragma: no cover
         """ returns the number of cells """
         return self.GetNumberOfCells()
 
@@ -581,7 +633,8 @@ class Common(DataSetFilters):
 
     @property
     def extent(self):
-        return list(self.GetExtent())
+        if hasattr(self, 'GetExtent'):
+            return list(self.GetExtent())
 
     def get_data_range(self, arr=None, preference='cell'):
         if arr is None:

@@ -17,6 +17,9 @@ vtki
 .. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
    :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
 
+.. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/akaszynski/vtki
+
 
 ``vtki`` is a VTK helper module that takes a different approach on interfacing
 with VTK through NumPy and direct array access. This module simplifies mesh

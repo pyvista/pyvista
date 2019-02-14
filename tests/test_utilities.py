@@ -19,7 +19,7 @@ def test_createvectorpolydata_1D():
     vdata = utilities.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_arrays['vectors'])
-
+    
 
 def test_createvectorpolydata():
     orig = np.random.random((100, 3))
