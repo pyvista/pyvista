@@ -120,22 +120,34 @@ class Common(DataSetFilters):
     def arrows(self):
         """
         Returns a glyph representation of the active vector data as
-        arrows.  Requires the active vectors and magnitude be
-        '_vectors' and '_vector_mag'.  Store these using the vectors
-        property.
+        arrows.  Arrows will be located at the points of the mesh and
+        their size will be dependent on the length of the vector.
+        Their direction will be the "direction" of the vector
 
         Returns
         -------
         arrows : vtki.PolyData
-
+            Active scalars represented as arrows.
         """
-        if ORIENT_KEY in self.point_arrays:
-            return self.glyph()
+        if self.active_vectors is None:
+            return
+
+        arrow = vtk.vtkArrowSource()
+        arrow.Update()
+
+        alg = vtk.vtkGlyph3D()
+        alg.SetSourceData(arrow.GetOutput())
+        alg.SetOrient(True)
+        alg.SetInputData(self)
+        alg.SetVectorModeToUseVector()
+        alg.SetScaleModeToScaleByVector()
+        alg.Update()
+        return vtki.wrap(alg.GetOutput())
 
     @property
     def vectors(self):
-        if ORIENT_KEY in self.point_arrays:
-            return self.point_arrays[ORIENT_KEY]
+        """ Returns active vectors """
+        return self.active_vectors
 
     @vectors.setter
     def vectors(self, array):
@@ -148,10 +160,10 @@ class Common(DataSetFilters):
             raise Exception('Array must contain the same number of vectors as points')
 
         self.point_arrays[ORIENT_KEY] = array
-        self.point_arrays[MAG_KEY] = np.linalg.norm(array, axis=1)
+        # self.point_arrays[MAG_KEY] = np.linalg.norm(array, axis=1)
 
         self.active_vectors_name = ORIENT_KEY
-        self.active_scalar_name = MAG_KEY
+        # self.active_scalar_name = MAG_KEY
 
     @property
     def t_coords(self):
@@ -250,8 +262,10 @@ class Common(DataSetFilters):
         _, field = get_scalar(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().GetArray(old_name).SetName(new_name)
+            self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == CELL_DATA_FIELD:
             self.GetCellData().GetArray(old_name).SetName(new_name)
+            self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
         if self.active_scalar_info[1] == old_name:
