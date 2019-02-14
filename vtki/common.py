@@ -17,6 +17,10 @@ from vtki import DataSetFilters
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
+# vector array names
+ORIENT_KEY = '_vectors'
+MAG_KEY = '_vector_mag'
+
 
 class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
@@ -72,10 +76,11 @@ class Common(DataSetFilters):
     @property
     def active_vectors(self):
         field, name = self.active_vectors_info
-        if field is POINT_DATA_FIELD:
-            return self.point_arrays[name]
-        if field is CELL_DATA_FIELD:
-            return self.cell_arrays[name]
+        if name:
+            if field is POINT_DATA_FIELD:
+                return self.point_arrays[name]
+            if field is CELL_DATA_FIELD:
+                return self.cell_arrays[name]
 
     @property
     def active_vectors_name(self):
@@ -110,6 +115,43 @@ class Common(DataSetFilters):
         self.SetPoints(vtk_points)
         self.GetPoints().Modified()
         self.Modified()
+
+    @property
+    def arrows(self):
+        """
+        Returns a glyph representation of the active vector data as
+        arrows.  Requires the active vectors and magnitude be
+        '_vectors' and '_vector_mag'.  Store these using the vectors
+        property.
+
+        Returns
+        -------
+        arrows : vtki.PolyData
+
+        """
+        if ORIENT_KEY in self.point_arrays:
+            return self.glyph()
+
+    @property
+    def vectors(self):
+        if ORIENT_KEY in self.point_arrays:
+            return self.point_arrays[ORIENT_KEY]
+
+    @vectors.setter
+    def vectors(self, array):
+        """ Sets the active vector  """
+        if array.ndim != 2:
+            array = orig.reshape((-1, 3))
+        elif array.shape[1] != 3:
+            raise Exception('Array must be 3D')
+        elif array.shape[0] != self.n_points:
+            raise Exception('Array must contain the same number of vectors as points')
+
+        self.point_arrays[ORIENT_KEY] = array
+        self.point_arrays[MAG_KEY] = np.linalg.norm(array, axis=1)
+
+        self.active_vectors_name = ORIENT_KEY
+        self.active_scalar_name = MAG_KEY
 
     @property
     def t_coords(self):
@@ -189,7 +231,7 @@ class Common(DataSetFilters):
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveScalars(name)
         else:
-            raise RuntimeError('Data field ({}) no useable'.format(field))
+            raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_scalar_info = [field, name]
 
     def set_active_vectors(self, name, preference='cell'):
@@ -200,7 +242,7 @@ class Common(DataSetFilters):
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveVectors(name)
         else:
-            raise RuntimeError('Data field ({}) no useable'.format(field))
+            raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_vectors_info = [field, name]
 
     def change_scalar_name(self, old_name, new_name, preference='cell'):

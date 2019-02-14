@@ -259,3 +259,6 @@ def test_texture():
     # now grab the texture coordinates
     foo = mesh.t_coords
     assert np.allclose(foo, t_coords)
+
+
+# def test_active_v

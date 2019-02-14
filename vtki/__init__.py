@@ -36,7 +36,7 @@ else:
     ID_TYPE = np.int32
 
 # determine if using vtk > 5
-if vtk.vtkVersion().GetVTKMajorVersion() < 5:
+if vtk.vtkVersion().GetVTKMajorVersion() < 5:  # pragma: no cover
     raise Exception('VTK version must be 5.0 or greater.')
 
 

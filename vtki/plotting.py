@@ -2179,8 +2179,10 @@ class BasePlotter(object):
 
 
     def export_vtkjs(self, filename, compress_arrays=False):
-        """Export the current rendering scene as a VTKjs scene for rendering
-        in a web browser"""
+        """
+        Export the current rendering scene as a VTKjs scene for
+        rendering in a web browser
+        """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
