@@ -57,6 +57,15 @@ def test_plot_invalid_style():
 def test_plot_bounds_axes_with_no_data():
     plotter = vtki.Plotter()
     plotter.add_bounds_axes()
+    plotter.close()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_show_grid():
+    plotter = vtki.Plotter()
+    plotter.show_grid()
+    plotter.add_mesh(sphere)
+    plotter.close()
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -208,8 +217,7 @@ def test_add_legend():
 def test_add_axes_twice():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_axes()
-    with pytest.raises(Exception):
-        plotter.add_axes()
+    plotter.add_axes(interactive=True)
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")

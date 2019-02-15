@@ -13,17 +13,19 @@ import vtki
 from vtki.utilities import (get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD,
                             vtk_bit_array_to_char)
 from vtki import DataSetFilters
-from vtki import plot
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
+
+# vector array names
+DEFAULT_VECTOR_KEY = '_vectors'
 
 
 class Common(DataSetFilters):
     """ Methods in common to grid and surface objects"""
 
     # Simply bind vtki.plotting.plot to the object
-    plot = plot
+    plot = vtki.plot
 
     def __init__(self, *args, **kwargs):
         self.references = []
@@ -50,19 +52,58 @@ class Common(DataSetFilters):
             carr = self.GetCellData().GetArrayName(0)
             if parr is not None:
                 self._active_scalar_info = [POINT_DATA_FIELD, parr]
+                self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
                 self._active_scalar_info = [CELL_DATA_FIELD, carr]
+                self.GetCellData().SetActiveScalars(carr)
         return self._active_scalar_info
+
+    @property
+    def active_vectors_info(self):
+        """Return the active scalar's field and name: [field, name]"""
+        if not hasattr(self, '_active_vectors_info'):
+            self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
+        field, name = self._active_vectors_info
+
+        # rare error where scalar name isn't a valid scalar
+        if name not in self.point_arrays:
+            if name not in self.cell_arrays:
+                name = None
+
+        return self._active_vectors_info
+
+    @property
+    def active_vectors(self):
+        field, name = self.active_vectors_info
+        if name:
+            if field is POINT_DATA_FIELD:
+                return self.point_arrays[name]
+            if field is CELL_DATA_FIELD:
+                return self.cell_arrays[name]
+
+    @property
+    def active_vectors_name(self):
+        return self.active_vectors_info[1]
+
+    @active_vectors_name.setter
+    def active_vectors_name(self, name):
+        return self.set_active_vectors(name)
 
     @property
     def active_scalar_name(self):
         """Returns the active scalar's name"""
         return self.active_scalar_info[1]
 
+    @active_scalar_name.setter
+    def active_scalar_name(self, name):
+        return self.set_active_scalar(name)
+
     @property
     def points(self):
         """ returns a pointer to the points as a numpy object """
-        return vtk_to_numpy(self.GetPoints().GetData())
+        vtk_data = self.GetPoints().GetData()
+        arr = vtk_to_numpy(vtk_data)
+        return vtki_ndarray(arr, vtk_data)
 
     @points.setter
     def points(self, points):
@@ -75,6 +116,52 @@ class Common(DataSetFilters):
         self.Modified()
 
     @property
+    def arrows(self):
+        """
+        Returns a glyph representation of the active vector data as
+        arrows.  Arrows will be located at the points of the mesh and
+        their size will be dependent on the length of the vector.
+        Their direction will be the "direction" of the vector
+
+        Returns
+        -------
+        arrows : vtki.PolyData
+            Active scalars represented as arrows.
+        """
+        if self.active_vectors is None:
+            return
+
+        arrow = vtk.vtkArrowSource()
+        arrow.Update()
+
+        alg = vtk.vtkGlyph3D()
+        alg.SetSourceData(arrow.GetOutput())
+        alg.SetOrient(True)
+        alg.SetInputData(self)
+        alg.SetVectorModeToUseVector()
+        alg.SetScaleModeToScaleByVector()
+        alg.Update()
+        return vtki.wrap(alg.GetOutput())
+
+    @property
+    def vectors(self):
+        """ Returns active vectors """
+        return self.active_vectors
+
+    @vectors.setter
+    def vectors(self, array):
+        """ Sets the active vector  """
+        if array.ndim != 2:
+            raise AssertionError('vector array must be a 2-dimensional array')
+        elif array.shape[1] != 3:
+            raise RuntimeError('vector array must be 3D')
+        elif array.shape[0] != self.n_points:
+            raise RuntimeError('Number of vectors be the same as the number of points')
+
+        self.point_arrays[DEFAULT_VECTOR_KEY] = array
+        self.active_vectors_name = DEFAULT_VECTOR_KEY
+
+    @property
     def t_coords(self):
         if self.GetPointData().GetTCoords() is not None:
             return vtk_to_numpy(self.GetPointData().GetTCoords())
@@ -85,7 +172,7 @@ class Common(DataSetFilters):
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
-            raise AssertionError('Texture coordinates must by a 2-dimensional array')
+            raise AssertionError('Texture coordinates must be a 2-dimensional array')
         if t_coords.shape[0] != self.n_points:
             raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
         if t_coords.shape[1] != 2:
@@ -152,21 +239,33 @@ class Common(DataSetFilters):
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveScalars(name)
         else:
-            raise RuntimeError('Data field ({}) no useable'.format(field))
+            raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_scalar_info = [field, name]
+
+    def set_active_vectors(self, name, preference='cell'):
+        """Finds the vectors by name and appropriately sets it as active"""
+        arr, field = get_scalar(self, name, preference=preference, info=True)
+        if field == POINT_DATA_FIELD:
+            self.GetPointData().SetActiveVectors(name)
+        elif field == CELL_DATA_FIELD:
+            self.GetCellData().SetActiveVectors(name)
+        else:
+            raise RuntimeError('Data field ({}) not useable'.format(field))
+        self._active_vectors_info = [field, name]
 
     def change_scalar_name(self, old_name, new_name, preference='cell'):
         """Changes array name by searching for the array then renaming it"""
         _, field = get_scalar(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().GetArray(old_name).SetName(new_name)
+            self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == CELL_DATA_FIELD:
             self.GetCellData().GetArray(old_name).SetName(new_name)
+            self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
         if self.active_scalar_info[1] == old_name:
             self.set_active_scalar(new_name, preference=field)
-
 
     @property
     def active_scalar(self):
@@ -253,7 +352,7 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
-        if set_active:
+        if set_active or self.active_scalar_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalar_info = [POINT_DATA_FIELD, name]
 
@@ -413,13 +512,14 @@ class Common(DataSetFilters):
         vtkarr = numpy_to_vtk(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetCellData().AddArray(vtkarr)
-        if set_active:
+        if set_active or self.active_scalar_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
             self._active_scalar_info = [CELL_DATA_FIELD, name]
 
     def copy_meta_from(self, ido):
         """Copies vtki meta data onto this object from another object"""
         self._active_scalar_info = ido.active_scalar_info
+        self._active_vectors_info = ido.active_vectors_info
 
     def copy(self, deep=True):
         """
@@ -514,12 +614,12 @@ class Common(DataSetFilters):
         return self.GetNumberOfCells()
 
     @property
-    def number_of_points(self):
+    def number_of_points(self):  # pragma: no cover
         """ returns the number of points """
         return self.GetNumberOfPoints()
 
     @property
-    def number_of_cells(self):
+    def number_of_cells(self):  # pragma: no cover
         """ returns the number of cells """
         return self.GetNumberOfCells()
 
@@ -533,7 +633,8 @@ class Common(DataSetFilters):
 
     @property
     def extent(self):
-        return list(self.GetExtent())
+        if hasattr(self, 'GetExtent'):
+            return list(self.GetExtent())
 
     def get_data_range(self, arr=None, preference='cell'):
         if arr is None:
@@ -690,7 +791,6 @@ class CellScalarsDict(dict):
             self.data._add_cell_scalar(val, key, deep=False)
         dict.__setitem__(self, key, val)
         self.data.GetCellData().Modified()
-        # self.data.Modified()
 
     def __delitem__(self, key):
         self.data._remove_cell_scalar(key)
@@ -717,7 +817,6 @@ class PointScalarsDict(dict):
             self.data._add_point_scalar(val, key, deep=False)
         dict.__setitem__(self, key, val)
         self.data.GetPointData().Modified()
-        # self.data.Modified()
 
     def __delitem__(self, key):
         self.data._remove_point_scalar(key)
@@ -756,3 +855,27 @@ def axis_rotation(p, ang, inplace=False, deg=True, axis='z'):
 
     if not inplace:
         return p
+
+
+class vtki_ndarray(np.ndarray):
+    """
+    Links a numpy array with the vtk object the data is attached to.
+
+    When the array is changed it triggers "Modified()" which updates
+    all upstream objects, including any render windows holding the
+    object.
+
+    """
+
+    def __new__(cls, input_array, proxy):
+        obj = np.asarray(input_array).view(cls)
+        cls.proxy = proxy
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None: return
+
+    def __setitem__(self, coords, value):
+        """ Update the array and update the vtk object """
+        super(vtki_ndarray, self).__setitem__(coords, value)
+        self.proxy.Modified()

@@ -26,23 +26,18 @@ from vtki.ipy_tools import Clip
 from vtki.ipy_tools import ScaledPlotter
 
 import numpy as np
-
 import vtk
 
 # get the int type from vtk
+ID_TYPE = np.int32
 if vtk.VTK_ID_TYPE == 12:
     ID_TYPE = np.int64
-else:
-    ID_TYPE = np.int32
+    
 
 # determine if using vtk > 5
-if vtk.vtkVersion().GetVTKMajorVersion() < 5:
-    raise Exception('VTK version must be 5.0 or greater.')
-
+assert vtk.vtkVersion().GetVTKMajorVersion() > 5, 'VTK version must be 5.0 or greater.'
 
 # catch annoying numpy/vtk future warning:
-# vtk/util/numpy_support.py:135: FutureWarning: Conversion of the second argument of issubdtype from `complex` to `np.complexfloating` is deprecated. In future, it will be treated as `np.complex128 == np.dtype(complex).type`.
-#   assert not numpy.issubdtype(z.dtype, complex), \
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation

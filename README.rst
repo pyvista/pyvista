@@ -1,5 +1,5 @@
 vtki
-====
+****
 
 
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
@@ -12,10 +12,13 @@ vtki
    :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
 
 .. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
-   :target: https://vtkinterface.readthedocs.io/en/latest/
+   :target: http://www.vtki.org/
 
 .. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
    :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
+
+.. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/akaszynski/vtki
 
 
 ``vtki`` is a VTK helper module that takes a different approach on interfacing
@@ -27,15 +30,15 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 
 Documentation
--------------
-Refer to the `Read the Docs <http://vtkInterface.readthedocs.io/en/latest/index.html>`_
+=============
+Refer to the `Read the Docs <http://www.vtki.org/>`_
 documentation for detailed installation and usage details.
 
 Also see the `wiki <https://github.com/akaszynski/vtki/wiki>`_ for brief code
 snippets.
 
 Installation
-------------
+============
 Installation is simply::
 
     pip install vtki
@@ -43,17 +46,17 @@ Installation is simply::
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
 `GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
 
-See the `Installation <http://vtkInterface.readthedocs.io/en/latest/getting-started/installation.html#install-ref.>`_
+See the `Installation <http://www.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
 
 Highlights
-----------
+==========
 
 Head over to the `Quick Examples`_ page in the docs to learn more about using
 ``vtki``.
 
-.. _Quick Examples: https://vtkinterface.readthedocs.io/en/latest/examples/index.html
+.. _Quick Examples: http://www.vtki.org/en/latest/examples/index.html
 
 * Pythonic interface to VTK's Python-C++ bindings
 * Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
@@ -61,21 +64,32 @@ Head over to the `Quick Examples`_ page in the docs to learn more about using
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 
 
-.. _IPython Tools: https://vtkinterface.readthedocs.io/en/latest/tools/ipy_tools.html
-.. _Filters: https://vtkinterface.readthedocs.io/en/latest/tools/filters.html
-.. _Plotting: https://vtkinterface.readthedocs.io/en/latest/tools/plotting.html
+.. _IPython Tools: http://www.vtki.org/en/latest/tools/ipy_tools.html
+.. _Filters: http://www.vtki.org/en/latest/tools/filters.html
+.. _Plotting: http://www.vtki.org/en/latest/tools/plotting.html
 
 
 Connections
------------
+===========
 
 ``vtki`` is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
 Here are a few open-source projects that leverage ``vtki``:
 
-* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models
-* omfvtk_: 3D visualization for the Open Mining Format (omf)
+* pyansys_: Pythonic interface to ANSYS result, full, and archive files
+* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. ``vtki`` is used to make the inputs and outputs of PVGeo's algorithms more accessible.
+* omfvtk_: 3D visualization for the Open Mining Format (omf). ``vtki`` provides the foundation for this libraries visualization.
+* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``vtki`` versions of their data types for `creating compelling visualizations`_.
+* pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
+* tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
+.. _pymeshfix: https://github.com/akaszynski/pymeshfix
+.. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvtk: https://github.com/OpenGeoVis/omfvtk
+.. _discretize: http://discretize.simpeg.xyz/en/master/
+.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
+.. _pymeshfix: https://github.com/akaszynski/pymeshfix
+.. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
+.. _tetgen: https://github.com/akaszynski/tetgen

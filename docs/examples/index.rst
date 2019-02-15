@@ -1,5 +1,7 @@
+.. _examples_ref:
+
 Quick Examples
-==============
+**************
 
 The following examples demonstrate the functionality of ``vtki``.
 
@@ -14,10 +16,12 @@ The following examples demonstrate the functionality of ``vtki``.
    quick/create-uniform-grid
    quick/create-gif
    quick/plot-clear
+   quick/plot-glyphs
+   quick/plot-time-lapse
 
 
 Long Examples
-=============
+*************
 
 Do you have a technical processing workflow or visualization routine you would
 like to share? If so, please consider sharing your code as a *Long Example*

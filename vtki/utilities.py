@@ -62,9 +62,15 @@ def get_scalar(mesh, name, preference='cell', info=False):
             raise RuntimeError('Data field ({}) not supported.'.format(preference))
     if all([parr is not None, carr is not None]):
         if preference == CELL_DATA_FIELD:
-            return carr
+            if info:
+                return carr, CELL_DATA_FIELD
+            else:
+                return carr
         elif preference == POINT_DATA_FIELD:
-            return parr
+            if info:
+                return parr, POINT_DATA_FIELD
+            else:
+                return parr
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(preference))
     arr = None

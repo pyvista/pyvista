@@ -152,7 +152,7 @@ manually interact with the plotting window:
     plotter.add_mesh(mesh, color='yellow')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
-    # img = plotter.screenshot('airplane.png')
+    # plotter.screenshot('airplane.png')
     plotter.close()
 
 
