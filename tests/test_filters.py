@@ -3,6 +3,8 @@ import pytest
 import vtki
 from vtki import examples
 
+import numpy as np
+
 
 
 datasets = [
@@ -186,3 +188,28 @@ def test_compute_cell_sizes():
         assert isinstance(result, type(dataset))
         assert 'Area' in result.scalar_names
         assert 'Volume' in result.scalar_names
+
+
+def test_cell_centers():
+    for i, dataset in enumerate(datasets):
+        result = dataset.cell_centers()
+        assert result is not None
+        assert isinstance(result, vtki.PolyData)
+
+def test_glyph():
+    for i, dataset in enumerate(datasets):
+        result = dataset.glyph()
+        assert result is not None
+        assert isinstance(result, vtki.PolyData)
+    # Test different options for glyph filter
+    sphere = vtki.Sphere(radius=3.14)
+    # make cool swirly pattern
+    vectors = np.vstack((np.sin(sphere.points[:, 0]),
+    np.cos(sphere.points[:, 1]),
+    np.cos(sphere.points[:, 2]))).T
+    # add and scale
+    sphere.vectors = vectors*0.3
+    sphere.point_arrays['foo'] = np.random.rand(sphere.n_points)
+    sphere.point_arrays['arr'] = np.ones(sphere.n_points)
+    result = sphere.glyph(scale='arr')
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
