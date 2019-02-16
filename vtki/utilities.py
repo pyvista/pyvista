@@ -243,7 +243,7 @@ def read(filename):
             return vtki.UnstructuredGrid(filename)
         elif ext in ['.ply', '.obj', '.stl']: # PolyData
             return vtki.PolyData(filename)
-        elif ext in '.vts': # UnstructuredGrid
+        elif ext in '.vts': # StructuredGrid
             return vtki.StructuredGrid(filename)
         elif ext in ['.vtm', '.vtmb']:
             return vtki.MultiBlock(filename)
@@ -278,7 +278,7 @@ def load_texture(filename):
         reader = vtk.vtkPNGReader()
     else:
         # Otherwise, use the imageio reader
-        return numpy_to_texture(imagio.imread(filename))
+        return numpy_to_texture(imageio.imread(filename))
     reader.SetFileName(filename)
     reader.Update()
     texture = vtk.vtkTexture()

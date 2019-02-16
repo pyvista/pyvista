@@ -122,6 +122,11 @@ def test_save(extension, binary, tmpdir):
     assert grid.cells.shape == beam.cells.shape
     assert grid.points.shape == beam.points.shape
 
+    grid = vtki.read(filename)
+    assert grid.cells.shape == beam.cells.shape
+    assert grid.points.shape == beam.points.shape
+    assert isinstance(grid, vtki.UnstructuredGrid)
+
 
 def test_init_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
@@ -223,6 +228,12 @@ def test_save_structured(extension, binary, tmpdir):
     assert grid.n_cells
     assert grid.points.shape == sgrid.points.shape
 
+    grid = vtki.read(filename)
+    assert grid.x.shape == sgrid.y.shape
+    assert grid.n_cells
+    assert grid.points.shape == sgrid.points.shape
+    assert isinstance(grid, vtki.StructuredGrid)
+
 
 def test_load_structured_bad_filename():
     with pytest.raises(Exception):
@@ -245,6 +256,13 @@ def test_create_rectilinear_grid_from_specs():
 
 def test_create_rectilinear_grid_from_file():
     grid = examples.load_rectilinear()
+    assert grid.n_cells == 16146
+    assert grid.n_points == 18144
+    assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
+    assert grid.n_scalars == 1
+
+def test_read_rectilinear_grid_from_file():
+    grid = vtki.read(examples.rectfile)
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
@@ -286,6 +304,14 @@ def test_uniform_setters():
 
 def test_create_uniform_grid_from_file():
     grid = examples.load_uniform()
+    assert grid.n_cells == 729
+    assert grid.n_points == 1000
+    assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
+    assert grid.n_scalars == 2
+    assert grid.dimensions == [10, 10, 10]
+
+def test_read_uniform_grid_from_file():
+    grid = vtki.read(examples.uniformfile)
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]

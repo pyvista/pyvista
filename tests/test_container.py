@@ -127,6 +127,8 @@ def test_multi_block_io(extension, binary, tmpdir):
     multi.save(filename, binary)
     foo = vtki.MultiBlock(filename)
     assert foo.n_blocks == multi.n_blocks
+    foo = vtki.read(filename)
+    assert foo.n_blocks == multi.n_blocks
 
 
 def test_extract_geometry():
