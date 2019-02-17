@@ -135,7 +135,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
         else:
-            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
+            raise Exception('File extension must be either "vtm" or "vtmb"')
 
         writer.SetFileName(filename)
         writer.SetInputDataObject(self)

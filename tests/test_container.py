@@ -20,6 +20,34 @@ def test_multi_block_init_vtk():
     assert multi.n_blocks == 2
     assert isinstance(multi[0], vtki.RectilinearGrid)
     assert isinstance(multi[1], vtk.vtkTable)
+    multi = vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, vtk.vtkTable())
+    multi = vtki.MultiBlock(multi, deep=True)
+    assert isinstance(multi, vtki.MultiBlock)
+    assert multi.n_blocks == 2
+    assert isinstance(multi[0], vtki.RectilinearGrid)
+    assert isinstance(multi[1], vtk.vtkTable)
+
+def test_multi_block_init_dict():
+    data = dict()
+    data['grid'] = ex.load_rectilinear()
+    data['poly'] = ex.load_airplane()
+    multi = vtki.MultiBlock(data)
+    assert isinstance(multi, vtki.MultiBlock)
+    assert multi.n_blocks == 2
+    assert isinstance(multi[0], vtki.RectilinearGrid)
+    assert multi.get_block_name(0) == 'grid'
+    assert isinstance(multi[1], vtki.PolyData)
+    assert multi.get_block_name(1) == 'poly'
+
+def test_multi_block_init_list():
+    data = [ex.load_rectilinear(), ex.load_airplane()]
+    multi = vtki.MultiBlock(data)
+    assert isinstance(multi, vtki.MultiBlock)
+    assert multi.n_blocks == 2
+    assert isinstance(multi[0], vtki.RectilinearGrid)
+    assert isinstance(multi[1], vtki.PolyData)
 
 
 def test_multi_block_append():
@@ -39,6 +67,13 @@ def test_multi_block_append():
     assert isinstance(multi[2], vtki.UniformGrid)
     assert isinstance(multi[3], vtki.PolyData)
     assert isinstance(multi[4], vtki.RectilinearGrid)
+    # Now overwrite a block
+    multi[4] = vtki.Sphere()
+    assert isinstance(multi[4], vtki.PolyData)
+    multi[4] = vtk.vtkUnstructuredGrid()
+    assert isinstance(multi[4], vtki.UnstructuredGrid)
+
+
 
 
 def test_multi_block_set_get_ers():
