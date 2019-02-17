@@ -728,7 +728,7 @@ class BasePlotter(object):
                 _raise_not_matching(scalars, mesh)
 
             # Set scalar range
-            if not rng:
+            if rng is None:
                 rng = [np.nanmin(scalars), np.nanmax(scalars)]
             elif isinstance(rng, float) or isinstance(rng, int):
                 rng = [-rng, rng]
