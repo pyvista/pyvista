@@ -325,8 +325,14 @@ def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
-
     grid = vtki.RectilinearGrid(filename)
+    assert grid.n_cells == ogrid.n_cells
+    assert np.allclose(grid.x, ogrid.x)
+    assert np.allclose(grid.y, ogrid.y)
+    assert np.allclose(grid.z, ogrid.z)
+    assert grid.dimensions == ogrid.dimensions
+    grid = vtki.read(filename)
+    assert isinstance(grid, vtki.RectilinearGrid)
     assert grid.n_cells == ogrid.n_cells
     assert np.allclose(grid.x, ogrid.x)
     assert np.allclose(grid.y, ogrid.y)
@@ -339,8 +345,13 @@ def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
-
     grid = vtki.UniformGrid(filename)
+    assert grid.n_cells == ogrid.n_cells
+    assert grid.origin == ogrid.origin
+    assert grid.spacing == ogrid.spacing
+    assert grid.dimensions == ogrid.dimensions
+    grid = vtki.read(filename)
+    assert isinstance(grid, vtki.UniformGrid)
     assert grid.n_cells == ogrid.n_cells
     assert grid.origin == ogrid.origin
     assert grid.spacing == ogrid.spacing
@@ -348,7 +359,7 @@ def test_save_uniform(extension, binary, tmpdir):
 
 
 def test_grid_points():
-    """Test the points mehtods on UniformGrid and RectilinearGrid"""
+    """Test the points mehtods on UniformGrid and inearGrid"""
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
                        [1, 1, 0],
