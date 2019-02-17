@@ -19,7 +19,7 @@ def test_createvectorpolydata_1D():
     vdata = utilities.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_arrays['vectors'])
-    
+
 
 def test_createvectorpolydata():
     orig = np.random.random((100, 3))
@@ -52,3 +52,13 @@ def test_get_scalar():
     assert np.allclose(parr, utilities.get_scalar(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, utilities.get_scalar(grid, 'other'))
     assert None == utilities.get_scalar(grid, 'foo')
+
+
+def test_is_inside_bounds():
+    data = ex.load_uniform()
+    bnds = data.bounds
+    assert utilities.is_inside_bounds((0.5, 0.5, 0.5), bnds)
+    assert not utilities.is_inside_bounds((12, 5, 5), bnds)
+    assert not utilities.is_inside_bounds((5, 12, 5), bnds)
+    assert not utilities.is_inside_bounds((5, 5, 12), bnds)
+    assert not utilities.is_inside_bounds((12, 12, 12), bnds)
