@@ -272,6 +272,15 @@ def test_plot_cell_scalars():
                      n_colors=5, rng=10)
     plotter.plot()
 
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_clim():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    scalars = np.arange(sphere.n_faces)
+    plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
+                     n_colors=5, clim=10)
+    plotter.plot()
+    assert plotter.mapper.GetScalarRange() == (-10, 10)
+
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_invalid_n_scalars():

@@ -501,7 +501,8 @@ class BasePlotter(object):
 
         rng : 2 item list, optional
             Range of mapper for scalars.  Defaults to minimum and maximum of
-            scalars array.  Example: ``[-1, 2]``
+            scalars array.  Example: ``[-1, 2]``. ``clim`` is also an accepted
+            alias for this.
 
         stitle : string, optional
             Scalar title.  By default there is no scalar legend bar.  Setting
@@ -583,6 +584,9 @@ class BasePlotter(object):
 
         if lighting is None:
             lighting = rcParams['lighting']
+
+        if rng is None:
+            rng = kwargs.get('clim', None)
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
