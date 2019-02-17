@@ -172,23 +172,18 @@ def test_multi_block_io(extension, binary, tmpdir):
 def test_multi_io_erros(tmpdir):
     fdir = tmpdir.mkdir("tmpdir")
     multi = vtki.MultiBlock()
+    # Check saving with bad extension
     bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
     with pytest.raises(Exception):
         multi.save(bad_ext_name)
     arr = np.random.rand(10, 10)
     np.save(bad_ext_name, arr)
-    # save an empty dataset
-    filename = str(fdir.join('data.%s' % 'vtm'))
-    multi.save(filename)
     # Load non existing file
     with pytest.raises(Exception):
         data = vtki.MultiBlock('foo.vtm')
     # Load bad extension
     with pytest.raises(IOError):
         data = vtki.MultiBlock(bad_ext_name)
-    # Load empty dataset
-    with pytest.raises(AssertionError):
-        data = vtki.MultiBlock(filename)
 
 
 
