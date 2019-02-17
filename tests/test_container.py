@@ -36,10 +36,11 @@ def test_multi_block_init_dict():
     multi = vtki.MultiBlock(data)
     assert isinstance(multi, vtki.MultiBlock)
     assert multi.n_blocks == 2
-    assert isinstance(multi[0], vtki.RectilinearGrid)
-    assert multi.get_block_name(0) == 'grid'
-    assert isinstance(multi[1], vtki.PolyData)
-    assert multi.get_block_name(1) == 'poly'
+    # Note that disctionaries do not maintain order
+    assert isinstance(multi[0], (vtki.RectilinearGrid, vtki.PolyData))
+    assert multi.get_block_name(0) in ['grid','poly']
+    assert isinstance(multi[1], (vtki.RectilinearGrid, vtki.PolyData))
+    assert multi.get_block_name(1) in ['grid','poly']
 
 def test_multi_block_init_list():
     data = [ex.load_rectilinear(), ex.load_airplane()]
