@@ -75,8 +75,6 @@ def test_multi_block_append():
     assert isinstance(multi[4], vtki.UnstructuredGrid)
 
 
-
-
 def test_multi_block_set_get_ers():
     """This puts all of the example data objects into a a MultiBlock container"""
     multi = vtki.MultiBlock()
@@ -97,6 +95,7 @@ def test_multi_block_set_get_ers():
     assert multi.bounds == list(data.bounds)
     multi[5] = ex.load_uniform()
     multi.set_block_name(5, 'uni')
+    multi.set_block_name(5, None) # Make sure it doesn't get overwritten
     assert isinstance(multi.get(5), vtki.UniformGrid)
     # Test get by name
     assert isinstance(multi['uni'], vtki.UniformGrid)
@@ -115,6 +114,9 @@ def test_multi_block_set_get_ers():
     pop = multi.pop(0)
     assert isinstance(pop, vtki.RectilinearGrid)
     assert multi.n_blocks == 3
+    assert multi.get_block_name(10) is None
+    with pytest.raises(RuntimeError):
+        idx = multi.get_index_by_name('foo')
 
 
 # def test_mutli_block_clean():
@@ -165,6 +167,29 @@ def test_multi_block_io(extension, binary, tmpdir):
     assert foo.n_blocks == multi.n_blocks
     foo = vtki.read(filename)
     assert foo.n_blocks == multi.n_blocks
+
+
+def test_multi_io_erros(tmpdir):
+    fdir = tmpdir.mkdir("tmpdir")
+    multi = vtki.MultiBlock()
+    bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
+    with pytest.raises(Exception):
+        multi.save(bad_ext_name)
+    arr = np.random.rand(10, 10)
+    np.save(bad_ext_name, arr)
+    # save an empty dataset
+    filename = str(fdir.join('data.%s' % 'vtm'))
+    multi.save(filename)
+    # Load non existing file
+    with pytest.raises(Exception):
+        data = vtki.MultiBlock('foo.vtm')
+    # Load bad extension
+    with pytest.raises(IOError):
+        data = vtki.MultiBlock(bad_ext_name)
+    # Load empty dataset
+    with pytest.raises(AssertionError):
+        data = vtki.MultiBlock(filename)
+
 
 
 def test_extract_geometry():

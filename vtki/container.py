@@ -97,7 +97,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         if ext in ['.vtm', '.vtmb']:
             reader = vtk.vtkXMLMultiBlockDataReader()
         else:
-            raise TypeError('File extension must be either "vtm" or "vtmb"')
+            raise IOError('File extension must be either "vtm" or "vtmb"')
 
         # Load file
         reader.SetFileName(filename)

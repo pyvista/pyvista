@@ -237,6 +237,14 @@ def test_html_repr():
     repr_html = grid._repr_html_()
     assert repr_html is not None
 
+def test_print_repr():
+    """
+    This just tests to make sure no errors are thrown on the text friendly
+    representation method for Common datasets.
+    """
+    repr = grid.head()
+    assert repr is not None
+
 
 def test_texture():
     """Test adding texture coordinates"""
@@ -270,7 +278,7 @@ def test_invalid_vector():
 
     with pytest.raises(RuntimeError):
         grid.vectors = np.empty((3, 2))
-    
+
     with pytest.raises(RuntimeError):
         grid.vectors = np.empty((3, 3))
 
@@ -296,7 +304,7 @@ def test_arrows():
     sphere.vectors = vectors*0.3
     assert np.allclose(sphere.active_vectors, vectors*0.3)
     assert np.allclose(sphere.vectors, vectors*0.3)
-    
+
     assert sphere.active_vectors_info[1] == '_vectors'
     arrows = sphere.arrows
     assert isinstance(arrows, vtki.PolyData)
@@ -326,7 +334,7 @@ def test_set_t_coords():
 
     with pytest.raises(AssertionError):
         grid.t_coords = np.empty((grid.n_points, 1))
-    
+
     with pytest.raises(AssertionError):
         arr = np.empty((grid.n_points, 2))
         arr[:] = -1
