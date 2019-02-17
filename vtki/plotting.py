@@ -405,6 +405,8 @@ class BasePlotter(object):
         elif key == 'b':
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
                                                   self.left_button_down)
+        elif key == 'i':
+            self.isometric_view()
 
     def left_button_down(self, obj, event_type):
         # Get 2D click location on window
