@@ -73,7 +73,10 @@ def test_qt_interactor(qtbot):
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting(qtbot):
     sphere = vtki.Sphere()
-    plotter = vtki.BackgroundPlotter(show=False)
+    plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
     plotter.add_mesh(sphere)
     assert np.any(plotter.mesh.points)
+    # now test some of the features
+    plotter.save_camera_position()
+    plotter.clear_camera_positions()
     assert plotter.close()
