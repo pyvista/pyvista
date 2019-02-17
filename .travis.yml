@@ -33,7 +33,7 @@ install:
   - pip install codecov
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      pip install PyQt5<5.12;
+      pip install PyQt5;
       pip install pytest-qt;
       pip install nbval; # For testing the notebooks
       pip install ipywidgets;
