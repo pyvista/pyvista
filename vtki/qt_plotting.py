@@ -276,7 +276,7 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addSeparator()
         # Orientation marker
         orien_menu = view_menu.addMenu('Orientation Marker')
-        orien_menu.addAction('Show', self.add_axes)
+        orien_menu.addAction('Show', self.show_axes)
         orien_menu.addAction('Hide', self.hide_axes)
         # Bounds axes
         axes_menu = view_menu.addMenu('Bounds Axes')

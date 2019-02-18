@@ -374,7 +374,6 @@ class BasePlotter(object):
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
             self._updatae_axes_color(color)
-            self.axes_widget.EnabledOn()
             # raise Exception('Plotter already has an axes widget')
             return
         self.axes_actor = vtk.vtkAxesActor()
@@ -382,15 +381,20 @@ class BasePlotter(object):
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
             self.axes_widget.SetInteractor(self.iren)
-            self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
+            self.axes_widget.SetEnabled(1)
         # Set the color
-        self.axes_widget.EnabledOn()
         self._updatae_axes_color(color)
 
     def hide_axes(self):
         if hasattr(self, 'axes_widget'):
             self.axes_widget.EnabledOff()
+
+    def show_axes(self):
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOn()
+        else:
+            self.add_axes()
 
 
     def get_default_cam_pos(self):
