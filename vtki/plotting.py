@@ -1270,7 +1270,7 @@ class BasePlotter(object):
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
         kwargs.setdefault('ticks', 'both')
-        kwargs.setdefault('all_edges', True)
+        # kwargs.setdefault('all_edges', True)
         return self.add_bounds_axes(**kwargs)
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
