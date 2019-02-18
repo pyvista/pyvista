@@ -12,7 +12,7 @@ vtki
    :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
 
 .. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
-   :target: http://www.vtki.org/
+   :target: http://docs.vtki.org/
 
 .. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
    :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
@@ -31,7 +31,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 Documentation
 =============
-Refer to the `Read the Docs <http://www.vtki.org/>`_ documentation for detailed
+Refer to the `Read the Docs <http://docs.vtki.org/>`_ documentation for detailed
 installation and usage details.
 
 
@@ -44,7 +44,7 @@ Installation is simply::
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
 `GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
 
-See the `Installation <http://www.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
+See the `Installation <http://docs.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
 
@@ -54,7 +54,7 @@ Highlights
 Head over to the `Quick Examples`_ page in the docs to learn more about using
 ``vtki``.
 
-.. _Quick Examples: http://www.vtki.org/en/latest/examples/index.html
+.. _Quick Examples: http://docs.vtki.org/en/latest/examples/index.html
 
 * Pythonic interface to VTK's Python-C++ bindings
 * Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
@@ -62,9 +62,9 @@ Head over to the `Quick Examples`_ page in the docs to learn more about using
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 
 
-.. _IPython Tools: http://www.vtki.org/en/latest/tools/ipy_tools.html
-.. _Filters: http://www.vtki.org/en/latest/tools/filters.html
-.. _Plotting: http://www.vtki.org/en/latest/tools/plotting.html
+.. _IPython Tools: http://docs.vtki.org/en/latest/tools/ipy_tools.html
+.. _Filters: http://docs.vtki.org/en/latest/tools/filters.html
+.. _Plotting: http://docs.vtki.org/en/latest/tools/plotting.html
 
 
 Connections
