@@ -383,8 +383,8 @@ class BasePlotter(object):
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
             self.axes_widget.SetInteractor(self.iren)
-            self.axes_widget.SetInteractive(interactive)
             self.axes_widget.SetEnabled(1)
+            self.axes_widget.SetInteractive(interactive)
         # Set the color
         self._updatae_axes_color(color)
 
