@@ -209,13 +209,14 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     def quit(self, obj=None, event=None):
         try:
             key = self.iren.GetKeySym().lower()
-        except AttributeError:
-            key = 'q'
 
-        if key == 'q' and self.allow_quit_keypress:
-            self.iren.TerminateApp()
-            self.close()
-            self.signal_close.emit()
+            if key == 'q' and self.allow_quit_keypress:
+                self.iren.TerminateApp()
+                self.close()
+                self.signal_close.emit()
+
+        except:
+            pass
 
 
 class BackgroundPlotter(QtInteractor):
