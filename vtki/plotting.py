@@ -1895,8 +1895,6 @@ class BasePlotter(object):
         direction[:,2] *= mag
 
         pdata = vtki.vector_poly_data(cent, direction)
-        # arrows = arrows_actor(pdata)
-        # self.add_actor(arrows, reset_camera=reset_camera, name=name)
         # Create arrow object
         arrow = vtk.vtkArrowSource()
         arrow.Update()
@@ -2399,29 +2397,6 @@ class Plotter(BasePlotter):
         """ renders main window """
         self.ren_win.Render()
 
-
-def arrows_actor(pdata):
-    """ Creates an actor composed of arrows """
-
-    # Create arrow object
-    arrow = vtk.vtkArrowSource()
-    arrow.Update()
-    glyph3D = vtk.vtkGlyph3D()
-    glyph3D.SetSourceData(arrow.GetOutput())
-    glyph3D.SetInputData(pdata)
-    glyph3D.SetVectorModeToUseVector()
-    glyph3D.Update()
-
-    # Create mapper
-    mapper = vtk.vtkDataSetMapper()
-    mapper.SetInputConnection(glyph3D.GetOutputPort())
-
-    # Create actor
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    actor.GetProperty().LightingOff()
-
-    return actor
 
 
 def single_triangle():
