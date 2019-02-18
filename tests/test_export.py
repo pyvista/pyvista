@@ -41,7 +41,7 @@ def test_export_multi(tmpdir):
     # Create the scene
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(multi)
-    plotter.export_vtkjs(filename)
+    plotter.export_vtkjs(filename, compress_arrays=True)
     cpos_out = plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
@@ -54,7 +54,7 @@ def test_export_texture(tmpdir):
     data = ex.load_globe()
     # Create the scene
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
-    plotter.add_mesh(data)
+    plotter.add_mesh(data, texture=True)
     plotter.export_vtkjs(filename)
     cpos_out = plotter.show() # Export must be called before showing!
     plotter.close()
@@ -87,3 +87,10 @@ def test_export_color(tmpdir):
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile('{}.vtkjs'.format(filename))
+
+
+def test_vtkjs_url():
+    file_url = 'https://www.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
+    vtkjs_url = 'http://viewer.pvgeo.org/?fileURL=https://dl.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
+    assert vtkjs_url in vtki.get_vtkjs_url(file_url)
+    assert vtkjs_url in vtki.get_vtkjs_url('dropbox', file_url)

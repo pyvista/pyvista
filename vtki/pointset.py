@@ -93,7 +93,7 @@ class PolyData(vtkPolyData, vtki.Common):
                                    np.arange(npoints).reshape(-1, 1)))
                 cells = np.ascontiguousarray(cells, dtype=vtki.ID_TYPE)
                 cells = np.reshape(cells, (2*npoints))
-                self._from_arrays(points, cells, deep)
+                self._from_arrays(points, cells, deep, verts=True)
             else:
                 raise TypeError('Invalid input type')
 
@@ -189,7 +189,7 @@ class PolyData(vtkPolyData, vtki.Common):
     #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
     #     return np.ascontiguousarray(lines[:, 1:])
 
-    def _from_arrays(self, vertices, faces, deep=True):
+    def _from_arrays(self, vertices, faces, deep=True, verts=False):
         """
         Set polygons and points from numpy arrays
 
@@ -216,7 +216,7 @@ class PolyData(vtkPolyData, vtki.Common):
         >>> surf = vtki.PolyData(vertices, faces)
 
         """
-        if deep:
+        if deep or verts:
             vtkpoints = vtk.vtkPoints()
             vtkpoints.SetData(numpy_to_vtk(vertices, deep=deep))
             self.SetPoints(vtkpoints)
@@ -238,7 +238,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
             idarr = numpy_to_vtkIdTypeArray(faces.ravel(), deep=deep)
             vtkcells.SetCells(nfaces, idarr)
-            if faces.ndim > 1 and faces.shape[1] == 2:
+            if (faces.ndim > 1 and faces.shape[1] == 2) or verts:
                 self.SetVerts(vtkcells)
             else:
                 self.SetPolys(vtkcells)

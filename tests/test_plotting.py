@@ -3,6 +3,7 @@ import os
 import sys
 from weakref import proxy
 
+import imageio
 import numpy as np
 import vtki
 
@@ -57,6 +58,15 @@ def test_plot_invalid_style():
 def test_plot_bounds_axes_with_no_data():
     plotter = vtki.Plotter()
     plotter.add_bounds_axes()
+    plotter.close()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_show_grid():
+    plotter = vtki.Plotter()
+    plotter.show_grid()
+    plotter.add_mesh(sphere)
+    plotter.close()
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -262,6 +272,15 @@ def test_plot_cell_scalars():
                      n_colors=5, rng=10)
     plotter.plot()
 
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_clim():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    scalars = np.arange(sphere.n_faces)
+    plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
+                     n_colors=5, clim=10)
+    plotter.plot()
+    assert plotter.mapper.GetScalarRange() == (-10, 10)
+
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_invalid_n_scalars():
@@ -334,6 +353,8 @@ def test_scalars_by_name():
 
 def test_themes():
     vtki.set_plot_theme('paraview')
+    vtki.set_plot_theme('document')
+    vtki.set_plot_theme('default')
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -372,6 +393,15 @@ def test_plot_texture_associated():
     globe = examples.load_globe()
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=True)
+    plotter.plot()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_load_texture_from_numpy():
+    """"Test adding a texture to a plot"""
+    globe = examples.load_globe()
+    texture = vtki.numpy_to_texture(imageio.imread(examples.mapfile))
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(globe, texture=texture)
     plotter.plot()
 
 

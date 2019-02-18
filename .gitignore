@@ -41,6 +41,11 @@ test.bat
 # Code coverage results
 htmlcov
 .coverage
+*,cover
 
 # Mac
 .DS_Store
+
+
+# Testing output
+tests/ERROR_OUTPUT.txt

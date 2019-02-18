@@ -125,6 +125,11 @@ class DataSetFilters(object):
             ymin = _get_quarter(ymin, ymax)
             zmin = _get_quarter(zmin, zmax)
             bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+        if isinstance(bounds, (float, int)):
+            bounds = [bounds, bounds, bounds]
+        if len(bounds) == 3:
+            xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
+            bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
         if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
             raise AssertionError('Bounds must be a length 6 iterable of floats')
         xmin, xmax, ymin, ymax, zmin, zmax = bounds
@@ -233,15 +238,16 @@ class DataSetFilters(object):
             triangles otherwise, the output will be the intersection polygons.
 
         """
+        axes = {'x':0, 'y':1, 'z':2}
         output = vtki.MultiBlock()
-        if isinstance(axis, str):
-            axes = {'x':0, 'y':1, 'z':2}
+        if isinstance(axis, int):
+            ax = axis
+            axis = list(axes.keys())[list(axes.values()).index(ax)]
+        elif isinstance(axis, str):
             try:
                 ax = axes[axis]
             except KeyError:
                 raise RuntimeError('Axis ({}) not understood'.format(axis))
-        else:
-            ax = axis
         # get the locations along that axis
         if tolerance is None:
             tolerance = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
@@ -655,5 +661,64 @@ class DataSetFilters(object):
         alg.SetComputeVolume(volume)
         alg.SetComputeLength(length)
         alg.SetComputeVertexCount(False)
+        alg.Update()
+        return _get_output(alg)
+
+    def cell_centers(self, vertex=True):
+        """Generate points at the center of the cells in this dataset.
+        These points can be used for placing glyphs / vectors.
+
+        Parameters
+        ----------
+        vertex : bool
+            Enable/disable the generation of vertex cells.
+        """
+        alg = vtk.vtkCellCenters()
+        alg.SetInputDataObject(self)
+        alg.SetVertexCells(vertex)
+        alg.Update()
+        output = _get_output(alg)
+        return output
+
+
+    def glyph(self, orient=True, scale=True, factor=1.0, geom=None):
+        """
+        Copies a geometric representation (called a glyph) to every
+        point in the input dataset.  The glyph may be oriented along
+        the input vectors, and it may be scaled according to scalar
+        data or vector magnitude.
+
+        Parameters
+        ----------
+        orient : bool
+            Use the active vectors array to orient the the glyphs
+
+        scale : bool
+            Use the active scalars to scale the glyphs
+
+        factor : float
+            Scale factor applied to sclaing array
+
+        geom : vtk.vtkDataSet
+            The geometry to use for the glyph
+        """
+        if geom is None:
+            arrow = vtk.vtkArrowSource()
+            arrow.Update()
+            geom = arrow.GetOutput()
+        alg = vtk.vtkGlyph3D()
+        alg.SetSourceData(geom)
+        if isinstance(scale, str):
+            self.active_scalar_name = scale
+            scale = True
+        if scale:
+            alg.SetScaleModeToScaleByScalar()
+        if isinstance(orient, str):
+            self.active_vectors_name = orient
+            orient = True
+        alg.SetOrient(orient)
+        alg.SetInputData(self)
+        alg.SetVectorModeToUseVector()
+        alg.SetScaleFactor(factor)
         alg.Update()
         return _get_output(alg)

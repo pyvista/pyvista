@@ -78,7 +78,7 @@ Advanced Plotting with Numpy
 
 When combined with numpy, you can make some truly spectacular plots:
 
-.. code:: python
+.. testcode:: python
 
     import vtki
     import numpy as np
@@ -99,8 +99,7 @@ When combined with numpy, you can make some truly spectacular plots:
     # plot using the plotting class
     plobj = vtki.Plotter()
     plobj.add_arrows(points, direction, 0.5)
-    plobj.background([0, 0, 0]) # RGB set to black
-    plobj.plot()
+    plobj.show()
 
 .. image:: ./images/vectorfield.png
 

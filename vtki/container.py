@@ -97,16 +97,12 @@ class MultiBlock(vtkMultiBlockDataSet):
         if ext in ['.vtm', '.vtmb']:
             reader = vtk.vtkXMLMultiBlockDataReader()
         else:
-            raise TypeError('File extension must be either "vtm" or "vtmb"')
+            raise IOError('File extension must be either "vtm" or "vtmb"')
 
         # Load file
         reader.SetFileName(filename)
         reader.Update()
         self.ShallowCopy(reader.GetOutput())
-
-        # sanity check
-        if self.n_blocks < 1:
-            raise AssertionError('MultiBlock file ({}) returned no blocks'.format(filename))
 
 
     def save(self, filename, binary=True):
@@ -135,7 +131,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
         else:
-            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
+            raise Exception('File extension must be either "vtm" or "vtmb"')
 
         writer.SetFileName(filename)
         writer.SetInputDataObject(self)

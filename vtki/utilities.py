@@ -62,9 +62,15 @@ def get_scalar(mesh, name, preference='cell', info=False):
             raise RuntimeError('Data field ({}) not supported.'.format(preference))
     if all([parr is not None, carr is not None]):
         if preference == CELL_DATA_FIELD:
-            return carr
+            if info:
+                return carr, CELL_DATA_FIELD
+            else:
+                return carr
         elif preference == POINT_DATA_FIELD:
-            return parr
+            if info:
+                return parr, POINT_DATA_FIELD
+            else:
+                return parr
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(preference))
     arr = None
@@ -218,35 +224,36 @@ def read(filename):
     then wrap the VTK object for use in ``vtki``
     """
     filename = os.path.abspath(os.path.expanduser(filename))
+    ext = os.path.splitext(filename)[1].lower()
+
     def legacy(filename):
+        """Use VTK's legacy reader to read a file"""
         reader = vtk.vtkDataSetReader()
         reader.SetFileName(filename)
         reader.Update()
         return reader.GetOutputDataObject(0)
-    ext = os.path.splitext(filename)[1].lower()
-    if ext in '.vtk':
-        # Use a legacy reader and wrap the result
-        return wrap(legacy(filename))
+
+    # From the extension, decide which reader to use
+    if ext in '.vti': # ImageData
+        return vtki.UniformGrid(filename)
+    elif ext in '.vtr': # RectilinearGrid
+        return vtki.RectilinearGrid(filename)
+    elif ext in '.vtu': # UnstructuredGrid
+        return vtki.UnstructuredGrid(filename)
+    elif ext in ['.ply', '.obj', '.stl']: # PolyData
+        return vtki.PolyData(filename)
+    elif ext in '.vts': # StructuredGrid
+        return vtki.StructuredGrid(filename)
+    elif ext in ['.vtm', '.vtmb']:
+        return vtki.MultiBlock(filename)
     else:
-        # From the extension, decide which reader to use
-        if ext in '.vti': # ImageData
-            return vtki.UniformGrid(filename)
-        elif ext in '.vtr': # RectilinearGrid
-            return vtki.RectilinearGrid(filename)
-        elif ext in '.vtu': # UnstructuredGrid
-            return vtki.UnstructuredGrid(filename)
-        elif ext in ['.ply', '.obj', '.stl']: # PolyData
-            return vtki.PolyData(filename)
-        elif ext in '.vts': # UnstructuredGrid
-            return vtki.StructuredGrid(filename)
-        elif ext in ['.vtm', '.vtmb']:
-            return vtki.MultiBlock(filename)
-        else:
-            # Attempt to use the legacy reader...
-            try:
-                return wrap(legacy(filename))
-            except:
-                pass
+        # Attempt to use the legacy reader...
+        try:
+            output = wrap(legacy(filename))
+            assert output is not None
+            return output
+        except:
+            pass
     raise IOError("This file was not able to be automatically read by vtki.")
 
 
@@ -264,15 +271,19 @@ def load_texture(filename):
     """Loads a ``vtkTexture`` from an image file."""
     filename = os.path.abspath(os.path.expanduser(filename))
     ext = os.path.splitext(filename)[1].lower()
-    if ext in ['.jpg', '.jpeg']:
-        reader = vtk.vtkJPEGReader()
-    elif ext in ['.tif', '.tiff']:
-        reader = vtk.vtkTIFFReader()
-    elif ext in ['.png']:
-        reader = vtk.vtkPNGReader()
-    else:
+    readers = {
+        '.jpg': vtk.vtkJPEGReader,
+        '.jpeg': vtk.vtkJPEGReader,
+        '.tif': vtk.vtkTIFFReader,
+        '.tiff': vtk.vtkTIFFReader,
+        '.png': vtk.vtkPNGReader,
+    }
+    try:
+        # intitialize the reader using the extnesion to find it
+        reader = readers[ext]()
+    except KeyError:
         # Otherwise, use the imageio reader
-        return numpy_to_texture(imagio.imread(filename))
+        return numpy_to_texture(imageio.imread(filename))
     reader.SetFileName(filename)
     reader.Update()
     texture = vtk.vtkTexture()
