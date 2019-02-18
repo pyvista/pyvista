@@ -353,6 +353,8 @@ def test_scalars_by_name():
 
 def test_themes():
     vtki.set_plot_theme('paraview')
+    vtki.set_plot_theme('document')
+    vtki.set_plot_theme('default')
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
