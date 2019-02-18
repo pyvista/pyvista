@@ -125,6 +125,11 @@ class DataSetFilters(object):
             ymin = _get_quarter(ymin, ymax)
             zmin = _get_quarter(zmin, zmax)
             bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+        if isinstance(bounds, (float, int)):
+            bounds = [bounds, bounds, bounds]
+        if len(bounds) == 3:
+            xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
+            bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
         if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
             raise AssertionError('Bounds must be a length 6 iterable of floats')
         xmin, xmax, ymin, ymax, zmin, zmax = bounds
@@ -233,15 +238,16 @@ class DataSetFilters(object):
             triangles otherwise, the output will be the intersection polygons.
 
         """
+        axes = {'x':0, 'y':1, 'z':2}
         output = vtki.MultiBlock()
-        if isinstance(axis, str):
-            axes = {'x':0, 'y':1, 'z':2}
+        if isinstance(axis, int):
+            ax = axis
+            axis = list(axes.keys())[list(axes.values()).index(ax)]
+        elif isinstance(axis, str):
             try:
                 ax = axes[axis]
             except KeyError:
                 raise RuntimeError('Axis ({}) not understood'.format(axis))
-        else:
-            ax = axis
         # get the locations along that axis
         if tolerance is None:
             tolerance = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
