@@ -126,7 +126,7 @@ you can access the plotting window and add features or datasets:
     p = thresher.plotter
 
     # Label the axes bounds
-    p.add_bounds_axes(grid=True)
+    p.show_grid()
 
     # Add some other datasets
     p.add_mesh(dataset.clip())
