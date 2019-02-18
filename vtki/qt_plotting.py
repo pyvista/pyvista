@@ -269,6 +269,7 @@ class BackgroundPlotter(QtInteractor):
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Reset Camera', self.reset_camera)
         cam_menu.addAction('Isometric View', self.isometric_view)
+        cam_menu.addSeparator()
         cam_menu.addAction('Save Current Camera Position', self.save_camera_position)
         cam_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
 
@@ -281,7 +282,10 @@ class BackgroundPlotter(QtInteractor):
         axes_menu = view_menu.addMenu('Bounds Axes')
         axes_menu.addAction('Add Bounds Axes (front)', self.add_bounds_axes)
         axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
-        axes_menu.addAction('Clear Bounds', self.remove_bounds_axes)
+        axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
+        axes_menu.addSeparator()
+        axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
+        axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
 
         # A final separator to seperate OS options
         view_menu.addSeparator()
