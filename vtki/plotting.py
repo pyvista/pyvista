@@ -383,10 +383,20 @@ class BasePlotter(object):
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
             self.axes_widget.SetInteractor(self.iren)
-            self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
+            self.axes_widget.SetEnabled(1)
         # Set the color
         self._updatae_axes_color(color)
+
+    def hide_axes(self):
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOff()
+
+    def show_axes(self):
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOn()
+        else:
+            self.add_axes()
 
 
     def get_default_cam_pos(self):
@@ -1053,8 +1063,7 @@ class BasePlotter(object):
         >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
-        if hasattr(self, 'cube_axes_actor'):
-            self.remove_actor(self.cube_axes_actor)
+        self.remove_bounds_axes()
 
         if font_family is None:
             font_family = rcParams['font']['family']
@@ -1262,6 +1271,10 @@ class BasePlotter(object):
             self.bounding_box_actor = None
             del self._box_object
             self.remove_actor(actor, reset_camera=False)
+
+    def remove_bounds_axes(self):
+        if hasattr(self, 'cube_axes_actor'):
+            self.remove_actor(self.cube_axes_actor)
 
     def show_grid(self, **kwargs):
         """
