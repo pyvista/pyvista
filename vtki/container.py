@@ -104,10 +104,6 @@ class MultiBlock(vtkMultiBlockDataSet):
         reader.Update()
         self.ShallowCopy(reader.GetOutput())
 
-        # sanity check
-        if self.n_blocks < 1:
-            raise AssertionError('MultiBlock file ({}) returned no blocks'.format(filename))
-
 
     def save(self, filename, binary=True):
         """
