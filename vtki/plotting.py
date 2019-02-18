@@ -407,6 +407,8 @@ class BasePlotter(object):
         elif key == 'b':
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
                                                   self.left_button_down)
+        elif key == 'i':
+            self.isometric_view()
 
     def left_button_down(self, obj, event_type):
         # Get 2D click location on window
@@ -501,7 +503,8 @@ class BasePlotter(object):
 
         rng : 2 item list, optional
             Range of mapper for scalars.  Defaults to minimum and maximum of
-            scalars array.  Example: ``[-1, 2]``
+            scalars array.  Example: ``[-1, 2]``. ``clim`` is also an accepted
+            alias for this.
 
         stitle : string, optional
             Scalar title.  By default there is no scalar legend bar.  Setting
@@ -583,6 +586,9 @@ class BasePlotter(object):
 
         if lighting is None:
             lighting = rcParams['lighting']
+
+        if rng is None:
+            rng = kwargs.get('clim', None)
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
@@ -729,7 +735,7 @@ class BasePlotter(object):
                 _raise_not_matching(scalars, mesh)
 
             # Set scalar range
-            if not rng:
+            if rng is None:
                 rng = [np.nanmin(scalars), np.nanmax(scalars)]
             elif isinstance(rng, float) or isinstance(rng, int):
                 rng = [-rng, rng]
@@ -1267,7 +1273,7 @@ class BasePlotter(object):
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
         kwargs.setdefault('ticks', 'both')
-        kwargs.setdefault('all_edges', True)
+        # kwargs.setdefault('all_edges', True)
         return self.add_bounds_axes(**kwargs)
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
@@ -1913,8 +1919,6 @@ class BasePlotter(object):
         direction[:,2] *= mag
 
         pdata = vtki.vector_poly_data(cent, direction)
-        # arrows = arrows_actor(pdata)
-        # self.add_actor(arrows, reset_camera=reset_camera, name=name)
         # Create arrow object
         arrow = vtk.vtkArrowSource()
         arrow.Update()
@@ -2417,29 +2421,6 @@ class Plotter(BasePlotter):
         """ renders main window """
         self.ren_win.Render()
 
-
-def arrows_actor(pdata):
-    """ Creates an actor composed of arrows """
-
-    # Create arrow object
-    arrow = vtk.vtkArrowSource()
-    arrow.Update()
-    glyph3D = vtk.vtkGlyph3D()
-    glyph3D.SetSourceData(arrow.GetOutput())
-    glyph3D.SetInputData(pdata)
-    glyph3D.SetVectorModeToUseVector()
-    glyph3D.Update()
-
-    # Create mapper
-    mapper = vtk.vtkDataSetMapper()
-    mapper.SetInputConnection(glyph3D.GetOutputPort())
-
-    # Create actor
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    actor.GetProperty().LightingOff()
-
-    return actor
 
 
 def single_triangle():

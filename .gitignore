@@ -45,3 +45,7 @@ htmlcov
 
 # Mac
 .DS_Store
+
+
+# Testing output
+tests/ERROR_OUTPUT.txt

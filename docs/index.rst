@@ -147,9 +147,7 @@ Tools
 
 
 
-Project Index & Search
-**********************
+Project Index
+*************
 
 * :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
