@@ -20,6 +20,9 @@ vtki
 .. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/akaszynski/vtki
 
+.. image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
+   :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
+
 
 ``vtki`` is a VTK helper module that takes a different approach on interfacing
 with VTK through NumPy and direct array access. This module simplifies mesh
