@@ -372,13 +372,16 @@ def test_rename_scalar_point():
     grid.set_active_scalar(old_name, preference='point')
     grid.rename_scalar(old_name, new_name, preference='point')
     assert new_name in grid.point_arrays
+    assert old_name not in grid.point_arrays
 
 
 def test_rename_scalar_cell():
     cell_keys = list(grid.cell_arrays.keys())
+    old_name = cell_keys[0]
     new_name = 'cell changed'
-    grid.rename_scalar(cell_keys[0], new_name)
+    grid.rename_scalar(old_name, new_name)
     assert new_name in grid.cell_arrays
+    assert old_name not in grid.cell_arrays
 
 
 def test_change_name_fail():
