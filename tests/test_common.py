@@ -365,15 +365,13 @@ def test_set_active_scalar_name():
     grid.set_active_scalar_name = point_keys[0]
 
 
-# @pytest.mark.skipif(py2, reason="Unexplained error for python2.7")
-# def test_rename_scalar_point():
-#     point_keys = list(grid.point_arrays.keys())
-#     old_name = point_keys[0]
-#     grid.set_active_scalar(old_name, 'point')
-#     new_name = 'point changed'
-#     grid.rename_scalar(old_name, new_name)
-#     assert new_name in grid.point_arrays
-#     grid._point_scalar()  # errors if active array is not found
+def test_rename_scalar_point():
+    point_keys = list(grid.point_arrays.keys())
+    old_name = point_keys[0]
+    new_name = 'point changed'
+    grid.set_active_scalar(old_name, preference='point')
+    grid.rename_scalar(old_name, new_name, preference='point')
+    assert new_name in grid.point_arrays
 
 
 def test_rename_scalar_cell():
