@@ -571,7 +571,7 @@ class DataSetFilters(object):
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != 0:
+        if field != vtki.POINT_DATA_FIELD:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
