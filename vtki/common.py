@@ -253,15 +253,13 @@ class Common(DataSetFilters):
             raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_vectors_info = [field, name]
 
-    def change_scalar_name(self, old_name, new_name, preference='cell'):
+    def rename_scalar(self, old_name, new_name, preference='cell'):
         """Changes array name by searching for the array then renaming it"""
         _, field = get_scalar(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
-            self.GetPointData().GetArray(old_name).SetName(new_name)
-            self.point_arrays[new_name] = self.point_arrays.pop(old_name)
+            self.point_arrays[new_name] = self.point_arrays[old_name]
         elif field == CELL_DATA_FIELD:
-            self.GetCellData().GetArray(old_name).SetName(new_name)
-            self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
+            self.cell_arrays[new_name] = self.cell_arrays[old_name]
         else:
             raise RuntimeError('Array not found.')
         if self.active_scalar_info[1] == old_name:
