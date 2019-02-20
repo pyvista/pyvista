@@ -224,6 +224,9 @@ class OrthogonalSlicer(InteractiveTool):
             self.input_dataset = self.input_dataset.threshold()
 
         x, y, z = self.input_dataset.center
+        x = default_params.get("x", x)
+        y = default_params.get("y", y)
+        z = default_params.get("z", z)
 
         self._data_to_update = [None, None, None]
         self.output_dataset = vtki.MultiBlock()
@@ -269,17 +272,17 @@ class OrthogonalSlicer(InteractiveTool):
         xsl = widgets.FloatSlider(min=self.input_dataset.bounds[0]+stepx,
                             max=self.input_dataset.bounds[1]-stepx,
                             step=stepx,
-                            value=self.input_dataset.center[0],
+                            value=x,
                             continuous_update=self.continuous_update)
         ysl = widgets.FloatSlider(min=self.input_dataset.bounds[2]+stepy,
                             max=self.input_dataset.bounds[3]-stepy,
                             step=stepy,
-                            value=self.input_dataset.center[1],
+                            value=y,
                             continuous_update=self.continuous_update)
         zsl = widgets.FloatSlider(min=self.input_dataset.bounds[4]+stepz,
                             max=self.input_dataset.bounds[5]-stepz,
                             step=stepz,
-                            value=self.input_dataset.center[2],
+                            value=z,
                             continuous_update=self.continuous_update)
 
         # Create/display the widgets
@@ -330,7 +333,9 @@ class ManySlicesAlongAxis(InteractiveTool):
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
-        nsl = widgets.IntSlider(min=1, max=10, step=1, value=5,
+        n = default_params.get("n", 5)
+        axis = default_params.get("axis", "x")
+        nsl = widgets.IntSlider(min=1, max=n*2, step=1, value=n,
                                 continuous_update=self.continuous_update)
 
         def update(n, axis, **kwargs):
@@ -344,7 +349,11 @@ class ManySlicesAlongAxis(InteractiveTool):
             self._need_to_update = False
 
         # Create/display the widgets
-        return interact(update, n=nsl, axis=['x', 'y', 'z'],
+        axes = ['x', 'y', 'z']
+        idx = axes.index(axis)
+        del axes[idx]
+        axes.insert(0, axis)
+        return interact(update, n=nsl, axis=axes,
                         scalars=self._get_scalar_names())
 
 
@@ -384,6 +393,8 @@ class Threshold(InteractiveTool):
 
         # Now set up the widgets
         lowstart, highstart = _calc_start_values(self.valid_range)
+        lowstart = default_params.get("dmin", lowstart)
+        highstart = default_params.get("dmax", highstart)
         minsl = widgets.FloatSlider(min=self.valid_range[0],
                             max=self.valid_range[1],
                             value=lowstart,
@@ -444,6 +455,11 @@ class Threshold(InteractiveTool):
 
 
         # Create/display the widgets
+        scalars = self._get_scalar_names()
+        name = default_params.get("scalars", scalars[0])
+        idx = scalars.index(name)
+        del scalars[idx]
+        scalars.insert(0, name)
         return interact(update, dmin=minsl, dmax=maxsl,
                         scalars=self._get_scalar_names(),
                         invert=default_params.get('invert', False),
@@ -488,12 +504,12 @@ class Clip(InteractiveTool):
             self.input_dataset = self.input_dataset.threshold()
 
         bnds = self.input_dataset.bounds
-        center = self.input_dataset.center
+        locataion = default_params.get("location", self.input_dataset.center[0])
         axchoices = ['x', 'y', 'z']
 
         locsl = widgets.FloatSlider(min=bnds[0],
                             max=bnds[1],
-                            value=center[0],
+                            value=locataion,
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(normal):
@@ -503,7 +519,7 @@ class Clip(InteractiveTool):
             # Update to the total range
             locsl.min = vmin
             locsl.max = vmax
-            locsl.value = center[ax]
+            locsl.value = self.input_dataset.center[ax]
             locsl.min = new_rng[0]
             locsl.max = new_rng[1]
             return
