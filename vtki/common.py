@@ -198,7 +198,7 @@ class Common(DataSetFilters):
 
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates. This makes
-        sure to not destroy onld texture coordinates
+        sure to not destroy old texture coordinates
 
         Parameters
         ----------
