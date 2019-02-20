@@ -265,7 +265,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         >>> multi[1, 'foo'] = vtki.UnstructuredGrid()
         >>> multi['bar'] = vtki.PolyData()
         >>> multi.n_blocks
-        4
+        3
         """
         if isinstance(index, collections.Iterable) and not isinstance(index, str):
             i, name = index[0], index[1]
