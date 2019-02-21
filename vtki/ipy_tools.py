@@ -71,7 +71,7 @@ class InteractiveTool(object):
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
                  display_params=None, default_params=None,
-                 continuous_update=False, **kwargs):
+                 continuous_update=False, clean=True, **kwargs):
         if not run_from_ipython() or not ipy_available:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
@@ -111,6 +111,8 @@ class InteractiveTool(object):
         # Make a name
         display_params.setdefault('name', '{}({})'.format(type(self).__name__, str(hex(id(self)))))
         self.display_params = display_params
+
+        self.clean = clean
 
         # Set the tool status
         self._need_to_update = True
@@ -215,11 +217,11 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, step=None, generate_triangles=False,
+    def tool(self, step=None, generate_triangles=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
-        if clean and self.input_dataset.active_scalar is not None:
+        if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
@@ -325,11 +327,11 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, tolerance=None, generate_triangles=False,
+    def tool(self, tolerance=None, generate_triangles=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
-        if clean and self.input_dataset.active_scalar is not None:
+        if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
@@ -496,10 +498,10 @@ class Clip(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, default_params=None, **kwargs):
+    def tool(self, default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
-        if clean and self.input_dataset.active_scalar is not None:
+        if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
