@@ -19,6 +19,14 @@ from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
 from vtki.export import export_plotter_vtkjs
 import imageio
 
+_OPEN_PLOTTERS = {}
+
+def close_all():
+    """Close all open/active plotters"""
+    for key, p in _OPEN_PLOTTERS.items():
+        p.close()
+    _OPEN_PLOTTERS.clear()
+    return True
 
 MAX_N_COLOR_BARS = 10
 PV_BACKGROUND = [82/255., 87/255., 110/255.]
@@ -293,6 +301,8 @@ class BasePlotter(object):
         self.scale = [1.0, 1.0, 1.0]
         self._labels = []
         self.bounding_box_actor = None
+        # Add self to open plotters
+        _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
 
     @property

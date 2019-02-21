@@ -198,7 +198,7 @@ class Common(DataSetFilters):
 
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates. This makes
-        sure to not destroy onld texture coordinates
+        sure to not destroy old texture coordinates
 
         Parameters
         ----------
@@ -253,14 +253,12 @@ class Common(DataSetFilters):
             raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_vectors_info = [field, name]
 
-    def change_scalar_name(self, old_name, new_name, preference='cell'):
+    def rename_scalar(self, old_name, new_name, preference='cell'):
         """Changes array name by searching for the array then renaming it"""
         _, field = get_scalar(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
-            self.GetPointData().GetArray(old_name).SetName(new_name)
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == CELL_DATA_FIELD:
-            self.GetCellData().GetArray(old_name).SetName(new_name)
             self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
@@ -785,6 +783,11 @@ class CellScalarsDict(dict):
     def enable_callback(self):
         self.callback_enabled = True
 
+    def pop(self, key):
+        arr = dict.pop(self, key).copy()
+        self.data._remove_cell_scalar(key)
+        return arr
+
     def __setitem__(self, key, val):
         """ overridden to assure data is contigious """
         if self.callback_enabled:
@@ -810,6 +813,11 @@ class PointScalarsDict(dict):
 
     def enable_callback(self):
         self.callback_enabled = True
+
+    def pop(self, key):
+        arr = dict.pop(self, key).copy()
+        self.data._remove_point_scalar(key)
+        return arr
 
     def __setitem__(self, key, val):
         """ overridden to assure data is contigious """

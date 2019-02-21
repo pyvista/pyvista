@@ -115,7 +115,7 @@ def test_multi_block_set_get_ers():
     assert isinstance(pop, vtki.RectilinearGrid)
     assert multi.n_blocks == 3
     assert multi.get_block_name(10) is None
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         idx = multi.get_index_by_name('foo')
 
 
