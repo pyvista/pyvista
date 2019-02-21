@@ -769,66 +769,74 @@ class Common(DataSetFilters):
         return fmt
 
 
-class CellScalarsDict(dict):
+class _ScalarsDict(dict):
+    """Internal helper for scalars dictionaries"""
+    def __init__(self, data):
+        self.data = proxy(data)
+        dict.__init__(self)
+        self.callback_enabled = False
+        self.adder = None
+        self.remover = None
+        self.modifier = None
+
+    def enable_callback(self):
+        self.callback_enabled = True
+
+    def pop(self, key):
+        arr = dict.pop(self, key).copy()
+        self.remover(key)
+        return arr
+
+    def update(self, data):
+        """
+        Update this dictionary with th key-value pairs from a given
+        dictionary
+        """
+        if not isinstance(data, dict):
+            raise TypeError('Data to update must be in a dictionary.')
+        for k, v in data.items():
+            arr = np.array(v)
+            try:
+                self[k] = arr
+            except TypeError:
+                logging.warning("Values under key ({}) not supported by VTK".format(k))
+        return
+
+    def __setitem__(self, key, val):
+        """ overridden to assure data is contigious """
+        if self.callback_enabled:
+            self.adder(val, key, deep=False)
+        dict.__setitem__(self, key, val)
+        self.modifier()
+
+    def __delitem__(self, key):
+        self.remover(key)
+        return dict.__delitem__(self, key)
+
+class CellScalarsDict(_ScalarsDict):
     """
     Updates internal cell data when an array is added or removed from
     the dictionary.
     """
 
     def __init__(self, data):
-        self.data = proxy(data)
-        dict.__init__(self)
-        self.callback_enabled = False
-
-    def enable_callback(self):
-        self.callback_enabled = True
-
-    def pop(self, key):
-        arr = dict.pop(self, key).copy()
-        self.data._remove_cell_scalar(key)
-        return arr
-
-    def __setitem__(self, key, val):
-        """ overridden to assure data is contigious """
-        if self.callback_enabled:
-            self.data._add_cell_scalar(val, key, deep=False)
-        dict.__setitem__(self, key, val)
-        self.data.GetCellData().Modified()
-
-    def __delitem__(self, key):
-        self.data._remove_cell_scalar(key)
-        return dict.__delitem__(self, key)
+        _ScalarsDict.__init__(self, data)
+        self.adder = self.data._add_cell_scalar
+        self.remover = self.data._remove_cell_scalar
+        self.modifier = self.data.GetCellData().Modified
 
 
-class PointScalarsDict(dict):
+class PointScalarsDict(_ScalarsDict):
     """
     Updates internal point data when an array is added or removed from
     the dictionary.
     """
 
     def __init__(self, data):
-        self.data = proxy(data)
-        dict.__init__(self)
-        self.callback_enabled = False
-
-    def enable_callback(self):
-        self.callback_enabled = True
-
-    def pop(self, key):
-        arr = dict.pop(self, key).copy()
-        self.data._remove_point_scalar(key)
-        return arr
-
-    def __setitem__(self, key, val):
-        """ overridden to assure data is contigious """
-        if self.callback_enabled:
-            self.data._add_point_scalar(val, key, deep=False)
-        dict.__setitem__(self, key, val)
-        self.data.GetPointData().Modified()
-
-    def __delitem__(self, key):
-        self.data._remove_point_scalar(key)
-        return dict.__delitem__(self, key)
+        _ScalarsDict.__init__(self, data)
+        self.adder = self.data._add_point_scalar
+        self.remover = self.data._remove_point_scalar
+        self.modifier = self.data.GetPointData().Modified
 
 
 def axis_rotation(p, ang, inplace=False, deg=True, axis='z'):

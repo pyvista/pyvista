@@ -64,7 +64,8 @@ rcParams = {
         'position_y' : 0.02,
     },
     'show_edges' : False,
-    'lighting': True,
+    'lighting' : True,
+    'interactive' : False,
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -382,8 +383,10 @@ class BasePlotter(object):
             prop.SetShadow(False)
         return
 
-    def add_axes(self, interactive=False, color=None):
+    def add_axes(self, interactive=None, color=None):
         """ Add an interactive axes widget """
+        if interactive is None:
+            interactive = rcParams['interactive']
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
             self._updatae_axes_color(color)
@@ -1520,6 +1523,8 @@ class BasePlotter(object):
 
             self._scalar_bar_actors[title] = self.scalar_bar
 
+        if interactive is None:
+            interactive = rcParams['interactive']
         if interactive and hasattr(self, 'iren'):
             self.scalar_widget = vtk.vtkScalarBarWidget()
             self.scalar_widget.SetScalarBarActor(self.scalar_bar)
