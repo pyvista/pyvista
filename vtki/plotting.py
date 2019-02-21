@@ -55,6 +55,7 @@ rcParams = {
     },
     'cmap' : 'jet',
     'color' : 'white',
+    'nan_color' : 'darkgray',
     'outline_color' : 'white',
     'colorbar' : {
         'width' : 0.60,
@@ -487,7 +488,8 @@ class BasePlotter(object):
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=False,
                  render_lines_as_tubes=False, edge_color='black',
-                 ambient=0.2, show_scalar_bar=True, **kwargs):
+                 ambient=0.2, show_scalar_bar=True, nan_color=None,
+                 nan_opacity=1.0, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -585,6 +587,12 @@ class BasePlotter(object):
             0 to 1 that reaches the actor when not directed at the
             light source emitted from the viewer.  Default 0.2.
 
+        nan_color : string or 3 item list, optional, defaults to gray
+            The color to use for all NaN values in the plotted scalar array
+
+        nan_opacity : float, optional
+            Opacity of NaN values.  Should be between 0 and 1.  Default 1.0
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -674,7 +682,8 @@ class BasePlotter(object):
                                   render_points_as_spheres=render_points_as_spheres,
                                   render_lines_as_tubes=render_lines_as_tubes,
                                   edge_color=edge_color,
-                                  show_scalar_bar=True, **kwargs)
+                                  show_scalar_bar=True, nan_color=nan_color,
+                                  nan_opacity=nan_opacity, **kwargs)
                 actors.append(a)
                 if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -682,6 +691,11 @@ class BasePlotter(object):
                     self.camera_set = False
                     self.reset_camera()
             return actors
+
+        if nan_color is None:
+            nan_color = rcParams['nan_color']
+        nanr, nanb, nang = parse_color(nan_color)
+        nan_color = nanr, nanb, nang, nan_opacity
 
 
         # set main values
@@ -765,6 +779,7 @@ class BasePlotter(object):
 
             # Flip if requested
             table = self.mapper.GetLookupTable()
+            table.SetNanColor(nan_color)
             if cmap is not None:
                 try:
                     from matplotlib.cm import get_cmap
