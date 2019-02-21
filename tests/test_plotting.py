@@ -134,7 +134,8 @@ def test_plotter_scale():
 def test_plot_add_scalar_bar():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa')
+    plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
+                interactive=True, vertical=True)
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
