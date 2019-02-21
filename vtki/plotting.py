@@ -741,7 +741,8 @@ class BasePlotter(object):
             append_scalars = True
             if isinstance(scalars, str):
                 title = scalars
-                scalars = get_scalar(mesh, scalars)
+                scalars = get_scalar(mesh, scalars,
+                        preference=kwargs.get('preference', 'cell'), err=True)
                 if stitle is None:
                     stitle = title
                 #append_scalars = False

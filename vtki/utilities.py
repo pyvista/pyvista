@@ -49,7 +49,7 @@ def cell_scalar(mesh, name):
         return vtk_to_numpy(vtkarr)
 
 
-def get_scalar(mesh, name, preference='cell', info=False):
+def get_scalar(mesh, name, preference='cell', info=False, err=False):
     """ Searches both point and cell data for an array """
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
@@ -78,9 +78,11 @@ def get_scalar(mesh, name, preference='cell', info=False):
     if parr is not None:
         arr = parr
         field = 0
-    if carr is not None:
+    elif carr is not None:
         arr = carr
         field = 1
+    elif err:
+        raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
     if info:
         return arr, field
     return arr
