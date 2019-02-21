@@ -431,7 +431,7 @@ class BasePlotter(object):
         elif key == 'b':
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
                                                   self.left_button_down)
-        elif key == 'i':
+        elif key == 'v':
             self.isometric_view()
 
     def left_button_down(self, obj, event_type):
