@@ -720,6 +720,9 @@ class BasePlotter(object):
             if mesh.GetPointData().GetTCoords() is None:
                 raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
             actor.SetTexture(texture)
+            # Set color to white by default when using a texture
+            if color is None:
+                color = 'white'
 
 
         # Attempt get the active scalars if no preference given
