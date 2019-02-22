@@ -232,6 +232,7 @@ def read(filename):
         """Use VTK's legacy reader to read a file"""
         reader = vtk.vtkDataSetReader()
         reader.SetFileName(filename)
+        reader.ReadAllScalarsOn()
         reader.Update()
         return reader.GetOutputDataObject(0)
 
