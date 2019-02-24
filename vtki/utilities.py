@@ -13,6 +13,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import vtki
+from vtki.readers import standard_reader_routine, get_ext, get_reader
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -237,50 +238,6 @@ def wrap(vtkdataset):
         return vtkdataset # if not supported just passes the VTK data object
     return wrapped
 
-def read(filename):
-    """This will read any VTK file! It will figure out what reader to use
-    then wrap the VTK object for use in ``vtki``
-    """
-    filename = os.path.abspath(os.path.expanduser(filename))
-    ext = os.path.splitext(filename)[1].lower()
-
-    def legacy(filename):
-        """Use VTK's legacy reader to read a file"""
-        reader = vtk.vtkDataSetReader()
-        reader.SetFileName(filename)
-        # Ensure all data is fetched with poorly formated legacy files
-        reader.ReadAllScalarsOn()
-        reader.ReadAllColorScalarsOn()
-        reader.ReadAllNormalsOn()
-        reader.ReadAllTCoordsOn()
-        reader.ReadAllVectorsOn()
-        # Perform the read
-        reader.Update()
-        return reader.GetOutputDataObject(0)
-
-    # From the extension, decide which reader to use
-    if ext in '.vti': # ImageData
-        return vtki.UniformGrid(filename)
-    elif ext in '.vtr': # RectilinearGrid
-        return vtki.RectilinearGrid(filename)
-    elif ext in '.vtu': # UnstructuredGrid
-        return vtki.UnstructuredGrid(filename)
-    elif ext in ['.ply', '.obj', '.stl']: # PolyData
-        return vtki.PolyData(filename)
-    elif ext in '.vts': # StructuredGrid
-        return vtki.StructuredGrid(filename)
-    elif ext in ['.vtm', '.vtmb']:
-        return vtki.MultiBlock(filename)
-    else:
-        # Attempt to use the legacy reader...
-        try:
-            output = wrap(legacy(filename))
-            if output is None:
-                raise AssertionError()
-            return output
-        except:
-            pass
-    raise IOError("This file was not able to be automatically read by vtki.")
 
 
 def set_error_output_file(filename):
@@ -293,29 +250,12 @@ def set_error_output_file(filename):
     return fileOutputWindow, outputWindow
 
 
-def load_texture(filename):
-    """Loads a ``vtkTexture`` from an image file."""
-    filename = os.path.abspath(os.path.expanduser(filename))
-    ext = os.path.splitext(filename)[1].lower()
-    readers = {
-        '.jpg': vtk.vtkJPEGReader,
-        '.jpeg': vtk.vtkJPEGReader,
-        '.tif': vtk.vtkTIFFReader,
-        '.tiff': vtk.vtkTIFFReader,
-        '.png': vtk.vtkPNGReader,
-    }
-    try:
-        # intitialize the reader using the extnesion to find it
-        reader = readers[ext]()
-    except KeyError:
-        # Otherwise, use the imageio reader
-        return numpy_to_texture(imageio.imread(filename))
-    reader.SetFileName(filename)
-    reader.Update()
-    texture = vtk.vtkTexture()
-    texture.SetInputDataObject(reader.GetOutputDataObject(0))
-    texture.Update()
-    return texture
+def image_to_texture(image):
+    """Converts ``vtkImageData`` to a ``vtkTexture``"""
+    vtex = vtk.vtkTexture()
+    vtex.SetInputDataObject(image)
+    vtex.Update()
+    return vtex
 
 
 def numpy_to_texture(image):
@@ -327,10 +267,7 @@ def numpy_to_texture(image):
     grid = vtki.UniformGrid((image.shape[1], image.shape[0], 1))
     grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
     grid.set_active_scalar('Image')
-    vtex = vtk.vtkTexture()
-    vtex.SetInputDataObject(grid)
-    vtex.Update()
-    return vtex
+    return image_to_texture(grid)
 
 
 def is_inside_bounds(point, bounds):

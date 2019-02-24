@@ -121,7 +121,7 @@ class PolyData(vtkPolyData, vtki.Common):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
 
         # Select reader
         if ext == '.ply':

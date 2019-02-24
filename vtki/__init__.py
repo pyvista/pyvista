@@ -2,6 +2,7 @@ import warnings
 from vtki._version import __version__
 from vtki.plotting import *
 from vtki.utilities import *
+from vtki.readers import *
 from vtki.colors import *
 from vtki.filters import DataSetFilters
 from vtki.common import Common
