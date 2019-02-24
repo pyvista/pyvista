@@ -846,7 +846,8 @@ class BasePlotter(object):
 
         # legend label
         if label:
-            assert isinstance(label, str), 'Label must be a string'
+            if not isinstance(label, str):
+                raise AssertionError('Label must be a string')
             self._labels.append([single_triangle(), label, rgb_color])
 
         # lighting display style
@@ -1819,7 +1820,8 @@ class BasePlotter(object):
 
         # legend label
         if label:
-            assert isinstance(label, str), 'Label must be a string'
+            if not isinstance(label, str):
+                raise AssertionError('Label must be a string')
             self._labels.append([lines, label, rgb_color])
 
         # Create actor

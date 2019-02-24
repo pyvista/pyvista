@@ -512,7 +512,8 @@ class DataSetFilters(object):
         elif isinstance(scalar_range, str):
             scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
         elif isinstance(scalar_range, collections.Iterable):
-            assert len(scalar_range) == 2, 'scalar_range must have a length of two defining the min and max'
+            if len(scalar_range) != 2:
+                raise AssertionError('scalar_range must have a length of two defining the min and max')
         else:
             raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
         # Construct the filter

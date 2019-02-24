@@ -141,7 +141,8 @@ class PolyData(vtkPolyData, vtki.Common):
         self.ShallowCopy(reader.GetOutput())
 
         # sanity check
-        assert np.any(self.points), 'Empty or invalid file'
+        if not np.any(self.points):
+            raise AssertionError('Empty or invalid file')
 
     @property
     def faces(self):
@@ -1300,8 +1301,8 @@ class PolyData(vtkPolyData, vtki.Common):
             remove = np.asarray(remove)
 
         if remove.dtype == np.bool:
-            assert_statement = 'Mask different size than n_points'
-            assert remove.size == self.n_points, assert_statement
+            if remove.size != self.n_points:
+                raise AssertionError('Mask different size than n_points')
             remove_mask = remove
         else:
             remove_mask = np.zeros(self.n_points, np.bool)

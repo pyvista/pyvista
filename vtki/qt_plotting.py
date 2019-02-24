@@ -181,7 +181,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     def __init__(self, parent=None, title=None):
         """ Initialize Qt interactor """
-        assert has_pyqt, 'Requires PyQt5'
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
         self.parent = parent
 
@@ -224,7 +225,8 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, **kwargs):
-        assert has_pyqt, 'Requires PyQt5'
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
 

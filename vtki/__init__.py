@@ -35,7 +35,8 @@ if vtk.VTK_ID_TYPE == 12:
 
 
 # determine if using vtk > 5
-assert vtk.vtkVersion().GetVTKMajorVersion() > 5, 'VTK version must be 5.0 or greater.'
+if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
+    raise AssertionError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)

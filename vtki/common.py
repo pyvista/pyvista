@@ -302,7 +302,8 @@ class Common(DataSetFilters):
             if field != POINT_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetArray(name)
-        assert vtkarr is not None, '%s is not a point scalar' % name
+        if vtkarr is None:
+            raise AssertionError('({}) is not a point scalar'.format(name))
 
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
@@ -467,7 +468,8 @@ class Common(DataSetFilters):
                 raise RuntimeError('Must specify an array to fetch.')
 
         vtkarr = self.GetCellData().GetArray(name)
-        assert vtkarr is not None, '%s is not a cell scalar' % name
+        if vtkarr is None:
+            raise AssertionError('({}) is not a cell scalar'.format(name))
 
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
@@ -507,7 +509,8 @@ class Common(DataSetFilters):
             raise Exception('Number of scalars must match the number of cells (%d)'
                             % self.n_cells)
 
-        assert scalars.flags.c_contiguous, 'Array must be contigious'
+        if not scalars.flags.c_contiguous:
+            raise AssertionError('Array must be contigious')
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._cell_bool_array_names.append(name)
