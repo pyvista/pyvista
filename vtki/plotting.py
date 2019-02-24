@@ -1773,7 +1773,7 @@ class BasePlotter(object):
         tgt_size = (self.window_size[1], self.window_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None, name=None):
+    def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """
         Adds lines to the plotting object.
 
@@ -2042,7 +2042,7 @@ class BasePlotter(object):
 
         return img
 
-    def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
+    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None):
         """
         Adds a legend to render window.  Entries must be a list

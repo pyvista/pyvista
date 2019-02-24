@@ -112,8 +112,10 @@ def get_object_id(obj):
 
 # -----------------------------------------------------------------------------
 
-def dump_data_array(dataset_dir, data_dir, array, root={}, compress=True):
+def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     """Dump vtkjs data arry"""
+    if root is None:
+        root = {}
     if not array:
         return None
 
@@ -158,8 +160,10 @@ def dump_data_array(dataset_dir, data_dir, array, root={}, compress=True):
 # -----------------------------------------------------------------------------
 
 
-def dump_color_array(dataset_dir, data_dir, color_array_info, root={}, compress=True):
+def dump_color_array(dataset_dir, data_dir, color_array_info, root=None, compress=True):
     """Dump vtkjs color array"""
+    if root is None:
+        root = {}
     root['pointData'] = {
         'vtkClass': 'vtkDataSetAttributes',
         "activeGlobalIds": -1,
@@ -208,8 +212,10 @@ def dump_color_array(dataset_dir, data_dir, color_array_info, root={}, compress=
 # -----------------------------------------------------------------------------
 
 
-def dump_t_coords(dataset_dir, data_dir, dataset, root={}, compress=True):
+def dump_t_coords(dataset_dir, data_dir, dataset, root=None, compress=True):
     """dump vtkjs texture coordinates"""
+    if root is None:
+        root = {}
     tcoords = dataset.GetPointData().GetTCoords()
     if tcoords:
         dumped_array = dump_data_array(dataset_dir, data_dir, tcoords, {}, compress)
@@ -219,8 +225,10 @@ def dump_t_coords(dataset_dir, data_dir, dataset, root={}, compress=True):
 # -----------------------------------------------------------------------------
 
 
-def dump_normals(dataset_dir, data_dir, dataset, root={}, compress=True):
+def dump_normals(dataset_dir, data_dir, dataset, root=None, compress=True):
     """dump vtkjs normal vectors"""
+    if root is None:
+        root = {}
     normals = dataset.GetPointData().GetNormals()
     if normals:
         dumped_array = dump_data_array(dataset_dir, data_dir, normals, {}, compress)
@@ -230,8 +238,10 @@ def dump_normals(dataset_dir, data_dir, dataset, root={}, compress=True):
 # -----------------------------------------------------------------------------
 
 
-def dump_all_arrays(dataset_dir, data_dir, dataset, root={}, compress=True):
+def dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
     """Dump all data arrays to vtkjs"""
+    if root is None:
+        root = {}
     root['pointData'] = {
         'vtkClass': 'vtkDataSetAttributes',
         "activeGlobalIds": -1,
@@ -293,8 +303,10 @@ def dump_all_arrays(dataset_dir, data_dir, dataset, root={}, compress=True):
 # -----------------------------------------------------------------------------
 
 
-def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root={}, compress=True):
+def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, compress=True):
     """Dump poly data object to vtkjs"""
+    if root is None:
+        root = {}
     root['vtkClass'] = 'vtkPolyData'
     container = root
 
@@ -349,8 +361,10 @@ writer_mapping['vtkPolyData'] = dump_poly_data
 # -----------------------------------------------------------------------------
 
 
-def dump_image_data(dataset_dir, data_dir, dataset, color_array_info, root={}, compress=True):
+def dump_image_data(dataset_dir, data_dir, dataset, color_array_info, root=None, compress=True):
     """Dump image data object to vtkjs"""
+    if root is None:
+        root = {}
     root['vtkClass'] = 'vtkImageData'
     container = root
 
