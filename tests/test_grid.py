@@ -1,8 +1,8 @@
 import os
 
-import vtk
 import numpy as np
 import pytest
+import vtk
 
 import vtki
 from vtki import examples

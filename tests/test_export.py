@@ -1,12 +1,12 @@
-import vtk
-import pytest
-import vtki
-from vtki import examples as ex
-import numpy as np
-
 import os
 import sys
 
+import numpy as np
+import pytest
+import vtk
+
+import vtki
+from vtki import examples as ex
 from vtki.plotting import running_xserver
 
 if __name__ != '__main__':

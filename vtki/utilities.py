@@ -2,19 +2,17 @@
 Supporting functions for polydata and grid objects
 
 """
-import logging
 import ctypes
-import imageio
-
-import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
-
+import logging
 import os
 
-import vtki
+import imageio
+import numpy as np
+import vtk
+from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
+                                    vtk_to_numpy)
 
+import vtki
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -28,6 +26,7 @@ def vtk_bit_array_to_char(vtkarr_bint):
 
 
 def is_vtki_obj(obj):
+    """ Return True if the Object is a ``vtki`` wrapped dataset """
     return isinstance(obj, (vtki.Common, vtki.MultiBlock))
 
 
@@ -50,7 +49,24 @@ def cell_scalar(mesh, name):
 
 
 def get_scalar(mesh, name, preference='cell', info=False, err=False):
-    """ Searches both point and cell data for an array """
+    """ Searches both point and cell data for an array
+
+    Parameters
+    ----------
+    name : str
+        The name of the array to get the range.
+
+    preference : str, optional
+        When scalars is specified, this is the perfered scalar type to
+        search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+
+    info : bool
+        Return info about the scalar rather than the array itself.
+
+    err : bool
+        Boolean to control whether to throw an error if array is not present.
+
+    """
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
     if isinstance(preference, str):
@@ -259,7 +275,8 @@ def read(filename):
         # Attempt to use the legacy reader...
         try:
             output = wrap(legacy(filename))
-            assert output is not None
+            if output is None:
+                raise AssertionError()
             return output
         except:
             pass

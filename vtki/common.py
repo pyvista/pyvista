@@ -6,13 +6,12 @@ from weakref import proxy
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import vtk_to_numpy
-from vtk.util.numpy_support import numpy_to_vtk
+from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import vtki
-from vtki.utilities import (get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD,
-                            vtk_bit_array_to_char)
 from vtki import DataSetFilters
+from vtki.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, get_scalar,
+                            vtk_bit_array_to_char)
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -63,7 +62,7 @@ class Common(DataSetFilters):
         """Return the active scalar's field and name: [field, name]"""
         if not hasattr(self, '_active_vectors_info'):
             self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
-        field, name = self._active_vectors_info
+        _, name = self._active_vectors_info
 
         # rare error where scalar name isn't a valid scalar
         if name not in self.point_arrays:
@@ -74,6 +73,7 @@ class Common(DataSetFilters):
 
     @property
     def active_vectors(self):
+        """The active vectors array"""
         field, name = self.active_vectors_info
         if name:
             if field is POINT_DATA_FIELD:
@@ -83,10 +83,12 @@ class Common(DataSetFilters):
 
     @property
     def active_vectors_name(self):
+        """The name of the active vectors array"""
         return self.active_vectors_info[1]
 
     @active_vectors_name.setter
     def active_vectors_name(self, name):
+        """Set the name of the active vector"""
         return self.set_active_vectors(name)
 
     @property
@@ -96,6 +98,7 @@ class Common(DataSetFilters):
 
     @active_scalar_name.setter
     def active_scalar_name(self, name):
+        """Set the name of the active scalar"""
         return self.set_active_scalar(name)
 
     @property
@@ -163,12 +166,14 @@ class Common(DataSetFilters):
 
     @property
     def t_coords(self):
+        """The active texture coordinates on the points"""
         if self.GetPointData().GetTCoords() is not None:
             return vtk_to_numpy(self.GetPointData().GetTCoords())
         return None
 
     @t_coords.setter
     def t_coords(self, t_coords):
+        """Set the array to use as the texture coordinates"""
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
@@ -233,7 +238,7 @@ class Common(DataSetFilters):
 
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
-        arr, field = get_scalar(self, name, preference=preference, info=True)
+        _, field = get_scalar(self, name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveScalars(name)
         elif field == CELL_DATA_FIELD:
@@ -244,7 +249,7 @@ class Common(DataSetFilters):
 
     def set_active_vectors(self, name, preference='cell'):
         """Finds the vectors by name and appropriately sets it as active"""
-        arr, field = get_scalar(self, name, preference=preference, info=True)
+        _, field = get_scalar(self, name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveVectors(name)
         elif field == CELL_DATA_FIELD:
@@ -297,7 +302,8 @@ class Common(DataSetFilters):
             if field != POINT_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetArray(name)
-        assert vtkarr is not None, '%s is not a point scalar' % name
+        if vtkarr is None:
+            raise AssertionError('({}) is not a point scalar'.format(name))
 
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
@@ -462,7 +468,8 @@ class Common(DataSetFilters):
                 raise RuntimeError('Must specify an array to fetch.')
 
         vtkarr = self.GetCellData().GetArray(name)
-        assert vtkarr is not None, '%s is not a cell scalar' % name
+        if vtkarr is None:
+            raise AssertionError('({}) is not a cell scalar'.format(name))
 
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
@@ -502,7 +509,8 @@ class Common(DataSetFilters):
             raise Exception('Number of scalars must match the number of cells (%d)'
                             % self.n_cells)
 
-        assert scalars.flags.c_contiguous, 'Array must be contigious'
+        if not scalars.flags.c_contiguous:
+            raise AssertionError('Array must be contigious')
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._cell_bool_array_names.append(name)
@@ -605,10 +613,12 @@ class Common(DataSetFilters):
 
     @property
     def n_points(self):
+        """The number of points in the entire dataset"""
         return self.GetNumberOfPoints()
 
     @property
     def n_cells(self):
+        """The number of cells in the entire dataset"""
         return self.GetNumberOfCells()
 
     @property
@@ -623,18 +633,37 @@ class Common(DataSetFilters):
 
     @property
     def bounds(self):
+        """
+        bounding box of this dataset in the form
+        (xmin,xmax, ymin,ymax, zmin,zmax)
+        """
         return list(self.GetBounds())
 
     @property
     def center(self):
+        """ Center of the bounding box """
         return list(self.GetCenter())
 
     @property
     def extent(self):
+        """ The range of the bounding box """
         if hasattr(self, 'GetExtent'):
             return list(self.GetExtent())
 
     def get_data_range(self, arr=None, preference='cell'):
+        """Get the non-NaN min and max of a named scalar array
+
+        Parameters
+        ----------
+        arr : str, np.ndarray, optional
+            The name of the array to get the range. If None, the active scalar
+            is used
+
+        preference : str, optional
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+
+        """
         if arr is None:
             # use active scalar array
             _, arr = self.active_scalar_info
@@ -652,6 +681,7 @@ class Common(DataSetFilters):
 
     @property
     def n_scalars(self):
+        """The number of scalara arrays present in the dataset"""
         return self.GetPointData().GetNumberOfArrays() + \
                self.GetCellData().GetNumberOfArrays()
 
@@ -751,6 +781,7 @@ class Common(DataSetFilters):
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{:.3e}</td><td>{:.3e}</td></tr>\n"
 
             def format_array(key, field):
+                """internal helper to foramt array information for printing"""
                 arr = get_scalar(self, key)
                 dl, dh = self.get_data_range(key)
                 if key == self.active_scalar_info[1]:
@@ -780,9 +811,11 @@ class _ScalarsDict(dict):
         self.modifier = None
 
     def enable_callback(self):
+        """Enable callbacks to be set True"""
         self.callback_enabled = True
 
     def pop(self, key):
+        """Get and remove an element by key name"""
         arr = dict.pop(self, key).copy()
         self.remover(key)
         return arr
@@ -810,6 +843,7 @@ class _ScalarsDict(dict):
         self.modifier()
 
     def __delitem__(self, key):
+        """Remove item by key name"""
         self.remover(key)
         return dict.__delitem__(self, key)
 
@@ -839,38 +873,38 @@ class PointScalarsDict(_ScalarsDict):
         self.modifier = self.data.GetPointData().Modified
 
 
-def axis_rotation(p, ang, inplace=False, deg=True, axis='z'):
-    """ Rotates points p angle ang (in deg) about an axis """
+def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
+    """ Rotates points angle ang (in deg) about an axis """
     axis = axis.lower()
 
     # Copy original array to if not inplace
     if not inplace:
-        p = p.copy()
+        points = points.copy()
 
     # Convert angle to radians
     if deg:
-        ang *= np.pi / 180
+        angle *= np.pi / 180
 
     if axis == 'x':
-        y = p[:, 1] * np.cos(ang) - p[:, 2] * np.sin(ang)
-        z = p[:, 1] * np.sin(ang) + p[:, 2] * np.cos(ang)
-        p[:, 1] = y
-        p[:, 2] = z
+        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
+        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
+        points[:, 1] = y
+        points[:, 2] = z
     elif axis == 'y':
-        x = p[:, 0] * np.cos(ang) + p[:, 2] * np.sin(ang)
-        z = - p[:, 0] * np.sin(ang) + p[:, 2] * np.cos(ang)
-        p[:, 0] = x
-        p[:, 2] = z
+        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
+        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
+        points[:, 0] = x
+        points[:, 2] = z
     elif axis == 'z':
-        x = p[:, 0] * np.cos(ang) - p[:, 1] * np.sin(ang)
-        y = p[:, 0] * np.sin(ang) + p[:, 1] * np.cos(ang)
-        p[:, 0] = x
-        p[:, 1] = y
+        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
+        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
+        points[:, 0] = x
+        points[:, 1] = y
     else:
         raise Exception('invalid axis.  Must be either "x", "y", or "z"')
 
     if not inplace:
-        return p
+        return points
 
 
 class vtki_ndarray(np.ndarray):

@@ -1,15 +1,13 @@
 """
 Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData
 """
-import os
 import logging
-
-import vtk
-from vtk import vtkRectilinearGrid, vtkImageData
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
+import os
 
 import numpy as np
+import vtk
+from vtk import vtkImageData, vtkRectilinearGrid
+from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import vtki
 
@@ -61,7 +59,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     >>> vtkgrid = vtk.vtkRectilinearGrid()
     >>> grid = vtki.RectilinearGrid(vtkgrid)
 
-    >>> # Creat from NumPy arrays
+    >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
@@ -487,19 +485,22 @@ class UniformGrid(vtkImageData, Grid):
 
     @property
     def x(self):
+        """ all the X points """
         return self.points[:, 0]
 
     @property
     def y(self):
+        """ all the Y points """
         return self.points[:, 1]
 
     @property
     def z(self):
+        """ all the Z points """
         return self.points[:, 2]
 
     @property
     def origin(self):
-        """The origins of the grid"""
+        """Origin of the grid (bottom southwest corner)"""
         return list(self.GetOrigin())
 
     @origin.setter

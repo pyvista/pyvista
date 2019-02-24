@@ -1,9 +1,9 @@
-from threading import Thread
-import time
 import logging
-import numpy as np
 import os
+import time
+from threading import Thread
 
+import numpy as np
 import vtk
 import vtk.qt
 
@@ -38,11 +38,10 @@ try:
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout,
-                                 QFrame, QMainWindow, QSlider,
-                                 QDialog, QFormLayout, QGroupBox, QFileDialog)
+    from PyQt5.QtWidgets import (QVBoxLayout, QFrame, QMainWindow, QSlider,
+                                 QDialog, QFormLayout, QFileDialog)
     has_pyqt = True
-except:
+except ImportError:
     pass
 
 
@@ -107,6 +106,7 @@ class ScaleAxesDialog(QDialog):
 
         # setup sliders
         def make_slider():
+            """Makes a double slider"""
             slider = DoubleSlider(QtCore.Qt.Horizontal)
             slider.setTickInterval(0.1)
             slider.setMinimum(0)
@@ -181,7 +181,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     def __init__(self, parent=None, title=None):
         """ Initialize Qt interactor """
-        assert has_pyqt, 'Requires PyQt5'
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
         self.parent = parent
 
@@ -224,7 +225,8 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, **kwargs):
-        assert has_pyqt, 'Requires PyQt5'
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
 

@@ -1,23 +1,21 @@
 """
 vtki plotting module
 """
-import time
-import logging
-import ctypes
-import PIL.Image
-from subprocess import Popen, PIPE
-import os
-import colorsys
 import collections
+import ctypes
+import logging
+import time
+from subprocess import PIPE, Popen
 
+import imageio
+import numpy as np
+import PIL.Image
 import vtk
 from vtk.util import numpy_support as VN
 
-import numpy as np
 import vtki
-from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
 from vtki.export import export_plotter_vtkjs
-import imageio
+from vtki.utilities import get_scalar, is_vtki_obj, numpy_to_texture, wrap
 
 _OPEN_PLOTTERS = {}
 
@@ -93,7 +91,7 @@ def set_plot_theme(theme):
 def run_from_ipython():
     """ returns True when run from IPython """
     try:
-        __IPYTHON__
+        py = __IPYTHON__
         return True
     except NameError:
         return False
@@ -275,7 +273,7 @@ def running_xserver():
         p.communicate()
         return p.returncode == 0
     except:
-        False
+        return False
 
 
 class BasePlotter(object):
@@ -322,7 +320,7 @@ class BasePlotter(object):
                 update_axis(ax)
             return
 
-        for name, actor in self._actors.items():
+        for actor in self._actors.values():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
             if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
@@ -333,6 +331,7 @@ class BasePlotter(object):
 
     @property
     def center(self):
+        """Center of the bounding box around all data present in the scene"""
         bounds = self.bounds
         x = (bounds[1] + bounds[0])/2
         y = (bounds[3] + bounds[2])/2
@@ -403,10 +402,12 @@ class BasePlotter(object):
         self._updatae_axes_color(color)
 
     def hide_axes(self):
+        """Hide the axes orientation widget"""
         if hasattr(self, 'axes_widget'):
             self.axes_widget.EnabledOff()
 
     def show_axes(self):
+        """Show the axes orientation widget"""
         if hasattr(self, 'axes_widget'):
             self.axes_widget.EnabledOn()
         else:
@@ -435,12 +436,13 @@ class BasePlotter(object):
             self.isometric_view()
 
     def left_button_down(self, obj, event_type):
+        """Register the event for a left button down click"""
         # Get 2D click location on window
-        clickPos = self.iren.GetEventPosition()
+        click_pos = self.iren.GetEventPosition()
 
         # Get corresponding click location in the 3D plot
         picker = vtk.vtkWorldPointPicker()
-        picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
+        picker.Pick(click_pos[0], click_pos[1], 0, self.renderer)
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
         if np.any(np.isnan(self.pickpoint)):
             self.pickpoint[:] = 0
@@ -652,7 +654,7 @@ class BasePlotter(object):
                 if mesh[idx] is None:
                     continue
                 # Get a good name to use
-                nm = '{}-{}'.format(name, idx)
+                next_name = '{}-{}'.format(name, idx)
                 # Get the data object
                 if not is_vtki_obj(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
@@ -680,7 +682,7 @@ class BasePlotter(object):
                                   interpolate_before_map=interpolate_before_map,
                                   cmap=cmap, label=label,
                                   scalar_bar_args=scalar_bar_args,
-                                  reset_camera=reset_camera, name=nm,
+                                  reset_camera=reset_camera, name=next_name,
                                   texture=None,
                                   render_points_as_spheres=render_points_as_spheres,
                                   render_lines_as_tubes=render_lines_as_tubes,
@@ -844,7 +846,8 @@ class BasePlotter(object):
 
         # legend label
         if label:
-            assert isinstance(label, str), 'Label must be a string'
+            if not isinstance(label, str):
+                raise AssertionError('Label must be a string')
             self._labels.append([single_triangle(), label, rgb_color])
 
         # lighting display style
@@ -911,6 +914,7 @@ class BasePlotter(object):
 
     @property
     def camera(self):
+        """The active camera for the rendering scene"""
         return self.renderer.GetActiveCamera()
 
     def remove_actor(self, actor, reset_camera=False):
@@ -1770,7 +1774,7 @@ class BasePlotter(object):
         tgt_size = (self.window_size[1], self.window_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None, name=None):
+    def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """
         Adds lines to the plotting object.
 
@@ -1816,7 +1820,8 @@ class BasePlotter(object):
 
         # legend label
         if label:
-            assert isinstance(label, str), 'Label must be a string'
+            if not isinstance(label, str):
+                raise AssertionError('Label must be a string')
             self._labels.append([lines, label, rgb_color])
 
         # Create actor
@@ -2039,7 +2044,7 @@ class BasePlotter(object):
 
         return img
 
-    def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
+    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None):
         """
         Adds a legend to render window.  Entries must be a list

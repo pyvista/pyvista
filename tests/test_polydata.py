@@ -1,8 +1,8 @@
 import os
 from math import pi
 
-import pytest
 import numpy as np
+import pytest
 
 import vtki
 from vtki import examples
@@ -237,7 +237,7 @@ def test_invalid_save():
 
 def test_tri_filter():
     arrow = vtki.Arrow([0, 0, 0], [1, 1, 1])
-    assert arrow.faces.size % 4 
+    assert arrow.faces.size % 4
     arrow.tri_filter(inplace=True)
     assert not(arrow.faces.size % 4)
 

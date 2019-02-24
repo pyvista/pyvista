@@ -2,23 +2,22 @@
 A set of useful plotting tools and widgets that can be used in a Jupyter
 notebook
 """
-ipy_available = False
+IPY_AVAILABLE = False
 try:
-    from ipywidgets import interact, interactive, fixed, interact_manual
+    from ipywidgets import interact, interactive
     import ipywidgets as widgets
-    ipy_available = True
-except:
+    IPY_AVAILABLE = True
+except ImportError:
     pass
 
 import collections
-import numpy as np
 import logging
 
-import vtk
+import numpy as np
 
 import vtki
-from vtki.utilities import is_vtki_obj, wrap
 from vtki.plotting import run_from_ipython
+from vtki.utilities import is_vtki_obj, wrap
 
 
 class ScaledPlotter(vtki.BackgroundPlotter):
@@ -27,7 +26,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
-        if not run_from_ipython() or not ipy_available:
+        if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
@@ -40,6 +39,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
                                 continuous_update=self.continuous_update)
 
         def update(xscale, yscale, zscale):
+            """Update the scales"""
             # Update max range if needed
             if xscale >= self.xslider.max:
                 self.xslider.max *= 2
@@ -72,7 +72,7 @@ class InteractiveTool(object):
                  show_bounds=False, reset_camera=True, outline=None,
                  display_params=None, default_params=None,
                  continuous_update=False, clean=True, **kwargs):
-        if not run_from_ipython() or not ipy_available:
+        if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_vtki_obj(dataset):
@@ -247,6 +247,7 @@ class OrthogonalSlicer(InteractiveTool):
             self.display_params['name'] = name
 
         def update(x, y, z, **kwargs):
+            """Update the slices"""
             self._update_plotting_params(**kwargs)
             if x != self._old[0] or self._need_to_update:
                 _update_slice(0, x, y, z)
@@ -341,6 +342,7 @@ class ManySlicesAlongAxis(InteractiveTool):
                                 continuous_update=self.continuous_update)
 
         def update(n, axis, **kwargs):
+            """Update the slices"""
             if n >= nsl.max:
                 nsl.max *= 2
             self._update_plotting_params(**kwargs)
@@ -389,6 +391,7 @@ class Threshold(InteractiveTool):
         preference = self.display_params['preference']
 
         def _calc_start_values(rng):
+            """Get starting values for sliders use a data range"""
             lowstart = ((rng[1] - rng[0]) * 0.25) + rng[0]
             highstart = ((rng[1] - rng[0]) * 0.75) + rng[0]
             return lowstart, highstart
@@ -407,6 +410,7 @@ class Threshold(InteractiveTool):
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(new_rng):
+            """Updates the slider ranges when switching scalars"""
             vmin, vmax = np.nanmin([new_rng[0], minsl.min]), np.nanmax([new_rng[1], minsl.max])
             # Update to the total range
             minsl.min = vmin
@@ -424,6 +428,7 @@ class Threshold(InteractiveTool):
 
 
         def update(dmin, dmax, invert, continuous, **kwargs):
+            """Update the threshold"""
             if dmax < dmin:
                 # If user chooses a min that is more than max, correct them:
                 # Set max threshold as 1 percent of the range more than min
@@ -515,6 +520,7 @@ class Clip(InteractiveTool):
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(normal):
+            """Update the sliders ranges"""
             ax = axchoices.index(normal)
             new_rng = bnds[2*ax:2*ax+2]
             vmin, vmax = np.nanmin([new_rng[0], locsl.min]), np.nanmax([new_rng[1], locsl.max])
@@ -527,6 +533,7 @@ class Clip(InteractiveTool):
             return
 
         def update(location, normal, invert, **kwargs):
+            """Update the clip location"""
             if self._last_normal != normal:
                 self._last_normal = normal
                 _update_slider_ranges(normal)

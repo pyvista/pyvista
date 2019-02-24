@@ -1,9 +1,11 @@
 import sys
-import vtk
+
+import numpy as np
 import pytest
+import vtk
+
 import vtki
 from vtki import examples
-import numpy as np
 
 grid = vtki.UnstructuredGrid(examples.hexbeamfile)
 

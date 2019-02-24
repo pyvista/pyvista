@@ -3,21 +3,20 @@ Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
 VTK datasets in one object that can be passed to VTK algorithms and ``vtki``
 filtering/plotting routines.
 """
-import logging
-from weakref import proxy
 import collections
+import logging
 import os
 
 import numpy as np
 import vtk
 from vtk import vtkMultiBlockDataSet
 
+from vtki import plot
+from vtki.utilities import get_scalar, is_vtki_obj, wrap
+
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-import vtki
-from vtki.utilities import wrap, is_vtki_obj, get_scalar
-from vtki import plot
 
 
 class MultiBlock(vtkMultiBlockDataSet):
@@ -153,6 +152,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
 
         def update_bounds(ax, nb, bounds):
+            """internal helper to update bounds while keeping track"""
             if nb[2*ax] < bounds[2*ax]:
                 bounds[2*ax] = nb[2*ax]
             if nb[2*ax+1] > bounds[2*ax+1]:
@@ -297,10 +297,12 @@ class MultiBlock(vtkMultiBlockDataSet):
 
 
     def __iter__(self):
+        """The iterator across all blocks"""
         self._iter_n = 0
         return self
 
     def next(self):
+        """Get the next block from the iterator"""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
             self._iter_n += 1
