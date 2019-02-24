@@ -59,7 +59,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     >>> vtkgrid = vtk.vtkRectilinearGrid()
     >>> grid = vtki.RectilinearGrid(vtkgrid)
 
-    >>> # Creat from NumPy arrays
+    >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
