@@ -1156,6 +1156,12 @@ class PolyData(vtkPolyData, vtki.Common):
 
     @property
     def obbTree(self):
+        """obbTree is an object to generate oriented bounding box (OBB)
+        trees. An oriented bounding box is a bounding box that does not
+        necessarily line up along coordinate axes. The OBB tree is a
+        hierarchical tree structure of such boxes, where deeper levels of OBB
+        confine smaller regions of space.
+        """
         if not hasattr(self, '_obbTree'):
             self._obbTree = vtk.vtkOBBTree()
             self._obbTree.SetDataSet(self)
@@ -2138,16 +2144,19 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     @property
     def x(self):
+        """The X coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 0].reshape(dim, order='F')
 
     @property
     def y(self):
+        """The Y coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 1].reshape(dim, order='F')
 
     @property
     def z(self):
+        """The Z coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 2].reshape(dim, order='F')
 

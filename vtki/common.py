@@ -88,6 +88,7 @@ class Common(DataSetFilters):
 
     @active_vectors_name.setter
     def active_vectors_name(self, name):
+        """Set the name of the active vector"""
         return self.set_active_vectors(name)
 
     @property
@@ -97,6 +98,7 @@ class Common(DataSetFilters):
 
     @active_scalar_name.setter
     def active_scalar_name(self, name):
+        """Set the name of the active scalar"""
         return self.set_active_scalar(name)
 
     @property
@@ -171,6 +173,7 @@ class Common(DataSetFilters):
 
     @t_coords.setter
     def t_coords(self, t_coords):
+        """Set the array to use as the texture coordinates"""
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
@@ -809,6 +812,7 @@ class _ScalarsDict(dict):
         self.callback_enabled = True
 
     def pop(self, key):
+        """Get and remove an element by key name"""
         arr = dict.pop(self, key).copy()
         self.remover(key)
         return arr
@@ -836,6 +840,7 @@ class _ScalarsDict(dict):
         self.modifier()
 
     def __delitem__(self, key):
+        """Remove item by key name"""
         self.remover(key)
         return dict.__delitem__(self, key)
 

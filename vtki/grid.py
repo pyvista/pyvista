@@ -485,19 +485,22 @@ class UniformGrid(vtkImageData, Grid):
 
     @property
     def x(self):
+        """ all the X points """
         return self.points[:, 0]
 
     @property
     def y(self):
+        """ all the Y points """
         return self.points[:, 1]
 
     @property
     def z(self):
+        """ all the Z points """
         return self.points[:, 2]
 
     @property
     def origin(self):
-        """The origins of the grid"""
+        """Origin of the grid (bottom southwest corner)"""
         return list(self.GetOrigin())
 
     @origin.setter

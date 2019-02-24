@@ -391,6 +391,7 @@ class Threshold(InteractiveTool):
         preference = self.display_params['preference']
 
         def _calc_start_values(rng):
+            """Get starting values for sliders use a data range"""
             lowstart = ((rng[1] - rng[0]) * 0.25) + rng[0]
             highstart = ((rng[1] - rng[0]) * 0.75) + rng[0]
             return lowstart, highstart
@@ -409,6 +410,7 @@ class Threshold(InteractiveTool):
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(new_rng):
+            """Updates the slider ranges when switching scalars"""
             vmin, vmax = np.nanmin([new_rng[0], minsl.min]), np.nanmax([new_rng[1], minsl.max])
             # Update to the total range
             minsl.min = vmin
@@ -518,6 +520,7 @@ class Clip(InteractiveTool):
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(normal):
+            """Update the sliders ranges"""
             ax = axchoices.index(normal)
             new_rng = bnds[2*ax:2*ax+2]
             vmin, vmax = np.nanmin([new_rng[0], locsl.min]), np.nanmax([new_rng[1], locsl.max])

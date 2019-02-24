@@ -119,6 +119,7 @@ class DataSetFilters(object):
         """
         if bounds is None:
             def _get_quarter(dmin, dmax):
+                """internal helper to get a section of the given range"""
                 return dmax - ((dmax - dmin) * factor)
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             xmin = _get_quarter(xmin, xmax)

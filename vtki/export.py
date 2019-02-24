@@ -75,6 +75,7 @@ writer_mapping = {}
 
 
 def get_range_info(array, component):
+    """Get the data range of the array's component"""
     r = array.GetRange(component)
     comp_range = {}
     comp_range['min'] = r[0]
@@ -86,6 +87,7 @@ def get_range_info(array, component):
 
 
 def get_ref(dest_dir, md5):
+    """Get reference"""
     ref = {}
     ref['id'] = md5
     ref['encode'] = 'BigEndian' if sys.byteorder == 'big' else 'LittleEndian'
@@ -99,6 +101,7 @@ objIds = []
 
 
 def get_object_id(obj):
+    """Get object identifier"""
     try:
         idx = objIds.index(obj)
         return idx + 1
@@ -110,6 +113,7 @@ def get_object_id(obj):
 # -----------------------------------------------------------------------------
 
 def dump_data_array(dataset_dir, data_dir, array, root={}, compress=True):
+    """Dump vtkjs data arry"""
     if not array:
         return None
 
@@ -155,6 +159,7 @@ def dump_data_array(dataset_dir, data_dir, array, root={}, compress=True):
 
 
 def dump_color_array(dataset_dir, data_dir, color_array_info, root={}, compress=True):
+    """Dump vtkjs color array"""
     root['pointData'] = {
         'vtkClass': 'vtkDataSetAttributes',
         "activeGlobalIds": -1,
@@ -204,6 +209,7 @@ def dump_color_array(dataset_dir, data_dir, color_array_info, root={}, compress=
 
 
 def dump_t_coords(dataset_dir, data_dir, dataset, root={}, compress=True):
+    """dump vtkjs texture coordinates"""
     tcoords = dataset.GetPointData().GetTCoords()
     if tcoords:
         dumped_array = dump_data_array(dataset_dir, data_dir, tcoords, {}, compress)
@@ -214,6 +220,7 @@ def dump_t_coords(dataset_dir, data_dir, dataset, root={}, compress=True):
 
 
 def dump_normals(dataset_dir, data_dir, dataset, root={}, compress=True):
+    """dump vtkjs normal vectors"""
     normals = dataset.GetPointData().GetNormals()
     if normals:
         dumped_array = dump_data_array(dataset_dir, data_dir, normals, {}, compress)
@@ -224,6 +231,7 @@ def dump_normals(dataset_dir, data_dir, dataset, root={}, compress=True):
 
 
 def dump_all_arrays(dataset_dir, data_dir, dataset, root={}, compress=True):
+    """Dump all data arrays to vtkjs"""
     root['pointData'] = {
         'vtkClass': 'vtkDataSetAttributes',
         "activeGlobalIds": -1,
@@ -286,6 +294,7 @@ def dump_all_arrays(dataset_dir, data_dir, dataset, root={}, compress=True):
 
 
 def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root={}, compress=True):
+    """Dump poly data object to vtkjs"""
     root['vtkClass'] = 'vtkPolyData'
     container = root
 
@@ -341,6 +350,7 @@ writer_mapping['vtkPolyData'] = dump_poly_data
 
 
 def dump_image_data(dataset_dir, data_dir, dataset, color_array_info, root={}, compress=True):
+    """Dump image data object to vtkjs"""
     root['vtkClass'] = 'vtkImageData'
     container = root
 
@@ -359,6 +369,7 @@ writer_mapping['vtkImageData'] = dump_image_data
 
 
 def write_data_set(file_path, dataset, output_dir, color_array_info, new_name=None, compress=True):
+    """write dataset to vtkjs"""
     fileName = new_name if new_name else os.path.basename(file_path)
     dataset_dir = os.path.join(output_dir, fileName)
     data_dir = os.path.join(dataset_dir, 'data')
@@ -386,6 +397,7 @@ def write_data_set(file_path, dataset, output_dir, color_array_info, new_name=No
 ### ----------------------------------------------------------------------- ###
 
 def mkdir_p(path):
+    """Make directory at path"""
     try:
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
@@ -609,9 +621,11 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
 
 def convert_dropbox_url(url):
+    """Convert dropbox url to direct download link"""
     return url.replace("https://www.dropbox.com", "https://dl.dropbox.com")
 
 def generate_viewer_url(dataURL):
+    """Generate viewer url with data link"""
     viewerURL = "http://viewer.pvgeo.org/"
     return viewerURL + '%s%s' % ("?fileURL=", dataURL)
 
