@@ -6,7 +6,7 @@ import logging
 
 import vtk
 from vtk import vtkRectilinearGrid, vtkImageData
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
+from vtk.util.numpy_support import vtk_to_numpy
 from vtk.util.numpy_support import numpy_to_vtk
 
 import numpy as np

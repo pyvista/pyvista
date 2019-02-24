@@ -63,7 +63,7 @@ class Common(DataSetFilters):
         """Return the active scalar's field and name: [field, name]"""
         if not hasattr(self, '_active_vectors_info'):
             self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
-        field, name = self._active_vectors_info
+        _, name = self._active_vectors_info
 
         # rare error where scalar name isn't a valid scalar
         if name not in self.point_arrays:
@@ -236,7 +236,7 @@ class Common(DataSetFilters):
 
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
-        arr, field = get_scalar(self, name, preference=preference, info=True)
+        _, field = get_scalar(self, name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveScalars(name)
         elif field == CELL_DATA_FIELD:
@@ -247,7 +247,7 @@ class Common(DataSetFilters):
 
     def set_active_vectors(self, name, preference='cell'):
         """Finds the vectors by name and appropriately sets it as active"""
-        arr, field = get_scalar(self, name, preference=preference, info=True)
+        _, field = get_scalar(self, name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveVectors(name)
         elif field == CELL_DATA_FIELD:

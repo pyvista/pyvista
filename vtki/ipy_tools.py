@@ -4,7 +4,7 @@ notebook
 """
 IPY_AVAILABLE = False
 try:
-    from ipywidgets import interact, interactive, fixed, interact_manual
+    from ipywidgets import interact, interactive
     import ipywidgets as widgets
     IPY_AVAILABLE = True
 except:
@@ -13,8 +13,6 @@ except:
 import collections
 import numpy as np
 import logging
-
-import vtk
 
 import vtki
 from vtki.utilities import is_vtki_obj, wrap

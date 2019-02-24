@@ -449,7 +449,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     componentName = 'data_%d_%d' % (
                         rIdx, rpIdx)  # getComponentName(renProp)
                     scalarVisibility = mapper.GetScalarVisibility()
-                    arrayAccessMode = mapper.GetArrayAccessMode()
+                    #arrayAccessMode = mapper.GetArrayAccessMode()
                     #colorArrayName = mapper.GetArrayName() #TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
                     colorMode = mapper.GetColorMode()
                     scalarMode = mapper.GetScalarMode()

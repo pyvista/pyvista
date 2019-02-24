@@ -24,7 +24,6 @@ Example
 
 """
 import collections
-import logging
 import numpy as np
 import vtk
 
@@ -374,7 +373,7 @@ class DataSetFilters(object):
 
         """
         if scalars is None:
-            field, tscalars = dataset.active_scalar_info
+            _, tscalars = dataset.active_scalar_info
         else:
             tscalars = scalars
         dmin, dmax = dataset.get_data_range(arr=tscalars, preference=preference)

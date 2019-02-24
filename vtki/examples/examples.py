@@ -1,9 +1,5 @@
-import inspect
-import sys
 import os
 import time
-
-import vtk
 
 import vtki
 import numpy as np
@@ -222,8 +218,8 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
             time.sleep(tdelay - tpast)
 
         # get render time and actual FPS
-        rtime = rstop - rstart
-        act_fps = 1 / (time.time() - tlast + 1E-10)
+        # rtime = rstop - rstart
+        # act_fps = 1 / (time.time() - tlast + 1E-10)
         tlast = time.time()
 
     # Close movie and delete object

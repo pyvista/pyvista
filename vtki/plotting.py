@@ -6,8 +6,6 @@ import logging
 import ctypes
 import PIL.Image
 from subprocess import Popen, PIPE
-import os
-import colorsys
 import collections
 
 import vtk
@@ -93,7 +91,7 @@ def set_plot_theme(theme):
 def run_from_ipython():
     """ returns True when run from IPython """
     try:
-        __IPYTHON__
+        py = __IPYTHON__
         return True
     except NameError:
         return False
@@ -275,7 +273,7 @@ def running_xserver():
         p.communicate()
         return p.returncode == 0
     except:
-        False
+        return False
 
 
 class BasePlotter(object):
@@ -322,7 +320,7 @@ class BasePlotter(object):
                 update_axis(ax)
             return
 
-        for name, actor in self._actors.items():
+        for actor in self._actors.values():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
             if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None

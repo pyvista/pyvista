@@ -38,9 +38,8 @@ try:
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout,
-                                 QFrame, QMainWindow, QSlider,
-                                 QDialog, QFormLayout, QGroupBox, QFileDialog)
+    from PyQt5.QtWidgets import (QVBoxLayout, QFrame, QMainWindow, QSlider,
+                                 QDialog, QFormLayout, QFileDialog)
     has_pyqt = True
 except:
     pass

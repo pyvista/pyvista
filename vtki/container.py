@@ -4,7 +4,6 @@ VTK datasets in one object that can be passed to VTK algorithms and ``vtki``
 filtering/plotting routines.
 """
 import logging
-from weakref import proxy
 import collections
 import os
 
@@ -15,7 +14,6 @@ from vtk import vtkMultiBlockDataSet
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-import vtki
 from vtki.utilities import wrap, is_vtki_obj, get_scalar
 from vtki import plot
 
