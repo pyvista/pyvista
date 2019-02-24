@@ -153,6 +153,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
 
         def update_bounds(ax, nb, bounds):
+            """internal helper to update bounds while keeping track"""
             if nb[2*ax] < bounds[2*ax]:
                 bounds[2*ax] = nb[2*ax]
             if nb[2*ax+1] > bounds[2*ax+1]:
@@ -297,10 +298,12 @@ class MultiBlock(vtkMultiBlockDataSet):
 
 
     def __iter__(self):
+        """The iterator across all blocks"""
         self._iter_n = 0
         return self
 
     def next(self):
+        """Get the next block from the iterator"""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
             self._iter_n += 1

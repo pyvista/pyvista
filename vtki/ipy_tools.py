@@ -2,11 +2,11 @@
 A set of useful plotting tools and widgets that can be used in a Jupyter
 notebook
 """
-ipy_available = False
+IPY_AVAILABLE = False
 try:
     from ipywidgets import interact, interactive, fixed, interact_manual
     import ipywidgets as widgets
-    ipy_available = True
+    IPY_AVAILABLE = True
 except:
     pass
 
@@ -27,7 +27,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
-        if not run_from_ipython() or not ipy_available:
+        if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
@@ -40,6 +40,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
                                 continuous_update=self.continuous_update)
 
         def update(xscale, yscale, zscale):
+            """Update the scales"""
             # Update max range if needed
             if xscale >= self.xslider.max:
                 self.xslider.max *= 2
@@ -72,7 +73,7 @@ class InteractiveTool(object):
                  show_bounds=False, reset_camera=True, outline=None,
                  display_params=None, default_params=None,
                  continuous_update=False, clean=True, **kwargs):
-        if not run_from_ipython() or not ipy_available:
+        if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_vtki_obj(dataset):
@@ -247,6 +248,7 @@ class OrthogonalSlicer(InteractiveTool):
             self.display_params['name'] = name
 
         def update(x, y, z, **kwargs):
+            """Update the slices"""
             self._update_plotting_params(**kwargs)
             if x != self._old[0] or self._need_to_update:
                 _update_slice(0, x, y, z)
@@ -341,6 +343,7 @@ class ManySlicesAlongAxis(InteractiveTool):
                                 continuous_update=self.continuous_update)
 
         def update(n, axis, **kwargs):
+            """Update the slices"""
             if n >= nsl.max:
                 nsl.max *= 2
             self._update_plotting_params(**kwargs)
@@ -424,6 +427,7 @@ class Threshold(InteractiveTool):
 
 
         def update(dmin, dmax, invert, continuous, **kwargs):
+            """Update the threshold"""
             if dmax < dmin:
                 # If user chooses a min that is more than max, correct them:
                 # Set max threshold as 1 percent of the range more than min
@@ -527,6 +531,7 @@ class Clip(InteractiveTool):
             return
 
         def update(location, normal, invert, **kwargs):
+            """Update the clip location"""
             if self._last_normal != normal:
                 self._last_normal = normal
                 _update_slider_ranges(normal)

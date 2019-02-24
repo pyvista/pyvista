@@ -107,6 +107,7 @@ class ScaleAxesDialog(QDialog):
 
         # setup sliders
         def make_slider():
+            """Makes a double slider"""
             slider = DoubleSlider(QtCore.Qt.Horizontal)
             slider.setTickInterval(0.1)
             slider.setMinimum(0)

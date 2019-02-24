@@ -28,6 +28,7 @@ def vtk_bit_array_to_char(vtkarr_bint):
 
 
 def is_vtki_obj(obj):
+    """ Return True if the Object is a ``vtki`` wrapped dataset """
     return isinstance(obj, (vtki.Common, vtki.MultiBlock))
 
 
@@ -50,7 +51,24 @@ def cell_scalar(mesh, name):
 
 
 def get_scalar(mesh, name, preference='cell', info=False, err=False):
-    """ Searches both point and cell data for an array """
+    """ Searches both point and cell data for an array
+
+    Parameters
+    ----------
+    name : str
+        The name of the array to get the range.
+
+    preference : str, optional
+        When scalars is specified, this is the perfered scalar type to
+        search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+
+    info : bool
+        Return info about the scalar rather than the array itself.
+
+    err : bool
+        Boolean to control whether to throw an error if array is not present.
+
+    """
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
     if isinstance(preference, str):

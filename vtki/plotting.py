@@ -333,6 +333,7 @@ class BasePlotter(object):
 
     @property
     def center(self):
+        """Center of the bounding box around all data present in the scene"""
         bounds = self.bounds
         x = (bounds[1] + bounds[0])/2
         y = (bounds[3] + bounds[2])/2
@@ -403,10 +404,12 @@ class BasePlotter(object):
         self._updatae_axes_color(color)
 
     def hide_axes(self):
+        """Hide the axes orientation widget"""
         if hasattr(self, 'axes_widget'):
             self.axes_widget.EnabledOff()
 
     def show_axes(self):
+        """Show the axes orientation widget"""
         if hasattr(self, 'axes_widget'):
             self.axes_widget.EnabledOn()
         else:
@@ -435,12 +438,13 @@ class BasePlotter(object):
             self.isometric_view()
 
     def left_button_down(self, obj, event_type):
+        """Register the event for a left button down click"""
         # Get 2D click location on window
-        clickPos = self.iren.GetEventPosition()
+        click_pos = self.iren.GetEventPosition()
 
         # Get corresponding click location in the 3D plot
         picker = vtk.vtkWorldPointPicker()
-        picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
+        picker.Pick(click_pos[0], click_pos[1], 0, self.renderer)
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
         if np.any(np.isnan(self.pickpoint)):
             self.pickpoint[:] = 0
@@ -652,7 +656,7 @@ class BasePlotter(object):
                 if mesh[idx] is None:
                     continue
                 # Get a good name to use
-                nm = '{}-{}'.format(name, idx)
+                next_name = '{}-{}'.format(name, idx)
                 # Get the data object
                 if not is_vtki_obj(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
@@ -680,7 +684,7 @@ class BasePlotter(object):
                                   interpolate_before_map=interpolate_before_map,
                                   cmap=cmap, label=label,
                                   scalar_bar_args=scalar_bar_args,
-                                  reset_camera=reset_camera, name=nm,
+                                  reset_camera=reset_camera, name=next_name,
                                   texture=None,
                                   render_points_as_spheres=render_points_as_spheres,
                                   render_lines_as_tubes=render_lines_as_tubes,
@@ -911,6 +915,7 @@ class BasePlotter(object):
 
     @property
     def camera(self):
+        """The active camera for the rendering scene"""
         return self.renderer.GetActiveCamera()
 
     def remove_actor(self, actor, reset_camera=False):

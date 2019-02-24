@@ -74,6 +74,7 @@ class Common(DataSetFilters):
 
     @property
     def active_vectors(self):
+        """The active vectors array"""
         field, name = self.active_vectors_info
         if name:
             if field is POINT_DATA_FIELD:
@@ -83,6 +84,7 @@ class Common(DataSetFilters):
 
     @property
     def active_vectors_name(self):
+        """The name of the active vectors array"""
         return self.active_vectors_info[1]
 
     @active_vectors_name.setter
@@ -163,6 +165,7 @@ class Common(DataSetFilters):
 
     @property
     def t_coords(self):
+        """The active texture coordinates on the points"""
         if self.GetPointData().GetTCoords() is not None:
             return vtk_to_numpy(self.GetPointData().GetTCoords())
         return None
@@ -605,10 +608,12 @@ class Common(DataSetFilters):
 
     @property
     def n_points(self):
+        """The number of points in the entire dataset"""
         return self.GetNumberOfPoints()
 
     @property
     def n_cells(self):
+        """The number of cells in the entire dataset"""
         return self.GetNumberOfCells()
 
     @property
@@ -623,18 +628,37 @@ class Common(DataSetFilters):
 
     @property
     def bounds(self):
+        """
+        bounding box of this dataset in the form
+        (xmin,xmax, ymin,ymax, zmin,zmax)
+        """
         return list(self.GetBounds())
 
     @property
     def center(self):
+        """ Center of the bounding box """
         return list(self.GetCenter())
 
     @property
     def extent(self):
+        """ The range of the bounding box """
         if hasattr(self, 'GetExtent'):
             return list(self.GetExtent())
 
     def get_data_range(self, arr=None, preference='cell'):
+        """Get the non-NaN min and max of a named scalar array
+
+        Parameters
+        ----------
+        arr : str, np.ndarray, optional
+            The name of the array to get the range. If None, the active scalar
+            is used
+
+        preference : str, optional
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+
+        """
         if arr is None:
             # use active scalar array
             _, arr = self.active_scalar_info
@@ -652,6 +676,7 @@ class Common(DataSetFilters):
 
     @property
     def n_scalars(self):
+        """The number of scalara arrays present in the dataset"""
         return self.GetPointData().GetNumberOfArrays() + \
                self.GetCellData().GetNumberOfArrays()
 
@@ -751,6 +776,7 @@ class Common(DataSetFilters):
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{:.3e}</td><td>{:.3e}</td></tr>\n"
 
             def format_array(key, field):
+                """internal helper to foramt array information for printing"""
                 arr = get_scalar(self, key)
                 dl, dh = self.get_data_range(key)
                 if key == self.active_scalar_info[1]:
@@ -780,6 +806,7 @@ class _ScalarsDict(dict):
         self.modifier = None
 
     def enable_callback(self):
+        """Enable callbacks to be set True"""
         self.callback_enabled = True
 
     def pop(self, key):
@@ -839,38 +866,38 @@ class PointScalarsDict(_ScalarsDict):
         self.modifier = self.data.GetPointData().Modified
 
 
-def axis_rotation(p, ang, inplace=False, deg=True, axis='z'):
-    """ Rotates points p angle ang (in deg) about an axis """
+def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
+    """ Rotates points angle ang (in deg) about an axis """
     axis = axis.lower()
 
     # Copy original array to if not inplace
     if not inplace:
-        p = p.copy()
+        points = points.copy()
 
     # Convert angle to radians
     if deg:
-        ang *= np.pi / 180
+        angle *= np.pi / 180
 
     if axis == 'x':
-        y = p[:, 1] * np.cos(ang) - p[:, 2] * np.sin(ang)
-        z = p[:, 1] * np.sin(ang) + p[:, 2] * np.cos(ang)
-        p[:, 1] = y
-        p[:, 2] = z
+        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
+        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
+        points[:, 1] = y
+        points[:, 2] = z
     elif axis == 'y':
-        x = p[:, 0] * np.cos(ang) + p[:, 2] * np.sin(ang)
-        z = - p[:, 0] * np.sin(ang) + p[:, 2] * np.cos(ang)
-        p[:, 0] = x
-        p[:, 2] = z
+        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
+        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
+        points[:, 0] = x
+        points[:, 2] = z
     elif axis == 'z':
-        x = p[:, 0] * np.cos(ang) - p[:, 1] * np.sin(ang)
-        y = p[:, 0] * np.sin(ang) + p[:, 1] * np.cos(ang)
-        p[:, 0] = x
-        p[:, 1] = y
+        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
+        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
+        points[:, 0] = x
+        points[:, 1] = y
     else:
         raise Exception('invalid axis.  Must be either "x", "y", or "z"')
 
     if not inplace:
-        return p
+        return points
 
 
 class vtki_ndarray(np.ndarray):

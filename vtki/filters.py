@@ -291,8 +291,8 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         # set the scalaras to threshold on
@@ -369,8 +369,8 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         if scalars is None:
@@ -553,8 +553,8 @@ class DataSetFilters(object):
             Preserves the scalar values that are being contoured
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         # Make sure the input has scalars to contour on
