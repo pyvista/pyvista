@@ -7,7 +7,7 @@ try:
     from ipywidgets import interact, interactive
     import ipywidgets as widgets
     IPY_AVAILABLE = True
-except:
+except ImportError:
     pass
 
 import collections

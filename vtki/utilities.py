@@ -275,7 +275,8 @@ def read(filename):
         # Attempt to use the legacy reader...
         try:
             output = wrap(legacy(filename))
-            assert output is not None
+            if output is None:
+                raise AssertionError()
             return output
         except:
             pass

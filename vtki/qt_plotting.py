@@ -41,7 +41,7 @@ try:
     from PyQt5.QtWidgets import (QVBoxLayout, QFrame, QMainWindow, QSlider,
                                  QDialog, QFormLayout, QFileDialog)
     has_pyqt = True
-except:
+except ImportError:
     pass
 
 
