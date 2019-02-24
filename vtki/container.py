@@ -3,19 +3,20 @@ Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
 VTK datasets in one object that can be passed to VTK algorithms and ``vtki``
 filtering/plotting routines.
 """
-import logging
 import collections
+import logging
 import os
 
 import numpy as np
 import vtk
 from vtk import vtkMultiBlockDataSet
 
+from vtki import plot
+from vtki.utilities import get_scalar, is_vtki_obj, wrap
+
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-from vtki.utilities import wrap, is_vtki_obj, get_scalar
-from vtki import plot
 
 
 class MultiBlock(vtkMultiBlockDataSet):

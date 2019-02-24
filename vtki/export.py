@@ -40,17 +40,17 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 """
 
-import hashlib
-import shutil
-import gzip
-import json
 import errno
-import time
+import gzip
+import hashlib
+import json
 import os
+import shutil
 import sys
-import vtk
+import time
 import zipfile
 
+import vtk
 
 FILENAME_EXTENSION = '.vtkjs'
 

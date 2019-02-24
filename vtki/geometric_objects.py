@@ -17,9 +17,10 @@ vtkLineSource
 vtkRegularPolygonSource
 
 """
-from vtki import PolyData
-import vtk
 import numpy as np
+import vtk
+
+from vtki import PolyData
 
 
 def translate(surf, center, direction):

@@ -11,12 +11,13 @@ except:
     pass
 
 import collections
-import numpy as np
 import logging
 
+import numpy as np
+
 import vtki
-from vtki.utilities import is_vtki_obj, wrap
 from vtki.plotting import run_from_ipython
+from vtki.utilities import is_vtki_obj, wrap
 
 
 class ScaledPlotter(vtki.BackgroundPlotter):

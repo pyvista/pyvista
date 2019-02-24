@@ -6,13 +6,12 @@ from weakref import proxy
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import vtk_to_numpy
-from vtk.util.numpy_support import numpy_to_vtk
+from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import vtki
-from vtki.utilities import (get_scalar, POINT_DATA_FIELD, CELL_DATA_FIELD,
-                            vtk_bit_array_to_char)
 from vtki import DataSetFilters
+from vtki.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, get_scalar,
+                            vtk_bit_array_to_char)
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

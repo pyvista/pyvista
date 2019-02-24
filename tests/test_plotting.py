@@ -1,12 +1,13 @@
-from subprocess import Popen, PIPE
 import os
 import sys
+from subprocess import PIPE, Popen
 from weakref import proxy
 
 import imageio
 import numpy as np
-import vtki
+import pytest
 
+import vtki
 from vtki import examples
 from vtki.plotting import running_xserver
 
@@ -15,7 +16,6 @@ if __name__ != '__main__':
 else:
     OFF_SCREEN = False
 
-import pytest
 
 
 sphere = vtki.Sphere()

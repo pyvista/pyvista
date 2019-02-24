@@ -1,21 +1,21 @@
 """
 vtki plotting module
 """
-import time
-import logging
-import ctypes
-import PIL.Image
-from subprocess import Popen, PIPE
 import collections
+import ctypes
+import logging
+import time
+from subprocess import PIPE, Popen
 
+import imageio
+import numpy as np
+import PIL.Image
 import vtk
 from vtk.util import numpy_support as VN
 
-import numpy as np
 import vtki
-from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
 from vtki.export import export_plotter_vtkjs
-import imageio
+from vtki.utilities import get_scalar, is_vtki_obj, numpy_to_texture, wrap
 
 _OPEN_PLOTTERS = {}
 

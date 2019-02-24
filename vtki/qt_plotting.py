@@ -1,9 +1,9 @@
-from threading import Thread
-import time
 import logging
-import numpy as np
 import os
+import time
+from threading import Thread
 
+import numpy as np
 import vtk
 import vtk.qt
 

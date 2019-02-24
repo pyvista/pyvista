@@ -1,8 +1,9 @@
 import os
 import time
 
-import vtki
 import numpy as np
+
+import vtki
 
 # get location of this folder and the example files
 dir_path = os.path.dirname(os.path.realpath(__file__))

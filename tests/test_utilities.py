@@ -1,10 +1,12 @@
 """ test vtki.utilities """
-import pytest
-import numpy as np
-import vtki
-from vtki import utilities
-from vtki import examples as ex
 import os
+
+import numpy as np
+import pytest
+
+import vtki
+from vtki import examples as ex
+from vtki import utilities
 
 # Only set this here just the once.
 utilities.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))

@@ -1,12 +1,13 @@
 """
 Installation file for python vtki module
 """
-from setuptools import setup
-from io import open as io_open
 import os
-import sys
 import platform
+import sys
 import warnings
+from io import open as io_open
+
+from setuptools import setup
 
 package_name = 'vtki'
 

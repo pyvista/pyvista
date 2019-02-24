@@ -1,15 +1,13 @@
 """
 Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData
 """
-import os
 import logging
-
-import vtk
-from vtk import vtkRectilinearGrid, vtkImageData
-from vtk.util.numpy_support import vtk_to_numpy
-from vtk.util.numpy_support import numpy_to_vtk
+import os
 
 import numpy as np
+import vtk
+from vtk import vtkImageData, vtkRectilinearGrid
+from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import vtki
 

@@ -1,14 +1,13 @@
-from subprocess import Popen, PIPE
 import os
+from subprocess import PIPE, Popen
 
 import numpy as np
 import pytest
+import vtk
 
 import vtki
 from vtki import examples as ex
 from vtki.plotting import running_xserver
-
-import vtk
 
 
 def test_multi_block_init_vtk():

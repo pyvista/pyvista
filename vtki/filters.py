@@ -24,11 +24,12 @@ Example
 
 """
 import collections
+
 import numpy as np
 import vtk
 
 import vtki
-from vtki.utilities import get_scalar, wrap, is_inside_bounds
+from vtki.utilities import get_scalar, is_inside_bounds, wrap
 
 NORMALS = {
     'x': [1, 0, 0],

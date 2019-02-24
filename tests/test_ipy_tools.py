@@ -1,12 +1,11 @@
 import sys
 
-import pytest
 import numpy as np
+import pytest
 
 import vtki
-from vtki import QtInteractor
+from vtki import QtInteractor, examples
 from vtki.plotting import running_xserver
-from vtki import examples
 
 try:
     import PyQt5

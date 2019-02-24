@@ -2,19 +2,17 @@
 Supporting functions for polydata and grid objects
 
 """
-import logging
 import ctypes
-import imageio
-
-import numpy as np
-import vtk
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
-
+import logging
 import os
 
-import vtki
+import imageio
+import numpy as np
+import vtk
+from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
+                                    vtk_to_numpy)
 
+import vtki
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
