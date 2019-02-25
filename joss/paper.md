@@ -85,6 +85,8 @@ plotter.show_grid()
 plotter.show()
 ```
 
+[comment]: # I'd like to suggest we use one of the new images I've uploaded to show the power of plotting using vtki.  Not all of the have transparent backgrounds, some have been cropped to avoid releasing propritary geometry, so take your pick since none are perfect.
+
 
 ## Data Types & Mesh Creation
 
@@ -179,5 +181,15 @@ p.show(screenshot='./images/filter-chain.png')
 
 ![Rendering of the result from the filtering chain](./images/filter-chain.png)
 
+## Mentions
+
+`vtki` is used extensively by the Air Force Research Labs (AFRL) for
+data visualization and plotting.  These research articles include
+figures visualizing 3D tessellated models generated from structured
+light optical scanner and results from finite element analysis, both
+of which are particularly suited to `vtki`.
+
+[comment]: # There are several recent papers from AFRL that include vtki figures.  It's late, and I'm not sure how cite in markdown.  I've included a bibtex file "ref.bib".  Would be great if we could use the references directly from there.
 
 ## References
+
