@@ -80,7 +80,10 @@ lines of code. Loading files supported by the VTK library is:
 
 ```python
 import vtki
+from vtki import examples
 import numpy as np
+# Set a document friendly plotting theme
+vtki.set_plot_theme('document')
 
 filename = 'path/to/vtk/supported/file.ext'
 mesh = vtki.read(filename)
@@ -134,61 +137,25 @@ ugrid.cell_arrays['values'] = values.flatten(order='F')
 ## Simplified Plotting Routines
 
 Plotting VTK datasets using only the VTK Python package is often an ambitious
-programming endeavor. For example, to read a VTK supported file and plot it, a
-user would have to write the following code using VTK alone
-(adapted from [this creative commons VTK example](https://vtk.org/Wiki/VTK/Examples/Python/STLReader)):
-
-```python
-import vtk
-
-# create reader
-reader = vtk.vtkSTLReader()
-reader.SetFileName("myfile.stl")
-
-mapper = vtk.vtkPolyDataMapper()
-if vtk.VTK_MAJOR_VERSION <= 5:
-    mapper.SetInput(reader.GetOutput())
-else:
-    mapper.SetInputConnection(reader.GetOutputPort())
-
-# create actor
-actor = vtk.vtkActor()
-actor.SetMapper(mapper)
-
-# Create a rendering window and renderer
-ren = vtk.vtkRenderer()
-renWin = vtk.vtkRenderWindow()
-renWin.AddRenderer(ren)
-
-# Create a renderwindowinteractor
-iren = vtk.vtkRenderWindowInteractor()
-iren.SetRenderWindow(renWin)
-
-# Assign actor to the renderer
-ren.AddActor(actor)
-
-# Enable user interface interactor
-iren.Initialize()
-renWin.Render()
-iren.Start()
-
-# clean up objects
-del iren
-del renWin
-```
-
+programming endeavor. Reading a VTK supported file and plotting it requires a
+user to write a complicated sequence of routines to render the data object while
+having to remember which VTK classes to use for file reading and dataset mapping.
+An example can be found in [this creative commons VTK example](https://vtk.org/Wiki/VTK/Examples/Python/STLReader).
 
 `vtki` includes numerous plotting routines that are intended to be intuitive and
 highly controllable with `matplotlib` [@matplotlib] similar syntax and keyword
 arguments.
 These plotting routines are defined to make the rendering process
-straightforward and easily implemented by novice VTK users. The above
-rendering example is translated to the following code in `vtki`:
+straightforward and easily implemented by novice VTK users. Loading and
+rendering in `vtki` is implemented to take only a few lines of code:
 
 ```python
-mesh = vtki.read('myfile.stl')
-mesh.plot()
+filename = examples.planefile
+mesh = vtki.read(filename)
+mesh.plot(show_edges=True, screenshot='./images/airplane.png')
 ```
+
+![airplane](./images/airplane.png)
 
 Notably, the `vtki.plot()` convenience method is binded to each `vtki`
 data object to make visual inspection of datasets easily performed. Other
@@ -220,7 +187,6 @@ object:
 
 ```python
 # Load a sample UniformGrid
-from vtki import examples
 dataset = examples.load_uniform()
 # Apply a threshold over a data range
 result = dataset.threshold([100, 500])
@@ -239,15 +205,25 @@ output to the next filtering algorithm [@vtkbook].
 the last filter. In the following example using the sample dataset from above,
 several filters are chained together.
 
-1. An empty threshold filter to clean out any `NaN` values.
+1. A threshold filter to extract a range of the active scalar array.
 2. An elevation filter to generate scalar values corresponding to height.
 3. A clip filter to cut the dataset in half.
 4. Create three slices along each axial plane.
 
 ```python
 # Apply a filtering chain
-result = dataset.threshold().elevation().clip(normal='z').slice_orthogonal()
+result = dataset.threshold([100, 500], invert=True).elevation().clip(normal='z').slice_orthogonal()
 ```
+
+```python
+p = vtki.Plotter()
+p.add_mesh(dataset.outline(), color='black')
+p.add_mesh(result, scalars='Elevation', show_edges=True)
+p.isometric_view()
+p.show(screenshot='./images/filter-chain.png')
+```
+
+![filter-chain](./images/filter-chain.png)
 
 A complete list of common filters can be found in the
 [`vtki` documentation](http://docs.vtki.org/en/latest/tools/filters.html#vtki.DataSetFilters)
@@ -263,6 +239,9 @@ function is provided below:
 import vtki
 import numpy as np
 
+# Set a document friendly plotting theme
+vtki.set_plot_theme('document')
+
 sphere = vtki.Sphere(radius=3.14)
 
 # make a swirly pattern
@@ -274,8 +253,10 @@ vectors = np.vstack((np.sin(sphere.points[:, 0]),
 sphere.vectors = vectors*0.3
 
 # plot the arrows
-sphere.arrows.plot(cmap='Blues')
+sphere.arrows.plot(cmap='viridis', screenshot='./images/arrows.png')
 ```
+
+![arrows-example](./images/arrows.png)
 
 
 `vtki` can also be used to create integrated visualizations of any spatially
@@ -327,8 +308,10 @@ p.add_mesh(assay.tube(scalars='CU_pct', radius=3), name='assay', cmap='viridis')
 
 p.show(auto_close=False)
 # Save a screenshot!
-p.screenshot('wolfpass.png')
+p.screenshot('./images/wolfpass.png')
 p.close()
 ```
+
+![omfvtk example](./images/wolfpass.png)
 
 ## References

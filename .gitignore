@@ -49,3 +49,6 @@ htmlcov
 
 # Testing output
 tests/ERROR_OUTPUT.txt
+
+# ignore data files
+*.omf
