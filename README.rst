@@ -37,6 +37,14 @@ Documentation
 Refer to the `Read the Docs <http://docs.vtki.org/>`_ documentation for detailed
 installation and usage details.
 
+For general questions about the project, its applications, or about software
+usage, please do not create an issue but join us on Slack_ or send one
+of the developers an email. The project support team can be reached at
+`info@vtki.org`_.
+
+.. _Slack: http://slack.opengeovis.org
+.. _info@vtki.org: mailto:info@vtki.org
+
 
 Installation
 ============
