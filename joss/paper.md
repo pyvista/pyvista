@@ -68,7 +68,7 @@ mesh = vtki.read(filename)
 mesh.plot(show_edges=True, screenshot='./images/airplane.png')
 ```
 
-![airplane](./images/airplane.png)
+![Example rendering of mesh loaded from a file](./images/airplane.png)
 
 Notably, the `vtki.plot()` convenience method is binded to each `vtki`
 data object to make visual inspection of datasets easily performed. Other
@@ -175,7 +175,7 @@ p.isometric_view()
 p.show(screenshot='./images/filter-chain.png')
 ```
 
-![filter-chain](./images/filter-chain.png)
+![Rendering of the result from the filtering chain](./images/filter-chain.png)
 
 A complete list of common filters can be found in the
 [`vtki` documentation](http://docs.vtki.org/en/latest/tools/filters.html#vtki.DataSetFilters)
@@ -202,7 +202,7 @@ sphere.vectors = vectors*0.3
 sphere.arrows.plot(cmap='viridis', screenshot='./images/arrows.png')
 ```
 
-![arrows-example](./images/arrows.png)
+![3D arrow glyphing example](./images/arrows.png)
 
 
 `vtki` can also be used to create integrated visualizations of any spatially
@@ -254,6 +254,6 @@ p.screenshot('./images/wolfpass.png')
 p.close()
 ```
 
-![omfvtk example](./images/wolfpass.png)
+![Example scene of geospatial subsurface data](./images/wolfpass.png)
 
 ## References
