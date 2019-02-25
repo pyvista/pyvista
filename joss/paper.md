@@ -9,7 +9,7 @@ authors:
     orcid: 0000-0001-8628-4566
     affiliation: 1
   - name: Alexander A. Kaszynski
-    orcid: 0000-0001-6293-5352
+    orcid: 0000-0002-8232-7212
     affiliation: 2
 affiliations:
  - name: Department of Geophysics, Colorado School of Mines, Golden, CO, USA
