@@ -132,7 +132,10 @@ def read_legacy(filename):
     reader.ReadAllVectorsOn()
     # Perform the read
     reader.Update()
-    return reader.GetOutputDataObject(0)
+    output = reader.GetOutputDataObject(0)
+    if output is None:
+        raise AssertionError('No output when using VTKs legacy reader')
+    return vtki.wrap(output)
 
 
 def read(filename, attrs=None):
@@ -168,10 +171,7 @@ def read(filename, attrs=None):
         return vtki.MultiBlock(filename)
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
-        output = vtki.wrap(read_legacy(filename))
-        if output is None:
-            raise AssertionError('No output when using VTKs legacy reader')
-        return output
+        return read_legacy(filename)
     else:
         # Attempt find a reader in the readers mapping
         try:
@@ -182,15 +182,15 @@ def read(filename, attrs=None):
     raise IOError("This file was not able to be automatically read by vtki.")
 
 
-def read_texture(filename):
+def read_texture(filename, attrs=None):
     """Loads a ``vtkTexture`` from an image file."""
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
         # intitialize the reader using the extnesion to find it
         reader = get_reader(filename)
+        image = standard_reader_routine(reader, filename, attrs=attrs)
+        return vtki.image_to_texture(image)
     except KeyError:
         # Otherwise, use the imageio reader
-        return vtki.numpy_to_texture(imageio.imread(filename))
-    reader.SetFileName(filename)
-    reader.Update()
-    return vtki.image_to_texture(reader.GetOutputDataObject(0))
+        pass
+    return vtki.numpy_to_texture(imageio.imread(filename))
