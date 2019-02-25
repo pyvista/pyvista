@@ -279,7 +279,8 @@ sphere.arrows.plot(cmap='Blues')
 
 
 `vtki` can also be used to create integrated visualizations of any spatially
-referenced data. Using the `vtki`-based [`omfvtk` Python package](https://github.com/OpenGeoVis/omfvtk),
+referenced data. Using the `vtki`-based
+[`omfvtk` Python package](https://github.com/OpenGeoVis/omfvtk),
 users can load geospatial data into VTK data structures and create compelling
 visualizations of real data in just a few lines of code:
 
