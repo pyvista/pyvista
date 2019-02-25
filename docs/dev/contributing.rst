@@ -10,11 +10,11 @@ Questions
 ~~~~~~~~~
 
 For general questions about the project, its applications, or about the
-non-technical, please do not create an issue but join us on
-slack_ or send one of the developers an email.
-The project support team can be reached at `info@vtki.org`_.
+non-technical, please do not create an issue but join us on Slack_ or send one
+of the developers an email. The project support team can be reached at
+`info@vtki.org`_.
 
-.. _slack: http://slack.opengeovis.org
+.. _Slack: http://slack.opengeovis.org
 .. _info@vtki.org: mailto:info@vtki.org
 
 For more technical questions, you are welcome to create an issue on the
