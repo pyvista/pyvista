@@ -54,6 +54,15 @@ straightforward and easily implemented by novice VTK users. Loading and
 rendering in `vtki` is implemented to take only a few lines of code:
 
 ```python
+# Obligatory set up code
+import vtki
+from vtki import examples
+import numpy as np
+# Set a document friendly plotting theme
+vtki.set_plot_theme('document')
+```
+
+```python
 filename = examples.planefile
 mesh = vtki.read(filename)
 mesh.plot(show_edges=True, screenshot='./images/airplane.png')
@@ -115,20 +124,6 @@ class  `vtki.Common`.
 
 Creation of VTK data objects over the `vtki` interface can be completed in a few
 lines of code. Loading files supported by the VTK library is:
-
-```python
-import vtki
-from vtki import examples
-import numpy as np
-# Plotting parameters to reproduce figures in this paper
-# Set a document friendly plotting theme
-vtki.set_plot_theme('document')
-# Set a default colormap
-vtki.rcParams['cmap'] = 'viridis'
-vtki.rcParams['font']['size'] = 18
-vtki.rcParams['font']['title_size'] = 18
-vtki.rcParams['font']['label_size'] = 18
-```
 
 ```python
 filename = 'path/to/vtk/supported/file.ext'

@@ -78,7 +78,10 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
-        rcParams['cmap'] = 'coolwarm'
+        rcParams['cmap'] = 'viridis'
+        rcParams['font']['size'] = 18
+        rcParams['font']['title_size'] = 18
+        rcParams['font']['label_size'] = 18
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
         rcParams['color'] = 'orange'
