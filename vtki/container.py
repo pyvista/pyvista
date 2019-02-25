@@ -11,6 +11,7 @@ import numpy as np
 import vtk
 from vtk import vtkMultiBlockDataSet
 
+import vtki
 from vtki import plot
 from vtki.utilities import get_scalar, is_vtki_obj, wrap
 
@@ -89,7 +90,7 @@ class MultiBlock(vtkMultiBlockDataSet):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
         # Extensions: .vtm and .vtmb
 
         # Select reader
@@ -126,7 +127,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         file size.
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
         else:
