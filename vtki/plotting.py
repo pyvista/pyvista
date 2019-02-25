@@ -711,6 +711,21 @@ class BasePlotter(object):
             self.mapper.SetArrayName(scalars)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
 
+        # Try to plot something if no preference given
+        if scalars is None and color is None and texture is None:
+            # Prefer texture first
+            if len(list(mesh.textures.keys())) > 0:
+                texture = True
+            # If no texture, plot any active scalar
+            else:
+                # Make sure scalar components are not vectors/tuples
+                scalars = mesh.active_scalar
+                if scalars is None or scalars.ndim != 1:
+                    scalars = None
+                else:
+                    if stitle is None:
+                        stitle = mesh.active_scalar_info[1]
+
         if texture == True or isinstance(texture, str):
             texture = mesh._activate_texture(texture)
 
@@ -726,16 +741,6 @@ class BasePlotter(object):
             if color is None:
                 color = 'white'
 
-
-        # Attempt get the active scalars if no preference given
-        if scalars is None and color is None and texture is None:
-            scalars = mesh.active_scalar
-            # Make sure scalar components are not vectors/tuples
-            if scalars is None or scalars.ndim != 1:
-                scalars = None
-            else:
-                if stitle is None:
-                    stitle = mesh.active_scalar_info[1]
 
         # Scalar formatting ===================================================
         if cmap is None:
