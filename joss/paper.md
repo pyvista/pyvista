@@ -303,7 +303,7 @@ p.show_grid()
 # Add datasets
 p.add_mesh(topo, texture=True, opacity=0.90, name='topo', color='white')
 p.add_mesh(dacite, color='orange', opacity=0.6, name='dacite')
-p.add_mesh(threshed, name='vol')
+p.add_mesh(threshed, name='vol', cmap='coolwarm')
 # Add the assay logs: use a tube filter that varies the radius by an attribute
 # this will vary the radius by 'CU_pct' and color by the active scalar array
 p.add_mesh(assay.tube(scalars='CU_pct', radius=3), name='assay', cmap='viridis')
