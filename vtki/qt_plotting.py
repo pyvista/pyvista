@@ -50,6 +50,49 @@ except ImportError:  # pragma: no cover
     pass
 
 
+class FileDialog(QFileDialog):
+    """
+    Generic file query that emits a signal when a file is selected and
+    the dialog was property closed.
+    """
+    dlg_accepted = pyqtSignal(str)
+
+    def __init__(self, parent=None, filefilter=None, save_mode=True, show=True,
+                 callback=None, directory=False):
+        super(FileDialog, self).__init__(parent)
+
+        if filefilter is not None:
+            self.setNameFilters(filefilter)
+
+        self.setOption(QFileDialog.DontUseNativeDialog)
+        self.accepted.connect(self.emit_accepted)
+
+        if directory:
+            self.FileMode(QFileDialog.DirectoryOnly)
+            self.setOption(QFileDialog.ShowDirsOnly, True)
+
+        if save_mode:
+            self.setAcceptMode(QFileDialog.AcceptSave)
+
+        if callback is not None:
+            self.dlg_accepted.connect(callback)
+
+        if show:  # pragma: no cover
+            self.show()
+
+    def emit_accepted(self):
+        """
+        Sends signal that the file dialog was closed properly.
+        
+        Sends:
+        filename
+        """
+        if self.result():
+            filename = self.selectedFiles()[0]
+            if os.path.isdir(os.path.dirname(filename)):
+                self.dlg_accepted.emit(filename)
+
+
 class DoubleSlider(QSlider):
     """
     Double precision slider from:
@@ -169,7 +212,6 @@ class ScaleAxesDialog(QDialog):
 
     def update_scale(self, value):
         """ updates the scale of all actors in the plotter """
-        print(self.x_slider_group.value)
         self.plotter.set_scale(self.x_slider_group.value,
                                self.y_slider_group.value,
                                self.z_slider_group.value)
@@ -246,7 +288,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         # QVTKRenderWindowInteractor doesn't have a "q" quit event
         self.iren.AddObserver("KeyPressEvent", self.key_quit)
 
-    def key_quit(self, obj=None, event=None):
+    def key_quit(self, obj=None, event=None):  # pragma: no cover
         try:
             key = self.iren.GetKeySym().lower()
 
@@ -272,8 +314,7 @@ class BackgroundPlotter(QtInteractor):
         self.saved_camera_positions = []
 
         # ipython magic
-        if run_from_ipython():
-            # breakpoint()
+        if run_from_ipython():  # pragma: no cover
             from IPython import get_ipython
             ipython = get_ipython()
             ipython.magic('gui qt')
@@ -285,7 +326,7 @@ class BackgroundPlotter(QtInteractor):
         if app is None:
             from PyQt5.QtWidgets import QApplication
             app = QApplication.instance()
-            if not app:
+            if not app:  # pragma: no cover
                 app = QApplication([''])
 
         self.app = app
@@ -342,7 +383,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
 
-        if show:
+        if show:  # pragma: no cover
             self.app_window.show()
             self.show()
 
@@ -400,7 +441,7 @@ class BackgroundPlotter(QtInteractor):
 
     def add_actor(self, actor, reset_camera=None, name=None):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor, reset_camera, name)
-        if reset_camera:
+        if reset_camera:  # pragma: no cover
             self.reset_camera()
         self.update_app_icon()
         return actor, prop
@@ -409,11 +450,11 @@ class BackgroundPlotter(QtInteractor):
         """
         Update the app icon if the user is not trying to resize the window.
         """
-        if os.name == 'nt':
+        if os.name == 'nt':  # pragma: no cover
             # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
             return
         cur_time = time.time()
-        if self._last_window_size != self.window_size:
+        if self._last_window_size != self.window_size:  # pragma: no cover
             # Window size hasn't remained constant since last render.
             # This means the user is resizing it so ignore update.
             pass
@@ -436,26 +477,29 @@ class BackgroundPlotter(QtInteractor):
         # Update trackers
         self._last_window_size = self.window_size
 
-    def _qt_screenshot(self):
-        filename = QFileDialog.getSaveFileName(self.app_window,
-                        caption='Save Screenshot...', directory=os.getcwd(), filter='*.png')
-        filename = filename[0]
-        if not os.path.isdir(os.path.dirname(filename)):
-            return
-        return self.screenshot(filename, return_img=False)
+    def _qt_screenshot(self, show=True):
+        return FileDialog(self.app_window,
+                          filefilter=['Image File (*.png)',
+                                      'JPEG (*.jpeg)'],
+                          show=show,
+                          directory=os.getcwd(),
+                          callback=self.screenshot)
 
-    def _qt_export_vtkjs(self):
-        filename = QFileDialog.getSaveFileName(self.app_window,
-                        caption='Save VTKjs...', directory=os.getcwd())
-        filename = filename[0]
-        if not os.path.isdir(os.path.dirname(filename)):
-            return
-        return self.export_vtkjs(filename)
+    def _qt_export_vtkjs(self, show=True):
+        """
+        Spawn an save file dialog to export a vtkjs file.
+        """
+        return FileDialog(self.app_window,
+                          filefilter=['VTK JS File(*.vtkjs)'],
+                          show=show,
+                          directory=os.getcwd(),
+                          callback=self.export_vtkjs)
 
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
         return
 
-    def __del__(self):
+    def __del__(self):  # pragma: no cover
         self.close()
+
