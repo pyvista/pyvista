@@ -79,4 +79,18 @@ def test_background_plotting(qtbot):
     # now test some of the features
     plotter.save_camera_position()
     plotter.clear_camera_positions()
+    dlg = plotter.scale_axes_dialog(show=False)
+
+    value = 2.0
+    dlg.x_slider_group.value = value
+    assert plotter.scale[0] == value
+
+    dlg.x_slider_group.spinbox.setValue(-1)
+    assert dlg.x_slider_group.value == 0
+    dlg.x_slider_group.spinbox.setValue(1000.0)
+    assert dlg.x_slider_group.value < 100
+
+    plotter._last_update_time = 0.0
+    plotter.update_app_icon()
+
     assert plotter.close()
