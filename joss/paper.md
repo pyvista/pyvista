@@ -8,13 +8,13 @@ authors:
   - name: C. Bane Sullivan
     orcid: 0000-0001-8628-4566
     affiliation: 1
-  - name: Alex Kaszynski
+  - name: Alexander A. Kaszynski
     orcid: 0000-0001-6293-5352
     affiliation: 2
 affiliations:
  - name: Department of Geophysics, Colorado School of Mines, Golden, CO, USA
    index: 1
- - name: TODO
+ - name: Universal Technology Corporation, Dayton, OH, USA
    index: 2
 
 date: 10 February 2019
@@ -23,20 +23,21 @@ bibliography: paper.bib
 
 # Summary
 
-The Visualization Toolkit (VTK) is an excellent visualization software library,
-moreover, with Python bindings, it combines the speed of C++ with the rapid
-prototyping of Python [@vtkbook].
-However, VTK code programmed in Python generally looks the same as its C++
-counterpart. This Python package seeks to simplify common mesh creation and
-plotting routines without compromising on the speed of the C++ VTK backend.
-At its core, `vtki` is a pure Python helper module for VTK that interfaces with
-back to VTK data objects through NumPy [@numpy] and direct array access.
-This package expands upon VTK's data objects by creating classes
-that extend their VTK counterpart.
-VTK data objects passed to `vtki` have an added layer of functionality on top of
-that object providing a wrapping layer that creates an accessible and intuitive
-interface back to the VTK library to foster rapid prototyping and analysis of
-VTK datasets.
+The Visualization Toolkit (VTK) is an excellent visualization software
+library, and with Python bindings it combines the speed of C++ with
+the rapid prototyping of Python [@vtkbook].  Despite this, VTK code
+programmed in Python using the base package provided by KitWare is
+unnecessarily complex as the Python package merely wraps existing C++
+calls. This Python package seeks to simplify common mesh creation and
+plotting routines without compromising on the speed of the C++ VTK
+backend.  At its core, `vtki` is a pure Python helper module for VTK
+that interfaces with back to VTK data objects through NumPy [@numpy]
+and direct array access.  This package expands upon VTK's data objects
+by creating classes that extend their VTK counterpart.  VTK data
+objects passed to `vtki` have an added layer of functionality on top
+of that object providing a wrapping layer that creates an accessible
+and intuitive interface back to the VTK library to foster rapid
+prototyping and analysis of VTK datasets.
 
 ## Simplified Plotting Routines
 
@@ -132,7 +133,7 @@ VTK library that have been made more accessible by binding a method to control
 that algorithm directly onto all `vtki` datasets. These filtering algorithms are
 held in the `vtki.DataSetFilters` class which is inherited by the `vtki.Common`
 class giving all datasets a shared set of functionality.
-Through the use of these binded methods, powerful VTK filtering algorithms can
+Through the use of these bound methods, powerful VTK filtering algorithms can
 be leveraged with intuitive control via keyword arguments in Python.
 These filters can be used by calling the filtering method directly from the data
 object:
