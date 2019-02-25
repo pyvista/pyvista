@@ -36,8 +36,14 @@ class QSlider(object):
 def pyqtSignal(*args, **kwargs):  # pragma: no cover
     pass
 
+
 class QHBoxLayout(object):
     pass
+
+
+class QFileDialog(object):
+    pass
+
 
 try:
     from PyQt5.QtCore import pyqtSignal
