@@ -21,6 +21,9 @@ has_pyqt = False
 class QVTKRenderWindowInteractor(object):
     pass
 
+class RangeGroup(object):
+    pass
+
 
 class QDialog(object):
     pass
@@ -30,19 +33,73 @@ class QSlider(object):
     pass
 
 
-def pyqtSignal(*args, **kwargs):
+def pyqtSignal(*args, **kwargs):  # pragma: no cover
     pass
+
+
+class QHBoxLayout(object):
+    pass
+
+
+class QFileDialog(object):
+    pass
+
 
 try:
     from PyQt5.QtCore import pyqtSignal
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import (QVBoxLayout, QFrame, QMainWindow, QSlider,
-                                 QDialog, QFormLayout, QFileDialog)
+    from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
+                                 QFrame, QMainWindow, QSlider,
+                                 QSpinBox, QHBoxLayout, QDialog,
+                                 QFormLayout, QGroupBox, QFileDialog)
     has_pyqt = True
-except ImportError:
+except ImportError:  # pragma: no cover
     pass
+
+
+class FileDialog(QFileDialog):
+    """
+    Generic file query that emits a signal when a file is selected and
+    the dialog was property closed.
+    """
+    dlg_accepted = pyqtSignal(str)
+
+    def __init__(self, parent=None, filefilter=None, save_mode=True, show=True,
+                 callback=None, directory=False):
+        super(FileDialog, self).__init__(parent)
+
+        if filefilter is not None:
+            self.setNameFilters(filefilter)
+
+        self.setOption(QFileDialog.DontUseNativeDialog)
+        self.accepted.connect(self.emit_accepted)
+
+        if directory:
+            self.FileMode(QFileDialog.DirectoryOnly)
+            self.setOption(QFileDialog.ShowDirsOnly, True)
+
+        if save_mode:
+            self.setAcceptMode(QFileDialog.AcceptSave)
+
+        if callback is not None:
+            self.dlg_accepted.connect(callback)
+
+        if show:  # pragma: no cover
+            self.show()
+
+    def emit_accepted(self):
+        """
+        Sends signal that the file dialog was closed properly.
+        
+        Sends:
+        filename
+        """
+        if self.result():
+            filename = self.selectedFiles()[0]
+            if os.path.isdir(os.path.dirname(filename)):
+                self.dlg_accepted.emit(filename)
 
 
 class DoubleSlider(QSlider):
@@ -72,24 +129,65 @@ class DoubleSlider(QSlider):
         super().setValue(int((value - self._min_value) / self._value_range * self._max_int))
 
     def setMinimum(self, value):
-        if value > self._max_value:
+        if value > self._max_value:  # pragma: no cover
             raise ValueError("Minimum limit cannot be higher than maximum")
 
         self._min_value = value
         self.setValue(self.value())
 
     def setMaximum(self, value):
-        if value < self._min_value:
+        if value < self._min_value:  # pragma: no cover
             raise ValueError("Minimum limit cannot be higher than maximum")
 
         self._max_value = value
         self.setValue(self.value())
 
-    def minimum(self):
-        return self._min_value
 
-    def maximum(self):
-        return self._max_value
+class RangeGroup(QHBoxLayout):
+
+    def __init__(self, parent, callback, minimum=0.0, maximum=20.0,
+                 value=1.0):
+        super(RangeGroup, self).__init__(parent)
+        self.slider = DoubleSlider(QtCore.Qt.Horizontal)
+        self.slider.setTickInterval(0.1)
+        self.slider.setMinimum(minimum)
+        self.slider.setMaximum(maximum)
+        self.slider.setValue(value)
+
+        self.minimum = minimum
+        self.maximum = maximum
+
+        self.spinbox = QDoubleSpinBox(value=value, minimum=minimum,
+                                      maximum=maximum, decimals=4)
+
+        self.addWidget(self.slider)
+        self.addWidget(self.spinbox)
+
+        # Connect slider to spinbox
+        self.slider.valueChanged.connect(self.update_spinbox)
+        self.spinbox.valueChanged.connect(self.update_value)
+        self.spinbox.valueChanged.connect(callback)
+
+    def update_spinbox(self, value):
+        self.spinbox.setValue(self.slider.value())
+
+    def update_value(self, value):
+        # if self.spinbox.value() < self.minimum:
+        #     self.spinbox.setValue(self.minimum)
+        # elif self.spinbox.value() > self.maximum:
+        #     self.spinbox.setValue(self.maximum)
+
+        self.slider.blockSignals(True)
+        self.slider.setValue(self.spinbox.value())
+        self.slider.blockSignals(False)
+
+    @property
+    def value(self):
+        return self.spinbox.value()
+
+    @value.setter
+    def value(self, new_value):
+        self.slider.setValue(new_value)
 
 
 class ScaleAxesDialog(QDialog):
@@ -104,36 +202,28 @@ class ScaleAxesDialog(QDialog):
         self.signal_close.connect(self.close)
         self.plotter = plotter
 
-        # setup sliders
-        def make_slider():
-            """Makes a double slider"""
-            slider = DoubleSlider(QtCore.Qt.Horizontal)
-            slider.setTickInterval(0.1)
-            slider.setMinimum(0)
-            slider.setMaximum(20)
-            slider.setValue(1)
-            slider.valueChanged.connect(self.update_scale)
-            return slider
-
-        self.x_slider = make_slider()
-        self.y_slider = make_slider()
-        self.z_slider = make_slider()
+        self.x_slider_group = RangeGroup(parent, self.update_scale,
+                                         value=plotter.scale[0])
+        self.y_slider_group = RangeGroup(parent, self.update_scale,
+                                         value=plotter.scale[1])
+        self.z_slider_group = RangeGroup(parent, self.update_scale,
+                                         value=plotter.scale[2])
 
         form_layout = QFormLayout(self)
-        form_layout.addRow('X Scale', self.x_slider)
-        form_layout.addRow('Y Scale', self.y_slider)
-        form_layout.addRow('Z Scale', self.z_slider)
+        form_layout.addRow('X Scale', self.x_slider_group)
+        form_layout.addRow('Y Scale', self.y_slider_group)
+        form_layout.addRow('Z Scale', self.z_slider_group)
 
         self.setLayout(form_layout)
 
-        if show:
+        if show:  # pragma: no cover
             self.show()
 
     def update_scale(self, value):
         """ updates the scale of all actors in the plotter """
-        self.plotter.set_scale(self.x_slider.value(),
-                               self.y_slider.value(),
-                               self.z_slider.value())
+        self.plotter.set_scale(self.x_slider_group.value,
+                               self.y_slider_group.value,
+                               self.z_slider_group.value)
 
 
 def resample_image(arr, max_size=400):
@@ -205,19 +295,21 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.add_axes()
 
         # QVTKRenderWindowInteractor doesn't have a "q" quit event
-        self.iren.AddObserver("KeyPressEvent", self.quit)
+        self.iren.AddObserver("KeyPressEvent", self.key_quit)
 
-    def quit(self, obj=None, event=None):
+    def key_quit(self, obj=None, event=None):  # pragma: no cover
         try:
             key = self.iren.GetKeySym().lower()
 
             if key == 'q' and self.allow_quit_keypress:
-                self.iren.TerminateApp()
-                self.close()
-                self.signal_close.emit()
-
+                self.quit()
         except:
             pass
+
+    def quit(self):
+        self.iren.TerminateApp()
+        self.close()
+        self.signal_close.emit()
 
 
 class BackgroundPlotter(QtInteractor):
@@ -231,8 +323,7 @@ class BackgroundPlotter(QtInteractor):
         self.saved_camera_positions = []
 
         # ipython magic
-        if run_from_ipython():
-            # breakpoint()
+        if run_from_ipython():  # pragma: no cover
             from IPython import get_ipython
             ipython = get_ipython()
             ipython.magic('gui qt')
@@ -244,7 +335,7 @@ class BackgroundPlotter(QtInteractor):
         if app is None:
             from PyQt5.QtWidgets import QApplication
             app = QApplication.instance()
-            if not app:
+            if not app:  # pragma: no cover
                 app = QApplication([''])
 
         self.app = app
@@ -259,10 +350,11 @@ class BackgroundPlotter(QtInteractor):
         # build main menu
         main_menu = self.app_window.menuBar()
 
-        fileMenu = main_menu.addMenu('File')
-        fileMenu.addAction('Exit', self.quit)
-        fileMenu.addAction('Screenshot', self._qt_screenshot)
-        fileMenu.addAction('Export as VTKjs', self._qt_export_vtkjs)
+        file_menu = main_menu.addMenu('File')
+        file_menu.addAction('Take Screenshot', self._qt_screenshot)
+        file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
+        file_menu.addSeparator()
+        file_menu.addAction('Exit', self.quit)
 
         view_menu = main_menu.addMenu('View')
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
@@ -300,7 +392,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
 
-        if show:
+        if show:  # pragma: no cover
             self.app_window.show()
             self.show()
 
@@ -310,8 +402,9 @@ class BackgroundPlotter(QtInteractor):
 
         self._spawn_background_rendering()
 
-    def scale_axes_dialog(self):
-        ScaleAxesDialog(self.app_window, self)
+    def scale_axes_dialog(self, show=True):
+        """ Open scale axes dialog """
+        return ScaleAxesDialog(self.app_window, self, show=show)
 
     def clear_camera_positions(self):
         """ clears all camera positions """
@@ -357,7 +450,7 @@ class BackgroundPlotter(QtInteractor):
 
     def add_actor(self, actor, reset_camera=None, name=None):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor, reset_camera, name)
-        if reset_camera:
+        if reset_camera:  # pragma: no cover
             self.reset_camera()
         self.update_app_icon()
         return actor, prop
@@ -366,11 +459,11 @@ class BackgroundPlotter(QtInteractor):
         """
         Update the app icon if the user is not trying to resize the window.
         """
-        if os.name == 'nt':
+        if os.name == 'nt':  # pragma: no cover
             # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
             return
         cur_time = time.time()
-        if self._last_window_size != self.window_size:
+        if self._last_window_size != self.window_size:  # pragma: no cover
             # Window size hasn't remained constant since last render.
             # This means the user is resizing it so ignore update.
             pass
@@ -393,26 +486,29 @@ class BackgroundPlotter(QtInteractor):
         # Update trackers
         self._last_window_size = self.window_size
 
-    def _qt_screenshot(self):
-        filename = QFileDialog.getSaveFileName(self.app_window,
-                        caption='Save Screenshot...', directory=os.getcwd(), filter='*.png')
-        filename = filename[0]
-        if not os.path.isdir(os.path.dirname(filename)):
-            return
-        return self.screenshot(filename, return_img=False)
+    def _qt_screenshot(self, show=True):
+        return FileDialog(self.app_window,
+                          filefilter=['Image File (*.png)',
+                                      'JPEG (*.jpeg)'],
+                          show=show,
+                          directory=os.getcwd(),
+                          callback=self.screenshot)
 
-    def _qt_export_vtkjs(self):
-        filename = QFileDialog.getSaveFileName(self.app_window,
-                        caption='Save VTKjs...', directory=os.getcwd())
-        filename = filename[0]
-        if not os.path.isdir(os.path.dirname(filename)):
-            return
-        return self.export_vtkjs(filename)
+    def _qt_export_vtkjs(self, show=True):
+        """
+        Spawn an save file dialog to export a vtkjs file.
+        """
+        return FileDialog(self.app_window,
+                          filefilter=['VTK JS File(*.vtkjs)'],
+                          show=show,
+                          directory=os.getcwd(),
+                          callback=self.export_vtkjs)
 
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
         return
 
-    def __del__(self):
+    def __del__(self):  # pragma: no cover
         self.close()
+
