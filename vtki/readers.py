@@ -141,9 +141,11 @@ def read(filename, attrs=None):
 
     Parameters
     ----------
-    attrs :
-        A string list of reader attributes to call. If specified, the standard
-        reading routine will be used with each attribute specified called.
+    attrs : dict, optional
+        A dictionary of attributes to call on the reader. Keys of dictionary are
+        the attribute/method names and values are the arguments passed to those
+        calls. If you do not have any attributes to call, pass ``None`` as the
+        value.
     """
     filename = os.path.abspath(os.path.expanduser(filename))
     ext = get_ext(filename)
