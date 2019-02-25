@@ -3,21 +3,20 @@ Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
 VTK datasets in one object that can be passed to VTK algorithms and ``vtki``
 filtering/plotting routines.
 """
-import logging
-from weakref import proxy
 import collections
+import logging
 import os
 
 import numpy as np
 import vtk
 from vtk import vtkMultiBlockDataSet
 
+from vtki import plot
+from vtki.utilities import get_scalar, is_vtki_obj, wrap
+
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-import vtki
-from vtki.utilities import wrap, is_vtki_obj, get_scalar
-from vtki import plot
 
 
 class MultiBlock(vtkMultiBlockDataSet):
@@ -153,6 +152,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
 
         def update_bounds(ax, nb, bounds):
+            """internal helper to update bounds while keeping track"""
             if nb[2*ax] < bounds[2*ax]:
                 bounds[2*ax] = nb[2*ax]
             if nb[2*ax+1] > bounds[2*ax+1]:
@@ -209,7 +209,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
-        raise RuntimeError('Block name ({}) not found'.format(name))
+        raise KeyError('Block name ({}) not found'.format(name))
 
 
     def __getitem__(self, index):
@@ -263,16 +263,29 @@ class MultiBlock(vtkMultiBlockDataSet):
         >>> multi = vtki.MultiBlock()
         >>> multi[0] = vtki.PolyData()
         >>> multi[1, 'foo'] = vtki.UnstructuredGrid()
+        >>> multi['bar'] = vtki.PolyData()
+        >>> multi.n_blocks
+        3
         """
-        if isinstance(index, collections.Iterable):
+        if isinstance(index, collections.Iterable) and not isinstance(index, str):
             i, name = index[0], index[1]
+        elif isinstance(index, str):
+            try:
+                i = self.get_index_by_name(index)
+            except KeyError:
+                i = -1
+            name = index
         else:
             i, name = index, None
-        if name is None:
-            name = 'Block-{0:02}'.format(i)
         if data is not None and not is_vtki_obj(data):
             data = wrap(data)
-        self.SetBlock(i, data)
+        if i == -1:
+            self.append(data)
+            i = self.n_blocks - 1
+        else:
+            self.SetBlock(i, data)
+        if name is None:
+            name = 'Block-{0:02}'.format(i)
         self.set_block_name(i, name) # Note that this calls self.Modified()
 
 
@@ -284,10 +297,12 @@ class MultiBlock(vtkMultiBlockDataSet):
 
 
     def __iter__(self):
+        """The iterator across all blocks"""
         self._iter_n = 0
         return self
 
     def next(self):
+        """Get the next block from the iterator"""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
             self._iter_n += 1

@@ -88,7 +88,15 @@ Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible t
     sphere.points *= 0.5
 
 
+
 .. autoclass:: vtki.BackgroundPlotter
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+
+.. autoclass:: vtki.ScaledPlotter
+  :members:
+  :undoc-members:
+  :show-inheritance:

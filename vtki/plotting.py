@@ -1,24 +1,30 @@
 """
 vtki plotting module
 """
-import time
-import logging
-import ctypes
-import PIL.Image
-from subprocess import Popen, PIPE
-import os
-import colorsys
 import collections
+import ctypes
+import logging
+import time
+from subprocess import PIPE, Popen
 
+import imageio
+import numpy as np
+import PIL.Image
 import vtk
 from vtk.util import numpy_support as VN
 
-import numpy as np
 import vtki
-from vtki.utilities import get_scalar, wrap, is_vtki_obj, numpy_to_texture
 from vtki.export import export_plotter_vtkjs
-import imageio
+from vtki.utilities import get_scalar, is_vtki_obj, numpy_to_texture, wrap
 
+_OPEN_PLOTTERS = {}
+
+def close_all():
+    """Close all open/active plotters"""
+    for key, p in _OPEN_PLOTTERS.items():
+        p.close()
+    _OPEN_PLOTTERS.clear()
+    return True
 
 MAX_N_COLOR_BARS = 10
 PV_BACKGROUND = [82/255., 87/255., 110/255.]
@@ -47,6 +53,7 @@ rcParams = {
     },
     'cmap' : 'jet',
     'color' : 'white',
+    'nan_color' : 'darkgray',
     'outline_color' : 'white',
     'colorbar' : {
         'width' : 0.60,
@@ -55,7 +62,8 @@ rcParams = {
         'position_y' : 0.02,
     },
     'show_edges' : False,
-    'lighting': True,
+    'lighting' : True,
+    'interactive' : False,
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -83,7 +91,7 @@ def set_plot_theme(theme):
 def run_from_ipython():
     """ returns True when run from IPython """
     try:
-        __IPYTHON__
+        py = __IPYTHON__
         return True
     except NameError:
         return False
@@ -265,7 +273,7 @@ def running_xserver():
         p.communicate()
         return p.returncode == 0
     except:
-        False
+        return False
 
 
 class BasePlotter(object):
@@ -284,6 +292,7 @@ class BasePlotter(object):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
         self._actors = {}
         # track if the camera has been setup
         self.camera_set = False
@@ -292,6 +301,8 @@ class BasePlotter(object):
         self.scale = [1.0, 1.0, 1.0]
         self._labels = []
         self.bounding_box_actor = None
+        # Add self to open plotters
+        _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
 
     @property
@@ -309,7 +320,7 @@ class BasePlotter(object):
                 update_axis(ax)
             return
 
-        for name, actor in self._actors.items():
+        for actor in self._actors.values():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
             if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
@@ -320,6 +331,7 @@ class BasePlotter(object):
 
     @property
     def center(self):
+        """Center of the bounding box around all data present in the scene"""
         bounds = self.bounds
         x = (bounds[1] + bounds[0])/2
         y = (bounds[3] + bounds[2])/2
@@ -334,6 +346,7 @@ class BasePlotter(object):
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
 
     def enable_trackball_style(self):
         """ sets the interacto style to trackball """
@@ -369,8 +382,10 @@ class BasePlotter(object):
             prop.SetShadow(False)
         return
 
-    def add_axes(self, interactive=False, color=None):
+    def add_axes(self, interactive=None, color=None):
         """ Add an interactive axes widget """
+        if interactive is None:
+            interactive = rcParams['interactive']
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
             self._updatae_axes_color(color)
@@ -385,6 +400,18 @@ class BasePlotter(object):
             self.axes_widget.SetInteractive(interactive)
         # Set the color
         self._updatae_axes_color(color)
+
+    def hide_axes(self):
+        """Hide the axes orientation widget"""
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOff()
+
+    def show_axes(self):
+        """Show the axes orientation widget"""
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOn()
+        else:
+            self.add_axes()
 
 
     def get_default_cam_pos(self):
@@ -405,16 +432,17 @@ class BasePlotter(object):
         elif key == 'b':
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
                                                   self.left_button_down)
-        elif key == 'i':
+        elif key == 'v':
             self.isometric_view()
 
     def left_button_down(self, obj, event_type):
+        """Register the event for a left button down click"""
         # Get 2D click location on window
-        clickPos = self.iren.GetEventPosition()
+        click_pos = self.iren.GetEventPosition()
 
         # Get corresponding click location in the 3D plot
         picker = vtk.vtkWorldPointPicker()
-        picker.Pick(clickPos[0], clickPos[1], 0, self.renderer)
+        picker.Pick(click_pos[0], click_pos[1], 0, self.renderer)
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
         if np.any(np.isnan(self.pickpoint)):
             self.pickpoint[:] = 0
@@ -465,7 +493,8 @@ class BasePlotter(object):
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=False,
                  render_lines_as_tubes=False, edge_color='black',
-                 ambient=0.2, **kwargs):
+                 ambient=0.2, show_scalar_bar=True, nan_color=None,
+                 nan_opacity=1.0, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the plotting object.
 
@@ -563,6 +592,12 @@ class BasePlotter(object):
             0 to 1 that reaches the actor when not directed at the
             light source emitted from the viewer.  Default 0.2.
 
+        nan_color : string or 3 item list, optional, defaults to gray
+            The color to use for all NaN values in the plotted scalar array
+
+        nan_opacity : float, optional
+            Opacity of NaN values.  Should be between 0 and 1.  Default 1.0
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -619,7 +654,7 @@ class BasePlotter(object):
                 if mesh[idx] is None:
                     continue
                 # Get a good name to use
-                nm = '{}-{}'.format(name, idx)
+                next_name = '{}-{}'.format(name, idx)
                 # Get the data object
                 if not is_vtki_obj(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
@@ -647,11 +682,13 @@ class BasePlotter(object):
                                   interpolate_before_map=interpolate_before_map,
                                   cmap=cmap, label=label,
                                   scalar_bar_args=scalar_bar_args,
-                                  reset_camera=reset_camera, name=nm,
+                                  reset_camera=reset_camera, name=next_name,
                                   texture=None,
                                   render_points_as_spheres=render_points_as_spheres,
                                   render_lines_as_tubes=render_lines_as_tubes,
-                                  edge_color=edge_color, **kwargs)
+                                  edge_color=edge_color,
+                                  show_scalar_bar=True, nan_color=nan_color,
+                                  nan_opacity=nan_opacity, **kwargs)
                 actors.append(a)
                 if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -659,6 +696,11 @@ class BasePlotter(object):
                     self.camera_set = False
                     self.reset_camera()
             return actors
+
+        if nan_color is None:
+            nan_color = rcParams['nan_color']
+        nanr, nanb, nang = parse_color(nan_color)
+        nan_color = nanr, nanb, nang, nan_opacity
 
 
         # set main values
@@ -668,6 +710,21 @@ class BasePlotter(object):
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
         actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
+
+        # Try to plot something if no preference given
+        if scalars is None and color is None and texture is None:
+            # Prefer texture first
+            if len(list(mesh.textures.keys())) > 0:
+                texture = True
+            # If no texture, plot any active scalar
+            else:
+                # Make sure scalar components are not vectors/tuples
+                scalars = mesh.active_scalar
+                if scalars is None or scalars.ndim != 1:
+                    scalars = None
+                else:
+                    if stitle is None:
+                        stitle = mesh.active_scalar_info[1]
 
         if texture == True or isinstance(texture, str):
             texture = mesh._activate_texture(texture)
@@ -680,17 +737,10 @@ class BasePlotter(object):
             if mesh.GetPointData().GetTCoords() is None:
                 raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
             actor.SetTexture(texture)
+            # Set color to white by default when using a texture
+            if color is None:
+                color = 'white'
 
-
-        # Attempt get the active scalars if no preference given
-        if scalars is None and color is None and texture is None:
-            scalars = mesh.active_scalar
-            # Make sure scalar components are not vectors/tuples
-            if scalars is None or scalars.ndim != 1:
-                scalars = None
-            else:
-                if stitle is None:
-                    stitle = mesh.active_scalar_info[1]
 
         # Scalar formatting ===================================================
         if cmap is None:
@@ -701,7 +751,8 @@ class BasePlotter(object):
             append_scalars = True
             if isinstance(scalars, str):
                 title = scalars
-                scalars = get_scalar(mesh, scalars)
+                scalars = get_scalar(mesh, scalars,
+                        preference=kwargs.get('preference', 'cell'), err=True)
                 if stitle is None:
                     stitle = title
                 #append_scalars = False
@@ -742,6 +793,7 @@ class BasePlotter(object):
 
             # Flip if requested
             table = self.mapper.GetLookupTable()
+            table.SetNanColor(nan_color)
             if cmap is not None:
                 try:
                     from matplotlib.cm import get_cmap
@@ -799,7 +851,8 @@ class BasePlotter(object):
 
         # legend label
         if label:
-            assert isinstance(label, str), 'Label must be a string'
+            if not isinstance(label, str):
+                raise AssertionError('Label must be a string')
             self._labels.append([single_triangle(), label, rgb_color])
 
         # lighting display style
@@ -811,7 +864,7 @@ class BasePlotter(object):
             prop.SetLineWidth(line_width)
 
         # Add scalar bar if available
-        if stitle is not None:
+        if stitle is not None and show_scalar_bar:
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
@@ -866,6 +919,7 @@ class BasePlotter(object):
 
     @property
     def camera(self):
+        """The active camera for the rendering scene"""
         return self.renderer.GetActiveCamera()
 
     def remove_actor(self, actor, reset_camera=False):
@@ -1050,8 +1104,7 @@ class BasePlotter(object):
         >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
-        if hasattr(self, 'cube_axes_actor'):
-            self.remove_actor(self.cube_axes_actor)
+        self.remove_bounds_axes()
 
         if font_family is None:
             font_family = rcParams['font']['family']
@@ -1260,6 +1313,10 @@ class BasePlotter(object):
             del self._box_object
             self.remove_actor(actor, reset_camera=False)
 
+    def remove_bounds_axes(self):
+        if hasattr(self, 'cube_axes_actor'):
+            self.remove_actor(self.cube_axes_actor)
+
     def show_grid(self, **kwargs):
         """
         A wrapped implementation of ``add_bounds_axes`` to change default
@@ -1298,8 +1355,9 @@ class BasePlotter(object):
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False, bold=True,
                        title_font_size=None, label_font_size=None, color=None,
-                       font_family=None, shadow=False, mapper=None,
-                       width=None, height=None, position_x=None, position_y=None):
+                       font_family=None, shadow=False, mapper=None, width=None,
+                       height=None, position_x=None, position_y=None,
+                       vertical=None, interactive=False):
         """
         Creates scalar bar using the ranges as set by the last input mesh.
 
@@ -1351,6 +1409,9 @@ class BasePlotter(object):
         position_y : float, optional
             The percentage (0 to 1) along the winow's vertical direction to
             place the bottom left corner of the colorbar
+
+        interactive : bool, optional
+            Use a widget to control the size and location of the scalar bar.
 
         Notes
         -----
@@ -1428,7 +1489,11 @@ class BasePlotter(object):
         self.scalar_bar.SetHeight(height)
         self.scalar_bar.SetWidth(width)
         self.scalar_bar.SetPosition(position_x, position_y)
-        self.scalar_bar.SetOrientationToHorizontal()
+
+        if vertical:
+            self.scalar_bar.SetOrientationToVertical()
+        else:
+            self.scalar_bar.SetOrientationToHorizontal()
 
         if label_font_size is None or title_font_size is None:
             self.scalar_bar.UnconstrainedFontSizeOn()
@@ -1470,6 +1535,21 @@ class BasePlotter(object):
             title_text.SetColor(color)
 
             self._scalar_bar_actors[title] = self.scalar_bar
+
+        if interactive is None:
+            interactive = rcParams['interactive']
+        if interactive and hasattr(self, 'iren'):
+            self.scalar_widget = vtk.vtkScalarBarWidget()
+            self.scalar_widget.SetScalarBarActor(self.scalar_bar)
+            self.scalar_widget.SetInteractor(self.iren)
+            self.scalar_widget.SetEnabled(1)
+            rep = self.scalar_widget.GetRepresentation()
+            # self.scalar_widget.On()
+            if vertical is True or vertical is None:
+                rep.SetOrientation(1)  # 0 = Horizontal, 1 = Vertical
+            else:
+                rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
+            self._scalar_bar_widgets[title] = self.scalar_widget
 
         self.add_actor(self.scalar_bar, reset_camera=False)
 
@@ -1699,7 +1779,7 @@ class BasePlotter(object):
         tgt_size = (self.window_size[1], self.window_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    def add_lines(self, lines, color=[1, 1, 1], width=5, label=None, name=None):
+    def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """
         Adds lines to the plotting object.
 
@@ -1745,7 +1825,8 @@ class BasePlotter(object):
 
         # legend label
         if label:
-            assert isinstance(label, str), 'Label must be a string'
+            if not isinstance(label, str):
+                raise AssertionError('Label must be a string')
             self._labels.append([lines, label, rgb_color])
 
         # Create actor
@@ -1968,7 +2049,7 @@ class BasePlotter(object):
 
         return img
 
-    def add_legend(self, labels=None, bcolor=[0.5, 0.5, 0.5], border=False,
+    def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None):
         """
         Adds a legend to render window.  Entries must be a list

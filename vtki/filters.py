@@ -24,12 +24,12 @@ Example
 
 """
 import collections
-import logging
+
 import numpy as np
 import vtk
 
 import vtki
-from vtki.utilities import get_scalar, wrap, is_inside_bounds
+from vtki.utilities import get_scalar, is_inside_bounds, wrap
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -119,6 +119,7 @@ class DataSetFilters(object):
         """
         if bounds is None:
             def _get_quarter(dmin, dmax):
+                """internal helper to get a section of the given range"""
                 return dmax - ((dmax - dmin) * factor)
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             xmin = _get_quarter(xmin, xmax)
@@ -291,8 +292,8 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         # set the scalaras to threshold on
@@ -369,12 +370,12 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         if scalars is None:
-            field, tscalars = dataset.active_scalar_info
+            _, tscalars = dataset.active_scalar_info
         else:
             tscalars = scalars
         dmin, dmax = dataset.get_data_range(arr=tscalars, preference=preference)
@@ -511,7 +512,8 @@ class DataSetFilters(object):
         elif isinstance(scalar_range, str):
             scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
         elif isinstance(scalar_range, collections.Iterable):
-            assert len(scalar_range) == 2, 'scalar_range must have a length of two defining the min and max'
+            if len(scalar_range) != 2:
+                raise AssertionError('scalar_range must have a length of two defining the min and max')
         else:
             raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
         # Construct the filter
@@ -553,8 +555,8 @@ class DataSetFilters(object):
             Preserves the scalar values that are being contoured
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         # Make sure the input has scalars to contour on
@@ -571,7 +573,7 @@ class DataSetFilters(object):
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != 0:
+        if field != vtki.POINT_DATA_FIELD:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces

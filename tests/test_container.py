@@ -1,14 +1,13 @@
-from subprocess import Popen, PIPE
 import os
+from subprocess import PIPE, Popen
 
 import numpy as np
 import pytest
+import vtk
 
 import vtki
 from vtki import examples as ex
 from vtki.plotting import running_xserver
-
-import vtk
 
 
 def test_multi_block_init_vtk():
@@ -115,7 +114,7 @@ def test_multi_block_set_get_ers():
     assert isinstance(pop, vtki.RectilinearGrid)
     assert multi.n_blocks == 3
     assert multi.get_block_name(10) is None
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         idx = multi.get_index_by_name('foo')
 
 

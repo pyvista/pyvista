@@ -1,9 +1,9 @@
-from threading import Thread
-import time
 import logging
-import numpy as np
 import os
+import time
+from threading import Thread
 
+import numpy as np
 import vtk
 import vtk.qt
 
@@ -38,11 +38,10 @@ try:
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout,
-                                 QFrame, QMainWindow, QSlider,
-                                 QDialog, QFormLayout, QGroupBox)
+    from PyQt5.QtWidgets import (QVBoxLayout, QFrame, QMainWindow, QSlider,
+                                 QDialog, QFormLayout, QFileDialog)
     has_pyqt = True
-except:
+except ImportError:
     pass
 
 
@@ -107,6 +106,7 @@ class ScaleAxesDialog(QDialog):
 
         # setup sliders
         def make_slider():
+            """Makes a double slider"""
             slider = DoubleSlider(QtCore.Qt.Horizontal)
             slider.setTickInterval(0.1)
             slider.setMinimum(0)
@@ -181,7 +181,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     def __init__(self, parent=None, title=None):
         """ Initialize Qt interactor """
-        assert has_pyqt, 'Requires PyQt5'
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
         self.parent = parent
 
@@ -209,13 +210,14 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     def quit(self, obj=None, event=None):
         try:
             key = self.iren.GetKeySym().lower()
-        except AttributeError:
-            key = 'q'
 
-        if key == 'q' and self.allow_quit_keypress:
-            self.iren.TerminateApp()
-            self.close()
-            self.signal_close.emit()
+            if key == 'q' and self.allow_quit_keypress:
+                self.iren.TerminateApp()
+                self.close()
+                self.signal_close.emit()
+
+        except:
+            pass
 
 
 class BackgroundPlotter(QtInteractor):
@@ -223,7 +225,8 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, **kwargs):
-        assert has_pyqt, 'Requires PyQt5'
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
 
@@ -258,14 +261,36 @@ class BackgroundPlotter(QtInteractor):
 
         fileMenu = main_menu.addMenu('File')
         fileMenu.addAction('Exit', self.quit)
+        fileMenu.addAction('Screenshot', self._qt_screenshot)
+        fileMenu.addAction('Export as VTKjs', self._qt_export_vtkjs)
 
         view_menu = main_menu.addMenu('View')
-        view_menu.addAction('Reset Camera', self.reset_camera)
-        view_menu.addAction('Isometric View', self.isometric_view)
-        view_menu.addAction('Save Current Camera Position', self.save_camera_position)
-        view_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
-        view_menu.addAction('Add Bounds Axes', self.add_bounds_axes)
+        view_menu.addAction('Clear All', self.clear)
+
+        cam_menu = view_menu.addMenu('Camera')
+        cam_menu.addAction('Reset Camera', self.reset_camera)
+        cam_menu.addAction('Isometric View', self.isometric_view)
+        cam_menu.addSeparator()
+        cam_menu.addAction('Save Current Camera Position', self.save_camera_position)
+        cam_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
+
+        view_menu.addSeparator()
+        # Orientation marker
+        orien_menu = view_menu.addMenu('Orientation Marker')
+        orien_menu.addAction('Show', self.show_axes)
+        orien_menu.addAction('Hide', self.hide_axes)
+        # Bounds axes
+        axes_menu = view_menu.addMenu('Bounds Axes')
+        axes_menu.addAction('Add Bounds Axes (front)', self.add_bounds_axes)
+        axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
+        axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
+        axes_menu.addSeparator()
+        axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
+        axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
+
+        # A final separator to seperate OS options
+        view_menu.addSeparator()
 
         self.saved_camera_menu = main_menu.addMenu('Camera Positions')
 
@@ -367,6 +392,22 @@ class BackgroundPlotter(QtInteractor):
             self._last_camera_pos = self.camera_position
         # Update trackers
         self._last_window_size = self.window_size
+
+    def _qt_screenshot(self):
+        filename = QFileDialog.getSaveFileName(self.app_window,
+                        caption='Save Screenshot...', directory=os.getcwd(), filter='*.png')
+        filename = filename[0]
+        if not os.path.isdir(os.path.dirname(filename)):
+            return
+        return self.screenshot(filename, return_img=False)
+
+    def _qt_export_vtkjs(self):
+        filename = QFileDialog.getSaveFileName(self.app_window,
+                        caption='Save VTKjs...', directory=os.getcwd())
+        filename = filename[0]
+        if not os.path.isdir(os.path.dirname(filename)):
+            return
+        return self.export_vtkjs(filename)
 
     def _render(self):
         super(BackgroundPlotter, self)._render()

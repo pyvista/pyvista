@@ -1,11 +1,8 @@
+import numpy as np
 import pytest
 
 import vtki
 from vtki import examples
-
-import numpy as np
-
-
 
 datasets = [
     examples.load_uniform(), # UniformGrid

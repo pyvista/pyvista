@@ -1,9 +1,11 @@
 import sys
-import vtk
+
+import numpy as np
 import pytest
+import vtk
+
 import vtki
 from vtki import examples
-import numpy as np
 
 grid = vtki.UnstructuredGrid(examples.hexbeamfile)
 
@@ -365,27 +367,28 @@ def test_set_active_scalar_name():
     grid.set_active_scalar_name = point_keys[0]
 
 
-# @pytest.mark.skipif(py2, reason="Unexplained error for python2.7")
-# def test_change_scalar_name_point():
-#     point_keys = list(grid.point_arrays.keys())
-#     old_name = point_keys[0]
-#     grid.set_active_scalar(old_name, 'point')
-#     new_name = 'point changed'
-#     grid.change_scalar_name(old_name, new_name)
-#     assert new_name in grid.point_arrays
-#     grid._point_scalar()  # errors if active array is not found
+def test_rename_scalar_point():
+    point_keys = list(grid.point_arrays.keys())
+    old_name = point_keys[0]
+    new_name = 'point changed'
+    grid.set_active_scalar(old_name, preference='point')
+    grid.rename_scalar(old_name, new_name, preference='point')
+    assert new_name in grid.point_arrays
+    assert old_name not in grid.point_arrays
 
 
-def test_change_scalar_name_cell():
+def test_rename_scalar_cell():
     cell_keys = list(grid.cell_arrays.keys())
+    old_name = cell_keys[0]
     new_name = 'cell changed'
-    grid.change_scalar_name(cell_keys[0], new_name)
+    grid.rename_scalar(old_name, new_name)
     assert new_name in grid.cell_arrays
+    assert old_name not in grid.cell_arrays
 
 
 def test_change_name_fail():
     with pytest.raises(RuntimeError):
-        grid.change_scalar_name('not a key', '')
+        grid.rename_scalar('not a key', '')
 
 
 def test_get_cell_scalar_fail():

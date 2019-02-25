@@ -2,23 +2,22 @@
 A set of useful plotting tools and widgets that can be used in a Jupyter
 notebook
 """
-ipy_available = False
+IPY_AVAILABLE = False
 try:
-    from ipywidgets import interact, interactive, fixed, interact_manual
+    from ipywidgets import interact, interactive
     import ipywidgets as widgets
-    ipy_available = True
-except:
+    IPY_AVAILABLE = True
+except ImportError:
     pass
 
 import collections
-import numpy as np
 import logging
 
-import vtk
+import numpy as np
 
 import vtki
-from vtki.utilities import is_vtki_obj, wrap
 from vtki.plotting import run_from_ipython
+from vtki.utilities import is_vtki_obj, wrap
 
 
 class ScaledPlotter(vtki.BackgroundPlotter):
@@ -27,7 +26,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
-        if not run_from_ipython() or not ipy_available:
+        if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
@@ -40,6 +39,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
                                 continuous_update=self.continuous_update)
 
         def update(xscale, yscale, zscale):
+            """Update the scales"""
             # Update max range if needed
             if xscale >= self.xslider.max:
                 self.xslider.max *= 2
@@ -71,8 +71,8 @@ class InteractiveTool(object):
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
                  display_params=None, default_params=None,
-                 continuous_update=False, **kwargs):
-        if not run_from_ipython() or not ipy_available:
+                 continuous_update=False, clean=True, **kwargs):
+        if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_vtki_obj(dataset):
@@ -111,6 +111,8 @@ class InteractiveTool(object):
         # Make a name
         display_params.setdefault('name', '{}({})'.format(type(self).__name__, str(hex(id(self)))))
         self.display_params = display_params
+
+        self.clean = clean
 
         # Set the tool status
         self._need_to_update = True
@@ -215,15 +217,18 @@ class OrthogonalSlicer(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, step=None, generate_triangles=False,
+    def tool(self, step=None, generate_triangles=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
-        if clean and self.input_dataset.active_scalar is not None:
+        if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
         x, y, z = self.input_dataset.center
+        x = default_params.get("x", x)
+        y = default_params.get("y", y)
+        z = default_params.get("z", z)
 
         self._data_to_update = [None, None, None]
         self.output_dataset = vtki.MultiBlock()
@@ -242,6 +247,7 @@ class OrthogonalSlicer(InteractiveTool):
             self.display_params['name'] = name
 
         def update(x, y, z, **kwargs):
+            """Update the slices"""
             self._update_plotting_params(**kwargs)
             if x != self._old[0] or self._need_to_update:
                 _update_slice(0, x, y, z)
@@ -269,17 +275,17 @@ class OrthogonalSlicer(InteractiveTool):
         xsl = widgets.FloatSlider(min=self.input_dataset.bounds[0]+stepx,
                             max=self.input_dataset.bounds[1]-stepx,
                             step=stepx,
-                            value=self.input_dataset.center[0],
+                            value=x,
                             continuous_update=self.continuous_update)
         ysl = widgets.FloatSlider(min=self.input_dataset.bounds[2]+stepy,
                             max=self.input_dataset.bounds[3]-stepy,
                             step=stepy,
-                            value=self.input_dataset.center[1],
+                            value=y,
                             continuous_update=self.continuous_update)
         zsl = widgets.FloatSlider(min=self.input_dataset.bounds[4]+stepz,
                             max=self.input_dataset.bounds[5]-stepz,
                             step=stepz,
-                            value=self.input_dataset.center[2],
+                            value=z,
                             continuous_update=self.continuous_update)
 
         # Create/display the widgets
@@ -322,18 +328,21 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, tolerance=None, generate_triangles=False,
+    def tool(self, tolerance=None, generate_triangles=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
-        if clean and self.input_dataset.active_scalar is not None:
+        if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
-        nsl = widgets.IntSlider(min=1, max=10, step=1, value=5,
+        n = default_params.get("n", 5)
+        axis = default_params.get("axis", "x")
+        nsl = widgets.IntSlider(min=1, max=n*2, step=1, value=n,
                                 continuous_update=self.continuous_update)
 
         def update(n, axis, **kwargs):
+            """Update the slices"""
             if n >= nsl.max:
                 nsl.max *= 2
             self._update_plotting_params(**kwargs)
@@ -344,7 +353,11 @@ class ManySlicesAlongAxis(InteractiveTool):
             self._need_to_update = False
 
         # Create/display the widgets
-        return interact(update, n=nsl, axis=['x', 'y', 'z'],
+        axes = ['x', 'y', 'z']
+        idx = axes.index(axis)
+        del axes[idx]
+        axes.insert(0, axis)
+        return interact(update, n=nsl, axis=axes,
                         scalars=self._get_scalar_names())
 
 
@@ -378,12 +391,15 @@ class Threshold(InteractiveTool):
         preference = self.display_params['preference']
 
         def _calc_start_values(rng):
+            """Get starting values for sliders use a data range"""
             lowstart = ((rng[1] - rng[0]) * 0.25) + rng[0]
             highstart = ((rng[1] - rng[0]) * 0.75) + rng[0]
             return lowstart, highstart
 
         # Now set up the widgets
         lowstart, highstart = _calc_start_values(self.valid_range)
+        lowstart = default_params.get("dmin", lowstart)
+        highstart = default_params.get("dmax", highstart)
         minsl = widgets.FloatSlider(min=self.valid_range[0],
                             max=self.valid_range[1],
                             value=lowstart,
@@ -394,6 +410,7 @@ class Threshold(InteractiveTool):
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(new_rng):
+            """Updates the slider ranges when switching scalars"""
             vmin, vmax = np.nanmin([new_rng[0], minsl.min]), np.nanmax([new_rng[1], minsl.max])
             # Update to the total range
             minsl.min = vmin
@@ -411,6 +428,7 @@ class Threshold(InteractiveTool):
 
 
         def update(dmin, dmax, invert, continuous, **kwargs):
+            """Update the threshold"""
             if dmax < dmin:
                 # If user chooses a min that is more than max, correct them:
                 # Set max threshold as 1 percent of the range more than min
@@ -444,6 +462,11 @@ class Threshold(InteractiveTool):
 
 
         # Create/display the widgets
+        scalars = self._get_scalar_names()
+        name = default_params.get("scalars", scalars[0])
+        idx = scalars.index(name)
+        del scalars[idx]
+        scalars.insert(0, name)
         return interact(update, dmin=minsl, dmax=maxsl,
                         scalars=self._get_scalar_names(),
                         invert=default_params.get('invert', False),
@@ -480,35 +503,37 @@ class Clip(InteractiveTool):
 
     """
 
-    def tool(self, clean=True, default_params=None, **kwargs):
+    def tool(self, default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
-        if clean and self.input_dataset.active_scalar is not None:
+        if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
 
         bnds = self.input_dataset.bounds
-        center = self.input_dataset.center
+        locataion = default_params.get("location", self.input_dataset.center[0])
         axchoices = ['x', 'y', 'z']
 
         locsl = widgets.FloatSlider(min=bnds[0],
                             max=bnds[1],
-                            value=center[0],
+                            value=locataion,
                             continuous_update=self.continuous_update)
 
         def _update_slider_ranges(normal):
+            """Update the sliders ranges"""
             ax = axchoices.index(normal)
             new_rng = bnds[2*ax:2*ax+2]
             vmin, vmax = np.nanmin([new_rng[0], locsl.min]), np.nanmax([new_rng[1], locsl.max])
             # Update to the total range
             locsl.min = vmin
             locsl.max = vmax
-            locsl.value = center[ax]
+            locsl.value = self.input_dataset.center[ax]
             locsl.min = new_rng[0]
             locsl.max = new_rng[1]
             return
 
         def update(location, normal, invert, **kwargs):
+            """Update the clip location"""
             if self._last_normal != normal:
                 self._last_normal = normal
                 _update_slider_ranges(normal)

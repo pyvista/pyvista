@@ -17,9 +17,10 @@ vtkLineSource
 vtkRegularPolygonSource
 
 """
-from vtki import PolyData
-import vtk
 import numpy as np
+import vtk
+
+from vtki import PolyData
 
 
 def translate(surf, center, direction):
@@ -134,7 +135,7 @@ def Arrow(start, direction, tip_length=0.25, tip_radius=0.1, shaft_radius=0.05,
     return surf
 
 
-def Sphere(radius=0.5, center=[0, 0, 0], direction=[0, 0, 1], theta_resolution=30,
+def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=30,
            phi_resolution=30, start_theta=0, end_theta=360, start_phi=0, end_phi=180):
     """
     Create a vtk Sphere
@@ -190,7 +191,7 @@ def Sphere(radius=0.5, center=[0, 0, 0], direction=[0, 0, 1], theta_resolution=3
     return surf
 
 
-def Plane(center=[0, 0, 0], direction=[0, 0, 1], i_size=1, j_size=1, i_resolution=10,
+def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=10,
           j_resolution=10):
     """
     Create a plane

@@ -1,31 +1,22 @@
 """
 Sub-classes for vtk.vtkPolyData
 """
-import os
 import logging
-
-import vtk
-from vtk import vtkPolyData, vtkUnstructuredGrid, vtkStructuredGrid
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
-
-from vtk import VTK_TRIANGLE
-from vtk import VTK_QUAD
-from vtk import VTK_QUADRATIC_TRIANGLE
-from vtk import VTK_QUADRATIC_QUAD
-from vtk import VTK_HEXAHEDRON
-from vtk import VTK_PYRAMID
-from vtk import VTK_TETRA
-from vtk import VTK_WEDGE
-from vtk import VTK_QUADRATIC_TETRA
-from vtk import VTK_QUADRATIC_PYRAMID
-from vtk import VTK_QUADRATIC_WEDGE
-from vtk import VTK_QUADRATIC_HEXAHEDRON
+import os
 
 import numpy as np
+import vtk
+from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
+                 VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_PYRAMID,
+                 VTK_QUADRATIC_QUAD, VTK_QUADRATIC_TETRA,
+                 VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
+                 VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
+                 vtkUnstructuredGrid)
+from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
+                                    vtk_to_numpy)
+
 import vtki
 from vtki.filters import _get_output
-
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -150,7 +141,8 @@ class PolyData(vtkPolyData, vtki.Common):
         self.ShallowCopy(reader.GetOutput())
 
         # sanity check
-        assert np.any(self.points), 'Empty or invalid file'
+        if not np.any(self.points):
+            raise AssertionError('Empty or invalid file')
 
     @property
     def faces(self):
@@ -278,6 +270,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     @property
     def n_faces(self):
+        """alias for ``n_cells``"""
         return self.n_cells
 
     @property
@@ -1164,6 +1157,12 @@ class PolyData(vtkPolyData, vtki.Common):
 
     @property
     def obbTree(self):
+        """obbTree is an object to generate oriented bounding box (OBB)
+        trees. An oriented bounding box is a bounding box that does not
+        necessarily line up along coordinate axes. The OBB tree is a
+        hierarchical tree structure of such boxes, where deeper levels of OBB
+        confine smaller regions of space.
+        """
         if not hasattr(self, '_obbTree'):
             self._obbTree = vtk.vtkOBBTree()
             self._obbTree.SetDataSet(self)
@@ -1206,10 +1205,10 @@ class PolyData(vtkPolyData, vtki.Common):
 
         """
         points = vtk.vtkPoints()
-        cellIDs = vtk.vtkIdList()
+        cell_ids = vtk.vtkIdList()
         code = self.obbTree.IntersectWithLine(np.array(origin),
                                               np.array(end_point),
-                                              points, cellIDs)
+                                              points, cell_ids)
 
         intersection_points = vtk_to_numpy(points.GetData())
         if first_point and intersection_points.shape[0] >= 1:
@@ -1220,9 +1219,9 @@ class PolyData(vtkPolyData, vtki.Common):
             if first_point:
                 ncells = 1
             else:
-                ncells = cellIDs.GetNumberOfIds()
+                ncells = cell_ids.GetNumberOfIds()
             for i in range(ncells):
-                intersection_cells.append(cellIDs.GetId(i))
+                intersection_cells.append(cell_ids.GetId(i))
         intersection_cells = np.array(intersection_cells)
 
         if plot:
@@ -1302,8 +1301,8 @@ class PolyData(vtkPolyData, vtki.Common):
             remove = np.asarray(remove)
 
         if remove.dtype == np.bool:
-            assert_statement = 'Mask different size than n_points'
-            assert remove.size == self.n_points, assert_statement
+            if remove.size != self.n_points:
+                raise AssertionError('Mask different size than n_points')
             remove_mask = remove
         else:
             remove_mask = np.zeros(self.n_points, np.bool)
@@ -1822,10 +1821,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
     @property
     def celltypes(self):
+        """Get the cell types array"""
         return vtk_to_numpy(self.GetCellTypesArray())
 
     @property
     def offset(self):
+        """Get Cell Locations Array"""
         return vtk_to_numpy(self.GetCellLocationsArray())
 
     def extract_cells(self, ind):
@@ -1867,11 +1868,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         selection.AddNode(selectionNode)
 
         # extract
-        extractSelection = vtk.vtkExtractSelection()
-        extractSelection.SetInputData(0, self)
-        extractSelection.SetInputData(1, selection)
-        extractSelection.Update()
-        subgrid = UnstructuredGrid(extractSelection.GetOutput())
+        extract_sel = vtk.vtkExtractSelection()
+        extract_sel.SetInputData(0, self)
+        extract_sel.SetInputData(1, selection)
+        extract_sel.Update()
+        subgrid = UnstructuredGrid(extract_sel.GetOutput())
 
         # extracts only in float32
         if self.points.dtype is not np.dtype('float32'):
@@ -1910,11 +1911,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     #     selection.AddNode(selectionNode)
 
     #     # extract
-    #     extractSelection = vtk.vtkExtractSelection()
-    #     extractSelection.SetInputData(0, self)
-    #     extractSelection.SetInputData(1, selection)
-    #     extractSelection.Update()
-    #     return UnstructuredGrid(extractSelection.GetOutput())
+    #     extract_sel = vtk.vtkExtractSelection()
+    #     extract_sel.SetInputData(0, self)
+    #     extract_sel.SetInputData(1, selection)
+    #     extract_sel.Update()
+    #     return UnstructuredGrid(extract_sel.GetOutput())
 
     def merge(self, grid=None, merge_points=True, inplace=True,
               main_has_priority=True):
@@ -2144,16 +2145,19 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     @property
     def x(self):
+        """The X coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 0].reshape(dim, order='F')
 
     @property
     def y(self):
+        """The Y coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 1].reshape(dim, order='F')
 
     @property
     def z(self):
+        """The Z coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 2].reshape(dim, order='F')
 
