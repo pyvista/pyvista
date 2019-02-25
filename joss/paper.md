@@ -287,6 +287,12 @@ visualizations of real data in just a few lines of code:
 ```python
 import vtki
 import omfvtk
+import requests
+
+# download the sample data
+r = requests.get("https://github.com/OpenGeoVis/omfvtk/raw/master/assets/test_file.omf")
+with open('test_file.omf', 'wb') as f:
+    f.write(r.content)
 
 # Set a document friendly plotting theme
 vtki.set_plot_theme('document')
@@ -312,20 +318,17 @@ p = vtki.Plotter()
 p.show_grid()
 
 # Add datasets
-p.add_mesh(topo, texture=True, opacity=0.90, name='topo')
+p.add_mesh(topo, texture=True, opacity=0.90, name='topo', color='white')
 p.add_mesh(dacite, color='orange', opacity=0.6, name='dacite')
 p.add_mesh(threshed, name='vol')
-
-# Add the assay logs: use a tube filter that varius the radius by an attribute
+# Add the assay logs: use a tube filter that varies the radius by an attribute
 # this will vary the radius by 'CU_pct' and color by the active scalar array
-tubes = assay.tube(scalars='CU_pct', radius=3)
-p.add_mesh(tubes, scalars='DENSITY', name='assay', cmap='viridis')
+p.add_mesh(assay.tube(scalars='CU_pct', radius=3), name='assay', cmap='viridis')
 
 p.show(auto_close=False)
 # Save a screenshot!
-# p.screenshot('wolfpass.png')
+p.screenshot('wolfpass.png')
 p.close()
-
 ```
 
 ## References
