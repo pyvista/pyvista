@@ -82,9 +82,17 @@ lines of code. Loading files supported by the VTK library is:
 import vtki
 from vtki import examples
 import numpy as np
+# Plotting parameters to reproduce figures in this paper
 # Set a document friendly plotting theme
 vtki.set_plot_theme('document')
+# Set a default colormap
+vtki.rcParams['cmap'] = 'viridis'
+vtki.rcParams['font']['size'] = 18
+vtki.rcParams['font']['title_size'] = 18
+vtki.rcParams['font']['label_size'] = 18
+```
 
+```python
 filename = 'path/to/vtk/supported/file.ext'
 mesh = vtki.read(filename)
 ```
@@ -100,6 +108,8 @@ points = np.random.rand(100, 3)
 poly = vtki.PolyData(points)
 # Add a data on the nodes of the mesh
 poly.point_arrays['foo'] = np.random.rand(poly.n_points)
+
+poly.plot(render_points_as_spheres=True, point_size=10, screenshot='./images/poly-data.png', show_scalar_bar=False)
 ```
 
 ![poly-data](./images/poly-data.png)
@@ -115,9 +125,10 @@ r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 # Create and plot structured grid
 sgrid = vtki.StructuredGrid(x, y, z)
-# Add a data on the cells of the mesh
-values = np.linspace(0, 10, sgrid.n_cells)
-sgrid.cell_arrays['values'] = values.ravel()
+# Add a data on the nodes of the mesh
+sgrid.point_arrays['values'] = z.ravel()
+
+sgrid.plot(show_edges=True, screenshot='./images/structured-grid.png', show_scalar_bar=False)
 ```
 
 ![structured-grid](./images/structured-grid.png)
@@ -135,6 +146,8 @@ ugrid.spacing = (1, 5, 2) # These are the cell sizes along each axis
 # Add a data on the cells of the mesh
 values = np.linspace(0, 10, ugrid.n_cells).reshape(np.array(ugrid.dimensions)-1)
 ugrid.cell_arrays['values'] = values.flatten(order='F')
+
+ugrid.plot(show_edges=True, screenshot='./images/uniform-grid.png', show_scalar_bar=False)
 ```
 
 ![uniform-grid](./images/uniform-grid.png)
@@ -223,7 +236,7 @@ result = dataset.threshold([100, 500], invert=True).elevation().clip(normal='z')
 ```python
 p = vtki.Plotter()
 p.add_mesh(dataset.outline(), color='black')
-p.add_mesh(result, scalars='Elevation', show_edges=True)
+p.add_mesh(result, scalars='Elevation', show_edges=True, font_size=12)
 p.isometric_view()
 p.show(screenshot='./images/filter-chain.png')
 ```
@@ -241,12 +254,6 @@ NumPy interface. An example of plotting arrow glyphs from a simple numerical
 function is provided below:
 
 ```python
-import vtki
-import numpy as np
-
-# Set a document friendly plotting theme
-vtki.set_plot_theme('document')
-
 sphere = vtki.Sphere(radius=3.14)
 
 # make a swirly pattern
@@ -271,7 +278,6 @@ users can load geospatial data into VTK data structures and create compelling
 visualizations of real data in just a few lines of code:
 
 ```python
-import vtki
 import omfvtk
 import requests
 
@@ -279,9 +285,6 @@ import requests
 r = requests.get("https://github.com/OpenGeoVis/omfvtk/raw/master/assets/test_file.omf")
 with open('test_file.omf', 'wb') as f:
     f.write(r.content)
-
-# Set a document friendly plotting theme
-vtki.set_plot_theme('document')
 
 # Load example OMF data file into a vtki.MultiBlock object
 proj = omfvtk.load_project('test_file.omf')
