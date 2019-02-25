@@ -1,4 +1,6 @@
+import os
 import sys
+import time
 
 import pytest
 import numpy as np
@@ -71,14 +73,12 @@ def test_qt_interactor(qtbot):
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
-def test_background_plotting(qtbot):
+def test_background_plotting_axes_scale(qtbot):
     sphere = vtki.Sphere()
     plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
     plotter.add_mesh(sphere)
     assert np.any(plotter.mesh.points)
-    # now test some of the features
-    plotter.save_camera_position()
-    plotter.clear_camera_positions()
+
     dlg = plotter.scale_axes_dialog(show=False)
 
     value = 2.0
@@ -93,4 +93,54 @@ def test_background_plotting(qtbot):
     plotter._last_update_time = 0.0
     plotter.update_app_icon()
 
-    assert plotter.close()
+    assert plotter.quit() is None
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting_camera(qtbot):
+    plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
+    plotter.add_mesh(vtki.Sphere())
+
+    cpos = [(0.0, 0.0, 1.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+    plotter.camera_position = cpos
+    plotter.save_camera_position()
+    plotter.camera_position = [(0.0, 0.0, 3.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
+
+    # load existing position
+    plotter.saved_camera_menu.actions()[0].trigger()
+    assert plotter.camera_position == cpos
+
+    plotter.clear_camera_positions()
+    assert not len(plotter.saved_camera_menu.actions())
+    plotter.close()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotter_export_files(qtbot, tmpdir):
+    plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
+    plotter.add_mesh(vtki.Sphere())
+
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
+    dlg = plotter._qt_screenshot(show=False)
+    dlg.selectFile(filename)
+    dlg.accept()
+    plotter.close()
+
+    assert os.path.isfile(filename)
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotter_export_vtkjs(qtbot, tmpdir):
+    plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
+    plotter.add_mesh(vtki.Sphere())
+
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp'))
+    dlg = plotter._qt_export_vtkjs(show=False)
+    dlg.selectFile(filename)
+    dlg.accept()
+    plotter.close()
+
+    assert os.path.isfile(filename + '.vtkjs')
