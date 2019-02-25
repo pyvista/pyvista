@@ -26,12 +26,12 @@ bibliography: paper.bib
 The Visualization Toolkit (VTK) is an excellent visualization software
 library, and with Python bindings it combines the speed of C++ with
 the rapid prototyping of Python [@vtkbook].  Despite this, VTK code
-programmed in Python using the base package provided by KitWare is
+programmed in Python using the base package provided by Kitware is
 unnecessarily complex as the Python package merely wraps existing C++
 calls. This Python package seeks to simplify common mesh creation and
 plotting routines without compromising on the speed of the C++ VTK
 backend.  At its core, `vtki` is a pure Python helper module for VTK
-that interfaces with back to VTK data objects through NumPy [@numpy]
+that interfaces back to VTK data objects through NumPy [@numpy]
 and direct array access.  This package expands upon VTK's data objects
 by creating classes that extend their VTK counterpart.  VTK data
 objects passed to `vtki` have an added layer of functionality on top
