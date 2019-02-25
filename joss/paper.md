@@ -93,7 +93,7 @@ Creating mesh objects in VTK is also simplified by `vtki` by providing intuitive
 initialization functions and attributes on the `vtki` classes that callback to
 the original VTK data object.
 
-Create polygonal data from scattered points:
+### Point Data
 
 ```python
 points = np.random.rand(100, 3)
@@ -102,7 +102,9 @@ poly = vtki.PolyData(points)
 poly.point_arrays['foo'] = np.random.rand(poly.n_points)
 ```
 
-Create a structured grid:
+![poly-data](./images/poly-data.png)
+
+### Structured Grid
 
 ```python
 # Make data
@@ -118,7 +120,9 @@ values = np.linspace(0, 10, sgrid.n_cells)
 sgrid.cell_arrays['values'] = values.ravel()
 ```
 
-Create uniform grid:
+![structured-grid](./images/structured-grid.png)
+
+### Uniform Grid
 
 ```python
 # Create the spatial reference
@@ -133,6 +137,7 @@ values = np.linspace(0, 10, ugrid.n_cells).reshape(np.array(ugrid.dimensions)-1)
 ugrid.cell_arrays['values'] = values.flatten(order='F')
 ```
 
+![uniform-grid](./images/uniform-grid.png)
 
 ## Simplified Plotting Routines
 
