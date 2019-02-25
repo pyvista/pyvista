@@ -38,7 +38,45 @@ that object providing a wrapping layer that creates an accessible and intuitive
 interface back to the VTK library to foster rapid prototyping and analysis of
 VTK datasets.
 
-## Data Types
+## Simplified Plotting Routines
+
+Plotting VTK datasets using only the VTK Python package is often an ambitious
+programming endeavor. Reading a VTK supported file and plotting it requires a
+user to write a complicated sequence of routines to render the data object while
+having to remember which VTK classes to use for file reading and dataset mapping.
+An example can be found in [this creative commons VTK example](https://vtk.org/Wiki/VTK/Examples/Python/STLReader).
+
+`vtki` includes numerous plotting routines that are intended to be intuitive and
+highly controllable with `matplotlib` [@matplotlib] similar syntax and keyword
+arguments.
+These plotting routines are defined to make the rendering process
+straightforward and easily implemented by novice VTK users. Loading and
+rendering in `vtki` is implemented to take only a few lines of code:
+
+```python
+filename = examples.planefile
+mesh = vtki.read(filename)
+mesh.plot(show_edges=True, screenshot='./images/airplane.png')
+```
+
+![airplane](./images/airplane.png)
+
+Notably, the `vtki.plot()` convenience method is binded to each `vtki`
+data object to make visual inspection of datasets easily performed. Other
+plotting routines in `vtki` are available for creating integrated and
+easily manipulated scenes via the `vtki.Plotter` and `vtki.BackgroundPlotter`
+classes. Creating a rendering scene and altering its properties can be performed
+with the following code in `vtki`:
+
+```python
+plotter = vtki.Plotter()
+plotter.add_mesh(mesh, color='yellow')
+plotter.show_grid()
+plotter.show()
+```
+
+
+## Data Types & Mesh Creation
 
 Datasets are any spatially referenced information and usually consist of
 geometrical representations of a surface or volume in 3D space.
@@ -137,9 +175,7 @@ sgrid.plot(show_edges=True, screenshot='./images/structured-grid.png', show_scal
 
 ```python
 # Create the spatial reference
-ugrid = vtki.UniformGrid()
-# Set the size of the grid
-ugrid.dimensions = (20, 5, 10)
+ugrid = vtki.UniformGrid((20, 5, 10))
 # Edit the spatial reference
 ugrid.origin = (100, 33, 55.6) # The bottom left corner of the data set
 ugrid.spacing = (1, 5, 2) # These are the cell sizes along each axis
@@ -151,43 +187,6 @@ ugrid.plot(show_edges=True, screenshot='./images/uniform-grid.png', show_scalar_
 ```
 
 ![uniform-grid](./images/uniform-grid.png)
-
-## Simplified Plotting Routines
-
-Plotting VTK datasets using only the VTK Python package is often an ambitious
-programming endeavor. Reading a VTK supported file and plotting it requires a
-user to write a complicated sequence of routines to render the data object while
-having to remember which VTK classes to use for file reading and dataset mapping.
-An example can be found in [this creative commons VTK example](https://vtk.org/Wiki/VTK/Examples/Python/STLReader).
-
-`vtki` includes numerous plotting routines that are intended to be intuitive and
-highly controllable with `matplotlib` [@matplotlib] similar syntax and keyword
-arguments.
-These plotting routines are defined to make the rendering process
-straightforward and easily implemented by novice VTK users. Loading and
-rendering in `vtki` is implemented to take only a few lines of code:
-
-```python
-filename = examples.planefile
-mesh = vtki.read(filename)
-mesh.plot(show_edges=True, screenshot='./images/airplane.png')
-```
-
-![airplane](./images/airplane.png)
-
-Notably, the `vtki.plot()` convenience method is binded to each `vtki`
-data object to make visual inspection of datasets easily performed. Other
-plotting routines in `vtki` are available for creating integrated and
-easily manipulated scenes via the `vtki.Plotter` and `vtki.BackgroundPlotter`
-classes. Creating a rendering scene and altering its properties can be performed
-with the following code in `vtki`:
-
-```python
-plotter = vtki.Plotter()
-plotter.add_mesh(mesh, color='yellow')
-plotter.show_grid()
-plotter.show()
-```
 
 
 ## Accessing Common Analysis Routines
