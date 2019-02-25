@@ -1,5 +1,5 @@
 ---
-title: 'vtki: A Python interface for the Visualization Toolkit'
+title: 'vtki: A Streamlined Python Interface for the Visualization Toolkit'
 tags:
   - Python
   - visualization
