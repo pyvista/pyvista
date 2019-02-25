@@ -97,16 +97,6 @@ quickly accessing scalar arrays associated with the dataset or easily inspecting
 attributes of the dataset such as all the scalar names or number of points
 present.
 
-In VTK, datasets consist of geometry, topology, and attributes to which `vtki`
-provides direct access through NumPy arrays [@vtkbook]:
-
-- The geometry of the dataset is the collection of points and cells in 2D or 3D
-space.
-- Topology defines the structure of the dataset, or how the points are connected
-to each other to form a cells constructing a surface or volume.
-- Attributes are any data values that are associated with either the points or
-cells of the dataset.
-
 All of the following data types are subclasses of their corresponding VTK class
 and share a set of common functionality which `vtki` implements into the base
 class  `vtki.Common`.
@@ -122,66 +112,16 @@ class  `vtki.Common`.
 | `vtk.vtkMultiBlockDataSet` | `vtki.MultiBlock`       |
 
 
-Creation of VTK data objects over the `vtki` interface can be completed in a few
-lines of code. Loading files supported by the VTK library is:
+Creating mesh objects in VTK is also simplified by `vtki` by providing intuitive
+initialization functions and attributes on the `vtki` classes that callback to
+the original VTK data object. Loading files supported by the VTK library is also
+simplified with a module level function to decide on the appropriate reader for
+the file.
 
 ```python
 filename = 'path/to/vtk/supported/file.ext'
 mesh = vtki.read(filename)
 ```
-
-Creating mesh objects in VTK is also simplified by `vtki` by providing intuitive
-initialization functions and attributes on the `vtki` classes that callback to
-the original VTK data object.
-
-### Point Data
-
-```python
-points = np.random.rand(100, 3)
-poly = vtki.PolyData(points)
-# Add a data on the nodes of the mesh
-poly.point_arrays['foo'] = np.random.rand(poly.n_points)
-
-poly.plot(render_points_as_spheres=True, point_size=10, screenshot='./images/poly-data.png', show_scalar_bar=False)
-```
-
-![poly-data](./images/poly-data.png)
-
-### Structured Grid
-
-```python
-# Make data
-x = np.arange(-10, 10, 0.25)
-y = np.arange(-10, 10, 0.25)
-x, y = np.meshgrid(x, y)
-r = np.sqrt(x**2 + y**2)
-z = np.sin(r)
-# Create and plot structured grid
-sgrid = vtki.StructuredGrid(x, y, z)
-# Add a data on the nodes of the mesh
-sgrid.point_arrays['values'] = z.ravel()
-
-sgrid.plot(show_edges=True, screenshot='./images/structured-grid.png', show_scalar_bar=False)
-```
-
-![structured-grid](./images/structured-grid.png)
-
-### Uniform Grid
-
-```python
-# Create the spatial reference
-ugrid = vtki.UniformGrid((20, 5, 10))
-# Edit the spatial reference
-ugrid.origin = (100, 33, 55.6) # The bottom left corner of the data set
-ugrid.spacing = (1, 5, 2) # These are the cell sizes along each axis
-# Add a data on the cells of the mesh
-values = np.linspace(0, 10, ugrid.n_cells).reshape(np.array(ugrid.dimensions)-1)
-ugrid.cell_arrays['values'] = values.flatten(order='F')
-
-ugrid.plot(show_edges=True, screenshot='./images/uniform-grid.png', show_scalar_bar=False)
-```
-
-![uniform-grid](./images/uniform-grid.png)
 
 
 ## Accessing Common Analysis Routines
