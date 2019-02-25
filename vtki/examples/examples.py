@@ -66,7 +66,7 @@ def load_globe():
 
 def load_globe_texture():
     """ Loads a vtk.vtkTexture that can be applied to the globe source """
-    return vtki.load_texture(mapfile)
+    return vtki.read_texture(mapfile)
 
 def plot_ants_plane(off_screen=False, notebook=None):
     """

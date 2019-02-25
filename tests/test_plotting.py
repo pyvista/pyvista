@@ -397,7 +397,7 @@ def test_plot_texture_associated():
     plotter.plot()
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
-def test_load_texture_from_numpy():
+def test_read_texture_from_numpy():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
     texture = vtki.numpy_to_texture(imageio.imread(examples.mapfile))

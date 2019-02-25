@@ -182,7 +182,7 @@ def read(filename, attrs=None):
     raise IOError("This file was not able to be automatically read by vtki.")
 
 
-def load_texture(filename):
+def read_texture(filename):
     """Loads a ``vtkTexture`` from an image file."""
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
