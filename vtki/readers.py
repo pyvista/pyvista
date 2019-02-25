@@ -30,7 +30,44 @@ READERS = {
     '.slc': vtk.vtkSLCReader,
     '.tiff': vtk.vtkTIFFReader,
     '.tif': vtk.vtkTIFFReader,
+    # ExodusII files:
+    #.g, .e, .ex2, .ex2v2, .exo, .gen, .exoII, .exii, .0, .00, .000
+    '.g': vtk.vtkExodusIIReader,
+    '.e': vtk.vtkExodusIIReader,
+    '.ex2': vtk.vtkExodusIIReader,
+    '.ex2v2': vtk.vtkExodusIIReader,
+    '.exo': vtk.vtkExodusIIReader,
+    '.gen': vtk.vtkExodusIIReader,
+    '.exoii': vtk.vtkExodusIIReader,
+    '.exii': vtk.vtkExodusIIReader,
+    '.0': vtk.vtkExodusIIReader,
+    '.00': vtk.vtkExodusIIReader,
+    '.000': vtk.vtkExodusIIReader,
+    # Other formats:
+    '.byu': vtk.vtkBYUReader,
+    '.chemml': vtk.vtkCMLMoleculeReader,
+    '.cml': vtk.vtkCMLMoleculeReader,
+    # TODO: '.csv': vtk.vtkCSVReader, # vtkTables are currently not supported
+    '.facet': vtk.vtkFacetReader,
+    '.cas': vtk.vtkFLUENTReader,
+    '.dat': vtk.vtkFLUENTReader,
+    '.cube': vtk.vtkGaussianCubeReader,
+    '.res': vtk.vtkMFIXReader,
+    '.foam': vtk.vtkOpenFOAMReader,
+    '.pdb': vtk.vtkPDBReader,
+    '.p3d': vtk.vtkPlot3DMetaReader,
+    '.pts': vtk.vtkPTSReader,
+    '.particles': vtk.vtkParticleReader,
+    #TODO: '.pht': vtk.vtkPhasta??????,
+    #TODO: '.vpc': vtk.vtkVPIC?????,
+    '.xyz': vtk.vtkXYZMolReader,
 }
+
+
+if (vtk.vtkVersion().GetVTKMajorVersion() >= 8 and
+    vtk.vtkVersion().GetVTKMinorVersion() >= 2):
+    READERS['.sgy'] = vtk.vtkSegYReader
+    READERS['.segy'] = vtk.vtkSegYReader
 
 
 def get_ext(filename):
@@ -81,7 +118,6 @@ def standard_reader_routine(reader, filename, attrs=None):
     # Perform the read
     reader.Update()
     return vtki.wrap(reader.GetOutputDataObject(0))
-
 
 
 def read_legacy(filename):
