@@ -71,7 +71,7 @@ mesh.plot(show_edges=True, screenshot='./images/airplane.png')
 
 ![Example rendering of mesh loaded from a file](./images/airplane.png)
 
-Notably, the `vtki.plot()` convenience method is binded to each `vtki`
+Notably, the `vtki.plot()` convenience method is bound to each `vtki`
 data object to make visual inspection of datasets easily performed. Other
 plotting routines in `vtki` are available for creating integrated and
 easily manipulated scenes via the `vtki.Plotter` and `vtki.BackgroundPlotter`
@@ -148,7 +148,8 @@ result = dataset.threshold([100, 500])
 Above, an extracted version of the input dataset where the active scalar array
 is between 100 and 500 is created in the new `result` object.
 Documentation of the available keyword arguments to control the
-filtering algorithms are described in the docstrings of each filtering method.
+filtering algorithms are described in the documentation of each filtering
+method.
 
 ### Filtering Chain
 
