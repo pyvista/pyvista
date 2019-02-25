@@ -9,8 +9,8 @@ concern, feature request, or desire to contribute.
 Questions
 ~~~~~~~~~
 
-For general questions about the project, its applications, or about the
-non-technical, please do not create an issue but join us on Slack_ or send one
+For general questions about the project, its applications, or about software
+usage, please do not create an issue but join us on Slack_ or send one
 of the developers an email. The project support team can be reached at
 `info@vtki.org`_.
 
