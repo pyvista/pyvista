@@ -9,8 +9,8 @@ vtki Overview
 .. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/vtkiorg/vtki
 
-.. image:: https://img.shields.io/appveyor/ci/akaszynski/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
-   :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
+.. image:: https://img.shields.io/appveyor/ci/vtkiorg/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
+   :target: https://ci.appveyor.com/project/vtkiorg/vtkinterface/history
 
 .. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
    :target: https://github.com/vtkiorg/vtki/graphs/contributors/
