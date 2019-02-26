@@ -5,17 +5,17 @@ vtki
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
-.. image:: https://img.shields.io/travis/akaszynski/vtki/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/akaszynski/vtki
+.. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
+   :target: https://travis-ci.org/vtkiorg/vtki
 
-.. image:: https://img.shields.io/appveyor/ci/akaszynski/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
-   :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
+.. image:: https://img.shields.io/appveyor/ci/vtkiorg/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
+   :target: https://ci.appveyor.com/project/vtkiorg/vtkinterface/history
 
 .. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
    :target: http://docs.vtki.org/
 
-.. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
-   :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
+.. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
+   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
 
 .. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/akaszynski/vtki
@@ -53,7 +53,7 @@ Installation is simply::
     pip install vtki
 
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
-`GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
+`GitHub <https://github.com/vtkiorg/vtki>`_ to download the source.
 
 See the `Installation <http://docs.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.

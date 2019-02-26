@@ -63,5 +63,5 @@ widgets that will control a filter or task in an interactive rendering scene:
    vtki.OrthogonalSlicer(dataset)
 
 
-.. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/slicer-tool.gif
+.. figure:: https://github.com/vtkiorg/vtki/raw/master/docs/images/slicer-tool.gif
   :width: 500pt

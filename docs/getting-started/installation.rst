@@ -36,7 +36,7 @@ Install vtki from `PyPi <http://pypi.python.org/pypi/vtki>`_ by running::
     pip install vtki
 
 Alternatively, you can install the latest version from GitHub by visiting
-`vtki <https://github.com/akaszynski/vtki>`_, downloading the source, and
+`vtki <https://github.com/vtkiorg/vtki>`_, downloading the source, and
 running::
 
     cd C:\Where\You\Downloaded\vtki
