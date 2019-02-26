@@ -8,8 +8,8 @@ vtki
 .. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/vtkiorg/vtki
 
-.. image:: https://img.shields.io/appveyor/ci/vtkiorg/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
-   :target: https://ci.appveyor.com/project/vtkiorg/vtki/history
+.. image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
+   :target: https://ci.appveyor.com/project/banesullivan/vtki/history
 
 .. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
    :target: http://docs.vtki.org/
