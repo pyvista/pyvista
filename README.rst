@@ -5,8 +5,8 @@ vtki
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
-.. image:: https://img.shields.io/travis/akaszynski/vtki/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/akaszynski/vtki
+.. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
+   :target: https://travis-ci.org/vtkiorg/vtki
 
 .. image:: https://img.shields.io/appveyor/ci/akaszynski/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
