@@ -657,8 +657,8 @@ class Common(DataSetFilters):
 
         Returns
         -------
-        area : float
-            Total area of the mesh.
+        volume : float
+            Total volume of the mesh.
 
         """
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
