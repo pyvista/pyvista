@@ -79,7 +79,9 @@ cell sizes, then extract the volumes of each body:
     print('Original volume: {}'.format(dataset.volume))
 
 
-.. code-block:: text
+.. testoutput:: python
+   :hide:
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
 
     Low grade volume: 518.0
     High grade volume: 35.0
