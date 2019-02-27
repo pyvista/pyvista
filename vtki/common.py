@@ -650,6 +650,20 @@ class Common(DataSetFilters):
         if hasattr(self, 'GetExtent'):
             return list(self.GetExtent())
 
+    @property
+    def volume(self):
+        """
+        Mesh volume
+
+        Returns
+        -------
+        area : float
+            Total area of the mesh.
+
+        """
+        sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
+        return np.sum(sizes.cell_arrays['Volume'])
+
     def get_data_range(self, arr=None, preference='cell'):
         """Get the non-NaN min and max of a named scalar array
 
