@@ -17,8 +17,8 @@ vtki
 .. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
    :target: https://github.com/vtkiorg/vtki/graphs/contributors/
 
-.. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/akaszynski/vtki
+.. image:: https://codecov.io/gh/vtkiorg/vtki/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/vtkiorg/vtki
 
 .. image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
