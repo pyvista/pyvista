@@ -4,7 +4,7 @@ Compute the Volume of a Mesh
 
 Calculating mass properties such as the volume or area of datasets in ``vtki``
 is quite easy using the :func:`vtki.DataSetFilters.compute_cell_sizes` filter
-and the :func:`vtki.Common.volume` property on all ``vtki`` meshes.
+and the :attr:`vtki.Common.volume` property on all ``vtki`` meshes.
 
 
 Let's get started with a simple gridded mesh:
