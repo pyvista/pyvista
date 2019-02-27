@@ -7,19 +7,20 @@ vtkArrowSource
 vtkCylinderSource
 vtkSphereSource
 vtkPlaneSource
+vtkLineSource
+vtkCubeSource
+vtkConeSource
 
 NEED TO ADD
 -----------
-vtkConeSource
-vtkCubeSource
 vtkDiskSource
-vtkLineSource
 vtkRegularPolygonSource
 
 """
 import numpy as np
 import vtk
 
+import vtki
 from vtki import PolyData
 
 
@@ -40,10 +41,11 @@ def translate(surf, center, direction):
     trans[3, 3] = 1
 
     surf.transform(trans)
-    surf.points += center
+    surf.points += np.array(center)
 
 
-def Cylinder(center, direction, radius, height, resolution=100, cap_ends=True):
+def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
+             resolution=100, **kwargs):
 
     """
     Create the surface of a cylinder.
@@ -65,7 +67,7 @@ def Cylinder(center, direction, radius, height, resolution=100, cap_ends=True):
     resolution : int
         Number of points on the circular face of the cylinder.
 
-    cap_ends : bool, optional
+    capping : bool, optional
         Cap cylinder ends with polygons.  Default True
 
     Returns
@@ -81,10 +83,11 @@ def Cylinder(center, direction, radius, height, resolution=100, cap_ends=True):
     >>> cylinder.plot() # doctest:+SKIP
 
     """
+    capping = kwargs.get('capping', kwargs.get('cap_ends', True))
     cylinderSource = vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
     cylinderSource.SetHeight(height)
-    cylinderSource.SetCapping(cap_ends)
+    cylinderSource.SetCapping(capping)
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
     surf = PolyData(cylinderSource.GetOutput())
@@ -93,8 +96,8 @@ def Cylinder(center, direction, radius, height, resolution=100, cap_ends=True):
     return surf
 
 
-def Arrow(start, direction, tip_length=0.25, tip_radius=0.1, shaft_radius=0.05,
-          shaft_resolution=20):
+def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
+          tip_radius=0.1, shaft_radius=0.05, shaft_resolution=20):
     """
     Create a vtk Arrow
 
@@ -191,8 +194,8 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     return surf
 
 
-def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolution=10,
-          j_resolution=10):
+def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
+          i_resolution=10, j_resolution=10):
     """
     Create a plane
 
@@ -234,3 +237,104 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1, i_resolutio
     surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
+
+
+def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
+    """Create a line
+
+    Parameters
+    ----------
+    pointa : np.ndarray or list
+        Location in [x, y, z].
+
+    pointb : np.ndarray or list
+        Location in [x, y, z].
+
+    resolution : int
+        number of pieces to divide line into
+    """
+    if np.array(pointa).size != 3:
+        raise TypeError('Point A must be a length three tuple of floats.')
+    if np.array(pointb).size != 3:
+        raise TypeError('Point B must be a length three tuple of floats.')
+    src = vtk.vtkLineSource()
+    src.SetPoint1(*pointa)
+    src.SetPoint2(*pointb)
+    src.SetResolution(resolution)
+    src.Update()
+    return vtki.wrap(src.GetOutput())
+
+
+def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
+    """Create a cube by either specifying the center and side lengths or just
+    the bounds of the cube. If ``bounds`` are given, all other arguments are
+    ignored.
+
+    Parameters
+    ----------
+    center : np.ndarray or list
+        Center in [x, y, z].
+
+    x_length : float
+        length of the cube in the x-direction.
+
+    y_length : float
+        length of the cube in the y-direction.
+
+    z_length : float
+        length of the cube in the z-direction.
+
+    bounds : np.ndarray or list
+        Specify the bounding box of the cube. If given, all other arguments are
+        ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
+    """
+    src = vtk.vtkCubeSource()
+    if bounds is not None:
+        if np.array(bounds).size != 6:
+            raise TypeError('Bounds must be given as length 6 tuple: (xMin,xMax, yMin,yMax, zMin,zMax)')
+        src.SetBounds(bounds)
+    else:
+        src.SetCenter(center)
+        src.SetXLength(x_length)
+        src.SetYLength(y_length)
+        src.SetZLength(z_length)
+    src.Update()
+    return vtki.wrap(src.GetOutput())
+
+
+def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
+         capping=True, angle=26.6, resolution=6):
+    """Create a cone
+
+    Parameters
+    ----------
+    center : np.ndarray or list
+        Center in [x, y, z]. middle of the axis of the cone.
+
+    direction : np.ndarray or list
+        direction vector in [x, y, z]. orientation vector of the cone.
+
+    height : float
+        height along the cone in its specified direction.
+
+    radius : float
+        base radius of the cone
+
+    capping : bool
+        Turn on/off whether to cap the base of the cone with a polygon.
+
+    angle : float
+        The angle degrees between the axis of the cone and a generatrix.
+
+    resolution : int
+        number of facets used to represent the cone
+    """
+    src = vtk.vtkConeSource()
+    src.SetAngle(angle)
+    src.SetCapping(capping)
+    src.SetCenter(center)
+    src.SetHeight(height)
+    src.SetRadius(radius)
+    src.SetResolution(resolution)
+    src.Update()
+    return vtki.wrap(src.GetOutput())

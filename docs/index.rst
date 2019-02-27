@@ -145,6 +145,7 @@ Tools
    :caption: Tools
    :hidden:
 
+   tools/geometric
    tools/plotting
    tools/filters
    tools/ipy_tools
