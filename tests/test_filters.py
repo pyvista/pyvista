@@ -217,6 +217,11 @@ def test_compute_cell_sizes():
         assert isinstance(result, type(dataset))
         assert 'Area' in result.scalar_names
         assert 'Volume' in result.scalar_names
+    # Test the volume property
+    grid = vtki.UniformGrid((10,10,10))
+    volume = float(np.prod(np.array(grid.dimensions) - 1))
+    assert np.allclose(grid.volume, volume)
+
 
 
 def test_cell_centers():
