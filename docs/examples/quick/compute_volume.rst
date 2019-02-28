@@ -159,13 +159,13 @@ Now extract all the different bodies and compute their volumes:
     bodies = channels.split_bodies()
     # Now remove all bodies with a small volume
     for key in bodies.keys():
-    b = bodies[key]
-    vol = b.volume
-    if vol < 1000.0:
-        del bodies[key]
-        continue
-    # Now lets add a volume array to all blocks
-    b.cell_arrays['TOTAL VOLUME'] = np.full(b.n_cells, vol)
+        b = bodies[key]
+        vol = b.volume
+        if vol < 1000.0:
+            del bodies[key]
+            continue
+        # Now lets add a volume array to all blocks
+        b.cell_arrays['TOTAL VOLUME'] = np.full(b.n_cells, vol)
 
 
 Print out the volumes for each body:
