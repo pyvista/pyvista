@@ -416,6 +416,7 @@ def test_camera():
     plotter.camera_position = None
 
 
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_multi_renderers():
     plotter = vtki.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
 
