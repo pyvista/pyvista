@@ -1764,6 +1764,12 @@ class BasePlotter(object):
         """ returns render window size """
         return list(self.ren_win.GetSize())
 
+
+    @window_size.setter
+    def window_size(self, window_size):
+        """ set the render window size """
+        self.ren_win.SetSize(window_size[0], window_size[1])
+
     @property
     def image(self):
         """ Returns an image array of current render window """
@@ -1772,11 +1778,12 @@ class BasePlotter(object):
         # Update filter and grab pixels
         self.ifilter.Modified()
         self.ifilter.Update()
-        image = self.ifilter.GetOutput()
+        image = vtki.wrap(self.ifilter.GetOutput())
+        img_size = image.dimensions
         img_array = vtki.utilities.point_scalar(image, 'ImageScalars')
 
         # Reshape and write
-        tgt_size = (self.window_size[1], self.window_size[0], -1)
+        tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
@@ -2328,7 +2335,7 @@ class Plotter(BasePlotter):
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False, notebook=None):
+    def __init__(self, off_screen=False, notebook=None, window_size=None):
         """
         Initialize a vtk plotting object
         """
@@ -2350,6 +2357,9 @@ class Plotter(BasePlotter):
             off_screen = True
         self.off_screen = off_screen
 
+        if window_size is None:
+            window_size = vtki.rcParams['window_size']
+
         # initialize render window
         self.ren_win = vtk.vtkRenderWindow()
         self.ren_win.AddRenderer(self.renderer)
@@ -2365,6 +2375,9 @@ class Plotter(BasePlotter):
 
         # Set background
         self.set_background(rcParams['background'])
+
+        # Set window size
+        self.window_size = window_size
 
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
@@ -2421,7 +2434,7 @@ class Plotter(BasePlotter):
             self.ren_win.BordersOn()  # super buggy when disabled
         else:
             if window_size is None:
-                window_size = rcParams['window_size']
+                window_size = self.window_size
             self.ren_win.SetSize(window_size[0], window_size[1])
 
         # Render
