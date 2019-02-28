@@ -92,7 +92,7 @@ class FileDialog(QFileDialog):
     def emit_accepted(self):
         """
         Sends signal that the file dialog was closed properly.
-        
+
         Sends:
         filename
         """
@@ -318,11 +318,17 @@ class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, shape=(1, 1), **kwargs):
+    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None, **kwargs):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
+
+        if window_size is None:
+            window_size = rcParams['window_size']
+
+        # Remove notebook argument in case user passed it
+        kwargs.pop('notebook', None)
 
         # ipython magic
         if run_from_ipython():  # pragma: no cover
@@ -403,6 +409,8 @@ class BackgroundPlotter(QtInteractor):
         self._last_camera_pos = self.camera_position
 
         self._spawn_background_rendering()
+
+        self.window_size = window_size
 
     def scale_axes_dialog(self, show=True):
         """ Open scale axes dialog """
@@ -511,6 +519,18 @@ class BackgroundPlotter(QtInteractor):
         self.update_app_icon()
         return
 
+    @property
+    def window_size(self):
+        """ returns render window size """
+        the_size = self.app_window.baseSize()
+        return the_size.width(), the_size.height()
+
+
+    @window_size.setter
+    def window_size(self, window_size):
+        """ set the render window size """
+        BasePlotter.window_size.fset(self, window_size)
+        self.app_window.setBaseSize(*window_size)
+
     def __del__(self):  # pragma: no cover
         self.close()
-

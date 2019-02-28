@@ -896,7 +896,7 @@ class BasePlotter(object):
             Resets the camera when true.
 
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
@@ -921,9 +921,9 @@ class BasePlotter(object):
         Parameters
         ----------
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
-        
+
         Returns
         -------
         idx : int
@@ -1066,7 +1066,7 @@ class BasePlotter(object):
             draw the default box. Dafuault is 0.5 to show the full box.
 
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
@@ -1115,13 +1115,13 @@ class BasePlotter(object):
             box. Dafuault is 0.5 to show the full box.
 
         line_width : float, optional
-            Thickness of lines.  
+            Thickness of lines.
 
         opacity : float, optional
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0
 
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
@@ -1140,7 +1140,7 @@ class BasePlotter(object):
         Parameters
         ----------
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
         """
@@ -1155,7 +1155,7 @@ class BasePlotter(object):
         Parameters
         ----------
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
         """
@@ -1587,7 +1587,7 @@ class BasePlotter(object):
             will be replaced by the new actor.
 
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
         Returns
@@ -1656,6 +1656,12 @@ class BasePlotter(object):
         """ returns render window size """
         return list(self.ren_win.GetSize())
 
+
+    @window_size.setter
+    def window_size(self, window_size):
+        """ set the render window size """
+        self.ren_win.SetSize(window_size[0], window_size[1])
+
     @property
     def image(self):
         """ Returns an image array of current render window """
@@ -1664,11 +1670,12 @@ class BasePlotter(object):
         # Update filter and grab pixels
         self.ifilter.Modified()
         self.ifilter.Update()
-        image = self.ifilter.GetOutput()
+        image = vtki.wrap(self.ifilter.GetOutput())
+        img_size = image.dimensions
         img_array = vtki.utilities.point_scalar(image, 'ImageScalars')
 
         # Reshape and write
-        tgt_size = (self.window_size[1], self.window_size[0], -1)
+        tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
@@ -2217,7 +2224,8 @@ class Plotter(BasePlotter):
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False, notebook=None, shape=(1, 1)):
+    def __init__(self, off_screen=False, notebook=None, shape=(1, 1),
+                 window_size=None):
         """
         Initialize a vtk plotting object
         """
@@ -2239,6 +2247,9 @@ class Plotter(BasePlotter):
             off_screen = True
         self.off_screen = off_screen
 
+        if window_size is None:
+            window_size = vtki.rcParams['window_size']
+
         # initialize render window
         self.ren_win = vtk.vtkRenderWindow()
         for renderer in self.renderers:
@@ -2258,6 +2269,9 @@ class Plotter(BasePlotter):
 
         # Set background
         self.set_background(rcParams['background'])
+
+        # Set window size
+        self.window_size = window_size
 
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
@@ -2315,7 +2329,7 @@ class Plotter(BasePlotter):
             self.ren_win.BordersOn()  # super buggy when disabled
         else:
             if window_size is None:
-                window_size = rcParams['window_size']
+                window_size = self.window_size
             self.ren_win.SetSize(window_size[0], window_size[1])
 
         # Render

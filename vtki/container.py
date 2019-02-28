@@ -254,6 +254,14 @@ class MultiBlock(vtkMultiBlockDataSet):
         return None
 
 
+    def keys(self):
+        """Get all the block names in the dataset"""
+        names = []
+        for i in range(self.n_blocks):
+            names.append(self.get_block_name(i))
+        return names
+
+
     def __setitem__(self, index, data):
         """Sets a block with a VTK data object. To set the name simultaneously,
         pass a string name as the 2nd index.
