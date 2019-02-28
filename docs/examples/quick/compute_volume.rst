@@ -1,5 +1,5 @@
-Compute the Volume of a Mesh
-============================
+Volumetric Analysis
+===================
 
 
 Calculating mass properties such as the volume or area of datasets in ``vtki``
@@ -90,7 +90,7 @@ cell sizes, then extract the volumes of each body:
 
 
 Splitting Volumes
-=================
+~~~~~~~~~~~~~~~~~
 
 What if instead, we wanted to split all the different connected bodies/volumes
 in a dataset like the one above? We could use the
@@ -131,3 +131,59 @@ dataset. For example, lets split the thresholded volume in the example above:
 
 
 .. image:: ../../images/split-bodies.png
+
+
+A Real Dataset
+~~~~~~~~~~~~~~
+
+Here is a realistic training dataset of fluvial channels in the subsurface.
+This will threshold the channels from the dataset then separate each
+significantly large body and compute the volumes for each!
+
+Load up the data and threshold the channels:
+
+.. testcode:: python
+
+    import vtki
+    from vtki import examples
+    import numpy as np
+    vtki.set_plot_theme('document')
+
+    data = examples.load_channels()
+    channels = data.threshold([0.9, 1.1])
+
+Now extract all the different bodies and compute their volumes:
+
+.. testcode:: python
+
+    bodies = channels.split_bodies()
+    # Now remove all bodies with a small volume
+    for key in bodies.keys():
+    b = bodies[key]
+    vol = b.volume
+    if vol < 1000.0:
+        del bodies[key]
+        continue
+    # Now lets add a volume array to all blocks
+    b.cell_arrays['TOTAL VOLUME'] = np.full(b.n_cells, vol)
+
+
+Print out the volumes for each body:
+
+
+.. testcode:: python
+
+    for i, body in enumerate(bodies):
+        print('Body {:02d} volume: {:.3f}'.format(i, body.volume))
+
+And visualize all the different volumes:
+
+.. code-block:: python
+
+    p = vtki.Plotter()
+    p.add_mesh(bodies, scalars='TOTAL VOLUME', cmap='viridis')
+    p.show_grid()
+    p.show()
+
+
+.. image:: ../../images/channel-volumes.png
