@@ -92,7 +92,7 @@ class FileDialog(QFileDialog):
     def emit_accepted(self):
         """
         Sends signal that the file dialog was closed properly.
-        
+
         Sends:
         filename
         """
@@ -316,11 +316,14 @@ class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, **kwargs):
+    def __init__(self, show=True, app=None, window_size=None, **kwargs):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
+
+        if window_size is None:
+            window_size = vtki.rcParams['window_size']
 
         # ipython magic
         if run_from_ipython():  # pragma: no cover
@@ -340,6 +343,7 @@ class BackgroundPlotter(QtInteractor):
 
         self.app = app
         self.app_window = QMainWindow()
+        self.app_window.setBaseSize(*window_size)
 
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
@@ -511,4 +515,3 @@ class BackgroundPlotter(QtInteractor):
 
     def __del__(self):  # pragma: no cover
         self.close()
-
