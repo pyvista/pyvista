@@ -413,3 +413,32 @@ def test_camera():
     plotter.isometric_view()
     plotter.reset_camera()
     plotter.show()
+    plotter.camera_position = None
+
+
+def test_multi_renderers():
+    plotter = vtki.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
+
+    loc = (0, 0)
+    plotter.add_text('Render Window 0', loc=loc, font_size=30)
+    sphere = vtki.Sphere()
+    plotter.add_mesh(sphere, loc=loc, scalars=sphere.points[:, 2])
+    plotter.add_scalar_bar('Z', vertical=True)
+
+    loc = (0, 1)
+    plotter.add_text('Render Window 1', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Cube(), loc=loc, show_edges=True)
+
+    loc = (1, 0)
+    plotter.add_text('Render Window 2', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Arrow(), color='y', loc=loc, show_edges=True)
+
+    loc = (1, 1)
+    plotter.add_text('Render Window 3', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Cone(), color='g', loc=loc, show_edges=True)
+    plotter.add_bounding_box()
+    plotter.add_bounds_axes(all_edges=True)
+    # plotter.add_mesh(vtki.Cube(), color='g', loc=loc, show_edges=True)
+    plotter.update_bounds_axes()
+    plotter.plot()
+

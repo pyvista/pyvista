@@ -55,11 +55,17 @@ rcParams = {
     'color' : 'white',
     'nan_color' : 'darkgray',
     'outline_color' : 'white',
-    'colorbar' : {
+    'colorbar_horizontal' : {
         'width' : 0.60,
         'height' : 0.08,
         'position_x' : 0.35,
         'position_y' : 0.02,
+    },
+    'colorbar_vertical' : {
+        'width' : 0.1,
+        'height' : 0.8,
+        'position_x' : 0.85,
+        'position_y' : 0.1,
     },
     'show_edges' : False,
     'lighting' : True,
@@ -298,7 +304,6 @@ class BasePlotter(object):
         # self.camera_set = False
         self.first_time = True
         # Keep track of the scale
-        self.scale = [1.0, 1.0, 1.0]
         self._labels = []
 
         # Add self to open plotters
@@ -308,14 +313,6 @@ class BasePlotter(object):
         """ sets the interacto style to trackball """
         istyle = vtk.vtkInteractorStyleTrackballCamera()
         self.iren.SetInteractorStyle(istyle)
-
-    # def 
-    #     self.iren.AddObserver('MouseMoveEvent',
-    #                           self._tmp)
-
-    # def _tmp(self):
-        
-
 
     def set_focus(self, point):
         """ sets focus to a point """
@@ -333,19 +330,6 @@ class BasePlotter(object):
             elif not self.first_time:
                 self.render()
 
-    def _update_axes_color(self, color):
-        """Internal helper to set the axes label color"""
-        prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
-        if color is None:
-            color = rcParams['font']['color']
-        color = parse_color(color)
-        for prop in [prop_x, prop_y, prop_z]:
-            prop.SetColor(color[0], color[1], color[2])
-            prop.SetShadow(False)
-        return
-
     def add_axes(self, interactive=None, color=None):
         """ Add an interactive axes widget """
         if interactive is None:
@@ -353,7 +337,6 @@ class BasePlotter(object):
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
             self._update_axes_color(color)
-            # raise Exception('Plotter already has an axes widget')
             return
         self.axes_actor = vtk.vtkAxesActor()
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
@@ -927,7 +910,8 @@ class BasePlotter(object):
 
         """
         # add actor to the correct render window
-        renderer = self.renderers[self.loc_to_index(loc)]
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
         return renderer.add_actor(uinput, reset_camera, name)
 
     def loc_to_index(self, loc):
@@ -961,24 +945,22 @@ class BasePlotter(object):
 
     def add_axes_at_origin(self, loc=None):
         """
-        Add axes actor at origin
+        Add axes actor at the origin of a render window.
 
         Parameters
         ----------
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
-            ``loc=2`` or ``loc=(1, 1)``.
+            Index of the renderer to add the actor to.  For example,
+            ``loc=2`` or ``loc=(1, 1)``.  When None, defaults to the
+            active render window.
 
         Returns
         --------
         marker_actor : vtk.vtkAxesActor
             vtkAxesActor actor
         """
-        self.marker_actor = vtk.vtkAxesActor()
-        renderer = self.renderers[self.loc_to_index(loc)]
-        renderer.AddActor(self.marker_actor)
-        self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
-        return self.marker_actor
+        self._active_renderer_index = self.loc_to_index(loc)
+        return self.renderers[self._active_renderer_index].add_axes_at_origin()
 
     def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
@@ -1103,203 +1085,83 @@ class BasePlotter(object):
         >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
-        self.remove_bounds_axes()
-
-        if font_family is None:
-            font_family = rcParams['font']['family']
-        if font_size is None:
-            font_size = rcParams['font']['size']
-        if color is None:
-            color = rcParams['font']['color']
-
-        color = parse_color(color)
-
-        # Use the bounds of all data in the rendering window
-        if not mesh and not bounds:
-            bounds = self.bounds
-
-        # create actor
-        cube_axes_actor = vtk.vtkCubeAxesActor()
-        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-            cube_axes_actor.SetUse2DMode(True)
-        else:
-            cube_axes_actor.SetUse2DMode(False)
-
-        if grid:
-            if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            if isinstance(grid, str) and grid.lower() in ('both', 'all'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
-            else:
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
-            cube_axes_actor.DrawXGridlinesOn()
-            cube_axes_actor.DrawYGridlinesOn()
-            cube_axes_actor.DrawZGridlinesOn()
-            # Set the colors
-            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color)
-            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color)
-            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color)
-
-        if isinstance(ticks, str):
-            ticks = ticks.lower()
-            if ticks in ('inside'):
-                cube_axes_actor.SetTickLocationToInside()
-            elif ticks in ('outside'):
-                cube_axes_actor.SetTickLocationToOutside()
-            elif ticks in ('both'):
-                cube_axes_actor.SetTickLocationToBoth()
-            else:
-                raise ValueError('Value of ticks ({}) not understood.'.format(ticks))
-
-        if isinstance(location, str):
-            location = location.lower()
-            if location in ('all'):
-                cube_axes_actor.SetFlyModeToStaticEdges()
-            elif location in ('origin'):
-                cube_axes_actor.SetFlyModeToStaticTriad()
-            elif location in ('outer'):
-                cube_axes_actor.SetFlyModeToOuterEdges()
-            elif location in ('default', 'closest', 'front'):
-                cube_axes_actor.SetFlyModeToClosestTriad()
-            elif location in ('furthest', 'back'):
-                cube_axes_actor.SetFlyModeToFurthestTriad()
-            else:
-                raise ValueError('Value of location ({}) not understood.'.format(location))
-
-        # set bounds
-        if not bounds:
-            bounds = mesh.GetBounds()
-        cube_axes_actor.SetBounds(bounds)
-
-        # show or hide axes
-        cube_axes_actor.SetXAxisVisibility(show_xaxis)
-        cube_axes_actor.SetYAxisVisibility(show_yaxis)
-        cube_axes_actor.SetZAxisVisibility(show_zaxis)
-
-        # disable minor ticks
-        cube_axes_actor.XAxisMinorTickVisibilityOff()
-        cube_axes_actor.YAxisMinorTickVisibilityOff()
-        cube_axes_actor.ZAxisMinorTickVisibilityOff()
-
-        cube_axes_actor.SetCamera(self.camera)
-
-        # set color
-        cube_axes_actor.GetXAxesLinesProperty().SetColor(color)
-        cube_axes_actor.GetYAxesLinesProperty().SetColor(color)
-        cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
-
-        # empty arr
-        empty_str = vtk.vtkStringArray()
-        empty_str.InsertNextValue('')
-
-        # show lines
-        if show_xaxis:
-            cube_axes_actor.SetXTitle(xlabel)
-        else:
-            cube_axes_actor.SetXTitle('')
-            cube_axes_actor.SetAxisLabels(0, empty_str)
-
-        if show_yaxis:
-            cube_axes_actor.SetYTitle(ylabel)
-        else:
-            cube_axes_actor.SetYTitle('')
-            cube_axes_actor.SetAxisLabels(1, empty_str)
-
-        if show_zaxis:
-            cube_axes_actor.SetZTitle(zlabel)
-        else:
-            cube_axes_actor.SetZTitle('')
-            cube_axes_actor.SetAxisLabels(2, empty_str)
-
-        # show labels
-        if not show_xlabels:
-            cube_axes_actor.SetAxisLabels(0, empty_str)
-
-        if not show_ylabels:
-            cube_axes_actor.SetAxisLabels(1, empty_str)
-
-        if not show_zlabels:
-            cube_axes_actor.SetAxisLabels(2, empty_str)
-
-        # set font
-        font_family = parse_font_family(font_family)
-        for i in range(3):
-            cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetTitleTextProperty(i).SetColor(color)
-            cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
-
-            cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
-            cube_axes_actor.GetLabelTextProperty(i).SetColor(color)
-            cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
-            cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
-
-        self.add_actor(cube_axes_actor, reset_camera=False, loc=loc)
-        self.cube_axes_actor = cube_axes_actor
-
-        if all_edges:
-            self.add_bounding_box(color=color, corner_factor=corner_factor)
-
-        return cube_axes_actor
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        renderer.add_bounds_axes(mesh, bounds, show_xaxis, show_yaxis,
+                                 show_zaxis, show_xlabels,
+                                 show_ylabels, show_zlabels, italic,
+                                 bold, shadow, font_size, font_family,
+                                 color, xlabel, ylabel, zlabel,
+                                 use_2d, grid, location, ticks,
+                                 all_edges, corner_factor)
 
     def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
-            opacity=1.0, render_lines_as_tubes=False, lighting=None,
-            reset_camera=None):
-        """Adds an unlabeled and unticked box at the boundaries of
+                         opacity=1.0, render_lines_as_tubes=False, lighting=None,
+                         reset_camera=None, loc=None):
+        """
+        Adds an unlabeled and unticked box at the boundaries of
         plot.  Useful for when wanting to plot outer grids while
         still retaining all edges of the boundary.
 
         Parameters
         ----------
         corner_factor : float, optional
-            If ``all_edges````, this is the factor along each axis to
-            draw the default box. Dafuault is 0.5 to show the full box.
+            If ``all_edges``, this is the factor along each axis to
+            draw the default box. Dafuault is 0.5 to show the full
+            box.
+
+        corner_factor : float, optional
+            This is the factor along each axis to draw the default
+            box. Dafuault is 0.5 to show the full box.
+
+        line_width : float, optional
+            Thickness of lines.  
+
+        opacity : float, optional
+            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
+
         """
-        if lighting is None:
-            lighting = rcParams['lighting']
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.add_bounding_box(color, corner_factor,
+                                         line_width, opacity,
+                                         render_lines_as_tubes,
+                                         lighting, reset_camera)
 
-        self.remove_bounding_box()
-        if color is None:
-            color = rcParams['font']['color']
-        rgb_color = parse_color(color)
-        self._bounding_box = vtk.vtkOutlineCornerSource()
-        self._bounding_box.SetBounds(self.bounds)
-        self._bounding_box.SetCornerFactor(corner_factor)
-        self._bounding_box.Update()
-        self._box_object = wrap(self._bounding_box.GetOutput())
-        name = 'BoundingBox({})'.format(hex(id(self._box_object)))
+    def remove_bounding_box(self, loc=None):
+        """
+        Removes bounding box from the active renderer.
 
-        mapper = vtk.vtkDataSetMapper()
-        mapper.SetInputData(self._box_object)
-        self.bounding_box_actor, prop = self.add_actor(mapper, reset_camera=reset_camera, name=name)
+        Parameters
+        ----------
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
+        """
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        renderer.remove_bounding_box()
 
-        prop.SetColor(rgb_color)
-        prop.SetOpacity(opacity)
-        if render_lines_as_tubes:
-            prop.SetRenderLinesAsTubes(render_lines_as_tubes)
+    def remove_bounds_axes(self, loc=None):
+        """
+        Removes bounds axes from the active renderer.
 
-        # lighting display style
-        if lighting is False:
-            prop.LightingOff()
-
-        # set line thickness
-        if line_width:
-            prop.SetLineWidth(line_width)
-
-        prop.SetRepresentationToSurface()
-
-        return self.bounding_box_actor
-
-    def remove_bounding_box(self):
-        if hasattr(self, '_box_object'):
-            actor = self.bounding_box_actor
-            self.bounding_box_actor = None
-            del self._box_object
-            self.remove_actor(actor, reset_camera=False)
-
-    def remove_bounds_axes(self):
-        if hasattr(self, 'cube_axes_actor'):
-            self.remove_actor(self.cube_axes_actor)
+        Parameters
+        ----------
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
+        """
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        renderer.remove_bounds_axes()
 
     def show_grid(self, **kwargs):
         """
@@ -1311,32 +1173,49 @@ class BasePlotter(object):
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
         kwargs.setdefault('ticks', 'both')
-        # kwargs.setdefault('all_edges', True)
         return self.add_bounds_axes(**kwargs)
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """
-        Scale all the datasets in the scene.
+        Scale all the datasets in the scene of the active renderer.
+
         Scaling in performed independently on the X, Y and Z axis.
         A scale of zero is illegal and will be replaced with one.
-        """
-        if xscale is None:
-            xscale = self.scale[0]
-        if yscale is None:
-            yscale = self.scale[1]
-        if zscale is None:
-            zscale = self.scale[2]
-        self.scale = [xscale, yscale, zscale]
 
-        # Update the camera's coordinate system
-        cam = self.renderer.camera
-        transform = vtk.vtkTransform()
-        transform.Scale(xscale, yscale, zscale)
-        cam.SetModelTransformMatrix(transform.GetMatrix())
-        self._render()
-        if reset_camera:
-            self.update_bounds_axes()
-            self.reset_camera()
+        Parameters
+        ----------
+        xscale : float, optional
+            Scaling of the x axis.  Must be greater than zero.
+
+        yscale : float, optional
+            Scaling of the y axis.  Must be greater than zero.
+
+        zscale : float, optional
+            Scaling of the z axis.  Must be greater than zero.
+
+        reset_camera : bool, optional
+            Resets camera so all actors can be seen.
+
+        """
+        self.renderer.set_scale(xscale, yscale, zscale, reset_camera)
+
+    @property
+    def scale(self):
+        """ The scaling of the active renderer. """
+        return self.renderer.scale
+
+    def _update_axes_color(self, color):
+        """Internal helper to set the axes label color"""
+        prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
+        if color is None:
+            color = rcParams['font']['color']
+        color = parse_color(color)
+        for prop in [prop_x, prop_y, prop_z]:
+            prop.SetColor(color[0], color[1], color[2])
+            prop.SetShadow(False)
+        return
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
                        bold=True, title_font_size=None,
@@ -1385,18 +1264,18 @@ class BasePlotter(object):
             Adds a black shadow to the text.  Defaults to False
 
         width : float, optional
-            The percentage (0 to 1) width of the window fo the colorbar
+            The percentage (0 to 1) width of the window for the colorbar
 
         height : float, optional
             The percentage (0 to 1) height of the window for the colorbar
 
         position_x : float, optional
-            The percentage (0 to 1) along the winow's horizontal direction to
-            place the bottom left corner of the colorbar
+            The percentage (0 to 1) along the windows's horizontal
+            direction to place the bottom left corner of the colorbar
 
         position_y : float, optional
-            The percentage (0 to 1) along the winow's vertical direction to
-            place the bottom left corner of the colorbar
+            The percentage (0 to 1) along the windows's vertical
+            direction to place the bottom left corner of the colorbar
 
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
@@ -1418,9 +1297,15 @@ class BasePlotter(object):
             color = rcParams['font']['color']
         # Automatically choose size if not specified
         if width is None:
-            width = rcParams['colorbar']['width']
+            if vertical:
+                width = rcParams['colorbar_vertical']['width']
+            else:
+                width = rcParams['colorbar_horizontal']['width']
         if height is None:
-            height = rcParams['colorbar']['height']
+            if vertical:
+                height = rcParams['colorbar_vertical']['height']
+            else:
+                height = rcParams['colorbar_horizontal']['height']
 
         # check if maper exists
         if mapper is None:
@@ -1456,9 +1341,18 @@ class BasePlotter(object):
             except:
                 raise RuntimeError('Maximum number of color bars reached.')
             if position_x is None:
-                position_x = rcParams['colorbar']['position_x']
+                if vertical:
+                    position_x = rcParams['colorbar_vertical']['position_x']
+                else:
+                    position_x = rcParams['colorbar_horizontal']['position_x']
+                    position_x -= slot * width
+
             if position_y is None:
-                position_y = rcParams['colorbar']['position_y'] + slot * height
+                if vertical:
+                    position_y = rcParams['colorbar_vertical']['position_y']
+                    position_y += slot * height
+                else:
+                    position_y = rcParams['colorbar_horizontal']['position_y']
         # Adjust to make sure on the screen
         if position_x + width > 1:
             position_x -= width
@@ -1503,6 +1397,7 @@ class BasePlotter(object):
             rng = mapper.GetScalarRange()
             self._scalar_bar_ranges[title] = rng
             self._scalar_bar_mappers[title] = [mapper]
+            slot = min(self._scalar_bar_slots)
             self._scalar_bar_slot_lookup[title] = slot
 
             self.scalar_bar.SetTitle(title)
@@ -1526,6 +1421,12 @@ class BasePlotter(object):
 
         if interactive is None:
             interactive = rcParams['interactive']
+            if shape != (1, 1):
+                interactive = False
+        elif interactive and self.shape != (1, 1):
+            err_str = 'Interactive scalar bars disabled for multi-renderer plots'
+            raise Exception(err_str)
+
         if interactive and hasattr(self, 'iren'):
             self.scalar_widget = vtk.vtkScalarBarWidget()
             self.scalar_widget.SetScalarBarActor(self.scalar_bar)
@@ -1628,7 +1529,6 @@ class BasePlotter(object):
 
     def close(self):
         """ closes render window """
-
         # must close out axes marker
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
@@ -2153,25 +2053,13 @@ class BasePlotter(object):
 
     @property
     def camera_position(self):
-        """ Returns camera position of active render window """
-        return [self.camera.GetPosition(),
-                self.camera.GetFocalPoint(),
-                self.camera.GetViewUp()]
+        """ Returns camera position of the active render window """
+        return self.renderer.camera_position
 
     @camera_position.setter
     def camera_position(self, camera_location):
         """ Set camera position of the active render window """
-        if camera_location is None:
-            return
-
-        # everything is set explicitly
-        self.camera.SetPosition(camera_location[0])
-        self.camera.SetFocalPoint(camera_location[1])
-        self.camera.SetViewUp(camera_location[2])
-
-        # reset clipping range
-        self.renderer.ResetCameraClippingRange()
-        self.camera_set = True
+        self.renderer.camera_position = camera_location
 
     def reset_camera(self):
         """
@@ -2364,6 +2252,9 @@ class Plotter(BasePlotter):
             self.iren.SetRenderWindow(self.ren_win)
             self.enable_trackball_style()
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
+
+            # for renderer in self.renderers:
+            #     self.iren.SetRenderWindow(renderer)
 
         # Set background
         self.set_background(rcParams['background'])

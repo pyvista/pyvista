@@ -8,7 +8,8 @@ from weakref import proxy
 import numpy as np
 from vtk import vtkRenderer
 
-from vtki.plotting import rcParams
+from vtki.plotting import rcParams, parse_color, parse_font_family
+from vtki.utilities import wrap
 
 
 class Renderer(vtkRenderer):
@@ -18,6 +19,7 @@ class Renderer(vtkRenderer):
         self.parent = parent
         self.camera_set = False
         self.bounding_box_actor = None
+        self.scale = [1.0, 1.0, 1.0]
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None):
         """
@@ -78,6 +80,348 @@ class Renderer(vtkRenderer):
             pass
 
         return actor, actor.GetProperty()
+
+    def add_axes_at_origin(self):
+        """
+        Add axes actor at origin
+
+        Returns
+        --------
+        marker_actor : vtk.vtkAxesActor
+            vtkAxesActor actor
+        """
+        self.marker_actor = vtk.vtkAxesActor()
+        # renderer = self.renderers[self.loc_to_index(loc)]
+        self.AddActor(self.marker_actor)
+        self.parent._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
+        return self.marker_actor
+
+    def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
+                        show_yaxis=True, show_zaxis=True, show_xlabels=True,
+                        show_ylabels=True, show_zlabels=True, italic=False,
+                        bold=True, shadow=False, font_size=None,
+                        font_family=None, color=None,
+                        xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
+                        use_2d=True, grid=None, location='closest', ticks=None,
+                        all_edges=False, corner_factor=0.5, loc=None):
+        """
+        Adds bounds axes.  Shows the bounds of the most recent input
+        mesh unless mesh is specified.
+
+        Parameters
+        ----------
+        mesh : vtkPolydata or unstructured grid, optional
+            Input mesh to draw bounds axes around
+
+        bounds : list or tuple, optional
+            Bounds to override mesh bounds.
+            [xmin, xmax, ymin, ymax, zmin, zmax]
+
+        show_xaxis : bool, optional
+            Makes x axis visible.  Default True.
+
+        show_yaxis : bool, optional
+            Makes y axis visible.  Default True.
+
+        show_zaxis : bool, optional
+            Makes z axis visible.  Default True.
+
+        show_xlabels : bool, optional
+            Shows x labels.  Default True.
+
+        show_ylabels : bool, optional
+            Shows y labels.  Default True.
+
+        show_zlabels : bool, optional
+            Shows z labels.  Default True.
+
+        italic : bool, optional
+            Italicises axis labels and numbers.  Default False.
+
+        bold : bool, optional
+            Bolds axis labels and numbers.  Default True.
+
+        shadow : bool, optional
+            Adds a black shadow to the text.  Default False.
+
+        font_size : float, optional
+            Sets the size of the label font.  Defaults to 16.
+
+        font_family : string, optional
+            Font family.  Must be either courier, times, or arial.
+
+        color : string or 3 item list, optional
+            Color of all labels and axis titles.  Default white.
+            Either a string, rgb list, or hex color string.  For example:
+
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+
+        xlabel : string, optional
+            Title of the x axis.  Default "X Axis"
+
+        ylabel : string, optional
+            Title of the y axis.  Default "Y Axis"
+
+        zlabel : string, optional
+            Title of the z axis.  Default "Z Axis"
+
+        use_2d : bool, optional
+            A bug with vtk 6.3 in Windows seems to cause this function
+            to crash this can be enabled for smoother plotting for
+            other enviornments.
+
+        grid : bool or str, optional
+            Add grid lines to the backface (``True``, ``'back'``, or
+            ``'backface'``) or to the frontface (``'front'``,
+            ``'frontface'``) of the axes actor.
+
+        location : str, optional
+            Set how the axes are drawn: either static (``'all'``),
+            closest triad (``front``), furthest triad (``'back'``),
+            static closest to the origin (``'origin'``), or outer
+            edges (``'outer'``) in relation to the camera
+            position. Options include: ``'all', 'front', 'back',
+            'origin', 'outer'``
+
+        ticks : str, optional
+            Set how the ticks are drawn on the axes grid. Options include:
+            ``'inside', 'outside', 'both'``
+
+        all_edges : bool, optional
+            Adds an unlabeled and unticked box at the boundaries of
+            plot. Useful for when wanting to plot outer grids while
+            still retaining all edges of the boundary.
+
+        corner_factor : float, optional
+            If ``all_edges````, this is the factor along each axis to
+            draw the default box. Dafuault is 0.5 to show the full box.
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
+
+        Returns
+        -------
+        cube_axes_actor : vtk.vtkCubeAxesActor
+            Bounds actor
+
+        Examples
+        --------
+        >>> import vtki
+        >>> from vtki import examples
+        >>> mesh = vtki.Sphere()
+        >>> plotter = vtki.Plotter()
+        >>> _ = plotter.add_mesh(mesh)
+        >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> plotter.show() # doctest:+SKIP
+        """
+        self.remove_bounds_axes()
+
+        if font_family is None:
+            font_family = rcParams['font']['family']
+        if font_size is None:
+            font_size = rcParams['font']['size']
+        if color is None:
+            color = rcParams['font']['color']
+
+        color = parse_color(color)
+
+        # Use the bounds of all data in the rendering window
+        if not mesh and not bounds:
+            bounds = self.bounds
+
+        # create actor
+        cube_axes_actor = vtk.vtkCubeAxesActor()
+        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+            cube_axes_actor.SetUse2DMode(True)
+        else:
+            cube_axes_actor.SetUse2DMode(False)
+
+        if grid:
+            if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
+            if isinstance(grid, str) and grid.lower() in ('both', 'all'):
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
+            else:
+                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
+            cube_axes_actor.DrawXGridlinesOn()
+            cube_axes_actor.DrawYGridlinesOn()
+            cube_axes_actor.DrawZGridlinesOn()
+            # Set the colors
+            cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color)
+            cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color)
+            cube_axes_actor.GetZAxesGridlinesProperty().SetColor(color)
+
+        if isinstance(ticks, str):
+            ticks = ticks.lower()
+            if ticks in ('inside'):
+                cube_axes_actor.SetTickLocationToInside()
+            elif ticks in ('outside'):
+                cube_axes_actor.SetTickLocationToOutside()
+            elif ticks in ('both'):
+                cube_axes_actor.SetTickLocationToBoth()
+            else:
+                raise ValueError('Value of ticks ({}) not understood.'.format(ticks))
+
+        if isinstance(location, str):
+            location = location.lower()
+            if location in ('all'):
+                cube_axes_actor.SetFlyModeToStaticEdges()
+            elif location in ('origin'):
+                cube_axes_actor.SetFlyModeToStaticTriad()
+            elif location in ('outer'):
+                cube_axes_actor.SetFlyModeToOuterEdges()
+            elif location in ('default', 'closest', 'front'):
+                cube_axes_actor.SetFlyModeToClosestTriad()
+            elif location in ('furthest', 'back'):
+                cube_axes_actor.SetFlyModeToFurthestTriad()
+            else:
+                raise ValueError('Value of location ({}) not understood.'.format(location))
+
+        # set bounds
+        if not bounds:
+            bounds = mesh.GetBounds()
+        cube_axes_actor.SetBounds(bounds)
+
+        # show or hide axes
+        cube_axes_actor.SetXAxisVisibility(show_xaxis)
+        cube_axes_actor.SetYAxisVisibility(show_yaxis)
+        cube_axes_actor.SetZAxisVisibility(show_zaxis)
+
+        # disable minor ticks
+        cube_axes_actor.XAxisMinorTickVisibilityOff()
+        cube_axes_actor.YAxisMinorTickVisibilityOff()
+        cube_axes_actor.ZAxisMinorTickVisibilityOff()
+
+        cube_axes_actor.SetCamera(self.camera)
+
+        # set color
+        cube_axes_actor.GetXAxesLinesProperty().SetColor(color)
+        cube_axes_actor.GetYAxesLinesProperty().SetColor(color)
+        cube_axes_actor.GetZAxesLinesProperty().SetColor(color)
+
+        # empty arr
+        empty_str = vtk.vtkStringArray()
+        empty_str.InsertNextValue('')
+
+        # show lines
+        if show_xaxis:
+            cube_axes_actor.SetXTitle(xlabel)
+        else:
+            cube_axes_actor.SetXTitle('')
+            cube_axes_actor.SetAxisLabels(0, empty_str)
+
+        if show_yaxis:
+            cube_axes_actor.SetYTitle(ylabel)
+        else:
+            cube_axes_actor.SetYTitle('')
+            cube_axes_actor.SetAxisLabels(1, empty_str)
+
+        if show_zaxis:
+            cube_axes_actor.SetZTitle(zlabel)
+        else:
+            cube_axes_actor.SetZTitle('')
+            cube_axes_actor.SetAxisLabels(2, empty_str)
+
+        # show labels
+        if not show_xlabels:
+            cube_axes_actor.SetAxisLabels(0, empty_str)
+
+        if not show_ylabels:
+            cube_axes_actor.SetAxisLabels(1, empty_str)
+
+        if not show_zlabels:
+            cube_axes_actor.SetAxisLabels(2, empty_str)
+
+        # set font
+        font_family = parse_font_family(font_family)
+        for i in range(3):
+            cube_axes_actor.GetTitleTextProperty(i).SetFontSize(font_size)
+            cube_axes_actor.GetTitleTextProperty(i).SetColor(color)
+            cube_axes_actor.GetTitleTextProperty(i).SetFontFamily(font_family)
+            cube_axes_actor.GetTitleTextProperty(i).SetBold(bold)
+
+            cube_axes_actor.GetLabelTextProperty(i).SetFontSize(font_size)
+            cube_axes_actor.GetLabelTextProperty(i).SetColor(color)
+            cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
+            cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
+
+        self.add_actor(cube_axes_actor, reset_camera=False)
+        self.cube_axes_actor = cube_axes_actor
+
+        if all_edges:
+            self.add_bounding_box(color=color, corner_factor=corner_factor)
+
+        return cube_axes_actor
+
+    def remove_bounding_box(self):
+        """ Removes bounding box """
+        if hasattr(self, '_box_object'):
+            actor = self.bounding_box_actor
+            self.bounding_box_actor = None
+            del self._box_object
+            self.remove_actor(actor, reset_camera=False)
+
+    def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
+                         opacity=1.0, render_lines_as_tubes=False, lighting=None,
+                         reset_camera=None):
+        """
+        Adds an unlabeled and unticked box at the boundaries of
+        plot.  Useful for when wanting to plot outer grids while
+        still retaining all edges of the boundary.
+
+        Parameters
+        ----------
+        corner_factor : float, optional
+            If ``all_edges``, this is the factor along each axis to
+            draw the default box. Dafuault is 0.5 to show the full
+            box.
+        """
+        if lighting is None:
+            lighting = rcParams['lighting']
+
+        self.remove_bounding_box()
+        if color is None:
+            color = rcParams['font']['color']
+        rgb_color = parse_color(color)
+        self._bounding_box = vtk.vtkOutlineCornerSource()
+        self._bounding_box.SetBounds(self.bounds)
+        self._bounding_box.SetCornerFactor(corner_factor)
+        self._bounding_box.Update()
+        self._box_object = wrap(self._bounding_box.GetOutput())
+        name = 'BoundingBox({})'.format(hex(id(self._box_object)))
+
+        mapper = vtk.vtkDataSetMapper()
+        mapper.SetInputData(self._box_object)
+        self.bounding_box_actor, prop = self.add_actor(mapper,
+                                                       reset_camera=reset_camera,
+                                                       name=name)
+
+        prop.SetColor(rgb_color)
+        prop.SetOpacity(opacity)
+        if render_lines_as_tubes:
+            prop.SetRenderLinesAsTubes(render_lines_as_tubes)
+
+        # lighting display style
+        if lighting is False:
+            prop.LightingOff()
+
+        # set line thickness
+        if line_width:
+            prop.SetLineWidth(line_width)
+
+        prop.SetRepresentationToSurface()
+
+        return self.bounding_box_actor
+
+    def remove_bounds_axes(self):
+        """ Removes bounds axes """
+        if hasattr(self, 'cube_axes_actor'):
+            self.remove_actor(self.cube_axes_actor)
 
     @property
     def camera_position(self):
@@ -166,6 +510,29 @@ class Renderer(vtkRenderer):
         else:
             self.parent._render()
         return True
+
+    def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
+        """
+        Scale all the datasets in the scene.
+        Scaling in performed independently on the X, Y and Z axis.
+        A scale of zero is illegal and will be replaced with one.
+        """
+        if xscale is None:
+            xscale = self.scale[0]
+        if yscale is None:
+            yscale = self.scale[1]
+        if zscale is None:
+            zscale = self.scale[2]
+        self.scale = [xscale, yscale, zscale]
+
+        # Update the camera's coordinate system
+        transform = vtk.vtkTransform()
+        transform.Scale(xscale, yscale, zscale)
+        self.camera.SetModelTransformMatrix(transform.GetMatrix())
+        self.parent._render()
+        if reset_camera:
+            self.update_bounds_axes()
+            self.reset_camera()
 
     @property
     def bounds(self):
