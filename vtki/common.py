@@ -725,6 +725,7 @@ class Common(DataSetFilters):
         attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3e}, {:.3e}"))
         attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3e}, {:.3e}"))
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
+        attrs.append(("Volume", (self.volume), "{:.3e}"))
         return attrs
 
 
