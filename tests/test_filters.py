@@ -261,3 +261,9 @@ def test_split_and_connectivity():
     assert len(volumes) == bodies.n_blocks
     for i, body in enumerate(bodies):
         assert np.allclose(body.volume, volumes[i], rtol=0.1)
+
+
+def test_warp_by_scalar():
+    data = examples.load_uniform()
+    warped = data.warp_by_scalar()
+    assert data.n_points == warped.n_points
