@@ -171,7 +171,7 @@ Now extract all the different bodies and compute their volumes:
 Print out the volumes for each body:
 
 
-.. testcode:: python
+.. code-block:: python
 
     for i, body in enumerate(bodies):
         print('Body {:02d} volume: {:.3f}'.format(i, body.volume))
