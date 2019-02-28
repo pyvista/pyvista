@@ -247,3 +247,17 @@ def test_glyph():
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
+
+
+def test_split_and_connectivity():
+    # Load a simple example mesh
+    dataset = examples.load_uniform()
+    dataset.set_active_scalar('Spatial Cell Data')
+    threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
+
+    bodies = threshed.split_bodies()
+
+    volumes = [518.0, 35.0]
+    assert len(volumes) == bodies.n_blocks
+    for i, body in enumerate(bodies):
+        assert np.allclose(body.volume, volumes[i], rtol=0.1)
