@@ -304,11 +304,18 @@ class BasePlotter(object):
         # Add self to open plotters
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
-
     def enable_trackball_style(self):
         """ sets the interacto style to trackball """
         istyle = vtk.vtkInteractorStyleTrackballCamera()
         self.iren.SetInteractorStyle(istyle)
+
+    # def 
+    #     self.iren.AddObserver('MouseMoveEvent',
+    #                           self._tmp)
+
+    # def _tmp(self):
+        
+
 
     def set_focus(self, point):
         """ sets focus to a point """
@@ -380,7 +387,7 @@ class BasePlotter(object):
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
                                                   self.left_button_down)
         elif key == 'v':
-            self.isometric_view()
+            self.isometric_view_interactive()
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click"""
@@ -393,6 +400,12 @@ class BasePlotter(object):
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
         if np.any(np.isnan(self.pickpoint)):
             self.pickpoint[:] = 0
+
+    def isometric_view_interactive(self):
+        """ sets the current interactive render window to isometric view """
+        interactor = self.iren.GetInteractorStyle()
+        renderer = interactor.GetCurrentRenderer()
+        renderer.isometric_view()
 
     def update(self, stime=1, force_redraw=True):
         """

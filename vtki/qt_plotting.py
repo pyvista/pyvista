@@ -269,16 +269,18 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     allow_quit_keypress = True
     signal_close = pyqtSignal()
 
-    def __init__(self, parent=None, title=None):
+    def __init__(self, parent=None, title=None, shape=(1, 1)):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
+        BasePlotter.__init__(self, shape=shape)
         self.parent = parent
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
-        self.ren_win.AddRenderer(self.renderer)
+        for renderer in self.renderers:
+            self.ren_win.AddRenderer(renderer)
         self.iren = self.ren_win.GetInteractor()
 
         self.background_color = rcParams['background']
@@ -316,7 +318,7 @@ class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, **kwargs):
+    def __init__(self, show=True, app=None, shape=(1, 1), **kwargs):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
@@ -344,7 +346,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
-        QtInteractor.__init__(self, parent=self.frame, **kwargs)
+        QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
         self.signal_close.connect(self.app_window.close)
 
         # build main menu
