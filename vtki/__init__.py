@@ -18,6 +18,7 @@ from vtki.container import MultiBlock
 from vtki.qt_plotting import QtInteractor
 from vtki.qt_plotting import BackgroundPlotter
 from vtki.export import export_plotter_vtkjs, get_vtkjs_url
+from vtki.renderer import Renderer
 
 # IPython interactive tools
 from vtki.ipy_tools import OrthogonalSlicer

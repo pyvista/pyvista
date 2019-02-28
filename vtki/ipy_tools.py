@@ -1,6 +1,6 @@
 """
-A set of useful plotting tools and widgets that can be used in a Jupyter
-notebook
+A set of useful plotting tools and widgets that can be used in a
+Jupyter notebook.
 """
 IPY_AVAILABLE = False
 try:
@@ -21,8 +21,9 @@ from vtki.utilities import is_vtki_obj, wrap
 
 
 class ScaledPlotter(vtki.BackgroundPlotter):
-    """An extension of the ``vtki.BackgroundPlotter`` that has interactive
-    widgets for scaling the axes in the rendering scene.
+    """
+    An extension of the ``vtki.BackgroundPlotter`` that has
+    interactive widgets for scaling the axes in the rendering scene.
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
@@ -59,7 +60,6 @@ class ScaledPlotter(vtki.BackgroundPlotter):
         # Create/display the widgets
         interact(update, xscale=self.xslider, yscale=self.yslider,
                         zscale=self.zslider, **kwargs)
-
 
 
 class InteractiveTool(object):
@@ -179,7 +179,6 @@ class InteractiveTool(object):
         cmap = kwargs.get('cmap', None)
         if cmap is not None:
             self.display_params['cmap'] = cmap
-
 
 
 class OrthogonalSlicer(InteractiveTool):

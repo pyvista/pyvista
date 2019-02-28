@@ -104,24 +104,6 @@ def _raise_not_matching(scalars, mesh):
                     'or the number of cells ' +
                     '(%d) ' % mesh.GetNumberOfCells())
 
-def _remove_mapper_from_plotter(plotter, actor, reset_camera):
-    """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
-    try:
-        mapper = actor.GetMapper()
-    except AttributeError:
-        return
-    for name in list(plotter._scalar_bar_mappers.keys()):
-        try:
-            plotter._scalar_bar_mappers[name].remove(mapper)
-        except ValueError:
-            pass
-        if len(plotter._scalar_bar_mappers[name]) < 1:
-            plotter._scalar_bar_mappers.pop(name)
-            plotter._scalar_bar_ranges.pop(name)
-            plotter.remove_actor(plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera)
-            plotter._scalar_bar_slots.add(plotter._scalar_bar_slot_lookup.pop(name))
-    return
-
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
@@ -278,12 +260,30 @@ def running_xserver():
 
 class BasePlotter(object):
     """
-    Base plotter class to be used by the Plotter and VtkInteractor
-    classes
+    To be used by the Plotter and QtInteractor classes.
     """
 
-    def __init__(self):
-        self.renderer = vtk.vtkRenderer()
+    def __init__(self, shape=(1, 1)):
+        """ Initialize base plotter """
+
+        # add render windows
+        self.renderers = []
+        self._active_renderer_index = 0
+        assert_str = '"shape" should be a list or tuple'
+        assert isinstance(shape, collections.Iterable), assert_str
+        assert shape[0] > 0, '"shape" must be positive'
+        assert shape[1] > 0, '"shape" must be positive'
+        self.shape = shape
+        for i in reversed(range(shape[0])):
+            for j in range(shape[1]):
+                renderer = vtki.Renderer(self)
+                x0 = i/shape[0]
+                y0 = j/shape[1]
+                x1 = (i+1)/shape[0]
+                y1 = (j+1)/shape[1]
+                renderer.SetViewport(y0, x0, y1, x1)
+                self.renderers.append(renderer)
+
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
@@ -295,58 +295,15 @@ class BasePlotter(object):
         self._scalar_bar_widgets = {}
         self._actors = {}
         # track if the camera has been setup
-        self.camera_set = False
+        # self.camera_set = False
         self.first_time = True
         # Keep track of the scale
         self.scale = [1.0, 1.0, 1.0]
         self._labels = []
-        self.bounding_box_actor = None
+
         # Add self to open plotters
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
-
-    @property
-    def bounds(self):
-        """ Bounds of all actors present in the rendering window """
-        the_bounds = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf]
-
-        def _update_bounds(bounds):
-            def update_axis(ax):
-                if bounds[ax*2] < the_bounds[ax*2]:
-                    the_bounds[ax*2] = bounds[ax*2]
-                if bounds[ax*2+1] > the_bounds[ax*2+1]:
-                    the_bounds[ax*2+1] = bounds[ax*2+1]
-            for ax in range(3):
-                update_axis(ax)
-            return
-
-        for actor in self._actors.values():
-            if isinstance(actor, vtk.vtkCubeAxesActor):
-                continue
-            if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
-                 and id(actor) != id(self.bounding_box_actor)):
-                _update_bounds(actor.GetBounds())
-
-        return the_bounds
-
-    @property
-    def center(self):
-        """Center of the bounding box around all data present in the scene"""
-        bounds = self.bounds
-        x = (bounds[1] + bounds[0])/2
-        y = (bounds[3] + bounds[2])/2
-        z = (bounds[5] + bounds[4])/2
-        return [x, y, z]
-
-    def clear(self):
-        """ Clears plot by removing all actors and properties """
-        self.renderer.RemoveAllViewProps()
-        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
-        self._scalar_bar_slot_lookup = {}
-        self._scalar_bar_ranges = {}
-        self._scalar_bar_mappers = {}
-        self._scalar_bar_actors = {}
-        self._scalar_bar_widgets = {}
 
     def enable_trackball_style(self):
         """ sets the interacto style to trackball """
@@ -369,7 +326,7 @@ class BasePlotter(object):
             elif not self.first_time:
                 self.render()
 
-    def _updatae_axes_color(self, color):
+    def _update_axes_color(self, color):
         """Internal helper to set the axes label color"""
         prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
         prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
@@ -388,7 +345,7 @@ class BasePlotter(object):
             interactive = rcParams['interactive']
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
-            self._updatae_axes_color(color)
+            self._update_axes_color(color)
             # raise Exception('Plotter already has an axes widget')
             return
         self.axes_actor = vtk.vtkAxesActor()
@@ -399,7 +356,7 @@ class BasePlotter(object):
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         # Set the color
-        self._updatae_axes_color(color)
+        self._update_axes_color(color)
 
     def hide_axes(self):
         """Hide the axes orientation widget"""
@@ -412,16 +369,6 @@ class BasePlotter(object):
             self.axes_widget.EnabledOn()
         else:
             self.add_axes()
-
-
-    def get_default_cam_pos(self):
-        """
-        Returns the default focal points and viewup. Uses ResetCamera to
-        make a useful view.
-        """
-        focal_pt = self.center
-        return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
-                focal_pt, rcParams['camera']['viewup']]
 
     def key_press_event(self, obj, event):
         """ Listens for key press event """
@@ -494,9 +441,10 @@ class BasePlotter(object):
                  render_points_as_spheres=False,
                  render_lines_as_tubes=False, edge_color='black',
                  ambient=0.2, show_scalar_bar=True, nan_color=None,
-                 nan_opacity=1.0, **kwargs):
+                 nan_opacity=1.0, loc=None, **kwargs):
         """
-        Adds a unstructured, structured, or surface mesh to the plotting object.
+        Adds a unstructured, structured, or surface mesh to the
+        plotting object.
 
         Also accepts a 3D numpy.ndarray
 
@@ -523,20 +471,22 @@ class BasePlotter(object):
             Defaults to 'surface'
 
         scalars : numpy array, optional
-            Scalars used to "color" the mesh.  Accepts an array equal to the
-            number of cells or the number of points in the mesh.  Array should
-            be sized as a single vector. If both color and scalars are None,
-            then the active scalars are used
+            Scalars used to "color" the mesh.  Accepts an array equal
+            to the number of cells or the number of points in the
+            mesh.  Array should be sized as a single vector. If both
+            color and scalars are None, then the active scalars are
+            used
 
         rng : 2 item list, optional
-            Range of mapper for scalars.  Defaults to minimum and maximum of
-            scalars array.  Example: ``[-1, 2]``. ``clim`` is also an accepted
-            alias for this.
+            Range of mapper for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``clim``
+            is also an accepted alias for this.
 
         stitle : string, optional
-            Scalar title.  By default there is no scalar legend bar.  Setting
-            this creates the legend bar and adds a title to it.  To create a
-            bar with no title, use an empty string (i.e. '').
+            Scalar title.  By default there is no scalar legend bar.
+            Setting this creates the legend bar and adds a title to
+            it.  To create a bar with no title, use an empty string
+            (i.e. '').
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
@@ -572,20 +522,21 @@ class BasePlotter(object):
            (rainbow).  Requires matplotlib.
 
         multi_colors : bool, optional
-            If a ``MultiBlock`` dataset is given this will color each block by
-            a solid color using matplotlib's color cycler.
+            If a ``MultiBlock`` dataset is given this will color each
+            block by a solid color using matplotlib's color cycler.
 
         name : str, optional
-            The name for the added mesh/actor so that it can be easily updated.
-            If an actor of this name already exists in the rendering window, it
-            will be replaced by the new actor.
+            The name for the added mesh/actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
 
         texture : vtk.vtkTexture or np.ndarray or boolean, optional
-            A texture to apply if the input mesh has texture coordinates.
-            This will not work with MultiBlock datasets. If set to ``True``,
-            the first avaialble texture on the object will be used. If a string
-            name is given, it will pull a texture with that name associated to
-            the input mesh.
+            A texture to apply if the input mesh has texture
+            coordinates.  This will not work with MultiBlock
+            datasets. If set to ``True``, the first avaialble texture
+            on the object will be used. If a string name is given, it
+            will pull a texture with that name associated to the input
+            mesh.
 
         ambient : float, optional
             When lighting is enabled, this is the amount of light from
@@ -593,10 +544,12 @@ class BasePlotter(object):
             light source emitted from the viewer.  Default 0.2.
 
         nan_color : string or 3 item list, optional, defaults to gray
-            The color to use for all NaN values in the plotted scalar array
+            The color to use for all NaN values in the plotted scalar
+            array.
 
         nan_opacity : float, optional
-            Opacity of NaN values.  Should be between 0 and 1.  Default 1.0
+            Opacity of NaN values.  Should be between 0 and 1.
+            Default 1.0
 
         Returns
         -------
@@ -625,7 +578,6 @@ class BasePlotter(object):
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
-
 
         if isinstance(mesh, vtki.MultiBlock):
             self.remove_actor(name, reset_camera=reset_camera)
@@ -688,7 +640,8 @@ class BasePlotter(object):
                                   render_lines_as_tubes=render_lines_as_tubes,
                                   edge_color=edge_color,
                                   show_scalar_bar=True, nan_color=nan_color,
-                                  nan_opacity=nan_opacity, **kwargs)
+                                  nan_opacity=nan_opacity,
+                                  loc=loc, **kwargs)
                 actors.append(a)
                 if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -702,14 +655,16 @@ class BasePlotter(object):
         nanr, nanb, nang = parse_color(nan_color)
         nan_color = nanr, nanb, nang, nan_opacity
 
-
         # set main values
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()
         self.mapper.SetInputData(self.mesh)
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
-        actor, prop = self.add_actor(self.mapper, reset_camera=reset_camera, name=name)
+
+        actor, prop = self.add_actor(self.mapper,
+                                     reset_camera=reset_camera,
+                                     name=name, loc=loc)
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -869,7 +824,69 @@ class BasePlotter(object):
 
         return actor
 
-    def add_actor(self, uinput, reset_camera=False, name=None):
+    @property
+    def camera_set(self):
+        """ Returns if the camera of the active renderer has been set """
+        return self.renderer.camera_set
+
+    def get_default_cam_pos(self):
+        """ Return the default camera position of the active renderer """
+        return self.renderer.get_default_cam_pos()
+
+    @camera_set.setter
+    def camera_set(self, is_set):
+        """ Sets if the camera has been set on the active renderer"""
+        self.renderer.camera_set = is_set
+
+    @property
+    def renderer(self):
+        """ simply returns the active renderer """
+        return self.renderers[self._active_renderer_index]
+
+    @property
+    def bounds(self):
+        """ Returns the bounds of the active renderer """
+        return self.renderer.bounds
+
+    def update_bounds_axes(self):
+        """ Update the bounds of the active renderer """
+        return self.renderer.update_bounds_axes()
+
+    def clear(self):
+        """ Clears plot by removing all actors and properties """
+        for renderer in self.renderers:
+            renderer.RemoveAllViewProps()
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slot_lookup = {}
+        self._scalar_bar_ranges = {}
+        self._scalar_bar_mappers = {}
+        self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
+
+    def remove_actor(self, actor, reset_camera=False):
+        """
+        Removes an actor from the Plotter.
+
+        Parameters
+        ----------
+        actor : vtk.vtkActor
+            Actor that has previously added to the Renderer.
+
+        reset_camera : bool, optional
+            Resets camera so all actors can be seen.
+
+        Returns
+        -------
+        success : bool
+            True when actor removed.  False when actor has not been
+            removed.
+        """
+        for renderer in self.renderers:
+            if renderer.remove_actor(actor, reset_camera):
+                return True
+        return False
+
+    def add_actor(self, uinput, reset_camera=False, name=None, loc=None):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -882,6 +899,11 @@ class BasePlotter(object):
         reset_camera : bool, optional
             Resets the camera when true.
 
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
+
         Returns
         -------
         actor : vtk.vtkActor
@@ -891,90 +913,48 @@ class BasePlotter(object):
             Actor properties.
 
         """
-        # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False)
+        # add actor to the correct render window
+        renderer = self.renderers[self.loc_to_index(loc)]
+        return renderer.add_actor(uinput, reset_camera, name)
 
-        if isinstance(uinput, vtk.vtkMapper):
-            actor = vtk.vtkActor()
-            actor.SetMapper(uinput)
-        else:
-            actor = uinput
-
-        self.renderer.AddActor(actor)
-        if name is None:
-            name = str(hex(id(actor)))
-
-        self._actors[name] = actor
-
-        if reset_camera:
-            self.reset_camera()
-        elif not self.camera_set and reset_camera is None and not rv:
-            self.reset_camera()
-        else:
-            self._render()
-
-        self.update_bounds_axes()
-
-        return actor, actor.GetProperty()
-
-    @property
-    def camera(self):
-        """The active camera for the rendering scene"""
-        return self.renderer.GetActiveCamera()
-
-    def remove_actor(self, actor, reset_camera=False):
+    def loc_to_index(self, loc):
         """
-        Removes an actor from the Plotter.
+        Return index of the render window given a location index.
 
         Parameters
         ----------
-        actor : vtk.vtkActor
-            Actor that has previously added to the Plotter.
-        """
-        name = None
-        if isinstance(actor, str):
-            name = actor
-            keys = list(self._actors.keys())
-            names = []
-            for k in keys:
-                if k.startswith('{}-'.format(name)):
-                    names.append(k)
-            if len(names) > 0:
-                self.remove_actor(names, reset_camera=reset_camera)
-            try:
-                actor = self._actors[name]
-            except KeyError:
-                # If actor of that name is not present then return success
-                return False
-        if isinstance(actor, collections.Iterable):
-            success = False
-            for a in actor:
-                rv = self.remove_actor(a, reset_camera=reset_camera)
-                if rv or success:
-                    success = True
-            return success
-        if actor is None:
-            return False
-        # First remove this actor's mapper from _scalar_bar_mappers
-        _remove_mapper_from_plotter(self, actor, False)
-        self.renderer.RemoveActor(actor)
-        if name is None:
-            for k, v in self._actors.items():
-                if v == actor:
-                    name = k
-        self._actors.pop(name, None)
-        self.update_bounds_axes()
-        if reset_camera:
-            self.reset_camera()
-        elif not self.camera_set and reset_camera is None:
-            self.reset_camera()
-        else:
-            self._render()
-        return True
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.
+        
+        Returns
+        -------
+        idx : int
+            Index of the render window.
 
-    def add_axes_at_origin(self):
+        """
+        if loc is None:
+            return self._active_renderer_index
+        elif isinstance(loc, int):
+            return loc
+        elif isinstance(loc, collections.Iterable):
+            assert len(loc) == 2, '"loc" must contain two items'
+            return loc[0]*self.shape[0] + loc[1]
+
+    @property
+    def camera(self):
+        """ The active camera of the active renderer """
+        return self.renderer.camera
+
+    def add_axes_at_origin(self, loc=None):
         """
         Add axes actor at origin
+
+        Parameters
+        ----------
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.
 
         Returns
         --------
@@ -982,7 +962,8 @@ class BasePlotter(object):
             vtkAxesActor actor
         """
         self.marker_actor = vtk.vtkAxesActor()
-        self.renderer.AddActor(self.marker_actor)
+        renderer = self.renderers[self.loc_to_index(loc)]
+        renderer.AddActor(self.marker_actor)
         self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
@@ -993,7 +974,7 @@ class BasePlotter(object):
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=True, grid=None, location='closest', ticks=None,
-                        all_edges=False, corner_factor=0.5):
+                        all_edges=False, corner_factor=0.5, loc=None):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1088,6 +1069,11 @@ class BasePlotter(object):
         corner_factor : float, optional
             If ``all_edges````, this is the factor along each axis to
             draw the default box. Dafuault is 0.5 to show the full box.
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
 
         Returns
         -------
@@ -1235,7 +1221,7 @@ class BasePlotter(object):
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cube_axes_actor, reset_camera=False)
+        self.add_actor(cube_axes_actor, reset_camera=False, loc=loc)
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
@@ -1291,21 +1277,6 @@ class BasePlotter(object):
 
         return self.bounding_box_actor
 
-    def update_bounds_axes(self):
-        """Update the bounds axes of the render window """
-        if (hasattr(self, '_box_object') and self._box_object is not None
-                and self.bounding_box_actor is not None):
-            if not np.allclose(self._box_object.bounds, self.bounds):
-                color = self.bounding_box_actor.GetProperty().GetColor()
-                self.remove_bounding_box()
-                self.add_bounding_box(color=color)
-        if hasattr(self, 'cube_axes_actor'):
-            self.cube_axes_actor.SetBounds(self.bounds)
-            if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
-                self.cube_axes_actor.SetUse2DMode(True)
-            else:
-                self.cube_axes_actor.SetUse2DMode(False)
-
     def remove_bounding_box(self):
         if hasattr(self, '_box_object'):
             actor = self.bounding_box_actor
@@ -1343,8 +1314,9 @@ class BasePlotter(object):
         if zscale is None:
             zscale = self.scale[2]
         self.scale = [xscale, yscale, zscale]
+
         # Update the camera's coordinate system
-        cam = self.renderer.GetActiveCamera()
+        cam = self.renderer.camera
         transform = vtk.vtkTransform()
         transform.Scale(xscale, yscale, zscale)
         cam.SetModelTransformMatrix(transform.GetMatrix())
@@ -1353,13 +1325,16 @@ class BasePlotter(object):
             self.update_bounds_axes()
             self.reset_camera()
 
-    def add_scalar_bar(self, title=None, n_labels=5, italic=False, bold=True,
-                       title_font_size=None, label_font_size=None, color=None,
-                       font_family=None, shadow=False, mapper=None, width=None,
-                       height=None, position_x=None, position_y=None,
-                       vertical=None, interactive=False):
+    def add_scalar_bar(self, title=None, n_labels=5, italic=False,
+                       bold=True, title_font_size=None,
+                       label_font_size=None, color=None,
+                       font_family=None, shadow=False, mapper=None,
+                       width=None, height=None, position_x=None,
+                       position_y=None, vertical=None,
+                       interactive=False):
         """
-        Creates scalar bar using the ranges as set by the last input mesh.
+        Creates scalar bar using the ranges as set by the last input
+        mesh.
 
         Parameters
         ----------
@@ -1673,7 +1648,7 @@ class BasePlotter(object):
             del self.ifilter
 
     def add_text(self, text, position=None, font_size=50, color=None,
-                font=None, shadow=False, name=None):
+                 font=None, shadow=False, name=None, loc=None):
         """
         Adds text to plot object in the top left corner by default
 
@@ -1697,6 +1672,10 @@ class BasePlotter(object):
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example, 
+            ``loc=2`` or ``loc=(1, 1)``.
 
         Returns
         -------
@@ -1722,7 +1701,7 @@ class BasePlotter(object):
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
         self.textActor.SetInput(text)
-        self.add_actor(self.textActor, reset_camera=False, name=name)
+        self.add_actor(self.textActor, reset_camera=False, name=name, loc=loc)
         return self.textActor
 
     def open_movie(self, filename, framerate=24):
@@ -2168,7 +2147,7 @@ class BasePlotter(object):
 
     @camera_position.setter
     def camera_position(self, camera_location):
-        """ Set camera position of active render window """
+        """ Set camera position of the active render window """
         if camera_location is None:
             return
 
@@ -2186,7 +2165,7 @@ class BasePlotter(object):
         Reset camera so it slides along the vector defined from camera
         position to focal point until all of the actors can be seen.
         """
-        self.renderer.ResetCamera()
+        self.renderer.reset_camera()
         self._render()
 
     def isometric_view(self):
@@ -2194,11 +2173,9 @@ class BasePlotter(object):
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        self.camera_position = self.get_default_cam_pos()
-        self.camera_set = False
-        return self.reset_camera()
+        self.renderer.isometric_view()
 
-    def set_background(self, color):
+    def set_background(self, color, loc='all'):
         """
         Sets background color
 
@@ -2211,6 +2188,11 @@ class BasePlotter(object):
                 color=[1, 1, 1]
                 color='#FFFFFF'
 
+        loc : int, tuple, list, or str, optional
+            Index of the renderer to add the actor to.  For example,
+            ``loc=2`` or ``loc=(1, 1)``.  If ``loc='all'`` then all
+            render windows will have their background set.
+
         """
         if color is None:
             color = rcParams['background']
@@ -2220,16 +2202,22 @@ class BasePlotter(object):
                 color = PV_BACKGROUND
             else:
                 color = vtki.string_to_rgb(color)
-        self.renderer.SetBackground(color)
+
+        if loc =='all':
+            for renderer in self.renderers:
+                renderer.SetBackground(color)
+        else:
+            renderer = self.renderers[self.loc_to_index(loc)]
+            renderer.SetBackground(color)
 
     @property
     def background_color(self):
-        """ Returns background color """
-        return self.renderer.GetBackground()
+        """ Returns background color of the first render window """
+        return self.renderers[0].GetBackground()
 
     @background_color.setter
     def background_color(self, color):
-        """ Sets background color """
+        """ Sets the background color of all the render windows """
         self.set_background(color)
 
     def start_image_filter(self):
@@ -2328,11 +2316,11 @@ class Plotter(BasePlotter):
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False, notebook=None):
+    def __init__(self, off_screen=False, notebook=None, shape=(1, 1)):
         """
         Initialize a vtk plotting object
         """
-        super(Plotter, self).__init__()
+        super(Plotter, self).__init__(shape)
         log.debug('Initializing')
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:
@@ -2352,7 +2340,8 @@ class Plotter(BasePlotter):
 
         # initialize render window
         self.ren_win = vtk.vtkRenderWindow()
-        self.ren_win.AddRenderer(self.renderer)
+        for renderer in self.renderers:
+            self.ren_win.AddRenderer(renderer)
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
@@ -2369,7 +2358,6 @@ class Plotter(BasePlotter):
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
-
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
@@ -2389,16 +2377,16 @@ class Plotter(BasePlotter):
             Enabled by default.  Allows user to pan and move figure.
 
         auto_close : bool, optional
-            Enabled by default.  Exits plotting session when user closes the
-            window when interactive is True.
+            Enabled by default.  Exits plotting session when user
+            closes the window when interactive is True.
 
         interactive_update: bool, optional
             Disabled by default.  Allows user to non-blocking draw,
             user should call Update() in each iteration.
 
         full_screen : bool, optional
-            Opens window in full screen.  When enabled, ignores window_size.
-            Default False.
+            Opens window in full screen.  When enabled, ignores
+            window_size.  Default False.
 
         Returns
         -------
@@ -2407,9 +2395,11 @@ class Plotter(BasePlotter):
 
         """
         # reset unless camera for the first render unless camera is set
-        if self.first_time and not self.camera_set:
-            self.camera_position = self.get_default_cam_pos()
-            self.renderer.ResetCamera()
+        if self.first_time:  # and not self.camera_set:
+            for renderer in self.renderers:
+                if not renderer.camera_set:
+                    renderer.camera_position = renderer.get_default_cam_pos()
+                    renderer.ResetCamera()
             self.first_time = False
 
         if title:
