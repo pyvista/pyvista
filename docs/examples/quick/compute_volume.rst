@@ -86,3 +86,48 @@ cell sizes, then extract the volumes of each body:
     Low grade volume: 518.0
     High grade volume: 35.0
     Original volume: 729.0
+
+
+
+Splitting Volumes
+=================
+
+What if instead, we wanted to split all the different connected bodies/volumes
+in a dataset like the one above? We could use the
+:func:`vtki.DataSetFilters.split_bodies` filter to extract all the different
+connected volumes in a dataset into blocks in a :class:`vtki.MultiBlock`
+dataset. For example, lets split the thresholded volume in the example above:
+
+
+.. testcode:: python
+
+    import numpy as np
+    import vtki
+    from vtki import examples
+    vtki.set_plot_theme('document')
+
+    # Load a simple example mesh
+    dataset = examples.load_uniform()
+    dataset.set_active_scalar('Spatial Cell Data')
+    threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
+
+    bodies = threshed.split_bodies()
+
+    for i, body in enumerate(bodies):
+        print('Body {} volume: {:.3f}'.format(i, body.volume))
+
+
+.. testoutput:: python
+   :hide:
+   :options: -ELLIPSIS, +NORMALIZE_WHITESPACE
+
+    Body 0 volume: 518.000
+    Body 1 volume: 35.000
+
+
+.. code-block:: python
+
+    bodies.plot(show_bounds=True, multi_colors=True)
+
+
+.. image:: ../../images/split-bodies.png

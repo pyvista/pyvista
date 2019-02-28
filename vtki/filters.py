@@ -666,7 +666,7 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def cell_centers(self, vertex=True):
+    def cell_centers(dataset, vertex=True):
         """Generate points at the center of the cells in this dataset.
         These points can be used for placing glyphs / vectors.
 
@@ -676,14 +676,14 @@ class DataSetFilters(object):
             Enable/disable the generation of vertex cells.
         """
         alg = vtk.vtkCellCenters()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(dataset)
         alg.SetVertexCells(vertex)
         alg.Update()
         output = _get_output(alg)
         return output
 
 
-    def glyph(self, orient=True, scale=True, factor=1.0, geom=None):
+    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None):
         """
         Copies a geometric representation (called a glyph) to every
         point in the input dataset.  The glyph may be oriented along
@@ -711,16 +711,57 @@ class DataSetFilters(object):
         alg = vtk.vtkGlyph3D()
         alg.SetSourceData(geom)
         if isinstance(scale, str):
-            self.active_scalar_name = scale
+            dataset.active_scalar_name = scale
             scale = True
         if scale:
             alg.SetScaleModeToScaleByScalar()
         if isinstance(orient, str):
-            self.active_vectors_name = orient
+            dataset.active_vectors_name = orient
             orient = True
         alg.SetOrient(orient)
-        alg.SetInputData(self)
+        alg.SetInputData(dataset)
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.Update()
         return _get_output(alg)
+
+
+    def connectivity(dataset):
+        """Find and label connected bodies/volumes. This adds an ID array to
+        the point and cell data to distinguish seperate connected bodies.
+        This applies a ``vtkConnectivityFilter`` filter which extracts cells
+        that share common points and/or meet other connectivity criterion.
+        (Cells that share vertices and meet other connectivity criterion such
+        as scalar range are known as a region.)
+        """
+        alg = vtk.vtkConnectivityFilter()
+        alg.SetInputData(dataset)
+        alg.SetExtractionModeToAllRegions()
+        alg.SetColorRegions(True)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def split_bodies(dataset, label=False):
+        """Find, label, and split connected bodies/volumes. This splits
+        different connected bodies into blocks in a MultiBlock dataset.
+
+        Parameters
+        ----------
+        label : bool
+            A flag on whether to keep the ID arrays given by the
+            ``connectivity`` filter.
+        """
+        # Get the connectivity and label different bodies
+        labeled = dataset.connectivity()
+        classifier = labeled.cell_arrays['RegionId']
+        bodies = vtki.MultiBlock()
+        for vid in np.unique(classifier):
+            # Now extract it:
+            b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId')
+            if not label:
+                del b.cell_arrays['RegionId']
+                del b.point_arrays['RegionId']
+            bodies.append(b)
+
+        return bodies
