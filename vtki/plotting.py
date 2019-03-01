@@ -1466,7 +1466,10 @@ class BasePlotter(object):
             rng = mapper.GetScalarRange()
             self._scalar_bar_ranges[title] = rng
             self._scalar_bar_mappers[title] = [mapper]
-            slot = min(self._scalar_bar_slots)
+            try:
+                slot = min(self._scalar_bar_slots)
+            except:
+                raise RuntimeError('Maximum number of color bars reached.')
             self._scalar_bar_slot_lookup[title] = slot
 
             self.scalar_bar.SetTitle(title)
