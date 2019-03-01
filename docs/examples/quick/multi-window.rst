@@ -34,3 +34,23 @@ This example shows how to create a multi-window plotter by specifying the ``shap
     plotter.plot()
 
 .. image:: ../../images/multi-window.png
+
+This example shows how you can use the :func:`vtki.plotting.Plotter.subplot` function to select the subplot you wish to be the active subplot.  This makes adding new meshes and text straightforward as you no longer need to specify the ``loc`` parameter each time you add a plot.
+
+.. code-block:: python
+
+    import vtki
+    from vtki import examples
+
+    plotter = vtki.Plotter(shape=(1, 2))
+
+    # load and plot an airplane on the left half of the screen
+    plotter.add_text('Airplane Example\n', font_size=30)
+    plotter.add_mesh(examples.load_airplane(), show_edges=False)
+
+    # load and plot the uniform data example on the right-hand side
+    plotter.subplot(0, 1)
+    plotter.add_text('Uniform Data Example\n', font_size=30)
+    plotter.add_mesh(examples.load_uniform(), show_edges=True)
+
+    plotter.show()

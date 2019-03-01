@@ -433,12 +433,12 @@ def test_multi_renderers():
     plotter.add_text('Render Window 2', loc=loc, font_size=30)
     plotter.add_mesh(vtki.Arrow(), color='y', loc=loc, show_edges=True)
 
-    loc = (1, 1)
+    plotter.subplot(1, 1)
     plotter.add_text('Render Window 3', loc=loc, font_size=30)
     plotter.add_mesh(vtki.Cone(), color='g', loc=loc, show_edges=True,
                      backface_culling=True)
     plotter.add_bounding_box()
     plotter.add_bounds_axes(all_edges=True)
-    # plotter.add_mesh(vtki.Cube(), color='g', loc=loc, show_edges=True)
+
     plotter.update_bounds_axes()
     plotter.plot()

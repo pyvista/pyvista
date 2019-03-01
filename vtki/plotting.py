@@ -1206,6 +1206,21 @@ class BasePlotter(object):
         renderer = self.renderers[self._active_renderer_index]
         renderer.remove_bounds_axes()
 
+    def subplot(self, index_x, index_y):
+        """
+        Sets the active subplot.
+
+        Parameters
+        ----------
+        index_x : int
+            Index of the subplot to activate in the x direction.
+
+        index_y : int
+            Index of the subplot to activate in the y direction.
+
+        """
+        self._active_renderer_index = self.loc_to_index((index_x, index_y))
+
     def show_grid(self, **kwargs):
         """
         A wrapped implementation of ``add_bounds_axes`` to change default
