@@ -1401,16 +1401,16 @@ class BasePlotter(object):
             if position_x is None:
                 if vertical:
                     position_x = rcParams['colorbar_vertical']['position_x']
+                    position_x -= slot * width
                 else:
                     position_x = rcParams['colorbar_horizontal']['position_x']
-                    position_x -= slot * width
 
             if position_y is None:
                 if vertical:
                     position_y = rcParams['colorbar_vertical']['position_y']
-                    position_y += slot * height
                 else:
                     position_y = rcParams['colorbar_horizontal']['position_y']
+                    position_y += slot * height
         # Adjust to make sure on the screen
         if position_x + width > 1:
             position_x -= width
