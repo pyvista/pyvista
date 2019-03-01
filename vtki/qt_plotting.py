@@ -404,13 +404,12 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
-        self._last_window_size = self.window_size
-        self._last_camera_pos = self.camera_position
-
         self._spawn_background_rendering()
 
         self.window_size = window_size
+        self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
+        self._last_window_size = self.window_size
+        self._last_camera_pos = self.camera_position
 
     def scale_axes_dialog(self, show=True):
         """ Open scale axes dialog """
@@ -470,7 +469,7 @@ class BackgroundPlotter(QtInteractor):
         """
         Update the app icon if the user is not trying to resize the window.
         """
-        if os.name == 'nt':  # pragma: no cover
+        if os.name == 'nt' or not hasattr(self, '_last_window_size'):  # pragma: no cover
             # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
             return
         cur_time = time.time()

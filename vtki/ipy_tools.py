@@ -90,6 +90,7 @@ class InteractiveTool(object):
             plotter = vtki.BackgroundPlotter(**kwargs)
             plotter.setWindowTitle(type(self).__name__)
         self._plotter = plotter
+        self._loc = plotter.index_to_loc(plotter._active_renderer_index)
 
         # This is the actor that will be removed and re-added to the plotter
         self._data_to_update = None
@@ -147,15 +148,18 @@ class InteractiveTool(object):
 
     def _initialize(self, show_bounds, reset_camera, outline):
         """Outlines the input dataset and sets up the scene"""
+        self.plotter.subplot(*self.loc)
         if outline is None:
             self.plotter.add_mesh(self.input_dataset.outline_corners(),
-                    reset_camera=False, color=vtki.rcParams['outline_color'])
+                    reset_camera=False, color=vtki.rcParams['outline_color'],
+                    loc=self.loc)
         elif outline:
             self.plotter.add_mesh(self.input_dataset.outline(),
-                    reset_camera=False, color=vtki.rcParams['outline_color'])
+                    reset_camera=False, color=vtki.rcParams['outline_color'],
+                    loc=self.loc)
         # add the axis labels
         if show_bounds:
-            self.plotter.add_bounds_axes(reset_camera=False)
+            self.plotter.add_bounds_axes(reset_camera=False, loc=loc)
         if reset_camera:
             cpos = self.plotter.get_default_cam_pos()
             self.plotter.camera_position = cpos
@@ -172,6 +176,7 @@ class InteractiveTool(object):
             old = self.display_params['scalars']
             self.display_params['scalars'] = scalars
             if old != scalars:
+                self.plotter.subplot(*self.loc)
                 self.plotter.remove_actor(self._data_to_update, reset_camera=False)
                 self._need_to_update = True
                 self.valid_range = self.input_dataset.get_data_range(scalars)
@@ -187,6 +192,15 @@ class InteractiveTool(object):
         instantiation
         """
         return self._plotter
+
+    @property
+    def loc(self):
+        """The location in the plotter window."""
+        return self._loc
+
+    @property
+    def renderer(self):
+        return self.plotter.renderers[self.loc]
 
 
 
@@ -246,6 +260,7 @@ class OrthogonalSlicer(InteractiveTool):
 
         def _update_slice(index, x, y, z):
             name = self.display_params.pop('name')
+            self.plotter.subplot(*self.loc)
             self.plotter.remove_actor(self._data_to_update[index], reset_camera=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index],
                     origin=[x,y,z], generate_triangles=generate_triangles)
@@ -353,11 +368,12 @@ class ManySlicesAlongAxis(InteractiveTool):
             """Update the slices"""
             if n >= nsl.max:
                 nsl.max *= 2
+            self.plotter.subplot(*self.loc)
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance, generate_triangles=generate_triangles)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                reset_camera=False, **self.display_params)
+                reset_camera=False, loc=self.loc, **self.display_params)
             self._need_to_update = False
 
         # Create/display the widgets
@@ -458,13 +474,14 @@ class Threshold(InteractiveTool):
                     invert=invert)
 
             # Update the plotter
+            self.plotter.subplot(*self.loc)
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             if self.output_dataset.n_points == 0 and self.output_dataset.n_cells == 0:
                 pass
             else:
                 self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                    reset_camera=False, **self.display_params)
+                    reset_camera=False, loc=self.loc, **self.display_params)
 
             self._need_to_update = False
 
@@ -546,13 +563,14 @@ class Clip(InteractiveTool):
                 self._last_normal = normal
                 _update_slider_ranges(normal)
                 return update(locsl.value, normal, invert, **kwargs)
+            self.plotter.subplot(*self.loc)
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             origin = list(self.input_dataset.center)
             origin[axchoices.index(normal)] = location
             self.output_dataset = self.input_dataset.clip(normal=normal, origin=origin, invert=invert)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                reset_camera=False, **self.display_params)
+                reset_camera=False, loc=self.loc, **self.display_params)
             self._need_to_update = False
 
         # Create/display the widgets

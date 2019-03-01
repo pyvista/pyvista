@@ -983,6 +983,17 @@ class BasePlotter(object):
             assert len(loc) == 2, '"loc" must contain two items'
             return loc[0]*self.shape[0] + loc[1]
 
+    def index_to_loc(self, index):
+        """Convert a 1D index location to the 2D location on the plotting grid
+        """
+        sz = int(self.shape[0] * self.shape[1])
+        idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
+        args = np.argwhere(idxs == index)
+        if len(args) < 1:
+            raise RuntimeError('Index ({}) is out of range.')
+        return args[0]
+
+
     @property
     def camera(self):
         """ The active camera of the active renderer """
