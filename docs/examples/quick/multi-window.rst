@@ -35,7 +35,7 @@ This example shows how to create a multi-window plotter by specifying the ``shap
 
 .. image:: ../../images/multi-window.png
 
-This example shows how you can use the :func:`vtki.plotting.Plotter.subplot` function to select the subplot you wish to be the active subplot.  This makes adding new meshes and text straightforward as you no longer need to specify the ``loc`` parameter each time you add a plot.
+This example shows how you can use the :func:`vtki.BasePlotter.subplot` function to select the subplot you wish to be the active subplot.  This makes adding new meshes and text straightforward as you no longer need to specify the ``loc`` parameter each time you add a plot.
 
 .. code-block:: python
 
@@ -54,3 +54,5 @@ This example shows how you can use the :func:`vtki.plotting.Plotter.subplot` fun
     plotter.add_mesh(examples.load_uniform(), show_edges=True)
 
     plotter.show()
+
+.. image:: ../../images/sub-plot-demo.png
