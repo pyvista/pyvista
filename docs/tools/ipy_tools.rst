@@ -33,6 +33,17 @@ slider bars directly in a Jupyter notebook:
    :width: 500pt
 
 
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.Orthogonal
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.OrthogonalSlicer
+   :methods:
+
+
 .. autoclass:: vtki.OrthogonalSlicer
    :show-inheritance:
 
@@ -62,6 +73,18 @@ of a Jupyter notebook cell:
    :width: 500pt
 
 
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.Threshold
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.Threshold
+   :methods:
+
+
 .. autoclass:: vtki.Threshold
    :show-inheritance:
 
@@ -88,6 +111,18 @@ down menu in the Jupyter notebook cell output:
 
 .. figure:: ../images/many-slices-tool.gif
    :width: 500pt
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.ManySlicesAlongAxis
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.ManySlicesAlongAxis
+   :methods:
+
 
 .. autoclass:: vtki.ManySlicesAlongAxis
    :show-inheritance:

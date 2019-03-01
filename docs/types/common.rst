@@ -90,6 +90,17 @@ spatially referenced datasets in ``vtki``.
 This base class is analogous to VTK's ``vtk.vtkDataSet`` class.
 
 
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.Common
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.Common
+   :methods:
+
+
 .. autoclass:: vtki.Common
    :show-inheritance:
    :members:

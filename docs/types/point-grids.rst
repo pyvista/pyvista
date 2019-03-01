@@ -317,6 +317,19 @@ vtki.Unstructured Grid Class Methods
 --------------------------------------------
 The following is a description of the methods available to a ``vtki.UnstructuredGrid`` object.  It inherits all methods from the original vtk object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
 
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.UnstructuredGrid
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.UnstructuredGrid
+   :methods:
+
+
 .. autoclass:: vtki.UnstructuredGrid
    :show-inheritance:
    :members:
@@ -327,6 +340,18 @@ vtki.Structured Grid Class Methods
 --------------------------------------------
 The following is a description of the methods available to a ``vtki.StructuredGrid`` object.  It inherits all methods from the original vtk object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
 
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.StructuredGrid
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.StructuredGrid
+   :methods:
+
 .. autoclass:: vtki.StructuredGrid
    :show-inheritance:
    :members:
@@ -336,6 +361,18 @@ The following is a description of the methods available to a ``vtki.StructuredGr
 Methods in Common with Structured and Unstructured Grids
 --------------------------------------------------------
 These methods are in common to both ``vtki.StructuredGrid`` and ``vtki.UnstructuredGrid`` objects.
+
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.PointGrid
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.PointGrid
+   :methods:
 
 .. autoclass:: vtki.PointGrid
    :show-inheritance:
