@@ -2287,7 +2287,7 @@ class Plotter(BasePlotter):
     right_timer_id = -1
 
     def __init__(self, off_screen=False, notebook=None, shape=(1, 1),
-                 border=None, border_color='w', window_size=None):
+                 border=None, border_color='k', window_size=None):
         """
         Initialize a vtk plotting object
         """
