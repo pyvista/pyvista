@@ -35,7 +35,7 @@ class Renderer(vtkRenderer):
             Resets the camera when true.
 
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
         Returns
@@ -103,7 +103,8 @@ class Renderer(vtkRenderer):
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=True, grid=None, location='closest', ticks=None,
-                        all_edges=False, corner_factor=0.5, loc=None):
+                        all_edges=False, corner_factor=0.5, loc=None, fmt=None,
+                        minor_ticks=False):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -200,7 +201,7 @@ class Renderer(vtkRenderer):
             draw the default box. Dafuault is 0.5 to show the full box.
 
         loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example, 
+            Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
@@ -227,6 +228,8 @@ class Renderer(vtkRenderer):
             font_size = rcParams['font']['size']
         if color is None:
             color = rcParams['font']['color']
+        if fmt is None:
+            fmt = rcParams['font']['fmt']
 
         color = parse_color(color)
 
@@ -293,9 +296,10 @@ class Renderer(vtkRenderer):
         cube_axes_actor.SetZAxisVisibility(show_zaxis)
 
         # disable minor ticks
-        cube_axes_actor.XAxisMinorTickVisibilityOff()
-        cube_axes_actor.YAxisMinorTickVisibilityOff()
-        cube_axes_actor.ZAxisMinorTickVisibilityOff()
+        if not minor_ticks:
+            cube_axes_actor.XAxisMinorTickVisibilityOff()
+            cube_axes_actor.YAxisMinorTickVisibilityOff()
+            cube_axes_actor.ZAxisMinorTickVisibilityOff()
 
         cube_axes_actor.SetCamera(self.camera)
 
@@ -355,6 +359,12 @@ class Renderer(vtkRenderer):
 
         if all_edges:
             self.add_bounding_box(color=color, corner_factor=corner_factor)
+
+        if fmt is not None:
+            print('This is fmt', fmt)
+            cube_axes_actor.SetXLabelFormat(fmt)
+            cube_axes_actor.SetYLabelFormat(fmt)
+            cube_axes_actor.SetZLabelFormat(fmt)
 
         return cube_axes_actor
 

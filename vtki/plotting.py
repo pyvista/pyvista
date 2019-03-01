@@ -50,6 +50,7 @@ rcParams = {
         'title_size': None,
         'label_size' : None,
         'color' : [1, 1, 1],
+        'fmt' : None,
     },
     'cmap' : 'jet',
     'color' : 'white',
@@ -969,7 +970,8 @@ class BasePlotter(object):
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=True, grid=None, location='closest', ticks=None,
-                        all_edges=False, corner_factor=0.5, loc=None):
+                        all_edges=False, corner_factor=0.5, fmt=None,
+                        minor_ticks=False, loc=None):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1085,15 +1087,12 @@ class BasePlotter(object):
         >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
+        kwargs = locals()
+        _ = kwargs.pop('self')
+        _ = kwargs.pop('loc')
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        renderer.add_bounds_axes(mesh, bounds, show_xaxis, show_yaxis,
-                                 show_zaxis, show_xlabels,
-                                 show_ylabels, show_zlabels, italic,
-                                 bold, shadow, font_size, font_family,
-                                 color, xlabel, ylabel, zlabel,
-                                 use_2d, grid, location, ticks,
-                                 all_edges, corner_factor)
+        renderer.add_bounds_axes(**kwargs)
 
     def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
                          opacity=1.0, render_lines_as_tubes=False, lighting=None,
@@ -1126,12 +1125,12 @@ class BasePlotter(object):
             active Renderer.
 
         """
+        kwargs = locals()
+        _ = kwargs.pop('self')
+        _ = kwargs.pop('loc')
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        return renderer.add_bounding_box(color, corner_factor,
-                                         line_width, opacity,
-                                         render_lines_as_tubes,
-                                         lighting, reset_camera)
+        return renderer.add_bounding_box(**kwargs)
 
     def remove_bounding_box(self, loc=None):
         """
