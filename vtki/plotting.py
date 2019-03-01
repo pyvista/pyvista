@@ -439,7 +439,8 @@ class BasePlotter(object):
                  render_points_as_spheres=False,
                  render_lines_as_tubes=False, edge_color='black',
                  ambient=0.2, show_scalar_bar=True, nan_color=None,
-                 nan_opacity=1.0, loc=None, **kwargs):
+                 nan_opacity=1.0, loc=None, backface_culling=False,
+                 **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the
         plotting object.
@@ -548,6 +549,12 @@ class BasePlotter(object):
         nan_opacity : float, optional
             Opacity of NaN values.  Should be between 0 and 1.
             Default 1.0
+
+        backface_culling : bool optional
+            Does not render faces that should not be visible to the
+            plotter.  This can be helpful for dense surface meshes,
+            especially when edges are visible, but can cause flat
+            meshes to be partially displayed.  Default False.
 
         Returns
         -------
@@ -662,7 +669,7 @@ class BasePlotter(object):
 
         actor, prop = self.add_actor(self.mapper,
                                      reset_camera=reset_camera,
-                                     name=name, loc=loc)
+                                     name=name, loc=loc, culling=backface_culling)
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -884,7 +891,8 @@ class BasePlotter(object):
                 return True
         return False
 
-    def add_actor(self, uinput, reset_camera=False, name=None, loc=None):
+    def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
+                  culling=False):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -902,6 +910,12 @@ class BasePlotter(object):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
+        culling : bool optional
+            Does not render faces that should not be visible to the
+            plotter.  This can be helpful for dense surface meshes,
+            especially when edges are visible, but can cause flat
+            meshes to be partially displayed.  Default False.
+
         Returns
         -------
         actor : vtk.vtkActor
@@ -914,7 +928,7 @@ class BasePlotter(object):
         # add actor to the correct render window
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        return renderer.add_actor(uinput, reset_camera, name)
+        return renderer.add_actor(uinput, reset_camera, name, culling)
 
     def loc_to_index(self, loc):
         """

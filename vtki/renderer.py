@@ -21,7 +21,8 @@ class Renderer(vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
 
-    def add_actor(self, uinput, reset_camera=False, name=None, loc=None):
+    def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
+                  culling=False):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -37,6 +38,12 @@ class Renderer(vtkRenderer):
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
+
+        culling : bool optional
+            Does not render faces that should not be visible to the
+            plotter.  This can be helpful for dense surface meshes,
+            especially when edges are visible, but can cause flat
+            meshes to be partially displayed.  Default False.
 
         Returns
         -------
@@ -73,11 +80,11 @@ class Renderer(vtkRenderer):
 
         self.update_bounds_axes()
 
-        try:
-            actor.GetProperty().FrontfaceCullingOn()
-            actor.GetProperty().BackfaceCullingOn()
-        except AttributeError:
-            pass
+        if culling:
+            try:
+                actor.GetProperty().BackfaceCullingOn()
+            except AttributeError:  # pragma: no cover
+                pass
 
         return actor, actor.GetProperty()
 
