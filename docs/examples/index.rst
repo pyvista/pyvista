@@ -19,7 +19,7 @@ The following examples demonstrate the functionality of ``vtki``.
    quick/plot-glyphs
    quick/plot-time-lapse
    quick/compute-volume
-
+   quick/multi-window
 
 Long Examples
 *************
