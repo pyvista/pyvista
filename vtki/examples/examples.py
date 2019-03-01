@@ -15,6 +15,7 @@ uniformfile = os.path.join(dir_path, 'uniform.vtk')
 rectfile = os.path.join(dir_path, 'rectilinear.vtk')
 globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
+channelsfile = os.path.join(dir_path, 'channels.vti')
 
 # get location of this folder
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -67,6 +68,11 @@ def load_globe():
 def load_globe_texture():
     """ Loads a vtk.vtkTexture that can be applied to the globe source """
     return vtki.read_texture(mapfile)
+
+
+def load_channels():
+    """ Loads a uniform grid of fluvial channels in the subsurface """
+    return vtki.read(channelsfile)
 
 def plot_ants_plane(off_screen=False, notebook=None):
     """
