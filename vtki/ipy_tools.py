@@ -89,7 +89,7 @@ class InteractiveTool(object):
         if plotter is None:
             plotter = vtki.BackgroundPlotter(**kwargs)
             plotter.setWindowTitle(type(self).__name__)
-        self.plotter = plotter
+        self._plotter = plotter
 
         # This is the actor that will be removed and re-added to the plotter
         self._data_to_update = None
@@ -179,6 +179,14 @@ class InteractiveTool(object):
         cmap = kwargs.get('cmap', None)
         if cmap is not None:
             self.display_params['cmap'] = cmap
+
+
+    @property
+    def plotter(self):
+        """The active plotter that this tool uses. This must be set upon
+        instantiation
+        """
+        return self._plotter
 
 
 

@@ -11,6 +11,18 @@ These tools are useable from the top level of ``vtki`` on any ``vtki`` wrapped
 dataset. Simply call one of these tools on your object.
 
 
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.ipy_tools.InteractiveTool
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.ipy_tools.InteractiveTool
+   :methods:
+
+
 Orthogonal Slicer
 -----------------
 
@@ -31,17 +43,6 @@ slider bars directly in a Jupyter notebook:
 
 .. figure:: ../images/slicer-tool.gif
    :width: 500pt
-
-
-.. rubric:: Attributes
-
-.. autoautosummary:: vtki.Orthogonal
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: vtki.OrthogonalSlicer
-   :methods:
 
 
 .. autoclass:: vtki.OrthogonalSlicer
@@ -73,18 +74,6 @@ of a Jupyter notebook cell:
    :width: 500pt
 
 
-
-.. rubric:: Attributes
-
-.. autoautosummary:: vtki.Threshold
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: vtki.Threshold
-   :methods:
-
-
 .. autoclass:: vtki.Threshold
    :show-inheritance:
 
@@ -111,17 +100,6 @@ down menu in the Jupyter notebook cell output:
 
 .. figure:: ../images/many-slices-tool.gif
    :width: 500pt
-
-
-.. rubric:: Attributes
-
-.. autoautosummary:: vtki.ManySlicesAlongAxis
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: vtki.ManySlicesAlongAxis
-   :methods:
 
 
 .. autoclass:: vtki.ManySlicesAlongAxis
