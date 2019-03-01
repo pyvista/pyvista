@@ -53,6 +53,17 @@ The base plotter class that all ``vtki`` plotters inherit. Please note that the
 :class:`vtki.BackgroundPlotter` is documented under :ref:`qt_ref`.
 
 
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.BasePlotter
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.BasePlotter
+   :methods:
+
+
 .. autoclass:: vtki.BasePlotter
    :show-inheritance:
    :members:
@@ -61,6 +72,18 @@ The base plotter class that all ``vtki`` plotters inherit. Please note that the
 
 Plotter
 -------
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.Plotter
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.Plotter
+   :methods:
+
+
 
 .. autoclass:: vtki.Plotter
    :show-inheritance:

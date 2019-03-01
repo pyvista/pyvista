@@ -11,6 +11,18 @@ These tools are useable from the top level of ``vtki`` on any ``vtki`` wrapped
 dataset. Simply call one of these tools on your object.
 
 
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.ipy_tools.InteractiveTool
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.ipy_tools.InteractiveTool
+   :methods:
+
+
 Orthogonal Slicer
 -----------------
 
@@ -88,6 +100,7 @@ down menu in the Jupyter notebook cell output:
 
 .. figure:: ../images/many-slices-tool.gif
    :width: 500pt
+
 
 .. autoclass:: vtki.ManySlicesAlongAxis
    :show-inheritance:

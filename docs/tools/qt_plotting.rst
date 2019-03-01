@@ -89,6 +89,16 @@ Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible t
 
 
 
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.BackgroundPlotter
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.BackgroundPlotter
+   :methods:
+
 .. autoclass:: vtki.BackgroundPlotter
    :members:
    :undoc-members:

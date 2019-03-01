@@ -765,3 +765,38 @@ class DataSetFilters(object):
             bodies.append(b)
 
         return bodies
+
+
+    def warp_by_scalar(dataset, scalars=None, scale_factor=1.0, normal=None,):
+        """
+        Warp the dataset's points by a point data scalar array's values.
+        This modifies point coordinates by moving points along point normals by
+        the scalar amount times the scale factor.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to warb by. Defaults to currently active scalars.
+
+        scale_factor : float, optional
+            A scalaing factor to increase the scaling effect
+
+        normal : np.array, list, tuple of length 3
+            User specified normal. If given, data normals will be ignored and
+            the given normal will be used to project the warp.
+        """
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        arr, field = get_scalar(dataset, scalars, preference='point', info=True)
+        if field != vtki.POINT_DATA_FIELD:
+            raise AssertionError('Dataset can only by warped by a point data array.')
+        # Run the algorithm
+        alg = vtk.vtkWarpScalar()
+        alg.SetInputDataObject(dataset)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetScaleFactor(scale_factor)
+        if normal is not None:
+            alg.SetNormal(normal)
+            alg.SetUseNormal(True)
+        alg.Update()
+        return _get_output(alg)
