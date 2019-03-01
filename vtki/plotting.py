@@ -916,9 +916,8 @@ class BasePlotter(object):
             removed.
         """
         for renderer in self.renderers:
-            if renderer.remove_actor(actor, reset_camera):
-                return True
-        return False
+            renderer.remove_actor(actor, reset_camera)
+        return True
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
                   culling=False):
@@ -1407,6 +1406,7 @@ class BasePlotter(object):
             try:
                 slot = min(self._scalar_bar_slots)
                 self._scalar_bar_slots.remove(slot)
+                self._scalar_bar_slot_lookup[title] = slot
             except:
                 raise RuntimeError('Maximum number of color bars reached.')
             if position_x is None:
@@ -1466,11 +1466,6 @@ class BasePlotter(object):
             rng = mapper.GetScalarRange()
             self._scalar_bar_ranges[title] = rng
             self._scalar_bar_mappers[title] = [mapper]
-            try:
-                slot = min(self._scalar_bar_slots)
-            except:
-                raise RuntimeError('Maximum number of color bars reached.')
-            self._scalar_bar_slot_lookup[title] = slot
 
             self.scalar_bar.SetTitle(title)
             title_text = self.scalar_bar.GetTitleTextProperty()
