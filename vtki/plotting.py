@@ -115,7 +115,7 @@ def _raise_not_matching(scalars, mesh):
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', **kwargs):
+         text='', return_img=False, **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
 
@@ -213,7 +213,8 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
                         auto_close=False,
                         interactive=interactive,
                         full_screen=full_screen,
-                        screenshot=screenshot)
+                        screenshot=screenshot,
+                        return_img=return_img)
 
     # close and return camera position and maybe image
     plotter.close()
@@ -1940,7 +1941,7 @@ class BasePlotter(object):
             raise Exception('Empty image.  Have you run plot() first?')
 
         # write screenshot to file
-        if filename:
+        if isinstance(filename, str):
             if not return_img:
                 return imageio.imwrite(filename, img)
             imageio.imwrite(filename, img)
@@ -2366,7 +2367,7 @@ class Plotter(BasePlotter):
         if self.notebook:
             return disp
 
-        if return_img:
+        if return_img or screenshot == True:
                 return cpos, img
 
         return cpos

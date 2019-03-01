@@ -42,7 +42,7 @@ def test_plot(tmpdir):
                           flip_scalars=True,
                           cmap='bwr',
                           interpolate_before_map=True,
-                          screenshot=filename)
+                          screenshot=filename, return_img=True)
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
@@ -442,4 +442,3 @@ def test_multi_renderers():
     # plotter.add_mesh(vtki.Cube(), color='g', loc=loc, show_edges=True)
     plotter.update_bounds_axes()
     plotter.plot()
-
