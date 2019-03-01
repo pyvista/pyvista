@@ -2278,7 +2278,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False):
+             screenshot=False, return_img=False):
         """
         Creates plotting window
 
@@ -2349,22 +2349,16 @@ class Plotter(BasePlotter):
         # Get camera position before closing
         cpos = self.camera_position
 
+        # Get the screenshot
+        img = self.screenshot(screenshot, return_img=True)
+
         if self.notebook:
             # sanity check
             try:
                 import IPython
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
-
-            img = PIL.Image.fromarray(self.screenshot())
-            disp = IPython.display.display(img)
-
-        # take screenshot
-        if screenshot:
-            if screenshot == True:
-                img = self.screenshot(return_img=True)
-            else:
-                img = self.screenshot(screenshot, return_img=True)
+            disp = IPython.display.display(PIL.Image.fromarray(img))
 
         if auto_close:
             self.close()
@@ -2372,8 +2366,8 @@ class Plotter(BasePlotter):
         if self.notebook:
             return disp
 
-        if screenshot:
-            return cpos, img
+        if return_img:
+                return cpos, img
 
         return cpos
 
