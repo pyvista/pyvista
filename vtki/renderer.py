@@ -8,18 +8,53 @@ from weakref import proxy
 import numpy as np
 from vtk import vtkRenderer
 
+import vtki
 from vtki.plotting import rcParams, parse_color, parse_font_family
 from vtki.utilities import wrap
 
 
 class Renderer(vtkRenderer):
-    def __init__(self, parent):
+    def __init__(self, parent, border=True, border_color=[1, 1, 1],
+                 border_width=2.0):
         super(Renderer, self).__init__()
         self._actors = {}
         self.parent = parent
         self.camera_set = False
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
+
+        if border:
+            self.add_border(border_color, border_width)
+
+    def add_border(self, color=[1, 1, 1], width=2.0):
+        points = np.array([[1., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 0., 0.],
+                           [1., 0., 0.]])
+
+        lines = np.array([[2, 0, 1],
+                          [2, 1, 2],
+                          [2, 2, 3],
+                          [2, 3, 0]]).ravel()
+
+        poly = vtki.PolyData()
+        poly.points = points
+        poly.lines = lines
+
+        coordinate = vtk.vtkCoordinate()
+        coordinate.SetCoordinateSystemToNormalizedViewport()
+
+        mapper = vtk.vtkPolyDataMapper2D()
+        mapper.SetInputData(poly);
+        mapper.SetTransformCoordinate(coordinate);
+
+        actor = vtk.vtkActor2D()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetColor(parse_color(color))
+        actor.GetProperty().SetLineWidth(width)
+
+        self.add_actor(actor)
+
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
                   culling=False):

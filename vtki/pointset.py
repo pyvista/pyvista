@@ -145,6 +145,27 @@ class PolyData(vtkPolyData, vtki.Common):
             raise AssertionError('Empty or invalid file')
 
     @property
+    def lines(self):
+        return vtk_to_numpy(self.GetLines().GetData())
+
+    @lines.setter
+    def lines(self, lines):
+        if lines.dtype != vtki.ID_TYPE:
+            lines = lines.astype(vtki.ID_TYPE)
+
+        # get number of faces
+        if lines.ndim == 1:
+            div = lines.size / 3.0
+            assert not div % 1, 'Invalid lines array'
+            nlines = int(div)
+        else:
+            nlines = lines.shape[0]
+
+        vtkcells = vtk.vtkCellArray()
+        vtkcells.SetCells(nlines, numpy_to_vtkIdTypeArray(lines, deep=False))
+        self.SetLines(vtkcells)
+
+    @property
     def faces(self):
         """ returns a pointer to the points as a numpy object """
         return vtk_to_numpy(self.GetPolys().GetData())

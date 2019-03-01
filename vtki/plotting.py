@@ -269,10 +269,39 @@ def running_xserver():
 class BasePlotter(object):
     """
     To be used by the Plotter and QtInteractor classes.
+
+    Parameters
+    ----------
+    shape : list or tuple, optional
+        Number of sub-render windows inside of the main window.
+        Specify two across with ``shape=(2, 1)`` and a two by two grid
+        with ``shape=(2, 2)``.  By default there is only one renderer.
+
+    border : bool, optional
+        Draw a border around each render window.  Default False.
+
+    border_color : string or 3 item list, optional, defaults to white
+        Either a string, rgb list, or hex color string.  For example:
+            color='white'
+            color='w'
+            color=[1, 1, 1]
+            color='#FFFFFF'
+
+    border_width : float, optional
+        Width of the border in pixels when enabled.
+
     """
 
-    def __init__(self, shape=(1, 1)):
+    def __init__(self, shape=(1, 1), border=None, border_color='k',
+                 border_width=1.0):
         """ Initialize base plotter """
+
+        # by default add border for multiple plots
+        if border is None:
+            if shape != (1, 1):
+                border = True
+            else:
+                border = False
 
         # add render windows
         self.renderers = []
@@ -284,7 +313,7 @@ class BasePlotter(object):
         self.shape = shape
         for i in reversed(range(shape[0])):
             for j in range(shape[1]):
-                renderer = vtki.Renderer(self)
+                renderer = vtki.Renderer(self, border, border_color, border_width)
                 x0 = i/shape[0]
                 y0 = j/shape[1]
                 x1 = (i+1)/shape[0]
@@ -2233,17 +2262,36 @@ class Plotter(BasePlotter):
         When True, the resulting plot is placed inline a jupyter notebook.
         Assumes a jupyter console is active.  Automatically enables off_screen.
 
+    shape : list or tuple, optional
+        Number of sub-render windows inside of the main window.
+        Specify two across with ``shape=(2, 1)`` and a two by two grid
+        with ``shape=(2, 2)``.  By default there is only one render
+        window.
+
+    border : bool, optional
+        Draw a border around each render window.  Default False.
+
+    border_color : string or 3 item list, optional, defaults to white
+        Either a string, rgb list, or hex color string.  For example:
+            color='white'
+            color='w'
+            color=[1, 1, 1]
+            color='#FFFFFF'
+
+    window_size : list, optional
+        Window size in pixels.  Defaults to [1024, 768]
+
     """
     last_update_time = 0.0
     q_pressed = False
     right_timer_id = -1
 
     def __init__(self, off_screen=False, notebook=None, shape=(1, 1),
-                 window_size=None):
+                 border=None, border_color='w', window_size=None):
         """
         Initialize a vtk plotting object
         """
-        super(Plotter, self).__init__(shape)
+        super(Plotter, self).__init__(shape, border, border_color)
         log.debug('Initializing')
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:
@@ -2266,6 +2314,7 @@ class Plotter(BasePlotter):
 
         # initialize render window
         self.ren_win = vtk.vtkRenderWindow()
+        self.ren_win.SetBorders(True)
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
 
