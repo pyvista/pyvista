@@ -836,3 +836,33 @@ class DataSetFilters(object):
         alg.SetInputData(dataset)
         alg.Update()
         return _get_output(alg)
+
+
+    def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5):
+        """Constructs a 3D Delaunay triangulation of the mesh.
+        This helps smooth out a rugged mesh.
+
+        Parameters
+        ----------
+        alpha : float, optional
+            Distance value to control output of this filter. For a non-zero
+            alpha value, only verts, edges, faces, or tetra contained within
+            the circumsphere (of radius alpha) will be output. Otherwise, only
+            tetrahedra will be output.
+
+        tol : float, optional
+            tolerance to control discarding of closely spaced points.
+            This tolerance is specified as a fraction of the diagonal length
+            of the bounding box of the points.
+
+        offset : float, optional
+            multiplier to control the size of the initial, bounding Delaunay
+            triangulation.
+        """
+        alg = vtk.vtkDelaunay3D()
+        alg.SetInputData(dataset)
+        alg.SetAlpha(alpha)
+        alg.SetTolerance(tol)
+        alg.SetOffset(offset)
+        alg.Update()
+        return _get_output(alg)
