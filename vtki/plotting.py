@@ -1987,7 +1987,7 @@ class BasePlotter(object):
         return self.add_mesh(arrows, **kwargs)
 
     def screenshot(self, filename=None, transparent_background=False,
-                   return_img=None):
+                   return_img=None, window_size=None):
         """
         Takes screenshot at current camera position
 
@@ -2018,6 +2018,8 @@ class BasePlotter(object):
         >>> actor = plotter.add_mesh(sphere)
         >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
         """
+        if window_size is not None:
+            self.window_size = window_size
         if not hasattr(self, 'ifilter'):
             self.start_image_filter()
         # configure image filter
