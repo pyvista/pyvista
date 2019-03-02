@@ -800,3 +800,22 @@ class DataSetFilters(object):
             alg.SetUseNormal(True)
         alg.Update()
         return _get_output(alg)
+
+
+    def cell_data_to_point_data(dataset, pass_cell_data=False):
+        """Transforms cell data (i.e., data specified per cell) into point data
+        (i.e., data specified at cell points).
+        The method of transformation is based on averaging the data values of
+        all cells using a particular point. Optionally, the input cell data can
+        be passed through to the output as well.
+
+        Parameters
+        ----------
+        pass_cell_data : bool
+            If enabled, pass the input cell data through to the output
+        """
+        alg = vtk.vtkCellDataToPointData()
+        alg.SetInputDataObject(dataset)
+        alg.SetPassCellData(pass_cell_data)
+        alg.Update()
+        return _get_output(alg)
