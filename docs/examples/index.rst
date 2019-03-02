@@ -15,11 +15,12 @@ The following examples demonstrate the functionality of ``vtki``.
    quick/create-structured-surface
    quick/create-uniform-grid
    quick/create-gif
+   quick/multi-window
    quick/plot-clear
    quick/plot-glyphs
    quick/plot-time-lapse
    quick/compute-volume
-   quick/multi-window
+   quick/volume-smoothing
 
 Long Examples
 *************
