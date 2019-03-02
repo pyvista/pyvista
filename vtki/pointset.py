@@ -1173,7 +1173,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         """
         mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self)
+        mprop.SetInputData(self.tri_filter())
         return mprop.GetVolume()
 
     @property
