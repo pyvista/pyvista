@@ -818,4 +818,4 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.SetPassCellData(pass_cell_data)
         alg.Update()
-        return _get_output(alg)
+        return _get_output(alg, active_scalar=dataset.active_scalar_name)
