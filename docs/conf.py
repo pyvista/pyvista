@@ -158,7 +158,7 @@ class AutoAutoSummary(Autosummary):
         if not include_public:
             include_public = []
         items = []
-        for name in obj.__dict__.keys():#dir(obj):
+        for name in sorted(obj.__dict__.keys()):#dir(obj):
             try:
                 documenter = get_documenter(safe_getattr(obj, name), obj)
             except AttributeError:
