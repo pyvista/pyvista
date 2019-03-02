@@ -281,3 +281,9 @@ def test_triangulate():
     tri = data.triangulate()
     assert isinstance(tri, vtki.UnstructuredGrid)
     assert np.any(tri.cells)
+
+
+def test_delaunay_3d():
+    data = examples.load_uniform().threshold_percent(30)
+    result = data.delaunay_3d()
+    assert np.any(result.points)
