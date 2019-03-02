@@ -689,6 +689,9 @@ class BasePlotter(object):
         nanr, nanb, nang = parse_color(nan_color)
         nan_color = nanr, nanb, nang, nan_opacity
 
+        if mesh.n_points < 1:
+            raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
+
         # set main values
         self.mesh = mesh
         self.mapper = vtk.vtkDataSetMapper()

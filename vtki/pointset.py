@@ -1260,9 +1260,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     def plot_boundaries(self, **kwargs):
         """ Plots boundaries of a mesh """
-        edges = self.extract_edges(non_manifold_edges=False,
-                                   feature_edges=False,
-                                   manifold_edges=False)
+        edges = self.extract_edges()
 
         plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
