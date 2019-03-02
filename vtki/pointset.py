@@ -910,13 +910,13 @@ class PolyData(vtkPolyData, vtki.Common):
         Parameters
         ----------
         cell_normals : bool, optional
-            Calculation of cell normals. Defaults to False.
+            Calculation of cell normals. Defaults to True.
 
         point_normals : bool, optional
             Calculation of point normals. Defaults to True.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to True.
+            Splitting of sharp edges. Defaults to False.
 
         flip_normals : bool, optional
             Set global flipping of normal orientation. Flipping modifies both
@@ -948,7 +948,7 @@ class PolyData(vtkPolyData, vtki.Common):
             edge is considered "sharp". Defaults to 30.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place while returning nothing. Defaults to True.
 
         Returns
         -------
