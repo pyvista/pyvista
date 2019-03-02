@@ -269,16 +269,18 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     allow_quit_keypress = True
     signal_close = pyqtSignal()
 
-    def __init__(self, parent=None, title=None):
+    def __init__(self, parent=None, title=None, shape=(1, 1)):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
+        BasePlotter.__init__(self, shape=shape)
         self.parent = parent
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
-        self.ren_win.AddRenderer(self.renderer)
+        for renderer in self.renderers:
+            self.ren_win.AddRenderer(renderer)
         self.iren = self.ren_win.GetInteractor()
 
         self.background_color = rcParams['background']
@@ -316,7 +318,7 @@ class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, window_size=None, **kwargs):
+    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None, **kwargs):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
@@ -350,7 +352,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
-        QtInteractor.__init__(self, parent=self.frame, **kwargs)
+        QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
         self.signal_close.connect(self.app_window.close)
 
         # build main menu
@@ -402,13 +404,12 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
-        self._last_window_size = self.window_size
-        self._last_camera_pos = self.camera_position
-
         self._spawn_background_rendering()
 
         self.window_size = window_size
+        self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
+        self._last_window_size = self.window_size
+        self._last_camera_pos = self.camera_position
 
     def scale_axes_dialog(self, show=True):
         """ Open scale axes dialog """
@@ -456,10 +457,11 @@ class BackgroundPlotter(QtInteractor):
         self.app.quit()
         self.close()
 
-    def add_actor(self, actor, reset_camera=None, name=None):
-        actor, prop = super(BackgroundPlotter, self).add_actor(actor, reset_camera, name)
-        if reset_camera:  # pragma: no cover
-            self.reset_camera()
+    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
+        actor, prop = super(BackgroundPlotter, self).add_actor(actor,
+                                                               reset_camera,
+                                                               name,
+                                                               loc)
         self.update_app_icon()
         return actor, prop
 
@@ -467,7 +469,7 @@ class BackgroundPlotter(QtInteractor):
         """
         Update the app icon if the user is not trying to resize the window.
         """
-        if os.name == 'nt':  # pragma: no cover
+        if os.name == 'nt' or not hasattr(self, '_last_window_size'):  # pragma: no cover
             # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
             return
         cur_time = time.time()

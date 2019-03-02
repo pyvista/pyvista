@@ -17,7 +17,6 @@ else:
     OFF_SCREEN = False
 
 
-
 sphere = vtki.Sphere()
 sphere_b = vtki.Sphere(1.0)
 sphere_c = vtki.Sphere(2.0)
@@ -42,7 +41,7 @@ def test_plot(tmpdir):
                           flip_scalars=True,
                           cmap='bwr',
                           interpolate_before_map=True,
-                          screenshot=filename)
+                          screenshot=filename, return_img=True)
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
@@ -256,7 +255,7 @@ def test_key_press_event():
 def test_left_button_down():
     plotter = vtki.Plotter()
     plotter.left_button_down(None, None)
-    assert np.allclose(plotter.pickpoint, [0, 0, 0])
+    # assert np.allclose(plotter.pickpoint, [0, 0, 0])
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -413,3 +412,33 @@ def test_camera():
     plotter.isometric_view()
     plotter.reset_camera()
     plotter.show()
+    plotter.camera_position = None
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_multi_renderers():
+    plotter = vtki.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
+
+    loc = (0, 0)
+    plotter.add_text('Render Window 0', loc=loc, font_size=30)
+    sphere = vtki.Sphere()
+    plotter.add_mesh(sphere, loc=loc, scalars=sphere.points[:, 2])
+    plotter.add_scalar_bar('Z', vertical=True)
+
+    loc = (0, 1)
+    plotter.add_text('Render Window 1', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Cube(), loc=loc, show_edges=True)
+
+    loc = (1, 0)
+    plotter.add_text('Render Window 2', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Arrow(), color='y', loc=loc, show_edges=True)
+
+    plotter.subplot(1, 1)
+    plotter.add_text('Render Window 3', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Cone(), color='g', loc=loc, show_edges=True,
+                     backface_culling=True)
+    plotter.add_bounding_box()
+    plotter.add_bounds_axes(all_edges=True)
+
+    plotter.update_bounds_axes()
+    plotter.plot()
