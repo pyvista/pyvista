@@ -819,3 +819,20 @@ class DataSetFilters(object):
         alg.SetPassCellData(pass_cell_data)
         alg.Update()
         return _get_output(alg, active_scalar=dataset.active_scalar_name)
+
+
+    def triangulate(dataset):
+        """
+        Returns an all triangle mesh.  More complex polygons will be broken
+        down into triangles.
+
+        Returns
+        -------
+        mesh : vtki.UnstructuredGrid
+            Mesh containing only triangles.
+
+        """
+        alg = vtk.vtkDataSetTriangleFilter()
+        alg.SetInputData(dataset)
+        alg.Update()
+        return _get_output(alg)

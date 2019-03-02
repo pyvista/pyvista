@@ -274,3 +274,10 @@ def test_cell_data_to_point_data():
     foo = data.cell_data_to_point_data()
     assert foo.n_scalars == 2
     assert len(foo.cell_arrays.keys()) == 0
+
+
+def test_triangulate():
+    data = examples.load_uniform()
+    tri = data.triangulate()
+    assert isinstance(tri, vtki.UnstructuredGrid)
+    assert np.any(tri.cells)
