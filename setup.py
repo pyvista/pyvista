@@ -60,7 +60,7 @@ setup(
 
     url='https://github.com/vtkiorg/vtki',
     keywords='vtk numpy plotting mesh',
-    package_data={'vtki.examples': ['airplane.ply', 'ant.ply',
+    package_data={'vtki.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
                                     'hexbeam.vtk', 'sphere.ply',
                                     'uniform.vtk', 'rectilinear.vtk',
                                     'globe.vtk', '2k_earth_daymap.jpg']},
