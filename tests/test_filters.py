@@ -287,3 +287,11 @@ def test_delaunay_3d():
     data = examples.load_uniform().threshold_percent(30)
     result = data.delaunay_3d()
     assert np.any(result.points)
+
+
+def test_smooth():
+    data = examples.load_uniform()
+    vol = data.threshold_percent(30)
+    surf = vol.extract_geometry()
+    smooth = surf.smooth()
+    assert np.any(smooth)

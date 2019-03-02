@@ -563,6 +563,28 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             return PolyData(trifilter.GetOutput())
 
+
+    def smooth(self, n_iter=20, convergence=0.0):
+        """Adjust point coordinates using Laplacian smoothing.
+        The effect is to "relax" the mesh, making the cells better shaped and
+        the vertices more evenly distributed.
+
+        Parameters
+        ----------
+        n_iter : int
+            number of iterations for Laplacian smoothing,
+
+        conversion : float, optional
+            convergence criterion for the iteration process. Smaller numbers
+            result in more smoothing iterations. Range from (0 to 1).
+        """
+        alg = vtk.vtkSmoothPolyDataFilter()
+        alg.SetInputData(self)
+        alg.SetNumberOfIterations(n_iter)
+        alg.SetConvergence(convergence)
+        alg.Update()
+        return _get_output(alg)
+
     def tube(self, radius=None, scalars=None, capping=True, n_sides=20,
              radius_factor=10, preference='point'):
         """Generate a tube around each input line. The radius of the tube can be
