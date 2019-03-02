@@ -858,6 +858,37 @@ class BasePlotter(object):
 
         return actor
 
+
+    def update_scalar_bar_range(self, clim, name=None):
+        """Update the value range of the active or named scalar bar.
+
+        Parameters
+        ----------
+        2 item list
+            The new range of scalar bar. Example: ``[-1, 2]``.
+
+        name : str, optional
+            The title of the scalar bar to update
+        """
+        if isinstance(clim, float) or isinstance(clim, int):
+            clim = [-clim, clim]
+        if len(clim) != 2:
+            raise TypeError('clim argument must be a length 2 iterable of values: (min, max).')
+        if name is None:
+            if not hasattr(self, 'mapper'):
+                raise RuntimeError('This plotter does not have an active mapper.')
+            return self.mapper.SetScalarRange(*clim)
+        # Use the name to find the desired actor
+        def update_mapper(mapper):
+            return mapper.SetScalarRange(*clim)
+        try:
+            for m in self._scalar_bar_mappers[name]:
+                update_mapper(m)
+        except KeyError:
+            raise KeyError('Name ({}) not valid/not found in this plotter.')
+        return
+
+
     @property
     def camera_set(self):
         """ Returns if the camera of the active renderer has been set """
