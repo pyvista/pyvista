@@ -108,3 +108,9 @@ def test_load_sphere():
     """ Loads sphere ply mesh """
     mesh = examples.load_sphere()
     assert mesh.n_points
+
+
+def test_load_channels():
+    """ Loads geostat training image """
+    mesh = examples.load_channels()
+    assert mesh.n_points
