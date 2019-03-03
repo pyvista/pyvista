@@ -817,7 +817,7 @@ class Common(DataSetFilters):
 
     def __repr__(self):
         """Object representation"""
-        return self.head()
+        return self.head(display=False)
 
 
 class _ScalarsDict(dict):
