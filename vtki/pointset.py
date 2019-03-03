@@ -980,10 +980,16 @@ class PolyData(vtkPolyData, vtki.Common):
         normal.SetInputData(self)
         normal.Update()
 
+        output = normal.GetOutput()
+        if point_normals:
+            output.GetPointData().SetActiveNormals('Normals')
+        if cell_normals:
+            output.GetCellData().SetActiveNormals('Normals')
+
         if inplace:
-            self.overwrite(normal.GetOutput())
+            self.overwrite(output)
         else:
-            return PolyData(normal.GetOutput())
+            return PolyData(output)
 
     @property
     def point_normals(self):
