@@ -144,3 +144,13 @@ def test_background_plotter_export_vtkjs(qtbot, tmpdir):
     plotter.close()
 
     assert os.path.isfile(filename + '.vtkjs')
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting_orbit(qtbot):
+    plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
+    plotter.add_mesh(vtki.Sphere())
+    # perfrom the orbit:
+    plotter.orbit_on_path(bkg=False)
+    plotter.close()

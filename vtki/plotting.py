@@ -5,6 +5,7 @@ import collections
 import ctypes
 import logging
 import time
+from threading import Thread
 from subprocess import PIPE, Popen
 
 import imageio
@@ -351,6 +352,22 @@ class BasePlotter(object):
             if point.ndim != 1:
                 point = point.ravel()
         self.camera.SetFocalPoint(point)
+        self._render()
+
+    def set_position(self, point):
+        """ sets camera position to a point """
+        if isinstance(point, np.ndarray):
+            if point.ndim != 1:
+                point = point.ravel()
+        self.camera.SetPosition(point)
+        self._render()
+
+    def set_viewup(self, vector):
+        """ sets camera viewup vector """
+        if isinstance(vector, np.ndarray):
+            if vector.ndim != 1:
+                vector = vector.ravel()
+        self.camera.SetViewUp(vector)
         self._render()
 
     def _render(self):
@@ -915,6 +932,11 @@ class BasePlotter(object):
     def bounds(self):
         """ Returns the bounds of the active renderer """
         return self.renderer.bounds
+
+    @property
+    def center(self):
+        """ Returns the center of the active renderer """
+        return self.renderer.center
 
     def update_bounds_axes(self):
         """ Update the bounds of the active renderer """
@@ -2286,6 +2308,90 @@ class BasePlotter(object):
         style = vtk.vtkInteractorStyleRubberBandPick()
         self.iren.SetInteractorStyle(style)
         self.iren.SetPicker(area_picker)
+
+
+    def generate_orbital_path(self, factor=3., n_points=20, viewup=None, z_shift=None):
+        """Genrates an orbital path around the data scene
+
+        Parameters
+        ----------
+        facotr : float
+            A scaling factor when biulding the orbital extent
+
+        n_points : int
+            number of points on the orbital path
+
+        viewup : list(float)
+            the normal to the orbital plane
+
+        z_shift : float, optional
+            shift the plane up/down from the center of the scene by this amount
+        """
+        if viewup is None:
+            viewup = rcParams['camera']['viewup']
+        center = list(self.center)
+        bnds = list(self.bounds)
+        if z_shift is None:
+            z_shift = (bnds[5] - bnds[4]) * factor
+        center[2] = center[2] + z_shift
+        radius = (bnds[1] - bnds[0]) * factor
+        y = (bnds[3] - bnds[2]) * factor
+        if y > radius:
+            radius = y
+        return vtki.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
+
+
+    def fly_to(point):
+        """Given a position point, move the current camera's focal point to that
+        point. The movement is animated over the number of frames specified in
+        NumberOfFlyFrames. The LOD desired frame rate is used.
+        """
+        return self.iren.FlyTo(self.renderer, *point)
+
+
+    def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None, bkg=True):
+        """Orbit on the given path focusing on the focus point
+
+        Parameters
+        ----------
+        path : vtki.PolyData
+            Path of orbital points. The order in the points is the order of
+            travel
+
+        focus : list(float) of length 3, optional
+            The point ot focus the camera.
+
+        step : float, optional
+            The timestep between flying to each camera position
+
+        viewup : list(float)
+            the normal to the orbital plane
+        """
+        if focus is None:
+            focus = self.center
+        if viewup is None:
+            viewup = rcParams['camera']['viewup']
+        if path is None:
+            path = self.generate_orbital_path(viewup=viewup)
+        if not is_vtki_obj(path):
+            path = vtki.PolyData(path)
+        points = path.points
+
+        def orbit():
+            """Internal thread for running the orbit"""
+            for point in points:
+                self.set_position(point)
+                self.set_focus(focus)
+                self.set_viewup(viewup)
+                time.sleep(step)
+
+
+        if bkg:
+            thread = Thread(target=orbit)
+            thread.start()
+        else:
+            orbit()
+        return
 
 
     def export_vtkjs(self, filename, compress_arrays=False):
