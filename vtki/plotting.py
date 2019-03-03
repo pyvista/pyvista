@@ -2220,6 +2220,14 @@ class BasePlotter(object):
         """View the YZ plane"""
         self.renderer.view_yz(negative=negative)
 
+    def disable(self):
+        """Disable this renderer's camera from being interactive"""
+        return self.renderer.disable()
+
+    def enable(self):
+        """Enable this renderer's camera to be interactive"""
+        return self.renderer.enable()
+
     def set_background(self, color, loc='all'):
         """
         Sets background color

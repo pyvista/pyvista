@@ -694,6 +694,14 @@ class Renderer(vtkRenderer):
             vec = np.array([-1,0,0])
         return self.view_vector(vec, viewup)
 
+    def disable(self):
+        """Disable this renderer's camera from being interactive"""
+        return self.SetInteractive(0)
+
+    def enable(self):
+        """Enable this renderer's camera to be interactive"""
+        return self.SetInteractive(1)
+
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
