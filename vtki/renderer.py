@@ -660,6 +660,40 @@ class Renderer(vtkRenderer):
         self.camera_set = False
         return self.reset_camera()
 
+    def view_vector(self, vector, viewup=None):
+        """Point the camera in the direction of the given vector"""
+        focal_pt = self.center
+        if viewup is None:
+            viewup = rcParams['camera']['viewup']
+        cpos = [vector + np.array(focal_pt),
+                focal_pt, viewup]
+        self.camera_position = cpos
+        return self.reset_camera()
+
+    def view_xy(self, negative=False):
+        """View the XY plane"""
+        vec = np.array([0,0,1])
+        viewup = np.array([0,1,0])
+        if negative:
+            vec = np.array([0,0,-1])
+        return self.view_vector(vec, viewup)
+
+    def view_xz(self, negative=False):
+        """View the XZ plane"""
+        vec = np.array([0,-1,0])
+        viewup = np.array([0,0,1])
+        if negative:
+            vec = np.array([0,1,0])
+        return self.view_vector(vec, viewup)
+
+    def view_yz(self, negative=False):
+        """View the YZ plane"""
+        vec = np.array([1,0,0])
+        viewup = np.array([0,0,1])
+        if negative:
+            vec = np.array([-1,0,0])
+        return self.view_vector(vec, viewup)
+
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""

@@ -2208,6 +2208,18 @@ class BasePlotter(object):
         """
         self.renderer.isometric_view()
 
+    def view_xy(self, negative=False):
+        """View the XY plane"""
+        self.renderer.view_xy(negative=negative)
+
+    def view_xz(self, negative=False):
+        """View the XZ plane"""
+        self.renderer.view_xz(negative=negative)
+
+    def view_yz(self, negative=False):
+        """View the YZ plane"""
+        self.renderer.view_yz(negative=negative)
+
     def set_background(self, color, loc='all'):
         """
         Sets background color
