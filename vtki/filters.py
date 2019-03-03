@@ -67,7 +67,7 @@ class DataSetFilters(object):
     def __new__(cls, *args, **kwargs):
         if cls is DataSetFilters:
             raise TypeError("vtki.DataSetFilters is an abstract class and may not be instantiated.")
-        return object.__new__(cls, *args, **kwargs)
+        return object.__new__(cls)
 
 
     def clip(dataset, normal='x', origin=None, invert=True):
