@@ -23,7 +23,7 @@ READERS = {
     # Image formats:
     '.bmp': vtk.vtkBMPReader,
     '.dem': vtk.vtkDEMReader,
-    '.dcm': vtk.vtkDICOMImageReader, # TODO: not tested
+    #'.dcm': vtk.vtkDICOMImageReader, # TODO: not tested and not working
     '.jpeg': vtk.vtkJPEGReader,
     '.jpg': vtk.vtkJPEGReader,
     '.mhd': vtk.vtkMetaImageReader,
@@ -34,7 +34,7 @@ READERS = {
     '.tif': vtk.vtkTIFFReader,
     # Other formats:
     '.byu': vtk.vtkBYUReader, # TODO: not tested
-    '.chemml': vtk.vtkCMLMoleculeReader, # TODO: not tested
+    # '.chemml': vtk.vtkCMLMoleculeReader, # TODO: not tested
     # '.cml': vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by vtki
     # TODO: '.csv': vtk.vtkCSVReader, # vtkTables are currently not supported
     '.facet': vtk.vtkFacetReader,
@@ -46,7 +46,7 @@ READERS = {
     # '.pdb': vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
     '.p3d': vtk.vtkPlot3DMetaReader,
     '.pts': vtk.vtkPTSReader,
-    '.particles': vtk.vtkParticleReader, # TODO: not tested
+    # '.particles': vtk.vtkParticleReader, # TODO: not tested
     #TODO: '.pht': vtk.vtkPhasta??????,
     #TODO: '.vpc': vtk.vtkVPIC?????,
 }
