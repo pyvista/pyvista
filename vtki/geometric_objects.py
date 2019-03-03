@@ -10,9 +10,6 @@ vtkPlaneSource
 vtkLineSource
 vtkCubeSource
 vtkConeSource
-
-NEED TO ADD
------------
 vtkDiskSource
 vtkRegularPolygonSource
 
@@ -302,6 +299,18 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
     return vtki.wrap(src.GetOutput())
 
 
+def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
+    """Creates a box with solid faces for the given bounds.
+
+    Parameters
+    ----------
+    bounds : np.ndarray or list
+        Specify the bounding box of the cube. If given, all other arguments are
+        ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
+    """
+    return Cube(bounds=bounds)
+
+
 def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
          capping=True, angle=26.6, resolution=6):
     """Create a cone
@@ -336,5 +345,69 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
     src.SetHeight(height)
     src.SetRadius(radius)
     src.SetResolution(resolution)
+    src.Update()
+    return vtki.wrap(src.GetOutput())
+
+
+def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
+    """
+    Createa a polygonal disk with a hole in the center. The disk has zero
+    height. The user can specify the inner and outer radius of the disk, and
+    the radial and circumferential resolution of the polygonal representation.
+
+    Parameters
+    ----------
+    center : np.ndarray or list
+        Center in [x, y, z]. middle of the axis of the polygon.
+
+    radius : float
+        The radius of the polygon
+
+    normal : np.ndarray or list
+        direction vector in [x, y, z]. orientation vector of the cone.
+
+    n_sides : int
+        Number of sides of the polygon
+    """
+    src = vtk.vtkRegularPolygonSource()
+    src.SetNumberOfSides(n_sides)
+    src.SetRadius(radius)
+    src.SetNormal(normal)
+    src.Update()
+    return vtki.wrap(src.GetOutput())
+
+
+def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
+         c_res=6):
+    """
+    Createa a polygonal disk with a hole in the center. The disk has zero
+    height. The user can specify the inner and outer radius of the disk, and
+    the radial and circumferential resolution of the polygonal representation.
+
+    Parameters
+    ----------
+    center : np.ndarray or list
+        Center in [x, y, z]. middle of the axis of the disc.
+
+    inner : flaot
+        The inner radius
+
+    outer : float
+        The outer radius
+
+    normal : np.ndarray or list
+        direction vector in [x, y, z]. orientation vector of the cone.
+
+    r_res: int
+        number of points in radius direction.
+
+    r_res: int
+        number of points in circumferential direction.
+    """
+    src = vtk.vtkDiskSource()
+    src.SetInnerRadius(inner)
+    src.SetOuterRadius(outer)
+    src.SetRadialResolution(r_res)
+    src.SetCircumferentialResolution(c_res)
     src.Update()
     return vtki.wrap(src.GetOutput())

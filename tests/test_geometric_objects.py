@@ -51,3 +51,18 @@ def test_cone():
     cone = vtki.Cone()
     assert np.any(cone.points)
     assert np.any(cone.faces)
+
+
+def test_box():
+    geom = vtki.Box()
+    assert np.any(geom.points)
+
+
+def test_polygon():
+    geom = vtki.Polygon()
+    assert np.any(geom.points)
+
+
+def test_disc():
+    geom = vtki.Disc()
+    assert np.any(geom.points)
