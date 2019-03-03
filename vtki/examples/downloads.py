@@ -6,6 +6,13 @@ import sys
 
 import vtki
 
+
+DOWNLOAD_TEMP_FOLDER = True
+"""
+A flag to save downloads in a temporary directory or the current working
+directory.
+"""
+
 # Helpers:
 
 def _get_vtk_file_url(filename):
@@ -17,6 +24,12 @@ def _retrieve_file(url, filename):
         urlretrieve = urllib.urlretrieve
     else:
         urlretrieve = urllib.request.urlretrieve
+    if DOWNLOAD_TEMP_FOLDER:
+        saved_file, resp = urlretrieve(url)
+        # rename saved file:
+        new_name = saved_file.replace(os.path.basename(saved_file), filename)
+        os.rename(saved_file, new_name)
+        return new_name, resp
     return urlretrieve(url, filename)
 
 def _download_file(filename):
@@ -24,10 +37,10 @@ def _download_file(filename):
     return _retrieve_file(url, filename)
 
 def _download_and_read(filename, texture=False):
-    _download_file(filename)
+    saved_file, _ = _download_file(filename)
     if texture:
-        return vtki.read_texture(filename)
-    return vtki.read(filename)
+        return vtki.read_texture(saved_file)
+    return vtki.read(saved_file)
 
 
 # Textures:
@@ -46,6 +59,8 @@ def download_usa():
 
 def download_st_helens():
     return _download_and_read('SainteHelens.dem')
+
+download_st_helens()
 
 def download_bunny():
     return _download_and_read('bunny.ply')
