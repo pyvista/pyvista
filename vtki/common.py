@@ -815,6 +815,11 @@ class Common(DataSetFilters):
         return fmt
 
 
+    def __repr__(self):
+        """Object representation"""
+        return self.head()
+
+
 class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries"""
     def __init__(self, data):

@@ -390,3 +390,16 @@ class MultiBlock(vtkMultiBlockDataSet):
         fmt += "\n"
         fmt += "</td></tr> </table>"
         return fmt
+
+
+    def __repr__(self):
+        # return a string that is Python console friendly
+        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
+        # now make a call on the object to get its attributes as a list of len 2 tuples
+        row = "  {}:\t{}\n"
+        for attr in self._get_attrs():
+            try:
+                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+            except:
+                fmt += row.format(attr[0], attr[2].format(attr[1]))
+        return fmt

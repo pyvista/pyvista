@@ -98,6 +98,11 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             raise TypeError('Invalid input type')
 
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
+
     def _load_file(self, filename):
         """
         Load a surface mesh from a mesh file.
@@ -1609,6 +1614,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             else:
                 raise Exception('All input types must be np.ndarray')
 
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
+
     def overwrite(self, grid):
         """
         Overwrites the old grid data with the new grid data
@@ -2076,6 +2086,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
+
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
 
     def _from_arrays(self, x, y, z):
         """
