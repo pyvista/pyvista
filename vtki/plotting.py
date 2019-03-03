@@ -865,7 +865,7 @@ class BasePlotter(object):
             self._labels.append([single_triangle(), label, rgb_color])
 
         # lighting display style
-        if lighting is False:
+        if not lighting:
             prop.LightingOff()
 
         # set line thickness
