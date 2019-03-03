@@ -6,18 +6,17 @@ import sys
 
 import vtki
 
-# grab the correct url retriever
-if sys.version_info < (3,):
-    urlretrieve = urllib.urlretrieve
-else:
-    urlretrieve = urllib.request.urlretrieve
-
 # Helpers:
 
 def _get_vtk_file_url(filename):
     return 'https://github.com/open-cv/VTKData/raw/master/Data/{}'.format(filename)
 
 def _retrieve_file(url, filename):
+    # grab the correct url retriever
+    if sys.version_info < (3,) or os.name == 'nt':
+        urlretrieve = urllib.urlretrieve
+    else:
+        urlretrieve = urllib.request.urlretrieve
     return urlretrieve(url, filename)
 
 def _download_file(filename):
