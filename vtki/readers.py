@@ -22,45 +22,32 @@ READERS = {
     # Image formats:
     '.bmp': vtk.vtkBMPReader,
     '.dem': vtk.vtkDEMReader,
-    '.dcm': vtk.vtkDICOMImageReader,
+    '.dcm': vtk.vtkDICOMImageReader, # TODO: not tested
     '.jpeg': vtk.vtkJPEGReader,
     '.jpg': vtk.vtkJPEGReader,
+    '.mhd': vtk.vtkMetaImageReader,
     '.png': vtk.vtkPNGReader,
-    '.pnm': vtk.vtkPNMReader,
+    '.pnm': vtk.vtkPNMReader, # TODO: not tested
     '.slc': vtk.vtkSLCReader,
     '.tiff': vtk.vtkTIFFReader,
     '.tif': vtk.vtkTIFFReader,
-    # ExodusII files:
-    #.g, .e, .ex2, .ex2v2, .exo, .gen, .exoII, .exii, .0, .00, .000
-    '.g': vtk.vtkExodusIIReader,
-    '.e': vtk.vtkExodusIIReader,
-    '.ex2': vtk.vtkExodusIIReader,
-    '.ex2v2': vtk.vtkExodusIIReader,
-    '.exo': vtk.vtkExodusIIReader,
-    '.gen': vtk.vtkExodusIIReader,
-    '.exoii': vtk.vtkExodusIIReader,
-    '.exii': vtk.vtkExodusIIReader,
-    '.0': vtk.vtkExodusIIReader,
-    '.00': vtk.vtkExodusIIReader,
-    '.000': vtk.vtkExodusIIReader,
     # Other formats:
-    '.byu': vtk.vtkBYUReader,
-    '.chemml': vtk.vtkCMLMoleculeReader,
-    '.cml': vtk.vtkCMLMoleculeReader,
+    '.byu': vtk.vtkBYUReader, # TODO: not tested
+    '.chemml': vtk.vtkCMLMoleculeReader, # TODO: not tested
+    # '.cml': vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by vtki
     # TODO: '.csv': vtk.vtkCSVReader, # vtkTables are currently not supported
     '.facet': vtk.vtkFacetReader,
-    '.cas': vtk.vtkFLUENTReader,
-    '.dat': vtk.vtkFLUENTReader,
-    '.cube': vtk.vtkGaussianCubeReader,
-    '.res': vtk.vtkMFIXReader,
+    '.cas': vtk.vtkFLUENTReader, # TODO: not tested
+    # '.dat': vtk.vtkFLUENTReader, # TODO: not working
+    # '.cube': vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
+    '.res': vtk.vtkMFIXReader, # TODO: not tested
     '.foam': vtk.vtkOpenFOAMReader,
-    '.pdb': vtk.vtkPDBReader,
+    # '.pdb': vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
     '.p3d': vtk.vtkPlot3DMetaReader,
     '.pts': vtk.vtkPTSReader,
-    '.particles': vtk.vtkParticleReader,
+    '.particles': vtk.vtkParticleReader, # TODO: not tested
     #TODO: '.pht': vtk.vtkPhasta??????,
     #TODO: '.vpc': vtk.vtkVPIC?????,
-    '.xyz': vtk.vtkXYZMolReader,
 }
 
 
