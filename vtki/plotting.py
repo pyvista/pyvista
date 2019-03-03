@@ -293,6 +293,11 @@ class BasePlotter(object):
 
     """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is BasePlotter:
+            raise TypeError("vtki.BasePlotter is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
+
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=1.0):
         """ Initialize base plotter """
