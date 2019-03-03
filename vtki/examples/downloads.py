@@ -1,6 +1,5 @@
 """Functions to download sampe datasets from the VTK data repository
 """
-import urllib
 import os
 import sys
 
@@ -20,9 +19,11 @@ def _get_vtk_file_url(filename):
 
 def _retrieve_file(url, filename):
     # grab the correct url retriever
-    if sys.version_info < (3,) or os.name == 'nt':
+    if sys.version_info < (3,):
+        import urllib
         urlretrieve = urllib.urlretrieve
     else:
+        import urllib.request
         urlretrieve = urllib.request.urlretrieve
     if DOWNLOAD_TEMP_FOLDER:
         saved_file, resp = urlretrieve(url)
