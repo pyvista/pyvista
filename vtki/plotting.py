@@ -769,6 +769,10 @@ class BasePlotter(object):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
+            if rgb:
+                if scalars.ndim != 2 or scalars.shape[2] != 3:
+                    raise ValueError('RGB array must be n_points/n_cells by 3 in shape.')
+
             if scalars.ndim != 1:
                 if rgb:
                     pass
