@@ -9,4 +9,7 @@ Geometric Objects
 .. autofunction:: vtki.Plane
 .. autofunction:: vtki.Line
 .. autofunction:: vtki.Cube
+.. autofunction:: vtki.Box
 .. autofunction:: vtki.Cone
+.. autofunction:: vtki.Polygon
+.. autofunction:: vtki.Disc
