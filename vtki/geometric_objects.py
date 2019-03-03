@@ -370,6 +370,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
         Number of sides of the polygon
     """
     src = vtk.vtkRegularPolygonSource()
+    src.SetCenter(center)
     src.SetNumberOfSides(n_sides)
     src.SetRadius(radius)
     src.SetNormal(normal)
