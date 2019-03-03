@@ -457,6 +457,7 @@ def test_orthographic_slicer():
     p.subplot(1,1)
     p.add_mesh(slices, clim=data.get_data_range())
     p.add_axes()
+    p.enable()
 
     p.subplot(0,0)
     p.add_mesh(slices['XY'])
