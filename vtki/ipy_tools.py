@@ -741,7 +741,6 @@ class Isocontour(InteractiveTool):
     def tool(self, default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
-        preference = self.display_params['preference']
 
         def _calc_start_value(rng):
             """Get starting value for slider using a data range"""
@@ -753,6 +752,7 @@ class Isocontour(InteractiveTool):
         valsl = widgets.FloatSlider(min=self.valid_range[0],
                             max=self.valid_range[1],
                             value=start,
+                            description='Contour by:',
                             continuous_update=self.continuous_update)
 
         def _update_slider_range(new_rng):
@@ -770,7 +770,8 @@ class Isocontour(InteractiveTool):
 
         def update(value, **kwargs):
             """Update the contour"""
-            scalars = kwargs.get('scalars')
+            scalars = kwargs.get('contour_by')
+            preference = self.display_params['preference']
 
             # Update the sliders if scalar is changed
             self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
@@ -798,8 +799,8 @@ class Isocontour(InteractiveTool):
 
         # Create/display the widgets
         scalars = self._get_scalar_names()
-        name = default_params.get("scalars", scalars[0])
+        name = default_params.get("contour_by", scalars[0])
         idx = scalars.index(name)
         del scalars[idx]
         scalars.insert(0, name)
-        return interact(update, value=valsl, scalars=self._get_scalar_names())
+        self._tool_widget =  interact(update, value=valsl, contour_by=self._get_scalar_names())

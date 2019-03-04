@@ -80,6 +80,6 @@ def test_ipy_integrated(qtbot):
 def test_ipy_isocontour(qtbot):
     data = examples.load_uniform()
     tool = vtki.Isocontour(data, show=False)
-    g = tool.tool()
+    g = tool._tool_widget
     g.widget.update()
     tool.plotter.close()
