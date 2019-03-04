@@ -108,7 +108,7 @@ class OrthographicSlicer(object):
         self.plotter.enable()
         self.plotter.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self.kwargs)
         self._update_bounds()
-        self.plotter.view_xz(negative=True)
+        self.plotter.view_xz()
         self.plotter.disable()
         return
 
