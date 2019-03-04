@@ -460,3 +460,36 @@ def test_multi_renderers():
 
     plotter.update_bounds_axes()
     plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_orthographic_slicer():
+    data = examples.load_uniform()
+    data.set_active_scalar('Spatial Cell Data')
+
+    slices = data.slice_orthogonal()
+
+    # Orthographic Slicer
+    p = vtki.Plotter(shape=(2,2), off_screen=OFF_SCREEN)
+
+    p.subplot(1,1)
+    p.add_mesh(slices, clim=data.get_data_range())
+    p.add_axes()
+    p.enable()
+
+    p.subplot(0,0)
+    p.add_mesh(slices['XY'])
+    p.view_xy()
+    p.disable()
+
+    p.subplot(0,1)
+    p.add_mesh(slices['XZ'])
+    p.view_xz(negative=True)
+    p.disable()
+
+    p.subplot(1,0)
+    p.add_mesh(slices['YZ'])
+    p.view_yz()
+    p.disable()
+
+    p.show()
