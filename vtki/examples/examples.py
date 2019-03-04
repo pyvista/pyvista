@@ -1,12 +1,9 @@
-import inspect
-import sys
 import os
 import time
 
-import vtk
+import numpy as np
 
 import vtki
-import numpy as np
 
 # get location of this folder and the example files
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -18,6 +15,7 @@ uniformfile = os.path.join(dir_path, 'uniform.vtk')
 rectfile = os.path.join(dir_path, 'rectilinear.vtk')
 globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
+channelsfile = os.path.join(dir_path, 'channels.vti')
 
 # get location of this folder
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -69,7 +67,12 @@ def load_globe():
 
 def load_globe_texture():
     """ Loads a vtk.vtkTexture that can be applied to the globe source """
-    return vtki.load_texture(mapfile)
+    return vtki.read_texture(mapfile)
+
+
+def load_channels():
+    """ Loads a uniform grid of fluvial channels in the subsurface """
+    return vtki.read(channelsfile)
 
 def plot_ants_plane(off_screen=False, notebook=None):
     """
@@ -222,8 +225,8 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
             time.sleep(tdelay - tpast)
 
         # get render time and actual FPS
-        rtime = rstop - rstart
-        act_fps = 1 / (time.time() - tlast + 1E-10)
+        # rtime = rstop - rstart
+        # act_fps = 1 / (time.time() - tlast + 1E-10)
         tlast = time.time()
 
     # Close movie and delete object

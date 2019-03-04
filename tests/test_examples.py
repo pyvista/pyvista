@@ -1,5 +1,5 @@
-from subprocess import Popen, PIPE
 import os
+from subprocess import PIPE, Popen
 
 import numpy as np
 import pytest
@@ -48,21 +48,21 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
     x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
-    
+
     # Create and structured surface
     grid = vtki.StructuredGrid(x, y, z)
-    
+
     # Make copy of points
     pts = grid.points.copy()
-    
+
     # Start a plotter object and set the scalars to the Z height
     plotter = vtki.Plotter(off_screen=off_screen)
     plotter.add_mesh(grid, scalars=z.ravel())
     plotter.plot(auto_close=False)
-    
+
     # Open a gif
     plotter.open_gif(filename)
-    
+
     # Update Z and write a frame for each updated position
     nframe = 5
     for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
@@ -71,7 +71,7 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
         plotter.update_coordinates(pts)
         plotter.update_scalars(z.ravel())
         plotter.write_frame()
-    
+
     # Close movie and delete object
     plotter.close()
 
@@ -107,4 +107,10 @@ def test_load_airplane():
 def test_load_sphere():
     """ Loads sphere ply mesh """
     mesh = examples.load_sphere()
+    assert mesh.n_points
+
+
+def test_load_channels():
+    """ Loads geostat training image """
+    mesh = examples.load_channels()
     assert mesh.n_points

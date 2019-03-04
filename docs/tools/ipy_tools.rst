@@ -11,6 +11,18 @@ These tools are useable from the top level of ``vtki`` on any ``vtki`` wrapped
 dataset. Simply call one of these tools on your object.
 
 
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.ipy_tools.InteractiveTool
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.ipy_tools.InteractiveTool
+   :methods:
+
+
 Orthogonal Slicer
 -----------------
 
@@ -89,6 +101,7 @@ down menu in the Jupyter notebook cell output:
 .. figure:: ../images/many-slices-tool.gif
    :width: 500pt
 
+
 .. autoclass:: vtki.ManySlicesAlongAxis
    :show-inheritance:
 
@@ -125,8 +138,8 @@ you can access the plotting window and add features or datasets:
     # Grab the plotter
     p = thresher.plotter
 
-    # Label the axis bounds
-    p.add_axes_bounds()
+    # Label the axes bounds
+    p.show_grid()
 
     # Add some other datasets
     p.add_mesh(dataset.clip())

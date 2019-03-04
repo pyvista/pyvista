@@ -1,9 +1,9 @@
-from threading import Thread
-import time
 import logging
-import numpy as np
 import os
+import time
+from threading import Thread
 
+import numpy as np
 import vtk
 import vtk.qt
 
@@ -21,6 +21,9 @@ has_pyqt = False
 class QVTKRenderWindowInteractor(object):
     pass
 
+class RangeGroup(object):
+    pass
+
 
 class QDialog(object):
     pass
@@ -30,20 +33,73 @@ class QSlider(object):
     pass
 
 
-def pyqtSignal(*args, **kwargs):
+def pyqtSignal(*args, **kwargs):  # pragma: no cover
     pass
+
+
+class QHBoxLayout(object):
+    pass
+
+
+class QFileDialog(object):
+    pass
+
 
 try:
     from PyQt5.QtCore import pyqtSignal
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
-    from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout,
+    from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
                                  QFrame, QMainWindow, QSlider,
-                                 QDialog, QFormLayout, QGroupBox)
+                                 QSpinBox, QHBoxLayout, QDialog,
+                                 QFormLayout, QGroupBox, QFileDialog)
     has_pyqt = True
-except:
+except ImportError:  # pragma: no cover
     pass
+
+
+class FileDialog(QFileDialog):
+    """
+    Generic file query that emits a signal when a file is selected and
+    the dialog was property closed.
+    """
+    dlg_accepted = pyqtSignal(str)
+
+    def __init__(self, parent=None, filefilter=None, save_mode=True, show=True,
+                 callback=None, directory=False):
+        super(FileDialog, self).__init__(parent)
+
+        if filefilter is not None:
+            self.setNameFilters(filefilter)
+
+        self.setOption(QFileDialog.DontUseNativeDialog)
+        self.accepted.connect(self.emit_accepted)
+
+        if directory:
+            self.FileMode(QFileDialog.DirectoryOnly)
+            self.setOption(QFileDialog.ShowDirsOnly, True)
+
+        if save_mode:
+            self.setAcceptMode(QFileDialog.AcceptSave)
+
+        if callback is not None:
+            self.dlg_accepted.connect(callback)
+
+        if show:  # pragma: no cover
+            self.show()
+
+    def emit_accepted(self):
+        """
+        Sends signal that the file dialog was closed properly.
+
+        Sends:
+        filename
+        """
+        if self.result():
+            filename = self.selectedFiles()[0]
+            if os.path.isdir(os.path.dirname(filename)):
+                self.dlg_accepted.emit(filename)
 
 
 class DoubleSlider(QSlider):
@@ -73,24 +129,65 @@ class DoubleSlider(QSlider):
         super().setValue(int((value - self._min_value) / self._value_range * self._max_int))
 
     def setMinimum(self, value):
-        if value > self._max_value:
+        if value > self._max_value:  # pragma: no cover
             raise ValueError("Minimum limit cannot be higher than maximum")
 
         self._min_value = value
         self.setValue(self.value())
 
     def setMaximum(self, value):
-        if value < self._min_value:
+        if value < self._min_value:  # pragma: no cover
             raise ValueError("Minimum limit cannot be higher than maximum")
 
         self._max_value = value
         self.setValue(self.value())
 
-    def minimum(self):
-        return self._min_value
 
-    def maximum(self):
-        return self._max_value
+class RangeGroup(QHBoxLayout):
+
+    def __init__(self, parent, callback, minimum=0.0, maximum=20.0,
+                 value=1.0):
+        super(RangeGroup, self).__init__(parent)
+        self.slider = DoubleSlider(QtCore.Qt.Horizontal)
+        self.slider.setTickInterval(0.1)
+        self.slider.setMinimum(minimum)
+        self.slider.setMaximum(maximum)
+        self.slider.setValue(value)
+
+        self.minimum = minimum
+        self.maximum = maximum
+
+        self.spinbox = QDoubleSpinBox(value=value, minimum=minimum,
+                                      maximum=maximum, decimals=4)
+
+        self.addWidget(self.slider)
+        self.addWidget(self.spinbox)
+
+        # Connect slider to spinbox
+        self.slider.valueChanged.connect(self.update_spinbox)
+        self.spinbox.valueChanged.connect(self.update_value)
+        self.spinbox.valueChanged.connect(callback)
+
+    def update_spinbox(self, value):
+        self.spinbox.setValue(self.slider.value())
+
+    def update_value(self, value):
+        # if self.spinbox.value() < self.minimum:
+        #     self.spinbox.setValue(self.minimum)
+        # elif self.spinbox.value() > self.maximum:
+        #     self.spinbox.setValue(self.maximum)
+
+        self.slider.blockSignals(True)
+        self.slider.setValue(self.spinbox.value())
+        self.slider.blockSignals(False)
+
+    @property
+    def value(self):
+        return self.spinbox.value()
+
+    @value.setter
+    def value(self, new_value):
+        self.slider.setValue(new_value)
 
 
 class ScaleAxesDialog(QDialog):
@@ -105,35 +202,28 @@ class ScaleAxesDialog(QDialog):
         self.signal_close.connect(self.close)
         self.plotter = plotter
 
-        # setup sliders
-        def make_slider():
-            slider = DoubleSlider(QtCore.Qt.Horizontal)
-            slider.setTickInterval(0.1)
-            slider.setMinimum(0)
-            slider.setMaximum(20)
-            slider.setValue(1)
-            slider.valueChanged.connect(self.update_scale)
-            return slider
-
-        self.x_slider = make_slider()
-        self.y_slider = make_slider()
-        self.z_slider = make_slider()
+        self.x_slider_group = RangeGroup(parent, self.update_scale,
+                                         value=plotter.scale[0])
+        self.y_slider_group = RangeGroup(parent, self.update_scale,
+                                         value=plotter.scale[1])
+        self.z_slider_group = RangeGroup(parent, self.update_scale,
+                                         value=plotter.scale[2])
 
         form_layout = QFormLayout(self)
-        form_layout.addRow('X Scale', self.x_slider)
-        form_layout.addRow('Y Scale', self.y_slider)
-        form_layout.addRow('Z Scale', self.z_slider)
+        form_layout.addRow('X Scale', self.x_slider_group)
+        form_layout.addRow('Y Scale', self.y_slider_group)
+        form_layout.addRow('Z Scale', self.z_slider_group)
 
         self.setLayout(form_layout)
 
-        if show:
+        if show:  # pragma: no cover
             self.show()
 
     def update_scale(self, value):
         """ updates the scale of all actors in the plotter """
-        self.plotter.set_scale(self.x_slider.value(),
-                               self.y_slider.value(),
-                               self.z_slider.value())
+        self.plotter.set_scale(self.x_slider_group.value,
+                               self.y_slider_group.value,
+                               self.z_slider_group.value)
 
 
 def resample_image(arr, max_size=400):
@@ -179,15 +269,18 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     allow_quit_keypress = True
     signal_close = pyqtSignal()
 
-    def __init__(self, parent=None, title=None):
+    def __init__(self, parent=None, title=None, shape=(1, 1), **kwargs):
         """ Initialize Qt interactor """
-        assert has_pyqt, 'Requires PyQt5'
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
+        BasePlotter.__init__(self, shape=shape)
         self.parent = parent
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
-        self.ren_win.AddRenderer(self.renderer)
+        for renderer in self.renderers:
+            self.ren_win.AddRenderer(renderer)
         self.iren = self.ren_win.GetInteractor()
 
         self.background_color = rcParams['background']
@@ -204,32 +297,41 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.add_axes()
 
         # QVTKRenderWindowInteractor doesn't have a "q" quit event
-        self.iren.AddObserver("KeyPressEvent", self.quit)
+        self.iren.AddObserver("KeyPressEvent", self.key_quit)
 
-    def quit(self, obj=None, event=None):
+    def key_quit(self, obj=None, event=None):  # pragma: no cover
         try:
             key = self.iren.GetKeySym().lower()
-        except AttributeError:
-            key = 'q'
 
-        if key == 'q' and self.allow_quit_keypress:
-            self.iren.TerminateApp()
-            self.close()
-            self.signal_close.emit()
+            if key == 'q' and self.allow_quit_keypress:
+                self.quit()
+        except:
+            pass
+
+    def quit(self):
+        self.iren.TerminateApp()
+        self.close()
+        self.signal_close.emit()
 
 
 class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, **kwargs):
-        assert has_pyqt, 'Requires PyQt5'
+    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None, **kwargs):
+        if not has_pyqt:
+            raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
 
+        if window_size is None:
+            window_size = rcParams['window_size']
+
+        # Remove notebook argument in case user passed it
+        kwargs.pop('notebook', None)
+
         # ipython magic
-        if run_from_ipython():
-            # breakpoint()
+        if run_from_ipython():  # pragma: no cover
             from IPython import get_ipython
             ipython = get_ipython()
             ipython.magic('gui qt')
@@ -241,7 +343,7 @@ class BackgroundPlotter(QtInteractor):
         if app is None:
             from PyQt5.QtWidgets import QApplication
             app = QApplication.instance()
-            if not app:
+            if not app:  # pragma: no cover
                 app = QApplication([''])
 
         self.app = app
@@ -250,22 +352,48 @@ class BackgroundPlotter(QtInteractor):
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
-        QtInteractor.__init__(self, parent=self.frame, **kwargs)
+        QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
         self.signal_close.connect(self.app_window.close)
 
         # build main menu
         main_menu = self.app_window.menuBar()
 
-        fileMenu = main_menu.addMenu('File')
-        fileMenu.addAction('Exit', self.quit)
+        file_menu = main_menu.addMenu('File')
+        file_menu.addAction('Take Screenshot', self._qt_screenshot)
+        file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
+        file_menu.addSeparator()
+        file_menu.addAction('Exit', self.quit)
 
         view_menu = main_menu.addMenu('View')
-        view_menu.addAction('Reset Camera', self.reset_camera)
-        view_menu.addAction('Isometric View', self.isometric_view)
-        view_menu.addAction('Save Current Camera Position', self.save_camera_position)
-        view_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
-        view_menu.addAction('Add Bounds Axes', self.add_bounds_axes)
+        view_menu.addAction('Clear All', self.clear)
+
+        cam_menu = view_menu.addMenu('Camera')
+        cam_menu.addAction('Reset Camera', self.reset_camera)
+        cam_menu.addAction('Isometric View', self.isometric_view)
+        cam_menu.addAction('View XY Plane', self.view_xy)
+        cam_menu.addAction('View XZ Plane', self.view_xz)
+        cam_menu.addAction('View YZ Plane', self.view_yz)
+        cam_menu.addSeparator()
+        cam_menu.addAction('Save Current Camera Position', self.save_camera_position)
+        cam_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
+
+        view_menu.addSeparator()
+        # Orientation marker
+        orien_menu = view_menu.addMenu('Orientation Marker')
+        orien_menu.addAction('Show', self.show_axes)
+        orien_menu.addAction('Hide', self.hide_axes)
+        # Bounds axes
+        axes_menu = view_menu.addMenu('Bounds Axes')
+        axes_menu.addAction('Add Bounds Axes (front)', self.add_bounds_axes)
+        axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
+        axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
+        axes_menu.addSeparator()
+        axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
+        axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
+
+        # A final separator to seperate OS options
+        view_menu.addSeparator()
 
         self.saved_camera_menu = main_menu.addMenu('Camera Positions')
 
@@ -275,18 +403,20 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
 
-        if show:
+        if show:  # pragma: no cover
             self.app_window.show()
             self.show()
 
+        self._spawn_background_rendering()
+
+        self.window_size = window_size
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
 
-        self._spawn_background_rendering()
-
-    def scale_axes_dialog(self):
-        ScaleAxesDialog(self.app_window, self)
+    def scale_axes_dialog(self, show=True):
+        """ Open scale axes dialog """
+        return ScaleAxesDialog(self.app_window, self, show=show)
 
     def clear_camera_positions(self):
         """ clears all camera positions """
@@ -330,10 +460,11 @@ class BackgroundPlotter(QtInteractor):
         self.app.quit()
         self.close()
 
-    def add_actor(self, actor, reset_camera=None, name=None):
-        actor, prop = super(BackgroundPlotter, self).add_actor(actor, reset_camera, name)
-        if reset_camera:
-            self.reset_camera()
+    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
+        actor, prop = super(BackgroundPlotter, self).add_actor(actor,
+                                                               reset_camera,
+                                                               name,
+                                                               loc)
         self.update_app_icon()
         return actor, prop
 
@@ -341,11 +472,11 @@ class BackgroundPlotter(QtInteractor):
         """
         Update the app icon if the user is not trying to resize the window.
         """
-        if os.name == 'nt':
+        if os.name == 'nt' or not hasattr(self, '_last_window_size'):  # pragma: no cover
             # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
             return
         cur_time = time.time()
-        if self._last_window_size != self.window_size:
+        if self._last_window_size != self.window_size:  # pragma: no cover
             # Window size hasn't remained constant since last render.
             # This means the user is resizing it so ignore update.
             pass
@@ -368,10 +499,41 @@ class BackgroundPlotter(QtInteractor):
         # Update trackers
         self._last_window_size = self.window_size
 
+    def _qt_screenshot(self, show=True):
+        return FileDialog(self.app_window,
+                          filefilter=['Image File (*.png)',
+                                      'JPEG (*.jpeg)'],
+                          show=show,
+                          directory=os.getcwd(),
+                          callback=self.screenshot)
+
+    def _qt_export_vtkjs(self, show=True):
+        """
+        Spawn an save file dialog to export a vtkjs file.
+        """
+        return FileDialog(self.app_window,
+                          filefilter=['VTK JS File(*.vtkjs)'],
+                          show=show,
+                          directory=os.getcwd(),
+                          callback=self.export_vtkjs)
+
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
         return
 
-    def __del__(self):
+    @property
+    def window_size(self):
+        """ returns render window size """
+        the_size = self.app_window.baseSize()
+        return the_size.width(), the_size.height()
+
+
+    @window_size.setter
+    def window_size(self, window_size):
+        """ set the render window size """
+        BasePlotter.window_size.fset(self, window_size)
+        self.app_window.setBaseSize(*window_size)
+
+    def __del__(self):  # pragma: no cover
         self.close()

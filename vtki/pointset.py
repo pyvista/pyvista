@@ -1,31 +1,22 @@
 """
 Sub-classes for vtk.vtkPolyData
 """
-import os
 import logging
-
-import vtk
-from vtk import vtkPolyData, vtkUnstructuredGrid, vtkStructuredGrid
-from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtkIdTypeArray
-from vtk.util.numpy_support import numpy_to_vtk
-
-from vtk import VTK_TRIANGLE
-from vtk import VTK_QUAD
-from vtk import VTK_QUADRATIC_TRIANGLE
-from vtk import VTK_QUADRATIC_QUAD
-from vtk import VTK_HEXAHEDRON
-from vtk import VTK_PYRAMID
-from vtk import VTK_TETRA
-from vtk import VTK_WEDGE
-from vtk import VTK_QUADRATIC_TETRA
-from vtk import VTK_QUADRATIC_PYRAMID
-from vtk import VTK_QUADRATIC_WEDGE
-from vtk import VTK_QUADRATIC_HEXAHEDRON
+import os
 
 import numpy as np
+import vtk
+from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
+                 VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_PYRAMID,
+                 VTK_QUADRATIC_QUAD, VTK_QUADRATIC_TETRA,
+                 VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
+                 VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
+                 vtkUnstructuredGrid)
+from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
+                                    vtk_to_numpy)
+
 import vtki
 from vtki.filters import _get_output
-
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -92,7 +83,8 @@ class PolyData(vtkPolyData, vtki.Common):
                 cells = np.hstack((np.ones((npoints, 1)),
                                    np.arange(npoints).reshape(-1, 1)))
                 cells = np.ascontiguousarray(cells, dtype=vtki.ID_TYPE)
-                self._from_arrays(points, cells, deep)
+                cells = np.reshape(cells, (2*npoints))
+                self._from_arrays(points, cells, deep, verts=True)
             else:
                 raise TypeError('Invalid input type')
 
@@ -105,6 +97,11 @@ class PolyData(vtkPolyData, vtki.Common):
                 raise TypeError('Invalid input type')
         else:
             raise TypeError('Invalid input type')
+
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
 
     def _load_file(self, filename):
         """
@@ -129,7 +126,7 @@ class PolyData(vtkPolyData, vtki.Common):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
 
         # Select reader
         if ext == '.ply':
@@ -149,7 +146,29 @@ class PolyData(vtkPolyData, vtki.Common):
         self.ShallowCopy(reader.GetOutput())
 
         # sanity check
-        assert np.any(self.points), 'Empty or invalid file'
+        if not np.any(self.points):
+            raise AssertionError('Empty or invalid file')
+
+    @property
+    def lines(self):
+        return vtk_to_numpy(self.GetLines().GetData())
+
+    @lines.setter
+    def lines(self, lines):
+        if lines.dtype != vtki.ID_TYPE:
+            lines = lines.astype(vtki.ID_TYPE)
+
+        # get number of faces
+        if lines.ndim == 1:
+            div = lines.size / 3.0
+            assert not div % 1, 'Invalid lines array'
+            nlines = int(div)
+        else:
+            nlines = lines.shape[0]
+
+        vtkcells = vtk.vtkCellArray()
+        vtkcells.SetCells(nlines, numpy_to_vtkIdTypeArray(lines, deep=False))
+        self.SetLines(vtkcells)
 
     @property
     def faces(self):
@@ -180,6 +199,7 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             self.SetPolys(vtkcells)
         self._face_ref = faces
+        self.Modified()
 
     # @property
     # def lines(self):
@@ -187,7 +207,7 @@ class PolyData(vtkPolyData, vtki.Common):
     #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
     #     return np.ascontiguousarray(lines[:, 1:])
 
-    def _from_arrays(self, vertices, faces, deep=True):
+    def _from_arrays(self, vertices, faces, deep=True, verts=False):
         """
         Set polygons and points from numpy arrays
 
@@ -214,7 +234,7 @@ class PolyData(vtkPolyData, vtki.Common):
         >>> surf = vtki.PolyData(vertices, faces)
 
         """
-        if deep:
+        if deep or verts:
             vtkpoints = vtk.vtkPoints()
             vtkpoints.SetData(numpy_to_vtk(vertices, deep=deep))
             self.SetPoints(vtkpoints)
@@ -236,7 +256,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
             idarr = numpy_to_vtkIdTypeArray(faces.ravel(), deep=deep)
             vtkcells.SetCells(nfaces, idarr)
-            if faces.ndim > 1 and faces.shape[1] == 2:
+            if (faces.ndim > 1 and faces.shape[1] == 2) or verts:
                 self.SetVerts(vtkcells)
             else:
                 self.SetPolys(vtkcells)
@@ -276,6 +296,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     @property
     def n_faces(self):
+        """alias for ``n_cells``"""
         return self.n_cells
 
     @property
@@ -546,6 +567,75 @@ class PolyData(vtkPolyData, vtki.Common):
             self.overwrite(trifilter.GetOutput())
         else:
             return PolyData(trifilter.GetOutput())
+
+
+    def smooth(self, n_iter=20, convergence=0.0):
+        """Adjust point coordinates using Laplacian smoothing.
+        The effect is to "relax" the mesh, making the cells better shaped and
+        the vertices more evenly distributed.
+
+        Parameters
+        ----------
+        n_iter : int
+            number of iterations for Laplacian smoothing,
+
+        conversion : float, optional
+            convergence criterion for the iteration process. Smaller numbers
+            result in more smoothing iterations. Range from (0 to 1).
+        """
+        alg = vtk.vtkSmoothPolyDataFilter()
+        alg.SetInputData(self)
+        alg.SetNumberOfIterations(n_iter)
+        alg.SetConvergence(convergence)
+        alg.Update()
+        return _get_output(alg)
+
+    def tube(self, radius=None, scalars=None, capping=True, n_sides=20,
+             radius_factor=10, preference='point'):
+        """Generate a tube around each input line. The radius of the tube can be
+        set to linearly vary with a scalar value.
+
+        Parameters
+        ----------
+        radius : float
+            Minimum tube radius (minimum because the tube radius may vary).
+
+        scalars : str, optional
+            Scalar array by which the radius varies
+
+        capping : bool
+            Turn on/off whether to cap the ends with polygons. Default True.
+
+        n_sides : int
+            Set the number of sides for the tube. Minimum of 3.
+
+        radius_factor : float
+            Maximum tube radius in terms of a multiple of the minimum radius.
+
+        preference : str
+            The field preference when searching for the scalar array by name
+        """
+        if n_sides < 3:
+            n_sides = 3
+        tube = vtk.vtkTubeFilter()
+        tube.SetInputDataObject(self)
+        # User Defined Parameters
+        tube.SetCapping(capping)
+        if radius is not None:
+            tube.SetRadius(radius)
+        tube.SetNumberOfSides(n_sides)
+        tube.SetRadiusFactor(radius_factor)
+        # Check if scalar array given
+        if scalars is not None:
+            if not isinstance(scalars, str):
+                raise TypeError('Scalar array must be given as a string name')
+            _, field = self.get_scalar(scalars, preference=preference, info=True)
+            # args: (idx, port, connection, field, name)
+            tube.SetInputArrayToProcess(0, 0, 0, field, scalars)
+            tube.SetVaryRadiusToVaryRadiusByScalar()
+        # Apply the filter
+        tube.Update()
+        return _get_output(tube)
 
     def subdivide(self, nsub, subfilter='linear', inplace=False):
         """
@@ -825,13 +915,13 @@ class PolyData(vtkPolyData, vtki.Common):
         Parameters
         ----------
         cell_normals : bool, optional
-            Calculation of cell normals. Defaults to False.
+            Calculation of cell normals. Defaults to True.
 
         point_normals : bool, optional
             Calculation of point normals. Defaults to True.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to True.
+            Splitting of sharp edges. Defaults to False.
 
         flip_normals : bool, optional
             Set global flipping of normal orientation. Flipping modifies both
@@ -863,7 +953,7 @@ class PolyData(vtkPolyData, vtki.Common):
             edge is considered "sharp". Defaults to 30.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place while returning nothing. Defaults to True.
 
         Returns
         -------
@@ -895,10 +985,16 @@ class PolyData(vtkPolyData, vtki.Common):
         normal.SetInputData(self)
         normal.Update()
 
+        output = normal.GetOutput()
+        if point_normals:
+            output.GetPointData().SetActiveNormals('Normals')
+        if cell_normals:
+            output.GetCellData().SetActiveNormals('Normals')
+
         if inplace:
-            self.overwrite(normal.GetOutput())
+            self.overwrite(output)
         else:
-            return PolyData(normal.GetOutput())
+            return PolyData(output)
 
     @property
     def point_normals(self):
@@ -1110,11 +1206,17 @@ class PolyData(vtkPolyData, vtki.Common):
 
         """
         mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self)
+        mprop.SetInputData(self.tri_filter())
         return mprop.GetVolume()
 
     @property
     def obbTree(self):
+        """obbTree is an object to generate oriented bounding box (OBB)
+        trees. An oriented bounding box is a bounding box that does not
+        necessarily line up along coordinate axes. The OBB tree is a
+        hierarchical tree structure of such boxes, where deeper levels of OBB
+        confine smaller regions of space.
+        """
         if not hasattr(self, '_obbTree'):
             self._obbTree = vtk.vtkOBBTree()
             self._obbTree.SetDataSet(self)
@@ -1157,10 +1259,10 @@ class PolyData(vtkPolyData, vtki.Common):
 
         """
         points = vtk.vtkPoints()
-        cellIDs = vtk.vtkIdList()
+        cell_ids = vtk.vtkIdList()
         code = self.obbTree.IntersectWithLine(np.array(origin),
                                               np.array(end_point),
-                                              points, cellIDs)
+                                              points, cell_ids)
 
         intersection_points = vtk_to_numpy(points.GetData())
         if first_point and intersection_points.shape[0] >= 1:
@@ -1171,9 +1273,9 @@ class PolyData(vtkPolyData, vtki.Common):
             if first_point:
                 ncells = 1
             else:
-                ncells = cellIDs.GetNumberOfIds()
+                ncells = cell_ids.GetNumberOfIds()
             for i in range(ncells):
-                intersection_cells.append(cellIDs.GetId(i))
+                intersection_cells.append(cell_ids.GetId(i))
         intersection_cells = np.array(intersection_cells)
 
         if plot:
@@ -1191,9 +1293,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     def plot_boundaries(self, **kwargs):
         """ Plots boundaries of a mesh """
-        edges = self.extract_edges(non_manifold_edges=False,
-                                   feature_edges=False,
-                                   manifold_edges=False)
+        edges = self.extract_edges()
 
         plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
@@ -1253,8 +1353,8 @@ class PolyData(vtkPolyData, vtki.Common):
             remove = np.asarray(remove)
 
         if remove.dtype == np.bool:
-            assert_statement = 'Mask different size than n_points'
-            assert remove.size == self.n_points, assert_statement
+            if remove.size != self.n_points:
+                raise AssertionError('Mask different size than n_points')
             remove_mask = remove
         else:
             remove_mask = np.zeros(self.n_points, np.bool)
@@ -1514,6 +1614,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             else:
                 raise Exception('All input types must be np.ndarray')
 
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
+
     def overwrite(self, grid):
         """
         Overwrites the old grid data with the new grid data
@@ -1712,8 +1817,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     def linear_copy(self, deep=False):
         """
         Returns a copy of the input unstructured grid containing only
-        linear cells.  Converts the following cell types to their linear
-        equivalents.
+        linear cells.  Converts the following cell types to their
+        linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
         - VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID
@@ -1723,7 +1828,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         Parameters
         ----------
         deep : bool
-            When True, makes a copy of the points array.  Default False.
+            When True, makes a copy of the points array.  Default
+            False.  Cells and cell types are always copied.
 
         Returns
         -------
@@ -1740,17 +1846,44 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         celltype[celltype == VTK_QUADRATIC_WEDGE] = VTK_WEDGE
         celltype[celltype == VTK_QUADRATIC_HEXAHEDRON] = VTK_HEXAHEDRON
 
+        # track quad mask for later
+        quad_quad_mask = celltype == VTK_QUADRATIC_QUAD
+        celltype[quad_quad_mask] = VTK_QUAD
+
+        quad_tri_mask = celltype == VTK_QUADRATIC_TRIANGLE
+        celltype[quad_tri_mask] = VTK_TRIANGLE
+
         vtk_offset = self.GetCellLocationsArray()
-        lgrid.SetCells(vtk_cell_type, vtk_offset, self.GetCells())
+        cells = vtk.vtkCellArray()
+        cells.DeepCopy(self.GetCells())
+        lgrid.SetCells(vtk_cell_type, vtk_offset, cells)
+
+        # fixing bug with display of quad cells
+        if np.any(quad_quad_mask):
+            quad_offset = lgrid.offset[quad_quad_mask]
+            base_point = lgrid.cells[quad_offset + 1]
+            lgrid.cells[quad_offset + 5] = base_point
+            lgrid.cells[quad_offset + 6] = base_point
+            lgrid.cells[quad_offset + 7] = base_point
+            lgrid.cells[quad_offset + 8] = base_point
+
+        if np.any(quad_tri_mask):
+            tri_offset = lgrid.offset[quad_tri_mask]
+            base_point = lgrid.cells[tri_offset + 1]
+            lgrid.cells[tri_offset + 4] = base_point
+            lgrid.cells[tri_offset + 5] = base_point
+            lgrid.cells[tri_offset + 6] = base_point
 
         return lgrid
 
     @property
     def celltypes(self):
+        """Get the cell types array"""
         return vtk_to_numpy(self.GetCellTypesArray())
 
     @property
     def offset(self):
+        """Get Cell Locations Array"""
         return vtk_to_numpy(self.GetCellLocationsArray())
 
     def extract_cells(self, ind):
@@ -1792,11 +1925,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         selection.AddNode(selectionNode)
 
         # extract
-        extractSelection = vtk.vtkExtractSelection()
-        extractSelection.SetInputData(0, self)
-        extractSelection.SetInputData(1, selection)
-        extractSelection.Update()
-        subgrid = UnstructuredGrid(extractSelection.GetOutput())
+        extract_sel = vtk.vtkExtractSelection()
+        extract_sel.SetInputData(0, self)
+        extract_sel.SetInputData(1, selection)
+        extract_sel.Update()
+        subgrid = UnstructuredGrid(extract_sel.GetOutput())
 
         # extracts only in float32
         if self.points.dtype is not np.dtype('float32'):
@@ -1835,11 +1968,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     #     selection.AddNode(selectionNode)
 
     #     # extract
-    #     extractSelection = vtk.vtkExtractSelection()
-    #     extractSelection.SetInputData(0, self)
-    #     extractSelection.SetInputData(1, selection)
-    #     extractSelection.Update()
-    #     return UnstructuredGrid(extractSelection.GetOutput())
+    #     extract_sel = vtk.vtkExtractSelection()
+    #     extract_sel.SetInputData(0, self)
+    #     extract_sel.SetInputData(1, selection)
+    #     extract_sel.Update()
+    #     return UnstructuredGrid(extract_sel.GetOutput())
 
     def merge(self, grid=None, merge_points=True, inplace=True,
               main_has_priority=True):
@@ -1953,6 +2086,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
+
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
 
     def _from_arrays(self, x, y, z):
         """
@@ -2069,16 +2207,19 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     @property
     def x(self):
+        """The X coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 0].reshape(dim, order='F')
 
     @property
     def y(self):
+        """The Y coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 1].reshape(dim, order='F')
 
     @property
     def z(self):
+        """The Z coordinates of all points"""
         dim = self.GetDimensions()
         return self.points[:, 2].reshape(dim, order='F')
 

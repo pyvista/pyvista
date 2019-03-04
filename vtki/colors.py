@@ -344,11 +344,11 @@ def string_to_rgb(string):
     if len(string) == 1:
 
         # Convert from single character to full hex
-        try:
-            colorhex = hexcolors[color_char_to_word[string.lower()]]
-        except:
-            ValueError('Single character string must be one of the following:'
-                       '\n%s' % str(color_char_to_word))
+        if string.lower() not in color_char_to_word:
+            raise ValueError('Single character string must be one of the following:'
+                             '\n%s' % str(color_char_to_word.keys()))
+
+        colorhex = hexcolors[color_char_to_word[string.lower()]]
 
     # if a color name
     elif string.lower() in hexcolors:
@@ -359,6 +359,6 @@ def string_to_rgb(string):
         try:
             return hex_to_rgb(string)
         except:
-            raise Exception('Invalid color string or hex string.')
+            raise ValueError('Invalid color string or hex string.')
 
     return hex_to_rgb(colorhex)

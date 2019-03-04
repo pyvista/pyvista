@@ -1,12 +1,13 @@
 """
 Installation file for python vtki module
 """
-from setuptools import setup
-from io import open as io_open
 import os
-import sys
 import platform
+import sys
 import warnings
+from io import open as io_open
+
+from setuptools import setup
 
 package_name = 'vtki'
 
@@ -57,9 +58,9 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
 
-    url='https://github.com/akaszynski/vtki',
+    url='https://github.com/vtkiorg/vtki',
     keywords='vtk numpy plotting mesh',
-    package_data={'vtki.examples': ['airplane.ply', 'ant.ply',
+    package_data={'vtki.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
                                     'hexbeam.vtk', 'sphere.ply',
                                     'uniform.vtk', 'rectilinear.vtk',
                                     'globe.vtk', '2k_earth_daymap.jpg']},

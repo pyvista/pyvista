@@ -15,6 +15,12 @@ all the the following filters available as callable methods directly from any
 ``vtki`` dataset.
 
 
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.DataSetFilters
+   :methods:
+
+
 .. autoclass:: vtki.DataSetFilters
    :members:
    :undoc-members:

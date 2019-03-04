@@ -16,4 +16,4 @@ Utilities
 
 .. autofunction:: vtki.trans_from_matrix
 
-.. autofunction:: vtki.setErrorOutputFile
+.. autofunction:: vtki.set_error_output_file

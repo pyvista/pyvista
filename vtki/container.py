@@ -3,21 +3,21 @@ Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
 VTK datasets in one object that can be passed to VTK algorithms and ``vtki``
 filtering/plotting routines.
 """
-import logging
-from weakref import proxy
 import collections
+import logging
 import os
 
 import numpy as np
 import vtk
 from vtk import vtkMultiBlockDataSet
 
+import vtki
+from vtki import plot
+from vtki.utilities import get_scalar, is_vtki_obj, wrap
+
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-import vtki
-from vtki.utilities import wrap, is_vtki_obj, get_scalar
-from vtki import plot
 
 
 class MultiBlock(vtkMultiBlockDataSet):
@@ -27,6 +27,8 @@ class MultiBlock(vtkMultiBlockDataSet):
     easily plot these data sets and use the container in a Pythonic manner.
     """
 
+    # Bind vtki.plotting.plot to the object
+    plot = plot
 
     def __init__(self, *args, **kwargs):
         super(MultiBlock, self).__init__()
@@ -50,6 +52,34 @@ class MultiBlock(vtkMultiBlockDataSet):
                     idx += 1
 
 
+    def extract_geometry(self):
+        """Combines the geomertry of all blocks into a single ``PolyData``
+        object. Place this filter at the end of a pipeline before a polydata
+        consumer such as a polydata mapper to extract geometry from all blocks
+        and append them to one polydata object.
+        """
+        gf = vtk.vtkCompositeDataGeometryFilter()
+        gf.SetInputData(self)
+        gf.Update()
+        return wrap(gf.GetOutputDataObject(0))
+
+    def combine(self, merge_points=False):
+        """Appends all blocks into a single unstructured grid.
+
+        Parameters
+        ----------
+        merge_points : bool, optional
+            Merge coincidental points.
+
+        """
+        alg = vtk.vtkAppendFilter()
+        for block in self:
+            alg.AddInputData(block)
+        alg.SetMergePoints(merge_points)
+        alg.Update()
+        return wrap(alg.GetOutputDataObject(0))
+
+
     def _load_file(self, filename):
         """Load a vtkMultiBlockDataSet from a file (extension ``.vtm`` or
         ``.vtmb``)
@@ -60,38 +90,33 @@ class MultiBlock(vtkMultiBlockDataSet):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
         # Extensions: .vtm and .vtmb
 
         # Select reader
         if ext in ['.vtm', '.vtmb']:
             reader = vtk.vtkXMLMultiBlockDataReader()
         else:
-            raise TypeError('File extension must be either "vtm" or "vtmb"')
+            raise IOError('File extension must be either "vtm" or "vtmb"')
 
         # Load file
         reader.SetFileName(filename)
         reader.Update()
         self.ShallowCopy(reader.GetOutput())
 
-        # sanity check
-        if self.n_blocks < 1:
-            raise AssertionError('MultiBlock file ({}) returned no blocks'.format(filename))
-
 
     def save(self, filename, binary=True):
         """
-        Writes a surface mesh to disk.
+        Writes a ``MultiBlock`` dataset to disk.
 
-        Written file may be an ASCII or binary ply, stl, or vtk mesh file.
+        Written file may be an ASCII or binary vtm file.
 
         Parameters
         ----------
         filename : str
             Filename of mesh to be written.  File type is inferred from
             the extension of the filename unless overridden with
-            ftype.  Can be one of the following types (.ply, .stl,
-            .vtk)
+            ftype.  Can be one of the following types (.vtm or .vtmb)
 
         binary : bool, optional
             Writes the file as binary when True and ASCII when False.
@@ -102,23 +127,20 @@ class MultiBlock(vtkMultiBlockDataSet):
         file size.
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
         else:
-            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
+            raise Exception('File extension must be either "vtm" or "vtmb"')
 
         writer.SetFileName(filename)
-        writer.SetInputData(self)
+        writer.SetInputDataObject(self)
         if binary:
             writer.SetDataModeToBinary()
         else:
-            writer.SetDataModeToASCII()
+            writer.SetDataModeToAscii()
         writer.Write()
-
-    # Simply bind vtki.plotting.plot to the object
-    plot = plot
-
+        return
 
     @property
     def bounds(self):
@@ -131,6 +153,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
 
         def update_bounds(ax, nb, bounds):
+            """internal helper to update bounds while keeping track"""
             if nb[2*ax] < bounds[2*ax]:
                 bounds[2*ax] = nb[2*ax]
             if nb[2*ax+1] > bounds[2*ax+1]:
@@ -160,6 +183,7 @@ class MultiBlock(vtkMultiBlockDataSet):
     def n_blocks(self, n):
         """The total number of blocks set"""
         self.SetNumberOfBlocks(n)
+        self.Modified()
 
 
     def get_data_range(self, name):
@@ -186,7 +210,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
-        raise RuntimeError('Block name ({}) not found'.format(name))
+        raise KeyError('Block name ({}) not found'.format(name))
 
 
     def __getitem__(self, index):
@@ -230,6 +254,14 @@ class MultiBlock(vtkMultiBlockDataSet):
         return None
 
 
+    def keys(self):
+        """Get all the block names in the dataset"""
+        names = []
+        for i in range(self.n_blocks):
+            names.append(self.get_block_name(i))
+        return names
+
+
     def __setitem__(self, index, data):
         """Sets a block with a VTK data object. To set the name simultaneously,
         pass a string name as the 2nd index.
@@ -240,16 +272,29 @@ class MultiBlock(vtkMultiBlockDataSet):
         >>> multi = vtki.MultiBlock()
         >>> multi[0] = vtki.PolyData()
         >>> multi[1, 'foo'] = vtki.UnstructuredGrid()
+        >>> multi['bar'] = vtki.PolyData()
+        >>> multi.n_blocks
+        3
         """
-        if isinstance(index, collections.Iterable):
+        if isinstance(index, collections.Iterable) and not isinstance(index, str):
             i, name = index[0], index[1]
+        elif isinstance(index, str):
+            try:
+                i = self.get_index_by_name(index)
+            except KeyError:
+                i = -1
+            name = index
         else:
             i, name = index, None
-        if name is None:
-            name = 'Block-{0:02}'.format(i)
         if data is not None and not is_vtki_obj(data):
             data = wrap(data)
-        self.SetBlock(i, data)
+        if i == -1:
+            self.append(data)
+            i = self.n_blocks - 1
+        else:
+            self.SetBlock(i, data)
+        if name is None:
+            name = 'Block-{0:02}'.format(i)
         self.set_block_name(i, name) # Note that this calls self.Modified()
 
 
@@ -261,10 +306,12 @@ class MultiBlock(vtkMultiBlockDataSet):
 
 
     def __iter__(self):
+        """The iterator across all blocks"""
         self._iter_n = 0
         return self
 
     def next(self):
+        """Get the next block from the iterator"""
         if self._iter_n < self.n_blocks:
             result = self[self._iter_n]
             self._iter_n += 1
@@ -342,4 +389,17 @@ class MultiBlock(vtkMultiBlockDataSet):
         fmt += "</table>\n"
         fmt += "\n"
         fmt += "</td></tr> </table>"
+        return fmt
+
+
+    def __repr__(self):
+        # return a string that is Python console friendly
+        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
+        # now make a call on the object to get its attributes as a list of len 2 tuples
+        row = "  {}:\t{}\n"
+        for attr in self._get_attrs():
+            try:
+                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+            except:
+                fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt

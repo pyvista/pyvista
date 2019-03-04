@@ -24,12 +24,12 @@ Example
 
 """
 import collections
-import logging
+
 import numpy as np
 import vtk
 
 import vtki
-from vtki.utilities import get_scalar, wrap, is_inside_bounds
+from vtki.utilities import get_scalar, is_inside_bounds, wrap
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -100,24 +100,53 @@ class DataSetFilters(object):
         alg.Update() # Perfrom the Cut
         return _get_output(alg)
 
-    def clip_box(dataset, bounds):
-        """Clips a dataset by a bounding box defined by the bounds
+    def clip_box(dataset, bounds=None, invert=True, factor=0.35):
+        """Clips a dataset by a bounding box defined by the bounds. If no bounds
+        are given, a corner of the dataset bounds will be removed.
 
         Parameters
         ----------
         bounds : tuple(float)
             Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax)
 
+        invert : bool
+            Flag on whether to flip/invert the clip
+
+        factor : float, optional
+            If bounds are not given this is the factor along each axis to
+            extract the default box.
+
         """
+        if bounds is None:
+            def _get_quarter(dmin, dmax):
+                """internal helper to get a section of the given range"""
+                return dmax - ((dmax - dmin) * factor)
+            xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
+            xmin = _get_quarter(xmin, xmax)
+            ymin = _get_quarter(ymin, ymax)
+            zmin = _get_quarter(zmin, zmax)
+            bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+        if isinstance(bounds, (float, int)):
+            bounds = [bounds, bounds, bounds]
+        if len(bounds) == 3:
+            xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
+            bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
         if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
             raise AssertionError('Bounds must be a length 6 iterable of floats')
+        xmin, xmax, ymin, ymax, zmin, zmax = bounds
         alg = vtk.vtkBoxClipDataSet()
-        alg.SetBoxClip(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5])
         alg.SetInputDataObject(dataset)
+        alg.SetBoxClip(xmin, xmax, ymin, ymax, zmin, zmax)
+        port = 0
+        if invert:
+            # invert the clip if needed
+            port = 1
+            alg.GenerateClippedOutputOn()
         alg.Update()
-        return _get_output(alg)
+        return _get_output(alg, oport=port)
 
-    def slice(dataset, normal='x', origin=None, generate_triangles=False):
+    def slice(dataset, normal='x', origin=None, generate_triangles=False,
+              contour=False):
         """Slice a dataset by a plane at the specified origin and normal vector
         orientation. If no origin is specified, the center of the input dataset will
         be used.
@@ -136,6 +165,9 @@ class DataSetFilters(object):
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -153,10 +185,14 @@ class DataSetFilters(object):
         if not generate_triangles:
             alg.GenerateTrianglesOff()
         alg.Update() # Perfrom the Cut
-        return _get_output(alg)
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
+        return output
 
 
-    def slice_orthogonal(dataset, x=None, y=None, z=None, generate_triangles=False):
+    def slice_orthogonal(dataset, x=None, y=None, z=None,
+                         generate_triangles=False, contour=False):
         """Creates three orthogonal slices through the dataset on the three
         caresian planes. Yields a MutliBlock dataset of the three slices
 
@@ -175,6 +211,9 @@ class DataSetFilters(object):
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
         """
         output = vtki.MultiBlock()
         # Create the three slices
@@ -190,7 +229,8 @@ class DataSetFilters(object):
         return output
 
 
-    def slice_along_axis(dataset, n=5, axis='x', tolerance=None, generate_triangles=False):
+    def slice_along_axis(dataset, n=5, axis='x', tolerance=None,
+                         generate_triangles=False, contour=False):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -210,16 +250,20 @@ class DataSetFilters(object):
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
         """
+        axes = {'x':0, 'y':1, 'z':2}
         output = vtki.MultiBlock()
-        if isinstance(axis, str):
-            axes = {'x':0, 'y':1, 'z':2}
+        if isinstance(axis, int):
+            ax = axis
+            axis = list(axes.keys())[list(axes.values()).index(ax)]
+        elif isinstance(axis, str):
             try:
                 ax = axes[axis]
             except KeyError:
                 raise RuntimeError('Axis ({}) not understood'.format(axis))
-        else:
-            ax = axis
         # get the locations along that axis
         if tolerance is None:
             tolerance = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
@@ -228,7 +272,8 @@ class DataSetFilters(object):
         # Make each of the slices
         for i in range(n):
             center[ax] = rng[i]
-            slc = DataSetFilters.slice(dataset, normal=axis, origin=center, generate_triangles=generate_triangles)
+            slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
+                    generate_triangles=generate_triangles, contour=contour)
             output[i, 'slice%.2d'%i] = slc
         return output
 
@@ -263,8 +308,8 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         # set the scalaras to threshold on
@@ -341,12 +386,12 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         if scalars is None:
-            field, tscalars = dataset.active_scalar_info
+            _, tscalars = dataset.active_scalar_info
         else:
             tscalars = scalars
         dmin, dmax = dataset.get_data_range(arr=tscalars, preference=preference)
@@ -428,7 +473,6 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
                   preference='point', set_active=True):
         """Generate scalar values on a dataset.  The scalar values lie within a
@@ -468,7 +512,7 @@ class DataSetFilters(object):
         Warning
         -------
         This will create a scalar array named `Elevation` on the point data of
-        the input dataset and overwrite an array named `Elevation` if present.
+        the input dataset and overasdf write an array named `Elevation` if present.
 
         """
         # Fix the projection line:
@@ -484,7 +528,8 @@ class DataSetFilters(object):
         elif isinstance(scalar_range, str):
             scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
         elif isinstance(scalar_range, collections.Iterable):
-            assert len(scalar_range) == 2, 'scalar_range must have a length of two defining the min and max'
+            if len(scalar_range) != 2:
+                raise AssertionError('scalar_range must have a length of two defining the min and max')
         else:
             raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
         # Construct the filter
@@ -526,8 +571,8 @@ class DataSetFilters(object):
             Preserves the scalar values that are being contoured
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to search
-            for in the dataset.  Must be either 'point' or 'cell'.
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
         # Make sure the input has scalars to contour on
@@ -544,7 +589,7 @@ class DataSetFilters(object):
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != 0:
+        if field != vtki.POINT_DATA_FIELD:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
@@ -611,3 +656,237 @@ class DataSetFilters(object):
         # CRITICAL:
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
         return # No return type because it is inplace
+
+    def compute_cell_sizes(dataset, length=False, area=True, volume=True):
+        """This filter computes sizes for 1D (length), 2D (area) and 3D (volume)
+        cells.
+
+        Parameters
+        ----------
+        length : bool
+            Specify whether or not to compute the length of 1D cells.
+
+        area : bool
+            Specify whether or not to compute the area of 2D cells.
+
+        volume : bool
+            Specify whether or not to compute the volume of 3D cells.
+
+        """
+        alg = vtk.vtkCellSizeFilter()
+        alg.SetInputDataObject(dataset)
+        alg.SetComputeArea(area)
+        alg.SetComputeVolume(volume)
+        alg.SetComputeLength(length)
+        alg.SetComputeVertexCount(False)
+        alg.Update()
+        return _get_output(alg)
+
+    def cell_centers(dataset, vertex=True):
+        """Generate points at the center of the cells in this dataset.
+        These points can be used for placing glyphs / vectors.
+
+        Parameters
+        ----------
+        vertex : bool
+            Enable/disable the generation of vertex cells.
+        """
+        alg = vtk.vtkCellCenters()
+        alg.SetInputDataObject(dataset)
+        alg.SetVertexCells(vertex)
+        alg.Update()
+        output = _get_output(alg)
+        return output
+
+
+    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None):
+        """
+        Copies a geometric representation (called a glyph) to every
+        point in the input dataset.  The glyph may be oriented along
+        the input vectors, and it may be scaled according to scalar
+        data or vector magnitude.
+
+        Parameters
+        ----------
+        orient : bool
+            Use the active vectors array to orient the the glyphs
+
+        scale : bool
+            Use the active scalars to scale the glyphs
+
+        factor : float
+            Scale factor applied to sclaing array
+
+        geom : vtk.vtkDataSet
+            The geometry to use for the glyph
+        """
+        if geom is None:
+            arrow = vtk.vtkArrowSource()
+            arrow.Update()
+            geom = arrow.GetOutput()
+        alg = vtk.vtkGlyph3D()
+        alg.SetSourceData(geom)
+        if isinstance(scale, str):
+            dataset.active_scalar_name = scale
+            scale = True
+        if scale:
+            alg.SetScaleModeToScaleByScalar()
+        if isinstance(orient, str):
+            dataset.active_vectors_name = orient
+            orient = True
+        alg.SetOrient(orient)
+        alg.SetInputData(dataset)
+        alg.SetVectorModeToUseVector()
+        alg.SetScaleFactor(factor)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def connectivity(dataset):
+        """Find and label connected bodies/volumes. This adds an ID array to
+        the point and cell data to distinguish seperate connected bodies.
+        This applies a ``vtkConnectivityFilter`` filter which extracts cells
+        that share common points and/or meet other connectivity criterion.
+        (Cells that share vertices and meet other connectivity criterion such
+        as scalar range are known as a region.)
+        """
+        alg = vtk.vtkConnectivityFilter()
+        alg.SetInputData(dataset)
+        alg.SetExtractionModeToAllRegions()
+        alg.SetColorRegions(True)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def split_bodies(dataset, label=False):
+        """Find, label, and split connected bodies/volumes. This splits
+        different connected bodies into blocks in a MultiBlock dataset.
+
+        Parameters
+        ----------
+        label : bool
+            A flag on whether to keep the ID arrays given by the
+            ``connectivity`` filter.
+        """
+        # Get the connectivity and label different bodies
+        labeled = dataset.connectivity()
+        classifier = labeled.cell_arrays['RegionId']
+        bodies = vtki.MultiBlock()
+        for vid in np.unique(classifier):
+            # Now extract it:
+            b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId')
+            if not label:
+                del b.cell_arrays['RegionId']
+                del b.point_arrays['RegionId']
+            bodies.append(b)
+
+        return bodies
+
+
+    def warp_by_scalar(dataset, scalars=None, scale_factor=1.0, normal=None,
+                       in_place=False):
+        """
+        Warp the dataset's points by a point data scalar array's values.
+        This modifies point coordinates by moving points along point normals by
+        the scalar amount times the scale factor.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to warb by. Defaults to currently active scalars.
+
+        scale_factor : float, optional
+            A scalaing factor to increase the scaling effect
+
+        normal : np.array, list, tuple of length 3
+            User specified normal. If given, data normals will be ignored and
+            the given normal will be used to project the warp.
+
+        in_place : bool
+            If True, the points of the give dataset will be updated.
+        """
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        arr, field = get_scalar(dataset, scalars, preference='point', info=True)
+        if field != vtki.POINT_DATA_FIELD:
+            raise AssertionError('Dataset can only by warped by a point data array.')
+        # Run the algorithm
+        alg = vtk.vtkWarpScalar()
+        alg.SetInputDataObject(dataset)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetScaleFactor(scale_factor)
+        if normal is not None:
+            alg.SetNormal(normal)
+            alg.SetUseNormal(True)
+        alg.Update()
+        output = _get_output(alg)
+        if in_place:
+            dataset.points = output.points
+            return
+        return output
+
+
+    def cell_data_to_point_data(dataset, pass_cell_data=False):
+        """Transforms cell data (i.e., data specified per cell) into point data
+        (i.e., data specified at cell points).
+        The method of transformation is based on averaging the data values of
+        all cells using a particular point. Optionally, the input cell data can
+        be passed through to the output as well.
+
+        Parameters
+        ----------
+        pass_cell_data : bool
+            If enabled, pass the input cell data through to the output
+        """
+        alg = vtk.vtkCellDataToPointData()
+        alg.SetInputDataObject(dataset)
+        alg.SetPassCellData(pass_cell_data)
+        alg.Update()
+        return _get_output(alg, active_scalar=dataset.active_scalar_name)
+
+
+    def triangulate(dataset):
+        """
+        Returns an all triangle mesh.  More complex polygons will be broken
+        down into triangles.
+
+        Returns
+        -------
+        mesh : vtki.UnstructuredGrid
+            Mesh containing only triangles.
+
+        """
+        alg = vtk.vtkDataSetTriangleFilter()
+        alg.SetInputData(dataset)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5):
+        """Constructs a 3D Delaunay triangulation of the mesh.
+        This helps smooth out a rugged mesh.
+
+        Parameters
+        ----------
+        alpha : float, optional
+            Distance value to control output of this filter. For a non-zero
+            alpha value, only verts, edges, faces, or tetra contained within
+            the circumsphere (of radius alpha) will be output. Otherwise, only
+            tetrahedra will be output.
+
+        tol : float, optional
+            tolerance to control discarding of closely spaced points.
+            This tolerance is specified as a fraction of the diagonal length
+            of the bounding box of the points.
+
+        offset : float, optional
+            multiplier to control the size of the initial, bounding Delaunay
+            triangulation.
+        """
+        alg = vtk.vtkDelaunay3D()
+        alg.SetInputData(dataset)
+        alg.SetAlpha(alpha)
+        alg.SetTolerance(tol)
+        alg.SetOffset(offset)
+        alg.Update()
+        return _get_output(alg)

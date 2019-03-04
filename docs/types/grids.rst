@@ -8,6 +8,16 @@ are encompassed int their shared inheritance of :class:`vtki.Grid`
 
 
 
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.Grid
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.Grid
+   :methods:
+
 .. autoclass:: vtki.Grid
    :show-inheritance:
    :members:
@@ -16,6 +26,18 @@ are encompassed int their shared inheritance of :class:`vtki.Grid`
 
 Rectilinear Grid
 ----------------
+
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.RectilinearGrid
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.RectilinearGrid
+   :methods:
 
 .. autoclass:: vtki.RectilinearGrid
    :show-inheritance:
@@ -28,6 +50,17 @@ Uniform Grid
 ------------
 
 `vtki`'s definition of a uniform grid is an extension of VTK's ``vtkImageData``
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.UniformGrid
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.UniformGrid
+   :methods:
 
 .. autoclass:: vtki.UniformGrid
    :show-inheritance:

@@ -1,8 +1,8 @@
 import os
 
-import vtk
 import numpy as np
 import pytest
+import vtk
 
 import vtki
 from vtki import examples
@@ -122,6 +122,11 @@ def test_save(extension, binary, tmpdir):
     assert grid.cells.shape == beam.cells.shape
     assert grid.points.shape == beam.points.shape
 
+    grid = vtki.read(filename)
+    assert grid.cells.shape == beam.cells.shape
+    assert grid.points.shape == beam.points.shape
+    assert isinstance(grid, vtki.UnstructuredGrid)
+
 
 def test_init_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
@@ -223,6 +228,12 @@ def test_save_structured(extension, binary, tmpdir):
     assert grid.n_cells
     assert grid.points.shape == sgrid.points.shape
 
+    grid = vtki.read(filename)
+    assert grid.x.shape == sgrid.y.shape
+    assert grid.n_cells
+    assert grid.points.shape == sgrid.points.shape
+    assert isinstance(grid, vtki.StructuredGrid)
+
 
 def test_load_structured_bad_filename():
     with pytest.raises(Exception):
@@ -245,6 +256,13 @@ def test_create_rectilinear_grid_from_specs():
 
 def test_create_rectilinear_grid_from_file():
     grid = examples.load_rectilinear()
+    assert grid.n_cells == 16146
+    assert grid.n_points == 18144
+    assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
+    assert grid.n_scalars == 1
+
+def test_read_rectilinear_grid_from_file():
+    grid = vtki.read(examples.rectfile)
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
@@ -292,6 +310,14 @@ def test_create_uniform_grid_from_file():
     assert grid.n_scalars == 2
     assert grid.dimensions == [10, 10, 10]
 
+def test_read_uniform_grid_from_file():
+    grid = vtki.read(examples.uniformfile)
+    assert grid.n_cells == 729
+    assert grid.n_points == 1000
+    assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
+    assert grid.n_scalars == 2
+    assert grid.dimensions == [10, 10, 10]
+
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtr', 'vtk'])
@@ -299,8 +325,14 @@ def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
-
     grid = vtki.RectilinearGrid(filename)
+    assert grid.n_cells == ogrid.n_cells
+    assert np.allclose(grid.x, ogrid.x)
+    assert np.allclose(grid.y, ogrid.y)
+    assert np.allclose(grid.z, ogrid.z)
+    assert grid.dimensions == ogrid.dimensions
+    grid = vtki.read(filename)
+    assert isinstance(grid, vtki.RectilinearGrid)
     assert grid.n_cells == ogrid.n_cells
     assert np.allclose(grid.x, ogrid.x)
     assert np.allclose(grid.y, ogrid.y)
@@ -313,8 +345,13 @@ def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
-
     grid = vtki.UniformGrid(filename)
+    assert grid.n_cells == ogrid.n_cells
+    assert grid.origin == ogrid.origin
+    assert grid.spacing == ogrid.spacing
+    assert grid.dimensions == ogrid.dimensions
+    grid = vtki.read(filename)
+    assert isinstance(grid, vtki.UniformGrid)
     assert grid.n_cells == ogrid.n_cells
     assert grid.origin == ogrid.origin
     assert grid.spacing == ogrid.spacing
@@ -322,7 +359,7 @@ def test_save_uniform(extension, binary, tmpdir):
 
 
 def test_grid_points():
-    """Test the points mehtods on UniformGrid and RectilinearGrid"""
+    """Test the points mehtods on UniformGrid and inearGrid"""
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
                        [1, 1, 0],

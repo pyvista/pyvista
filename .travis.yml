@@ -30,10 +30,13 @@ install:
   - pip install -r requirements.txt
   - pip install -r requirements_docs.txt
   - pip install pytest-cov
+  - pip install codecov
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      pip install PyQt5 pytest-qt;
+      pip install PyQt5==5.11.3;
+      pip install pytest-qt;
       pip install nbval; # For testing the notebooks
+      pip install ipywidgets;
     fi
   - pip install -e .
   - which python
@@ -45,7 +48,12 @@ script:
   - pytest -v --cov vtki
   # Run all code examples in the docstrings
   - pytest -v --doctest-modules vtki
+  - |  # report code coverage
+    if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
+      codecov
+    fi
   # Now make sure notebooks are running
+  # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
       pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
@@ -55,6 +63,7 @@ script:
   - make doctest
   - make html
   # And then clean up and changes from running examples with fileio
+  - cd ..
   - git reset --hard # removes staged and working directory changes
 
 cache:

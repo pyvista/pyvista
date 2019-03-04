@@ -2,6 +2,7 @@ import warnings
 from vtki._version import __version__
 from vtki.plotting import *
 from vtki.utilities import *
+from vtki.readers import *
 from vtki.colors import *
 from vtki.filters import DataSetFilters
 from vtki.common import Common
@@ -17,6 +18,7 @@ from vtki.container import MultiBlock
 from vtki.qt_plotting import QtInteractor
 from vtki.qt_plotting import BackgroundPlotter
 from vtki.export import export_plotter_vtkjs, get_vtkjs_url
+from vtki.renderer import Renderer
 
 # IPython interactive tools
 from vtki.ipy_tools import InteractiveTool
@@ -27,23 +29,19 @@ from vtki.ipy_tools import Clip
 from vtki.ipy_tools import ScaledPlotter
 
 import numpy as np
-
 import vtk
 
 # get the int type from vtk
+ID_TYPE = np.int32
 if vtk.VTK_ID_TYPE == 12:
     ID_TYPE = np.int64
-else:
-    ID_TYPE = np.int32
+
 
 # determine if using vtk > 5
-if vtk.vtkVersion().GetVTKMajorVersion() < 5:
-    raise Exception('VTK version must be 5.0 or greater.')
-
+if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
+    raise AssertionError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
-# vtk/util/numpy_support.py:135: FutureWarning: Conversion of the second argument of issubdtype from `complex` to `np.complexfloating` is deprecated. In future, it will be treated as `np.complex128 == np.dtype(complex).type`.
-#   assert not numpy.issubdtype(z.dtype, complex), \
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
