@@ -1424,6 +1424,11 @@ class PolyData(vtkPolyData, vtki.Common):
 class PointGrid(vtki.Common):
     """ Class in common with structured and unstructured grids """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is PointGrid:
+            raise TypeError("vtki.PointGrid is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
+
     def __init__(self, *args, **kwargs):
         super(PointGrid, self).__init__()
 
