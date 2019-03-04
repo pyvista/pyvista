@@ -406,6 +406,24 @@ def test_read_texture_from_numpy():
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_rgb():
+    """"Test adding a texture to a plot"""
+    image = vtki.read(examples.mapfile)
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(image, rgb=True)
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_multi_component_array():
+    """"Test adding a texture to a plot"""
+    image = vtki.read(examples.mapfile)
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(image)
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_camera():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
