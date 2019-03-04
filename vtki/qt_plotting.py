@@ -269,7 +269,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     allow_quit_keypress = True
     signal_close = pyqtSignal()
 
-    def __init__(self, parent=None, title=None, shape=(1, 1)):
+    def __init__(self, parent=None, title=None, shape=(1, 1), **kwargs):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
