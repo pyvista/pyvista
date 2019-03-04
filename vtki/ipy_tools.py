@@ -706,3 +706,100 @@ class Clip(InteractiveTool):
         self._last_normal = 'x'
         self._tool_widget = interact(update, location=locsl, normal=axchoices, invert=True,
                         scalars=self._get_scalar_names())
+
+
+
+
+class Isocontour(InteractiveTool):
+    """Within ipython enviornments like Jupyter notebooks, this will create
+    an interactive render window with slider bars in the ipython enviornment to
+    contour a volumetric dataset.
+
+    Parameters
+    ----------
+    dataset : vtki.Common
+        The datset to orthogonalally slice
+
+    plotter : vtki.BasePlotter
+        The active plotter (rendering window) to use
+
+    clean : bool, optional
+        This will apply a threshold on the input dataset to remove any NaN
+        values. Default is True if active scalar present.
+
+    scalars : str
+        The name of the scalars to plot
+
+    preference : str, optional
+        The preference for data choice when search for the scalar array
+
+    display_params : dict
+        Any plotting keyword parameters to use
+
+    """
+
+    def tool(self, default_params=None, **kwargs):
+        if default_params is None:
+            default_params = {}
+        preference = self.display_params['preference']
+
+        def _calc_start_value(rng):
+            """Get starting value for slider using a data range"""
+            return ((rng[1] - rng[0]) * 0.5) + rng[0]
+
+        # Now set up the widget
+        start = _calc_start_value(self.valid_range)
+        start = default_params.get("value", start)
+        valsl = widgets.FloatSlider(min=self.valid_range[0],
+                            max=self.valid_range[1],
+                            value=start,
+                            continuous_update=self.continuous_update)
+
+        def _update_slider_range(new_rng):
+            """Updates the slider ranges when switching scalars"""
+            vmin, vmax = np.nanmin([new_rng[0], valsl.min]), np.nanmax([new_rng[1], valsl.max])
+            # Update to the total range
+            valsl.min = vmin
+            valsl.max = vmax
+            start = _calc_start_value(new_rng)
+            valsl.value = start
+            valsl.min = new_rng[0]
+            valsl.max = new_rng[1]
+            return start
+
+
+        def update(value, **kwargs):
+            """Update the contour"""
+            scalars = kwargs.get('scalars')
+
+            # Update the sliders if scalar is changed
+            self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
+            if self._last_scalars != scalars:
+                self._last_scalars = scalars
+                # Update to the new range
+                value = _update_slider_range(self.input_dataset.get_data_range(scalars))
+
+            # Run the threshold
+            self.output_dataset = self.input_dataset.contour([value],
+                    scalars=scalars, preference=preference)
+
+            # Update the plotter
+            self.plotter.subplot(*self.loc)
+            self._update_plotting_params(**kwargs)
+            self.plotter.remove_actor(self._data_to_update, reset_camera=False)
+            if self.output_dataset.n_points == 0 and self.output_dataset.n_cells == 0:
+                pass
+            else:
+                self._data_to_update = self.plotter.add_mesh(self.output_dataset,
+                    reset_camera=False, loc=self.loc, **self.display_params)
+
+            self._need_to_update = False
+
+
+        # Create/display the widgets
+        scalars = self._get_scalar_names()
+        name = default_params.get("scalars", scalars[0])
+        idx = scalars.index(name)
+        del scalars[idx]
+        scalars.insert(0, name)
+        return interact(update, value=valsl, scalars=self._get_scalar_names())

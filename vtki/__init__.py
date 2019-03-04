@@ -27,6 +27,7 @@ from vtki.ipy_tools import ManySlicesAlongAxis
 from vtki.ipy_tools import Threshold
 from vtki.ipy_tools import Clip
 from vtki.ipy_tools import ScaledPlotter
+from vtki.ipy_tools import Isocontour
 
 import numpy as np
 import vtk
