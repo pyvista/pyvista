@@ -2608,6 +2608,7 @@ class Plotter(BasePlotter):
 
         # Get camera position before closing
         cpos = self.camera_position
+        img = self.screenshot(screenshot, return_img=True)
 
         if self.notebook:
             # sanity check
@@ -2624,7 +2625,6 @@ class Plotter(BasePlotter):
             return disp
 
         if return_img or screenshot == True:
-            img = self.screenshot(screenshot, return_img=True)
             return cpos, img
 
         return cpos
