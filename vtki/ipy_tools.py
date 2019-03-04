@@ -242,15 +242,20 @@ class OrthogonalSlicer(InteractiveTool):
     display_params : dict
         Any plotting keyword parameters to use
 
+    contour : bool, optional
+        If True, apply a ``contour`` filter after slicing
+
     """
 
-    def tool(self, step=None, generate_triangles=False,
+    def tool(self, step=None, generate_triangles=False, contour=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
+
+        self.contour = contour
 
         x, y, z = self.input_dataset.center
         x = default_params.get("x", x)
@@ -268,7 +273,7 @@ class OrthogonalSlicer(InteractiveTool):
             self.plotter.subplot(*self.loc)
             self.plotter.remove_actor(self._data_to_update[index], reset_camera=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index],
-                    origin=[x,y,z], generate_triangles=generate_triangles)
+                    origin=[x,y,z], generate_triangles=generate_triangles, contour=self.contour)
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
                     reset_camera=False, name='{}-{}'.format(name, index), **self.display_params)
             self._old[index] = [x,y,z][index]
@@ -354,15 +359,20 @@ class ManySlicesAlongAxis(InteractiveTool):
     display_params : dict
         Any plotting keyword parameters to use
 
+    contour : bool, optional
+        If True, apply a ``contour`` filter after slicing
+
     """
 
-    def tool(self, tolerance=None, generate_triangles=False,
+    def tool(self, tolerance=None, generate_triangles=False, contour=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
+
+        self.contour = contour
 
         n = default_params.get("n", 5)
         axis = default_params.get("axis", "x")
@@ -376,7 +386,7 @@ class ManySlicesAlongAxis(InteractiveTool):
             self.plotter.subplot(*self.loc)
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
-            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance, generate_triangles=generate_triangles)
+            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance, generate_triangles=generate_triangles, contour=self.contour)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
                 reset_camera=False, loc=self.loc, **self.display_params)
             self._need_to_update = False

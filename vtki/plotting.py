@@ -491,7 +491,7 @@ class BasePlotter(object):
                  render_lines_as_tubes=False, edge_color='black',
                  ambient=0.2, show_scalar_bar=True, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
-                 **kwargs):
+                 rgb=False, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the
         plotting object.
@@ -697,7 +697,7 @@ class BasePlotter(object):
                                   edge_color=edge_color,
                                   show_scalar_bar=True, nan_color=nan_color,
                                   nan_opacity=nan_opacity,
-                                  loc=loc, **kwargs)
+                                  loc=loc, rgb=rgb, **kwargs)
                 actors.append(a)
                 if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
@@ -734,7 +734,7 @@ class BasePlotter(object):
             else:
                 # Make sure scalar components are not vectors/tuples
                 scalars = mesh.active_scalar
-                if scalars is None or scalars.ndim != 1:
+                if scalars is None:# or scalars.ndim != 1:
                     scalars = None
                 else:
                     if stitle is None:
@@ -774,20 +774,30 @@ class BasePlotter(object):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
+            if rgb:
+                if scalars.ndim != 2 or scalars.shape[1] != 3:
+                    raise ValueError('RGB array must be n_points/n_cells by 3 in shape.')
+
             if scalars.ndim != 1:
-                scalars = scalars.ravel()
+                if rgb:
+                    pass
+                elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
+                    scalars = np.linalg.norm(scalars.copy(), axis=1)
+                    title = '{}-normed'.format(title)
+                else:
+                    scalars = scalars.ravel()
 
             if scalars.dtype == np.bool:
                 scalars = scalars.astype(np.float)
 
             # Scalar interpolation approach
-            if scalars.size == mesh.GetNumberOfPoints():
+            if scalars.shape[0] == mesh.n_points:
                 self.mesh._add_point_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUsePointData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
                 if interpolate_before_map:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
-            elif scalars.size == mesh.GetNumberOfCells():
+            elif scalars.shape[0] == mesh.n_cells:
                 self.mesh._add_cell_scalar(scalars, title, append_scalars)
                 self.mapper.SetScalarModeToUseCellData()
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
@@ -802,7 +812,7 @@ class BasePlotter(object):
             elif isinstance(rng, float) or isinstance(rng, int):
                 rng = [-rng, rng]
 
-            if np.any(rng):
+            if np.any(rng) and not rgb:
                 self.mapper.SetScalarRange(rng[0], rng[1])
 
             # Flip if requested
@@ -878,7 +888,7 @@ class BasePlotter(object):
             prop.SetLineWidth(line_width)
 
         # Add scalar bar if available
-        if stitle is not None and show_scalar_bar:
+        if stitle is not None and show_scalar_bar and not rgb:
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
@@ -2212,6 +2222,26 @@ class BasePlotter(object):
         actors in the scene.
         """
         self.renderer.isometric_view()
+
+    def view_xy(self, negative=False):
+        """View the XY plane"""
+        self.renderer.view_xy(negative=negative)
+
+    def view_xz(self, negative=False):
+        """View the XZ plane"""
+        self.renderer.view_xz(negative=negative)
+
+    def view_yz(self, negative=False):
+        """View the YZ plane"""
+        self.renderer.view_yz(negative=negative)
+
+    def disable(self):
+        """Disable this renderer's camera from being interactive"""
+        return self.renderer.disable()
+
+    def enable(self):
+        """Enable this renderer's camera to be interactive"""
+        return self.renderer.enable()
 
     def set_background(self, color, loc='all'):
         """

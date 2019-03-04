@@ -150,7 +150,8 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg, oport=port)
 
-    def slice(dataset, normal='x', origin=None, generate_triangles=False):
+    def slice(dataset, normal='x', origin=None, generate_triangles=False,
+              contour=False):
         """Slice a dataset by a plane at the specified origin and normal vector
         orientation. If no origin is specified, the center of the input dataset will
         be used.
@@ -169,6 +170,9 @@ class DataSetFilters(object):
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -186,10 +190,14 @@ class DataSetFilters(object):
         if not generate_triangles:
             alg.GenerateTrianglesOff()
         alg.Update() # Perfrom the Cut
-        return _get_output(alg)
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
+        return output
 
 
-    def slice_orthogonal(dataset, x=None, y=None, z=None, generate_triangles=False):
+    def slice_orthogonal(dataset, x=None, y=None, z=None,
+                         generate_triangles=False, contour=False):
         """Creates three orthogonal slices through the dataset on the three
         caresian planes. Yields a MutliBlock dataset of the three slices
 
@@ -208,6 +216,9 @@ class DataSetFilters(object):
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
         """
         output = vtki.MultiBlock()
         # Create the three slices
@@ -223,7 +234,8 @@ class DataSetFilters(object):
         return output
 
 
-    def slice_along_axis(dataset, n=5, axis='x', tolerance=None, generate_triangles=False):
+    def slice_along_axis(dataset, n=5, axis='x', tolerance=None,
+                         generate_triangles=False, contour=False):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -242,6 +254,9 @@ class DataSetFilters(object):
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
 
         """
         axes = {'x':0, 'y':1, 'z':2}
@@ -262,7 +277,8 @@ class DataSetFilters(object):
         # Make each of the slices
         for i in range(n):
             center[ax] = rng[i]
-            slc = DataSetFilters.slice(dataset, normal=axis, origin=center, generate_triangles=generate_triangles)
+            slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
+                    generate_triangles=generate_triangles, contour=contour)
             output[i, 'slice%.2d'%i] = slc
         return output
 

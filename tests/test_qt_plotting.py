@@ -152,5 +152,5 @@ def test_background_plotting_orbit(qtbot):
     plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
     plotter.add_mesh(vtki.Sphere())
     # perfrom the orbit:
-    plotter.orbit_on_path(bkg=False)
+    plotter.orbit_on_path(bkg=False, step=0.0)
     plotter.close()
