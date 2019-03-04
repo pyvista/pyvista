@@ -9,7 +9,11 @@ import vtki
 from vtki import examples
 from vtki.plotting import running_xserver
 
-TEST_DOWNLOADS = False
+try:
+    os.environ['TEST_DOWNLOADS']
+    TEST_DOWNLOADS = True
+except KeyError:
+    TEST_DOWNLOADS = False
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
