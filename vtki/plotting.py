@@ -342,9 +342,29 @@ class BasePlotter(object):
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
     def enable_trackball_style(self):
-        """ sets the interacto style to trackball """
+        """ sets the interactive style to trackball """
         istyle = vtk.vtkInteractorStyleTrackballCamera()
         self.iren.SetInteractorStyle(istyle)
+
+    def enable_image_style(self):
+        """ sets the interactive style to image """
+        istyle = vtk.vtkInteractorStyleImage()
+        return self.iren.SetInteractorStyle(istyle)
+
+    def enable_joystick_style(self):
+        """ sets the interactive style to joystick """
+        istyle = vtk.vtkInteractorStyleJoystickCamera()
+        return self.iren.SetInteractorStyle(istyle)
+
+    def enable_zoom_style(self):
+        """ sets the interactive style to rubber band zoom """
+        istyle = vtk.vtkInteractorStyleRubberBandZoom()
+        return self.iren.SetInteractorStyle(istyle)
+
+    def enable_terrain_style(self):
+        """ sets the interactive style to terrain """
+        istyle = vtk.vtkInteractorStyleTerrain()
+        return self.iren.SetInteractorStyle(istyle)
 
     def set_focus(self, point):
         """ sets focus to a point """
