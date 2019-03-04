@@ -64,6 +64,11 @@ def _generate_plane(normal, origin):
 class DataSetFilters(object):
     """A set of common filters that can be applied to any vtkDataSet"""
 
+    def __new__(cls, *args, **kwargs):
+        if cls is DataSetFilters:
+            raise TypeError("vtki.DataSetFilters is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
+
 
     def clip(dataset, normal='x', origin=None, invert=True):
         """
