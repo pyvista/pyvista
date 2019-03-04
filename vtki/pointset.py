@@ -130,10 +130,12 @@ class PolyData(vtkPolyData, vtki.Common):
             reader = vtk.vtkSTLReader()
         elif ext == '.vtk':
             reader = vtk.vtkPolyDataReader()
+        elif ext == '.vtp':
+            reader = vtk.vtkXMLPolyDataReader()
         elif ext == '.obj':
             reader = vtk.vtkOBJReader()
         else:
-            raise TypeError('Filetype must be either "ply", "stl", or "vtk"')
+            raise TypeError('Filetype must be either "ply", "stl", "vtk", "vtp", or "obj".')
 
         # Load file
         reader.SetFileName(filename)
@@ -493,10 +495,18 @@ class PolyData(vtkPolyData, vtki.Common):
         file size.
         """
         filename = os.path.abspath(os.path.expanduser(filename))
+        file_mode = True
         # Check filetype
         ftype = filename[-3:]
         if ftype == 'ply':
             writer = vtk.vtkPLYWriter()
+        elif ftype == 'vtp':
+            writer = vtk.vtkXMLPolyDataWriter()
+            file_mode = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         elif ftype == 'stl':
             writer = vtk.vtkSTLWriter()
         elif ftype == 'vtk':
@@ -506,9 +516,9 @@ class PolyData(vtkPolyData, vtki.Common):
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary:
+        if binary and file_mode:
             writer.SetFileTypeToBinary()
-        else:
+        elif file_mode:
             writer.SetFileTypeToASCII()
         writer.Write()
 
@@ -1775,18 +1785,22 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkUnstructuredGridWriter()
-            legacy = True
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
         elif '.vtu' in filename:
             writer = vtk.vtkXMLUnstructuredGridWriter()
-            legacy = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         else:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
-        writer.Write()
+        return writer.Write()
 
     @property
     def cells(self):
@@ -2176,18 +2190,22 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkStructuredGridWriter()
-            legacy = True
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
         elif '.vts' in filename:
             writer = vtk.vtkXMLStructuredGridWriter()
-            legacy = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         else:
             raise Exception('Extension should be either ".vts" (xml) or' +
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
