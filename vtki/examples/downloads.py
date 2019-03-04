@@ -1,5 +1,6 @@
 """Functions to download sampe datasets from the VTK data repository
 """
+import shutil
 import os
 import sys
 
@@ -29,7 +30,7 @@ def _retrieve_file(url, filename):
         saved_file, resp = urlretrieve(url)
         # rename saved file:
         new_name = saved_file.replace(os.path.basename(saved_file), filename)
-        os.rename(saved_file, new_name)
+        shutil.move(saved_file, new_name)
         return new_name, resp
     return urlretrieve(url, filename)
 
