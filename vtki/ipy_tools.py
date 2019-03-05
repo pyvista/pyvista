@@ -31,7 +31,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
-        self.continuous_update = continuous_update
+        self.continuous_update = bool(continuous_update)
         self.xslider = widgets.FloatSlider(min=0, max=xscale*2, value=xscale,
                                 continuous_update=self.continuous_update)
         self.yslider = widgets.FloatSlider(min=0, max=yscale*2, value=yscale,
