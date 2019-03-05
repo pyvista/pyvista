@@ -3,10 +3,18 @@ from subprocess import PIPE, Popen
 
 import numpy as np
 import pytest
+import vtk
 
 import vtki
 from vtki import examples
 from vtki.plotting import running_xserver
+
+TEST_DOWNLOADS = False
+try:
+    if os.environ['TEST_DOWNLOADS'] == 'True':
+        TEST_DOWNLOADS = True
+except KeyError:
+    pass
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -114,3 +122,51 @@ def test_load_channels():
     """ Loads geostat training image """
     mesh = examples.load_channels()
     assert mesh.n_points
+
+if TEST_DOWNLOADS:
+
+    def test_download_masonry_texture():
+        data = examples.download_masonry_texture()
+        assert isinstance(data, vtk.vtkTexture)
+
+    def test_download_usa_texture():
+        data = examples.download_usa_texture()
+        assert isinstance(data, vtk.vtkTexture)
+
+    def test_download_usa():
+        data = examples.download_usa()
+        assert np.any(data.points)
+
+    def test_download_st_helens():
+        data = examples.download_st_helens()
+        assert data.n_points
+
+    def test_download_bunny():
+        data = examples.download_bunny()
+        assert data.n_points
+
+    def test_download_cow():
+        data = examples.download_cow()
+        assert data.n_points
+
+    def test_download_faults():
+        data = examples.download_faults()
+        assert data.n_points
+
+    def test_download_tensors():
+        data = examples.download_tensors()
+        assert data.n_points
+
+    def test_download_head():
+        data = examples.download_head()
+        assert data.n_points
+
+    def test_download_bolt_nut():
+        data = examples.download_bolt_nut()
+        assert isinstance(data, vtki.MultiBlock)
+
+    def test_download_clown():
+        data = examples.download_clown()
+        assert data.n_points
+
+# End of download tests

@@ -293,9 +293,15 @@ class BasePlotter(object):
 
     """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is BasePlotter:
+            raise TypeError("vtki.BasePlotter is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
+
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=1.0):
         """ Initialize base plotter """
+        self.image_transparent_background = False
 
         # by default add border for multiple plots
         if border is None:
@@ -342,9 +348,29 @@ class BasePlotter(object):
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
     def enable_trackball_style(self):
-        """ sets the interacto style to trackball """
+        """ sets the interactive style to trackball """
         istyle = vtk.vtkInteractorStyleTrackballCamera()
         self.iren.SetInteractorStyle(istyle)
+
+    def enable_image_style(self):
+        """ sets the interactive style to image """
+        istyle = vtk.vtkInteractorStyleImage()
+        return self.iren.SetInteractorStyle(istyle)
+
+    def enable_joystick_style(self):
+        """ sets the interactive style to joystick """
+        istyle = vtk.vtkInteractorStyleJoystickCamera()
+        return self.iren.SetInteractorStyle(istyle)
+
+    def enable_zoom_style(self):
+        """ sets the interactive style to rubber band zoom """
+        istyle = vtk.vtkInteractorStyleRubberBandZoom()
+        return self.iren.SetInteractorStyle(istyle)
+
+    def enable_terrain_style(self):
+        """ sets the interactive style to terrain """
+        istyle = vtk.vtkInteractorStyleTerrain()
+        return self.iren.SetInteractorStyle(istyle)
 
     def set_focus(self, point):
         """ sets focus to a point """
@@ -1690,9 +1716,6 @@ class BasePlotter(object):
             except BaseException:
                 pass
 
-        if hasattr(self, 'ifilter'):
-            del self.ifilter
-
     def add_text(self, text, position=None, font_size=50, color=None,
                  font=None, shadow=False, name=None, loc=None):
         """
@@ -1798,12 +1821,20 @@ class BasePlotter(object):
     @property
     def image(self):
         """ Returns an image array of current render window """
-        if not hasattr(self, 'ifilter'):
-            self.start_image_filter()
+        ifilter = vtk.vtkWindowToImageFilter()
+        ifilter.SetInput(self.ren_win)
+        ifilter.SetInputBufferTypeToRGB()
+        ifilter.ReadFrontBufferOff()
+
+        if self.image_transparent_background:
+            ifilter.SetInputBufferTypeToRGBA()
+        else:
+            ifilter.SetInputBufferTypeToRGB()
+
         # Update filter and grab pixels
-        self.ifilter.Modified()
-        self.ifilter.Update()
-        image = vtki.wrap(self.ifilter.GetOutput())
+        ifilter.Modified()
+        ifilter.Update()
+        image = vtki.wrap(ifilter.GetOutput())
         img_size = image.dimensions
         img_array = vtki.utilities.point_scalar(image, 'ImageScalars')
 
@@ -2055,13 +2086,9 @@ class BasePlotter(object):
         """
         if window_size is not None:
             self.window_size = window_size
-        if not hasattr(self, 'ifilter'):
-            self.start_image_filter()
+
         # configure image filter
-        if transparent_background:
-            self.ifilter.SetInputBufferTypeToRGBA()
-        else:
-            self.ifilter.SetInputBufferTypeToRGB()
+        self.image_transparent_background = transparent_background
 
         # this needs to be called twice for some reason,  debug later
         if isinstance(self, Plotter):
@@ -2282,13 +2309,6 @@ class BasePlotter(object):
     def background_color(self, color):
         """ Sets the background color of all the render windows """
         self.set_background(color)
-
-    def start_image_filter(self):
-        """ creates an image filter """
-        self.ifilter = vtk.vtkWindowToImageFilter()
-        self.ifilter.SetInput(self.ren_win)
-        self.ifilter.SetInputBufferTypeToRGB()
-        self.ifilter.ReadFrontBufferOff()
 
     def remove_legend(self):
         """ Removes legend actor """
@@ -2608,8 +2628,6 @@ class Plotter(BasePlotter):
 
         # Get camera position before closing
         cpos = self.camera_position
-
-        # Get the screenshot
         img = self.screenshot(screenshot, return_img=True)
 
         if self.notebook:
@@ -2627,7 +2645,7 @@ class Plotter(BasePlotter):
             return disp
 
         if return_img or screenshot == True:
-                return cpos, img
+            return cpos, img
 
         return cpos
 
