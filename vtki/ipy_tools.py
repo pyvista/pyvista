@@ -213,10 +213,16 @@ class InteractiveTool(object):
         self._display_widget = interact(_update_display_params, **i_display_params)
 
 
-    def _get_scalar_names(self):
+    def _get_scalar_names(self, limit=None):
         """Only give scalar options that have a varying range"""
         names = []
-        for name in self.input_dataset.scalar_names:
+        if limit == 'point':
+            inpnames = list(self.input_dataset.point_arrays.keys())
+        elif limit == 'cell':
+            inpnames = list(self.input_dataset.cell_arrays.keys())
+        else:
+            inpnames = self.input_dataset.scalar_names
+        for name in inpnames:
             arr = self.input_dataset.get_scalar(name)
             rng = self.input_dataset.get_data_range(name)
             if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
@@ -607,12 +613,6 @@ class Threshold(InteractiveTool):
 
             self._need_to_update = False
 
-        w_thresh_by = widgets.Dropdown(
-            options=self._get_scalar_names(),
-            description='Threshold by:',
-            disabled=False,
-        )
-
 
         # Create/display the widgets
         scalars = self._get_scalar_names()
@@ -620,6 +620,13 @@ class Threshold(InteractiveTool):
         idx = scalars.index(name)
         del scalars[idx]
         scalars.insert(0, name)
+
+        w_thresh_by = widgets.Dropdown(
+            options=scalars,
+            description='Threshold by:',
+            disabled=False,
+        )
+
         self._tool_widget = interact(update, dmin=minsl, dmax=maxsl,
                  thresh_by=w_thresh_by,
                  invert=default_params.get('invert', False),
@@ -798,9 +805,9 @@ class Isocontour(InteractiveTool):
 
 
         # Create/display the widgets
-        scalars = self._get_scalar_names()
+        scalars = self._get_scalar_names(limit='point')
         name = default_params.get("contour_by", scalars[0])
         idx = scalars.index(name)
         del scalars[idx]
         scalars.insert(0, name)
-        self._tool_widget =  interact(update, value=valsl, contour_by=self._get_scalar_names())
+        self._tool_widget =  interact(update, value=valsl, contour_by=scalars)
