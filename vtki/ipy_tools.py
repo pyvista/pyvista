@@ -71,6 +71,11 @@ class InteractiveTool(object):
     the ``plotter`` argument.
     """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is InteractiveTool:
+            raise TypeError("vtki.InteractiveTool is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
+
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
                  display_params=None, default_params=None,
@@ -718,7 +723,9 @@ class Clip(InteractiveTool):
 
 
 class Isocontour(InteractiveTool):
-    """Within ipython enviornments like Jupyter notebooks, this will create
+    """Create a sinlge iso-value contour of a dataset. Contouring only supports
+    point data attributes.
+    Within ipython enviornments like Jupyter notebooks, this will create
     an interactive render window with slider bars in the ipython enviornment to
     contour a volumetric dataset.
 

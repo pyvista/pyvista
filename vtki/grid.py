@@ -18,6 +18,11 @@ log.setLevel('CRITICAL')
 class Grid(vtki.Common):
     """A class full of common methods for non-pointset grids """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is Grid:
+            raise TypeError("vtki.Grid is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
+
     def __init__(self, *args, **kwargs):
         super(Grid, self).__init__()
 
