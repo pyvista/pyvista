@@ -98,6 +98,11 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             raise TypeError('Invalid input type')
 
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
+
     def _load_file(self, filename):
         """
         Load a surface mesh from a mesh file.
@@ -1429,6 +1434,11 @@ class PolyData(vtkPolyData, vtki.Common):
 class PointGrid(vtki.Common):
     """ Class in common with structured and unstructured grids """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is PointGrid:
+            raise TypeError("vtki.PointGrid is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
+
     def __init__(self, *args, **kwargs):
         super(PointGrid, self).__init__()
 
@@ -1618,6 +1628,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
             else:
                 raise Exception('All input types must be np.ndarray')
+
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
 
     def overwrite(self, grid):
         """
@@ -2090,6 +2105,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
+
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
 
     def _from_arrays(self, x, y, z):
         """

@@ -20,11 +20,16 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class Common(DataSetFilters):
+class Common(DataSetFilters, object):
     """ Methods in common to grid and surface objects"""
 
     # Simply bind vtki.plotting.plot to the object
     plot = vtki.plot
+
+    def __new__(cls, *args, **kwargs):
+        if cls is Common:
+            raise TypeError("vtki.Common is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         self.references = []
@@ -813,6 +818,11 @@ class Common(DataSetFilters):
             fmt += "\n"
             fmt += "</td></tr> </table>"
         return fmt
+
+
+    def __repr__(self):
+        """Object representation"""
+        return self.head(display=False)
 
 
 class _ScalarsDict(dict):

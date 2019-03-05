@@ -18,6 +18,11 @@ log.setLevel('CRITICAL')
 class Grid(vtki.Common):
     """A class full of common methods for non-pointset grids """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is Grid:
+            raise TypeError("vtki.Grid is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
+
     def __init__(self, *args, **kwargs):
         super(Grid, self).__init__()
 
@@ -84,6 +89,10 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
+
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
 
 
     def _from_arrays(self, x, y, z):
@@ -342,6 +351,9 @@ class UniformGrid(vtkImageData, Grid):
                 self._from_specs(args[0], args[1], args[2])
             elif all([arg0_is_valid, arg1_is_valid]):
                 self._from_specs(args[0], args[1])
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
