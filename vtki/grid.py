@@ -213,22 +213,18 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkRectilinearGridWriter()
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
+            legacy = True
         elif '.vtr' in filename:
             writer = vtk.vtkXMLRectilinearGridWriter()
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
+            legacy = False
         else:
             raise Exception('Extension should be either ".vtr" (xml) or' +
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
+        if binary and legacy:
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
@@ -485,22 +481,18 @@ class UniformGrid(vtkImageData, Grid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkDataSetWriter()
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
+            legacy = True
         elif '.vti' in filename:
             writer = vtk.vtkXMLImageDataWriter()
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
+            legacy = False
         else:
             raise Exception('Extension should be either ".vti" (xml) or' +
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
+        if binary and legacy:
+            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
