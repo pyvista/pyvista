@@ -125,10 +125,16 @@ class InteractiveTool(object):
         self.tool(default_params=default_params, **kwargs)
 
 
-    def _get_scalar_names(self):
+    def _get_scalar_names(self, limit=None):
         """Only give scalar options that have a varying range"""
         names = []
-        for name in self.input_dataset.scalar_names:
+        if limit == 'point':
+            inpnames = list(self.input_dataset.point_arrays.keys())
+        elif limit == 'cell':
+            inpnames = list(self.input_dataset.cell_arrays.keys())
+        else:
+            inpnames = self.input_dataset.scalar_names
+        for name in inpnames:
             arr = self.input_dataset.get_scalar(name)
             rng = self.input_dataset.get_data_range(name)
             if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
@@ -503,7 +509,7 @@ class Threshold(InteractiveTool):
         del scalars[idx]
         scalars.insert(0, name)
         return interact(update, dmin=minsl, dmax=maxsl,
-                        scalars=self._get_scalar_names(),
+                        scalars=scalars,
                         invert=default_params.get('invert', False),
                         continuous=False)
 
@@ -678,9 +684,10 @@ class Isocontour(InteractiveTool):
 
 
         # Create/display the widgets
-        scalars = self._get_scalar_names()
+        # NOTE: Contour filter can only contour by point data
+        scalars = self._get_scalar_names(limit='point')
         name = default_params.get("scalars", scalars[0])
         idx = scalars.index(name)
         del scalars[idx]
         scalars.insert(0, name)
-        return interact(update, value=valsl, scalars=self._get_scalar_names())
+        return interact(update, value=valsl, scalars=scalars)
