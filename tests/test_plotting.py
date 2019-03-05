@@ -101,7 +101,15 @@ def test_plot_add_bounds_axes():
                             show_zaxis=False,
                             show_xlabels=False,
                             show_ylabels=False,
-                            show_zlabels=False)
+                            show_zlabels=False,
+                            use_2d=True)
+    plotter.plot()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_label_fmt():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.add_bounds_axes(xlabel='My X', fmt=r'%.3f')
     plotter.plot()
 
 
@@ -429,6 +437,13 @@ def test_camera():
     plotter.add_mesh(sphere)
     plotter.isometric_view()
     plotter.reset_camera()
+    plotter.view_xy()
+    plotter.view_xz()
+    plotter.view_yz()
+    plotter.add_mesh(examples.load_uniform(), reset_camera=True, backface_culling=True)
+    plotter.view_xy(True)
+    plotter.view_xz(True)
+    plotter.view_yz(True)
     plotter.show()
     plotter.camera_position = None
 
@@ -455,7 +470,7 @@ def test_multi_renderers():
     plotter.add_text('Render Window 3', loc=loc, font_size=30)
     plotter.add_mesh(vtki.Cone(), color='g', loc=loc, show_edges=True,
                      backface_culling=True)
-    plotter.add_bounding_box()
+    plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
     plotter.add_bounds_axes(all_edges=True)
 
     plotter.update_bounds_axes()
@@ -493,3 +508,12 @@ def test_orthographic_slicer():
     p.disable()
 
     p.show()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_remove_actor():
+    data = examples.load_uniform()
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(data, name='data')
+    plotter.add_mesh(data, name='data')
+    plotter.add_mesh(data, name='data')
+    plotter.show()
