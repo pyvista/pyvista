@@ -94,7 +94,7 @@ down menu in the Jupyter notebook cell output:
 
     dataset = examples.load_uniform()
 
-    # Use the slicer tool
+    # Use the many slices tool
     vtki.ManySlicesAlongAxis(dataset)
 
 
@@ -105,6 +105,31 @@ down menu in the Jupyter notebook cell output:
 .. autoclass:: vtki.ManySlicesAlongAxis
    :show-inheritance:
 
+
+
+Isocontour
+----------
+
+The :class:`vtki.Isocontour` tool creates a single value isocontour of a dataset
+along a point scalar array
+
+
+.. code-block:: python
+
+    import vtki
+    from vtki import examples
+
+    dataset = examples.load_uniform()
+
+    # Use the contour tool
+    vtki.Isocontour(dataset)
+
+
+.. figure:: ../images/isocontour-tool.gif
+   :width: 500pt
+
+.. autoclass:: vtki.ManySlicesAlongAxis
+   :show-inheritance:
 
 
 Using the Tools in an Integrated Scene

@@ -603,7 +603,9 @@ class Clip(InteractiveTool):
 
 
 class Isocontour(InteractiveTool):
-    """Within ipython enviornments like Jupyter notebooks, this will create
+    """Create a sinlge iso-value contour of a dataset. Contouring only supports
+    point data attributes.
+    Within ipython enviornments like Jupyter notebooks, this will create
     an interactive render window with slider bars in the ipython enviornment to
     contour a volumetric dataset.
 
