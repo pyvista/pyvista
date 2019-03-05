@@ -74,3 +74,12 @@ def test_ipy_integrated(qtbot):
     thresher = vtki.Threshold(data, plotter=p)
     clipper = vtki.Clip(data, plotter=p)
     p.close()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_ipy_isocontour(qtbot):
+    data = examples.load_uniform()
+    tool = vtki.Isocontour(data, show=False)
+    g = tool.tool()
+    g.widget.update()
+    tool.plotter.close()
