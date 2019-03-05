@@ -68,6 +68,11 @@ class InteractiveTool(object):
     the ``plotter`` argument.
     """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is InteractiveTool:
+            raise TypeError("vtki.InteractiveTool is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
+
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
                  display_params=None, default_params=None,

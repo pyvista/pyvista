@@ -221,7 +221,7 @@ def test_invalid_curvature():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['stl', 'vtk', 'ply'])
+@pytest.mark.parametrize('extension', ['stl', 'vtk', 'ply', 'vtp'])
 def test_save(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     sphere.save(filename, binary)

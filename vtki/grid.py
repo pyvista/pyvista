@@ -18,6 +18,11 @@ log.setLevel('CRITICAL')
 class Grid(vtki.Common):
     """A class full of common methods for non-pointset grids """
 
+    def __new__(cls, *args, **kwargs):
+        if cls is Grid:
+            raise TypeError("vtki.Grid is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
+
     def __init__(self, *args, **kwargs):
         super(Grid, self).__init__()
 
@@ -208,18 +213,22 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkRectilinearGridWriter()
-            legacy = True
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
         elif '.vtr' in filename:
             writer = vtk.vtkXMLRectilinearGridWriter()
-            legacy = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         else:
             raise Exception('Extension should be either ".vtr" (xml) or' +
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
@@ -476,18 +485,22 @@ class UniformGrid(vtkImageData, Grid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkDataSetWriter()
-            legacy = True
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
         elif '.vti' in filename:
             writer = vtk.vtkXMLImageDataWriter()
-            legacy = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         else:
             raise Exception('Extension should be either ".vti" (xml) or' +
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
