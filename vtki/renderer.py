@@ -403,7 +403,6 @@ class Renderer(vtkRenderer):
             self.add_bounding_box(color=color, corner_factor=corner_factor)
 
         if fmt is not None:
-            print('This is fmt', fmt)
             cube_axes_actor.SetXLabelFormat(fmt)
             cube_axes_actor.SetYLabelFormat(fmt)
             cube_axes_actor.SetZLabelFormat(fmt)
