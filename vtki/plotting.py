@@ -2228,6 +2228,21 @@ class BasePlotter(object):
     @camera_position.setter
     def camera_position(self, camera_location):
         """ Set camera position of the active render window """
+        if isinstance(camera_location, str):
+            camera_location = camera_location.lower()
+            if camera_location == 'xy':
+                self.view_xy()
+            elif camera_location == 'xz':
+                self.view_xz()
+            elif camera_location == 'yz':
+                self.view_yz()
+            elif camera_location == 'yx':
+                self.view_xy(True)
+            elif camera_location == 'zx':
+                self.view_xz(True)
+            elif camera_location == 'zy':
+                self.view_yz(True)
+            return
         self.renderer.camera_position = camera_location
 
     def reset_camera(self):

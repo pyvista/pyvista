@@ -77,6 +77,12 @@ def test_set_camera_position():
 
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
+    plotter.camera_position = 'xy'
+    plotter.camera_position = 'xz'
+    plotter.camera_position = 'yz'
+    plotter.camera_position = 'yx'
+    plotter.camera_position = 'zx'
+    plotter.camera_position = 'zy'
     plotter.camera_position = cpos
     cpos_out = plotter.plot()
     assert cpos_out == cpos
