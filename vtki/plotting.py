@@ -143,7 +143,8 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         Window size in pixels.  Defaults to [1024, 768]
 
     show_bounds : bool, optional
-        Shows mesh bounds when True.  Default False.
+        Shows mesh bounds when True.  Default False. Alias ``show_grid`` also
+        accepted.
 
     notebook : bool, optional
         When True, the resulting plot is placed inline a jupyter notebook.
@@ -200,7 +201,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     if text:
         plotter.add_text(text)
 
-    if show_bounds:
+    if show_bounds or kwargs.get('show_grid', False):
         plotter.add_bounds_axes()
 
     if cpos is None:
@@ -1115,7 +1116,7 @@ class BasePlotter(object):
                         bold=True, shadow=False, font_size=None,
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=True, grid=None, location='closest', ticks=None,
+                        use_2d=False, grid=None, location='closest', ticks=None,
                         all_edges=False, corner_factor=0.5, fmt=None,
                         minor_ticks=False, loc=None):
         """
