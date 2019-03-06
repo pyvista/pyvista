@@ -762,13 +762,13 @@ class BasePlotter(object):
                     if stitle is None:
                         stitle = mesh.active_scalar_info[1]
 
-        if texture == True or isinstance(texture, str):
+        if texture == True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
 
         if texture:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
-            if not isinstance(texture, vtk.vtkTexture):
+            if not isinstance(texture, (vtk.vtkTexture, vtk.vtkOpenGLTexture)):
                 raise TypeError('Invalid texture type ({})'.format(type(texture)))
             if mesh.GetPointData().GetTCoords() is None:
                 raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
@@ -776,7 +776,9 @@ class BasePlotter(object):
             # Set color to white by default when using a texture
             if color is None:
                 color = 'white'
-
+            if scalars is None:
+                show_scalar_bar = False
+            self.mapper.SetScalarModeToUsePointFieldData()
 
         # Scalar formatting ===================================================
         if cmap is None:
