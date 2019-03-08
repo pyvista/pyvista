@@ -2058,6 +2058,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         else:
             return merged
 
+    def delaunay_2d(self):
+        """Apply a delaunay 2D filter along the best fitting plane. This
+        extracts the grid's points and perfoms the triangulation on those alone.
+        """
+        return PolyData(self.points).delaunay_2d()
+
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
     """
