@@ -32,6 +32,8 @@ scalar bar plotting:
 .. image:: ../../images/st-helens.png
 
 
+-----
+
 
 We could also plot the scene with an interactive scalar bar to move around and
 place where we like by specifying passing keyword arguments to control the
@@ -45,7 +47,6 @@ The keyword arguments to control the scalar bar are defined in
     # create dictionary of parameters to control scalar bar
     sargs = dict(interactive=True) # Simply make the bar interactive
 
-    # Render the scene
     p = vtki.Plotter(notebook=False) # If in IPython, be sure to show the scene
     p.add_mesh(mesh, scalar_bar_args=sargs)
     p.show()
@@ -54,6 +55,7 @@ The keyword arguments to control the scalar bar are defined in
 .. figure:: ../../images/scalar-bar-interactive.gif
 
 
+-----
 
 Or manually define the scalar bar's location:
 
@@ -70,7 +72,7 @@ Or manually define the scalar bar's location:
 
 .. image:: ../../images/scalar-bar-location.png
 
-
+-----
 
 The text properties of the scalar bar can also be controlled:
 
