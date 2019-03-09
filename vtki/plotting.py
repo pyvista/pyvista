@@ -1736,7 +1736,7 @@ class BasePlotter(object):
 
         position : tuple(float)
             Length 2 tuple of the pixelwise position to place the bottom
-            left corner of the text box. Default is to find the top right corner
+            left corner of the text box. Default is to find the top left corner
             of the renderering window and place text box up there.
 
         font : string, optional
