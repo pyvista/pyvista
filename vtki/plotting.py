@@ -1386,7 +1386,7 @@ class BasePlotter(object):
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
-                       interactive=False):
+                       interactive=False, fmt=None):
         """
         Creates scalar bar using the ranges as set by the last input
         mesh.
@@ -1458,6 +1458,8 @@ class BasePlotter(object):
             title_font_size = rcParams['font']['title_size']
         if color is None:
             color = rcParams['font']['color']
+        if fmt is None:
+            fmt = rcParams['font']['fmt']
         # Automatically choose size if not specified
         if width is None:
             if vertical:
@@ -1535,6 +1537,9 @@ class BasePlotter(object):
         self.scalar_bar.SetHeight(height)
         self.scalar_bar.SetWidth(width)
         self.scalar_bar.SetPosition(position_x, position_y)
+
+        if fmt is not None:
+            self.scalar_bar.SetLabelFormat(fmt)
 
         if vertical:
             self.scalar_bar.SetOrientationToVertical()
