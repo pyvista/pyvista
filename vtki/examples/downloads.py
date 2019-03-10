@@ -29,7 +29,7 @@ def _retrieve_file(url, filename):
     if DOWNLOAD_TEMP_FOLDER:
         saved_file, resp = urlretrieve(url)
         # rename saved file:
-        new_name = saved_file.replace(os.path.basename(saved_file), filename)
+        new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
         shutil.move(saved_file, new_name)
         return new_name, resp
     return urlretrieve(url, filename)
@@ -86,3 +86,13 @@ def download_bolt_nut():
 
 def download_clown():
     return _download_and_read('clown.facet')
+
+def download_topo_global():
+    return _download_and_read('EarthModels/ETOPO_10min_Ice.vtp')
+
+def download_topo_land():
+    return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp')
+
+
+def download_coastlines():
+    return _download_and_read('EarthModels/Coastlines_Los_Alamos.vtp')
