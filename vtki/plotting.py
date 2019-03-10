@@ -91,6 +91,13 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'orange'
         rcParams['outline_color'] = 'black'
+    elif theme.lower() in ['night', 'dark']:
+        rcParams['background'] = 'black'
+        rcParams['cmap'] = 'viridis'
+        rcParams['font']['color'] = 'white'
+        rcParams['show_edges'] = False
+        rcParams['color'] = 'orange'
+        rcParams['outline_color'] = 'white'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
