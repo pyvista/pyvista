@@ -16,7 +16,7 @@ directory.
 # Helpers:
 
 def _get_vtk_file_url(filename):
-    return 'https://github.com/open-cv/VTKData/raw/master/Data/{}'.format(filename)
+    return 'https://github.com/vtkiorg/vtk-data/raw/master/Data/{}'.format(filename)
 
 def _retrieve_file(url, filename):
     # grab the correct url retriever
@@ -61,8 +61,6 @@ def download_usa():
 
 def download_st_helens():
     return _download_and_read('SainteHelens.dem')
-
-download_st_helens()
 
 def download_bunny():
     return _download_and_read('bunny.ply')
