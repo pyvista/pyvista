@@ -7,6 +7,7 @@ import pytest
 import vtki
 from vtki import examples as ex
 from vtki import utilities
+from vtki import readers
 
 # Only set this here just the once.
 utilities.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
@@ -41,7 +42,12 @@ def test_read(tmpdir):
     types = (vtki.PolyData, vtki.PolyData, vtki.UnstructuredGrid,
              vtki.PolyData, vtki.UniformGrid, vtki.RectilinearGrid)
     for i, filename in enumerate(fnames):
-        obj = utilities.read(filename)
+        obj = readers.read(filename)
+        assert isinstance(obj, types[i])
+    # Now test the standard_reader_routine
+    for i, filename in enumerate(fnames):
+        # Pass attrs to for the standard_reader_routine to be used
+        obj = readers.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'npy'))

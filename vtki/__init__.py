@@ -2,6 +2,7 @@ import warnings
 from vtki._version import __version__
 from vtki.plotting import *
 from vtki.utilities import *
+from vtki.readers import *
 from vtki.colors import *
 from vtki.filters import DataSetFilters
 from vtki.common import Common
@@ -17,6 +18,7 @@ from vtki.container import MultiBlock
 from vtki.qt_plotting import QtInteractor
 from vtki.qt_plotting import BackgroundPlotter
 from vtki.export import export_plotter_vtkjs, get_vtkjs_url
+from vtki.renderer import Renderer
 
 # IPython interactive tools
 from vtki.ipy_tools import OrthogonalSlicer
@@ -24,6 +26,7 @@ from vtki.ipy_tools import ManySlicesAlongAxis
 from vtki.ipy_tools import Threshold
 from vtki.ipy_tools import Clip
 from vtki.ipy_tools import ScaledPlotter
+from vtki.ipy_tools import Isocontour
 
 import numpy as np
 import vtk
@@ -43,3 +46,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
 TESTING_OFFSCREEN = False
+
+# A threshold for the max cells to compute a volume for when repr-ing
+REPR_VOLUME_MAX_CELLS = 1e6

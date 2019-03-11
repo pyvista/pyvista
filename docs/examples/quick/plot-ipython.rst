@@ -43,6 +43,29 @@ that you can manipulate in real time from the Jupyter notebook:
     plotter.add_bounds_axes()
 
 
+Background Plotting
+-------------------
+
+``vtki`` provides a plotter that enables users to create a rendering window in
+the background that remains interactive while the user performs their
+processing. This creates the ability to make a rendering scene and interactively
+add or remove datasets from the scene as well as has some useful menu functions
+for common scene manipulation or export tasks. To get started, try instantiating
+the :class:`vtki.BackgroundPlotter`:
+
+.. code:: python
+
+    import vtki
+    from vtki import examples
+
+    dataset = examples.load_hexbeam()
+
+    p = vtki.BackgroundPlotter()
+
+    p.add_mesh(dataset)
+
+    p.add_bounds_axes(grid=True, location='back')
+
 
 IPython Interactive Plotting Tools
 ----------------------------------
@@ -50,7 +73,9 @@ IPython Interactive Plotting Tools
 ``vtki`` comes packed with several interactive plotting tools to make using the
 filters a bit more intuitive (see :ref:`ipy_tools_ref`).
 If in an IPython environment, call one of the tools on an input dataset to yield
-widgets that will control a filter or task in an interactive rendering scene:
+widgets that will control a filter or task in an interactive rendering scene.
+These tools create an :class:`vtki.BackgroundPlotter` instance which can be
+accessed under the ``.plotter`` attribute for further scene manipulation:
 
 .. code:: python
 
@@ -60,8 +85,12 @@ widgets that will control a filter or task in an interactive rendering scene:
    dataset = examples.load_hexbeam()
 
    # Use the slicer tool
-   vtki.OrthogonalSlicer(dataset)
+   tool = vtki.OrthogonalSlicer(dataset)
+
+   # Get the plotter for adding more datasets:
+   p = tool.plotter
+   p.show_grid()
 
 
-.. figure:: https://github.com/akaszynski/vtki/raw/master/docs/images/slicer-tool.gif
+.. figure:: https://github.com/vtkiorg/vtki/raw/master/docs/images/slicer-tool.gif
   :width: 500pt

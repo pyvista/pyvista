@@ -5,20 +5,20 @@ vtki
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
-.. image:: https://img.shields.io/travis/akaszynski/vtki/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/akaszynski/vtki
+.. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
+   :target: https://travis-ci.org/vtkiorg/vtki
 
-.. image:: https://img.shields.io/appveyor/ci/akaszynski/vtkinterface.svg?label=AppVeyor&style=flat&logo=appveyor
-   :target: https://ci.appveyor.com/project/akaszynski/vtkinterface/history
+.. image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
+   :target: https://ci.appveyor.com/project/banesullivan/vtki/history
 
 .. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
    :target: http://docs.vtki.org/
 
-.. image:: https://img.shields.io/github/contributors/akaszynski/vtki.svg?logo=github&logoColor=white
-   :target: https://GitHub.com/akaszynski/vtki/graphs/contributors/
+.. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
+   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
 
-.. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/akaszynski/vtki
+.. image:: https://codecov.io/gh/vtkiorg/vtki/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/vtkiorg/vtki
 
 .. image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
@@ -37,6 +37,14 @@ Documentation
 Refer to the `Read the Docs <http://docs.vtki.org/>`_ documentation for detailed
 installation and usage details.
 
+For general questions about the project, its applications, or about software
+usage, please do not create an issue but join us on Slack_ or send one
+of the developers an email. The project support team can be reached at
+`info@vtki.org`_.
+
+.. _Slack: http://slack.opengeovis.org
+.. _info@vtki.org: mailto:info@vtki.org
+
 
 Installation
 ============
@@ -45,7 +53,7 @@ Installation is simply::
     pip install vtki
 
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
-`GitHub <https://github.com/akaszynski/vtki>`_ to download the source.
+`GitHub <https://github.com/vtkiorg/vtki>`_ to download the source.
 
 See the `Installation <http://docs.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
@@ -79,7 +87,7 @@ Here are a few open-source projects that leverage ``vtki``:
 
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. ``vtki`` is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfvtk_: 3D visualization for the Open Mining Format (omf). ``vtki`` provides the foundation for this libraries visualization.
+* omfvtk_: 3D visualization for the Open Mining Format (omf). ``vtki`` provides the foundation for this library's visualization.
 * discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``vtki`` versions of their data types for `creating compelling visualizations`_.
 * pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library

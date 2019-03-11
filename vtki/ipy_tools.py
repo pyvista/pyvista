@@ -1,6 +1,6 @@
 """
-A set of useful plotting tools and widgets that can be used in a Jupyter
-notebook
+A set of useful plotting tools and widgets that can be used in a
+Jupyter notebook.
 """
 IPY_AVAILABLE = False
 try:
@@ -21,8 +21,9 @@ from vtki.utilities import is_vtki_obj, wrap
 
 
 class ScaledPlotter(vtki.BackgroundPlotter):
-    """An extension of the ``vtki.BackgroundPlotter`` that has interactive
-    widgets for scaling the axes in the rendering scene.
+    """
+    An extension of the ``vtki.BackgroundPlotter`` that has
+    interactive widgets for scaling the axes in the rendering scene.
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
@@ -30,7 +31,7 @@ class ScaledPlotter(vtki.BackgroundPlotter):
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         vtki.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
-        self.continuous_update = continuous_update
+        self.continuous_update = bool(continuous_update)
         self.xslider = widgets.FloatSlider(min=0, max=xscale*2, value=xscale,
                                 continuous_update=self.continuous_update)
         self.yslider = widgets.FloatSlider(min=0, max=yscale*2, value=yscale,
@@ -61,12 +62,16 @@ class ScaledPlotter(vtki.BackgroundPlotter):
                         zscale=self.zslider, **kwargs)
 
 
-
 class InteractiveTool(object):
     """A backend helper for various interactive ipython tools.
     This tool can be added to an active plotter in the background if passed as
     the ``plotter`` argument.
     """
+
+    def __new__(cls, *args, **kwargs):
+        if cls is InteractiveTool:
+            raise TypeError("vtki.InteractiveTool is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
                  show_bounds=False, reset_camera=True, outline=None,
@@ -89,7 +94,8 @@ class InteractiveTool(object):
         if plotter is None:
             plotter = vtki.BackgroundPlotter(**kwargs)
             plotter.setWindowTitle(type(self).__name__)
-        self.plotter = plotter
+        self._plotter = plotter
+        self._loc = plotter.index_to_loc(plotter._active_renderer_index)
 
         # This is the actor that will be removed and re-added to the plotter
         self._data_to_update = None
@@ -124,10 +130,16 @@ class InteractiveTool(object):
         self.tool(default_params=default_params, **kwargs)
 
 
-    def _get_scalar_names(self):
+    def _get_scalar_names(self, limit=None):
         """Only give scalar options that have a varying range"""
         names = []
-        for name in self.input_dataset.scalar_names:
+        if limit == 'point':
+            inpnames = list(self.input_dataset.point_arrays.keys())
+        elif limit == 'cell':
+            inpnames = list(self.input_dataset.cell_arrays.keys())
+        else:
+            inpnames = self.input_dataset.scalar_names
+        for name in inpnames:
             arr = self.input_dataset.get_scalar(name)
             rng = self.input_dataset.get_data_range(name)
             if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
@@ -147,15 +159,18 @@ class InteractiveTool(object):
 
     def _initialize(self, show_bounds, reset_camera, outline):
         """Outlines the input dataset and sets up the scene"""
+        self.plotter.subplot(*self.loc)
         if outline is None:
             self.plotter.add_mesh(self.input_dataset.outline_corners(),
-                    reset_camera=False, color=vtki.rcParams['outline_color'])
+                    reset_camera=False, color=vtki.rcParams['outline_color'],
+                    loc=self.loc)
         elif outline:
             self.plotter.add_mesh(self.input_dataset.outline(),
-                    reset_camera=False, color=vtki.rcParams['outline_color'])
+                    reset_camera=False, color=vtki.rcParams['outline_color'],
+                    loc=self.loc)
         # add the axis labels
         if show_bounds:
-            self.plotter.add_bounds_axes(reset_camera=False)
+            self.plotter.add_bounds_axes(reset_camera=False, loc=loc)
         if reset_camera:
             cpos = self.plotter.get_default_cam_pos()
             self.plotter.camera_position = cpos
@@ -172,6 +187,7 @@ class InteractiveTool(object):
             old = self.display_params['scalars']
             self.display_params['scalars'] = scalars
             if old != scalars:
+                self.plotter.subplot(*self.loc)
                 self.plotter.remove_actor(self._data_to_update, reset_camera=False)
                 self._need_to_update = True
                 self.valid_range = self.input_dataset.get_data_range(scalars)
@@ -179,6 +195,23 @@ class InteractiveTool(object):
         cmap = kwargs.get('cmap', None)
         if cmap is not None:
             self.display_params['cmap'] = cmap
+
+
+    @property
+    def plotter(self):
+        """The active plotter that this tool uses. This must be set upon
+        instantiation
+        """
+        return self._plotter
+
+    @property
+    def loc(self):
+        """The location in the plotter window."""
+        return self._loc
+
+    @property
+    def renderer(self):
+        return self.plotter.renderers[self.loc]
 
 
 
@@ -215,15 +248,20 @@ class OrthogonalSlicer(InteractiveTool):
     display_params : dict
         Any plotting keyword parameters to use
 
+    contour : bool, optional
+        If True, apply a ``contour`` filter after slicing
+
     """
 
-    def tool(self, step=None, generate_triangles=False,
+    def tool(self, step=None, generate_triangles=False, contour=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
+
+        self.contour = contour
 
         x, y, z = self.input_dataset.center
         x = default_params.get("x", x)
@@ -238,9 +276,10 @@ class OrthogonalSlicer(InteractiveTool):
 
         def _update_slice(index, x, y, z):
             name = self.display_params.pop('name')
+            self.plotter.subplot(*self.loc)
             self.plotter.remove_actor(self._data_to_update[index], reset_camera=False)
             self.output_dataset[index] = self.input_dataset.slice(normal=axes[index],
-                    origin=[x,y,z], generate_triangles=generate_triangles)
+                    origin=[x,y,z], generate_triangles=generate_triangles, contour=self.contour)
             self._data_to_update[index] = self.plotter.add_mesh(self.output_dataset[index],
                     reset_camera=False, name='{}-{}'.format(name, index), **self.display_params)
             self._old[index] = [x,y,z][index]
@@ -326,15 +365,20 @@ class ManySlicesAlongAxis(InteractiveTool):
     display_params : dict
         Any plotting keyword parameters to use
 
+    contour : bool, optional
+        If True, apply a ``contour`` filter after slicing
+
     """
 
-    def tool(self, tolerance=None, generate_triangles=False,
+    def tool(self, tolerance=None, generate_triangles=False, contour=False,
              default_params=None, **kwargs):
         if default_params is None:
             default_params = {}
         if self.clean and self.input_dataset.active_scalar is not None:
             # This will clean out the nan values
             self.input_dataset = self.input_dataset.threshold()
+
+        self.contour = contour
 
         n = default_params.get("n", 5)
         axis = default_params.get("axis", "x")
@@ -345,11 +389,12 @@ class ManySlicesAlongAxis(InteractiveTool):
             """Update the slices"""
             if n >= nsl.max:
                 nsl.max *= 2
+            self.plotter.subplot(*self.loc)
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
-            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance, generate_triangles=generate_triangles)
+            self.output_dataset = self.input_dataset.slice_along_axis(n=n, axis=axis, tolerance=tolerance, generate_triangles=generate_triangles, contour=self.contour)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                reset_camera=False, **self.display_params)
+                reset_camera=False, loc=self.loc, **self.display_params)
             self._need_to_update = False
 
         # Create/display the widgets
@@ -450,13 +495,14 @@ class Threshold(InteractiveTool):
                     invert=invert)
 
             # Update the plotter
+            self.plotter.subplot(*self.loc)
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             if self.output_dataset.n_points == 0 and self.output_dataset.n_cells == 0:
                 pass
             else:
                 self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                    reset_camera=False, **self.display_params)
+                    reset_camera=False, loc=self.loc, **self.display_params)
 
             self._need_to_update = False
 
@@ -468,7 +514,7 @@ class Threshold(InteractiveTool):
         del scalars[idx]
         scalars.insert(0, name)
         return interact(update, dmin=minsl, dmax=maxsl,
-                        scalars=self._get_scalar_names(),
+                        scalars=scalars,
                         invert=default_params.get('invert', False),
                         continuous=False)
 
@@ -538,16 +584,117 @@ class Clip(InteractiveTool):
                 self._last_normal = normal
                 _update_slider_ranges(normal)
                 return update(locsl.value, normal, invert, **kwargs)
+            self.plotter.subplot(*self.loc)
             self._update_plotting_params(**kwargs)
             self.plotter.remove_actor(self._data_to_update, reset_camera=False)
             origin = list(self.input_dataset.center)
             origin[axchoices.index(normal)] = location
             self.output_dataset = self.input_dataset.clip(normal=normal, origin=origin, invert=invert)
             self._data_to_update = self.plotter.add_mesh(self.output_dataset,
-                reset_camera=False, **self.display_params)
+                reset_camera=False, loc=self.loc, **self.display_params)
             self._need_to_update = False
 
         # Create/display the widgets
         self._last_normal = 'x'
         return interact(update, location=locsl, normal=axchoices, invert=True,
                         scalars=self._get_scalar_names())
+
+
+
+
+class Isocontour(InteractiveTool):
+    """Create a sinlge iso-value contour of a dataset. Contouring only supports
+    point data attributes.
+    Within ipython enviornments like Jupyter notebooks, this will create
+    an interactive render window with slider bars in the ipython enviornment to
+    contour a volumetric dataset.
+
+    Parameters
+    ----------
+    dataset : vtki.Common
+        The datset to orthogonalally slice
+
+    plotter : vtki.BasePlotter
+        The active plotter (rendering window) to use
+
+    clean : bool, optional
+        This will apply a threshold on the input dataset to remove any NaN
+        values. Default is True if active scalar present.
+
+    scalars : str
+        The name of the scalars to plot
+
+    preference : str, optional
+        The preference for data choice when search for the scalar array
+
+    display_params : dict
+        Any plotting keyword parameters to use
+
+    """
+
+    def tool(self, default_params=None, **kwargs):
+        if default_params is None:
+            default_params = {}
+        preference = self.display_params['preference']
+
+        def _calc_start_value(rng):
+            """Get starting value for slider using a data range"""
+            return ((rng[1] - rng[0]) * 0.5) + rng[0]
+
+        # Now set up the widget
+        start = _calc_start_value(self.valid_range)
+        start = default_params.get("value", start)
+        valsl = widgets.FloatSlider(min=self.valid_range[0],
+                            max=self.valid_range[1],
+                            value=start,
+                            continuous_update=self.continuous_update)
+
+        def _update_slider_range(new_rng):
+            """Updates the slider ranges when switching scalars"""
+            vmin, vmax = np.nanmin([new_rng[0], valsl.min]), np.nanmax([new_rng[1], valsl.max])
+            # Update to the total range
+            valsl.min = vmin
+            valsl.max = vmax
+            start = _calc_start_value(new_rng)
+            valsl.value = start
+            valsl.min = new_rng[0]
+            valsl.max = new_rng[1]
+            return start
+
+
+        def update(value, **kwargs):
+            """Update the contour"""
+            scalars = kwargs.get('scalars')
+
+            # Update the sliders if scalar is changed
+            self.valid_range = self.input_dataset.get_data_range(arr=scalars, preference=preference)
+            if self._last_scalars != scalars:
+                self._last_scalars = scalars
+                # Update to the new range
+                value = _update_slider_range(self.input_dataset.get_data_range(scalars))
+
+            # Run the threshold
+            self.output_dataset = self.input_dataset.contour([value],
+                    scalars=scalars, preference=preference)
+
+            # Update the plotter
+            self.plotter.subplot(*self.loc)
+            self._update_plotting_params(**kwargs)
+            self.plotter.remove_actor(self._data_to_update, reset_camera=False)
+            if self.output_dataset.n_points == 0 and self.output_dataset.n_cells == 0:
+                pass
+            else:
+                self._data_to_update = self.plotter.add_mesh(self.output_dataset,
+                    reset_camera=False, loc=self.loc, **self.display_params)
+
+            self._need_to_update = False
+
+
+        # Create/display the widgets
+        # NOTE: Contour filter can only contour by point data
+        scalars = self._get_scalar_names(limit='point')
+        name = default_params.get("scalars", scalars[0])
+        idx = scalars.index(name)
+        del scalars[idx]
+        scalars.insert(0, name)
+        return interact(update, value=valsl, scalars=scalars)

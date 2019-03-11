@@ -217,6 +217,11 @@ def test_compute_cell_sizes():
         assert isinstance(result, type(dataset))
         assert 'Area' in result.scalar_names
         assert 'Volume' in result.scalar_names
+    # Test the volume property
+    grid = vtki.UniformGrid((10,10,10))
+    volume = float(np.prod(np.array(grid.dimensions) - 1))
+    assert np.allclose(grid.volume, volume)
+
 
 
 def test_cell_centers():
@@ -242,3 +247,51 @@ def test_glyph():
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
+
+
+def test_split_and_connectivity():
+    # Load a simple example mesh
+    dataset = examples.load_uniform()
+    dataset.set_active_scalar('Spatial Cell Data')
+    threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
+
+    bodies = threshed.split_bodies()
+
+    volumes = [518.0, 35.0]
+    assert len(volumes) == bodies.n_blocks
+    for i, body in enumerate(bodies):
+        assert np.allclose(body.volume, volumes[i], rtol=0.1)
+
+
+def test_warp_by_scalar():
+    data = examples.load_uniform()
+    warped = data.warp_by_scalar()
+    assert data.n_points == warped.n_points
+
+
+def test_cell_data_to_point_data():
+    data = examples.load_uniform()
+    foo = data.cell_data_to_point_data()
+    assert foo.n_scalars == 2
+    assert len(foo.cell_arrays.keys()) == 0
+
+
+def test_triangulate():
+    data = examples.load_uniform()
+    tri = data.triangulate()
+    assert isinstance(tri, vtki.UnstructuredGrid)
+    assert np.any(tri.cells)
+
+
+def test_delaunay_3d():
+    data = examples.load_uniform().threshold_percent(30)
+    result = data.delaunay_3d()
+    assert np.any(result.points)
+
+
+def test_smooth():
+    data = examples.load_uniform()
+    vol = data.threshold_percent(30)
+    surf = vol.extract_geometry()
+    smooth = surf.smooth()
+    assert np.any(smooth)

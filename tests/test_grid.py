@@ -245,6 +245,7 @@ def test_load_structured_bad_filename():
 
 
 def test_create_rectilinear_grid_from_specs():
+    # 3D example
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 5)
     zrng = np.arange(-10, 10, 1)
@@ -252,6 +253,14 @@ def test_create_rectilinear_grid_from_specs():
     assert grid.n_cells == 9*3*19
     assert grid.n_points == 10*4*20
     assert grid.bounds == [-10.0,8.0, -10.0,5.0, -10.0,9.0]
+    # 2D example
+    cell_spacings = np.array([1., 1., 2., 2., 5., 10.])
+    x_coordinates = np.cumsum(cell_spacings)
+    y_coordinates = np.cumsum(cell_spacings)
+    grid = vtki.RectilinearGrid(x_coordinates, y_coordinates)
+    assert grid.n_cells == 5*5
+    assert grid.n_points == 6*6
+    assert grid.bounds == [1.,21., 1.,21., 0.,0.]
 
 
 def test_create_rectilinear_grid_from_file():

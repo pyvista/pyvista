@@ -64,6 +64,11 @@ def _generate_plane(normal, origin):
 class DataSetFilters(object):
     """A set of common filters that can be applied to any vtkDataSet"""
 
+    def __new__(cls, *args, **kwargs):
+        if cls is DataSetFilters:
+            raise TypeError("vtki.DataSetFilters is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
+
 
     def clip(dataset, normal='x', origin=None, invert=True):
         """
@@ -145,7 +150,8 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg, oport=port)
 
-    def slice(dataset, normal='x', origin=None, generate_triangles=False):
+    def slice(dataset, normal='x', origin=None, generate_triangles=False,
+              contour=False):
         """Slice a dataset by a plane at the specified origin and normal vector
         orientation. If no origin is specified, the center of the input dataset will
         be used.
@@ -164,6 +170,9 @@ class DataSetFilters(object):
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -181,10 +190,14 @@ class DataSetFilters(object):
         if not generate_triangles:
             alg.GenerateTrianglesOff()
         alg.Update() # Perfrom the Cut
-        return _get_output(alg)
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
+        return output
 
 
-    def slice_orthogonal(dataset, x=None, y=None, z=None, generate_triangles=False):
+    def slice_orthogonal(dataset, x=None, y=None, z=None,
+                         generate_triangles=False, contour=False):
         """Creates three orthogonal slices through the dataset on the three
         caresian planes. Yields a MutliBlock dataset of the three slices
 
@@ -203,6 +216,9 @@ class DataSetFilters(object):
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
 
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
         """
         output = vtki.MultiBlock()
         # Create the three slices
@@ -218,7 +234,8 @@ class DataSetFilters(object):
         return output
 
 
-    def slice_along_axis(dataset, n=5, axis='x', tolerance=None, generate_triangles=False):
+    def slice_along_axis(dataset, n=5, axis='x', tolerance=None,
+                         generate_triangles=False, contour=False):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -237,6 +254,9 @@ class DataSetFilters(object):
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
 
         """
         axes = {'x':0, 'y':1, 'z':2}
@@ -257,7 +277,8 @@ class DataSetFilters(object):
         # Make each of the slices
         for i in range(n):
             center[ax] = rng[i]
-            slc = DataSetFilters.slice(dataset, normal=axis, origin=center, generate_triangles=generate_triangles)
+            slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
+                    generate_triangles=generate_triangles, contour=contour)
             output[i, 'slice%.2d'%i] = slc
         return output
 
@@ -666,7 +687,7 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def cell_centers(self, vertex=True):
+    def cell_centers(dataset, vertex=True):
         """Generate points at the center of the cells in this dataset.
         These points can be used for placing glyphs / vectors.
 
@@ -676,14 +697,14 @@ class DataSetFilters(object):
             Enable/disable the generation of vertex cells.
         """
         alg = vtk.vtkCellCenters()
-        alg.SetInputDataObject(self)
+        alg.SetInputDataObject(dataset)
         alg.SetVertexCells(vertex)
         alg.Update()
         output = _get_output(alg)
         return output
 
 
-    def glyph(self, orient=True, scale=True, factor=1.0, geom=None):
+    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None):
         """
         Copies a geometric representation (called a glyph) to every
         point in the input dataset.  The glyph may be oriented along
@@ -711,16 +732,166 @@ class DataSetFilters(object):
         alg = vtk.vtkGlyph3D()
         alg.SetSourceData(geom)
         if isinstance(scale, str):
-            self.active_scalar_name = scale
+            dataset.active_scalar_name = scale
             scale = True
         if scale:
             alg.SetScaleModeToScaleByScalar()
         if isinstance(orient, str):
-            self.active_vectors_name = orient
+            dataset.active_vectors_name = orient
             orient = True
         alg.SetOrient(orient)
-        alg.SetInputData(self)
+        alg.SetInputData(dataset)
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def connectivity(dataset):
+        """Find and label connected bodies/volumes. This adds an ID array to
+        the point and cell data to distinguish seperate connected bodies.
+        This applies a ``vtkConnectivityFilter`` filter which extracts cells
+        that share common points and/or meet other connectivity criterion.
+        (Cells that share vertices and meet other connectivity criterion such
+        as scalar range are known as a region.)
+        """
+        alg = vtk.vtkConnectivityFilter()
+        alg.SetInputData(dataset)
+        alg.SetExtractionModeToAllRegions()
+        alg.SetColorRegions(True)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def split_bodies(dataset, label=False):
+        """Find, label, and split connected bodies/volumes. This splits
+        different connected bodies into blocks in a MultiBlock dataset.
+
+        Parameters
+        ----------
+        label : bool
+            A flag on whether to keep the ID arrays given by the
+            ``connectivity`` filter.
+        """
+        # Get the connectivity and label different bodies
+        labeled = dataset.connectivity()
+        classifier = labeled.cell_arrays['RegionId']
+        bodies = vtki.MultiBlock()
+        for vid in np.unique(classifier):
+            # Now extract it:
+            b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId')
+            if not label:
+                del b.cell_arrays['RegionId']
+                del b.point_arrays['RegionId']
+            bodies.append(b)
+
+        return bodies
+
+
+    def warp_by_scalar(dataset, scalars=None, scale_factor=1.0, normal=None,
+                       in_place=False):
+        """
+        Warp the dataset's points by a point data scalar array's values.
+        This modifies point coordinates by moving points along point normals by
+        the scalar amount times the scale factor.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to warb by. Defaults to currently active scalars.
+
+        scale_factor : float, optional
+            A scalaing factor to increase the scaling effect
+
+        normal : np.array, list, tuple of length 3
+            User specified normal. If given, data normals will be ignored and
+            the given normal will be used to project the warp.
+
+        in_place : bool
+            If True, the points of the give dataset will be updated.
+        """
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        arr, field = get_scalar(dataset, scalars, preference='point', info=True)
+        if field != vtki.POINT_DATA_FIELD:
+            raise AssertionError('Dataset can only by warped by a point data array.')
+        # Run the algorithm
+        alg = vtk.vtkWarpScalar()
+        alg.SetInputDataObject(dataset)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetScaleFactor(scale_factor)
+        if normal is not None:
+            alg.SetNormal(normal)
+            alg.SetUseNormal(True)
+        alg.Update()
+        output = _get_output(alg)
+        if in_place:
+            dataset.points = output.points
+            return
+        return output
+
+
+    def cell_data_to_point_data(dataset, pass_cell_data=False):
+        """Transforms cell data (i.e., data specified per cell) into point data
+        (i.e., data specified at cell points).
+        The method of transformation is based on averaging the data values of
+        all cells using a particular point. Optionally, the input cell data can
+        be passed through to the output as well.
+
+        Parameters
+        ----------
+        pass_cell_data : bool
+            If enabled, pass the input cell data through to the output
+        """
+        alg = vtk.vtkCellDataToPointData()
+        alg.SetInputDataObject(dataset)
+        alg.SetPassCellData(pass_cell_data)
+        alg.Update()
+        return _get_output(alg, active_scalar=dataset.active_scalar_name)
+
+
+    def triangulate(dataset):
+        """
+        Returns an all triangle mesh.  More complex polygons will be broken
+        down into triangles.
+
+        Returns
+        -------
+        mesh : vtki.UnstructuredGrid
+            Mesh containing only triangles.
+
+        """
+        alg = vtk.vtkDataSetTriangleFilter()
+        alg.SetInputData(dataset)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5):
+        """Constructs a 3D Delaunay triangulation of the mesh.
+        This helps smooth out a rugged mesh.
+
+        Parameters
+        ----------
+        alpha : float, optional
+            Distance value to control output of this filter. For a non-zero
+            alpha value, only verts, edges, faces, or tetra contained within
+            the circumsphere (of radius alpha) will be output. Otherwise, only
+            tetrahedra will be output.
+
+        tol : float, optional
+            tolerance to control discarding of closely spaced points.
+            This tolerance is specified as a fraction of the diagonal length
+            of the bounding box of the points.
+
+        offset : float, optional
+            multiplier to control the size of the initial, bounding Delaunay
+            triangulation.
+        """
+        alg = vtk.vtkDelaunay3D()
+        alg.SetInputData(dataset)
+        alg.SetAlpha(alpha)
+        alg.SetTolerance(tol)
+        alg.SetOffset(offset)
         alg.Update()
         return _get_output(alg)

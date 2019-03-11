@@ -17,7 +17,6 @@ else:
     OFF_SCREEN = False
 
 
-
 sphere = vtki.Sphere()
 sphere_b = vtki.Sphere(1.0)
 sphere_c = vtki.Sphere(2.0)
@@ -42,7 +41,7 @@ def test_plot(tmpdir):
                           flip_scalars=True,
                           cmap='bwr',
                           interpolate_before_map=True,
-                          screenshot=filename)
+                          screenshot=filename, return_img=True)
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
@@ -78,6 +77,12 @@ def test_set_camera_position():
 
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
+    plotter.camera_position = 'xy'
+    plotter.camera_position = 'xz'
+    plotter.camera_position = 'yz'
+    plotter.camera_position = 'yx'
+    plotter.camera_position = 'zx'
+    plotter.camera_position = 'zy'
     plotter.camera_position = cpos
     cpos_out = plotter.plot()
     assert cpos_out == cpos
@@ -102,7 +107,15 @@ def test_plot_add_bounds_axes():
                             show_zaxis=False,
                             show_xlabels=False,
                             show_ylabels=False,
-                            show_zlabels=False)
+                            show_zlabels=False,
+                            use_2d=True)
+    plotter.plot()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_label_fmt():
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.add_bounds_axes(xlabel='My X', fmt=r'%.3f')
     plotter.plot()
 
 
@@ -256,7 +269,7 @@ def test_key_press_event():
 def test_left_button_down():
     plotter = vtki.Plotter()
     plotter.left_button_down(None, None)
-    assert np.allclose(plotter.pickpoint, [0, 0, 0])
+    # assert np.allclose(plotter.pickpoint, [0, 0, 0])
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
@@ -397,7 +410,7 @@ def test_plot_texture_associated():
     plotter.plot()
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
-def test_load_texture_from_numpy():
+def test_read_texture_from_numpy():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
     texture = vtki.numpy_to_texture(imageio.imread(examples.mapfile))
@@ -407,9 +420,106 @@ def test_load_texture_from_numpy():
 
 
 @pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_rgb():
+    """"Test adding a texture to a plot"""
+    image = vtki.read(examples.mapfile)
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(image, rgb=True)
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_plot_multi_component_array():
+    """"Test adding a texture to a plot"""
+    image = vtki.read(examples.mapfile)
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(image)
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
 def test_camera():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.isometric_view()
     plotter.reset_camera()
+    plotter.view_xy()
+    plotter.view_xz()
+    plotter.view_yz()
+    plotter.add_mesh(examples.load_uniform(), reset_camera=True, backface_culling=True)
+    plotter.view_xy(True)
+    plotter.view_xz(True)
+    plotter.view_yz(True)
+    plotter.show()
+    plotter.camera_position = None
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_multi_renderers():
+    plotter = vtki.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
+
+    loc = (0, 0)
+    plotter.add_text('Render Window 0', loc=loc, font_size=30)
+    sphere = vtki.Sphere()
+    plotter.add_mesh(sphere, loc=loc, scalars=sphere.points[:, 2])
+    plotter.add_scalar_bar('Z', vertical=True)
+
+    loc = (0, 1)
+    plotter.add_text('Render Window 1', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Cube(), loc=loc, show_edges=True)
+
+    loc = (1, 0)
+    plotter.add_text('Render Window 2', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Arrow(), color='y', loc=loc, show_edges=True)
+
+    plotter.subplot(1, 1)
+    plotter.add_text('Render Window 3', loc=loc, font_size=30)
+    plotter.add_mesh(vtki.Cone(), color='g', loc=loc, show_edges=True,
+                     backface_culling=True)
+    plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
+    plotter.add_bounds_axes(all_edges=True)
+
+    plotter.update_bounds_axes()
+    plotter.plot()
+
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_orthographic_slicer():
+    data = examples.load_uniform()
+    data.set_active_scalar('Spatial Cell Data')
+
+    slices = data.slice_orthogonal()
+
+    # Orthographic Slicer
+    p = vtki.Plotter(shape=(2,2), off_screen=OFF_SCREEN)
+
+    p.subplot(1,1)
+    p.add_mesh(slices, clim=data.get_data_range())
+    p.add_axes()
+    p.enable()
+
+    p.subplot(0,0)
+    p.add_mesh(slices['XY'])
+    p.view_xy()
+    p.disable()
+
+    p.subplot(0,1)
+    p.add_mesh(slices['XZ'])
+    p.view_xz(negative=True)
+    p.disable()
+
+    p.subplot(1,0)
+    p.add_mesh(slices['YZ'])
+    p.view_yz()
+    p.disable()
+
+    p.show()
+
+@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+def test_remove_actor():
+    data = examples.load_uniform()
+    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(data, name='data')
+    plotter.add_mesh(data, name='data')
+    plotter.add_mesh(data, name='data')
     plotter.show()

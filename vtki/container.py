@@ -11,6 +11,7 @@ import numpy as np
 import vtk
 from vtk import vtkMultiBlockDataSet
 
+import vtki
 from vtki import plot
 from vtki.utilities import get_scalar, is_vtki_obj, wrap
 
@@ -89,7 +90,7 @@ class MultiBlock(vtkMultiBlockDataSet):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
         # Extensions: .vtm and .vtmb
 
         # Select reader
@@ -126,7 +127,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         file size.
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
         else:
@@ -251,6 +252,14 @@ class MultiBlock(vtkMultiBlockDataSet):
         if meta is not None:
             return meta.Get(vtk.vtkCompositeDataSet.NAME())
         return None
+
+
+    def keys(self):
+        """Get all the block names in the dataset"""
+        names = []
+        for i in range(self.n_blocks):
+            names.append(self.get_block_name(i))
+        return names
 
 
     def __setitem__(self, index, data):
@@ -380,4 +389,17 @@ class MultiBlock(vtkMultiBlockDataSet):
         fmt += "</table>\n"
         fmt += "\n"
         fmt += "</td></tr> </table>"
+        return fmt
+
+
+    def __repr__(self):
+        # return a string that is Python console friendly
+        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
+        # now make a call on the object to get its attributes as a list of len 2 tuples
+        row = "  {}:\t{}\n"
+        for attr in self._get_attrs():
+            try:
+                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+            except:
+                fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt

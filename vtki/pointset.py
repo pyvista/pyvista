@@ -98,6 +98,11 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             raise TypeError('Invalid input type')
 
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
+
     def _load_file(self, filename):
         """
         Load a surface mesh from a mesh file.
@@ -121,7 +126,7 @@ class PolyData(vtkPolyData, vtki.Common):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = os.path.splitext(filename)[1].lower()
+        ext = vtki.get_ext(filename)
 
         # Select reader
         if ext == '.ply':
@@ -130,10 +135,12 @@ class PolyData(vtkPolyData, vtki.Common):
             reader = vtk.vtkSTLReader()
         elif ext == '.vtk':
             reader = vtk.vtkPolyDataReader()
+        elif ext == '.vtp':
+            reader = vtk.vtkXMLPolyDataReader()
         elif ext == '.obj':
             reader = vtk.vtkOBJReader()
         else:
-            raise TypeError('Filetype must be either "ply", "stl", or "vtk"')
+            raise TypeError('Filetype must be either "ply", "stl", "vtk", "vtp", or "obj".')
 
         # Load file
         reader.SetFileName(filename)
@@ -143,6 +150,27 @@ class PolyData(vtkPolyData, vtki.Common):
         # sanity check
         if not np.any(self.points):
             raise AssertionError('Empty or invalid file')
+
+    @property
+    def lines(self):
+        return vtk_to_numpy(self.GetLines().GetData())
+
+    @lines.setter
+    def lines(self, lines):
+        if lines.dtype != vtki.ID_TYPE:
+            lines = lines.astype(vtki.ID_TYPE)
+
+        # get number of faces
+        if lines.ndim == 1:
+            div = lines.size / 3.0
+            assert not div % 1, 'Invalid lines array'
+            nlines = int(div)
+        else:
+            nlines = lines.shape[0]
+
+        vtkcells = vtk.vtkCellArray()
+        vtkcells.SetCells(nlines, numpy_to_vtkIdTypeArray(lines, deep=False))
+        self.SetLines(vtkcells)
 
     @property
     def faces(self):
@@ -472,10 +500,18 @@ class PolyData(vtkPolyData, vtki.Common):
         file size.
         """
         filename = os.path.abspath(os.path.expanduser(filename))
+        file_mode = True
         # Check filetype
         ftype = filename[-3:]
         if ftype == 'ply':
             writer = vtk.vtkPLYWriter()
+        elif ftype == 'vtp':
+            writer = vtk.vtkXMLPolyDataWriter()
+            file_mode = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         elif ftype == 'stl':
             writer = vtk.vtkSTLWriter()
         elif ftype == 'vtk':
@@ -485,9 +521,9 @@ class PolyData(vtkPolyData, vtki.Common):
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary:
+        if binary and file_mode:
             writer.SetFileTypeToBinary()
-        else:
+        elif file_mode:
             writer.SetFileTypeToASCII()
         writer.Write()
 
@@ -541,6 +577,28 @@ class PolyData(vtkPolyData, vtki.Common):
             self.overwrite(trifilter.GetOutput())
         else:
             return PolyData(trifilter.GetOutput())
+
+
+    def smooth(self, n_iter=20, convergence=0.0):
+        """Adjust point coordinates using Laplacian smoothing.
+        The effect is to "relax" the mesh, making the cells better shaped and
+        the vertices more evenly distributed.
+
+        Parameters
+        ----------
+        n_iter : int
+            number of iterations for Laplacian smoothing,
+
+        conversion : float, optional
+            convergence criterion for the iteration process. Smaller numbers
+            result in more smoothing iterations. Range from (0 to 1).
+        """
+        alg = vtk.vtkSmoothPolyDataFilter()
+        alg.SetInputData(self)
+        alg.SetNumberOfIterations(n_iter)
+        alg.SetConvergence(convergence)
+        alg.Update()
+        return _get_output(alg)
 
     def tube(self, radius=None, scalars=None, capping=True, n_sides=20,
              radius_factor=10, preference='point'):
@@ -867,13 +925,13 @@ class PolyData(vtkPolyData, vtki.Common):
         Parameters
         ----------
         cell_normals : bool, optional
-            Calculation of cell normals. Defaults to False.
+            Calculation of cell normals. Defaults to True.
 
         point_normals : bool, optional
             Calculation of point normals. Defaults to True.
 
         split_vertices : bool, optional
-            Splitting of sharp edges. Defaults to True.
+            Splitting of sharp edges. Defaults to False.
 
         flip_normals : bool, optional
             Set global flipping of normal orientation. Flipping modifies both
@@ -905,7 +963,7 @@ class PolyData(vtkPolyData, vtki.Common):
             edge is considered "sharp". Defaults to 30.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing.
+            Updates mesh in-place while returning nothing. Defaults to True.
 
         Returns
         -------
@@ -937,10 +995,16 @@ class PolyData(vtkPolyData, vtki.Common):
         normal.SetInputData(self)
         normal.Update()
 
+        output = normal.GetOutput()
+        if point_normals:
+            output.GetPointData().SetActiveNormals('Normals')
+        if cell_normals:
+            output.GetCellData().SetActiveNormals('Normals')
+
         if inplace:
-            self.overwrite(normal.GetOutput())
+            self.overwrite(output)
         else:
-            return PolyData(normal.GetOutput())
+            return PolyData(output)
 
     @property
     def point_normals(self):
@@ -1152,7 +1216,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         """
         mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self)
+        mprop.SetInputData(self.tri_filter())
         return mprop.GetVolume()
 
     @property
@@ -1239,9 +1303,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     def plot_boundaries(self, **kwargs):
         """ Plots boundaries of a mesh """
-        edges = self.extract_edges(non_manifold_edges=False,
-                                   feature_edges=False,
-                                   manifold_edges=False)
+        edges = self.extract_edges()
 
         plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
@@ -1360,17 +1422,27 @@ class PolyData(vtkPolyData, vtki.Common):
         f = self.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
 
-    def delauney_2d(self):
-        """Apply a Delauney 2D filter along the best fitting plane"""
+    def delaunay_2d(self):
+        """Apply a delaunay 2D filter along the best fitting plane"""
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(self)
         alg.Update()
         return _get_output(alg)
 
+    def delauney_2d(self):
+        """DEPRECATED. Please see :func:`vtki.PolyData.delaunay_2d`"""
+        raise AttributeError('`delauney_2d` is deprecated because we made a '\
+                             'spelling mistake. Please use `delaunay_2d`.')
+
 
 class PointGrid(vtki.Common):
     """ Class in common with structured and unstructured grids """
+
+    def __new__(cls, *args, **kwargs):
+        if cls is PointGrid:
+            raise TypeError("vtki.PointGrid is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         super(PointGrid, self).__init__()
@@ -1562,6 +1634,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             else:
                 raise Exception('All input types must be np.ndarray')
 
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
+
     def overwrite(self, grid):
         """
         Overwrites the old grid data with the new grid data
@@ -1728,18 +1805,22 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkUnstructuredGridWriter()
-            legacy = True
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
         elif '.vtu' in filename:
             writer = vtk.vtkXMLUnstructuredGridWriter()
-            legacy = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         else:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
-        writer.Write()
+        return writer.Write()
 
     @property
     def cells(self):
@@ -1977,6 +2058,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         else:
             return merged
 
+    def delaunay_2d(self):
+        """Apply a delaunay 2D filter along the best fitting plane. This
+        extracts the grid's points and perfoms the triangulation on those alone.
+        """
+        return PolyData(self.points).delaunay_2d()
+
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
     """
@@ -2029,6 +2116,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
+
+
+    def __repr__(self):
+        return vtki.Common.__repr__(self)
+
 
     def _from_arrays(self, x, y, z):
         """
@@ -2129,18 +2221,22 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         # Use legacy writer if vtk is in filename
         if '.vtk' in filename:
             writer = vtk.vtkStructuredGridWriter()
-            legacy = True
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
         elif '.vts' in filename:
             writer = vtk.vtkXMLStructuredGridWriter()
-            legacy = False
+            if binary:
+                writer.SetDataModeToBinary()
+            else:
+                writer.SetDataModeToAscii()
         else:
             raise Exception('Extension should be either ".vts" (xml) or' +
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property

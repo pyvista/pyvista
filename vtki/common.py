@@ -20,11 +20,16 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class Common(DataSetFilters):
+class Common(DataSetFilters, object):
     """ Methods in common to grid and surface objects"""
 
     # Simply bind vtki.plotting.plot to the object
     plot = vtki.plot
+
+    def __new__(cls, *args, **kwargs):
+        if cls is Common:
+            raise TypeError("vtki.Common is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         self.references = []
@@ -214,10 +219,14 @@ class Common(DataSetFilters):
         ------
         vtk.vtkTexture : The active texture
         """
-        if name == True:
+        if name == True or isinstance(name, int):
+            keys = list(mesh.textures.keys())
             # Grab the first name availabe if True
+            idx = 0 if not isinstance(name, int) or name == True else name
+            if idx > len(keys):
+                idx = 0
             try:
-                name = list(mesh.textures.keys())[0]
+                name = keys[idx]
             except IndexError:
                 logging.warning('No textures associated with input mesh.')
                 return None
@@ -234,6 +243,7 @@ class Common(DataSetFilters):
                 old_tcoord = mesh.GetPointData().GetTCoords()
                 mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(name))
                 mesh.GetPointData().AddArray(old_tcoord)
+                mesh.Modified()
         return texture
 
     def set_active_scalar(self, name, preference='cell'):
@@ -650,6 +660,20 @@ class Common(DataSetFilters):
         if hasattr(self, 'GetExtent'):
             return list(self.GetExtent())
 
+    @property
+    def volume(self):
+        """
+        Mesh volume
+
+        Returns
+        -------
+        volume : float
+            Total volume of the mesh.
+
+        """
+        sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
+        return np.sum(sizes.cell_arrays['Volume'])
+
     def get_data_range(self, arr=None, preference='cell'):
         """Get the non-NaN min and max of a named scalar array
 
@@ -711,6 +735,8 @@ class Common(DataSetFilters):
         attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3e}, {:.3e}"))
         attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3e}, {:.3e}"))
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
+        if self.n_cells <= vtki.REPR_VOLUME_MAX_CELLS:
+            attrs.append(("Volume", (self.volume), "{:.3e}"))
         return attrs
 
 
@@ -798,6 +824,11 @@ class Common(DataSetFilters):
             fmt += "\n"
             fmt += "</td></tr> </table>"
         return fmt
+
+
+    def __repr__(self):
+        """Object representation"""
+        return self.head(display=False)
 
 
 class _ScalarsDict(dict):

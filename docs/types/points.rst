@@ -152,21 +152,24 @@ vtki supports single line segment ray tracing.
 .. image:: ../images/intersection_sphere.png
 
 
-Simple Geometric Objects
-------------------------
-vtki includes a few functions to generate simple geometric surfaces.
-
-.. autofunction:: vtki.geometric_objects.Sphere
-.. autofunction:: vtki.geometric_objects.Cylinder
-.. autofunction:: vtki.geometric_objects.Arrow
-.. autofunction:: vtki.geometric_objects.Plane
-
 
 vtki.PolyData Grid Class Methods
 ----------------------------------------
 The following is a description of the methods available to a ``vtki.PolyData``
 object.  It inherits all methods from the original vtk object,
 `vtk.vtkPolyData <https://www.vtk.org/doc/nightly/html/classvtkPolyData.html>`_.
+
+
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.PolyData
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.PolyData
+   :methods:
 
 .. autoclass:: vtki.PolyData
    :show-inheritance:
