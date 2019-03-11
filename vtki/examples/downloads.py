@@ -93,6 +93,8 @@ def download_topo_global():
 def download_topo_land():
     return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp')
 
-
 def download_coastlines():
     return _download_and_read('EarthModels/Coastlines_Los_Alamos.vtp')
+
+def download_knee():
+    return _download_and_read('DICOM_KNEE.dcm')
