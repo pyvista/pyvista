@@ -10,7 +10,6 @@ from subprocess import PIPE, Popen
 
 import imageio
 import numpy as np
-import PIL.Image
 import vtk
 from vtk.util import numpy_support as VN
 
@@ -2666,6 +2665,8 @@ class Plotter(BasePlotter):
                 import IPython
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
+
+            import PIL.Image
             disp = IPython.display.display(PIL.Image.fromarray(img))
 
         if auto_close:
