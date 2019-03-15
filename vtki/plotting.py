@@ -853,7 +853,9 @@ class BasePlotter(object):
                     from matplotlib.cm import get_cmap
                 except ImportError:
                     raise Exception('cmap requires matplotlib')
-                cmap = get_cmap(cmap)
+                if isinstance(cmap, str):
+                    cmap = get_cmap(cmap)
+                    # ELSE: assume cmap is callable
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
                 if flip_scalars:
