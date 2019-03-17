@@ -1754,6 +1754,9 @@ class BasePlotter(object):
             self.ren_win.Finalize()
             del self.ren_win
 
+        if hasattr(self, '_style'):
+            del self._style
+
         if hasattr(self, 'iren'):
             self.iren.RemoveAllObservers()
             del self.iren
