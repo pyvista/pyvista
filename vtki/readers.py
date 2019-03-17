@@ -23,7 +23,8 @@ READERS = {
     # Image formats:
     '.bmp': vtk.vtkBMPReader,
     '.dem': vtk.vtkDEMReader,
-    #'.dcm': vtk.vtkDICOMImageReader, # TODO: not tested and not working
+    '.dcm': vtk.vtkDICOMImageReader,
+    '.img': vtk.vtkDICOMImageReader,
     '.jpeg': vtk.vtkJPEGReader,
     '.jpg': vtk.vtkJPEGReader,
     '.mhd': vtk.vtkMetaImageReader,

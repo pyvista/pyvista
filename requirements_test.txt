@@ -1,0 +1,7 @@
+pytest
+pytest-cov
+codecov
+PyQt5==5.11.3
+pytest-qt
+nbval
+ipywidgets

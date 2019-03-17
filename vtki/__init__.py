@@ -27,6 +27,7 @@ from vtki.ipy_tools import ManySlicesAlongAxis
 from vtki.ipy_tools import Threshold
 from vtki.ipy_tools import Clip
 from vtki.ipy_tools import ScaledPlotter
+from vtki.ipy_tools import Isocontour
 
 import numpy as np
 import vtk
@@ -46,3 +47,6 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
 TESTING_OFFSCREEN = False
+
+# A threshold for the max cells to compute a volume for when repr-ing
+REPR_VOLUME_MAX_CELLS = 1e6

@@ -219,10 +219,14 @@ class Common(DataSetFilters, object):
         ------
         vtk.vtkTexture : The active texture
         """
-        if name == True:
+        if name == True or isinstance(name, int):
+            keys = list(mesh.textures.keys())
             # Grab the first name availabe if True
+            idx = 0 if not isinstance(name, int) or name == True else name
+            if idx > len(keys):
+                idx = 0
             try:
-                name = list(mesh.textures.keys())[0]
+                name = keys[idx]
             except IndexError:
                 logging.warning('No textures associated with input mesh.')
                 return None
@@ -239,6 +243,7 @@ class Common(DataSetFilters, object):
                 old_tcoord = mesh.GetPointData().GetTCoords()
                 mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(name))
                 mesh.GetPointData().AddArray(old_tcoord)
+                mesh.Modified()
         return texture
 
     def set_active_scalar(self, name, preference='cell'):
@@ -730,7 +735,8 @@ class Common(DataSetFilters, object):
         attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3e}, {:.3e}"))
         attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3e}, {:.3e}"))
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
-        attrs.append(("Volume", (self.volume), "{:.3e}"))
+        if self.n_cells <= vtki.REPR_VOLUME_MAX_CELLS:
+            attrs.append(("Volume", (self.volume), "{:.3e}"))
         return attrs
 
 

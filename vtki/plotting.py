@@ -10,7 +10,6 @@ from subprocess import PIPE, Popen
 
 import imageio
 import numpy as np
-import PIL.Image
 import vtk
 from vtk.util import numpy_support as VN
 
@@ -91,6 +90,13 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'orange'
         rcParams['outline_color'] = 'black'
+    elif theme.lower() in ['night', 'dark']:
+        rcParams['background'] = 'black'
+        rcParams['cmap'] = 'viridis'
+        rcParams['font']['color'] = 'white'
+        rcParams['show_edges'] = False
+        rcParams['color'] = 'orange'
+        rcParams['outline_color'] = 'white'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
@@ -111,6 +117,21 @@ def _raise_not_matching(scalars, mesh):
                     '(%d) ' % mesh.GetNumberOfPoints() +
                     'or the number of cells ' +
                     '(%d) ' % mesh.GetNumberOfCells())
+
+
+def opacity_transfer_function(key, n_colors):
+    """Get the opacity transfer function results: range from 0 to 255
+    """
+    transfer_func = {
+        'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
+        'linear_r': np.linspace(0, 255, n_colors, dtype=np.uint8)[::-1],
+        'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
+        'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
+    }
+    try:
+        return transfer_func[key]
+    except KeyError:
+        raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
 
 
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
@@ -143,7 +164,8 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         Window size in pixels.  Defaults to [1024, 768]
 
     show_bounds : bool, optional
-        Shows mesh bounds when True.  Default False.
+        Shows mesh bounds when True.  Default False. Alias ``show_grid`` also
+        accepted.
 
     notebook : bool, optional
         When True, the resulting plot is placed inline a jupyter notebook.
@@ -200,7 +222,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     if text:
         plotter.add_text(text)
 
-    if show_bounds:
+    if show_bounds or kwargs.get('show_grid', False):
         plotter.add_bounds_axes()
 
     if cpos is None:
@@ -503,7 +525,7 @@ class BasePlotter(object):
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
                  rng=None, stitle=None, show_edges=None,
-                 point_size=5.0, opacity=1, line_width=None,
+                 point_size=5.0, opacity=1.0, line_width=None,
                  flip_scalars=False, lighting=None, n_colors=256,
                  interpolate_before_map=False, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None,
@@ -567,7 +589,13 @@ class BasePlotter(object):
             Point size.  Applicable when style='points'.  Default 5.0
 
         opacity : float, optional
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+            Opacity of mesh.  Should be between 0 and 1.  Default 1.0.
+            A string option can also be specified to map the scalar range
+            to the opacity. Options are:
+                linear
+                linear_r
+                geom
+                geom_r
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
@@ -761,13 +789,13 @@ class BasePlotter(object):
                     if stitle is None:
                         stitle = mesh.active_scalar_info[1]
 
-        if texture == True or isinstance(texture, str):
+        if texture == True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
 
         if texture:
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
-            if not isinstance(texture, vtk.vtkTexture):
+            if not isinstance(texture, (vtk.vtkTexture, vtk.vtkOpenGLTexture)):
                 raise TypeError('Invalid texture type ({})'.format(type(texture)))
             if mesh.GetPointData().GetTCoords() is None:
                 raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
@@ -775,7 +803,9 @@ class BasePlotter(object):
             # Set color to white by default when using a texture
             if color is None:
                 color = 'white'
-
+            if scalars is None:
+                show_scalar_bar = False
+            self.mapper.SetScalarModeToUsePointFieldData()
 
         # Scalar formatting ===================================================
         if cmap is None:
@@ -844,18 +874,23 @@ class BasePlotter(object):
                     from matplotlib.cm import get_cmap
                 except ImportError:
                     raise Exception('cmap requires matplotlib')
-                cmap = get_cmap(cmap)
+                if isinstance(cmap, str):
+                    cmap = get_cmap(cmap)
+                    # ELSE: assume cmap is callable
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
+                # Set opactities
+                if isinstance(opacity, str):
+                    ctable[:,-1] = opacity_transfer_function(opacity, n_colors)
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
 
             else:  # no cmap specified
                 if flip_scalars:
-                    self.mapper.GetLookupTable().SetHueRange(0.0, 0.66667)
+                    table.SetHueRange(0.0, 0.66667)
                 else:
-                    self.mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
+                    table.SetHueRange(0.66667, 0.0)
 
         else:
             self.mapper.SetScalarModeToUseFieldData()
@@ -886,7 +921,8 @@ class BasePlotter(object):
 
         rgb_color = parse_color(color)
         prop.SetColor(rgb_color)
-        prop.SetOpacity(opacity)
+        if isinstance(opacity, (float, int)):
+            prop.SetOpacity(opacity)
         prop.SetEdgeColor(parse_color(edge_color))
 
         if render_points_as_spheres:
@@ -1115,7 +1151,7 @@ class BasePlotter(object):
                         bold=True, shadow=False, font_size=None,
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=True, grid=None, location='closest', ticks=None,
+                        use_2d=False, grid=None, location='closest', ticks=None,
                         all_edges=False, corner_factor=0.5, fmt=None,
                         minor_ticks=False, loc=None):
         """
@@ -1383,7 +1419,7 @@ class BasePlotter(object):
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
-                       interactive=False):
+                       interactive=False, fmt=None):
         """
         Creates scalar bar using the ranges as set by the last input
         mesh.
@@ -1455,6 +1491,8 @@ class BasePlotter(object):
             title_font_size = rcParams['font']['title_size']
         if color is None:
             color = rcParams['font']['color']
+        if fmt is None:
+            fmt = rcParams['font']['fmt']
         # Automatically choose size if not specified
         if width is None:
             if vertical:
@@ -1532,6 +1570,9 @@ class BasePlotter(object):
         self.scalar_bar.SetHeight(height)
         self.scalar_bar.SetWidth(width)
         self.scalar_bar.SetPosition(position_x, position_y)
+
+        if fmt is not None:
+            self.scalar_bar.SetLabelFormat(fmt)
 
         if vertical:
             self.scalar_bar.SetOrientationToVertical()
@@ -1728,7 +1769,7 @@ class BasePlotter(object):
 
         position : tuple(float)
             Length 2 tuple of the pixelwise position to place the bottom
-            left corner of the text box. Default is to find the top right corner
+            left corner of the text box. Default is to find the top left corner
             of the renderering window and place text box up there.
 
         font : string, optional
@@ -2228,6 +2269,21 @@ class BasePlotter(object):
     @camera_position.setter
     def camera_position(self, camera_location):
         """ Set camera position of the active render window """
+        if isinstance(camera_location, str):
+            camera_location = camera_location.lower()
+            if camera_location == 'xy':
+                self.view_xy()
+            elif camera_location == 'xz':
+                self.view_xz()
+            elif camera_location == 'yz':
+                self.view_yz()
+            elif camera_location == 'yx':
+                self.view_xy(True)
+            elif camera_location == 'zx':
+                self.view_xz(True)
+            elif camera_location == 'zy':
+                self.view_yz(True)
+            return
         self.renderer.camera_position = camera_location
 
     def reset_camera(self):
@@ -2636,6 +2692,8 @@ class Plotter(BasePlotter):
                 import IPython
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
+
+            import PIL.Image
             disp = IPython.display.display(PIL.Image.fromarray(img))
 
         if auto_close:

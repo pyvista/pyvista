@@ -1422,13 +1422,18 @@ class PolyData(vtkPolyData, vtki.Common):
         f = self.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
 
-    def delauney_2d(self):
-        """Apply a Delauney 2D filter along the best fitting plane"""
+    def delaunay_2d(self):
+        """Apply a delaunay 2D filter along the best fitting plane"""
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(self)
         alg.Update()
         return _get_output(alg)
+
+    def delauney_2d(self):
+        """DEPRECATED. Please see :func:`vtki.PolyData.delaunay_2d`"""
+        raise AttributeError('`delauney_2d` is deprecated because we made a '\
+                             'spelling mistake. Please use `delaunay_2d`.')
 
 
 class PointGrid(vtki.Common):
@@ -2052,6 +2057,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             self.DeepCopy(merged)
         else:
             return merged
+
+    def delaunay_2d(self):
+        """Apply a delaunay 2D filter along the best fitting plane. This
+        extracts the grid's points and perfoms the triangulation on those alone.
+        """
+        return PolyData(self.points).delaunay_2d()
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):

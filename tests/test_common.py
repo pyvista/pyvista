@@ -416,3 +416,18 @@ def test_axis_rotation_not_in_place():
     p = np.eye(3)
     p_out = vtki.common.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
+
+
+def test_bad_instantiation():
+    with pytest.raises(TypeError):
+        vtki.Common()
+    with pytest.raises(TypeError):
+        vtki.Grid()
+    with pytest.raises(TypeError):
+        vtki.DataSetFilters()
+    with pytest.raises(TypeError):
+        vtki.PointGrid()
+    with pytest.raises(TypeError):
+        vtki.ipy_tools.InteractiveTool()
+    with pytest.raises(TypeError):
+        vtki.BasePlotter()

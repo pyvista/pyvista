@@ -144,7 +144,7 @@ class Renderer(vtkRenderer):
                         bold=True, shadow=False, font_size=None,
                         font_family=None, color=None,
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=True, grid=None, location='closest', ticks=None,
+                        use_2d=False, grid=None, location='closest', ticks=None,
                         all_edges=False, corner_factor=0.5, loc=None, fmt=None,
                         minor_ticks=False):
         """
@@ -281,7 +281,7 @@ class Renderer(vtkRenderer):
 
         # create actor
         cube_axes_actor = vtk.vtkCubeAxesActor()
-        if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
+        if use_2d or not np.allclose(self.scale, [1.0, 1.0, 1.0]):
             cube_axes_actor.SetUse2DMode(True)
         else:
             cube_axes_actor.SetUse2DMode(False)
@@ -403,7 +403,6 @@ class Renderer(vtkRenderer):
             self.add_bounding_box(color=color, corner_factor=corner_factor)
 
         if fmt is not None:
-            print('This is fmt', fmt)
             cube_axes_actor.SetXLabelFormat(fmt)
             cube_axes_actor.SetYLabelFormat(fmt)
             cube_axes_actor.SetZLabelFormat(fmt)
