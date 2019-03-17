@@ -7,17 +7,19 @@ os:
 
 language: python
 
-python:
-  - '2.7'
-  - '3.5'
-  - '3.6'
-  - '3.7'
-
 matrix:
   include:
-    - env: TEST_DOWNLOADS = "False"
+    - python: '2.7'
+      env: TEST_DOWNLOADS = "False"
+    - python: '3.5'
+      env: TEST_DOWNLOADS = "False"
+    - python: '3.6'
+      env: TEST_DOWNLOADS = "False"
+    - python: '3.7'
+      env: TEST_DOWNLOADS = "False"
   allow_failures:
-    - env: TEST_DOWNLOADS = "True"
+    - python: '3.7'
+      env: TEST_DOWNLOADS = "True"
 
 addons:
   apt:
