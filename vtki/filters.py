@@ -553,7 +553,8 @@ class DataSetFilters(object):
 
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
-                compute_gradients=False, compute_scalars=True, preference='point'):
+                compute_gradients=False, compute_scalars=True,  rng=None,
+                preference='point'):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
         specifying the number of isosurfaces in the data range or an iterable set of
         values for explicitly setting the isosurfaces.
@@ -574,6 +575,11 @@ class DataSetFilters(object):
 
         compute_scalars : bool, optional
             Preserves the scalar values that are being contoured
+
+        rng : tuple(float), optional
+            If an integer number of isosurfaces is specified, this is the range
+            over which to generate contours. Default is the scalar arrays's full
+            data range.
 
         preference : str, optional
             When scalars is specified, this is the perfered scalar type to
@@ -600,7 +606,9 @@ class DataSetFilters(object):
         # set the isosurfaces
         if isinstance(isosurfaces, int):
             # generate values
-            alg.GenerateValues(isosurfaces, dataset.get_data_range(scalars))
+            if rng is None:
+                rng = dataset.get_data_range(scalars)
+            alg.GenerateValues(isosurfaces, rng)
         elif isinstance(isosurfaces, collections.Iterable):
             alg.SetNumberOfContours(len(isosurfaces))
             for i, val in enumerate(isosurfaces):
