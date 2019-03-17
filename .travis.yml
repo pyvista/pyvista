@@ -39,6 +39,7 @@ install:
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
   - python -c "import imageio; imageio.plugins.ffmpeg.download()"
+  - pip list
 
 script:
   # Run the test suite and generate coverage report

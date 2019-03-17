@@ -369,30 +369,41 @@ class BasePlotter(object):
         # Add self to open plotters
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
+    def update_style(self):
+        if not hasattr(self, '_style'):
+            self._style = vtk.vtkInteractorStyleTrackballCamera()
+        if hasattr(self, 'iren'):
+            return self.iren.SetInteractorStyle(self._style)
+
     def enable_trackball_style(self):
         """ sets the interactive style to trackball """
-        istyle = vtk.vtkInteractorStyleTrackballCamera()
-        self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleTrackballCamera()
+        return self.update_style()
 
     def enable_image_style(self):
         """ sets the interactive style to image """
-        istyle = vtk.vtkInteractorStyleImage()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleImage()
+        return self.update_style()
 
     def enable_joystick_style(self):
         """ sets the interactive style to joystick """
-        istyle = vtk.vtkInteractorStyleJoystickCamera()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleJoystickCamera()
+        return self.update_style()
 
     def enable_zoom_style(self):
         """ sets the interactive style to rubber band zoom """
-        istyle = vtk.vtkInteractorStyleRubberBandZoom()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleRubberBandZoom()
+        return self.update_style()
 
     def enable_terrain_style(self):
         """ sets the interactive style to terrain """
-        istyle = vtk.vtkInteractorStyleTerrain()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleTerrain()
+        return self.update_style()
+
+    def enable_rubber_band_style(self):
+        """ sets the interactive style to rubber band picking """
+        self._style = vtk.vtkInteractorStyleRubberBandPick()
+        return self.update_style()
 
     def set_focus(self, point):
         """ sets focus to a point """
@@ -2411,8 +2422,7 @@ class BasePlotter(object):
         area_picker = vtk.vtkAreaPicker()
         area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
 
-        style = vtk.vtkInteractorStyleRubberBandPick()
-        self.iren.SetInteractorStyle(style)
+        self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
 
 
@@ -2598,6 +2608,7 @@ class Plotter(BasePlotter):
             self.iren.SetRenderWindow(self.ren_win)
             self.enable_trackball_style()
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
+            self.update_style()
 
             # for renderer in self.renderers:
             #     self.iren.SetRenderWindow(renderer)
@@ -2674,6 +2685,7 @@ class Plotter(BasePlotter):
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
+                self.update_style()
                 self.iren.Initialize()
                 if not interactive_update:
                     self.iren.Start()
