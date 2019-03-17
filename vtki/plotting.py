@@ -119,6 +119,21 @@ def _raise_not_matching(scalars, mesh):
                     '(%d) ' % mesh.GetNumberOfCells())
 
 
+def opacity_transfer_function(key, n_colors):
+    """Get the opacity transfer function results: range from 0 to 255
+    """
+    transfer_func = {
+        'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
+        'linear_r': np.linspace(0, 255, n_colors, dtype=np.uint8)[::-1],
+        'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
+        'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
+    }
+    try:
+        return transfer_func[key]
+    except KeyError:
+        raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
+
+
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
@@ -510,7 +525,7 @@ class BasePlotter(object):
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
                  rng=None, stitle=None, show_edges=None,
-                 point_size=5.0, opacity=1, line_width=None,
+                 point_size=5.0, opacity=1.0, line_width=None,
                  flip_scalars=False, lighting=None, n_colors=256,
                  interpolate_before_map=False, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None,
@@ -574,7 +589,13 @@ class BasePlotter(object):
             Point size.  Applicable when style='points'.  Default 5.0
 
         opacity : float, optional
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+            Opacity of mesh.  Should be between 0 and 1.  Default 1.0.
+            A string option can also be specified to map the scalar range
+            to the opacity. Options are:
+                linear
+                linear_r
+                geom
+                geom_r
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
@@ -858,15 +879,18 @@ class BasePlotter(object):
                     # ELSE: assume cmap is callable
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
+                # Set opactities
+                if isinstance(opacity, str):
+                    ctable[:,-1] = opacity_transfer_function(opacity, n_colors)
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
 
             else:  # no cmap specified
                 if flip_scalars:
-                    self.mapper.GetLookupTable().SetHueRange(0.0, 0.66667)
+                    table.SetHueRange(0.0, 0.66667)
                 else:
-                    self.mapper.GetLookupTable().SetHueRange(0.66667, 0.0)
+                    table.SetHueRange(0.66667, 0.0)
 
         else:
             self.mapper.SetScalarModeToUseFieldData()
@@ -897,7 +921,8 @@ class BasePlotter(object):
 
         rgb_color = parse_color(color)
         prop.SetColor(rgb_color)
-        prop.SetOpacity(opacity)
+        if isinstance(opacity, (float, int)):
+            prop.SetOpacity(opacity)
         prop.SetEdgeColor(parse_color(edge_color))
 
         if render_points_as_spheres:
