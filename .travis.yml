@@ -14,7 +14,6 @@ python:
   - '3.7'
 
 matrix:
-  fast_finish: true
   include:
     - env: TEST_DOWNLOADS = "False"
   allow_failures:
