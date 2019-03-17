@@ -651,6 +651,10 @@ class Renderer(vtkRenderer):
         self.parent._render()
 
     def isometric_view(self):
+        """DEPRECATED: Please use ``view_isometric``"""
+        return self.view_isometric()
+
+    def view_isometric(self):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.

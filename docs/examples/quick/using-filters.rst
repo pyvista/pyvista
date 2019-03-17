@@ -37,7 +37,7 @@ object:
     p = vtki.BackgroundPlotter()
     p.add_mesh(dataset.outline())
     p.add_mesh(result)
-    p.isometric_view()
+    p.view_isometric()
     p.screenshot('./images/threshold.png')
 
 
@@ -77,7 +77,7 @@ And to view this filtered data, simply call the ``plot`` method
     p = vtki.BackgroundPlotter()
     p.add_mesh(dataset.outline())
     p.add_mesh(result, scalars='Elevation')
-    p.isometric_view()
+    p.view_isometric()
     p.screenshot('./images/filter-chain.png')
 
 

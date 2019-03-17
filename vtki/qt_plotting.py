@@ -370,7 +370,7 @@ class BackgroundPlotter(QtInteractor):
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Reset Camera', self.reset_camera)
-        cam_menu.addAction('Isometric View', self.isometric_view)
+        cam_menu.addAction('Isometric View', self.view_isometric)
         cam_menu.addAction('View XY Plane', self.view_xy)
         cam_menu.addAction('View XZ Plane', self.view_xz)
         cam_menu.addAction('View YZ Plane', self.view_yz)

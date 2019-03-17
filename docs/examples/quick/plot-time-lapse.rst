@@ -21,7 +21,7 @@ values change through time:
 
     plotter = vtki.BackgroundPlotter()
     plotter.add_mesh(globe, lighting=False, show_edges=True, texture=True, scalars='scalars')
-    plotter.isometric_view()
+    plotter.view_isometric()
 
     # shrink globe in the background
     def shrink():

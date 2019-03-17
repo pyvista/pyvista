@@ -495,7 +495,7 @@ class BasePlotter(object):
         """ sets the current interactive render window to isometric view """
         interactor = self.iren.GetInteractorStyle()
         renderer = interactor.GetCurrentRenderer()
-        renderer.isometric_view()
+        renderer.view_isometric()
 
     def update(self, stime=1, force_redraw=True):
         """
@@ -2306,11 +2306,15 @@ class BasePlotter(object):
         self._render()
 
     def isometric_view(self):
+        """DEPRECATED: Please use ``view_isometric``"""
+        return self.view_isometric()
+
+    def view_isometric(self):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        self.renderer.isometric_view()
+        self.renderer.view_isometric()
 
     def view_xy(self, negative=False):
         """View the XY plane"""
