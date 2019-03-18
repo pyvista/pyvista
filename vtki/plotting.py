@@ -2317,19 +2317,22 @@ class BasePlotter(object):
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        self.renderer.view_isometric()
+        return self.renderer.view_isometric()
+
+    def view_vector(self, vector, viewup=None):
+        return self.renderer.view_vector(vector, viewup=viewup)
 
     def view_xy(self, negative=False):
         """View the XY plane"""
-        self.renderer.view_xy(negative=negative)
+        return self.renderer.view_xy(negative=negative)
 
     def view_xz(self, negative=False):
         """View the XZ plane"""
-        self.renderer.view_xz(negative=negative)
+        return self.renderer.view_xz(negative=negative)
 
     def view_yz(self, negative=False):
         """View the YZ plane"""
-        self.renderer.view_yz(negative=negative)
+        return self.renderer.view_yz(negative=negative)
 
     def disable(self):
         """Disable this renderer's camera from being interactive"""
