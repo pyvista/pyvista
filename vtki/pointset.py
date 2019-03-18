@@ -1422,11 +1422,15 @@ class PolyData(vtkPolyData, vtki.Common):
         f = self.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
 
-    def delaunay_2d(self):
+    def delaunay_2d(self, tol=1e-05, alpha=0.0, offset=1.0, bound=False):
         """Apply a delaunay 2D filter along the best fitting plane"""
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(self)
+        alg.SetTolerance(tol)
+        alg.SetAlpha(alpha)
+        alg.SetOffset(offset)
+        alg.SetBoundingTriangulation(bound)
         alg.Update()
         return _get_output(alg)
 
@@ -2058,11 +2062,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         else:
             return merged
 
-    def delaunay_2d(self):
+    def delaunay_2d(self, tol=1e-05, alpha=0.0, offset=1.0, bound=False):
         """Apply a delaunay 2D filter along the best fitting plane. This
         extracts the grid's points and perfoms the triangulation on those alone.
         """
-        return PolyData(self.points).delaunay_2d()
+        return PolyData(self.points).delaunay_2d(tol=tol, alpha=alpha, offset=offset, bound=bound)
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
