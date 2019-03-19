@@ -2,6 +2,7 @@ import sphinx_rtd_theme
 
 import vtki
 vtki.TESTING_OFFSCREEN = True
+vtki.set_plot_theme('document')
 
 # -- General configuration ------------------------------------------------
 numfig = True

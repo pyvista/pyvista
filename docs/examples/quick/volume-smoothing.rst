@@ -9,17 +9,19 @@ a :func:`vtki.PolyData.smooth` filter.
 
 The below code snippet loads a sample  roughly edged volumetric dataset:
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
-    vtki.set_plot_theme('document')
+
+    # Vector to view rough edges
+    cpos = [-2,5,3]
 
     # Load dataset
     data = examples.load_uniform()
     # Extract a rugged volume
     vol = data.threshold_percent(30, invert=1)
-    vol.plot(show_edges=1, screenshot='vol-smooth-0.png')
+    vol.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-0.png')
 
 
 .. image:: ../../images/vol-smooth-0.png
@@ -29,13 +31,13 @@ Extract the outer surface of the volume using the
 :func:`vtki.DataSetFilters.extract_geometry` filter and then apply the smoothing
 filter:
 
-.. code-block:: python
+.. testcode:: python
 
     # Get the out surface as PolyData
     surf = vol.extract_geometry()
     # Smooth the surface
     smooth = surf.smooth()
-    smooth.plot(screenshot='vol-smooth-20.png')
+    smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-20.png')
 
 
 .. image:: ../../images/vol-smooth-20.png
@@ -44,11 +46,11 @@ filter:
 Not smooth enough? Try increasing the number of iterations for the laplacian
 smoothing algorithm:
 
-.. code-block:: python
+.. testcode:: python
 
     # Smooth the surface even more
     smooth = surf.smooth(n_iter=100)
-    smooth.plot(screenshot='vol-smooth-100.png')
+    smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-100.png')
 
 
 .. image:: ../../images/vol-smooth-100.png
@@ -57,11 +59,11 @@ smoothing algorithm:
 Still not smooth enough? Increase the number of iterations for the laplacian
 smoothing algorithm to a crazy high value:
 
-.. code-block:: python
+.. testcode:: python
 
     # Smooth the surface EVEN MORE
     smooth = surf.smooth(n_iter=1000)
-    smooth.plot(screenshot='vol-smooth-1000.png')
+    smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-1000.png')
 
 
 .. image:: ../../images/vol-smooth-1000.png

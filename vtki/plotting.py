@@ -86,7 +86,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
-        rcParams['cmap'] = 'coolwarm'
+        rcParams['cmap'] = 'viridis'
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
         rcParams['color'] = 'orange'
@@ -1814,6 +1814,8 @@ class BasePlotter(object):
             font = rcParams['font']['family']
         if font_size is None:
             font_size = rcParams['font']['size']
+        if color is None:
+            color = rcParams['font']['color']
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
@@ -2294,21 +2296,6 @@ class BasePlotter(object):
     @camera_position.setter
     def camera_position(self, camera_location):
         """ Set camera position of the active render window """
-        if isinstance(camera_location, str):
-            camera_location = camera_location.lower()
-            if camera_location == 'xy':
-                self.view_xy()
-            elif camera_location == 'xz':
-                self.view_xz()
-            elif camera_location == 'yz':
-                self.view_yz()
-            elif camera_location == 'yx':
-                self.view_xy(True)
-            elif camera_location == 'zx':
-                self.view_xz(True)
-            elif camera_location == 'zy':
-                self.view_yz(True)
-            return
         self.renderer.camera_position = camera_location
 
     def reset_camera(self):

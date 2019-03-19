@@ -6,10 +6,10 @@ Clearing a Mesh or the Entire Plot
 
 Removing a single actor:
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
-    plotter = vtki.Plotter(notebook=True)
+    plotter = vtki.Plotter()
     actor = plotter.add_mesh(vtki.Sphere())
     plotter.remove_actor(actor)
     plotter.show()
@@ -17,10 +17,10 @@ Removing a single actor:
 
 Clearing the entire plotting window:
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
-    plotter = vtki.Plotter(notebook=True)
+    plotter = vtki.Plotter()
     plotter.add_mesh(vtki.Sphere())
     plotter.add_mesh(vtki.Plane())
     plotter.clear()  # clears all actors
@@ -30,10 +30,10 @@ Clearing the entire plotting window:
 Or you can give any actor a ``name`` when adding it and if an actor is added
 with that same name at a later time, it will replace the previous actor:
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
-    plotter = vtki.Plotter(notebook=True)
+    plotter = vtki.Plotter()
     plotter.add_mesh(vtki.Sphere(), name='mydata')
     plotter.add_mesh(vtki.Plane(), name='mydata')
     # Only the Plane is shown!

@@ -8,7 +8,7 @@ axis corresponds to the XYZ cartesian axes. This example will create a
 :class:`vtki.UniformGrid` object that will hold the spatial reference for a
 3D grid which a 3D NumPy array of values can be plotted against.
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     import numpy as np
@@ -32,7 +32,7 @@ axis corresponds to the XYZ cartesian axes. This example will create a
     grid.cell_arrays['values'] = values.flatten(order='F') # Flatten the array!
 
     # Now plot the grid!
-    grid.plot(show_edges=True)
+    grid.plot(show_edges=True, screenshot='./images/uniform-grid.png')
 
 
 .. image:: ../../images/uniform-grid.png
@@ -43,7 +43,7 @@ Don't like cell data? You could also add the NumPy array to the point data of a
 :class:`vtki.UniformGrid`. Take note of the subtle difference when setting the
 grid dimensions upon initialization.
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     import numpy as np

@@ -14,7 +14,6 @@ Let's get started with a simple gridded mesh:
     import numpy as np
     import vtki
     from vtki import examples
-    vtki.set_plot_theme('document')
 
     # Load a simple example mesh
     dataset = examples.load_uniform()
@@ -49,7 +48,7 @@ volumetric bodies left over in one dataset? Take this for example:
 .. testcode:: python
 
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
-    threshed.plot(show_bounds=True)
+    threshed.plot(show_bounds=True, cpos=[-2,5,3], screenshot='./images/two-bodies.png')
 
 
 .. image:: ../../images/two-bodies.png
@@ -104,7 +103,6 @@ dataset. For example, lets split the thresholded volume in the example above:
     import numpy as np
     import vtki
     from vtki import examples
-    vtki.set_plot_theme('document')
 
     # Load a simple example mesh
     dataset = examples.load_uniform()
@@ -125,9 +123,9 @@ dataset. For example, lets split the thresholded volume in the example above:
     Body 1 volume: 35.000
 
 
-.. code-block:: python
+.. testcode:: python
 
-    bodies.plot(show_bounds=True, multi_colors=True)
+    bodies.plot(show_bounds=True, multi_colors=True, cpos=[-2,5,3], screenshot='./images/split-bodies.png')
 
 
 .. image:: ../../images/split-bodies.png
@@ -147,7 +145,6 @@ Load up the data and threshold the channels:
     import vtki
     from vtki import examples
     import numpy as np
-    vtki.set_plot_theme('document')
 
     data = examples.load_channels()
     channels = data.threshold([0.9, 1.1])
@@ -178,12 +175,12 @@ Print out the volumes for each body:
 
 And visualize all the different volumes:
 
-.. code-block:: python
+.. testcode:: python
 
     p = vtki.Plotter()
     p.add_mesh(bodies, scalars='TOTAL VOLUME', cmap='viridis')
     p.show_grid()
-    p.show()
+    p.show(screenshot='./images/channel-volumes.png')
 
 
 .. image:: ../../images/channel-volumes.png

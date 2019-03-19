@@ -13,7 +13,7 @@ position:
 
     filename = examples.planefile
     mesh = vtki.read(filename)
-    cpos = mesh.plot(screenshot='./images/airplane.png', color='yellow')
+    cpos = mesh.plot(screenshot='./images/airplane.png', color='orange')
 
 .. image:: ../../images/airplane.png
 
@@ -24,7 +24,7 @@ the ``Plotter``:
 .. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='yellow')
+    plotter.add_mesh(mesh, color='orange')
     plotter.plot(auto_close=False)
     plotter.screenshot('./images/airplane.png')
     plotter.close()
@@ -52,7 +52,7 @@ manually interact with the ``vtk`` plot window:
 .. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='yellow')
+    plotter.add_mesh(mesh, color='orange')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
     plotter.screenshot('./images/airplane.png')

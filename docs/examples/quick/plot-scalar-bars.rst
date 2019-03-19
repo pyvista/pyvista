@@ -15,9 +15,6 @@ scalar bar plotting:
     import vtki
     from vtki import examples
 
-    # Use a documentation friendly plotting theme
-    vtki.set_plot_theme('document')
-
     # Load St Helens DEM and warp the topography
     mesh = examples.download_st_helens().warp_by_scalar()
 
@@ -52,7 +49,7 @@ The keyword arguments to control the scalar bar are defined in
     p.show()
 
 
-.. figure:: ../../images/scalar-bar-interactive.gif
+.. figure:: ../../images/gifs/scalar-bar-interactive.gif
 
 
 -----
