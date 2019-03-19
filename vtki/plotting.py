@@ -71,6 +71,7 @@ rcParams = {
     'show_edges' : False,
     'lighting' : True,
     'interactive' : False,
+    'render_points_as_spheres' : False
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -85,7 +86,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
-        rcParams['cmap'] = 'coolwarm'
+        rcParams['cmap'] = 'viridis'
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
         rcParams['color'] = 'orange'
@@ -137,7 +138,7 @@ def opacity_transfer_function(key, n_colors):
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, **kwargs):
+         text='', return_img=False, eye_dome_lighting=False, **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
 
@@ -231,6 +232,9 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.camera_set = False
     else:
         plotter.camera_position = cpos
+
+    if eye_dome_lighting:
+        plotter.eye_dome_lighting_on()
 
     result = plotter.show(window_size=window_size,
                         auto_close=False,
@@ -369,30 +373,41 @@ class BasePlotter(object):
         # Add self to open plotters
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
+    def update_style(self):
+        if not hasattr(self, '_style'):
+            self._style = vtk.vtkInteractorStyleTrackballCamera()
+        if hasattr(self, 'iren'):
+            return self.iren.SetInteractorStyle(self._style)
+
     def enable_trackball_style(self):
         """ sets the interactive style to trackball """
-        istyle = vtk.vtkInteractorStyleTrackballCamera()
-        self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleTrackballCamera()
+        return self.update_style()
 
     def enable_image_style(self):
         """ sets the interactive style to image """
-        istyle = vtk.vtkInteractorStyleImage()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleImage()
+        return self.update_style()
 
     def enable_joystick_style(self):
         """ sets the interactive style to joystick """
-        istyle = vtk.vtkInteractorStyleJoystickCamera()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleJoystickCamera()
+        return self.update_style()
 
     def enable_zoom_style(self):
         """ sets the interactive style to rubber band zoom """
-        istyle = vtk.vtkInteractorStyleRubberBandZoom()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleRubberBandZoom()
+        return self.update_style()
 
     def enable_terrain_style(self):
         """ sets the interactive style to terrain """
-        istyle = vtk.vtkInteractorStyleTerrain()
-        return self.iren.SetInteractorStyle(istyle)
+        self._style = vtk.vtkInteractorStyleTerrain()
+        return self.update_style()
+
+    def enable_rubber_band_style(self):
+        """ sets the interactive style to rubber band picking """
+        self._style = vtk.vtkInteractorStyleRubberBandPick()
+        return self.update_style()
 
     def set_focus(self, point):
         """ sets focus to a point """
@@ -484,7 +499,7 @@ class BasePlotter(object):
         """ sets the current interactive render window to isometric view """
         interactor = self.iren.GetInteractorStyle()
         renderer = interactor.GetCurrentRenderer()
-        renderer.isometric_view()
+        renderer.view_isometric()
 
     def update(self, stime=1, force_redraw=True):
         """
@@ -530,7 +545,7 @@ class BasePlotter(object):
                  interpolate_before_map=False, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=False,
+                 render_points_as_spheres=None,
                  render_lines_as_tubes=False, edge_color='black',
                  ambient=0.2, show_scalar_bar=True, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
@@ -591,11 +606,7 @@ class BasePlotter(object):
         opacity : float, optional
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0.
             A string option can also be specified to map the scalar range
-            to the opacity. Options are:
-                linear
-                linear_r
-                geom
-                geom_r
+            to the opacity. Options are: linear, linear_r, geom, geom_r
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
@@ -680,6 +691,9 @@ class BasePlotter(object):
 
         if rng is None:
             rng = kwargs.get('clim', None)
+
+        if render_points_as_spheres is None:
+            render_points_as_spheres = rcParams['render_points_as_spheres']
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
@@ -1743,6 +1757,9 @@ class BasePlotter(object):
             self.ren_win.Finalize()
             del self.ren_win
 
+        if hasattr(self, '_style'):
+            del self._style
+
         if hasattr(self, 'iren'):
             self.iren.RemoveAllObservers()
             del self.iren
@@ -1797,6 +1814,8 @@ class BasePlotter(object):
             font = rcParams['font']['family']
         if font_size is None:
             font_size = rcParams['font']['size']
+        if color is None:
+            color = rcParams['font']['color']
         if position is None:
             # Set the position of the text to the top left corner
             window_size = self.window_size
@@ -1882,6 +1901,14 @@ class BasePlotter(object):
         # Reshape and write
         tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
+
+    def eye_dome_lighting_on(self):
+        """Enable eye dome lighting (EDL) for active renderer"""
+        return self.renderer.eye_dome_lighting_on()
+
+    def eye_dome_lighting_off(self):
+        """Disable eye dome lighting (EDL) for active renderer"""
+        return self.renderer.eye_dome_lighting_off()
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """
@@ -2269,21 +2296,6 @@ class BasePlotter(object):
     @camera_position.setter
     def camera_position(self, camera_location):
         """ Set camera position of the active render window """
-        if isinstance(camera_location, str):
-            camera_location = camera_location.lower()
-            if camera_location == 'xy':
-                self.view_xy()
-            elif camera_location == 'xz':
-                self.view_xz()
-            elif camera_location == 'yz':
-                self.view_yz()
-            elif camera_location == 'yx':
-                self.view_xy(True)
-            elif camera_location == 'zx':
-                self.view_xz(True)
-            elif camera_location == 'zy':
-                self.view_yz(True)
-            return
         self.renderer.camera_position = camera_location
 
     def reset_camera(self):
@@ -2295,23 +2307,30 @@ class BasePlotter(object):
         self._render()
 
     def isometric_view(self):
+        """DEPRECATED: Please use ``view_isometric``"""
+        return self.view_isometric()
+
+    def view_isometric(self):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        self.renderer.isometric_view()
+        return self.renderer.view_isometric()
+
+    def view_vector(self, vector, viewup=None):
+        return self.renderer.view_vector(vector, viewup=viewup)
 
     def view_xy(self, negative=False):
         """View the XY plane"""
-        self.renderer.view_xy(negative=negative)
+        return self.renderer.view_xy(negative=negative)
 
     def view_xz(self, negative=False):
         """View the XZ plane"""
-        self.renderer.view_xz(negative=negative)
+        return self.renderer.view_xz(negative=negative)
 
     def view_yz(self, negative=False):
         """View the YZ plane"""
-        self.renderer.view_yz(negative=negative)
+        return self.renderer.view_yz(negative=negative)
 
     def disable(self):
         """Disable this renderer's camera from being interactive"""
@@ -2411,8 +2430,7 @@ class BasePlotter(object):
         area_picker = vtk.vtkAreaPicker()
         area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
 
-        style = vtk.vtkInteractorStyleRubberBandPick()
-        self.iren.SetInteractorStyle(style)
+        self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
 
 
@@ -2598,6 +2616,7 @@ class Plotter(BasePlotter):
             self.iren.SetRenderWindow(self.ren_win)
             self.enable_trackball_style()
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
+            self.update_style()
 
             # for renderer in self.renderers:
             #     self.iren.SetRenderWindow(renderer)
@@ -2674,6 +2693,7 @@ class Plotter(BasePlotter):
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
+                self.update_style()
                 self.iren.Initialize()
                 if not interactive_update:
                     self.iren.Start()

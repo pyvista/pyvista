@@ -54,7 +54,7 @@ of the mesh respectively).
 
 First, check out some common meta data properties:
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
@@ -118,7 +118,7 @@ To get started, try out the :func:`vtki.plot` convenience method that is binded
 to each ``vtki`` data object:
 
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
@@ -126,13 +126,17 @@ to each ``vtki`` data object:
     data = examples.load_airplane()
     data.plot()
 
+
+.. image:: ../images/airplane.png
+
+
 You can also create the plotter to highly control the scene. First, instantiate
 a plotter such as :class:`vtki.Plotter` or :class:`vtki.BackgroundPlotter`:
 
 The :class:`vtki.Plotter` will create a rendering window that will pause the
 execution of the code after calling ``show``.
 
-.. code-block:: python
+.. testcode:: python
 
     plotter = vtki.Plotter()  # instantiate the plotter
     plotter.add_mesh(data)    # add a dataset to the scene
@@ -149,7 +153,7 @@ manually interact with the plotting window:
 .. code-block:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='yellow')
+    plotter.add_mesh(data, color='orange')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
     # plotter.screenshot('airplane.png')

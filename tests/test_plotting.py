@@ -449,7 +449,7 @@ def test_plot_multi_component_array():
 def test_camera():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.isometric_view()
+    plotter.view_isometric()
     plotter.reset_camera()
     plotter.view_xy()
     plotter.view_xz()

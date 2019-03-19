@@ -1,5 +1,5 @@
 Plot Scalar Bars
-================
+----------------
 
 This example provides a walk through of all the different interactive
 capabilities of scalar bars and how a user can customize scalar bars.
@@ -15,9 +15,6 @@ scalar bar plotting:
     import vtki
     from vtki import examples
 
-    # Use a documentation friendly plotting theme
-    vtki.set_plot_theme('document')
-
     # Load St Helens DEM and warp the topography
     mesh = examples.download_st_helens().warp_by_scalar()
 
@@ -29,7 +26,7 @@ scalar bar plotting:
     p.show(screenshot='./images/st-helens.png')
 
 
-.. image:: ../../images/st-helens.png
+.. image:: ../../../images/st-helens.png
 
 
 -----
@@ -52,7 +49,7 @@ The keyword arguments to control the scalar bar are defined in
     p.show()
 
 
-.. figure:: ../../images/scalar-bar-interactive.gif
+.. figure:: ../../../images/gifs/scalar-bar-interactive.gif
 
 
 -----
@@ -70,7 +67,7 @@ Or manually define the scalar bar's location:
     p.show(screenshot='./images/scalar-bar-location.png')
 
 
-.. image:: ../../images/scalar-bar-location.png
+.. image:: ../../../images/scalar-bar-location.png
 
 -----
 
@@ -88,4 +85,4 @@ The text properties of the scalar bar can also be controlled:
     p.show(screenshot='./images/scalar-bar-text.png')
 
 
-.. image:: ../../images/scalar-bar-text.png
+.. image:: ../../../images/scalar-bar-text.png
