@@ -1,5 +1,5 @@
 Creating a Uniform Grid
-=======================
+-----------------------
 
 This example creates a simple uniform grid from a 3D NumPy array of values.
 
@@ -35,7 +35,7 @@ axis corresponds to the XYZ cartesian axes. This example will create a
     grid.plot(show_edges=True, screenshot='./images/uniform-grid.png')
 
 
-.. image:: ../../images/uniform-grid.png
+.. image:: ../../../images/uniform-grid.png
 
 
 

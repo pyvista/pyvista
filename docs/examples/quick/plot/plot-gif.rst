@@ -1,6 +1,6 @@
 
 Creating a GIF Movie
-====================
+--------------------
 
 This example shows the versatility of the plotting object by generating a moving
 gif:
@@ -43,4 +43,4 @@ gif:
     # Close movie and delete object
     plotter.close()
 
-.. image:: ../../images/gifs/wave.gif
+.. image:: ../../../images/gifs/wave.gif

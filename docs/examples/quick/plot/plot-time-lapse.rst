@@ -1,5 +1,5 @@
 Plot Time Series Data
-=====================
+---------------------
 
 This example outlines how to plot data where the spatial reference and data
 values change through time:
@@ -35,4 +35,4 @@ values change through time:
     thread.start()
 
 
-.. figure:: ../../images/gifs/shrink-globe.gif
+.. figure:: ../../../images/gifs/shrink-globe.gif

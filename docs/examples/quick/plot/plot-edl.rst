@@ -1,5 +1,5 @@
 Plot Eye Dome Lighting
-======================
+----------------------
 
 Eye-Dome Lighting (EDL) is a non-photorealistic, image-based shading technique
 designed to improve depth perception in scientific visualization images.
@@ -30,7 +30,7 @@ And now plot this point cloud as-is:
     p.show(screenshot='./images/point-cloud-no-edl.png')
 
 
-.. image:: ../../images/point-cloud-no-edl.png
+.. image:: ../../../images/point-cloud-no-edl.png
 
 
 We can improve the depth mapping by enabling eye dome lighting on the renderer.
@@ -45,7 +45,7 @@ Reference :func:`vtki.Renderer.eye_dome_lighting_on`.
     p.show(screenshot='./images/point-cloud-edl.png')
 
 
-.. image:: ../../images/point-cloud-edl.png
+.. image:: ../../../images/point-cloud-edl.png
 
 
 The eye dome lighting mode can also handle plotting scalar arrays:
@@ -59,4 +59,4 @@ The eye dome lighting mode can also handle plotting scalar arrays:
     p.show(screenshot='./images/point-cloud-edl-scalars.png')
 
 
-.. image:: ../../images/point-cloud-edl-scalars.png
+.. image:: ../../../images/point-cloud-edl-scalars.png

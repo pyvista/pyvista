@@ -1,5 +1,5 @@
 Volumetric Analysis
-===================
+-------------------
 
 
 Calculating mass properties such as the volume or area of datasets in ``vtki``
@@ -51,7 +51,7 @@ volumetric bodies left over in one dataset? Take this for example:
     threshed.plot(show_bounds=True, cpos=[-2,5,3], screenshot='./images/two-bodies.png')
 
 
-.. image:: ../../images/two-bodies.png
+.. image:: ../../../images/two-bodies.png
 
 We could then assign a classification array for the two bodies, compute the
 cell sizes, then extract the volumes of each body:
@@ -128,7 +128,7 @@ dataset. For example, lets split the thresholded volume in the example above:
     bodies.plot(show_bounds=True, multi_colors=True, cpos=[-2,5,3], screenshot='./images/split-bodies.png')
 
 
-.. image:: ../../images/split-bodies.png
+.. image:: ../../../images/split-bodies.png
 
 
 A Real Dataset
@@ -183,4 +183,4 @@ And visualize all the different volumes:
     p.show(screenshot='./images/channel-volumes.png')
 
 
-.. image:: ../../images/channel-volumes.png
+.. image:: ../../../images/channel-volumes.png
