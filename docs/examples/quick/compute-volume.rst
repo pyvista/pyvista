@@ -48,7 +48,7 @@ volumetric bodies left over in one dataset? Take this for example:
 .. testcode:: python
 
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
-    threshed.plot(show_bounds=True, screenshot='./images/two-bodies.png')
+    threshed.plot(show_bounds=True, cpos=[-2,5,3], screenshot='./images/two-bodies.png')
 
 
 .. image:: ../../images/two-bodies.png
@@ -125,7 +125,7 @@ dataset. For example, lets split the thresholded volume in the example above:
 
 .. testcode:: python
 
-    bodies.plot(show_bounds=True, multi_colors=True, screenshot='./images/split-bodies.png')
+    bodies.plot(show_bounds=True, multi_colors=True, cpos=[-2,5,3], screenshot='./images/split-bodies.png')
 
 
 .. image:: ../../images/split-bodies.png

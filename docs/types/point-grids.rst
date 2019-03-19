@@ -65,7 +65,7 @@ An unstructured grid can be created directly from numpy arrays.  This is useful 
     grid = vtki.UnstructuredGrid(offset, cells, cell_type, points)
 
     # plot the grid
-    grid.plot(screenshot='./images/twocubes.png')
+    grid.plot(show_edges=True, screenshot='./images/twocubes.png')
 
 ..
    The resulting plot can be found in :numref:`twocubes`.
@@ -138,7 +138,7 @@ A structured grid can be created directly from numpy arrays.  This is useful whe
 
     # create the unstructured grid directly from the numpy arrays and plot
     grid = vtki.StructuredGrid(x, y, z)
-    grid.plot(screenshot='./images/structured_cube.png')
+    grid.plot(show_edges=True, screenshot='./images/structured_cube.png')
 
 .. image:: ../images/structured_cube.png
 

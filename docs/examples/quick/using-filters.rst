@@ -37,7 +37,7 @@ object:
     p = vtki.Plotter()
     p.add_mesh(dataset.outline(), color='k')
     p.add_mesh(result)
-    p.view_isometric()
+    p.camera_position = [-2,5,3]
     p.show(screenshot='./images/threshold.png')
 
 

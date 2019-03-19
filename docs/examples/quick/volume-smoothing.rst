@@ -14,11 +14,14 @@ The below code snippet loads a sample  roughly edged volumetric dataset:
     import vtki
     from vtki import examples
 
+    # Vector to view rough edges
+    cpos = [-2,5,3]
+
     # Load dataset
     data = examples.load_uniform()
     # Extract a rugged volume
     vol = data.threshold_percent(30, invert=1)
-    vol.plot(show_edges=1, screenshot='./images/vol-smooth-0.png')
+    vol.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-0.png')
 
 
 .. image:: ../../images/vol-smooth-0.png
@@ -34,7 +37,7 @@ filter:
     surf = vol.extract_geometry()
     # Smooth the surface
     smooth = surf.smooth()
-    smooth.plot(screenshot='./images/vol-smooth-20.png')
+    smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-20.png')
 
 
 .. image:: ../../images/vol-smooth-20.png
@@ -47,7 +50,7 @@ smoothing algorithm:
 
     # Smooth the surface even more
     smooth = surf.smooth(n_iter=100)
-    smooth.plot(screenshot='./images/vol-smooth-100.png')
+    smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-100.png')
 
 
 .. image:: ../../images/vol-smooth-100.png
@@ -60,7 +63,7 @@ smoothing algorithm to a crazy high value:
 
     # Smooth the surface EVEN MORE
     smooth = surf.smooth(n_iter=1000)
-    smooth.plot(screenshot='./images/vol-smooth-1000.png')
+    smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-1000.png')
 
 
 .. image:: ../../images/vol-smooth-1000.png
