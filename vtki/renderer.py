@@ -487,6 +487,25 @@ class Renderer(vtkRenderer):
         if camera_location is None:
             return
 
+        if isinstance(camera_location, str):
+            camera_location = camera_location.lower()
+            if camera_location == 'xy':
+                self.view_xy()
+            elif camera_location == 'xz':
+                self.view_xz()
+            elif camera_location == 'yz':
+                self.view_yz()
+            elif camera_location == 'yx':
+                self.view_xy(True)
+            elif camera_location == 'zx':
+                self.view_xz(True)
+            elif camera_location == 'zy':
+                self.view_yz(True)
+            return
+
+        if isinstance(camera_location[0], (int, float)):
+            return self.view_vector(camera_location)
+
         # everything is set explicitly
         self.camera.SetPosition(camera_location[0])
         self.camera.SetFocalPoint(camera_location[1])
@@ -651,6 +670,10 @@ class Renderer(vtkRenderer):
         self.parent._render()
 
     def isometric_view(self):
+        """DEPRECATED: Please use ``view_isometric``"""
+        return self.view_isometric()
+
+    def view_isometric(self):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
@@ -700,6 +723,31 @@ class Renderer(vtkRenderer):
     def enable(self):
         """Enable this renderer's camera to be interactive"""
         return self.SetInteractive(1)
+
+    def eye_dome_lighting_on(self):
+        """Enable eye dome lighting (EDL)"""
+        if hasattr(self, 'edl_pass'):
+            return self
+        # create the basic VTK render steps
+        basic_passes = vtk.vtkRenderStepsPass()
+        # blur the resulting image
+        # The blur delegates rendering the unblured image to the basic_passes
+        self.edl_pass = vtk.vtkEDLShading()
+        self.edl_pass.SetDelegatePass(basic_passes)
+
+        # tell the renderer to use our render pass pipeline
+        self.glrenderer = vtk.vtkOpenGLRenderer.SafeDownCast(self)
+        self.glrenderer.SetPass(self.edl_pass)
+        return self.glrenderer
+
+    def eye_dome_lighting_off(self):
+        """Disable eye dome lighting (EDL)"""
+        if not hasattr(self, 'edl_pass'):
+            return
+        self.SetPass(None)
+        del self.edl_pass
+        return
+
 
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):

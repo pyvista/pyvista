@@ -1,6 +1,6 @@
 
 Creating a Structured Surface
-=============================
+-----------------------------
 
 This example creates a simple surface grid and plots the resulting grid and its
 curvature:
@@ -22,9 +22,9 @@ curvature:
     grid.plot()
 
     # Plot mean curvature as well
-    grid.plot_curvature(screenshot='./images/curvature.png')
+    grid.plot_curvature(screenshot='./images/curvature.png', clim=[-1, 1])
 
-.. image:: ../../images/curvature.png
+.. image:: ../../../images/curvature.png
 
 Generating a structured grid is a one liner in this module, and the points from
 the resulting surface can be accessed as a NumPy array:

@@ -2,6 +2,7 @@ import sphinx_rtd_theme
 
 import vtki
 vtki.TESTING_OFFSCREEN = True
+vtki.set_plot_theme('document')
 
 # -- General configuration ------------------------------------------------
 numfig = True
@@ -14,6 +15,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
               'sphinx.ext.doctest',
               'sphinx.ext.autosummary',
+              'notfound.extension',
              ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -142,7 +144,11 @@ from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_documenter
 from docutils.parsers.rst import directives
 from sphinx.util.inspect import safe_getattr
+from sphinx.deprecation import RemovedInSphinx20Warning
 import re
+import warnings
+# catch annoying numpy/vtk future warning:
+warnings.simplefilter(action='ignore', category=RemovedInSphinx20Warning)
 
 class AutoAutoSummary(Autosummary):
 

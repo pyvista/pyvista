@@ -11,6 +11,14 @@ import vtki
 from vtki import examples
 from vtki.plotting import running_xserver
 
+NO_PLOTTING = not running_xserver()
+try:
+    if os.environ['ALLOW_PLOTTING'] == 'True':
+        NO_PLOTTING = False
+except KeyError:
+    pass
+
+
 if __name__ != '__main__':
     OFF_SCREEN = 'pytest' in sys.modules
 else:
@@ -21,7 +29,7 @@ sphere = vtki.Sphere()
 sphere_b = vtki.Sphere(1.0)
 sphere_c = vtki.Sphere(2.0)
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot(tmpdir):
     try:
         filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
@@ -47,20 +55,20 @@ def test_plot(tmpdir):
     assert os.path.isfile(filename)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_invalid_style():
     with pytest.raises(Exception):
         vtki.plot(sphere, style='not a style')
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_bounds_axes_with_no_data():
     plotter = vtki.Plotter()
     plotter.add_bounds_axes()
     plotter.close()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_show_grid():
     plotter = vtki.Plotter()
     plotter.show_grid()
@@ -68,7 +76,7 @@ def test_plot_show_grid():
     plotter.close()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_set_camera_position():
     # with pytest.raises(Exception):
     cpos = [(2.085387555594636, 5.259683527170288, 13.092943022481887),
@@ -88,7 +96,7 @@ def test_set_camera_position():
     assert cpos_out == cpos
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_no_active_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -98,7 +106,7 @@ def test_plot_no_active_scalars():
         plotter.update_scalars(np.arange(sphere.n_faces))
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_add_bounds_axes():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -111,7 +119,7 @@ def test_plot_add_bounds_axes():
                             use_2d=True)
     plotter.plot()
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_label_fmt():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -119,7 +127,7 @@ def test_plot_label_fmt():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_add_bounds_axes_params(grid, location):
@@ -131,7 +139,7 @@ def test_plot_add_bounds_axes_params(grid, location):
     plotter.show()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plotter_scale():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -143,7 +151,7 @@ def test_plotter_scale():
     plotter.show()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_add_scalar_bar():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -151,14 +159,14 @@ def test_plot_add_scalar_bar():
                 interactive=True, vertical=True)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_invalid_add_scalar_bar():
     with pytest.raises(Exception):
         plotter = vtki.Plotter()
         plotter.add_scalar_bar()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_list():
     vtki.plot([sphere, sphere_b],
               off_screen=OFF_SCREEN,
@@ -168,21 +176,21 @@ def test_plot_list():
               off_screen=OFF_SCREEN,
               style='wireframe')
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_add_lines_invalid():
     plotter = vtki.Plotter()
     with pytest.raises(Exception):
         plotter.add_lines(range(10))
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_open_gif_invalid():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     with pytest.raises(Exception):
         plotter.open_gif('file.abs')
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_make_movie():
     try:
         filename = str(tmpdir.mkdir("tmpdir").join('tmp.mp4'))
@@ -216,7 +224,7 @@ def test_make_movie():
         raise Exception('Plotter did not close')
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_add_legend():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -228,14 +236,14 @@ def test_add_legend():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_add_axes_twice():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_axes()
     plotter.add_axes(interactive=True)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_add_point_labels():
     n = 10
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
@@ -250,7 +258,7 @@ def test_add_point_labels():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_add_points():
     n = 10
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
@@ -259,26 +267,26 @@ def test_add_points():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_key_press_event():
     plotter = vtki.Plotter()
     plotter.key_press_event(None, None)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_left_button_down():
     plotter = vtki.Plotter()
     plotter.left_button_down(None, None)
     # assert np.allclose(plotter.pickpoint, [0, 0, 0])
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_update():
     plotter = vtki.Plotter(off_screen=True)
     plotter.update()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_cell_scalars():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
@@ -286,7 +294,7 @@ def test_plot_cell_scalars():
                      n_colors=5, rng=10)
     plotter.plot()
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_clim():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
@@ -296,7 +304,7 @@ def test_plot_clim():
     assert plotter.mapper.GetScalarRange() == (-10, 10)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_invalid_n_scalars():
     with pytest.raises(Exception):
         plotter = vtki.Plotter(off_screen=OFF_SCREEN)
@@ -304,7 +312,7 @@ def test_invalid_n_scalars():
         plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_arrow():
     cent = np.random.random(3)
     direction = np.random.random(3)
@@ -312,7 +320,7 @@ def test_plot_arrow():
     assert np.any(img)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_arrows():
     cent = np.random.random((100, 3))
     direction = np.random.random((100, 3))
@@ -320,7 +328,7 @@ def test_plot_arrows():
     assert np.any(img)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_axes():
     plotter = vtki.Plotter(off_screen=True)
     plotter.add_axes()
@@ -328,7 +336,7 @@ def test_axes():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_screenshot():
     plotter = vtki.Plotter(off_screen=True)
     plotter.add_mesh(vtki.Sphere())
@@ -357,7 +365,7 @@ def test_invalid_font():
         femorph.parse_font_family('not a font')
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_scalars_by_name():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     data = examples.load_uniform()
@@ -371,7 +379,7 @@ def test_themes():
     vtki.set_plot_theme('default')
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_multi_block_plot():
     multi = vtki.MultiBlock()
     multi.append(examples.load_rectilinear())
@@ -384,7 +392,7 @@ def test_multi_block_plot():
     multi.plot(scalars='Random Data', off_screen=OFF_SCREEN, multi_colors=True)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_clear():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -392,7 +400,7 @@ def test_clear():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_texture():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -401,7 +409,7 @@ def test_plot_texture():
     plotter.add_mesh(globe, texture=texture)
     plotter.plot()
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_texture_associated():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -409,7 +417,7 @@ def test_plot_texture_associated():
     plotter.add_mesh(globe, texture=True)
     plotter.plot()
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_read_texture_from_numpy():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
@@ -419,7 +427,7 @@ def test_read_texture_from_numpy():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_rgb():
     """"Test adding a texture to a plot"""
     image = vtki.read(examples.mapfile)
@@ -428,7 +436,7 @@ def test_plot_rgb():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_multi_component_array():
     """"Test adding a texture to a plot"""
     image = vtki.read(examples.mapfile)
@@ -437,11 +445,11 @@ def test_plot_multi_component_array():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_camera():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.isometric_view()
+    plotter.view_isometric()
     plotter.reset_camera()
     plotter.view_xy()
     plotter.view_xz()
@@ -454,7 +462,7 @@ def test_camera():
     plotter.camera_position = None
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_multi_renderers():
     plotter = vtki.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
 
@@ -483,7 +491,7 @@ def test_multi_renderers():
     plotter.plot()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_orthographic_slicer():
     data = examples.load_uniform()
     data.set_active_scalar('Spatial Cell Data')
@@ -515,7 +523,7 @@ def test_orthographic_slicer():
 
     p.show()
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_remove_actor():
     data = examples.load_uniform()
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
