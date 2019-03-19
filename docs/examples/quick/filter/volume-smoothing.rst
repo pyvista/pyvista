@@ -1,5 +1,5 @@
 Volume Smoothing
-================
+----------------
 
 Suppose you extract a volumetric subset of a dataset that has roughly defined
 edges. Perhaps you'd like a smooth representation of that model region. This
@@ -24,7 +24,7 @@ The below code snippet loads a sample  roughly edged volumetric dataset:
     vol.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-0.png')
 
 
-.. image:: ../../images/vol-smooth-0.png
+.. image:: ../../../images/vol-smooth-0.png
 
 
 Extract the outer surface of the volume using the
@@ -40,7 +40,7 @@ filter:
     smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-20.png')
 
 
-.. image:: ../../images/vol-smooth-20.png
+.. image:: ../../../images/vol-smooth-20.png
 
 
 Not smooth enough? Try increasing the number of iterations for the laplacian
@@ -53,7 +53,7 @@ smoothing algorithm:
     smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-100.png')
 
 
-.. image:: ../../images/vol-smooth-100.png
+.. image:: ../../../images/vol-smooth-100.png
 
 
 Still not smooth enough? Increase the number of iterations for the laplacian
@@ -66,4 +66,4 @@ smoothing algorithm to a crazy high value:
     smooth.plot(show_edges=True, cpos=cpos, screenshot='./images/vol-smooth-1000.png')
 
 
-.. image:: ../../images/vol-smooth-1000.png
+.. image:: ../../../images/vol-smooth-1000.png

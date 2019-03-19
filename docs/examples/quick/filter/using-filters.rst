@@ -1,6 +1,6 @@
 
 Using Common Filters
-====================
+--------------------
 
 ``vtki`` wrapped data objects have a suite of common filters ready for immediate
 use directly on the object. These filters include the following
@@ -41,7 +41,7 @@ object:
     p.show(screenshot='./images/threshold.png')
 
 
-.. image:: ../../images/threshold.png
+.. image:: ../../../images/threshold.png
 
 
 And now there is a thresholded version of the input dataset in the new
@@ -81,4 +81,4 @@ And to view this filtered data, simply call the ``plot`` method
     p.show(screenshot='./images/filter-chain.png')
 
 
-.. image:: ../../images/filter-chain.png
+.. image:: ../../../images/filter-chain.png

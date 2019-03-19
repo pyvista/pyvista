@@ -1,5 +1,5 @@
 Multi-Window Plot
-=================
+-----------------
 
 This example shows how to create a multi-window plotter by specifying the
 ``shape`` parameter.  The window generated is a two by two window by setting
@@ -38,7 +38,7 @@ the subplot you wish to be the active subplot.
     # Display the window
     plotter.show(screenshot='./images/multi-window.png')
 
-.. image:: ../../images/multi-window.png
+.. image:: ../../../images/multi-window.png
 
 
 
@@ -63,4 +63,4 @@ the subplot you wish to be the active subplot.
     # Display the window
     plotter.show(screenshot='./images/sub-plot-demo.png')
 
-.. image:: ../../images/sub-plot-demo.png
+.. image:: ../../../images/sub-plot-demo.png

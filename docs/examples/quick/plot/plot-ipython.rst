@@ -1,5 +1,5 @@
 Plotting in a Jupyter Notebook
-==============================
+------------------------------
 
 Inline plots are possible using a Jupyter notebook.  The code snippet below
 will create a static screenshot of the rendering and display it in the Jupyter
@@ -20,7 +20,7 @@ notebook:
     plotter.plot()
 
 
-.. figure:: ../../images/user-generated/notebook_sphere.png
+.. figure:: ../../../images/user-generated/notebook_sphere.png
     :width: 600pt
 
     Jupyter Inline Plotting
@@ -92,5 +92,5 @@ accessed under the ``.plotter`` attribute for further scene manipulation:
    p.show_grid()
 
 
-.. figure:: ../../images/gifs/slicer-tool.gif
+.. figure:: ../../../images/gifs/slicer-tool.gif
   :width: 500pt
