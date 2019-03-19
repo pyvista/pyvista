@@ -706,21 +706,29 @@ class Renderer(vtkRenderer):
         return self.SetInteractive(1)
 
     def eye_dome_lighting_on(self):
-        """Enable eye dome lighting (EDL).
-        Once enabled, this cannot be turned off for this renderer
-        (it has to be recreated).
-        """
+        """Enable eye dome lighting (EDL)"""
+        if hasattr(self, 'edl_pass'):
+            return self
         # create the basic VTK render steps
         basic_passes = vtk.vtkRenderStepsPass()
         # blur the resulting image
         # The blur delegates rendering the unblured image to the basic_passes
-        edl = vtk.vtkEDLShading()
-        edl.SetDelegatePass(basic_passes)
+        self.edl_pass = vtk.vtkEDLShading()
+        self.edl_pass.SetDelegatePass(basic_passes)
 
-        #tell the renderer to use our render pass pipeline
-        glrenderer = vtk.vtkOpenGLRenderer.SafeDownCast(self)
-        glrenderer.SetPass(edl)
-        return glrenderer
+        # tell the renderer to use our render pass pipeline
+        self.glrenderer = vtk.vtkOpenGLRenderer.SafeDownCast(self)
+        self.glrenderer.SetPass(self.edl_pass)
+        return self.glrenderer
+
+    def eye_dome_lighting_off(self):
+        """Disable eye dome lighting (EDL)"""
+        if not hasattr(self, 'edl_pass'):
+            return
+        self.SetPass(None)
+        del self.edl_pass
+        return
+
 
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):

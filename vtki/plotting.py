@@ -1901,11 +1901,12 @@ class BasePlotter(object):
         return img_array.reshape(tgt_size)[::-1]
 
     def eye_dome_lighting_on(self):
-        """Enable eye dome lighting (EDL) for active renderer.
-        Once enabled, this cannot be turned off for the active renderer
-        (it has to be recreated).
-        """
+        """Enable eye dome lighting (EDL) for active renderer"""
         return self.renderer.eye_dome_lighting_on()
+
+    def eye_dome_lighting_off(self):
+        """Disable eye dome lighting (EDL) for active renderer"""
+        return self.renderer.eye_dome_lighting_off()
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """
