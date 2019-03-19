@@ -287,6 +287,6 @@ def is_inside_bounds(point, bounds):
         return True
     p = point.popleft()
     lower, upper = bounds.popleft(), bounds.popleft()
-    if lower < p < upper:
+    if lower <= p <= upper:
         return is_inside_bounds(point, bounds)
     return False
