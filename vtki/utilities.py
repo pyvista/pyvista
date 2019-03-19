@@ -275,6 +275,8 @@ def is_inside_bounds(point, bounds):
     """ Checks if a point is inside a set of bounds. This is implemented
     through recursion so that this is N-dimensional.
     """
+    if isinstance(point, (int, float)):
+        point = [point]
     if isinstance(point, collections.Iterable) and not isinstance(point, collections.deque):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise AssertionError('Bounds mismatch point dimensionality')
