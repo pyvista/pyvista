@@ -365,7 +365,7 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Exit', self.quit)
 
         view_menu = main_menu.addMenu('View')
-        view_menu.addAction('Eye Dome Lighting', self._toggle_edl)
+        view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
         view_menu.addAction('Clear All', self.clear)
 
