@@ -1,5 +1,5 @@
 Plot Time Series Data
-=====================
+---------------------
 
 This example outlines how to plot data where the spatial reference and data
 values change through time:
@@ -21,7 +21,7 @@ values change through time:
 
     plotter = vtki.BackgroundPlotter()
     plotter.add_mesh(globe, lighting=False, show_edges=True, texture=True, scalars='scalars')
-    plotter.isometric_view()
+    plotter.view_isometric()
 
     # shrink globe in the background
     def shrink():
@@ -35,4 +35,4 @@ values change through time:
     thread.start()
 
 
-.. figure:: ../../images/shrink-globe.gif
+.. figure:: ../../../images/gifs/shrink-globe.gif

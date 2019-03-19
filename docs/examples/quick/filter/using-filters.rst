@@ -1,6 +1,6 @@
 
 Using Common Filters
-====================
+--------------------
 
 ``vtki`` wrapped data objects have a suite of common filters ready for immediate
 use directly on the object. These filters include the following
@@ -32,16 +32,16 @@ object:
 
 
 
-.. code-block:: python
+.. testcode:: python
 
-    p = vtki.BackgroundPlotter()
-    p.add_mesh(dataset.outline())
+    p = vtki.Plotter()
+    p.add_mesh(dataset.outline(), color='k')
     p.add_mesh(result)
-    p.isometric_view()
-    p.screenshot('./images/threshold.png')
+    p.camera_position = [-2,5,3]
+    p.show(screenshot='./images/threshold.png')
 
 
-.. image:: ../../images/threshold.png
+.. image:: ../../../images/threshold.png
 
 
 And now there is a thresholded version of the input dataset in the new
@@ -72,13 +72,13 @@ In the following example, several filters are chained together:
 And to view this filtered data, simply call the ``plot`` method
 (``result.plot()``) or create a rendering scene:
 
-.. code-block:: python
+.. testcode:: python
 
-    p = vtki.BackgroundPlotter()
-    p.add_mesh(dataset.outline())
+    p = vtki.Plotter()
+    p.add_mesh(dataset.outline(), color='k')
     p.add_mesh(result, scalars='Elevation')
-    p.isometric_view()
-    p.screenshot('./images/filter-chain.png')
+    p.view_isometric()
+    p.show(screenshot='./images/filter-chain.png')
 
 
-.. image:: ../../images/filter-chain.png
+.. image:: ../../../images/filter-chain.png

@@ -98,3 +98,6 @@ def download_coastlines():
 
 def download_knee():
     return _download_and_read('DICOM_KNEE.dcm')
+
+def download_lidar():
+    return _download_and_read('kafadar-lidar-interp.vtp')

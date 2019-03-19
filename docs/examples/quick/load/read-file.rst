@@ -1,5 +1,5 @@
 Load and Plot from a File
-=========================
+-------------------------
 
 Loading a mesh is trivial.  The following code block uses a built-in example
 file, displays an airplane mesh, saves a screenshot, and returns the camera's
@@ -13,9 +13,9 @@ position:
 
     filename = examples.planefile
     mesh = vtki.read(filename)
-    cpos = mesh.plot(screenshot='./images/airplane.png', color='yellow')
+    cpos = mesh.plot(screenshot='./images/airplane.png', color='orange')
 
-.. image:: ../../images/airplane.png
+.. image:: ../../../images/airplane.png
 
 
 You can also take a screenshot without creating an interactive plot window using
@@ -24,7 +24,7 @@ the ``Plotter``:
 .. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='yellow')
+    plotter.add_mesh(mesh, color='orange')
     plotter.plot(auto_close=False)
     plotter.screenshot('./images/airplane.png')
     plotter.close()
@@ -52,7 +52,7 @@ manually interact with the ``vtk`` plot window:
 .. testcode:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(mesh, color='yellow')
+    plotter.add_mesh(mesh, color='orange')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
     plotter.screenshot('./images/airplane.png')

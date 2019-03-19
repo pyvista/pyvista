@@ -365,12 +365,13 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Exit', self.quit)
 
         view_menu = main_menu.addMenu('View')
+        view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
         view_menu.addAction('Clear All', self.clear)
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Reset Camera', self.reset_camera)
-        cam_menu.addAction('Isometric View', self.isometric_view)
+        cam_menu.addAction('Isometric View', self.view_isometric)
         cam_menu.addAction('View XY Plane', self.view_xy)
         cam_menu.addAction('View XZ Plane', self.view_xz)
         cam_menu.addAction('View YZ Plane', self.view_yz)
@@ -516,6 +517,11 @@ class BackgroundPlotter(QtInteractor):
                           show=show,
                           directory=os.getcwd(),
                           callback=self.export_vtkjs)
+
+    def _toggle_edl(self):
+        if hasattr(self.renderer, 'edl_pass'):
+            return self.renderer.eye_dome_lighting_off()
+        return self.renderer.eye_dome_lighting_on()
 
     def _render(self):
         super(BackgroundPlotter, self)._render()

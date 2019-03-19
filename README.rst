@@ -5,6 +5,9 @@ vtki
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
+.. image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
+   :target: https://anaconda.org/conda-forge/vtki
+
 .. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/vtkiorg/vtki
 

@@ -65,7 +65,7 @@ The following example shows how to create a simple application that adds a spher
         sys.exit(app.exec_())
 
 
-.. figure:: ../images/qt_plotting_sphere.png
+.. figure:: ../images/user-generated/qt_plotting_sphere.png
     :width: 600pt
 
     PyQt5 vtki QtInteractor
