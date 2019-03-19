@@ -9,18 +9,12 @@ The following examples demonstrate the functionality of ``vtki``.
 .. toctree::
    :maxdepth: 2
 
-   quick/load-file
-   quick/plot-ipython
-   quick/using-filters
-   quick/create-structured-surface
-   quick/create-uniform-grid
-   quick/create-gif
-   quick/multi-window
-   quick/plot-clear
-   quick/plot-glyphs
-   quick/plot-time-lapse
-   quick/compute-volume
-   quick/volume-smoothing
+   quick/load/index
+
+   quick/filter/index
+
+   quick/plot/index
+
 
 Long Examples
 *************

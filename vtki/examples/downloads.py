@@ -16,7 +16,7 @@ directory.
 # Helpers:
 
 def _get_vtk_file_url(filename):
-    return 'https://github.com/open-cv/VTKData/raw/master/Data/{}'.format(filename)
+    return 'https://github.com/vtkiorg/vtk-data/raw/master/Data/{}'.format(filename)
 
 def _retrieve_file(url, filename):
     # grab the correct url retriever
@@ -29,7 +29,7 @@ def _retrieve_file(url, filename):
     if DOWNLOAD_TEMP_FOLDER:
         saved_file, resp = urlretrieve(url)
         # rename saved file:
-        new_name = saved_file.replace(os.path.basename(saved_file), filename)
+        new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
         shutil.move(saved_file, new_name)
         return new_name, resp
     return urlretrieve(url, filename)
@@ -62,8 +62,6 @@ def download_usa():
 def download_st_helens():
     return _download_and_read('SainteHelens.dem')
 
-download_st_helens()
-
 def download_bunny():
     return _download_and_read('bunny.ply')
 
@@ -88,3 +86,18 @@ def download_bolt_nut():
 
 def download_clown():
     return _download_and_read('clown.facet')
+
+def download_topo_global():
+    return _download_and_read('EarthModels/ETOPO_10min_Ice.vtp')
+
+def download_topo_land():
+    return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp')
+
+def download_coastlines():
+    return _download_and_read('EarthModels/Coastlines_Los_Alamos.vtp')
+
+def download_knee():
+    return _download_and_read('DICOM_KNEE.dcm')
+
+def download_lidar():
+    return _download_and_read('kafadar-lidar-interp.vtp')

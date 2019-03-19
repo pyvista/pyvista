@@ -89,3 +89,24 @@ Plotter
    :show-inheritance:
    :members:
    :undoc-members:
+
+
+Renderer
+--------
+
+.. rubric:: Attributes
+
+.. autoautosummary:: vtki.Renderer
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: vtki.Renderer
+   :methods:
+
+
+
+.. autoclass:: vtki.Renderer
+   :show-inheritance:
+   :members:
+   :undoc-members:

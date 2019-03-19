@@ -864,27 +864,6 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             return PolyData(decimate.GetOutput())
 
-    def overwrite(self, mesh):
-        """
-        Overwrites the old mesh data with the new mesh data
-
-        Parameters
-        ----------
-        mesh : vtk.vtkPolyData or vtki.PolyData
-            The overwriting mesh.
-
-        """
-        # copy points and point data
-        self.SetPoints(mesh.GetPoints())
-        self.GetPointData().DeepCopy(mesh.GetPointData())
-
-        # copy cells and cell data
-        self.SetPolys(mesh.GetPolys())
-        self.GetCellData().DeepCopy(mesh.GetCellData())
-
-        # Must rebuild or subsequent operations on this mesh will segfault
-        self.BuildCells()
-
     def center_of_mass(self, scalars_weight=False):
         """
         Returns the coordinates for the center of mass of the mesh.
@@ -1184,10 +1163,16 @@ class PolyData(vtkPolyData, vtki.Common):
         clean.SetInputData(self)
         clean.Update()
 
+        output = _get_output(clean)
+
+        # Check output so no segfaults occur
+        if output.n_points < 1:
+            raise AssertionError('Clean tolerance is too high. Empty mesh returned.')
+
         if inplace:
-            self.overwrite(clean.GetOutput())
+            self.overwrite(output)
         else:
-            return PolyData(clean.GetOutput())
+            return output
 
     @property
     def area(self):
@@ -1422,13 +1407,22 @@ class PolyData(vtkPolyData, vtki.Common):
         f = self.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
 
-    def delauney_2d(self):
-        """Apply a Delauney 2D filter along the best fitting plane"""
+    def delaunay_2d(self, tol=1e-05, alpha=0.0, offset=1.0, bound=False):
+        """Apply a delaunay 2D filter along the best fitting plane"""
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(self)
+        alg.SetTolerance(tol)
+        alg.SetAlpha(alpha)
+        alg.SetOffset(offset)
+        alg.SetBoundingTriangulation(bound)
         alg.Update()
         return _get_output(alg)
+
+    def delauney_2d(self):
+        """DEPRECATED. Please see :func:`vtki.PolyData.delaunay_2d`"""
+        raise AttributeError('`delauney_2d` is deprecated because we made a '\
+                             'spelling mistake. Please use `delaunay_2d`.')
 
 
 class PointGrid(vtki.Common):
@@ -1633,29 +1627,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     def __repr__(self):
         return vtki.Common.__repr__(self)
 
-
-    def overwrite(self, grid):
-        """
-        Overwrites the old grid data with the new grid data
-
-        Parameters
-        ----------
-        mesh : vtk.vtkPolyData or vtki.PolyData
-            The overwriting mesh.
-
-        """
-        self.DeepCopy(grid)
-
-        # # copy points and point data
-        # self.SetPoints(grid.GetPoints())
-        # self.GetPointData().DeepCopy(grid.GetPointData())
-
-        # # copy cells and cell data
-        # # self.SetCells(grid.GetCells())
-        # self.GetCellData().DeepCopy(grid.GetCellData())
-
-        # # Must rebuild or subsequent operations on this grid will segfault
-        # # self.BuildCells()
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """
@@ -2052,6 +2023,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             self.DeepCopy(merged)
         else:
             return merged
+
+    def delaunay_2d(self, tol=1e-05, alpha=0.0, offset=1.0, bound=False):
+        """Apply a delaunay 2D filter along the best fitting plane. This
+        extracts the grid's points and perfoms the triangulation on those alone.
+        """
+        return PolyData(self.points).delaunay_2d(tol=tol, alpha=alpha, offset=offset, bound=bound)
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):

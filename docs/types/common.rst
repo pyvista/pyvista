@@ -82,8 +82,8 @@ The :class:`vtki.MultiBlock` class is an extension of
 ``vtk.vtkMultiBlockDataSet``.
 
 
-The Dataset Model
-=================
+The Common Model
+================
 
 The :class:`vtki.Common` class holds attributes that are *common* to all
 spatially referenced datasets in ``vtki``.

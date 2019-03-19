@@ -51,7 +51,7 @@ number of points for each face and the indices of each of those faces.
     surf = vtki.PolyData(vertices, faces)
 
     # plot each face with a different color
-    surf.plot(scalars=np.arange(3))
+    surf.plot(scalars=np.arange(3), screenshot='./images/samplepolydata.png')
 
 .. image:: ../images/samplepolydata.png
 
@@ -133,7 +133,7 @@ The following code creates the class and plots the meshes with various colors.
 
     # Add annotation text
     plotter.add_text('Ants and Plane Example')
-    plotter.plot()
+    plotter.plot(screenshot='./images/AntsAndPlane.png')
 
 .. image:: ../images/AntsAndPlane.png
 
@@ -144,10 +144,24 @@ vtki supports single line segment ray tracing.
 
 .. testcode:: python
 
-    # Use built-in sphere and test againt a single ray
+    # Use built-in sphere and test against a single ray
     import vtki
-    sphere = vtki.Sphere()
-    points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
+
+    sphere = vtki.Sphere(radius=0.85)
+
+    start = [0, 0, 0]
+    stop = [0.25, 1, 0.5]
+    points, ind = sphere.ray_trace(start, stop)
+    ray = vtki.Line(start, stop)
+    intersection = vtki.PolyData(points)
+
+    p = vtki.Plotter()
+    p.add_mesh(sphere, show_edges=True, opacity=0.5, color='w', lighting=False, label='Test Mesh')
+    p.add_mesh(ray, color='blue', line_width=5, label='Ray Segment')
+    p.add_mesh(intersection, color='maroon', point_size=10, label='Intersection Points')
+    p.add_legend()
+    p.show(screenshot='./images/intersection_sphere.png')
+
 
 .. image:: ../images/intersection_sphere.png
 

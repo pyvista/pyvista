@@ -1,6 +1,6 @@
-#############
-vtki Overview
-#############
+##################
+vtki Documentation
+##################
 
 
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
