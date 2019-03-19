@@ -142,7 +142,11 @@ from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_documenter
 from docutils.parsers.rst import directives
 from sphinx.util.inspect import safe_getattr
+from sphinx.deprecation import RemovedInSphinx20Warning
 import re
+import warnings
+# catch annoying numpy/vtk future warning:
+warnings.simplefilter(action='ignore', category=RemovedInSphinx20Warning)
 
 class AutoAutoSummary(Autosummary):
 
