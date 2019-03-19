@@ -35,4 +35,4 @@ values change through time:
     thread.start()
 
 
-.. figure:: ../../images/shrink-globe.gif
+.. figure:: ../../images/gifs/shrink-globe.gif

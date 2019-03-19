@@ -41,7 +41,7 @@ slider bars directly in a Jupyter notebook:
     vtki.OrthogonalSlicer(dataset)
 
 
-.. figure:: ../images/slicer-tool.gif
+.. figure:: ../images/gifs/slicer-tool.gif
    :width: 500pt
 
 
@@ -70,7 +70,7 @@ of a Jupyter notebook cell:
     vtki.Threshold(dataset)
 
 
-.. figure:: ../images/threshold-tool.gif
+.. figure:: ../images/gifs/threshold-tool.gif
    :width: 500pt
 
 
@@ -98,7 +98,7 @@ down menu in the Jupyter notebook cell output:
     vtki.ManySlicesAlongAxis(dataset)
 
 
-.. figure:: ../images/many-slices-tool.gif
+.. figure:: ../images/gifs/many-slices-tool.gif
    :width: 500pt
 
 
@@ -125,7 +125,7 @@ along a point scalar array
     vtki.Isocontour(dataset)
 
 
-.. figure:: ../images/isocontour-tool.gif
+.. figure:: ../images/gifs/isocontour-tool.gif
    :width: 500pt
 
 .. autoclass:: vtki.ManySlicesAlongAxis
@@ -179,5 +179,5 @@ passing the plotter to the tool upon construction:
 
 And now you have two tools being used in one rendering window!
 
-.. figure:: ../images/integrated-tools.gif
+.. figure:: ../images/gifs/integrated-tools.gif
    :width: 500pt

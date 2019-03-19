@@ -7,7 +7,7 @@ This example shows how to create a multi-window plotter by specifying the
 the subplot you wish to be the active subplot.
 
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
@@ -20,7 +20,7 @@ the subplot you wish to be the active subplot.
 
     plotter.subplot(0, 1)
     plotter.add_text('Render Window 1', font_size=30)
-    plotter.add_mesh(vtki.Cube(), show_edges=True)
+    plotter.add_mesh(vtki.Cube(), show_edges=True, color='orange')
 
     plotter.subplot(1, 0)
     plotter.add_text('Render Window 2', font_size=30)
@@ -36,14 +36,14 @@ the subplot you wish to be the active subplot.
     plotter.add_bounds_axes(all_edges=True)
 
     # Display the window
-    plotter.show()
+    plotter.show(screenshot='./images/multi-window.png')
 
 .. image:: ../../images/multi-window.png
 
 
 
 
-.. code-block:: python
+.. testcode:: python
 
     import vtki
     from vtki import examples
@@ -61,6 +61,6 @@ the subplot you wish to be the active subplot.
     plotter.add_mesh(examples.load_uniform(), show_edges=True)
 
     # Display the window
-    plotter.show()
+    plotter.show(screenshot='./images/sub-plot-demo.png')
 
 .. image:: ../../images/sub-plot-demo.png

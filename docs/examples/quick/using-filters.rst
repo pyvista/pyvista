@@ -32,13 +32,13 @@ object:
 
 
 
-.. code-block:: python
+.. testcode:: python
 
-    p = vtki.BackgroundPlotter()
-    p.add_mesh(dataset.outline())
+    p = vtki.Plotter()
+    p.add_mesh(dataset.outline(), color='k')
     p.add_mesh(result)
     p.view_isometric()
-    p.screenshot('./images/threshold.png')
+    p.show(screenshot='./images/threshold.png')
 
 
 .. image:: ../../images/threshold.png
@@ -72,13 +72,13 @@ In the following example, several filters are chained together:
 And to view this filtered data, simply call the ``plot`` method
 (``result.plot()``) or create a rendering scene:
 
-.. code-block:: python
+.. testcode:: python
 
-    p = vtki.BackgroundPlotter()
-    p.add_mesh(dataset.outline())
+    p = vtki.Plotter()
+    p.add_mesh(dataset.outline(), color='k')
     p.add_mesh(result, scalars='Elevation')
     p.view_isometric()
-    p.screenshot('./images/filter-chain.png')
+    p.show(screenshot='./images/filter-chain.png')
 
 
 .. image:: ../../images/filter-chain.png

@@ -20,7 +20,7 @@ notebook:
     plotter.plot()
 
 
-.. figure:: ../../images/notebook_sphere.png
+.. figure:: ../../images/user-generated/notebook_sphere.png
     :width: 600pt
 
     Jupyter Inline Plotting
@@ -92,5 +92,5 @@ accessed under the ``.plotter`` attribute for further scene manipulation:
    p.show_grid()
 
 
-.. figure:: https://github.com/vtkiorg/vtki/raw/master/docs/images/slicer-tool.gif
+.. figure:: ../../images/gifs/slicer-tool.gif
   :width: 500pt

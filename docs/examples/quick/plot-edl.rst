@@ -16,8 +16,6 @@ Take this Lidar point cloud for example:
     import vtki
     from vtki import examples
 
-    vtki.set_plot_theme('document')
-
     # Load a sample point cloud.
     point_cloud = examples.download_lidar()
 
