@@ -1883,7 +1883,6 @@ class BasePlotter(object):
         """ Returns an image array of current render window """
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
-        ifilter.SetInputBufferTypeToRGB()
         ifilter.ReadFrontBufferOff()
 
         if self.image_transparent_background:
@@ -2158,12 +2157,13 @@ class BasePlotter(object):
         # configure image filter
         self.image_transparent_background = transparent_background
 
-        # this needs to be called twice for some reason,  debug later
         if isinstance(self, Plotter):
             # TODO: we need a consistent rendering function
             self.render()
         else:
             self._render()
+
+        # debug: this needs to be called twice for some reason,  
         img = self.image
         img = self.image
 
@@ -2689,6 +2689,7 @@ class Plotter(BasePlotter):
         # Render
         log.debug('Rendering')
         self.ren_win.Render()
+        img = self.screenshot(screenshot, return_img=True)
 
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
@@ -2704,7 +2705,6 @@ class Plotter(BasePlotter):
 
         # Get camera position before closing
         cpos = self.camera_position
-        img = self.screenshot(screenshot, return_img=True)
 
         if self.notebook:
             # sanity check
