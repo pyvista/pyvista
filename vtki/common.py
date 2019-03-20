@@ -743,17 +743,8 @@ class Common(DataSetFilters, object):
     def head(self, display=True, html=None):
         """Return the header stats of this dataset. If in IPython, this will
         be formatted to HTML. Otherwise returns a console friendly string"""
-        try:
-            __IPYTHON__
-            ipy = True
-        except NameError:
-            ipy = False
-        if html == True:
-            ipy = True
-        elif html == False:
-            ipy = False
         # Generate the output
-        if ipy:
+        if html:
             fmt = ""
             # HTML version
             fmt += "\n"
@@ -828,7 +819,7 @@ class Common(DataSetFilters, object):
 
     def __repr__(self):
         """Object representation"""
-        return self.head(display=False)
+        return self.head(display=False, html=False)
 
     def overwrite(self, mesh):
         """
