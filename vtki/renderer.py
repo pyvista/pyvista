@@ -22,6 +22,7 @@ class Renderer(vtkRenderer):
         self.camera_set = False
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
+        self.AutomaticLightCreationOff()
 
         if border:
             self.add_border(border_color, border_width)

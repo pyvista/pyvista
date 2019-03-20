@@ -373,6 +373,12 @@ class BasePlotter(object):
         # Add self to open plotters
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
+        # lighting style
+        self.lighting = vtk.vtkLightKit()
+        for renderer in self.renderers:
+            self.lighting.AddLightsToRenderer(renderer)
+            renderer.LightFollowCameraOn()
+
     def update_style(self):
         if not hasattr(self, '_style'):
             self._style = vtk.vtkInteractorStyleTrackballCamera()
@@ -2612,6 +2618,7 @@ class Plotter(BasePlotter):
             self.ren_win.SetOffScreenRendering(1)
         else:  # Allow user to interact
             self.iren = vtk.vtkRenderWindowInteractor()
+            self.iren.LightFollowCameraOff()
             self.iren.SetDesiredUpdateRate(30.0)
             self.iren.SetRenderWindow(self.ren_win)
             self.enable_trackball_style()
