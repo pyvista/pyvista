@@ -1891,18 +1891,7 @@ class BasePlotter(object):
         """ set the render window size """
         self.ren_win.SetSize(window_size[0], window_size[1])
 
-    @property
-    def image(self):
-        """ Returns an image array of current render window """
-        ifilter = vtk.vtkWindowToImageFilter()
-        ifilter.SetInput(self.ren_win)
-        ifilter.ReadFrontBufferOff()
-
-        if self.image_transparent_background:
-            ifilter.SetInputBufferTypeToRGBA()
-        else:
-            ifilter.SetInputBufferTypeToRGB()
-
+    def _run_image_filter(self, ifilter):
         # Update filter and grab pixels
         ifilter.Modified()
         ifilter.Update()
@@ -1913,6 +1902,27 @@ class BasePlotter(object):
         # Reshape and write
         tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
+
+    @property
+    def image_depth(self):
+        """ Returns an image array of current render window """
+        ifilter = vtk.vtkWindowToImageFilter()
+        ifilter.SetInput(self.ren_win)
+        ifilter.ReadFrontBufferOff()
+        ifilter.SetInputBufferTypeToZBuffer()
+        return self._run_image_filter(ifilter)
+
+    @property
+    def image(self):
+        """ Returns an image array of current render window """
+        ifilter = vtk.vtkWindowToImageFilter()
+        ifilter.SetInput(self.ren_win)
+        ifilter.ReadFrontBufferOff()
+        if self.image_transparent_background:
+            ifilter.SetInputBufferTypeToRGBA()
+        else:
+            ifilter.SetInputBufferTypeToRGB()
+        return self._run_image_filter(ifilter)
 
     def eye_dome_lighting_on(self):
         """Enable eye dome lighting (EDL) for active renderer"""
