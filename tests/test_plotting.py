@@ -543,3 +543,4 @@ def test_image_properties():
     img = p.image
     # Get the depth image
     img = np.sum(p.image_depth, axis=2)
+    p.close()
