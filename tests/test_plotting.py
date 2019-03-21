@@ -536,7 +536,7 @@ def test_remove_actor():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_image_properties():
     mesh = examples.load_uniform()
-    p = vtki.Plotter()
+    p = vtki.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh)
     p.show(auto_close=False) # DO NOT close plotter
     # Get RGB image
