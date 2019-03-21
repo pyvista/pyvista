@@ -373,6 +373,14 @@ class BasePlotter(object):
         # Add self to open plotters
         _OPEN_PLOTTERS[str(hex(id(self)))] = self
 
+        # lighting style
+        self.lighting = vtk.vtkLightKit()
+        # self.lighting.SetHeadLightWarmth(1.0)
+        # self.lighting.SetHeadLightWarmth(1.0)
+        for renderer in self.renderers:
+            self.lighting.AddLightsToRenderer(renderer)
+            renderer.LightFollowCameraOn()
+
     def update_style(self):
         if not hasattr(self, '_style'):
             self._style = vtk.vtkInteractorStyleTrackballCamera()
@@ -547,7 +555,7 @@ class BasePlotter(object):
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None,
                  render_lines_as_tubes=False, edge_color='black',
-                 ambient=0.2, show_scalar_bar=True, nan_color=None,
+                 ambient=0.0, show_scalar_bar=True, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
                  rgb=False, **kwargs):
         """
@@ -672,6 +680,11 @@ class BasePlotter(object):
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
+        # fixes lighting issue when using precalculated normals
+        if isinstance(mesh, vtk.vtkPolyData):
+            if mesh.GetPointData().HasArray('Normals'):
+                mesh.point_arrays['Normals'] = mesh.point_arrays.pop('Normals')
+
         if scalar_bar_args is None:
             scalar_bar_args = {}
 
@@ -2612,6 +2625,7 @@ class Plotter(BasePlotter):
             self.ren_win.SetOffScreenRendering(1)
         else:  # Allow user to interact
             self.iren = vtk.vtkRenderWindowInteractor()
+            self.iren.LightFollowCameraOff()
             self.iren.SetDesiredUpdateRate(30.0)
             self.iren.SetRenderWindow(self.ren_win)
             self.enable_trackball_style()
