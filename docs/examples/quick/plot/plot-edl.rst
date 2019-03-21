@@ -34,14 +34,14 @@ And now plot this point cloud as-is:
 
 
 We can improve the depth mapping by enabling eye dome lighting on the renderer.
-Reference :func:`vtki.Renderer.eye_dome_lighting_on`.
+Reference :func:`vtki.Renderer.enable_eye_dome_lighting`.
 
 .. testcode:: python
 
     # Plot with EDL
     p = vtki.Plotter()
     p.add_mesh(point_cloud, color='orange', point_size=5)
-    p.eye_dome_lighting_on()
+    p.enable_eye_dome_lighting()
     p.show(screenshot='./images/point-cloud-edl.png')
 
 
@@ -55,7 +55,7 @@ The eye dome lighting mode can also handle plotting scalar arrays:
     # Plot with EDL and scalar data
     p = vtki.Plotter()
     p.add_mesh(point_cloud, scalars='Elevation', point_size=5)
-    p.eye_dome_lighting_on()
+    p.enable_eye_dome_lighting()
     p.show(screenshot='./images/point-cloud-edl-scalars.png')
 
 

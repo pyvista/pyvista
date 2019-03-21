@@ -520,8 +520,8 @@ class BackgroundPlotter(QtInteractor):
 
     def _toggle_edl(self):
         if hasattr(self.renderer, 'edl_pass'):
-            return self.renderer.eye_dome_lighting_off()
-        return self.renderer.eye_dome_lighting_on()
+            return self.renderer.disable_eye_dome_lighting()
+        return self.renderer.enable_eye_dome_lighting()
 
     def _render(self):
         super(BackgroundPlotter, self)._render()

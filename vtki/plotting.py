@@ -234,7 +234,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.camera_position = cpos
 
     if eye_dome_lighting:
-        plotter.eye_dome_lighting_on()
+        plotter.enable_eye_dome_lighting()
 
     result = plotter.show(window_size=window_size,
                         auto_close=False,
@@ -1924,13 +1924,13 @@ class BasePlotter(object):
             ifilter.SetInputBufferTypeToRGB()
         return self._run_image_filter(ifilter)
 
-    def eye_dome_lighting_on(self):
+    def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL) for active renderer"""
-        return self.renderer.eye_dome_lighting_on()
+        return self.renderer.enable_eye_dome_lighting()
 
-    def eye_dome_lighting_off(self):
+    def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL) for active renderer"""
-        return self.renderer.eye_dome_lighting_off()
+        return self.renderer.disable_eye_dome_lighting()
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """
