@@ -2176,7 +2176,7 @@ class BasePlotter(object):
         else:
             self._render()
 
-        # debug: this needs to be called twice for some reason,  
+        # debug: this needs to be called twice for some reason,
         img = self.image
         img = self.image
 
@@ -2590,11 +2590,13 @@ class Plotter(BasePlotter):
     right_timer_id = -1
 
     def __init__(self, off_screen=False, notebook=None, shape=(1, 1),
-                 border=None, border_color='k', window_size=None):
+                 border=None, border_color='k', border_width=1.0,
+                 window_size=None):
         """
         Initialize a vtk plotting object
         """
-        super(Plotter, self).__init__(shape, border, border_color)
+        super(Plotter, self).__init__(shape=shape, border=border,
+                    border_color=border_color, border_width=border_width)
         log.debug('Initializing')
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:
