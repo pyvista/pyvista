@@ -27,7 +27,7 @@ And now plot this point cloud as-is:
     # Plot a typical point cloud with no EDL
     p = vtki.Plotter()
     p.add_mesh(point_cloud, color='orange', point_size=5)
-    p.show(screenshot='./images/point-cloud-no-edl.png')
+    p.show(screenshot='point-cloud-no-edl.png')
 
 
 .. image:: ../../../images/point-cloud-no-edl.png
@@ -42,7 +42,7 @@ Reference :func:`vtki.Renderer.enable_eye_dome_lighting`.
     p = vtki.Plotter()
     p.add_mesh(point_cloud, color='orange', point_size=5)
     p.enable_eye_dome_lighting()
-    p.show(screenshot='./images/point-cloud-edl.png')
+    p.show(screenshot='point-cloud-edl.png')
 
 
 .. image:: ../../../images/point-cloud-edl.png
@@ -56,7 +56,7 @@ The eye dome lighting mode can also handle plotting scalar arrays:
     p = vtki.Plotter()
     p.add_mesh(point_cloud, scalars='Elevation', point_size=5)
     p.enable_eye_dome_lighting()
-    p.show(screenshot='./images/point-cloud-edl-scalars.png')
+    p.show(screenshot='point-cloud-edl-scalars.png')
 
 
 .. image:: ../../../images/point-cloud-edl-scalars.png

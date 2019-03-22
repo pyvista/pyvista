@@ -1860,6 +1860,8 @@ class BasePlotter(object):
             Frames per second.
 
         """
+        if isinstance(vtki.FIGURE_PATH, str):
+            filename = vtki.FIGURE_PATH + filename
         self.mwriter = imageio.get_writer(filename, fps=framerate)
 
     def open_gif(self, filename):
@@ -1874,6 +1876,8 @@ class BasePlotter(object):
         """
         if filename[-3:] != 'gif':
             raise Exception('Unsupported filetype.  Must end in .gif')
+        if isinstance(vtki.FIGURE_PATH, str):
+            filename = vtki.FIGURE_PATH + filename
         self.mwriter = imageio.get_writer(filename, mode='I')
 
     def write_frame(self):
@@ -2195,6 +2199,8 @@ class BasePlotter(object):
 
         # write screenshot to file
         if isinstance(filename, str):
+            if isinstance(vtki.FIGURE_PATH, str):
+                filename = vtki.FIGURE_PATH + filename
             if not return_img:
                 return imageio.imwrite(filename, img)
             imageio.imwrite(filename, img)
@@ -2548,6 +2554,8 @@ class BasePlotter(object):
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
+        if isinstance(vtki.FIGURE_PATH, str):
+            filename = vtki.FIGURE_PATH + filename
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
 

@@ -28,7 +28,7 @@ Using vectors in a dataset to plot and orient glyphs can be done via the
     p = vtki.Plotter()
     p.add_mesh(grid.glyph(orient='vec', scale='mag', factor=1))
     p.show(auto_close=False)
-    p.screenshot('./images/vectorfield.png')
+    p.screenshot('vectorfield.png')
     p.close()
 
 
@@ -53,13 +53,13 @@ Another approach is to load the vectors directly to the grid object and then acc
     sphere.vectors = vectors*0.3
 
     # plot just the arrows
-    sphere.arrows.plot(screenshot='./images/sphere_vectorfield.png')
+    sphere.arrows.plot(screenshot='sphere_vectorfield.png')
 
     # plot the arrows and the sphere
     p = vtki.Plotter()
     p.add_mesh(sphere.arrows, lighting=False, stitle='Vector Magnitude')
     p.add_mesh(sphere, 'w', ambient=0.6, opacity=0.75, show_edges=False)
-    p.show(screenshot='./images/sphere_vectorfield_w_sphere.png')
+    p.show(screenshot='sphere_vectorfield_w_sphere.png')
 
 
 .. image:: ../../../images/sphere_vectorfield.png

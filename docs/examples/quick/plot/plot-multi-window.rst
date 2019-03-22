@@ -36,7 +36,7 @@ the subplot you wish to be the active subplot.
     plotter.add_bounds_axes(all_edges=True)
 
     # Display the window
-    plotter.show(screenshot='./images/multi-window.png')
+    plotter.show(screenshot='multi-window.png')
 
 .. image:: ../../../images/multi-window.png
 
@@ -61,6 +61,6 @@ the subplot you wish to be the active subplot.
     plotter.add_mesh(examples.load_uniform(), show_edges=True)
 
     # Display the window
-    plotter.show(screenshot='./images/sub-plot-demo.png')
+    plotter.show(screenshot='sub-plot-demo.png')
 
 .. image:: ../../../images/sub-plot-demo.png

@@ -3,6 +3,7 @@ import sphinx_rtd_theme
 import vtki
 vtki.TESTING_OFFSCREEN = True
 vtki.set_plot_theme('document')
+vtki.FIGURE_PATH = './images/'
 
 # -- General configuration ------------------------------------------------
 numfig = True

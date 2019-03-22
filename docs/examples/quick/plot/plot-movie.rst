@@ -1,5 +1,5 @@
-Creating a Movie
-----------------
+Create an MP4 Movie
+-------------------
 
 
 .. testcode:: python
@@ -7,16 +7,16 @@ Creating a Movie
     import vtki
     import numpy as np
 
-    filename = './images/sphere-shrinking.mp4'
+    filename = 'sphere-shrinking.mp4'
 
     mesh = vtki.Sphere()
     mesh.cell_arrays['data'] = np.random.random(mesh.n_cells)
 
     plotter = vtki.Plotter()
-    # Open a moview file
+    # Open a movie file
     plotter.open_movie(filename)
 
-    # Add intial mesh
+    # Add initial mesh
     plotter.add_mesh(mesh, scalars='data', clim=[0, 1])
     # Add outline for shrinking reference
     plotter.add_mesh(mesh.outline_corners())
@@ -25,7 +25,7 @@ Creating a Movie
     plotter.plot(auto_close=False)
 
     # Run through each frame
-    plotter.write_frame() # write intial data
+    plotter.write_frame() # write initial data
 
     # Update scalars on each frame
     for i in range(100):
@@ -35,6 +35,7 @@ Creating a Movie
         mesh.cell_arrays['data'] = np.random.random(mesh.n_cells)
         plotter.write_frame() # Write this frame
 
+    # Be sure to close the plotter when finished
     plotter.close()
 
 

@@ -49,3 +49,6 @@ TESTING_OFFSCREEN = False
 
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
+
+# Set where figures are saved
+FIGURE_PATH = None

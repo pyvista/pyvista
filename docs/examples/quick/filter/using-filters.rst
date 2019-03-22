@@ -38,7 +38,7 @@ object:
     p.add_mesh(dataset.outline(), color='k')
     p.add_mesh(result)
     p.camera_position = [-2,5,3]
-    p.show(screenshot='./images/threshold.png')
+    p.show(screenshot='threshold.png')
 
 
 .. image:: ../../../images/threshold.png
@@ -78,7 +78,7 @@ And to view this filtered data, simply call the ``plot`` method
     p.add_mesh(dataset.outline(), color='k')
     p.add_mesh(result, scalars='Elevation')
     p.view_isometric()
-    p.show(screenshot='./images/filter-chain.png')
+    p.show(screenshot='filter-chain.png')
 
 
 .. image:: ../../../images/filter-chain.png
