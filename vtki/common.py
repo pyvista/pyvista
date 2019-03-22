@@ -906,7 +906,6 @@ class PointScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.adder = self.data._add_point_scalar
         self.remover = lambda key: self.data._remove_point_scalar(key)
         self.modifier = lambda *args: self.data.GetPointData().Modified()
 
