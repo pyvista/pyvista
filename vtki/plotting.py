@@ -224,7 +224,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.add_text(text)
 
     if show_bounds or kwargs.get('show_grid', False):
-        plotter.add_bounds_axes()
+        if kwargs.get('show_grid', False):
+            plotter.show_grid()
+        else:
+            plotter.add_bounds_axes()
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()
@@ -234,7 +237,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.camera_position = cpos
 
     if eye_dome_lighting:
-        plotter.eye_dome_lighting_on()
+        plotter.enable_eye_dome_lighting()
 
     result = plotter.show(window_size=window_size,
                         auto_close=False,
@@ -1860,6 +1863,8 @@ class BasePlotter(object):
             Frames per second.
 
         """
+        if isinstance(vtki.FIGURE_PATH, str):
+            filename = vtki.FIGURE_PATH + filename
         self.mwriter = imageio.get_writer(filename, fps=framerate)
 
     def open_gif(self, filename):
@@ -1874,10 +1879,14 @@ class BasePlotter(object):
         """
         if filename[-3:] != 'gif':
             raise Exception('Unsupported filetype.  Must end in .gif')
+        if isinstance(vtki.FIGURE_PATH, str):
+            filename = vtki.FIGURE_PATH + filename
         self.mwriter = imageio.get_writer(filename, mode='I')
 
     def write_frame(self):
         """ Writes a single frame to the movie file """
+        if not hasattr(self, 'mwriter'):
+            raise AssertionError('This plotter has not opened a movie or GIF file.')
         self.mwriter.append_data(self.image)
 
     @property
@@ -1891,18 +1900,7 @@ class BasePlotter(object):
         """ set the render window size """
         self.ren_win.SetSize(window_size[0], window_size[1])
 
-    @property
-    def image(self):
-        """ Returns an image array of current render window """
-        ifilter = vtk.vtkWindowToImageFilter()
-        ifilter.SetInput(self.ren_win)
-        ifilter.ReadFrontBufferOff()
-
-        if self.image_transparent_background:
-            ifilter.SetInputBufferTypeToRGBA()
-        else:
-            ifilter.SetInputBufferTypeToRGB()
-
+    def _run_image_filter(self, ifilter):
         # Update filter and grab pixels
         ifilter.Modified()
         ifilter.Update()
@@ -1914,13 +1912,34 @@ class BasePlotter(object):
         tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    def eye_dome_lighting_on(self):
-        """Enable eye dome lighting (EDL) for active renderer"""
-        return self.renderer.eye_dome_lighting_on()
+    @property
+    def image_depth(self):
+        """ Returns an image array of current render window """
+        ifilter = vtk.vtkWindowToImageFilter()
+        ifilter.SetInput(self.ren_win)
+        ifilter.ReadFrontBufferOff()
+        ifilter.SetInputBufferTypeToZBuffer()
+        return self._run_image_filter(ifilter)
 
-    def eye_dome_lighting_off(self):
+    @property
+    def image(self):
+        """ Returns an image array of current render window """
+        ifilter = vtk.vtkWindowToImageFilter()
+        ifilter.SetInput(self.ren_win)
+        ifilter.ReadFrontBufferOff()
+        if self.image_transparent_background:
+            ifilter.SetInputBufferTypeToRGBA()
+        else:
+            ifilter.SetInputBufferTypeToRGB()
+        return self._run_image_filter(ifilter)
+
+    def enable_eye_dome_lighting(self):
+        """Enable eye dome lighting (EDL) for active renderer"""
+        return self.renderer.enable_eye_dome_lighting()
+
+    def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL) for active renderer"""
-        return self.renderer.eye_dome_lighting_off()
+        return self.renderer.disable_eye_dome_lighting()
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """
@@ -2176,7 +2195,7 @@ class BasePlotter(object):
         else:
             self._render()
 
-        # debug: this needs to be called twice for some reason,  
+        # debug: this needs to be called twice for some reason,
         img = self.image
         img = self.image
 
@@ -2185,6 +2204,8 @@ class BasePlotter(object):
 
         # write screenshot to file
         if isinstance(filename, str):
+            if isinstance(vtki.FIGURE_PATH, str):
+                filename = vtki.FIGURE_PATH + filename
             if not return_img:
                 return imageio.imwrite(filename, img)
             imageio.imwrite(filename, img)
@@ -2538,6 +2559,8 @@ class BasePlotter(object):
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
+        if isinstance(vtki.FIGURE_PATH, str):
+            filename = vtki.FIGURE_PATH + filename
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
 
@@ -2590,11 +2613,13 @@ class Plotter(BasePlotter):
     right_timer_id = -1
 
     def __init__(self, off_screen=False, notebook=None, shape=(1, 1),
-                 border=None, border_color='k', window_size=None):
+                 border=None, border_color='k', border_width=1.0,
+                 window_size=None):
         """
         Initialize a vtk plotting object
         """
-        super(Plotter, self).__init__(shape, border, border_color)
+        super(Plotter, self).__init__(shape=shape, border=border,
+                    border_color=border_color, border_width=border_width)
         log.debug('Initializing')
         def onTimer(iren, eventId):
             if 'TimerEvent' == eventId:

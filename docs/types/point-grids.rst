@@ -65,7 +65,7 @@ An unstructured grid can be created directly from numpy arrays.  This is useful 
     grid = vtki.UnstructuredGrid(offset, cells, cell_type, points)
 
     # plot the grid
-    grid.plot(show_edges=True, screenshot='./images/twocubes.png')
+    grid.plot(show_edges=True, screenshot='twocubes.png')
 
 ..
    The resulting plot can be found in :numref:`twocubes`.
@@ -138,7 +138,7 @@ A structured grid can be created directly from numpy arrays.  This is useful whe
 
     # create the unstructured grid directly from the numpy arrays and plot
     grid = vtki.StructuredGrid(x, y, z)
-    grid.plot(show_edges=True, screenshot='./images/structured_cube.png')
+    grid.plot(show_edges=True, screenshot='structured_cube.png')
 
 .. image:: ../images/structured_cube.png
 
@@ -199,7 +199,7 @@ A more complex plot can be created using:
 
     # Don't let it close automatically so we can take a screenshot
     cpos = plotter.plot(auto_close=False)
-    plotter.screenshot('./images/beam.png')
+    plotter.screenshot('beam.png')
     plotter.close()
 
 .. image:: ../images/beam.png
@@ -222,7 +222,7 @@ You then open the render window by plotting before opening movie file.  Set auto
     plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
 
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
-    plotter.open_gif('./images/gifs/beam.gif')  # or beam.mp4
+    plotter.open_gif('gifs/beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
@@ -250,7 +250,7 @@ You can also render the beam as as a wire-frame object:
     plotter.show(interactive=False, auto_close=False, window_size=[800, 600])
 
     #plotter.OpenMovie('beam.mp4')
-    plotter.open_gif('./images/gifs/beam_wireframe.gif')
+    plotter.open_gif('gifs/beam_wireframe.gif')
     for phase in np.linspace(0, 2*np.pi, 20):
         plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
         plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
@@ -289,7 +289,7 @@ Labels can be added to a plot using the ``add_point_labels`` function within the
                     (0.05268120500967251, 0.639442034364944, 1.204095304165153),
                     (0.2364061044392675, 0.9369426029156169, -0.25739213784721)]
 
-    plotter.show(screenshot='./images/labels0.png')
+    plotter.show(screenshot='labels0.png')
 
 .. image:: ../images/labels0.png
 
@@ -313,7 +313,7 @@ This example is similar and shows how labels can be combined with a scalar bar t
     plotter.add_text('Example showing plot labels')
 
     plotter.view_vector((-6, -3, -4), (0.,-1., 0.))
-    plotter.show(screenshot='./images/labels1.png')
+    plotter.show(screenshot='labels1.png')
 
 .. image:: ../images/labels1.png
 

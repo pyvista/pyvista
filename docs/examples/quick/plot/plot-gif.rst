@@ -1,6 +1,6 @@
 
-Creating a GIF Movie
---------------------
+Create a GIF Movie
+------------------
 
 This example shows the versatility of the plotting object by generating a moving
 gif:
@@ -27,7 +27,7 @@ gif:
     plotter.plot(auto_close=False)
 
     # Open a gif
-    plotter.open_gif('./images/gifs/wave.gif')
+    plotter.open_gif('gifs/wave.gif')
 
     pts = grid.points.copy()
 

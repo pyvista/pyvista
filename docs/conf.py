@@ -3,6 +3,7 @@ import sphinx_rtd_theme
 import vtki
 vtki.TESTING_OFFSCREEN = True
 vtki.set_plot_theme('document')
+vtki.FIGURE_PATH = './images/'
 
 # -- General configuration ------------------------------------------------
 numfig = True
@@ -192,3 +193,4 @@ class AutoAutoSummary(Autosummary):
 
 def setup(app):
     app.add_directive('autoautosummary', AutoAutoSummary)
+    app.add_stylesheet("style.css")

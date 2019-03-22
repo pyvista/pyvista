@@ -13,7 +13,7 @@ position:
 
     filename = examples.planefile
     mesh = vtki.read(filename)
-    cpos = mesh.plot(screenshot='./images/airplane.png', color='orange')
+    cpos = mesh.plot(screenshot='airplane.png', color='orange')
 
 .. image:: ../../../images/airplane.png
 
@@ -26,7 +26,7 @@ the ``Plotter``:
     plotter = vtki.Plotter(off_screen=True)
     plotter.add_mesh(mesh, color='orange')
     plotter.plot(auto_close=False)
-    plotter.screenshot('./images/airplane.png')
+    plotter.screenshot('airplane.png')
     plotter.close()
 
 The ``img`` array can be used to plot the screenshot in ``matplotlib``:
@@ -55,7 +55,7 @@ manually interact with the ``vtk`` plot window:
     plotter.add_mesh(mesh, color='orange')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
-    plotter.screenshot('./images/airplane.png')
+    plotter.screenshot('airplane.png')
     plotter.close()
 
 The points and faces from the mesh are directly accessible as a NumPy array:

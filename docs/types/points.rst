@@ -51,7 +51,7 @@ number of points for each face and the indices of each of those faces.
     surf = vtki.PolyData(vertices, faces)
 
     # plot each face with a different color
-    surf.plot(scalars=np.arange(3), screenshot='./images/samplepolydata.png')
+    surf.plot(scalars=np.arange(3), cpos=[-1,1,0.5], screenshot='samplepolydata.png')
 
 .. image:: ../images/samplepolydata.png
 
@@ -133,7 +133,7 @@ The following code creates the class and plots the meshes with various colors.
 
     # Add annotation text
     plotter.add_text('Ants and Plane Example')
-    plotter.plot(screenshot='./images/AntsAndPlane.png')
+    plotter.plot(screenshot='AntsAndPlane.png')
 
 .. image:: ../images/AntsAndPlane.png
 
@@ -160,7 +160,7 @@ vtki supports single line segment ray tracing.
     p.add_mesh(ray, color='blue', line_width=5, label='Ray Segment')
     p.add_mesh(intersection, color='maroon', point_size=10, label='Intersection Points')
     p.add_legend()
-    p.show(screenshot='./images/intersection_sphere.png')
+    p.show(screenshot='intersection_sphere.png')
 
 
 .. image:: ../images/intersection_sphere.png

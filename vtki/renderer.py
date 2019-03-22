@@ -725,7 +725,7 @@ class Renderer(vtkRenderer):
         """Enable this renderer's camera to be interactive"""
         return self.SetInteractive(1)
 
-    def eye_dome_lighting_on(self):
+    def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL)"""
         if hasattr(self, 'edl_pass'):
             return self
@@ -741,7 +741,7 @@ class Renderer(vtkRenderer):
         self.glrenderer.SetPass(self.edl_pass)
         return self.glrenderer
 
-    def eye_dome_lighting_off(self):
+    def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL)"""
         if not hasattr(self, 'edl_pass'):
             return

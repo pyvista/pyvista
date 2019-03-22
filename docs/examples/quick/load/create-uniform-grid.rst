@@ -32,7 +32,7 @@ axis corresponds to the XYZ cartesian axes. This example will create a
     grid.cell_arrays['values'] = values.flatten(order='F') # Flatten the array!
 
     # Now plot the grid!
-    grid.plot(show_edges=True, screenshot='./images/uniform-grid.png')
+    grid.plot(show_edges=True, screenshot='uniform-grid.png')
 
 
 .. image:: ../../../images/uniform-grid.png
