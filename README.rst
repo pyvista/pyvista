@@ -55,7 +55,8 @@ Installation is simply::
 
     pip install vtki
 
-You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
+You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_,
+`Anaconda <https://anaconda.org/conda-forge/vtki>`_, or
 `GitHub <https://github.com/vtkiorg/vtki>`_ to download the source.
 
 See the `Installation <http://docs.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_

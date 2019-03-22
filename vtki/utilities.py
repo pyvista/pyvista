@@ -2,6 +2,7 @@
 Supporting functions for polydata and grid objects
 
 """
+import collections
 import ctypes
 import logging
 import os
@@ -271,11 +272,23 @@ def numpy_to_texture(image):
 
 
 def is_inside_bounds(point, bounds):
-    """ Checks if a point is inside a set of bounds """
-    if not (bounds[0] < point[0] < bounds[1]):
-        return False
-    if not (bounds[2] < point[1] < bounds[3]):
-        return False
-    if not (bounds[4] < point[2] < bounds[5]):
-        return False
-    return True
+    """ Checks if a point is inside a set of bounds. This is implemented
+    through recursion so that this is N-dimensional.
+    """
+    if isinstance(point, (int, float)):
+        point = [point]
+    if isinstance(point, collections.Iterable) and not isinstance(point, collections.deque):
+        if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
+            raise AssertionError('Bounds mismatch point dimensionality')
+        point = collections.deque(point)
+        bounds = collections.deque(bounds)
+        return is_inside_bounds(point, bounds)
+    if not isinstance(point, collections.deque):
+        raise TypeError('Unknown input data type ({}).'.format(type(point)))
+    if len(point) < 1:
+        return True
+    p = point.popleft()
+    lower, upper = bounds.popleft(), bounds.popleft()
+    if lower <= p <= upper:
+        return is_inside_bounds(point, bounds)
+    return False

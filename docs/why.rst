@@ -99,7 +99,7 @@ When combined with numpy, you can make some truly spectacular plots:
     # plot using the plotting class
     plobj = vtki.Plotter()
     plobj.add_arrows(points, direction, 0.5)
-    plobj.show(screenshot='./images/vectorfield.png')
+    plobj.show(screenshot='vectorfield.png')
 
 .. image:: ./images/vectorfield.png
 

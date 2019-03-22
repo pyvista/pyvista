@@ -1,0 +1,113 @@
+/* To stick the footer to the bottom of the page */
+html {
+}
+
+body {
+    font-family: 'Open Sans', sans-serif;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 300;
+    font-family: "Open Sans",sans-serif;
+}
+
+h1 {
+    font-size: 200%;
+}
+
+.sidebar-title {
+    margin-top: 10px;
+    margin-bottom: 0px;
+}
+
+.banner {
+    padding-bottom: 60px;
+    text-align: center;
+}
+
+.banner img {
+    margin-bottom: 40px;
+}
+
+.api-module {
+	margin-bottom: 80px;
+}
+
+.youtube-embed {
+    max-width: 600px;
+    margin-bottom: 24px;
+}
+
+.video-container {
+    position:relative;
+    padding-bottom:56.25%;
+    padding-top:30px;
+    height:0;
+    overflow:hidden;
+}
+
+.video-container iframe, .video-container object, .video-container embed {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+}
+
+.wy-nav-content {
+    max-width: 1000px;
+}
+
+.wy-nav-top {
+    background-color: #555555;
+}
+
+.wy-side-nav-search {
+    background-color: #555555;
+}
+
+.wy-side-nav-search > a img.logo {
+    width: 50%;
+}
+
+.wy-side-nav-search input[type="text"] {
+    border-color: #555555;
+}
+
+/* Remove the padding from the Parameters table */
+.rst-content table.field-list .field-name {
+    padding-left: 0px;
+}
+
+/* Lign up the Parameters section with the descriptions */
+.rst-content table.field-list td {
+    padding-top: 8px;
+}
+
+.rst-content .highlight > pre {
+    font-size: 14px;
+}
+
+.rst-content img {
+    max-width: 100%;
+}
+
+.source-link {
+    float: right;
+}
+
+/* Don't let the edit and notebook download links disappear on mobile. */
+@media screen and (max-width: 480px) {
+    .wy-breadcrumbs li.source-link {
+        float:none;
+        display: block;
+        margin-top: 20px;
+    }
+}
+
+/* Sphinx-Gallery */
+/****************************************************************************/
+/* Don't let captions be italic */
+.rst-content div.figure p.caption {
+    font-style: normal;
+}

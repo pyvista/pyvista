@@ -23,7 +23,7 @@ scalar bar plotting:
     # Add the data, use active scalar for coloring, and show the scalar bar
     p.add_mesh(mesh)
     # Display the scene
-    p.show(screenshot='./images/st-helens.png')
+    p.show(screenshot='st-helens.png')
 
 
 .. image:: ../../../images/st-helens.png
@@ -64,7 +64,7 @@ Or manually define the scalar bar's location:
 
     p = vtki.Plotter()
     p.add_mesh(mesh, scalar_bar_args=sargs)
-    p.show(screenshot='./images/scalar-bar-location.png')
+    p.show(screenshot='scalar-bar-location.png')
 
 
 .. image:: ../../../images/scalar-bar-location.png
@@ -82,7 +82,7 @@ The text properties of the scalar bar can also be controlled:
 
     p = vtki.Plotter()
     p.add_mesh(mesh, scalar_bar_args=sargs)
-    p.show(screenshot='./images/scalar-bar-text.png')
+    p.show(screenshot='scalar-bar-text.png')
 
 
 .. image:: ../../../images/scalar-bar-text.png

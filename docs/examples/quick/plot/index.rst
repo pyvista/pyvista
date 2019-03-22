@@ -12,4 +12,5 @@ Plotting Examples
    plot-glyphs
    plot-time-lapse
    plot-gif
+   plot-movie
    plot-edl
