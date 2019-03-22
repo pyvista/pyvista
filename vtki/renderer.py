@@ -2,6 +2,7 @@
 Module containing vtki implementation of vtkRenderer
 """
 import collections
+import logging
 import vtk
 from weakref import proxy
 
@@ -139,7 +140,7 @@ class Renderer(vtkRenderer):
         self.parent._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
-    def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
+    def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
                         bold=True, shadow=False, font_size=None,
@@ -260,7 +261,7 @@ class Renderer(vtkRenderer):
         >>> mesh = vtki.Sphere()
         >>> plotter = vtki.Plotter()
         >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> _ = plotter.show_bounds(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
         self.remove_bounds_axes()
@@ -409,6 +410,11 @@ class Renderer(vtkRenderer):
             cube_axes_actor.SetZLabelFormat(fmt)
 
         return cube_axes_actor
+
+    def add_bounds_axes(self, *args, **kwargs):
+        """Deprecated"""
+        logging.warning('`add_bounds_axes` is deprecaed. Use `show_bounds` or `show_grid`.')
+        return self.show_bounds(*args, **kwargs)
 
     def remove_bounding_box(self):
         """ Removes bounding box """

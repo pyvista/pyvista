@@ -170,7 +170,7 @@ class InteractiveTool(object):
                     loc=self.loc)
         # add the axis labels
         if show_bounds:
-            self.plotter.add_bounds_axes(reset_camera=False, loc=loc)
+            self.plotter.show_bounds(reset_camera=False, loc=loc)
         if reset_camera:
             cpos = self.plotter.get_default_cam_pos()
             self.plotter.camera_position = cpos
