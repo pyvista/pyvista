@@ -1,6 +1,6 @@
 
-Creating a GIF Movie
---------------------
+Create a GIF Movie
+------------------
 
 This example shows the versatility of the plotting object by generating a moving
 gif:
