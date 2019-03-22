@@ -1308,7 +1308,7 @@ class BasePlotter(object):
 
     def add_bounds_axes(self, *args, **kwargs):
         """Deprecated"""
-        logging.warning('`add_bounds_axes` is deprecaed. Use `show_bounds` or `show_grid`.')
+        logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
         return self.show_bounds(*args, **kwargs)
 
     def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
