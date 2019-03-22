@@ -842,7 +842,6 @@ class _ScalarsDict(dict):
         self.data = proxy(data)
         dict.__init__(self)
         self.callback_enabled = False
-        self.adder = None
         self.remover = None
         self.modifier = None
 
@@ -883,6 +882,7 @@ class _ScalarsDict(dict):
         self.remover(key)
         return dict.__delitem__(self, key)
 
+
 class CellScalarsDict(_ScalarsDict):
     """
     Updates internal cell data when an array is added or removed from
@@ -891,9 +891,11 @@ class CellScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.adder = self.data._add_cell_scalar
-        self.remover = self.data._remove_cell_scalar
-        self.modifier = self.data.GetCellData().Modified
+        self.remover = lambda key: self.data._remove_cell_scalar(key)
+        self.modifier = lambda *args: self.data.GetCellData().Modified()
+
+    def adder(self, scalars, name, set_active=False, deep=True):
+        self.data._add_cell_scalar(scalars, name, set_active=False, deep=deep)
 
 
 class PointScalarsDict(_ScalarsDict):
@@ -905,8 +907,11 @@ class PointScalarsDict(_ScalarsDict):
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
         self.adder = self.data._add_point_scalar
-        self.remover = self.data._remove_point_scalar
-        self.modifier = self.data.GetPointData().Modified
+        self.remover = lambda key: self.data._remove_point_scalar(key)
+        self.modifier = lambda *args: self.data.GetPointData().Modified()
+
+    def adder(self, scalars, name, set_active=False, deep=True):
+        self.data._add_point_scalar(scalars, name, set_active=False, deep=deep)
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
