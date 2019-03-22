@@ -51,7 +51,7 @@ number of points for each face and the indices of each of those faces.
     surf = vtki.PolyData(vertices, faces)
 
     # plot each face with a different color
-    surf.plot(scalars=np.arange(3), screenshot='samplepolydata.png')
+    surf.plot(scalars=np.arange(3), cpos=[-1,1,0.5], screenshot='samplepolydata.png')
 
 .. image:: ../images/samplepolydata.png
 
