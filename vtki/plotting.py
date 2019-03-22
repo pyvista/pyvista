@@ -224,7 +224,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.add_text(text)
 
     if show_bounds or kwargs.get('show_grid', False):
-        plotter.add_bounds_axes()
+        if kwargs.get('show_grid', False):
+            plotter.show_grid()
+        else:
+            plotter.add_bounds_axes()
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()

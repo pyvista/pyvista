@@ -48,7 +48,7 @@ volumetric bodies left over in one dataset? Take this for example:
 .. testcode:: python
 
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
-    threshed.plot(show_bounds=True, cpos=[-2,5,3], screenshot='two-bodies.png')
+    threshed.plot(show_grid=True, cpos=[-2,5,3], screenshot='two-bodies.png')
 
 
 .. image:: ../../../images/two-bodies.png
@@ -125,7 +125,7 @@ dataset. For example, lets split the thresholded volume in the example above:
 
 .. testcode:: python
 
-    bodies.plot(show_bounds=True, multi_colors=True, cpos=[-2,5,3], screenshot='split-bodies.png')
+    bodies.plot(show_grid=True, multi_colors=True, cpos=[-2,5,3], screenshot='split-bodies.png')
 
 
 .. image:: ../../../images/split-bodies.png
@@ -177,10 +177,8 @@ And visualize all the different volumes:
 
 .. testcode:: python
 
-    p = vtki.Plotter()
-    p.add_mesh(bodies, scalars='TOTAL VOLUME', cmap='viridis')
-    p.show_grid()
-    p.show(screenshot='channel-volumes.png')
+    bodies.plot(scalars='TOTAL VOLUME', cmap='viridis',
+                show_grid=True, screenshot='channel-volumes.png')
 
 
 .. image:: ../../../images/channel-volumes.png
