@@ -1882,6 +1882,8 @@ class BasePlotter(object):
 
     def write_frame(self):
         """ Writes a single frame to the movie file """
+        if not hasattr(self, 'mwriter'):
+            raise AssertionError('This plotter has not opened a movie or GIF file.')
         self.mwriter.append_data(self.image)
 
     @property
