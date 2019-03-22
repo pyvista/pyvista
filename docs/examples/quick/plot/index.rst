@@ -6,6 +6,7 @@ Plotting Examples
    :maxdepth: 2
 
    plot-scalar-bars
+   plot-opacity
    plot-ipython
    plot-clear
    plot-multi-window
