@@ -193,3 +193,4 @@ class AutoAutoSummary(Autosummary):
 
 def setup(app):
     app.add_directive('autoautosummary', AutoAutoSummary)
+    app.add_stylesheet("style.css")
