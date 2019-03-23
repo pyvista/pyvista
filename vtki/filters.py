@@ -789,8 +789,11 @@ class DataSetFilters(object):
             # Now extract it:
             b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId')
             if not label:
-                del b.cell_arrays['RegionId']
-                del b.point_arrays['RegionId']
+                # strange behavior:
+                # must use this method rather than deleting from the point_arrays
+                # or else object is collected.  
+                b._remove_cell_scalar('RegionId')
+                b._remove_point_scalar('RegionId')
             bodies.append(b)
 
         return bodies
