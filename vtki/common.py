@@ -883,34 +883,66 @@ class _ScalarsDict(dict):
         return dict.__delitem__(self, key)
 
 
-class CellScalarsDict(_ScalarsDict):
+class CellScalarsDict(dict):
     """
     Updates internal cell data when an array is added or removed from
     the dictionary.
     """
 
     def __init__(self, data):
-        _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_cell_scalar(key)
-        self.modifier = lambda *args: self.data.GetCellData().Modified()
+        self.data = proxy(data)
+        dict.__init__(self)
+        self.callback_enabled = False
 
-    def adder(self, scalars, name, set_active=False, deep=True):
-        self.data._add_cell_scalar(scalars, name, set_active=False, deep=deep)
+    def enable_callback(self):
+        self.callback_enabled = True
+
+    def pop(self, key):
+        arr = dict.pop(self, key).copy()
+        self.data._remove_cell_scalar(key)
+        return arr
+
+    def __setitem__(self, key, val):
+        """ overridden to assure data is contigious """
+        if self.callback_enabled:
+            self.data._add_cell_scalar(val, key, deep=False)
+        dict.__setitem__(self, key, val)
+        self.data.GetCellData().Modified()
+
+    def __delitem__(self, key):
+        self.data._remove_cell_scalar(key)
+        return dict.__delitem__(self, key)
 
 
-class PointScalarsDict(_ScalarsDict):
+class PointScalarsDict(dict):
     """
     Updates internal point data when an array is added or removed from
     the dictionary.
     """
 
     def __init__(self, data):
-        _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_point_scalar(key)
-        self.modifier = lambda *args: self.data.GetPointData().Modified()
+        self.data = proxy(data)
+        dict.__init__(self)
+        self.callback_enabled = False
 
-    def adder(self, scalars, name, set_active=False, deep=True):
-        self.data._add_point_scalar(scalars, name, set_active=False, deep=deep)
+    def enable_callback(self):
+        self.callback_enabled = True
+
+    def pop(self, key):
+        arr = dict.pop(self, key).copy()
+        self.data._remove_point_scalar(key)
+        return arr
+
+    def __setitem__(self, key, val):
+        """ overridden to assure data is contigious """
+        if self.callback_enabled:
+            self.data._add_point_scalar(val, key, deep=False)
+        dict.__setitem__(self, key, val)
+        self.data.GetPointData().Modified()
+
+    def __delitem__(self, key):
+        self.data._remove_point_scalar(key)
+        return dict.__delitem__(self, key)
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
