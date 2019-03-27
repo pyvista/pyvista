@@ -2565,8 +2565,7 @@ class BasePlotter(object):
 
 
 class Plotter(BasePlotter):
-    """
-    Plotting object to display vtk meshes or numpy arrays.
+    """ Plotting object to display vtk meshes or numpy arrays.
 
     Example
     -------
@@ -2619,10 +2618,13 @@ class Plotter(BasePlotter):
         Initialize a vtk plotting object
         """
         super(Plotter, self).__init__(shape=shape, border=border,
-                    border_color=border_color, border_width=border_width)
+                                      border_color=border_color,
+                                      border_width=border_width)
         log.debug('Initializing')
-        def onTimer(iren, eventId):
-            if 'TimerEvent' == eventId:
+
+        def on_timer(iren, event_id):
+            """ Exit application if interactive renderer stops """
+            if event_id == 'TimerEvent':
                 self.iren.TerminateApp()
 
         if vtki.TESTING_OFFSCREEN:
@@ -2630,7 +2632,10 @@ class Plotter(BasePlotter):
 
         if notebook is None:
             if run_from_ipython():
-                notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+                try:
+                    notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+                except NameError:
+                    pass
 
         self.notebook = notebook
         if self.notebook:
@@ -2668,7 +2673,7 @@ class Plotter(BasePlotter):
 
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
-            self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
+            self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
