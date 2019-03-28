@@ -195,7 +195,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     """
     if notebook is None:
         if run_from_ipython():
-            notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+            try:
+                notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+            except NameError:
+                pass
 
     if notebook:
         off_screen = notebook
