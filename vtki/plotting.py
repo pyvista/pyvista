@@ -243,11 +243,11 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.enable_eye_dome_lighting()
 
     result = plotter.show(window_size=window_size,
-                        auto_close=False,
-                        interactive=interactive,
-                        full_screen=full_screen,
-                        screenshot=screenshot,
-                        return_img=return_img)
+                          auto_close=False,
+                          interactive=interactive,
+                          full_screen=full_screen,
+                          screenshot=screenshot,
+                          return_img=return_img)
 
     # close and return camera position and maybe image
     plotter.close()
