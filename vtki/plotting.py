@@ -842,6 +842,8 @@ class BasePlotter(object):
 
         # Scalar formatting ===================================================
         if cmap is None:
+            cmap = kwargs.get('colormap', None)
+        if cmap is None:
             cmap = rcParams['cmap']
         title = 'Data' if stitle is None else stitle
         if scalars is not None:
