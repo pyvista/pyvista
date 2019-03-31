@@ -40,7 +40,7 @@ that you can manipulate in real time from the Jupyter notebook:
     plotter.add_mesh(dataset)
 
     # Then in another cell, you can add more to the plotter
-    plotter.add_bounds_axes()
+    plotter.show_bounds()
 
 
 Background Plotting
@@ -64,7 +64,7 @@ the :class:`vtki.BackgroundPlotter`:
 
     p.add_mesh(dataset)
 
-    p.add_bounds_axes(grid=True, location='back')
+    p.show_bounds(grid=True, location='back')
 
 
 IPython Interactive Plotting Tools

@@ -386,7 +386,7 @@ class BackgroundPlotter(QtInteractor):
         orien_menu.addAction('Hide', self.hide_axes)
         # Bounds axes
         axes_menu = view_menu.addMenu('Bounds Axes')
-        axes_menu.addAction('Add Bounds Axes (front)', self.add_bounds_axes)
+        axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)
         axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
         axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
         axes_menu.addSeparator()

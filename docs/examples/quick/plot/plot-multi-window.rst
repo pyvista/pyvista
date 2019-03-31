@@ -33,7 +33,7 @@ the subplot you wish to be the active subplot.
     plotter.subplot(1, 1)
     plotter.add_text('Render Window 3', font_size=30)
     plotter.add_mesh(vtki.Cone(), color='g', show_edges=True)
-    plotter.add_bounds_axes(all_edges=True)
+    plotter.show_bounds(all_edges=True)
 
     # Display the window
     plotter.show(screenshot='multi-window.png')
