@@ -230,7 +230,7 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         if kwargs.get('show_grid', False):
             plotter.show_grid()
         else:
-            plotter.add_bounds_axes()
+            plotter.show_bounds()
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()
@@ -1180,7 +1180,7 @@ class BasePlotter(object):
         self._active_renderer_index = self.loc_to_index(loc)
         return self.renderers[self._active_renderer_index].add_axes_at_origin()
 
-    def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
+    def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
                         bold=True, shadow=False, font_size=None,
@@ -1301,7 +1301,7 @@ class BasePlotter(object):
         >>> mesh = vtki.Sphere()
         >>> plotter = vtki.Plotter()
         >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> _ = plotter.show_bounds(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
         kwargs = locals()
@@ -1309,7 +1309,12 @@ class BasePlotter(object):
         _ = kwargs.pop('loc')
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        renderer.add_bounds_axes(**kwargs)
+        renderer.show_bounds(**kwargs)
+
+    def add_bounds_axes(self, *args, **kwargs):
+        """Deprecated"""
+        logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
+        return self.show_bounds(*args, **kwargs)
 
     def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
                          opacity=1.0, render_lines_as_tubes=False, lighting=None,
@@ -1396,7 +1401,7 @@ class BasePlotter(object):
 
     def show_grid(self, **kwargs):
         """
-        A wrapped implementation of ``add_bounds_axes`` to change default
+        A wrapped implementation of ``show_bounds`` to change default
         behaviour to use gridlines and showing the axes labels on the outer
         edges. This is intended to be silimar to ``matplotlib``'s ``grid``
         function.
@@ -1404,7 +1409,7 @@ class BasePlotter(object):
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
         kwargs.setdefault('ticks', 'both')
-        return self.add_bounds_axes(**kwargs)
+        return self.show_bounds(**kwargs)
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """
