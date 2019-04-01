@@ -101,3 +101,7 @@ def download_knee():
 
 def download_lidar():
     return _download_and_read('kafadar-lidar-interp.vtp')
+
+def download_exodus():
+    """Sample ExodusII data file"""
+    return _download_and_read('mesh_fs8.exo')
