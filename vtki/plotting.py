@@ -2767,8 +2767,17 @@ class Plotter(BasePlotter):
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
 
-            import PIL.Image
-            disp = IPython.display.display(PIL.Image.fromarray(img))
+            try:
+                import panel
+                panel.extension('vtk')
+                from panel.pane import VTK as panel_display
+                disp = panel_display(self.ren_win)
+            except:
+                disp = None
+
+            if disp is None or self.shape != (1,1):
+                import PIL.Image
+                disp = IPython.display.display(PIL.Image.fromarray(img))
 
         if auto_close:
             self.close()
