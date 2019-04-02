@@ -755,17 +755,25 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def connectivity(dataset):
+    def connectivity(dataset, largest=False):
         """Find and label connected bodies/volumes. This adds an ID array to
         the point and cell data to distinguish seperate connected bodies.
         This applies a ``vtkConnectivityFilter`` filter which extracts cells
         that share common points and/or meet other connectivity criterion.
         (Cells that share vertices and meet other connectivity criterion such
         as scalar range are known as a region.)
+
+        Parameters
+        ----------
+        largest : bool
+            Extract the largest connected part of the mesh.
         """
         alg = vtk.vtkConnectivityFilter()
         alg.SetInputData(dataset)
-        alg.SetExtractionModeToAllRegions()
+        if largest:
+            alg.SetExtractionModeToLargestRegion()
+        else:
+            alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
         alg.Update()
         return _get_output(alg)
@@ -791,7 +799,7 @@ class DataSetFilters(object):
             if not label:
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
-                # or else object is collected.  
+                # or else object is collected.
                 b._remove_cell_scalar('RegionId')
                 b._remove_point_scalar('RegionId')
             bodies.append(b)

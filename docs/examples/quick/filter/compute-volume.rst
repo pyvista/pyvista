@@ -54,7 +54,8 @@ volumetric bodies left over in one dataset? Take this for example:
 .. image:: ../../../images/two-bodies.png
 
 We could then assign a classification array for the two bodies, compute the
-cell sizes, then extract the volumes of each body:
+cell sizes, then extract the volumes of each body. Note that there is a simpler
+implementation of this below in :ref:`split_vol_ref`.
 
 .. testcode:: python
 
@@ -87,6 +88,28 @@ cell sizes, then extract the volumes of each body:
     Original volume: 729.0
 
 
+Or better yet, you could simply extract the largest volume from your thresholded
+dataset:
+
+.. testcode:: python
+
+    # Grab the largest connected volume present
+    largest = threshed.connectivity(largest=1)
+
+    # Get volume as numeric value
+    large_volume = largest.volume
+
+    # Display it!
+    largest.plot(show_grid=True, cpos=[-2,5,3], screenshot='two-bodies-largest.png')
+
+
+.. image:: ../../../images/two-bodies-largest.png
+
+
+
+-----
+
+.. _split_vol_ref:
 
 Splitting Volumes
 ~~~~~~~~~~~~~~~~~
@@ -130,6 +153,8 @@ dataset. For example, lets split the thresholded volume in the example above:
 
 .. image:: ../../../images/split-bodies.png
 
+
+-----
 
 A Real Dataset
 ~~~~~~~~~~~~~~
