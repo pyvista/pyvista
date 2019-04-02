@@ -56,7 +56,7 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'friendly'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -122,7 +122,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'vtkinterface', u'vtki Documentation',
+    (master_doc, 'vtki', u'vtki Documentation',
      [author], 1)
 ]
 
@@ -134,9 +134,14 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'vtki', u'vtki Documentation',
-     author, 'vtki', 'One line description of project.',
+     author, 'vtki', 'A Streamlined Python Interface for the Visualization Toolkit',
      'Miscellaneous'),
 ]
+
+
+notfound_context = {
+        'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.vtki.org/en/latest/examples/index.html">examples page</a>.',
+}
 
 
 # Add autosummary functions
