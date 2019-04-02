@@ -195,3 +195,5 @@ class AutoAutoSummary(Autosummary):
 def setup(app):
     app.add_directive('autoautosummary', AutoAutoSummary)
     app.add_stylesheet("style.css")
+    app.add_javascript("custom.js")
+    app.add_javascript("https://cdn.jsdelivr.net/npm/clipboard@1/dist/clipboard.min.js")
