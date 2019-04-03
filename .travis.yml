@@ -64,9 +64,15 @@ script:
     fi
   # And test the documentation
   - cd ./docs/
-  - make html
-  - make doctest
-  - make html
+  # Do not run doc testing on python 2.7
+  # Run `make html` before `make doctest` to avoid segfault.
+  # Then rerun `make html` to use updated figures from `make doctest`
+  - |
+    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
+      - make html
+      - make doctest
+      - make html
+    fi
   # now deploy the docs # TODO: ensure only on the master branch!
   - |
     if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
