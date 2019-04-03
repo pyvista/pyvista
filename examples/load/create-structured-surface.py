@@ -1,4 +1,6 @@
 """
+.. _ref_create_structured:
+
 Creating a Structured Surface
 -----------------------------
 
