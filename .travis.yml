@@ -74,13 +74,13 @@ script:
       make html;
     fi
   # now deploy the docs # TODO: ensure only on the master branch!
+  - cd ..
   - |
     if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
       set -e;
-      doctr deploy --no-require-master --built-docs _build/html/ --deploy-repo vtkiorg/vtki-docs docs/;
+      doctr deploy --no-require-master --built-docs docs/_build/html/ --deploy-repo vtkiorg/vtki-docs docs/;
     fi
   # And then clean up and changes from running examples with fileio
-  - cd ..
   - git reset --hard # removes staged and working directory changes
 
 cache:
