@@ -1,3 +1,6 @@
+import faulthandler
+faulthandler.enable()
+
 import os
 # Set up vtki
 import vtki
