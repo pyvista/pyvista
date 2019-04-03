@@ -14,9 +14,6 @@ vtki
 .. image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/vtki/history
 
-.. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
-   :target: http://docs.vtki.org/
-
 .. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
    :target: https://github.com/vtkiorg/vtki/graphs/contributors/
 
@@ -37,7 +34,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 Documentation
 =============
-Refer to the `Read the Docs <http://docs.vtki.org/>`_ documentation for detailed
+Refer to the `documentation <http://docs.vtki.org/>`_ for detailed
 installation and usage details.
 
 For general questions about the project, its applications, or about software
