@@ -80,14 +80,6 @@ cache:
   - "$HOME/.cache/pip"
 
 deploy:
-  - provider: pypi
-    user: akaszynski
-    distributions: sdist
-    on:
-        condition: "$TRAVIS_PYTHON_VERSION == 3.6"
-        tags: true
-    password: $PYPI_PASSWORD
-
   # Push the built HTML in docs/_build/html to the vtki-docs repo
   - provider: script
     script: deploy-gh-pages.sh
@@ -95,6 +87,13 @@ deploy:
     on:
       branch: master
       condition: '$TRAVIS_PYTHON_VERSION == 3.7'
+  - provider: pypi
+    user: akaszynski
+    distributions: sdist
+    on:
+        condition: "$TRAVIS_PYTHON_VERSION == 3.6"
+        tags: true
+    password: $PYPI_PASSWORD
 
 notifications:
   email: false
