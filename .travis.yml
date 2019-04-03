@@ -70,7 +70,7 @@ script:
   - |
     if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
       set -e;
-      doctr deploy --built-docs _build/html/ --deploy-repo vtkiorg/vtki-docs;
+      doctr deploy --built-docs _build/html/ --deploy-repo vtkiorg/vtki-docs docs/;
     fi
   # And then clean up and changes from running examples with fileio
   - cd ..
