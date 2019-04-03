@@ -681,6 +681,10 @@ class BasePlotter(object):
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
+        rgb : bool, optional
+            If an 2 dimensional array is passed as the scalars, plot those
+            values as RGB+A colors! ``rgba`` is also accepted alias for this.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -860,9 +864,12 @@ class BasePlotter(object):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
+            if rgb is False or rgb is None:
+                rgb = kwargs.get('rgba', False)
             if rgb:
-                if scalars.ndim != 2 or scalars.shape[1] != 3:
-                    raise ValueError('RGB array must be n_points/n_cells by 3 in shape.')
+                if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
+                    print(scalars.shape[1])
+                    raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
             if scalars.ndim != 1:
                 if rgb:
