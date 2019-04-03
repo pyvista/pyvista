@@ -868,7 +868,6 @@ class BasePlotter(object):
                 rgb = kwargs.get('rgba', False)
             if rgb:
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
-                    print(scalars.shape[1])
                     raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
             if scalars.ndim != 1:
