@@ -7,8 +7,7 @@ vtki.set_error_output_file('errors.txt')
 vtki.FIGURE_PATH = os.path.abspath('./images/')
 
 # -- General configuration ------------------------------------------------
-numfig = True
-numfig_format = {'figure': 'Figure %s', 'table': 'Table %s', 'code-block': 'My code %s'}
+numfig = False
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
