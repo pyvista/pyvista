@@ -76,7 +76,7 @@ script:
     fi
   - cd ..
   - |
-    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
+    if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
         doctr deploy --built-docs docs/_build/html .;
     fi
 
