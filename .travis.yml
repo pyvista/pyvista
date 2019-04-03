@@ -18,6 +18,11 @@ addons:
     packages:
       - xvfb
 
+env:
+  global:
+    # Doctr deploy key for vtkiorg/vtki-docs
+    - secure: "IIlZXKvOLypbEMEvIdnlM97sKMGboXDVQMS6ElGB5ZF15flaB7ko3wFTwROYggUFYJQoENnw5lJVdvmg7/VXbCSwdZfjdcCJ6P2avAxr4dj7W/lTn5WWztwYPelt/6Mkkjei/tfgCLwqF3UA+oT+JJDvRusDTSN3jI9t6wBQCNbQL/cZpQaGiupBeoUDrsRqxCBBys163BVbQi+qP+DKoOJIWAivj11BfSiJ02wnSJMODYD6Fmu8VMHhX6WdUm00yL/olygmV1P/jDikwCHRZFXkrSH7IUldzvOODS1rtLwSXBXJSt3FvtBJFUWFlSEPdTed4A4oUvT2q60AMVwyUcXkc+vuHeFLQz5Yp/aypBXuBt3FWL3/VxFNliSK2o5bmiX4v1h3hev+wFIOrvL8anlgK9KzMh7KZ2GANv113uHYYJDxOUryddzrtoITEMsHD62i+eQDJu7Gx9ZFV9thk7gAMsQ1hVoyXhl3cNp5lZP+QEpKNcuX0o8+134sUQSiFTuzoOW3/A1Cc0d1p2lBKumSH3uioP+LuMMAuDAOGBUu69JLak44QUnAzpj377alR1G0SkB2kprWwwSMtqyv1Md0/G/3SZMIAgcybnM43cFJIdBodDVMWD26EySJB3/Tzd7vjRlzWAu3Nb359sWQFAnrSv9q4hLpumLVQtJxFF4="
+
 before_script: # configure a headless display to test plot generation
   - export DISPLAY=:99.0
   - which Xvfb
@@ -60,6 +65,12 @@ script:
   - cd ./docs/
   - make doctest
   - make html
+  # now deploy the docs # TODO: ensure only on the master branch!
+  - |
+    if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
+      set -e;
+      doctr deploy --built-docs _build/html/ --deploy-repo vtkiorg/vtki-docs;
+    fi
   # And then clean up and changes from running examples with fileio
   - cd ..
   - git reset --hard # removes staged and working directory changes
