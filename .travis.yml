@@ -20,8 +20,8 @@ addons:
 
 env:
   global:
-    # Doctr deploy key for vtkiorg/vtki-docs
-    - secure: "IIlZXKvOLypbEMEvIdnlM97sKMGboXDVQMS6ElGB5ZF15flaB7ko3wFTwROYggUFYJQoENnw5lJVdvmg7/VXbCSwdZfjdcCJ6P2avAxr4dj7W/lTn5WWztwYPelt/6Mkkjei/tfgCLwqF3UA+oT+JJDvRusDTSN3jI9t6wBQCNbQL/cZpQaGiupBeoUDrsRqxCBBys163BVbQi+qP+DKoOJIWAivj11BfSiJ02wnSJMODYD6Fmu8VMHhX6WdUm00yL/olygmV1P/jDikwCHRZFXkrSH7IUldzvOODS1rtLwSXBXJSt3FvtBJFUWFlSEPdTed4A4oUvT2q60AMVwyUcXkc+vuHeFLQz5Yp/aypBXuBt3FWL3/VxFNliSK2o5bmiX4v1h3hev+wFIOrvL8anlgK9KzMh7KZ2GANv113uHYYJDxOUryddzrtoITEMsHD62i+eQDJu7Gx9ZFV9thk7gAMsQ1hVoyXhl3cNp5lZP+QEpKNcuX0o8+134sUQSiFTuzoOW3/A1Cc0d1p2lBKumSH3uioP+LuMMAuDAOGBUu69JLak44QUnAzpj377alR1G0SkB2kprWwwSMtqyv1Md0/G/3SZMIAgcybnM43cFJIdBodDVMWD26EySJB3/Tzd7vjRlzWAu3Nb359sWQFAnrSv9q4hLpumLVQtJxFF4="
+    # Doctr deploy key for vtkiorg/vtki
+    - secure: "NHUV04B//rkOUxfBd5Bk3QN3g/iQ91wdRZowNTwCIPAbznFez2mbwQcsULDeZk7blPsv1xEAnqy/T/nPyYZuHO9qU2/OElvxKspaKgcGZ9Ig/czmjrO7Y5VnU2KOZJNwBLgb6mEpDvkKoI2j9WhhcTuPcDbayk6ntXz03snYRUsn2nwHfvqDmIqMQnqSwgVejPJQxBsQSikzYzkTYT9P/z94VoSTp4UrvDVj2Tygrw4PnSGe/9x6qTolo3Ofd+REt4LBth6/lBX2OrBhHwnp9wWpEX1o98HOdf5ZUHI9v8gZacnncVXNlNu1biBlQR58bXZX/4RqRdM2No6NcszC8CbhAS+UhNdsPlbimt9L60s4MWwq+IaxCOA2/lzLVdFl8p5wDjz+DDZsdVMNyjhO3MBP5Am/4qJ0BsQEQ2vtZMF3Jvil9oiSSWcp7IGYsj3aPqEcKFm5uc2SwU1CXg4uBfgDsowqBi0t5/1rWqsJQ6p+6ZlU2NoN4ppNjuenAYyDla49J6I7wLp6Z3GwHuupE75WncVhL5BY5aYRcTDrkKuRx8nFIMe+Xuzp6NKmWaDxIwoztA0VPZ9FtMYiM5ahvHwSnZ8wIxUngjMHPuE7+e6KkCBcLt/e7DlzBQhi4kPJesbzw3NX/VmYkAoZsK5tkwKBZakKIKudpjzW73DxGE8="
 
 before_script: # configure a headless display to test plot generation
   - export DISPLAY=:99.0
@@ -69,24 +69,22 @@ script:
   # Then rerun `make html` to use updated figures from `make doctest`
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
+      set -e;
       make html;
       make doctest;
       make html;
     fi
   - cd ..
+  - |
+    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
+        doctr deploy --built-docs docs/_build/html site;
+    fi
 
 cache:
   directories:
   - "$HOME/.cache/pip"
 
 deploy:
-  # Push the built HTML in docs/_build/html to the vtki-docs repo
-  - provider: script
-    script: deploy-gh-pages.sh
-    skip_cleanup: true
-    on:
-      branch: master
-      condition: '$TRAVIS_PYTHON_VERSION == 3.7'
   - provider: pypi
     user: akaszynski
     distributions: sdist
