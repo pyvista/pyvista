@@ -124,7 +124,7 @@ to each ``vtki`` data object:
     from vtki import examples
 
     data = examples.load_airplane()
-    data.plot()
+    data.plot(screenshot='airplane.png')
 
 
 .. image:: ../images/airplane.png

@@ -120,8 +120,9 @@ side to help new users understand which data types to use.
 Examples
 ********
 
-Be sure to head over to the :ref:`examples_ref` chapter to explore different use
-cases of ``vtki`` and to start visualizing 3D data in Pyhton!
+Be sure to head over to the `examples gallery <./examples/index.html>`_
+to explore different use cases of ``vtki`` and to start visualizing 3D data in
+Pyhton!
 
 
 .. toctree::
@@ -130,6 +131,7 @@ cases of ``vtki`` and to start visualizing 3D data in Pyhton!
    :hidden:
 
    examples/index
+   external_examples
 
 
 Tools

@@ -18,6 +18,11 @@ addons:
     packages:
       - xvfb
 
+env:
+  global:
+    # Doctr deploy key for vtkiorg/vtki-docs
+    - secure: "IIlZXKvOLypbEMEvIdnlM97sKMGboXDVQMS6ElGB5ZF15flaB7ko3wFTwROYggUFYJQoENnw5lJVdvmg7/VXbCSwdZfjdcCJ6P2avAxr4dj7W/lTn5WWztwYPelt/6Mkkjei/tfgCLwqF3UA+oT+JJDvRusDTSN3jI9t6wBQCNbQL/cZpQaGiupBeoUDrsRqxCBBys163BVbQi+qP+DKoOJIWAivj11BfSiJ02wnSJMODYD6Fmu8VMHhX6WdUm00yL/olygmV1P/jDikwCHRZFXkrSH7IUldzvOODS1rtLwSXBXJSt3FvtBJFUWFlSEPdTed4A4oUvT2q60AMVwyUcXkc+vuHeFLQz5Yp/aypBXuBt3FWL3/VxFNliSK2o5bmiX4v1h3hev+wFIOrvL8anlgK9KzMh7KZ2GANv113uHYYJDxOUryddzrtoITEMsHD62i+eQDJu7Gx9ZFV9thk7gAMsQ1hVoyXhl3cNp5lZP+QEpKNcuX0o8+134sUQSiFTuzoOW3/A1Cc0d1p2lBKumSH3uioP+LuMMAuDAOGBUu69JLak44QUnAzpj377alR1G0SkB2kprWwwSMtqyv1Md0/G/3SZMIAgcybnM43cFJIdBodDVMWD26EySJB3/Tzd7vjRlzWAu3Nb359sWQFAnrSv9q4hLpumLVQtJxFF4="
+
 before_script: # configure a headless display to test plot generation
   - export DISPLAY=:99.0
   - which Xvfb
@@ -34,6 +39,7 @@ install:
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
       pip install -r requirements_test.txt
+      pip install -U doctr
     fi
   - pip install -e .
   - which python
@@ -58,24 +64,37 @@ script:
     fi
   # And test the documentation
   - cd ./docs/
-  - make doctest
-  - make html
-  # And then clean up and changes from running examples with fileio
+  # Do not run doc testing on python 2.7
+  # Run `make html` before `make doctest` to avoid segfault.
+  # Then rerun `make html` to use updated figures from `make doctest`
+  - |
+    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
+      make html;
+      make doctest;
+      make html;
+    fi
   - cd ..
-  - git reset --hard # removes staged and working directory changes
 
 cache:
   directories:
   - "$HOME/.cache/pip"
 
 deploy:
-  provider: pypi
-  user: akaszynski
-  distributions: sdist
-  on:
-    condition: "$TRAVIS_PYTHON_VERSION == 3.6"
-    tags: true
-  password: $PYPI_PASSWORD
+  - provider: pypi
+    user: akaszynski
+    distributions: sdist
+    on:
+        condition: "$TRAVIS_PYTHON_VERSION == 3.6"
+        tags: true
+    password: $PYPI_PASSWORD
+
+  # Push the built HTML in docs/_build/html to the vtki-docs repo
+  - provider: script
+    script: deploy-gh-pages.sh
+    skip_cleanup: true
+    on:
+      branch: master
+      condition: '$TRAVIS_PYTHON_VERSION == 3.7'
 
 notifications:
   email: false
