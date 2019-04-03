@@ -69,9 +69,9 @@ script:
   # Then rerun `make html` to use updated figures from `make doctest`
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      - make html
-      - make doctest
-      - make html
+      make html;
+      make doctest;
+      make html;
     fi
   # now deploy the docs # TODO: ensure only on the master branch!
   - |
