@@ -1,9 +1,10 @@
+import os
 # Set up vtki
 import vtki
 vtki.TESTING_OFFSCREEN = True
 vtki.set_plot_theme('document')
 vtki.set_error_output_file('errors.txt')
-vtki.FIGURE_PATH = './images/'
+vtki.FIGURE_PATH = os.path.abspath('./images/')
 
 # -- General configuration ------------------------------------------------
 numfig = True

@@ -31,9 +31,9 @@ class Scraper(object):
         figures = vtki.plotting._ALL_PLOTTERS
         for address, plotter in figures.items():
             fname = next(image_path_iterator)
-            if hasattr(plotter, '_mfile'):
+            if hasattr(plotter, '_gif_filename'):
                 # move gif to fname
-                shutil.move(plotter._mfile, fname)
+                shutil.move(plotter._gif_filename, fname)
             else:
                 plotter.screenshot(fname)
             image_names.append(fname)
