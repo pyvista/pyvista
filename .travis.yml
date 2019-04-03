@@ -39,6 +39,7 @@ install:
   - |
     if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
       pip install -r requirements_test.txt
+      pip install -U doctr
     fi
   - pip install -e .
   - which python
