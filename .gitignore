@@ -20,7 +20,7 @@ build/
 dist/
 
 # MISC
-*.sh
+# *.sh
 
 # doc generated
 docs/_build
