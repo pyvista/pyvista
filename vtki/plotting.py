@@ -4,6 +4,7 @@ vtki plotting module
 import collections
 import ctypes
 import logging
+import os
 import time
 from threading import Thread
 from subprocess import PIPE, Popen
@@ -17,13 +18,13 @@ import vtki
 from vtki.export import export_plotter_vtkjs
 from vtki.utilities import get_scalar, is_vtki_obj, numpy_to_texture, wrap
 
-_OPEN_PLOTTERS = {}
+_ALL_PLOTTERS = {}
 
 def close_all():
     """Close all open/active plotters"""
-    for key, p in _OPEN_PLOTTERS.items():
+    for key, p in _ALL_PLOTTERS.items():
         p.close()
-    _OPEN_PLOTTERS.clear()
+    _ALL_PLOTTERS.clear()
     return True
 
 MAX_N_COLOR_BARS = 10
@@ -377,7 +378,7 @@ class BasePlotter(object):
         self._labels = []
 
         # Add self to open plotters
-        _OPEN_PLOTTERS[str(hex(id(self)))] = self
+        _ALL_PLOTTERS[str(hex(id(self)))] = self
 
         # lighting style
         self.lighting = vtk.vtkLightKit()
@@ -1875,6 +1876,7 @@ class BasePlotter(object):
         """
         if isinstance(vtki.FIGURE_PATH, str):
             filename = vtki.FIGURE_PATH + filename
+        self._mfile = os.path.abspath(filename)
         self.mwriter = imageio.get_writer(filename, fps=framerate)
 
     def open_gif(self, filename):
@@ -1891,6 +1893,7 @@ class BasePlotter(object):
             raise Exception('Unsupported filetype.  Must end in .gif')
         if isinstance(vtki.FIGURE_PATH, str):
             filename = vtki.FIGURE_PATH + filename
+        self._mfile = os.path.abspath(filename)
         self.mwriter = imageio.get_writer(filename, mode='I')
 
     def write_frame(self):
@@ -1934,6 +1937,8 @@ class BasePlotter(object):
     @property
     def image(self):
         """ Returns an image array of current render window """
+        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
+            return self.last_image
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
         ifilter.ReadFrontBufferOff()
@@ -2161,6 +2166,23 @@ class BasePlotter(object):
 
         return self.add_mesh(arrows, **kwargs)
 
+
+    @staticmethod
+    def _save_image(image, filename, return_img=None):
+        """Internal helper for saving a NumPy image array"""
+        if not image.size:
+            raise Exception('Empty image.  Have you run plot() first?')
+
+        # write screenshot to file
+        if isinstance(filename, str):
+            if isinstance(vtki.FIGURE_PATH, str):
+                filename = vtki.FIGURE_PATH + filename
+            if not return_img:
+                return imageio.imwrite(filename, image)
+            imageio.imwrite(filename, image)
+
+        return image
+
     def screenshot(self, filename=None, transparent_background=False,
                    return_img=None, window_size=None):
         """
@@ -2199,6 +2221,17 @@ class BasePlotter(object):
         # configure image filter
         self.image_transparent_background = transparent_background
 
+        # This if statement allows you to save screenshots of closed plotters
+        # This is needed for the sphinx-gallery work
+        if not hasattr(self, 'ren_win'):
+            # If plotter has been closed...
+            # check if last_image exists
+            if hasattr(self, 'last_image'):
+                # Save last image
+                return self._save_image(self.last_image, filename, return_img)
+            # Plotter hasn't been rendered or was improperly closed
+            raise AttributeError('This plotter is unable to save a screenshot.')
+
         if isinstance(self, Plotter):
             # TODO: we need a consistent rendering function
             self.render()
@@ -2209,18 +2242,7 @@ class BasePlotter(object):
         img = self.image
         img = self.image
 
-        if not img.size:
-            raise Exception('Empty image.  Have you run plot() first?')
-
-        # write screenshot to file
-        if isinstance(filename, str):
-            if isinstance(vtki.FIGURE_PATH, str):
-                filename = vtki.FIGURE_PATH + filename
-            if not return_img:
-                return imageio.imwrite(filename, img)
-            imageio.imwrite(filename, img)
-
-        return img
+        return self._save_image(img, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None):
@@ -2743,7 +2765,6 @@ class Plotter(BasePlotter):
         # Render
         log.debug('Rendering')
         self.ren_win.Render()
-        img = self.screenshot(screenshot, return_img=True)
 
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
@@ -2757,6 +2778,9 @@ class Plotter(BasePlotter):
                 self.close()
                 raise KeyboardInterrupt
 
+        # Keep track of image for sphinx-gallery
+        self.last_image = self.screenshot(screenshot, return_img=True)
+
         # Get camera position before closing
         cpos = self.camera_position
 
@@ -2768,7 +2792,7 @@ class Plotter(BasePlotter):
                 raise Exception('Install IPython to display image in a notebook')
 
             import PIL.Image
-            disp = IPython.display.display(PIL.Image.fromarray(img))
+            disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
 
         if auto_close:
             self.close()
@@ -2777,7 +2801,7 @@ class Plotter(BasePlotter):
             return disp
 
         if return_img or screenshot == True:
-            return cpos, img
+            return cpos, self.last_image
 
         return cpos
 

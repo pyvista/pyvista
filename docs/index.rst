@@ -130,6 +130,7 @@ cases of ``vtki`` and to start visualizing 3D data in Pyhton!
    :hidden:
 
    examples/index
+   external_examples
 
 
 Tools

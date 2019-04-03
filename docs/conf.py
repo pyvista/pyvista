@@ -1,9 +1,9 @@
-import sphinx_rtd_theme
-
+# Set up vtki
 import vtki
 vtki.TESTING_OFFSCREEN = True
 vtki.set_plot_theme('document')
-vtki.FIGURE_PATH = './images/'
+vtki.set_error_output_file('errors.txt')
+# vtki.FIGURE_PATH = './images/'
 
 # -- General configuration ------------------------------------------------
 numfig = True
@@ -18,6 +18,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.autosummary',
               'notfound.extension',
               'sphinx_copybutton',
+              'sphinx_gallery.gen_gallery',
              ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,7 +68,7 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
+import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
@@ -139,14 +140,39 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+# -- Custom 404 page
 
 notfound_context = {
         'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.vtki.org/en/latest/examples/index.html">examples page</a>.',
 }
 
 
-# Add autosummary functions
+# -- Sphinx Gallery Options
+from sphinx_gallery.sorting import FileNameSortKey
 
+sphinx_gallery_conf = {
+    # path to your examples scripts
+    "examples_dirs": [
+        "../examples/",
+    ],
+    # path where to save gallery generated examples
+    "gallery_dirs": ["examples"],
+    # Patter to search for example files
+    "filename_pattern": r"\.py",
+    # Remove the "Download all examples" button from the top level gallery
+    "download_all_examples": False,
+    # Sort gallery example by file name instead of number of lines (default)
+    "within_subsection_order": FileNameSortKey,
+    # directory where function granular galleries are stored
+    "backreferences_dir": False,
+    # Modules for which function level galleries are created.  In
+    "doc_module": "vtki",
+    "image_scrapers": (vtki.Scraper(), 'matplotlib'),
+    "thumbnail_size": (350, 350),
+}
+
+
+# -- Autosummary options
 from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_documenter
 from docutils.parsers.rst import directives

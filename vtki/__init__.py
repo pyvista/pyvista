@@ -28,6 +28,9 @@ from vtki.ipy_tools import Clip
 from vtki.ipy_tools import ScaledPlotter
 from vtki.ipy_tools import Isocontour
 
+# Sphinx-gallery tools
+from vtki.sphinx_gallery import Scraper
+
 import numpy as np
 import vtk
 
