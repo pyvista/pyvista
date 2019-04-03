@@ -1,5 +1,7 @@
-import faulthandler
-faulthandler.enable()
+import sys
+if sys.version_info >= (3, 0):
+    import faulthandler
+    faulthandler.enable()
 
 import os
 # Set up vtki

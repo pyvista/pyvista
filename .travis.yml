@@ -64,6 +64,7 @@ script:
     fi
   # And test the documentation
   - cd ./docs/
+  - make html
   - make doctest
   - make html
   # now deploy the docs # TODO: ensure only on the master branch!
