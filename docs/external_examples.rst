@@ -1,5 +1,5 @@
 External Examples
-=============
+=================
 
 Here are a list of longer, more technical examples of what ``vtki`` can do!
 
