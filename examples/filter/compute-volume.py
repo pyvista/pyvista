@@ -3,13 +3,14 @@ Volumetric Analysis
 -------------------
 
 
-Calculating mass properties such as the volume or area of datasets in ``vtki``
-is quite easy using the :func:`vtki.DataSetFilters.compute_cell_sizes` filter
-and the :attr:`vtki.Common.volume` property on all ``vtki`` meshes.
-
-
-Let's get started with a simple gridded mesh:
+Calculate mass properties such as the volume or area of datasets
 """
+################################################################################
+# Computing mass properties such as the volume or area of datasetsin ``vtki``
+# is quite easy using the :func:`vtki.DataSetFilters.compute_cell_sizes` filter
+# and the :attr:`vtki.Common.volume` property on all ``vtki`` meshes.
+#
+# Let's get started with a simple gridded mesh:
 
 import numpy as np
 import vtki

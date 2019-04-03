@@ -2,7 +2,7 @@
 Create a MP4 Movie
 ------------------
 
-Create an animated MP$ movie of a rendering scene
+Create an animated MP4 movie of a rendering scene
 """
 
 

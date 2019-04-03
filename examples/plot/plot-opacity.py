@@ -2,11 +2,14 @@
 Plot with Opacity
 -----------------
 
-It's possible to apply an opacity mapping to any scalar array plotted. You can
-specify either a single static value to make the mesh opaque on all cells, or
-use a transfer function where the scalar array plotted is mapped to the opacity.
+Plot a mesh's scalar array with an opacity trasfer funciton
 """
+
 ################################################################################
+# It's possible to apply an opacity mapping to any scalar array plotted. You can
+# specify either a single static value to make the mesh opaque on all cells, or
+# use a transfer function where the scalar array plotted is mapped to the opacity.
+#
 # Opacity transfer function options are:
 #
 # - ``'linear'``: linearly vary (increase) opacity across the plotted scalar range from low to high

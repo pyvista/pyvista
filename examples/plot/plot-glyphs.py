@@ -2,9 +2,12 @@
 Plotting Glyphs
 ---------------
 
-Using vectors in a dataset to plot and orient glyphs can be done via the
-:func:`vtki.DataSetFilters.glyph` filter:
+Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
+
+################################################################################
+# Glyphying can be done via the :func:`vtki.DataSetFilters.glyph` filter
+
 # sphinx_gallery_thumbnail_number = 3
 import vtki
 import numpy as np

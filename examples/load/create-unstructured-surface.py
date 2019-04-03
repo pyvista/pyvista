@@ -4,11 +4,14 @@
 Creating an Unstructured Surface
 --------------------------------
 
-An unstructured grid can be created directly from numpy arrays.
-This is useful when creating a grid from scratch or copying it from another
-format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_
-for available cell types and their descriptions.
+Create an irregular, unstructured grid from NumPy arrays
 """
+################################################################################
+# An unstructured grid can be created directly from numpy arrays.
+# This is useful when creating a grid from scratch or copying it from another
+# format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_
+# for available cell types and their descriptions.
+
 import vtki
 import vtk
 import numpy as np

@@ -1,8 +1,8 @@
 """
 Ray Tracing
 -----------
-``vtki`` supports single line segment ray tracing for :class:`vtki.PolyData`
-objects.
+
+Single line segment ray tracing for PolyData objects.
 """
 
 # Use built-in sphere and test against a single ray

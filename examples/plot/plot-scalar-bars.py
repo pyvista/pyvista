@@ -1,16 +1,18 @@
 """
-Plot Scalar Bars
-----------------
+Customize Scalar Bars
+---------------------
 
-This example provides a walk through of all the different interactive
-capabilities of scalar bars and how a user can customize scalar bars.
+Walk through of all the different capabilities of scalar bars and
+how a user can customize scalar bars.
 
-By default, when plotting a dataset with a scalar array, a scalar bar for that
-array is added. To turn off this behavior, a user could specify
-``show_scalar_bar=False`` when calling ``.add_mesh()``. Let's start with a
-sample dataset provide via ``vtki`` to demonstrate the default behavior of
-scalar bar plotting:
 """
+################################################################################
+# By default, when plotting a dataset with a scalar array, a scalar bar for that
+# array is added. To turn off this behavior, a user could specify
+# ``show_scalar_bar=False`` when calling ``.add_mesh()``. Let's start with a
+# sample dataset provide via ``vtki`` to demonstrate the default behavior of
+# scalar bar plotting:
+
 # sphinx_gallery_thumbnail_number = 2
 import vtki
 from vtki import examples

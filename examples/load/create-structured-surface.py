@@ -4,8 +4,7 @@
 Creating a Structured Surface
 -----------------------------
 
-This example creates a simple surface grid and plots the resulting grid and its
-curvature
+Create a StructuredGrid surface from NumPy arrays
 """
 # sphinx_gallery_thumbnail_number = 2
 import vtki

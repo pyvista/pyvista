@@ -2,11 +2,14 @@
 Multi-Window Plot
 -----------------
 
-This example shows how to create a multi-window plotter by specifying the
-``shape`` parameter.  The window generated is a two by two window by setting
-``shape=(2, 2)``. Use the :func:`vtki.BasePlotter.subplot` function to select
-the subplot you wish to be the active subplot.
+
+Subplotting: having multiple scenes in a signle window
 """
+################################################################################
+# This example shows how to create a multi-window plotter by specifying the
+# ``shape`` parameter.  The window generated is a two by two window by setting
+# ``shape=(2, 2)``. Use the :func:`vtki.BasePlotter.subplot` function to select
+# the subplot you wish to be the active subplot.
 
 import vtki
 from vtki import examples

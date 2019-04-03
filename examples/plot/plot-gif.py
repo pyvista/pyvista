@@ -2,8 +2,7 @@
 Create a GIF Movie
 ------------------
 
-This example shows the versatility of the plotting object by generating a moving
-gif:
+Generate a moving gif from an active plotter
 """
 
 import vtki
