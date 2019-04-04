@@ -835,6 +835,15 @@ class Common(DataSetFilters, object):
         if is_vtki_obj(mesh):
             self.copy_meta_from(mesh)
 
+    def cast_to_unstructured_grid(self):
+        """Get a new representation of this object as an
+        :ref:`vtki.UnstructuredGrid`
+        """
+        alg = vtk.vtkAppendFilter()
+        alg.AddInputData(self)
+        alg.Update()
+        return vtki.filters._get_output(alg)
+
 
 class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries"""
