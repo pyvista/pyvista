@@ -3,6 +3,9 @@
 Installation
 ============
 
+.. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
+   :target: https://pypi.org/project/vtki/
+
 Installing ``vtki`` itself is quite straightforward as it can be installed
 from `PyPi <http://pypi.python.org/pypi/vtki>`_ using ``pip``::
 
@@ -14,6 +17,9 @@ which should be installed by pip automatically.
 
 Install from Anaconda
 ~~~~~~~~~~~~~~~~~~~~~
+
+.. image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
+   :target: https://anaconda.org/conda-forge/vtki
 
 To install this package with conda run::
 
