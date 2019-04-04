@@ -58,7 +58,7 @@ You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_,
 `Anaconda <https://anaconda.org/conda-forge/vtki>`_, or
 `GitHub <https://github.com/vtkiorg/vtki>`_ to download the source.
 
-See the `Installation <http://docs.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
+See the `Installation <http://docs.vtki.org/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
 
@@ -68,7 +68,7 @@ Highlights
 Head over to the `Quick Examples`_ page in the docs to learn more about using
 ``vtki``.
 
-.. _Quick Examples: http://docs.vtki.org/en/latest/examples/index.html
+.. _Quick Examples: http://docs.vtki.org/examples/index.html
 
 * Pythonic interface to VTK's Python-C++ bindings
 * Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
@@ -76,9 +76,9 @@ Head over to the `Quick Examples`_ page in the docs to learn more about using
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 
 
-.. _IPython Tools: http://docs.vtki.org/en/latest/tools/ipy_tools.html
-.. _Filters: http://docs.vtki.org/en/latest/tools/filters.html
-.. _Plotting: http://docs.vtki.org/en/latest/tools/plotting.html
+.. _IPython Tools: http://docs.vtki.org/tools/ipy_tools.html
+.. _Filters: http://docs.vtki.org/tools/filters.html
+.. _Plotting: http://docs.vtki.org/tools/plotting.html
 
 
 Connections
