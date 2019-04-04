@@ -395,32 +395,75 @@ class BasePlotter(object):
             return self.iren.SetInteractorStyle(self._style)
 
     def enable_trackball_style(self):
-        """ sets the interactive style to trackball """
+        """ sets the interactive style to trackball - the default syle """
         self._style = vtk.vtkInteractorStyleTrackballCamera()
         return self.update_style()
 
     def enable_image_style(self):
-        """ sets the interactive style to image """
+        """ sets the interactive style to image
+
+        Controls:
+         - Left Mouse button triggers window level events
+         - CTRL Left Mouse spins the camera around its view plane normal
+         - SHIFT Left Mouse pans the camera
+         - CTRL SHIFT Left Mouse dollys (a positional zoom) the camera
+         - Middle mouse button pans the camera
+         - Right mouse button dollys the camera.
+         - SHIFT Right Mouse triggers pick events
+        """
         self._style = vtk.vtkInteractorStyleImage()
         return self.update_style()
 
     def enable_joystick_style(self):
-        """ sets the interactive style to joystick """
+        """ sets the interactive style to joystick
+
+        allows the user to move (rotate, pan, etc.) the camera, the point of
+        view for the scene.  The position of the mouse relative to the center of
+        the scene determines the speed at which the camera moves, and the speed
+        of the mouse movement determines the acceleration of the camera, so the
+        camera continues to move even if the mouse if not moving.
+
+        For a 3-button mouse, the left button is for rotation, the right button
+        for zooming, the middle button for panning, and ctrl + left button for
+        spinning.  (With fewer mouse buttons, ctrl + shift + left button is
+        for zooming, and shift + left button is for panning.)
+        """
         self._style = vtk.vtkInteractorStyleJoystickCamera()
         return self.update_style()
 
     def enable_zoom_style(self):
-        """ sets the interactive style to rubber band zoom """
+        """ sets the interactive style to rubber band zoom
+
+        This interactor style allows the user to draw a rectangle in the render
+        window using the left mouse button.  When the mouse button is released,
+        the current camera zooms by an amount determined from the shorter side
+        of the drawn rectangle.
+        """
         self._style = vtk.vtkInteractorStyleRubberBandZoom()
         return self.update_style()
 
     def enable_terrain_style(self):
-        """ sets the interactive style to terrain """
+        """ sets the interactive style to terrain
+
+        Used to manipulate a camera which is viewing a scene with a natural
+        view up, e.g., terrain. The camera in such a scene is manipulated by
+        specifying azimuth (angle around the view up vector) and elevation
+        (the angle from the horizon).
+        """
         self._style = vtk.vtkInteractorStyleTerrain()
         return self.update_style()
 
     def enable_rubber_band_style(self):
-        """ sets the interactive style to rubber band picking """
+        """ sets the interactive style to rubber band picking
+
+        This interactor style allows the user to draw a rectangle in the render
+        window by hitting 'r' and then using the left mouse button.
+        When the mouse button is released, the attached picker operates on the
+        pixel in the center of the selection rectangle. If the picker happens to
+        be a vtkAreaPicker it will operate on the entire selection rectangle.
+        When the 'p' key is hit the above pick operation occurs on a 1x1
+        rectangle. In other respects it behaves the same as its parent class.
+        """
         self._style = vtk.vtkInteractorStyleRubberBandPick()
         return self.update_style()
 
