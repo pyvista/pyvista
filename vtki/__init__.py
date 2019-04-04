@@ -2,6 +2,7 @@ import warnings
 from vtki._version import __version__
 from vtki.plotting import *
 from vtki.utilities import *
+from vtki.errors import *
 from vtki.readers import *
 from vtki.colors import *
 from vtki.filters import DataSetFilters
@@ -67,3 +68,6 @@ if not os.path.exists(USER_DATA_PATH):
 EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
 if not os.path.exists(EXAMPLES_PATH):
     os.makedirs(EXAMPLES_PATH)
+
+# Send VTK messages to the logging module:
+send_errors_to_logging()

@@ -240,17 +240,6 @@ def wrap(vtkdataset):
     return wrapped
 
 
-
-def set_error_output_file(filename):
-    """Sets a file to write out the VTK errors"""
-    filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
-    fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
-    outputWindow.SetInstance(fileOutputWindow)
-    return fileOutputWindow, outputWindow
-
-
 def image_to_texture(image):
     """Converts ``vtkImageData`` to a ``vtkTexture``"""
     vtex = vtk.vtkTexture()
