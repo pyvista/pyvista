@@ -67,3 +67,7 @@ if not os.path.exists(USER_DATA_PATH):
 EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
 if not os.path.exists(EXAMPLES_PATH):
     os.makedirs(EXAMPLES_PATH)
+
+# Set default error output
+OUTPUT_FILE = os.path.join(USER_DATA_PATH, 'errors.txt')
+set_error_output_file(OUTPUT_FILE)
