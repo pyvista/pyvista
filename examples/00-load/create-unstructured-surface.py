@@ -2,7 +2,7 @@
 .. _ref_create_unstructured:
 
 Creating an Unstructured Surface
---------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create an irregular, unstructured grid from NumPy arrays
 """

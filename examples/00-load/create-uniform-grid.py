@@ -1,6 +1,6 @@
 """
 Creating a Uniform Grid
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a simple uniform grid from a 3D NumPy array of values.
 

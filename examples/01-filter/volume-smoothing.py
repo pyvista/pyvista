@@ -1,6 +1,6 @@
 """
 Volume Smoothing
-----------------
+~~~~~~~~~~~~~~~~
 
 Smoothing rough edges of a volumetric surface
 """

@@ -1,6 +1,6 @@
 """
 Multi-Window Plot
------------------
+~~~~~~~~~~~~~~~~~
 
 
 Subplotting: having multiple scenes in a signle window

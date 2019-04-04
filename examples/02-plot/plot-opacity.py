@@ -1,6 +1,6 @@
 """
 Plot with Opacity
------------------
+~~~~~~~~~~~~~~~~~
 
 Plot a mesh's scalar array with an opacity trasfer funciton
 """

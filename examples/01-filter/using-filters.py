@@ -1,6 +1,6 @@
 """
 Using Common Filters
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 Using common filters like thresholding and clipping
 """
@@ -47,7 +47,7 @@ p.show()
 
 ################################################################################
 # Filter Pipeline
-# ---------------
+# +++++++++++++++
 #
 # In VTK, filters are often used in a pipeline where each algorithm passes its
 # output to the next filtering algorithm. In ``vtki``, we can mimic the filtering

@@ -2,7 +2,7 @@
 .. _ref_create_poly:
 
 Create PolyData
----------------
+~~~~~~~~~~~~~~~
 
 Creating a PolyData object from NumPy arrays
 

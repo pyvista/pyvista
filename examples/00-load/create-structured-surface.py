@@ -2,7 +2,7 @@
 .. _ref_create_structured:
 
 Creating a Structured Surface
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Create a StructuredGrid surface from NumPy arrays
 """

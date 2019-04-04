@@ -1,6 +1,6 @@
 """
 Plotting Glyphs
----------------
+~~~~~~~~~~~~~~~
 
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """

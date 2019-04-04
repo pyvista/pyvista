@@ -1,6 +1,6 @@
 """
 Clearing a Mesh or the Entire Plot
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example demonstrates how to remove elements from a scene.
 
