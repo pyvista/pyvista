@@ -57,6 +57,7 @@ rcParams = {
     'color' : 'white',
     'nan_color' : 'darkgray',
     'outline_color' : 'white',
+    'colorbar_orientation' : 'horizontal',
     'colorbar_horizontal' : {
         'width' : 0.60,
         'height' : 0.08,
@@ -69,6 +70,7 @@ rcParams = {
         'position_x' : 0.85,
         'position_y' : 0.1,
     },
+    'show_scalar_bar' : True,
     'show_edges' : False,
     'lighting' : True,
     'interactive' : False,
@@ -605,7 +607,7 @@ class BasePlotter(object):
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None,
                  render_lines_as_tubes=False, edge_color='black',
-                 ambient=0.0, show_scalar_bar=True, nan_color=None,
+                 ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
                  rgb=False, **kwargs):
         """
@@ -753,6 +755,9 @@ class BasePlotter(object):
         if show_edges is None:
             show_edges = rcParams['show_edges']
 
+        if show_scalar_bar is None:
+            show_scalar_bar = rcParams['show_scalar_bar']
+
         if lighting is None:
             lighting = rcParams['lighting']
 
@@ -825,7 +830,7 @@ class BasePlotter(object):
                                   render_points_as_spheres=render_points_as_spheres,
                                   render_lines_as_tubes=render_lines_as_tubes,
                                   edge_color=edge_color,
-                                  show_scalar_bar=True, nan_color=nan_color,
+                                  show_scalar_bar=show_scalar_bar, nan_color=nan_color,
                                   nan_opacity=nan_opacity,
                                   loc=loc, rgb=rgb, **kwargs)
                 actors.append(a)
@@ -1583,6 +1588,9 @@ class BasePlotter(object):
             color = rcParams['font']['color']
         if fmt is None:
             fmt = rcParams['font']['fmt']
+        if vertical is None:
+            if rcParams['colorbar_orientation'].lower() == 'vertical':
+                vertical = True
         # Automatically choose size if not specified
         if width is None:
             if vertical:

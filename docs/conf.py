@@ -8,6 +8,7 @@ import os
 import vtki
 vtki.TESTING_OFFSCREEN = True
 vtki.set_plot_theme('document')
+vtki.rcParams['colorbar_orientation'] = 'vertical'
 vtki.set_error_output_file('errors.txt')
 vtki.FIGURE_PATH = os.path.join(os.path.abspath('./images/'), 'auto-generated/')
 if not os.path.exists(vtki.FIGURE_PATH):
