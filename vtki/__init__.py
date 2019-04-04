@@ -55,3 +55,15 @@ REPR_VOLUME_MAX_CELLS = 1e6
 
 # Set where figures are saved
 FIGURE_PATH = None
+
+# Set up data directory
+import appdirs
+import os
+
+USER_DATA_PATH = appdirs.user_data_dir('vtki')
+if not os.path.exists(USER_DATA_PATH):
+    os.makedirs(USER_DATA_PATH)
+
+EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
+if not os.path.exists(EXAMPLES_PATH):
+    os.makedirs(EXAMPLES_PATH)

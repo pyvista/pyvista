@@ -6,19 +6,22 @@ import sys
 
 import vtki
 
-
-DOWNLOAD_TEMP_FOLDER = True
-"""
-A flag to save downloads in a temporary directory or the current working
-directory.
-"""
-
 # Helpers:
+
+def delete_downloads():
+    """Delete all downloaded examples to free space or update the files"""
+    shutil.rmtree(vtki.EXAMPLES_PATH)
+    os.makedirs(vtki.EXAMPLES_PATH)
+    return True
 
 def _get_vtk_file_url(filename):
     return 'https://github.com/vtkiorg/vtk-data/raw/master/Data/{}'.format(filename)
 
 def _retrieve_file(url, filename):
+    # First check if file has already been downloaded
+    local_path = os.path.join(vtki.EXAMPLES_PATH, filename)
+    if os.path.isfile(local_path):
+        return local_path, None
     # grab the correct url retriever
     if sys.version_info < (3,):
         import urllib
@@ -26,13 +29,11 @@ def _retrieve_file(url, filename):
     else:
         import urllib.request
         urlretrieve = urllib.request.urlretrieve
-    if DOWNLOAD_TEMP_FOLDER:
-        saved_file, resp = urlretrieve(url)
-        # rename saved file:
-        new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
-        shutil.move(saved_file, new_name)
-        return new_name, resp
-    return urlretrieve(url, filename)
+    # Perfrom download
+    saved_file, resp = urlretrieve(url)
+    # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
+    shutil.move(saved_file, local_path)
+    return local_path, resp
 
 def _download_file(filename):
     url = _get_vtk_file_url(filename)
