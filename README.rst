@@ -24,9 +24,11 @@ vtki
    :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
 
 
-``vtki`` is a VTK helper module that takes a different approach on interfacing
-with VTK through NumPy and direct array access. This module simplifies mesh
-creation and plotting by adding functionality to existing VTK objects.
+``vtki`` is a helper module for the Visualization Toolkit (VTK) that takes a
+different approach on interfacing with VTK through NumPy and direct array access.
+This package provides a pythonic, well documented interface to expose all VTK
+functionality while simplifying mesh creation and plotting by adding 
+functionality to existing VTK objects.
 
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
