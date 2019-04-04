@@ -103,7 +103,7 @@ grid from NumPy arrays.
     grid = vtki.StructuredGrid(x, y, z)
     grid.plot(show_edges=True, screenshot='structured_cube.png')
 
-.. image:: ../images/structured_cube.png
+.. image:: ../images/auto-generated/structured_cube.png
 
 
 Loading from File
@@ -166,7 +166,7 @@ A more complex plot can be created using:
     plotter.screenshot('beam.png')
     plotter.close()
 
-.. image:: ../images/beam.png
+.. image:: ../images/auto-generated/beam.png
 
 You can animate the motion of the beam by updating the positions and scalars of
 the grid copied to the plotting object.
@@ -191,7 +191,7 @@ for the user to exit the window.
     plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
 
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
-    plotter.open_gif('gifs/beam.gif')  # or beam.mp4
+    plotter.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
@@ -203,7 +203,7 @@ for the user to exit the window.
     # Close the movie and plot
     plotter.close()
 
-.. image:: ../images/gifs/beam.gif
+.. image:: ../images/auto-generated/beam.gif
 
 You can also render the beam as as a wire-frame object:
 
@@ -219,7 +219,7 @@ You can also render the beam as as a wire-frame object:
     plotter.show(interactive=False, auto_close=False, window_size=[800, 600])
 
     #plotter.OpenMovie('beam.mp4')
-    plotter.open_gif('gifs/beam_wireframe.gif')
+    plotter.open_gif('beam_wireframe.gif')
     for phase in np.linspace(0, 2*np.pi, 20):
         plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
         plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
@@ -228,7 +228,7 @@ You can also render the beam as as a wire-frame object:
 
     plotter.close()
 
-.. image:: ../images/gifs/beam_wireframe.gif
+.. image:: ../images/auto-generated/beam_wireframe.gif
 
 
 Adding Labels to a Plot
@@ -266,7 +266,7 @@ string.
 
     plotter.show(screenshot='labels0.png')
 
-.. image:: ../images/labels0.png
+.. image:: ../images/auto-generated/labels0.png
 
 This example is similar and shows how labels can be combined with a scalar bar
 to show the exact value of certain points.
@@ -291,7 +291,7 @@ to show the exact value of certain points.
     plotter.view_vector((-6, -3, -4), (0.,-1., 0.))
     plotter.show(screenshot='labels1.png')
 
-.. image:: ../images/labels1.png
+.. image:: ../images/auto-generated/labels1.png
 
 
 

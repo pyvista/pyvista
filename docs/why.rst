@@ -99,7 +99,7 @@ When combined with numpy, you can make some truly spectacular plots:
     plobj.add_arrows(points, direction, 0.5)
     plobj.show(screenshot='vectorfield.png')
 
-.. image:: ./images/vectorfield.png
+.. image:: ./images/auto-generated/vectorfield.png
 
 
 While not everything can be simplified without losing functionality, many of the

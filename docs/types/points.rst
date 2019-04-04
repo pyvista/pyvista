@@ -107,7 +107,7 @@ The following code creates the class and plots the meshes with various colors.
     plotter.add_text('Ants and Plane Example')
     plotter.plot(screenshot='AntsAndPlane.png')
 
-.. image:: ../images/AntsAndPlane.png
+.. image:: ../images/auto-generated/AntsAndPlane.png
 
 
 
