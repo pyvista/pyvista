@@ -837,7 +837,7 @@ class Common(DataSetFilters, object):
 
     def cast_to_unstructured_grid(self):
         """Get a new representation of this object as an
-        :ref:`vtki.UnstructuredGrid`
+        :class:`vtki.UnstructuredGrid`
         """
         alg = vtk.vtkAppendFilter()
         alg.AddInputData(self)
