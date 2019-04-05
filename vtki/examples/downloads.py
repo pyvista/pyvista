@@ -19,7 +19,7 @@ def _get_vtk_file_url(filename):
 
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded
-    local_path = os.path.join(vtki.EXAMPLES_PATH, filename)
+    local_path = os.path.join(vtki.EXAMPLES_PATH, os.path.basename(filename))
     if os.path.isfile(local_path):
         return local_path, None
     # grab the correct url retriever
