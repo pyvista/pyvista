@@ -75,7 +75,7 @@ p.camera_position = [-2,5,3]
 # Show the glyphs
 p.subplot(1,1)
 p.add_mesh(outline, color='k')
-p.add_mesh(glyphs)
+p.add_mesh(glyphs, show_scalar_bar=False)
 p.camera_position = [-2,5,3]
 
 p.show()
