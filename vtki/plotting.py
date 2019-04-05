@@ -2715,7 +2715,7 @@ class Plotter(BasePlotter):
             if event_id == 'TimerEvent':
                 self.iren.TerminateApp()
 
-        if vtki.TESTING_OFFSCREEN:
+        if vtki.OFFSCREEN:
             off_screen = True
 
         if notebook is None:

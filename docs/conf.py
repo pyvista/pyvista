@@ -6,7 +6,7 @@ if sys.version_info >= (3, 0):
 import os
 # Set up vtki
 import vtki
-vtki.TESTING_OFFSCREEN = True
+vtki.OFFSCREEN = True
 vtki.set_plot_theme('document')
 vtki.rcParams['colorbar_orientation'] = 'vertical'
 vtki.set_error_output_file('errors.txt')
