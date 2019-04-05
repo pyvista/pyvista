@@ -1514,7 +1514,7 @@ class BasePlotter(object):
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
-                       interactive=False, fmt=None):
+                       interactive=False, fmt=None, use_opacity=True):
         """
         Creates scalar bar using the ranges as set by the last input
         mesh.
@@ -1570,6 +1570,9 @@ class BasePlotter(object):
 
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
+
+        use_opacity : bool, optional
+            Optionally disply the opacity mapping on the scalar bar
 
         Notes
         -----
@@ -1737,6 +1740,9 @@ class BasePlotter(object):
             else:
                 rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
             self._scalar_bar_widgets[title] = self.scalar_widget
+
+        if use_opacity:
+            self.scalar_bar.SetUseOpacity(True)
 
         self.add_actor(self.scalar_bar, reset_camera=False)
 
