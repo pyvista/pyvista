@@ -12,6 +12,7 @@ Calculate mass properties such as the volume or area of datasets
 #
 # Let's get started with a simple gridded mesh:
 
+# sphinx_gallery_thumbnail_number = 4
 import numpy as np
 import vtki
 from vtki import examples
@@ -159,5 +160,4 @@ for i, body in enumerate(bodies):
 ################################################################################
 # And visualize all the different volumes:
 
-# sphinx_gallery_thumbnail_number = 4
 bodies.plot(scalars='TOTAL VOLUME', cmap='viridis', show_grid=True)

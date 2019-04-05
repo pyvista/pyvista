@@ -21,17 +21,21 @@ Using common filters like thresholding and clipping
 # To use these filters, call the method of your choice directly on your data
 # object:
 
+# sphinx_gallery_thumbnail_number = 2
 import vtki
 from vtki import examples
 
 dataset = examples.load_uniform()
+dataset.set_active_scalar('Spatial Point Data')
 
 # Apply a threshold over a data range
-result = dataset.threshold([100, 500])
+threshed = dataset.threshold([100, 500])
+
+outline = dataset.outline()
 
 ################################################################################
 # And now there is a thresholded version of the input dataset in the new
-# ``result`` object. To learn more about what keyword arguments are available to
+# ``threshed`` object. To learn more about what keyword arguments are available to
 # alter how filters are executed, print the docstring for any filter attached to
 # ``vtki`` objects with either ``help(dataset.threshold)`` or using ``shift+tab``
 # in an IPython environment.
@@ -40,9 +44,40 @@ result = dataset.threshold([100, 500])
 # dataset
 
 p = vtki.Plotter()
-p.add_mesh(dataset.outline(), color='k')
-p.add_mesh(result)
+p.add_mesh(outline, color='k')
+p.add_mesh(threshed)
 p.camera_position = [-2,5,3]
+p.show()
+
+
+################################################################################
+# What about other filters? Let's collect a few filter results and compare them:
+
+contours = dataset.contour()
+slices = dataset.slice_orthogonal()
+glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere())
+
+p = vtki.Plotter(shape=(2,2))
+# Show the theshold
+p.add_mesh(outline, color='k')
+p.add_mesh(threshed, show_scalar_bar=False)
+p.camera_position = [-2,5,3]
+# Show the contour
+p.subplot(0,1)
+p.add_mesh(outline, color='k')
+p.add_mesh(contours, show_scalar_bar=False)
+p.camera_position = [-2,5,3]
+# Show the slices
+p.subplot(1,0)
+p.add_mesh(outline, color='k')
+p.add_mesh(slices, show_scalar_bar=False)
+p.camera_position = [-2,5,3]
+# Show the glyphs
+p.subplot(1,1)
+p.add_mesh(outline, color='k')
+p.add_mesh(glyphs)
+p.camera_position = [-2,5,3]
+
 p.show()
 
 ################################################################################
@@ -67,7 +102,7 @@ result = dataset.threshold().elevation().clip(normal='z').slice_orthogonal()
 # (``result.plot()``) or create a rendering scene:
 
 p = vtki.Plotter()
-p.add_mesh(dataset.outline(), color='k')
+p.add_mesh(outline, color='k')
 p.add_mesh(result, scalars='Elevation')
 p.view_isometric()
 p.show()
