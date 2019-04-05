@@ -185,7 +185,6 @@ from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_documenter
 from docutils.parsers.rst import directives
 from sphinx.util.inspect import safe_getattr
-import re
 
 class AutoAutoSummary(Autosummary):
 
@@ -195,6 +194,7 @@ class AutoAutoSummary(Autosummary):
     }
 
     required_arguments = 1
+    app = None
 
     @staticmethod
     def get_members(obj, typ, include_public=None):
@@ -203,7 +203,7 @@ class AutoAutoSummary(Autosummary):
         items = []
         for name in sorted(obj.__dict__.keys()):#dir(obj):
             try:
-                documenter = get_documenter(safe_getattr(obj, name), obj)
+                documenter = get_documenter(AutoAutoSummary.app, safe_getattr(obj, name), obj)
             except AttributeError:
                 continue
             if documenter.objtype == typ:
@@ -228,6 +228,7 @@ class AutoAutoSummary(Autosummary):
             return super(AutoAutoSummary, self).run()
 
 def setup(app):
+    AutoAutoSummary.app = app
     app.add_directive('autoautosummary', AutoAutoSummary)
     app.add_stylesheet("style.css")
     app.add_stylesheet("copybutton.css")
