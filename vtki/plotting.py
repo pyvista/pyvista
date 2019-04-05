@@ -1514,7 +1514,8 @@ class BasePlotter(object):
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
-                       interactive=False, fmt=None, use_opacity=True):
+                       interactive=False, fmt=None, use_opacity=True,
+                       outline=False):
         """
         Creates scalar bar using the ranges as set by the last input
         mesh.
@@ -1573,6 +1574,10 @@ class BasePlotter(object):
 
         use_opacity : bool, optional
             Optionally disply the opacity mapping on the scalar bar
+
+        outline : bool, optional
+            Optionally outline the scalar bar to make opacity mappings more
+            obvious.
 
         Notes
         -----
@@ -1743,6 +1748,13 @@ class BasePlotter(object):
 
         if use_opacity:
             self.scalar_bar.SetUseOpacity(True)
+
+        if outline:
+            self.scalar_bar.SetDrawFrame(True)
+            frame_prop = self.scalar_bar.GetFrameProperty()
+            frame_prop.SetColor(color)
+        else:
+            self.scalar_bar.SetDrawFrame(False)
 
         self.add_actor(self.scalar_bar, reset_camera=False)
 
