@@ -1243,7 +1243,7 @@ class BasePlotter(object):
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=False, grid=None, location='closest', ticks=None,
                         all_edges=False, corner_factor=0.5, fmt=None,
-                        minor_ticks=False, loc=None):
+                        minor_ticks=False, loc=None, padding=0.0):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1343,6 +1343,11 @@ class BasePlotter(object):
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
+
+        padding : float, optional
+            An optional percent padding along each axial direction to cushion
+            the datasets in the scene from the axes annotations. Defaults to
+            have no padding
 
         Returns
         -------
