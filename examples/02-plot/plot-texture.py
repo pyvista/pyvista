@@ -1,4 +1,6 @@
 """
+.. _ref_texture_example:
+
 Applying Textures
 ~~~~~~~~~~~~~~~~~
 
@@ -46,8 +48,8 @@ curvsurf.plot(texture=tex)
 ################################################################################
 # Note that this process can be completed with any image texture!
 
-# use the earth map image
-tex = examples.load_globe_texture()
+# use the puppy image
+tex = examples.download_puppy_texture()
 curvsurf.plot(texture=tex)
 
 

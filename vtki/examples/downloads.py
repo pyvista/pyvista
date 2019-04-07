@@ -54,8 +54,14 @@ def download_masonry_texture():
 def download_usa_texture():
     return _download_and_read('usa_image.jpg', texture=True)
 
+def download_puppy_texture():
+    return _download_and_read('puppy.jpg', texture=True)
+
 
 # Examples:
+
+def download_puppy():
+    return _download_and_read('puppy.jpg')
 
 def download_usa():
     return _download_and_read('usa.vtk')
