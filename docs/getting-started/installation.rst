@@ -66,6 +66,11 @@ with headless displays and Docker containers. The steps here will work for
 using ``vtki`` on Linux based continuous integration services like Travis CI
 and on notebook hosting services like MyBinder_.
 
+Please see `this project`_ for a convenient Cookiecutter_ to get started using
+``vtki`` on the notebook hosting service MyBinder_.
+
+.. _this project: https://github.com/vtkiorg/cookiecutter-vtki-binder
+.. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _MyBinder: https://mybinder.org
 
 To get started, the Docker container will need to have ``libgl1-mesa-dev`` and
