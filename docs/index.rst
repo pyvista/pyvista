@@ -38,7 +38,7 @@ This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
 
-Want to test drive ``vtki``? Check out our live examples on MyBinder:
+Want to test-drive ``vtki``? Check out our live examples on MyBinder:
 
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/vtkiorg/vtki-examples/master
