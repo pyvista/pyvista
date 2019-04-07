@@ -2875,7 +2875,8 @@ class Plotter(BasePlotter):
                 panel.extension('vtk')
                 from panel.pane import VTK as panel_display
                 # TODO: width, height = self.window_size
-                disp = panel_display(self.ren_win)#, width=width, height=height)
+                disp = panel_display(self.ren_win, sizing_mode='stretch_width',
+                                     height=400)
             except:
                 disp = None
 
