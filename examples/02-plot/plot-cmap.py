@@ -9,7 +9,8 @@ Use a custom built colormap when plotting scalar values.
 # Colormaps are typically specifiedby passing the string name of the
 # ``matplotlib`` colormap to the plotting routine via the ``cmap`` argument.
 #
-# See `this page` for a complete list of available colormaps.
+# See `this page`_ for a complete list of available colormaps.
+#
 # .. _this page: https://matplotlib.org/tutorials/colors/colormaps.html
 #
 # To get started using a custom colormap, download some data with scalars to
