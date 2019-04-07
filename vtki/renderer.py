@@ -141,14 +141,14 @@ class Renderer(vtkRenderer):
         return self.marker_actor
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
-                        show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                        show_ylabels=True, show_zlabels=True, italic=False,
-                        bold=True, shadow=False, font_size=None,
-                        font_family=None, color=None,
-                        xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=False, grid=None, location='closest', ticks=None,
-                        all_edges=False, corner_factor=0.5, loc=None, fmt=None,
-                        minor_ticks=False):
+                    show_yaxis=True, show_zaxis=True, show_xlabels=True,
+                    show_ylabels=True, show_zlabels=True, italic=False,
+                    bold=True, shadow=False, font_size=None,
+                    font_family=None, color=None,
+                    xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
+                    use_2d=False, grid=None, location='closest', ticks=None,
+                    all_edges=False, corner_factor=0.5, loc=None, fmt=None,
+                    minor_ticks=False, padding=0.0):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -249,6 +249,11 @@ class Renderer(vtkRenderer):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
+        padding : float, optional
+            An optional percent padding along each axial direction to cushion
+            the datasets in the scene from the axes annotations. Defaults to
+            have no padding
+
         Returns
         -------
         cube_axes_actor : vtk.vtkCubeAxesActor
@@ -331,7 +336,15 @@ class Renderer(vtkRenderer):
 
         # set bounds
         if not bounds:
-            bounds = mesh.GetBounds()
+            bounds = np.array(mesh.GetBounds())
+        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
+            cushion = np.array([np.abs(bounds[1] - bounds[0]),
+                                np.abs(bounds[3] - bounds[2]),
+                                np.abs(bounds[5] - bounds[4])]) * padding
+            bounds[::2] -= cushion
+            bounds[1::2] += cushion
+        else:
+            raise ValueError('padding ({}) not understood. Must be float between 0 and 1'.format(padding))
         cube_axes_actor.SetBounds(bounds)
 
         # show or hide axes
