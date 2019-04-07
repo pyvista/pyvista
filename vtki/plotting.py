@@ -2788,7 +2788,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False):
+             screenshot=False, return_img=False, no_panel=False):
         """
         Creates plotting window
 
@@ -2814,6 +2814,10 @@ class Plotter(BasePlotter):
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
             window_size.  Default False.
+
+        no_panel : bool, optional
+            If True, the interactive rendering from panel will not be used in
+            notebooks
 
         Returns
         -------
@@ -2870,15 +2874,16 @@ class Plotter(BasePlotter):
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
 
-            try:
-                import panel
-                panel.extension('vtk')
-                from panel.pane import VTK as panel_display
-                # TODO: width, height = self.window_size
-                disp = panel_display(self.ren_win, sizing_mode='stretch_width',
-                                     height=400)
-            except:
-                disp = None
+            if not no_panel:
+                try:
+                    import panel
+                    panel.extension('vtk')
+                    from panel.pane import VTK as panel_display
+                    # TODO: width, height = self.window_size
+                    disp = panel_display(self.ren_win, sizing_mode='stretch_width',
+                                         height=400)
+                except:
+                    disp = None
 
             if disp is None or self.shape != (1,1):
                 import PIL.Image
