@@ -158,6 +158,8 @@ def read(filename, attrs=None):
         return vtki.StructuredGrid(filename)
     elif ext in ['.vtm', '.vtmb']:
         return vtki.MultiBlock(filename)
+    elif ext in ['.e', '.exo']:
+        return read_exodus(filename)
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
         return read_legacy(filename)
@@ -183,3 +185,33 @@ def read_texture(filename, attrs=None):
         # Otherwise, use the imageio reader
         pass
     return vtki.numpy_to_texture(imageio.imread(filename))
+
+
+def read_exodus(filename,
+                animate_mode_shapes=True,
+                apply_displacements=True,
+                displacement_magnitude=1.0,
+                enabled_sidesets=None):
+    """Read an ExodusII file (``'.e'`` or ``'.exo'``)"""
+    reader = vtk.vtkExodusIIReader()
+    reader.SetFileName(filename)
+    reader.UpdateInformation()
+    reader.SetAnimateModeShapes(animate_mode_shapes)
+    reader.SetApplyDisplacements(apply_displacements)
+    reader.SetDisplacementMagnitude(displacement_magnitude)
+
+    if enabled_sidesets is None:
+        enabled_sidesets = list(range(reader.GetNumberOfSideSetArrays()))
+
+    for sideset in enabled_sidesets:
+        if isinstance(sideset, int):
+            name = reader.GetSideSetArrayName(sideset)
+        elif isinstance(sideset, str):
+            name = sideset
+        else:
+            raise ValueError('Could not parse sideset ID/name: {}'.format(sideset))
+
+        reader.SetSideSetArrayStatus(name, 1)
+
+    reader.Update()
+    return vtki.wrap(reader.GetOutput())
