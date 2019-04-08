@@ -4,6 +4,6 @@ sphinx-rtd-theme
 sphinxcontrib-napoleon
 sphinxcontrib-websupport
 pytest-sphinx
-sphinx-notfound-page
+git+git://github.com/banesullivan/sphinx-notfound-page@patch-1
 sphinx-copybutton
 sphinx-gallery

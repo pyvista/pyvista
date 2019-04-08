@@ -153,6 +153,7 @@ texinfo_documents = [
 notfound_context = {
         'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.vtki.org/examples/index.html">examples page</a>.',
 }
+notfound_no_urls_prefix = True
 
 
 # -- Sphinx Gallery Options
