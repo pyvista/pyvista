@@ -31,8 +31,7 @@ grid.point_arrays['vec'] = vectors
 # plot using the plotting class
 p = vtki.Plotter()
 p.add_mesh(grid.glyph(orient='vec', scale='mag', factor=1))
-p.show(auto_close=False)
-p.close()
+p.show()
 
 ################################################################################
 # Another approach is to load the vectors directly to the grid object and then
