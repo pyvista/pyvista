@@ -338,11 +338,12 @@ class Renderer(vtkRenderer):
         if not bounds:
             bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
-            cushion = np.array([np.abs(bounds[1] - bounds[0]),
-                                np.abs(bounds[3] - bounds[2]),
-                                np.abs(bounds[5] - bounds[4])]) * padding
-            bounds[::2] -= cushion
-            bounds[1::2] += cushion
+            if not np.any(np.abs(bounds) == np.inf):
+                cushion = np.array([np.abs(bounds[1] - bounds[0]),
+                                    np.abs(bounds[3] - bounds[2]),
+                                    np.abs(bounds[5] - bounds[4])]) * padding
+                bounds[::2] -= cushion
+                bounds[1::2] += cushion
         else:
             raise ValueError('padding ({}) not understood. Must be float between 0 and 1'.format(padding))
         cube_axes_actor.SetBounds(bounds)
