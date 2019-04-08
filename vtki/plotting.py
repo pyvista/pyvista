@@ -74,7 +74,8 @@ rcParams = {
     'show_edges' : False,
     'lighting' : True,
     'interactive' : False,
-    'render_points_as_spheres' : False
+    'render_points_as_spheres' : False,
+    'use_panel' : True,
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -141,7 +142,7 @@ def opacity_transfer_function(key, n_colors):
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, use_panel=True,
+         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
          **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
@@ -2790,7 +2791,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=True):
+             screenshot=False, return_img=False, use_panel=None):
         """
         Creates plotting window
 
@@ -2827,6 +2828,8 @@ class Plotter(BasePlotter):
             List of camera position, focal point, and view up
 
         """
+        if use_panel is None:
+            use_panel = rcParams['use_panel']
         # reset unless camera for the first render unless camera is set
         if self.first_time:  # and not self.camera_set:
             for renderer in self.renderers:
