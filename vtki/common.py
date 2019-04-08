@@ -536,6 +536,8 @@ class Common(DataSetFilters, object):
         """Copies vtki meta data onto this object from another object"""
         self._active_scalar_info = ido.active_scalar_info
         self._active_vectors_info = ido.active_vectors_info
+        if hasattr(ido, '_textures'):
+            self._textures = ido._textures
 
     def copy(self, deep=True):
         """
