@@ -103,7 +103,11 @@ curvsurf.plot(texture=tex)
 # What if you have a single texture that you'd like to repeat across a mesh?
 # Simply define the texture coordinates for all nodes explicitly.
 #
-# Here we create a the texture coordinates to fill up the grid with several
+# .. warning:: This example is not correct
+#
+#    Would you like to help us make this example better? Please consider opening a pull request
+#
+# Here we create the texture coordinates to fill up the grid with several
 # mappings of a single texture:
 
 axial_num_puppies = 4
