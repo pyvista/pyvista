@@ -5,16 +5,14 @@ Plotting Glyphs
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-################################################################################
-# Glyphying can be done via the :func:`vtki.DataSetFilters.glyph` filter
-
 # sphinx_gallery_thumbnail_number = 3
 import vtki
 import numpy as np
 
 ################################################################################
+# Glyphying can be done via the :func:`vtki.DataSetFilters.glyph` filter
 
-# Make a grid
+# Make a grid:
 x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
                   np.linspace(-5, 5, 20),
                   np.linspace(-5, 5, 5))
@@ -37,9 +35,6 @@ p.show()
 # Another approach is to load the vectors directly to the grid object and then
 # access the :attr:`vtki.Common.arrows` property.
 
-import vtki
-import numpy as np
-
 sphere = vtki.Sphere(radius=3.14)
 
 # make cool swirly pattern
@@ -52,6 +47,8 @@ sphere.vectors = vectors*0.3
 
 # plot just the arrows
 sphere.arrows.plot()
+
+################################################################################
 
 # plot the arrows and the sphere
 p = vtki.Plotter()

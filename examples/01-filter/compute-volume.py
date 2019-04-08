@@ -5,17 +5,18 @@ Volumetric Analysis
 
 Calculate mass properties such as the volume or area of datasets
 """
+
+# sphinx_gallery_thumbnail_number = 4
+import numpy as np
+import vtki
+from vtki import examples
+
 ################################################################################
 # Computing mass properties such as the volume or area of datasetsin ``vtki``
 # is quite easy using the :func:`vtki.DataSetFilters.compute_cell_sizes` filter
 # and the :attr:`vtki.Common.volume` property on all ``vtki`` meshes.
 #
 # Let's get started with a simple gridded mesh:
-
-# sphinx_gallery_thumbnail_number = 4
-import numpy as np
-import vtki
-from vtki import examples
 
 # Load a simple example mesh
 dataset = examples.load_uniform()
@@ -98,10 +99,6 @@ largest.plot(show_grid=True, cpos=[-2,5,3])
 # connected volumes in a dataset into blocks in a :class:`vtki.MultiBlock`
 # dataset. For example, lets split the thresholded volume in the example above:
 
-import numpy as np
-import vtki
-from vtki import examples
-
 # Load a simple example mesh
 dataset = examples.load_uniform()
 dataset.set_active_scalar('Spatial Cell Data')
@@ -129,10 +126,6 @@ bodies.plot(show_grid=True, multi_colors=True, cpos=[-2,5,3])
 # significantly large body and compute the volumes for each!
 #
 # Load up the data and threshold the channels:
-
-import vtki
-from vtki import examples
-import numpy as np
 
 data = examples.load_channels()
 channels = data.threshold([0.9, 1.1])

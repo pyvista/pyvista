@@ -5,7 +5,6 @@ Ray Tracing
 Single line segment ray tracing for PolyData objects.
 """
 
-# Use built-in sphere and test against a single ray
 import vtki
 
 # Create source to ray trace

@@ -5,15 +5,16 @@ Load and Plot from a File
 Read a dataset from a known file type
 
 """
-################################################################################
-# Loading a mesh is trivial.  The following code block uses a built-in example
-# file, displays an airplane mesh, saves a screenshot, and returns the camera's
-# position:
 
 import vtki
 from vtki import examples
 import numpy as np
 import matplotlib.pyplot as plt
+
+################################################################################
+# Loading a mesh is trivial.  The following code block uses a built-in example
+# file, displays an airplane mesh, saves a screenshot, and returns the camera's
+# position:
 
 # Get a sample file
 filename = examples.planefile

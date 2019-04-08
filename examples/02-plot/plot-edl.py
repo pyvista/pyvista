@@ -12,11 +12,14 @@ To learn more, please see `this blog post`_.
 When plotting a simple point cloud, it can be difficult to perceive depth.
 Take this Lidar point cloud for example:
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import vtki
 from vtki import examples
 
+################################################################################
 # Load a sample point cloud.
+
 point_cloud = examples.download_lidar()
 
 

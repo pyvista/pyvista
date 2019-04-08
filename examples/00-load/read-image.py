@@ -5,6 +5,9 @@ Read Image Files
 Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
+
+from vtki import examples
+
 ################################################################################
 # ``vtki`` fully supportes reading images into their own spatially referenced
 # data objects (this example) as well as supports texture mapping of images onto
@@ -13,7 +16,6 @@ Read and plot image files (JPEG, TIFF, PNG, etc).
 # Download a JPEG image of a puppy and load it to :class:`vtki.UniformGrid`.
 # This could similarly be implemented with any image file by using the
 # :func:`vtki.read` function and passing the path to the image file.
-from vtki import examples
 
 image = examples.download_puppy()
 # or...

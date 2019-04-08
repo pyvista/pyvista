@@ -5,8 +5,11 @@ Clearing a Mesh or the Entire Plot
 This example demonstrates how to remove elements from a scene.
 
 """
+
 # sphinx_gallery_thumbnail_number = 3
 import vtki
+
+################################################################################
 
 plotter = vtki.Plotter()
 actor = plotter.add_mesh(vtki.Sphere())

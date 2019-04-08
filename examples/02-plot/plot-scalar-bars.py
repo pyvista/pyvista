@@ -6,16 +6,17 @@ Walk through of all the different capabilities of scalar bars and
 how a user can customize scalar bars.
 
 """
+
+# sphinx_gallery_thumbnail_number = 2
+import vtki
+from vtki import examples
+
 ################################################################################
 # By default, when plotting a dataset with a scalar array, a scalar bar for that
 # array is added. To turn off this behavior, a user could specify
 # ``show_scalar_bar=False`` when calling ``.add_mesh()``. Let's start with a
 # sample dataset provide via ``vtki`` to demonstrate the default behavior of
 # scalar bar plotting:
-
-# sphinx_gallery_thumbnail_number = 2
-import vtki
-from vtki import examples
 
 # Load St Helens DEM and warp the topography
 mesh = examples.download_st_helens().warp_by_scalar()

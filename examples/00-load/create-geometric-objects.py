@@ -6,15 +6,16 @@ Geometric Objects
 
 The "Hello, world!" of VTK
 """
+
+# sphinx_gallery_thumbnail_number = 3
+import vtki
+
 ################################################################################
 #
 # This runs through several of the available geomoetric objects available in VTK
 # which ``vtki`` provides simple conveinance methods for generating.
 
 # Let's run through a few geometric objects!
-
-# sphinx_gallery_thumbnail_number = 3
-import vtki
 
 sphere = vtki.Sphere()
 sphere.plot(color='orange', show_edges=True)

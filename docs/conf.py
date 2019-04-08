@@ -188,6 +188,18 @@ sphinx_gallery_conf = {
     "doc_module": "vtki",
     "image_scrapers": (vtki.Scraper(), 'matplotlib'),
     "thumbnail_size": (350, 350),
+    'binder': {
+        # Required keys
+        'org': 'vtkiorg',
+        'repo': 'vtki-examples',
+        'branch': 'master',
+        'binderhub_url': 'https://mybinder.org',
+        'dependencies': '../requirements.txt',
+        # Optional keys
+        # 'filepath_prefix': '<prefix>' # A prefix to prepend to any filepaths in Binder links.
+        # 'notebooks_dir': 'auto_notebooks',
+        'use_jupyter_lab': False
+     }
 }
 
 

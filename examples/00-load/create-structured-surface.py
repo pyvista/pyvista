@@ -6,6 +6,7 @@ Creating a Structured Surface
 
 Create a StructuredGrid surface from NumPy arrays
 """
+
 # sphinx_gallery_thumbnail_number = 2
 import vtki
 import numpy as np
@@ -28,6 +29,8 @@ z = np.sin(r)
 grid = vtki.StructuredGrid(x, y, z)
 grid.plot()
 
+################################################################################
+
 # Plot mean curvature as well
 grid.plot_curvature(clim=[-1, 1])
 
@@ -35,4 +38,4 @@ grid.plot_curvature(clim=[-1, 1])
 # Generating a structured grid is a one liner in this module, and the points from
 # the resulting surface can be accessed as a NumPy array:
 
-grid.points
+print(grid.points)

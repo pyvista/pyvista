@@ -4,6 +4,11 @@ Custom Colormaps
 
 Use a custom built colormap when plotting scalar values.
 """
+
+import vtki
+from vtki import examples
+import matplotlib.pyplot as plt
+
 ################################################################################
 # Any colormap built for ``matplotlib`` is fully compatible with ``vtki``.
 # Colormaps are typically specifiedby passing the string name of the
@@ -15,10 +20,6 @@ Use a custom built colormap when plotting scalar values.
 #
 # To get started using a custom colormap, download some data with scalars to
 # plot.
-
-import vtki
-from vtki import examples
-import matplotlib.pyplot as plt
 
 mesh = examples.download_st_helens().warp_by_scalar()
 

@@ -5,13 +5,14 @@ Computing Surface Normals
 
 Compute normals on a surface.
 """
-################################################################################
-# Computing the normals of a surace is quite easy using :class:`vtki.PolyData`'s
-# ``compute_normals`` method
 
 # sphinx_gallery_thumbnail_number = 2
 import vtki
 from vtki import examples
+
+################################################################################
+# Computing the normals of a surace is quite easy using :class:`vtki.PolyData`'s
+# ``compute_normals`` method
 
 mesh = examples.download_topo_global()
 mesh.plot(cmap='gist_earth', show_scalar_bar=False)

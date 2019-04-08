@@ -5,14 +5,15 @@ Creating a Uniform Grid
 Create a simple uniform grid from a 3D NumPy array of values.
 
 """
+
+import vtki
+import numpy as np
+
 ################################################################################
 # Take a 3D NumPy array of data values that holds some spatial data where each
 # axis corresponds to the XYZ cartesian axes. This example will create a
 # :class:`vtki.UniformGrid` object that will hold the spatial reference for a
 # 3D grid which a 3D NumPy array of values can be plotted against.
-
-import vtki
-import numpy as np
 
 ################################################################################
 # Create the 3D NumPy array of spatially referenced data

@@ -7,13 +7,14 @@ Create PolyData
 Creating a PolyData object from NumPy arrays
 
 """
+
+import numpy as np
+import vtki
+
 ################################################################################
 # A PolyData object can be created quickly from numpy arrays.  The vertex array
 # contains the locations of the points of the mesh and the face array contains the
 # number of points for each face and the indices of each of those faces.
-
-import numpy as np
-import vtki
 
 # mesh points
 vertices = np.array([[0, 0, 0],

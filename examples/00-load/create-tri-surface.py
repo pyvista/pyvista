@@ -4,12 +4,13 @@ Create Triangulated Surface
 
 Create a surface from a set of points through a Delaunay triangulation.
 """
-################################################################################
-#  First, create some points for the surface.
 
 # sphinx_gallery_thumbnail_number = 2
 import vtki
 import numpy as np
+
+################################################################################
+#  First, create some points for the surface.
 
 # Define a simple Gaussian surface
 xx, yy = np.meshgrid(np.linspace(-200,200,20), np.linspace(-200,200,20))

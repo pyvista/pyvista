@@ -7,14 +7,15 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
+import vtki
+from vtki import examples
+import numpy as np
+from matplotlib.cm import get_cmap
+
 ################################################################################
 # Texture mapping is easily implemented using ``vtki``. Many of the geometric
 # objects come preloaded with texture coordinates, so quickly creating a surface
 # and displaying an image is simply:
-
-import vtki
-from vtki import examples
-import numpy as np
 
 # load a sample texture
 tex = examples.download_masonry_texture()
@@ -82,7 +83,6 @@ A, b = 500, 100
 zz = A*np.exp(-0.5*((xx/b)**2. + (yy/b)**2.))
 
 # Creating a custom RGB image
-from matplotlib.cm import get_cmap
 cmap = get_cmap('nipy_spectral')
 norm = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
 hue = norm(zz.ravel())

@@ -4,6 +4,11 @@ Using Common Filters
 
 Using common filters like thresholding and clipping
 """
+
+# sphinx_gallery_thumbnail_number = 2
+import vtki
+from vtki import examples
+
 ################################################################################
 # ``vtki`` wrapped data objects have a suite of common filters ready for immediate
 # use directly on the object. These filters include the following
@@ -20,10 +25,6 @@ Using common filters like thresholding and clipping
 #
 # To use these filters, call the method of your choice directly on your data
 # object:
-
-# sphinx_gallery_thumbnail_number = 2
-import vtki
-from vtki import examples
 
 dataset = examples.load_uniform()
 dataset.set_active_scalar('Spatial Point Data')

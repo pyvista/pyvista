@@ -4,17 +4,18 @@ Volume Smoothing
 
 Smoothing rough edges of a volumetric surface
 """
+
+# sphinx_gallery_thumbnail_number = 4
+import vtki
+from vtki import examples
+
 ################################################################################
 # Suppose you extract a volumetric subset of a dataset that has roughly defined
 # edges. Perhaps you'd like a smooth representation of that model region. This
 # can be achieved by extracting the bounding surface of the volume and applying
 # a :func:`vtki.PolyData.smooth` filter.
 #
-# The below code snippet loads a sample  roughly edged volumetric dataset:
-
-# sphinx_gallery_thumbnail_number = 4
-import vtki
-from vtki import examples
+# The below code snippet loads a sample roughly edged volumetric dataset:
 
 # Vector to view rough edges
 cpos = [-2,5,3]
