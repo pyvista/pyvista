@@ -71,3 +71,11 @@ if not os.path.exists(EXAMPLES_PATH):
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()
+
+
+# Set up panel for interactive notebook rendering
+try:
+    import panel
+    panel.extension('vtk')
+except ImportError:
+    pass

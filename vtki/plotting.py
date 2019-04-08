@@ -141,7 +141,8 @@ def opacity_transfer_function(key, n_colors):
 def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, **kwargs):
+         text='', return_img=False, eye_dome_lighting=False, use_panel=True,
+         **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
 
@@ -250,7 +251,8 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
                           interactive=interactive,
                           full_screen=full_screen,
                           screenshot=screenshot,
-                          return_img=return_img)
+                          return_img=return_img,
+                          use_panel=use_panel)
 
     # close and return camera position and maybe image
     plotter.close()
@@ -2788,7 +2790,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, no_panel=False):
+             screenshot=False, return_img=False, use_panel=True):
         """
         Creates plotting window
 
@@ -2815,8 +2817,8 @@ class Plotter(BasePlotter):
             Opens window in full screen.  When enabled, ignores
             window_size.  Default False.
 
-        no_panel : bool, optional
-            If True, the interactive rendering from panel will not be used in
+        use_panel : bool, optional
+            If False, the interactive rendering from panel will not be used in
             notebooks
 
         Returns
@@ -2874,16 +2876,14 @@ class Plotter(BasePlotter):
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
 
-            if not no_panel:
+            disp = None
+            if use_panel:
                 try:
-                    import panel
-                    panel.extension('vtk')
                     from panel.pane import VTK as panel_display
-                    # TODO: width, height = self.window_size
                     disp = panel_display(self.ren_win, sizing_mode='stretch_width',
                                          height=400)
                 except:
-                    disp = None
+                    pass
 
             if disp is None or self.shape != (1,1):
                 import PIL.Image
