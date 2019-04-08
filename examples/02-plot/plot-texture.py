@@ -54,6 +54,9 @@ curvsurf.plot(texture=tex)
 
 
 ################################################################################
+# Textures from Files
+# +++++++++++++++++++
+#
 # What about loading your own texture from an image? This is often most easily
 # done using the :func:`vtki.read_texture` function - simply pass an image
 # file's path, and this function with handle making a ``vtkTexture`` for you to
@@ -65,6 +68,9 @@ curvsurf.plot(texture=tex)
 
 
 ################################################################################
+# NumPy Arrays as Textures
+# ++++++++++++++++++++++++
+#
 # Wan't to use a programmaticaly built image? :class:`vtki.UniformGrid` objects
 # can be converted to textures using :func:`vtki.image_to_texture` and 3D
 # NumPy (X by Y by RGB) arrays can be converted to textures using
@@ -88,3 +94,37 @@ tex = vtki.numpy_to_texture(image)
 
 # Render it!
 curvsurf.plot(texture=tex)
+
+
+################################################################################
+# Repeating Textures
+# ++++++++++++++++++
+#
+# What if you have a single texture that you'd like to repeat across a mesh?
+# Simply define the texture coordinates for all nodes explicitly.
+#
+# Here we create a the texture coordinates to fill up the grid with several
+# mappings of a single texture:
+
+axial_num_puppies = 4
+dx = curvsurf.dimensions[0] // axial_num_puppies
+dy = curvsurf.dimensions[1] // axial_num_puppies
+
+xc = np.full((axial_num_puppies, dx), np.linspace(0, 1, dx))
+yc = np.full((axial_num_puppies, dy), np.linspace(0, 1, dy))
+
+xxc, yyc = np.meshgrid(xc, yc)
+puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
+
+################################################################################
+# Then we must associate those texture coordinates with the mesh through the
+# :attr:`vtki.Common.t_coords` property.
+
+curvsurf.t_coords = puppy_coords
+
+################################################################################
+# Now display all the puppies!
+
+# use the puppy image
+tex = examples.download_puppy_texture()
+curvsurf.plot(texture=tex, cpos='yx')

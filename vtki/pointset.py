@@ -2206,22 +2206,31 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         writer.Write()
 
     @property
+    def dimensions(self):
+        """Returns a length 3 tuple of the grid's dimensions"""
+        return list(self.GetDimensions())
+
+    @dimensions.setter
+    def dimensions(self, dims):
+        """Sets the dataset dimensions. Pass a length three tuple of integers"""
+        nx, ny, nz = dims[0], dims[1], dims[2]
+        self.SetDimensions(nx, ny, nz)
+        self.Modified()
+
+    @property
     def x(self):
         """The X coordinates of all points"""
-        dim = self.GetDimensions()
-        return self.points[:, 0].reshape(dim, order='F')
+        return self.points[:, 0].reshape(self.dimensions, order='F')
 
     @property
     def y(self):
         """The Y coordinates of all points"""
-        dim = self.GetDimensions()
-        return self.points[:, 1].reshape(dim, order='F')
+        return self.points[:, 1].reshape(self.dimensions, order='F')
 
     @property
     def z(self):
         """The Z coordinates of all points"""
-        dim = self.GetDimensions()
-        return self.points[:, 2].reshape(dim, order='F')
+        return self.points[:, 2].reshape(self.dimensions, order='F')
 
     @property
     def quality(self):
