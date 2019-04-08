@@ -3,6 +3,9 @@
 Installation
 ============
 
+PyPI
+~~~~
+
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
@@ -15,8 +18,8 @@ from `PyPi <http://pypi.python.org/pypi/vtki>`_ using ``pip``::
 which should be installed by pip automatically.
 
 
-Install from Anaconda
-~~~~~~~~~~~~~~~~~~~~~
+Anaconda
+~~~~~~~~
 
 .. image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
    :target: https://anaconda.org/conda-forge/vtki
@@ -26,7 +29,27 @@ To install this package with conda run::
     conda install -c conda-forge vtki
 
 
-Install from Source
+Optional Dependencies
+~~~~~~~~~~~~~~~~~~~~~
+
+The following are a list of optional dependencies and their purpose:
+
++-----------------------------------+-----------------------------------------+
+| Package                           | Purpose                                 |
++===================================+=========================================+
+| ``matplotlib``                    | Using Colormaps                         |
++-----------------------------------+-----------------------------------------+
+| ``PyQt5==5.11.3``                 | Background plotting                     |
++-----------------------------------+-----------------------------------------+
+| ``ipywidgets``                    | IPython interactive tools               |
++-----------------------------------+-----------------------------------------+
+| ``panel``                         | Interactive notebook rendering          |
++-----------------------------------+-----------------------------------------+
+| ``sphinx_gallery``                | Capturing ``vtki`` output for docs      |
++-----------------------------------+-----------------------------------------+
+
+
+Source / Developers
 ~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can install the latest version from GitHub by visiting
@@ -35,7 +58,7 @@ Alternatively, you can install the latest version from GitHub by visiting
 
     git clone https://github.com/vtkiorg/vtki.git
     cd vtki
-    pip install .
+    pip install -e .
 
 
 Test Installation
@@ -58,8 +81,20 @@ See other examples:
     print(dir(examples))
 
 
-Installing to Docker Containers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Development Testing
++++++++++++++++++++
+
+To run the full suite of tests when cloned into the repository, execute::
+
+    python -m pytest -v --cov vtki
+
+
+.. warning::
+
+   The requirements defined under ``requirements_test.txt`` are required for testing.
+
+Running on CI Services
+~~~~~~~~~~~~~~~~~~~~~~
 
 This section is for advanced users that would like to install and use ``vtki``
 with headless displays and Docker containers. The steps here will work for
