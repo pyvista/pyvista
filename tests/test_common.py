@@ -14,7 +14,7 @@ py2 = sys.version_info.major == 2
 
 def test_point_arrays():
     key = 'test_array'
-    grid.point_arrays[key] = np.arange(grid.n_points)
+    grid[key] = np.arange(grid.n_points)
     assert key in grid.point_arrays
 
     orig_value = grid.point_arrays[key][0]/1.0
@@ -27,6 +27,8 @@ def test_point_arrays():
     grid.point_arrays[key] = np.arange(grid.n_points)
     assert key in grid.point_arrays
 
+    assert np.allclose(grid[key], np.arange(grid.n_points))
+
 
 def test_point_arrays_bad_value():
     with pytest.raises(TypeError):
@@ -38,7 +40,7 @@ def test_point_arrays_bad_value():
 
 def test_cell_arrays():
     key = 'test_array'
-    grid.cell_arrays[key] = np.arange(grid.n_cells)
+    grid[key] = np.arange(grid.n_cells)
     assert key in grid.cell_arrays
 
     orig_value = grid.cell_arrays[key][0]/1.0
@@ -50,6 +52,8 @@ def test_cell_arrays():
 
     grid.cell_arrays[key] = np.arange(grid.n_cells)
     assert key in grid.cell_arrays
+
+    assert np.allclose(grid[key], np.arange(grid.n_cells))
 
 
 def test_cell_arrays_bad_value():
