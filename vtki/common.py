@@ -1,6 +1,7 @@
 """
 Attributes common to PolyData and Grid Objects
 """
+import collections
 import logging
 from weakref import proxy
 
@@ -706,10 +707,16 @@ class Common(DataSetFilters, object):
         return get_scalar(self, name, preference=preference, info=info)
 
 
-    def __getitem__(self, name):
-        """Get an array by name"""
-        # TODO: can we implement a way for the user to set the preference?
-        return self.get_scalar(name, preference='cell', info=False)
+    def __getitem__(self, index):
+        """ Searches both point and cell data for an array """
+        if isinstance(index, collections.Iterable) and not isinstance(index, str):
+            name, preference = index[0], index[1]
+        elif isinstance(index, str):
+            name = index
+            preference = 'cell'
+        else:
+            raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
+        return self.get_scalar(name, preference=preference, info=False)
 
     def __setitem__(self, name, scalars):
         """Add/set an array in the point_arrays or cell_arrays field depending
