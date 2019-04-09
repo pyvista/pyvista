@@ -49,10 +49,12 @@ if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
+OFFSCREEN = False
 try:
-    OFFSCREEN = bool(os.environ['VTKI_OFFSCREEN'])
+    if os.environ['VTKI_OFFSCREEN'] == 'True':
+        OFFSCREEN = True
 except KeyError:
-    OFFSCREEN = False
+    pass
 
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
