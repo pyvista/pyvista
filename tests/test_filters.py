@@ -275,6 +275,12 @@ def test_cell_data_to_point_data():
     assert foo.n_scalars == 2
     assert len(foo.cell_arrays.keys()) == 0
 
+def test_point_data_to_cell_data():
+    data = examples.load_uniform()
+    foo = data.point_data_to_cell_data()
+    assert foo.n_scalars == 2
+    assert len(foo.point_arrays.keys()) == 0
+
 
 def test_triangulate():
     data = examples.load_uniform()
