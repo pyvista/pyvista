@@ -139,7 +139,7 @@ def opacity_transfer_function(key, n_colors):
         raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
 
 
-def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
+def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, use_panel=None,
@@ -2725,7 +2725,7 @@ class Plotter(BasePlotter):
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False, notebook=None, shape=(1, 1),
+    def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
                  border=None, border_color='k', border_width=1.0,
                  window_size=None):
         """
@@ -2741,8 +2741,8 @@ class Plotter(BasePlotter):
             if event_id == 'TimerEvent':
                 self.iren.TerminateApp()
 
-        if vtki.OFFSCREEN:
-            off_screen = True
+        if off_screen is None:
+            off_screen = vtki.OFF_SCREEN
 
         if notebook is None:
             if run_from_ipython():

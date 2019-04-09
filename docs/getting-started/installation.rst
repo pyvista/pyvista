@@ -163,4 +163,4 @@ at `this repository`_ that is currently using ``vtki`` on MyBinder.
     .. code-block:: python
 
         import vtki
-        vtki.OFFSCREEN = True
+        vtki.OFF_SCREEN = True

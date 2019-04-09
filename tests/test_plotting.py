@@ -24,6 +24,8 @@ if __name__ != '__main__':
 else:
     OFF_SCREEN = False
 
+vtki.OFF_SCREEN = OFF_SCREEN
+
 
 sphere = vtki.Sphere()
 sphere_b = vtki.Sphere(1.0)
@@ -277,13 +279,13 @@ def test_add_points():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_key_press_event():
-    plotter = vtki.Plotter()
+    plotter = vtki.Plotter(off_screen=False)
     plotter.key_press_event(None, None)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_left_button_down():
-    plotter = vtki.Plotter()
+    plotter = vtki.Plotter(off_screen=False)
     plotter.left_button_down(None, None)
     # assert np.allclose(plotter.pickpoint, [0, 0, 0])
 

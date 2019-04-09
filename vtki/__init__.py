@@ -49,10 +49,10 @@ if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # A simple flag to set when generating the documentation
-OFFSCREEN = False
+OFF_SCREEN = False
 try:
-    if os.environ['VTKI_OFFSCREEN'] == 'True':
-        OFFSCREEN = True
+    if os.environ['VTKI_OFF_SCREEN'] == 'True':
+        OFF_SCREEN = True
 except KeyError:
     pass
 

@@ -9,7 +9,7 @@ import vtki
 # Manage errors
 vtki.set_error_output_file('errors.txt')
 # Ensure that offscreen rendering is used for docs generation
-vtki.OFFSCREEN = True # Not necessary - simply an insurance policy
+vtki.OFF_SCREEN = True # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 vtki.set_plot_theme('document')
 vtki.rcParams['colorbar_orientation'] = 'vertical'
