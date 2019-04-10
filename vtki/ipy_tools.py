@@ -191,7 +191,7 @@ class InteractiveTool(object):
                 self.plotter.remove_actor(self._data_to_update, reset_camera=False)
                 self._need_to_update = True
                 self.valid_range = self.input_dataset.get_data_range(scalars)
-                self.display_params['rng'] = self.valid_range
+                # self.display_params['rng'] = self.valid_range
         cmap = kwargs.get('cmap', None)
         if cmap is not None:
             self.display_params['cmap'] = cmap
