@@ -4,6 +4,7 @@ vtki plotting module
 import collections
 import ctypes
 import logging
+import os
 import time
 from threading import Thread
 from subprocess import PIPE, Popen
@@ -17,13 +18,13 @@ import vtki
 from vtki.export import export_plotter_vtkjs
 from vtki.utilities import get_scalar, is_vtki_obj, numpy_to_texture, wrap
 
-_OPEN_PLOTTERS = {}
+_ALL_PLOTTERS = {}
 
 def close_all():
     """Close all open/active plotters"""
-    for key, p in _OPEN_PLOTTERS.items():
+    for key, p in _ALL_PLOTTERS.items():
         p.close()
-    _OPEN_PLOTTERS.clear()
+    _ALL_PLOTTERS.clear()
     return True
 
 MAX_N_COLOR_BARS = 10
@@ -56,6 +57,7 @@ rcParams = {
     'color' : 'white',
     'nan_color' : 'darkgray',
     'outline_color' : 'white',
+    'colorbar_orientation' : 'horizontal',
     'colorbar_horizontal' : {
         'width' : 0.60,
         'height' : 0.08,
@@ -68,10 +70,12 @@ rcParams = {
         'position_x' : 0.85,
         'position_y' : 0.1,
     },
+    'show_scalar_bar' : True,
     'show_edges' : False,
     'lighting' : True,
     'interactive' : False,
-    'render_points_as_spheres' : False
+    'render_points_as_spheres' : False,
+    'use_panel' : True,
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -138,10 +142,11 @@ def opacity_transfer_function(key, n_colors):
         raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
 
 
-def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
+def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, **kwargs):
+         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
+         **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
 
@@ -198,7 +203,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
     """
     if notebook is None:
         if run_from_ipython():
-            notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+            try:
+                notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+            except NameError:
+                pass
 
     if notebook:
         off_screen = notebook
@@ -227,7 +235,10 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.add_text(text)
 
     if show_bounds or kwargs.get('show_grid', False):
-        plotter.add_bounds_axes()
+        if kwargs.get('show_grid', False):
+            plotter.show_grid()
+        else:
+            plotter.show_bounds()
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()
@@ -240,11 +251,12 @@ def plot(var_item, off_screen=False, full_screen=False, screenshot=None,
         plotter.enable_eye_dome_lighting()
 
     result = plotter.show(window_size=window_size,
-                        auto_close=False,
-                        interactive=interactive,
-                        full_screen=full_screen,
-                        screenshot=screenshot,
-                        return_img=return_img)
+                          auto_close=False,
+                          interactive=interactive,
+                          full_screen=full_screen,
+                          screenshot=screenshot,
+                          return_img=return_img,
+                          use_panel=use_panel)
 
     # close and return camera position and maybe image
     plotter.close()
@@ -374,7 +386,7 @@ class BasePlotter(object):
         self._labels = []
 
         # Add self to open plotters
-        _OPEN_PLOTTERS[str(hex(id(self)))] = self
+        _ALL_PLOTTERS[str(hex(id(self)))] = self
 
         # lighting style
         self.lighting = vtk.vtkLightKit()
@@ -391,32 +403,75 @@ class BasePlotter(object):
             return self.iren.SetInteractorStyle(self._style)
 
     def enable_trackball_style(self):
-        """ sets the interactive style to trackball """
+        """ sets the interactive style to trackball - the default syle """
         self._style = vtk.vtkInteractorStyleTrackballCamera()
         return self.update_style()
 
     def enable_image_style(self):
-        """ sets the interactive style to image """
+        """ sets the interactive style to image
+
+        Controls:
+         - Left Mouse button triggers window level events
+         - CTRL Left Mouse spins the camera around its view plane normal
+         - SHIFT Left Mouse pans the camera
+         - CTRL SHIFT Left Mouse dollys (a positional zoom) the camera
+         - Middle mouse button pans the camera
+         - Right mouse button dollys the camera.
+         - SHIFT Right Mouse triggers pick events
+        """
         self._style = vtk.vtkInteractorStyleImage()
         return self.update_style()
 
     def enable_joystick_style(self):
-        """ sets the interactive style to joystick """
+        """ sets the interactive style to joystick
+
+        allows the user to move (rotate, pan, etc.) the camera, the point of
+        view for the scene.  The position of the mouse relative to the center of
+        the scene determines the speed at which the camera moves, and the speed
+        of the mouse movement determines the acceleration of the camera, so the
+        camera continues to move even if the mouse if not moving.
+
+        For a 3-button mouse, the left button is for rotation, the right button
+        for zooming, the middle button for panning, and ctrl + left button for
+        spinning.  (With fewer mouse buttons, ctrl + shift + left button is
+        for zooming, and shift + left button is for panning.)
+        """
         self._style = vtk.vtkInteractorStyleJoystickCamera()
         return self.update_style()
 
     def enable_zoom_style(self):
-        """ sets the interactive style to rubber band zoom """
+        """ sets the interactive style to rubber band zoom
+
+        This interactor style allows the user to draw a rectangle in the render
+        window using the left mouse button.  When the mouse button is released,
+        the current camera zooms by an amount determined from the shorter side
+        of the drawn rectangle.
+        """
         self._style = vtk.vtkInteractorStyleRubberBandZoom()
         return self.update_style()
 
     def enable_terrain_style(self):
-        """ sets the interactive style to terrain """
+        """ sets the interactive style to terrain
+
+        Used to manipulate a camera which is viewing a scene with a natural
+        view up, e.g., terrain. The camera in such a scene is manipulated by
+        specifying azimuth (angle around the view up vector) and elevation
+        (the angle from the horizon).
+        """
         self._style = vtk.vtkInteractorStyleTerrain()
         return self.update_style()
 
     def enable_rubber_band_style(self):
-        """ sets the interactive style to rubber band picking """
+        """ sets the interactive style to rubber band picking
+
+        This interactor style allows the user to draw a rectangle in the render
+        window by hitting 'r' and then using the left mouse button.
+        When the mouse button is released, the attached picker operates on the
+        pixel in the center of the selection rectangle. If the picker happens to
+        be a vtkAreaPicker it will operate on the entire selection rectangle.
+        When the 'p' key is hit the above pick operation occurs on a 1x1
+        rectangle. In other respects it behaves the same as its parent class.
+        """
         self._style = vtk.vtkInteractorStyleRubberBandPick()
         return self.update_style()
 
@@ -558,7 +613,7 @@ class BasePlotter(object):
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None,
                  render_lines_as_tubes=False, edge_color='black',
-                 ambient=0.0, show_scalar_bar=True, nan_color=None,
+                 ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
                  rgb=False, **kwargs):
         """
@@ -678,6 +733,10 @@ class BasePlotter(object):
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
+        rgb : bool, optional
+            If an 2 dimensional array is passed as the scalars, plot those
+            values as RGB+A colors! ``rgba`` is also accepted alias for this.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -701,6 +760,9 @@ class BasePlotter(object):
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
+
+        if show_scalar_bar is None:
+            show_scalar_bar = rcParams['show_scalar_bar']
 
         if lighting is None:
             lighting = rcParams['lighting']
@@ -774,7 +836,7 @@ class BasePlotter(object):
                                   render_points_as_spheres=render_points_as_spheres,
                                   render_lines_as_tubes=render_lines_as_tubes,
                                   edge_color=edge_color,
-                                  show_scalar_bar=True, nan_color=nan_color,
+                                  show_scalar_bar=show_scalar_bar, nan_color=nan_color,
                                   nan_opacity=nan_opacity,
                                   loc=loc, rgb=rgb, **kwargs)
                 actors.append(a)
@@ -839,6 +901,8 @@ class BasePlotter(object):
 
         # Scalar formatting ===================================================
         if cmap is None:
+            cmap = kwargs.get('colormap', None)
+        if cmap is None:
             cmap = rcParams['cmap']
         title = 'Data' if stitle is None else stitle
         if scalars is not None:
@@ -855,9 +919,11 @@ class BasePlotter(object):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
+            if rgb is False or rgb is None:
+                rgb = kwargs.get('rgba', False)
             if rgb:
-                if scalars.ndim != 2 or scalars.shape[1] != 3:
-                    raise ValueError('RGB array must be n_points/n_cells by 3 in shape.')
+                if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
+                    raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
 
             if scalars.ndim != 1:
                 if rgb:
@@ -1175,7 +1241,7 @@ class BasePlotter(object):
         self._active_renderer_index = self.loc_to_index(loc)
         return self.renderers[self._active_renderer_index].add_axes_at_origin()
 
-    def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
+    def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
                         show_ylabels=True, show_zlabels=True, italic=False,
                         bold=True, shadow=False, font_size=None,
@@ -1183,7 +1249,7 @@ class BasePlotter(object):
                         xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                         use_2d=False, grid=None, location='closest', ticks=None,
                         all_edges=False, corner_factor=0.5, fmt=None,
-                        minor_ticks=False, loc=None):
+                        minor_ticks=False, loc=None, padding=0.0):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1284,6 +1350,11 @@ class BasePlotter(object):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
+        padding : float, optional
+            An optional percent padding along each axial direction to cushion
+            the datasets in the scene from the axes annotations. Defaults to
+            have no padding
+
         Returns
         -------
         cube_axes_actor : vtk.vtkCubeAxesActor
@@ -1296,7 +1367,7 @@ class BasePlotter(object):
         >>> mesh = vtki.Sphere()
         >>> plotter = vtki.Plotter()
         >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> _ = plotter.show_bounds(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
         kwargs = locals()
@@ -1304,7 +1375,12 @@ class BasePlotter(object):
         _ = kwargs.pop('loc')
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        renderer.add_bounds_axes(**kwargs)
+        renderer.show_bounds(**kwargs)
+
+    def add_bounds_axes(self, *args, **kwargs):
+        """Deprecated"""
+        logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
+        return self.show_bounds(*args, **kwargs)
 
     def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
                          opacity=1.0, render_lines_as_tubes=False, lighting=None,
@@ -1391,7 +1467,7 @@ class BasePlotter(object):
 
     def show_grid(self, **kwargs):
         """
-        A wrapped implementation of ``add_bounds_axes`` to change default
+        A wrapped implementation of ``show_bounds`` to change default
         behaviour to use gridlines and showing the axes labels on the outer
         edges. This is intended to be silimar to ``matplotlib``'s ``grid``
         function.
@@ -1399,7 +1475,7 @@ class BasePlotter(object):
         kwargs.setdefault('grid', 'back')
         kwargs.setdefault('location', 'outer')
         kwargs.setdefault('ticks', 'both')
-        return self.add_bounds_axes(**kwargs)
+        return self.show_bounds(**kwargs)
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """
@@ -1449,7 +1525,8 @@ class BasePlotter(object):
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
-                       interactive=False, fmt=None):
+                       interactive=False, fmt=None, use_opacity=True,
+                       outline=False):
         """
         Creates scalar bar using the ranges as set by the last input
         mesh.
@@ -1506,6 +1583,13 @@ class BasePlotter(object):
         interactive : bool, optional
             Use a widget to control the size and location of the scalar bar.
 
+        use_opacity : bool, optional
+            Optionally disply the opacity mapping on the scalar bar
+
+        outline : bool, optional
+            Optionally outline the scalar bar to make opacity mappings more
+            obvious.
+
         Notes
         -----
         Setting title_font_size, or label_font_size disables automatic font
@@ -1523,6 +1607,9 @@ class BasePlotter(object):
             color = rcParams['font']['color']
         if fmt is None:
             fmt = rcParams['font']['fmt']
+        if vertical is None:
+            if rcParams['colorbar_orientation'].lower() == 'vertical':
+                vertical = True
         # Automatically choose size if not specified
         if width is None:
             if vertical:
@@ -1669,6 +1756,16 @@ class BasePlotter(object):
             else:
                 rep.SetOrientation(0)  # 0 = Horizontal, 1 = Vertical
             self._scalar_bar_widgets[title] = self.scalar_widget
+
+        if use_opacity:
+            self.scalar_bar.SetUseOpacity(True)
+
+        if outline:
+            self.scalar_bar.SetDrawFrame(True)
+            frame_prop = self.scalar_bar.GetFrameProperty()
+            frame_prop.SetColor(color)
+        else:
+            self.scalar_bar.SetDrawFrame(False)
 
         self.add_actor(self.scalar_bar, reset_camera=False)
 
@@ -1863,8 +1960,8 @@ class BasePlotter(object):
             Frames per second.
 
         """
-        if isinstance(vtki.FIGURE_PATH, str):
-            filename = vtki.FIGURE_PATH + filename
+        if isinstance(vtki.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(vtki.FIGURE_PATH, filename)
         self.mwriter = imageio.get_writer(filename, fps=framerate)
 
     def open_gif(self, filename):
@@ -1879,8 +1976,9 @@ class BasePlotter(object):
         """
         if filename[-3:] != 'gif':
             raise Exception('Unsupported filetype.  Must end in .gif')
-        if isinstance(vtki.FIGURE_PATH, str):
-            filename = vtki.FIGURE_PATH + filename
+        if isinstance(vtki.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(vtki.FIGURE_PATH, filename)
+        self._gif_filename = os.path.abspath(filename)
         self.mwriter = imageio.get_writer(filename, mode='I')
 
     def write_frame(self):
@@ -1924,6 +2022,8 @@ class BasePlotter(object):
     @property
     def image(self):
         """ Returns an image array of current render window """
+        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
+            return self.last_image
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
         ifilter.ReadFrontBufferOff()
@@ -2151,6 +2251,23 @@ class BasePlotter(object):
 
         return self.add_mesh(arrows, **kwargs)
 
+
+    @staticmethod
+    def _save_image(image, filename, return_img=None):
+        """Internal helper for saving a NumPy image array"""
+        if not image.size:
+            raise Exception('Empty image.  Have you run plot() first?')
+
+        # write screenshot to file
+        if isinstance(filename, str):
+            if isinstance(vtki.FIGURE_PATH, str) and not os.path.isabs(filename):
+                filename = os.path.join(vtki.FIGURE_PATH, filename)
+            if not return_img:
+                return imageio.imwrite(filename, image)
+            imageio.imwrite(filename, image)
+
+        return image
+
     def screenshot(self, filename=None, transparent_background=False,
                    return_img=None, window_size=None):
         """
@@ -2189,6 +2306,17 @@ class BasePlotter(object):
         # configure image filter
         self.image_transparent_background = transparent_background
 
+        # This if statement allows you to save screenshots of closed plotters
+        # This is needed for the sphinx-gallery work
+        if not hasattr(self, 'ren_win'):
+            # If plotter has been closed...
+            # check if last_image exists
+            if hasattr(self, 'last_image'):
+                # Save last image
+                return self._save_image(self.last_image, filename, return_img)
+            # Plotter hasn't been rendered or was improperly closed
+            raise AttributeError('This plotter is unable to save a screenshot.')
+
         if isinstance(self, Plotter):
             # TODO: we need a consistent rendering function
             self.render()
@@ -2199,18 +2327,7 @@ class BasePlotter(object):
         img = self.image
         img = self.image
 
-        if not img.size:
-            raise Exception('Empty image.  Have you run plot() first?')
-
-        # write screenshot to file
-        if isinstance(filename, str):
-            if isinstance(vtki.FIGURE_PATH, str):
-                filename = vtki.FIGURE_PATH + filename
-            if not return_img:
-                return imageio.imwrite(filename, img)
-            imageio.imwrite(filename, img)
-
-        return img
+        return self._save_image(img, filename, return_img)
 
     def add_legend(self, labels=None, bcolor=(0.5, 0.5, 0.5), border=False,
                    size=None, name=None):
@@ -2559,14 +2676,13 @@ class BasePlotter(object):
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
-        if isinstance(vtki.FIGURE_PATH, str):
-            filename = vtki.FIGURE_PATH + filename
+        if isinstance(vtki.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(vtki.FIGURE_PATH, filename)
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
 
 class Plotter(BasePlotter):
-    """
-    Plotting object to display vtk meshes or numpy arrays.
+    """ Plotting object to display vtk meshes or numpy arrays.
 
     Example
     -------
@@ -2612,25 +2728,31 @@ class Plotter(BasePlotter):
     q_pressed = False
     right_timer_id = -1
 
-    def __init__(self, off_screen=False, notebook=None, shape=(1, 1),
+    def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
                  border=None, border_color='k', border_width=1.0,
                  window_size=None):
         """
         Initialize a vtk plotting object
         """
         super(Plotter, self).__init__(shape=shape, border=border,
-                    border_color=border_color, border_width=border_width)
+                                      border_color=border_color,
+                                      border_width=border_width)
         log.debug('Initializing')
-        def onTimer(iren, eventId):
-            if 'TimerEvent' == eventId:
+
+        def on_timer(iren, event_id):
+            """ Exit application if interactive renderer stops """
+            if event_id == 'TimerEvent':
                 self.iren.TerminateApp()
 
-        if vtki.TESTING_OFFSCREEN:
-            off_screen = True
+        if off_screen is None:
+            off_screen = vtki.OFF_SCREEN
 
         if notebook is None:
             if run_from_ipython():
-                notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+                try:
+                    notebook = type(get_ipython()).__module__.startswith('ipykernel.')
+                except NameError:
+                    pass
 
         self.notebook = notebook
         if self.notebook:
@@ -2668,11 +2790,11 @@ class Plotter(BasePlotter):
 
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
-            self.iren.AddObserver(vtk.vtkCommand.TimerEvent, onTimer)
+            self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False):
+             screenshot=False, return_img=False, use_panel=None):
         """
         Creates plotting window
 
@@ -2699,12 +2821,18 @@ class Plotter(BasePlotter):
             Opens window in full screen.  When enabled, ignores
             window_size.  Default False.
 
+        use_panel : bool, optional
+            If False, the interactive rendering from panel will not be used in
+            notebooks
+
         Returns
         -------
         cpos : list
             List of camera position, focal point, and view up
 
         """
+        if use_panel is None:
+            use_panel = rcParams['use_panel']
         # reset unless camera for the first render unless camera is set
         if self.first_time:  # and not self.camera_set:
             for renderer in self.renderers:
@@ -2728,7 +2856,6 @@ class Plotter(BasePlotter):
         # Render
         log.debug('Rendering')
         self.ren_win.Render()
-        img = self.screenshot(screenshot, return_img=True)
 
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
@@ -2742,6 +2869,9 @@ class Plotter(BasePlotter):
                 self.close()
                 raise KeyboardInterrupt
 
+        # Keep track of image for sphinx-gallery
+        self.last_image = self.screenshot(screenshot, return_img=True)
+
         # Get camera position before closing
         cpos = self.camera_position
 
@@ -2752,8 +2882,18 @@ class Plotter(BasePlotter):
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
 
-            import PIL.Image
-            disp = IPython.display.display(PIL.Image.fromarray(img))
+            disp = None
+            if use_panel:
+                try:
+                    from panel.pane import VTK as panel_display
+                    disp = panel_display(self.ren_win, sizing_mode='stretch_width',
+                                         height=400)
+                except:
+                    pass
+
+            if disp is None or self.shape != (1,1):
+                import PIL.Image
+                disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
 
         if auto_close:
             self.close()
@@ -2762,7 +2902,7 @@ class Plotter(BasePlotter):
             return disp
 
         if return_img or screenshot == True:
-            return cpos, img
+            return cpos, self.last_image
 
         return cpos
 

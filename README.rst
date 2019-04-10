@@ -14,9 +14,6 @@ vtki
 .. image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/vtki/history
 
-.. image:: https://img.shields.io/readthedocs/vtkinterface.svg?logo=read%20the%20docs&logoColor=white
-   :target: http://docs.vtki.org/
-
 .. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
    :target: https://github.com/vtkiorg/vtki/graphs/contributors/
 
@@ -27,9 +24,11 @@ vtki
    :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
 
 
-``vtki`` is a VTK helper module that takes a different approach on interfacing
-with VTK through NumPy and direct array access. This module simplifies mesh
-creation and plotting by adding functionality to existing VTK objects.
+``vtki`` is a helper module for the Visualization Toolkit (VTK) that takes a
+different approach on interfacing with VTK through NumPy and direct array access.
+This package provides a pythonic, well documented interface to expose all VTK
+functionality while simplifying mesh creation and plotting by adding
+functionality to existing VTK objects.
 
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
@@ -37,7 +36,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 Documentation
 =============
-Refer to the `Read the Docs <http://docs.vtki.org/>`_ documentation for detailed
+Refer to the `documentation <http://docs.vtki.org/>`_ for detailed
 installation and usage details.
 
 For general questions about the project, its applications, or about software
@@ -59,7 +58,7 @@ You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_,
 `Anaconda <https://anaconda.org/conda-forge/vtki>`_, or
 `GitHub <https://github.com/vtkiorg/vtki>`_ to download the source.
 
-See the `Installation <http://docs.vtki.org/en/latest/getting-started/installation.html#install-ref.>`_
+See the `Installation <http://docs.vtki.org/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
 
@@ -69,7 +68,14 @@ Highlights
 Head over to the `Quick Examples`_ page in the docs to learn more about using
 ``vtki``.
 
-.. _Quick Examples: http://docs.vtki.org/en/latest/examples/index.html
+.. _Quick Examples: http://docs.vtki.org/examples/index.html
+
+Want to test-drive ``vtki``? Check out our live examples on MyBinder:
+
+.. image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/vtkiorg/vtki-examples/master
+   :alt: Launch on Binder
+
 
 * Pythonic interface to VTK's Python-C++ bindings
 * Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
@@ -77,9 +83,9 @@ Head over to the `Quick Examples`_ page in the docs to learn more about using
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 
 
-.. _IPython Tools: http://docs.vtki.org/en/latest/tools/ipy_tools.html
-.. _Filters: http://docs.vtki.org/en/latest/tools/filters.html
-.. _Plotting: http://docs.vtki.org/en/latest/tools/plotting.html
+.. _IPython Tools: http://docs.vtki.org/tools/ipy_tools.html
+.. _Filters: http://docs.vtki.org/tools/filters.html
+.. _Plotting: http://docs.vtki.org/tools/plotting.html
 
 
 Connections

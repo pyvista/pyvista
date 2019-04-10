@@ -240,17 +240,6 @@ def wrap(vtkdataset):
     return wrapped
 
 
-
-def set_error_output_file(filename):
-    """Sets a file to write out the VTK errors"""
-    filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
-    fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
-    outputWindow.SetInstance(fileOutputWindow)
-    return fileOutputWindow, outputWindow
-
-
 def image_to_texture(image):
     """Converts ``vtkImageData`` to a ``vtkTexture``"""
     vtex = vtk.vtkTexture()
@@ -292,3 +281,25 @@ def is_inside_bounds(point, bounds):
     if lower <= p <= upper:
         return is_inside_bounds(point, bounds)
     return False
+
+
+def fit_plane_to_points(points, return_meta=False):
+    """
+    Fits a plane to a set of points
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Size n by 3 array of points to fit a plane through
+
+    return_meta : bool
+        If true, also returns the center and normal used to generate the plane
+    """
+    data = np.array(points)
+    center = data.mean(axis=0)
+    result = np.linalg.svd(data - center)
+    normal = np.cross(result[2][0], result[2][1])
+    plane = vtki.Plane(center=center, direction=normal)
+    if return_meta:
+        return plane, center, normal
+    return plane

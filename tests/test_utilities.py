@@ -10,7 +10,7 @@ from vtki import utilities
 from vtki import readers
 
 # Only set this here just the once.
-utilities.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
+vtki.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
 
 
 def test_createvectorpolydata_error():

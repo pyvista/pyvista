@@ -30,11 +30,19 @@ About
 
 ``vtki`` is a helper module for the Visualization Toolkit (VTK) that takes a
 different approach on interfacing with VTK through NumPy and direct array access.
-This module simplifies mesh creation and plotting by adding functionality to
-existing VTK objects.
+This package provides a pythonic, well documented interface to expose all VTK
+functionality while simplifying mesh creation and plotting by adding
+functionality to existing VTK objects.
 
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
+
+
+Want to test-drive ``vtki``? Check out our live examples on MyBinder:
+
+.. image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/vtkiorg/vtki-examples/master
+   :alt: Launch on Binder
 
 .. toctree::
    :hidden:
@@ -128,8 +136,9 @@ side to help new users understand which data types to use.
 Examples
 ********
 
-Be sure to head over to the :ref:`examples_ref` chapter to explore different use
-cases of ``vtki`` and to start visualizing 3D data in Pyhton!
+Be sure to head over to the `examples gallery <./examples/index.html>`_
+to explore different use cases of ``vtki`` and to start visualizing 3D data in
+Pyhton!
 
 
 .. toctree::
@@ -138,6 +147,7 @@ cases of ``vtki`` and to start visualizing 3D data in Pyhton!
    :hidden:
 
    examples/index
+   external_examples
 
 
 Tools

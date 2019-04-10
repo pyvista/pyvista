@@ -91,6 +91,6 @@ def test_export_color(tmpdir):
 
 def test_vtkjs_url():
     file_url = 'https://www.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
-    vtkjs_url = 'http://viewer.pvgeo.org/?fileURL=https://dl.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
+    vtkjs_url = 'http://viewer.vtki.org/?fileURL=https://dl.dropbox.com/s/6m5ttdbv5bf4ngj/ripple.vtkjs?dl=0'
     assert vtkjs_url in vtki.get_vtkjs_url(file_url)
     assert vtkjs_url in vtki.get_vtkjs_url('dropbox', file_url)

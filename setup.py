@@ -19,7 +19,9 @@ with io_open(version_file, mode='r') as fd:
 
 # pre-compiled vtk available for python3
 install_requires = ['numpy',
-                    'imageio']
+                    'imageio',
+                    'appdirs',
+                    ]
 
 # add vtk if not windows and 2.7
 py_ver = int(sys.version[0])

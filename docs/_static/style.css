@@ -8,7 +8,7 @@ body {
 
 h1, h2, h3, h4 {
     font-weight: 300;
-    font-family: "Open Sans",sans-serif;
+    font-family: "Open Sans", sans-serif;
 }
 
 h1 {
@@ -59,11 +59,11 @@ h1 {
 }
 
 .wy-nav-top {
-    background-color: #555555;
+    background-color: #546E7A;
 }
 
 .wy-side-nav-search {
-    background-color: #555555;
+    background-color: #546E7A;
 }
 
 .wy-side-nav-search > a img.logo {
@@ -71,7 +71,7 @@ h1 {
 }
 
 .wy-side-nav-search input[type="text"] {
-    border-color: #555555;
+    border-color: #546E7A;
 }
 
 /* Remove the padding from the Parameters table */

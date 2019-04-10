@@ -536,6 +536,8 @@ class Common(DataSetFilters, object):
         """Copies vtki meta data onto this object from another object"""
         self._active_scalar_info = ido.active_scalar_info
         self._active_vectors_info = ido.active_vectors_info
+        if hasattr(ido, '_textures'):
+            self._textures = ido._textures
 
     def copy(self, deep=True):
         """
@@ -735,7 +737,7 @@ class Common(DataSetFilters, object):
         attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3e}, {:.3e}"))
         attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3e}, {:.3e}"))
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
-        if self.n_cells <= vtki.REPR_VOLUME_MAX_CELLS:
+        if self.n_cells <= vtki.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
             attrs.append(("Volume", (self.volume), "{:.3e}"))
         return attrs
 
@@ -835,6 +837,15 @@ class Common(DataSetFilters, object):
         if is_vtki_obj(mesh):
             self.copy_meta_from(mesh)
 
+    def cast_to_unstructured_grid(self):
+        """Get a new representation of this object as an
+        :class:`vtki.UnstructuredGrid`
+        """
+        alg = vtk.vtkAppendFilter()
+        alg.AddInputData(self)
+        alg.Update()
+        return vtki.filters._get_output(alg)
+
 
 class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries"""
@@ -842,7 +853,6 @@ class _ScalarsDict(dict):
         self.data = proxy(data)
         dict.__init__(self)
         self.callback_enabled = False
-        self.adder = None
         self.remover = None
         self.modifier = None
 
@@ -883,6 +893,7 @@ class _ScalarsDict(dict):
         self.remover(key)
         return dict.__delitem__(self, key)
 
+
 class CellScalarsDict(_ScalarsDict):
     """
     Updates internal cell data when an array is added or removed from
@@ -891,9 +902,11 @@ class CellScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.adder = self.data._add_cell_scalar
-        self.remover = self.data._remove_cell_scalar
-        self.modifier = self.data.GetCellData().Modified
+        self.remover = lambda key: self.data._remove_cell_scalar(key)
+        self.modifier = lambda *args: self.data.GetCellData().Modified()
+
+    def adder(self, scalars, name, set_active=False, deep=True):
+        self.data._add_cell_scalar(scalars, name, set_active=False, deep=deep)
 
 
 class PointScalarsDict(_ScalarsDict):
@@ -904,9 +917,11 @@ class PointScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.adder = self.data._add_point_scalar
-        self.remover = self.data._remove_point_scalar
-        self.modifier = self.data.GetPointData().Modified
+        self.remover = lambda key: self.data._remove_point_scalar(key)
+        self.modifier = lambda *args: self.data.GetPointData().Modified()
+
+    def adder(self, scalars, name, set_active=False, deep=True):
+        self.data._add_point_scalar(scalars, name, set_active=False, deep=deep)
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):

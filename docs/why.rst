@@ -101,7 +101,7 @@ When combined with numpy, you can make some truly spectacular plots:
     plobj.add_arrows(points, direction, 0.5)
     plobj.show(screenshot='vectorfield.png')
 
-.. image:: ./images/vectorfield.png
+.. image:: ./images/auto-generated/vectorfield.png
 
 
 While not everything can be simplified without losing functionality, many of the
@@ -113,8 +113,13 @@ That way, subdivision can be performed with:
 
 .. code:: python
 
-    submesh = mesh.subdivide('linear', nsub=3)
+    from vtki import examples
+    mesh = examples.load_ant()
+    submesh = mesh.subdivide(3, 'linear')
 
-Additionally, ``vtki`` provides insightful documentation on the wrapped VTK data
-structures and algorithms to encourage rapid data exploration and analysis using
-the VTK software library.
+Additionally, the docstrings for all methods in ``vtki`` are intended to be used
+within interactive coding sessions. This allows users to use sophisticated
+processing routines on the fly with immediate access to a description of how to
+use those methods:
+
+.. figure:: ./images/gifs/documentation.gif
