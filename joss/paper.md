@@ -28,10 +28,11 @@ library, and with Python bindings it combines the speed of C++ with
 the rapid prototyping of Python [@vtkbook].  Despite this, VTK code
 programmed in Python using the base package provided by Kitware is
 unnecessarily complex as the Python package merely wraps existing C++
-calls. This Python package seeks to simplify common mesh creation and
-plotting routines without compromising on the speed of the C++ VTK
+calls. The `vtki` Python package seeks to simplify common mesh creation
+and plotting routines without compromising on the speed of the C++ VTK
 backend, enabling researchers to rapidly explore large datasets,
 communicate their spatial findings, and facilitate reproducibility.
+
 At its core, `vtki` is a pure Python helper module for VTK
 that interfaces back to VTK data objects through NumPy [@numpy]
 and direct array access.  This package expands upon VTK's data objects
@@ -47,11 +48,10 @@ by `vtki`; to learn more about this dataset, please visit
 
 ![A visually integrated scene of geospatial data (FORGE Geothermal Site)](./images/forge-iso.png)
 **Figure 1:** A visually integrated scene of geospatial data
-(FORGE Geothermal Site). This rendering includes a land surface digital
-elevation map with overlain satellite imagery and geologic map, a subsurface
-temperature model, scattered points of the sampled temperature values,
-geophysical well logging data, GIS site boundary, and interpreted faulting
-surfaces.
+(FORGE Geothermal Site). This rendering includes a a digital land surface
+with overlain satellite imagery and geologic map, a subsurface temperature
+model, scattered points of the sampled temperature values, geophysical well
+logging data, GIS site boundary, and interpreted faulting surfaces.
 
 
 
@@ -69,8 +69,8 @@ An example can be found in [this creative commons VTK example](https://vtk.org/W
 highly controllable with `matplotlib` [@matplotlib] similar syntax and keyword
 arguments. These plotting routines are defined to make the process of
 visualizing spatially referenced data straightforward and easily implemented
-by novice programmers. Loading and rendering in `vtki` is implemented to take
-only a few lines of code:
+by novice programmers. Loading and rendering of sophisticated meshes in `vtki`
+is implemented to take only a few lines of code:
 
 ```python
 # Obligatory set up code
@@ -79,20 +79,19 @@ from vtki import examples
 import numpy as np
 # Set a document-friendly plotting theme
 vtki.set_plot_theme('document')
-vtki.rcParams['window_size'] = np.array([1024, 768]) * 2
+vtki.rcParams['use_panel'] = False
 ```
 
 ```python
-# Example data file name
-filename = examples.planefile
-# Read the data from the file
-mesh = vtki.read(filename)
+# Example mesh of Queen Nefertiti
+mesh = examples.download_nefertiti()
 # Render the dataset
-mesh.plot(show_edges=True, screenshot='./images/airplane.png')
+mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True,
+          screenshot='./images/nefertiti.png')
 ```
 
-![Example rendering of mesh loaded from a file](./images/airplane.png)
-**Figure 2:** Rendering of an example mesh file included with `vtki`
+![Nefertiti](./images/nefertiti.png)
+**Figure 2:** Example rendering of Queen Nefertiti mesh consisting of approximately 2 million triangles
 
 
 Notably, the `vtki.plot()` convenience method is bound to each `vtki`
@@ -109,7 +108,7 @@ point_cloud = examples.download_lidar()
 # Instantiate a rendering scene
 plotter = vtki.Plotter()
 # Add spatial data to the scene
-plotter.add_mesh(point_cloud, color='orange')
+plotter.add_mesh(point_cloud, show_scalar_bar=False)
 # Alter how the scene is rendered
 plotter.enable_eye_dome_lighting()
 # Show axes labels
@@ -196,7 +195,7 @@ contours = dataset.contour() # Figure 4 B
 slices = dataset.slice_orthogonal() # Figure 4 C
 glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere()) # Figure 4 D
 
-# Two by Two comparison
+# Two by two comparison
 vtki.plot_compare_four(threshed, contours, slices, glyphs,
                         {'show_scalar_bar':False},
                         camera_position=[-2,5,3], outline=outline,
