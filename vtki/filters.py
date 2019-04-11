@@ -935,3 +935,20 @@ class DataSetFilters(object):
         alg.SetOffset(offset)
         alg.Update()
         return _get_output(alg)
+
+    def interpolate(source, target):
+        """Interpolate data between two vtk objects using vtkResampleWithDataSet.
+
+        Parameters
+        ----------
+        source: The vtk data object to take the data from.
+
+        target: The vtk data object to interpolate on to.
+        """
+        alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
+        alg.SetInputData(source)  # Set the Input data (actually the source i.e. where to interpolate from)
+        alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to interpolate to)
+        alg.Update() # Perfrom the resampling
+        output = _get_output(alg)
+        return output
+
