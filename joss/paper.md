@@ -30,46 +30,70 @@ programmed in Python using the base package provided by Kitware is
 unnecessarily complex as the Python package merely wraps existing C++
 calls. This Python package seeks to simplify common mesh creation and
 plotting routines without compromising on the speed of the C++ VTK
-backend.  At its core, `vtki` is a pure Python helper module for VTK
+backend, enabling researchers to rapidly explore large datasets,
+communicate their spatial findings, and facilitate reproducibility.
+At its core, `vtki` is a pure Python helper module for VTK
 that interfaces back to VTK data objects through NumPy [@numpy]
 and direct array access.  This package expands upon VTK's data objects
-by creating classes that extend their VTK counterpart.  VTK data
+by creating classes that extend their VTK counterpart. VTK data
 objects passed to `vtki` have an added layer of functionality on top
-of that object providing a wrapping layer that creates an accessible
-and intuitive interface back to the VTK library to foster rapid
-prototyping and analysis of VTK datasets.
+of that object providing an accessible and intuitive interface back to
+the VTK library to foster rapid prototyping, analysis, and visual
+integration of spatially referenced datasets.
+Figure 1 demonstrates an integrated scene of geospatial data generated
+by `vtki`; to learn more about this dataset, please visit
+[this website](http://forge.pvgeo.org).
+
+
+![A visually integrated scene of geospatial data (FORGE Geothermal Site)](./images/forge-iso.png)
+**Figure 1:** A visually integrated scene of geospatial data
+(FORGE Geothermal Site). This rendering includes a land surface digital
+elevation map with overlain satellite imagery and geologic map, a subsurface
+temperature model, scattered points of the sampled temperature values,
+geophysical well logging data, GIS site boundary, and interpreted faulting
+surfaces.
+
+
+
 
 ## Simplified Plotting Routines
 
-Plotting VTK datasets using only the VTK Python package is often an ambitious
-programming endeavor. Reading a VTK supported file and plotting it requires a
-user to write a complicated sequence of routines to render the data object while
+Plotting VTK datasets using only the VTK Python package or a similar
+visualization library is often an ambitious programming endeavor.
+Reading a VTK supported file and plotting it requires a user to write a
+complicated sequence of routines to render the data object while
 having to remember which VTK classes to use for file reading and dataset mapping.
 An example can be found in [this creative commons VTK example](https://vtk.org/Wiki/VTK/Examples/Python/STLReader).
 
-`vtki` includes numerous plotting routines that are intended to be intuitive and
+`vtki` includes plotting routines that are intended to be intuitive and
 highly controllable with `matplotlib` [@matplotlib] similar syntax and keyword
-arguments.
-These plotting routines are defined to make the rendering process
-straightforward and easily implemented by novice VTK users. Loading and
-rendering in `vtki` is implemented to take only a few lines of code:
+arguments. These plotting routines are defined to make the process of
+visualizing spatially referenced data straightforward and easily implemented
+by novice programmers. Loading and rendering in `vtki` is implemented to take
+only a few lines of code:
 
 ```python
 # Obligatory set up code
 import vtki
 from vtki import examples
 import numpy as np
-# Set a document friendly plotting theme
+# Set a document-friendly plotting theme
 vtki.set_plot_theme('document')
+vtki.rcParams['window_size'] = np.array([1024, 768]) * 2
 ```
 
 ```python
+# Example data file name
 filename = examples.planefile
+# Read the data from the file
 mesh = vtki.read(filename)
+# Render the dataset
 mesh.plot(show_edges=True, screenshot='./images/airplane.png')
 ```
 
 ![Example rendering of mesh loaded from a file](./images/airplane.png)
+**Figure 2:** Rendering of an example mesh file included with `vtki`
+
 
 Notably, the `vtki.plot()` convenience method is bound to each `vtki`
 data object to make visual inspection of datasets easily performed. Other
@@ -79,13 +103,25 @@ classes. Creating a rendering scene and altering its properties can be performed
 with the following code in `vtki`:
 
 ```python
+# Load a sample point cloud
+point_cloud = examples.download_lidar()
+
+# Instantiate a rendering scene
 plotter = vtki.Plotter()
-plotter.add_mesh(mesh, color='yellow')
+# Add spatial data to the scene
+plotter.add_mesh(point_cloud, color='orange')
+# Alter how the scene is rendered
+plotter.enable_eye_dome_lighting()
+# Show axes labels
 plotter.show_grid()
-plotter.show()
+# Render and display the scene
+plotter.show(screenshot='./images/point_cloud.png')
 ```
 
-[comment]: # I'd like to suggest we use one of the new images I've uploaded to show the power of plotting using vtki.  Not all of the have transparent backgrounds, some have been cropped to avoid releasing propritary geometry, so take your pick since none are perfect.
+![Rendering scene with eye dome lighting enabled](./images/point_cloud.png)
+**Figure 3:** Rendering of an example point cloud dataset with a
+non-photorealistic shading technique, Eye-Dome Lighting, applied to improve
+depth perception [@edl].
 
 
 ## Data Types & Mesh Creation
@@ -136,12 +172,12 @@ that algorithm directly onto all `vtki` datasets. These filtering algorithms are
 held in the `vtki.DataSetFilters` class which is inherited by the `vtki.Common`
 class giving all datasets a shared set of functionality.
 Through the use of these bound methods, powerful VTK filtering algorithms can
-be leveraged with intuitive control via keyword arguments in Python.
-These filters can be used by calling the filtering method directly from the data
-object:
+be leveraged with intuitive control via keyword arguments.
+These filters can be used by calling the filtering method directly from the
+data object:
 
 ```python
-# Load a sample UniformGrid
+# Load an example uniform grid
 dataset = examples.load_uniform()
 # Apply a threshold over a data range
 result = dataset.threshold([100, 500])
@@ -149,9 +185,8 @@ result = dataset.threshold([100, 500])
 
 Above, an extracted version of the input dataset where the active scalar array
 is between 100 and 500 is created in the new `result` object.
-Documentation of the available keyword arguments to control the
-filtering algorithms are described in the documentation of each filtering
-method.
+Available keyword arguments to control the filtering algorithms are described
+in the documentation of each filtering method.
 
 ### Filtering Chain
 
@@ -180,6 +215,8 @@ p.show(screenshot='./images/filter-chain.png')
 ```
 
 ![Rendering of the result from the filtering chain](./images/filter-chain.png)
+**Figure 4:** Resulting dataset from a `vtki` filtering chain.
+
 
 ## Mentions
 
@@ -189,7 +226,10 @@ figures visualizing 3D tessellated models generated from structured
 light optical scanner and results from finite element analysis, both
 of which are particularly suited to `vtki`.
 
-[comment]: # There are several recent papers from AFRL that include vtki figures.  It's late, and I'm not sure how cite in markdown.  I've included a bibtex file "ref.bib".  Would be great if we could use the references directly from there.
+[PVGeo](http://pvgeo.org) is Python package of VTK-based algorithms to analyze
+geoscientific data and models. ``vtki`` is used to make the inputs and outputs
+of PVGeo's algorithms more accessible and to streamline the process of
+visualizing geoscientific data.
+
 
 ## References
-
