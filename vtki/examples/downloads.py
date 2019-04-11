@@ -126,4 +126,4 @@ def download_exodus():
 
 def download_nefertiti():
     """ Download mesh of Queen Nefertiti """
-    return _download_and_read('nefertiti.obj.zip')
+    return _download_and_read('Nefertiti.obj.zip')
