@@ -16,7 +16,8 @@ from vtk.util import numpy_support as VN
 
 import vtki
 from vtki.export import export_plotter_vtkjs
-from vtki.utilities import get_scalar, is_vtki_obj, numpy_to_texture, wrap
+from vtki.utilities import (get_scalar, is_vtki_obj, numpy_to_texture, wrap,
+                            _raise_not_matching)
 
 _ALL_PLOTTERS = {}
 
@@ -115,13 +116,6 @@ def run_from_ipython():
     except NameError:
         return False
 
-
-def _raise_not_matching(scalars, mesh):
-    raise Exception('Number of scalars (%d) ' % scalars.size +
-                    'must match either the number of points ' +
-                    '(%d) ' % mesh.GetNumberOfPoints() +
-                    'or the number of cells ' +
-                    '(%d) ' % mesh.GetNumberOfCells())
 
 
 def opacity_transfer_function(key, n_colors):
