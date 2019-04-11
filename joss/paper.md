@@ -180,13 +180,56 @@ data object:
 # Load an example uniform grid
 dataset = examples.load_uniform()
 # Apply a threshold over a data range
-result = dataset.threshold([100, 500])
+threshed = dataset.threshold([100, 500]) # Figure 4 A
 ```
 
 Above, an extracted version of the input dataset where the active scalar array
-is between 100 and 500 is created in the new `result` object.
+is between 100 and 500 is created in the new `threshed` object.
 Available keyword arguments to control the filtering algorithms are described
-in the documentation of each filtering method.
+in the documentation of each filtering method. Below is an example of several
+common filtering algorthms.
+
+
+```python
+outline = dataset.outline()
+contours = dataset.contour() # Figure 4 B
+slices = dataset.slice_orthogonal() # Figure 4 C
+glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere()) # Figure 4 D
+
+p = vtki.Plotter(shape=(2,2))
+# Show the theshold
+p.add_mesh(outline, color='k')
+p.add_mesh(threshed, show_scalar_bar=False)
+p.add_text('A')
+p.camera_position = [-2,5,3]
+# Show the contour
+p.subplot(0,1)
+p.add_mesh(outline, color='k')
+p.add_mesh(contours, show_scalar_bar=False)
+p.add_text('B')
+p.camera_position = [-2,5,3]
+# Show the slices
+p.subplot(1,0)
+p.add_mesh(outline, color='k')
+p.add_mesh(slices, show_scalar_bar=False)
+p.add_text('C')
+p.camera_position = [-2,5,3]
+# Show the glyphs
+p.subplot(1,1)
+p.add_mesh(outline, color='k')
+p.add_mesh(glyphs, show_scalar_bar=False)
+p.add_text('D')
+p.camera_position = [-2,5,3]
+
+p.show(screenshot='./images/filters.png')
+```
+
+![Examples of common filters](./images/filters.png)
+**Figure 4:** Examples of common filtering algorithms: A) threshold volume
+extraction by scalar array, B) iso-contouring by scalar array, C) orthogonal
+slicing through volume, and D) geometric glyphing at mesh nodes and scaled by
+a scalar array.
+
 
 ### Filtering Chain
 
@@ -205,17 +248,6 @@ several filters are chained together.
 # Apply a filtering chain
 result = dataset.threshold([100, 500], invert=True).elevation().clip(normal='z').slice_orthogonal()
 ```
-
-```python
-p = vtki.Plotter()
-p.add_mesh(dataset.outline(), color='black')
-p.add_mesh(result, scalars='Elevation', show_edges=True, font_size=12)
-p.isometric_view()
-p.show(screenshot='./images/filter-chain.png')
-```
-
-![Rendering of the result from the filtering chain](./images/filter-chain.png)
-**Figure 4:** Resulting dataset from a `vtki` filtering chain.
 
 
 ## Mentions
