@@ -1,6 +1,6 @@
 """
-Plot Eye Dome Lighting
-~~~~~~~~~~~~~~~~~~~~~~
+Eye Dome Lighting
+~~~~~~~~~~~~~~~~~
 
 Eye-Dome Lighting (EDL) is a non-photorealistic, image-based shading technique
 designed to improve depth perception in scientific visualization images.
@@ -8,17 +8,46 @@ To learn more, please see `this blog post`_.
 
 .. _this blog post: https://blog.kitware.com/eye-dome-lighting-a-non-photorealistic-shading-technique/
 
-
-When plotting a simple point cloud, it can be difficult to perceive depth.
-Take this Lidar point cloud for example:
 """
+################################################################################
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 1
 import vtki
 from vtki import examples
 
 ################################################################################
-# Load a sample point cloud.
+# Statue
+# +++++++++++
+#
+# Eye-Dome Lighting can dramatically improve depth perception when plotting
+# incredebily sophisticated meshes like the creative commons Queen Nefertiti
+# statue:
+
+nefertiti = examples.download_nefertiti()
+
+p = vtki.Plotter(shape=(1, 2))
+
+# With eye-dome lighting
+p.subplot(0,0)
+p.add_mesh(nefertiti)
+p.enable_eye_dome_lighting()
+p.add_text('Eye-Dome Lighting')
+p.camera_position = [-1,-1,0.2]
+
+# No eye-dome lighting
+p.subplot(0,1)
+p.add_mesh(nefertiti)
+p.add_text('No Eye-Dome Lighting')
+p.camera_position = [-1,-1,0.2]
+
+p.show()
+
+################################################################################
+# Point Cloud
+# +++++++++++
+#
+# When plotting a simple point cloud, it can be difficult to perceive depth.
+# Take this Lidar point cloud for example:
 
 point_cloud = examples.download_lidar()
 
@@ -28,7 +57,7 @@ point_cloud = examples.download_lidar()
 
 # Plot a typical point cloud with no EDL
 p = vtki.Plotter()
-p.add_mesh(point_cloud, color='orange', point_size=5)
+p.add_mesh(point_cloud, color='tan', point_size=5)
 p.show()
 
 
@@ -38,7 +67,7 @@ p.show()
 
 # Plot with EDL
 p = vtki.Plotter()
-p.add_mesh(point_cloud, color='orange', point_size=5)
+p.add_mesh(point_cloud, color='tan', point_size=5)
 p.enable_eye_dome_lighting()
 p.show()
 

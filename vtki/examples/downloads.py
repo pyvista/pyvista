@@ -3,6 +3,7 @@
 import shutil
 import os
 import sys
+import zipfile
 
 import vtki
 
@@ -14,14 +15,20 @@ def delete_downloads():
     os.makedirs(vtki.EXAMPLES_PATH)
     return True
 
+
+def _decompress(filename):
+    zip_ref = zipfile.ZipFile(filename, 'r')
+    zip_ref.extractall(vtki.EXAMPLES_PATH)
+    return zip_ref.close()
+
 def _get_vtk_file_url(filename):
     return 'https://github.com/vtkiorg/vtk-data/raw/master/Data/{}'.format(filename)
 
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded
     local_path = os.path.join(vtki.EXAMPLES_PATH, os.path.basename(filename))
-    if os.path.isfile(local_path):
-        return local_path, None
+    if os.path.isfile(local_path.replace('.zip', '')):
+        return local_path.replace('.zip', ''), None
     # grab the correct url retriever
     if sys.version_info < (3,):
         import urllib
@@ -41,6 +48,9 @@ def _download_file(filename):
 
 def _download_and_read(filename, texture=False):
     saved_file, _ = _download_file(filename)
+    if vtki.get_ext(saved_file) in ['.zip']:
+        _decompress(saved_file)
+        saved_file = saved_file[:-4]
     if texture:
         return vtki.read_texture(saved_file)
     return vtki.read(saved_file)
@@ -112,3 +122,8 @@ def download_lidar():
 def download_exodus():
     """Sample ExodusII data file"""
     return _download_and_read('mesh_fs8.exo')
+
+
+def download_nefertiti():
+    """ Download mesh of Queen Nefertiti """
+    return _download_and_read('nefertiti.obj.zip')
