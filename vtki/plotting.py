@@ -44,7 +44,7 @@ rcParams = {
         'position' : [1, 1, 1],
         'viewup' : [0, 0, 1],
     },
-    'window_size' : [1024, 768],
+    'window_size' : np.array([1024, 768]) * 2,
     'font' : {
         'family' : 'courier',
         'size' : 12,
@@ -96,14 +96,14 @@ def set_plot_theme(theme):
         rcParams['font']['label_size'] = 18
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
-        rcParams['color'] = 'orange'
+        rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'black'
     elif theme.lower() in ['night', 'dark']:
         rcParams['background'] = 'black'
         rcParams['cmap'] = 'viridis'
         rcParams['font']['color'] = 'white'
         rcParams['show_edges'] = False
-        rcParams['color'] = 'orange'
+        rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'white'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():

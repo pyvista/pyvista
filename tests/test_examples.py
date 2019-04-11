@@ -173,4 +173,8 @@ if TEST_DOWNLOADS:
         data = examples.download_exodus()
         assert data.n_blocks
 
+    def test_download_nefertiti():
+        data = examples.download_nefertiti()
+        assert data.n_cells
+
 # End of download tests
