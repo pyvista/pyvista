@@ -24,8 +24,12 @@ from vtki import examples
 # statue:
 
 nefertiti = examples.download_nefertiti()
+nefertiti.plot(eye_dome_lighting=True, cpos=[-1,-1,0.2])
 
-p = vtki.Plotter(shape=(1, 2))
+################################################################################
+# Here we will compare a EDL shading side by side with normal shading
+
+p = vtki.Plotter(shape=(1, 2), border=False)
 
 # With eye-dome lighting
 p.subplot(0,0)
