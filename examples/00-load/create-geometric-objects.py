@@ -18,32 +18,32 @@ import vtki
 # Let's run through a few geometric objects!
 
 sphere = vtki.Sphere()
-sphere.plot(color='orange', show_edges=True)
+sphere.plot(show_edges=True, color='tan')
 
 
 ################################################################################
 cyl = vtki.Cylinder()
-cyl.plot(color='orange', show_edges=True)
+cyl.plot(show_edges=True, color='tan')
 
 
 ################################################################################
 arrow = vtki.Arrow()
-arrow.plot(color='orange', show_edges=True)
+arrow.plot(show_edges=True)
 
 
 ################################################################################
 box = vtki.Box()
-box.plot(color='orange', show_edges=True)
+box.plot(show_edges=True, color='tan')
 
 ################################################################################
 cone = vtki.Cone()
-cone.plot(color='orange', show_edges=True)
+cone.plot(show_edges=True)
 
 
 ################################################################################
 poly = vtki.Polygon()
-poly.plot(color='orange', show_edges=True)
+poly.plot(show_edges=True)
 
 ################################################################################
 disc = vtki.Disc()
-disc.plot(color='orange', show_edges=True)
+disc.plot(show_edges=True)

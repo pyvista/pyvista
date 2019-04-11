@@ -23,7 +23,7 @@ plotter.add_mesh(examples.load_globe())
 
 plotter.subplot(0, 1)
 plotter.add_text('Render Window 1', font_size=30)
-plotter.add_mesh(vtki.Cube(), show_edges=True, color='orange')
+plotter.add_mesh(vtki.Cube(), show_edges=True, color='tan')
 
 plotter.subplot(1, 0)
 plotter.add_text('Render Window 2', font_size=30)
