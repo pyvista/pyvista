@@ -196,32 +196,11 @@ contours = dataset.contour() # Figure 4 B
 slices = dataset.slice_orthogonal() # Figure 4 C
 glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere()) # Figure 4 D
 
-p = vtki.Plotter(shape=(2,2))
-# Show the theshold
-p.add_mesh(outline, color='k')
-p.add_mesh(threshed, show_scalar_bar=False)
-p.add_text('A')
-p.camera_position = [-2,5,3]
-# Show the contour
-p.subplot(0,1)
-p.add_mesh(outline, color='k')
-p.add_mesh(contours, show_scalar_bar=False)
-p.add_text('B')
-p.camera_position = [-2,5,3]
-# Show the slices
-p.subplot(1,0)
-p.add_mesh(outline, color='k')
-p.add_mesh(slices, show_scalar_bar=False)
-p.add_text('C')
-p.camera_position = [-2,5,3]
-# Show the glyphs
-p.subplot(1,1)
-p.add_mesh(outline, color='k')
-p.add_mesh(glyphs, show_scalar_bar=False)
-p.add_text('D')
-p.camera_position = [-2,5,3]
-
-p.show(screenshot='./images/filters.png')
+# Two by Two comparison
+vtki.plot_compare_four(threshed, contours, slices, glyphs,
+                        {'show_scalar_bar':False},
+                        camera_position=[-2,5,3], outline=outline,
+                        screenshot='./images/filters.png')
 ```
 
 ![Examples of common filters](./images/filters.png)
