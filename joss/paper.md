@@ -51,7 +51,7 @@ and direct array access adhering to VTK's object oriented approach to
 3D visualization [@vtkbook]. This package expands upon VTK's data types
 by creating classes that extend their VTK counterpart.
 The `vtki` wrapping layer provides an accessible and intuitive interface back
-to the VTK library to foster rapid prototyping, analysis, and visual
+to the VTK library to facilitate rapid prototyping, analysis, and visual
 integration of spatially referenced datasets.
 
 
@@ -115,7 +115,7 @@ VTK library that have been made more accessible by binding a method to control
 that algorithm directly onto all `vtki` datasets. These filtering algorithms are
 inherited by all dataset classes providing a shared set of functionality.
 Through the use of these bound filtering methods, powerful VTK algorithms
-can be leveraged and controlled via keyword arguments design to be intuitive
+can be leveraged and controlled via keyword arguments designed to be intuitive
 for novice users. Below is a programmatic example of the filtering workflow
 and Figure 3 show examples of common filtering algorithms.
 
