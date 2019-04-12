@@ -14,7 +14,7 @@ vtki.OFF_SCREEN = True # Not necessary - simply an insurance policy
 # Preferred plotting style for documentation
 vtki.set_plot_theme('document')
 vtki.rcParams['colorbar_orientation'] = 'vertical'
-vtki.rcParams['window_size'] = np.array([1024, 768]) * 2,
+vtki.rcParams['window_size'] = np.array([1024, 768]) * 2
 # Save figures in specified directory
 vtki.FIGURE_PATH = os.path.join(os.path.abspath('./images/'), 'auto-generated/')
 if not os.path.exists(vtki.FIGURE_PATH):
