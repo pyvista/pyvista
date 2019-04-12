@@ -153,12 +153,14 @@ result = dataset.threshold([100, 500], invert=True).elevation().clip(normal='z')
 data visualization and plotting.  These research articles include
 figures visualizing 3D tessellated models generated from structured
 light optical scanner and results from finite element analysis, both
-of which are particularly suited to `vtki`.
+of which are particularly suited to `vtki`: [@Gillaugh2017], [@Brown2018],
+[@Brown2018_pro], [@Beck2018_subspace], [@Kaszynski2018], [@Gillaugh2018_art],
+[@Gillaugh2019]
 
-[PVGeo](http://pvgeo.org) is Python package of VTK-based algorithms to analyze
-geoscientific data and models. ``vtki`` is used to make the inputs and outputs
-of PVGeo's algorithms more accessible and to streamline the process of
-visualizing geoscientific data.
+[PVGeo](https://github.com/OpenGeoVis/PVGeo) is Python package of VTK-based
+algorithms to analyze geoscientific data and models. ``vtki`` is used to make
+the inputs and outputs of PVGeo's algorithms more accessible and to streamline
+the process of visualizing geoscientific data.
 
 
 ## References
