@@ -26,6 +26,8 @@ class Scraper(object):
         Called by sphinx-gallery to save the figures generated after running
         example code.
         """
+        if figure_rst is None:
+            raise RuntimeError('You must install `sphinx_gallery`')
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = vtki.plotting._ALL_PLOTTERS

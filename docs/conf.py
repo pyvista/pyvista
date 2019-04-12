@@ -6,6 +6,7 @@ if sys.version_info >= (3, 0):
 
 # -- vtki configuration ---------------------------------------------------
 import vtki
+import numpy as np
 # Manage errors
 vtki.set_error_output_file('errors.txt')
 # Ensure that offscreen rendering is used for docs generation
