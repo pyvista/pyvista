@@ -92,6 +92,9 @@ def set_plot_theme(theme):
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
         rcParams['cmap'] = 'viridis'
+        rcParams['font']['size'] = 18
+        rcParams['font']['title_size'] = 18
+        rcParams['font']['label_size'] = 18
         rcParams['font']['color'] = 'black'
         rcParams['show_edges'] = False
         rcParams['color'] = 'tan'
@@ -1023,7 +1026,11 @@ class BasePlotter(object):
         if label:
             if not isinstance(label, str):
                 raise AssertionError('Label must be a string')
-            self._labels.append([single_triangle(), label, rgb_color])
+            geom = single_triangle()
+            if scalars is not None:
+                geom = vtki.Box()
+                rgb_color = parse_color('black')
+            self._labels.append([geom, label, rgb_color])
 
         # lighting display style
         if not lighting:
@@ -2945,3 +2952,35 @@ def parse_font_family(font_family):
                         'or "arial"')
 
     return FONT_KEYS[font_family]
+
+
+def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
+                      plotter_kwargs=None, show_kwargs=None, screenshot=None,
+                      camera_position=None, outline=None, outline_color='k',
+                      labels=('A', 'B', 'C', 'D')):
+    """Plot a 2 by 2 comparison of data objects. Plotting parameters and camera
+    positions will all be the same.
+    """
+    datasets = [[data_a, data_b], [data_c, data_d]]
+    labels = [labels[0:2], labels[2:4]]
+
+    if plotter_kwargs is None:
+        plotter_kwargs = {}
+    if disply_kwargs is None:
+        disply_kwargs = {}
+    if show_kwargs is None:
+        show_kwargs = {}
+
+    p = vtki.Plotter(shape=(2,2), **plotter_kwargs)
+
+    for i in range(2):
+        for j in range(2):
+            p.subplot(i, j)
+            p.add_mesh(datasets[i][j], **disply_kwargs)
+            p.add_text(labels[i][j])
+            if is_vtki_obj(outline):
+                p.add_mesh(outline, color=outline_color)
+            if camera_position is not None:
+                p.camera_position = camera_position
+
+    return p.show(screenshot=screenshot, **show_kwargs)

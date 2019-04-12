@@ -1,5 +1,5 @@
-Why?
-====
+Why ``vtki``?
+=============
 
 VTK is an excellent visualization toolkit, and with Python bindings it should be
 able to combine the speed of C++ with the rapid prototyping of Python.
@@ -58,6 +58,7 @@ loading and plotting an STL file requires a lot of code when using only the
 
 Plot a Mesh using vtki
 ~~~~~~~~~~~~~~~~~~~~~~
+
 The same stl can be loaded and plotted using vtki with:
 
 .. code:: python
@@ -74,6 +75,7 @@ after the user closes the VTK plotting window.
 
 Advanced Plotting with Numpy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 When combined with numpy, you can make some truly spectacular plots:
 
 .. testcode:: python

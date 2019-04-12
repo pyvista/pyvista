@@ -77,6 +77,14 @@ Here are a few open-source projects that leverage ``vtki``:
 
 
 
+Authors
+=======
+
+.. _authors_ref:
+
+.. include:: ../AUTHORS.rst
+
+
 
 
 Getting Started
@@ -162,6 +170,32 @@ Tools
    tools/qt_plotting
    tools/utilities
 
+
+Contributing
+************
+
+We absolutely welcome contributions and we hope that this guide will facilitate
+an understanding of the ``vtki`` code repository. It is important to note that
+the  ``vtki`` software package is maintained on a volunteer basis and thus we
+need to foster a community that can support user questions and develop new
+features to make this software a useful tool for all users. To learn more about
+contributing to ``vtki``, please see :ref:`contributing_ref`.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contributing
+   :hidden:
+
+   dev/contributing.rst
+   dev/guidelines.rst
+   dev/testing.rst
+
+
+
+License
+*******
+
+.. include:: ../LICENSE
 
 
 Project Index

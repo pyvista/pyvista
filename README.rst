@@ -112,3 +112,26 @@ Here are a few open-source projects that leverage ``vtki``:
 .. _pymeshfix: https://github.com/akaszynski/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/akaszynski/tetgen
+
+
+Authors
+=======
+
+Please take a look at the `contributors page`_ and the active `list of authors`_
+to learn more about the developers of ``vtki``.
+
+.. _contributors page: https://GitHub.com/akaszynski/vtki/graphs/contributors/
+.. _list of authors: https://vtkinterface.readthedocs.io/en/latest/#authors
+
+
+Contributing
+============
+
+We absolutely welcome contributions and we hope that this guide will facilitate
+an understanding of the ``vtki`` code repository. It is important to note that
+the  ``vtki`` software package is maintained on a volunteer basis and thus we
+need to foster a community that can support user questions and develop new
+features to make this software a useful tool for all users. To learn more about
+contributing to ``vtki``, please see the `Contributing Guide`_.
+
+.. _Contributing Guide: http://docs.vtki.org/en/latest/dev/contributing.html

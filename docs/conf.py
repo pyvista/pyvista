@@ -47,7 +47,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'vtki'
-copyright = u'2017-2019, Alex Kaszynski'
+copyright = u'2017-2019, vtkiorg Developers'
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
