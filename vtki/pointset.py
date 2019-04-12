@@ -1290,7 +1290,8 @@ class PolyData(vtkPolyData, vtki.Common):
         """ Plots boundaries of a mesh """
         edges = self.extract_edges()
 
-        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
+        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False),
+                               notebook=kwargs.pop('notebook', None))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
         plotter.add_mesh(self, legend='Mesh', **kwargs)
         plotter.plot()
@@ -1300,7 +1301,8 @@ class PolyData(vtkPolyData, vtki.Common):
         """
         Plot the point normals of a mesh.
         """
-        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
+        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False),
+                               notebook=kwargs.pop('notebook', None))
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
 
