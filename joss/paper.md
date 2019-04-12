@@ -32,15 +32,6 @@ calls. The `vtki` Python package seeks to simplify common mesh creation
 and plotting routines without compromising on the speed of the C++ VTK
 backend, enabling researchers to rapidly explore large datasets,
 communicate their spatial findings, and facilitate reproducibility.
-
-At its core, `vtki` is a pure Python helper module for VTK
-that interfaces back to VTK data objects through NumPy [@numpy]
-and direct array access.  This package expands upon VTK's data objects
-by creating classes that extend their VTK counterpart. VTK data
-objects passed to `vtki` have an added layer of functionality on top
-of those objects providing an accessible and intuitive interface back
-to the VTK library to foster rapid prototyping, analysis, and visual
-integration of spatially referenced datasets.
 Figure 1 demonstrates an integrated scene of geospatial data generated
 by `vtki`; to learn more about how this visualization was created,
 please visit [PVGeo's FORGE project website](http://forge.pvgeo.org).
@@ -54,6 +45,14 @@ model, scattered points of the sampled temperature values, geophysical well
 logging data, GIS site boundary, and interpreted faulting surfaces.
 
 
+At its core, `vtki` is a pure Python helper module for VTK
+that interfaces back to VTK data objects through NumPy [@numpy]
+and direct array access adhering to VTK's object oriented approach to
+3D visualization [@vtkbook]. This package expands upon VTK's data types
+by creating classes that extend their VTK counterpart.
+The `vtki` wrapping layer provides an accessible and intuitive interface back
+to the VTK library to foster rapid prototyping, analysis, and visual
+integration of spatially referenced datasets.
 
 
 ## Simplified Plotting Routines
@@ -73,31 +72,21 @@ by novice programmers. Loading and rendering of sophisticated meshes in `vtki`
 is implemented to take only a few lines of code:
 
 ```python
-# Obligatory set up code
-import vtki
 from vtki import examples
-import numpy as np
-# Set a document-friendly plotting theme
-vtki.set_plot_theme('document')
-```
-
-```python
 # Example mesh of Queen Nefertiti
 mesh = examples.download_nefertiti()
 # Render the dataset
-mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True,
-          screenshot='./images/nefertiti.png')
+mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True)
 ```
 
 ![Nefertiti](./images/nefertiti.png)
 **Figure 2:** Rendering of the Queen Nefertiti example mesh consisting of approximately 2 million triangles.
 
 
-Notably, the `vtki.plot()` convenience method is bound to each `vtki`
+Notably, the `.plot()` convenience method is bound to each `vtki`
 data object to make visual inspection of datasets easily performed. Other
 plotting routines are available in `vtki` for creating integrated and
-easily manipulated scenes like that show in Figure 1 via the `vtki.Plotter`
-and `vtki.BackgroundPlotter` classes.
+easily manipulated scenes like that show in Figure 1.
 
 
 ## Data Types & Mesh Creation
@@ -108,35 +97,14 @@ In VTK, the abstract class `vtk.vtkDataSet` represents a set of common
 functionality for spatially referenced datasets [@vtkbook].
 In `vtki`, the common functionality shared across spatially referenced datasets
 is shared in the `vtki.Common` class which holds methods and attributes for
-quickly accessing scalar arrays associated with the dataset or easily inspecting
-attributes of the dataset such as all the scalar names or number of points
-present.
-
-All of the following data types are subclasses of their corresponding VTK class
-and share a set of common functionality which `vtki` implements into the base
-class  `vtki.Common`.
-
-| VTK Class                  | `vtki` Implementation   |
-|----------------------------|-------------------------|
-| `vtk.vtkDataSet`           | `vtki.Common`           |
-| `vtk.vtkPolyData`          | `vtki.PolyData`         |
-| `vtk.vtkUnstructuredGrid`  | `vtki.UnstructuredGrid` |
-| `vtk.vtkStructuredGrid`    | `vtki.StructuredGrid`   |
-| `vtk.vtkRectilinearGrid`   | `vtki.RectilinearGrid`  |
-| `vtk.vtkImageData`         | `vtki.UniformGrid`      |
-| `vtk.vtkMultiBlockDataSet` | `vtki.MultiBlock`       |
-
+quickly accessing scalar arrays or inspecting properties of the dataset such
+as the available scalar names or number of points present.
 
 Creating mesh objects in VTK is also simplified by `vtki` by providing intuitive
 initialization functions and attributes on the `vtki` classes that callback to
 the original VTK data object. Loading files supported by the VTK library is also
 simplified with a module level function to decide on the appropriate reader for
 supported file types.
-
-```python
-filename = 'path/to/vtk/supported/file.ext'
-mesh = vtki.read(filename)
-```
 
 
 ## Accessing Common Analysis Routines
@@ -145,38 +113,17 @@ mesh = vtki.read(filename)
 use directly on the objects. These filters are commonly used algorithms in the
 VTK library that have been made more accessible by binding a method to control
 that algorithm directly onto all `vtki` datasets. These filtering algorithms are
-held in the `vtki.DataSetFilters` class which is inherited by the `vtki.Common`
-class giving all datasets a shared set of functionality.
-Through the use of these bound methods, powerful VTK filtering algorithms can
-be leveraged with intuitive control via keyword arguments.
-These filters can be used by calling the filtering method directly from the
-data object:
+inherited by all dataset classes providing a shared set of functionality.
+Through the use of these bound filtering methods, powerful VTK algorithms
+can be leveraged and controlled via keyword arguments design to be intuitive
+for novice users. Below is a programmatic example of the filtering workflow
+and Figure 3 show examples of common filtering algorithms.
 
 ```python
 # Load an example uniform grid
 dataset = examples.load_uniform()
 # Apply a threshold over a data range
 threshed = dataset.threshold([100, 500]) # Figure 4 A
-```
-
-Above, an extracted version of the input dataset where the active scalar array
-is between 100 and 500 is created in the new `threshed` object.
-Available keyword arguments to control the filtering algorithms are described
-in the documentation of each filtering method. Below is an example of several
-common filtering algorthms.
-
-
-```python
-outline = dataset.outline()
-contours = dataset.contour() # Figure 4 B
-slices = dataset.slice_orthogonal() # Figure 4 C
-glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere()) # Figure 4 D
-
-# Two by two comparison
-vtki.plot_compare_four(threshed, contours, slices, glyphs,
-                        {'show_scalar_bar':False},
-                        camera_position=[-2,5,3], outline=outline,
-                        screenshot='./images/filters.png')
 ```
 
 ![Examples of common filters](./images/filters.png)
@@ -191,13 +138,8 @@ a scalar array.
 In VTK, filters are often used in a pipeline where each algorithm passes its
 output to the next filtering algorithm [@vtkbook].
 `vtki` mimics the filtering pipeline through a chain; attaching each filter to
-the last filter. In the following example using the sample dataset from above,
-several filters are chained together.
-
-1. A threshold filter to extract a range of the active scalar array.
-2. An elevation filter to generate scalar values corresponding to height.
-3. A clip filter to cut the dataset in half.
-4. Create three slices along each axial plane.
+the last filter. The following code provides an example of how filtering
+algorithms can be combined into a chain mimicking the VTK pipeline.
 
 ```python
 # Apply a filtering chain
