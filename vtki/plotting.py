@@ -45,7 +45,7 @@ rcParams = {
         'position' : [1, 1, 1],
         'viewup' : [0, 0, 1],
     },
-    'window_size' : np.array([1024, 768]) * 2,
+    'window_size' : [1024, 768],
     'font' : {
         'family' : 'courier',
         'size' : 12,
