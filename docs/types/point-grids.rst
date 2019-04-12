@@ -252,7 +252,7 @@ string.
 
     # Create plotting class and add the unstructured grid
     plotter = vtki.Plotter()
-    plotter.add_mesh(grid, show_edges=True, color='orange')
+    plotter.add_mesh(grid, show_edges=True, color='tan')
 
     # Add labels to points on the yz plane (where x == 0)
     points = grid.points

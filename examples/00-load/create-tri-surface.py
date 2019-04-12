@@ -27,7 +27,8 @@ print(points[0:5, :])
 
 # simply pass the numpy points to the PolyData constructor
 cloud = vtki.PolyData(points)
-cloud.plot()
+vtki.set_plot_theme('doc')
+cloud.plot(point_size=15)
 
 ################################################################################
 # Now that we have a ``vtki`` data structure of the points, we can perform a

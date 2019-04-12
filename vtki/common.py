@@ -1,6 +1,7 @@
 """
 Attributes common to PolyData and Grid Objects
 """
+import collections
 import logging
 from weakref import proxy
 
@@ -11,7 +12,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import vtki
 from vtki import DataSetFilters
 from vtki.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, get_scalar,
-                            vtk_bit_array_to_char, is_vtki_obj)
+                            vtk_bit_array_to_char, is_vtki_obj, _raise_not_matching)
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -704,6 +705,34 @@ class Common(DataSetFilters, object):
     def get_scalar(self, name, preference='cell', info=False):
         """ Searches both point and cell data for an array """
         return get_scalar(self, name, preference=preference, info=info)
+
+
+    def __getitem__(self, index):
+        """ Searches both point and cell data for an array """
+        if isinstance(index, collections.Iterable) and not isinstance(index, str):
+            name, preference = index[0], index[1]
+        elif isinstance(index, str):
+            name = index
+            preference = 'cell'
+        else:
+            raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
+        return self.get_scalar(name, preference=preference, info=False)
+
+    def __setitem__(self, name, scalars):
+        """Add/set an array in the point_arrays or cell_arrays field depending
+        on the array's length
+        """
+        # First check points - think of case with vertex cells
+        #   there would be the same number of cells as points but we'd want
+        #   the data to be on the nodes.
+        if scalars.shape[0] == self.n_points:
+            self.point_arrays[name] = scalars
+        elif scalars.shape[0] == self.n_cells:
+            self.cell_arrays[name] = scalars
+        else:
+            _raise_not_matching(scalars, self)
+        return
+
 
     @property
     def n_scalars(self):

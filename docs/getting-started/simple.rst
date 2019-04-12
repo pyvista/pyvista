@@ -153,7 +153,7 @@ manually interact with the plotting window:
 .. code-block:: python
 
     plotter = vtki.Plotter(off_screen=True)
-    plotter.add_mesh(data, color='orange')
+    plotter.add_mesh(data, color='tan')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
     # plotter.screenshot('airplane.png')

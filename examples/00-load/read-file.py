@@ -19,14 +19,14 @@ import matplotlib.pyplot as plt
 # Get a sample file
 filename = examples.planefile
 mesh = vtki.read(filename)
-cpos = mesh.plot(color='orange')
+cpos = mesh.plot()
 
 ################################################################################
 # You can also take a screenshot without creating an interactive plot window using
 # the ``Plotter``:
 
 plotter = vtki.Plotter(off_screen=True)
-plotter.add_mesh(mesh, color='orange')
+plotter.add_mesh(mesh)
 plotter.show(auto_close=False)
 # plotter.screenshot('airplane.png')
 plotter.close()
@@ -50,7 +50,7 @@ cpos = plotter.show()
 # manually interact with the ``vtk`` plot window:
 
 plotter = vtki.Plotter(off_screen=True)
-plotter.add_mesh(mesh, color='orange')
+plotter.add_mesh(mesh)
 plotter.camera_position = cpos
 plotter.show(auto_close=False)
 # plotter.screenshot('airplane.png')
