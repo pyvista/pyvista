@@ -37,7 +37,7 @@ by `vtki`; to learn more about how this visualization was created,
 please visit [PVGeo's FORGE project website](http://forge.pvgeo.org).
 
 
-![A visually integrated scene of geospatial data (FORGE Geothermal Site)](./images/forge-iso.png)
+![Figure 1](./images/forge-iso.png)
 **Figure 1:** A visually integrated scene of geospatial data
 (FORGE Geothermal Site). This rendering includes a a digital land surface
 with overlain satellite imagery and geologic map, a subsurface temperature
@@ -51,7 +51,7 @@ and direct array access adhering to VTK's object oriented approach to
 3D visualization [@vtkbook]. This package expands upon VTK's data types
 by creating classes that extend their VTK counterpart.
 The `vtki` wrapping layer provides an accessible and intuitive interface back
-to the VTK library to foster rapid prototyping, analysis, and visual
+to the VTK library to facilitate rapid prototyping, analysis, and visual
 integration of spatially referenced datasets.
 
 
@@ -79,7 +79,7 @@ mesh = examples.download_nefertiti()
 mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True)
 ```
 
-![Nefertiti](./images/nefertiti.png)
+![Figure 2](./images/nefertiti.png)
 **Figure 2:** Rendering of the Queen Nefertiti example mesh consisting of approximately 2 million triangles.
 
 
@@ -126,7 +126,7 @@ dataset = examples.load_uniform()
 threshed = dataset.threshold([100, 500]) # Figure 4 A
 ```
 
-![Examples of common filters](./images/filters.png)
+![Figure 3](./images/filters.png)
 **Figure 3:** Examples of common filtering algorithms: A) threshold volume
 extraction by scalar array, B) iso-contouring by scalar array, C) orthogonal
 slicing through volume, and D) geometric glyphing at mesh nodes and scaled by
