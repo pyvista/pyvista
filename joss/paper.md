@@ -38,12 +38,12 @@ that interfaces back to VTK data objects through NumPy [@numpy]
 and direct array access.  This package expands upon VTK's data objects
 by creating classes that extend their VTK counterpart. VTK data
 objects passed to `vtki` have an added layer of functionality on top
-of that object providing an accessible and intuitive interface back to
-the VTK library to foster rapid prototyping, analysis, and visual
+of those objects providing an accessible and intuitive interface back
+to the VTK library to foster rapid prototyping, analysis, and visual
 integration of spatially referenced datasets.
 Figure 1 demonstrates an integrated scene of geospatial data generated
-by `vtki`; to learn more about this dataset, please visit
-[this website](http://forge.pvgeo.org).
+by `vtki`; to learn more about how this visualization was created,
+please visit [PVGeo's FORGE project website](http://forge.pvgeo.org).
 
 
 ![A visually integrated scene of geospatial data (FORGE Geothermal Site)](./images/forge-iso.png)
@@ -79,7 +79,6 @@ from vtki import examples
 import numpy as np
 # Set a document-friendly plotting theme
 vtki.set_plot_theme('document')
-vtki.rcParams['use_panel'] = False
 ```
 
 ```python
@@ -91,36 +90,14 @@ mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True,
 ```
 
 ![Nefertiti](./images/nefertiti.png)
-**Figure 2:** Example rendering of Queen Nefertiti mesh consisting of approximately 2 million triangles
+**Figure 2:** Rendering of the Queen Nefertiti example mesh consisting of approximately 2 million triangles.
 
 
 Notably, the `vtki.plot()` convenience method is bound to each `vtki`
 data object to make visual inspection of datasets easily performed. Other
-plotting routines in `vtki` are available for creating integrated and
-easily manipulated scenes via the `vtki.Plotter` and `vtki.BackgroundPlotter`
-classes. Creating a rendering scene and altering its properties can be performed
-with the following code in `vtki`:
-
-```python
-# Load a sample point cloud
-point_cloud = examples.download_lidar()
-
-# Instantiate a rendering scene
-plotter = vtki.Plotter()
-# Add spatial data to the scene
-plotter.add_mesh(point_cloud, show_scalar_bar=False)
-# Alter how the scene is rendered
-plotter.enable_eye_dome_lighting()
-# Show axes labels
-plotter.show_grid()
-# Render and display the scene
-plotter.show(screenshot='./images/point_cloud.png')
-```
-
-![Rendering scene with eye dome lighting enabled](./images/point_cloud.png)
-**Figure 3:** Rendering of an example point cloud dataset with a
-non-photorealistic shading technique, Eye-Dome Lighting, applied to improve
-depth perception [@edl].
+plotting routines are available in `vtki` for creating integrated and
+easily manipulated scenes like that show in Figure 1 via the `vtki.Plotter`
+and `vtki.BackgroundPlotter` classes.
 
 
 ## Data Types & Mesh Creation
@@ -154,7 +131,7 @@ Creating mesh objects in VTK is also simplified by `vtki` by providing intuitive
 initialization functions and attributes on the `vtki` classes that callback to
 the original VTK data object. Loading files supported by the VTK library is also
 simplified with a module level function to decide on the appropriate reader for
-the file.
+supported file types.
 
 ```python
 filename = 'path/to/vtk/supported/file.ext'
@@ -203,7 +180,7 @@ vtki.plot_compare_four(threshed, contours, slices, glyphs,
 ```
 
 ![Examples of common filters](./images/filters.png)
-**Figure 4:** Examples of common filtering algorithms: A) threshold volume
+**Figure 3:** Examples of common filtering algorithms: A) threshold volume
 extraction by scalar array, B) iso-contouring by scalar array, C) orthogonal
 slicing through volume, and D) geometric glyphing at mesh nodes and scaled by
 a scalar array.
