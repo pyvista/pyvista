@@ -12,9 +12,6 @@ vtki Documentation
 .. image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/vtki/history
 
-.. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
-   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
-
 .. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/akaszynski/vtki
 
@@ -49,6 +46,7 @@ Want to test-drive ``vtki``? Check out our live examples on MyBinder:
 
    self
    why
+   authors
 
 Connections
 ===========
@@ -75,14 +73,6 @@ Here are a few open-source projects that leverage ``vtki``:
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/akaszynski/tetgen
 
-
-
-Authors
-=======
-
-.. _authors_ref:
-
-.. include:: ../AUTHORS.rst
 
 
 

@@ -81,17 +81,8 @@ See other examples:
     print(dir(examples))
 
 
-Development Testing
-+++++++++++++++++++
+.. warning:: Developers, please see :ref:`testing_ref` for details on development testing
 
-To run the full suite of tests when cloned into the repository, execute::
-
-    python -m pytest -v --cov vtki
-
-
-.. warning::
-
-   The requirements defined under ``requirements_test.txt`` are required for testing.
 
 Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -131,6 +122,7 @@ Then, you need to configure the headless display, on Travis, add this to the
 
     before_script: # configure a headless display to test plot generation
       - export DISPLAY=:99.0
+      - export VTKI_OFF_SCREEN=True
       - which Xvfb
       - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
       - sleep 3 # give xvfb some time to start
@@ -143,6 +135,7 @@ set up script that will run everytime your Docker container is launched:
 
     #!/bin/bash
     export DISPLAY=:99.0
+    export VTKI_OFF_SCREEN=True
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3

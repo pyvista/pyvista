@@ -121,7 +121,7 @@ Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of ``vtki``.
 
 .. _contributors page: https://GitHub.com/akaszynski/vtki/graphs/contributors/
-.. _list of authors: https://vtkinterface.readthedocs.io/en/latest/#authors
+.. _list of authors: http://docs.vtki.org/authors
 
 
 Contributing
