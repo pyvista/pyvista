@@ -1,11 +1,13 @@
 """
+.. _glyph_example:
+
 Plotting Glyphs
 ~~~~~~~~~~~~~~~
 
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-# sphinx_gallery_thumbnail_number = 3
+# sphinx_gallery_thumbnail_number = 2
 import vtki
 import numpy as np
 
@@ -26,9 +28,15 @@ vectors = np.sin(grid.points)**3
 grid.point_arrays['mag'] = np.linalg.norm(vectors, axis=1)
 grid.point_arrays['vec'] = vectors
 
+# Make a geometric obhect to use as the glyph
+geom = vtki.Arrow() # This could be any dataset
+
+# Perform the glyph
+glyphs = grid.glyph(orient='vec', scale='mag', factor=0.8, geom=geom)
+
 # plot using the plotting class
 p = vtki.Plotter()
-p.add_mesh(grid.glyph(orient='vec', scale='mag', factor=1))
+p.add_mesh(glyphs)
 p.show()
 
 ################################################################################

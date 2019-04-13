@@ -29,7 +29,7 @@ plotter.subplot(1, 0)
 plotter.add_text('Render Window 2', font_size=30)
 sphere = vtki.Sphere()
 plotter.add_mesh(sphere, scalars=sphere.points[:, 2])
-plotter.add_scalar_bar('Z', vertical=True)
+plotter.add_scalar_bar('Z')
 # plotter.add_axes()
 plotter.add_axes(interactive=True)
 

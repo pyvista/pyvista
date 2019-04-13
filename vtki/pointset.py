@@ -1192,12 +1192,12 @@ class PolyData(vtkPolyData, vtki.Common):
     @property
     def volume(self):
         """
-        Mesh volume
+        Mesh volume - will throw a VTK error/warning if not a closed surface
 
         Returns
         -------
-        area : float
-            Total area of the mesh.
+        volume : float
+            Total volume of the mesh.
 
         """
         mprop = vtk.vtkMassProperties()

@@ -743,7 +743,11 @@ class DataSetFilters(object):
             dataset.active_scalar_name = scale
             scale = True
         if scale:
-            alg.SetScaleModeToScaleByScalar()
+            if dataset.active_scalar is not None:
+                if dataset.active_scalar.ndim > 1:
+                    alg.SetScaleModeToScaleByVector()
+                else:
+                    alg.SetScaleModeToScaleByScalar()
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
