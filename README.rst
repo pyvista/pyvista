@@ -134,4 +134,4 @@ need to foster a community that can support user questions and develop new
 features to make this software a useful tool for all users. To learn more about
 contributing to ``vtki``, please see the `Contributing Guide`_.
 
-.. _Contributing Guide: http://docs.vtki.org/en/latest/dev/contributing.html
+.. _Contributing Guide: http://docs.vtki.org/dev/contributing.html
