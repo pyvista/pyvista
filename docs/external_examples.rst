@@ -15,7 +15,7 @@ Here are a list of longer, more technical examples of what ``vtki`` can do!
    3D visualization for the Open Mining Format (omf) <https://github.com/OpenGeoVis/omfvtk/blob/master/Example.ipynb>
    3D Rendering with Discretize <http://discretize.simpeg.xyz/en/master/auto_examples/vtki_demo.html#sphx-glr-auto-examples-vtki-demo-py>
    OpenFOAM Rendering <https://pswpswpsw.github.io/posts/2018/09/blog-post-modify-vtk-openfoam/>
-   FORGE Geothermal Project <http:/forge.pvgeo.org>
+   FORGE Geothermal Project <http://forge.pvgeo.org>
 
 
 .. attention::
