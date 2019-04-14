@@ -1,26 +1,46 @@
-##################
-vtki Documentation
-##################
+####
+vtki
+####
+
+`A Streamlined Python Interface for the Visualization Toolkit`
 
 
-.. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
+.. |pypi| image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
-.. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
+   :target: https://anaconda.org/conda-forge/vtki
+
+.. |travis| image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/vtkiorg/vtki
 
-.. image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/vtki/history
 
-.. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
+.. |codecov| image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/akaszynski/vtki
 
-.. image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
+.. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
 
-.. image:: https://img.shields.io/github/stars/vtkiorg/vtki.svg?style=social&label=Stars
-  :target: https://github.com/vtkiorg/vtki
-  :alt: GitHub
+.. |contributors| image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
+   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
+
+.. |stars| image:: https://img.shields.io/github/stars/vtkiorg/vtki.svg?style=social&label=Stars
+   :target: https://github.com/vtkiorg/vtki
+   :alt: GitHub
+
+
++----------------------+------------------------+
+| Deployment           | |pypi| |conda|         |
++----------------------+------------------------+
+| Build Status         | |travis| |appveyor|    |
++----------------------+------------------------+
+| Metrics              | |codacy| |codecov|     |
++----------------------+------------------------+
+| GitHub               | |contributors| |stars| |
++----------------------+------------------------+
+
 
 About
 *****
