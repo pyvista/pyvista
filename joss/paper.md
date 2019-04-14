@@ -143,7 +143,8 @@ algorithms can be combined into a chain mimicking the VTK pipeline.
 
 ```python
 # Apply a filtering chain
-result = dataset.threshold([100, 500], invert=True).elevation().clip(normal='z').slice_orthogonal()
+result = dataset.threshold([100, 500],
+                           invert=True).elevation().slice_orthogonal()
 ```
 
 
