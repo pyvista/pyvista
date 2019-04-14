@@ -39,7 +39,7 @@ please visit [PVGeo's FORGE project website](http://forge.pvgeo.org).
 
 ![Figure 1](./images/forge-iso.png)
 **Figure 1:** A visually integrated scene of geospatial data
-(FORGE Geothermal Site). This rendering includes a a digital land surface
+(FORGE Geothermal Site). This rendering includes a digital land surface
 with overlain satellite imagery and geologic map, a subsurface temperature
 model, scattered points of the sampled temperature values, geophysical well
 logging data, GIS site boundary, and interpreted faulting surfaces.
