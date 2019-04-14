@@ -79,7 +79,7 @@ mesh = examples.download_nefertiti()
 mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True)
 ```
 
-![Figure 2](./images/nefertiti.png)
+![Figure 2](./images/nefertiti.png){width=75%}
 **Figure 2:** Rendering of the Queen Nefertiti example mesh consisting of approximately 2 million triangles.
 
 
