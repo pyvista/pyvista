@@ -33,6 +33,7 @@ class MultiBlock(vtkMultiBlockDataSet):
     def __init__(self, *args, **kwargs):
         super(MultiBlock, self).__init__()
         deep = kwargs.pop('deep', False)
+        self.refs = []
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkMultiBlockDataSet):
@@ -51,6 +52,8 @@ class MultiBlock(vtkMultiBlockDataSet):
                     self[idx, key] = block
                     idx += 1
 
+            # keep a reference of the args
+            self.refs.append(args)
 
     def extract_geometry(self):
         """Combines the geomertry of all blocks into a single ``PolyData``
@@ -228,10 +231,11 @@ class MultiBlock(vtkMultiBlockDataSet):
 
     def append(self, data):
         """Add a data set to the next block index"""
-        index = self.n_blocks # note off by one so ues as index
+        index = self.n_blocks # note off by one so use as index
         self[index] = data
+        self.refs.append(data)
 
-
+        
     def get(self, index):
         """Get a block by its index or name (if the name is non-unique then
         returns the first occurence)"""
