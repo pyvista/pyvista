@@ -226,6 +226,8 @@ class MultiBlock(vtkMultiBlockDataSet):
             return data
         if data is not None and not is_vtki_obj(data):
             data = wrap(data)
+        if data not in self.refs:
+            self.refs.append(data)
         return data
 
 
@@ -235,7 +237,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         self[index] = data
         self.refs.append(data)
 
-        
+
     def get(self, index):
         """Get a block by its index or name (if the name is non-unique then
         returns the first occurence)"""
@@ -300,6 +302,8 @@ class MultiBlock(vtkMultiBlockDataSet):
         if name is None:
             name = 'Block-{0:02}'.format(i)
         self.set_block_name(i, name) # Note that this calls self.Modified()
+        if data not in self.refs:
+            self.refs.append(data)
 
 
     def __delitem__(self, index):
