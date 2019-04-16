@@ -942,7 +942,8 @@ class DataSetFilters(object):
 
     def interpolate(dataset, target, tolerance=None, pass_cell_arrays=True,
                     pass_point_arrays=True):
-        """Interpolate data between two vtk objects using vtkResampleWithDataSet.
+        """Resample (interpolate) scalar data between from a mesh onto this mesh
+        using :class:`vtk.vtkResampleWithDataSet`.
 
         Parameters
         ----------
