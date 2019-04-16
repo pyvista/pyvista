@@ -551,6 +551,56 @@ class PolyData(vtkPolyData, vtki.Common):
         """
         return self.plot(scalars=self.curvature(curv_type),
                          stitle='%s\nCurvature' % curv_type, **kwargs)
+    def smooth(self, iterations, relaxation_factor, feature_edge_smoothing=False,
+               boundary_smoothing=True, feature_angle=30, edge_angle=15, inplace=False):
+        """
+        Smooth mesh using Laplacian smoothing.
+
+        Parameters
+        ----------
+        iterations : int
+            Number of smoothing iterations.
+
+        relaxation_factor : float
+            Smoothing relaxation factor setting how much a point is adjusted
+            based on the neighbourhood average.
+
+        feature_edge_smoothing : bool, optional
+             Default = False.
+
+        boundary_smoothing : bool, optional
+             Default = True.
+
+        feature_angle : float, optional
+             Default = 30.
+
+        edge_angle : float, optional
+             Default = 15.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtki.PolyData
+            Mesh containing only triangles.  None when inplace=True
+
+        """
+        smooth = vtk.vtkSmoothPolyDataFilter()
+        smooth.SetInputData(self)
+
+        smooth.SetNumberOfIterations(iterations)
+        smooth.SetRelaxationFactor(relaxation_factor)
+        smooth.SetFeatureAngle(feature_angle)
+        smooth.SetEdgeAngle(edge_angle)
+        smooth.SetFeatureEdgeSmoothing(feature_edge_smoothing)
+        smooth.SetBoundarySmoothing(boundary_smoothing)
+        smooth.Update()
+
+        if inplace:
+            self.overwrite(smooth.GetOutput())
+        else:
+            return PolyData(smooth.GetOutput())
 
     def tri_filter(self, inplace=False):
         """
@@ -1218,6 +1268,60 @@ class PolyData(vtkPolyData, vtki.Common):
             self._obbTree.BuildLocator()
 
         return self._obbTree
+
+    def geodesic(self, start_vertex, end_vertex):
+        """
+        Calculates the geodesic path betweeen two vertices using Dijkstra's
+        algorithm.
+
+        Parameters
+        ----------
+        start_vertex : int
+            Vertex index indicating the start point of the geodesic segment.
+
+        end_vertex : int
+            Vertex index indicating the end point of the geodesic segment.
+
+        Returns
+        -------
+        output : vtki.PolyData
+            PolyData object consisting of the line segment between the two given
+            vertices.
+
+        """
+        if start_vertex < 0 or end_vertex > self.n_points - 1:
+            raise IndexError('Invalid indices.')
+
+        dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
+        dijkstra.SetInputData(self)
+        dijkstra.SetStartVertex(start_vertex)
+        dijkstra.SetEndVertex(end_vertex)
+        dijkstra.Update()
+
+        output = _get_output(dijkstra)
+        return output
+
+    def geodesic_distance(self, start_vertex, end_vertex):
+        """
+        Calculates the geodesic distance betweeen two vertices using Dijkstra's
+        algorithm.
+
+        Parameters
+        ----------
+        start_vertex : int
+            Vertex index indicating the start point of the geodesic segment.
+
+        end_vertex : int
+            Vertex index indicating the end point of the geodesic segment.
+
+        Returns
+        -------
+        length : float
+            Length of the geodesic segment.
+
+        """
+        length = self.geodesic(start_vertex, end_vertex).GetLength()
+        return length
 
     def ray_trace(self, origin, end_point, first_point=False, plot=False,
                   off_screen=False):
