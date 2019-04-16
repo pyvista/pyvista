@@ -306,7 +306,7 @@ def test_smooth():
 def test_resample():
     mesh = vtki.Sphere(center=(4.5,4.5,4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
-    result = mesh.interpolate(data_to_probe)
+    result = mesh.sample(data_to_probe)
     name = 'Spatial Point Data'
     assert name in result.scalar_names
     assert isinstance(result, type(mesh))

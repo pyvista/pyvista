@@ -27,7 +27,7 @@ p.show()
 
 ###############################################################################
 # Run the algorithm and plot the result
-result = mesh.interpolate(data_to_probe)
+result = mesh.sample(data_to_probe)
 
 # Plot result
 name = 'Spatial Point Data'

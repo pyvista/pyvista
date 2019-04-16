@@ -940,19 +940,19 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def interpolate(dataset, target, tolerance=None, pass_cell_arrays=True,
+    def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
                     pass_point_arrays=True):
-        """Resample (interpolate) scalar data between from a mesh onto this mesh
+        """Resample scalar data between from a mesh onto this mesh
         using :class:`vtk.vtkResampleWithDataSet`.
 
         Parameters
         ----------
         dataset: vtki.Common
-            The source vtk data object as the mesh to interpolate values on to
+            The source vtk data object as the mesh to sample values on to
 
         target: vtki.Common
-            The vtk data object to interpolate from - point and cell arrays from
-            this object are interpolated onto the nodes of the ``dataset`` mesh
+            The vtk data object to sample from - point and cell arrays from
+            this object are sampled onto the nodes of the ``dataset`` mesh
 
         tolerance: flaot, optional
             tolerance used to compute whether a point in the source is in a
@@ -965,8 +965,8 @@ class DataSetFilters(object):
             Preserve source mesh's original point data arrays
         """
         alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
-        alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to interpolate from)
-        alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to interpolate to)
+        alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
+        alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetPassCellArrays(pass_cell_arrays)
         alg.SetPassPointArrays(pass_point_arrays)
         if tolerance is not None:
