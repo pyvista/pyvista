@@ -940,19 +940,36 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def interpolate(source, target):
+    def interpolate(dataset, target, tolerance=None, pass_cell_arrays=True,
+                    pass_point_arrays=True):
         """Interpolate data between two vtk objects using vtkResampleWithDataSet.
 
         Parameters
         ----------
-        source: The vtk data object to take the data from.
+        dataset: vtki.Common
+            The source vtk data object as the mesh to interpolate values on to
 
-        target: The vtk data object to interpolate on to.
+        target: vtki.Common
+            The vtk data object to interpolate from - point and cell arrays from
+            this object are interpolated onto the nodes of the ``dataset`` mesh
+
+        tolerance: flaot, optional
+            tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance automatically generated.
+
+        pass_cell_arrays: bool, optional
+            Preserve source mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve source mesh's original point data arrays
         """
         alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
-        alg.SetInputData(source)  # Set the Input data (actually the source i.e. where to interpolate from)
+        alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to interpolate from)
         alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to interpolate to)
+        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassPointArrays(pass_point_arrays)
+        if tolerance is not None:
+            alg.SetComputeTolerance(False)
+            alg.SetTolerance(tolerance)
         alg.Update() # Perfrom the resampling
-        output = _get_output(alg)
-        return output
-
+        return _get_output(alg)
