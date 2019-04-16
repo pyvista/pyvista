@@ -551,56 +551,6 @@ class PolyData(vtkPolyData, vtki.Common):
         """
         return self.plot(scalars=self.curvature(curv_type),
                          stitle='%s\nCurvature' % curv_type, **kwargs)
-    def smooth(self, iterations, relaxation_factor, feature_edge_smoothing=False,
-               boundary_smoothing=True, feature_angle=30, edge_angle=15, inplace=False):
-        """
-        Smooth mesh using Laplacian smoothing.
-
-        Parameters
-        ----------
-        iterations : int
-            Number of smoothing iterations.
-
-        relaxation_factor : float
-            Smoothing relaxation factor setting how much a point is adjusted
-            based on the neighbourhood average.
-
-        feature_edge_smoothing : bool, optional
-             Default = False.
-
-        boundary_smoothing : bool, optional
-             Default = True.
-
-        feature_angle : float, optional
-             Default = 30.
-
-        edge_angle : float, optional
-             Default = 15.
-
-        inplace : bool, optional
-            Updates mesh in-place while returning nothing.
-
-        Returns
-        -------
-        mesh : vtki.PolyData
-            Mesh containing only triangles.  None when inplace=True
-
-        """
-        smooth = vtk.vtkSmoothPolyDataFilter()
-        smooth.SetInputData(self)
-
-        smooth.SetNumberOfIterations(iterations)
-        smooth.SetRelaxationFactor(relaxation_factor)
-        smooth.SetFeatureAngle(feature_angle)
-        smooth.SetEdgeAngle(edge_angle)
-        smooth.SetFeatureEdgeSmoothing(feature_edge_smoothing)
-        smooth.SetBoundarySmoothing(boundary_smoothing)
-        smooth.Update()
-
-        if inplace:
-            self.overwrite(smooth.GetOutput())
-        else:
-            return PolyData(smooth.GetOutput())
 
     def tri_filter(self, inplace=False):
         """
