@@ -103,6 +103,10 @@ class PolyData(vtkPolyData, vtki.Common):
         return vtki.Common.__repr__(self)
 
 
+    def __str__(self):
+        return vtki.Common.__str__(self)
+
+
     def _load_file(self, filename):
         """
         Load a surface mesh from a mesh file.
@@ -1684,6 +1688,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         return vtki.Common.__repr__(self)
 
 
+    def __str__(self):
+        return vtki.Common.__str__(self)
+
+
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """
         Create VTK unstructured grid from numpy arrays
@@ -2142,6 +2150,10 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     def __repr__(self):
         return vtki.Common.__repr__(self)
+
+
+    def __str__(self):
+        return vtki.Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):

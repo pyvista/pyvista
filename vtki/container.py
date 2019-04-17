@@ -411,3 +411,7 @@ class MultiBlock(vtkMultiBlockDataSet):
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt
+
+
+    def __str__(self):
+        return MultiBlock.__repr__(self)

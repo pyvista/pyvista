@@ -101,6 +101,10 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         return vtki.Common.__repr__(self)
 
 
+    def __str__(self):
+        return vtki.Common.__str__(self)
+
+
     def _from_arrays(self, x, y, z):
         """
         Create VTK rectilinear grid directly from numpy arrays. Each array
@@ -356,6 +360,10 @@ class UniformGrid(vtkImageData, Grid):
 
     def __repr__(self):
         return vtki.Common.__repr__(self)
+
+
+    def __str__(self):
+        return vtki.Common.__str__(self)
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
