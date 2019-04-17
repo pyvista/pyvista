@@ -2,9 +2,12 @@
 Load and Plot from a File
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Read a dataset from a known file type
+Read a dataset from a known file type.
 
 """
+################################################################################
+# Loading a mesh is trivial.  The following code block uses a built-in example
+# file and displays an airplane mesh.
 
 import vtki
 from vtki import examples
@@ -65,3 +68,7 @@ print(mesh.points)
 # The faces from the mesh are also directly accessible as a NumPy array:
 
 print(mesh.faces.reshape(-1, 4)[:, 1:])
+
+
+################################################################################
+#

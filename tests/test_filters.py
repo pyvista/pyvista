@@ -300,4 +300,13 @@ def test_smooth():
     vol = data.threshold_percent(30)
     surf = vol.extract_geometry()
     smooth = surf.smooth()
-    assert np.any(smooth)
+    assert np.any(smooth.points)
+
+
+def test_resample():
+    mesh = vtki.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    data_to_probe = examples.load_uniform()
+    result = mesh.sample(data_to_probe)
+    name = 'Spatial Point Data'
+    assert name in result.scalar_names
+    assert isinstance(result, type(mesh))
