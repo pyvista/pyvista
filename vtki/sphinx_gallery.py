@@ -1,10 +1,6 @@
 """
 Utilities for using vtki with sphinx-gallery.
 """
-try:
-    from sphinx_gallery.scrapers import figure_rst
-except ImportError:
-    figure_rst = None
 
 import shutil
 
@@ -26,8 +22,10 @@ class Scraper(object):
         Called by sphinx-gallery to save the figures generated after running
         example code.
         """
-        if figure_rst is None:
-            raise RuntimeError('You must install `sphinx_gallery`')
+        try:
+            from sphinx_gallery.scrapers import figure_rst
+        except ImportError:
+            raise ImportError('You must install `sphinx_gallery`')
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = vtki.plotting._ALL_PLOTTERS

@@ -131,6 +131,13 @@ def test_invalid_file():
     # with pytest.raises(Exception):
         # vtki.PolyData(examples.hexbeamfile)
 
+def test_geodesic():
+    geodesic = sphere.geodesic(0, sphere.n_points - 1)
+    assert isinstance(geodesic, vtki.PolyData)
+
+def test_geodesic_distance():
+    distance = sphere.geodesic_distance(0, sphere.n_points - 1)
+    assert isinstance(distance, float)
 
 def test_ray_trace():
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])

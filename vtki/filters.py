@@ -939,3 +939,38 @@ class DataSetFilters(object):
         alg.SetOffset(offset)
         alg.Update()
         return _get_output(alg)
+
+    def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
+                    pass_point_arrays=True):
+        """Resample scalar data between from a mesh onto this mesh
+        using :class:`vtk.vtkResampleWithDataSet`.
+
+        Parameters
+        ----------
+        dataset: vtki.Common
+            The source vtk data object as the mesh to sample values on to
+
+        target: vtki.Common
+            The vtk data object to sample from - point and cell arrays from
+            this object are sampled onto the nodes of the ``dataset`` mesh
+
+        tolerance: flaot, optional
+            tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance automatically generated.
+
+        pass_cell_arrays: bool, optional
+            Preserve source mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve source mesh's original point data arrays
+        """
+        alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
+        alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
+        alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
+        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassPointArrays(pass_point_arrays)
+        if tolerance is not None:
+            alg.SetComputeTolerance(False)
+            alg.SetTolerance(tolerance)
+        alg.Update() # Perfrom the resampling
+        return _get_output(alg)

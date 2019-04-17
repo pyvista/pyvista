@@ -1219,6 +1219,60 @@ class PolyData(vtkPolyData, vtki.Common):
 
         return self._obbTree
 
+    def geodesic(self, start_vertex, end_vertex):
+        """
+        Calculates the geodesic path betweeen two vertices using Dijkstra's
+        algorithm.
+
+        Parameters
+        ----------
+        start_vertex : int
+            Vertex index indicating the start point of the geodesic segment.
+
+        end_vertex : int
+            Vertex index indicating the end point of the geodesic segment.
+
+        Returns
+        -------
+        output : vtki.PolyData
+            PolyData object consisting of the line segment between the two given
+            vertices.
+
+        """
+        if start_vertex < 0 or end_vertex > self.n_points - 1:
+            raise IndexError('Invalid indices.')
+
+        dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
+        dijkstra.SetInputData(self)
+        dijkstra.SetStartVertex(start_vertex)
+        dijkstra.SetEndVertex(end_vertex)
+        dijkstra.Update()
+
+        output = _get_output(dijkstra)
+        return output
+
+    def geodesic_distance(self, start_vertex, end_vertex):
+        """
+        Calculates the geodesic distance betweeen two vertices using Dijkstra's
+        algorithm.
+
+        Parameters
+        ----------
+        start_vertex : int
+            Vertex index indicating the start point of the geodesic segment.
+
+        end_vertex : int
+            Vertex index indicating the end point of the geodesic segment.
+
+        Returns
+        -------
+        length : float
+            Length of the geodesic segment.
+
+        """
+        length = self.geodesic(start_vertex, end_vertex).GetLength()
+        return length
+
     def ray_trace(self, origin, end_point, first_point=False, plot=False,
                   off_screen=False):
         """
