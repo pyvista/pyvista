@@ -79,7 +79,7 @@ script:
     fi
   - cd ..
   - |
-    if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
+    if [[ ($TRAVIS_PYTHON_VERSION == 3.7) || ($TRAVIS_REPO_SLUG == 'vtkiorg/vtki') ]]; then
         doctr deploy --built-docs ./docs/_build/html .;
         cookiecutter -f --no-input --config-file vtki-binder-config.yml -o .. https://github.com/vtkiorg/cookiecutter-vtki-binder.git;
         rm -rf ../vtki-examples/notebooks/;
