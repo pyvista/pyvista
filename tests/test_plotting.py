@@ -24,6 +24,8 @@ if __name__ != '__main__':
 else:
     OFF_SCREEN = False
 
+vtki.OFF_SCREEN = OFF_SCREEN
+
 
 sphere = vtki.Sphere()
 sphere_b = vtki.Sphere(1.0)
@@ -64,7 +66,7 @@ def test_plot_invalid_style():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot_bounds_axes_with_no_data():
     plotter = vtki.Plotter()
-    plotter.add_bounds_axes()
+    plotter.show_bounds()
     plotter.close()
 
 
@@ -107,9 +109,17 @@ def test_plot_no_active_scalars():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
-def test_plot_add_bounds_axes():
+def test_plot_show_bounds():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
+    plotter.show_bounds(show_xaxis=False,
+                        show_yaxis=False,
+                        show_zaxis=False,
+                        show_xlabels=False,
+                        show_ylabels=False,
+                        show_zlabels=False,
+                        use_2d=True)
+    # And test backwards compatibility
     plotter.add_bounds_axes(show_xaxis=False,
                             show_yaxis=False,
                             show_zaxis=False,
@@ -123,19 +133,19 @@ def test_plot_add_bounds_axes():
 def test_plot_label_fmt():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.add_bounds_axes(xlabel='My X', fmt=r'%.3f')
+    plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
     plotter.plot()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
-def test_plot_add_bounds_axes_params(grid, location):
+def test_plot_show_bounds_params(grid, location):
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.add_bounds_axes(grid=grid, ticks='inside', location=location)
-    plotter.add_bounds_axes(grid=grid, ticks='outside', location=location)
-    plotter.add_bounds_axes(grid=grid, ticks='both', location=location)
+    plotter.show_bounds(grid=grid, ticks='inside', location=location)
+    plotter.show_bounds(grid=grid, ticks='outside', location=location)
+    plotter.show_bounds(grid=grid, ticks='both', location=location)
     plotter.show()
 
 
@@ -269,13 +279,13 @@ def test_add_points():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_key_press_event():
-    plotter = vtki.Plotter()
+    plotter = vtki.Plotter(off_screen=False)
     plotter.key_press_event(None, None)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_left_button_down():
-    plotter = vtki.Plotter()
+    plotter = vtki.Plotter(off_screen=False)
     plotter.left_button_down(None, None)
     # assert np.allclose(plotter.pickpoint, [0, 0, 0])
 
@@ -485,7 +495,7 @@ def test_multi_renderers():
     plotter.add_mesh(vtki.Cone(), color='g', loc=loc, show_edges=True,
                      backface_culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
-    plotter.add_bounds_axes(all_edges=True)
+    plotter.show_bounds(all_edges=True)
 
     plotter.update_bounds_axes()
     plotter.plot()
@@ -531,3 +541,16 @@ def test_remove_actor():
     plotter.add_mesh(data, name='data')
     plotter.add_mesh(data, name='data')
     plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
+def test_image_properties():
+    mesh = examples.load_uniform()
+    p = vtki.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.show(auto_close=False) # DO NOT close plotter
+    # Get RGB image
+    img = p.image
+    # Get the depth image
+    img = np.sum(p.image_depth, axis=2)
+    p.close()

@@ -386,7 +386,7 @@ class BackgroundPlotter(QtInteractor):
         orien_menu.addAction('Hide', self.hide_axes)
         # Bounds axes
         axes_menu = view_menu.addMenu('Bounds Axes')
-        axes_menu.addAction('Add Bounds Axes (front)', self.add_bounds_axes)
+        axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)
         axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
         axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
         axes_menu.addSeparator()
@@ -520,8 +520,8 @@ class BackgroundPlotter(QtInteractor):
 
     def _toggle_edl(self):
         if hasattr(self.renderer, 'edl_pass'):
-            return self.renderer.eye_dome_lighting_off()
-        return self.renderer.eye_dome_lighting_on()
+            return self.renderer.disable_eye_dome_lighting()
+        return self.renderer.enable_eye_dome_lighting()
 
     def _render(self):
         super(BackgroundPlotter, self)._render()

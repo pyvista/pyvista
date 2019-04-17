@@ -1,46 +1,72 @@
-##################
-vtki Documentation
-##################
+####
+vtki
+####
+
+`A Streamlined Python Interface for the Visualization Toolkit`
 
 
-.. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
+.. |pypi| image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
-.. image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
+   :target: https://anaconda.org/conda-forge/vtki
+
+.. |travis| image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/vtkiorg/vtki
 
-.. image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/vtki/history
 
-.. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
-   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
-
-.. image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
+.. |codecov| image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/akaszynski/vtki
 
-.. image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
+.. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
 
-.. image:: https://img.shields.io/github/stars/vtkiorg/vtki.svg?style=social&label=Stars
-  :target: https://github.com/vtkiorg/vtki
-  :alt: GitHub
+.. |contributors| image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
+   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
+
+.. |stars| image:: https://img.shields.io/github/stars/vtkiorg/vtki.svg?style=social&label=Stars
+   :target: https://github.com/vtkiorg/vtki
+   :alt: GitHub
+
+
++----------------------+------------------------+
+| Deployment           | |pypi| |conda|         |
++----------------------+------------------------+
+| Build Status         | |travis| |appveyor|    |
++----------------------+------------------------+
+| Metrics              | |codacy| |codecov|     |
++----------------------+------------------------+
+| GitHub               | |contributors| |stars| |
++----------------------+------------------------+
+
 
 About
 *****
 
 ``vtki`` is a helper module for the Visualization Toolkit (VTK) that takes a
-different approach on interfacing with VTK through NumPy and direct array access.
-This module simplifies mesh creation and plotting by adding functionality to
-existing VTK objects.
+different approach on interfacing with VTK through NumPy and direct array
+access. This package provides a Pythonic, well-documented interface exposing
+VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
+and visual integration of spatially referenced datasets.
 
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
+
+
+Want to test-drive ``vtki``? Check out our live examples on MyBinder:
+
+.. image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/vtkiorg/vtki-examples/master
+   :alt: Launch on Binder
 
 .. toctree::
    :hidden:
 
    self
    why
+   authors
 
 Connections
 ===========
@@ -120,8 +146,9 @@ side to help new users understand which data types to use.
 Examples
 ********
 
-Be sure to head over to the :ref:`examples_ref` chapter to explore different use
-cases of ``vtki`` and to start visualizing 3D data in Pyhton!
+Be sure to head over to the `examples gallery <./examples/index.html>`_
+to explore different use cases of ``vtki`` and to start visualizing 3D data in
+Pyhton!
 
 
 .. toctree::
@@ -130,6 +157,7 @@ cases of ``vtki`` and to start visualizing 3D data in Pyhton!
    :hidden:
 
    examples/index
+   external_examples
 
 
 Tools
@@ -152,6 +180,32 @@ Tools
    tools/qt_plotting
    tools/utilities
 
+
+Contributing
+************
+
+We absolutely welcome contributions and we hope that this guide will facilitate
+an understanding of the ``vtki`` code repository. It is important to note that
+the  ``vtki`` software package is maintained on a volunteer basis and thus we
+need to foster a community that can support user questions and develop new
+features to make this software a useful tool for all users. To learn more about
+contributing to ``vtki``, please see :ref:`contributing_ref`.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contributing
+   :hidden:
+
+   dev/contributing.rst
+   dev/guidelines.rst
+   dev/testing.rst
+
+
+
+License
+*******
+
+.. include:: ../LICENSE
 
 
 Project Index

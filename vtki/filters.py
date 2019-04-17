@@ -743,7 +743,11 @@ class DataSetFilters(object):
             dataset.active_scalar_name = scale
             scale = True
         if scale:
-            alg.SetScaleModeToScaleByScalar()
+            if dataset.active_scalar is not None:
+                if dataset.active_scalar.ndim > 1:
+                    alg.SetScaleModeToScaleByVector()
+                else:
+                    alg.SetScaleModeToScaleByScalar()
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
@@ -755,17 +759,25 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-    def connectivity(dataset):
+    def connectivity(dataset, largest=False):
         """Find and label connected bodies/volumes. This adds an ID array to
         the point and cell data to distinguish seperate connected bodies.
         This applies a ``vtkConnectivityFilter`` filter which extracts cells
         that share common points and/or meet other connectivity criterion.
         (Cells that share vertices and meet other connectivity criterion such
         as scalar range are known as a region.)
+
+        Parameters
+        ----------
+        largest : bool
+            Extract the largest connected part of the mesh.
         """
         alg = vtk.vtkConnectivityFilter()
         alg.SetInputData(dataset)
-        alg.SetExtractionModeToAllRegions()
+        if largest:
+            alg.SetExtractionModeToLargestRegion()
+        else:
+            alg.SetExtractionModeToAllRegions()
         alg.SetColorRegions(True)
         alg.Update()
         return _get_output(alg)
@@ -789,8 +801,11 @@ class DataSetFilters(object):
             # Now extract it:
             b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId')
             if not label:
-                del b.cell_arrays['RegionId']
-                del b.point_arrays['RegionId']
+                # strange behavior:
+                # must use this method rather than deleting from the point_arrays
+                # or else object is collected.
+                b._remove_cell_scalar('RegionId')
+                b._remove_point_scalar('RegionId')
             bodies.append(b)
 
         return bodies
@@ -846,6 +861,8 @@ class DataSetFilters(object):
         all cells using a particular point. Optionally, the input cell data can
         be passed through to the output as well.
 
+        See aslo: :func:`vtki.DataSetFilters.point_data_to_cell_data`
+
         Parameters
         ----------
         pass_cell_data : bool
@@ -854,6 +871,25 @@ class DataSetFilters(object):
         alg = vtk.vtkCellDataToPointData()
         alg.SetInputDataObject(dataset)
         alg.SetPassCellData(pass_cell_data)
+        alg.Update()
+        return _get_output(alg, active_scalar=dataset.active_scalar_name)
+
+
+    def point_data_to_cell_data(dataset, pass_point_data=False):
+        """Transforms point data (i.e., data specified per node) into cell data
+        (i.e., data specified within cells).
+        Optionally, the input point data can be passed through to the output.
+
+        See aslo: :func:`vtki.DataSetFilters.cell_data_to_point_data`
+
+        Parameters
+        ----------
+        pass_point_data : bool
+            If enabled, pass the input point data through to the output
+        """
+        alg = vtk.vtkPointDataToCellData()
+        alg.SetInputDataObject(dataset)
+        alg.SetPassPointData(pass_point_data)
         alg.Update()
         return _get_output(alg, active_scalar=dataset.active_scalar_name)
 
@@ -902,4 +938,39 @@ class DataSetFilters(object):
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
         alg.Update()
+        return _get_output(alg)
+
+    def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
+                    pass_point_arrays=True):
+        """Resample scalar data between from a mesh onto this mesh
+        using :class:`vtk.vtkResampleWithDataSet`.
+
+        Parameters
+        ----------
+        dataset: vtki.Common
+            The source vtk data object as the mesh to sample values on to
+
+        target: vtki.Common
+            The vtk data object to sample from - point and cell arrays from
+            this object are sampled onto the nodes of the ``dataset`` mesh
+
+        tolerance: flaot, optional
+            tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance automatically generated.
+
+        pass_cell_arrays: bool, optional
+            Preserve source mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve source mesh's original point data arrays
+        """
+        alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
+        alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
+        alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
+        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassPointArrays(pass_point_arrays)
+        if tolerance is not None:
+            alg.SetComputeTolerance(False)
+            alg.SetTolerance(tolerance)
+        alg.Update() # Perfrom the resampling
         return _get_output(alg)

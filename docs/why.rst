@@ -1,5 +1,5 @@
-Why?
-====
+Why ``vtki``?
+=============
 
 VTK is an excellent visualization toolkit, and with Python bindings it should be
 able to combine the speed of C++ with the rapid prototyping of Python.
@@ -58,6 +58,7 @@ loading and plotting an STL file requires a lot of code when using only the
 
 Plot a Mesh using vtki
 ~~~~~~~~~~~~~~~~~~~~~~
+
 The same stl can be loaded and plotted using vtki with:
 
 .. code:: python
@@ -74,6 +75,7 @@ after the user closes the VTK plotting window.
 
 Advanced Plotting with Numpy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 When combined with numpy, you can make some truly spectacular plots:
 
 .. testcode:: python
@@ -97,9 +99,9 @@ When combined with numpy, you can make some truly spectacular plots:
     # plot using the plotting class
     plobj = vtki.Plotter()
     plobj.add_arrows(points, direction, 0.5)
-    plobj.show(screenshot='./images/vectorfield.png')
+    plobj.show(screenshot='vectorfield.png')
 
-.. image:: ./images/vectorfield.png
+.. image:: ./images/auto-generated/vectorfield.png
 
 
 While not everything can be simplified without losing functionality, many of the
@@ -111,55 +113,13 @@ That way, subdivision can be performed with:
 
 .. code:: python
 
-    submesh = mesh.subdivide('linear', nsub=3)
+    from vtki import examples
+    mesh = examples.load_ant()
+    submesh = mesh.subdivide(3, 'linear')
 
-Additionally, ``help(mesh.subdivide)`` yields a useful docstring::
+Additionally, the docstrings for all methods in ``vtki`` are intended to be used
+within interactive coding sessions. This allows users to use sophisticated
+processing routines on the fly with immediate access to a description of how to
+use those methods:
 
-    Help on method subdivide in module vtki.polydata:
-
-    subdivide(nsub, subfilter='linear', inplace=False) method of vtki.polydata.PolyData instance
-        Increase the number of triangles in a single, connected triangular
-        mesh.
-
-        Uses one of the following vtk subdivision filters to subdivide a mesh.
-        vtkButterflySubdivisionFilter
-        vtkLoopSubdivisionFilter
-        vtkLinearSubdivisionFilter
-
-        Linear subdivision results in the fastest mesh subdivision, but it
-        does not smooth mesh edges, but rather splits each triangle into 4
-        smaller triangles.
-
-        Butterfly and loop subdivision perform smoothing when dividing, and may
-        introduce artifacts into the mesh when dividing.
-
-        Subdivision filter appears to fail for multiple part meshes.  Should
-        be one single mesh.
-
-        Parameters
-        ----------
-        nsub : int
-            Number of subdivisions.  Each subdivision creates 4 new triangles,
-            so the number of resulting triangles is nface*4**nsub where nface
-            is the current number of faces.
-
-        subfilter : string, optional
-            Can be one of the following: 'butterfly', 'loop', 'linear'
-
-        inplace : bool, optional
-            Updates mesh in-place while returning nothing.
-
-        Returns
-        -------
-        mesh : Polydata object
-            vtki polydata object.  None when inplace=True
-
-        Examples
-        --------
-        >>> from vtki import examples
-        >>> import vtki
-        >>> mesh = vtki.PolyData(examples.planefile)
-        >>> submesh = mesh.subdivide(1, 'loop')
-
-	alternatively, update mesh in-place
-        >>> mesh.subdivide(1, 'loop', inplace=True)
+.. figure:: ./images/gifs/documentation.gif

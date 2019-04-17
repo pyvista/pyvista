@@ -2,6 +2,7 @@
 Supporting functions for polydata and grid objects
 
 """
+import collections
 import ctypes
 import logging
 import os
@@ -239,17 +240,6 @@ def wrap(vtkdataset):
     return wrapped
 
 
-
-def set_error_output_file(filename):
-    """Sets a file to write out the VTK errors"""
-    filename = os.path.abspath(os.path.expanduser(filename))
-    fileOutputWindow = vtk.vtkFileOutputWindow()
-    fileOutputWindow.SetFileName(filename)
-    outputWindow = vtk.vtkOutputWindow()
-    outputWindow.SetInstance(fileOutputWindow)
-    return fileOutputWindow, outputWindow
-
-
 def image_to_texture(image):
     """Converts ``vtkImageData`` to a ``vtkTexture``"""
     vtex = vtk.vtkTexture()
@@ -271,11 +261,53 @@ def numpy_to_texture(image):
 
 
 def is_inside_bounds(point, bounds):
-    """ Checks if a point is inside a set of bounds """
-    if not (bounds[0] < point[0] < bounds[1]):
-        return False
-    if not (bounds[2] < point[1] < bounds[3]):
-        return False
-    if not (bounds[4] < point[2] < bounds[5]):
-        return False
-    return True
+    """ Checks if a point is inside a set of bounds. This is implemented
+    through recursion so that this is N-dimensional.
+    """
+    if isinstance(point, (int, float)):
+        point = [point]
+    if isinstance(point, collections.Iterable) and not isinstance(point, collections.deque):
+        if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
+            raise AssertionError('Bounds mismatch point dimensionality')
+        point = collections.deque(point)
+        bounds = collections.deque(bounds)
+        return is_inside_bounds(point, bounds)
+    if not isinstance(point, collections.deque):
+        raise TypeError('Unknown input data type ({}).'.format(type(point)))
+    if len(point) < 1:
+        return True
+    p = point.popleft()
+    lower, upper = bounds.popleft(), bounds.popleft()
+    if lower <= p <= upper:
+        return is_inside_bounds(point, bounds)
+    return False
+
+
+def fit_plane_to_points(points, return_meta=False):
+    """
+    Fits a plane to a set of points
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Size n by 3 array of points to fit a plane through
+
+    return_meta : bool
+        If true, also returns the center and normal used to generate the plane
+    """
+    data = np.array(points)
+    center = data.mean(axis=0)
+    result = np.linalg.svd(data - center)
+    normal = np.cross(result[2][0], result[2][1])
+    plane = vtki.Plane(center=center, direction=normal)
+    if return_meta:
+        return plane, center, normal
+    return plane
+
+
+def _raise_not_matching(scalars, mesh):
+    raise Exception('Number of scalars (%d) ' % scalars.size +
+                    'must match either the number of points ' +
+                    '(%d) ' % mesh.n_points +
+                    'or the number of cells ' +
+                    '(%d) ' % mesh.n_cells)
