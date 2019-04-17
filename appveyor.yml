@@ -18,6 +18,9 @@ environment:
       PYTHON_VERSION: "3.7.1"
       PYTHON_ARCH: "64"
 
+  # This is a vtki flag to bypass X11 hooks
+  ALLOW_PLOTTING: "True"
+
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
@@ -25,6 +28,7 @@ install:
   - "%PYTHON% -m ensurepip"
   - "%PYTHON% -m pip install -r requirements.txt"
   - "%PYTHON% -m pip install pytest"
+  - "%PYTHON% -m pip install pytest-cov"
   - "%PYTHON% -m pip install pyqt5==5.11.3"
   - "%PYTHON% -m pip install pytest-qt"
 
@@ -37,5 +41,5 @@ build_script:
 test_script:
   - "del /Q tests\\test_qt_plotting.py"
   - "cd tests"
-  - "%PYTHON% -m pytest -v"
+  - "%PYTHON% -m pytest --cov -v"
   - "cd .."
