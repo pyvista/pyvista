@@ -95,6 +95,7 @@ deploy:
     script: docs/deploy.sh
     on:
         branch: master
+        condition: ""($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'vtkiorg/vtki') && ($TRAVIS_BRANCH == 'master')""
 
 notifications:
   email: false
