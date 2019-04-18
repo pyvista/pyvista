@@ -2,7 +2,7 @@
 # Useage: deploy.sh ${GH_TOKEN} ${GH_NAME} ${GH_EMAIL} ${TRAVIS_BUILD_NUMBER}
 cd "$(dirname "$0")";
 doctr deploy --built-docs ./_build/html .;
-cookiecutter -f --no-input --config-file vtki-binder-config.yml -o .. https://github.com/vtkiorg/cookiecutter-vtki-binder.git;
+cookiecutter -f --no-input --config-file vtki-binder-config.yml -o ../.. https://github.com/vtkiorg/cookiecutter-vtki-binder.git;
 rm -rf ../../vtki-examples/notebooks/;
 find ./examples -type f -name '*.ipynb' | cpio -p -d -v ../../vtki-examples/;
 cd ../../vtki-examples/;
