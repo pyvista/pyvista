@@ -31,10 +31,7 @@ install:
   # Install requirements
   - "%PYTHON% -m ensurepip"
   - "%PYTHON% -m pip install -r requirements.txt"
-  - "%PYTHON% -m pip install pytest"
-  - "%PYTHON% -m pip install pytest-cov"
-  - "%PYTHON% -m pip install pyqt5==5.11.3"
-  - "%PYTHON% -m pip install pytest-qt"
+  - "%PYTHON% -m pip install -r requirements_test.txt"
   - "%PYTHON% -c \"import imageio; imageio.plugins.ffmpeg.download()\""
 
 build_script:
