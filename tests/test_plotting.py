@@ -9,14 +9,9 @@ import pytest
 
 import vtki
 from vtki import examples
-from vtki.plotting import running_xserver
+from vtki.plotting import system_supports_plotting
 
-NO_PLOTTING = not running_xserver()
-try:
-    if os.environ['ALLOW_PLOTTING'] == 'True':
-        NO_PLOTTING = False
-except KeyError:
-    pass
+NO_PLOTTING = not system_supports_plotting()
 
 
 if __name__ != '__main__':

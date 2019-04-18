@@ -6,7 +6,7 @@ import pytest
 
 import vtki
 from vtki import examples
-from vtki.plotting import running_xserver
+from vtki.plotting import system_supports_plotting
 
 radius = 0.5
 sphere = vtki.Sphere(radius, theta_resolution=10, phi_resolution=10)
@@ -145,7 +145,7 @@ def test_ray_trace():
     assert np.any(ind)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_ray_trace_plot():
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1], plot=True, first_point=True,
                                    off_screen=True)
@@ -153,7 +153,7 @@ def test_ray_trace_plot():
     assert np.any(ind)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_plot_curvature():
     cpos = sphere.plot_curvature(off_screen=True)
     assert isinstance(cpos, list)
@@ -352,12 +352,12 @@ def test_volume():
     assert np.isclose(dense_sphere.volume, ideal_volume, rtol=1E-3)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_plot_boundaries():
     sphere.plot_boundaries(off_screen=True)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_plot_normals():
     sphere.plot_normals(off_screen=True)
 

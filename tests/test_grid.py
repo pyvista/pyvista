@@ -6,7 +6,7 @@ import vtk
 
 import vtki
 from vtki import examples
-from vtki.plotting import running_xserver
+from vtki.plotting import system_supports_plotting
 
 beam = vtki.UnstructuredGrid(examples.hexbeamfile)
 
@@ -35,7 +35,7 @@ def test_merge():
     beamA.Merge(beamB)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_struct_example():
     # create and plot structured grid
     grid = examples.load_structured()
