@@ -940,10 +940,11 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
+
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
                     pass_point_arrays=True):
-        """Resample scalar data between from a mesh onto this mesh
-        using :class:`vtk.vtkResampleWithDataSet`.
+        """Resample scalar data from a passed mesh onto this mesh using
+        :class:`vtk.vtkResampleWithDataSet`.
 
         Parameters
         ----------
