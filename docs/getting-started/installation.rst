@@ -157,3 +157,46 @@ at `this repository`_ that is currently using ``vtki`` on MyBinder.
 
         import vtki
         vtki.OFF_SCREEN = True
+
+
+Running on remote servers
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Using ``vtki`` on remote servers requires similar setup steps as in the above Docker case. As an example, here are the complete steps to use ``vtki`` on AWS EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``). Other servers would work similarly.
+
+After logging into the remote server, install Miniconda and related packages:
+
+.. code-block:: bash
+
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    bash miniconda.sh -b -p miniconda
+    echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
+    conda create --name vtk_env python=3.7
+    conda activate vtk_env
+    conda install nodejs  # required when importing vtki in Jupyter
+    pip install jupyter vtki panel
+
+    # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
+    # https://stackoverflow.com/q/32389599
+    # https://askubuntu.com/q/629692
+    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
+
+Then, configure the headless display:
+
+.. code-block:: bash
+
+    sudo apt-get install xvfb
+    export DISPLAY=:99.0
+    export VTKI_OFF_SCREEN=True
+    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    sleep 3
+
+Reconnect to the server with port-forwarding, and start Jupyter:
+
+.. code-block:: bash
+
+    ssh -i "your-ssh-key" your-user-name@your-server-ip -L 8888:localhost:8888
+    conda activate vtk_env
+    jupyter notebook --NotebookApp.token='' --no-browser --port=8888
+
+Visit ``localhost:8888`` in the web browser.
