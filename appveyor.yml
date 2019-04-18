@@ -31,7 +31,6 @@ install:
   # Install requirements
   - "%PYTHON% -m ensurepip"
   - "%PYTHON% -m pip install -r requirements.txt"
-  - "%PYTHON% -m pip install -r requirements_test.txt"
   - "%PYTHON% -c \"import imageio; imageio.plugins.ffmpeg.download()\""
 
 build_script:
