@@ -26,8 +26,8 @@ init:
 
 install:
   # Use ci-helpers
-  - "git clone --depth 1 git://github.com/vtkiorg/ci-helpers.git"
-  - "powershell ci-helpers/appveyor/install_opengl.ps1"
+  - "git clone --depth 1 git://github.com/vtkiorg/gl-ci-helpers.git"
+  - "powershell gl-ci-helpers/appveyor/install_opengl.ps1"
   # Install requirements
   - "%PYTHON% -m ensurepip"
   - "%PYTHON% -m pip install -r requirements.txt"
