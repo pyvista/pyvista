@@ -12,7 +12,7 @@ else:
     OFF_SCREEN = False
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_camera_position():
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(vtki.Sphere())

@@ -35,7 +35,7 @@ def test_merge():
     beamA.Merge(beamB)
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_struct_example():
     # create and plot structured grid
     grid = examples.load_structured()

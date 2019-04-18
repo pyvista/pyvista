@@ -14,7 +14,7 @@ if __name__ != '__main__':
 else:
     OFF_SCREEN = False
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_export_single(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
     data = ex.load_airplane()
@@ -28,7 +28,7 @@ def test_export_single(tmpdir):
     assert os.path.isfile('{}.vtkjs'.format(filename))
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_export_multi(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
     multi = vtki.MultiBlock()
@@ -48,7 +48,7 @@ def test_export_multi(tmpdir):
     assert os.path.isfile('{}.vtkjs'.format(filename))
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_export_texture(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
     data = ex.load_globe()
@@ -62,7 +62,7 @@ def test_export_texture(tmpdir):
     assert os.path.isfile('{}.vtkjs'.format(filename))
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_export_verts(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
     data = vtki.PolyData(np.random.rand(100, 3))
@@ -75,7 +75,7 @@ def test_export_verts(tmpdir):
     # Now make sure the file is there
     assert os.path.isfile('{}.vtkjs'.format(filename))
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_export_color(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
     data = ex.load_airplane()

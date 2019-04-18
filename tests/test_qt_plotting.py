@@ -66,7 +66,7 @@ class MainWindow(QMainWindow):
         self.vtk_widget.reset_camera()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
     window = MainWindow(show=False)
@@ -75,7 +75,7 @@ def test_qt_interactor(qtbot):
     assert np.any(window.vtk_widget.mesh.points)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_axes_scale(qtbot):
     sphere = vtki.Sphere()
@@ -100,7 +100,7 @@ def test_background_plotting_axes_scale(qtbot):
     assert plotter.quit() is None
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_camera(qtbot):
     plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
@@ -120,7 +120,7 @@ def test_background_plotting_camera(qtbot):
     plotter.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotter_export_files(qtbot, tmpdir):
     plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
@@ -135,7 +135,7 @@ def test_background_plotter_export_files(qtbot, tmpdir):
     assert os.path.isfile(filename)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotter_export_vtkjs(qtbot, tmpdir):
     plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
@@ -150,7 +150,7 @@ def test_background_plotter_export_vtkjs(qtbot, tmpdir):
     assert os.path.isfile(filename + '.vtkjs')
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_orbit(qtbot):
     plotter = vtki.BackgroundPlotter(show=False, title='Testing Window')
