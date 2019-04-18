@@ -23,7 +23,13 @@ env:
     # Doctr deploy key for vtkiorg/vtki
     - secure: "NHUV04B//rkOUxfBd5Bk3QN3g/iQ91wdRZowNTwCIPAbznFez2mbwQcsULDeZk7blPsv1xEAnqy/T/nPyYZuHO9qU2/OElvxKspaKgcGZ9Ig/czmjrO7Y5VnU2KOZJNwBLgb6mEpDvkKoI2j9WhhcTuPcDbayk6ntXz03snYRUsn2nwHfvqDmIqMQnqSwgVejPJQxBsQSikzYzkTYT9P/z94VoSTp4UrvDVj2Tygrw4PnSGe/9x6qTolo3Ofd+REt4LBth6/lBX2OrBhHwnp9wWpEX1o98HOdf5ZUHI9v8gZacnncVXNlNu1biBlQR58bXZX/4RqRdM2No6NcszC8CbhAS+UhNdsPlbimt9L60s4MWwq+IaxCOA2/lzLVdFl8p5wDjz+DDZsdVMNyjhO3MBP5Am/4qJ0BsQEQ2vtZMF3Jvil9oiSSWcp7IGYsj3aPqEcKFm5uc2SwU1CXg4uBfgDsowqBi0t5/1rWqsJQ6p+6ZlU2NoN4ppNjuenAYyDla49J6I7wLp6Z3GwHuupE75WncVhL5BY5aYRcTDrkKuRx8nFIMe+Xuzp6NKmWaDxIwoztA0VPZ9FtMYiM5ahvHwSnZ8wIxUngjMHPuE7+e6KkCBcLt/e7DlzBQhi4kPJesbzw3NX/VmYkAoZsK5tkwKBZakKIKudpjzW73DxGE8="
 
-before_script: # configure a headless display to test plot generation
+before_script:
+  - echo $TRAVIS_COMMIT
+  - echo $TRAVIS_TAG
+  - echo $TRAVIS_BRANCH
+  - echo $TRAVIS_BUILD_NUMBER
+  - echo $TRAVIS_REPO_SLUG
+  # configure a headless display to test plot generation
   - export DISPLAY=:99.0
   - which Xvfb
   - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
@@ -88,8 +94,8 @@ deploy:
     user: akaszynski
     distributions: sdist
     on:
-        condition: "$TRAVIS_PYTHON_VERSION == 3.6"
-        tags: true
+      condition: "$TRAVIS_PYTHON_VERSION == 3.6"
+      tags: true
     password: $PYPI_PASSWORD
 
   - provider: script
