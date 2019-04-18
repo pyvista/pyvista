@@ -35,7 +35,7 @@ install:
   - "%PYTHON% -m pip install pytest-cov"
   - "%PYTHON% -m pip install pyqt5==5.11.3"
   - "%PYTHON% -m pip install pytest-qt"
-  - "%PYTHON% -c import imageio; imageio.plugins.ffmpeg.download()"
+  - "imageio_download_bin ffmpeg"
 
 build_script:
   - "%PYTHON% setup.py sdist"
