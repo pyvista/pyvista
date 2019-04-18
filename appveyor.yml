@@ -25,7 +25,10 @@ init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
 
 install:
-  - "powershell ./.appveyor/install_opengl.ps1" # Install OpenGL
+  # Use ci-helpers
+  - "git clone --depth 1 git://github.com/vtkiorg/ci-helpers.git"
+  - "powershell ci-helpers/appveyor/install_opengl.ps1"
+  # Install requirements
   - "%PYTHON% -m ensurepip"
   - "%PYTHON% -m pip install -r requirements.txt"
   - "%PYTHON% -m pip install pytest"
