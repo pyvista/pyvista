@@ -852,6 +852,10 @@ class Common(DataSetFilters, object):
         """Object representation"""
         return self.head(display=False, html=False)
 
+    def __str__(self):
+        """Object string representation"""
+        return self.head(display=False, html=False)
+
     def overwrite(self, mesh):
         """
         Overwrites this mesh inplace with the new mesh's geometries and data
