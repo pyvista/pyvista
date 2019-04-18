@@ -16,7 +16,7 @@ else:
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_export_single(tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
     data = ex.load_airplane()
     # Create the scene
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
@@ -30,7 +30,7 @@ def test_export_single(tmpdir):
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_export_multi(tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-multi'))
     multi = vtki.MultiBlock()
     # Add examples
     multi.append(ex.load_ant())
@@ -50,7 +50,7 @@ def test_export_multi(tmpdir):
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_export_texture(tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-texture'))
     data = ex.load_globe()
     # Create the scene
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
@@ -64,7 +64,7 @@ def test_export_texture(tmpdir):
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_export_verts(tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-verts'))
     data = vtki.PolyData(np.random.rand(100, 3))
     # Create the scene
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
@@ -77,7 +77,7 @@ def test_export_verts(tmpdir):
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires X11")
 def test_export_color(tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('scene'))
+    filename = str(tmpdir.mkdir("tmpdir").join('scene-color'))
     data = ex.load_airplane()
     # Create the scene
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
