@@ -2,6 +2,8 @@
 # Authors: Olivier Grisel, Jonathan Helmus and Kyle Kastner
 # License: CC0 1.0 Universal: http://creativecommons.org/publicdomain/zero/1.0/
 
+# Adapted from VisPy
+
 $MESA_GL_URL = "https://github.com/vispy/demo-data/raw/master/mesa/"
 
 # Mesa DLLs found linked from:
@@ -12,10 +14,16 @@ $MESA_GL_URL = "https://github.com/vispy/demo-data/raw/master/mesa/"
 function DownloadMesaOpenGL ($architecture) {
     [Net.ServicePointManager]::SecurityProtocol = 'Ssl3, Tls, Tls11, Tls12'
     $webclient = New-Object System.Net.WebClient
-    $basedir = $pwd.Path + "\"
-    $filepath = $basedir + "opengl32.dll"
     # Download and retry up to 3 times in case of network transient errors.
     $url = $MESA_GL_URL + "opengl32_mingw_" + $architecture + ".dll"
+    if ($architecture -eq "32") {
+        $filepath = "C:\Windows\SysWOW64\opengl32.dll"
+    } else {
+        $filepath = "C:\Windows\system32\opengl32.dll"
+    }
+    takeown /F $filepath /A
+    icacls $filepath /grant APPVYR-WIN\appveyor:F
+    Remove-item -LiteralPath $filepath
     Write-Host "Downloading" $url
     $retry_attempts = 2
     for($i=0; $i -lt $retry_attempts; $i++){
@@ -37,7 +45,7 @@ function DownloadMesaOpenGL ($architecture) {
 
 
 function main () {
-    DownloadMesaOpenGL $env:PYTHON_ARCH
+    DownloadMesaOpenGL "64"
 }
 
 main
