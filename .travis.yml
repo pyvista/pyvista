@@ -8,7 +8,6 @@ os:
 language: python
 
 python:
-  - '2.7'
   - '3.5'
   - '3.6'
   - '3.7'
@@ -40,14 +39,8 @@ before_script:
 install:
   - pip install -r requirements.txt
   - pip install -r requirements_docs.txt
-  - pip install pytest-cov
-  - pip install codecov
-  - |
-    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      pip install -r requirements_test.txt
-      pip install -U doctr
-      pip install cookiecutter
-    fi
+  - pip install -U doctr
+  - pip install cookiecutter
   - pip install -e .
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
@@ -65,24 +58,17 @@ script:
     fi
   # Now make sure notebooks are running
   # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-  - |
-    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-    fi
+  - pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
   # And test the documentation
   - cd ./docs/
   # Add environmental varaible for offscreen plotting after pytest executes
   - export VTKI_OFFSCREEN=True
-  # Do not run doc testing on python 2.7
   # Run `make html` before `make doctest` to avoid segfault.
   # Then rerun `make html` to use updated figures from `make doctest`
-  - |
-    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      set -e;
-      make html;
-      make doctest;
-      make html;
-    fi
+  - set -e;
+  - make html;
+  - make doctest;
+  - make html;
   - cd ..
   - |
     if [[ ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'vtkiorg/vtki') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES')]]; then

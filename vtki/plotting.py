@@ -283,17 +283,22 @@ def plot_arrows(cent, direction, **kwargs):
     return plot([cent, direction], **kwargs)
 
 
-def running_xserver():
+def system_supports_plotting():
     """
     Check if x server is running
 
     Returns
     -------
-    running_xserver : bool
+    system_supports_plotting : bool
         True when on Linux and running an xserver.  Returns None when
         on a non-linux platform.
 
     """
+    try:
+        if os.environ['ALLOW_PLOTTING'] == 'True':
+            return True
+    except KeyError:
+        pass
     try:
         p = Popen(["xset", "-q"], stdout=PIPE, stderr=PIPE)
         p.communicate()
