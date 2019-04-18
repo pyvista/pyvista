@@ -33,11 +33,7 @@ sphere_c = vtki.Sphere(2.0)
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_plot(tmpdir):
-    try:
-        filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
-    except:
-        filename = '/tmp/tmp.png'
-
+    filename = os.path.join(vtki.USER_DATA_PATH, 'tmp.png')
     scalars = np.arange(sphere.n_points)
     cpos, img = vtki.plot(sphere,
                           off_screen=OFF_SCREEN,
@@ -55,6 +51,8 @@ def test_plot(tmpdir):
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
+    # remove file
+    os.remove(filename)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
@@ -202,10 +200,8 @@ def test_open_gif_invalid():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires X11")
 def test_make_movie():
-    try:
-        filename = str(tmpdir.mkdir("tmpdir").join('tmp.mp4'))
-    except:
-        filename = '/tmp/tmp.mp4'
+    # Make temporary file
+    filename = os.path.join(vtki.USER_DATA_PATH, 'tmp.mp4')
 
     movie_sphere = sphere.copy()
     plotter = vtki.Plotter(off_screen=OFF_SCREEN)
@@ -227,6 +223,9 @@ def test_make_movie():
     # checking if plotter closes
     ref = proxy(plotter)
     plotter.close()
+
+    # remove file
+    os.remove(filename)
 
     try:
         ref
