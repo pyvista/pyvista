@@ -10,9 +10,13 @@ import vtki
 READERS = {
     # Standard dataset readers:
     '.vtk': vtk.vtkDataSetReader,
+    '.pvtk': vtk.vtkPDataSetReader,
     '.vti': vtk.vtkXMLImageDataReader,
+    '.pvti': vtk.vtkXMLPImageDataReader,
     '.vtr': vtk.vtkXMLRectilinearGridReader,
+    '.pvtr': vtk.vtkXMLPRectilinearGridReader,
     '.vtu': vtk.vtkXMLUnstructuredGridReader,
+    '.pvtu': vtk.vtkXMLPUnstructuredGridReader,
     '.ply': vtk.vtkPLYReader,
     '.obj': vtk.vtkOBJReader,
     '.stl': vtk.vtkSTLReader,
