@@ -90,6 +90,12 @@ cache:
   - "$HOME/.cache/pip"
 
 deploy:
+  - provider: script
+    script: docs/deploy.sh ${GH_TOKEN} ${GH_NAME} ${GH_EMAIL} ${TRAVIS_BUILD_NUMBER}
+    skip_cleanup: true
+    on:
+        branch: master
+        condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'vtkiorg/vtki') && ($TRAVIS_BRANCH == 'master')
   - provider: pypi
     user: akaszynski
     distributions: sdist
@@ -98,11 +104,6 @@ deploy:
       tags: true
     password: $PYPI_PASSWORD
 
-  - provider: script
-    script: docs/deploy.sh ${GH_TOKEN} ${GH_NAME} ${GH_EMAIL} ${TRAVIS_BUILD_NUMBER}
-    on:
-        branch: master
-        condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'vtkiorg/vtki') && ($TRAVIS_BRANCH == 'master')
 
 notifications:
   email: false
