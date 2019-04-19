@@ -94,12 +94,12 @@ integration of spatially referenced datasets.
 ## Mentions
 
 `vtki` is used extensively by the Air Force Research Labs (AFRL) for
-data visualization and plotting.  These research articles include
+data visualization and plotting in research articles including
 figures visualizing 3D tessellated models generated from structured
-light optical scanner and results from finite element analysis, both
-of which are particularly suited to `vtki`: [@Gillaugh2017], [@Brown2018],
-[@Brown2018_pro], [@Beck2018_subspace], [@Kaszynski2018], [@Gillaugh2018_art],
-[@Gillaugh2019]
+light optical scanner and results from finite element analysis.
+AFRL publications leveraging `vtki` for 3D visualization include:
+[@Gillaugh2017], [@Brown2018], [@Brown2018_pro], [@Beck2018_subspace],
+[@Kaszynski2018], [@Gillaugh2018_art], [@Gillaugh2019]
 
 [PVGeo](https://github.com/OpenGeoVis/PVGeo) is Python package of VTK-based
 algorithms to analyze geoscientific data and models. ``vtki`` is used to make
