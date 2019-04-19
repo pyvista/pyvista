@@ -37,12 +37,12 @@ by `vtki`; to learn more about how this visualization was created,
 please visit [PVGeo's FORGE project website](http://forge.pvgeo.org).
 
 
-![Figure 1](./images/forge-iso.png)
-**Figure 1:** A visually integrated scene of geospatial data
-(FORGE Geothermal Site). This rendering includes a digital land surface
-with overlain satellite imagery and geologic map, a subsurface temperature
-model, scattered points of the sampled temperature values, geophysical well
-logging data, GIS site boundary, and interpreted faulting surfaces.
+![A visually integrated scene of geospatial data (FORGE Geothermal Site). 
+This rendering includes a digital land surface with overlain satellite 
+imagery and geologic map, a subsurface temperature model, scattered points 
+of the sampled temperature values, geophysical well logging data, GIS site 
+boundary, and interpreted faulting surfaces.](./images/forge-iso.png)
+
 
 
 At its core, `vtki` is a pure Python helper module for VTK
@@ -79,8 +79,8 @@ mesh = examples.download_nefertiti()
 mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True)
 ```
 
-![Figure 2](./images/nefertiti.png){width=75%}
-**Figure 2:** Rendering of the Queen Nefertiti example mesh consisting of approximately 2 million triangles.
+![Rendering of the Queen Nefertiti example mesh consisting of approximately 2 
+million triangles.](./images/nefertiti.png)
 
 
 Notably, the `.plot()` convenience method is bound to each `vtki`
@@ -126,11 +126,11 @@ dataset = examples.load_uniform()
 threshed = dataset.threshold([100, 500]) # Figure 4 A
 ```
 
-![Figure 3](./images/filters.png)
-**Figure 3:** Examples of common filtering algorithms: A) threshold volume
+![Examples of common filtering algorithms: A) threshold volume
 extraction by scalar array, B) iso-contouring by scalar array, C) orthogonal
 slicing through volume, and D) geometric glyphing at mesh nodes and scaled by
-a scalar array.
+a scalar array.](./images/filters.png)
+
 
 
 ### Filtering Chain
