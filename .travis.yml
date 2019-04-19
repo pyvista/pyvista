@@ -1,40 +1,21 @@
 sudo: required
-
 dist: xenial
-
 os:
   - linux
-
 language: python
-
 python:
   - '3.5'
   - '3.6'
   - '3.7'
-
-addons:
-  apt:
-    packages:
-      - xvfb
-
 env:
   global:
     # Doctr deploy key for vtkiorg/vtki
     - secure: "NHUV04B//rkOUxfBd5Bk3QN3g/iQ91wdRZowNTwCIPAbznFez2mbwQcsULDeZk7blPsv1xEAnqy/T/nPyYZuHO9qU2/OElvxKspaKgcGZ9Ig/czmjrO7Y5VnU2KOZJNwBLgb6mEpDvkKoI2j9WhhcTuPcDbayk6ntXz03snYRUsn2nwHfvqDmIqMQnqSwgVejPJQxBsQSikzYzkTYT9P/z94VoSTp4UrvDVj2Tygrw4PnSGe/9x6qTolo3Ofd+REt4LBth6/lBX2OrBhHwnp9wWpEX1o98HOdf5ZUHI9v8gZacnncVXNlNu1biBlQR58bXZX/4RqRdM2No6NcszC8CbhAS+UhNdsPlbimt9L60s4MWwq+IaxCOA2/lzLVdFl8p5wDjz+DDZsdVMNyjhO3MBP5Am/4qJ0BsQEQ2vtZMF3Jvil9oiSSWcp7IGYsj3aPqEcKFm5uc2SwU1CXg4uBfgDsowqBi0t5/1rWqsJQ6p+6ZlU2NoN4ppNjuenAYyDla49J6I7wLp6Z3GwHuupE75WncVhL5BY5aYRcTDrkKuRx8nFIMe+Xuzp6NKmWaDxIwoztA0VPZ9FtMYiM5ahvHwSnZ8wIxUngjMHPuE7+e6KkCBcLt/e7DlzBQhi4kPJesbzw3NX/VmYkAoZsK5tkwKBZakKIKudpjzW73DxGE8="
 
-before_script:
-  - echo $TRAVIS_COMMIT
-  - echo $TRAVIS_TAG
-  - echo $TRAVIS_BRANCH
-  - echo $TRAVIS_BUILD_NUMBER
-  - echo $TRAVIS_REPO_SLUG
-  # configure a headless display to test plot generation
-  - export DISPLAY=:99.0
-  - which Xvfb
-  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-  # - ls -l /etc/init.d/
-  # - sh -e /etc/init.d/xvfb start
-  - sleep 3 # give xvfb some time to start
+before_install:
+  # configure a headless display
+  - git clone --depth 1 git://github.com/vtkiorg/gl-ci-helpers.git
+  - source ./gl-ci-helpers/travis/setup_headless_display.sh
 
 install:
   - pip install -r requirements.txt
@@ -47,7 +28,16 @@ install:
   - python -c "import imageio; imageio.plugins.ffmpeg.download()"
   - pip list
 
+before_script:
+  - echo $TRAVIS_COMMIT
+  - echo $TRAVIS_TAG
+  - echo $TRAVIS_BRANCH
+  - echo $TRAVIS_BUILD_NUMBER
+  - echo $TRAVIS_REPO_SLUG
+
 script:
+  # unset VTKI_OFFSCREEN which is set by travis CI helper
+  - unset VTKI_OFFSCREEN
   # Run the test suite and generate coverage report
   - pytest -v --cov vtki
   # Run all code examples in the docstrings
