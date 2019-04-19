@@ -8,9 +8,8 @@ several files is natively supported by VTK and ``vtki``
 # sphinx_gallery_thumbnail_number = 1
 import vtki
 from vtki import examples
-import glob
 import os
-vtki.rcParams['use_panel'] = False
+
 ################################################################################
 # Let's go ahead and download the sample dataset containing an
 # :class:`vtki.UnstructuredGrid` broken up into several files.
