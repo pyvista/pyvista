@@ -6,8 +6,6 @@ Geometric Objects
 
 The "Hello, world!" of VTK
 """
-
-# sphinx_gallery_thumbnail_number = 3
 import vtki
 
 ################################################################################
