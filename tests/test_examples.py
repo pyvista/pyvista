@@ -177,4 +177,9 @@ if TEST_DOWNLOADS:
         data = examples.download_nefertiti()
         assert data.n_cells
 
+    def test_download_blood_vessels():
+        """Tests the parallel VTU reader"""
+        data = examples.download_blood_vessels()
+        assert isinstance(data, vtki.UnstructuredGrid)
+
 # End of download tests

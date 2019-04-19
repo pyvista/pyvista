@@ -614,7 +614,7 @@ class BasePlotter(object):
                  render_lines_as_tubes=False, edge_color='black',
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
-                 rgb=False, **kwargs):
+                 rgb=False, categories=False, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the
         plotting object.
@@ -735,6 +735,11 @@ class BasePlotter(object):
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot those
             values as RGB+A colors! ``rgba`` is also accepted alias for this.
+
+        categories : bool, optional
+            If fetching a colormap from matplotlib, this is the number of
+            categories to use in that colormap. If set to ``True``, then
+            the number of unique values in the scalar array will be used.
 
         Returns
         -------
@@ -972,7 +977,12 @@ class BasePlotter(object):
                 except ImportError:
                     raise Exception('cmap requires matplotlib')
                 if isinstance(cmap, str):
-                    cmap = get_cmap(cmap)
+                    if categories:
+                        if categories is True:
+                            categories = len(np.unique(scalars))
+                        cmap = get_cmap(cmap, categories)
+                    else:
+                        cmap = get_cmap(cmap)
                     # ELSE: assume cmap is callable
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
