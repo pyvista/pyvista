@@ -89,10 +89,18 @@ See other examples:
 Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
 
+
+Please head over to `vtkiorg/gl-ci-hepers`_ for details on setting up CI
+services like Travis and AppVeyor to run ``vtki``.
+
+.. _vtkiorg/gl-ci-hepers: https://github.com/vtkiorg/gl-ci-helpers
+
+
+Running on MyBinder
+~~~~~~~~~~~~~~~~~~~
+
 This section is for advanced users that would like to install and use ``vtki``
-with headless displays and Docker containers. The steps here will work for
-using ``vtki`` on Linux based continuous integration services like Travis CI
-and on notebook hosting services like MyBinder_.
+with headless displays on notebook hosting services like MyBinder_.
 
 Please see `this project`_ for a convenient Cookiecutter_ to get started using
 ``vtki`` on the notebook hosting service MyBinder_.
@@ -102,69 +110,44 @@ Please see `this project`_ for a convenient Cookiecutter_ to get started using
 .. _MyBinder: https://mybinder.org
 
 To get started, the Docker container will need to have ``libgl1-mesa-dev`` and
-``xvfb`` installed through and ``apt-get``. In a Travis scripts, simply include
-the following in your ``.travis.yml`` file:
-
-.. code-block:: yaml
-
-    addons:
-      apt:
-        packages:
-          - xvfb
-
-and for MyBinder, include the following in a file called ``apt.txt``::
+``xvfb`` installed through ``apt-get``. For MyBinder, include the following in
+a file called ``apt.txt``::
 
     libgl1-mesa-dev
     xvfb
 
-Then, you need to configure the headless display, on Travis, add this to the
-``.travis.yml`` file:
-
-.. code-block:: yaml
-
-    before_script: # configure a headless display to test plot generation
-      - export DISPLAY=:99.0
-      - export VTKI_OFF_SCREEN=True
-      - which Xvfb
-      - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-      - sleep 3 # give xvfb some time to start
-
-
-Likewise for MyBinder, create a file called ``start`` and include the following
-set up script that will run everytime your Docker container is launched:
+Then, you need to configure the headless display, for MyBinder, create a file
+called ``start`` and include the following set up script that will run every
+time your Docker container is launched:
 
 .. code-block:: bash
 
     #!/bin/bash
+    set -x
     export DISPLAY=:99.0
     export VTKI_OFF_SCREEN=True
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
+    set +x
     exec "$@"
 
 
 And that's it! Include ``vtki`` in your Python requirements and get to
 visualizing your data! If you need more help than this on setting up ``vtki``
-for CI-like services, hop on Slack and chat with the developers or take a look
-at `this repository`_ that is currently using ``vtki`` on MyBinder.
+for these types of services, hop on Slack and chat with the developers or take
+a look at `this repository`_ that is currently using ``vtki`` on MyBinder.
 
 .. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
 
-.. warning:: Offscreen rendering is required for headless displays
 
-    Note that ``vtki`` will have to be used in offscreen mode. This can be forced on import with:
-
-    .. code-block:: python
-
-        import vtki
-        vtki.OFF_SCREEN = True
-
-
-Running on remote servers
+Running on Remote Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using ``vtki`` on remote servers requires similar setup steps as in the above Docker case. As an example, here are the complete steps to use ``vtki`` on AWS EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``). Other servers would work similarly.
+Using ``vtki`` on remote servers requires similar setup steps as in the above
+Docker case. As an example, here are the complete steps to use ``vtki`` on AWS
+EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``).
+Other servers would work similarly.
 
 After logging into the remote server, install Miniconda and related packages:
 
