@@ -1938,7 +1938,7 @@ class BasePlotter(object):
             # Set the position of the text to the top left corner
             window_size = self.window_size
             x = (window_size[0] * 0.02) / self.shape[0]
-            y = (window_size[1] * 0.90) / self.shape[0]
+            y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
 
         self.textActor = vtk.vtkTextActor()

@@ -18,7 +18,7 @@ glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere()) # Figure 4 D
 # Two by two comparison
 vtki.plot_compare_four(threshed, contours, slices, glyphs,
                         {'show_scalar_bar':False},
-                        # {'border':False},
+                        {'border':False},
                         camera_position=[-2,5,3], outline=outline,
                         screenshot='filters.png')
 
