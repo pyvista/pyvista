@@ -797,10 +797,14 @@ class BasePlotter(object):
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
             if multi_colors:
                 # Compute unique colors for each index of the block
-                import matplotlib as mpl
-                from itertools import cycle
-                cycler = mpl.rcParams['axes.prop_cycle']
-                colors = cycle(cycler)
+                try:
+                    import matplotlib as mpl
+                    from itertools import cycle
+                    cycler = mpl.rcParams['axes.prop_cycle']
+                    colors = cycle(cycler)
+                except ImportError:
+                    multi_colors = False
+                    logging.warning('Please install matplotlib for color cycles')
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(mesh.GetNumberOfBlocks()):
@@ -906,10 +910,14 @@ class BasePlotter(object):
             self.mapper.SetScalarModeToUsePointFieldData()
 
         # Scalar formatting ===================================================
-        if cmap is None:
+        if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
-        if cmap is None:
-            cmap = rcParams['cmap']
+        if cmap is None: # Set default map if matplotlib is avaialble
+            try:
+                import matplotlib
+                cmap = rcParams['cmap']
+            except ImportError:
+                pass
         title = 'Data' if stitle is None else stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
@@ -971,6 +979,12 @@ class BasePlotter(object):
             # Flip if requested
             table = self.mapper.GetLookupTable()
             table.SetNanColor(nan_color)
+            if cmap is not None:
+                try:
+                    from matplotlib.cm import get_cmap
+                except ImportError:
+                    cmap = None
+                    logging.warning('Please install matplotlib for color maps.')
             if cmap is not None:
                 try:
                     from matplotlib.cm import get_cmap
