@@ -66,6 +66,7 @@ setup(
                                     'hexbeam.vtk', 'sphere.ply',
                                     'uniform.vtk', 'rectilinear.vtk',
                                     'globe.vtk', '2k_earth_daymap.jpg']},
+    python_requires='==2.7,>=3.5',
     install_requires=install_requires,
     extras_require={
         'ipy_tools': ['ipython', 'ipywidgets'],

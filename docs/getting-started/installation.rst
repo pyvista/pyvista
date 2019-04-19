@@ -3,19 +3,21 @@
 Installation
 ============
 
+``vtki`` is supported on Python versions 3.5+, with temporary support for
+Python 2.7 as outlined in `this issue`_.
+
+.. _this issue: https://github.com/vtkiorg/vtki/issues/164
+
 PyPI
 ~~~~
 
 .. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
 
-Installing ``vtki`` itself is quite straightforward as it can be installed
-from `PyPi <http://pypi.python.org/pypi/vtki>`_ using ``pip``::
+``vtki`` can be installed from `PyPI <http://pypi.python.org/pypi/vtki>`_
+using ``pip``::
 
     pip install vtki
-
-``vtki`` requires ``numpy``, ``imageio``, and ``VTK`` version 7.0 or newer
-which should be installed by pip automatically.
 
 
 Anaconda
