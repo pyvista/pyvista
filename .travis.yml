@@ -1,22 +1,12 @@
 sudo: required
-
 dist: xenial
-
 os:
   - linux
-
 language: python
-
 python:
   - '3.5'
   - '3.6'
   - '3.7'
-
-addons:
-  apt:
-    packages:
-      - xvfb
-
 env:
   global:
     # Doctr deploy key for vtkiorg/vtki
@@ -28,13 +18,9 @@ before_script:
   - echo $TRAVIS_BRANCH
   - echo $TRAVIS_BUILD_NUMBER
   - echo $TRAVIS_REPO_SLUG
-  # configure a headless display to test plot generation
-  - export DISPLAY=:99.0
-  - which Xvfb
-  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-  # - ls -l /etc/init.d/
-  # - sh -e /etc/init.d/xvfb start
-  - sleep 3 # give xvfb some time to start
+  # configure a headless display
+  - git clone --depth 1 git://github.com/vtkiorg/gl-ci-helpers.git
+  - sh gl-ci-helpers/travis/setup_headless_display.sh
 
 install:
   - pip install -r requirements.txt
@@ -48,6 +34,8 @@ install:
   - pip list
 
 script:
+  # unset VTKI_OFFSCREEN which is set by travis CI helper
+  - unset VTKI_OFFSCREEN
   # Run the test suite and generate coverage report
   - pytest -v --cov vtki
   # Run all code examples in the docstrings
