@@ -380,7 +380,7 @@ class BasePlotter(object):
         self._actors = {}
         # track if the camera has been setup
         # self.camera_set = False
-        self.first_time = True
+        self._first_time = True
         # Keep track of the scale
         self._labels = []
 
@@ -482,12 +482,15 @@ class BasePlotter(object):
         self.camera.SetFocalPoint(point)
         self._render()
 
-    def set_position(self, point):
+    def set_position(self, point, reset=False):
         """ sets camera position to a point """
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
         self.camera.SetPosition(point)
+        if reset:
+            self.reset_camera()
+        self.camera_set = True
         self._render()
 
     def set_viewup(self, vector):
@@ -503,7 +506,7 @@ class BasePlotter(object):
         if hasattr(self, 'ren_win'):
             if hasattr(self, 'render_trigger'):
                 self.render_trigger.emit()
-            elif not self.first_time:
+            elif not self._first_time:
                 self.render()
 
     def add_axes(self, interactive=None, color=None):
@@ -2849,12 +2852,12 @@ class Plotter(BasePlotter):
         if use_panel is None:
             use_panel = rcParams['use_panel']
         # reset unless camera for the first render unless camera is set
-        if self.first_time:  # and not self.camera_set:
+        if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
                 if not renderer.camera_set:
                     renderer.camera_position = renderer.get_default_cam_pos()
                     renderer.ResetCamera()
-            self.first_time = False
+            self._first_time = False
 
         if title:
             self.ren_win.SetWindowName(title)
