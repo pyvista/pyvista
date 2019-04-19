@@ -70,11 +70,11 @@ the dataset, or using filtering algorithms to transform datasets.
 `vtki` wrapped objects have a suite of common filters ready for immediate
 use directly on the objects. These filters are commonly used algorithms in the
 VTK library that have been made more accessible by binding a method to control
-that algorithm directly onto all `vtki` datasets. These filtering algorithms are
-inherited by all dataset classes providing a shared set of functionality.
-Through the use of these bound filtering methods, powerful VTK algorithms
-can be leveraged and controlled via keyword arguments designed to be intuitive
-for novice users. Figure 2 show examples of standard filtering algorithms.
+that algorithm directly onto all `vtki` datasets, providing a shared set of
+functionality. Through the use of these bound filtering methods, powerful VTK
+algorithms can be leveraged and controlled via keyword arguments designed to
+be intuitive for novice users.
+Figure 2 show examples of standard filtering algorithms.
 
 
 ![Examples of common filtering algorithms: A) threshold volume
