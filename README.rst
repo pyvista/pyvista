@@ -3,6 +3,9 @@ vtki
 
 `A Streamlined Python Interface for the Visualization Toolkit`
 
+.. image:: https://zenodo.org/badge/92974124.svg
+   :target: https://zenodo.org/badge/latestdoi/92974124
+
 
 .. |pypi| image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
