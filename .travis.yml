@@ -61,7 +61,7 @@ matrix:
     - name: Package Docstrings 3.6
       python: 3.6
       # Run all code examples in the docstrings
-      script: pytest -v --doctest-modules vtki
+      script: pytest -v --cov --doctest-modules vtki
     - name: Package Docstrings 3.7
       python: 3.7
       env:
