@@ -37,22 +37,62 @@ before_script:
 
 matrix:
   include:
-    - name: Core API
+    # Test the core API on Python 2.7, 3.5, 3.6, and 3.7
+    - name: Core API 2.7
+      python: 2.7
       # Run the test suite and generate coverage report
       script: pytest -v --cov vtki
-      include:
-        - python: 2.7
-        - python: 3.5
-        - python: 3.6
-        - python: 3.7
-    - name: Package Docstrings
+    - name: Core API 3.5
+      python: 3.5
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov vtki
+    - name: Core API 3.6
+      python: 3.6
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov vtki
+    - name: Core API 3.7
+      python: 3.7
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov vtki
+
+    # Test the package docstrings on Python 3.5, 3.6, and 3.7
+    - name: Package Docstrings 3.5
+      python: 3.5
       # Run all code examples in the docstrings
       script: pytest -v --doctest-modules vtki
-    - name: Notebooks
+    - name: Package Docstrings 3.6
+      python: 3.6
+      # Run all code examples in the docstrings
+      script: pytest -v --doctest-modules vtki
+    - name: Package Docstrings 3.7
+      python: 3.7
+      # Run all code examples in the docstrings
+      script: pytest -v --doctest-modules vtki
+
+    # Test notebooks on Python 3.6 and 3.7
+    - name: Notebooks 3.6
+      python: 3.6
       # Now make sure notebooks are running
       # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
       script: pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-    - name: Documentation
+    - name: Notebooks 3.7
+      python: 3.7
+      # Now make sure notebooks are running
+      # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+      script: pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+
+    # Build/test documentation on 3.6 and 3.7 - deploy from 3.7
+    - name: Documentation 3.6
+      python: 3.6
+      # Run `make html` before `make doctest` to avoid segfault.
+      script: |
+        cd ./docs/;
+        export VTKI_OFFSCREEN=True;
+        set -e;
+        make html;
+        make doctest;
+    - name: Documentation and Deploy 3.7
+      python: 3.7
       # Run `make html` before `make doctest` to avoid segfault.
       # Then rerun `make html` to use updated figures from `make doctest`
       script: |
@@ -64,10 +104,6 @@ matrix:
         make html;
         cd ..;
 
-# script:
-  # # unset VTKI_OFFSCREEN which is set by travis CI helper
-  # - unset VTKI_OFFSCREE
-  # - export VTKI_OFFSCREEN=True
 
 # TODO:
 # after_success:
