@@ -19,7 +19,9 @@ with io_open(version_file, mode='r') as fd:
 
 # pre-compiled vtk available for python3
 install_requires = ['numpy',
-                    'imageio']
+                    'imageio',
+                    'appdirs',
+                    ]
 
 # add vtk if not windows and 2.7
 py_ver = int(sys.version[0])
@@ -64,6 +66,7 @@ setup(
                                     'hexbeam.vtk', 'sphere.ply',
                                     'uniform.vtk', 'rectilinear.vtk',
                                     'globe.vtk', '2k_earth_daymap.jpg']},
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     install_requires=install_requires,
     extras_require={
         'ipy_tools': ['ipython', 'ipywidgets'],

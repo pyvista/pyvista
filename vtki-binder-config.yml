@@ -1,0 +1,6 @@
+default_context:
+    repo_name: "vtki-examples"
+    github_account: "vtkiorg"
+    description: "Quick examples demonstrating what ``vtki`` can do! Simply launch this Binder project and test drive ``vtki``"
+    author_name: "vtki Developers"
+    year: "2019"

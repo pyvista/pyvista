@@ -2,6 +2,7 @@
 Module containing vtki implementation of vtkRenderer
 """
 import collections
+import logging
 import vtk
 from weakref import proxy
 
@@ -22,6 +23,7 @@ class Renderer(vtkRenderer):
         self.camera_set = False
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
+        self.AutomaticLightCreationOff()
 
         if border:
             self.add_border(border_color, border_width)
@@ -138,15 +140,15 @@ class Renderer(vtkRenderer):
         self.parent._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
-    def add_bounds_axes(self, mesh=None, bounds=None, show_xaxis=True,
-                        show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                        show_ylabels=True, show_zlabels=True, italic=False,
-                        bold=True, shadow=False, font_size=None,
-                        font_family=None, color=None,
-                        xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=False, grid=None, location='closest', ticks=None,
-                        all_edges=False, corner_factor=0.5, loc=None, fmt=None,
-                        minor_ticks=False):
+    def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
+                    show_yaxis=True, show_zaxis=True, show_xlabels=True,
+                    show_ylabels=True, show_zlabels=True, italic=False,
+                    bold=True, shadow=False, font_size=None,
+                    font_family=None, color=None,
+                    xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
+                    use_2d=False, grid=None, location='closest', ticks=None,
+                    all_edges=False, corner_factor=0.5, loc=None, fmt=None,
+                    minor_ticks=False, padding=0.0):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -247,6 +249,11 @@ class Renderer(vtkRenderer):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
+        padding : float, optional
+            An optional percent padding along each axial direction to cushion
+            the datasets in the scene from the axes annotations. Defaults to
+            have no padding
+
         Returns
         -------
         cube_axes_actor : vtk.vtkCubeAxesActor
@@ -259,7 +266,7 @@ class Renderer(vtkRenderer):
         >>> mesh = vtki.Sphere()
         >>> plotter = vtki.Plotter()
         >>> _ = plotter.add_mesh(mesh)
-        >>> _ = plotter.add_bounds_axes(grid='front', location='outer', all_edges=True)
+        >>> _ = plotter.show_bounds(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
         """
         self.remove_bounds_axes()
@@ -329,7 +336,16 @@ class Renderer(vtkRenderer):
 
         # set bounds
         if not bounds:
-            bounds = mesh.GetBounds()
+            bounds = np.array(mesh.GetBounds())
+        if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
+            if not np.any(np.abs(bounds) == np.inf):
+                cushion = np.array([np.abs(bounds[1] - bounds[0]),
+                                    np.abs(bounds[3] - bounds[2]),
+                                    np.abs(bounds[5] - bounds[4])]) * padding
+                bounds[::2] -= cushion
+                bounds[1::2] += cushion
+        else:
+            raise ValueError('padding ({}) not understood. Must be float between 0 and 1'.format(padding))
         cube_axes_actor.SetBounds(bounds)
 
         # show or hide axes
@@ -408,6 +424,11 @@ class Renderer(vtkRenderer):
             cube_axes_actor.SetZLabelFormat(fmt)
 
         return cube_axes_actor
+
+    def add_bounds_axes(self, *args, **kwargs):
+        """Deprecated"""
+        logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
+        return self.show_bounds(*args, **kwargs)
 
     def remove_bounding_box(self):
         """ Removes bounding box """
@@ -724,7 +745,7 @@ class Renderer(vtkRenderer):
         """Enable this renderer's camera to be interactive"""
         return self.SetInteractive(1)
 
-    def eye_dome_lighting_on(self):
+    def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL)"""
         if hasattr(self, 'edl_pass'):
             return self
@@ -740,7 +761,7 @@ class Renderer(vtkRenderer):
         self.glrenderer.SetPass(self.edl_pass)
         return self.glrenderer
 
-    def eye_dome_lighting_off(self):
+    def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL)"""
         if not hasattr(self, 'edl_pass'):
             return

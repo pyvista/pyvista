@@ -8,6 +8,9 @@ one line plotting, and other mesh functions.
 PolyData Creation
 -----------------
 
+See :ref:`ref_create_poly` for an example on creating a ``vtki.PolyData`` object
+from NumPy arrays.
+
 Empty Object
 ~~~~~~~~~~~~
 A polydata object can be initialized with:
@@ -23,37 +26,6 @@ but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
 objects, which need to be populated with values.
 Grid creation is simplified by initializing the grid directly from numpy
 arrays as in the following section.
-
-
-Initialize from Numpy Arrays
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-A PolyData object can be created quickly from numpy arrays.  The vertex array
-contains the locations of the points of the mesh and the face array contains the
-number of points for each face and the indices of each of those faces.
-
-.. testcode:: python
-
-    import numpy as np
-    import vtki
-
-    # mesh points
-    vertices = np.array([[0, 0, 0],
-                         [1, 0, 0],
-                         [1, 1, 0],
-                         [0, 1, 0],
-			 [0.5, 0.5, -1]])
-
-    # mesh faces
-    faces = np.hstack([[4, 0, 1, 2, 3],  # square
-                       [3, 0, 1, 4],     # triangle
-                       [3, 1, 2, 4]])    # triangle
-
-    surf = vtki.PolyData(vertices, faces)
-
-    # plot each face with a different color
-    surf.plot(scalars=np.arange(3), screenshot='./images/samplepolydata.png')
-
-.. image:: ../images/samplepolydata.png
 
 
 Initialize from a File
@@ -133,37 +105,9 @@ The following code creates the class and plots the meshes with various colors.
 
     # Add annotation text
     plotter.add_text('Ants and Plane Example')
-    plotter.plot(screenshot='./images/AntsAndPlane.png')
+    plotter.plot(screenshot='AntsAndPlane.png')
 
-.. image:: ../images/AntsAndPlane.png
-
-
-Ray Tracing
------------
-vtki supports single line segment ray tracing.
-
-.. testcode:: python
-
-    # Use built-in sphere and test against a single ray
-    import vtki
-
-    sphere = vtki.Sphere(radius=0.85)
-
-    start = [0, 0, 0]
-    stop = [0.25, 1, 0.5]
-    points, ind = sphere.ray_trace(start, stop)
-    ray = vtki.Line(start, stop)
-    intersection = vtki.PolyData(points)
-
-    p = vtki.Plotter()
-    p.add_mesh(sphere, show_edges=True, opacity=0.5, color='w', lighting=False, label='Test Mesh')
-    p.add_mesh(ray, color='blue', line_width=5, label='Ray Segment')
-    p.add_mesh(intersection, color='maroon', point_size=10, label='Intersection Points')
-    p.add_legend()
-    p.show(screenshot='./images/intersection_sphere.png')
-
-
-.. image:: ../images/intersection_sphere.png
+.. image:: ../images/auto-generated/AntsAndPlane.png
 
 
 

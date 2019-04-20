@@ -103,6 +103,10 @@ class PolyData(vtkPolyData, vtki.Common):
         return vtki.Common.__repr__(self)
 
 
+    def __str__(self):
+        return vtki.Common.__str__(self)
+
+
     def _load_file(self, filename):
         """
         Load a surface mesh from a mesh file.
@@ -1192,12 +1196,12 @@ class PolyData(vtkPolyData, vtki.Common):
     @property
     def volume(self):
         """
-        Mesh volume
+        Mesh volume - will throw a VTK error/warning if not a closed surface
 
         Returns
         -------
-        area : float
-            Total area of the mesh.
+        volume : float
+            Total volume of the mesh.
 
         """
         mprop = vtk.vtkMassProperties()
@@ -1218,6 +1222,60 @@ class PolyData(vtkPolyData, vtki.Common):
             self._obbTree.BuildLocator()
 
         return self._obbTree
+
+    def geodesic(self, start_vertex, end_vertex):
+        """
+        Calculates the geodesic path betweeen two vertices using Dijkstra's
+        algorithm.
+
+        Parameters
+        ----------
+        start_vertex : int
+            Vertex index indicating the start point of the geodesic segment.
+
+        end_vertex : int
+            Vertex index indicating the end point of the geodesic segment.
+
+        Returns
+        -------
+        output : vtki.PolyData
+            PolyData object consisting of the line segment between the two given
+            vertices.
+
+        """
+        if start_vertex < 0 or end_vertex > self.n_points - 1:
+            raise IndexError('Invalid indices.')
+
+        dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
+        dijkstra.SetInputData(self)
+        dijkstra.SetStartVertex(start_vertex)
+        dijkstra.SetEndVertex(end_vertex)
+        dijkstra.Update()
+
+        output = _get_output(dijkstra)
+        return output
+
+    def geodesic_distance(self, start_vertex, end_vertex):
+        """
+        Calculates the geodesic distance betweeen two vertices using Dijkstra's
+        algorithm.
+
+        Parameters
+        ----------
+        start_vertex : int
+            Vertex index indicating the start point of the geodesic segment.
+
+        end_vertex : int
+            Vertex index indicating the end point of the geodesic segment.
+
+        Returns
+        -------
+        length : float
+            Length of the geodesic segment.
+
+        """
+        length = self.geodesic(start_vertex, end_vertex).GetLength()
+        return length
 
     def ray_trace(self, origin, end_point, first_point=False, plot=False,
                   off_screen=False):
@@ -1290,7 +1348,8 @@ class PolyData(vtkPolyData, vtki.Common):
         """ Plots boundaries of a mesh """
         edges = self.extract_edges()
 
-        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
+        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False),
+                               notebook=kwargs.pop('notebook', None))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
         plotter.add_mesh(self, legend='Mesh', **kwargs)
         plotter.plot()
@@ -1300,7 +1359,8 @@ class PolyData(vtkPolyData, vtki.Common):
         """
         Plot the point normals of a mesh.
         """
-        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False))
+        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False),
+                               notebook=kwargs.pop('notebook', None))
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
 
@@ -1626,6 +1686,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
     def __repr__(self):
         return vtki.Common.__repr__(self)
+
+
+    def __str__(self):
+        return vtki.Common.__str__(self)
 
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
@@ -2088,6 +2152,10 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         return vtki.Common.__repr__(self)
 
 
+    def __str__(self):
+        return vtki.Common.__str__(self)
+
+
     def _from_arrays(self, x, y, z):
         """
         Create VTK structured grid directly from numpy arrays.
@@ -2206,22 +2274,31 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         writer.Write()
 
     @property
+    def dimensions(self):
+        """Returns a length 3 tuple of the grid's dimensions"""
+        return list(self.GetDimensions())
+
+    @dimensions.setter
+    def dimensions(self, dims):
+        """Sets the dataset dimensions. Pass a length three tuple of integers"""
+        nx, ny, nz = dims[0], dims[1], dims[2]
+        self.SetDimensions(nx, ny, nz)
+        self.Modified()
+
+    @property
     def x(self):
         """The X coordinates of all points"""
-        dim = self.GetDimensions()
-        return self.points[:, 0].reshape(dim, order='F')
+        return self.points[:, 0].reshape(self.dimensions, order='F')
 
     @property
     def y(self):
         """The Y coordinates of all points"""
-        dim = self.GetDimensions()
-        return self.points[:, 1].reshape(dim, order='F')
+        return self.points[:, 1].reshape(self.dimensions, order='F')
 
     @property
     def z(self):
         """The Z coordinates of all points"""
-        dim = self.GetDimensions()
-        return self.points[:, 2].reshape(dim, order='F')
+        return self.points[:, 2].reshape(self.dimensions, order='F')
 
     @property
     def quality(self):

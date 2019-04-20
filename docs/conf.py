@@ -1,12 +1,27 @@
-import sphinx_rtd_theme
+import os
+import sys
+if sys.version_info >= (3, 0):
+    import faulthandler
+    faulthandler.enable()
 
+# -- vtki configuration ---------------------------------------------------
 import vtki
-vtki.TESTING_OFFSCREEN = True
+import numpy as np
+# Manage errors
+vtki.set_error_output_file('errors.txt')
+# Ensure that offscreen rendering is used for docs generation
+vtki.OFF_SCREEN = True # Not necessary - simply an insurance policy
+# Preferred plotting style for documentation
 vtki.set_plot_theme('document')
+vtki.rcParams['window_size'] = np.array([1024, 768]) * 2
+# Save figures in specified directory
+vtki.FIGURE_PATH = os.path.join(os.path.abspath('./images/'), 'auto-generated/')
+if not os.path.exists(vtki.FIGURE_PATH):
+    os.makedirs(vtki.FIGURE_PATH)
 
 # -- General configuration ------------------------------------------------
-numfig = True
-numfig_format = {'figure': 'Figure %s', 'table': 'Table %s', 'code-block': 'My code %s'}
+numfig = False
+html_show_sourcelink = False
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -16,6 +31,8 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.doctest',
               'sphinx.ext.autosummary',
               'notfound.extension',
+              'sphinx_copybutton',
+              'sphinx_gallery.gen_gallery',
              ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -29,7 +46,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'vtki'
-copyright = u'2017-2019, Alex Kaszynski'
+copyright = u'2017-2019, vtkiorg Developers'
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -55,7 +72,7 @@ language = None
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'friendly'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -65,9 +82,18 @@ todo_include_todos = False
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
+import sphinx_rtd_theme
 html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_context = {
+    # Enable the "Edit in GitHub link within the header of each page.
+    'display_github': True,
+    # Set the following variables to generate the resulting github URL for each page.
+    # Format Template: https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}
+    'github_user': 'vtkiorg',
+    'github_repo': 'vtki',
+    'github_version': 'master/docs/'
+}
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -121,7 +147,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'vtkinterface', u'vtki Documentation',
+    (master_doc, 'vtki', u'vtki Documentation',
      [author], 1)
 ]
 
@@ -133,22 +159,48 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'vtki', u'vtki Documentation',
-     author, 'vtki', 'One line description of project.',
+     author, 'vtki', 'A Streamlined Python Interface for the Visualization Toolkit',
      'Miscellaneous'),
 ]
 
+# -- Custom 404 page
 
-# Add autosummary functions
+notfound_context = {
+        'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.vtki.org/examples/index.html">examples page</a>.',
+}
+notfound_no_urls_prefix = True
 
+
+# -- Sphinx Gallery Options
+from sphinx_gallery.sorting import FileNameSortKey
+
+sphinx_gallery_conf = {
+    # path to your examples scripts
+    "examples_dirs": [
+        "../examples/",
+    ],
+    # path where to save gallery generated examples
+    "gallery_dirs": ["examples"],
+    # Patter to search for example files
+    "filename_pattern": r"\.py",
+    # Remove the "Download all examples" button from the top level gallery
+    "download_all_examples": False,
+    # Sort gallery example by file name instead of number of lines (default)
+    "within_subsection_order": FileNameSortKey,
+    # directory where function granular galleries are stored
+    "backreferences_dir": False,
+    # Modules for which function level galleries are created.  In
+    "doc_module": "vtki",
+    "image_scrapers": (vtki.Scraper(), 'matplotlib'),
+    "thumbnail_size": (350, 350),
+}
+
+
+# -- Autosummary options
 from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_documenter
 from docutils.parsers.rst import directives
 from sphinx.util.inspect import safe_getattr
-from sphinx.deprecation import RemovedInSphinx20Warning
-import re
-import warnings
-# catch annoying numpy/vtk future warning:
-warnings.simplefilter(action='ignore', category=RemovedInSphinx20Warning)
 
 class AutoAutoSummary(Autosummary):
 
@@ -158,6 +210,7 @@ class AutoAutoSummary(Autosummary):
     }
 
     required_arguments = 1
+    app = None
 
     @staticmethod
     def get_members(obj, typ, include_public=None):
@@ -166,7 +219,7 @@ class AutoAutoSummary(Autosummary):
         items = []
         for name in sorted(obj.__dict__.keys()):#dir(obj):
             try:
-                documenter = get_documenter(safe_getattr(obj, name), obj)
+                documenter = get_documenter(AutoAutoSummary.app, safe_getattr(obj, name), obj)
             except AttributeError:
                 continue
             if documenter.objtype == typ:
@@ -191,4 +244,7 @@ class AutoAutoSummary(Autosummary):
             return super(AutoAutoSummary, self).run()
 
 def setup(app):
+    AutoAutoSummary.app = app
     app.add_directive('autoautosummary', AutoAutoSummary)
+    app.add_stylesheet("style.css")
+    app.add_stylesheet("copybutton.css")

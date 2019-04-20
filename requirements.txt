@@ -2,3 +2,11 @@ numpy
 imageio<=2.4.1
 vtk
 matplotlib
+appdirs
+pytest
+pytest-cov
+codecov
+PyQt5==5.11.3
+pytest-qt
+nbval
+ipywidgets
