@@ -102,8 +102,7 @@ matrix:
 
 
 after_success:
-  - echo $REPORT_COVERAGE
-  - if [ $TRAVIS_PYTHON_VERSION == 3.7 && $REPORT_COVERAGE == "true"]; then
+  - if [($TRAVIS_PYTHON_VERSION == 3.7) && ($REPORT_COVERAGE == "true")]; then
       echo "Uploading coverage to Codecov";
       codecov;
     fi
