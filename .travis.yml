@@ -48,6 +48,8 @@ matrix:
       script: pytest -v --cov vtki
     - name: Core API 3.7
       python: 3.7
+      env:
+        - REPORT_COVERAGE: true
       # Run the test suite and generate coverage report
       script: pytest -v --cov vtki
 
@@ -62,8 +64,10 @@ matrix:
       script: pytest -v --doctest-modules vtki
     - name: Package Docstrings 3.7
       python: 3.7
+      env:
+        - REPORT_COVERAGE: true
       # Run all code examples in the docstrings
-      script: pytest -v --doctest-modules vtki
+      script: pytest -v --cov --doctest-modules vtki
 
     # Test notebooks on Python 3.6 and 3.7
     - name: Notebooks 3.6
@@ -73,6 +77,8 @@ matrix:
       script: pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
     - name: Notebooks 3.7
       python: 3.7
+      env:
+        - REPORT_COVERAGE: false
       # Now make sure notebooks are running
       # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
       script: pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
@@ -80,6 +86,8 @@ matrix:
     # Build/test documentation on 3.7 only
     - name: Documentation and Deploy 3.7
       python: 3.7
+      env:
+        - REPORT_COVERAGE: false
       # Run `make html` before `make doctest` to avoid segfault.
       # Then rerun `make html` to use updated figures from `make doctest`
       script: |
@@ -92,12 +100,12 @@ matrix:
         cd ..;
 
 
-# TODO:
-# after_success:
-#   - if [ $TRAVIS_PYTHON_VERSION == 3.7 ]; then
-#       echo "Uploading coverage to Codecov";
-#       codecov;
-#     fi
+
+after_success:
+  - if [ $TRAVIS_PYTHON_VERSION == 3.7 && $REPORT_COVERAGE == "true"]; then
+      echo "Uploading coverage to Codecov";
+      codecov;
+    fi
 
 cache:
   directories:
