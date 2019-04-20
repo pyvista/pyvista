@@ -383,6 +383,8 @@ class BasePlotter(object):
         self._first_time = True
         # Keep track of the scale
         self._labels = []
+        # Set default style
+        self._style = vtk.vtkInteractorStyleRubberBandPick()
 
         # Add self to open plotters
         _ALL_PLOTTERS[str(hex(id(self)))] = self
