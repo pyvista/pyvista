@@ -7,25 +7,15 @@ os:
 
 language: python
 
+python:
+  - '3.5'
+  - '3.6'
+  - '3.7'
+
 env:
   global:
     # Doctr deploy key for vtkiorg/vtki
     - secure: "NHUV04B//rkOUxfBd5Bk3QN3g/iQ91wdRZowNTwCIPAbznFez2mbwQcsULDeZk7blPsv1xEAnqy/T/nPyYZuHO9qU2/OElvxKspaKgcGZ9Ig/czmjrO7Y5VnU2KOZJNwBLgb6mEpDvkKoI2j9WhhcTuPcDbayk6ntXz03snYRUsn2nwHfvqDmIqMQnqSwgVejPJQxBsQSikzYzkTYT9P/z94VoSTp4UrvDVj2Tygrw4PnSGe/9x6qTolo3Ofd+REt4LBth6/lBX2OrBhHwnp9wWpEX1o98HOdf5ZUHI9v8gZacnncVXNlNu1biBlQR58bXZX/4RqRdM2No6NcszC8CbhAS+UhNdsPlbimt9L60s4MWwq+IaxCOA2/lzLVdFl8p5wDjz+DDZsdVMNyjhO3MBP5Am/4qJ0BsQEQ2vtZMF3Jvil9oiSSWcp7IGYsj3aPqEcKFm5uc2SwU1CXg4uBfgDsowqBi0t5/1rWqsJQ6p+6ZlU2NoN4ppNjuenAYyDla49J6I7wLp6Z3GwHuupE75WncVhL5BY5aYRcTDrkKuRx8nFIMe+Xuzp6NKmWaDxIwoztA0VPZ9FtMYiM5ahvHwSnZ8wIxUngjMHPuE7+e6KkCBcLt/e7DlzBQhi4kPJesbzw3NX/VmYkAoZsK5tkwKBZakKIKudpjzW73DxGE8="
-
-matrix:
-  include:
-    - python: '2.7'
-      env: TEST_DOWNLOADS = "False"
-    - python: '3.5'
-      env: TEST_DOWNLOADS = "False"
-    - python: '3.6'
-      env: TEST_DOWNLOADS = "False"
-    - python: '3.7'
-      env: TEST_DOWNLOADS = "False"
-  allow_failures:
-    - python: '3.7'
-      env: TEST_DOWNLOADS = "True"
-
 
 before_install:
   # configure a headless display
@@ -50,31 +40,41 @@ before_script:
   - echo $TRAVIS_BUILD_NUMBER
   - echo $TRAVIS_REPO_SLUG
 
-script:
-  # unset VTKI_OFFSCREEN which is set by travis CI helper
-  - unset VTKI_OFFSCREEN
-  # Run the test suite and generate coverage report
-  - pytest -v --cov vtki
-  # Run all code examples in the docstrings
-  - pytest -v --doctest-modules vtki
-  - |  # report code coverage
-    if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
-      codecov
-    fi
-  # Now make sure notebooks are running
-  # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-  - pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-  # And test the documentation
-  - cd ./docs/
-  # Add environmental varaible for offscreen plotting after pytest executes
-  - export VTKI_OFFSCREEN=True
-  # Run `make html` before `make doctest` to avoid segfault.
-  # Then rerun `make html` to use updated figures from `make doctest`
-  - set -e;
-  - make html;
-  - make doctest;
-  - make html;
-  - cd ..
+matrix:
+  include:
+    - name: Core API
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov vtki
+    - name: Package Docstrings
+      # Run all code examples in the docstrings
+      script: pytest -v --doctest-modules vtki
+    - name: Notebooks
+      # Now make sure notebooks are running
+      # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+      script: pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+    - name: Documentation
+      # Run `make html` before `make doctest` to avoid segfault.
+      # Then rerun `make html` to use updated figures from `make doctest`
+      script: |
+        cd ./docs/;
+        export VTKI_OFFSCREEN=True;
+        set -e;
+        make html;
+        make doctest;
+        make html;
+        cd ..;
+
+# script:
+  # # unset VTKI_OFFSCREEN which is set by travis CI helper
+  # - unset VTKI_OFFSCREE
+  # - export VTKI_OFFSCREEN=True
+
+# TODO:
+# after_success:
+#   - if [ $TRAVIS_PYTHON_VERSION == 3.7 ]; then
+#       echo "Uploading coverage to Codecov";
+#       codecov;
+#     fi
 
 cache:
   directories:
