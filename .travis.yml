@@ -37,11 +37,7 @@ before_script:
 
 matrix:
   include:
-    # Test the core API on Python 2.7, 3.5, 3.6, and 3.7
-    - name: Core API 2.7
-      python: 2.7
-      # Run the test suite and generate coverage report
-      script: pytest -v --cov vtki
+    # Test the core API on Python 3.5, 3.6, and 3.7
     - name: Core API 3.5
       python: 3.5
       # Run the test suite and generate coverage report
