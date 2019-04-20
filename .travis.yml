@@ -7,11 +7,6 @@ os:
 
 language: python
 
-python:
-  - '3.5'
-  - '3.6'
-  - '3.7'
-
 env:
   global:
     # Doctr deploy key for vtkiorg/vtki
@@ -45,6 +40,11 @@ matrix:
     - name: Core API
       # Run the test suite and generate coverage report
       script: pytest -v --cov vtki
+      include:
+        - python: 2.7
+        - python: 3.5
+        - python: 3.6
+        - python: 3.7
     - name: Package Docstrings
       # Run all code examples in the docstrings
       script: pytest -v --doctest-modules vtki
