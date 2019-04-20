@@ -77,16 +77,7 @@ matrix:
       # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
       script: pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
 
-    # Build/test documentation on 3.6 and 3.7 - deploy from 3.7
-    - name: Documentation 3.6
-      python: 3.6
-      # Run `make html` before `make doctest` to avoid segfault.
-      script: |
-        cd ./docs/;
-        export VTKI_OFFSCREEN=True;
-        set -e;
-        make html;
-        make doctest;
+    # Build/test documentation on 3.7 only
     - name: Documentation and Deploy 3.7
       python: 3.7
       # Run `make html` before `make doctest` to avoid segfault.
