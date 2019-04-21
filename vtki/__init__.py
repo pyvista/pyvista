@@ -51,7 +51,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # A simple flag to set when generating the documentation
 OFF_SCREEN = False
 try:
-    if os.environ['VTKI_OFF_SCREEN'] == 'True':
+    if os.environ['VTKI_OFF_SCREEN'].lower() == 'true':
         OFF_SCREEN = True
 except KeyError:
     pass
@@ -79,6 +79,13 @@ send_errors_to_logging()
 
 
 # Set up panel for interactive notebook rendering
+try:
+    if os.environ['VTKI_USE_PANEL'].lower() == 'false':
+        rcParams['use_panel'] = False
+    elif os.environ['VTKI_USE_PANEL'].lower() == 'true':
+        rcParams['use_panel'] = True
+except KeyError:
+    pass
 try:
     import panel
     panel.extension('vtk')

@@ -295,7 +295,7 @@ def system_supports_plotting():
 
     """
     try:
-        if os.environ['ALLOW_PLOTTING'] == 'True':
+        if os.environ['ALLOW_PLOTTING'].lower() == 'true':
             return True
     except KeyError:
         pass

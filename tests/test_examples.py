@@ -11,7 +11,7 @@ from vtki.plotting import system_supports_plotting
 
 TEST_DOWNLOADS = False
 try:
-    if os.environ['TEST_DOWNLOADS'] == 'True':
+    if os.environ['TEST_DOWNLOADS'].lower() == 'true':
         TEST_DOWNLOADS = True
 except KeyError:
     pass

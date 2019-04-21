@@ -29,8 +29,6 @@ if os.name == 'nt' and (py_ver < 3 or '64' not in platform.architecture()[0]):
     warnings.warn('\nYou will need to install VTK manually.' +
                   '  Try using Anaconda.  See:\n'
                   + 'https://anaconda.org/anaconda/vtk')
-# elif os.environ.get('READTHEDOCS') != 'True':
-    # pass  # don't install vtk for readthedocs
 else:
     install_requires.append(['vtk'])
 
