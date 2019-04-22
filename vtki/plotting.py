@@ -76,7 +76,8 @@ rcParams = {
     'lighting' : True,
     'interactive' : False,
     'render_points_as_spheres' : False,
-    'use_panel' : True,
+    'use_panel' : False,#True,
+    'transparent_background' : False
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -341,7 +342,7 @@ class BasePlotter(object):
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=1.0):
         """ Initialize base plotter """
-        self.image_transparent_background = False
+        self.image_transparent_background = rcParams['transparent_background']
 
         # by default add border for multiple plots
         if border is None:
@@ -2302,7 +2303,7 @@ class BasePlotter(object):
 
         return image
 
-    def screenshot(self, filename=None, transparent_background=False,
+    def screenshot(self, filename=None, transparent_background=None,
                    return_img=None, window_size=None):
         """
         Takes screenshot at current camera position
@@ -2338,6 +2339,8 @@ class BasePlotter(object):
             self.window_size = window_size
 
         # configure image filter
+        if transparent_background is None:
+            transparent_background = rcParams['transparent_background']
         self.image_transparent_background = transparent_background
 
         # This if statement allows you to save screenshots of closed plotters
