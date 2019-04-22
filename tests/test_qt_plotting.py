@@ -13,12 +13,6 @@ from vtki.plotting import system_supports_plotting
 NO_PLOTTING = not system_supports_plotting()
 
 
-
-# dummy class to allow module init
-class QMainWindow(object):
-    pass
-
-
 try:
     import PyQt5
     from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QAction)
