@@ -579,7 +579,8 @@ class PolyData(vtkPolyData, vtki.Common):
             return PolyData(trifilter.GetOutput())
 
 
-    def smooth(self, n_iter=20, convergence=0.0):
+    def smooth(self, n_iter=20, convergence=0.0, edge_angle=15, feature_angle=45,
+               boundary_smoothing=True, feature_smoothing=False):
         """Adjust point coordinates using Laplacian smoothing.
         The effect is to "relax" the mesh, making the cells better shaped and
         the vertices more evenly distributed.
@@ -587,16 +588,33 @@ class PolyData(vtkPolyData, vtki.Common):
         Parameters
         ----------
         n_iter : int
-            number of iterations for Laplacian smoothing,
+            Number of iterations for Laplacian smoothing,
 
-        conversion : float, optional
-            convergence criterion for the iteration process. Smaller numbers
+        convergence : float, optional
+            Convergence criterion for the iteration process. Smaller numbers
             result in more smoothing iterations. Range from (0 to 1).
+
+        edge_angle : float, optional
+            Edge angle to control smoothing along edges (either interior or boundary).
+
+        feature_angle : float, optional
+            Feature angle for sharp edge identification.
+
+        boundary_smoothing : bool, optional
+            Boolean flag to control smoothing of boundary edges.
+
+        feature_smoothing : bool, optional
+            Boolean flag to control smoothing of feature edges.
+
         """
         alg = vtk.vtkSmoothPolyDataFilter()
         alg.SetInputData(self)
         alg.SetNumberOfIterations(n_iter)
         alg.SetConvergence(convergence)
+        alg.SetFeatureEdgeSmoothing(feature_smoothing)
+        alg.SetFeatureAngle(feature_angle)
+        alg.SetEdgeAngle(edge_angle)
+        alg.SetBoundarySmoothing(boundary_smoothing)
         alg.Update()
         return _get_output(alg)
 
