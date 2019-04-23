@@ -290,7 +290,7 @@ class PolyData(vtkPolyData, vtki.Common):
         featureEdges.ManifoldEdgesOff()
         featureEdges.SetFeatureAngle(angle)
         featureEdges.Update()
-        edges = featureEdges.GetOutput()
+        edges = _get_output(featureEdges)
         orig_id = vtki.point_scalar(edges, 'point_ind')
 
         return np.in1d(self.point_arrays['point_ind'], orig_id,
@@ -338,10 +338,11 @@ class PolyData(vtkPolyData, vtki.Common):
         bfilter.SetTolerance(tolerance)
         bfilter.Update()
 
+        mesh = _get_output(bfilter)
         if inplace:
-            self.overwrite(bfilter.GetOutput())
+            self.overwrite(mesh)
         else:
-            return PolyData(bfilter.GetOutput())
+            return mesh
 
     def __add__(self, mesh):
         """ adds two meshes together """
@@ -371,10 +372,11 @@ class PolyData(vtkPolyData, vtki.Common):
         vtkappend.AddInputData(mesh)
         vtkappend.Update()
 
+        mesh = _get_output(vtkappend)
         if inplace:
-            self.overwrite(vtkappend.GetOutput())
+            self.overwrite(mesh)
         else:
-            return PolyData(vtkappend.GetOutput())
+            return mesh
 
     def boolean_union(self, mesh, inplace=False):
         """
@@ -401,10 +403,11 @@ class PolyData(vtkPolyData, vtki.Common):
         bfilter.ReorientDifferenceCellsOff()
         bfilter.Update()
 
+        mesh = _get_output(bfilter)
         if inplace:
-            self.overwrite(bfilter.GetOutput())
+            self.overwrite(mesh)
         else:
-            return PolyData(bfilter.GetOutput())
+            return mesh
 
     def boolean_difference(self, mesh, inplace=False):
         """
@@ -432,10 +435,11 @@ class PolyData(vtkPolyData, vtki.Common):
         bfilter.ReorientDifferenceCellsOff()
         bfilter.Update()
 
+        mesh = _get_output(bfilter)
         if inplace:
-            self.overwrite(bfilter.GetOutput())
+            self.overwrite(mesh)
         else:
-            return PolyData(bfilter.GetOutput())
+            return mesh
 
     def curvature(self, curv_type='mean'):
         """
@@ -478,7 +482,7 @@ class PolyData(vtkPolyData, vtki.Common):
         curvefilter.Update()
 
         # Compute and return curvature
-        curv = curvefilter.GetOutput()
+        curv = _get_output(curvefilter)
         return vtk_to_numpy(curv.GetPointData().GetScalars())
 
     def save(self, filename, binary=True):
@@ -1195,22 +1199,13 @@ class PolyData(vtkPolyData, vtki.Common):
             Largest connected set in mesh
 
         """
-        connect = vtk.vtkConnectivityFilter()
-        connect.SetExtractionModeToLargestRegion()
-
-        connect.SetInputData(self)
-        connect.Update()
-
-        geofilter = vtk.vtkGeometryFilter()
-
-        geofilter.SetInputData(connect.GetOutput())
-        geofilter.Update()
-
-        mesh = _get_output(geofilter)
+        mesh =  self.connectivity(largest=True)
         if inplace:
             self.overwrite(mesh)
         else:
             return mesh
+
+
 
     def fill_holes(self, hole_size, inplace=False):  # pragma: no cover
         """
@@ -1474,7 +1469,7 @@ class PolyData(vtkPolyData, vtki.Common):
                              label='Intersection Points')
             plotter.add_legend()
             plotter.add_axes()
-            plotter.plot()
+            plotter.show()
 
         return intersection_points, intersection_cells
 
@@ -1486,7 +1481,7 @@ class PolyData(vtkPolyData, vtki.Common):
                                notebook=kwargs.pop('notebook', None))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
         plotter.add_mesh(self, legend='Mesh', **kwargs)
-        plotter.plot()
+        return plotter.show()
 
     def plot_normals(self, show_mesh=True, mag=1.0, flip=False,
                      use_every=1, **kwargs):
@@ -1503,7 +1498,7 @@ class PolyData(vtkPolyData, vtki.Common):
             normals *= -1
         plotter.add_arrows(self.points[::use_every],
                            normals[::use_every], mag=mag)
-        return plotter.plot()
+        return plotter.show()
 
     def remove_points(self, remove, mode='any', keep_scalars=True, inplace=False):
         """
@@ -2132,7 +2127,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         extract_sel.SetInputData(0, self)
         extract_sel.SetInputData(1, selection)
         extract_sel.Update()
-        subgrid = UnstructuredGrid(extract_sel.GetOutput())
+        subgrid = _get_output(extract_sel)
 
         # extracts only in float32
         if self.points.dtype is not np.dtype('float32'):
@@ -2231,7 +2226,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             append_filter.AddInputData(self)
 
         append_filter.Update()
-        merged = UnstructuredGrid(append_filter.GetOutput())
+        merged = _get_output(append_filter)
         if inplace:
             self.DeepCopy(merged)
         else:

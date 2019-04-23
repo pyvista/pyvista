@@ -9,12 +9,12 @@ from vtki import examples
 from vtki.plotting import system_supports_plotting
 
 radius = 0.5
-sphere = vtki.Sphere(radius, theta_resolution=10, phi_resolution=10)
+SPHERE = vtki.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
-sphere_shifted = vtki.Sphere(center=[0.5, 0.5, 0.5],
+SPHERE_SHIFTED = vtki.Sphere(center=[0.5, 0.5, 0.5],
                              theta_resolution=10, phi_resolution=10)
 
-dense_sphere = vtki.Sphere(radius, theta_resolution=100, phi_resolution=100)
+SPHERE_DENSE = vtki.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 try:
     test_path = os.path.dirname(os.path.abspath(__file__))
@@ -37,6 +37,7 @@ def test_init():
 
 
 def test_init_from_pdata():
+    sphere = SPHERE.copy()
     mesh = vtki.PolyData(sphere, deep=True)
     assert mesh.n_points
     assert mesh.n_cells
@@ -132,16 +133,19 @@ def test_invalid_file():
         # vtki.PolyData(examples.hexbeamfile)
 
 def test_geodesic():
+    sphere = SPHERE.copy()
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
     assert isinstance(geodesic, vtki.PolyData)
 
 
 def test_geodesic_distance():
+    sphere = SPHERE.copy()
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
 
 
 def test_ray_trace():
+    sphere = SPHERE.copy()
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
     assert np.any(points)
     assert np.any(ind)
@@ -149,6 +153,7 @@ def test_ray_trace():
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_ray_trace_plot():
+    sphere = SPHERE.copy()
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1], plot=True, first_point=True,
                                    off_screen=True)
     assert np.any(points)
@@ -157,28 +162,35 @@ def test_ray_trace_plot():
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_curvature():
+    sphere = SPHERE.copy()
     cpos = sphere.plot_curvature(off_screen=True)
     assert isinstance(cpos, list)
 
 
 def test_edge_mask():
+    sphere = SPHERE.copy()
     mask = sphere.edge_mask(10)
 
 
 def test_boolean_cut_inplace():
-    sub_mesh = sphere.copy()
+    sub_mesh = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
     sub_mesh.boolean_cut(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 
 
 def test_subtract():
+    sphere = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
     sub_mesh = sphere - sphere_shifted
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
 
 
 def test_add():
+    sphere = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
     add_mesh = sphere + sphere_shifted
 
     npoints = sphere.n_points + sphere_shifted.n_points
@@ -189,6 +201,8 @@ def test_add():
 
 
 def test_boolean_add_inplace():
+    sphere = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
     sub_mesh = sphere.copy()
     sub_mesh.boolean_add(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
@@ -196,6 +210,8 @@ def test_boolean_add_inplace():
 
 
 def test_boolean_union_inplace():
+    sphere = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
     sub_mesh = sphere.boolean_union(sphere_shifted)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
@@ -207,6 +223,8 @@ def test_boolean_union_inplace():
 
 
 def test_boolean_difference():
+    sphere = SPHERE.copy()
+    sphere_shifted = SPHERE_SHIFTED.copy()
     sub_mesh = sphere.copy()
     sub_mesh.boolean_difference(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
@@ -219,12 +237,14 @@ def test_boolean_difference():
 
 @pytest.mark.parametrize('curv_type', ['mean', 'gaussian', 'maximum', 'minimum'])
 def test_curvature(curv_type):
+    sphere = SPHERE.copy()
     curv = sphere.curvature(curv_type)
     assert np.any(curv)
     assert curv.size == sphere.n_points
 
 
 def test_invalid_curvature():
+    sphere = SPHERE.copy()
     with pytest.raises(Exception):
         curv = sphere.curvature('not valid')
 
@@ -232,6 +252,7 @@ def test_invalid_curvature():
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['stl', 'vtk', 'ply', 'vtp'])
 def test_save(extension, binary, tmpdir):
+    sphere = SPHERE.copy()
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     sphere.save(filename, binary)
 
@@ -240,6 +261,7 @@ def test_save(extension, binary, tmpdir):
     assert mesh.points.shape == sphere.points.shape
 
 def test_invalid_save():
+    sphere = SPHERE.copy()
     with pytest.raises(Exception):
         sphere.save('file.abc')
 
@@ -253,6 +275,7 @@ def test_tri_filter():
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
 def test_subdivision(subfilter):
+    sphere = SPHERE.copy()
     mesh = sphere.subdivide(1, subfilter)
     assert mesh.n_points > sphere.n_points
     assert mesh.n_faces > sphere.n_faces
@@ -264,22 +287,27 @@ def test_subdivision(subfilter):
 
 
 def test_invalid_subdivision():
+    sphere = SPHERE.copy()
     with pytest.raises(Exception):
         mesh = sphere.subdivide(1, 'not valid')
 
 
 def test_extract_edges():
-    edges = sphere.extract_edges(90)
+    # Test extraction of NO edges
+    mesh = SPHERE.copy()
+    edges = mesh.extract_edges(90)
     assert not edges.n_points
 
-    more_edges = sphere.extract_edges(10)
+    mesh = vtki.Cube() # use a mesh that actually has strongly defined edges
+    more_edges = mesh.extract_edges(10)
     assert more_edges.n_points
 
-    sphere.extract_edges(10, inplace=True)
-    assert sphere.n_points == more_edges.n_points
+    mesh.extract_edges(10, inplace=True)
+    assert mesh.n_points == more_edges.n_points
 
 
 def test_decimate():
+    sphere = SPHERE.copy()
     mesh = sphere.copy()
     mesh = sphere.decimate(0.5)
     assert mesh.n_points < sphere.n_points
@@ -291,6 +319,7 @@ def test_decimate():
 
 
 def test_decimate_pro():
+    sphere = SPHERE.copy()
     mesh = sphere.copy()
     mesh = sphere.decimate_pro(0.5)
     assert mesh.n_points < sphere.n_points
@@ -302,11 +331,13 @@ def test_decimate_pro():
 
 
 def test_center_of_mass():
+    sphere = SPHERE.copy()
     assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
 
 
 def test_compute_normals():
-    sphere_normals = sphere.copy()
+    sphere = SPHERE.copy()
+    sphere_normals = SPHERE.copy()
     sphere_normals.compute_normals(inplace=True)
 
     point_normals = sphere_normals.point_arrays['Normals']
@@ -316,18 +347,22 @@ def test_compute_normals():
 
 
 def test_point_normals():
+    sphere = SPHERE.copy()
     assert sphere.point_normals.shape[0] == sphere.n_points
 
 
 def test_cell_normals():
+    sphere = SPHERE.copy()
     assert sphere.cell_normals.shape[0] == sphere.n_cells
 
 
 def test_face_normals():
+    sphere = SPHERE.copy()
     assert sphere.face_normals.shape[0] == sphere.n_faces
 
 
 def test_clip_plane():
+    sphere = SPHERE.copy()
     clipped_sphere = sphere.copy()
     clipped_sphere = sphere.clip_with_plane([0, 0, 0], [0, 0, -1])
     faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
@@ -339,6 +374,7 @@ def test_clip_plane():
 
 
 def test_extract_largest():
+    sphere = SPHERE.copy()
     mesh = sphere + vtki.Sphere(0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
     assert largest.n_faces == sphere.n_faces
@@ -348,6 +384,7 @@ def test_extract_largest():
 
 
 def test_clean():
+    sphere = SPHERE.copy()
     mesh = sphere + sphere
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1E-5)
@@ -358,35 +395,41 @@ def test_clean():
 
 
 def test_area():
+    dense_sphere = SPHERE_DENSE.copy()
     radius = 0.5
     ideal_area = 4*pi*radius**2
     assert np.isclose(dense_sphere.area, ideal_area, rtol=1E-3)
 
 
 def test_volume():
+    dense_sphere = SPHERE_DENSE.copy()
     ideal_volume = (4/3.0)*pi*radius**3
     assert np.isclose(dense_sphere.volume, ideal_volume, rtol=1E-3)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_boundaries():
-    sphere.plot_boundaries(off_screen=True)
+    # make sure to plot an object that has boundaries
+    vtki.Cube().plot_boundaries(off_screen=True)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_normals():
+    sphere = SPHERE.copy()
     sphere.plot_normals(off_screen=True)
 
 
 def test_remove_points_any():
+    sphere = SPHERE.copy()
     remove_mask = np.zeros(sphere.n_points, np.bool)
     remove_mask[:3] = True
     sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
-    assert sphere_mod.n_points + remove_mask.sum() == sphere.n_points
+    assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
     assert np.allclose(sphere_mod.points, sphere.points[ind])
 
 
 def test_remove_points_all():
+    sphere = SPHERE.copy()
     sphere_copy = sphere.copy()
     sphere_copy.cell_arrays['ind'] = np.arange(sphere_copy.n_faces)
     remove = sphere.faces[1:4]
