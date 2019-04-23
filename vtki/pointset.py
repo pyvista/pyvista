@@ -573,14 +573,15 @@ class PolyData(vtkPolyData, vtki.Common):
         trifilter.PassVertsOff()
         trifilter.PassLinesOff()
         trifilter.Update()
-        if inplace:
-            self.overwrite(trifilter.GetOutput())
-        else:
-            return PolyData(trifilter.GetOutput())
 
+        mesh = _get_output(trifilter)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def smooth(self, n_iter=20, convergence=0.0, edge_angle=15, feature_angle=45,
-               boundary_smoothing=True, feature_smoothing=False):
+               boundary_smoothing=True, feature_smoothing=False, inplace=False):
         """Adjust point coordinates using Laplacian smoothing.
         The effect is to "relax" the mesh, making the cells better shaped and
         the vertices more evenly distributed.
@@ -606,6 +607,14 @@ class PolyData(vtkPolyData, vtki.Common):
         feature_smoothing : bool, optional
             Boolean flag to control smoothing of feature edges.
 
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtki.PolyData
+            Decimated mesh. None when inplace=True.
+
         """
         alg = vtk.vtkSmoothPolyDataFilter()
         alg.SetInputData(self)
@@ -617,7 +626,11 @@ class PolyData(vtkPolyData, vtki.Common):
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.Update()
 
-        return _get_output(alg)
+        mesh = _get_output(alg)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def decimate_pro(self, reduction, feature_angle=45.0, split_angle=75.0, splitting=True,
                      pre_split_mesh=False, preserve_topology=False, inplace=False):
@@ -682,7 +695,7 @@ class PolyData(vtkPolyData, vtki.Common):
             return mesh
 
     def tube(self, radius=None, scalars=None, capping=True, n_sides=20,
-             radius_factor=10, preference='point'):
+             radius_factor=10, preference='point', inplace=False):
         """Generate a tube around each input line. The radius of the tube can be
         set to linearly vary with a scalar value.
 
@@ -705,6 +718,15 @@ class PolyData(vtkPolyData, vtki.Common):
 
         preference : str
             The field preference when searching for the scalar array by name
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtki.PolyData
+            Tube-filtered mesh. None when inplace=True.
+
         """
         if n_sides < 3:
             n_sides = 3
@@ -726,7 +748,12 @@ class PolyData(vtkPolyData, vtki.Common):
             tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
         tube.Update()
-        return _get_output(tube)
+
+        mesh = _get_output(tube)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def subdivide(self, nsub, subfilter='linear', inplace=False):
         """
@@ -792,7 +819,8 @@ class PolyData(vtkPolyData, vtki.Common):
         sfilter.SetNumberOfSubdivisions(nsub)
         sfilter.SetInputData(self)
         sfilter.Update()
-        submesh = PolyData(sfilter.GetOutput())
+
+        submesh = _get_output(sfilter)
         if inplace:
             self.overwrite(submesh)
         else:
@@ -800,7 +828,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     def extract_edges(self, feature_angle=30, boundary_edges=True,
                      non_manifold_edges=True, feature_edges=True,
-                     manifold_edges=True):
+                     manifold_edges=True, inplace=False):
         """
         Extracts edges from a surface.  From vtk documentation, the edges are
         one of the following
@@ -828,10 +856,13 @@ class PolyData(vtkPolyData, vtki.Common):
         manifold_edges : bool, optional
             Defaults to True
 
+        inplace : bool, optional
+            Return new mesh or overwrite input.
+
         Returns
         -------
         edges : vtki.vtkPolyData
-            Extracted edges
+            Extracted edges. None if inplace=True.
 
         """
         featureEdges = vtk.vtkFeatureEdges()
@@ -843,13 +874,18 @@ class PolyData(vtkPolyData, vtki.Common):
         featureEdges.SetFeatureEdges(feature_edges)
         featureEdges.SetColoring(False)
         featureEdges.Update()
-        return PolyData(featureEdges.GetOutput())
+
+        mesh = _get_output(featureEdges)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def decimate(self, target_reduction, volume_preservation=False,
                  attribute_error=False, scalars=True, vectors=True,
                  normals=False, tcoords=True, tensors=True, scalars_weight=0.1,
                  vectors_weight=0.1, normals_weight=0.1, tcoords_weight=0.1,
-                 tensors_weight=0.1, inplace=True):
+                 tensors_weight=0.1, inplace=False):
         """
         Reduces the number of triangles in a triangular mesh using
         vtkQuadricDecimation.
@@ -940,10 +976,11 @@ class PolyData(vtkPolyData, vtki.Common):
         decimate.SetInputData(self)
         decimate.Update()
 
+        mesh = _get_output(decimate)
         if inplace:
-            self.overwrite(decimate.GetOutput())
+            self.overwrite(mesh)
         else:
-            return PolyData(decimate.GetOutput())
+            return mesh
 
     def center_of_mass(self, scalars_weight=False):
         """
@@ -965,10 +1002,9 @@ class PolyData(vtkPolyData, vtki.Common):
         comfilter.Update()
         return np.array(comfilter.GetCenter())
 
-    def compute_normals(self, cell_normals=True, point_normals=True,
-                        split_vertices=False, flip_normals=False,
-                        consistent_normals=True, auto_orient_normals=False,
-                        non_manifold_traversal=True, feature_angle=30.0, inplace=True):
+    def compute_normals(self, cell_normals=True, point_normals=True, split_vertices=False,
+                        flip_normals=False, consistent_normals=True, auto_orient_normals=False,
+                        non_manifold_traversal=True, feature_angle=30.0, inplace=False):
         """
         Compute point and/or cell normals for a mesh.
 
@@ -1023,7 +1059,7 @@ class PolyData(vtkPolyData, vtki.Common):
             edge is considered "sharp". Defaults to 30.0.
 
         inplace : bool, optional
-            Updates mesh in-place while returning nothing. Defaults to True.
+            Updates mesh in-place while returning nothing. Defaults to False.
 
         Returns
         -------
@@ -1055,16 +1091,17 @@ class PolyData(vtkPolyData, vtki.Common):
         normal.SetInputData(self)
         normal.Update()
 
-        output = normal.GetOutput()
+        mesh = _get_output(normal)
         if point_normals:
-            output.GetPointData().SetActiveNormals('Normals')
+            mesh.GetPointData().SetActiveNormals('Normals')
         if cell_normals:
-            output.GetCellData().SetActiveNormals('Normals')
+            mesh.GetCellData().SetActiveNormals('Normals')
+
 
         if inplace:
-            self.overwrite(output)
+            self.overwrite(mesh)
         else:
-            return PolyData(output)
+            return mesh
 
     @property
     def point_normals(self):
@@ -1083,7 +1120,7 @@ class PolyData(vtkPolyData, vtki.Common):
         """ Cell normals  """
         return self.cell_normals
 
-    def clip_with_plane(self, origin, normal, value=0, inplace=True):
+    def clip_with_plane(self, origin, normal, value=0, inplace=False):
         """
         Clip a vtki.PolyData or vtk.vtkPolyData with a plane.
 
@@ -1108,7 +1145,7 @@ class PolyData(vtkPolyData, vtki.Common):
         Returns
         -------
         mesh : vtki.PolyData
-            Updated mesh with cell and point normals if inplace=False
+            Updated mesh with cell and point normals if inplace=False. Otherwise None.
 
         Notes
         -----
@@ -1129,10 +1166,11 @@ class PolyData(vtkPolyData, vtki.Common):
         clip.SetInputData(self)
         clip.Update()
 
+        mesh = _get_output(clip)
         if inplace:
-            self.overwrite(clip.GetOutput())
+            self.overwrite(mesh)
         else:
-            return PolyData(clip.GetOutput())
+            return mesh
 
     def extract_largest(self, inplace=False):
         """
@@ -1164,12 +1202,13 @@ class PolyData(vtkPolyData, vtki.Common):
         geofilter.SetInputData(connect.GetOutput())
         geofilter.Update()
 
+        mesh = _get_output(geofilter)
         if inplace:
-            self.overwrite(geofilter.GetOutput())
+            self.overwrite(mesh)
         else:
-            return PolyData(geofilter.GetOutput())
+            return mesh
 
-    def fill_holes(self, hole_size):  # pragma: no cover
+    def fill_holes(self, hole_size, inplace=False):  # pragma: no cover
         """
         Fill holes in a vtki.PolyData or vtk.vtkPolyData object.
 
@@ -1186,22 +1225,30 @@ class PolyData(vtkPolyData, vtki.Common):
             this is an approximate area; the actual area cannot be computed
             without first triangulating the hole.
 
+        inplace : bool, optional
+            Return new mesh or overwrite input.
+
         Returns
         -------
         mesh : vtki.PolyData
             Mesh with holes filled.  None when inplace=True
 
         """
-        logging.warning('Known to segfault.  Use at your own risk')
+        logging.warning('vtki.pointset.PolyData.fill_holes is known to segfault. ' +
+                        'Use at your own risk')
         fill = vtk.vtkFillHolesFilter()
         fill.SetHoleSize(hole_size)
         fill.SetInputData(self)
         fill.Update()
-        pdata = PolyData(fill.GetOutput(), deep=True)
-        return pdata
+
+        mesh = _get_output(fill)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def clean(self, point_merging=True, merge_tol=None, lines_to_points=True,
-              polys_to_lines=True, strips_to_polys=True, inplace=True):
+              polys_to_lines=True, strips_to_polys=True, inplace=False):
         """
         Cleans mesh by merging duplicate points, remove unused
         points, and/or remove degenerate cells.
@@ -1300,7 +1347,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         return self._obbTree
 
-    def geodesic(self, start_vertex, end_vertex):
+    def geodesic(self, start_vertex, end_vertex, inplace=False):
         """
         Calculates the geodesic path betweeen two vertices using Dijkstra's
         algorithm.
@@ -1330,7 +1377,10 @@ class PolyData(vtkPolyData, vtki.Common):
         dijkstra.Update()
 
         output = _get_output(dijkstra)
-        return output
+        if inplace:
+            self.overwrite(output)
+        else:
+            return output
 
     def geodesic_distance(self, start_vertex, end_vertex):
         """
@@ -1544,7 +1594,7 @@ class PolyData(vtkPolyData, vtki.Common):
         f = self.faces.reshape((-1, 4))
         f[:, 1:] = f[:, 1:][:, ::-1]
 
-    def delaunay_2d(self, tol=1e-05, alpha=0.0, offset=1.0, bound=False):
+    def delaunay_2d(self, tol=1e-05, alpha=0.0, offset=1.0, bound=False, inplace=False):
         """Apply a delaunay 2D filter along the best fitting plane"""
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
@@ -1554,7 +1604,12 @@ class PolyData(vtkPolyData, vtki.Common):
         alg.SetOffset(offset)
         alg.SetBoundingTriangulation(bound)
         alg.Update()
-        return _get_output(alg)
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def delauney_2d(self):
         """DEPRECATED. Please see :func:`vtki.PolyData.delaunay_2d`"""
@@ -1609,7 +1664,7 @@ class PointGrid(vtki.Common):
         surf = self.extract_surface().tri_filter()
         return surf.volume
 
-    def extract_surface(self, pass_pointid=True, pass_cellid=True):
+    def extract_surface(self, pass_pointid=True, pass_cellid=True, inplace=False):
         """
         Extract surface mesh of the grid
 
@@ -1623,6 +1678,9 @@ class PointGrid(vtki.Common):
             Adds a cell scalar "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
+        inplace : bool, optional
+            Return new mesh or overwrite input.
+
         Returns
         -------
         extsurf : vtki.PolyData
@@ -1635,7 +1693,12 @@ class PointGrid(vtki.Common):
         if pass_cellid:
             surf_filter.PassThroughPointIdsOn()
         surf_filter.Update()
-        return vtki.PolyData(surf_filter.GetOutput())
+
+        mesh = _get_output(surf_filter)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def surface_indices(self):
         """
@@ -1652,7 +1715,7 @@ class PointGrid(vtki.Common):
 
     def extract_edges(self, feature_angle=30, boundary_edges=True,
                       non_manifold_edges=True, feature_edges=True,
-                      manifold_edges=True):
+                      manifold_edges=True, inplace=False):
         """
         Extracts edges from the surface of the grid.  From vtk documentation:
 
@@ -1662,7 +1725,6 @@ class PointGrid(vtki.Common):
             3) feature edges (edges used by two triangles and whose
                dihedral angle > feature_angle)
             4) manifold edges (edges used by exactly two polygons).
-
 
         Parameters
         ----------
@@ -1681,6 +1743,9 @@ class PointGrid(vtki.Common):
         manifold_edges : bool, optional
             Defaults to True
 
+        inplace : bool, optional
+            Return new mesh or overwrite input.
+
         Returns
         -------
         edges : vtki.vtkPolyData
@@ -1690,7 +1755,7 @@ class PointGrid(vtki.Common):
         surf = self.extract_surface()
         return surf.extract_edges(feature_angle, boundary_edges,
                                   non_manifold_edges, feature_edges,
-                                  manifold_edges)
+                                  manifold_edges, inplace=inplace)
 
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
@@ -2101,7 +2166,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     #     extract_sel.Update()
     #     return UnstructuredGrid(extract_sel.GetOutput())
 
-    def merge(self, grid=None, merge_points=True, inplace=True,
+    def merge(self, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
         """
         Join one or many other grids to this grid.  Grid is updated
