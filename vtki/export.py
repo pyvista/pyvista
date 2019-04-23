@@ -140,7 +140,8 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
     if compress:
         with open(ppath, 'rb') as f_in, gzip.open(os.path.join(data_dir, pMd5 + '.gz'), 'wb') as f_out:
             shutil.copyfileobj(f_in, f_out)
-            os.remove(ppath)
+        # Close then remove.
+        os.remove(ppath)
 
     root['ref'] = get_ref(os.path.relpath(data_dir, dataset_dir), pMd5)
     root['vtkClass'] = 'vtkDataArray'

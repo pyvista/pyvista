@@ -5,12 +5,6 @@ import numpy as np
 # Set a document-friendly plotting theme
 vtki.set_plot_theme('document')
 
-# Example mesh of Queen Nefertiti
-mesh = examples.download_nefertiti()
-# Render the dataset
-mesh.plot(cpos=[-1,-1,0.2], eye_dome_lighting=True,
-          screenshot='nefertiti.png')
-
 # Load an example uniform grid
 dataset = examples.load_uniform()
 # Apply a threshold over a data range
@@ -24,6 +18,7 @@ glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere()) # Figure 4 D
 # Two by two comparison
 vtki.plot_compare_four(threshed, contours, slices, glyphs,
                         {'show_scalar_bar':False},
+                        {'border':False},
                         camera_position=[-2,5,3], outline=outline,
                         screenshot='filters.png')
 

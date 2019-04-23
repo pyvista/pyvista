@@ -103,6 +103,10 @@ class PolyData(vtkPolyData, vtki.Common):
         return vtki.Common.__repr__(self)
 
 
+    def __str__(self):
+        return vtki.Common.__str__(self)
+
+
     def _load_file(self, filename):
         """
         Load a surface mesh from a mesh file.
@@ -1347,6 +1351,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         return self._obbTree
 
+
     def geodesic(self, start_vertex, end_vertex, inplace=False):
         """
         Calculates the geodesic path betweeen two vertices using Dijkstra's
@@ -1377,10 +1382,12 @@ class PolyData(vtkPolyData, vtki.Common):
         dijkstra.Update()
 
         output = _get_output(dijkstra)
+
         if inplace:
             self.overwrite(output)
         else:
             return output
+
 
     def geodesic_distance(self, start_vertex, end_vertex):
         """
@@ -1828,6 +1835,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
     def __repr__(self):
         return vtki.Common.__repr__(self)
+
+
+    def __str__(self):
+        return vtki.Common.__str__(self)
 
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
@@ -2288,6 +2299,10 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     def __repr__(self):
         return vtki.Common.__repr__(self)
+
+
+    def __str__(self):
+        return vtki.Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):

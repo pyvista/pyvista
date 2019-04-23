@@ -40,6 +40,9 @@ def _retrieve_file(url, filename):
     saved_file, resp = urlretrieve(url)
     # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
     shutil.move(saved_file, local_path)
+    if vtki.get_ext(local_path) in ['.zip']:
+        _decompress(local_path)
+        local_path = local_path[:-4]
     return local_path, resp
 
 def _download_file(filename):
@@ -48,9 +51,6 @@ def _download_file(filename):
 
 def _download_and_read(filename, texture=False):
     saved_file, _ = _download_file(filename)
-    if vtki.get_ext(saved_file) in ['.zip']:
-        _decompress(saved_file)
-        saved_file = saved_file[:-4]
     if texture:
         return vtki.read_texture(saved_file)
     return vtki.read(saved_file)
@@ -123,7 +123,12 @@ def download_exodus():
     """Sample ExodusII data file"""
     return _download_and_read('mesh_fs8.exo')
 
-
 def download_nefertiti():
-    """ Download mesh of Queen Nefertiti """
+    """Download mesh of Queen Nefertiti"""
     return _download_and_read('Nefertiti.obj.zip')
+
+def download_blood_vessels():
+    """data representing the bifurcation of blood vessels."""
+    local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
+    filename = os.path.join(local_path, 'T0000000500.pvtu')
+    return vtki.read(filename)

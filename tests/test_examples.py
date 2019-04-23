@@ -7,17 +7,17 @@ import vtk
 
 import vtki
 from vtki import examples
-from vtki.plotting import running_xserver
+from vtki.plotting import system_supports_plotting
 
 TEST_DOWNLOADS = False
 try:
-    if os.environ['TEST_DOWNLOADS'] == 'True':
+    if os.environ['TEST_DOWNLOADS'].lower() == 'true':
         TEST_DOWNLOADS = True
 except KeyError:
     pass
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_docexample_advancedplottingwithnumpy():
     import vtki
     import numpy as np
@@ -44,7 +44,7 @@ def test_docexample_advancedplottingwithnumpy():
     plotter.close()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_creatingagifmovie(tmpdir, off_screen=True):
     if tmpdir:
         filename = str(tmpdir.mkdir("tmpdir").join('wave.gif'))
@@ -84,18 +84,18 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
     plotter.close()
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_wave():
     points = examples.plot_wave(wavetime=0.1, off_screen=True)
     assert isinstance(points, np.ndarray)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_beam_example():
     examples.beam_example(off_screen=True)
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_ants_plane():
     examples.plot_ants_plane(off_screen=True)
 
@@ -176,5 +176,10 @@ if TEST_DOWNLOADS:
     def test_download_nefertiti():
         data = examples.download_nefertiti()
         assert data.n_cells
+
+    def test_download_blood_vessels():
+        """Tests the parallel VTU reader"""
+        data = examples.download_blood_vessels()
+        assert isinstance(data, vtki.UnstructuredGrid)
 
 # End of download tests

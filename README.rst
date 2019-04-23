@@ -3,6 +3,9 @@ vtki
 
 `A Streamlined Python Interface for the Visualization Toolkit`
 
+.. image:: https://zenodo.org/badge/92974124.svg
+   :target: https://zenodo.org/badge/latestdoi/92974124
+
 
 .. |pypi| image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/vtki/
@@ -44,6 +47,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 
 Documentation
 =============
+
 Refer to the `documentation <http://docs.vtki.org/>`_ for detailed
 installation and usage details.
 
@@ -58,7 +62,9 @@ of the developers an email. The project support team can be reached at
 
 Installation
 ============
-Installation is simply::
+
+``vtki`` can be installed from `PyPI <http://pypi.python.org/pypi/vtki>`_
+using ``pip`` on Python >= 3.5::
 
     pip install vtki
 

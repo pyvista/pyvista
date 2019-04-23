@@ -30,9 +30,12 @@ class Observer:
     @staticmethod
     def parse_message(message):
         # Message format
-        regex = re.compile('([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s(.+):\s(.+)')
-        kind, path, address, alert = regex.findall(message)[0]
-        return kind, path, address, alert
+        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s(.+):\s(.+)')
+        try:
+            kind, path, address, alert = regex.findall(message)[0]
+            return kind, path, address, alert
+        except:
+            return '', '', '', message
 
     def log_message(self, kind, alert):
         """Parses different event types and passes them to logging"""

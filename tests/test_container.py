@@ -7,7 +7,7 @@ import vtk
 
 import vtki
 from vtki import examples as ex
-from vtki.plotting import running_xserver
+from vtki.plotting import system_supports_plotting
 
 
 def test_multi_block_init_vtk():

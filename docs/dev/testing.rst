@@ -16,12 +16,6 @@ list:
 
     pip install -r requirements.txt
     pip install -r requirements_docs.txt
-    pip install pytest-cov
-    pip install codecov
-    pip install PyQt5==5.11.3
-    pip install pytest-qt
-    pip install nbval
-    pip install ipywidgets
 
 
 Then, if you have everything installed, you can run the various test suites:
