@@ -2792,12 +2792,6 @@ class Plotter(BasePlotter):
                     notebook = type(get_ipython()).__module__.startswith('ipykernel.')
                 except NameError:
                     pass
-        if notebook:
-            # sanity check
-            try:
-                import IPython
-            except ImportError:
-                raise Exception('Install IPython to display image in a notebook')
 
         self.notebook = notebook
         if self.notebook:
@@ -2940,6 +2934,11 @@ class Plotter(BasePlotter):
         # If notebook is true and panel display failed:
         if self.notebook and (disp is None or self.shape != (1,1)):
             import PIL.Image
+            # sanity check
+            try:
+                import IPython
+            except ImportError:
+                raise Exception('Install IPython to display image in a notebook')
             disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
 
         # Cleanup
