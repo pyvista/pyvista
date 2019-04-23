@@ -265,24 +265,28 @@ def test_extract_edges():
     more_edges = sphere.extract_edges(10)
     assert more_edges.n_points
 
+    sphere.extract_edges(10, inplace=True)
+    assert sphere.n_points == more_edges.n_points
+
 
 def test_decimate():
     mesh = sphere.copy()
-    mesh.decimate(0.5)
+    mesh = sphere.decimate(0.5)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
-    mesh = sphere.decimate(0.5, inplace=False)
+    mesh.decimate(0.5, inplace=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
+
 
 def test_decimate_pro():
     mesh = sphere.copy()
-    mesh.decimate(0.5)
+    mesh = sphere.decimate(0.5)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
-    mesh = sphere.decimate(0.5, inplace=False)
+    mesh.decimate_pro(0.5, inplace=True)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
@@ -293,7 +297,7 @@ def test_center_of_mass():
 
 def test_compute_normals():
     sphere_normals = sphere.copy()
-    sphere_normals.compute_normals()
+    sphere_normals.compute_normals(inplace=True)
 
     point_normals = sphere_normals.point_arrays['Normals']
     cell_normals = sphere_normals.cell_arrays['Normals']
@@ -315,11 +319,11 @@ def test_face_normals():
 
 def test_clip_plane():
     clipped_sphere = sphere.copy()
-    clipped_sphere.clip_with_plane([0, 0, 0], [0, 0, -1])
+    clipped_sphere = sphere.clip_with_plane([0, 0, 0], [0, 0, -1])
     faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
-    clipped_sphere = sphere.clip_with_plane([0, 0, 0], [0, 0, -1], inplace=False)
+    clipped_sphere.clip_with_plane([0, 0, 0], [0, 0, -1], inplace=True)
     faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
@@ -336,10 +340,10 @@ def test_extract_largest():
 def test_clean():
     mesh = sphere + sphere
     assert mesh.n_points > sphere.n_points
-    cleaned = mesh.clean(merge_tol=1E-5, inplace=False)
+    cleaned = mesh.clean(merge_tol=1E-5)
     assert cleaned.n_points == sphere.n_points
 
-    mesh.clean()
+    mesh.clean(merge_tol=1E-5, inplace=True)
     assert mesh.n_points == sphere.n_points
 
 
