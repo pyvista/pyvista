@@ -282,7 +282,7 @@ def test_decimate():
 
 def test_decimate_pro():
     mesh = sphere.copy()
-    mesh = sphere.decimate(0.5)
+    mesh = sphere.decimate_pro(0.5)
     assert mesh.n_points < sphere.n_points
     assert mesh.n_faces < sphere.n_faces
 
