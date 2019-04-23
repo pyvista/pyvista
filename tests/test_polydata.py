@@ -131,14 +131,6 @@ def test_invalid_file():
     # with pytest.raises(Exception):
         # vtki.PolyData(examples.hexbeamfile)
 
-def test_geodesic():
-    geodesic = sphere.geodesic(0, sphere.n_points - 1)
-    assert isinstance(geodesic, vtki.PolyData)
-
-def test_geodesic_distance():
-    distance = sphere.geodesic_distance(0, sphere.n_points - 1)
-    assert isinstance(distance, float)
-
 def test_ray_trace():
     points, ind = sphere.ray_trace([0, 0, 0], [1, 1, 1])
     assert np.any(points)
@@ -275,6 +267,16 @@ def test_extract_edges():
 
 
 def test_decimate():
+    mesh = sphere.copy()
+    mesh.decimate(0.5)
+    assert mesh.n_points < sphere.n_points
+    assert mesh.n_faces < sphere.n_faces
+
+    mesh = sphere.decimate(0.5, inplace=False)
+    assert mesh.n_points < sphere.n_points
+    assert mesh.n_faces < sphere.n_faces
+
+def test_decimate_pro():
     mesh = sphere.copy()
     mesh.decimate(0.5)
     assert mesh.n_points < sphere.n_points
