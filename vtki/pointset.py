@@ -616,7 +616,70 @@ class PolyData(vtkPolyData, vtki.Common):
         alg.SetEdgeAngle(edge_angle)
         alg.SetBoundarySmoothing(boundary_smoothing)
         alg.Update()
+
         return _get_output(alg)
+
+    def decimate_pro(self, reduction, feature_angle=45.0, split_angle=75.0, splitting=True,
+                     pre_split_mesh=False, preserve_topology=False, inplace=False):
+        """Reduce the number of triangles in a triangular mesh, forming a good
+        approximation to the original geometry. Based on the algorithm originally
+        described in "Decimation of Triangle Meshes", Proc Siggraph `92.
+
+        Parameters
+        ----------
+        reduction : float
+            Reduction factor. A value of 0.9 will leave 10 % of the original number
+            of vertices.
+
+        feature_angle : float, optional
+            Angle used to define what an edge is (i.e., if the surface normal between
+            two adjacent triangles is >= feature_angle, an edge exists).
+
+        split_angle : float, optional
+            Angle used to control the splitting of the mesh. A split line exists
+            when the surface normals between two edge connected triangles are >= split_angle.
+
+        splitting : bool, optional
+            Controls the splitting of the mesh at corners, along edges, at non-manifold
+            points, or anywhere else a split is required. Turning splitting off
+            will better preserve the original topology of the mesh, but may not
+            necessarily give the exact requested decimation.
+
+        pre_split_mesh : bool, optional
+            Separates the mesh into semi-planar patches, which are disconnected
+            from each other. This can give superior results in some cases. If pre_split_mesh
+            is set to True, the mesh is split with the specified split_angle. Otherwise
+            mesh splitting is deferred as long as possible.
+
+        preserve_topology : bool, optional
+            Controls topology preservation. If on, mesh splitting and hole elimination
+            will not occur. This may limit the maximum reduction that may be achieved.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        mesh : vtki.PolyData
+            Decimated mesh. None when inplace=True.
+
+        """
+
+        alg = vtk.vtkDecimatePro()
+        alg.SetInputData(self)
+        alg.SetTargetReduction(reduction)
+        alg.SetPreserveTopology(preserve_topology)
+        alg.SetFeatureAngle(feature_angle)
+        alg.SetSplitting(splitting)
+        alg.SetSplitAngle(split_angle)
+        alg.SetPreSplitMesh(pre_split_mesh)
+        alg.Update()
+
+        mesh = _get_output(alg)
+        if inplace:
+            self.overwrite(mesh)
+        else:
+            return mesh
 
     def tube(self, radius=None, scalars=None, capping=True, n_sides=20,
              radius_factor=10, preference='point'):
