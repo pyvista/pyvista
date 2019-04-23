@@ -812,7 +812,7 @@ class DataSetFilters(object):
 
 
     def warp_by_scalar(dataset, scalars=None, scale_factor=1.0, normal=None,
-                       in_place=False):
+                       inplace=False):
         """
         Warp the dataset's points by a point data scalar array's values.
         This modifies point coordinates by moving points along point normals by
@@ -830,7 +830,7 @@ class DataSetFilters(object):
             User specified normal. If given, data normals will be ignored and
             the given normal will be used to project the warp.
 
-        in_place : bool
+        inplace : bool
             If True, the points of the give dataset will be updated.
         """
         if scalars is None:
@@ -848,7 +848,7 @@ class DataSetFilters(object):
             alg.SetUseNormal(True)
         alg.Update()
         output = _get_output(alg)
-        if in_place:
+        if inplace:
             dataset.points = output.points
             return
         return output
