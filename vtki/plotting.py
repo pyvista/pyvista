@@ -548,6 +548,8 @@ class BasePlotter(object):
         log.debug('Key %s pressed' % key)
         if key == 'q':
             self.q_pressed = True
+            # Grab screenshot right before renderer closes
+            self.last_image = self.screenshot(True, return_img=True)
         elif key == 'b':
             self.observer = self.iren.AddObserver('LeftButtonPressEvent',
                                                   self.left_button_down)
@@ -2790,6 +2792,12 @@ class Plotter(BasePlotter):
                     notebook = type(get_ipython()).__module__.startswith('ipykernel.')
                 except NameError:
                     pass
+        if notebook:
+            # sanity check
+            try:
+                import IPython
+            except ImportError:
+                raise Exception('Install IPython to display image in a notebook')
 
         self.notebook = notebook
         if self.notebook:
@@ -2894,6 +2902,10 @@ class Plotter(BasePlotter):
         log.debug('Rendering')
         self.ren_win.Render()
 
+        # Keep track of image for sphinx-gallery
+        self.last_image = self.screenshot(screenshot, return_img=True)
+        disp = None
+
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
@@ -2905,42 +2917,45 @@ class Plotter(BasePlotter):
                 log.debug('KeyboardInterrupt')
                 self.close()
                 raise KeyboardInterrupt
-
-        # Keep track of image for sphinx-gallery
-        self.last_image = self.screenshot(screenshot, return_img=True)
+        elif self.notebook and use_panel:
+            try:
+                from panel.pane import VTK as panel_display
+                disp = panel_display(self.ren_win, sizing_mode='stretch_width',
+                                     height=400)
+            except:
+                pass
+        # NOTE: after this point, nothing from the render window can be accessed
+        #       as if a user presed the close button, then it destroys the
+        #       the render view and a stream of errors will kill the Python
+        #       kernel if code here tries to access that renderer.
+        #       See issues #135 and #186 for insight before editing the
+        #       remainder of this function.
 
         # Get camera position before closing
         cpos = self.camera_position
 
-        if self.notebook:
-            # sanity check
-            try:
-                import IPython
-            except ImportError:
-                raise Exception('Install IPython to display image in a notebook')
+        # NOTE: our conversion to panel currently does not support mult-view
+        #       so we should display the static screenshot in notebooks for
+        #       multi-view plots until we implement this feature
+        # If notebook is true and panel display failed:
+        if self.notebook and (disp is None or self.shape != (1,1)):
+            import PIL.Image
+            disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
 
-            disp = None
-            if use_panel:
-                try:
-                    from panel.pane import VTK as panel_display
-                    disp = panel_display(self.ren_win, sizing_mode='stretch_width',
-                                         height=400)
-                except:
-                    pass
-
-            if disp is None or self.shape != (1,1):
-                import PIL.Image
-                disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
-
+        # Cleanup
         if auto_close:
             self.close()
 
+        # Return the notebook display: either panel object or image display
         if self.notebook:
             return disp
 
+        # If user asked for screenshot, return as numpy array after camera
+        # position
         if return_img or screenshot == True:
             return cpos, self.last_image
 
+        # default to returning last used camera position
         return cpos
 
     def plot(self, *args, **kwargs):
