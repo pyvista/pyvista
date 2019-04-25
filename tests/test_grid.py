@@ -28,13 +28,6 @@ def test_volume():
     assert beam.volume > 0.0
 
 
-def test_merge():
-    beamA = vtki.UnstructuredGrid(examples.hexbeamfile)
-    beamB = beamA.copy()
-    beamB.points[:, 1] += 1
-    beamA.Merge(beamB)
-
-
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_struct_example():
     # create and plot structured grid
@@ -166,7 +159,7 @@ def test_merge():
     grid.points[:, 0] += 1
     unmerged = grid.merge(beam, inplace=False, merge_points=False)
 
-    grid.merge(beam)
+    grid.merge(beam, inplace=True)
     assert grid.n_points > beam.n_points
     assert grid.n_points < unmerged.n_points
 
@@ -177,7 +170,7 @@ def test_merge_not_main():
     unmerged = grid.merge(beam, inplace=False, merge_points=False,
                           main_has_priority=False)
 
-    grid.merge(beam)
+    grid.merge(beam, inplace=True)
     assert grid.n_points > beam.n_points
     assert grid.n_points < unmerged.n_points
 
@@ -189,7 +182,7 @@ def test_merge_list():
     grid_b = beam.copy()
     grid_b.points[:, 1] += 1
 
-    grid_a.merge([beam, grid_b])
+    grid_a.merge([beam, grid_b], inplace=True)
     assert grid_a.n_points > beam.n_points
 
 
