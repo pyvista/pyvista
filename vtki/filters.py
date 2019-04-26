@@ -975,3 +975,111 @@ class DataSetFilters(object):
             alg.SetTolerance(tolerance)
         alg.Update() # Perfrom the resampling
         return _get_output(alg)
+
+
+    def streamlines(dataset, vectors=None, source_center=None,
+                    source_radius=None, integration_direction='both',
+                    integrator_type=45, n_points=100,
+                    surface_streamlines=False, initial_step_length=0.5,
+                    step_unit='cl', min_step_length=0.01, max_step_length=1.0,
+                    max_steps=2000, max_streamline_length=None,
+                    terminal_speed=1e-12, max_error=1e-6, max_time=None,
+                    compute_vorticity=True, interpolator_type='point',
+                    rotation_scale=1.0, start_position=(0.0, 0.0, 0.0),
+                    return_source=False):
+        """Integrate a vector field to generate streamlines. The integration is
+        performed using a specified integrator, by default Runge-Kutta2.
+
+        This uses a Sphere as the source - set it's location and radius via
+        the ``source_center`` and ``source_radius`` keyword arguments.
+        You can retrieve the source as :class:`vtki.PolyData` by specifying
+        ``return_source=True``.
+        """
+        integration_direction = str(integration_direction).strip().lower()
+        if integration_direction not in ['both', 'back', 'backward', 'forward']:
+            raise RuntimeError("integration direction must be one of: 'backward', 'forward', or 'both' - not '{}'.".format(integration_direction))
+        if integrator_type not in [2, 4, 45]:
+            raise RuntimeError('integrator type must be one of `2`, `4`, or `45`.')
+        if interpolator_type not in ['c', 'cell', 'p', 'point']:
+            raise RuntimeError("interpolator type must be either 'cell' or 'point'")
+        if step_unit not in ['l', 'cl']:
+            raise RuntimeError("step unit must be either 'c' or 'cl'")
+        step_unit = {'cl':vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
+                     'l':vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
+        if isinstance(vectors, str):
+            dataset.set_active_scalar(vectors)
+            dataset.set_active_vectors(vectors)
+        if max_time is None:
+            max_velocity = dataset.get_data_range()[-1]
+            max_time = 4.0 * dataset.GetLength() / max_velocity
+        # Generate the source
+        if source_center is None:
+            source_center = dataset.center
+        if source_radius is None:
+            source_radius = dataset.length / 10.0
+        source = vtk.vtkPointSource()
+        source.SetNumberOfPoints(n_points);
+        source.SetCenter(source_center);
+        source.SetRadius(source_radius);
+        # Build the algorithm
+        alg = vtk.vtkStreamTracer()
+        # Inputs
+        alg.SetInputDataObject(dataset)
+        # NOTE: not sure why we can't pass a PolyData object
+        #       setting the connection is the only I could get it to work
+        alg.SetSourceConnection(source.GetOutputPort())
+        # general parameters
+        alg.SetComputeVorticity(compute_vorticity)
+        alg.SetInitialIntegrationStep(initial_step_length)
+        alg.SetIntegrationStepUnit(step_unit)
+        alg.SetMaximumError(max_error)
+        alg.SetMaximumIntegrationStep(max_step_length)
+        alg.SetMaximumNumberOfSteps(max_steps)
+        alg.SetMaximumPropagation(max_time)
+        alg.SetMinimumIntegrationStep(min_step_length)
+        alg.SetRotationScale(rotation_scale)
+        alg.SetStartPosition(start_position)
+        alg.SetSurfaceStreamlines(surface_streamlines)
+        alg.SetTerminalSpeed(terminal_speed)
+        # Model parameters
+        if integration_direction == 'forward':
+            alg.SetIntegrationDirectionToForward()
+        elif integration_direction in ['backward', 'back']:
+            alg.SetIntegrationDirectionToBackward()
+        else:
+            alg.SetIntegrationDirectionToBoth()
+        # set integrator type
+        if integrator_type == 2:
+            alg.SetIntegratorTypeToRungeKutta2()
+        elif integrator_type == 4:
+            alg.SetIntegratorTypeToRungeKutta4()
+        else:
+            alg.SetIntegratorTypeToRungeKutta45()
+        # set interpolator type
+        if interpolator_type in ['c', 'cell']:
+            alg.SetInterpolatorTypeToCellLocator()
+        else:
+            alg.SetInterpolatorTypeToDataSetPointLocator()
+        # run the algorithm
+        alg.Update()
+        output = _get_output(alg)
+        if return_source:
+            source.Update()
+            src = vtki.wrap(source.GetOutput())
+            return output, src
+        return output
+
+
+    def decimate_boundary(dataset, target_reduction=0.5):
+        """Return a decimated version of a triangulation of the boundary of
+        this mesh's outer surface
+
+        Parameters
+        ----------
+        target_reduction : float
+            Fraction of the original mesh to remove. Default is ``0.5``
+            TargetReduction is set to ``0.9``, this filter will try to reduce
+            the data set to 10% of its original size and will remove 90%
+            of the input triangles.
+        """
+        return dataset.extract_geometry().tri_filter().decimate(target_reduction).wireframe()
