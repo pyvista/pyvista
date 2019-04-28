@@ -13,7 +13,10 @@ import numpy as np
 #  First, create some points for the surface.
 
 # Define a simple Gaussian surface
-xx, yy = np.meshgrid(np.linspace(-200,200,20), np.linspace(-200,200,20))
+n = 20
+x = np.linspace(-200,200, num=n) + np.random.uniform(-5, 5, size=n)
+y = np.linspace(-200,200, num=n) + np.random.uniform(-5, 5, size=n)
+xx, yy = np.meshgrid(x, y)
 A, b = 100, 100
 zz = A*np.exp(-0.5*((xx/b)**2. + (yy/b)**2.))
 
