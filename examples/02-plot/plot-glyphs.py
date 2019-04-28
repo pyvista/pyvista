@@ -7,40 +7,33 @@ Plotting Glyphs
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 1
 import vtki
+from vtki import examples
 import numpy as np
 
 ################################################################################
 # Glyphying can be done via the :func:`vtki.DataSetFilters.glyph` filter
 
-# Make a grid:
-x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
-                  np.linspace(-5, 5, 20),
-                  np.linspace(-5, 5, 5))
-
-grid = vtki.StructuredGrid(x, y, z)
-
-vectors = np.sin(grid.points)**3
-
-
-# Compute a direction for the vector field
-grid.point_arrays['mag'] = np.linalg.norm(vectors, axis=1)
-grid.point_arrays['vec'] = vectors
+mesh = examples.download_carotid().threshold(145, scalars='scalars')
 
 # Make a geometric obhect to use as the glyph
 geom = vtki.Arrow() # This could be any dataset
 
 # Perform the glyph
-glyphs = grid.glyph(orient='vec', scale='mag', factor=0.8, geom=geom)
+glyphs = mesh.glyph(orient='vectors', scale='scalars', factor=0.005, geom=geom)
 
 # plot using the plotting class
 p = vtki.Plotter()
 p.add_mesh(glyphs)
+# Set a cool camera position
+p.camera_position = [(84.58052237950857, 77.76332116787425, 27.208569926456548),
+ (131.39486171068918, 99.871379394528, 20.082859824932008),
+ (0.13483731007732908, 0.033663777790747404, 0.9902957385932576)]
 p.show()
 
 ################################################################################
-# Another approach is to load the vectors directly to the grid object and then
+# Another approach is to load the vectors directly to the mesh object and then
 # access the :attr:`vtki.Common.arrows` property.
 
 sphere = vtki.Sphere(radius=3.14)
