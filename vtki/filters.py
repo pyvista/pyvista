@@ -940,6 +940,54 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
+    def select_enclosed_points(dataset, surface, tolerance=0.001,
+                inside_out=False, check_surface=True):
+        """Mark points as to whether they are inside a closed surface.
+        This evaluates all the input points to determine whether they are in an
+        enclosed surface. The filter produces a (0,1) mask
+        (in the form of a vtkDataArray) that indicates whether points are
+        outside (mask value=0) or inside (mask value=1) a provided surface.
+        (The name of the output vtkDataArray is "SelectedPointsArray".)
+
+        The filter assumes that the surface is closed and manifold. A boolean
+        flag can be set to force the filter to first check whether this is
+        true. If false, all points will be marked outside. Note that if this
+        check is not performed and the surface is not closed, the results are
+        undefined.
+
+        This filter produces and output data array, but does not modify the
+        input dataset. If you wish to extract cells or poinrs, various
+        threshold filters are available (i.e., threshold the output array).
+
+        Parameters
+        ----------
+        surface : vtki.PolyData
+            Set the surface to be used to test for containment. This must be a
+            :class:`vtki.PolyData` object.
+
+        tolerance : float
+            The tolerance on the intersection. The tolerance is expressed as a
+            fraction of the bounding box of the enclosing surface.
+
+        inside_out : bool
+            By default, points inside the surface are marked inside or sent
+            to the output. If ``inside_out`` is ``True``, then the points
+            outside the surface are marked inside.
+
+        check_surface : bool
+            Specify whether to check the surface for closure. If on, then the
+            algorithm first checks to see if the surface is closed and
+            manifold.
+        """
+        alg = vtk.vtkSelectEnclosedPoints()
+        alg.SetInputData(dataset)
+        alg.SetSurfaceData(surface)
+        alg.SetTolerance(tolerance)
+        alg.SetCheckSurface(check_surface)
+        alg.Update()
+        return _get_output(alg)
+
+
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
                     pass_point_arrays=True):
