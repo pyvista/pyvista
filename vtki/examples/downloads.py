@@ -137,7 +137,9 @@ def download_blood_vessels():
     """data representing the bifurcation of blood vessels."""
     local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
     filename = os.path.join(local_path, 'T0000000500.pvtu')
-    return vtki.read(filename)
+    mesh = vtki.read(filename)
+    mesh.set_active_vectors('velocity')
+    return mesh
 
 def download_iron_pot():
     return _download_and_read('ironProt.vtk')
@@ -279,7 +281,10 @@ def download_spider():
     return _download_and_read('spider.ply')
 
 def download_carotid():
-    return _download_and_read('carotid.vtk')
+    mesh = _download_and_read('carotid.vtk')
+    mesh.set_active_scalar('scalars')
+    mesh.set_active_vectors('vectors')
+    return mesh
 
 def download_blow():
     return _download_and_read('blow.vtk')
