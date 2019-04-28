@@ -3,6 +3,7 @@
 import shutil
 import os
 import sys
+import vtk
 import zipfile
 
 import vtki
@@ -149,6 +150,22 @@ def download_tetrahedron():
 
 def download_saddle_surface():
     return _download_and_read('InterpolatingOnSTL_final.stl')
+
+def download_sparse_points():
+    """Used with ``download_saddle_surface``"""
+    saved_file, _ = _download_file('sparsePoints.txt')
+    points_reader = vtk.vtkDelimitedTextReader()
+    points_reader.SetFileName(saved_file)
+    points_reader.DetectNumericColumnsOn()
+    points_reader.SetFieldDelimiterCharacters('\t')
+    points_reader.SetHaveHeaders(True)
+    table_points = vtk.vtkTableToPolyData()
+    table_points.SetInputConnection(points_reader.GetOutputPort())
+    table_points.SetXColumn('x')
+    table_points.SetYColumn('y')
+    table_points.SetZColumn('z')
+    table_points.Update()
+    return vtki.wrap(table_points.GetOutput())
 
 def download_foot_bones():
     return _download_and_read('fsu/footbones.ply')

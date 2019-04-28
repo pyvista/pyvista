@@ -1025,6 +1025,59 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
+    def interpolate(dataset, points, sharpness=2, radius=1.0,
+            dimensions=(101, 101, 101), pass_cell_arrays=True, pass_point_arrays=True):
+        """Interpolate values onto this mesh from the point data of a given
+        :class:`vtki.PolyData` object (typically a point cloud).
+
+        This uses a guassian interpolation kernel. Use the ``sharpness`` and
+        ``radius`` parameters to adjust this kernel.
+
+        Parameters
+        ----------
+        points : vtki.PolyData
+            The points whose values will be interpolated onto this mesh.
+
+        sharpness : float
+            Set / Get the sharpness (i.e., falloff) of the Gaussian. By
+            default Sharpness=2. As the sharpness increases the effects of
+            distant points are reduced.
+
+        radius : float
+            Specify the radius within which the basis points must lie.
+
+        dimensions : tuple(int)
+            When interpolating the points, they are first interpolating on to a
+            :class:`vtki.UniformGrid` with the same spatial extent -
+            ``dimensions`` is number of points along each axis for that grid.
+
+        pass_cell_arrays: bool, optional
+            Preserve source mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve source mesh's original point data arrays
+        """
+        bounds = np.array(dataset.bounds)
+        dimensions = np.array(dimensions)
+        box = vtki.UniformGrid()
+        box.dimensions = dimensions
+        box.spacing = (bounds[1::2] - bounds[:-1:2]) / (dimensions - 1)
+        box.origin = bounds[::2]
+
+        gaussian_kernel = vtk.vtkGaussianKernel()
+        gaussian_kernel.SetSharpness(sharpness)
+        gaussian_kernel.SetRadius(radius)
+
+        interpolator = vtk.vtkPointInterpolator()
+        interpolator.SetInputData(box)
+        interpolator.SetSourceData(points)
+        interpolator.SetKernel(gaussian_kernel)
+        interpolator.Update()
+
+        return dataset.sample(interpolator.GetOutput(),
+                    pass_cell_arrays=pass_cell_arrays,
+                    pass_point_arrays=pass_point_arrays)
+
     def streamlines(dataset, vectors=None, source_center=None,
                     source_radius=None, n_points=100,
                     integrator_type=45, integration_direction='both',
