@@ -53,7 +53,7 @@ streamlines, src = mesh.streamlines(return_source=True, source_radius=10,
 
 
 ################################################################################
-boundary = mesh.decimate_boundary()
+boundary = mesh.decimate_boundary().wireframe()
 
 p = vtki.Plotter(notebook=1)
 p.add_mesh(streamlines.tube(radius=0.2), ligthing=False)
