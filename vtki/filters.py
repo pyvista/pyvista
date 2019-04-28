@@ -978,22 +978,113 @@ class DataSetFilters(object):
 
 
     def streamlines(dataset, vectors=None, source_center=None,
-                    source_radius=None, integration_direction='both',
-                    integrator_type=45, n_points=100,
+                    source_radius=None, n_points=100,
+                    integrator_type=45, integration_direction='both',
                     surface_streamlines=False, initial_step_length=0.5,
                     step_unit='cl', min_step_length=0.01, max_step_length=1.0,
-                    max_steps=2000, max_streamline_length=None,
-                    terminal_speed=1e-12, max_error=1e-6, max_time=None,
-                    compute_vorticity=True, interpolator_type='point',
-                    rotation_scale=1.0, start_position=(0.0, 0.0, 0.0),
+                    max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
+                    max_time=None, compute_vorticity=True, rotation_scale=1.0,
+                    interpolator_type='point', start_position=(0.0, 0.0, 0.0),
                     return_source=False):
         """Integrate a vector field to generate streamlines. The integration is
         performed using a specified integrator, by default Runge-Kutta2.
+        This supports integration through any type of dataset.
+        Thus if the dataset contains 2D cells like polygons or triangles, the
+        integration is constrained to lie on the surface defined by 2D cells.
+
+        This produces polylines as the output, with each cell
+        (i.e., polyline) representing a streamline. The attribute values
+        associated with each streamline are stored in the cell data, whereas
+        those associated with streamline-points are stored in the point data.
 
         This uses a Sphere as the source - set it's location and radius via
         the ``source_center`` and ``source_radius`` keyword arguments.
         You can retrieve the source as :class:`vtki.PolyData` by specifying
         ``return_source=True``.
+
+        Parameters
+        ----------
+        vectors : str
+            The string name of the active vector field to integrate across
+
+        source_center : tuple(float)
+            Length 3 tuple of floats defining the center of the source
+            particles. Defaults to the center of the dataset
+
+        source_radius : float
+            Float radius of the source particle cloud. Defaults to one-tenth of
+            the diagonal of the dataset's spatial extent
+
+        n_points : int
+            Number of particles present in source sphere
+
+        integrator_type : int
+            The integrator type to be used for streamline generation.
+            The default is Runge-Kutta45. The recognized solvers are:
+            RUNGE_KUTTA2 (``2``),  RUNGE_KUTTA4 (``4``), and RUNGE_KUTTA45
+            (``45``). Options are ``2``, ``4``, or ``45``. Default is ``45``.
+
+        integration_direction : str
+            Specify whether the streamline is integrated in the upstream or
+            downstream directions (or both). Options are ``'both'``,
+            ``'backward'``, or ``'forward'``.
+
+        surface_streamlines : bool
+            Compute streamlines on a surface. Default ``False``
+
+        initial_step_length : float
+            Initial step size used for line integration, expressed ib length
+            unitsL or cell length units (see ``step_unit`` parameter).
+            either the starting size for an adaptive integrator, e.g., RK45, or
+            the constant / fixed size for non-adaptive ones, i.e., RK2 and RK4)
+
+        step_unit : str
+            Uniform integration step unit. The valid unit is now limited to
+            only LENGTH_UNIT (``'l'``) and CELL_LENGTH_UNIT (``'cl'``).
+            Default is CELL_LENGTH_UNIT: ``'cl'``.
+
+        min_step_length : float
+            Minimum step size used for line integration, expressed in length or
+            cell length units. Only valid for an adaptive integrator, e.g., RK45
+
+        max_step_length : float
+            Maxmimum step size used for line integration, expressed in length or
+            cell length units. Only valid for an adaptive integrator, e.g., RK45
+
+        max_steps : int
+            Maximum number of steps for integrating a streamline.
+            Defaults to ``2000``
+
+        terminal_speed : float
+            Terminal speed value, below which integration is terminated.
+
+        max_error : float
+            Maximum error tolerated throughout streamline integration.
+
+        max_time : float
+            Specify the maximum length of a streamline expressed in LENGTH_UNIT.
+
+        compute_vorticity : bool
+            Vorticity computation at streamline points (necessary for generating
+            proper stream-ribbons using the ``vtkRibbonFilter``.
+
+        interpolator_type : str
+            Set the type of the velocity field interpolator to locate cells
+            during streamline integration either by points or cells.
+            The cell locator is more robust then the point locator. Options
+            are ``'point'`` or ``'cell'`` (abreviations of ``'p'`` and ``'c'``
+            are also supported).
+
+        rotation_scale : float
+            This can be used to scale the rate with which the streamribbons
+            twist. The default is 1.
+
+        start_position : tuple(float)
+            Set the start position. Default is ``(0.0, 0.0, 0.0)``
+
+        return_source : bool
+            Return the source particles as :class:`vtki.PolyData` as well as the
+            streamlines. This will be the second value returned if ``True``.
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
@@ -1003,7 +1094,7 @@ class DataSetFilters(object):
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
             raise RuntimeError("interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
-            raise RuntimeError("step unit must be either 'c' or 'cl'")
+            raise RuntimeError("step unit must be either 'l' or 'cl'")
         step_unit = {'cl':vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
                      'l':vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
         if isinstance(vectors, str):
@@ -1082,4 +1173,4 @@ class DataSetFilters(object):
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
         """
-        return dataset.extract_geometry().tri_filter().decimate(target_reduction).wireframe()
+        return dataset.extract_geometry().tri_filter().decimate(target_reduction)
