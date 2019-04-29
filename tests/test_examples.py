@@ -412,8 +412,8 @@ if TEST_DOWNLOADS:
         data = examples.download_kitchen()
         assert data.n_cells
 
-    def test_download_kitchen(split=True):
-        data = examples.download_kitchen()
+    def test_download_kitchen_split():
+        data = examples.download_kitchen(split=True)
         assert data.n_blocks
 
     def test_download_topo_global():
