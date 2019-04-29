@@ -2350,7 +2350,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
-            raise Exception('%s does not exist')
+            raise Exception('{} does not exist'.format(filename))
 
         # Check file extention
         if '.vts' in filename:
