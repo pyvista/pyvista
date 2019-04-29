@@ -9,16 +9,16 @@ Integrate a vector field to generate streamlines.
 # provides context. The starting positions for the streamtubes were determined
 # by experimenting with the data.
 
-# sphinx_gallery_thumbnail_number = 1
+# sphinx_gallery_thumbnail_number = 4
 import vtki
 from vtki import examples
 
 ################################################################################
+# Carotid
+# +++++++
 # Download a sample dataset containing a vector field that can be integrated.
 
 mesh = examples.download_carotid()
-
-
 
 ################################################################################
 # Run the stream line filtering algorithm.
@@ -45,7 +45,10 @@ p.show()
 
 
 ################################################################################
+# Blood Vessels
+# +++++++++++++
 # Here is another example of blood flow:
+
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
 mesh.set_active_scalar('velocity')
 streamlines, src = mesh.streamlines(return_source=True, source_radius=10,
@@ -62,4 +65,28 @@ p.add_mesh(boundary, color='grey', opacity=0.25)
 p.camera_position = [(10, 9.5, -43),
                      (87.0, 73.5, 123.0),
                      (-0.5, -0.7, 0.5)]
+p.show()
+
+
+################################################################################
+# Kitchen
+# +++++++
+#
+kpos = [(-6.68, 11.9, 11.6),
+        (3.5, 2.5, 1.26),
+        (0.45, -0.4, 0.8)]
+
+mesh = examples.download_kitchen()
+kitchen = examples.download_kitchen(split=True)
+
+################################################################################
+streamlines = mesh.streamlines(n_points=40,
+                               source_center=(0.08, 3, 0.71))
+
+################################################################################
+p = vtki.Plotter(notebook=True)
+p.add_mesh(mesh.outline(), color='k')
+p.add_mesh(kitchen, color=True)
+p.add_mesh(streamlines.tube(radius=0.01), scalars='velocity', lighting=False)
+p.camera_position = kpos
 p.show()

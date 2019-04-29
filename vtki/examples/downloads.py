@@ -321,5 +321,38 @@ def download_gears():
 def download_torso():
     return _download_and_read('Torso.vtp')
 
-def download_kitchen():
-    return _download_and_read('kitchen.vtk')
+def download_kitchen(split=False):
+    """Download structured grid of kitchen with velocity field. Use the
+    ``split`` argument to extract all of the furniture in the kitchen.
+    """
+    mesh =  _download_and_read('kitchen.vtk')
+    if not split:
+        return mesh
+    extents = {
+        'door' : (27, 27, 14, 18, 0, 11),
+        'window1' : (0, 0, 9, 18, 6, 12),
+        'window2' : (5, 12, 23, 23, 6, 12),
+        'klower1' : (17, 17, 0, 11, 0, 6),
+        'klower2' : (19, 19, 0, 11, 0, 6),
+        'klower3' : (17, 19, 0, 0, 0, 6),
+        'klower4' : (17, 19, 11, 11, 0, 6),
+        'klower5' : (17, 19, 0, 11, 0, 0),
+        'klower6' : (17, 19, 0, 7, 6, 6),
+        'klower7' : (17, 19, 9, 11, 6, 6),
+        'hood1' : (17, 17, 0, 11, 11, 16),
+        'hood2' : (19, 19, 0, 11, 11, 16),
+        'hood3' : (17, 19, 0, 0, 11, 16),
+        'hood4' : (17, 19, 11, 11, 11, 16),
+        'hood5' : (17, 19, 0, 11, 16, 16),
+        'cookingPlate' : (17, 19, 7, 9, 6, 6),
+        'furniture' : (17, 19, 7, 9, 11, 11),
+    }
+    kitchen = vtki.MultiBlock()
+    for key, extent in extents.items():
+        alg = vtk.vtkStructuredGridGeometryFilter()
+        alg.SetInputDataObject(mesh)
+        alg.SetExtent(extent)
+        alg.Update()
+        result = vtki.filters._get_output(alg)
+        kitchen[key] = result
+    return kitchen
