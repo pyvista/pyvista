@@ -9,7 +9,7 @@ Integrate a vector field to generate streamlines.
 # provides context. The starting positions for the streamtubes were determined
 # by experimenting with the data.
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 3
 import vtki
 from vtki import examples
 
