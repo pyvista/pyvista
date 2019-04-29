@@ -62,8 +62,11 @@ READERS = {
 
 if (vtk.vtkVersion().GetVTKMajorVersion() >= 8 and
     vtk.vtkVersion().GetVTKMinorVersion() >= 2):
-    READERS['.sgy'] = vtk.vtkSegYReader
-    READERS['.segy'] = vtk.vtkSegYReader
+    try:
+        READERS['.sgy'] = vtk.vtkSegYReader
+        READERS['.segy'] = vtk.vtkSegYReader
+    except AttributeError:
+        pass
 
 
 def get_ext(filename):
