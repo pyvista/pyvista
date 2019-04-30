@@ -1,7 +1,6 @@
 #!/bin/sh
 # MAke sure this is called from root level of repository
 set -x
-doctr deploy --built-docs ./docs/_build/html .;
 cookiecutter -f --no-input --config-file ./docs/vtki-binder-config.yml -o .. https://github.com/vtkiorg/cookiecutter-vtki-binder.git;
 rm -rf ../vtki-examples/notebooks/;
 cd ./docs/;
@@ -16,4 +15,5 @@ git config --global user.email "${GH_EMAIL}";
 git remote add origin ${REMOTE};
 git push -uf origin master;
 cd ../vtki/
+doctr deploy --built-docs ./docs/_build/html .;
 set +x
