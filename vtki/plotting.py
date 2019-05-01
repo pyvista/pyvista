@@ -2150,6 +2150,7 @@ class BasePlotter(object):
         if hasattr(self, 'scalar_bar'):
             self.remove_actor(self.scalar_bar, reset_camera=False)
 
+
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          font_size=None, text_color=None,
                          font_family=None, shadow=False,
@@ -2272,6 +2273,36 @@ class BasePlotter(object):
 
         self.add_actor(labelActor, reset_camera=False, name=name)
         return labelMapper
+
+
+    def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
+        """Wrapper for :func:`vtki.BasePlotter.add_point_labels` that will label
+        points from a dataset with their scalar values.
+
+        Parameters
+        ----------
+        points : np.ndarray or vtki.Common
+            n x 3 numpy array of points or vtki dataset with points
+
+        labels : str
+            String name of the point data array to use.
+
+        fmt : str
+            String formatter used to format numerical data
+        """
+        if not is_vtki_obj(points):
+            raise TypeError('input points must be a vtki dataset, not: {}'.format(type(points)))
+        if not isinstance(labels, str):
+            raise TypeError('labels must be a string name of the scalar array to use')
+        if fmt is None:
+            fmt = rcParams['font']['fmt']
+        if fmt is None:
+            fmt = '%.6e'
+        scalars = points.point_arrays[labels]
+        phrase = '{} {}'.format(preamble, '%.3e')
+        labels = [phrase % val for val in scalars]
+        return self.add_point_labels(points, labels, **kwargs)
+
 
     def add_points(self, points, **kwargs):
         """ Add points to a mesh """
