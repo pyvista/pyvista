@@ -17,7 +17,7 @@ from vtk.util import numpy_support as VN
 import vtki
 from vtki.export import export_plotter_vtkjs
 from vtki.utilities import (get_scalar, is_vtki_obj, numpy_to_texture, wrap,
-                            _raise_not_matching)
+                            _raise_not_matching, convert_array)
 
 _ALL_PLOTTERS = {}
 
@@ -893,11 +893,12 @@ class BasePlotter(object):
             else:
                 # Make sure scalar components are not vectors/tuples
                 scalars = mesh.active_scalar
-                if scalars is None:# or scalars.ndim != 1:
-                    scalars = None
-                else:
+                # Don't allow plotting of string arrays by default
+                if scalars is not None and np.issubdtype(scalars.dtype, np.number):
                     if stitle is None:
                         stitle = mesh.active_scalar_info[1]
+                else:
+                    scalars = None
 
         if texture == True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -940,6 +941,9 @@ class BasePlotter(object):
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
+
+            if not np.issubdtype(scalars.dtype, np.number):
+                raise TypeError('Non-numeric scalars are currently not supported for plotting.')
 
             if rgb is False or rgb is None:
                 rgb = kwargs.get('rgba', False)
@@ -1853,7 +1857,7 @@ class BasePlotter(object):
         vtk_scalars = data.GetScalars()
         if vtk_scalars is None:
             raise Exception('No active scalars')
-        s = VN.vtk_to_numpy(vtk_scalars)
+        s = convert_array(vtk_scalars)
         s[:] = scalars
         data.Modified()
         try:
@@ -2147,21 +2151,22 @@ class BasePlotter(object):
             self.remove_actor(self.scalar_bar, reset_camera=False)
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
-                         font_size=None, text_color='k',
+                         font_size=None, text_color=None,
                          font_family=None, shadow=False,
-                         show_points=True, point_color='k', point_size=5,
-                         name=None):
+                         show_points=True, point_color=None, point_size=5,
+                         name=None, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
 
         Parameters
         ----------
-        points : np.ndarray
-            n x 3 numpy array of points.
+        points : np.ndarray or vtki.Common
+            n x 3 numpy array of points or vtki dataset with points
 
-        labels : list
-            List of labels.  Must be the same length as points.
+        labels : list or str
+            List of labels.  Must be the same length as points. If a string name
+            is given with a vtki.Common input for points, then these are fetched.
 
         italic : bool, optional
             Italicises title and bar labels.  Default False.
@@ -2172,9 +2177,8 @@ class BasePlotter(object):
         font_size : float, optional
             Sets the size of the title font.  Defaults to 16.
 
-        text_color : string or 3 item list, optional, defaults to black
-            Color of text.
-            Either a string, rgb list, or hex color string.  For example:
+        text_color : string or 3 item list, optional
+            Color of text. Either a string, rgb list, or hex color string.
 
                 text_color='white'
                 text_color='w'
@@ -2190,8 +2194,7 @@ class BasePlotter(object):
         show_points : bool, optional
             Controls if points are visible.  Default True
 
-        point_color : string or 3 item list, optional, defaults to black
-            Color of points (if visible).
+        point_color : string or 3 item list, optional. Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
 
                 text_color='white'
@@ -2217,11 +2220,25 @@ class BasePlotter(object):
             font_family = rcParams['font']['family']
         if font_size is None:
             font_size = rcParams['font']['size']
+        if point_color is None and text_color is None and kwargs.get('color', None) is not None:
+            point_color = kwargs.get('color', None)
+            text_color = kwargs.get('color', None)
+        if point_color is None:
+            point_color = rcParams['color']
+        if text_color is None:
+            text_color = rcParams['font']['color']
 
-        if len(points) != len(labels):
+        if isinstance(points, np.ndarray):
+            vtkpoints = vtki.PolyData(points) # Cast to poly data
+        elif is_vtki_obj(points):
+            vtkpoints = vtki.PolyData(points.points)
+            if isinstance(labels, str):
+                labels = points.point_arrays[labels].astype(str)
+        else:
+            raise TypeError('Points type not useable: {}'.format(type(points)))
+
+        if len(vtkpoints.points) != len(labels):
             raise Exception('There must be one label for each point')
-
-        vtkpoints = vtki.PolyData(points)
 
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')

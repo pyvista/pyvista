@@ -10,14 +10,28 @@ import os
 import imageio
 import numpy as np
 import vtk
-from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
-                                    vtk_to_numpy)
+import vtk.util.numpy_support as nps
 
 import vtki
 from vtki.readers import standard_reader_routine, get_ext, get_reader
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
+
+
+def get_vtk_type(typ):
+    """This looks up the VTK type for a give python data type. Corrects for
+    string type mapping issues.
+
+    Return
+    ------
+    int : the integer type id specified in vtkType.h
+    """
+    typ = nps.get_vtk_array_type(typ)
+    # This handles a silly string type bug
+    if typ is 3:
+        return 13
+    return typ
 
 
 def vtk_bit_array_to_char(vtkarr_bint):
@@ -27,6 +41,83 @@ def vtk_bit_array_to_char(vtkarr_bint):
     return vtkarr
 
 
+def convert_string_array(arr, name=None):
+    """A helper to convert a numpy array of strings to a vtkStringArray
+    or vice versa. Note that this is terribly inefficient - inefficient support
+    is better than no support :). If you have ideas on how to make this faster,
+    please consider opening a pull request.
+    """
+    if isinstance(arr, np.ndarray):
+        vtkarr = vtk.vtkStringArray()
+        ########### OPTIMIZE ###########
+        for val in arr:
+            vtkarr.InsertNextValue(val)
+        ################################
+        if isinstance(name, str):
+            vtkarr.SetName(name)
+        return vtkarr
+    # Otherwise it is a vtk array and needs to be converted back to numpy
+    carr = np.empty(arr.GetNumberOfValues(), dtype='O')
+    ############### OPTIMIZE ###############
+    for i in range(arr.GetNumberOfValues()):
+        carr[i] = arr.GetValue(i)
+    ########################################
+    return carr.astype('|S')
+
+
+def convert_array(arr, name=None, deep=0, array_type=None):
+    """A helper to convert a NumPy array to a vtkDataArray or vice versa
+
+    Parameters
+    -----------
+    arr : ndarray or vtkDataArry
+        A numpy array or vtkDataArry to convert
+    name : str
+        The name of the data array for VTK
+    deep : bool
+        if input is numpy array then deep copy values
+
+    Return
+    ------
+    vtkDataArray, ndarray, or DataFrame:
+        the converted array (if input is a NumPy ndaray then returns
+        ``vtkDataArray`` or is input is ``vtkDataArray`` then returns NumPy
+        ``ndarray``). If pdf==True and the input is ``vtkDataArry``,
+        return a pandas DataFrame.
+
+    """
+    if arr is None:
+        return
+    if isinstance(arr, np.ndarray):
+        if arr.dtype is np.dtype('O'):
+            arr = arr.astype('|S')
+        arr = np.ascontiguousarray(arr)
+        try:
+            # This will handle numerical data
+            arr = np.ascontiguousarray(arr)
+            vtk_data = nps.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
+        except ValueError:
+            # This handles strings
+            typ = get_vtk_type(arr.dtype)
+            if typ is 13:
+                vtk_data = convert_string_array(arr)
+        if isinstance(name, str):
+            vtk_data.SetName(name)
+        return vtk_data
+    # Otherwise input must be a vtkDataArray
+    if not isinstance(arr, (vtk.vtkDataArray, vtk.vtkBitArray, vtk.vtkStringArray)):
+        raise TypeError('Invalid input array type ({}).'.format(type(arr)))
+    # Handle booleans
+    if isinstance(arr, vtk.vtkBitArray):
+        arr = vtk_bit_array_to_char(arr)
+    # Handle string arrays
+    if isinstance(arr, vtk.vtkStringArray):
+        return convert_string_array(arr)
+    # Convert from vtkDataArry to NumPy
+    return nps.vtk_to_numpy(arr)
+
+
+
 def is_vtki_obj(obj):
     """ Return True if the Object is a ``vtki`` wrapped dataset """
     return isinstance(obj, (vtki.Common, vtki.MultiBlock))
@@ -34,20 +125,14 @@ def is_vtki_obj(obj):
 
 def point_scalar(mesh, name):
     """ Returns point scalars of a vtk object """
-    vtkarr = mesh.GetPointData().GetArray(name)
-    if vtkarr:
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-        return vtk_to_numpy(vtkarr)
+    vtkarr = mesh.GetPointData().GetAbstractArray(name)
+    return convert_array(vtkarr)
 
 
 def cell_scalar(mesh, name):
     """ Returns cell scalars of a vtk object """
-    vtkarr = mesh.GetCellData().GetArray(name)
-    if vtkarr:
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-        return vtk_to_numpy(vtkarr)
+    vtkarr = mesh.GetCellData().GetAbstractArray(name)
+    return convert_array(vtkarr)
 
 
 def get_scalar(mesh, name, preference='cell', info=False, err=False):
@@ -111,7 +196,7 @@ def vtk_points(points, deep=True):
     if not points.flags['C_CONTIGUOUS']:
         points = np.ascontiguousarray(points)
     vtkpts = vtk.vtkPoints()
-    vtkpts.SetData(numpy_to_vtk(points, deep=deep))
+    vtkpts.SetData(nps.numpy_to_vtk(points, deep=deep))
     return vtkpts
 
 
@@ -174,7 +259,7 @@ def vector_poly_data(orig, vec):
 
     # Create vtk points and cells objects
     vpts = vtk.vtkPoints()
-    vpts.SetData(numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
+    vpts.SetData(nps.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
     cells = np.hstack((np.ones((npts, 1), 'int'),
@@ -184,7 +269,7 @@ def vector_poly_data(orig, vec):
         cells = np.ascontiguousarray(cells, ctypes.c_int64)
     cells = np.reshape(cells, (2*npts))
     vcells = vtk.vtkCellArray()
-    vcells.SetCells(npts, numpy_to_vtkIdTypeArray(cells, deep=True))
+    vcells.SetCells(npts, nps.numpy_to_vtkIdTypeArray(cells, deep=True))
 
     # Create vtkPolyData object
     pdata = vtk.vtkPolyData()
@@ -193,7 +278,7 @@ def vector_poly_data(orig, vec):
 
     # Add vectors to polydata
     name = 'vectors'
-    vtkfloat = numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
+    vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveVectors(name)
@@ -201,7 +286,7 @@ def vector_poly_data(orig, vec):
     # Add magnitude of vectors to polydata
     name = 'mag'
     scalars = (vec * vec).sum(1)**0.5
-    vtkfloat = numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
+    vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)

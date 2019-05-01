@@ -435,3 +435,11 @@ def test_bad_instantiation():
         vtki.ipy_tools.InteractiveTool()
     with pytest.raises(TypeError):
         vtki.BasePlotter()
+
+
+def test_string_arrays():
+    poly = vtki.PolyData(np.random.rand(10, 3))
+    arr = np.array(['foo{}'.format(i) for i in range(10)])
+    poly['foo'] = arr
+    back = poly['foo']
+    assert len(back) == 10
