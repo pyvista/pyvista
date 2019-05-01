@@ -12,7 +12,8 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import vtki
 from vtki import DataSetFilters
 from vtki.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, get_scalar,
-                            vtk_bit_array_to_char, is_vtki_obj, _raise_not_matching)
+                            vtk_bit_array_to_char, is_vtki_obj,
+                            _raise_not_matching, convert_array)
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -312,7 +313,7 @@ class Common(DataSetFilters, object):
             field, name = self.active_scalar_info
             if field != POINT_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
-        vtkarr = self.GetPointData().GetArray(name)
+        vtkarr = self.GetPointData().GetAbstractArray(name)
         if vtkarr is None:
             raise AssertionError('({}) is not a point scalar'.format(name))
 
@@ -322,7 +323,7 @@ class Common(DataSetFilters, object):
             if name not in self._point_bool_array_names:
                 self._point_bool_array_names.append(name)
 
-        array = vtk_to_numpy(vtkarr)
+        array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._point_bool_array_names:
             array = array.view(np.bool)
         return array
@@ -347,8 +348,11 @@ class Common(DataSetFilters, object):
             must be kept to avoid a segfault.
 
         """
+        if scalars is None:
+            raise TypeError('Empty array unable to be added')
+
         if not isinstance(scalars, np.ndarray):
-            raise TypeError('Input must be a numpy.ndarray')
+            scalars = np.array(scalars)
 
         if scalars.shape[0] != self.n_points:
             raise Exception('Number of scalars must match the number of ' +
@@ -364,7 +368,7 @@ class Common(DataSetFilters, object):
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
 
-        vtkarr = numpy_to_vtk(scalars, deep=deep)
+        vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
         if set_active or self.active_scalar_info[1] is None:
@@ -478,7 +482,7 @@ class Common(DataSetFilters, object):
             if field != CELL_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
 
-        vtkarr = self.GetCellData().GetArray(name)
+        vtkarr = self.GetCellData().GetAbstractArray(name)
         if vtkarr is None:
             raise AssertionError('({}) is not a cell scalar'.format(name))
 
@@ -488,7 +492,7 @@ class Common(DataSetFilters, object):
             if name not in self._cell_bool_array_names:
                 self._cell_bool_array_names.append(name)
 
-        array = vtk_to_numpy(vtkarr)
+        array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._cell_bool_array_names:
             array = array.view(np.bool)
         return array
@@ -513,8 +517,11 @@ class Common(DataSetFilters, object):
             must be kept to avoid a segfault.
 
         """
+        if scalars is None:
+            raise TypeError('Empty array unable to be added')
+
         if not isinstance(scalars, np.ndarray):
-            raise TypeError('Input must be a numpy.ndarray')
+            scalars = np.array(scalars)
 
         if scalars.shape[0] != self.n_cells:
             raise Exception('Number of scalars must match the number of cells (%d)'
@@ -526,7 +533,7 @@ class Common(DataSetFilters, object):
             scalars = scalars.view(np.uint8)
             self._cell_bool_array_names.append(name)
 
-        vtkarr = numpy_to_vtk(scalars, deep=deep)
+        vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetCellData().AddArray(vtkarr)
         if set_active or self.active_scalar_info[1] is None:
@@ -702,7 +709,7 @@ class Common(DataSetFilters, object):
         if isinstance(arr, str):
             arr = get_scalar(self, arr, preference=preference)
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0:
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
@@ -730,6 +737,10 @@ class Common(DataSetFilters, object):
         # First check points - think of case with vertex cells
         #   there would be the same number of cells as points but we'd want
         #   the data to be on the nodes.
+        if scalars is None:
+            raise TypeError('Empty array unable to be added')
+        if not isinstance(scalars, np.ndarray):
+            scalars = np.array(scalars)
         if scalars.shape[0] == self.n_points:
             self.point_arrays[name] = scalars
         elif scalars.shape[0] == self.n_cells:
