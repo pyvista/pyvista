@@ -349,7 +349,7 @@ class Common(DataSetFilters, object):
 
         """
         if scalars is None:
-            raise TypeError('None is not an arry')
+            raise TypeError('Empty array unable to be added')
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
@@ -518,7 +518,7 @@ class Common(DataSetFilters, object):
 
         """
         if scalars is None:
-            raise TypeError('None is not an arry')
+            raise TypeError('Empty array unable to be added')
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
@@ -738,7 +738,7 @@ class Common(DataSetFilters, object):
         #   there would be the same number of cells as points but we'd want
         #   the data to be on the nodes.
         if scalars is None:
-            raise TypeError('None is not an arry')
+            raise TypeError('Empty array unable to be added')
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
         if scalars.shape[0] == self.n_points:
