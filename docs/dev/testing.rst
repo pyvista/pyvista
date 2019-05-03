@@ -8,8 +8,7 @@ request. The following tests will be executed after any commit or pull request,
 so we ask that you perform the following sequence locally to track down any new
 issues from your changes.
 To run our comprehensive suite of unit tests, install all the dependencies
-listed in ``requirements.txt``, ``requirements_docs.txt``, and the following
-list:
+listed in ``requirements.txt``, ``requirements_docs.txt``:
 
 
 .. code:: bash
@@ -25,22 +24,22 @@ Run the primary test suite and generate coverage report:
 
 .. code:: bash
 
-    pytest -v --cov vtki
+    python -m pytest -v --cov vtki
 
 
 Run all code examples in the docstrings:
 
 .. code:: bash
 
-    pytest -v --doctest-modules vtki
+    python -m pytest -v --doctest-modules vtki
 
 
 Now make sure notebooks are running
 
 .. code:: bash
 
-    pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-
+    python -m pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb
+    python -m pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb
 
 And finally, test the documentation examples:
 
