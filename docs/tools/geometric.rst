@@ -15,3 +15,4 @@ functions create, check out the example: :ref:`ref_geometric_example`.
 .. autofunction:: vtki.Cone
 .. autofunction:: vtki.Polygon
 .. autofunction:: vtki.Disc
+.. autofunction:: vtki.Text3D

@@ -22,6 +22,7 @@ if not os.path.exists(vtki.FIGURE_PATH):
 # -- General configuration ------------------------------------------------
 numfig = False
 html_show_sourcelink = False
+html_logo = './_static/vtki_logo.png'
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -104,7 +105,9 @@ html_context = {
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+html_theme_options = {
+    'logo_only' : True,
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

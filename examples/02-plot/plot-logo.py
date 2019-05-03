@@ -1,0 +1,111 @@
+"""
+Create Our Logo
+~~~~~~~~~~~~~~~
+
+Think our logo is awesome? Create it yourself!
+"""
+# sphinx_gallery_thumbnail_number = 2
+import vtki
+import numpy as np
+
+###############################################################################
+
+# mesh for each letter
+space = 0.3
+mesh_letters = vtki.MultiBlock()
+width = 0
+density = 0.03
+for letter in 'vtki':
+    mesh_letter = vtki.Text3D(letter, depth=0.3)
+    this_letter_width = mesh_letter.points[:, 0].max()
+    mesh_letter.translate([width + space, 0, 0.0])
+    width += this_letter_width
+    mesh_letters[letter] = mesh_letter
+
+grid = vtki.voxelize(vtki.Text3D('vtki'), 0.05)
+grid.plot(color='w', show_edges=True)
+
+###############################################################################
+
+v_grid = vtki.voxelize(mesh_letters['v'], density=0.03)
+t_grid = vtki.voxelize(mesh_letters['t'], density=0.07)
+k_grid = vtki.voxelize(mesh_letters['k'], density=0.08)
+i_grid = vtki.voxelize(mesh_letters['i'], 0.05)
+
+v_mesh = v_grid.triangulate().extract_geometry().decimate_pro(0.9)
+
+###############################################################################
+
+# plot letters
+plotter = vtki.Plotter(window_size=np.array([1024, 512]) * 2)
+
+# Add the V
+plotter.add_mesh(v_mesh, color='w', show_edges=True)
+
+# Add the T
+plotter.add_mesh(t_grid.extract_surface(),
+                 style='points', color='r', render_points_as_spheres=True,
+                 point_size=12)
+plotter.add_mesh(t_grid, style='wireframe', color='k', line_width=3, )
+
+
+# Add the K
+# isolate the cells of k_grid
+# cells = []
+x_min, x_max, y_min, y_max, z_min, z_max = k_grid.bounds
+x_width = x_max - x_min
+x_move = 2.1
+spread = 1.4
+x_mean, y_mean, z_mean = k_grid.points.mean(0)
+keep = []
+scalars = []
+# as x in increases, k cells will shift outward
+for i in range(k_grid.n_cells):
+    cell = k_grid.extract_cells([i])
+    orig_cell = cell.copy()
+    x_dist = np.mean(cell.bounds[:2])
+    fac = x_dist - x_move
+    x_shift = 0
+    y_dist = np.mean(cell.bounds[2:4])
+    z_dist = np.mean(cell.bounds[4:]) - z_mean
+    if fac > 0:
+        fac = fac**1.5
+        cell.translate([x_shift, y_dist*fac*spread, z_dist*fac*spread])
+    # cells.append(cell)
+
+    opacity = (x_max - x_dist)/x_width
+    if opacity > 0.5:
+        keep.append(i)
+        scalars.append(x_dist + 0.2)
+        # plotter.add_mesh(orig_cell, style='surface', color='w', cmap='Greys_r',
+        #                  scalars=[x_dist + 0.2], rng=[x_min, x_max],
+        #                  show_edges=True)
+    else:
+        # opactity = opacity
+        plotter.add_mesh(cell, color='w', show_edges=True, opacity=opacity)
+
+keep_k = k_grid.extract_cells(keep)
+plotter.add_mesh(keep_k, scalars=scalars, cmap='Greys_r', rng=[x_min, x_max],
+                 show_edges=True)
+
+
+# Add the I
+plotter.add_mesh(i_grid, color='w', style='wireframe', line_width=3,
+                 scalars=i_grid.points[:, 1], cmap='bwr')
+
+# Show
+plotter.set_background('white')
+
+plotter.camera_position = [(0.124, 1.100, 3.338),
+                           (1.716, 0.379, 0.143),
+                           (0.091, 0.980, -0.176)]
+
+
+
+save_it = False
+if save_it:
+    plotter.show(auto_close=False)
+    plotter.screenshot('vtki_logo.png', transparent_background=True)
+    plotter.close()
+else:
+    plotter.show()

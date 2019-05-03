@@ -412,3 +412,20 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     src.SetCircumferentialResolution(c_res)
     src.Update()
     return vtki.wrap(src.GetOutput())
+
+
+def Text3D(string, depth=0.5):
+    """ Create 3D text from a string"""
+    vec_text = vtk.vtkVectorText()
+    vec_text.SetText(string)
+
+    extrude = vtk.vtkLinearExtrusionFilter()
+    extrude.SetInputConnection(vec_text.GetOutputPort())
+    extrude.SetExtrusionTypeToNormalExtrusion();
+    extrude.SetVector(0, 0, 1 )
+    extrude.SetScaleFactor(depth)
+
+    tri_filter = vtk.vtkTriangleFilter()
+    tri_filter.SetInputConnection(extrude.GetOutputPort())
+    tri_filter.Update()
+    return vtki.wrap(tri_filter.GetOutput())

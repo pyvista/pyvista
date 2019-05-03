@@ -1,7 +1,12 @@
-vtki
-****
+.. title:: vtki
 
-`A Streamlined Python Interface for the Visualization Toolkit`
+.. raw:: html
+
+    <div class="banner">
+        <img src="https://github.com/vtkiorg/vtki/raw/master/docs/_static/vtki_logo.png" alt="vtki" width="500px">
+        <h2>A Streamlined Python Interface for the Visualization Toolkit</h2>
+    </div>
+
 
 .. image:: https://zenodo.org/badge/92974124.svg
    :target: https://zenodo.org/badge/latestdoi/92974124

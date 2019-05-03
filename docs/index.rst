@@ -1,8 +1,11 @@
-####
-vtki
-####
+.. title:: vtki
 
-`A Streamlined Python Interface for the Visualization Toolkit`
+.. raw:: html
+
+    <div class="banner">
+        <img src="_static/vtki_logo.png" alt="vtki" width="500px">
+        <h2>A Streamlined Python Interface for the Visualization Toolkit</h2>
+    </div>
 
 
 .. |pypi| image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white

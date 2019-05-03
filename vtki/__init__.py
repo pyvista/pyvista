@@ -5,6 +5,7 @@ from vtki.utilities import *
 from vtki.errors import *
 from vtki.readers import *
 from vtki.colors import *
+from vtki.features import *
 from vtki.filters import DataSetFilters
 from vtki.common import Common
 from vtki.pointset import PointGrid
