@@ -7,3 +7,10 @@ Authors
 .. _authors_ref:
 
 .. include:: ../AUTHORS.rst
+
+
+
+License
+-------
+
+.. include:: ../LICENSE

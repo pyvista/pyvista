@@ -326,7 +326,8 @@ def wrap(vtkdataset):
 
 
 def image_to_texture(image):
-    """Converts ``vtkImageData`` to a ``vtkTexture``"""
+    """Converts ``vtkImageData`` (:class:`vtki.UniformGrid`) to a ``vtkTexture``
+    """
     vtex = vtk.vtkTexture()
     vtex.SetInputDataObject(image)
     vtex.Update()

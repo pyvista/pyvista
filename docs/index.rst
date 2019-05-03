@@ -120,6 +120,25 @@ See :ref:`install_ref` for more details.
 
 
 
+Examples
+********
+
+Be sure to head over to the `examples gallery <./examples/index.html>`_
+to explore different use cases of ``vtki`` and to start visualizing 3D data in
+Pyhton! Also, please explore the list of external projects leveraging ``vtki``
+for 3D visualization in our `external examples list <./external_examples.html>`_
+
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Examples
+   :hidden:
+
+   examples/index
+   external_examples
+
+
+
 Data Types
 **********
 
@@ -143,22 +162,6 @@ side to help new users understand which data types to use.
    types/container
 
 
-Examples
-********
-
-Be sure to head over to the `examples gallery <./examples/index.html>`_
-to explore different use cases of ``vtki`` and to start visualizing 3D data in
-Pyhton!
-
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Examples
-   :hidden:
-
-   examples/index
-   external_examples
-
 
 Tools
 *****
@@ -181,6 +184,7 @@ Tools
    tools/utilities
 
 
+
 Contributing
 ************
 
@@ -201,11 +205,6 @@ contributing to ``vtki``, please see :ref:`contributing_ref`.
    dev/testing.rst
 
 
-
-License
-*******
-
-.. include:: ../LICENSE
 
 
 Project Index

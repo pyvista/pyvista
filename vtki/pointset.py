@@ -644,7 +644,7 @@ class PolyData(vtkPolyData, vtki.Common):
                      pre_split_mesh=False, preserve_topology=False, inplace=False):
         """Reduce the number of triangles in a triangular mesh, forming a good
         approximation to the original geometry. Based on the algorithm originally
-        described in "Decimation of Triangle Meshes", Proc Siggraph `92.
+        described in "Decimation of Triangle Meshes", Proc Siggraph 92.
 
         Parameters
         ----------
