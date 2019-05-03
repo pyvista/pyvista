@@ -221,6 +221,10 @@ class MultiBlock(vtkMultiBlockDataSet):
         returns the first occurence)"""
         if isinstance(index, str):
             index = self.get_index_by_name(index)
+        if index < 0:
+            index = self.n_blocks + index
+        if index < 0 or index >= self.n_blocks:
+            raise IndexError('index ({}) out of range for this dataset.'.format(index))
         data = self.GetBlock(index)
         if data is None:
             return data
@@ -415,3 +419,35 @@ class MultiBlock(vtkMultiBlockDataSet):
 
     def __str__(self):
         return MultiBlock.__repr__(self)
+
+
+    def copy_meta_from(self, ido):
+        """Copies vtki meta data onto this object from another object"""
+        # Note that `vtki.MultiBlock` datasets currently don't have any meta.
+        # This method is here for consistency witht the rest of the API and
+        # incase we add meta data to this pbject down the road.
+        pass
+
+
+    def copy(self, deep=True):
+        """
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        deep : bool, optional
+            When True makes a full copy of the object.
+
+        Returns
+        -------
+        newobject : same as input
+           Deep or shallow copy of the input.
+        """
+        thistype = type(self)
+        newobject = thistype()
+        if deep:
+            newobject.DeepCopy(self)
+        else:
+            newobject.ShallowCopy(self)
+        newobject.copy_meta_from(self)
+        return newobject

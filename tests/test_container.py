@@ -214,3 +214,39 @@ def test_combine_filter():
     # Now apply the geometry filter to combine a plethora of data blocks
     geom = multi.combine()
     assert isinstance(geom, vtki.UnstructuredGrid)
+
+
+
+def test_multi_block_copy():
+    multi = vtki.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(ex.load_globe())
+    # Now check everything
+    newobj = multi.copy()
+    assert multi.n_blocks == 5 == newobj.n_blocks
+    assert id(multi[0]) != id(newobj[0])
+    assert id(multi[-1]) != id(newobj[-1])
+    return
+
+
+def test_multi_block_negative_index():
+    multi = vtki.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(ex.load_globe())
+    # Now check everything
+    assert id(multi[-1]) == id(multi[4])
+    assert id(multi[-2]) == id(multi[3])
+    assert id(multi[-3]) == id(multi[2])
+    assert id(multi[-4]) == id(multi[1])
+    assert id(multi[-5]) == id(multi[0])
+    with pytest.raises(IndexError):
+        foo = multi[-6]
+    return
