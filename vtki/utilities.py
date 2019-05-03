@@ -17,6 +17,7 @@ from vtki.readers import standard_reader_routine, get_ext, get_reader
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
+FIELD_DATA_FIELD = 2
 
 
 def get_vtk_type(typ):
@@ -128,6 +129,10 @@ def point_scalar(mesh, name):
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+def field_scalar(mesh, name):
+    """ Returns field scalars of a vtk object """
+    vtkarr = mesh.GetFieldData().GetAbstractArray(name)
+    return convert_array(vtkarr)
 
 def cell_scalar(mesh, name):
     """ Returns cell scalars of a vtk object """
@@ -136,7 +141,7 @@ def cell_scalar(mesh, name):
 
 
 def get_scalar(mesh, name, preference='cell', info=False, err=False):
-    """ Searches both point and cell data for an array
+    """ Searches point, cell and field data for an array
 
     Parameters
     ----------
@@ -145,7 +150,8 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
 
     preference : str, optional
         When scalars is specified, this is the perfered scalar type to
-        search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+        search for in the dataset.  Must be either ``'point'``, ``'cell'``, or
+        ``'field'``
 
     info : bool
         Return info about the scalar rather than the array itself.
@@ -156,14 +162,17 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
     """
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
+    farr = field_scalar(mesh, name)
     if isinstance(preference, str):
         if preference in ['cell', 'c', 'cells']:
             preference = CELL_DATA_FIELD
         elif preference in ['point', 'p', 'points']:
             preference = POINT_DATA_FIELD
+        elif preference in ['field', 'f', 'fields']:
+            preference = FIELD_DATA_FIELD
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(preference))
-    if all([parr is not None, carr is not None]):
+    if all([parr is not None, carr is not None, farr is not None]):
         if preference == CELL_DATA_FIELD:
             if info:
                 return carr, CELL_DATA_FIELD
@@ -174,6 +183,11 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
                 return parr, POINT_DATA_FIELD
             else:
                 return parr
+        elif preference == FIELD_DATA_FIELD:
+            if info:
+                return farr, FIELD_DATA_FIELD
+            else:
+                return farr
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(preference))
     arr = None
@@ -184,6 +198,9 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
     elif carr is not None:
         arr = carr
         field = 1
+    elif farr is not None:
+        arr = farr
+        field = 2
     elif err:
         raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
     if info:
@@ -396,4 +413,6 @@ def _raise_not_matching(scalars, mesh):
                     'must match either the number of points ' +
                     '(%d) ' % mesh.n_points +
                     'or the number of cells ' +
-                    '(%d) ' % mesh.n_cells)
+                    '(%d). ' % mesh.n_cells +
+                    'For setting field data, please use ' +
+                    'vtki.Common.add_field_array.')
