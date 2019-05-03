@@ -91,3 +91,10 @@ try:
     panel.extension('vtk')
 except ImportError:
     pass
+
+# Set preferred plot theme
+try:
+    theme = os.environ['VTKI_PLOT_THEME'].lower()
+    set_plot_theme(theme)
+except KeyError:
+    pass
