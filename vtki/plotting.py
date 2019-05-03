@@ -57,6 +57,7 @@ rcParams = {
     'cmap' : 'jet',
     'color' : 'white',
     'nan_color' : 'darkgray',
+    'edge_color' : 'black',
     'outline_color' : 'white',
     'colorbar_orientation' : 'horizontal',
     'colorbar_horizontal' : {
@@ -107,6 +108,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'white'
+        rcParams['edge_color'] = 'white'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
@@ -619,7 +621,7 @@ class BasePlotter(object):
                  reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None,
-                 render_lines_as_tubes=False, edge_color='black',
+                 render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
                  rgb=False, categories=False, **kwargs):
@@ -772,6 +774,9 @@ class BasePlotter(object):
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
+
+        if edge_color is None:
+            edge_color = rcParams['edge_color']
 
         if show_scalar_bar is None:
             show_scalar_bar = rcParams['show_scalar_bar']
