@@ -384,3 +384,13 @@ def test_grid_points():
     grid.points = points
     assert grid.dimensions == [2, 2, 2]
     assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
+
+
+def test_grid_extract_selection_points():
+    grid = vtki.UnstructuredGrid(sgrid)
+    sub_grid = grid.extract_selection_points([0])
+    assert sub_grid.n_cells == 1
+
+    sub_grid = grid.extract_selection_points(range(100))
+    assert sub_grid.n_cells > 1
+    
