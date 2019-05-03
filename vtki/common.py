@@ -652,7 +652,7 @@ class Common(DataSetFilters, object):
         self.GetPointData().RemoveArray(key)
 
     def _remove_field_scalar(self, key):
-        """ removes point scalars from point data """
+        """ removes field scalars from field data """
         self.GetFieldData().RemoveArray(key)
 
     @property
