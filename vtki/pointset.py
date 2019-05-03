@@ -1755,12 +1755,6 @@ class PointGrid(vtki.Common):
                                   non_manifold_edges, feature_edges,
                                   manifold_edges, inplace=inplace)
 
-    # def select_enclosed_points(self, points):
-    #     """Given an array or polydata, returns the points within this
-    #     polydata.
-
-    #     """
-
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     """
@@ -2140,11 +2134,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
     def extract_selection_points(self, ind):
         """Returns a subset of the grid that contains the cells that
-        contain any of the point indices
+        contain any of the point indices.
 
         Parameters
         ----------
-        ind : np.ndarray
+        ind : np.ndarray, list, or iterable
             Numpy array of point indices to be extracted.
 
         Returns
