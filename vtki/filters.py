@@ -945,7 +945,7 @@ class DataSetFilters(object):
         return _get_output(alg)
 
     def select_enclosed_points(dataset, surface, tolerance=0.001,
-                inside_out=False, check_surface=True):
+                               inside_out=False, check_surface=True):
         """Mark points as to whether they are inside a closed surface.
         This evaluates all the input points to determine whether they are in an
         enclosed surface. The filter produces a (0,1) mask
