@@ -49,7 +49,11 @@ class Common(DataSetFilters, object):
         # rare error where scalar name isn't a valid scalar
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
-                name = None
+                if name in self.field_arrays:
+                    raise RuntimeError('Field arrays cannot be made active. ' +
+                                       'Convert to point/cell arrays if possible.')
+                else:
+                    name = None
 
         if name is None:
             if self.n_scalars < 1:
@@ -75,7 +79,11 @@ class Common(DataSetFilters, object):
         # rare error where scalar name isn't a valid scalar
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
-                name = None
+                if name in self.field_arrays:
+                    raise RuntimeError('Field arrays cannot be made active. ' +
+                                       'Convert to point/cell array if possible.')
+                else:
+                    name = None
 
         return self._active_vectors_info
 
