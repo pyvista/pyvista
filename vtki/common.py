@@ -11,7 +11,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import vtki
 from vtki import DataSetFilters
-from vtki.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, get_scalar,
+from vtki.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, FIELD_DATA_FIELD, get_scalar,
                             vtk_bit_array_to_char, is_vtki_obj,
                             _raise_not_matching, convert_array)
 
@@ -37,6 +37,7 @@ class Common(DataSetFilters, object):
         self.references = []
         self._point_bool_array_names = []
         self._cell_bool_array_names = []
+        self._field_bool_array_names = []
 
     @property
     def active_scalar_info(self):
@@ -48,7 +49,11 @@ class Common(DataSetFilters, object):
         # rare error where scalar name isn't a valid scalar
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
-                name = None
+                if name in self.field_arrays:
+                    raise RuntimeError('Field arrays cannot be made active. ' +
+                                       'Convert to point/cell arrays if possible.')
+                else:
+                    name = None
 
         if name is None:
             if self.n_scalars < 1:
@@ -74,7 +79,11 @@ class Common(DataSetFilters, object):
         # rare error where scalar name isn't a valid scalar
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
-                name = None
+                if name in self.field_arrays:
+                    raise RuntimeError('Field arrays cannot be made active. ' +
+                                       'Convert to point/cell array if possible.')
+                else:
+                    name = None
 
         return self._active_vectors_info
 
@@ -277,6 +286,8 @@ class Common(DataSetFilters, object):
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == CELL_DATA_FIELD:
             self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
+        elif field == FIELD_DATA_FIELD:
+            self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
         if self.active_scalar_info[1] == old_name:
@@ -379,6 +390,79 @@ class Common(DataSetFilters, object):
         """ Makes points double precision """
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
+
+    def _field_scalar(self, name=None):
+        """
+        Returns field scalars of a vtk object
+
+        Parameters
+        ----------
+        name : str
+            Name of field scalars to retrive.
+
+        Returns
+        -------
+        scalars : np.ndarray
+            Numpy array of scalars
+
+        """
+        if name is None:
+            raise RuntimeError('Must specify an array to fetch.')
+        vtkarr = self.GetFieldData().GetAbstractArray(name)
+        if vtkarr is None:
+            raise AssertionError('({}) is not a valid field scalar array'.format(name))
+
+        # numpy does not support bit array data types
+        if isinstance(vtkarr, vtk.vtkBitArray):
+            vtkarr = vtk_bit_array_to_char(vtkarr)
+            if name not in self._point_bool_array_names:
+                self._field_bool_array_names.append(name)
+
+        array = convert_array(vtkarr)
+        if array.dtype == np.uint8 and name in self._field_bool_array_names:
+            array = array.view(np.bool)
+        return array
+
+    def _add_field_scalar(self, scalars, name, deep=True):
+        """
+        Adds field scalars to the mesh
+
+        Parameters
+        ----------
+        scalars : numpy.ndarray
+            Numpy array of scalars.  Does not have to match number of points or
+            numbers of cells.
+
+        name : str
+            Name of field scalars to add.
+
+        deep : bool, optional
+            Does not copy scalars when False.  A reference to the scalars
+            must be kept to avoid a segfault.
+
+        """
+        if scalars is None:
+            raise TypeError('Empty array unable to be added')
+
+        if not isinstance(scalars, np.ndarray):
+            scalars = np.array(scalars)
+
+        # need to track which arrays are boolean as all boolean arrays
+        # must be stored as uint8
+        if scalars.dtype == np.bool:
+            scalars = scalars.view(np.uint8)
+            if name not in self._field_bool_array_names:
+                self._field_bool_array_names.append(name)
+
+        if not scalars.flags.c_contiguous:
+            scalars = np.ascontiguousarray(scalars)
+
+        vtkarr = convert_array(scalars, deep=deep)
+        vtkarr.SetName(name)
+        self.GetFieldData().AddArray(vtkarr)
+
+    def add_field_array(self, scalars, name, deep=True):
+        self._add_field_scalar(scalars, name, deep=deep)
 
     def rotate_x(self, angle):
         """
@@ -575,6 +659,10 @@ class Common(DataSetFilters, object):
         """ removes point scalars from point data """
         self.GetPointData().RemoveArray(key)
 
+    def _remove_field_scalar(self, key):
+        """ removes field scalars from field data """
+        self.GetFieldData().RemoveArray(key)
+
     @property
     def point_arrays(self):
         """ Returns the all point arrays """
@@ -600,6 +688,28 @@ class Common(DataSetFilters, object):
 
         self._point_arrays.enable_callback()
         return self._point_arrays
+
+    @property
+    def field_arrays(self):
+        """ Returns all field arrays """
+        fdata = self.GetFieldData()
+        narr = fdata.GetNumberOfArrays()
+
+        # just return if unmodified
+        if hasattr(self, '_field_arrays'):
+            keys = list(self._field_arrays.keys())
+            if narr == len(keys):
+                return self._field_arrays
+
+        # dictionary with callbacks
+        self._field_arrays = FieldScalarsDict(self)
+
+        for i in range(narr):
+            name = fdata.GetArrayName(i)
+            self._field_arrays[name] = self._field_scalar(name)
+
+        self._field_arrays.enable_callback()
+        return self._field_arrays
 
     def _remove_cell_scalar(self, key):
         """ removes cell scalars """
@@ -700,7 +810,8 @@ class Common(DataSetFilters, object):
 
         preference : str, optional
             When scalars is specified, this is the perfered scalar type to
-            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
+            or``'field'``.
 
         """
         if arr is None:
@@ -715,12 +826,12 @@ class Common(DataSetFilters, object):
         return np.nanmin(arr), np.nanmax(arr)
 
     def get_scalar(self, name, preference='cell', info=False):
-        """ Searches both point and cell data for an array """
+        """ Searches both point, cell and field data for an array """
         return get_scalar(self, name, preference=preference, info=info)
 
 
     def __getitem__(self, index):
-        """ Searches both point and cell data for an array """
+        """ Searches both point, cell, and field data for an array """
         if isinstance(index, collections.Iterable) and not isinstance(index, str):
             name, preference = index[0], index[1]
         elif isinstance(index, str):
@@ -731,8 +842,8 @@ class Common(DataSetFilters, object):
         return self.get_scalar(name, preference=preference, info=False)
 
     def __setitem__(self, name, scalars):
-        """Add/set an array in the point_arrays or cell_arrays field depending
-        on the array's length
+        """Add/set an array in the point_arrays, or cell_arrays depending on the
+        array's length, or specified mode.
         """
         # First check points - think of case with vertex cells
         #   there would be the same number of cells as points but we'd want
@@ -741,7 +852,7 @@ class Common(DataSetFilters, object):
             raise TypeError('Empty array unable to be added')
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
-        if scalars.shape[0] == self.n_points:
+        elif scalars.shape[0] == self.n_points:
             self.point_arrays[name] = scalars
         elif scalars.shape[0] == self.n_cells:
             self.cell_arrays[name] = scalars
@@ -749,12 +860,12 @@ class Common(DataSetFilters, object):
             _raise_not_matching(scalars, self)
         return
 
-
     @property
     def n_scalars(self):
         """The number of scalara arrays present in the dataset"""
         return self.GetPointData().GetNumberOfArrays() + \
-               self.GetCellData().GetNumberOfArrays()
+               self.GetCellData().GetNumberOfArrays() + \
+               self.GetFieldData().GetNumberOfArrays()
 
     @property
     def scalar_names(self):
@@ -765,6 +876,8 @@ class Common(DataSetFilters, object):
             names.append(self.GetPointData().GetArrayName(i))
         for i in range(self.GetCellData().GetNumberOfArrays()):
             names.append(self.GetCellData().GetArrayName(i))
+        for i in range(self.GetFieldData().GetNumberOfArrays()):
+            names.append(self.GetFieldData().GetArrayName(i))
         try:
             names.remove(self.active_scalar_name)
             names.insert(0, self.active_scalar_name)
@@ -858,6 +971,10 @@ class Common(DataSetFilters, object):
             for i in range(self.GetCellData().GetNumberOfArrays()):
                 key = self.GetCellData().GetArrayName(i)
                 fmt += format_array(key, field='Cells')
+            for i in range(self.GetFieldData().GetNumberOfArrays()):
+                key = self.GetFieldData().GetArrayName(i)
+                fmt += format_array(key, field='Fields')
+
             fmt += "</table>\n"
             fmt += "\n"
             fmt += "</td></tr> </table>"
@@ -971,6 +1088,20 @@ class PointScalarsDict(_ScalarsDict):
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_point_scalar(scalars, name, set_active=False, deep=deep)
+
+class FieldScalarsDict(_ScalarsDict):
+    """
+    Updates internal field data when an array is added or removed from
+    the dictionary.
+    """
+
+    def __init__(self, data):
+        _ScalarsDict.__init__(self, data)
+        self.remover = lambda key: self.data._remove_field_scalar(key)
+        self.modifier = lambda *args: self.data.GetFieldData().Modified()
+
+    def adder(self, scalars, name, set_active=False, deep=True):
+        self.data._add_field_scalar(scalars, name, deep=deep)
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
