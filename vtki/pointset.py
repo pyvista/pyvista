@@ -98,18 +98,14 @@ class PolyData(vtkPolyData, vtki.Common):
         else:
             raise TypeError('Invalid input type')
 
-
     def __repr__(self):
         return vtki.Common.__repr__(self)
-
 
     def __str__(self):
         return vtki.Common.__str__(self)
 
-
     def _load_file(self, filename):
-        """
-        Load a surface mesh from a mesh file.
+        """Load a surface mesh from a mesh file.
 
         Mesh file may be an ASCII or binary ply, stl, or vtk mesh file.
 
@@ -1759,6 +1755,12 @@ class PointGrid(vtki.Common):
                                   non_manifold_edges, feature_edges,
                                   manifold_edges, inplace=inplace)
 
+    # def select_enclosed_points(self, points):
+    #     """Given an array or polydata, returns the points within this
+    #     polydata.
+
+    #     """
+
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
     """
@@ -2136,41 +2138,49 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         return subgrid
 
-    # def extract_points(self, ind):
-    #     """
-    #     Returns a subset of an unstructured grid
+    def extract_selection_points(self, ind):
+        """Returns a subset of the grid that contains the cells that
+        contain any of the point indices
 
-    #     Parameters
-    #     ----------
-    #     ind : np.ndarray
-    #         Numpy array of point indices to be extracted.
+        Parameters
+        ----------
+        ind : np.ndarray
+            Numpy array of point indices to be extracted.
 
-    #     Returns
-    #     -------
-    #     subgrid : vtki.UnstructuredGrid
-    #         Subselected grid.
+        Returns
+        -------
+        subgrid : vtki.UnstructuredGrid
+            Subselected grid.
+        """
+        try:
+            ind = np.array(ind)
+        except:
+            raise Exception('indices must be either a mask, array, list, or iterable')
 
-    #     """
-    #     # Convert to vtk indices
-    #     if ind.dtype != np.int64:
-    #         ind = ind.astype(np.int64)
-    #     vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=True)
+        # Convert to vtk indices
+        if ind.dtype == np.bool:
+            ind = ind.nonzero()[0]
 
-    #     # Create selection objects
-    #     selectionNode = vtk.vtkSelectionNode()
-    #     selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
-    #     selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
-    #     selectionNode.SetSelectionList(vtk_ind)
+        if ind.dtype != np.int64:
+            ind = ind.astype(np.int64)
+        vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=True)
 
-    #     selection = vtk.vtkSelection()
-    #     selection.AddNode(selectionNode)
+        # Create selection objects
+        selectionNode = vtk.vtkSelectionNode()
+        selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
+        selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+        selectionNode.SetSelectionList(vtk_ind)
+        selectionNode.GetProperties().Set(vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
 
-    #     # extract
-    #     extract_sel = vtk.vtkExtractSelection()
-    #     extract_sel.SetInputData(0, self)
-    #     extract_sel.SetInputData(1, selection)
-    #     extract_sel.Update()
-    #     return UnstructuredGrid(extract_sel.GetOutput())
+        selection = vtk.vtkSelection()
+        selection.AddNode(selectionNode)
+
+        # extract
+        extract_sel = vtk.vtkExtractSelection()
+        extract_sel.SetInputData(0, self)
+        extract_sel.SetInputData(1, selection)
+        extract_sel.Update()
+        return UnstructuredGrid(extract_sel.GetOutput())
 
     def merge(self, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
@@ -2236,7 +2246,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         """Apply a delaunay 2D filter along the best fitting plane. This
         extracts the grid's points and perfoms the triangulation on those alone.
         """
-        return PolyData(self.points).delaunay_2d(tol=tol, alpha=alpha, offset=offset, bound=bound)
+        return PolyData(self.points).delaunay_2d(tol=tol, alpha=alpha,
+                                                 offset=offset, bound=bound)
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
