@@ -54,31 +54,8 @@ A structured grid can be initialized with:
     import vtki
     grid = vtki.StructuredGrid()
 
-This creates an empty grid, and is not useful until points are added to it and
-the shape set using ``SetPoints`` and ``SetDimensions``.  This can be done with:
-
-
-.. testcode:: python
-
-    import vtki
-    import numpy as np
-
-    # create a cube of points
-    x = np.arange(-10, 10, 0.25)
-    y = np.arange(-10, 10, 0.25)
-    z = np.arange(-10, 10, 0.25)
-    x, y, z = np.meshgrid(x, y, z)
-
-    # convert
-    points = np.empty((x.size, 3))
-    points[:, 0] = x.ravel('F')
-    points[:, 1] = y.ravel('F')
-    points[:, 2] = z.ravel('F')
-
-    # Create structured grid
-    grid = vtki.StructuredGrid(x, y, z)
-    grid.SetDimensions(x.shape)
-    grid.SetPoints(vtki.vtk_points(points))
+This creates an empty grid, and is not useful until points are added
+to it.
 
 
 Creating from Numpy Arrays
