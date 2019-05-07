@@ -356,3 +356,17 @@ def download_kitchen(split=False):
         result = vtki.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
+
+
+def download_tetra_dc_mesh():
+    """Download two meshes defining an electrical inverse problem. This contains
+    a high resolution forward modeled mesh and a coarse inverse modeled mesh
+    """
+    local_path, _ = _download_file('dc-inversion.zip')
+    filename = os.path.join(local_path, 'mesh-forward.vtu')
+    fwd = vtki.read(filename)
+    fwd.set_active_scalar('Resistivity(log10)-fwd')
+    filename = os.path.join(local_path, 'mesh-inverse.vtu')
+    inv = vtki.read(filename)
+    inv.set_active_scalar('Resistivity(log10)')
+    return vtki.MultiBlock({'forward':fwd, 'inverse':inv})
