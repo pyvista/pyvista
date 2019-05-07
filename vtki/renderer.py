@@ -10,7 +10,7 @@ import numpy as np
 from vtk import vtkRenderer
 
 import vtki
-from vtki.plotting import rcParams, parse_color, parse_font_family
+from vtki.plotting import rcParams, parse_color, parse_font_family, MAX_N_COLOR_BARS
 from vtki.utilities import wrap
 
 
@@ -24,6 +24,11 @@ class Renderer(vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+
+        # This is a private variable to keep track of how many colorbars exist
+        # This allows us to keep adding colorbars without overlapping
+        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
+        self._scalar_bar_slot_lookup = {}
 
         if border:
             self.add_border(border_color, border_width)

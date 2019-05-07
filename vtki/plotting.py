@@ -371,10 +371,7 @@ class BasePlotter(object):
                 renderer.SetViewport(y0, x0, y1, x1)
                 self.renderers.append(renderer)
 
-        # This is a private variable to keep track of how many colorbars exist
-        # This allows us to keep adding colorbars without overlapping
-        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
-        self._scalar_bar_slot_lookup = {}
+
         # This keeps track of scalar names already plotted and their ranges
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
@@ -1155,6 +1152,22 @@ class BasePlotter(object):
     def update_bounds_axes(self):
         """ Update the bounds of the active renderer """
         return self.renderer.update_bounds_axes()
+
+    @property
+    def _scalar_bar_slots(self):
+        return self.renderer._scalar_bar_slots
+
+    @property
+    def _scalar_bar_slot_lookup(self):
+        return self.renderer._scalar_bar_slot_lookup
+
+    @_scalar_bar_slots.setter
+    def _scalar_bar_slots(self, value):
+        self.renderer._scalar_bar_slots = value
+
+    @_scalar_bar_slot_lookup.setter
+    def _scalar_bar_slot_lookup(self, value):
+        self.renderer._scalar_bar_slot_lookup = value
 
     def clear(self):
         """ Clears plot by removing all actors and properties """
