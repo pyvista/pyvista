@@ -82,15 +82,25 @@ matrix:
     - name: Notebooks 3.6 with panel
       python: 3.6
       # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
       script: |
-        pip install panel;
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
         pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
         pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
     - name: Notebooks 3.7 with panel
       python: 3.7
       # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
       script: |
-        pip install panel;
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
         pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
         pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
     - name: Notebooks 3.7
@@ -121,15 +131,25 @@ matrix:
     - name: Notebooks 3.6 with panel
       python: 3.6
       # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
       script: |
-        pip install panel;
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
         pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
         pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
     - name: Notebooks 3.7 with panel
       python: 3.7
       # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
       script: |
-        pip install panel;
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
         pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
         pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
 
