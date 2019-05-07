@@ -13,7 +13,7 @@ py2 = sys.version_info.major == 2
 
 
 def test_point_arrays():
-    key = 'test_array'
+    key = 'test_array_points'
     grid[key] = np.arange(grid.n_points)
     assert key in grid.point_arrays
 
@@ -39,7 +39,7 @@ def test_point_arrays_bad_value():
 
 
 def test_cell_arrays():
-    key = 'test_array'
+    key = 'test_array_cells'
     grid[key] = np.arange(grid.n_cells)
     assert key in grid.cell_arrays
 
@@ -62,6 +62,27 @@ def test_cell_arrays_bad_value():
 
     with pytest.raises(Exception):
         grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
+
+
+def test_cell_arrays():
+    key = 'test_array_field'
+    # Add array of lenght not equal to n_cells or n_points
+    n = grid.n_cells // 3
+    grid.field_arrays[key] = np.arange(n)
+    assert key in grid.field_arrays
+    assert np.allclose(grid.field_arrays[key], np.arange(n))
+
+    orig_value = grid.field_arrays[key][0]/1.0
+    grid.field_arrays[key][0] += 1
+    assert orig_value == grid.field_arrays[key][0] -1
+
+    del grid.field_arrays[key]
+    assert key not in grid.field_arrays
+
+
+def test_cell_arrays_bad_value():
+    with pytest.raises(TypeError):
+        grid.field_arrays['new_array'] = None
 
 
 def test_copy():

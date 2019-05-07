@@ -659,9 +659,6 @@ class Common(DataSetFilters, object):
         """ removes point scalars from point data """
         self.GetPointData().RemoveArray(key)
 
-    def _remove_field_scalar(self, key):
-        """ removes field scalars from field data """
-        self.GetFieldData().RemoveArray(key)
 
     @property
     def point_arrays(self):
@@ -688,6 +685,12 @@ class Common(DataSetFilters, object):
 
         self._point_arrays.enable_callback()
         return self._point_arrays
+
+
+    def _remove_field_scalar(self, key):
+        """ removes field scalars from field data """
+        self.GetFieldData().RemoveArray(key)
+
 
     @property
     def field_arrays(self):

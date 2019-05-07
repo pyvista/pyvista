@@ -172,7 +172,7 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
             preference = FIELD_DATA_FIELD
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(preference))
-    if all([parr is not None, carr is not None, farr is not None]):
+    if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
         if preference == CELL_DATA_FIELD:
             if info:
                 return carr, CELL_DATA_FIELD
@@ -194,13 +194,13 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
     field = None
     if parr is not None:
         arr = parr
-        field = 0
+        field = POINT_DATA_FIELD
     elif carr is not None:
         arr = carr
-        field = 1
+        field = CELL_DATA_FIELD
     elif farr is not None:
         arr = farr
-        field = 2
+        field = FIELD_DATA_FIELD
     elif err:
         raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
     if info:
