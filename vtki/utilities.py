@@ -164,6 +164,7 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
     carr = cell_scalar(mesh, name)
     farr = field_scalar(mesh, name)
     if isinstance(preference, str):
+        preference = preference.strip().lower()
         if preference in ['cell', 'c', 'cells']:
             preference = CELL_DATA_FIELD
         elif preference in ['point', 'p', 'points']:
