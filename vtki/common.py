@@ -852,11 +852,14 @@ class Common(DataSetFilters, object):
             raise TypeError('Empty array unable to be added')
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
-        elif scalars.shape[0] == self.n_points:
+        # Now check array size to determine which field to place array
+        if scalars.shape[0] == self.n_points:
             self.point_arrays[name] = scalars
         elif scalars.shape[0] == self.n_cells:
             self.cell_arrays[name] = scalars
         else:
+            # Field data must be set explicitly as it could be a point of
+            # confusion for new users
             _raise_not_matching(scalars, self)
         return
 

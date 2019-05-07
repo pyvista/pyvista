@@ -409,10 +409,8 @@ def fit_plane_to_points(points, return_meta=False):
 
 
 def _raise_not_matching(scalars, mesh):
-    raise Exception('Number of scalars (%d) ' % scalars.size +
+    raise Exception('Number of scalars ({})'.format(scalars.size) +
                     'must match either the number of points ' +
-                    '(%d) ' % mesh.n_points +
+                    '({}) '.format(mesh.n_points) +
                     'or the number of cells ' +
-                    '(%d). ' % mesh.n_cells +
-                    'For setting field data, please use ' +
-                    'vtki.Common.add_field_array.')
+                    '({}). '.format(mesh.n_cells) )
