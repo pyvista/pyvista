@@ -58,7 +58,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
 
-    url='https://github.com/vtkiorg/vtki',
+    url='https://github.com/pyvista/vtki',
     keywords='vtk numpy plotting mesh',
     package_data={'vtki.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
                                     'hexbeam.vtk', 'sphere.ply',

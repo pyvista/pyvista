@@ -3,7 +3,7 @@
 .. raw:: html
 
     <div class="banner">
-        <img src="https://github.com/vtkiorg/vtki/raw/master/docs/_static/vtki_logo.png" alt="vtki" width="500px">
+        <img src="https://github.com/pyvista/vtki/raw/master/docs/_static/vtki_logo.png" alt="vtki" width="500px">
         <h2>A Streamlined Python Interface for the Visualization Toolkit</h2>
     </div>
 
@@ -18,8 +18,8 @@
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
    :target: https://anaconda.org/conda-forge/vtki
 
-.. |travis| image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/vtkiorg/vtki
+.. |travis| image:: https://img.shields.io/travis/pyvista/vtki/master.svg?label=build&logo=travis
+   :target: https://travis-ci.org/pyvista/vtki
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/vtki/history
@@ -75,7 +75,7 @@ using ``pip`` on Python >= 3.5::
 
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_,
 `Anaconda <https://anaconda.org/conda-forge/vtki>`_, or
-`GitHub <https://github.com/vtkiorg/vtki>`_ to download the source.
+`GitHub <https://github.com/pyvista/vtki>`_ to download the source.
 
 See the `Installation <http://docs.vtki.org/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
@@ -92,7 +92,7 @@ Head over to the `Quick Examples`_ page in the docs to learn more about using
 Want to test-drive ``vtki``? Check out our live examples on MyBinder:
 
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/vtkiorg/vtki-examples/master
+   :target: https://mybinder.org/v2/gh/pyvista/vtki-examples/master
    :alt: Launch on Binder
 
 

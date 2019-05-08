@@ -1,8 +1,8 @@
 Authors
 =======
 
-.. image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
-   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
+.. image:: https://img.shields.io/github/contributors/pyvista/vtki.svg?logo=github&logoColor=white
+   :target: https://github.com/pyvista/vtki/graphs/contributors/
 
 .. _authors_ref:
 

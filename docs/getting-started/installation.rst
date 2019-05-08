@@ -6,7 +6,7 @@ Installation
 ``vtki`` is supported on Python versions 3.5+, with temporary support for
 Python 2.7 as outlined in `this issue`_.
 
-.. _this issue: https://github.com/vtkiorg/vtki/issues/164
+.. _this issue: https://github.com/pyvista/vtki/issues/164
 
 PyPI
 ~~~~
@@ -55,10 +55,10 @@ Source / Developers
 ~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can install the latest version from GitHub by visiting
-`vtki <https://github.com/vtkiorg/vtki>`_, downloading the source
+`vtki <https://github.com/pyvista/vtki>`_, downloading the source
 (or cloning), and running::
 
-    git clone https://github.com/vtkiorg/vtki.git
+    git clone https://github.com/pyvista/vtki.git
     cd vtki
     pip install -e .
 
@@ -90,10 +90,10 @@ Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
 
 
-Please head over to `vtkiorg/gl-ci-hepers`_ for details on setting up CI
+Please head over to `pyvista/gl-ci-hepers`_ for details on setting up CI
 services like Travis and AppVeyor to run ``vtki``.
 
-.. _vtkiorg/gl-ci-hepers: https://github.com/vtkiorg/gl-ci-helpers
+.. _pyvista/gl-ci-hepers: https://github.com/pyvista/gl-ci-helpers
 
 
 Running on MyBinder
@@ -105,7 +105,7 @@ with headless displays on notebook hosting services like MyBinder_.
 Please see `this project`_ for a convenient Cookiecutter_ to get started using
 ``vtki`` on the notebook hosting service MyBinder_.
 
-.. _this project: https://github.com/vtkiorg/cookiecutter-vtki-binder
+.. _this project: https://github.com/pyvista/cookiecutter-vtki-binder
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _MyBinder: https://mybinder.org
 

@@ -14,8 +14,8 @@
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
    :target: https://anaconda.org/conda-forge/vtki
 
-.. |travis| image:: https://img.shields.io/travis/vtkiorg/vtki/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/vtkiorg/vtki
+.. |travis| image:: https://img.shields.io/travis/pyvista/vtki/master.svg?label=build&logo=travis
+   :target: https://travis-ci.org/pyvista/vtki
 
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/vtki/history
@@ -26,11 +26,11 @@
 .. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
 
-.. |contributors| image:: https://img.shields.io/github/contributors/vtkiorg/vtki.svg?logo=github&logoColor=white
-   :target: https://github.com/vtkiorg/vtki/graphs/contributors/
+.. |contributors| image:: https://img.shields.io/github/contributors/pyvista/vtki.svg?logo=github&logoColor=white
+   :target: https://github.com/pyvista/vtki/graphs/contributors/
 
-.. |stars| image:: https://img.shields.io/github/stars/vtkiorg/vtki.svg?style=social&label=Stars
-   :target: https://github.com/vtkiorg/vtki
+.. |stars| image:: https://img.shields.io/github/stars/pyvista/vtki.svg?style=social&label=Stars
+   :target: https://github.com/pyvista/vtki
    :alt: GitHub
 
 
@@ -61,7 +61,7 @@ papers as well as a supporting module for other mesh dependent Python modules.
 Want to test-drive ``vtki``? Check out our live examples on MyBinder:
 
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/vtkiorg/vtki-examples/master
+   :target: https://mybinder.org/v2/gh/pyvista/vtki-examples/master
    :alt: Launch on Binder
 
 .. toctree::
@@ -108,7 +108,7 @@ If you have a working copy of VTK, installation is simply::
     $ pip install vtki
 
 You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
-`GitHub <https://github.com/vtkiorg/vtki>`_ to download the source.
+`GitHub <https://github.com/pyvista/vtki>`_ to download the source.
 
 See :ref:`install_ref` for more details.
 

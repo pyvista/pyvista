@@ -23,7 +23,7 @@ def _decompress(filename):
     return zip_ref.close()
 
 def _get_vtk_file_url(filename):
-    return 'https://github.com/vtkiorg/vtk-data/raw/master/Data/{}'.format(filename)
+    return 'https://github.com/pyvista/vtk-data/raw/master/Data/{}'.format(filename)
 
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded

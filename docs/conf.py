@@ -52,7 +52,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'vtki'
-copyright = u'2017-2019, The vtkiorg Developers'
+copyright = u'2017-2019, The vista Developers'
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -96,7 +96,7 @@ html_context = {
     'display_github': True,
     # Set the following variables to generate the resulting github URL for each page.
     # Format Template: https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}
-    'github_user': 'vtkiorg',
+    'github_user': 'pyvista',
     'github_repo': 'vtki',
     'github_version': 'master/docs/'
 }
