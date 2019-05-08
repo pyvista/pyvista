@@ -12,10 +12,10 @@ Questions
 For general questions about the project, its applications, or about software
 usage, please do not create an issue but join us on Slack_ or send one
 of the developers an email. The project support team can be reached at
-`info@vtki.org`_.
+`info@pyvista.org`_.
 
 .. _Slack: http://slack.opengeovis.org
-.. _info@vtki.org: mailto:info@vtki.org
+.. _info@pyvista.org: mailto:info@pyvista.org
 
 For more technical questions, you are welcome to create an issue on the
 `issues page`_ which we will address promptly.
