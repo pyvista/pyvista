@@ -4,23 +4,23 @@ from math import pi
 import numpy as np
 import pytest
 
-import vtki
-from vtki import examples
-from vtki.plotting import system_supports_plotting
+import vista
+from vista import examples
+from vista.plotting import system_supports_plotting
 
 radius = 0.5
-SPHERE = vtki.Sphere(radius, theta_resolution=10, phi_resolution=10)
+SPHERE = vista.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
-SPHERE_SHIFTED = vtki.Sphere(center=[0.5, 0.5, 0.5],
+SPHERE_SHIFTED = vista.Sphere(center=[0.5, 0.5, 0.5],
                              theta_resolution=10, phi_resolution=10)
 
-SPHERE_DENSE = vtki.Sphere(radius, theta_resolution=100, phi_resolution=100)
+SPHERE_DENSE = vista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 try:
     test_path = os.path.dirname(os.path.abspath(__file__))
     test_data_path = os.path.join(test_path, 'test_data')
 except:
-    test_data_path = '/home/alex/afrl/python/source/vtki/tests/test_data'
+    test_data_path = '/home/alex/afrl/python/source/vista/tests/test_data'
 
 stl_test_file = os.path.join(test_data_path, 'sphere.stl')
 ply_test_file = os.path.join(test_data_path, 'sphere.ply')
@@ -31,14 +31,14 @@ test_files = [stl_test_file,
 
 
 def test_init():
-    mesh = vtki.PolyData()
+    mesh = vista.PolyData()
     assert not mesh.n_points
     assert not mesh.n_cells
 
 
 def test_init_from_pdata():
     sphere = SPHERE.copy()
-    mesh = vtki.PolyData(sphere, deep=True)
+    mesh = vista.PolyData(sphere, deep=True)
     assert mesh.n_points
     assert mesh.n_cells
     mesh.points[0] += 1
@@ -47,7 +47,7 @@ def test_init_from_pdata():
 
 # @pytest.mark.parametrize('filename', test_files)
 # def test_init_from_file(filename):
-#     mesh = vtki.PolyData(filename)
+#     mesh = vista.PolyData(filename)
 #     assert mesh.faces.shape == sphere.faces.shape
 #     assert mesh.points.shape == sphere.points.shape
 
@@ -64,11 +64,11 @@ def test_init_from_arrays():
                        [3, 0, 1, 4],
                        [3, 1, 2, 4]]).astype(np.int8)
 
-    mesh = vtki.PolyData(vertices, faces)
+    mesh = vista.PolyData(vertices, faces)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
-    mesh = vtki.PolyData(vertices, faces, deep=True)
+    mesh = vista.PolyData(vertices, faces, deep=True)
     vertices[0] += 1
     assert not np.allclose(vertices[0], mesh.points[0])
 
@@ -85,12 +85,12 @@ def test_init_from_arrays_triangular():
                        [3, 0, 1, 4],
                        [3, 1, 2, 4]])
 
-    mesh = vtki.PolyData(vertices, faces)
+    mesh = vista.PolyData(vertices, faces)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
 
-    mesh = vtki.PolyData(vertices, faces, deep=True)
+    mesh = vista.PolyData(vertices, faces, deep=True)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
@@ -102,40 +102,40 @@ def test_init_as_points():
                          [0, 1, 0],
                          [0.5, 0.5, -1]])
 
-    mesh = vtki.PolyData(vertices)
+    mesh = vista.PolyData(vertices)
     assert mesh.n_points == vertices.shape[0]
     assert mesh.n_cells == vertices.shape[0]
 
 
 def test_invalid_init():
     with pytest.raises(ValueError):
-        mesh = vtki.PolyData(np.array([1]))
+        mesh = vista.PolyData(np.array([1]))
 
     with pytest.raises(TypeError):
-        mesh = vtki.PolyData(np.array([1]), 'woa')
+        mesh = vista.PolyData(np.array([1]), 'woa')
 
     with pytest.raises(TypeError):
-        mesh = vtki.PolyData('woa', 'woa')
+        mesh = vista.PolyData('woa', 'woa')
 
     with pytest.raises(TypeError):
-        mesh = vtki.PolyData('woa', 'woa', 'woa')
+        mesh = vista.PolyData('woa', 'woa', 'woa')
 
 
 def test_invalid_file():
     with pytest.raises(Exception):
-        mesh = vtki.PolyData('file.bad')
+        mesh = vista.PolyData('file.bad')
 
     with pytest.raises(TypeError):
         filename = os.path.join(test_path, 'test_polydata.py')
-        mesh = vtki.PolyData(filename)
+        mesh = vista.PolyData(filename)
 
     # with pytest.raises(Exception):
-        # vtki.PolyData(examples.hexbeamfile)
+        # vista.PolyData(examples.hexbeamfile)
 
 def test_geodesic():
     sphere = SPHERE.copy()
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
-    assert isinstance(geodesic, vtki.PolyData)
+    assert isinstance(geodesic, vista.PolyData)
 
 
 def test_geodesic_distance():
@@ -256,7 +256,7 @@ def test_save(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     sphere.save(filename, binary)
 
-    mesh = vtki.PolyData(filename)
+    mesh = vista.PolyData(filename)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
 
@@ -267,7 +267,7 @@ def test_invalid_save():
 
 
 def test_tri_filter():
-    arrow = vtki.Arrow([0, 0, 0], [1, 1, 1])
+    arrow = vista.Arrow([0, 0, 0], [1, 1, 1])
     assert arrow.faces.size % 4
     arrow.tri_filter(inplace=True)
     assert not(arrow.faces.size % 4)
@@ -298,7 +298,7 @@ def test_extract_edges():
     edges = mesh.extract_edges(90)
     assert not edges.n_points
 
-    mesh = vtki.Cube() # use a mesh that actually has strongly defined edges
+    mesh = vista.Cube() # use a mesh that actually has strongly defined edges
     more_edges = mesh.extract_edges(10)
     assert more_edges.n_points
 
@@ -375,7 +375,7 @@ def test_clip_plane():
 
 def test_extract_largest():
     sphere = SPHERE.copy()
-    mesh = sphere + vtki.Sphere(0.1, theta_resolution=5, phi_resolution=5)
+    mesh = sphere + vista.Sphere(0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
     assert largest.n_faces == sphere.n_faces
 
@@ -410,7 +410,7 @@ def test_volume():
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_boundaries():
     # make sure to plot an object that has boundaries
-    vtki.Cube().plot_boundaries(off_screen=True)
+    vista.Cube().plot_boundaries(off_screen=True)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -439,6 +439,6 @@ def test_remove_points_all():
 
 
 def test_remove_points_fail():
-    arrow = vtki.Arrow([0, 0, 0], [1, 0, 0])
+    arrow = vista.Arrow([0, 0, 0], [1, 0, 0])
     with pytest.raises(Exception):
         arrow.remove_points(range(10))

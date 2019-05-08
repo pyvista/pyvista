@@ -5,39 +5,39 @@ Create Our Logo
 Think our logo is awesome? Create it yourself!
 """
 # sphinx_gallery_thumbnail_number = 2
-import vtki
+import vista
 import numpy as np
 
 ###############################################################################
 
 # mesh for each letter
 space = 0.3
-mesh_letters = vtki.MultiBlock()
+mesh_letters = vista.MultiBlock()
 width = 0
 density = 0.03
-for letter in 'vtki':
-    mesh_letter = vtki.Text3D(letter, depth=0.3)
+for letter in 'vista':
+    mesh_letter = vista.Text3D(letter, depth=0.3)
     this_letter_width = mesh_letter.points[:, 0].max()
     mesh_letter.translate([width + space, 0, 0.0])
     width += this_letter_width
     mesh_letters[letter] = mesh_letter
 
-grid = vtki.voxelize(vtki.Text3D('vtki'), 0.05)
+grid = vista.voxelize(vista.Text3D('vista'), 0.05)
 grid.plot(color='w', show_edges=True)
 
 ###############################################################################
 
-v_grid = vtki.voxelize(mesh_letters['v'], density=0.03)
-t_grid = vtki.voxelize(mesh_letters['t'], density=0.07)
-k_grid = vtki.voxelize(mesh_letters['k'], density=0.08)
-i_grid = vtki.voxelize(mesh_letters['i'], 0.05)
+v_grid = vista.voxelize(mesh_letters['v'], density=0.03)
+t_grid = vista.voxelize(mesh_letters['t'], density=0.07)
+k_grid = vista.voxelize(mesh_letters['k'], density=0.08)
+i_grid = vista.voxelize(mesh_letters['i'], 0.05)
 
 v_mesh = v_grid.triangulate().extract_geometry().decimate_pro(0.9)
 
 ###############################################################################
 
 # plot letters
-plotter = vtki.Plotter(window_size=np.array([1024, 512]) * 2)
+plotter = vista.Plotter(window_size=np.array([1024, 512]) * 2)
 
 # Add the V
 plotter.add_mesh(v_mesh, color='w', show_edges=True)
@@ -105,7 +105,7 @@ plotter.camera_position = [(0.124, 1.100, 3.338),
 save_it = False
 if save_it:
     plotter.show(auto_close=False)
-    plotter.screenshot('vtki_logo.png', transparent_background=True)
+    plotter.screenshot('vista_logo.png', transparent_background=True)
     plotter.close()
 else:
     plotter.show()

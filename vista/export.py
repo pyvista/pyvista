@@ -4,7 +4,7 @@ to a VTKjs file that can be viewed in a web browser.
 
 PVGeo has a webveiwer_ set up to load these files.
 
-.. _webviewer: http://viewer.vtki.org
+.. _webviewer: http://viewer.pyvista.org
 
 
 Much of this export script was adopted from the
@@ -642,7 +642,7 @@ def convert_dropbox_url(url):
 
 def generate_viewer_url(dataURL):
     """Generate viewer url with data link"""
-    viewerURL = "http://viewer.vtki.org/"
+    viewerURL = "http://viewer.pyvista.org/"
     return viewerURL + '%s%s' % ("?fileURL=", dataURL)
 
 def get_vtkjs_url(*args):
@@ -651,7 +651,7 @@ def get_vtkjs_url(*args):
     use this method to get a shareable link to that scene on the
     `PVGeo VTKjs viewer`_.
 
-    .. _PVGeo VTKjs viewer: http://viewer.vtki.org
+    .. _PVGeo VTKjs viewer: http://viewer.pyvista.org
 
     **Current file hosts supported:**
 

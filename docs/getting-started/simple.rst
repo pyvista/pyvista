@@ -1,47 +1,47 @@
 Basic API Usage
 ===============
 
-``vtki`` provides tools to get started with just about any VTK dataset
+``vista`` provides tools to get started with just about any VTK dataset
 and wrap that object into an easily accesible data object.
 Whether you are new to the VTK library or a power user, the best place to
-get started is with ``vtki``'s :func:`vtki.wrap` and :func:`vtk.read`
+get started is with ``vista``'s :func:`vista.wrap` and :func:`vtk.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
 
 Wrapping a VTK Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The wrapping function is under the :mod:`vtki.utilities` module which is
-usable from the top level of ``vtki``:
+The wrapping function is under the :mod:`vista.utilities` module which is
+usable from the top level of ``vista``:
 
 .. code-block:: python
 
-    import vtki
-    wrapped_data = vtki.wrap(my_vtk_data_object)
+    import vista
+    wrapped_data = vista.wrap(my_vtk_data_object)
 
 
 This allows users to quickly wrap any VTK dataset they have to its appropriate
-`vtki` object:
+`vista` object:
 
 .. testcode:: python
 
     import vtk
-    import vtki
+    import vista
     stuff = vtk.vtkPolyData()
-    better = vtki.wrap(stuff)
+    better = vista.wrap(stuff)
 
 
 Reading a VTK File
 ~~~~~~~~~~~~~~~~~~
 
-``vtki`` provides a convenience function to read VTK file formats into their
-respective ``vtki`` data objects. Simply call the :func:`vtki.read` function
+``vista`` provides a convenience function to read VTK file formats into their
+respective ``vista`` data objects. Simply call the :func:`vista.read` function
 passing the filename:
 
 .. code-block:: python
 
-    import vtki
-    data = vtki.read('my_strange_vtk_file.vtk')
+    import vista
+    data = vista.read('my_strange_vtk_file.vtk')
 
 
 Accessing the Wrapped Data Object
@@ -56,8 +56,8 @@ First, check out some common meta data properties:
 
 .. testcode:: python
 
-    import vtki
-    from vtki import examples
+    import vista
+    from vista import examples
     import numpy as np
 
 .. code-block:: python
@@ -82,7 +82,7 @@ First, check out some common meta data properties:
 
 
 Access the points by fetching the ``.points`` attribute on any
-``vtki`` data object:
+``vista`` data object:
 
 .. code-block:: python
 
@@ -111,17 +111,17 @@ accessed and modified.
 Plotting
 ~~~~~~~~
 
-``vtki`` includes numerous plotting routines that are intended to be intuitive
+``vista`` includes numerous plotting routines that are intended to be intuitive
 and highly controllable with ``matplotlib`` similar syntax and keyword
 arguments.
-To get started, try out the :func:`vtki.plot` convenience method that is binded
-to each ``vtki`` data object:
+To get started, try out the :func:`vista.plot` convenience method that is binded
+to each ``vista`` data object:
 
 
 .. testcode:: python
 
-    import vtki
-    from vtki import examples
+    import vista
+    from vista import examples
 
     data = examples.load_airplane()
     data.plot(screenshot='airplane.png')
@@ -131,14 +131,14 @@ to each ``vtki`` data object:
 
 
 You can also create the plotter to highly control the scene. First, instantiate
-a plotter such as :class:`vtki.Plotter` or :class:`vtki.BackgroundPlotter`:
+a plotter such as :class:`vista.Plotter` or :class:`vista.BackgroundPlotter`:
 
-The :class:`vtki.Plotter` will create a rendering window that will pause the
+The :class:`vista.Plotter` will create a rendering window that will pause the
 execution of the code after calling ``show``.
 
 .. testcode:: python
 
-    plotter = vtki.Plotter()  # instantiate the plotter
+    plotter = vista.Plotter()  # instantiate the plotter
     plotter.add_mesh(data)    # add a dataset to the scene
     cpos = plotter.show()     # show the rendering window
 
@@ -152,7 +152,7 @@ manually interact with the plotting window:
 
 .. code-block:: python
 
-    plotter = vtki.Plotter(off_screen=True)
+    plotter = vista.Plotter(off_screen=True)
     plotter.add_mesh(data, color='tan')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)
@@ -162,6 +162,6 @@ manually interact with the plotting window:
 
 Be sure to check out all the available plotters for your use case:
 
-* :class:`vtki.Plotter`: The standard plotter that pauses the code until closed
-* :class:`vtki.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution
-* :class:`vtki.ScaledPlotter`: An IPython extension of the :class:`vtki.BackgroundPlotter` that has interactive widgets for scaling the axes in the rendering scene.
+* :class:`vista.Plotter`: The standard plotter that pauses the code until closed
+* :class:`vista.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution
+* :class:`vista.ScaledPlotter`: An IPython extension of the :class:`vista.BackgroundPlotter` that has interactive widgets for scaling the axes in the rendering scene.

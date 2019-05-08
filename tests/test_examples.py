@@ -5,9 +5,9 @@ import numpy as np
 import pytest
 import vtk
 
-import vtki
-from vtki import examples
-from vtki.plotting import system_supports_plotting
+import vista
+from vista import examples
+from vista.plotting import system_supports_plotting
 
 TEST_DOWNLOADS = False
 try:
@@ -19,7 +19,7 @@ except KeyError:
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_docexample_advancedplottingwithnumpy():
-    import vtki
+    import vista
     import numpy as np
 
     # Make a grid
@@ -36,7 +36,7 @@ def test_docexample_advancedplottingwithnumpy():
     direction = np.sin(points)**3
 
     # plot using the plotting class
-    plotter = vtki.Plotter(off_screen=True)
+    plotter = vista.Plotter(off_screen=True)
     plotter.add_arrows(points, direction, 0.5)
     plotter.set_background([0, 0, 0]) # RGB set to black
     plotter.plot(auto_close=False)
@@ -58,13 +58,13 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
     z = np.sin(r)
 
     # Create and structured surface
-    grid = vtki.StructuredGrid(x, y, z)
+    grid = vista.StructuredGrid(x, y, z)
 
     # Make copy of points
     pts = grid.points.copy()
 
     # Start a plotter object and set the scalars to the Z height
-    plotter = vtki.Plotter(off_screen=off_screen)
+    plotter = vista.Plotter(off_screen=off_screen)
     plotter.add_mesh(grid, scalars=z.ravel())
     plotter.plot(auto_close=False)
 
@@ -163,7 +163,7 @@ if TEST_DOWNLOADS:
 
     def test_download_bolt_nut():
         data = examples.download_bolt_nut()
-        assert isinstance(data, vtki.MultiBlock)
+        assert isinstance(data, vista.MultiBlock)
 
     def test_download_clown():
         data = examples.download_clown()
@@ -180,7 +180,7 @@ if TEST_DOWNLOADS:
     def test_download_blood_vessels():
         """Tests the parallel VTU reader"""
         data = examples.download_blood_vessels()
-        assert isinstance(data, vtki.UnstructuredGrid)
+        assert isinstance(data, vista.UnstructuredGrid)
 
     def test_download_bunny_coarse():
         data = examples.download_bunny_coarse()

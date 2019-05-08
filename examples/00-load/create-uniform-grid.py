@@ -6,13 +6,13 @@ Create a simple uniform grid from a 3D NumPy array of values.
 
 """
 
-import vtki
+import vista
 import numpy as np
 
 ################################################################################
 # Take a 3D NumPy array of data values that holds some spatial data where each
 # axis corresponds to the XYZ cartesian axes. This example will create a
-# :class:`vtki.UniformGrid` object that will hold the spatial reference for a
+# :class:`vista.UniformGrid` object that will hold the spatial reference for a
 # 3D grid which a 3D NumPy array of values can be plotted against.
 
 ################################################################################
@@ -22,7 +22,7 @@ values = np.linspace(0, 10, 1000).reshape((20, 5, 10))
 values.shape
 
 # Create the spatial reference
-grid = vtki.UniformGrid()
+grid = vista.UniformGrid()
 
 # Set the grid dimensions: shape + 1 because we want to inject our values on the CELL data
 grid.dimensions = np.array(values.shape) + 1
@@ -40,7 +40,7 @@ grid.plot(show_edges=True)
 
 ################################################################################
 # Don't like cell data? You could also add the NumPy array to the point data of a
-# :class:`vtki.UniformGrid`. Take note of the subtle difference when setting the
+# :class:`vista.UniformGrid`. Take note of the subtle difference when setting the
 # grid dimensions upon initialization.
 
 # Create the 3D NumPy array of spatially referenced data
@@ -49,7 +49,7 @@ values = np.linspace(0, 10, 1000).reshape((20, 5, 10))
 values.shape
 
 # Create the spatial reference
-grid = vtki.UniformGrid()
+grid = vista.UniformGrid()
 
 # Set the grid dimensions: shape because we want to inject our values on the POINT data
 grid.dimensions = values.shape

@@ -4,7 +4,7 @@ Contains a dictionary that maps file extensions to VTK readers
 import os
 
 import vtk
-import vtki
+import vista
 
 
 READERS = {
@@ -41,7 +41,7 @@ READERS = {
     '.byu': vtk.vtkBYUReader, # TODO: not tested with this extension
     '.g': vtk.vtkBYUReader,
     # '.chemml': vtk.vtkCMLMoleculeReader, # TODO: not tested
-    # '.cml': vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by vtki
+    # '.cml': vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by vista
     # TODO: '.csv': vtk.vtkCSVReader, # vtkTables are currently not supported
     '.facet': vtk.vtkFacetReader,
     '.cas': vtk.vtkFLUENTReader, # TODO: not tested
@@ -56,7 +56,7 @@ READERS = {
     #TODO: '.pht': vtk.vtkPhasta??????,
     #TODO: '.vpc': vtk.vtkVPIC?????,
     # '.bin': vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
-    # '.tri': vtk.vtkMCubesReader, # TODO: Breaks vtki wrapping on point arrays
+    # '.tri': vtk.vtkMCubesReader, # TODO: Breaks vista wrapping on point arrays
 }
 
 
@@ -116,7 +116,7 @@ def standard_reader_routine(reader, filename, attrs=None):
             attr()
     # Perform the read
     reader.Update()
-    return vtki.wrap(reader.GetOutputDataObject(0))
+    return vista.wrap(reader.GetOutputDataObject(0))
 
 
 def read_legacy(filename):
@@ -134,12 +134,12 @@ def read_legacy(filename):
     output = reader.GetOutputDataObject(0)
     if output is None:
         raise AssertionError('No output when using VTKs legacy reader')
-    return vtki.wrap(output)
+    return vista.wrap(output)
 
 
 def read(filename, attrs=None):
     """This will read any VTK file! It will figure out what reader to use
-    then wrap the VTK object for use in ``vtki``.
+    then wrap the VTK object for use in ``vista``.
 
     Parameters
     ----------
@@ -157,17 +157,17 @@ def read(filename, attrs=None):
         reader = get_reader(filename)
         return standard_reader_routine(reader, filename, attrs=attrs)
     elif ext in '.vti': # ImageData
-        return vtki.UniformGrid(filename)
+        return vista.UniformGrid(filename)
     elif ext in '.vtr': # RectilinearGrid
-        return vtki.RectilinearGrid(filename)
+        return vista.RectilinearGrid(filename)
     elif ext in '.vtu': # UnstructuredGrid
-        return vtki.UnstructuredGrid(filename)
+        return vista.UnstructuredGrid(filename)
     elif ext in ['.ply', '.obj', '.stl']: # PolyData
-        return vtki.PolyData(filename)
+        return vista.PolyData(filename)
     elif ext in '.vts': # StructuredGrid
-        return vtki.StructuredGrid(filename)
+        return vista.StructuredGrid(filename)
     elif ext in ['.vtm', '.vtmb']:
-        return vtki.MultiBlock(filename)
+        return vista.MultiBlock(filename)
     elif ext in ['.e', '.exo']:
         return read_exodus(filename)
     elif ext in ['.vtk']:
@@ -180,7 +180,7 @@ def read(filename, attrs=None):
             return standard_reader_routine(reader, filename)
         except KeyError:
             pass
-    raise IOError("This file was not able to be automatically read by vtki.")
+    raise IOError("This file was not able to be automatically read by vista.")
 
 
 def read_texture(filename, attrs=None):
@@ -190,11 +190,11 @@ def read_texture(filename, attrs=None):
         # intitialize the reader using the extnesion to find it
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
-        return vtki.image_to_texture(image)
+        return vista.image_to_texture(image)
     except KeyError:
         # Otherwise, use the imageio reader
         pass
-    return vtki.numpy_to_texture(imageio.imread(filename))
+    return vista.numpy_to_texture(imageio.imread(filename))
 
 
 def read_exodus(filename,
@@ -224,4 +224,4 @@ def read_exodus(filename,
         reader.SetSideSetArrayStatus(name, 1)
 
     reader.Update()
-    return vtki.wrap(reader.GetOutput())
+    return vista.wrap(reader.GetOutput())

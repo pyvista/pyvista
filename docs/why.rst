@@ -1,5 +1,5 @@
-Why ``vtki``?
-=============
+Why ``vista``?
+==============
 
 VTK is an excellent visualization toolkit, and with Python bindings it should be
 able to combine the speed of C++ with the rapid prototyping of Python.
@@ -56,16 +56,16 @@ loading and plotting an STL file requires a lot of code when using only the
     del renWin
 
 
-Plot a Mesh using vtki
-~~~~~~~~~~~~~~~~~~~~~~
+Plot a Mesh using vista
+~~~~~~~~~~~~~~~~~~~~~~~
 
-The same stl can be loaded and plotted using vtki with:
+The same stl can be loaded and plotted using vista with:
 
 .. code:: python
 
-    import vtki
+    import vista
 
-    mesh = vtki.PolyData('myfile.stl')
+    mesh = vista.PolyData('myfile.stl')
     mesh.plot()
 
 The mesh object is more pythonic and the code is much more straightforward.
@@ -80,7 +80,7 @@ When combined with numpy, you can make some truly spectacular plots:
 
 .. testcode:: python
 
-    import vtki
+    import vista
     import numpy as np
 
     # Make a grid
@@ -97,7 +97,7 @@ When combined with numpy, you can make some truly spectacular plots:
     direction = np.sin(points)**3
 
     # plot using the plotting class
-    plobj = vtki.Plotter()
+    plobj = vista.Plotter()
     plobj.add_arrows(points, direction, 0.5)
     plobj.show(screenshot='vectorfield.png')
 
@@ -113,11 +113,11 @@ That way, subdivision can be performed with:
 
 .. code:: python
 
-    from vtki import examples
+    from vista import examples
     mesh = examples.load_ant()
     submesh = mesh.subdivide(3, 'linear')
 
-Additionally, the docstrings for all methods in ``vtki`` are intended to be used
+Additionally, the docstrings for all methods in ``vista`` are intended to be used
 within interactive coding sessions. This allows users to use sophisticated
 processing routines on the fly with immediate access to a description of how to
 use those methods:

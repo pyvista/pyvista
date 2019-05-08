@@ -1,16 +1,16 @@
-""" test vtki.utilities """
+""" test vista.utilities """
 import os
 
 import numpy as np
 import pytest
 
-import vtki
-from vtki import examples as ex
-from vtki import utilities
-from vtki import readers
+import vista
+from vista import examples as ex
+from vista import utilities
+from vista import readers
 
 # Only set this here just the once.
-vtki.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
+vista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
 
 
 def test_createvectorpolydata_error():
@@ -39,8 +39,8 @@ def test_createvectorpolydata():
 def test_read(tmpdir):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
               ex.uniformfile, ex.rectfile)
-    types = (vtki.PolyData, vtki.PolyData, vtki.UnstructuredGrid,
-             vtki.PolyData, vtki.UniformGrid, vtki.RectilinearGrid)
+    types = (vista.PolyData, vista.PolyData, vista.UnstructuredGrid,
+             vista.PolyData, vista.UniformGrid, vista.RectilinearGrid)
     for i, filename in enumerate(fnames):
         obj = readers.read(filename)
         assert isinstance(obj, types[i])
@@ -54,11 +54,11 @@ def test_read(tmpdir):
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
-        data = vtki.read(filename)
+        data = vista.read(filename)
 
 
 def test_get_scalar():
-    grid = vtki.UnstructuredGrid(ex.hexbeamfile)
+    grid = vista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
     grid._add_cell_scalar(carr, 'test_data')

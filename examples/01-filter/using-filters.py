@@ -6,11 +6,11 @@ Using common filters like thresholding and clipping
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import vtki
-from vtki import examples
+import vista
+from vista import examples
 
 ################################################################################
-# ``vtki`` wrapped data objects have a suite of common filters ready for immediate
+# ``vista`` wrapped data objects have a suite of common filters ready for immediate
 # use directly on the object. These filters include the following
 # (see :ref:`filters_ref` for a complete list):
 #
@@ -38,13 +38,13 @@ outline = dataset.outline()
 # And now there is a thresholded version of the input dataset in the new
 # ``threshed`` object. To learn more about what keyword arguments are available to
 # alter how filters are executed, print the docstring for any filter attached to
-# ``vtki`` objects with either ``help(dataset.threshold)`` or using ``shift+tab``
+# ``vista`` objects with either ``help(dataset.threshold)`` or using ``shift+tab``
 # in an IPython environment.
 #
 # We can now plot this filtered dataset along side an outline of the original
 # dataset
 
-p = vtki.Plotter()
+p = vista.Plotter()
 p.add_mesh(outline, color='k')
 p.add_mesh(threshed)
 p.camera_position = [-2,5,3]
@@ -56,9 +56,9 @@ p.show()
 
 contours = dataset.contour()
 slices = dataset.slice_orthogonal()
-glyphs = dataset.glyph(factor=1e-3, geom=vtki.Sphere())
+glyphs = dataset.glyph(factor=1e-3, geom=vista.Sphere())
 
-p = vtki.Plotter(shape=(2,2))
+p = vista.Plotter(shape=(2,2))
 # Show the theshold
 p.add_mesh(outline, color='k')
 p.add_mesh(threshed, show_scalar_bar=False)
@@ -86,7 +86,7 @@ p.show()
 # +++++++++++++++
 #
 # In VTK, filters are often used in a pipeline where each algorithm passes its
-# output to the next filtering algorithm. In ``vtki``, we can mimic the filtering
+# output to the next filtering algorithm. In ``vista``, we can mimic the filtering
 # pipeline through a chain; attaching each filter to the last filter.
 # In the following example, several filters are chained together:
 #
@@ -102,7 +102,7 @@ result = dataset.threshold().elevation().clip(normal='z').slice_orthogonal()
 # And to view this filtered data, simply call the ``plot`` method
 # (``result.plot()``) or create a rendering scene:
 
-p = vtki.Plotter()
+p = vista.Plotter()
 p.add_mesh(outline, color='k')
 p.add_mesh(result, scalars='Elevation')
 p.view_isometric()

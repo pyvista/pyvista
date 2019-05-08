@@ -7,7 +7,7 @@ Creating an Unstructured Surface
 Create an irregular, unstructured grid from NumPy arrays
 """
 
-import vtki
+import vista
 import vtk
 import numpy as np
 
@@ -50,7 +50,7 @@ cell2 = np.array([[0, 0, 2],
 points = np.vstack((cell1, cell2))
 
 # create the unstructured grid directly from the numpy arrays
-grid = vtki.UnstructuredGrid(offset, cells, cell_type, points)
+grid = vista.UnstructuredGrid(offset, cells, cell_type, points)
 
 # plot the grid
 grid.plot(show_edges=True)

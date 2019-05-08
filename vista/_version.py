@@ -1,4 +1,4 @@
-""" version info for vtki """
+""" version info for vista """
 # major, minor, patch
 version_info = 0, 18, 4
 

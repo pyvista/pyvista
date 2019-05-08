@@ -6,8 +6,8 @@ Extracts edges from a surface.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import vtki
-from vtki import examples
+import vista
+from vista import examples
 
 ################################################################################
 # From vtk documentation, the edges are one of the following:
@@ -28,7 +28,7 @@ mesh = examples.download_nefertiti()
 edges = mesh.extract_edges(12)
 
 # Render the edge lines ontop of the original mesh
-p = vtki.Plotter()
+p = vista.Plotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color='red', line_width=5)
 # Define a camera position that will zoom to her eye
@@ -38,14 +38,14 @@ p.camera_position = [(96., -197., 45.),
 p.show()
 
 ################################################################################
-# We can do this anaylsis for any :class:`vtki.PolyData` object. Let's try the
+# We can do this anaylsis for any :class:`vista.PolyData` object. Let's try the
 # cow mesh example:
 
 mesh = examples.download_cow()
 
 edges = mesh.extract_edges(20)
 
-p = vtki.Plotter()
+p = vista.Plotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color='red', line_width=5)
 p.camera_position = [(9.5, 3., 5.5),

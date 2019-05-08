@@ -5,7 +5,7 @@ Create a GIF Movie
 Generate a moving gif from an active plotter
 """
 
-import vtki
+import vista
 import numpy as np
 
 x = np.arange(-10, 10, 0.25)
@@ -15,10 +15,10 @@ r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 # Create and structured surface
-grid = vtki.StructuredGrid(x, y, z)
+grid = vista.StructuredGrid(x, y, z)
 
 # Creat a plotter object and set the scalars to the Z height
-plotter = vtki.Plotter()
+plotter = vista.Plotter()
 plotter.add_mesh(grid, scalars=z.ravel())
 
 # setup camera and close
