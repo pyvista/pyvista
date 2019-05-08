@@ -1,11 +1,7 @@
 .. title:: vista
 
-.. raw:: html
-
-    <div class="banner">
-        <img src="https://github.com/pyvista/vista/raw/master/docs/_static/vista_logo.png" alt="vista" width="500px">
-        <h2>A Streamlined Python Interface for the Visualization Toolkit</h2>
-    </div>
+.. image:: https://github.com/pyvista/vista/raw/master/docs/_static/vista_logo.png
+    :alt: Vista
 
 
 .. image:: https://zenodo.org/badge/92974124.svg
