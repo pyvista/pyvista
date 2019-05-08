@@ -1,3 +1,13 @@
+message = """
+ATTENTION: `vtki` has been renamed to `vista`. Please install `vista`:
+
+    pip install vista
+
+    conda install -c conda-forge vista
+"""
+
+raise ImportError(message)
+
 import warnings
 from vtki._version import __version__
 from vtki.plotting import *
