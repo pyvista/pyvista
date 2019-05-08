@@ -41,8 +41,8 @@ setup(
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=open(readme_file).read(),
-    author='Alex Kaszynski',
-    author_email='akascap@gmail.com',
+    author='vista Developers',
+    author_email='info@pyvista.org',
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
