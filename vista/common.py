@@ -814,7 +814,7 @@ class Common(DataSetFilters, object):
         preference : str, optional
             When scalars is specified, this is the perfered scalar type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or``'field'``.
+            or ``'field'``.
 
         """
         if arr is None:

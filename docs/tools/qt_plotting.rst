@@ -1,13 +1,16 @@
 .. _qt_ref:
 
 vista PyQt Interface
-===================
+====================
+
 ``vista`` has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``vista.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
 
 
 Example PyQt5 vista QtInteractor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The following example shows how to create a simple application that adds a sphere to an empty plotting window.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example shows how to create a simple application that adds a
+sphere to an empty plotting window.
 
 .. code:: python
 
@@ -73,7 +76,11 @@ The following example shows how to create a simple application that adds a spher
 
 Background Plotting
 ~~~~~~~~~~~~~~~~~~~
-Normal ``vista`` plotting windows exhibit blocking behavior, but it is possible to plot in the background and update the plotter in real-time using the ``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears and functions like a normal ``vista`` ``Plotter`` instance.  For example:
+
+Normal ``vista`` plotting windows exhibit blocking behavior, but it is possible
+to plot in the background and update the plotter in real-time using the
+``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears
+and functions like a normal ``vista`` ``Plotter`` instance.  For example:
 
 .. code:: python
 
