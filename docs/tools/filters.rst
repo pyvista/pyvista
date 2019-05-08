@@ -4,23 +4,23 @@ Filters
 =======
 
 
-.. automodule:: vtki.filters
+.. automodule:: vista.filters
 
 
 Dataset Filters
 ---------------
 
-The :class:`vtki.DataSetFilters` is inherited by :class:`vtki.Common` making
+The :class:`vista.DataSetFilters` is inherited by :class:`vista.Common` making
 all the the following filters available as callable methods directly from any
-``vtki`` dataset.
+``vista`` dataset.
 
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.DataSetFilters
+.. autoautosummary:: vista.DataSetFilters
    :methods:
 
 
-.. autoclass:: vtki.DataSetFilters
+.. autoclass:: vista.DataSetFilters
    :members:
    :undoc-members:

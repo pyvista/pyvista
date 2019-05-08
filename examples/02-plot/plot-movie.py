@@ -6,15 +6,15 @@ Create an animated MP4 movie of a rendering scene
 """
 
 
-import vtki
+import vista
 import numpy as np
 
 filename = 'sphere-shrinking.mp4'
 
-mesh = vtki.Sphere()
+mesh = vista.Sphere()
 mesh.cell_arrays['data'] = np.random.random(mesh.n_cells)
 
-plotter = vtki.Plotter()
+plotter = vista.Plotter()
 # Open a movie file
 plotter.open_movie(filename)
 

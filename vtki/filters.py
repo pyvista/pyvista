@@ -6,8 +6,8 @@ can easily apply common filters in an intuitive manner.
 Example
 -------
 
->>> import vtki
->>> from vtki import examples
+>>> import vista
+>>> from vista import examples
 >>> dataset = examples.load_uniform()
 
 >>> # Threshold
@@ -28,8 +28,8 @@ import collections
 import numpy as np
 import vtk
 
-import vtki
-from vtki.utilities import get_scalar, is_inside_bounds, wrap
+import vista
+from vista.utilities import get_scalar, is_inside_bounds, wrap
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -43,7 +43,7 @@ NORMALS = {
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
                 active_scalar_field='point'):
-    """A helper to get the algorithm's output and copy input's vtki meta info"""
+    """A helper to get the algorithm's output and copy input's vista meta info"""
     ido = algorithm.GetInputDataObject(iport, iconnection)
     data = wrap(algorithm.GetOutputDataObject(oport))
     data.copy_meta_from(ido)
@@ -66,7 +66,7 @@ class DataSetFilters(object):
 
     def __new__(cls, *args, **kwargs):
         if cls is DataSetFilters:
-            raise TypeError("vtki.DataSetFilters is an abstract class and may not be instantiated.")
+            raise TypeError("vista.DataSetFilters is an abstract class and may not be instantiated.")
         return object.__new__(cls)
 
 
@@ -220,7 +220,7 @@ class DataSetFilters(object):
             If True, apply a ``contour`` filter after slicing
 
         """
-        output = vtki.MultiBlock()
+        output = vista.MultiBlock()
         # Create the three slices
         if x is None:
             x = dataset.center[0]
@@ -260,7 +260,7 @@ class DataSetFilters(object):
 
         """
         axes = {'x':0, 'y':1, 'z':2}
-        output = vtki.MultiBlock()
+        output = vista.MultiBlock()
         if isinstance(axis, int):
             ax = axis
             axis = list(axes.keys())[list(axes.values()).index(ax)]
@@ -600,7 +600,7 @@ class DataSetFilters(object):
         else:
             _, field = get_scalar(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != vtki.POINT_DATA_FIELD:
+        if field != vista.POINT_DATA_FIELD:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
@@ -796,7 +796,7 @@ class DataSetFilters(object):
         # Get the connectivity and label different bodies
         labeled = dataset.connectivity()
         classifier = labeled.cell_arrays['RegionId']
-        bodies = vtki.MultiBlock()
+        bodies = vista.MultiBlock()
         for vid in np.unique(classifier):
             # Now extract it:
             b = labeled.threshold([vid-0.5, vid+0.5], scalars='RegionId')
@@ -837,7 +837,7 @@ class DataSetFilters(object):
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         arr, field = get_scalar(dataset, scalars, preference='point', info=True)
-        if field != vtki.POINT_DATA_FIELD:
+        if field != vista.POINT_DATA_FIELD:
             raise AssertionError('Dataset can only by warped by a point data array.')
         scale_factor = kwargs.get('scale_factor', None)
         if scale_factor is not None:
@@ -865,7 +865,7 @@ class DataSetFilters(object):
         all cells using a particular point. Optionally, the input cell data can
         be passed through to the output as well.
 
-        See aslo: :func:`vtki.DataSetFilters.point_data_to_cell_data`
+        See aslo: :func:`vista.DataSetFilters.point_data_to_cell_data`
 
         Parameters
         ----------
@@ -884,7 +884,7 @@ class DataSetFilters(object):
         (i.e., data specified within cells).
         Optionally, the input point data can be passed through to the output.
 
-        See aslo: :func:`vtki.DataSetFilters.cell_data_to_point_data`
+        See aslo: :func:`vista.DataSetFilters.cell_data_to_point_data`
 
         Parameters
         ----------
@@ -905,7 +905,7 @@ class DataSetFilters(object):
 
         Returns
         -------
-        mesh : vtki.UnstructuredGrid
+        mesh : vista.UnstructuredGrid
             Mesh containing only triangles.
 
         """
@@ -965,9 +965,9 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        surface : vtki.PolyData
+        surface : vista.PolyData
             Set the surface to be used to test for containment. This must be a
-            :class:`vtki.PolyData` object.
+            :class:`vista.PolyData` object.
 
         tolerance : float
             The tolerance on the intersection. The tolerance is expressed as a
@@ -1000,10 +1000,10 @@ class DataSetFilters(object):
 
         Parameters
         ----------
-        dataset: vtki.Common
+        dataset: vista.Common
             The source vtk data object as the mesh to sample values on to
 
-        target: vtki.Common
+        target: vista.Common
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh
 
@@ -1032,14 +1032,14 @@ class DataSetFilters(object):
     def interpolate(dataset, points, sharpness=2, radius=1.0,
             dimensions=(101, 101, 101), pass_cell_arrays=True, pass_point_arrays=True):
         """Interpolate values onto this mesh from the point data of a given
-        :class:`vtki.PolyData` object (typically a point cloud).
+        :class:`vista.PolyData` object (typically a point cloud).
 
         This uses a guassian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel.
 
         Parameters
         ----------
-        points : vtki.PolyData
+        points : vista.PolyData
             The points whose values will be interpolated onto this mesh.
 
         sharpness : float
@@ -1052,7 +1052,7 @@ class DataSetFilters(object):
 
         dimensions : tuple(int)
             When interpolating the points, they are first interpolating on to a
-            :class:`vtki.UniformGrid` with the same spatial extent -
+            :class:`vista.UniformGrid` with the same spatial extent -
             ``dimensions`` is number of points along each axis for that grid.
 
         pass_cell_arrays: bool, optional
@@ -1063,7 +1063,7 @@ class DataSetFilters(object):
         """
         bounds = np.array(dataset.bounds)
         dimensions = np.array(dimensions)
-        box = vtki.UniformGrid()
+        box = vista.UniformGrid()
         box.dimensions = dimensions
         box.spacing = (bounds[1::2] - bounds[:-1:2]) / (dimensions - 1)
         box.origin = bounds[::2]
@@ -1104,7 +1104,7 @@ class DataSetFilters(object):
 
         This uses a Sphere as the source - set it's location and radius via
         the ``source_center`` and ``source_radius`` keyword arguments.
-        You can retrieve the source as :class:`vtki.PolyData` by specifying
+        You can retrieve the source as :class:`vista.PolyData` by specifying
         ``return_source=True``.
 
         Parameters
@@ -1188,7 +1188,7 @@ class DataSetFilters(object):
             Set the start position. Default is ``(0.0, 0.0, 0.0)``
 
         return_source : bool
-            Return the source particles as :class:`vtki.PolyData` as well as the
+            Return the source particles as :class:`vista.PolyData` as well as the
             streamlines. This will be the second value returned if ``True``.
         """
         integration_direction = str(integration_direction).strip().lower()
@@ -1261,7 +1261,7 @@ class DataSetFilters(object):
         output = _get_output(alg)
         if return_source:
             source.Update()
-            src = vtki.wrap(source.GetOutput())
+            src = vista.wrap(source.GetOutput())
             return output, src
         return output
 

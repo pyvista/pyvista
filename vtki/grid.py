@@ -9,18 +9,18 @@ import vtk
 from vtk import vtkImageData, vtkRectilinearGrid
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
-import vtki
+import vista
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class Grid(vtki.Common):
+class Grid(vista.Common):
     """A class full of common methods for non-pointset grids """
 
     def __new__(cls, *args, **kwargs):
         if cls is Grid:
-            raise TypeError("vtki.Grid is an abstract class and may not be instantiated.")
+            raise TypeError("vista.Grid is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
@@ -53,22 +53,22 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     Examples
     --------
-    >>> import vtki
+    >>> import vista
     >>> import vtk
     >>> import numpy as np
 
     >>> # Create empty grid
-    >>> grid = vtki.RectilinearGrid()
+    >>> grid = vista.RectilinearGrid()
 
     >>> # Initialize from a vtk.vtkRectilinearGrid object
     >>> vtkgrid = vtk.vtkRectilinearGrid()
-    >>> grid = vtki.RectilinearGrid(vtkgrid)
+    >>> grid = vista.RectilinearGrid(vtkgrid)
 
     >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
-    >>> grid = vtki.RectilinearGrid(xrng, yrng, zrng)
+    >>> grid = vista.RectilinearGrid(xrng, yrng, zrng)
 
 
     """
@@ -98,11 +98,11 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
     def __repr__(self):
-        return vtki.Common.__repr__(self)
+        return vista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vtki.Common.__str__(self)
+        return vista.Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):
@@ -307,28 +307,28 @@ class UniformGrid(vtkImageData, Grid):
 
     Examples
     --------
-    >>> import vtki
+    >>> import vista
     >>> import vtk
     >>> import numpy as np
 
     >>> # Create empty grid
-    >>> grid = vtki.UniformGrid()
+    >>> grid = vista.UniformGrid()
 
     >>> # Initialize from a vtk.vtkImageData object
     >>> vtkgrid = vtk.vtkImageData()
-    >>> grid = vtki.UniformGrid(vtkgrid)
+    >>> grid = vista.UniformGrid(vtkgrid)
 
     >>> # Using just the grid dimensions
     >>> dims = (10, 10, 10)
-    >>> grid = vtki.UniformGrid(dims)
+    >>> grid = vista.UniformGrid(dims)
 
     >>> # Using dimensions and spacing
     >>> spacing = (2, 1, 5)
-    >>> grid = vtki.UniformGrid(dims, spacing)
+    >>> grid = vista.UniformGrid(dims, spacing)
 
     >>> # Using dimensions, spacing, and an origin
     >>> origin = (10, 35, 50)
-    >>> grid = vtki.UniformGrid(dims, spacing, origin)
+    >>> grid = vista.UniformGrid(dims, spacing, origin)
 
     """
 
@@ -359,11 +359,11 @@ class UniformGrid(vtkImageData, Grid):
                 self._from_specs(args[0], args[1])
 
     def __repr__(self):
-        return vtki.Common.__repr__(self)
+        return vista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vtki.Common.__str__(self)
+        return vista.Common.__str__(self)
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):

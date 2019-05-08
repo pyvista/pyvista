@@ -1,6 +1,6 @@
 Point Data
 ==========
-The ``vtki.PolyData`` object adds additional functionality to the
+The ``vista.PolyData`` object adds additional functionality to the
 ``vtk.vtkPolyData`` object, to include direct array access through numpy,
 one line plotting, and other mesh functions.
 
@@ -8,7 +8,7 @@ one line plotting, and other mesh functions.
 PolyData Creation
 -----------------
 
-See :ref:`ref_create_poly` for an example on creating a ``vtki.PolyData`` object
+See :ref:`ref_create_poly` for an example on creating a ``vista.PolyData`` object
 from NumPy arrays.
 
 Empty Object
@@ -17,8 +17,8 @@ A polydata object can be initialized with:
 
 .. testcode:: python
 
-    import vtki
-    grid = vtki.PolyData()
+    import vista
+    grid = vista.PolyData()
 
 This creates an empty grid, and is not useful until points and cells are added
 to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
@@ -30,16 +30,16 @@ arrays as in the following section.
 
 Initialize from a File
 ~~~~~~~~~~~~~~~~~~~~~~
-Both binary and ASCII .ply, .stl, and .vtk files can be read using vtki.
-For example, the vtki package contains example meshes and these can be loaded with:
+Both binary and ASCII .ply, .stl, and .vtk files can be read using vista.
+For example, the vista package contains example meshes and these can be loaded with:
 
 .. testcode:: python
 
-    import vtki
-    from vtki import examples
+    import vista
+    from vista import examples
 
     # Load mesh
-    mesh = vtki.PolyData(examples.planefile)
+    mesh = vista.PolyData(examples.planefile)
 
 This mesh can then be written to a vtk file using:
 
@@ -53,7 +53,7 @@ These meshes are identical.
 
     import numpy as np
 
-    mesh_from_vtk = vtki.PolyData('plane.vtk')
+    mesh_from_vtk = vista.PolyData('plane.vtk')
     print(np.allclose(mesh_from_vtk.points, mesh.points))
 
 .. testcleanup:: python
@@ -72,15 +72,15 @@ This example loads two meshes and moves, scales, and copies them.
 
 .. testcode:: python
 
-    import vtki
-    from vtki import examples
+    import vista
+    from vista import examples
 
     # load and shrink airplane
-    airplane = vtki.PolyData(examples.planefile)
+    airplane = vista.PolyData(examples.planefile)
     airplane.points /= 10 # shrink by 10x
 
     # rotate and translate ant so it is on the plane
-    ant = vtki.PolyData(examples.antfile)
+    ant = vista.PolyData(examples.antfile)
     ant.rotate_x(90)
     ant.translate([90, 60, 15])
 
@@ -94,7 +94,7 @@ The following code creates the class and plots the meshes with various colors.
 .. testcode:: python
 
     # Create plotting object
-    plotter = vtki.Plotter()
+    plotter = vista.Plotter()
     plotter.add_mesh(ant, 'r')
     plotter.add_mesh(ant_copy, 'b')
 
@@ -111,9 +111,9 @@ The following code creates the class and plots the meshes with various colors.
 
 
 
-vtki.PolyData Grid Class Methods
+vista.PolyData Grid Class Methods
 ----------------------------------------
-The following is a description of the methods available to a ``vtki.PolyData``
+The following is a description of the methods available to a ``vista.PolyData``
 object.  It inherits all methods from the original vtk object,
 `vtk.vtkPolyData <https://www.vtk.org/doc/nightly/html/classvtkPolyData.html>`_.
 
@@ -121,15 +121,15 @@ object.  It inherits all methods from the original vtk object,
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.PolyData
+.. autoautosummary:: vista.PolyData
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.PolyData
+.. autoautosummary:: vista.PolyData
    :methods:
 
-.. autoclass:: vtki.PolyData
+.. autoclass:: vista.PolyData
    :show-inheritance:
    :members:
    :undoc-members:

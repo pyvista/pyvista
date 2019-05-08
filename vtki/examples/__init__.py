@@ -1,2 +1,2 @@
-from vtki.examples.examples import *
-from vtki.examples.downloads import *
+from vista.examples.examples import *
+from vista.examples.downloads import *

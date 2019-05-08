@@ -8,7 +8,7 @@ Create a StructuredGrid surface from NumPy arrays
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import vtki
+import vista
 import numpy as np
 
 
@@ -23,10 +23,10 @@ r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 ################################################################################
-# Now pass the NumPy meshgrid to ``vtki``
+# Now pass the NumPy meshgrid to ``vista``
 
 # Create and plot structured grid
-grid = vtki.StructuredGrid(x, y, z)
+grid = vista.StructuredGrid(x, y, z)
 grid.plot()
 
 ################################################################################

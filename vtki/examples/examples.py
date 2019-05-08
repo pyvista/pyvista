@@ -3,7 +3,7 @@ import time
 
 import numpy as np
 
-import vtki
+import vista
 
 # get location of this folder and the example files
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -23,31 +23,31 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 def load_ant():
     """ Load ply ant mesh """
-    return vtki.PolyData(antfile)
+    return vista.PolyData(antfile)
 
 
 def load_airplane():
     """ Load ply airplane mesh """
-    return vtki.PolyData(planefile)
+    return vista.PolyData(planefile)
 
 
 def load_sphere():
     """ Loads sphere ply mesh """
-    return vtki.PolyData(spherefile)
+    return vista.PolyData(spherefile)
 
 
 def load_uniform():
     """ Loads a sample uniform grid """
-    return vtki.UniformGrid(uniformfile)
+    return vista.UniformGrid(uniformfile)
 
 
 def load_rectilinear():
     """ Loads a sample uniform grid """
-    return vtki.RectilinearGrid(rectfile)
+    return vista.RectilinearGrid(rectfile)
 
 def load_hexbeam():
     """ Loads a sample UnstructuredGrid """
-    return vtki.UnstructuredGrid(hexbeamfile)
+    return vista.UnstructuredGrid(hexbeamfile)
 
 
 def load_structured():
@@ -57,22 +57,22 @@ def load_structured():
     x, y = np.meshgrid(x, y)
     r = np.sqrt(x**2 + y**2)
     z = np.sin(r)
-    return vtki.StructuredGrid(x, y, z)
+    return vista.StructuredGrid(x, y, z)
 
 def load_globe():
     """ Loads a globe source """
-    globe = vtki.PolyData(globefile)
+    globe = vista.PolyData(globefile)
     globe.textures['2k_earth_daymap'] = load_globe_texture()
     return globe
 
 def load_globe_texture():
     """ Loads a vtk.vtkTexture that can be applied to the globe source """
-    return vtki.read_texture(mapfile)
+    return vista.read_texture(mapfile)
 
 
 def load_channels():
     """ Loads a uniform grid of fluvial channels in the subsurface """
-    return vtki.read(channelsfile)
+    return vista.read(channelsfile)
 
 def plot_ants_plane(off_screen=False, notebook=None):
     """
@@ -83,13 +83,13 @@ def plot_ants_plane(off_screen=False, notebook=None):
     """
 
     # load and shrink airplane
-    airplane = vtki.PolyData(planefile)
+    airplane = vista.PolyData(planefile)
     airplane.points /= 10
     # pts = airplane.points # gets pointer to array
     # pts /= 10  # shrink
 
     # rotate and translate ant so it is on the plane
-    ant = vtki.PolyData(antfile)
+    ant = vista.PolyData(antfile)
     ant.rotate_x(90)
     ant.translate([90, 60, 15])
 
@@ -98,7 +98,7 @@ def plot_ants_plane(off_screen=False, notebook=None):
     ant_copy.translate([30, 0, -10])
 
     # Create plotting object
-    plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = vista.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(ant, 'r')
     plotter.add_mesh(ant_copy, 'b')
 
@@ -114,7 +114,7 @@ def beam_example(off_screen=False, notebook=None):
     hexfile = hexbeamfile
 
     # Load Grid
-    grid = vtki.UnstructuredGrid(hexfile)
+    grid = vista.UnstructuredGrid(hexfile)
 
     # Create fiticious displacements as a function of Z location
     d = grid.points[:, 2]**3/250
@@ -132,7 +132,7 @@ def beam_example(off_screen=False, notebook=None):
         cmap = None
 
     # plot this displaced beam
-    plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = vista.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(grid, scalars=d, stitle='Y Displacement',
                      rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
@@ -185,13 +185,13 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     Z = np.sin(R)
 
     # Create and plot structured grid
-    sgrid = vtki.StructuredGrid(X, Y, Z)
+    sgrid = vista.StructuredGrid(X, Y, Z)
 
     # Get pointer to points
     points = sgrid.points.copy()
 
     # Start a plotter object and set the scalars to the Z height
-    plotter = vtki.Plotter(off_screen=off_screen, notebook=notebook)
+    plotter = vista.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(sgrid, scalars=Z.ravel())
     plotter.camera_position = cpos
     plotter.plot(title='Wave Example', window_size=[800, 600],

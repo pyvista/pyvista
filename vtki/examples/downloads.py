@@ -6,20 +6,20 @@ import sys
 import vtk
 import zipfile
 
-import vtki
+import vista
 
 # Helpers:
 
 def delete_downloads():
     """Delete all downloaded examples to free space or update the files"""
-    shutil.rmtree(vtki.EXAMPLES_PATH)
-    os.makedirs(vtki.EXAMPLES_PATH)
+    shutil.rmtree(vista.EXAMPLES_PATH)
+    os.makedirs(vista.EXAMPLES_PATH)
     return True
 
 
 def _decompress(filename):
     zip_ref = zipfile.ZipFile(filename, 'r')
-    zip_ref.extractall(vtki.EXAMPLES_PATH)
+    zip_ref.extractall(vista.EXAMPLES_PATH)
     return zip_ref.close()
 
 def _get_vtk_file_url(filename):
@@ -27,7 +27,7 @@ def _get_vtk_file_url(filename):
 
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded
-    local_path = os.path.join(vtki.EXAMPLES_PATH, os.path.basename(filename))
+    local_path = os.path.join(vista.EXAMPLES_PATH, os.path.basename(filename))
     if os.path.isfile(local_path.replace('.zip', '')):
         return local_path.replace('.zip', ''), None
     # grab the correct url retriever
@@ -41,7 +41,7 @@ def _retrieve_file(url, filename):
     saved_file, resp = urlretrieve(url)
     # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
     shutil.move(saved_file, local_path)
-    if vtki.get_ext(local_path) in ['.zip']:
+    if vista.get_ext(local_path) in ['.zip']:
         _decompress(local_path)
         local_path = local_path[:-4]
     return local_path, resp
@@ -53,8 +53,8 @@ def _download_file(filename):
 def _download_and_read(filename, texture=False):
     saved_file, _ = _download_file(filename)
     if texture:
-        return vtki.read_texture(saved_file)
-    return vtki.read(saved_file)
+        return vista.read_texture(saved_file)
+    return vista.read(saved_file)
 
 
 ###############################################################################
@@ -100,7 +100,7 @@ def download_head():
     return _download_and_read('HeadMRVolume.mhd')
 
 def download_bolt_nut():
-    blocks = vtki.MultiBlock()
+    blocks = vista.MultiBlock()
     blocks['bolt'] =  _download_and_read('bolt.slc')
     blocks['nut'] = _download_and_read('nut.slc')
     return blocks
@@ -138,7 +138,7 @@ def download_blood_vessels():
     """data representing the bifurcation of blood vessels."""
     local_path, _ = _download_file('pvtu_blood_vessels/blood_vessels.zip')
     filename = os.path.join(local_path, 'T0000000500.pvtu')
-    mesh = vtki.read(filename)
+    mesh = vista.read(filename)
     mesh.set_active_vectors('velocity')
     return mesh
 
@@ -165,7 +165,7 @@ def download_sparse_points():
     table_points.SetYColumn('y')
     table_points.SetZColumn('z')
     table_points.Update()
-    return vtki.wrap(table_points.GetOutput())
+    return vista.wrap(table_points.GetOutput())
 
 def download_foot_bones():
     return _download_and_read('fsu/footbones.ply')
@@ -347,13 +347,13 @@ def download_kitchen(split=False):
         'cookingPlate' : (17, 19, 7, 9, 6, 6),
         'furniture' : (17, 19, 7, 9, 11, 11),
     }
-    kitchen = vtki.MultiBlock()
+    kitchen = vista.MultiBlock()
     for key, extent in extents.items():
         alg = vtk.vtkStructuredGridGeometryFilter()
         alg.SetInputDataObject(mesh)
         alg.SetExtent(extent)
         alg.Update()
-        result = vtki.filters._get_output(alg)
+        result = vista.filters._get_output(alg)
         kitchen[key] = result
     return kitchen
 
@@ -364,9 +364,9 @@ def download_tetra_dc_mesh():
     """
     local_path, _ = _download_file('dc-inversion.zip')
     filename = os.path.join(local_path, 'mesh-forward.vtu')
-    fwd = vtki.read(filename)
+    fwd = vista.read(filename)
     fwd.set_active_scalar('Resistivity(log10)-fwd')
     filename = os.path.join(local_path, 'mesh-inverse.vtu')
-    inv = vtki.read(filename)
+    inv = vista.read(filename)
     inv.set_active_scalar('Resistivity(log10)')
-    return vtki.MultiBlock({'forward':fwd, 'inverse':inv})
+    return vista.MultiBlock({'forward':fwd, 'inverse':inv})

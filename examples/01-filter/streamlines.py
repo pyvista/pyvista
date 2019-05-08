@@ -10,8 +10,8 @@ Integrate a vector field to generate streamlines.
 # by experimenting with the data.
 
 # sphinx_gallery_thumbnail_number = 3
-import vtki
-from vtki import examples
+import vista
+from vista import examples
 
 ################################################################################
 # Carotid
@@ -32,7 +32,7 @@ streamlines, src = mesh.streamlines(return_source=True, max_time=100.0,
 # Display the results! Please note that because this dataset's velocity field
 # was measured with low resolution, many streamlines travel outside the artery.
 
-p = vtki.Plotter()
+p = vista.Plotter()
 p.add_mesh(mesh.outline(), color='k')
 p.add_mesh(streamlines.tube(radius=0.15))
 p.add_mesh(src)
@@ -58,7 +58,7 @@ streamlines, src = mesh.streamlines(return_source=True, source_radius=10,
 ################################################################################
 boundary = mesh.decimate_boundary().wireframe()
 
-p = vtki.Plotter()
+p = vista.Plotter()
 p.add_mesh(streamlines.tube(radius=0.2), ligthing=False)
 p.add_mesh(src)
 p.add_mesh(boundary, color='grey', opacity=0.25)
@@ -84,7 +84,7 @@ streamlines = mesh.streamlines(n_points=40,
                                source_center=(0.08, 3, 0.71))
 
 ################################################################################
-p = vtki.Plotter()
+p = vista.Plotter()
 p.add_mesh(mesh.outline(), color='k')
 p.add_mesh(kitchen, color=True)
 p.add_mesh(streamlines.tube(radius=0.01), scalars='velocity', lighting=False)

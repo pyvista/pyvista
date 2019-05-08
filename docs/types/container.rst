@@ -1,21 +1,21 @@
 Multiple Block Datasets
 =======================
 
-.. automodule:: vtki.container
+.. automodule:: vista.container
    :show-inheritance:
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.MultiBlock
+.. autoautosummary:: vista.MultiBlock
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.MultiBlock
+.. autoautosummary:: vista.MultiBlock
    :methods:
 
 
-.. autoclass:: vtki.MultiBlock
+.. autoclass:: vista.MultiBlock
    :show-inheritance:
    :members:
    :undoc-members:

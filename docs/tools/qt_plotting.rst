@@ -1,11 +1,11 @@
 .. _qt_ref:
 
-vtki PyQt Interface
+vista PyQt Interface
 ===================
-``vtki`` has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``vtki.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
+``vista`` has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``vista.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
 
 
-Example PyQt5 vtki QtInteractor
+Example PyQt5 vista QtInteractor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The following example shows how to create a simple application that adds a sphere to an empty plotting window.
 
@@ -16,7 +16,7 @@ The following example shows how to create a simple application that adds a spher
     from PyQt5 import Qt
     import numpy as np
 
-    import vtki
+    import vista
 
 
     class MainWindow(Qt.QMainWindow):
@@ -28,8 +28,8 @@ The following example shows how to create a simple application that adds a spher
             self.frame = Qt.QFrame()
             vlayout = Qt.QVBoxLayout()
 
-	    # add the vtki interactor object
-            self.vtk_widget = vtki.QtInteractor(self.frame)
+	    # add the vista interactor object
+            self.vtk_widget = vista.QtInteractor(self.frame)
             vlayout.addWidget(self.vtk_widget)
 
             self.frame.setLayout(vlayout)
@@ -54,7 +54,7 @@ The following example shows how to create a simple application that adds a spher
 
         def add_sphere(self):
 	    """ add a sphere to the pyqt frame """
-            sphere = vtki.Sphere()
+            sphere = vista.Sphere()
             self.vtk_widget.add_mesh(sphere)
             self.vtk_widget.reset_camera()
 
@@ -68,20 +68,20 @@ The following example shows how to create a simple application that adds a spher
 .. figure:: ../images/user-generated/qt_plotting_sphere.png
     :width: 600pt
 
-    PyQt5 vtki QtInteractor
+    PyQt5 vista QtInteractor
 
 
 Background Plotting
 ~~~~~~~~~~~~~~~~~~~
-Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible to plot in the background and update the plotter in real-time using the ``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears and functions like a normal ``vtki`` ``Plotter`` instance.  For example:
+Normal ``vista`` plotting windows exhibit blocking behavior, but it is possible to plot in the background and update the plotter in real-time using the ``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears and functions like a normal ``vista`` ``Plotter`` instance.  For example:
 
 .. code:: python
 
-    import vtki
+    import vista
 
-    sphere = vtki.Sphere()
+    sphere = vista.Sphere()
 
-    plotter = vtki.BackgroundPlotter()
+    plotter = vista.BackgroundPlotter()
     plotter.add_mesh(sphere)
 
     # can now operate on the sphere and have it updated in the background
@@ -91,22 +91,22 @@ Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible t
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.BackgroundPlotter
+.. autoautosummary:: vista.BackgroundPlotter
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.BackgroundPlotter
+.. autoautosummary:: vista.BackgroundPlotter
    :methods:
 
-.. autoclass:: vtki.BackgroundPlotter
+.. autoclass:: vista.BackgroundPlotter
    :members:
    :undoc-members:
    :show-inheritance:
 
 
 
-.. autoclass:: vtki.ScaledPlotter
+.. autoclass:: vista.ScaledPlotter
   :members:
   :undoc-members:
   :show-inheritance:

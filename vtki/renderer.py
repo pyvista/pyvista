@@ -1,5 +1,5 @@
 """
-Module containing vtki implementation of vtkRenderer
+Module containing vista implementation of vtkRenderer
 """
 import collections
 import logging
@@ -9,9 +9,9 @@ from weakref import proxy
 import numpy as np
 from vtk import vtkRenderer
 
-import vtki
-from vtki.plotting import rcParams, parse_color, parse_font_family, MAX_N_COLOR_BARS
-from vtki.utilities import wrap
+import vista
+from vista.plotting import rcParams, parse_color, parse_font_family, MAX_N_COLOR_BARS
+from vista.utilities import wrap
 
 
 class Renderer(vtkRenderer):
@@ -44,7 +44,7 @@ class Renderer(vtkRenderer):
                           [2, 2, 3],
                           [2, 3, 0]]).ravel()
 
-        poly = vtki.PolyData()
+        poly = vista.PolyData()
         poly.points = points
         poly.lines = lines
 
@@ -266,10 +266,10 @@ class Renderer(vtkRenderer):
 
         Examples
         --------
-        >>> import vtki
-        >>> from vtki import examples
-        >>> mesh = vtki.Sphere()
-        >>> plotter = vtki.Plotter()
+        >>> import vista
+        >>> from vista import examples
+        >>> mesh = vista.Sphere()
+        >>> plotter = vista.Plotter()
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.show_bounds(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP

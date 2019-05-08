@@ -18,7 +18,7 @@ environment:
       PYTHON_VERSION: "3.7.1"
       PYTHON_ARCH: "64"
 
-  # This is a vtki flag to bypass X11 hooks
+  # This is a vista flag to bypass X11 hooks
   ALLOW_PLOTTING: "True"
 
 init:

@@ -1,36 +1,36 @@
-.. title:: vtki
+.. title:: vista
 
 .. raw:: html
 
     <div class="banner">
-        <img src="_static/vtki_logo.png" alt="vtki" width="500px">
+        <img src="_static/vista_logo.png" alt="vista" width="500px">
         <h2>A Streamlined Python Interface for the Visualization Toolkit</h2>
     </div>
 
 
-.. |pypi| image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
-   :target: https://pypi.org/project/vtki/
+.. |pypi| image:: https://img.shields.io/pypi/v/vista.svg?logo=python&logoColor=white
+   :target: https://pypi.org/project/vista/
 
-.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
-   :target: https://anaconda.org/conda-forge/vtki
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/vista.svg
+   :target: https://anaconda.org/conda-forge/vista
 
-.. |travis| image:: https://img.shields.io/travis/pyvista/vtki/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/pyvista/vtki
+.. |travis| image:: https://img.shields.io/travis/pyvista/vista/master.svg?label=build&logo=travis
+   :target: https://travis-ci.org/pyvista/vista
 
-.. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/vtki.svg?label=AppVeyor&style=flat&logo=appveyor
-   :target: https://ci.appveyor.com/project/banesullivan/vtki/history
+.. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/vista.svg?label=AppVeyor&style=flat&logo=appveyor
+   :target: https://ci.appveyor.com/project/banesullivan/vista/history
 
-.. |codecov| image:: https://codecov.io/gh/akaszynski/vtki/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/akaszynski/vtki
+.. |codecov| image:: https://codecov.io/gh/akaszynski/vista/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/akaszynski/vista
 
 .. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
-   :target: https://www.codacy.com/app/banesullivan/vtki?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vtki&amp;utm_campaign=Badge_Grade
+   :target: https://www.codacy.com/app/banesullivan/vista?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/vista&amp;utm_campaign=Badge_Grade
 
-.. |contributors| image:: https://img.shields.io/github/contributors/pyvista/vtki.svg?logo=github&logoColor=white
-   :target: https://github.com/pyvista/vtki/graphs/contributors/
+.. |contributors| image:: https://img.shields.io/github/contributors/pyvista/vista.svg?logo=github&logoColor=white
+   :target: https://github.com/pyvista/vista/graphs/contributors/
 
-.. |stars| image:: https://img.shields.io/github/stars/pyvista/vtki.svg?style=social&label=Stars
-   :target: https://github.com/pyvista/vtki
+.. |stars| image:: https://img.shields.io/github/stars/pyvista/vista.svg?style=social&label=Stars
+   :target: https://github.com/pyvista/vista
    :alt: GitHub
 
 
@@ -48,7 +48,7 @@
 About
 *****
 
-``vtki`` is a helper module for the Visualization Toolkit (VTK) that takes a
+``vista`` is a helper module for the Visualization Toolkit (VTK) that takes a
 different approach on interfacing with VTK through NumPy and direct array
 access. This package provides a Pythonic, well-documented interface exposing
 VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
@@ -58,10 +58,10 @@ This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
 
-Want to test-drive ``vtki``? Check out our live examples on MyBinder:
+Want to test-drive ``vista``? Check out our live examples on MyBinder:
 
 .. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/pyvista/vtki-examples/master
+   :target: https://mybinder.org/v2/gh/pyvista/vista-examples/master
    :alt: Launch on Binder
 
 .. toctree::
@@ -74,14 +74,14 @@ Want to test-drive ``vtki``? Check out our live examples on MyBinder:
 Connections
 ===========
 
-``vtki`` is a powerful tool that researchers can harness to create compelling,
+``vista`` is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
-Here are a few open-source projects that leverage ``vtki``:
+Here are a few open-source projects that leverage ``vista``:
 
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
-* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. ``vtki`` is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfvtk_: 3D visualization for the Open Mining Format (omf). ``vtki`` provides the foundation for this library's visualization.
-* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``vtki`` versions of their data types for `creating compelling visualizations`_.
+* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. ``vista`` is used to make the inputs and outputs of PVGeo's algorithms more accessible.
+* omfvtk_: 3D visualization for the Open Mining Format (omf). ``vista`` provides the foundation for this library's visualization.
+* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``vista`` versions of their data types for `creating compelling visualizations`_.
 * pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
@@ -105,10 +105,10 @@ Getting Started
 
 If you have a working copy of VTK, installation is simply::
 
-    $ pip install vtki
+    $ pip install vista
 
-You can also visit `PyPi <http://pypi.python.org/pypi/vtki>`_ or
-`GitHub <https://github.com/pyvista/vtki>`_ to download the source.
+You can also visit `PyPi <http://pypi.python.org/pypi/vista>`_ or
+`GitHub <https://github.com/pyvista/vista>`_ to download the source.
 
 See :ref:`install_ref` for more details.
 
@@ -127,8 +127,8 @@ Examples
 ********
 
 Be sure to head over to the `examples gallery <./examples/index.html>`_
-to explore different use cases of ``vtki`` and to start visualizing 3D data in
-Pyhton! Also, please explore the list of external projects leveraging ``vtki``
+to explore different use cases of ``vista`` and to start visualizing 3D data in
+Pyhton! Also, please explore the list of external projects leveraging ``vista``
 for 3D visualization in our `external examples list <./external_examples.html>`_
 
 
@@ -146,7 +146,7 @@ Data Types
 **********
 
 The `Visualization Toolkit`_ (VTK), developed by Kitware_, has many mesh data
-types that ``vtki`` wraps.
+types that ``vista`` wraps.
 This chapter is intended to describe these different mesh types on the VTK
 side to help new users understand which data types to use.
 
@@ -192,11 +192,11 @@ Contributing
 ************
 
 We absolutely welcome contributions and we hope that this guide will facilitate
-an understanding of the ``vtki`` code repository. It is important to note that
-the  ``vtki`` software package is maintained on a volunteer basis and thus we
+an understanding of the ``vista`` code repository. It is important to note that
+the  ``vista`` software package is maintained on a volunteer basis and thus we
 need to foster a community that can support user questions and develop new
 features to make this software a useful tool for all users. To learn more about
-contributing to ``vtki``, please see :ref:`contributing_ref`.
+contributing to ``vista``, please see :ref:`contributing_ref`.
 
 .. toctree::
    :maxdepth: 2

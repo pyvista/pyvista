@@ -2,23 +2,23 @@ Gridded Data
 ============
 
 
-Gridded datasets in vtki capture ``vtkRectilinearGrid`` and ``vtkImageData``
+Gridded datasets in vista capture ``vtkRectilinearGrid`` and ``vtkImageData``
 data objects on the VTK backend. These data types have common features which
-are encompassed int their shared inheritance of :class:`vtki.Grid`
+are encompassed int their shared inheritance of :class:`vista.Grid`
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.Grid
+.. autoautosummary:: vista.Grid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.Grid
+.. autoautosummary:: vista.Grid
    :methods:
 
-.. autoclass:: vtki.Grid
+.. autoclass:: vista.Grid
    :show-inheritance:
    :members:
    :undoc-members:
@@ -31,15 +31,15 @@ Rectilinear Grid
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.RectilinearGrid
+.. autoautosummary:: vista.RectilinearGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.RectilinearGrid
+.. autoautosummary:: vista.RectilinearGrid
    :methods:
 
-.. autoclass:: vtki.RectilinearGrid
+.. autoclass:: vista.RectilinearGrid
    :show-inheritance:
    :members:
    :undoc-members:
@@ -49,20 +49,20 @@ Rectilinear Grid
 Uniform Grid
 ------------
 
-`vtki`'s definition of a uniform grid is an extension of VTK's ``vtkImageData``
+`vista`'s definition of a uniform grid is an extension of VTK's ``vtkImageData``
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.UniformGrid
+.. autoautosummary:: vista.UniformGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.UniformGrid
+.. autoautosummary:: vista.UniformGrid
    :methods:
 
-.. autoclass:: vtki.UniformGrid
+.. autoclass:: vista.UniformGrid
    :show-inheritance:
    :members:
    :undoc-members:

@@ -1,37 +1,37 @@
 import warnings
-from vtki._version import __version__
-from vtki.plotting import *
-from vtki.utilities import *
-from vtki.errors import *
-from vtki.readers import *
-from vtki.colors import *
-from vtki.features import *
-from vtki.filters import DataSetFilters
-from vtki.common import Common
-from vtki.pointset import PointGrid
-from vtki.pointset import PolyData
-from vtki.pointset import UnstructuredGrid
-from vtki.pointset import StructuredGrid
-from vtki.grid import Grid
-from vtki.grid import RectilinearGrid
-from vtki.grid import UniformGrid
-from vtki.geometric_objects import *
-from vtki.container import MultiBlock
-from vtki.qt_plotting import QtInteractor
-from vtki.qt_plotting import BackgroundPlotter
-from vtki.export import export_plotter_vtkjs, get_vtkjs_url
-from vtki.renderer import Renderer
+from vista._version import __version__
+from vista.plotting import *
+from vista.utilities import *
+from vista.errors import *
+from vista.readers import *
+from vista.colors import *
+from vista.features import *
+from vista.filters import DataSetFilters
+from vista.common import Common
+from vista.pointset import PointGrid
+from vista.pointset import PolyData
+from vista.pointset import UnstructuredGrid
+from vista.pointset import StructuredGrid
+from vista.grid import Grid
+from vista.grid import RectilinearGrid
+from vista.grid import UniformGrid
+from vista.geometric_objects import *
+from vista.container import MultiBlock
+from vista.qt_plotting import QtInteractor
+from vista.qt_plotting import BackgroundPlotter
+from vista.export import export_plotter_vtkjs, get_vtkjs_url
+from vista.renderer import Renderer
 
 # IPython interactive tools
-from vtki.ipy_tools import OrthogonalSlicer
-from vtki.ipy_tools import ManySlicesAlongAxis
-from vtki.ipy_tools import Threshold
-from vtki.ipy_tools import Clip
-from vtki.ipy_tools import ScaledPlotter
-from vtki.ipy_tools import Isocontour
+from vista.ipy_tools import OrthogonalSlicer
+from vista.ipy_tools import ManySlicesAlongAxis
+from vista.ipy_tools import Threshold
+from vista.ipy_tools import Clip
+from vista.ipy_tools import ScaledPlotter
+from vista.ipy_tools import Isocontour
 
 # Sphinx-gallery tools
-from vtki.sphinx_gallery import Scraper
+from vista.sphinx_gallery import Scraper
 
 import numpy as np
 import vtk
@@ -67,7 +67,7 @@ FIGURE_PATH = None
 import appdirs
 import os
 
-USER_DATA_PATH = appdirs.user_data_dir('vtki')
+USER_DATA_PATH = appdirs.user_data_dir('vista')
 if not os.path.exists(USER_DATA_PATH):
     os.makedirs(USER_DATA_PATH)
 

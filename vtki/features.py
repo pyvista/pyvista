@@ -1,6 +1,6 @@
 import numpy as np
 
-import vtki
+import vista
 
 
 def voxelize(mesh, density):
@@ -12,8 +12,8 @@ def voxelize(mesh, density):
     x, y, z = np.meshgrid(x, y, z)
 
     # Create unstructured grid from the structured grid
-    grid = vtki.StructuredGrid(x, y, z)
-    ugrid = vtki.UnstructuredGrid(grid)
+    grid = vista.StructuredGrid(x, y, z)
+    ugrid = vista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh
     selection = ugrid.select_enclosed_points(mesh, tolerance=0.0)

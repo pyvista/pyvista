@@ -9,7 +9,7 @@ language: python
 
 env:
   global:
-    # Doctr deploy key for pyvista/vtki
+    # Doctr deploy key for pyvista/vista
     - secure: "NHUV04B//rkOUxfBd5Bk3QN3g/iQ91wdRZowNTwCIPAbznFez2mbwQcsULDeZk7blPsv1xEAnqy/T/nPyYZuHO9qU2/OElvxKspaKgcGZ9Ig/czmjrO7Y5VnU2KOZJNwBLgb6mEpDvkKoI2j9WhhcTuPcDbayk6ntXz03snYRUsn2nwHfvqDmIqMQnqSwgVejPJQxBsQSikzYzkTYT9P/z94VoSTp4UrvDVj2Tygrw4PnSGe/9x6qTolo3Ofd+REt4LBth6/lBX2OrBhHwnp9wWpEX1o98HOdf5ZUHI9v8gZacnncVXNlNu1biBlQR58bXZX/4RqRdM2No6NcszC8CbhAS+UhNdsPlbimt9L60s4MWwq+IaxCOA2/lzLVdFl8p5wDjz+DDZsdVMNyjhO3MBP5Am/4qJ0BsQEQ2vtZMF3Jvil9oiSSWcp7IGYsj3aPqEcKFm5uc2SwU1CXg4uBfgDsowqBi0t5/1rWqsJQ6p+6ZlU2NoN4ppNjuenAYyDla49J6I7wLp6Z3GwHuupE75WncVhL5BY5aYRcTDrkKuRx8nFIMe+Xuzp6NKmWaDxIwoztA0VPZ9FtMYiM5ahvHwSnZ8wIxUngjMHPuE7+e6KkCBcLt/e7DlzBQhi4kPJesbzw3NX/VmYkAoZsK5tkwKBZakKIKudpjzW73DxGE8="
 
 before_install:
@@ -41,11 +41,11 @@ matrix:
     - name: Core API 3.5
       python: 3.5
       # Run the test suite and generate coverage report
-      script: pytest -v --cov vtki
+      script: pytest -v --cov vista
     - name: Core API 3.6
       python: 3.6
       # Run the test suite and generate coverage report
-      script: pytest -v --cov vtki
+      script: pytest -v --cov vista
     - name: Core API 3.7
       python: 3.7
       env:
@@ -53,23 +53,23 @@ matrix:
         # Deploy to PyPI when core testing passes on 3.7 on tags
         - VTKI_DEPLOY: true
       # Run the test suite and generate coverage report
-      script: pytest -v --cov vtki
+      script: pytest -v --cov vista
 
     # Test the package docstrings on Python 3.5, 3.6, and 3.7
     - name: Package Docstrings 3.5
       python: 3.5
       # Run all code examples in the docstrings
-      script: pytest -v --doctest-modules vtki
+      script: pytest -v --doctest-modules vista
     - name: Package Docstrings 3.6
       python: 3.6
       # Run all code examples in the docstrings
-      script: pytest -v --cov --doctest-modules vtki
+      script: pytest -v --cov --doctest-modules vista
     - name: Package Docstrings 3.7
       python: 3.7
       env:
         - REPORT_COVERAGE: true
       # Run all code examples in the docstrings
-      script: pytest -v --cov --doctest-modules vtki
+      script: pytest -v --cov --doctest-modules vista
 
     # Test notebooks on Python 3.6 and 3.7
     - name: Notebooks 3.6
@@ -169,7 +169,7 @@ deploy:
     script: sh ./docs/deploy_docs_from_travis.sh
     skip_cleanup: true
     on:
-      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/vtki') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES')
+      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/vista') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES')
   - provider: pypi
     user: akaszynski
     distributions: sdist

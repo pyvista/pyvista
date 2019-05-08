@@ -1,64 +1,64 @@
 Utilities
 =========
 
-.. automodule:: vtki.utilities
+.. automodule:: vista.utilities
 
-.. autofunction:: vtki.set_error_output_file
+.. autofunction:: vista.set_error_output_file
 
-.. autofunction:: vtki.trans_from_matrix
+.. autofunction:: vista.trans_from_matrix
 
-.. autofunction:: vtki.is_inside_bounds
+.. autofunction:: vista.is_inside_bounds
 
 
 Object Conversions
 ------------------
 
-.. autofunction:: vtki.wrap
+.. autofunction:: vista.wrap
 
-.. autofunction:: vtki.is_vtki_obj
+.. autofunction:: vista.is_vista_obj
 
-.. autofunction:: vtki.image_to_texture
+.. autofunction:: vista.image_to_texture
 
-.. autofunction:: vtki.numpy_to_texture
+.. autofunction:: vista.numpy_to_texture
 
 
 File IO
 -------
 
-.. autofunction:: vtki.read
+.. autofunction:: vista.read
 
-.. autofunction:: vtki.read_exodus
+.. autofunction:: vista.read_exodus
 
-.. autofunction:: vtki.read_texture
+.. autofunction:: vista.read_texture
 
-.. autofunction:: vtki.read_legacy
+.. autofunction:: vista.read_legacy
 
 
 Mesh Creation
 -------------
 
-.. autofunction:: vtki.lines_from_points
+.. autofunction:: vista.lines_from_points
 
-.. autofunction:: vtki.vtk_points
+.. autofunction:: vista.vtk_points
 
-.. autofunction:: vtki.vector_poly_data
+.. autofunction:: vista.vector_poly_data
 
-.. autofunction:: vtki.fit_plane_to_points
+.. autofunction:: vista.fit_plane_to_points
 
 
 Array Access
 ------------
 
-.. autofunction:: vtki.get_scalar
+.. autofunction:: vista.get_scalar
 
-.. autofunction:: vtki.convert_array
+.. autofunction:: vista.convert_array
 
-.. autofunction:: vtki.point_scalar
+.. autofunction:: vista.point_scalar
 
-.. autofunction:: vtki.cell_scalar
+.. autofunction:: vista.cell_scalar
 
-.. autofunction:: vtki.get_vtk_type
+.. autofunction:: vista.get_vtk_type
 
-.. autofunction:: vtki.vtk_bit_array_to_char
+.. autofunction:: vista.vtk_bit_array_to_char
 
-.. autofunction:: vtki.convert_string_array
+.. autofunction:: vista.convert_string_array

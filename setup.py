@@ -1,5 +1,5 @@
 """
-Installation file for python vtki module
+Installation file for python vista module
 """
 import os
 import platform
@@ -9,7 +9,7 @@ from io import open as io_open
 
 from setuptools import setup
 
-package_name = 'vtki'
+package_name = 'vista'
 
 __version__ = None
 filepath = os.path.dirname(__file__)
@@ -37,7 +37,7 @@ readme_file = os.path.join(filepath, 'README.rst')
 
 setup(
     name=package_name,
-    packages=[package_name, 'vtki.examples'],
+    packages=[package_name, 'vista.examples'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=open(readme_file).read(),
@@ -58,9 +58,9 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
 
-    url='https://github.com/pyvista/vtki',
+    url='https://github.com/pyvista/vista',
     keywords='vtk numpy plotting mesh',
-    package_data={'vtki.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
+    package_data={'vista.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
                                     'hexbeam.vtk', 'sphere.ply',
                                     'uniform.vtk', 'rectilinear.vtk',
                                     'globe.vtk', '2k_earth_daymap.jpg']},

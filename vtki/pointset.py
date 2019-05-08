@@ -15,14 +15,14 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
 from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
-import vtki
-from vtki.filters import _get_output
+import vista
+from vista.filters import _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PolyData(vtkPolyData, vtki.Common):
+class PolyData(vtkPolyData, vista.Common):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -36,27 +36,27 @@ class PolyData(vtkPolyData, vtki.Common):
 
     Examples
     --------
-    >>> import vtki
-    >>> from vtki import examples
+    >>> import vista
+    >>> from vista import examples
     >>> import vtk
     >>> import numpy as np
 
-    >>> surf = vtki.PolyData()  # Create an empty mesh
+    >>> surf = vista.PolyData()  # Create an empty mesh
 
     >>> # Initialize from a vtk.vtkPolyData object
     >>> vtkobj = vtk.vtkPolyData()
-    >>> surf = vtki.PolyData(vtkobj)
+    >>> surf = vista.PolyData(vtkobj)
 
     >>> # initialize from just vertices
     >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0],])
-    >>> surf = vtki.PolyData(vertices)
+    >>> surf = vista.PolyData(vertices)
 
     >>> # initialize from vertices and faces
     >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
-    >>> surf = vtki.PolyData(vertices, faces)
+    >>> surf = vista.PolyData(vertices, faces)
 
     >>>  # initialize from a filename
-    >>> surf = vtki.PolyData(examples.antfile)
+    >>> surf = vista.PolyData(examples.antfile)
     """
 
     def __init__(self, *args, **kwargs):
@@ -82,7 +82,7 @@ class PolyData(vtkPolyData, vtki.Common):
                 npoints = points.shape[0]
                 cells = np.hstack((np.ones((npoints, 1)),
                                    np.arange(npoints).reshape(-1, 1)))
-                cells = np.ascontiguousarray(cells, dtype=vtki.ID_TYPE)
+                cells = np.ascontiguousarray(cells, dtype=vista.ID_TYPE)
                 cells = np.reshape(cells, (2*npoints))
                 self._from_arrays(points, cells, deep, verts=True)
             else:
@@ -99,10 +99,10 @@ class PolyData(vtkPolyData, vtki.Common):
             raise TypeError('Invalid input type')
 
     def __repr__(self):
-        return vtki.Common.__repr__(self)
+        return vista.Common.__repr__(self)
 
     def __str__(self):
-        return vtki.Common.__str__(self)
+        return vista.Common.__str__(self)
 
     def _load_file(self, filename):
         """Load a surface mesh from a mesh file.
@@ -126,7 +126,7 @@ class PolyData(vtkPolyData, vtki.Common):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = vtki.get_ext(filename)
+        ext = vista.get_ext(filename)
 
         # Select reader
         if ext == '.ply':
@@ -157,8 +157,8 @@ class PolyData(vtkPolyData, vtki.Common):
 
     @lines.setter
     def lines(self, lines):
-        if lines.dtype != vtki.ID_TYPE:
-            lines = lines.astype(vtki.ID_TYPE)
+        if lines.dtype != vista.ID_TYPE:
+            lines = lines.astype(vista.ID_TYPE)
 
         # get number of faces
         if lines.ndim == 1:
@@ -180,8 +180,8 @@ class PolyData(vtkPolyData, vtki.Common):
     @faces.setter
     def faces(self, faces):
         """ set faces without copying """
-        if faces.dtype != vtki.ID_TYPE:
-            faces = faces.astype(vtki.ID_TYPE)
+        if faces.dtype != vista.ID_TYPE:
+            faces = faces.astype(vista.ID_TYPE)
 
         # get number of faces
         if faces.ndim == 1:
@@ -224,7 +224,7 @@ class PolyData(vtkPolyData, vtki.Common):
         Examples
         --------
         >>> import numpy as np
-        >>> import vtki
+        >>> import vista
         >>> vertices = np.array([[0, 0, 0],
         ...                      [1, 0, 0],
         ...                      [1, 1, 0],
@@ -233,7 +233,7 @@ class PolyData(vtkPolyData, vtki.Common):
         >>> faces = np.hstack([[4, 0, 1, 2, 3],
         ...                    [3, 0, 1, 4],
         ...                    [3, 1, 2, 4]])  # one square and two triangles
-        >>> surf = vtki.PolyData(vertices, faces)
+        >>> surf = vista.PolyData(vertices, faces)
 
         """
         if deep or verts:
@@ -243,8 +243,8 @@ class PolyData(vtkPolyData, vtki.Common):
 
             # Convert to a vtk array
             vtkcells = vtk.vtkCellArray()
-            if faces.dtype != vtki.ID_TYPE:
-                faces = faces.astype(vtki.ID_TYPE)
+            if faces.dtype != vista.ID_TYPE:
+                faces = faces.astype(vista.ID_TYPE)
 
             # get number of faces
             if faces.ndim == 1:
@@ -287,7 +287,7 @@ class PolyData(vtkPolyData, vtki.Common):
         featureEdges.SetFeatureAngle(angle)
         featureEdges.Update()
         edges = _get_output(featureEdges)
-        orig_id = vtki.point_scalar(edges, 'point_ind')
+        orig_id = vista.point_scalar(edges, 'point_ind')
 
         return np.in1d(self.point_arrays['point_ind'], orig_id,
                        assume_unique=True)
@@ -312,7 +312,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Parameters
         ----------
-        cut : vtki.PolyData
+        cut : vista.PolyData
             Mesh making the cut
 
         inplace : bool, optional
@@ -320,7 +320,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             The cut mesh when inplace=False
 
         """
@@ -351,7 +351,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Parameters
         ----------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             The mesh to add.
 
         inplace : bool, optional
@@ -359,7 +359,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        joinedmesh : vtki.PolyData
+        joinedmesh : vista.PolyData
             Initial mesh and the new mesh when inplace=False.
 
         """
@@ -380,7 +380,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Parameters
         ----------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             The mesh to perform a union against.
 
         inplace : bool, optional
@@ -388,7 +388,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        union : vtki.PolyData
+        union : vista.PolyData
             The union mesh when inplace=False.
 
         """
@@ -412,7 +412,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Parameters
         ----------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             The mesh to perform a union against.
 
         inplace : bool, optional
@@ -420,7 +420,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        union : vtki.PolyData
+        union : vista.PolyData
             The union mesh when inplace=False.
 
         """
@@ -546,7 +546,7 @@ class PolyData(vtkPolyData, vtki.Common):
             - Minimum
 
         **kwargs : optional
-            See help(vtki.plot)
+            See help(vista.plot)
 
         Returns
         -------
@@ -568,7 +568,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Mesh containing only triangles.  None when inplace=True
 
         """
@@ -616,7 +616,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Decimated mesh. None when inplace=True.
 
         """
@@ -677,7 +677,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Decimated mesh. None when inplace=True.
 
         """
@@ -728,7 +728,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Tube-filtered mesh. None when inplace=True.
 
         """
@@ -795,13 +795,13 @@ class PolyData(vtkPolyData, vtki.Common):
         Returns
         -------
         mesh : Polydata object
-            vtki polydata object.  None when inplace=True
+            vista polydata object.  None when inplace=True
 
         Examples
         --------
-        >>> from vtki import examples
-        >>> import vtki
-        >>> mesh = vtki.PolyData(examples.planefile)
+        >>> from vista import examples
+        >>> import vista
+        >>> mesh = vista.PolyData(examples.planefile)
         >>> submesh = mesh.subdivide(1, 'loop') # doctest:+SKIP
 
         alternatively, update mesh in-place
@@ -865,7 +865,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        edges : vtki.vtkPolyData
+        edges : vista.vtkPolyData
             Extracted edges. None if inplace=True.
 
         """
@@ -956,7 +956,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        outmesh : vtki.PolyData
+        outmesh : vista.PolyData
             Decimated mesh.  None when inplace=True.
 
         """
@@ -1067,7 +1067,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Updated mesh with cell and point normals if inplace=False
 
         Notes
@@ -1126,7 +1126,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     def clip_with_plane(self, origin, normal, value=0, inplace=False):
         """
-        Clip a vtki.PolyData or vtk.vtkPolyData with a plane.
+        Clip a vista.PolyData or vtk.vtkPolyData with a plane.
 
         Can be used to open a mesh which has been closed along a well-defined
         plane.
@@ -1148,7 +1148,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Updated mesh with cell and point normals if inplace=False. Otherwise None.
 
         Notes
@@ -1191,7 +1191,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Largest connected set in mesh
 
         """
@@ -1205,7 +1205,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
     def fill_holes(self, hole_size, inplace=False):  # pragma: no cover
         """
-        Fill holes in a vtki.PolyData or vtk.vtkPolyData object.
+        Fill holes in a vista.PolyData or vtk.vtkPolyData object.
 
         Holes are identified by locating boundary edges, linking them together
         into loops, and then triangulating the resulting loops. Note that you
@@ -1225,11 +1225,11 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Mesh with holes filled.  None when inplace=True
 
         """
-        logging.warning('vtki.pointset.PolyData.fill_holes is known to segfault. ' +
+        logging.warning('vista.pointset.PolyData.fill_holes is known to segfault. ' +
                         'Use at your own risk')
         fill = vtk.vtkFillHolesFilter()
         fill.SetHoleSize(hole_size)
@@ -1273,7 +1273,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Cleaned mesh.  None when inplace=True
         """
         clean = vtk.vtkCleanPolyData()
@@ -1358,7 +1358,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        output : vtki.PolyData
+        output : vista.PolyData
             PolyData object consisting of the line segment between the two given
             vertices.
 
@@ -1457,7 +1457,7 @@ class PolyData(vtkPolyData, vtki.Common):
         intersection_cells = np.array(intersection_cells)
 
         if plot:
-            plotter = vtki.Plotter(off_screen=off_screen)
+            plotter = vista.Plotter(off_screen=off_screen)
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.add_lines(segment, 'b', label='Ray Segment')
@@ -1473,7 +1473,7 @@ class PolyData(vtkPolyData, vtki.Common):
         """ Plots boundaries of a mesh """
         edges = self.extract_edges()
 
-        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False),
+        plotter = vista.Plotter(off_screen=kwargs.pop('off_screen', False),
                                notebook=kwargs.pop('notebook', None))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
         plotter.add_mesh(self, legend='Mesh', **kwargs)
@@ -1484,7 +1484,7 @@ class PolyData(vtkPolyData, vtki.Common):
         """
         Plot the point normals of a mesh.
         """
-        plotter = vtki.Plotter(off_screen=kwargs.pop('off_screen', False),
+        plotter = vista.Plotter(off_screen=kwargs.pop('off_screen', False),
                                notebook=kwargs.pop('notebook', None))
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
@@ -1520,7 +1520,7 @@ class PolyData(vtkPolyData, vtki.Common):
 
         Returns
         -------
-        mesh : vtki.PolyData
+        mesh : vista.PolyData
             Mesh without the points flagged for removal.  Not returned
             when inplace=False.
 
@@ -1556,7 +1556,7 @@ class PolyData(vtkPolyData, vtki.Common):
         new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
-        faces = np.empty((nfaces, 4), dtype=vtki.ID_TYPE)
+        faces = np.empty((nfaces, 4), dtype=vista.ID_TYPE)
         faces[:, 0] = 3
         faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
 
@@ -1610,17 +1610,17 @@ class PolyData(vtkPolyData, vtki.Common):
             return mesh
 
     def delauney_2d(self):
-        """DEPRECATED. Please see :func:`vtki.PolyData.delaunay_2d`"""
+        """DEPRECATED. Please see :func:`vista.PolyData.delaunay_2d`"""
         raise AttributeError('`delauney_2d` is deprecated because we made a '\
                              'spelling mistake. Please use `delaunay_2d`.')
 
 
-class PointGrid(vtki.Common):
+class PointGrid(vista.Common):
     """ Class in common with structured and unstructured grids """
 
     def __new__(cls, *args, **kwargs):
         if cls is PointGrid:
-            raise TypeError("vtki.PointGrid is an abstract class and may not be instantiated.")
+            raise TypeError("vista.PointGrid is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
@@ -1641,7 +1641,7 @@ class PointGrid(vtki.Common):
             - minimum
 
         **kwargs : optional
-            Optional keyword arguments.  See help(vtki.plot)
+            Optional keyword arguments.  See help(vista.plot)
 
         Returns
         -------
@@ -1681,7 +1681,7 @@ class PointGrid(vtki.Common):
 
         Returns
         -------
-        extsurf : vtki.PolyData
+        extsurf : vista.PolyData
             Surface mesh of the grid
         """
         surf_filter = vtk.vtkDataSetSurfaceFilter()
@@ -1746,7 +1746,7 @@ class PointGrid(vtki.Common):
 
         Returns
         -------
-        edges : vtki.vtkPolyData
+        edges : vista.vtkPolyData
             Extracted edges
 
         """
@@ -1769,22 +1769,22 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
     Examples
     --------
-    >>> import vtki
-    >>> from vtki import examples
+    >>> import vista
+    >>> from vista import examples
     >>> import vtk
 
     >>> # Create an empy grid
-    >>> grid = vtki.UnstructuredGrid()
+    >>> grid = vista.UnstructuredGrid()
 
     >>> # Copy a vtkUnstructuredGrid
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
-    >>> grid = vtki.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
+    >>> grid = vista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
     >>> # from arrays
-    >>> #grid = vtki.UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)
+    >>> #grid = vista.UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)
 
     >>> # From a string filename
-    >>> grid = vtki.UnstructuredGrid(examples.hexbeamfile)
+    >>> grid = vista.UnstructuredGrid(examples.hexbeamfile)
 
     """
 
@@ -1825,11 +1825,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
 
     def __repr__(self):
-        return vtki.Common.__repr__(self)
+        return vista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vtki.Common.__str__(self)
+        return vista.Common.__str__(self)
 
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
@@ -1857,7 +1857,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         --------
         >>> import numpy
         >>> import vtk
-        >>> import vtki
+        >>> import vista
         >>> offset = np.array([0, 9])
         >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
         >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
@@ -1882,15 +1882,15 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         >>> points = np.vstack((cell1, cell2))
 
-        >>> grid = vtki.UnstructuredGrid(offset, cells, cell_type, points)
+        >>> grid = vista.UnstructuredGrid(offset, cells, cell_type, points)
 
         """
 
-        if offset.dtype != vtki.ID_TYPE:
-            offset = offset.astype(vtki.ID_TYPE)
+        if offset.dtype != vista.ID_TYPE:
+            offset = offset.astype(vista.ID_TYPE)
 
-        if cells.dtype != vtki.ID_TYPE:
-            cells = cells.astype(vtki.ID_TYPE)
+        if cells.dtype != vista.ID_TYPE:
+            cells = cells.astype(vista.ID_TYPE)
 
         if not cells.flags['C_CONTIGUOUS']:
             cells = np.ascontiguousarray(cells)
@@ -1912,7 +1912,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         vtkcells.SetCells(ncells, numpy_to_vtkIdTypeArray(cells.ravel(), deep=deep))
 
         # Convert points to vtkPoints object
-        points = vtki.vtk_points(points, deep=deep)
+        points = vista.vtk_points(points, deep=deep)
 
         # Create unstructured grid
         self.SetPoints(points)
@@ -2027,7 +2027,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : vtki.UnstructuredGrid
+        grid : vista.UnstructuredGrid
             UnstructuredGrid containing only linear cells.
         """
         lgrid = self.copy(deep)
@@ -2091,7 +2091,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         Returns
         -------
-        subgrid : vtki.UnstructuredGrid
+        subgrid : vista.UnstructuredGrid
             Subselected grid
 
         """
@@ -2099,10 +2099,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             ind = np.array(ind, np.ndarray)
 
         if ind.dtype == np.bool:
-            ind = ind.nonzero()[0].astype(vtki.ID_TYPE)
+            ind = ind.nonzero()[0].astype(vista.ID_TYPE)
 
-        if ind.dtype != vtki.ID_TYPE:
-            ind = ind.astype(vtki.ID_TYPE)
+        if ind.dtype != vista.ID_TYPE:
+            ind = ind.astype(vista.ID_TYPE)
 
         if not ind.flags.c_contiguous:
             ind = np.ascontiguousarray(ind)
@@ -2143,7 +2143,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         Returns
         -------
-        subgrid : vtki.UnstructuredGrid
+        subgrid : vista.UnstructuredGrid
             Subselected grid.
         """
         try:
@@ -2219,7 +2219,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         if not main_has_priority:
             append_filter.AddInputData(self)
 
-        if isinstance(grid, vtki.UnstructuredGrid):
+        if isinstance(grid, vista.UnstructuredGrid):
             append_filter.AddInputData(grid)
         elif isinstance(grid, list):
             grids = grid
@@ -2258,23 +2258,23 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     Examples
     --------
-    >>> import vtki
+    >>> import vista
     >>> import vtk
     >>> import numpy as np
 
     >>> # Create empty grid
-    >>> grid = vtki.StructuredGrid()
+    >>> grid = vista.StructuredGrid()
 
     >>> # Initialize from a vtk.vtkStructuredGrid object
     >>> vtkgrid = vtk.vtkStructuredGrid()
-    >>> grid = vtki.StructuredGrid(vtkgrid)
+    >>> grid = vista.StructuredGrid(vtkgrid)
 
     >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 2)
     >>> zrng = np.arange(-10, 10, 2)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
-    >>> grid = vtki.StructuredGrid(x, y, z)
+    >>> grid = vista.StructuredGrid(x, y, z)
 
 
     """
@@ -2298,11 +2298,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
 
     def __repr__(self):
-        return vtki.Common.__repr__(self)
+        return vista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vtki.Common.__str__(self)
+        return vista.Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):
@@ -2336,7 +2336,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         # Create structured grid
         self.SetDimensions(dim)
-        self.SetPoints(vtki.vtk_points(points))
+        self.SetPoints(vista.vtk_points(points))
 
     def _load_file(self, filename):
         """
