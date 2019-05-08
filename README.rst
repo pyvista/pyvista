@@ -1,4 +1,6 @@
-.. title:: vista
+#####
+Vista
+#####
 
 .. image:: https://github.com/pyvista/vista/raw/master/docs/_static/vista_logo.png
     :alt: Vista
