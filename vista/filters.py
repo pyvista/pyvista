@@ -1061,12 +1061,7 @@ class DataSetFilters(object):
         pass_point_arrays: bool, optional
             Preserve source mesh's original point data arrays
         """
-        bounds = np.array(dataset.bounds)
-        dimensions = np.array(dimensions)
-        box = vista.UniformGrid()
-        box.dimensions = dimensions
-        box.spacing = (bounds[1::2] - bounds[:-1:2]) / (dimensions - 1)
-        box.origin = bounds[::2]
+        box = vista.create_grid(dataset, dimensions=dimensions)
 
         gaussian_kernel = vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)

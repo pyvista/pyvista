@@ -21,3 +21,22 @@ def voxelize(mesh, density):
 
     # extract cells from point indices
     return ugrid.extract_selection_points(mask)
+
+
+def create_grid(dataset, dimensions=(101, 101, 101)):
+    """Creates a uniform grid surrounding the given dataset with the specified
+    dimensions. This grid is commonly used for interpolating the input dataset.
+    """
+    bounds = np.array(dataset.bounds)
+    if dimensions is None:
+        # TODO: we should implement an algorithm to automaitcally deterime an
+        # "optimal" grid size by looking at the sparsity of the points in the
+        # input dataset - I actaully think VTK might have this implemented
+        # somewhere
+        raise NotImplementedError('Please specifiy dimensions.')
+    dimensions = np.array(dimensions)
+    image = vista.UniformGrid()
+    image.dimensions = dimensions
+    image.spacing = (bounds[1::2] - bounds[:-1:2]) / (dimensions - 1)
+    image.origin = bounds[::2]
+    return image
