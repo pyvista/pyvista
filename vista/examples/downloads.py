@@ -28,8 +28,9 @@ def _get_vtk_file_url(filename):
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded
     local_path = os.path.join(vista.EXAMPLES_PATH, os.path.basename(filename))
-    if os.path.isfile(local_path.replace('.zip', '')):
-        return local_path.replace('.zip', ''), None
+    local_path_no_zip = local_path.replace('.zip', '')
+    if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
+        return local_path_no_zip, None
     # grab the correct url retriever
     if sys.version_info < (3,):
         import urllib
