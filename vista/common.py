@@ -898,11 +898,12 @@ class Common(DataSetFilters, object):
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
-        attrs.append(("X Bounds", (bds[0], bds[1]), "{:.3e}, {:.3e}"))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3e}, {:.3e}"))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3e}, {:.3e}"))
+        fmt = "{}, {}".format(vista.FLOAT_FORMAT, vista.FLOAT_FORMAT)
+        attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
+        attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
+        attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
         # if self.n_cells <= vista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
-        #     attrs.append(("Volume", (self.volume), "{:.3e}"))
+        #     attrs.append(("Volume", (self.volume), vista.FLOAT_FORMAT))
         return attrs
 
 
@@ -968,8 +969,8 @@ class Common(DataSetFilters, object):
                 """internal helper to foramt array information for printing"""
                 arr = get_scalar(self, key, preference=field)
                 dl, dh = self.get_data_range(key)
-                dl = '{:.3e}'.format(dl)
-                dh = '{:.3e}'.format(dh)
+                dl = vista.FLOAT_FORMAT.format(dl)
+                dh = vista.FLOAT_FORMAT.format(dh)
                 if key == self.active_scalar_info[1]:
                     key = '<b>{}</b>'.format(key)
                 if arr.ndim > 1:

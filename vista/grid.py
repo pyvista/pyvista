@@ -38,6 +38,12 @@ class Grid(vista.Common):
         self.SetDimensions(nx, ny, nz)
         self.Modified()
 
+    def _get_attrs(self):
+        """An internal helper for the representation methods"""
+        attrs = vista.Common._get_attrs(self)
+        attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
+        return attrs
+
 
 class RectilinearGrid(vtkRectilinearGrid, Grid):
     """
@@ -548,3 +554,11 @@ class UniformGrid(vtkImageData, Grid):
         dx, dy, dz = spacing[0], spacing[1], spacing[2]
         self.SetSpacing(dx, dy, dz)
         self.Modified()
+
+
+    def _get_attrs(self):
+        """An internal helper for the representation methods"""
+        attrs = Grid._get_attrs(self)
+        fmt = "{}, {}, {}".format(*[vista.FLOAT_FORMAT]*3)
+        attrs.append(("Spacing", self.spacing, fmt))
+        return attrs

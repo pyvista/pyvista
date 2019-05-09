@@ -99,3 +99,7 @@ try:
     set_plot_theme(theme)
 except KeyError:
     pass
+
+
+# Set a parameter to control default print format for floats
+FLOAT_FORMAT = "{:.3e}"
