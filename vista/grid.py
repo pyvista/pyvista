@@ -28,7 +28,9 @@ class Grid(vista.Common):
 
     @property
     def dimensions(self):
-        """Returns a length 3 tuple of the grid's dimensions"""
+        """Returns a length 3 tuple of the grid's dimensions - these are
+        effectively the number of nodes along each of the three dataset axes
+        """
         return list(self.GetDimensions())
 
     @dimensions.setter
