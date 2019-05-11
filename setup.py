@@ -41,7 +41,7 @@ setup(
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=open(readme_file).read(),
-    author='pyvista Developers',
+    author='PyVista Developers',
     author_email='info@pyvista.org',
     license='MIT',
     classifiers=[

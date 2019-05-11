@@ -51,8 +51,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'pyvista'
-copyright = u'2017-2019, The pyvista Developers'
+project = u'PyVista'
+copyright = u'2017-2019, The PyVista Developers'
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
