@@ -47,7 +47,7 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
-| ``sphinx_gallery``                | Capturing PyVista output for docs     |
+| ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+
 
 

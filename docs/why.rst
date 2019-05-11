@@ -1,5 +1,5 @@
 Why PyVista?
-==============
+============
 
 VTK is an excellent visualization toolkit, and with Python bindings it should be
 able to combine the speed of C++ with the rapid prototyping of Python.
@@ -56,8 +56,8 @@ loading and plotting an STL file requires a lot of code when using only the
     del renWin
 
 
-Plot a Mesh using pyvista
-~~~~~~~~~~~~~~~~~~~~~~~
+Plot a Mesh using PyVista
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The same stl can be loaded and plotted using pyvista with:
 
