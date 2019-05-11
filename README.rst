@@ -1,6 +1,6 @@
-#####
-pyvista
-#####
+#######
+PyVista
+#######
 
 .. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
     :alt: pyvista
