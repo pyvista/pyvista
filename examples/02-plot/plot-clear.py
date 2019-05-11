@@ -7,12 +7,12 @@ This example demonstrates how to remove elements from a scene.
 """
 
 # sphinx_gallery_thumbnail_number = 3
-import vista
+import pyvista
 
 ################################################################################
 
-plotter = vista.Plotter()
-actor = plotter.add_mesh(vista.Sphere())
+plotter = pyvista.Plotter()
+actor = plotter.add_mesh(pyvista.Sphere())
 plotter.remove_actor(actor)
 plotter.show()
 
@@ -20,9 +20,9 @@ plotter.show()
 ################################################################################
 # Clearing the entire plotting window:
 
-plotter = vista.Plotter()
-plotter.add_mesh(vista.Sphere())
-plotter.add_mesh(vista.Plane())
+plotter = pyvista.Plotter()
+plotter.add_mesh(pyvista.Sphere())
+plotter.add_mesh(pyvista.Plane())
 plotter.clear()  # clears all actors
 plotter.show()
 
@@ -31,8 +31,8 @@ plotter.show()
 # Or you can give any actor a ``name`` when adding it and if an actor is added
 # with that same name at a later time, it will replace the previous actor:
 
-plotter = vista.Plotter()
-plotter.add_mesh(vista.Sphere(), name='mydata')
-plotter.add_mesh(vista.Plane(), name='mydata')
+plotter = pyvista.Plotter()
+plotter.add_mesh(pyvista.Sphere(), name='mydata')
+plotter.add_mesh(pyvista.Plane(), name='mydata')
 # Only the Plane is shown!
 plotter.show()

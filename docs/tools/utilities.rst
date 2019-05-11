@@ -1,64 +1,64 @@
 Utilities
 =========
 
-.. automodule:: vista.utilities
+.. automodule:: pyvista.utilities
 
-.. autofunction:: vista.set_error_output_file
+.. autofunction:: pyvista.set_error_output_file
 
-.. autofunction:: vista.trans_from_matrix
+.. autofunction:: pyvista.trans_from_matrix
 
-.. autofunction:: vista.is_inside_bounds
+.. autofunction:: pyvista.is_inside_bounds
 
 
 Object Conversions
 ------------------
 
-.. autofunction:: vista.wrap
+.. autofunction:: pyvista.wrap
 
-.. autofunction:: vista.is_vista_obj
+.. autofunction:: pyvista.is_pyvista_obj
 
-.. autofunction:: vista.image_to_texture
+.. autofunction:: pyvista.image_to_texture
 
-.. autofunction:: vista.numpy_to_texture
+.. autofunction:: pyvista.numpy_to_texture
 
 
 File IO
 -------
 
-.. autofunction:: vista.read
+.. autofunction:: pyvista.read
 
-.. autofunction:: vista.read_exodus
+.. autofunction:: pyvista.read_exodus
 
-.. autofunction:: vista.read_texture
+.. autofunction:: pyvista.read_texture
 
-.. autofunction:: vista.read_legacy
+.. autofunction:: pyvista.read_legacy
 
 
 Mesh Creation
 -------------
 
-.. autofunction:: vista.lines_from_points
+.. autofunction:: pyvista.lines_from_points
 
-.. autofunction:: vista.vtk_points
+.. autofunction:: pyvista.vtk_points
 
-.. autofunction:: vista.vector_poly_data
+.. autofunction:: pyvista.vector_poly_data
 
-.. autofunction:: vista.fit_plane_to_points
+.. autofunction:: pyvista.fit_plane_to_points
 
 
 Array Access
 ------------
 
-.. autofunction:: vista.get_scalar
+.. autofunction:: pyvista.get_scalar
 
-.. autofunction:: vista.convert_array
+.. autofunction:: pyvista.convert_array
 
-.. autofunction:: vista.point_scalar
+.. autofunction:: pyvista.point_scalar
 
-.. autofunction:: vista.cell_scalar
+.. autofunction:: pyvista.cell_scalar
 
-.. autofunction:: vista.get_vtk_type
+.. autofunction:: pyvista.get_vtk_type
 
-.. autofunction:: vista.vtk_bit_array_to_char
+.. autofunction:: pyvista.vtk_bit_array_to_char
 
-.. autofunction:: vista.convert_string_array
+.. autofunction:: pyvista.convert_string_array

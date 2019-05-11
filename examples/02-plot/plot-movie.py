@@ -6,15 +6,15 @@ Create an animated MP4 movie of a rendering scene
 """
 
 
-import vista
+import pyvista
 import numpy as np
 
 filename = 'sphere-shrinking.mp4'
 
-mesh = vista.Sphere()
+mesh = pyvista.Sphere()
 mesh.cell_arrays['data'] = np.random.random(mesh.n_cells)
 
-plotter = vista.Plotter()
+plotter = pyvista.Plotter()
 # Open a movie file
 plotter.open_movie(filename)
 

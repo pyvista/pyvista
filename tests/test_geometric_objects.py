@@ -1,68 +1,68 @@
 import numpy as np
 
-import vista
+import pyvista
 
 
 def test_cylinder():
-    surf = vista.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
+    surf = pyvista.Cylinder([0, 10, 0], [1, 1, 1], 1, 5)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
 
 def test_arrow():
-    surf = vista.Arrow([0, 0, 0], [1, 1, 1])
+    surf = pyvista.Arrow([0, 0, 0], [1, 1, 1])
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
 
 def test_sphere():
-    surf = vista.Sphere()
+    surf = pyvista.Sphere()
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
 
 def test_plane():
-    surf = vista.Plane()
+    surf = pyvista.Plane()
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
 
 def test_line():
-    line = vista.Line((0,0,0), (10, 1., 3))
+    line = pyvista.Line((0,0,0), (10, 1., 3))
     assert line.n_points == 2
     assert line.n_cells == 1
-    line = vista.Line((0,0,0), (10, 1., 3), 10)
+    line = pyvista.Line((0,0,0), (10, 1., 3), 10)
     assert line.n_points == 11
     assert line.n_cells == 1
 
 
 def test_cube():
-    cube = vista.Cube()
+    cube = pyvista.Cube()
     assert np.any(cube.points)
     assert np.any(cube.faces)
     bounds = (1.,3., 5.,6., 7.,8.)
-    cube = vista.Cube(bounds=bounds)
+    cube = pyvista.Cube(bounds=bounds)
     assert np.any(cube.points)
     assert np.any(cube.faces)
     assert np.allclose(cube.bounds, bounds)
 
 
 def test_cone():
-    cone = vista.Cone()
+    cone = pyvista.Cone()
     assert np.any(cone.points)
     assert np.any(cone.faces)
 
 
 def test_box():
-    geom = vista.Box()
+    geom = pyvista.Box()
     assert np.any(geom.points)
 
 
 def test_polygon():
-    geom = vista.Polygon()
+    geom = pyvista.Polygon()
     assert np.any(geom.points)
 
 
 def test_disc():
-    geom = vista.Disc()
+    geom = pyvista.Disc()
     assert np.any(geom.points)

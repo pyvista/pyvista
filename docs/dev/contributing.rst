@@ -23,7 +23,7 @@ Through posting on the issues page, your question can be addressed by community
 members with the needed expertise and the information gained will remain
 available on the issues page for other users.
 
-.. _issues page: https://github.com/pyvista/vista/issues
+.. _issues page: https://github.com/pyvista/pyvista/issues
 
 Reporting Bugs
 ~~~~~~~~~~~~~~
@@ -38,7 +38,7 @@ to help us address the issue.
 Feature Requests
 ~~~~~~~~~~~~~~~~
 
-We encourage users to submit ideas for improvements to ``vista`` code base!
+We encourage users to submit ideas for improvements to ``pyvista`` code base!
 Please create an issue on the `issues page`_ with a *Feature Request*
 label to suggest an improvement.
 Please use a descriptive title and provide ample background information to help
@@ -50,11 +50,11 @@ with. We will use the issue thread as a place to discuss and provide feedback.
 Contributing New Code
 ~~~~~~~~~~~~~~~~~~~~~
 
-If you have an idea for how to improve ``vista``, please first create an issue as
+If you have an idea for how to improve ``pyvista``, please first create an issue as
 a feature request which we can use as a discussion thread to work through how to
 implement the contribution.
 
-Once you are ready to start coding and develop for ``vista``, please take a look
+Once you are ready to start coding and develop for ``pyvista``, please take a look
 at the remainder of the pages in this *Development Guide*.
 
 Licensing

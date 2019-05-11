@@ -1,12 +1,12 @@
 .. _qt_ref:
 
-vista PyQt Interface
+pyvista PyQt Interface
 ====================
 
-``vista`` has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``vista.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
+``pyvista`` has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``pyvista.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
 
 
-Example PyQt5 vista QtInteractor
+Example PyQt5 pyvista QtInteractor
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The following example shows how to create a simple application that adds a
@@ -19,7 +19,7 @@ sphere to an empty plotting window.
     from PyQt5 import Qt
     import numpy as np
 
-    import vista
+    import pyvista
 
 
     class MainWindow(Qt.QMainWindow):
@@ -31,8 +31,8 @@ sphere to an empty plotting window.
             self.frame = Qt.QFrame()
             vlayout = Qt.QVBoxLayout()
 
-	    # add the vista interactor object
-            self.vtk_widget = vista.QtInteractor(self.frame)
+	    # add the pyvista interactor object
+            self.vtk_widget = pyvista.QtInteractor(self.frame)
             vlayout.addWidget(self.vtk_widget)
 
             self.frame.setLayout(vlayout)
@@ -57,7 +57,7 @@ sphere to an empty plotting window.
 
         def add_sphere(self):
 	    """ add a sphere to the pyqt frame """
-            sphere = vista.Sphere()
+            sphere = pyvista.Sphere()
             self.vtk_widget.add_mesh(sphere)
             self.vtk_widget.reset_camera()
 
@@ -71,24 +71,24 @@ sphere to an empty plotting window.
 .. figure:: ../images/user-generated/qt_plotting_sphere.png
     :width: 600pt
 
-    PyQt5 vista QtInteractor
+    PyQt5 pyvista QtInteractor
 
 
 Background Plotting
 ~~~~~~~~~~~~~~~~~~~
 
-Normal ``vista`` plotting windows exhibit blocking behavior, but it is possible
+Normal ``pyvista`` plotting windows exhibit blocking behavior, but it is possible
 to plot in the background and update the plotter in real-time using the
 ``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears
-and functions like a normal ``vista`` ``Plotter`` instance.  For example:
+and functions like a normal ``pyvista`` ``Plotter`` instance.  For example:
 
 .. code:: python
 
-    import vista
+    import pyvista
 
-    sphere = vista.Sphere()
+    sphere = pyvista.Sphere()
 
-    plotter = vista.BackgroundPlotter()
+    plotter = pyvista.BackgroundPlotter()
     plotter.add_mesh(sphere)
 
     # can now operate on the sphere and have it updated in the background
@@ -98,22 +98,22 @@ and functions like a normal ``vista`` ``Plotter`` instance.  For example:
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.BackgroundPlotter
+.. autoautosummary:: pyvista.BackgroundPlotter
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.BackgroundPlotter
+.. autoautosummary:: pyvista.BackgroundPlotter
    :methods:
 
-.. autoclass:: vista.BackgroundPlotter
+.. autoclass:: pyvista.BackgroundPlotter
    :members:
    :undoc-members:
    :show-inheritance:
 
 
 
-.. autoclass:: vista.ScaledPlotter
+.. autoclass:: pyvista.ScaledPlotter
   :members:
   :undoc-members:
   :show-inheritance:

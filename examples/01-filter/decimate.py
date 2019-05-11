@@ -6,8 +6,8 @@ Decaimate a mesh
 
 """
 # sphinx_gallery_thumbnail_number = 4
-import vista
-from vista import examples
+import pyvista
+from pyvista import examples
 
 mesh = examples.download_face()
 
@@ -20,7 +20,7 @@ mesh.plot(**dargs)
 
 ###############################################################################
 #  Now let's define a target reduction and compare the
-# :func:`vista.PolyData.decimate` and :func:`vista.PolyData.decimate_pro` filters.
+# :func:`pyvista.PolyData.decimate` and :func:`pyvista.PolyData.decimate_pro` filters.
 target_reduction = 0.7
 print('Reducing {} percent out of the original mesh'.format(target_reduction * 100.))
 
@@ -39,7 +39,7 @@ pro_decimated.plot(**dargs)
 ###############################################################################
 # Side by side comparison:
 
-p = vista.Plotter(shape=(1, 3))
+p = pyvista.Plotter(shape=(1, 3))
 p.add_mesh(mesh, **dargs)
 p.add_text('Input mesh', font_size=24)
 p.camera_position = cpos

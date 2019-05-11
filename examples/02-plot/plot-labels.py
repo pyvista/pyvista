@@ -5,8 +5,8 @@ Label Points
 Use string arrays in a point set to label points
 """
 # sphinx_gallery_thumbnail_number = 3
-from vista import examples
-import vista
+from pyvista import examples
+import pyvista
 import numpy as np
 
 ###############################################################################
@@ -17,7 +17,7 @@ import numpy as np
 # labels for each of the nodes.
 
 # Make some random points
-poly = vista.PolyData(np.random.rand(10, 3))
+poly = pyvista.PolyData(np.random.rand(10, 3))
 
 ###############################################################################
 # Add string labels to the point data - this associates a label with every node:
@@ -29,7 +29,7 @@ print(poly)
 ###############################################################################
 # Now plot the points with labels:
 
-plotter = vista.Plotter()
+plotter = pyvista.Plotter()
 plotter.add_point_labels(poly, 'My Labels', point_size=20, font_size=36)
 plotter.show()
 
@@ -41,12 +41,12 @@ plotter.show()
 # This example will label the nodes of a mesh with their coordinate locations
 
 # Load example beam file
-grid = vista.UnstructuredGrid(examples.hexbeamfile)
+grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
 ###############################################################################
 # Create plotting class and add the unstructured grid
-plotter = vista.Plotter()
+plotter = pyvista.Plotter()
 plotter.add_mesh(grid, show_edges=True, color='tan')
 
 # Add labels to points on the yz plane (where x == 0)
@@ -73,7 +73,7 @@ plotter.show()
 mesh = examples.load_uniform().slice()
 
 ###############################################################################
-p = vista.Plotter()
+p = pyvista.Plotter()
 
 # Add the mesh:
 p.add_mesh(mesh, scalars='Spatial Point Data', show_edges=True)

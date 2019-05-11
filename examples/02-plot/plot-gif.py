@@ -5,7 +5,7 @@ Create a GIF Movie
 Generate a moving gif from an active plotter
 """
 
-import vista
+import pyvista
 import numpy as np
 
 x = np.arange(-10, 10, 0.25)
@@ -15,10 +15,10 @@ r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 # Create and structured surface
-grid = vista.StructuredGrid(x, y, z)
+grid = pyvista.StructuredGrid(x, y, z)
 
 # Creat a plotter object and set the scalars to the Z height
-plotter = vista.Plotter()
+plotter = pyvista.Plotter()
 plotter.add_mesh(grid, scalars=z.ravel())
 
 # setup camera and close

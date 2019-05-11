@@ -1,6 +1,6 @@
 default_context:
-    repo_name: "vista-examples"
+    repo_name: "pyvista-examples"
     github_account: "pyvista"
-    description: "Quick examples demonstrating what ``vista`` can do! Simply launch this Binder project and test drive ``vista``"
-    author_name: "vista Developers"
+    description: "Quick examples demonstrating what ``pyvista`` can do! Simply launch this Binder project and test drive ``pyvista``"
+    author_name: "pyvista Developers"
     year: "2019"

@@ -24,14 +24,14 @@ Run the primary test suite and generate coverage report:
 
 .. code:: bash
 
-    python -m pytest -v --cov vista
+    python -m pytest -v --cov pyvista
 
 
 Run all code examples in the docstrings:
 
 .. code:: bash
 
-    python -m pytest -v --doctest-modules vista
+    python -m pytest -v --doctest-modules pyvista
 
 
 Now make sure notebooks are running

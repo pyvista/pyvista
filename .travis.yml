@@ -9,7 +9,7 @@ language: python
 
 env:
   global:
-    # Doctr deploy key for pyvista/vista
+    # Doctr deploy key for pyvista/pyvista
     - secure: "WAFIXdY3+gZaSYp5AKkVcEqs1tUlt27t1AsisyuZMSxGCrWJ6QzvYUsNH1ayb/0g0llnrY02d3FsLMswNpdXhD7A/JbfMZly06duplwvrUcZHw+YaVAZ3XECs7E5x58Pn9T6vqWq7TUWN2HFdjVMZFpKsbKnTt2EBfqabX2bRHioJKzfN4ilYHNP/8J1GRel7HMKKYkJ5ImVxpBwkevaH4OCzJIIbndKw3qcDnHnpA2dHENMCPWSShHtE6LoStqoEPj44YHN5MZDgv1HutRa2M9tC9Jfq2DeDUICEjq1LJK109ksq+vwmL8AAUm+RPLNw9AQ6agPX7hCeUE0/6FJqWrGKwMrneCXBSWh7P96Fyvvly6yNieK7UJoSLFUqT47i98W9fTWLdDvsyCO8O+xtHTPqnw1oGnseOB4+gXmT2ljHR2RWntXwWrUy3SlKhzjKfdNLzZQJIWnYaBOszJJAquDvYTdsbrkDugnKZJkuZBvHbIGGWfIdkLhu66z0nBS7rh1Xt/8KTdVYRUcUG2cZfmEzoksbqB7QO6N3zNf1kZnsI8WWMMbHj0iKLycWBQOZvwR0NyLiNlyL88uEh1nuoUORhSF8v8GA2jmjPgiksOJGKQGvfh5bnfqMsOVC3oAhfqeoXaLlrORpatJrdJ0PsfbfLh/EKxTrtH2ctsq66k="
 
 before_install:
@@ -41,35 +41,35 @@ matrix:
     - name: Core API 3.5
       python: 3.5
       # Run the test suite and generate coverage report
-      script: pytest -v --cov vista
+      script: pytest -v --cov pyvista
     - name: Core API 3.6
       python: 3.6
       # Run the test suite and generate coverage report
-      script: pytest -v --cov vista
+      script: pytest -v --cov pyvista
     - name: Core API 3.7
       python: 3.7
       env:
         - REPORT_COVERAGE: true
         # Deploy to PyPI when core testing passes on 3.7 on tags
-        - VISTA_DEPLOY: true
+        - pyvista_DEPLOY: true
       # Run the test suite and generate coverage report
-      script: pytest -v --cov vista
+      script: pytest -v --cov pyvista
 
     # Test the package docstrings on Python 3.5, 3.6, and 3.7
     - name: Package Docstrings 3.5
       python: 3.5
       # Run all code examples in the docstrings
-      script: pytest -v --doctest-modules vista
+      script: pytest -v --doctest-modules pyvista
     - name: Package Docstrings 3.6
       python: 3.6
       # Run all code examples in the docstrings
-      script: pytest -v --cov --doctest-modules vista
+      script: pytest -v --cov --doctest-modules pyvista
     - name: Package Docstrings 3.7
       python: 3.7
       env:
         - REPORT_COVERAGE: true
       # Run all code examples in the docstrings
-      script: pytest -v --cov --doctest-modules vista
+      script: pytest -v --cov --doctest-modules pyvista
 
     # Test notebooks on Python 3.6 and 3.7
     - name: Notebooks 3.6
@@ -121,7 +121,7 @@ matrix:
       # Then rerun `make html` to use updated figures from `make doctest`
       script: |
         cd ./docs/;
-        export VISTA_OFFSCREEN=True;
+        export pyvista_OFFSCREEN=True;
         set -e;
         make html;
         make doctest;
@@ -169,12 +169,12 @@ deploy:
     script: sh ./docs/deploy_docs_from_travis.sh
     skip_cleanup: true
     on:
-      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/vista') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES')
+      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/pyvista') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES')
   - provider: pypi
     user: akaszynski
     distributions: sdist
     on:
-      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($VISTA_DEPLOY == 'true')
+      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($pyvista_DEPLOY == 'true')
       tags: true
     password: $PYPI_PASSWORD
 

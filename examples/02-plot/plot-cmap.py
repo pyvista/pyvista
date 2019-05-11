@@ -5,12 +5,12 @@ Custom Colormaps
 Use a custom built colormap when plotting scalar values.
 """
 
-import vista
-from vista import examples
+import pyvista
+from pyvista import examples
 import matplotlib.pyplot as plt
 
 ################################################################################
-# Any colormap built for ``matplotlib`` is fully compatible with ``vista``.
+# Any colormap built for ``matplotlib`` is fully compatible with ``pyvista``.
 # Colormaps are typically specifiedby passing the string name of the
 # ``matplotlib`` colormap to the plotting routine via the ``cmap`` argument.
 #

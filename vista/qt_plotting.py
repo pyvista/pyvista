@@ -7,7 +7,7 @@ import numpy as np
 import vtk
 import vtk.qt
 
-from vista.plotting import BasePlotter, rcParams, run_from_ipython
+from pyvista.plotting import BasePlotter, rcParams, run_from_ipython
 
 # for display bugs due to older intel integrated GPUs
 vtk.qt.QVTKRWIBase = 'QGLWidget'
@@ -255,7 +255,7 @@ def pad_image(arr, max_size=400):
 class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     """
     Extends QVTKRenderWindowInteractor class by adding the methods
-    available to vista.Plotter.
+    available to pyvista.Plotter.
 
     Parameters
     ----------

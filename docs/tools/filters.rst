@@ -4,23 +4,23 @@ Filters
 =======
 
 
-.. automodule:: vista.filters
+.. automodule:: pyvista.filters
 
 
 Dataset Filters
 ---------------
 
-The :class:`vista.DataSetFilters` is inherited by :class:`vista.Common` making
+The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.Common` making
 all the the following filters available as callable methods directly from any
-``vista`` dataset.
+``pyvista`` dataset.
 
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.DataSetFilters
+.. autoautosummary:: pyvista.DataSetFilters
    :methods:
 
 
-.. autoclass:: vista.DataSetFilters
+.. autoclass:: pyvista.DataSetFilters
    :members:
    :undoc-members:

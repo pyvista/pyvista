@@ -1,37 +1,37 @@
 import warnings
-from vista._version import __version__
-from vista.plotting import *
-from vista.utilities import *
-from vista.errors import *
-from vista.readers import *
-from vista.colors import *
-from vista.features import *
-from vista.filters import DataSetFilters
-from vista.common import Common
-from vista.pointset import PointGrid
-from vista.pointset import PolyData
-from vista.pointset import UnstructuredGrid
-from vista.pointset import StructuredGrid
-from vista.grid import Grid
-from vista.grid import RectilinearGrid
-from vista.grid import UniformGrid
-from vista.geometric_objects import *
-from vista.container import MultiBlock
-from vista.qt_plotting import QtInteractor
-from vista.qt_plotting import BackgroundPlotter
-from vista.export import export_plotter_vtkjs, get_vtkjs_url
-from vista.renderer import Renderer
+from pyvista._version import __version__
+from pyvista.plotting import *
+from pyvista.utilities import *
+from pyvista.errors import *
+from pyvista.readers import *
+from pyvista.colors import *
+from pyvista.features import *
+from pyvista.filters import DataSetFilters
+from pyvista.common import Common
+from pyvista.pointset import PointGrid
+from pyvista.pointset import PolyData
+from pyvista.pointset import UnstructuredGrid
+from pyvista.pointset import StructuredGrid
+from pyvista.grid import Grid
+from pyvista.grid import RectilinearGrid
+from pyvista.grid import UniformGrid
+from pyvista.geometric_objects import *
+from pyvista.container import MultiBlock
+from pyvista.qt_plotting import QtInteractor
+from pyvista.qt_plotting import BackgroundPlotter
+from pyvista.export import export_plotter_vtkjs, get_vtkjs_url
+from pyvista.renderer import Renderer
 
 # IPython interactive tools
-from vista.ipy_tools import OrthogonalSlicer
-from vista.ipy_tools import ManySlicesAlongAxis
-from vista.ipy_tools import Threshold
-from vista.ipy_tools import Clip
-from vista.ipy_tools import ScaledPlotter
-from vista.ipy_tools import Isocontour
+from pyvista.ipy_tools import OrthogonalSlicer
+from pyvista.ipy_tools import ManySlicesAlongAxis
+from pyvista.ipy_tools import Threshold
+from pyvista.ipy_tools import Clip
+from pyvista.ipy_tools import ScaledPlotter
+from pyvista.ipy_tools import Isocontour
 
 # Sphinx-gallery tools
-from vista.sphinx_gallery import Scraper
+from pyvista.sphinx_gallery import Scraper
 
 import numpy as np
 import vtk
@@ -52,7 +52,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # A simple flag to set when generating the documentation
 OFF_SCREEN = False
 try:
-    if os.environ['VISTA_OFF_SCREEN'].lower() == 'true':
+    if os.environ['pyvista_OFF_SCREEN'].lower() == 'true':
         OFF_SCREEN = True
 except KeyError:
     pass
@@ -67,7 +67,7 @@ FIGURE_PATH = None
 import appdirs
 import os
 
-USER_DATA_PATH = appdirs.user_data_dir('vista')
+USER_DATA_PATH = appdirs.user_data_dir('pyvista')
 if not os.path.exists(USER_DATA_PATH):
     os.makedirs(USER_DATA_PATH)
 
@@ -81,9 +81,9 @@ send_errors_to_logging()
 
 # Set up panel for interactive notebook rendering
 try:
-    if os.environ['VISTA_USE_PANEL'].lower() == 'false':
+    if os.environ['pyvista_USE_PANEL'].lower() == 'false':
         rcParams['use_panel'] = False
-    elif os.environ['VISTA_USE_PANEL'].lower() == 'true':
+    elif os.environ['pyvista_USE_PANEL'].lower() == 'true':
         rcParams['use_panel'] = True
 except KeyError:
     pass
@@ -95,7 +95,7 @@ except ImportError:
 
 # Set preferred plot theme
 try:
-    theme = os.environ['VISTA_PLOT_THEME'].lower()
+    theme = os.environ['pyvista_PLOT_THEME'].lower()
     set_plot_theme(theme)
 except KeyError:
     pass

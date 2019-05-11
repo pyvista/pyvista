@@ -7,15 +7,15 @@ Read a dataset from a known file type.
 """
 ################################################################################
 # Loading a mesh is trivial - if your data is in one of the many supported
-# file formats, simply use :func:`vista.read` to load your spatially referneced
-# dataset into a ``vista`` mesh object.
+# file formats, simply use :func:`pyvista.read` to load your spatially referneced
+# dataset into a ``pyvista`` mesh object.
 #
 # The following code block uses a built-in example file and displays an airplane
 # mesh.
 
 # sphinx_gallery_thumbnail_number = 5
-import vista
-from vista import examples
+import pyvista
+from pyvista import examples
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -29,16 +29,16 @@ print(filename)
 
 ################################################################################
 # Note the above filename, it's a ``.ply`` file - one of the many supported
-# formats in ``vista``.
+# formats in ``pyvista``.
 
-mesh = vista.read(filename)
+mesh = pyvista.read(filename)
 cpos = mesh.plot()
 
 ################################################################################
 # You can also take a screenshot without creating an interactive plot window
 # using the ``Plotter``:
 
-plotter = vista.Plotter(off_screen=True)
+plotter = pyvista.Plotter(off_screen=True)
 plotter.add_mesh(mesh)
 plotter.show(screenshot='myscreenshot.png')
 
@@ -56,10 +56,10 @@ print(mesh.faces.reshape(-1, 4)[:, 1:])
 
 ################################################################################
 # Loading other files types is just as easy! Simply pass your file path to the
-# :func:`vista.read` function and that's it!
+# :func:`pyvista.read` function and that's it!
 #
 # Here are a few other examples - siply replace ``examples.download_*`` in the
-# examples below with ``vista.read('path/to/you/file.ext')``
+# examples below with ``pyvista.read('path/to/you/file.ext')``
 
 ################################################################################
 # Example STL file:

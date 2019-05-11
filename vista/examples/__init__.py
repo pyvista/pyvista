@@ -1,2 +1,2 @@
-from vista.examples.examples import *
-from vista.examples.downloads import *
+from pyvista.examples.examples import *
+from pyvista.examples.downloads import *

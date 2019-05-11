@@ -9,18 +9,18 @@ import vtk
 from vtk import vtkImageData, vtkRectilinearGrid
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
-import vista
+import pyvista
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class Grid(vista.Common):
+class Grid(pyvista.Common):
     """A class full of common methods for non-pointset grids """
 
     def __new__(cls, *args, **kwargs):
         if cls is Grid:
-            raise TypeError("vista.Grid is an abstract class and may not be instantiated.")
+            raise TypeError("pyvista.Grid is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
@@ -42,7 +42,7 @@ class Grid(vista.Common):
 
     def _get_attrs(self):
         """An internal helper for the representation methods"""
-        attrs = vista.Common._get_attrs(self)
+        attrs = pyvista.Common._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
 
@@ -61,22 +61,22 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     Examples
     --------
-    >>> import vista
+    >>> import pyvista
     >>> import vtk
     >>> import numpy as np
 
     >>> # Create empty grid
-    >>> grid = vista.RectilinearGrid()
+    >>> grid = pyvista.RectilinearGrid()
 
     >>> # Initialize from a vtk.vtkRectilinearGrid object
     >>> vtkgrid = vtk.vtkRectilinearGrid()
-    >>> grid = vista.RectilinearGrid(vtkgrid)
+    >>> grid = pyvista.RectilinearGrid(vtkgrid)
 
     >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 5)
     >>> zrng = np.arange(-10, 10, 1)
-    >>> grid = vista.RectilinearGrid(xrng, yrng, zrng)
+    >>> grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
 
 
     """
@@ -106,11 +106,11 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
     def __repr__(self):
-        return vista.Common.__repr__(self)
+        return pyvista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vista.Common.__str__(self)
+        return pyvista.Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):
@@ -315,28 +315,28 @@ class UniformGrid(vtkImageData, Grid):
 
     Examples
     --------
-    >>> import vista
+    >>> import pyvista
     >>> import vtk
     >>> import numpy as np
 
     >>> # Create empty grid
-    >>> grid = vista.UniformGrid()
+    >>> grid = pyvista.UniformGrid()
 
     >>> # Initialize from a vtk.vtkImageData object
     >>> vtkgrid = vtk.vtkImageData()
-    >>> grid = vista.UniformGrid(vtkgrid)
+    >>> grid = pyvista.UniformGrid(vtkgrid)
 
     >>> # Using just the grid dimensions
     >>> dims = (10, 10, 10)
-    >>> grid = vista.UniformGrid(dims)
+    >>> grid = pyvista.UniformGrid(dims)
 
     >>> # Using dimensions and spacing
     >>> spacing = (2, 1, 5)
-    >>> grid = vista.UniformGrid(dims, spacing)
+    >>> grid = pyvista.UniformGrid(dims, spacing)
 
     >>> # Using dimensions, spacing, and an origin
     >>> origin = (10, 35, 50)
-    >>> grid = vista.UniformGrid(dims, spacing, origin)
+    >>> grid = pyvista.UniformGrid(dims, spacing, origin)
 
     """
 
@@ -367,11 +367,11 @@ class UniformGrid(vtkImageData, Grid):
                 self._from_specs(args[0], args[1])
 
     def __repr__(self):
-        return vista.Common.__repr__(self)
+        return pyvista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vista.Common.__str__(self)
+        return pyvista.Common.__str__(self)
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
@@ -561,6 +561,6 @@ class UniformGrid(vtkImageData, Grid):
     def _get_attrs(self):
         """An internal helper for the representation methods"""
         attrs = Grid._get_attrs(self)
-        fmt = "{}, {}, {}".format(*[vista.FLOAT_FORMAT]*3)
+        fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT]*3)
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs

@@ -2,23 +2,23 @@ Gridded Data
 ============
 
 
-Gridded datasets in vista capture ``vtkRectilinearGrid`` and ``vtkImageData``
+Gridded datasets in pyvista capture ``vtkRectilinearGrid`` and ``vtkImageData``
 data objects on the VTK backend. These data types have common features which
-are encompassed int their shared inheritance of :class:`vista.Grid`
+are encompassed int their shared inheritance of :class:`pyvista.Grid`
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.Grid
+.. autoautosummary:: pyvista.Grid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.Grid
+.. autoautosummary:: pyvista.Grid
    :methods:
 
-.. autoclass:: vista.Grid
+.. autoclass:: pyvista.Grid
    :show-inheritance:
    :members:
    :undoc-members:
@@ -31,15 +31,15 @@ Rectilinear Grid
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.RectilinearGrid
+.. autoautosummary:: pyvista.RectilinearGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.RectilinearGrid
+.. autoautosummary:: pyvista.RectilinearGrid
    :methods:
 
-.. autoclass:: vista.RectilinearGrid
+.. autoclass:: pyvista.RectilinearGrid
    :show-inheritance:
    :members:
    :undoc-members:
@@ -49,20 +49,20 @@ Rectilinear Grid
 Uniform Grid
 ------------
 
-`vista`'s definition of a uniform grid is an extension of VTK's ``vtkImageData``
+`pyvista`'s definition of a uniform grid is an extension of VTK's ``vtkImageData``
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.UniformGrid
+.. autoautosummary:: pyvista.UniformGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.UniformGrid
+.. autoautosummary:: pyvista.UniformGrid
    :methods:
 
-.. autoclass:: vista.UniformGrid
+.. autoclass:: pyvista.UniformGrid
    :show-inheritance:
    :members:
    :undoc-members:

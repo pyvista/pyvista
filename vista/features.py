@@ -1,6 +1,6 @@
 import numpy as np
 
-import vista
+import pyvista
 
 
 def voxelize(mesh, density):
@@ -12,8 +12,8 @@ def voxelize(mesh, density):
     x, y, z = np.meshgrid(x, y, z)
 
     # Create unstructured grid from the structured grid
-    grid = vista.StructuredGrid(x, y, z)
-    ugrid = vista.UnstructuredGrid(grid)
+    grid = pyvista.StructuredGrid(x, y, z)
+    ugrid = pyvista.UnstructuredGrid(grid)
 
     # get part of the mesh within the mesh
     selection = ugrid.select_enclosed_points(mesh, tolerance=0.0)
@@ -35,7 +35,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # somewhere
         raise NotImplementedError('Please specifiy dimensions.')
     dimensions = np.array(dimensions)
-    image = vista.UniformGrid()
+    image = pyvista.UniformGrid()
     image.dimensions = dimensions
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / (dimensions - 1)
     image.origin = bounds[::2]
