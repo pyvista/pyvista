@@ -3,7 +3,7 @@ Parallel Files
 ~~~~~~~~~~~~~~
 
 The VTK library supports parallel file foramts. Reading meshes broken up into
-several files is natively supported by VTK and ``pyvista``
+several files is natively supported by VTK and PyVista
 """
 # sphinx_gallery_thumbnail_number = 1
 import pyvista

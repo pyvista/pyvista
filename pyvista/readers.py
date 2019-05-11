@@ -139,7 +139,7 @@ def read_legacy(filename):
 
 def read(filename, attrs=None):
     """This will read any VTK file! It will figure out what reader to use
-    then wrap the VTK object for use in ``pyvista``.
+    then wrap the VTK object for use in PyVista.
 
     Parameters
     ----------

@@ -49,7 +49,7 @@ Rectilinear Grid
 Uniform Grid
 ------------
 
-`pyvista`'s definition of a uniform grid is an extension of VTK's ``vtkImageData``
+PyVista's definition of a uniform grid is an extension of VTK's ``vtkImageData``
 
 
 .. rubric:: Attributes

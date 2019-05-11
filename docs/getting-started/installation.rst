@@ -3,7 +3,7 @@
 Installation
 ============
 
-``pyvista`` is supported on Python versions 3.5+, with temporary support for
+PyVista is supported on Python versions 3.5+, with temporary support for
 Python 2.7 as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
@@ -14,7 +14,7 @@ PyPI
 .. image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
 
-``pyvista`` can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
 using ``pip``::
 
     pip install pyvista
@@ -47,7 +47,7 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
-| ``sphinx_gallery``                | Capturing ``pyvista`` output for docs     |
+| ``sphinx_gallery``                | Capturing PyVista output for docs     |
 +-----------------------------------+-----------------------------------------+
 
 
@@ -91,7 +91,7 @@ Running on CI Services
 
 
 Please head over to `pyvista/gl-ci-hepers`_ for details on setting up CI
-services like Travis and AppVeyor to run ``pyvista``.
+services like Travis and AppVeyor to run PyVista.
 
 .. _pyvista/gl-ci-hepers: https://github.com/pyvista/gl-ci-helpers
 
@@ -99,11 +99,11 @@ services like Travis and AppVeyor to run ``pyvista``.
 Running on MyBinder
 ~~~~~~~~~~~~~~~~~~~
 
-This section is for advanced users that would like to install and use ``pyvista``
+This section is for advanced users that would like to install and use PyVista
 with headless displays on notebook hosting services like MyBinder_.
 
 Please see `this project`_ for a convenient Cookiecutter_ to get started using
-``pyvista`` on the notebook hosting service MyBinder_.
+PyVista on the notebook hosting service MyBinder_.
 
 .. _this project: https://github.com/pyvista/cookiecutter-pyvista-binder
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
@@ -133,10 +133,10 @@ time your Docker container is launched:
     exec "$@"
 
 
-And that's it! Include ``pyvista`` in your Python requirements and get to
-visualizing your data! If you need more help than this on setting up ``pyvista``
+And that's it! Include PyVista in your Python requirements and get to
+visualizing your data! If you need more help than this on setting up PyVista
 for these types of services, hop on Slack and chat with the developers or take
-a look at `this repository`_ that is currently using ``pyvista`` on MyBinder.
+a look at `this repository`_ that is currently using PyVista on MyBinder.
 
 .. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
 
@@ -144,8 +144,8 @@ a look at `this repository`_ that is currently using ``pyvista`` on MyBinder.
 Running on Remote Servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using ``pyvista`` on remote servers requires similar setup steps as in the above
-Docker case. As an example, here are the complete steps to use ``pyvista`` on AWS
+Using PyVista on remote servers requires similar setup steps as in the above
+Docker case. As an example, here are the complete steps to use PyVista on AWS
 EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``).
 Other servers would work similarly.
 

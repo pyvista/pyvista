@@ -48,7 +48,7 @@
 About
 *****
 
-``pyvista`` is a helper module for the Visualization Toolkit (VTK) that takes a
+PyVista is a helper module for the Visualization Toolkit (VTK) that takes a
 different approach on interfacing with VTK through NumPy and direct array
 access. This package provides a Pythonic, well-documented interface exposing
 VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
@@ -58,7 +58,7 @@ This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
 
-Want to test-drive ``pyvista``? Check out our live examples on MyBinder:
+Want to test-drive PyVista? Check out our live examples on MyBinder:
 
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
@@ -74,14 +74,14 @@ Want to test-drive ``pyvista``? Check out our live examples on MyBinder:
 Connections
 ===========
 
-``pyvista`` is a powerful tool that researchers can harness to create compelling,
+PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
-Here are a few open-source projects that leverage ``pyvista``:
+Here are a few open-source projects that leverage PyVista:
 
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
-* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. ``pyvista`` is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfpyvista_: 3D visualization for the Open Mining Format (omf). ``pyvista`` provides the foundation for this library's visualization.
-* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``pyvista`` versions of their data types for `creating compelling visualizations`_.
+* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
+* omfpyvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
+* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
 * pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
@@ -127,8 +127,8 @@ Examples
 ********
 
 Be sure to head over to the `examples gallery <./examples/index.html>`_
-to explore different use cases of ``pyvista`` and to start visualizing 3D data in
-Pyhton! Also, please explore the list of external projects leveraging ``pyvista``
+to explore different use cases of PyVista and to start visualizing 3D data in
+Pyhton! Also, please explore the list of external projects leveraging PyVista
 for 3D visualization in our `external examples list <./external_examples.html>`_
 
 
@@ -146,7 +146,7 @@ Data Types
 **********
 
 The `Visualization Toolkit`_ (VTK), developed by Kitware_, has many mesh data
-types that ``pyvista`` wraps.
+types that PyVista wraps.
 This chapter is intended to describe these different mesh types on the VTK
 side to help new users understand which data types to use.
 
@@ -192,11 +192,11 @@ Contributing
 ************
 
 We absolutely welcome contributions and we hope that this guide will facilitate
-an understanding of the ``pyvista`` code repository. It is important to note that
-the  ``pyvista`` software package is maintained on a volunteer basis and thus we
+an understanding of the PyVista code repository. It is important to note that
+the  PyVista software package is maintained on a volunteer basis and thus we
 need to foster a community that can support user questions and develop new
 features to make this software a useful tool for all users. To learn more about
-contributing to ``pyvista``, please see :ref:`contributing_ref`.
+contributing to PyVista, please see :ref:`contributing_ref`.
 
 .. toctree::
    :maxdepth: 2

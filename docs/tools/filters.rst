@@ -12,7 +12,7 @@ Dataset Filters
 
 The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.Common` making
 all the the following filters available as callable methods directly from any
-``pyvista`` dataset.
+PyVista dataset.
 
 
 .. rubric:: Methods

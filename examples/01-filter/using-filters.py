@@ -10,7 +10,7 @@ import pyvista
 from pyvista import examples
 
 ################################################################################
-# ``pyvista`` wrapped data objects have a suite of common filters ready for immediate
+# PyVista wrapped data objects have a suite of common filters ready for immediate
 # use directly on the object. These filters include the following
 # (see :ref:`filters_ref` for a complete list):
 #
@@ -38,7 +38,7 @@ outline = dataset.outline()
 # And now there is a thresholded version of the input dataset in the new
 # ``threshed`` object. To learn more about what keyword arguments are available to
 # alter how filters are executed, print the docstring for any filter attached to
-# ``pyvista`` objects with either ``help(dataset.threshold)`` or using ``shift+tab``
+# PyVista objects with either ``help(dataset.threshold)`` or using ``shift+tab``
 # in an IPython environment.
 #
 # We can now plot this filtered dataset along side an outline of the original
@@ -86,7 +86,7 @@ p.show()
 # +++++++++++++++
 #
 # In VTK, filters are often used in a pipeline where each algorithm passes its
-# output to the next filtering algorithm. In ``pyvista``, we can mimic the filtering
+# output to the next filtering algorithm. In PyVista, we can mimic the filtering
 # pipeline through a chain; attaching each filter to the last filter.
 # In the following example, several filters are chained together:
 #

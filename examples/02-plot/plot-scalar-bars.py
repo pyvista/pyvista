@@ -15,7 +15,7 @@ from pyvista import examples
 # By default, when plotting a dataset with a scalar array, a scalar bar for that
 # array is added. To turn off this behavior, a user could specify
 # ``show_scalar_bar=False`` when calling ``.add_mesh()``. Let's start with a
-# sample dataset provide via ``pyvista`` to demonstrate the default behavior of
+# sample dataset provide via PyVista to demonstrate the default behavior of
 # scalar bar plotting:
 
 # Load St Helens DEM and warp the topography

@@ -10,7 +10,7 @@ from pyvista import examples
 import matplotlib.pyplot as plt
 
 ################################################################################
-# Any colormap built for ``matplotlib`` is fully compatible with ``pyvista``.
+# Any colormap built for ``matplotlib`` is fully compatible with PyVista.
 # Colormaps are typically specifiedby passing the string name of the
 # ``matplotlib`` colormap to the plotting routine via the ``cmap`` argument.
 #

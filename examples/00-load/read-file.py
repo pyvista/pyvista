@@ -8,7 +8,7 @@ Read a dataset from a known file type.
 ################################################################################
 # Loading a mesh is trivial - if your data is in one of the many supported
 # file formats, simply use :func:`pyvista.read` to load your spatially referneced
-# dataset into a ``pyvista`` mesh object.
+# dataset into a PyVista mesh object.
 #
 # The following code block uses a built-in example file and displays an airplane
 # mesh.
@@ -29,7 +29,7 @@ print(filename)
 
 ################################################################################
 # Note the above filename, it's a ``.ply`` file - one of the many supported
-# formats in ``pyvista``.
+# formats in PyVista.
 
 mesh = pyvista.read(filename)
 cpos = mesh.plot()

@@ -1,4 +1,4 @@
-Why ``pyvista``?
+Why PyVista?
 ==============
 
 VTK is an excellent visualization toolkit, and with Python bindings it should be
@@ -117,7 +117,7 @@ That way, subdivision can be performed with:
     mesh = examples.load_ant()
     submesh = mesh.subdivide(3, 'linear')
 
-Additionally, the docstrings for all methods in ``pyvista`` are intended to be used
+Additionally, the docstrings for all methods in PyVista are intended to be used
 within interactive coding sessions. This allows users to use sophisticated
 processing routines on the fly with immediate access to a description of how to
 use those methods:

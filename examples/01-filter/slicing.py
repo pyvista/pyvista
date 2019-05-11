@@ -10,11 +10,11 @@ from pyvista import examples
 import matplotlib.pyplot as plt
 
 ################################################################################
-# ``pyvista`` meshes have several slicing filters bound directly to all datasets.
+# PyVista meshes have several slicing filters bound directly to all datasets.
 # Thes filters allow you to slice through a volumetric dataset to extract and
 # view sections through the volume of data.
 #
-# One of the most common slicing filters used in ``pyvista`` is the
+# One of the most common slicing filters used in PyVista is the
 # :func:`pyvista.DataSetFilters.slice_orthogonal` filter which creates three
 # orthogonal slices through the dataset on the three caresian planes.
 # For example, let's slice through the sample geostatitical training image

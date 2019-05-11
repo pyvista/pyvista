@@ -1,7 +1,7 @@
 External Examples
 =================
 
-Here are a list of longer, more technical examples of what ``pyvista`` can do!
+Here are a list of longer, more technical examples of what PyVista can do!
 
 .. caution::
 

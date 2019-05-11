@@ -120,7 +120,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
 
 
 def is_pyvista_obj(obj):
-    """ Return True if the Object is a ``pyvista`` wrapped dataset """
+    """ Return True if the Object is a PyVista wrapped dataset """
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
 
 
@@ -323,7 +323,7 @@ def trans_from_matrix(matrix):
 
 def wrap(vtkdataset):
     """This is a convenience method to safely wrap any given VTK data object
-    to its appropriate ``pyvista`` data object.
+    to its appropriate PyVista data object.
     """
     wrappers = {
         'vtkUnstructuredGrid' : pyvista.UnstructuredGrid,

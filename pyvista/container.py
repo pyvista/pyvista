@@ -1,6 +1,6 @@
 """
 Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
-VTK datasets in one object that can be passed to VTK algorithms and ``pyvista``
+VTK datasets in one object that can be passed to VTK algorithms and PyVista
 filtering/plotting routines.
 """
 import collections

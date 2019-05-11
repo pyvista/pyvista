@@ -25,7 +25,7 @@ points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
 print(points[0:5, :])
 
 ################################################################################
-# Now use those points to create a point cloud ``pyvista`` data object. This will
+# Now use those points to create a point cloud PyVista data object. This will
 # be encompassed in a :class:`pyvista.PolyData` object.
 
 # simply pass the numpy points to the PolyData constructor
@@ -33,7 +33,7 @@ cloud = pyvista.PolyData(points)
 cloud.plot(point_size=15)
 
 ################################################################################
-# Now that we have a ``pyvista`` data structure of the points, we can perform a
+# Now that we have a PyVista data structure of the points, we can perform a
 # triangulation to turn those boring discrete points into a connected surface.
 
 surf = cloud.delaunay_2d()

@@ -38,7 +38,7 @@ pyvista
 +----------------------+------------------------+
 
 
-``pyvista`` is a helper module for the Visualization Toolkit (VTK) that takes a
+PyVista is a helper module for the Visualization Toolkit (VTK) that takes a
 different approach on interfacing with VTK through NumPy and direct array
 access. This package provides a Pythonic, well-documented interface exposing
 VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
@@ -66,7 +66,7 @@ of the developers an email. The project support team can be reached at
 Installation
 ============
 
-``pyvista`` can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
 using ``pip`` on Python >= 3.5::
 
     pip install pyvista
@@ -83,11 +83,11 @@ Highlights
 ==========
 
 Head over to the `Quick Examples`_ page in the docs to learn more about using
-``pyvista``.
+PyVista.
 
 .. _Quick Examples: http://docs.pyvista.org/examples/index.html
 
-Want to test-drive ``pyvista``? Check out our live examples on MyBinder:
+Want to test-drive PyVista? Check out our live examples on MyBinder:
 
 .. image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
@@ -108,14 +108,14 @@ Want to test-drive ``pyvista``? Check out our live examples on MyBinder:
 Connections
 ===========
 
-``pyvista`` is a powerful tool that researchers can harness to create compelling,
+PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
-Here are a few open-source projects that leverage ``pyvista``:
+Here are a few open-source projects that leverage PyVista:
 
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
-* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. ``pyvista`` is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfpyvista_: 3D visualization for the Open Mining Format (omf). ``pyvista`` provides the foundation for this library's visualization.
-* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return ``pyvista`` versions of their data types for `creating compelling visualizations`_.
+* PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
+* omfpyvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
+* discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
 * pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
@@ -135,7 +135,7 @@ Authors
 =======
 
 Please take a look at the `contributors page`_ and the active `list of authors`_
-to learn more about the developers of ``pyvista``.
+to learn more about the developers of PyVista.
 
 .. _contributors page: https://GitHub.com/pyvista/pyvista/graphs/contributors/
 .. _list of authors: http://docs.pyvista.org/authors
@@ -145,10 +145,10 @@ Contributing
 ============
 
 We absolutely welcome contributions and we hope that this guide will facilitate
-an understanding of the ``pyvista`` code repository. It is important to note that
-the  ``pyvista`` software package is maintained on a volunteer basis and thus we
+an understanding of the PyVista code repository. It is important to note that
+the  PyVista software package is maintained on a volunteer basis and thus we
 need to foster a community that can support user questions and develop new
 features to make this software a useful tool for all users. To learn more about
-contributing to ``pyvista``, please see the `Contributing Guide`_.
+contributing to PyVista, please see the `Contributing Guide`_.
 
 .. _Contributing Guide: http://docs.pyvista.org/dev/contributing.html

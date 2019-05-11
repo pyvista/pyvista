@@ -13,7 +13,7 @@ import numpy as np
 from matplotlib.cm import get_cmap
 
 ################################################################################
-# Texture mapping is easily implemented using ``pyvista``. Many of the geometric
+# Texture mapping is easily implemented using PyVista. Many of the geometric
 # objects come preloaded with texture coordinates, so quickly creating a surface
 # and displaying an image is simply:
 

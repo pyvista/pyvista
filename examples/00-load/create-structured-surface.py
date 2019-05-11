@@ -23,7 +23,7 @@ r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
 
 ################################################################################
-# Now pass the NumPy meshgrid to ``pyvista``
+# Now pass the NumPy meshgrid to PyVista
 
 # Create and plot structured grid
 grid = pyvista.StructuredGrid(x, y, z)

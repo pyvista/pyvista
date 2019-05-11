@@ -5,7 +5,7 @@ Guidelines
 
 Through direct access to the Visualization Toolkit (VTK) via direct array
 access and intuitive Python properties, we hope to make the entire VTK library
-easily accessible to researchers of all disciplines. To further ``pyvista`` towards
+easily accessible to researchers of all disciplines. To further PyVista towards
 being the de facto Python interface to VTK, we need your help to make it even
 better!
 
@@ -16,7 +16,7 @@ welcome!
 
 There are three general coding paradigms that we believe in:
 
-    1. **Make it intuitive**. ``pyvista``'s goal is to create an intuitive and easy
+    1. **Make it intuitive**. PyVista's goal is to create an intuitive and easy
        to use interface back to the VTK library. Any new features should have
        intuitive naming conventions and explicit keyword arguments for users to
        make the bulk of the library accessible to novice users.

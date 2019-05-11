@@ -3,11 +3,11 @@
 IPython Tools
 =============
 
-The IPython tools harness ``pyvista``'s Qt rendering interface that enables
+The IPython tools harness PyVista's Qt rendering interface that enables
 accessible background plotting so that a rendering environment can be updated
 in real-time from a Jupyter notebook or other IPython environment.
 
-These tools are useable from the top level of ``pyvista`` on any ``pyvista`` wrapped
+These tools are useable from the top level of PyVista on any PyVista wrapped
 dataset. Simply call one of these tools on your object.
 
 

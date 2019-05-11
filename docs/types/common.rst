@@ -5,7 +5,7 @@ Datasets are any spatially reference information and usually consist of
 geometrical representations of a surface or volume in 3D space.
 In VTK, this superclass is represented by the ``vtk.vtkDataSet`` abstract class.
 
-In VTK, datasets consist of geometry, topology, and attributes to which ``pyvista``
+In VTK, datasets consist of geometry, topology, and attributes to which PyVista
 provides direct access:
 
 * Geometry is the collection of points and cells in 2D or 3D space.
@@ -86,7 +86,7 @@ The Common Model
 ================
 
 The :class:`pyvista.Common` class holds attributes that are *common* to all
-spatially referenced datasets in ``pyvista``.
+spatially referenced datasets in PyVista.
 This base class is analogous to VTK's ``vtk.vtkDataSet`` class.
 
 

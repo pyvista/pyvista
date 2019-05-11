@@ -49,7 +49,7 @@ Convenience Functions
 Base Plotter
 ------------
 
-The base plotter class that all ``pyvista`` plotters inherit. Please note that the
+The base plotter class that all PyVista plotters inherit. Please note that the
 :class:`pyvista.BackgroundPlotter` is documented under :ref:`qt_ref`.
 
 
@@ -160,7 +160,7 @@ that you can manipulate in real time from the Jupyter notebook:
 Background Plotting
 -------------------
 
-``pyvista`` provides a plotter that enables users to create a rendering window in
+PyVista provides a plotter that enables users to create a rendering window in
 the background that remains interactive while the user performs their
 processing. This creates the ability to make a rendering scene and interactively
 add or remove datasets from the scene as well as has some useful menu functions
@@ -184,7 +184,7 @@ the :class:`pyvista.BackgroundPlotter`:
 IPython Interactive Plotting Tools
 ----------------------------------
 
-``pyvista`` comes packed with several interactive plotting tools to make using the
+PyVista comes packed with several interactive plotting tools to make using the
 filters a bit more intuitive (see :ref:`ipy_tools_ref`).
 If in an IPython environment, call one of the tools on an input dataset to yield
 widgets that will control a filter or task in an interactive rendering scene.

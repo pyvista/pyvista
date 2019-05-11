@@ -3,7 +3,7 @@
 Quick Examples
 ==============
 
-Here is a gallery of all the quick examples demonstrating what ``pyvista`` can do!
+Here is a gallery of all the quick examples demonstrating what PyVista can do!
 
 All of these examples are live and available on MyBinder!
 

@@ -9,7 +9,7 @@ Read and plot image files (JPEG, TIFF, PNG, etc).
 from pyvista import examples
 
 ################################################################################
-# ``pyvista`` fully supportes reading images into their own spatially referenced
+# PyVista fully supportes reading images into their own spatially referenced
 # data objects (this example) as well as supports texture mapping of images onto
 # datasets (see :ref:`ref_texture_example`).
 #

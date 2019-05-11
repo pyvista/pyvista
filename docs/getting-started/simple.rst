@@ -1,10 +1,10 @@
 Basic API Usage
 ===============
 
-``pyvista`` provides tools to get started with just about any VTK dataset
+PyVista provides tools to get started with just about any VTK dataset
 and wrap that object into an easily accesible data object.
 Whether you are new to the VTK library or a power user, the best place to
-get started is with ``pyvista``'s :func:`pyvista.wrap` and :func:`vtk.read`
+get started is with PyVista's :func:`pyvista.wrap` and :func:`vtk.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
 
@@ -12,7 +12,7 @@ Wrapping a VTK Data Object
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The wrapping function is under the :mod:`pyvista.utilities` module which is
-usable from the top level of ``pyvista``:
+usable from the top level of PyVista:
 
 .. code-block:: python
 
@@ -21,7 +21,7 @@ usable from the top level of ``pyvista``:
 
 
 This allows users to quickly wrap any VTK dataset they have to its appropriate
-`pyvista` object:
+PyVista object:
 
 .. testcode:: python
 
@@ -34,8 +34,8 @@ This allows users to quickly wrap any VTK dataset they have to its appropriate
 Reading a VTK File
 ~~~~~~~~~~~~~~~~~~
 
-``pyvista`` provides a convenience function to read VTK file formats into their
-respective ``pyvista`` data objects. Simply call the :func:`pyvista.read` function
+PyVista provides a convenience function to read VTK file formats into their
+respective PyVista data objects. Simply call the :func:`pyvista.read` function
 passing the filename:
 
 .. code-block:: python
@@ -82,7 +82,7 @@ First, check out some common meta data properties:
 
 
 Access the points by fetching the ``.points`` attribute on any
-``pyvista`` data object:
+PyVista data object:
 
 .. code-block:: python
 
@@ -111,11 +111,11 @@ accessed and modified.
 Plotting
 ~~~~~~~~
 
-``pyvista`` includes numerous plotting routines that are intended to be intuitive
+PyVista includes numerous plotting routines that are intended to be intuitive
 and highly controllable with ``matplotlib`` similar syntax and keyword
 arguments.
 To get started, try out the :func:`pyvista.plot` convenience method that is binded
-to each ``pyvista`` data object:
+to each PyVista data object:
 
 
 .. testcode:: python

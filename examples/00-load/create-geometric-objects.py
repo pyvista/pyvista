@@ -10,7 +10,7 @@ import pyvista
 
 ################################################################################
 # This runs through several of the available geomoetric objects available in VTK
-# which ``pyvista`` provides simple conveinance methods for generating.
+# which PyVista provides simple conveinance methods for generating.
 #
 # Let's run through creating a few geometric objects!
 
