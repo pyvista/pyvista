@@ -7,13 +7,13 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
-import vista
-from vista import examples
+import pyvista
+from pyvista import examples
 import numpy as np
 from matplotlib.cm import get_cmap
 
 ################################################################################
-# Texture mapping is easily implemented using ``vista``. Many of the geometric
+# Texture mapping is easily implemented using PyVista. Many of the geometric
 # objects come preloaded with texture coordinates, so quickly creating a surface
 # and displaying an image is simply:
 
@@ -21,14 +21,14 @@ from matplotlib.cm import get_cmap
 tex = examples.download_masonry_texture()
 
 # create a surface to host this texture
-surf = vista.Cylinder()
+surf = pyvista.Cylinder()
 
 surf.plot(texture=tex)
 
 
 ################################################################################
 # But what if your dataset doesn't have texture coordinates? Then you can
-# harness the :func:`vista.DataSetFilters.texture_map_to_plane` filter to
+# harness the :func:`pyvista.DataSetFilters.texture_map_to_plane` filter to
 # properly map an image to a dataset's surface.
 # For example, let's map that same image of bricks to a curvey surface:
 
@@ -38,7 +38,7 @@ y = np.arange(-10, 10, 0.25)
 x, y = np.meshgrid(x, y)
 r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
-curvsurf = vista.StructuredGrid(x, y, z)
+curvsurf = pyvista.StructuredGrid(x, y, z)
 
 # Map the curved surface to a plane - use best fitting plane
 curvsurf.texture_map_to_plane(inplace=True)
@@ -59,12 +59,12 @@ curvsurf.plot(texture=tex)
 # +++++++++++++++++++
 #
 # What about loading your own texture from an image? This is often most easily
-# done using the :func:`vista.read_texture` function - simply pass an image
+# done using the :func:`pyvista.read_texture` function - simply pass an image
 # file's path, and this function with handle making a ``vtkTexture`` for you to
 # use.
 
 image_file = examples.mapfile
-tex = vista.read_texture(image_file)
+tex = pyvista.read_texture(image_file)
 curvsurf.plot(texture=tex)
 
 
@@ -72,10 +72,10 @@ curvsurf.plot(texture=tex)
 # NumPy Arrays as Textures
 # ++++++++++++++++++++++++
 #
-# Wan't to use a programmaticaly built image? :class:`vista.UniformGrid` objects
-# can be converted to textures using :func:`vista.image_to_texture` and 3D
+# Wan't to use a programmaticaly built image? :class:`pyvista.UniformGrid` objects
+# can be converted to textures using :func:`pyvista.image_to_texture` and 3D
 # NumPy (X by Y by RGB) arrays can be converted to textures using
-# :func:`vista.numpy_to_texture`.
+# :func:`pyvista.numpy_to_texture`.
 
 # create an image using Numpy,
 xx, yy = np.meshgrid(np.linspace(-200,200,20), np.linspace(-200,200,20))
@@ -90,7 +90,7 @@ colors = (cmap(hue)[:, 0:3] * 255.).astype(np.uint8)
 image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
 # Convert 3D numpy array to texture
-tex = vista.numpy_to_texture(image)
+tex = pyvista.numpy_to_texture(image)
 
 # Render it!
 curvsurf.plot(texture=tex)
@@ -122,7 +122,7 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 
 ################################################################################
 # Then we must associate those texture coordinates with the mesh through the
-# :attr:`vista.Common.t_coords` property.
+# :attr:`pyvista.Common.t_coords` property.
 
 curvsurf.t_coords = puppy_coords
 

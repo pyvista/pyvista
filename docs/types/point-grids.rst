@@ -20,8 +20,8 @@ An unstructured grid can be initialized with:
 
 .. testcode:: python
 
-    import vista
-    grid = vista.UnstructuredGrid()
+    import pyvista
+    grid = pyvista.UnstructuredGrid()
 
 This creates an empty grid, and is not useful until points and cells are added
 to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
@@ -36,10 +36,10 @@ Unstructured grids can be loaded from a vtk file.
 
 .. testcode:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
-    grid = vista.UnstructuredGrid(examples.hexbeamfile)
+    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
 Structured Grid Creation
@@ -51,8 +51,8 @@ A structured grid can be initialized with:
 
 .. testcode:: python
 
-    import vista
-    grid = vista.StructuredGrid()
+    import pyvista
+    grid = pyvista.StructuredGrid()
 
 This creates an empty grid, and is not useful until points are added
 to it.
@@ -68,7 +68,7 @@ grid from NumPy arrays.
 
 .. testcode:: python
 
-    import vista
+    import pyvista
     import numpy as np
 
     x = np.arange(-10, 10, 0.25)
@@ -77,7 +77,7 @@ grid from NumPy arrays.
     x, y, z = np.meshgrid(x, y, z)
 
     # create the unstructured grid directly from the numpy arrays and plot
-    grid = vista.StructuredGrid(x, y, z)
+    grid = pyvista.StructuredGrid(x, y, z)
     grid.plot(show_edges=True, screenshot='structured_cube.png')
 
 .. image:: ../images/auto-generated/structured_cube.png
@@ -89,7 +89,7 @@ Structured grids can be loaded from a ``vtk`` file.
 
 .. code:: python
 
-    grid = vista.StructuredGrid(filename)
+    grid = pyvista.StructuredGrid(filename)
 
 
 Plotting Grids
@@ -100,12 +100,12 @@ create a plot and gif movie by updating the plotting object.
 .. testcode:: python
 
     # Load module and example file
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
     import numpy as np
 
     # Load example beam grid
-    grid = vista.UnstructuredGrid(examples.hexbeamfile)
+    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     # Create fictitious displacements as a function of Z location
     d = np.zeros_like(grid.points)
@@ -132,7 +132,7 @@ A more complex plot can be created using:
             (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
 
     # plot this displaced beam
-    plotter = vista.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   rng=[-d.max(), d.max()])
     plotter.add_axes()
@@ -151,7 +151,7 @@ First you have to setup the plotting object:
 
 .. testcode:: python
 
-    plotter = vista.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   show_edges=True, rng=[-d.max(), d.max()],
                   interpolate_before_map=True)
@@ -187,7 +187,7 @@ You can also render the beam as as a wire-frame object:
 .. testcode:: python
 
     # Animate plot as a wire-frame
-    plotter = vista.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', show_edges=True,
                   rng=[-d.max(), d.max()], interpolate_before_map=True,
                   style='wireframe')
@@ -221,14 +221,14 @@ string.
 .. testcode:: python
 
     # Load module and example file
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     # Load example beam file
-    grid = vista.UnstructuredGrid(examples.hexbeamfile)
+    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     # Create plotting class and add the unstructured grid
-    plotter = vista.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(grid, show_edges=True, color='tan')
 
     # Add labels to points on the yz plane (where x == 0)
@@ -254,7 +254,7 @@ to show the exact value of certain points.
     values = grid.points[:, 2]
 
     # Create plotting class and add the unstructured grid
-    plotter = vista.Plotter(notebook=False)
+    plotter = pyvista.Plotter(notebook=False)
     # color mesh according to z value
     plotter.add_mesh(grid, scalars=values, stitle='Z Position', show_edges=True)
 
@@ -273,50 +273,50 @@ to show the exact value of certain points.
 
 
 
-vista.Unstructured Grid Class Methods
+pyvista.Unstructured Grid Class Methods
 --------------------------------------------
 The following is a description of the methods available to a
-``vista.UnstructuredGrid`` object.  It inherits all methods from the original
+``pyvista.UnstructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.UnstructuredGrid
+.. autoautosummary:: pyvista.UnstructuredGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.UnstructuredGrid
+.. autoautosummary:: pyvista.UnstructuredGrid
    :methods:
 
 
-.. autoclass:: vista.UnstructuredGrid
+.. autoclass:: pyvista.UnstructuredGrid
    :show-inheritance:
    :members:
    :undoc-members:
 
 
-vista.Structured Grid Class Methods
+pyvista.Structured Grid Class Methods
 --------------------------------------------
 The following is a description of the methods available to a
-``vista.StructuredGrid`` object.  It inherits all methods from the original
+``pyvista.StructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.StructuredGrid
+.. autoautosummary:: pyvista.StructuredGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.StructuredGrid
+.. autoautosummary:: pyvista.StructuredGrid
    :methods:
 
-.. autoclass:: vista.StructuredGrid
+.. autoclass:: pyvista.StructuredGrid
    :show-inheritance:
    :members:
    :undoc-members:
@@ -324,22 +324,22 @@ The following is a description of the methods available to a
 
 Methods in Common with Structured and Unstructured Grids
 --------------------------------------------------------
-These methods are in common to both ``vista.StructuredGrid`` and
-``vista.UnstructuredGrid`` objects.
+These methods are in common to both ``pyvista.StructuredGrid`` and
+``pyvista.UnstructuredGrid`` objects.
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.PointGrid
+.. autoautosummary:: pyvista.PointGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.PointGrid
+.. autoautosummary:: pyvista.PointGrid
    :methods:
 
-.. autoclass:: vista.PointGrid
+.. autoclass:: pyvista.PointGrid
    :show-inheritance:
    :members:
    :undoc-members:

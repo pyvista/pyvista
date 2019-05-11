@@ -1,6 +1,6 @@
 """
 Container to mimic ``vtkMultiBlockDataSet`` objects. These classes hold many
-VTK datasets in one object that can be passed to VTK algorithms and ``vista``
+VTK datasets in one object that can be passed to VTK algorithms and PyVista
 filtering/plotting routines.
 """
 import collections
@@ -11,9 +11,9 @@ import numpy as np
 import vtk
 from vtk import vtkMultiBlockDataSet
 
-import vista
-from vista import plot
-from vista.utilities import get_scalar, is_vista_obj, wrap
+import pyvista
+from pyvista import plot
+from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -27,7 +27,7 @@ class MultiBlock(vtkMultiBlockDataSet):
     easily plot these data sets and use the container in a Pythonic manner.
     """
 
-    # Bind vista.plotting.plot to the object
+    # Bind pyvista.plotting.plot to the object
     plot = plot
 
     def __init__(self, *args, **kwargs):
@@ -93,7 +93,7 @@ class MultiBlock(vtkMultiBlockDataSet):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = vista.get_ext(filename)
+        ext = pyvista.get_ext(filename)
         # Extensions: .vtm and .vtmb
 
         # Select reader
@@ -130,7 +130,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         file size.
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        ext = vista.get_ext(filename)
+        ext = pyvista.get_ext(filename)
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
         else:
@@ -228,7 +228,7 @@ class MultiBlock(vtkMultiBlockDataSet):
         data = self.GetBlock(index)
         if data is None:
             return data
-        if data is not None and not is_vista_obj(data):
+        if data is not None and not is_pyvista_obj(data):
             data = wrap(data)
         if data not in self.refs:
             self.refs.append(data)
@@ -278,11 +278,11 @@ class MultiBlock(vtkMultiBlockDataSet):
 
         Example
         -------
-        >>> import vista
-        >>> multi = vista.MultiBlock()
-        >>> multi[0] = vista.PolyData()
-        >>> multi[1, 'foo'] = vista.UnstructuredGrid()
-        >>> multi['bar'] = vista.PolyData()
+        >>> import pyvista
+        >>> multi = pyvista.MultiBlock()
+        >>> multi[0] = pyvista.PolyData()
+        >>> multi[1, 'foo'] = pyvista.UnstructuredGrid()
+        >>> multi['bar'] = pyvista.PolyData()
         >>> multi.n_blocks
         3
         """
@@ -296,7 +296,7 @@ class MultiBlock(vtkMultiBlockDataSet):
             name = index
         else:
             i, name = index, None
-        if data is not None and not is_vista_obj(data):
+        if data is not None and not is_pyvista_obj(data):
             data = wrap(data)
         if i == -1:
             self.append(data)
@@ -422,8 +422,8 @@ class MultiBlock(vtkMultiBlockDataSet):
 
 
     def copy_meta_from(self, ido):
-        """Copies vista meta data onto this object from another object"""
-        # Note that `vista.MultiBlock` datasets currently don't have any meta.
+        """Copies pyvista meta data onto this object from another object"""
+        # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
         # This method is here for consistency witht the rest of the API and
         # incase we add meta data to this pbject down the road.
         pass

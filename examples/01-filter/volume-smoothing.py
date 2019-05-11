@@ -6,14 +6,14 @@ Smoothing rough edges of a volumetric surface
 """
 
 # sphinx_gallery_thumbnail_number = 4
-import vista
-from vista import examples
+import pyvista
+from pyvista import examples
 
 ################################################################################
 # Suppose you extract a volumetric subset of a dataset that has roughly defined
 # edges. Perhaps you'd like a smooth representation of that model region. This
 # can be achieved by extracting the bounding surface of the volume and applying
-# a :func:`vista.PolyData.smooth` filter.
+# a :func:`pyvista.PolyData.smooth` filter.
 #
 # The below code snippet loads a sample roughly edged volumetric dataset:
 
@@ -28,7 +28,7 @@ vol.plot(show_edges=True, cpos=cpos)
 
 ################################################################################
 # Extract the outer surface of the volume using the
-# :func:`vista.DataSetFilters.extract_geometry` filter and then apply the
+# :func:`pyvista.DataSetFilters.extract_geometry` filter and then apply the
 # smoothing filter:
 
 # Get the out surface as PolyData

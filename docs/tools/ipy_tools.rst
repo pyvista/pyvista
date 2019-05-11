@@ -3,49 +3,49 @@
 IPython Tools
 =============
 
-The IPython tools harness ``vista``'s Qt rendering interface that enables
+The IPython tools harness PyVista's Qt rendering interface that enables
 accessible background plotting so that a rendering environment can be updated
 in real-time from a Jupyter notebook or other IPython environment.
 
-These tools are useable from the top level of ``vista`` on any ``vista`` wrapped
+These tools are useable from the top level of PyVista on any PyVista wrapped
 dataset. Simply call one of these tools on your object.
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.ipy_tools.InteractiveTool
+.. autoautosummary:: pyvista.ipy_tools.InteractiveTool
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.ipy_tools.InteractiveTool
+.. autoautosummary:: pyvista.ipy_tools.InteractiveTool
    :methods:
 
 
 Orthogonal Slicer
 -----------------
 
-The :class:`vista.OrthogonalSlicer` tool on an example dataset to create three
+The :class:`pyvista.OrthogonalSlicer` tool on an example dataset to create three
 slices on the cartesian planes and move those slices through the dataset using
 slider bars directly in a Jupyter notebook:
 
 .. code-block:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     dataset = examples.load_hexbeam()
 
     # Use the slicer tool
-    vista.OrthogonalSlicer(dataset)
+    pyvista.OrthogonalSlicer(dataset)
 
 
 .. figure:: ../images/gifs/slicer-tool.gif
    :width: 500pt
 
 
-.. autoclass:: vista.OrthogonalSlicer
+.. autoclass:: pyvista.OrthogonalSlicer
    :show-inheritance:
 
 
@@ -53,7 +53,7 @@ slider bars directly in a Jupyter notebook:
 Threshold
 ---------
 
-The :class:`vista.Threshold` tool is used to interactively threshold a
+The :class:`pyvista.Threshold` tool is used to interactively threshold a
 dataset using slider bars for the minimum and maximum range. This tool also
 has options to invert the threshold using checkboxes all directly in the output
 of a Jupyter notebook cell:
@@ -61,20 +61,20 @@ of a Jupyter notebook cell:
 
 .. code-block:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # Use the slicer tool
-    vista.Threshold(dataset)
+    pyvista.Threshold(dataset)
 
 
 .. figure:: ../images/gifs/threshold-tool.gif
    :width: 500pt
 
 
-.. autoclass:: vista.Threshold
+.. autoclass:: pyvista.Threshold
    :show-inheritance:
 
 
@@ -82,27 +82,27 @@ of a Jupyter notebook cell:
 Many Slices Along Axis
 ----------------------
 
-The :class:`vista.ManySlicesAlongAxis` tool is used to create many (``n``)
+The :class:`pyvista.ManySlicesAlongAxis` tool is used to create many (``n``)
 evenly spaced slices of a dataset along a specified axis. The user selects the
 number of slices via a slider bar and the axis to slice against via a drop
 down menu in the Jupyter notebook cell output:
 
 .. code-block:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # Use the many slices tool
-    vista.ManySlicesAlongAxis(dataset)
+    pyvista.ManySlicesAlongAxis(dataset)
 
 
 .. figure:: ../images/gifs/many-slices-tool.gif
    :width: 500pt
 
 
-.. autoclass:: vista.ManySlicesAlongAxis
+.. autoclass:: pyvista.ManySlicesAlongAxis
    :show-inheritance:
 
 
@@ -110,25 +110,25 @@ down menu in the Jupyter notebook cell output:
 Isocontour
 ----------
 
-The :class:`vista.Isocontour` tool creates a single value isocontour of a dataset
+The :class:`pyvista.Isocontour` tool creates a single value isocontour of a dataset
 along a point scalar array
 
 
 .. code-block:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # Use the contour tool
-    vista.Isocontour(dataset)
+    pyvista.Isocontour(dataset)
 
 
 .. figure:: ../images/gifs/isocontour-tool.gif
    :width: 500pt
 
-.. autoclass:: vista.ManySlicesAlongAxis
+.. autoclass:: pyvista.ManySlicesAlongAxis
    :show-inheritance:
 
 
@@ -146,13 +146,13 @@ so that you can access it's plotting window:
 
 .. code-block:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # assign the tool to a variable
-    thresher = vista.Threshold(dataset)
+    thresher = pyvista.Threshold(dataset)
 
 Now a rendering environment will appear and the cell will output to IPython
 tools. Since the tool is captured in the variable ``thresher`` for this example,
@@ -175,7 +175,7 @@ passing the plotter to the tool upon construction:
 .. code-block:: python
 
     # Add a second tool by passing the plotter
-    slicer = vista.OrthogonalSlicer(dataset, plotter=p)
+    slicer = pyvista.OrthogonalSlicer(dataset, plotter=p)
 
 And now you have two tools being used in one rendering window!
 

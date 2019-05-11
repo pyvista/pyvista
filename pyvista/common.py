@@ -9,11 +9,12 @@ import numpy as np
 import vtk
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
-import vista
-from vista import DataSetFilters
-from vista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, FIELD_DATA_FIELD, get_scalar,
-                            vtk_bit_array_to_char, is_vista_obj,
-                            _raise_not_matching, convert_array)
+import pyvista
+from pyvista import DataSetFilters
+from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
+                               FIELD_DATA_FIELD, get_scalar,
+                               vtk_bit_array_to_char, is_pyvista_obj,
+                               _raise_not_matching, convert_array)
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -25,12 +26,12 @@ DEFAULT_VECTOR_KEY = '_vectors'
 class Common(DataSetFilters, object):
     """ Methods in common to grid and surface objects"""
 
-    # Simply bind vista.plotting.plot to the object
-    plot = vista.plot
+    # Simply bind pyvista.plotting.plot to the object
+    plot = pyvista.plot
 
     def __new__(cls, *args, **kwargs):
         if cls is Common:
-            raise TypeError("vista.Common is an abstract class and may not be instantiated.")
+            raise TypeError("pyvista.Common is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
@@ -122,14 +123,14 @@ class Common(DataSetFilters, object):
         """ returns a pointer to the points as a numpy object """
         vtk_data = self.GetPoints().GetData()
         arr = vtk_to_numpy(vtk_data)
-        return vista_ndarray(arr, vtk_data)
+        return pyvista_ndarray(arr, vtk_data)
 
     @points.setter
     def points(self, points):
         """ set points without copying """
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
-        vtk_points = vista.vtk_points(points, False)
+        vtk_points = pyvista.vtk_points(points, False)
         self.SetPoints(vtk_points)
         self.GetPoints().Modified()
         self.Modified()
@@ -144,7 +145,7 @@ class Common(DataSetFilters, object):
 
         Returns
         -------
-        arrows : vista.PolyData
+        arrows : pyvista.PolyData
             Active scalars represented as arrows.
         """
         if self.active_vectors is None:
@@ -160,7 +161,7 @@ class Common(DataSetFilters, object):
         alg.SetVectorModeToUseVector()
         alg.SetScaleModeToScaleByVector()
         alg.Update()
-        return vista.wrap(alg.GetOutput())
+        return pyvista.wrap(alg.GetOutput())
 
     @property
     def vectors(self):
@@ -523,9 +524,9 @@ class Common(DataSetFilters, object):
 
         """
         if isinstance(trans, vtk.vtkMatrix4x4):
-            t = vista.trans_from_matrix(trans)
+            t = pyvista.trans_from_matrix(trans)
         elif isinstance(trans, vtk.vtkTransform):
-            t = vista.trans_from_matrix(trans.GetMatrix())
+            t = pyvista.trans_from_matrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
             if trans.shape[0] != 4 or trans.shape[1] != 4:
                 raise Exception('Transformation array must be 4x4')
@@ -625,7 +626,7 @@ class Common(DataSetFilters, object):
             self._active_scalar_info = [CELL_DATA_FIELD, name]
 
     def copy_meta_from(self, ido):
-        """Copies vista meta data onto this object from another object"""
+        """Copies pyvista meta data onto this object from another object"""
         self._active_scalar_info = ido.active_scalar_info
         self._active_vectors_info = ido.active_vectors_info
         if hasattr(ido, '_textures'):
@@ -898,12 +899,12 @@ class Common(DataSetFilters, object):
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
-        fmt = "{}, {}".format(vista.FLOAT_FORMAT, vista.FLOAT_FORMAT)
+        fmt = "{}, {}".format(pyvista.FLOAT_FORMAT, pyvista.FLOAT_FORMAT)
         attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
         attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
         attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
-        # if self.n_cells <= vista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
-        #     attrs.append(("Volume", (self.volume), vista.FLOAT_FORMAT))
+        # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
+        #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return attrs
 
 
@@ -969,8 +970,8 @@ class Common(DataSetFilters, object):
                 """internal helper to foramt array information for printing"""
                 arr = get_scalar(self, key, preference=field)
                 dl, dh = self.get_data_range(key)
-                dl = vista.FLOAT_FORMAT.format(dl)
-                dh = vista.FLOAT_FORMAT.format(dh)
+                dl = pyvista.FLOAT_FORMAT.format(dl)
+                dh = pyvista.FLOAT_FORMAT.format(dh)
                 if key == self.active_scalar_info[1]:
                     key = '<b>{}</b>'.format(key)
                 if arr.ndim > 1:
@@ -1014,17 +1015,17 @@ class Common(DataSetFilters, object):
 
         """
         self.DeepCopy(mesh)
-        if is_vista_obj(mesh):
+        if is_pyvista_obj(mesh):
             self.copy_meta_from(mesh)
 
     def cast_to_unstructured_grid(self):
         """Get a new representation of this object as an
-        :class:`vista.UnstructuredGrid`
+        :class:`pyvista.UnstructuredGrid`
         """
         alg = vtk.vtkAppendFilter()
         alg.AddInputData(self)
         alg.Update()
-        return vista.filters._get_output(alg)
+        return pyvista.filters._get_output(alg)
 
 
 class _ScalarsDict(dict):
@@ -1152,7 +1153,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
         return points
 
 
-class vista_ndarray(np.ndarray):
+class pyvista_ndarray(np.ndarray):
     """
     Links a numpy array with the vtk object the data is attached to.
 
@@ -1172,5 +1173,5 @@ class vista_ndarray(np.ndarray):
 
     def __setitem__(self, coords, value):
         """ Update the array and update the vtk object """
-        super(vista_ndarray, self).__setitem__(coords, value)
+        super(pyvista_ndarray, self).__setitem__(coords, value)
         self.proxy.Modified()

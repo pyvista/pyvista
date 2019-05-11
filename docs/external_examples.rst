@@ -1,7 +1,7 @@
 External Examples
 =================
 
-Here are a list of longer, more technical examples of what ``vista`` can do!
+Here are a list of longer, more technical examples of what PyVista can do!
 
 .. caution::
 
@@ -18,9 +18,9 @@ button at the top of this page and adding a link to your project!
 .. toctree::
    :maxdepth: 2
 
-   3D visualization for the Open Mining Format (omf) <https://github.com/OpenGeoVis/omfvista/blob/master/Example.ipynb>
-   Live example notebook showcasing omfvista <https://mybinder.org/v2/gh/OpenGeoVis/omfvista-demo/master?filepath=notebooks%2FExample.ipynb>
-   3D Rendering with Discretize <http://discretize.simpeg.xyz/en/master/auto_examples/vista_demo.html#sphx-glr-auto-examples-vista-demo-py>
+   3D visualization for the Open Mining Format (omf) <https://github.com/OpenGeoVis/omfpyvista/blob/master/Example.ipynb>
+   Live example notebook showcasing omfpyvista <https://mybinder.org/v2/gh/OpenGeoVis/omfpyvista-demo/master?filepath=notebooks%2FExample.ipynb>
+   3D Rendering with Discretize <http://discretize.simpeg.xyz/en/master/auto_examples/pyvista_demo.html#sphx-glr-auto-examples-pyvista-demo-py>
    OpenFOAM Rendering <https://pswpswpsw.github.io/posts/2018/09/blog-post-modify-vtk-openfoam/>
    FORGE Geothermal Project <http://forge.pvgeo.org>
    PVGeo's example gallery <https://pvgeo.org/examples/index.html>

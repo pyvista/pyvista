@@ -5,10 +5,10 @@ Ray Tracing
 Single line segment ray tracing for PolyData objects.
 """
 
-import vista
+import pyvista
 
 # Create source to ray trace
-sphere = vista.Sphere(radius=0.85)
+sphere = pyvista.Sphere(radius=0.85)
 
 # Define line segment
 start = [0, 0, 0]
@@ -18,11 +18,11 @@ stop = [0.25, 1, 0.5]
 points, ind = sphere.ray_trace(start, stop)
 
 # Create geometry to represent ray trace
-ray = vista.Line(start, stop)
-intersection = vista.PolyData(points)
+ray = pyvista.Line(start, stop)
+intersection = pyvista.PolyData(points)
 
 # Render the result
-p = vista.Plotter()
+p = pyvista.Plotter()
 p.add_mesh(sphere, show_edges=True, opacity=0.5, color='w', lighting=False, label='Test Mesh')
 p.add_mesh(ray, color='blue', line_width=5, label='Ray Segment')
 p.add_mesh(intersection, color='maroon', point_size=10, label='Intersection Points')

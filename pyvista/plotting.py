@@ -1,5 +1,5 @@
 """
-vista plotting module
+pyvista plotting module
 """
 import collections
 import ctypes
@@ -14,9 +14,9 @@ import numpy as np
 import vtk
 from vtk.util import numpy_support as VN
 
-import vista
-from vista.export import export_plotter_vtkjs
-from vista.utilities import (get_scalar, is_vista_obj, numpy_to_texture, wrap,
+import pyvista
+from pyvista.export import export_plotter_vtkjs
+from pyvista.utilities import (get_scalar, is_pyvista_obj, numpy_to_texture, wrap,
                             _raise_not_matching, convert_array)
 
 _ALL_PLOTTERS = {}
@@ -77,7 +77,7 @@ rcParams = {
     'lighting' : True,
     'interactive' : False,
     'render_points_as_spheres' : False,
-    'use_panel' : True,
+    'use_panel' : False, #True,
     'transparent_background' : False
 }
 
@@ -162,7 +162,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     screenshot : str or bool, optional
         Saves screenshot to file when enabled.  See:
-        help(vistanterface.Plotter.screenshot).  Default disabled.
+        help(pyvistanterface.Plotter.screenshot).  Default disabled.
 
         When True, takes screenshot and returns numpy array of image.
 
@@ -276,11 +276,11 @@ def plot_arrows(cent, direction, **kwargs):
         Must contain the same number of items as cent.
 
     **kwargs : additional arguments, optional
-        See help(vista.Plot)
+        See help(pyvista.Plot)
 
     Returns
     -------
-    Same as Plot.  See help(vista.Plot)
+    Same as Plot.  See help(pyvista.Plot)
 
     """
     return plot([cent, direction], **kwargs)
@@ -338,7 +338,7 @@ class BasePlotter(object):
 
     def __new__(cls, *args, **kwargs):
         if cls is BasePlotter:
-            raise TypeError("vista.BasePlotter is an abstract class and may not be instantiated.")
+            raise TypeError("pyvista.BasePlotter is an abstract class and may not be instantiated.")
         return object.__new__(cls)
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
@@ -363,7 +363,7 @@ class BasePlotter(object):
         self.shape = shape
         for i in reversed(range(shape[0])):
             for j in range(shape[1]):
-                renderer = vista.Renderer(self, border, border_color, border_width)
+                renderer = pyvista.Renderer(self, border, border_color, border_width)
                 x0 = i/shape[0]
                 y0 = j/shape[1]
                 x1 = (i+1)/shape[0]
@@ -762,11 +762,11 @@ class BasePlotter(object):
             scalar_bar_args = {}
 
         if isinstance(mesh, np.ndarray):
-            mesh = vista.PolyData(mesh)
+            mesh = pyvista.PolyData(mesh)
             style = 'points'
 
-        # Convert the VTK data object to a vista wrapped object if neccessary
-        if not is_vista_obj(mesh):
+        # Convert the VTK data object to a pyvista wrapped object if neccessary
+        if not is_pyvista_obj(mesh):
             mesh = wrap(mesh)
 
         if show_edges is None:
@@ -790,7 +790,7 @@ class BasePlotter(object):
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
 
-        if isinstance(mesh, vista.MultiBlock):
+        if isinstance(mesh, pyvista.MultiBlock):
             self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
             if rng is None and scalars is not None:
@@ -823,9 +823,9 @@ class BasePlotter(object):
                 # Get a good name to use
                 next_name = '{}-{}'.format(name, idx)
                 # Get the data object
-                if not is_vista_obj(mesh[idx]):
+                if not is_pyvista_obj(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
-                    if not is_vista_obj(mesh[idx]):
+                    if not is_pyvista_obj(mesh[idx]):
                         continue # move on if we can't plot it
                 else:
                     data = mesh.GetBlock(idx)
@@ -1071,7 +1071,7 @@ class BasePlotter(object):
                 raise AssertionError('Label must be a string')
             geom = single_triangle()
             if scalars is not None:
-                geom = vista.Box()
+                geom = pyvista.Box()
                 rgb_color = parse_color('black')
             self._labels.append([geom, label, rgb_color])
 
@@ -1421,10 +1421,10 @@ class BasePlotter(object):
 
         Examples
         --------
-        >>> import vista
-        >>> from vista import examples
-        >>> mesh = vista.Sphere()
-        >>> plotter = vista.Plotter()
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> mesh = pyvista.Sphere()
+        >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.show_bounds(grid='front', location='outer', all_edges=True)
         >>> plotter.show() # doctest:+SKIP
@@ -1848,7 +1848,7 @@ class BasePlotter(object):
         if mesh is None:
             mesh = self.mesh
 
-        if isinstance(mesh, (collections.Iterable, vista.MultiBlock)):
+        if isinstance(mesh, (collections.Iterable, pyvista.MultiBlock)):
             # Recursive if need to update scalars on many meshes
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
@@ -2019,8 +2019,8 @@ class BasePlotter(object):
             Frames per second.
 
         """
-        if isinstance(vista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(vista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self.mwriter = imageio.get_writer(filename, fps=framerate)
 
     def open_gif(self, filename):
@@ -2035,8 +2035,8 @@ class BasePlotter(object):
         """
         if filename[-3:] != 'gif':
             raise Exception('Unsupported filetype.  Must end in .gif')
-        if isinstance(vista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(vista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
         self.mwriter = imageio.get_writer(filename, mode='I')
 
@@ -2061,9 +2061,9 @@ class BasePlotter(object):
         # Update filter and grab pixels
         ifilter.Modified()
         ifilter.Update()
-        image = vista.wrap(ifilter.GetOutput())
+        image = pyvista.wrap(ifilter.GetOutput())
         img_size = image.dimensions
-        img_array = vista.utilities.point_scalar(image, 'ImageScalars')
+        img_array = pyvista.utilities.point_scalar(image, 'ImageScalars')
 
         # Reshape and write
         tgt_size = (img_size[1], img_size[0], -1)
@@ -2106,7 +2106,7 @@ class BasePlotter(object):
 
         Parameters
         ----------
-        lines : np.ndarray or vista.PolyData
+        lines : np.ndarray or pyvista.PolyData
             Points representing line segments.  For example, two line segments
             would be represented as:
 
@@ -2136,7 +2136,7 @@ class BasePlotter(object):
         if not isinstance(lines, np.ndarray):
             raise Exception('Input should be an array of point segments')
 
-        lines = vista.lines_from_points(lines)
+        lines = pyvista.lines_from_points(lines)
 
         # Create mapper and add lines
         mapper = vtk.vtkDataSetMapper()
@@ -2180,12 +2180,12 @@ class BasePlotter(object):
 
         Parameters
         ----------
-        points : np.ndarray or vista.Common
-            n x 3 numpy array of points or vista dataset with points
+        points : np.ndarray or pyvista.Common
+            n x 3 numpy array of points or pyvista dataset with points
 
         labels : list or str
             List of labels.  Must be the same length as points. If a string name
-            is given with a vista.Common input for points, then these are fetched.
+            is given with a pyvista.Common input for points, then these are fetched.
 
         italic : bool, optional
             Italicises title and bar labels.  Default False.
@@ -2248,9 +2248,9 @@ class BasePlotter(object):
             text_color = rcParams['font']['color']
 
         if isinstance(points, np.ndarray):
-            vtkpoints = vista.PolyData(points) # Cast to poly data
-        elif is_vista_obj(points):
-            vtkpoints = vista.PolyData(points.points)
+            vtkpoints = pyvista.PolyData(points) # Cast to poly data
+        elif is_pyvista_obj(points):
+            vtkpoints = pyvista.PolyData(points.points)
             if isinstance(labels, str):
                 labels = points.point_arrays[labels].astype(str)
         else:
@@ -2294,13 +2294,13 @@ class BasePlotter(object):
 
 
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
-        """Wrapper for :func:`vista.BasePlotter.add_point_labels` that will label
+        """Wrapper for :func:`pyvista.BasePlotter.add_point_labels` that will label
         points from a dataset with their scalar values.
 
         Parameters
         ----------
-        points : np.ndarray or vista.Common
-            n x 3 numpy array of points or vista dataset with points
+        points : np.ndarray or pyvista.Common
+            n x 3 numpy array of points or pyvista dataset with points
 
         labels : str
             String name of the point data array to use.
@@ -2308,8 +2308,8 @@ class BasePlotter(object):
         fmt : str
             String formatter used to format numerical data
         """
-        if not is_vista_obj(points):
-            raise TypeError('input points must be a vista dataset, not: {}'.format(type(points)))
+        if not is_pyvista_obj(points):
+            raise TypeError('input points must be a pyvista dataset, not: {}'.format(type(points)))
         if not isinstance(labels, str):
             raise TypeError('labels must be a string name of the scalar array to use')
         if fmt is None:
@@ -2340,7 +2340,7 @@ class BasePlotter(object):
         direction[:,1] *= mag
         direction[:,2] *= mag
 
-        pdata = vista.vector_poly_data(cent, direction)
+        pdata = pyvista.vector_poly_data(cent, direction)
         # Create arrow object
         arrow = vtk.vtkArrowSource()
         arrow.Update()
@@ -2363,8 +2363,8 @@ class BasePlotter(object):
 
         # write screenshot to file
         if isinstance(filename, str):
-            if isinstance(vista.FIGURE_PATH, str) and not os.path.isabs(filename):
-                filename = os.path.join(vista.FIGURE_PATH, filename)
+            if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+                filename = os.path.join(pyvista.FIGURE_PATH, filename)
             if not return_img:
                 return imageio.imwrite(filename, image)
             imageio.imwrite(filename, image)
@@ -2397,9 +2397,9 @@ class BasePlotter(object):
 
         Examples
         --------
-        >>> import vista
-        >>> sphere = vista.Sphere()
-        >>> plotter = vista.Plotter()
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> plotter = pyvista.Plotter()
         >>> actor = plotter.add_mesh(sphere)
         >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
         """
@@ -2481,11 +2481,11 @@ class BasePlotter(object):
 
         Examples
         --------
-        >>> import vista
-        >>> from vista import examples
+        >>> import pyvista
+        >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
         >>> othermesh = examples.load_uniform()
-        >>> plotter = vista.Plotter()
+        >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(mesh, label='My Mesh')
         >>> _ = plotter.add_mesh(othermesh, 'k', label='My Other Mesh')
         >>> _ = plotter.add_legend()
@@ -2493,14 +2493,14 @@ class BasePlotter(object):
 
         Alternative manual example
 
-        >>> import vista
-        >>> from vista import examples
+        >>> import pyvista
+        >>> from pyvista import examples
         >>> mesh = examples.load_hexbeam()
         >>> othermesh = examples.load_uniform()
         >>> legend_entries = []
         >>> legend_entries.append(['My Mesh', 'w'])
         >>> legend_entries.append(['My Other Mesh', 'k'])
-        >>> plotter = vista.Plotter()
+        >>> plotter = pyvista.Plotter()
         >>> _ = plotter.add_mesh(mesh)
         >>> _ = plotter.add_mesh(othermesh, 'k')
         >>> _ = plotter.add_legend(legend_entries)
@@ -2622,7 +2622,7 @@ class BasePlotter(object):
                 # Use the default ParaView background color
                 color = PV_BACKGROUND
             else:
-                color = vista.string_to_rgb(color)
+                color = pyvista.string_to_rgb(color)
 
         if loc =='all':
             for renderer in self.renderers:
@@ -2678,7 +2678,7 @@ class BasePlotter(object):
             extract.SetInputData(mesh)
             extract.SetImplicitFunction(picker.GetFrustum())
             extract.Update()
-            self.picked_cells = vista.wrap(extract.GetOutput())
+            self.picked_cells = pyvista.wrap(extract.GetOutput())
 
             if callback is not None:
                 callback(self.picked_cells)
@@ -2718,7 +2718,7 @@ class BasePlotter(object):
         y = (bnds[3] - bnds[2]) * factor
         if y > radius:
             radius = y
-        return vista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
+        return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
 
     def fly_to(point):
@@ -2734,7 +2734,7 @@ class BasePlotter(object):
 
         Parameters
         ----------
-        path : vista.PolyData
+        path : pyvista.PolyData
             Path of orbital points. The order in the points is the order of
             travel
 
@@ -2753,8 +2753,8 @@ class BasePlotter(object):
             viewup = rcParams['camera']['viewup']
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
-        if not is_vista_obj(path):
-            path = vista.PolyData(path)
+        if not is_pyvista_obj(path):
+            path = pyvista.PolyData(path)
         points = path.points
 
         def orbit():
@@ -2781,8 +2781,8 @@ class BasePlotter(object):
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
-        if isinstance(vista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(vista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
 
@@ -2791,11 +2791,11 @@ class Plotter(BasePlotter):
 
     Example
     -------
-    >>> import vista
-    >>> from vista import examples
+    >>> import pyvista
+    >>> from pyvista import examples
     >>> mesh = examples.load_hexbeam()
     >>> another_mesh = examples.load_uniform()
-    >>> plotter = vista.Plotter()
+    >>> plotter = pyvista.Plotter()
     >>> _ = plotter.add_mesh(mesh, color='red')
     >>> _ = plotter.add_mesh(another_mesh, color='blue')
     >>> plotter.show() # doctest:+SKIP
@@ -2850,7 +2850,7 @@ class Plotter(BasePlotter):
                 self.iren.TerminateApp()
 
         if off_screen is None:
-            off_screen = vista.OFF_SCREEN
+            off_screen = pyvista.OFF_SCREEN
 
         if notebook is None:
             if run_from_ipython():
@@ -2865,7 +2865,7 @@ class Plotter(BasePlotter):
         self.off_screen = off_screen
 
         if window_size is None:
-            window_size = vista.rcParams['window_size']
+            window_size = pyvista.rcParams['window_size']
 
         # initialize render window
         self.ren_win = vtk.vtkRenderWindow()
@@ -3039,7 +3039,7 @@ def single_triangle():
     points[1] = [1, 0, 0]
     points[2] = [0.5, 0.707, 0]
     cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
-    return vista.PolyData(points, cells)
+    return pyvista.PolyData(points, cells)
 
 
 def parse_color(color):
@@ -3047,7 +3047,7 @@ def parse_color(color):
     if color is None:
         color = rcParams['color']
     if isinstance(color, str):
-        return vista.string_to_rgb(color)
+        return pyvista.string_to_rgb(color)
     elif len(color) == 3:
         return color
     else:
@@ -3088,14 +3088,14 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
     if show_kwargs is None:
         show_kwargs = {}
 
-    p = vista.Plotter(shape=(2,2), **plotter_kwargs)
+    p = pyvista.Plotter(shape=(2,2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):
             p.subplot(i, j)
             p.add_mesh(datasets[i][j], **disply_kwargs)
             p.add_text(labels[i][j])
-            if is_vista_obj(outline):
+            if is_pyvista_obj(outline):
                 p.add_mesh(outline, color=outline_color)
             if camera_position is not None:
                 p.camera_position = camera_position

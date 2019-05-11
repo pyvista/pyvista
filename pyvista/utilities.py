@@ -12,8 +12,8 @@ import numpy as np
 import vtk
 import vtk.util.numpy_support as nps
 
-import vista
-from vista.readers import standard_reader_routine, get_ext, get_reader
+import pyvista
+from pyvista.readers import standard_reader_routine, get_ext, get_reader
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -119,9 +119,9 @@ def convert_array(arr, name=None, deep=0, array_type=None):
 
 
 
-def is_vista_obj(obj):
-    """ Return True if the Object is a ``vista`` wrapped dataset """
-    return isinstance(obj, (vista.Common, vista.MultiBlock))
+def is_pyvista_obj(obj):
+    """ Return True if the Object is a PyVista wrapped dataset """
+    return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
 
 
 def point_scalar(mesh, name):
@@ -232,17 +232,17 @@ def lines_from_points(points):
 
     Returns
     -------
-    lines : vista.PolyData
+    lines : pyvista.PolyData
         PolyData with lines and cells.
 
     Examples
     --------
     This example plots two line segments at right angles to each other line.
 
-    >>> import vista
+    >>> import pyvista
     >>> import numpy as np
     >>> points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    >>> lines = vista.lines_from_points(points)
+    >>> lines = pyvista.lines_from_points(points)
     >>> lines.plot() # doctest:+SKIP
 
     """
@@ -252,7 +252,7 @@ def lines_from_points(points):
                        np.arange(npoints),
                        np.arange(1, npoints + 1))).T.ravel()
 
-    return vista.PolyData(points, lines)
+    return pyvista.PolyData(points, lines)
 
 
 def vector_poly_data(orig, vec):
@@ -309,7 +309,7 @@ def vector_poly_data(orig, vec):
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveScalars(name)
 
-    return vista.PolyData(pdata)
+    return pyvista.PolyData(pdata)
 
 
 def trans_from_matrix(matrix):
@@ -323,28 +323,28 @@ def trans_from_matrix(matrix):
 
 def wrap(vtkdataset):
     """This is a convenience method to safely wrap any given VTK data object
-    to its appropriate ``vista`` data object.
+    to its appropriate PyVista data object.
     """
     wrappers = {
-        'vtkUnstructuredGrid' : vista.UnstructuredGrid,
-        'vtkRectilinearGrid' : vista.RectilinearGrid,
-        'vtkStructuredGrid' : vista.StructuredGrid,
-        'vtkPolyData' : vista.PolyData,
-        'vtkImageData' : vista.UniformGrid,
-        'vtkStructuredPoints' : vista.UniformGrid,
-        'vtkMultiBlockDataSet' : vista.MultiBlock,
+        'vtkUnstructuredGrid' : pyvista.UnstructuredGrid,
+        'vtkRectilinearGrid' : pyvista.RectilinearGrid,
+        'vtkStructuredGrid' : pyvista.StructuredGrid,
+        'vtkPolyData' : pyvista.PolyData,
+        'vtkImageData' : pyvista.UniformGrid,
+        'vtkStructuredPoints' : pyvista.UniformGrid,
+        'vtkMultiBlockDataSet' : pyvista.MultiBlock,
         }
     key = vtkdataset.GetClassName()
     try:
         wrapped = wrappers[key](vtkdataset)
     except:
-        logging.warning('VTK data type ({}) is not currently supported by vista.'.format(key))
+        logging.warning('VTK data type ({}) is not currently supported by pyvista.'.format(key))
         return vtkdataset # if not supported just passes the VTK data object
     return wrapped
 
 
 def image_to_texture(image):
-    """Converts ``vtkImageData`` (:class:`vista.UniformGrid`) to a ``vtkTexture``
+    """Converts ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``
     """
     vtex = vtk.vtkTexture()
     vtex.SetInputDataObject(image)
@@ -358,7 +358,7 @@ def numpy_to_texture(image):
         raise TypeError('Unknown input type ({})'.format(type(image)))
     if image.ndim != 3 or image.shape[2] != 3:
         raise AssertionError('Input image must be nn by nm by RGB')
-    grid = vista.UniformGrid((image.shape[1], image.shape[0], 1))
+    grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
     grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
     grid.set_active_scalar('Image')
     return image_to_texture(grid)
@@ -403,7 +403,7 @@ def fit_plane_to_points(points, return_meta=False):
     center = data.mean(axis=0)
     result = np.linalg.svd(data - center)
     normal = np.cross(result[2][0], result[2][1])
-    plane = vista.Plane(center=center, direction=normal)
+    plane = pyvista.Plane(center=center, direction=normal)
     if return_meta:
         return plane, center, normal
     return plane

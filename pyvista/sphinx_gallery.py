@@ -1,15 +1,15 @@
 """
-Utilities for using vista with sphinx-gallery.
+Utilities for using pyvista with sphinx-gallery.
 """
 
 import shutil
 
-import vista
+import pyvista
 
 
 class Scraper(object):
     """
-    Save ``vista.Plotter`` objects.
+    Save ``pyvista.Plotter`` objects.
 
     Used by sphinx-gallery to generate the plots from the code in the examples.
 
@@ -28,7 +28,7 @@ class Scraper(object):
             raise ImportError('You must install `sphinx_gallery`')
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
-        figures = vista.plotting._ALL_PLOTTERS
+        figures = pyvista.plotting._ALL_PLOTTERS
         for address, plotter in figures.items():
             fname = next(image_path_iterator)
             if hasattr(plotter, '_gif_filename'):
@@ -37,5 +37,5 @@ class Scraper(object):
             else:
                 plotter.screenshot(fname)
             image_names.append(fname)
-        vista.close_all() # close and clear all plotters
+        pyvista.close_all() # close and clear all plotters
         return figure_rst(image_names, gallery_conf["src_dir"])

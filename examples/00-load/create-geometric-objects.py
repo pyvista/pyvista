@@ -6,28 +6,28 @@ Geometric Objects
 
 The "Hello, world!" of VTK
 """
-import vista
+import pyvista
 
 ################################################################################
 # This runs through several of the available geomoetric objects available in VTK
-# which ``vista`` provides simple conveinance methods for generating.
+# which PyVista provides simple conveinance methods for generating.
 #
 # Let's run through creating a few geometric objects!
 
-cyl = vista.Cylinder()
-arrow = vista.Arrow()
-sphere = vista.Sphere()
-plane = vista.Plane()
-line = vista.Line()
-box = vista.Box()
-cone = vista.Cone()
-poly = vista.Polygon()
-disc = vista.Disc()
+cyl = pyvista.Cylinder()
+arrow = pyvista.Arrow()
+sphere = pyvista.Sphere()
+plane = pyvista.Plane()
+line = pyvista.Line()
+box = pyvista.Box()
+cone = pyvista.Cone()
+poly = pyvista.Polygon()
+disc = pyvista.Disc()
 
 ################################################################################
 # Now let's plot them all in one window
 
-p = vista.Plotter(shape=(3, 3))
+p = pyvista.Plotter(shape=(3, 3))
 # Top row
 p.subplot(0,0)
 p.add_mesh(cyl, color='tan', show_edges=True)

@@ -15,21 +15,21 @@ import logging
 
 import numpy as np
 
-import vista
-from vista.plotting import run_from_ipython
-from vista.utilities import is_vista_obj, wrap
+import pyvista
+from pyvista.plotting import run_from_ipython
+from pyvista.utilities import is_pyvista_obj, wrap
 
 
-class ScaledPlotter(vista.BackgroundPlotter):
+class ScaledPlotter(pyvista.BackgroundPlotter):
     """
-    An extension of the ``vista.BackgroundPlotter`` that has
+    An extension of the ``pyvista.BackgroundPlotter`` that has
     interactive widgets for scaling the axes in the rendering scene.
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
         if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
-        vista.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
+        pyvista.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
         self.continuous_update = bool(continuous_update)
         self.xslider = widgets.FloatSlider(min=0, max=xscale*2, value=xscale,
@@ -70,7 +70,7 @@ class InteractiveTool(object):
 
     def __new__(cls, *args, **kwargs):
         if cls is InteractiveTool:
-            raise TypeError("vista.InteractiveTool is an abstract class and may not be instantiated.")
+            raise TypeError("pyvista.InteractiveTool is an abstract class and may not be instantiated.")
         return object.__new__(cls)
 
     def __init__(self, dataset, plotter=None, scalars=None, preference='cell',
@@ -80,10 +80,10 @@ class InteractiveTool(object):
         if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
-        if not is_vista_obj(dataset):
+        if not is_pyvista_obj(dataset):
             dataset = wrap(dataset)
-            if not is_vista_obj(dataset):
-                raise RuntimeError('Object not supported for plotting in vista.')
+            if not is_pyvista_obj(dataset):
+                raise RuntimeError('Object not supported for plotting in pyvista.')
 
         # Make the input/output of this tool available
         self.input_dataset = dataset
@@ -92,7 +92,7 @@ class InteractiveTool(object):
         self.continuous_update = continuous_update
 
         if plotter is None:
-            plotter = vista.BackgroundPlotter(**kwargs)
+            plotter = pyvista.BackgroundPlotter(**kwargs)
             plotter.setWindowTitle(type(self).__name__)
         self._plotter = plotter
         self._loc = plotter.index_to_loc(plotter._active_renderer_index)
@@ -162,11 +162,11 @@ class InteractiveTool(object):
         self.plotter.subplot(*self.loc)
         if outline is None:
             self.plotter.add_mesh(self.input_dataset.outline_corners(),
-                    reset_camera=False, color=vista.rcParams['outline_color'],
+                    reset_camera=False, color=pyvista.rcParams['outline_color'],
                     loc=self.loc)
         elif outline:
             self.plotter.add_mesh(self.input_dataset.outline(),
-                    reset_camera=False, color=vista.rcParams['outline_color'],
+                    reset_camera=False, color=pyvista.rcParams['outline_color'],
                     loc=self.loc)
         # add the axis labels
         if show_bounds:
@@ -222,10 +222,10 @@ class OrthogonalSlicer(InteractiveTool):
 
     Parameters
     ----------
-    dataset : vista.Common
+    dataset : pyvista.Common
         The datset to orthogonalally slice
 
-    plotter : vista.BasePlotter
+    plotter : pyvista.BasePlotter
         The active plotter (rendering window) to use
 
     clean : bool, optional
@@ -269,7 +269,7 @@ class OrthogonalSlicer(InteractiveTool):
         z = default_params.get("z", z)
 
         self._data_to_update = [None, None, None]
-        self.output_dataset = vista.MultiBlock()
+        self.output_dataset = pyvista.MultiBlock()
         self._old = [None, None, None]
 
         axes = ['x', 'y', 'z']
@@ -339,10 +339,10 @@ class ManySlicesAlongAxis(InteractiveTool):
 
     Parameters
     ----------
-    dataset : vista.Common
+    dataset : pyvista.Common
         The datset to orthogonalally slice
 
-    plotter : vista.BasePlotter
+    plotter : pyvista.BasePlotter
         The active plotter (rendering window) to use
 
     clean : bool, optional
@@ -413,10 +413,10 @@ class Threshold(InteractiveTool):
 
     Parameters
     ----------
-    dataset : vista.Common
+    dataset : pyvista.Common
         The datset to orthogonalally slice
 
-    plotter : vista.BasePlotter
+    plotter : pyvista.BasePlotter
         The active plotter (rendering window) to use
 
     scalars : str
@@ -528,10 +528,10 @@ class Clip(InteractiveTool):
 
     Parameters
     ----------
-    dataset : vista.Common
+    dataset : pyvista.Common
         The datset to orthogonalally slice
 
-    plotter : vista.BasePlotter
+    plotter : pyvista.BasePlotter
         The active plotter (rendering window) to use
 
     clean : bool, optional
@@ -611,10 +611,10 @@ class Isocontour(InteractiveTool):
 
     Parameters
     ----------
-    dataset : vista.Common
+    dataset : pyvista.Common
         The datset to orthogonalally slice
 
-    plotter : vista.BasePlotter
+    plotter : pyvista.BasePlotter
         The active plotter (rendering window) to use
 
     clean : bool, optional

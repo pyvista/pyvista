@@ -37,34 +37,34 @@ Convenience Functions
 ---------------------
 
 
-.. autofunction:: vista.plot
+.. autofunction:: pyvista.plot
 
 
-.. autofunction:: vista.plot_arrows
+.. autofunction:: pyvista.plot_arrows
 
 
-.. autofunction:: vista.set_plot_theme
+.. autofunction:: pyvista.set_plot_theme
 
 
 Base Plotter
 ------------
 
-The base plotter class that all ``vista`` plotters inherit. Please note that the
-:class:`vista.BackgroundPlotter` is documented under :ref:`qt_ref`.
+The base plotter class that all PyVista plotters inherit. Please note that the
+:class:`pyvista.BackgroundPlotter` is documented under :ref:`qt_ref`.
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.BasePlotter
+.. autoautosummary:: pyvista.BasePlotter
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.BasePlotter
+.. autoautosummary:: pyvista.BasePlotter
    :methods:
 
 
-.. autoclass:: vista.BasePlotter
+.. autoclass:: pyvista.BasePlotter
    :show-inheritance:
    :members:
    :undoc-members:
@@ -75,17 +75,17 @@ Plotter
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.Plotter
+.. autoautosummary:: pyvista.Plotter
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.Plotter
+.. autoautosummary:: pyvista.Plotter
    :methods:
 
 
 
-.. autoclass:: vista.Plotter
+.. autoclass:: pyvista.Plotter
    :show-inheritance:
    :members:
    :undoc-members:
@@ -96,17 +96,17 @@ Renderer
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.Renderer
+.. autoautosummary:: pyvista.Renderer
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.Renderer
+.. autoautosummary:: pyvista.Renderer
    :methods:
 
 
 
-.. autoclass:: vista.Renderer
+.. autoclass:: pyvista.Renderer
    :show-inheritance:
    :members:
    :undoc-members:
@@ -122,14 +122,14 @@ notebook:
 
 .. code:: python
 
-    import vista
-    sphere = vista.Sphere()
+    import pyvista
+    sphere = pyvista.Sphere()
 
     # short example
     cpos, image = sphere.plot(notebook=True)
 
     # long example
-    plotter = vista.Plotter(notebook=True)
+    plotter = pyvista.Plotter(notebook=True)
     plotter.add_mesh(sphere)
     plotter.plot()
 
@@ -140,17 +140,17 @@ notebook:
     Jupyter Inline Plotting
 
 To display interactive plots in Jupyter notebooks, use the
-:class:`vista.BackgroundPlotter` to open a rendering window in the background
+:class:`pyvista.BackgroundPlotter` to open a rendering window in the background
 that you can manipulate in real time from the Jupyter notebook:
 
 .. code-block:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     dataset = examples.load_uniform()
 
-    plotter = vista.BackgroundPlotter()
+    plotter = pyvista.BackgroundPlotter()
     plotter.add_mesh(dataset)
 
     # Then in another cell, you can add more to the plotter
@@ -160,21 +160,21 @@ that you can manipulate in real time from the Jupyter notebook:
 Background Plotting
 -------------------
 
-``vista`` provides a plotter that enables users to create a rendering window in
+PyVista provides a plotter that enables users to create a rendering window in
 the background that remains interactive while the user performs their
 processing. This creates the ability to make a rendering scene and interactively
 add or remove datasets from the scene as well as has some useful menu functions
 for common scene manipulation or export tasks. To get started, try instantiating
-the :class:`vista.BackgroundPlotter`:
+the :class:`pyvista.BackgroundPlotter`:
 
 .. code:: python
 
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
     dataset = examples.load_hexbeam()
 
-    p = vista.BackgroundPlotter()
+    p = pyvista.BackgroundPlotter()
 
     p.add_mesh(dataset)
 
@@ -184,22 +184,22 @@ the :class:`vista.BackgroundPlotter`:
 IPython Interactive Plotting Tools
 ----------------------------------
 
-``vista`` comes packed with several interactive plotting tools to make using the
+PyVista comes packed with several interactive plotting tools to make using the
 filters a bit more intuitive (see :ref:`ipy_tools_ref`).
 If in an IPython environment, call one of the tools on an input dataset to yield
 widgets that will control a filter or task in an interactive rendering scene.
-These tools create an :class:`vista.BackgroundPlotter` instance which can be
+These tools create an :class:`pyvista.BackgroundPlotter` instance which can be
 accessed under the ``.plotter`` attribute for further scene manipulation:
 
 .. code:: python
 
-   import vista
-   from vista import examples
+   import pyvista
+   from pyvista import examples
 
    dataset = examples.load_hexbeam()
 
    # Use the slicer tool
-   tool = vista.OrthogonalSlicer(dataset)
+   tool = pyvista.OrthogonalSlicer(dataset)
 
    # Get the plotter for adding more datasets:
    p = tool.plotter
@@ -222,8 +222,8 @@ values change through time:
     from threading import Thread
     import time
     import numpy as np
-    import vista
-    from vista import examples
+    import pyvista
+    from pyvista import examples
 
 
     globe = examples.load_globe()
@@ -231,7 +231,7 @@ values change through time:
     globe.set_active_scalar('scalars')
 
 
-    plotter = vista.BackgroundPlotter()
+    plotter = pyvista.BackgroundPlotter()
     plotter.add_mesh(globe, lighting=False, show_edges=True, texture=True, scalars='scalars')
     plotter.view_isometric()
 

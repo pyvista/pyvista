@@ -7,9 +7,9 @@ import imageio
 import numpy as np
 import pytest
 
-import vista
-from vista import examples
-from vista.plotting import system_supports_plotting
+import pyvista
+from pyvista import examples
+from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
 
@@ -19,18 +19,18 @@ if __name__ != '__main__':
 else:
     OFF_SCREEN = False
 
-vista.OFF_SCREEN = OFF_SCREEN
+pyvista.OFF_SCREEN = OFF_SCREEN
 
 
-sphere = vista.Sphere()
-sphere_b = vista.Sphere(1.0)
-sphere_c = vista.Sphere(2.0)
+sphere = pyvista.Sphere()
+sphere_b = pyvista.Sphere(1.0)
+sphere_c = pyvista.Sphere(2.0)
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot(tmpdir):
-    filename = os.path.join(vista.USER_DATA_PATH, 'tmp.png')
+    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.png')
     scalars = np.arange(sphere.n_points)
-    cpos, img = vista.plot(sphere,
+    cpos, img = pyvista.plot(sphere,
                           off_screen=OFF_SCREEN,
                           full_screen=True,
                           text='this is a sphere',
@@ -53,19 +53,19 @@ def test_plot(tmpdir):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_invalid_style():
     with pytest.raises(Exception):
-        vista.plot(sphere, style='not a style')
+        pyvista.plot(sphere, style='not a style')
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_bounds_axes_with_no_data():
-    plotter = vista.Plotter()
+    plotter = pyvista.Plotter()
     plotter.show_bounds()
     plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_show_grid():
-    plotter = vista.Plotter()
+    plotter = pyvista.Plotter()
     plotter.show_grid()
     plotter.add_mesh(sphere)
     plotter.close()
@@ -78,7 +78,7 @@ def test_set_camera_position():
             (0.0, 0.0, 0.0),
             (-0.7611973344707588, -0.5507178512374836, 0.3424740374436883)]
 
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.camera_position = 'xy'
     plotter.camera_position = 'xz'
@@ -93,7 +93,7 @@ def test_set_camera_position():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_no_active_scalars():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     with pytest.raises(Exception):
         plotter.update_scalars(np.arange(5))
@@ -103,7 +103,7 @@ def test_plot_no_active_scalars():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_show_bounds():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.show_bounds(show_xaxis=False,
                         show_yaxis=False,
@@ -124,7 +124,7 @@ def test_plot_show_bounds():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_label_fmt():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
     plotter.plot()
@@ -134,7 +134,7 @@ def test_plot_label_fmt():
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_show_bounds_params(grid, location):
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
     plotter.show_bounds(grid=grid, ticks='outside', location=location)
@@ -144,7 +144,7 @@ def test_plot_show_bounds_params(grid, location):
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plotter_scale():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.set_scale(10, 10, 10)
     plotter.set_scale(5.0)
@@ -156,7 +156,7 @@ def test_plotter_scale():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_add_scalar_bar():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
                 interactive=True, vertical=True)
@@ -165,30 +165,30 @@ def test_plot_add_scalar_bar():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_invalid_add_scalar_bar():
     with pytest.raises(Exception):
-        plotter = vista.Plotter()
+        plotter = pyvista.Plotter()
         plotter.add_scalar_bar()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_list():
-    vista.plot([sphere, sphere_b],
+    pyvista.plot([sphere, sphere_b],
               off_screen=OFF_SCREEN,
               style='points')
 
-    vista.plot([sphere, sphere_b, sphere_c],
+    pyvista.plot([sphere, sphere_b, sphere_c],
               off_screen=OFF_SCREEN,
               style='wireframe')
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_lines_invalid():
-    plotter = vista.Plotter()
+    plotter = pyvista.Plotter()
     with pytest.raises(Exception):
         plotter.add_lines(range(10))
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_open_gif_invalid():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     with pytest.raises(Exception):
         plotter.open_gif('file.abs')
 
@@ -196,10 +196,10 @@ def test_open_gif_invalid():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_make_movie():
     # Make temporary file
-    filename = os.path.join(vista.USER_DATA_PATH, 'tmp.mp4')
+    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.mp4')
 
     movie_sphere = sphere.copy()
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.open_movie(filename)
     actor = plotter.add_axes_at_origin()
     plotter.remove_actor(actor)
@@ -230,7 +230,7 @@ def test_make_movie():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_legend():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     with pytest.raises(Exception):
         plotter.add_legend()
@@ -242,7 +242,7 @@ def test_add_legend():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_axes_twice():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_axes()
     plotter.add_axes(interactive=True)
 
@@ -250,7 +250,7 @@ def test_add_axes_twice():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_point_labels():
     n = 10
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     points = np.random.random((n, 3))
 
     with pytest.raises(Exception):
@@ -265,7 +265,7 @@ def test_add_point_labels():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_points():
     n = 10
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     points = np.random.random((n, 3))
     plotter.add_points(points, scalars=np.arange(10), cmap=None, flip_scalars=True)
     plotter.plot()
@@ -273,26 +273,26 @@ def test_add_points():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_key_press_event():
-    plotter = vista.Plotter(off_screen=False)
+    plotter = pyvista.Plotter(off_screen=False)
     plotter.key_press_event(None, None)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
-    plotter = vista.Plotter(off_screen=False)
+    plotter = pyvista.Plotter(off_screen=False)
     plotter.left_button_down(None, None)
     # assert np.allclose(plotter.pickpoint, [0, 0, 0])
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_update():
-    plotter = vista.Plotter(off_screen=True)
+    plotter = pyvista.Plotter(off_screen=True)
     plotter.update()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_cell_scalars():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
                      n_colors=5, rng=10)
@@ -300,7 +300,7 @@ def test_plot_cell_scalars():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_clim():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
                      n_colors=5, clim=10)
@@ -311,7 +311,7 @@ def test_plot_clim():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_invalid_n_scalars():
     with pytest.raises(Exception):
-        plotter = vista.Plotter(off_screen=OFF_SCREEN)
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(sphere, scalars=np.arange(10))
         plotter.plot()
 
@@ -320,7 +320,7 @@ def test_invalid_n_scalars():
 def test_plot_arrow():
     cent = np.random.random(3)
     direction = np.random.random(3)
-    cpos, img = vista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
+    cpos, img = pyvista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
     assert np.any(img)
 
 
@@ -328,22 +328,22 @@ def test_plot_arrow():
 def test_plot_arrows():
     cent = np.random.random((100, 3))
     direction = np.random.random((100, 3))
-    cpos, img = vista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
+    cpos, img = pyvista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
     assert np.any(img)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_axes():
-    plotter = vista.Plotter(off_screen=True)
+    plotter = pyvista.Plotter(off_screen=True)
     plotter.add_axes()
-    plotter.add_mesh(vista.Sphere())
+    plotter.add_mesh(pyvista.Sphere())
     plotter.plot()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_screenshot():
-    plotter = vista.Plotter(off_screen=True)
-    plotter.add_mesh(vista.Sphere())
+    plotter = pyvista.Plotter(off_screen=True)
+    plotter.add_mesh(pyvista.Sphere())
     img = plotter.screenshot(transparent_background=True)
     assert np.any(img)
     img_again = plotter.screenshot()
@@ -371,21 +371,21 @@ def test_invalid_font():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_scalars_by_name():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     data = examples.load_uniform()
     plotter.add_mesh(data, scalars='Spatial Cell Data')
     plotter.plot()
 
 
 def test_themes():
-    vista.set_plot_theme('paraview')
-    vista.set_plot_theme('document')
-    vista.set_plot_theme('default')
+    pyvista.set_plot_theme('paraview')
+    pyvista.set_plot_theme('document')
+    pyvista.set_plot_theme('default')
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_multi_block_plot():
-    multi = vista.MultiBlock()
+    multi = pyvista.MultiBlock()
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
     arr = np.random.rand(uni.n_cells)
@@ -398,7 +398,7 @@ def test_multi_block_plot():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_clear():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.clear()
     plotter.plot()
@@ -409,7 +409,7 @@ def test_plot_texture():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
     texture = examples.load_globe_texture()
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=texture)
     plotter.plot()
 
@@ -417,7 +417,7 @@ def test_plot_texture():
 def test_plot_texture_associated():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=True)
     plotter.plot()
 
@@ -425,8 +425,8 @@ def test_plot_texture_associated():
 def test_read_texture_from_numpy():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
-    texture = vista.numpy_to_texture(imageio.imread(examples.mapfile))
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    texture = pyvista.numpy_to_texture(imageio.imread(examples.mapfile))
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=texture)
     plotter.plot()
 
@@ -434,8 +434,8 @@ def test_read_texture_from_numpy():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_rgb():
     """"Test adding a texture to a plot"""
-    image = vista.read(examples.mapfile)
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    image = pyvista.read(examples.mapfile)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(image, rgb=True)
     plotter.plot()
 
@@ -443,15 +443,15 @@ def test_plot_rgb():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_multi_component_array():
     """"Test adding a texture to a plot"""
-    image = vista.read(examples.mapfile)
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    image = pyvista.read(examples.mapfile)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(image)
     plotter.plot()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_camera():
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.view_isometric()
     plotter.reset_camera()
@@ -468,25 +468,25 @@ def test_camera():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_multi_renderers():
-    plotter = vista.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
 
     loc = (0, 0)
     plotter.add_text('Render Window 0', loc=loc, font_size=30)
-    sphere = vista.Sphere()
+    sphere = pyvista.Sphere()
     plotter.add_mesh(sphere, loc=loc, scalars=sphere.points[:, 2])
     plotter.add_scalar_bar('Z', vertical=True)
 
     loc = (0, 1)
     plotter.add_text('Render Window 1', loc=loc, font_size=30)
-    plotter.add_mesh(vista.Cube(), loc=loc, show_edges=True)
+    plotter.add_mesh(pyvista.Cube(), loc=loc, show_edges=True)
 
     loc = (1, 0)
     plotter.add_text('Render Window 2', loc=loc, font_size=30)
-    plotter.add_mesh(vista.Arrow(), color='y', loc=loc, show_edges=True)
+    plotter.add_mesh(pyvista.Arrow(), color='y', loc=loc, show_edges=True)
 
     plotter.subplot(1, 1)
     plotter.add_text('Render Window 3', loc=loc, font_size=30)
-    plotter.add_mesh(vista.Cone(), color='g', loc=loc, show_edges=True,
+    plotter.add_mesh(pyvista.Cone(), color='g', loc=loc, show_edges=True,
                      backface_culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
     plotter.show_bounds(all_edges=True)
@@ -503,7 +503,7 @@ def test_orthographic_slicer():
     slices = data.slice_orthogonal()
 
     # Orthographic Slicer
-    p = vista.Plotter(shape=(2,2), off_screen=OFF_SCREEN)
+    p = pyvista.Plotter(shape=(2,2), off_screen=OFF_SCREEN)
 
     p.subplot(1,1)
     p.add_mesh(slices, clim=data.get_data_range())
@@ -530,7 +530,7 @@ def test_orthographic_slicer():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_remove_actor():
     data = examples.load_uniform()
-    plotter = vista.Plotter(off_screen=OFF_SCREEN)
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(data, name='data')
     plotter.add_mesh(data, name='data')
     plotter.add_mesh(data, name='data')
@@ -540,7 +540,7 @@ def test_remove_actor():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_image_properties():
     mesh = examples.load_uniform()
-    p = vista.Plotter(off_screen=OFF_SCREEN)
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh)
     p.show(auto_close=False) # DO NOT close plotter
     # Get RGB image

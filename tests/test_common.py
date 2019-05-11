@@ -4,10 +4,10 @@ import numpy as np
 import pytest
 import vtk
 
-import vista
-from vista import examples
+import pyvista
+from pyvista import examples
 
-grid = vista.UnstructuredGrid(examples.hexbeamfile)
+grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 py2 = sys.version_info.major == 2
 
@@ -108,7 +108,7 @@ def test_transform():
     grid_c = grid.copy()
     grid_a.transform(trans)
     grid_b.transform(trans.GetMatrix())
-    grid_c.transform(vista.trans_from_matrix(trans.GetMatrix()))
+    grid_c.transform(pyvista.trans_from_matrix(trans.GetMatrix()))
     assert np.allclose(grid_a.points, grid_b.points)
     assert np.allclose(grid_a.points, grid_c.points)
 
@@ -140,7 +140,7 @@ def test_rotate_x():
     trans_filter.SetTransform(trans)
     trans_filter.SetInputData(grid)
     trans_filter.Update()
-    grid_a = vista.UnstructuredGrid(trans_filter.GetOutput())
+    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
     grid_b = grid.copy()
     grid_b.rotate_x(angle)
@@ -157,7 +157,7 @@ def test_rotate_y():
     trans_filter.SetTransform(trans)
     trans_filter.SetInputData(grid)
     trans_filter.Update()
-    grid_a = vista.UnstructuredGrid(trans_filter.GetOutput())
+    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
     grid_b = grid.copy()
     grid_b.rotate_y(angle)
@@ -174,7 +174,7 @@ def test_rotate_z():
     trans_filter.SetTransform(trans)
     trans_filter.SetInputData(grid)
     trans_filter.Update()
-    grid_a = vista.UnstructuredGrid(trans_filter.GetOutput())
+    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
     grid_b = grid.copy()
     grid_b.rotate_z(angle)
@@ -291,7 +291,7 @@ def test_texture():
                         [1, 1],
                         [0, 1]])
     # Create the poly data
-    mesh = vista.PolyData(vertices, faces)
+    mesh = pyvista.PolyData(vertices, faces)
     # Attempt setting the texture coordinates
     mesh.t_coords = t_coords
     # now grab the texture coordinates
@@ -319,7 +319,7 @@ def test_no_arrows():
 
 
 def test_arrows():
-    sphere = vista.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
@@ -334,7 +334,7 @@ def test_arrows():
 
     assert sphere.active_vectors_info[1] == '_vectors'
     arrows = sphere.arrows
-    assert isinstance(arrows, vista.PolyData)
+    assert isinstance(arrows, pyvista.PolyData)
     assert np.any(arrows.points)
     sphere.set_active_vectors('_vectors')
     sphere.active_vectors_name == '_vectors'
@@ -417,7 +417,7 @@ def test_change_name_fail():
 
 
 def test_get_cell_scalar_fail():
-    sphere = vista.Sphere()
+    sphere = pyvista.Sphere()
     with pytest.raises(RuntimeError):
         sphere._cell_scalar(name=None)
 
@@ -434,32 +434,32 @@ def set_cell_vectors():
 
 def test_axis_rotation_invalid():
     with pytest.raises(Exception):
-        vista.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = vista.common.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.common.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
 def test_bad_instantiation():
     with pytest.raises(TypeError):
-        vista.Common()
+        pyvista.Common()
     with pytest.raises(TypeError):
-        vista.Grid()
+        pyvista.Grid()
     with pytest.raises(TypeError):
-        vista.DataSetFilters()
+        pyvista.DataSetFilters()
     with pytest.raises(TypeError):
-        vista.PointGrid()
+        pyvista.PointGrid()
     with pytest.raises(TypeError):
-        vista.ipy_tools.InteractiveTool()
+        pyvista.ipy_tools.InteractiveTool()
     with pytest.raises(TypeError):
-        vista.BasePlotter()
+        pyvista.BasePlotter()
 
 
 def test_string_arrays():
-    poly = vista.PolyData(np.random.rand(10, 3))
+    poly = pyvista.PolyData(np.random.rand(10, 3))
     arr = np.array(['foo{}'.format(i) for i in range(10)])
     poly['foo'] = arr
     back = poly['foo']

@@ -17,8 +17,8 @@ vtkRegularPolygonSource
 import numpy as np
 import vtk
 
-import vista
-from vista import PolyData
+import pyvista
+from pyvista import PolyData
 
 
 def translate(surf, center, direction):
@@ -69,14 +69,14 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
 
     Returns
     -------
-    cylinder : vista.PolyData
+    cylinder : pyvista.PolyData
         Cylinder surface.
 
     Examples
     --------
-    >>> import vista
+    >>> import pyvista
     >>> import numpy as np
-    >>> cylinder = vista.Cylinder(np.array([1, 2, 3]), np.array([1, 1, 1]), 1, 1)
+    >>> cylinder = pyvista.Cylinder(np.array([1, 2, 3]), np.array([1, 1, 1]), 1, 1)
     >>> cylinder.plot() # doctest:+SKIP
 
     """
@@ -120,7 +120,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
 
     Returns
     -------
-    arrow : vista.PolyData
+    arrow : pyvista.PolyData
         Arrow surface.
     """
     # Create arrow object
@@ -173,7 +173,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
     Returns
     -------
-    sphere : vista.PolyData
+    sphere : pyvista.PolyData
         Sphere mesh.
     """
     sphere = vtk.vtkSphereSource()
@@ -218,7 +218,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Returns
     -------
-    plane : vista.PolyData
+    plane : pyvista.PolyData
         Plane mesh
 
     """
@@ -259,7 +259,7 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     src.SetPoint2(*pointb)
     src.SetResolution(resolution)
     src.Update()
-    return vista.wrap(src.GetOutput())
+    return pyvista.wrap(src.GetOutput())
 
 
 def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
@@ -296,7 +296,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
         src.SetYLength(y_length)
         src.SetZLength(z_length)
     src.Update()
-    return vista.wrap(src.GetOutput())
+    return pyvista.wrap(src.GetOutput())
 
 
 def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
@@ -346,7 +346,7 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
     src.SetRadius(radius)
     src.SetResolution(resolution)
     src.Update()
-    return vista.wrap(src.GetOutput())
+    return pyvista.wrap(src.GetOutput())
 
 
 def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
@@ -375,7 +375,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
     src.SetRadius(radius)
     src.SetNormal(normal)
     src.Update()
-    return vista.wrap(src.GetOutput())
+    return pyvista.wrap(src.GetOutput())
 
 
 def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
@@ -411,7 +411,7 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     src.SetRadialResolution(r_res)
     src.SetCircumferentialResolution(c_res)
     src.Update()
-    return vista.wrap(src.GetOutput())
+    return pyvista.wrap(src.GetOutput())
 
 
 def Text3D(string, depth=0.5):
@@ -428,4 +428,4 @@ def Text3D(string, depth=0.5):
     tri_filter = vtk.vtkTriangleFilter()
     tri_filter.SetInputConnection(extrude.GetOutputPort())
     tri_filter.Update()
-    return vista.wrap(tri_filter.GetOutput())
+    return pyvista.wrap(tri_filter.GetOutput())

@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-import vista
-from vista import examples
+import pyvista
+from pyvista import examples
 
 datasets = [
     examples.load_uniform(), # UniformGrid
@@ -20,13 +20,13 @@ def test_clip_filter():
     for i, dataset in enumerate(datasets):
         clp = dataset.clip(normal=normals[i], invert=True)
         assert clp is not None
-        assert isinstance(clp, vista.UnstructuredGrid)
+        assert isinstance(clp, pyvista.UnstructuredGrid)
 
 def test_clip_box():
     for i, dataset in enumerate(datasets):
         clp = dataset.clip_box(invert=True)
         assert clp is not None
-        assert isinstance(clp, vista.UnstructuredGrid)
+        assert isinstance(clp, pyvista.UnstructuredGrid)
     dataset = examples.load_airplane()
     # test length 3 bounds
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False)
@@ -40,7 +40,7 @@ def test_slice_filter():
     for i, dataset in enumerate(datasets):
         slc = dataset.slice(normal=normals[i])
         assert slc is not None
-        assert isinstance(slc, vista.PolyData)
+        assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
     with pytest.raises(AssertionError):
         dataset.slice(origin=(10, 15, 15))
@@ -52,10 +52,10 @@ def test_slice_orthogonal_filter():
     for i, dataset in enumerate(datasets):
         slices = dataset.slice_orthogonal()
         assert slices is not None
-        assert isinstance(slices, vista.MultiBlock)
+        assert isinstance(slices, pyvista.MultiBlock)
         assert slices.n_blocks == 3
         for slc in slices:
-            assert isinstance(slc, vista.PolyData)
+            assert isinstance(slc, pyvista.PolyData)
 
 
 def test_slice_along_axis():
@@ -65,10 +65,10 @@ def test_slice_along_axis():
     for i, dataset in enumerate(datasets):
         slices = dataset.slice_along_axis(n=ns[i], axis=axii[i])
         assert slices is not None
-        assert isinstance(slices, vista.MultiBlock)
+        assert isinstance(slices, pyvista.MultiBlock)
         assert slices.n_blocks == ns[i]
         for slc in slices:
-            assert isinstance(slc, vista.PolyData)
+            assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
     with pytest.raises(RuntimeError):
         dataset.slice_along_axis(axis='u')
@@ -77,24 +77,24 @@ def test_threshold():
     for i, dataset in enumerate(datasets[0:3]):
         thresh = dataset.threshold()
         assert thresh is not None
-        assert isinstance(thresh, vista.UnstructuredGrid)
+        assert isinstance(thresh, pyvista.UnstructuredGrid)
     # Test value ranges
     dataset = examples.load_uniform() # UniformGrid
     thresh = dataset.threshold(100, invert=False)
     assert thresh is not None
-    assert isinstance(thresh, vista.UnstructuredGrid)
+    assert isinstance(thresh, pyvista.UnstructuredGrid)
     thresh = dataset.threshold([100, 500], invert=False)
     assert thresh is not None
-    assert isinstance(thresh, vista.UnstructuredGrid)
+    assert isinstance(thresh, pyvista.UnstructuredGrid)
     thresh = dataset.threshold([100, 500], invert=True)
     assert thresh is not None
-    assert isinstance(thresh, vista.UnstructuredGrid)
+    assert isinstance(thresh, pyvista.UnstructuredGrid)
     # Now test datasets without arrays
     with pytest.raises(AssertionError):
         for i, dataset in enumerate(datasets[3:-1]):
             thresh = dataset.threshold()
             assert thresh is not None
-            assert isinstance(thresh, vista.UnstructuredGrid)
+            assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
     with pytest.raises(AssertionError):
         dataset.threshold([10, 100, 300])
@@ -107,7 +107,7 @@ def test_threshold_percent():
     for i, dataset in enumerate(datasets[0:3]):
         thresh = dataset.threshold_percent(percent=percents[i], invert=inverts[i])
         assert thresh is not None
-        assert isinstance(thresh, vista.UnstructuredGrid)
+        assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
     result = dataset.threshold_percent(0.75, scalars='Spatial Cell Data')
     with pytest.raises(RuntimeError):
@@ -120,26 +120,26 @@ def test_outline():
     for i, dataset in enumerate(datasets):
         outline = dataset.outline()
         assert outline is not None
-        assert isinstance(outline, vista.PolyData)
+        assert isinstance(outline, pyvista.PolyData)
 
 def test_outline_corners():
     for i, dataset in enumerate(datasets):
         outline = dataset.outline_corners()
         assert outline is not None
-        assert isinstance(outline, vista.PolyData)
+        assert isinstance(outline, pyvista.PolyData)
 
 
 def test_extract_geometry():
     for i, dataset in enumerate(datasets):
         outline = dataset.extract_geometry()
         assert outline is not None
-        assert isinstance(outline, vista.PolyData)
+        assert isinstance(outline, pyvista.PolyData)
 
 def test_wireframe():
     for i, dataset in enumerate(datasets):
         wire = dataset.wireframe()
         assert wire is not None
-        assert isinstance(wire, vista.PolyData)
+        assert isinstance(wire, pyvista.PolyData)
 
 
 def test_contour():
@@ -151,7 +151,7 @@ def test_contour():
     with pytest.raises(AssertionError):
         result = dataset.contour(scalars='Spatial Cell Data')
     with pytest.raises(RuntimeError):
-        result = dataset.contour(isosurfaces=vista.PolyData())
+        result = dataset.contour(isosurfaces=pyvista.PolyData())
     dataset = examples.load_airplane()
     with pytest.raises(AssertionError):
         result = dataset.contour()
@@ -218,7 +218,7 @@ def test_compute_cell_sizes():
         assert 'Area' in result.scalar_names
         assert 'Volume' in result.scalar_names
     # Test the volume property
-    grid = vista.UniformGrid((10,10,10))
+    grid = pyvista.UniformGrid((10,10,10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
 
@@ -228,15 +228,15 @@ def test_cell_centers():
     for i, dataset in enumerate(datasets):
         result = dataset.cell_centers()
         assert result is not None
-        assert isinstance(result, vista.PolyData)
+        assert isinstance(result, pyvista.PolyData)
 
 def test_glyph():
     for i, dataset in enumerate(datasets):
         result = dataset.glyph()
         assert result is not None
-        assert isinstance(result, vista.PolyData)
+        assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
-    sphere = vista.Sphere(radius=3.14)
+    sphere = pyvista.Sphere(radius=3.14)
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
     np.cos(sphere.points[:, 1]),
@@ -285,7 +285,7 @@ def test_point_data_to_cell_data():
 def test_triangulate():
     data = examples.load_uniform()
     tri = data.triangulate()
-    assert isinstance(tri, vista.UnstructuredGrid)
+    assert isinstance(tri, pyvista.UnstructuredGrid)
     assert np.any(tri.cells)
 
 
@@ -304,7 +304,7 @@ def test_smooth():
 
 
 def test_resample():
-    mesh = vista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    mesh = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
     result = mesh.sample(data_to_probe)
     name = 'Spatial Point Data'

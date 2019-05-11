@@ -1,6 +1,6 @@
 import pytest
 
-from vista import colors
+from pyvista import colors
 
 
 def test_invalid_color_str_single_char():

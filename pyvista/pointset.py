@@ -15,14 +15,14 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
 from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
-import vista
-from vista.filters import _get_output
+import pyvista
+from pyvista.filters import _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PolyData(vtkPolyData, vista.Common):
+class PolyData(vtkPolyData, pyvista.Common):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -36,27 +36,27 @@ class PolyData(vtkPolyData, vista.Common):
 
     Examples
     --------
-    >>> import vista
-    >>> from vista import examples
+    >>> import pyvista
+    >>> from pyvista import examples
     >>> import vtk
     >>> import numpy as np
 
-    >>> surf = vista.PolyData()  # Create an empty mesh
+    >>> surf = pyvista.PolyData()  # Create an empty mesh
 
     >>> # Initialize from a vtk.vtkPolyData object
     >>> vtkobj = vtk.vtkPolyData()
-    >>> surf = vista.PolyData(vtkobj)
+    >>> surf = pyvista.PolyData(vtkobj)
 
     >>> # initialize from just vertices
     >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 0.5, 0], [0, 0.5, 0],])
-    >>> surf = vista.PolyData(vertices)
+    >>> surf = pyvista.PolyData(vertices)
 
     >>> # initialize from vertices and faces
     >>> faces = np.hstack([[3, 0, 1, 2], [3, 0, 3, 2]]).astype(np.int8)
-    >>> surf = vista.PolyData(vertices, faces)
+    >>> surf = pyvista.PolyData(vertices, faces)
 
     >>>  # initialize from a filename
-    >>> surf = vista.PolyData(examples.antfile)
+    >>> surf = pyvista.PolyData(examples.antfile)
     """
 
     def __init__(self, *args, **kwargs):
@@ -82,7 +82,7 @@ class PolyData(vtkPolyData, vista.Common):
                 npoints = points.shape[0]
                 cells = np.hstack((np.ones((npoints, 1)),
                                    np.arange(npoints).reshape(-1, 1)))
-                cells = np.ascontiguousarray(cells, dtype=vista.ID_TYPE)
+                cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
                 cells = np.reshape(cells, (2*npoints))
                 self._from_arrays(points, cells, deep, verts=True)
             else:
@@ -99,10 +99,10 @@ class PolyData(vtkPolyData, vista.Common):
             raise TypeError('Invalid input type')
 
     def __repr__(self):
-        return vista.Common.__repr__(self)
+        return pyvista.Common.__repr__(self)
 
     def __str__(self):
-        return vista.Common.__str__(self)
+        return pyvista.Common.__str__(self)
 
     def _load_file(self, filename):
         """Load a surface mesh from a mesh file.
@@ -126,7 +126,7 @@ class PolyData(vtkPolyData, vista.Common):
             raise Exception('File %s does not exist' % filename)
 
         # Get extension
-        ext = vista.get_ext(filename)
+        ext = pyvista.get_ext(filename)
 
         # Select reader
         if ext == '.ply':
@@ -157,8 +157,8 @@ class PolyData(vtkPolyData, vista.Common):
 
     @lines.setter
     def lines(self, lines):
-        if lines.dtype != vista.ID_TYPE:
-            lines = lines.astype(vista.ID_TYPE)
+        if lines.dtype != pyvista.ID_TYPE:
+            lines = lines.astype(pyvista.ID_TYPE)
 
         # get number of faces
         if lines.ndim == 1:
@@ -180,8 +180,8 @@ class PolyData(vtkPolyData, vista.Common):
     @faces.setter
     def faces(self, faces):
         """ set faces without copying """
-        if faces.dtype != vista.ID_TYPE:
-            faces = faces.astype(vista.ID_TYPE)
+        if faces.dtype != pyvista.ID_TYPE:
+            faces = faces.astype(pyvista.ID_TYPE)
 
         # get number of faces
         if faces.ndim == 1:
@@ -224,7 +224,7 @@ class PolyData(vtkPolyData, vista.Common):
         Examples
         --------
         >>> import numpy as np
-        >>> import vista
+        >>> import pyvista
         >>> vertices = np.array([[0, 0, 0],
         ...                      [1, 0, 0],
         ...                      [1, 1, 0],
@@ -233,7 +233,7 @@ class PolyData(vtkPolyData, vista.Common):
         >>> faces = np.hstack([[4, 0, 1, 2, 3],
         ...                    [3, 0, 1, 4],
         ...                    [3, 1, 2, 4]])  # one square and two triangles
-        >>> surf = vista.PolyData(vertices, faces)
+        >>> surf = pyvista.PolyData(vertices, faces)
 
         """
         if deep or verts:
@@ -243,8 +243,8 @@ class PolyData(vtkPolyData, vista.Common):
 
             # Convert to a vtk array
             vtkcells = vtk.vtkCellArray()
-            if faces.dtype != vista.ID_TYPE:
-                faces = faces.astype(vista.ID_TYPE)
+            if faces.dtype != pyvista.ID_TYPE:
+                faces = faces.astype(pyvista.ID_TYPE)
 
             # get number of faces
             if faces.ndim == 1:
@@ -287,7 +287,7 @@ class PolyData(vtkPolyData, vista.Common):
         featureEdges.SetFeatureAngle(angle)
         featureEdges.Update()
         edges = _get_output(featureEdges)
-        orig_id = vista.point_scalar(edges, 'point_ind')
+        orig_id = pyvista.point_scalar(edges, 'point_ind')
 
         return np.in1d(self.point_arrays['point_ind'], orig_id,
                        assume_unique=True)
@@ -312,7 +312,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Parameters
         ----------
-        cut : vista.PolyData
+        cut : pyvista.PolyData
             Mesh making the cut
 
         inplace : bool, optional
@@ -320,7 +320,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             The cut mesh when inplace=False
 
         """
@@ -351,7 +351,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Parameters
         ----------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             The mesh to add.
 
         inplace : bool, optional
@@ -359,7 +359,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        joinedmesh : vista.PolyData
+        joinedmesh : pyvista.PolyData
             Initial mesh and the new mesh when inplace=False.
 
         """
@@ -380,7 +380,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Parameters
         ----------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             The mesh to perform a union against.
 
         inplace : bool, optional
@@ -388,7 +388,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        union : vista.PolyData
+        union : pyvista.PolyData
             The union mesh when inplace=False.
 
         """
@@ -412,7 +412,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Parameters
         ----------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             The mesh to perform a union against.
 
         inplace : bool, optional
@@ -420,7 +420,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        union : vista.PolyData
+        union : pyvista.PolyData
             The union mesh when inplace=False.
 
         """
@@ -546,7 +546,7 @@ class PolyData(vtkPolyData, vista.Common):
             - Minimum
 
         **kwargs : optional
-            See help(vista.plot)
+            See help(pyvista.plot)
 
         Returns
         -------
@@ -568,7 +568,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Mesh containing only triangles.  None when inplace=True
 
         """
@@ -616,7 +616,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Decimated mesh. None when inplace=True.
 
         """
@@ -677,7 +677,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Decimated mesh. None when inplace=True.
 
         """
@@ -728,7 +728,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Tube-filtered mesh. None when inplace=True.
 
         """
@@ -795,13 +795,13 @@ class PolyData(vtkPolyData, vista.Common):
         Returns
         -------
         mesh : Polydata object
-            vista polydata object.  None when inplace=True
+            pyvista polydata object.  None when inplace=True
 
         Examples
         --------
-        >>> from vista import examples
-        >>> import vista
-        >>> mesh = vista.PolyData(examples.planefile)
+        >>> from pyvista import examples
+        >>> import pyvista
+        >>> mesh = pyvista.PolyData(examples.planefile)
         >>> submesh = mesh.subdivide(1, 'loop') # doctest:+SKIP
 
         alternatively, update mesh in-place
@@ -865,7 +865,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        edges : vista.vtkPolyData
+        edges : pyvista.vtkPolyData
             Extracted edges. None if inplace=True.
 
         """
@@ -956,7 +956,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        outmesh : vista.PolyData
+        outmesh : pyvista.PolyData
             Decimated mesh.  None when inplace=True.
 
         """
@@ -1067,7 +1067,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Updated mesh with cell and point normals if inplace=False
 
         Notes
@@ -1126,7 +1126,7 @@ class PolyData(vtkPolyData, vista.Common):
 
     def clip_with_plane(self, origin, normal, value=0, inplace=False):
         """
-        Clip a vista.PolyData or vtk.vtkPolyData with a plane.
+        Clip a pyvista.PolyData or vtk.vtkPolyData with a plane.
 
         Can be used to open a mesh which has been closed along a well-defined
         plane.
@@ -1148,7 +1148,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Updated mesh with cell and point normals if inplace=False. Otherwise None.
 
         Notes
@@ -1191,7 +1191,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Largest connected set in mesh
 
         """
@@ -1205,7 +1205,7 @@ class PolyData(vtkPolyData, vista.Common):
 
     def fill_holes(self, hole_size, inplace=False):  # pragma: no cover
         """
-        Fill holes in a vista.PolyData or vtk.vtkPolyData object.
+        Fill holes in a pyvista.PolyData or vtk.vtkPolyData object.
 
         Holes are identified by locating boundary edges, linking them together
         into loops, and then triangulating the resulting loops. Note that you
@@ -1225,11 +1225,11 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Mesh with holes filled.  None when inplace=True
 
         """
-        logging.warning('vista.pointset.PolyData.fill_holes is known to segfault. ' +
+        logging.warning('pyvista.pointset.PolyData.fill_holes is known to segfault. ' +
                         'Use at your own risk')
         fill = vtk.vtkFillHolesFilter()
         fill.SetHoleSize(hole_size)
@@ -1273,7 +1273,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
         """
         clean = vtk.vtkCleanPolyData()
@@ -1358,7 +1358,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        output : vista.PolyData
+        output : pyvista.PolyData
             PolyData object consisting of the line segment between the two given
             vertices.
 
@@ -1457,7 +1457,7 @@ class PolyData(vtkPolyData, vista.Common):
         intersection_cells = np.array(intersection_cells)
 
         if plot:
-            plotter = vista.Plotter(off_screen=off_screen)
+            plotter = pyvista.Plotter(off_screen=off_screen)
             plotter.add_mesh(self, label='Test Mesh')
             segment = np.array([origin, end_point])
             plotter.add_lines(segment, 'b', label='Ray Segment')
@@ -1473,7 +1473,7 @@ class PolyData(vtkPolyData, vista.Common):
         """ Plots boundaries of a mesh """
         edges = self.extract_edges()
 
-        plotter = vista.Plotter(off_screen=kwargs.pop('off_screen', False),
+        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
                                notebook=kwargs.pop('notebook', None))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
         plotter.add_mesh(self, legend='Mesh', **kwargs)
@@ -1484,7 +1484,7 @@ class PolyData(vtkPolyData, vista.Common):
         """
         Plot the point normals of a mesh.
         """
-        plotter = vista.Plotter(off_screen=kwargs.pop('off_screen', False),
+        plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
                                notebook=kwargs.pop('notebook', None))
         if show_mesh:
             plotter.add_mesh(self, **kwargs)
@@ -1520,7 +1520,7 @@ class PolyData(vtkPolyData, vista.Common):
 
         Returns
         -------
-        mesh : vista.PolyData
+        mesh : pyvista.PolyData
             Mesh without the points flagged for removal.  Not returned
             when inplace=False.
 
@@ -1556,7 +1556,7 @@ class PolyData(vtkPolyData, vista.Common):
         new_points = self.points.take(uni[0], 0)
 
         nfaces = fmask.sum()
-        faces = np.empty((nfaces, 4), dtype=vista.ID_TYPE)
+        faces = np.empty((nfaces, 4), dtype=pyvista.ID_TYPE)
         faces[:, 0] = 3
         faces[:, 1:] = np.reshape(uni[1], (nfaces, 3))
 
@@ -1610,17 +1610,17 @@ class PolyData(vtkPolyData, vista.Common):
             return mesh
 
     def delauney_2d(self):
-        """DEPRECATED. Please see :func:`vista.PolyData.delaunay_2d`"""
+        """DEPRECATED. Please see :func:`pyvista.PolyData.delaunay_2d`"""
         raise AttributeError('`delauney_2d` is deprecated because we made a '\
                              'spelling mistake. Please use `delaunay_2d`.')
 
 
-class PointGrid(vista.Common):
+class PointGrid(pyvista.Common):
     """ Class in common with structured and unstructured grids """
 
     def __new__(cls, *args, **kwargs):
         if cls is PointGrid:
-            raise TypeError("vista.PointGrid is an abstract class and may not be instantiated.")
+            raise TypeError("pyvista.PointGrid is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
@@ -1641,7 +1641,7 @@ class PointGrid(vista.Common):
             - minimum
 
         **kwargs : optional
-            Optional keyword arguments.  See help(vista.plot)
+            Optional keyword arguments.  See help(pyvista.plot)
 
         Returns
         -------
@@ -1681,7 +1681,7 @@ class PointGrid(vista.Common):
 
         Returns
         -------
-        extsurf : vista.PolyData
+        extsurf : pyvista.PolyData
             Surface mesh of the grid
         """
         surf_filter = vtk.vtkDataSetSurfaceFilter()
@@ -1746,7 +1746,7 @@ class PointGrid(vista.Common):
 
         Returns
         -------
-        edges : vista.vtkPolyData
+        edges : pyvista.vtkPolyData
             Extracted edges
 
         """
@@ -1769,22 +1769,22 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
     Examples
     --------
-    >>> import vista
-    >>> from vista import examples
+    >>> import pyvista
+    >>> from pyvista import examples
     >>> import vtk
 
     >>> # Create an empy grid
-    >>> grid = vista.UnstructuredGrid()
+    >>> grid = pyvista.UnstructuredGrid()
 
     >>> # Copy a vtkUnstructuredGrid
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
-    >>> grid = vista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
+    >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
     >>> # from arrays
-    >>> #grid = vista.UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)
+    >>> #grid = pyvista.UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)
 
     >>> # From a string filename
-    >>> grid = vista.UnstructuredGrid(examples.hexbeamfile)
+    >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     """
 
@@ -1825,11 +1825,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
 
     def __repr__(self):
-        return vista.Common.__repr__(self)
+        return pyvista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vista.Common.__str__(self)
+        return pyvista.Common.__str__(self)
 
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
@@ -1857,7 +1857,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         --------
         >>> import numpy
         >>> import vtk
-        >>> import vista
+        >>> import pyvista
         >>> offset = np.array([0, 9])
         >>> cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
         >>> cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int8)
@@ -1882,15 +1882,15 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         >>> points = np.vstack((cell1, cell2))
 
-        >>> grid = vista.UnstructuredGrid(offset, cells, cell_type, points)
+        >>> grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
 
         """
 
-        if offset.dtype != vista.ID_TYPE:
-            offset = offset.astype(vista.ID_TYPE)
+        if offset.dtype != pyvista.ID_TYPE:
+            offset = offset.astype(pyvista.ID_TYPE)
 
-        if cells.dtype != vista.ID_TYPE:
-            cells = cells.astype(vista.ID_TYPE)
+        if cells.dtype != pyvista.ID_TYPE:
+            cells = cells.astype(pyvista.ID_TYPE)
 
         if not cells.flags['C_CONTIGUOUS']:
             cells = np.ascontiguousarray(cells)
@@ -1912,7 +1912,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         vtkcells.SetCells(ncells, numpy_to_vtkIdTypeArray(cells.ravel(), deep=deep))
 
         # Convert points to vtkPoints object
-        points = vista.vtk_points(points, deep=deep)
+        points = pyvista.vtk_points(points, deep=deep)
 
         # Create unstructured grid
         self.SetPoints(points)
@@ -2027,7 +2027,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         Returns
         -------
-        grid : vista.UnstructuredGrid
+        grid : pyvista.UnstructuredGrid
             UnstructuredGrid containing only linear cells.
         """
         lgrid = self.copy(deep)
@@ -2091,7 +2091,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         Returns
         -------
-        subgrid : vista.UnstructuredGrid
+        subgrid : pyvista.UnstructuredGrid
             Subselected grid
 
         """
@@ -2099,10 +2099,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
             ind = np.array(ind, np.ndarray)
 
         if ind.dtype == np.bool:
-            ind = ind.nonzero()[0].astype(vista.ID_TYPE)
+            ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
 
-        if ind.dtype != vista.ID_TYPE:
-            ind = ind.astype(vista.ID_TYPE)
+        if ind.dtype != pyvista.ID_TYPE:
+            ind = ind.astype(pyvista.ID_TYPE)
 
         if not ind.flags.c_contiguous:
             ind = np.ascontiguousarray(ind)
@@ -2143,7 +2143,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
         Returns
         -------
-        subgrid : vista.UnstructuredGrid
+        subgrid : pyvista.UnstructuredGrid
             Subselected grid.
         """
         try:
@@ -2219,7 +2219,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
         if not main_has_priority:
             append_filter.AddInputData(self)
 
-        if isinstance(grid, vista.UnstructuredGrid):
+        if isinstance(grid, pyvista.UnstructuredGrid):
             append_filter.AddInputData(grid)
         elif isinstance(grid, list):
             grids = grid
@@ -2258,23 +2258,23 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     Examples
     --------
-    >>> import vista
+    >>> import pyvista
     >>> import vtk
     >>> import numpy as np
 
     >>> # Create empty grid
-    >>> grid = vista.StructuredGrid()
+    >>> grid = pyvista.StructuredGrid()
 
     >>> # Initialize from a vtk.vtkStructuredGrid object
     >>> vtkgrid = vtk.vtkStructuredGrid()
-    >>> grid = vista.StructuredGrid(vtkgrid)
+    >>> grid = pyvista.StructuredGrid(vtkgrid)
 
     >>> # Create from NumPy arrays
     >>> xrng = np.arange(-10, 10, 2)
     >>> yrng = np.arange(-10, 10, 2)
     >>> zrng = np.arange(-10, 10, 2)
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
-    >>> grid = vista.StructuredGrid(x, y, z)
+    >>> grid = pyvista.StructuredGrid(x, y, z)
 
 
     """
@@ -2298,11 +2298,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
 
     def __repr__(self):
-        return vista.Common.__repr__(self)
+        return pyvista.Common.__repr__(self)
 
 
     def __str__(self):
-        return vista.Common.__str__(self)
+        return pyvista.Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):
@@ -2336,7 +2336,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         # Create structured grid
         self.SetDimensions(dim)
-        self.SetPoints(vista.vtk_points(points))
+        self.SetPoints(pyvista.vtk_points(points))
 
     def _load_file(self, filename):
         """

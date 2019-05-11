@@ -1,21 +1,21 @@
 Multiple Block Datasets
 =======================
 
-.. automodule:: vista.container
+.. automodule:: pyvista.container
    :show-inheritance:
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vista.MultiBlock
+.. autoautosummary:: pyvista.MultiBlock
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vista.MultiBlock
+.. autoautosummary:: pyvista.MultiBlock
    :methods:
 
 
-.. autoclass:: vista.MultiBlock
+.. autoclass:: pyvista.MultiBlock
    :show-inheritance:
    :members:
    :undoc-members:
