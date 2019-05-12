@@ -52,7 +52,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 # A simple flag to set when generating the documentation
 OFF_SCREEN = False
 try:
-    if os.environ['pyvista_OFF_SCREEN'].lower() == 'true':
+    if os.environ['PYVISTA_OFF_SCREEN'].lower() == 'true':
         OFF_SCREEN = True
 except KeyError:
     pass
@@ -81,9 +81,9 @@ send_errors_to_logging()
 
 # Set up panel for interactive notebook rendering
 try:
-    if os.environ['pyvista_USE_PANEL'].lower() == 'false':
+    if os.environ['PYVISTA_USE_PANEL'].lower() == 'false':
         rcParams['use_panel'] = False
-    elif os.environ['pyvista_USE_PANEL'].lower() == 'true':
+    elif os.environ['PYVISTA_USE_PANEL'].lower() == 'true':
         rcParams['use_panel'] = True
 except KeyError:
     pass
@@ -95,7 +95,7 @@ except ImportError:
 
 # Set preferred plot theme
 try:
-    theme = os.environ['pyvista_PLOT_THEME'].lower()
+    theme = os.environ['PYVISTA_PLOT_THEME'].lower()
     set_plot_theme(theme)
 except KeyError:
     pass
