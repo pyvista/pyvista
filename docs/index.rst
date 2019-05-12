@@ -80,7 +80,7 @@ Here are a few open-source projects that leverage PyVista:
 
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
-* omfpyvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
+* omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
 * discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
 * pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
@@ -89,7 +89,7 @@ Here are a few open-source projects that leverage PyVista:
 .. _pymeshfix: https://github.com/akaszynski/pymeshfix
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
-.. _omfpyvista: https://github.com/OpenGeoVis/omfpyvista
+.. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: http://discretize.simpeg.xyz/en/master/
 .. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
 .. _pymeshfix: https://github.com/akaszynski/pymeshfix
