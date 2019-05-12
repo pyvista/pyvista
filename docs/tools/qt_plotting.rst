@@ -19,7 +19,7 @@ sphere to an empty plotting window.
     from PyQt5 import Qt
     import numpy as np
 
-    import pyvista
+    import pyvista as pv
 
 
     class MainWindow(Qt.QMainWindow):
@@ -32,7 +32,7 @@ sphere to an empty plotting window.
             vlayout = Qt.QVBoxLayout()
 
 	    # add the pyvista interactor object
-            self.vtk_widget = pyvista.QtInteractor(self.frame)
+            self.vtk_widget = pv.QtInteractor(self.frame)
             vlayout.addWidget(self.vtk_widget)
 
             self.frame.setLayout(vlayout)
@@ -57,7 +57,7 @@ sphere to an empty plotting window.
 
         def add_sphere(self):
 	    """ add a sphere to the pyqt frame """
-            sphere = pyvista.Sphere()
+            sphere = pv.Sphere()
             self.vtk_widget.add_mesh(sphere)
             self.vtk_widget.reset_camera()
 
@@ -84,11 +84,11 @@ and functions like a normal PyVista ``Plotter`` instance.  For example:
 
 .. code:: python
 
-    import pyvista
+    import pyvista as pv
 
-    sphere = pyvista.Sphere()
+    sphere = pv.Sphere()
 
-    plotter = pyvista.BackgroundPlotter()
+    plotter = pv.BackgroundPlotter()
     plotter.add_mesh(sphere)
 
     # can now operate on the sphere and have it updated in the background

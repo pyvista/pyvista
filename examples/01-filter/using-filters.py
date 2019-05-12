@@ -6,7 +6,7 @@ Using common filters like thresholding and clipping
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 ################################################################################
@@ -44,7 +44,7 @@ outline = dataset.outline()
 # We can now plot this filtered dataset along side an outline of the original
 # dataset
 
-p = pyvista.Plotter()
+p = pv.Plotter()
 p.add_mesh(outline, color='k')
 p.add_mesh(threshed)
 p.camera_position = [-2,5,3]
@@ -56,9 +56,9 @@ p.show()
 
 contours = dataset.contour()
 slices = dataset.slice_orthogonal()
-glyphs = dataset.glyph(factor=1e-3, geom=pyvista.Sphere())
+glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere())
 
-p = pyvista.Plotter(shape=(2,2))
+p = pv.Plotter(shape=(2,2))
 # Show the theshold
 p.add_mesh(outline, color='k')
 p.add_mesh(threshed, show_scalar_bar=False)
@@ -102,7 +102,7 @@ result = dataset.threshold().elevation().clip(normal='z').slice_orthogonal()
 # And to view this filtered data, simply call the ``plot`` method
 # (``result.plot()``) or create a rendering scene:
 
-p = pyvista.Plotter()
+p = pv.Plotter()
 p.add_mesh(outline, color='k')
 p.add_mesh(result, scalars='Elevation')
 p.view_isometric()

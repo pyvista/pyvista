@@ -122,14 +122,14 @@ notebook:
 
 .. code:: python
 
-    import pyvista
-    sphere = pyvista.Sphere()
+    import pyvista as pv
+    sphere = pv.Sphere()
 
     # short example
     cpos, image = sphere.plot(notebook=True)
 
     # long example
-    plotter = pyvista.Plotter(notebook=True)
+    plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(sphere)
     plotter.plot()
 
@@ -145,12 +145,12 @@ that you can manipulate in real time from the Jupyter notebook:
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     dataset = examples.load_uniform()
 
-    plotter = pyvista.BackgroundPlotter()
+    plotter = pv.BackgroundPlotter()
     plotter.add_mesh(dataset)
 
     # Then in another cell, you can add more to the plotter
@@ -169,12 +169,12 @@ the :class:`pyvista.BackgroundPlotter`:
 
 .. code:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     dataset = examples.load_hexbeam()
 
-    p = pyvista.BackgroundPlotter()
+    p = pv.BackgroundPlotter()
 
     p.add_mesh(dataset)
 
@@ -193,13 +193,13 @@ accessed under the ``.plotter`` attribute for further scene manipulation:
 
 .. code:: python
 
-   import pyvista
+   import pyvista as pv
    from pyvista import examples
 
    dataset = examples.load_hexbeam()
 
    # Use the slicer tool
-   tool = pyvista.OrthogonalSlicer(dataset)
+   tool = pv.OrthogonalSlicer(dataset)
 
    # Get the plotter for adding more datasets:
    p = tool.plotter
@@ -222,7 +222,7 @@ values change through time:
     from threading import Thread
     import time
     import numpy as np
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
 
@@ -231,7 +231,7 @@ values change through time:
     globe.set_active_scalar('scalars')
 
 
-    plotter = pyvista.BackgroundPlotter()
+    plotter = pv.BackgroundPlotter()
     plotter.add_mesh(globe, lighting=False, show_edges=True, texture=True, scalars='scalars')
     plotter.view_isometric()
 

@@ -8,7 +8,7 @@ Create a StructuredGrid surface from NumPy arrays
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import pyvista
+import pyvista as pv
 import numpy as np
 
 
@@ -26,7 +26,7 @@ z = np.sin(r)
 # Now pass the NumPy meshgrid to PyVista
 
 # Create and plot structured grid
-grid = pyvista.StructuredGrid(x, y, z)
+grid = pv.StructuredGrid(x, y, z)
 grid.plot()
 
 ################################################################################

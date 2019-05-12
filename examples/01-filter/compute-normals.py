@@ -7,7 +7,6 @@ Compute normals on a surface.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import pyvista
 from pyvista import examples
 
 ################################################################################

@@ -5,7 +5,7 @@ Read Image Files
 Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
-
+import pyvista as pv
 from pyvista import examples
 
 ################################################################################
@@ -19,7 +19,7 @@ from pyvista import examples
 
 image = examples.download_puppy()
 # or...
-# image = pyvista.read('my_image.jpg')
+# image = pv.read('my_image.jpg')
 
 ################################################################################
 # When plotting images stored in :class:`pyvista.UniformGrid` objects, it is

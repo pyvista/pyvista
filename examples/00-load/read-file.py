@@ -14,7 +14,7 @@ Read a dataset from a known file type.
 # mesh.
 
 # sphinx_gallery_thumbnail_number = 5
-import pyvista
+import pyvista as pv
 from pyvista import examples
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,14 +31,14 @@ print(filename)
 # Note the above filename, it's a ``.ply`` file - one of the many supported
 # formats in PyVista.
 
-mesh = pyvista.read(filename)
+mesh = pv.read(filename)
 cpos = mesh.plot()
 
 ################################################################################
 # You can also take a screenshot without creating an interactive plot window
 # using the ``Plotter``:
 
-plotter = pyvista.Plotter(off_screen=True)
+plotter = pv.Plotter(off_screen=True)
 plotter.add_mesh(mesh)
 plotter.show(screenshot='myscreenshot.png')
 

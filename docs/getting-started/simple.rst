@@ -16,8 +16,8 @@ usable from the top level of PyVista:
 
 .. code-block:: python
 
-    import pyvista
-    wrapped_data = pyvista.wrap(my_vtk_data_object)
+    import pyvista as pv
+    wrapped_data = pv.wrap(my_vtk_data_object)
 
 
 This allows users to quickly wrap any VTK dataset they have to its appropriate
@@ -26,9 +26,9 @@ PyVista object:
 .. testcode:: python
 
     import vtk
-    import pyvista
+    import pyvista as pv
     stuff = vtk.vtkPolyData()
-    better = pyvista.wrap(stuff)
+    better = pv.wrap(stuff)
 
 
 Reading a VTK File
@@ -40,8 +40,8 @@ passing the filename:
 
 .. code-block:: python
 
-    import pyvista
-    data = pyvista.read('my_strange_vtk_file.vtk')
+    import pyvista as pv
+    data = pv.read('my_strange_vtk_file.vtk')
 
 
 Accessing the Wrapped Data Object
@@ -56,7 +56,7 @@ First, check out some common meta data properties:
 
 .. testcode:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
     import numpy as np
 
@@ -120,7 +120,7 @@ to each PyVista data object:
 
 .. testcode:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     data = examples.load_airplane()
@@ -138,7 +138,7 @@ execution of the code after calling ``show``.
 
 .. testcode:: python
 
-    plotter = pyvista.Plotter()  # instantiate the plotter
+    plotter = pv.Plotter()  # instantiate the plotter
     plotter.add_mesh(data)    # add a dataset to the scene
     cpos = plotter.show()     # show the rendering window
 
@@ -152,7 +152,7 @@ manually interact with the plotting window:
 
 .. code-block:: python
 
-    plotter = pyvista.Plotter(off_screen=True)
+    plotter = pv.Plotter(off_screen=True)
     plotter.add_mesh(data, color='tan')
     plotter.camera_position = cpos
     plotter.plot(auto_close=False)

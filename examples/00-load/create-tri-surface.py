@@ -6,7 +6,7 @@ Create a surface from a set of points through a Delaunay triangulation.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import pyvista
+import pyvista as pv
 import numpy as np
 
 ################################################################################
@@ -29,7 +29,7 @@ print(points[0:5, :])
 # be encompassed in a :class:`pyvista.PolyData` object.
 
 # simply pass the numpy points to the PolyData constructor
-cloud = pyvista.PolyData(points)
+cloud = pv.PolyData(points)
 cloud.plot(point_size=15)
 
 ################################################################################

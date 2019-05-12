@@ -6,7 +6,7 @@ Extracts edges from a surface.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 ################################################################################
@@ -28,7 +28,7 @@ mesh = examples.download_nefertiti()
 edges = mesh.extract_edges(12)
 
 # Render the edge lines ontop of the original mesh
-p = pyvista.Plotter()
+p = pv.Plotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color='red', line_width=5)
 # Define a camera position that will zoom to her eye
@@ -45,7 +45,7 @@ mesh = examples.download_cow()
 
 edges = mesh.extract_edges(20)
 
-p = pyvista.Plotter()
+p = pv.Plotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color='red', line_width=5)
 p.camera_position = [(9.5, 3., 5.5),

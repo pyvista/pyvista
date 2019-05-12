@@ -6,7 +6,7 @@ Create a simple uniform grid from a 3D NumPy array of values.
 
 """
 
-import pyvista
+import pyvista as pv
 import numpy as np
 
 ################################################################################
@@ -22,7 +22,7 @@ values = np.linspace(0, 10, 1000).reshape((20, 5, 10))
 values.shape
 
 # Create the spatial reference
-grid = pyvista.UniformGrid()
+grid = pv.UniformGrid()
 
 # Set the grid dimensions: shape + 1 because we want to inject our values on the CELL data
 grid.dimensions = np.array(values.shape) + 1
@@ -49,7 +49,7 @@ values = np.linspace(0, 10, 1000).reshape((20, 5, 10))
 values.shape
 
 # Create the spatial reference
-grid = pyvista.UniformGrid()
+grid = pv.UniformGrid()
 
 # Set the grid dimensions: shape because we want to inject our values on the POINT data
 grid.dimensions = values.shape

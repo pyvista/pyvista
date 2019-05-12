@@ -5,7 +5,7 @@ Slicing
 Extract thin planar slices from a volume
 """
 # sphinx_gallery_thumbnail_number = 2
-import pyvista
+import pyvista as pv
 from pyvista import examples
 import matplotlib.pyplot as plt
 
@@ -50,7 +50,7 @@ slices.plot(cmap=cmap)
 # Sing slice - origin defaults to center of the mesh
 single_slice = mesh.slice(normal=[1,1,0])
 
-p = pyvista.Plotter()
+p = pv.Plotter()
 p.add_mesh(mesh.outline(), color='k')
 p.add_mesh(single_slice, cmap=cmap)
 p.show()

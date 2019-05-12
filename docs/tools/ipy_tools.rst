@@ -32,13 +32,13 @@ slider bars directly in a Jupyter notebook:
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     dataset = examples.load_hexbeam()
 
     # Use the slicer tool
-    pyvista.OrthogonalSlicer(dataset)
+    pv.OrthogonalSlicer(dataset)
 
 
 .. figure:: ../images/gifs/slicer-tool.gif
@@ -61,13 +61,13 @@ of a Jupyter notebook cell:
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # Use the slicer tool
-    pyvista.Threshold(dataset)
+    pv.Threshold(dataset)
 
 
 .. figure:: ../images/gifs/threshold-tool.gif
@@ -89,13 +89,13 @@ down menu in the Jupyter notebook cell output:
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # Use the many slices tool
-    pyvista.ManySlicesAlongAxis(dataset)
+    pv.ManySlicesAlongAxis(dataset)
 
 
 .. figure:: ../images/gifs/many-slices-tool.gif
@@ -116,13 +116,13 @@ along a point scalar array
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # Use the contour tool
-    pyvista.Isocontour(dataset)
+    pv.Isocontour(dataset)
 
 
 .. figure:: ../images/gifs/isocontour-tool.gif
@@ -146,13 +146,13 @@ so that you can access it's plotting window:
 
 .. code-block:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     dataset = examples.load_uniform()
 
     # assign the tool to a variable
-    thresher = pyvista.Threshold(dataset)
+    thresher = pv.Threshold(dataset)
 
 Now a rendering environment will appear and the cell will output to IPython
 tools. Since the tool is captured in the variable ``thresher`` for this example,
@@ -175,7 +175,7 @@ passing the plotter to the tool upon construction:
 .. code-block:: python
 
     # Add a second tool by passing the plotter
-    slicer = pyvista.OrthogonalSlicer(dataset, plotter=p)
+    slicer = pv.OrthogonalSlicer(dataset, plotter=p)
 
 And now you have two tools being used in one rendering window!
 

@@ -6,7 +6,7 @@ Decaimate a mesh
 
 """
 # sphinx_gallery_thumbnail_number = 4
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 mesh = examples.download_face()
@@ -39,7 +39,7 @@ pro_decimated.plot(**dargs)
 ###############################################################################
 # Side by side comparison:
 
-p = pyvista.Plotter(shape=(1, 3))
+p = pv.Plotter(shape=(1, 3))
 p.add_mesh(mesh, **dargs)
 p.add_text('Input mesh', font_size=24)
 p.camera_position = cpos

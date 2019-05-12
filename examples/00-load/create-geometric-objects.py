@@ -6,7 +6,7 @@ Geometric Objects
 
 The "Hello, world!" of VTK
 """
-import pyvista
+import pyvista as pv
 
 ################################################################################
 # This runs through several of the available geomoetric objects available in VTK
@@ -14,20 +14,20 @@ import pyvista
 #
 # Let's run through creating a few geometric objects!
 
-cyl = pyvista.Cylinder()
-arrow = pyvista.Arrow()
-sphere = pyvista.Sphere()
-plane = pyvista.Plane()
-line = pyvista.Line()
-box = pyvista.Box()
-cone = pyvista.Cone()
-poly = pyvista.Polygon()
-disc = pyvista.Disc()
+cyl = pv.Cylinder()
+arrow = pv.Arrow()
+sphere = pv.Sphere()
+plane = pv.Plane()
+line = pv.Line()
+box = pv.Box()
+cone = pv.Cone()
+poly = pv.Polygon()
+disc = pv.Disc()
 
 ################################################################################
 # Now let's plot them all in one window
 
-p = pyvista.Plotter(shape=(3, 3))
+p = pv.Plotter(shape=(3, 3))
 # Top row
 p.subplot(0,0)
 p.add_mesh(cyl, color='tan', show_edges=True)
