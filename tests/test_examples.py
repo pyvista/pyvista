@@ -416,13 +416,13 @@ if TEST_DOWNLOADS:
         data = examples.download_kitchen(split=True)
         assert data.n_blocks
 
-    def test_download_topo_global():
-        data = examples.download_topo_global()
-        assert data.n_cells
-
-    def test_download_topo_land():
-        data = examples.download_topo_land()
-        assert data.n_cells
+    # def test_download_topo_global():
+    #     data = examples.download_topo_global()
+    #     assert data.n_cells
+    #
+    # def test_download_topo_land():
+    #     data = examples.download_topo_land()
+    #     assert data.n_cells
 
     def test_download_coastlines():
         data = examples.download_coastlines()
