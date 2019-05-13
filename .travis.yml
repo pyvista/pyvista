@@ -51,7 +51,7 @@ matrix:
       env:
         - REPORT_COVERAGE: true
         # Deploy to PyPI when core testing passes on 3.7 on tags
-        - pyvista_DEPLOY: true
+        - PYVISTA_DEPLOY: true
       # Run the test suite and generate coverage report
       script: pytest -v --cov pyvista
 
@@ -121,7 +121,7 @@ matrix:
       # Then rerun `make html` to use updated figures from `make doctest`
       script: |
         cd ./docs/;
-        export pyvista_OFFSCREEN=True;
+        export PYVISTA_OFFSCREEN=True;
         set -e;
         make html;
         make doctest;
@@ -174,7 +174,7 @@ deploy:
     user: akaszynski
     distributions: sdist
     on:
-      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($pyvista_DEPLOY == 'true')
+      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($PYVISTA_DEPLOY == 'true')
       tags: true
     password: $PYPI_PASSWORD
 
