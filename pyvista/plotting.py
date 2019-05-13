@@ -77,7 +77,7 @@ rcParams = {
     'lighting' : True,
     'interactive' : False,
     'render_points_as_spheres' : False,
-    'use_panel' : False, #True,
+    'use_panel' : True,
     'transparent_background' : False
 }
 
