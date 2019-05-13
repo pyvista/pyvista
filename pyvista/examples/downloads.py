@@ -218,7 +218,7 @@ def download_letter_k():
     return _download_and_read('k.vtk')
 
 def download_letter_a():
-    return _download_and_read('a.vtp')
+    return _download_and_read('a_grid.vtk')
 
 def download_poly_line():
     return _download_and_read('polyline.vtk')
