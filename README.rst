@@ -2,13 +2,14 @@
 PyVista
 #######
 
+**🚨🚨 PyVista was formerly vtki 🚨🚨 We recently had to change the name of this
+software and we apologize for any confusion this may be causing**
+
 .. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
     :alt: pyvista
 
-
 .. image:: https://zenodo.org/badge/92974124.svg
    :target: https://zenodo.org/badge/latestdoi/92974124
-
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
