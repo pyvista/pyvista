@@ -23,8 +23,8 @@ software and we apologize for any confusion this may be causing**
 .. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/pyvista.svg?label=AppVeyor&style=flat&logo=appveyor
    :target: https://ci.appveyor.com/project/banesullivan/pyvista/history
 
-.. |codecov| image:: https://pvcodecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
-   :target: https://pvcodecov.io/gh/pyvista/pyvista
+.. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/pyvista/pyvista
 
 .. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/pyvista?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/pyvista&amp;utm_campaign=Badge_Grade
