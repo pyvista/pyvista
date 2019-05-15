@@ -117,6 +117,7 @@ matrix:
       python: 3.7
       env:
         - REPORT_COVERAGE: false
+        - DEPLOY_DOCS: true
       # Run `make html` before `make doctest` to avoid segfault.
       # Then rerun `make html` to use updated figures from `make doctest`
       script: |
@@ -169,7 +170,7 @@ deploy:
     script: sh ./docs/deploy_docs_from_travis.sh
     skip_cleanup: true
     on:
-      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/pyvista') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES')
+      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/pyvista') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES' && ($DEPLOY_DOCS == 'true'))
   - provider: pypi
     user: akaszynski
     distributions: sdist
