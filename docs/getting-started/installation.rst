@@ -8,6 +8,17 @@ Python 2.7 as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
 
+Dependencies
+~~~~~~~~~~~~
+
+PyVista is built on top of the Visualization Toolkit (VTK) and NumPy - as such,
+the following projects are required dependencies of PyVista:
+
+* `vtk <https://pypi.org/project/vtk/>`_ - PyVista directly inherits types from the VTK library.
+* `numpy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
+* `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
+* `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+
 PyPI
 ~~~~
 
@@ -85,7 +96,7 @@ See other examples:
 
 .. warning:: Developers, please see the `Contributing Guide`_ for details on development testing
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md#testing
 
 
 Running on CI Services
