@@ -24,7 +24,6 @@ dist/
 
 # doc generated
 docs/_build
-docs/_templates
 wiki/
 
 # testing coverage and cache

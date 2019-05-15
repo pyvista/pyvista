@@ -1,5 +1,5 @@
 Utilities
-=========
+---------
 
 .. automodule:: pyvista.utilities
 
@@ -11,7 +11,7 @@ Utilities
 
 
 Object Conversions
-------------------
+~~~~~~~~~~~~~~~~~~
 
 .. autofunction:: pyvista.wrap
 
@@ -23,7 +23,7 @@ Object Conversions
 
 
 File IO
--------
+~~~~~~~
 
 .. autofunction:: pyvista.read
 
@@ -35,7 +35,7 @@ File IO
 
 
 Mesh Creation
--------------
+~~~~~~~~~~~~~
 
 .. autofunction:: pyvista.lines_from_points
 
@@ -47,7 +47,7 @@ Mesh Creation
 
 
 Array Access
-------------
+~~~~~~~~~~~~
 
 .. autofunction:: pyvista.get_scalar
 

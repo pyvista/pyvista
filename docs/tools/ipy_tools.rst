@@ -1,7 +1,7 @@
 .. _ipy_tools_ref:
 
 IPython Tools
-=============
+-------------
 
 The IPython tools harness PyVista's Qt rendering interface that enables
 accessible background plotting so that a rendering environment can be updated
@@ -24,7 +24,7 @@ dataset. Simply call one of these tools on your object.
 
 
 Orthogonal Slicer
------------------
+~~~~~~~~~~~~~~~~~
 
 The :class:`pyvista.OrthogonalSlicer` tool on an example dataset to create three
 slices on the cartesian planes and move those slices through the dataset using
@@ -51,7 +51,7 @@ slider bars directly in a Jupyter notebook:
 
 
 Threshold
----------
+~~~~~~~~~
 
 The :class:`pyvista.Threshold` tool is used to interactively threshold a
 dataset using slider bars for the minimum and maximum range. This tool also
@@ -80,7 +80,7 @@ of a Jupyter notebook cell:
 
 
 Many Slices Along Axis
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 The :class:`pyvista.ManySlicesAlongAxis` tool is used to create many (``n``)
 evenly spaced slices of a dataset along a specified axis. The user selects the
@@ -108,7 +108,7 @@ down menu in the Jupyter notebook cell output:
 
 
 Isocontour
-----------
+~~~~~~~~~~
 
 The :class:`pyvista.Isocontour` tool creates a single value isocontour of a dataset
 along a point scalar array
@@ -133,7 +133,7 @@ along a point scalar array
 
 
 Using the Tools in an Integrated Scene
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Each of the tools in this module can be used to either create a scene that can
 have other datasets added or the tools can be used on an already existing

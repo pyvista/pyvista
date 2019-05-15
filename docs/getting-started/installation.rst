@@ -83,7 +83,9 @@ See other examples:
     print(dir(examples))
 
 
-.. warning:: Developers, please see :ref:`testing_ref` for details on development testing
+.. warning:: Developers, please see the `Contributing Guide`_ for details on development testing
+
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
 
 
 Running on CI Services

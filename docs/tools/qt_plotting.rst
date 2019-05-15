@@ -1,7 +1,7 @@
 .. _qt_ref:
 
 PyVista PyQt Interface
-======================
+----------------------
 
 PyVista has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``pyvista.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
 

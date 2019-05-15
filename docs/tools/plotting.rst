@@ -1,7 +1,7 @@
 .. _plotting_ref:
 
 Plotting
-========
+--------
 
 When plotting with the interactive rendering windows in VTK, several keyboard
 shortcuts are available:
@@ -34,7 +34,7 @@ shortcuts are available:
 
 
 Convenience Functions
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 
 .. autofunction:: pyvista.plot
@@ -47,7 +47,7 @@ Convenience Functions
 
 
 Base Plotter
-------------
+~~~~~~~~~~~~
 
 The base plotter class that all PyVista plotters inherit. Please note that the
 :class:`pyvista.BackgroundPlotter` is documented under :ref:`qt_ref`.
@@ -71,7 +71,7 @@ The base plotter class that all PyVista plotters inherit. Please note that the
 
 
 Plotter
--------
+~~~~~~~
 
 .. rubric:: Attributes
 
@@ -92,7 +92,7 @@ Plotter
 
 
 Renderer
---------
+~~~~~~~~
 
 .. rubric:: Attributes
 
@@ -113,7 +113,7 @@ Renderer
 
 
 Plotting in a Jupyter Notebook
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Inline plots are possible using a Jupyter notebook.  The code snippet below
 will create a static screenshot of the rendering and display it in the Jupyter
@@ -158,7 +158,7 @@ that you can manipulate in real time from the Jupyter notebook:
 
 
 Background Plotting
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 PyVista provides a plotter that enables users to create a rendering window in
 the background that remains interactive while the user performs their
@@ -182,7 +182,7 @@ the :class:`pyvista.BackgroundPlotter`:
 
 
 IPython Interactive Plotting Tools
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 PyVista comes packed with several interactive plotting tools to make using the
 filters a bit more intuitive (see :ref:`ipy_tools_ref`).
@@ -211,7 +211,7 @@ accessed under the ``.plotter`` attribute for further scene manipulation:
 
 
 Plot Time Series Data
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 This example outlines how to plot data where the spatial reference and data
 values change through time:

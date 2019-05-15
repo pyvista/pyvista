@@ -75,13 +75,38 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'friendly'
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
+
+
+# -- Sphinx Gallery Options
+from sphinx_gallery.sorting import FileNameSortKey
+
+sphinx_gallery_conf = {
+    # path to your examples scripts
+    "examples_dirs": [
+        "../examples/",
+    ],
+    # path where to save gallery generated examples
+    "gallery_dirs": ["examples"],
+    # Patter to search for example files
+    "filename_pattern": r"\.py",
+    # Remove the "Download all examples" button from the top level gallery
+    "download_all_examples": False,
+    # Sort gallery example by file name instead of number of lines (default)
+    "within_subsection_order": FileNameSortKey,
+    # directory where function granular galleries are stored
+    "backreferences_dir": False,
+    # Modules for which function level galleries are created.  In
+    "doc_module": "pyvista",
+    "image_scrapers": (pyvista.Scraper(), 'matplotlib'),
+    "thumbnail_size": (350, 350),
+}
 
 
 # -- Options for HTML output ----------------------------------------------
@@ -98,7 +123,13 @@ html_context = {
     # Format Template: https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}
     'github_user': 'pyvista',
     'github_repo': 'pyvista',
-    'github_version': 'master/docs/'
+    'github_version': 'master/docs/',
+    'menu_links_name': 'Getting Connected',
+    'menu_links': [
+        ('<i class="fa fa-comment fa-fw"></i> Support', 'https://github.com/pyvista/pyvista-support'),
+        ('<i class="fa fa-github fa-fw"></i> Source Code', 'https://github.com/pyvista/pyvista'),
+        ('<i class="fa fa-gavel fa-fw"></i> Contributing', 'https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md'),
+    ],
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -177,31 +208,6 @@ notfound_context = {
         'body': '<h1>Page not found.</h1>\n\nPerhaps try the <a href="http://docs.pyvista.org/examples/index.html">examples page</a>.',
 }
 notfound_no_urls_prefix = True
-
-
-# -- Sphinx Gallery Options
-from sphinx_gallery.sorting import FileNameSortKey
-
-sphinx_gallery_conf = {
-    # path to your examples scripts
-    "examples_dirs": [
-        "../examples/",
-    ],
-    # path where to save gallery generated examples
-    "gallery_dirs": ["examples"],
-    # Patter to search for example files
-    "filename_pattern": r"\.py",
-    # Remove the "Download all examples" button from the top level gallery
-    "download_all_examples": False,
-    # Sort gallery example by file name instead of number of lines (default)
-    "within_subsection_order": FileNameSortKey,
-    # directory where function granular galleries are stored
-    "backreferences_dir": False,
-    # Modules for which function level galleries are created.  In
-    "doc_module": "pyvista",
-    "image_scrapers": (pyvista.Scraper(), 'matplotlib'),
-    "thumbnail_size": (350, 350),
-}
 
 
 # -- Autosummary options

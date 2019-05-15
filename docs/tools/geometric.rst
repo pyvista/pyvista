@@ -1,5 +1,5 @@
 Geometric Objects
-=================
+-----------------
 
 PyVista includes a few functions to generate simple geometric objects.
 The code documentation for these functions are on this page; to see what these
