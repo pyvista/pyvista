@@ -1,7 +1,9 @@
 .. title:: PyVista
 
-**🚨🚨 PyVista was formerly vtki 🚨🚨 We recently had to change the name of this
-software and we apologize for any confusion this may be causing**
+.. warning:: 🚨🚨 PyVista was formerly vtki 🚨🚨
+
+   We recently had to change the name of this software and we apologize for any confusion this may be causing
+
 
 .. raw:: html
 
