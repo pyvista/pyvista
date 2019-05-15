@@ -8,8 +8,12 @@ software and we apologize for any confusion this may be causing**
 .. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
     :alt: pyvista
 
-.. image:: https://zenodo.org/badge/92974124.svg
+
+.. |zenodo| image:: https://zenodo.org/badge/92974124.svg
    :target: https://zenodo.org/badge/latestdoi/92974124
+
+.. |joss| image:: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
+   :target: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
@@ -37,6 +41,8 @@ software and we apologize for any confusion this may be causing**
 +----------------------+------------------------+
 | Metrics              | |codacy| |codecov|     |
 +----------------------+------------------------+
+| Citation             | |joss| |zenodo|        |
++----------------------+------------------------+
 
 
 PyVista is a helper module for the Visualization Toolkit (VTK) that takes a
@@ -56,10 +62,12 @@ Refer to the `documentation <http://docs.pyvista.org/>`_ for detailed
 installation and usage details.
 
 For general questions about the project, its applications, or about software
-usage, please do not create an issue but join us on Slack_ or send one
-of the developers an email. The project support team can be reached at
-`info@pyvista.org`_.
+usage, please create an issue in the `pyvista/pyvista-support`_ repository
+where the community can collectively address your questions. You are also
+welcome to join us on join us on Slack_ or send one of the developers an email.
+The project support team can be reached at `info@pyvista.org`_.
 
+.. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
 .. _Slack: http://slack.opengeovis.org
 .. _info@pyvista.org: mailto:info@pyvista.org
 

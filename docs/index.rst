@@ -36,6 +36,12 @@ software and we apologize for any confusion this may be causing**
    :target: https://github.com/pyvista/pyvista
    :alt: GitHub
 
+.. |zenodo| image:: https://zenodo.org/badge/92974124.svg
+   :target: https://zenodo.org/badge/latestdoi/92974124
+
+.. |joss| image:: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
+   :target: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -45,6 +51,8 @@ software and we apologize for any confusion this may be causing**
 | Metrics              | |codacy| |codecov|     |
 +----------------------+------------------------+
 | GitHub               | |contributors| |stars| |
++----------------------+------------------------+
+| Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
 
 
@@ -73,6 +81,21 @@ Want to test-drive PyVista? Check out our live examples on MyBinder:
    self
    why
    authors
+
+
+Support
+=======
+
+For general questions about the project, its applications, or about software
+usage, please create an issue in the `pyvista/pyvista-support`_ repository
+where the community can collectively address your questions. You are also
+welcome to join us on join us on Slack_ or send one of the developers an email.
+The project support team can be reached at `info@pyvista.org`_.
+
+.. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
+.. _Slack: http://slack.opengeovis.org
+.. _info@pyvista.org: mailto:info@pyvista.org
+
 
 Connections
 ===========
