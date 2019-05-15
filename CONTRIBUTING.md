@@ -10,6 +10,18 @@ This page is dedicated to outline where you should start with your question,
 concern, feature request, or desire to contribute.
 
 
+## Cloning the Source Repository
+
+You can clone the source repository from `https://github.com/pyvista/pyvista`
+and install the latest version by running:
+
+```bash
+git clone https://github.com/pyvista/pyvista.git
+cd pyvista
+python -m pip install -e .
+```
+
+
 ## Questions
 
 For general questions about the project, its applications, or about software

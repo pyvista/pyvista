@@ -66,12 +66,12 @@ Source / Developers
 ~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can install the latest version from GitHub by visiting
-`pyvista <https://github.com/pyvista/pyvista>`_, downloading the source
+`PyVista <https://github.com/pyvista/pyvista>`_, downloading the source
 (or cloning), and running::
 
     git clone https://github.com/pyvista/pyvista.git
     cd pyvista
-    pip install -e .
+    python -m pip install -e .
 
 
 Test Installation
@@ -94,9 +94,14 @@ See other examples:
     print(dir(examples))
 
 
-.. warning:: Developers, please see the `Contributing Guide`_ for details on development testing
+.. note::
 
-.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md#testing
+    A more comprehensive testing suite is available after cloning the source
+    repository. For details on how to clone and test the PyVista source, please
+    see our `Contributing Guide`_ and specifically, the `Testing`_ section.
+
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
+.. _Testing: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md#testing
 
 
 Running on CI Services
