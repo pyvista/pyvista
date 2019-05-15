@@ -672,7 +672,7 @@ class Common(DataSetFilters, object):
             keys = list(self._point_arrays.keys())
             if narr == len(keys):
                 if keys:
-                    if self._point_arrays[keys[0]].size == self.n_points:
+                    if self._point_arrays[keys[0]].shape[0] == self.n_points:
                         return self._point_arrays
                 else:
                     return self._point_arrays
@@ -730,7 +730,7 @@ class Common(DataSetFilters, object):
             keys = list(self._cell_arrays.keys())
             if narr == len(keys):
                 if keys:
-                    if self._cell_arrays[keys[0]].size == self.n_cells:
+                    if self._cell_arrays[keys[0]].shape[0] == self.n_cells:
                         return self._cell_arrays
                 else:
                     return self._cell_arrays
