@@ -7,7 +7,7 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
-import pyvista
+import pyvista as pv
 from pyvista import examples
 import numpy as np
 from matplotlib.cm import get_cmap
@@ -21,7 +21,7 @@ from matplotlib.cm import get_cmap
 tex = examples.download_masonry_texture()
 
 # create a surface to host this texture
-surf = pyvista.Cylinder()
+surf = pv.Cylinder()
 
 surf.plot(texture=tex)
 
@@ -38,7 +38,7 @@ y = np.arange(-10, 10, 0.25)
 x, y = np.meshgrid(x, y)
 r = np.sqrt(x**2 + y**2)
 z = np.sin(r)
-curvsurf = pyvista.StructuredGrid(x, y, z)
+curvsurf = pv.StructuredGrid(x, y, z)
 
 # Map the curved surface to a plane - use best fitting plane
 curvsurf.texture_map_to_plane(inplace=True)
@@ -64,7 +64,7 @@ curvsurf.plot(texture=tex)
 # use.
 
 image_file = examples.mapfile
-tex = pyvista.read_texture(image_file)
+tex = pv.read_texture(image_file)
 curvsurf.plot(texture=tex)
 
 
@@ -90,7 +90,7 @@ colors = (cmap(hue)[:, 0:3] * 255.).astype(np.uint8)
 image = colors.reshape((xx.shape[0], xx.shape[1], 3), order='F')
 
 # Convert 3D numpy array to texture
-tex = pyvista.numpy_to_texture(image)
+tex = pv.numpy_to_texture(image)
 
 # Render it!
 curvsurf.plot(texture=tex)

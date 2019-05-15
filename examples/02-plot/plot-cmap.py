@@ -5,7 +5,6 @@ Custom Colormaps
 Use a custom built colormap when plotting scalar values.
 """
 
-import pyvista
 from pyvista import examples
 import matplotlib.pyplot as plt
 

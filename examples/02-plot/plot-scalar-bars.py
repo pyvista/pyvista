@@ -8,7 +8,7 @@ how a user can customize scalar bars.
 """
 
 # sphinx_gallery_thumbnail_number = 2
-import pyvista
+import pyvista as pv
 from pyvista import examples
 
 ################################################################################
@@ -22,7 +22,7 @@ from pyvista import examples
 mesh = examples.download_st_helens().warp_by_scalar()
 
 # First a default plot with jet colormap
-p = pyvista.Plotter()
+p = pv.Plotter()
 # Add the data, use active scalar for coloring, and show the scalar bar
 p.add_mesh(mesh)
 # Display the scene
@@ -38,11 +38,11 @@ p.show()
 # create dictionary of parameters to control scalar bar
 sargs = dict(interactive=True) # Simply make the bar interactive
 
-p = pyvista.Plotter(notebook=False) # If in IPython, be sure to show the scene
+p = pv.Plotter(notebook=False) # If in IPython, be sure to show the scene
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 # Remove from plotters so output is not produced in docs
-pyvista.plotting._ALL_PLOTTERS.pop(str(hex(id(p))))
+pv.plotting._ALL_PLOTTERS.pop(str(hex(id(p))))
 
 
 ################################################################################
@@ -54,7 +54,7 @@ pyvista.plotting._ALL_PLOTTERS.pop(str(hex(id(p))))
 sargs = dict(height=0.25, vertical=True,
              position_x=0.05, position_y=0.05)
 
-p = pyvista.Plotter()
+p = pv.Plotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 
@@ -66,6 +66,6 @@ sargs = dict(title_font_size=20, label_font_size=16,
          shadow=True, n_labels=3, italic=True, fmt='%.1f',
          font_family='arial')
 
-p = pyvista.Plotter()
+p = pv.Plotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
