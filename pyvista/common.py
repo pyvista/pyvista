@@ -184,12 +184,13 @@ class Common(DataSetFilters, object):
 
     @property
     def repeat_texture(self):
+        """The state of repetition of the texture map."""
         return self._repeat_texture
 
     @repeat_texture.setter
     def repeat_texture(self, state):
+        """Turn on/off the repetition of the texture map."""
         self._repeat_texture = state
-        self.Modified()
 
     @property
     def t_coords(self):
