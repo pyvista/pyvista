@@ -199,8 +199,6 @@ class Common(DataSetFilters, object):
             raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
         if t_coords.shape[1] != 2:
             raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
-        if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
-            raise AssertionError('Texture coordinates must be within (0, 1) range.')
         # convert the array
         vtkarr = numpy_to_vtk(t_coords)
         vtkarr.SetName('Texture Coordinates')

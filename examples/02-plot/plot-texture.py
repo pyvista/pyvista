@@ -111,11 +111,8 @@ curvsurf.plot(texture=tex)
 # mappings of a single texture:
 
 axial_num_puppies = 4
-dx = curvsurf.dimensions[0] // axial_num_puppies
-dy = curvsurf.dimensions[1] // axial_num_puppies
-
-xc = np.full((axial_num_puppies, dx), np.linspace(0, 1, dx))
-yc = np.full((axial_num_puppies, dy), np.linspace(0, 1, dy))
+xc = np.linspace(0, axial_num_puppies, curvsurf.dimensions[0])
+yc = np.linspace(0, axial_num_puppies, curvsurf.dimensions[1])
 
 xxc, yyc = np.meshgrid(xc, yc)
 puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
