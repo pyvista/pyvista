@@ -989,6 +989,8 @@ class BasePlotter(object):
 
             if np.any(rng) and not rgb:
                 self.mapper.SetScalarRange(rng[0], rng[1])
+            elif rgb:
+                self.mapper.SetColorModeToDirectScalars()
 
             # Flip if requested
             table = self.mapper.GetLookupTable()
