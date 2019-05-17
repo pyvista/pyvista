@@ -128,4 +128,4 @@ curvsurf.t_coords = puppy_coords
 
 # use the puppy image
 tex = examples.download_puppy_texture()
-curvsurf.plot(texture=tex, repeat_texture=True, cpos='yx')
+curvsurf.plot(texture=tex, cpos='yx')

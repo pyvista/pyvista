@@ -617,7 +617,7 @@ class BasePlotter(object):
                  interpolate_before_map=False, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=None, repeat_texture=False,
+                 render_points_as_spheres=None,
                  render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
@@ -912,8 +912,6 @@ class BasePlotter(object):
                 raise TypeError('Invalid texture type ({})'.format(type(texture)))
             if mesh.GetPointData().GetTCoords() is None:
                 raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
-            if repeat_texture:
-                texture.RepeatOn()
             actor.SetTexture(texture)
             # Set color to white by default when using a texture
             if color is None:
