@@ -106,6 +106,9 @@ sphinx_gallery_conf = {
     "doc_module": "pyvista",
     "image_scrapers": (pyvista.Scraper(), 'matplotlib'),
     "thumbnail_size": (350, 350),
+    'first_notebook_cell': ("%matplotlib inline\n"
+                            "from pyvista import set_plot_theme",
+                            "set_plot_theme('document')",)
 }
 
 
