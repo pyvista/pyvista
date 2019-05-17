@@ -25,10 +25,13 @@ bibliography: paper.bib
 
 The availability of software for 3D visualization in Python is limited to
 libraries that are either not capable of handling large, spatially referenced
-datasets or have inherently complex application programming interfaces (APIs).
-One of these software libraries is the Visualization Toolkit (VTK) [@vtkbook];
-a powerful scientific visualization software library, and with Python bindings,
-it combines the speed of C++ with the rapid prototyping of Python.
+datasets, e.g. `matplotlib` [@matplotlib], or libraries including Mayavi
+[@mayavi], the yt Project [@ytproject], and the Visualization Toolkit (VTK)
+[@vtkbook] which are powerful yet have inherently complex application
+programming interfaces (APIs) that create a barrier to entry for new users.
+Notably, VTK is a powerful scientific visualization software library, and with
+Python bindings, it combines the speed of C++ with the rapid prototyping of
+Python.
 Despite this, VTK code programmed in Python using the base VTK python package
 is unnecessarily complicated as its API merely binds existing C++ calls.
 The PyVista Python package provides a concise, well-documented interface
@@ -63,7 +66,7 @@ like that shown in Figure 1.
 
 
 VTK implements an object-oriented approach to 3D visualization [@vtkbook],
-and PyVista adhere's to that underlying structure to provide an API that
+and PyVista adheres to that underlying structure to provide an API that
 expands on VTK's data types. These expanded, wrapped types hold methods and
 attributes for quickly accessing scalar arrays, inspecting properties of
 the dataset, or using filtering algorithms to transform datasets.
