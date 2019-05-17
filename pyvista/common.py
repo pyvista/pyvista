@@ -3,6 +3,7 @@ Attributes common to PolyData and Grid Objects
 """
 import collections
 import logging
+import warnings
 from weakref import proxy
 
 import numpy as np
@@ -39,7 +40,6 @@ class Common(DataSetFilters, object):
         self._point_bool_array_names = []
         self._cell_bool_array_names = []
         self._field_bool_array_names = []
-        self._repeat_texture = False
 
     @property
     def active_scalar_info(self):
@@ -183,16 +183,6 @@ class Common(DataSetFilters, object):
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
     @property
-    def repeat_texture(self):
-        """The state of repetition of the texture map."""
-        return self._repeat_texture
-
-    @repeat_texture.setter
-    def repeat_texture(self, state):
-        """Turn on/off the repetition of the texture map."""
-        self._repeat_texture = state
-
-    @property
     def t_coords(self):
         """The active texture coordinates on the points"""
         if self.GetPointData().GetTCoords() is not None:
@@ -210,8 +200,8 @@ class Common(DataSetFilters, object):
             raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
         if t_coords.shape[1] != 2:
             raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
-        if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0 and not self._repeat_texture:
-            raise AssertionError('Texture coordinates must be within (0, 1) range.')
+        if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
+            warnings.warn('Texture coordinates must be within (0, 1) range.', RuntimeWarning)
         # convert the array
         vtkarr = numpy_to_vtk(t_coords)
         vtkarr.SetName('Texture Coordinates')

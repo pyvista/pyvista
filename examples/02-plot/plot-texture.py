@@ -121,7 +121,6 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 # Then we must associate those texture coordinates with the mesh through the
 # :attr:`pyvista.Common.t_coords` property.
 
-curvsurf.repeat_texture = True
 curvsurf.t_coords = puppy_coords
 
 ################################################################################
@@ -129,4 +128,4 @@ curvsurf.t_coords = puppy_coords
 
 # use the puppy image
 tex = examples.download_puppy_texture()
-curvsurf.plot(texture=tex, cpos='yx')
+curvsurf.plot(texture=tex, repeat_texture=True, cpos='yx')
