@@ -23,12 +23,13 @@ bibliography: paper.bib
 
 # Summary
 
-The availability of software for 3D visualization in Python is limited to
-libraries that are either not capable of handling large, spatially referenced
-datasets, e.g. `matplotlib` [@matplotlib], or libraries including Mayavi
-[@mayavi], the yt Project [@ytproject], and the Visualization Toolkit (VTK)
-[@vtkbook] which are powerful yet have inherently complex application
-programming interfaces (APIs) that create a barrier to entry for new users.
+There are several options for 3D visualization in Python, a few notable projects
+include Matplotlib [@matplotlib], Mayavi [@mayavi], the yt Project [@ytproject],
+and the Visualization Toolkit (VTK) [@vtkbook].
+However, few open-source packages are capable of handling large,
+spatially-referenced datasets and some are powerful yet have inherently complex
+application programming interfaces (APIs), which might create a barrier to entry
+for new users.
 Notably, VTK is a powerful scientific visualization software library, and with
 Python bindings, it combines the speed of C++ with the rapid prototyping of
 Python.
