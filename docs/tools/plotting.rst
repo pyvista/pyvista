@@ -46,6 +46,9 @@ Convenience Functions
 .. autofunction:: pyvista.set_plot_theme
 
 
+.. autofunction:: pyvista.create_axes_orientation_box
+
+
 Base Plotter
 ~~~~~~~~~~~~
 

@@ -511,7 +511,7 @@ class BasePlotter(object):
             elif not self._first_time:
                 self.render()
 
-    def add_axes(self, interactive=None, color=None):
+    def add_axes(self, interactive=None, color=None, box=False, box_arguments=None):
         """ Add an interactive axes widget """
         if interactive is None:
             interactive = rcParams['interactive']
@@ -519,7 +519,14 @@ class BasePlotter(object):
             self.axes_widget.SetInteractive(interactive)
             self._update_axes_color(color)
             return
-        self.axes_actor = vtk.vtkAxesActor()
+        # Chose widget type
+        if box:
+            if box_arguments is None:
+                box_arguments = {}
+            prop_assembly = create_axes_orientation_box(**box_arguments)
+            self.axes_actor = prop_assembly
+        else:
+            self.axes_actor = vtk.vtkAxesActor()
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
@@ -1569,15 +1576,19 @@ class BasePlotter(object):
 
     def _update_axes_color(self, color):
         """Internal helper to set the axes label color"""
-        prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
-        prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
         if color is None:
             color = rcParams['font']['color']
         color = parse_color(color)
-        for prop in [prop_x, prop_y, prop_z]:
-            prop.SetColor(color[0], color[1], color[2])
-            prop.SetShadow(False)
+        if isinstance(self.axes_actor, vtk.vtkAxesActor):
+            prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+            prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
+            prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
+            for prop in [prop_x, prop_y, prop_z]:
+                prop.SetColor(color[0], color[1], color[2])
+                prop.SetShadow(False)
+        elif isinstance(self.axes_actor, vtk.vtkAnnotatedCubeActor):
+            self.axes_actor.GetTextEdgesProperty().SetColor(color)
+
         return
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
@@ -3103,3 +3114,63 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                 p.camera_position = camera_position
 
     return p.show(screenshot=screenshot, **show_kwargs)
+
+
+def create_axes_orientation_box(line_width=1, text_scale=0.366667,
+                                edge_color='black', x_color='lightblue',
+                                y_color='seagreen', z_color='tomato',
+                                x_face_color=(255, 0, 0),
+                                y_face_color=(0, 255, 0),
+                                z_face_color=(0, 0, 255),
+                                color_box=False):
+    """Create a Box axes orientation widget with labels.
+    """
+    axes_actor = vtk.vtkAnnotatedCubeActor()
+    axes_actor.SetFaceTextScale(text_scale)
+    axes_actor.SetXPlusFaceText("X+")
+    axes_actor.SetXMinusFaceText("X-")
+    axes_actor.SetYPlusFaceText("Y+")
+    axes_actor.SetYMinusFaceText("Y-")
+    axes_actor.SetZPlusFaceText("Z+")
+    axes_actor.SetZMinusFaceText("Z-")
+    axes_actor.GetTextEdgesProperty().SetColor(parse_color(edge_color))
+    axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
+    axes_actor.GetXPlusFaceProperty().SetColor(parse_color(x_color))
+    axes_actor.GetXMinusFaceProperty().SetColor(parse_color(x_color))
+    axes_actor.GetYPlusFaceProperty().SetColor(parse_color(y_color))
+    axes_actor.GetYMinusFaceProperty().SetColor(parse_color(y_color))
+    axes_actor.GetZPlusFaceProperty().SetColor(parse_color(z_color))
+    axes_actor.GetZMinusFaceProperty().SetColor(parse_color(z_color))
+
+    if color_box:
+        # Hide the cube so we can color each face
+        axes_actor.GetCubeProperty().SetOpacity(0)
+
+        cube = pyvista.Cube()
+        face_colors = np.array([x_face_color,
+                                x_face_color,
+                                y_face_color,
+                                y_face_color,
+                                z_face_color,
+                                z_face_color,
+                               ], dtype=np.uint8)
+
+        cube.cell_arrays['face_colors'] = face_colors
+
+        cube_mapper = vtk.vtkPolyDataMapper()
+        cube_mapper.SetInputData(cube)
+        cube_mapper.SetColorModeToDirectScalars()
+        cube_mapper.Update()
+
+        cube_actor = vtk.vtkActor()
+        cube_actor.SetMapper(cube_mapper)
+        cube_actor.GetProperty().BackfaceCullingOn()
+
+        prop_assembly = vtk.vtkPropAssembly()
+        prop_assembly.AddPart(axes_actor)
+        prop_assembly.AddPart(cube_actor)
+        actor = prop_assembly
+    else:
+        actor = axes_actor
+
+    return actor
