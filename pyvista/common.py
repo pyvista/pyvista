@@ -3,6 +3,7 @@ Attributes common to PolyData and Grid Objects
 """
 import collections
 import logging
+import warnings
 from weakref import proxy
 
 import numpy as np
@@ -200,7 +201,7 @@ class Common(DataSetFilters, object):
         if t_coords.shape[1] != 2:
             raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
         if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
-            raise AssertionError('Texture coordinates must be within (0, 1) range.')
+            warnings.warn('Texture coordinates must be within (0, 1) range.', RuntimeWarning)
         # convert the array
         vtkarr = numpy_to_vtk(t_coords)
         vtkarr.SetName('Texture Coordinates')

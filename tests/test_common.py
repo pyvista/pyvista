@@ -362,7 +362,7 @@ def test_set_t_coords():
     with pytest.raises(AssertionError):
         grid.t_coords = np.empty((grid.n_points, 1))
 
-    with pytest.raises(AssertionError):
+    with pytest.warns(RuntimeWarning):
         arr = np.empty((grid.n_points, 2))
         arr[:] = -1
         grid.t_coords = arr
