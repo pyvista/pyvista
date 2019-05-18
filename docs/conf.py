@@ -129,6 +129,7 @@ html_context = {
     'github_version': 'master/docs/',
     'menu_links_name': 'Getting Connected',
     'menu_links': [
+        ('<i class="fa fa-slack fa-fw"></i> Slack Community', 'http://slack.pyvista.org'),
         ('<i class="fa fa-comment fa-fw"></i> Support', 'https://github.com/pyvista/pyvista-support'),
         ('<i class="fa fa-github fa-fw"></i> Source Code', 'https://github.com/pyvista/pyvista'),
         ('<i class="fa fa-gavel fa-fw"></i> Contributing', 'https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md'),

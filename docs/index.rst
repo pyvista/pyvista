@@ -95,7 +95,7 @@ welcome to join us on join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
 
 .. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
-.. _Slack: http://slack.opengeovis.org
+.. _Slack: http://slack.pyvista.org
 .. _info@pyvista.org: mailto:info@pyvista.org
 
 
