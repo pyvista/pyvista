@@ -87,7 +87,7 @@ def test_set_camera_position():
     plotter.camera_position = 'zx'
     plotter.camera_position = 'zy'
     plotter.camera_position = cpos
-    cpos_out = plotter.plot()
+    cpos_out = plotter.show()
     assert cpos_out == cpos
 
 
@@ -120,14 +120,14 @@ def test_plot_show_bounds():
                             show_ylabels=False,
                             show_zlabels=False,
                             use_2d=True)
-    plotter.plot()
+    plotter.show()
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_label_fmt():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -205,7 +205,7 @@ def test_make_movie():
     plotter.remove_actor(actor)
     plotter.add_mesh(movie_sphere,
                      scalars=np.random.random(movie_sphere.n_faces))
-    plotter.plot(auto_close=False, window_size=[304, 304])
+    plotter.show(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
     for i in range(10):
         plotter.write_frame()
@@ -237,7 +237,7 @@ def test_add_legend():
     legend_labels = [['sphere', 'r']]
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
                        size=[0.1, 0.1])
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -259,7 +259,7 @@ def test_add_point_labels():
     plotter.set_background('k')
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
     plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -268,7 +268,7 @@ def test_add_points():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     points = np.random.random((n, 3))
     plotter.add_points(points, scalars=np.arange(10), cmap=None, flip_scalars=True)
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -296,7 +296,7 @@ def test_plot_cell_scalars():
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
                      n_colors=5, rng=10)
-    plotter.plot()
+    plotter.show()
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_clim():
@@ -304,7 +304,7 @@ def test_plot_clim():
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
                      n_colors=5, clim=10)
-    plotter.plot()
+    plotter.show()
     assert plotter.mapper.GetScalarRange() == (-10, 10)
 
 
@@ -313,7 +313,7 @@ def test_invalid_n_scalars():
     with pytest.raises(Exception):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(sphere, scalars=np.arange(10))
-        plotter.plot()
+        plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -337,7 +337,7 @@ def test_axes():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_axes()
     plotter.add_mesh(pyvista.Sphere())
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -374,7 +374,7 @@ def test_scalars_by_name():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     data = examples.load_uniform()
     plotter.add_mesh(data, scalars='Spatial Cell Data')
-    plotter.plot()
+    plotter.show()
 
 
 def test_themes():
@@ -401,7 +401,7 @@ def test_clear():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.clear()
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -411,7 +411,7 @@ def test_plot_texture():
     texture = examples.load_globe_texture()
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=texture)
-    plotter.plot()
+    plotter.show()
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_texture_associated():
@@ -419,7 +419,7 @@ def test_plot_texture_associated():
     globe = examples.load_globe()
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=True)
-    plotter.plot()
+    plotter.show()
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_read_texture_from_numpy():
@@ -428,7 +428,7 @@ def test_read_texture_from_numpy():
     texture = pyvista.numpy_to_texture(imageio.imread(examples.mapfile))
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=texture)
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -437,7 +437,7 @@ def test_plot_rgb():
     image = pyvista.read(examples.mapfile)
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(image, rgb=True)
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -446,7 +446,7 @@ def test_plot_multi_component_array():
     image = pyvista.read(examples.mapfile)
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(image)
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -492,7 +492,7 @@ def test_multi_renderers():
     plotter.show_bounds(all_edges=True)
 
     plotter.update_bounds_axes()
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

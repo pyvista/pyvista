@@ -131,7 +131,7 @@ notebook:
     # long example
     plotter = pv.Plotter(notebook=True)
     plotter.add_mesh(sphere)
-    plotter.plot()
+    plotter.show()
 
 
 .. figure:: ../images/user-generated/notebook_sphere.png

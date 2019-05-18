@@ -22,7 +22,7 @@ plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars=z.ravel())
 
 # setup camera and close
-plotter.plot(auto_close=False)
+plotter.show(auto_close=False)
 
 # Open a gif
 plotter.open_gif('wave.gif')

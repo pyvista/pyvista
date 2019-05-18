@@ -39,7 +39,7 @@ def test_docexample_advancedplottingwithnumpy():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_arrows(points, direction, 0.5)
     plotter.set_background([0, 0, 0]) # RGB set to black
-    plotter.plot(auto_close=False)
+    plotter.show(auto_close=False)
     np.any(plotter.screenshot())
     plotter.close()
 
@@ -66,7 +66,7 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
     # Start a plotter object and set the scalars to the Z height
     plotter = pyvista.Plotter(off_screen=off_screen)
     plotter.add_mesh(grid, scalars=z.ravel())
-    plotter.plot(auto_close=False)
+    plotter.show(auto_close=False)
 
     # Open a gif
     plotter.open_gif(filename)

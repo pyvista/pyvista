@@ -139,7 +139,7 @@ A more complex plot can be created using:
     plotter.camera_position = cpos
 
     # Don't let it close automatically so we can take a screenshot
-    cpos = plotter.plot(auto_close=False)
+    cpos = plotter.show(auto_close=False)
     plotter.screenshot('beam.png')
     plotter.close()
 
@@ -165,7 +165,7 @@ for the user to exit the window.
 
 .. testcode:: python
 
-    plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
+    plotter.show(interactive=False, auto_close=False, window_size=[800, 600])
 
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
     plotter.open_gif('beam.gif')  # or beam.mp4

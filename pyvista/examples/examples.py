@@ -106,7 +106,7 @@ def plot_ants_plane(off_screen=False, notebook=None):
     plane_scalars = airplane.points[:, 1]
     plotter.add_mesh(airplane, scalars=plane_scalars, stitle='Plane Y\nLocation')
     plotter.add_text('Ants and Plane Example')
-    plotter.plot()
+    plotter.show()
 
 
 def beam_example(off_screen=False, notebook=None):
@@ -137,7 +137,7 @@ def beam_example(off_screen=False, notebook=None):
                      rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
-    cpos = plotter.plot(auto_close=False)  # store camera position
+    cpos = plotter.show(auto_close=False)  # store camera position
     # plotter.TakeScreenShot('beam.png')
     plotter.close()
 
@@ -194,7 +194,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     plotter = pyvista.Plotter(off_screen=off_screen, notebook=notebook)
     plotter.add_mesh(sgrid, scalars=Z.ravel())
     plotter.camera_position = cpos
-    plotter.plot(title='Wave Example', window_size=[800, 600],
+    plotter.show(title='Wave Example', window_size=[800, 600],
                  # auto_close=False, interactive=interactive)
                  auto_close=False, interactive_update=True)
 

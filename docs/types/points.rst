@@ -105,7 +105,7 @@ The following code creates the class and plots the meshes with various colors.
 
     # Add annotation text
     plotter.add_text('Ants and Plane Example')
-    plotter.plot(screenshot='AntsAndPlane.png')
+    plotter.show(screenshot='AntsAndPlane.png')
 
 .. image:: ../images/auto-generated/AntsAndPlane.png
 

@@ -24,7 +24,7 @@ plotter.add_mesh(mesh, scalars='data', clim=[0, 1])
 plotter.add_mesh(mesh.outline_corners())
 
 # Render and do NOT close
-plotter.plot(auto_close=False)
+plotter.show(auto_close=False)
 
 # Run through each frame
 plotter.write_frame() # write initial data
