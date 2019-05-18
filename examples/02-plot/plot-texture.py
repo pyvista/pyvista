@@ -103,12 +103,9 @@ curvsurf.plot(texture=tex)
 # What if you have a single texture that you'd like to repeat across a mesh?
 # Simply define the texture coordinates for all nodes explicitly.
 #
-# .. warning:: This example is not correct
-#
-#    Would you like to help us make this example better? Please consider opening a pull request
-#
 # Here we create the texture coordinates to fill up the grid with several
-# mappings of a single texture:
+# mappings of a single texture. In order to do this we must define texture
+# coordinates outside of the typical ``(0, 1)`` range:
 
 axial_num_puppies = 4
 xc = np.linspace(0, axial_num_puppies, curvsurf.dimensions[0])
@@ -118,6 +115,9 @@ xxc, yyc = np.meshgrid(xc, yc)
 puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 
 ################################################################################
+# By defining texture coordinates that range ``(0, 4)`` on eaxh axis, we will
+# produce 4 repitions of the same texture on this mesh.
+#
 # Then we must associate those texture coordinates with the mesh through the
 # :attr:`pyvista.Common.t_coords` property.
 
