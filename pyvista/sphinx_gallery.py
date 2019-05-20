@@ -7,6 +7,17 @@ import shutil
 import pyvista
 
 
+def _get_sg_image_scraper():
+    """Returns the callable scraper to be used by Sphinx-Gallery which allows
+    PyVista users to just use strings as they already can for 'matplotlib' and
+    'mayavi'. Details on this implementation can be found in
+    `sphinx-gallery/sphinx-gallery/494`_
+
+    .. _sphinx-gallery/sphinx-gallery/494: https://github.com/sphinx-gallery/sphinx-gallery/pull/494
+    """
+    return Scraper()
+
+
 class Scraper(object):
     """
     Save ``pyvista.Plotter`` objects.
