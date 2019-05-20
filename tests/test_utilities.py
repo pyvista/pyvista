@@ -87,3 +87,9 @@ def test_is_inside_bounds():
     assert not utilities.is_inside_bounds((5, 12, 5), bnds)
     assert not utilities.is_inside_bounds((5, 5, 12), bnds)
     assert not utilities.is_inside_bounds((12, 12, 12), bnds)
+
+
+def test_get_sg_image_scraper():
+    scraper = pyvista._get_sg_image_scraper()
+    assert isinstance(scraper, pyvista.Scraper)
+    assert callable(scraper)
