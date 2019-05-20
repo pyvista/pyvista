@@ -12,8 +12,8 @@ software and we apologize for any confusion this may be causing**
 .. |zenodo| image:: https://zenodo.org/badge/92974124.svg
    :target: https://zenodo.org/badge/latestdoi/92974124
 
-.. |joss| image:: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
-   :target: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978
+.. |joss| image:: http://joss.theoj.org/papers/10.21105/joss.01450/status.svg
+   :target: https://doi.org/10.21105/joss.01450
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
@@ -161,3 +161,29 @@ features to make this software a useful tool for all users. To learn more about
 contributing to PyVista, please see the `Contributing Guide`_.
 
 .. _Contributing Guide: http://docs.pyvista.org/dev/contributing.html
+
+
+Citing PyVista
+==============
+
+There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_!
+
+If you are using PyVista in your scientific research, please help our scientific
+visibility by citing our work!
+
+
+    Sullivan et al., (2019). PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK). Journal of Open Source Software, 4(37), 1450, https://doi.org/10.21105/joss.01450
+
+
+BibTex:
+
+.. code::
+
+    @article{sullivan2019pyvista,
+      author = {Sullivan, C. Bane and Kaszynski, Alexander A.},
+      journal = {Journal of Open Source Software},
+      pages = {4(37), 1450},
+      title = {{PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)}},
+      year = {2019},
+      doi = {10.21105/joss.01450},
+    }
