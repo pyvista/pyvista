@@ -66,3 +66,8 @@ def test_polygon():
 def test_disc():
     geom = pyvista.Disc()
     assert np.any(geom.points)
+
+
+def test_supertoroid():
+    geom = pyvista.SuperToroid()
+    assert np.any(geom.points)
