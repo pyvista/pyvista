@@ -12,8 +12,11 @@ vtkCubeSource
 vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
+vtkParametricSuperToroid
 
 """
+from math import pi
+
 import numpy as np
 import vtk
 
@@ -429,3 +432,123 @@ def Text3D(string, depth=0.5):
     tri_filter.SetInputConnection(extrude.GetOutputPort())
     tri_filter.Update()
     return pyvista.wrap(tri_filter.GetOutput())
+
+
+def SuperToroid(ring_radius=1.0, cross_section_radius=0.5,
+                x_radius=1.0, y_radius=1.0, z_radius=1.0, n_1=1.0,
+                n_2=1.0, min_u=0, max_u=2*pi, min_v=0.0, max_v=2*pi,
+                u_res=100, v_res=100, w_res=100, join_u=False,
+                join_v=False, twist_u=False, twist_v=False,
+                clockwise=True):
+    """Construct a supertoroid and return a mesh.
+
+    Essentially a supertoroid is a torus with the sine and cosine
+    terms raised to a power. A supertoroid is a versatile primitive
+    that is controlled by four parameters r0, r1, n1 and n2. r0, r1
+    determine the type of torus whilst the value of n1 determines the
+    shape of the torus ring and n2 determines the shape of the cross
+    section of the ring. It is the different values of these powers
+    which give rise to a family of 3D shapes that are all basically
+    toroidal in shape.
+
+    Parameters
+    ----------
+    ring_radius : float
+        The radius from the center to the middle of the ring of the
+        supertoroid.
+
+    cross_section_radius = 0.5
+        The radius of the cross section of ring of the supertoroid.
+
+    x_radius : float, optional
+        Radius in the x direction.
+
+    y_radius : float, optional
+        Radius in the y direction.
+
+    z_radius : float, optional
+        Radius in the z direction.
+
+    n_1 : float
+        Controls shape of torus ring.
+
+    n_2 = 1
+        Controls shape of cross section of the ring.
+
+    min_u : float, optional
+        The minimum u-value.
+
+    max_u : float, optional
+        The maximum u-value.
+
+    min_v : float, optional
+        The minimum v-value.
+
+    max_v : float, optional
+        The maximum v-value.
+
+    u_res : int, optional
+        Resol
+
+    join_u : bool, optional
+        Joins the first triangle strip to the last one with a twist in
+        the u direction.
+
+    join_v : bool, optional
+        joins the first triangle strip to the last one with a twist in
+        the v direction.
+
+    twist_u : bool, optional
+        Joins the first triangle strip to the last one with a twist in
+        the u direction.
+
+    twist_v : bool, optional
+        Joins the first triangle strip to the last one with a twist in
+        the v direction.
+
+    clockwise : bool
+        Determines the ordering of the vertices forming the triangle
+        strips.
+
+    Notes
+    -----
+    Care needs to be taken specifying the bounds correctly. You may
+    need to carefully adjust MinimumU, MinimumV, MaximumU, MaximumV.
+
+    Examples
+    --------
+    Create default supertorid
+    >>> import pyvista
+    >>> mesh = pyvista.SuperToroid()
+    >>> mesh.plot(color='w')  # doctest:+SKIP
+
+    Alternative supertorid
+    >>> mesh = pyvista.SuperToroid(n_1=1, n_2=2)
+    """
+    # create parametric supertorus
+    supertorus = vtk.vtkParametricSuperToroid()
+    supertorus.SetMinimumU(min_u)
+    supertorus.SetMaximumU(max_u)
+    supertorus.SetMinimumV(min_v)
+    supertorus.SetMaximumV(max_v)
+    supertorus.SetJoinU(join_u)
+    supertorus.SetJoinV(join_v)
+    supertorus.SetTwistU(twist_u)
+    supertorus.SetTwistV(twist_v)
+    supertorus.SetClockwiseOrdering(clockwise)
+    supertorus.SetRingRadius(ring_radius)
+    supertorus.SetCrossSectionRadius(cross_section_radius)
+    supertorus.SetXRadius(x_radius)
+    supertorus.SetYRadius(y_radius)
+    supertorus.SetZRadius(z_radius)
+    supertorus.SetN1(n_1)
+    supertorus.SetN2(n_2)
+
+    # convert to a mesh
+    para_source = vtk.vtkParametricFunctionSource()
+    para_source.SetParametricFunction(supertorus)
+    para_source.SetUResolution(u_res)
+    para_source.SetVResolution(v_res)
+    para_source.SetWResolution(w_res)
+    para_source.Update()
+    return pyvista.wrap(para_source.GetOutput())
