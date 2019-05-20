@@ -133,6 +133,7 @@ html_context = {
         ('<i class="fa fa-comment fa-fw"></i> Support', 'https://github.com/pyvista/pyvista-support'),
         ('<i class="fa fa-github fa-fw"></i> Source Code', 'https://github.com/pyvista/pyvista'),
         ('<i class="fa fa-gavel fa-fw"></i> Contributing', 'https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md'),
+        ('<i class="fa fa-file-text fa-fw"></i> The Paper', 'https://doi.org/10.21105/joss.01450'),
     ],
 }
 
