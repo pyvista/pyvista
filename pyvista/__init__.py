@@ -31,7 +31,7 @@ from pyvista.ipy_tools import ScaledPlotter
 from pyvista.ipy_tools import Isocontour
 
 # Sphinx-gallery tools
-from pyvista.sphinx_gallery import Scraper
+from pyvista.sphinx_gallery import Scraper, _get_sg_image_scraper
 
 import numpy as np
 import vtk
