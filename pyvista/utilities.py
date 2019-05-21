@@ -13,7 +13,7 @@ import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
-from pyvista.readers import standard_reader_routine, get_ext, get_reader
+from pyvista.fileio import standard_reader_routine, get_ext, get_reader
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
