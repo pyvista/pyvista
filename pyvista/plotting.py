@@ -760,11 +760,6 @@ class BasePlotter(object):
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
-        # fixes lighting issue when using precalculated normals
-        if isinstance(mesh, vtk.vtkPolyData):
-            if mesh.GetPointData().HasArray('Normals'):
-                mesh.point_arrays['Normals'] = mesh.point_arrays.pop('Normals')
-
         if scalar_bar_args is None:
             scalar_bar_args = {}
 
@@ -1059,6 +1054,7 @@ class BasePlotter(object):
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
+        prop.SetInterpolationToPhong()
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
