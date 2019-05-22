@@ -624,7 +624,7 @@ class BasePlotter(object):
                  interpolate_before_map=False, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=None,
+                 render_points_as_spheres=None, smooth_shading=False,
                  render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
@@ -1054,7 +1054,10 @@ class BasePlotter(object):
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
-        prop.SetInterpolationToPhong()
+        if smooth_shading:
+            prop.SetInterpolationToPhong()
+        else:
+            prop.SetInterpolationToFlat()
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
