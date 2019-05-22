@@ -7,7 +7,7 @@ import pytest
 import pyvista
 from pyvista import examples as ex
 from pyvista import utilities
-from pyvista import readers
+from pyvista import fileio
 
 # Only set this here just the once.
 pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
