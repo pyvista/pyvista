@@ -221,12 +221,21 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                 plotter.add_arrows(var_item[0], var_item[1])
             else:
                 for item in var_item:
-                    plotter.add_mesh(item, **kwargs)
+                    if isinstance(item, np.ndarray) and item.ndim == 3:
+                        plotter.add_volume(item, **kwargs)
+                    else:
+                        plotter.add_mesh(item, **kwargs)
         else:
             for item in var_item:
-                plotter.add_mesh(item, **kwargs)
+                if isinstance(item, np.ndarray) and item.ndim == 3:
+                    plotter.add_volume(item, **kwargs)
+                else:
+                    plotter.add_mesh(item, **kwargs)
     else:
-        plotter.add_mesh(var_item, **kwargs)
+        if isinstance(var_item, np.ndarray) and var_item.ndim == 3:
+            plotter.add_volume(var_item, **kwargs)
+        else:
+            plotter.add_mesh(var_item, **kwargs)
 
     if text:
         plotter.add_text(text)
@@ -1095,6 +1104,153 @@ class BasePlotter(object):
         # Add scalar bar if available
         if stitle is not None and show_scalar_bar and not rgb:
             self.add_scalar_bar(stitle, **scalar_bar_args)
+
+        return actor
+
+    def add_volume(self, data, resolution=[1,1,1], opacity='linear', n_colors=256,
+                   cmap=None, flip_scalars=False, reset_camera=None, name=None,
+                   ambient=0.0, categories=False, loc=None, backface_culling=False,
+                   **kwargs):
+        """
+        Adds a volume, rendered using a GPU ray cast mapper.
+
+        Requires a 3D numpy.ndarray.
+
+        Parameters
+        ----------
+        data: 3D numpy.ndarray
+            The input array to visualize, assuming the array values denote
+            scalar intensities.
+
+        opacity : float or string, optional
+            Opacity of input array. Options are: linear, linear_r, geom, geom_r.
+            Defaults to 'linear'. Can also be given as a scalar value between 0
+            and 1.
+
+        flip_scalars : bool, optional
+            Flip direction of cmap.
+
+        n_colors : int, optional
+            Number of colors to use when displaying scalars.  Default
+            256.
+
+        cmap : str, optional
+           cmap string.  See available matplotlib cmaps. Only applicable for when
+           displaying scalars.  Defaults to None (jet).  Requires matplotlib.
+
+        name : str, optional
+            The name for the added actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
+
+        ambient : float, optional
+            The amount of light from 0 to 1 that reaches the actor when not
+            directed at the light source emitted from the viewer.  Default 0.0.
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example,
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
+
+        backface_culling : bool optional
+            Does not render faces that should not be visible to the
+            plotter.  This can be helpful for dense surface meshes,
+            especially when edges are visible, but can cause flat
+            meshes to be partially displayed.  Default False.
+
+        categories : bool, optional
+            If fetching a colormap from matplotlib, this is the number of
+            categories to use in that colormap. If set to ``True``, then
+            the number of unique values in the scalar array will be used.
+
+        Returns
+        -------
+        actor: vtk.vtkVolume
+            VTK volume of the input data.
+        """
+
+        data = data.copy()
+
+        # Make checks for types and dimensionality
+        if not isinstance(data, np.ndarray):
+            raise TypeError('Input array must be a numpy array.')
+
+        if not data.ndim == 3:
+            raise ValueError('Input array must be 3D.')
+
+        if name is None:
+            name = '{}({})'.format(type(data).__name__, str(hex(id(data))))
+
+        # Set main values
+        data = data.copy().astype(np.float)
+        data = ((data - np.min(data)) / (np.max(data) - np.min(data))) * 255
+        data = data.astype(np.uint8)
+
+        # Import data from array into VTK
+        data_importer = vtk.vtkImageImport()
+        data_string = data.tostring(order='F') # Python-C array ordering differences
+        data_importer.CopyImportVoidPointer(data_string, len(data_string))
+
+        data_importer.SetDataScalarTypeToUnsignedChar()
+        data_importer.SetNumberOfScalarComponents(1)
+
+        # Set spatial aspects of image
+        d, w, h = data.shape
+        data_importer.SetDataExtent(0, d - 1, 0, w - 1, 0, h - 1)
+        data_importer.SetWholeExtent(0, d - 1, 0, w - 1, 0, h - 1)
+        data_importer.SetDataSpacing(resolution)
+
+        # Set colormap
+        if cmap is None: # grab alias for cmaps: colormap
+            cmap = kwargs.get('colormap', None)
+            if cmap is None: # Set default map if matplotlib is avaialble
+                try:
+                    import matplotlib
+                    cmap = rcParams['cmap']
+                except ImportError:
+                    pass
+        if cmap is not None:
+            try:
+                from matplotlib.cm import get_cmap
+            except ImportError:
+                raise Exception('cmap requires matplotlib')
+            if isinstance(cmap, str):
+                if categories is True:
+                    categories = len(np.unique(data))
+                    cmap = get_cmap(cmap, categories)
+                else:
+                    cmap = get_cmap(cmap)
+        if flip_scalars:
+            cmap = cmap.reversed()
+
+        color_tf = vtk.vtkColorTransferFunction()
+        for ii in range(n_colors):
+            color_tf.AddRGBPoint(ii, *cmap(ii)[:-1])
+
+        # Set opacities
+        if isinstance(opacity, (float, int)):
+            opacity_values = [opacity] * n_colors
+        elif isinstance(opacity, str):
+            opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
+
+        opacity_tf = vtk.vtkPiecewiseFunction()
+        for ii in range(n_colors):
+            opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
+
+        # Define mapper, volume, and add the correct properties
+        self.mapper = vtk.vtkGPUVolumeRayCastMapper()
+        self.mapper.SetInputConnection(data_importer.GetOutputPort())
+        self.volume = vtk.vtkVolume()
+        self.volume.SetMapper(self.mapper)
+
+        prop = vtk.vtkVolumeProperty()
+        prop.SetColor(color_tf)
+        prop.SetScalarOpacity(opacity_tf)
+        prop.SetAmbient(ambient)
+        self.volume.SetProperty(prop)
+
+        actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
+                                     name=name, loc=loc, culling=backface_culling)
 
         return actor
 
