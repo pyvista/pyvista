@@ -1,5 +1,5 @@
 numpy
-imageio<=2.4.1
+imageio==2.4.1
 vtk
 matplotlib
 appdirs
