@@ -9,6 +9,16 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
+ffmpeg_failed = False
+try:
+    try:
+        import imageio_ffmpeg
+    except ImportError:
+        import imageio
+        imageio.plugins.ffmpeg.download()
+except:
+    ffmpeg_failed = True
+
 TEST_DOWNLOADS = False
 try:
     if os.environ['TEST_DOWNLOADS'].lower() == 'true':
@@ -44,6 +54,7 @@ def test_docexample_advancedplottingwithnumpy():
     plotter.close()
 
 
+@pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_creatingagifmovie(tmpdir, off_screen=True):
     if tmpdir:
