@@ -720,7 +720,7 @@ class Common(DataSetFilters, object):
         """ removes cell scalars """
         self.GetCellData().RemoveArray(key)
 
-    def clear_scalars(self):
+    def clear_arrays(self):
         """ removes all scalar arrays """
 
         p_keys = self._point_arrays.keys()
