@@ -70,7 +70,7 @@ First, check out some common meta data properties:
     >>> data.n_points
     1335
     >>> # What about scalar arrays? Are there any?
-    >>> data.n_scalars
+    >>> data.n_arrays
     0
     >>> # What are the data bounds?
     >>> data.bounds

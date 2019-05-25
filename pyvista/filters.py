@@ -587,7 +587,7 @@ class DataSetFilters(object):
 
         """
         # Make sure the input has scalars to contour on
-        if dataset.n_scalars < 1:
+        if dataset.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have scalar data.')
         alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(dataset)

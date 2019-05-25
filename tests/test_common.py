@@ -513,6 +513,6 @@ def test_clear_arrays():
     grid['foo-p'] = np.random.rand(grid.n_points)
     grid['foo-c'] = np.random.rand(grid.n_cells)
     grid.field_arrays['foo-f'] = np.random.rand(grid.n_points * grid.n_cells)
-    assert grid.n_scalars == 3
+    assert grid.n_arrays == 3
     grid.clear_arrays()
-    assert grid.n_scalars == 0
+    assert grid.n_arrays == 0

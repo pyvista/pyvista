@@ -58,7 +58,7 @@ class Common(DataSetFilters, object):
                     name = None
 
         if name is None:
-            if self.n_scalars < 1:
+            if self.n_arrays < 1:
                 return field, name
             # find some array in the set field
             parr = self.GetPointData().GetArrayName(0)
@@ -895,11 +895,17 @@ class Common(DataSetFilters, object):
         return
 
     @property
-    def n_scalars(self):
-        """The number of scalara arrays present in the dataset"""
+    def n_arrays(self):
+        """The number of scalar arrays present in the dataset"""
         return self.GetPointData().GetNumberOfArrays() + \
                self.GetCellData().GetNumberOfArrays() + \
                self.GetFieldData().GetNumberOfArrays()
+
+    @property
+    def n_scalars(self):
+        """DEPRECATED: Please use `n_arrays`"""
+        warnings.warn('Deprecation Warning: `n_scalars` is now `n_arrays`', RuntimeWarning)
+        return self.n_arrays
 
     @property
     def scalar_names(self):
@@ -952,7 +958,7 @@ class Common(DataSetFilters, object):
                     fmt += row.format(attr[0], attr[2].format(*attr[1]))
                 except:
                     fmt += row.format(attr[0], attr[2].format(attr[1]))
-            fmt += row.format('N Scalars', self.n_scalars)
+            fmt += row.format('N Arrays', self.n_arrays)
             fmt += "</table>\n"
             fmt += "\n"
             if display:
@@ -969,7 +975,7 @@ class Common(DataSetFilters, object):
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
-        fmt += row.format('N Scalars', self.n_scalars)
+        fmt += row.format('N Arrays', self.n_arrays)
         return fmt
 
 
@@ -977,14 +983,14 @@ class Common(DataSetFilters, object):
         """A pretty representation for Jupyter notebooks that includes header
         details and information about all scalar arrays"""
         fmt = ""
-        if self.n_scalars > 0:
+        if self.n_arrays > 0:
             fmt += "<table>"
             fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
         # Get the header info
         fmt += self.head(display=False, html=True)
         # Fill out scalar arrays
-        if self.n_scalars > 0:
+        if self.n_arrays > 0:
             fmt += "</td><td>"
             fmt += "\n"
             fmt += "<table>\n"
