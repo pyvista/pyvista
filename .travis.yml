@@ -22,7 +22,6 @@ install:
   - pip install -r requirements_docs.txt
   - pip install -U doctr
   - pip install cookiecutter
-  - python -c "import imageio; imageio.plugins.ffmpeg.download()"
   - pip install -e .
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"

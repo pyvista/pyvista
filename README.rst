@@ -137,7 +137,7 @@ Here are a few open-source projects that leverage PyVista:
 .. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
 .. _pymeshfix: https://github.com/akaszynski/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
-.. _tetgen: https://github.com/akaszynski/tetgen
+.. _tetgen: https://github.com/pyvista/tetgen
 
 
 Authors
