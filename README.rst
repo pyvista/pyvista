@@ -129,13 +129,12 @@ Here are a few open-source projects that leverage PyVista:
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
-.. _pymeshfix: https://github.com/akaszynski/pymeshfix
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: http://discretize.simpeg.xyz/en/master/
 .. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
-.. _pymeshfix: https://github.com/akaszynski/pymeshfix
+.. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/pyvista/tetgen
 
