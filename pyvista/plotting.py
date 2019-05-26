@@ -2914,7 +2914,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=None):
+             screenshot=False, return_img=False, use_panel=None, cpos=None):
         """
         Creates plotting window
 
@@ -2945,6 +2945,9 @@ class Plotter(BasePlotter):
             If False, the interactive rendering from panel will not be used in
             notebooks
 
+        cpos : list(tuple(floats))
+            The camera position to use
+
         Returns
         -------
         cpos : list
@@ -2956,9 +2959,11 @@ class Plotter(BasePlotter):
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
-                if not renderer.camera_set:
+                if not renderer.camera_set and cpos is None:
                     renderer.camera_position = renderer.get_default_cam_pos()
                     renderer.ResetCamera()
+                elif cpos is not None:
+                    renderer.camera_position = cpos
             self._first_time = False
 
         if title:
