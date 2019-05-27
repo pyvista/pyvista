@@ -1180,7 +1180,10 @@ class BasePlotter(object):
             VTK volume of the input data.
         """
 
-        data = data.copy()
+        if isinstance(data, vtk.vtkImageData):
+            data = pyvista.wrap(data)
+        else:
+            data = data.copy()
 
         # Make checks for types and dimensionality
         if isinstance(data, np.ndarray):
@@ -1223,6 +1226,8 @@ class BasePlotter(object):
 
                 actors.append(a)
             return actors
+        else:
+            raise TypeError(f'Data type {type(data)} is not valid.')
 
         if name is None:
             name = '{}({})'.format(type(data).__name__, str(hex(id(data))))
