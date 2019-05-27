@@ -1227,7 +1227,7 @@ class BasePlotter(object):
                 actors.append(a)
             return actors
         else:
-            raise TypeError(f'Data type {type(data)} is not valid.')
+            raise TypeError('Data type {} is not valid.'.format(type(data)))
 
         if name is None:
             name = '{}({})'.format(type(data).__name__, str(hex(id(data))))
@@ -1304,9 +1304,9 @@ class BasePlotter(object):
         elif blending in ['minimum', 'min', 'minimum_intensity']:
             self.mapper.SetBlendModeToMinimumIntensity()
         else:
-            raise ValueError(f'Blending mode {blending} invalid. Please choose one ' +
-                             'of \'additive\', \'composite\', \'minimum\' or ' +
-                             '\'maximum\'.')
+            raise ValueError('Blending mode \'{}\' invalid. '.format(blending) +
+                             'Please choose one ' + 'of \'additive\', ' +
+                             '\'composite\', \'minimum\' or ' + '\'maximum\'.')
         self.mapper.Update()
 
         self.volume = vtk.vtkVolume()
