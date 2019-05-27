@@ -771,7 +771,7 @@ class BasePlotter(object):
         if not is_pyvista_obj(mesh):
             mesh = wrap(mesh)
 
-        if smooth_shading:
+        if smooth_shading and isinstance(mesh, pyvista.PolyData):
             mesh.compute_normals(cell_normals=False, inplace=True)
 
         if show_edges is None:
