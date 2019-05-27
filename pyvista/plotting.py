@@ -2705,7 +2705,7 @@ class BasePlotter(object):
         self.iren.SetPicker(area_picker)
 
 
-    def generate_orbital_path(self, factor=3., n_points=20, viewup=None, z_shift=None):
+    def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Genrates an orbital path around the data scene
 
         Parameters
@@ -2719,20 +2719,18 @@ class BasePlotter(object):
         viewup : list(float)
             the normal to the orbital plane
 
-        z_shift : float, optional
+        shift : float, optional
             shift the plane up/down from the center of the scene by this amount
         """
         if viewup is None:
             viewup = rcParams['camera']['viewup']
-        center = list(self.center)
-        bnds = list(self.bounds)
-        if z_shift is None:
-            z_shift = (bnds[5] - bnds[4]) * factor
-        center[2] = center[2] + z_shift
+        center = np.array(self.center)
+        bnds = np.array(self.bounds)
         radius = (bnds[1] - bnds[0]) * factor
         y = (bnds[3] - bnds[2]) * factor
         if y > radius:
             radius = y
+        center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
 
@@ -2744,7 +2742,8 @@ class BasePlotter(object):
         return self.iren.FlyTo(self.renderer, *point)
 
 
-    def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None, bkg=True):
+    def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
+                      bkg=True, write_frames=False):
         """Orbit on the given path focusing on the focus point
 
         Parameters
@@ -2761,6 +2760,10 @@ class BasePlotter(object):
 
         viewup : list(float)
             the normal to the orbital plane
+
+        write_frames : bool
+            Assume a file is open and write a frame on each camera view during
+            the orbit.
         """
         if focus is None:
             focus = self.center
@@ -2778,13 +2781,17 @@ class BasePlotter(object):
                 self.set_position(point)
                 self.set_focus(focus)
                 self.set_viewup(viewup)
-                time.sleep(step)
+                if bkg:
+                    time.sleep(step)
+                if write_frames:
+                    self.write_frame()
 
 
-        if bkg:
+        if bkg and isinstance(self, pyvista.BackgroundPlotter):
             thread = Thread(target=orbit)
             thread.start()
         else:
+            bkg = False
             orbit()
         return
 
