@@ -633,7 +633,7 @@ class BasePlotter(object):
                  interpolate_before_map=False, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=None,
+                 render_points_as_spheres=None, smooth_shading=False,
                  render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
@@ -769,11 +769,6 @@ class BasePlotter(object):
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
-        # fixes lighting issue when using precalculated normals
-        if isinstance(mesh, vtk.vtkPolyData):
-            if mesh.GetPointData().HasArray('Normals'):
-                mesh.point_arrays['Normals'] = mesh.point_arrays.pop('Normals')
-
         if scalar_bar_args is None:
             scalar_bar_args = {}
 
@@ -784,6 +779,9 @@ class BasePlotter(object):
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_obj(mesh):
             mesh = wrap(mesh)
+
+        if smooth_shading:
+            mesh.compute_normals(cell_normals=False, inplace=True)
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
@@ -1068,6 +1066,10 @@ class BasePlotter(object):
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
+        if smooth_shading:
+            prop.SetInterpolationToPhong()
+        else:
+            prop.SetInterpolationToFlat()
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
@@ -3137,7 +3139,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=None):
+             screenshot=False, return_img=False, use_panel=None, cpos=None):
         """
         Creates plotting window
 
@@ -3168,6 +3170,9 @@ class Plotter(BasePlotter):
             If False, the interactive rendering from panel will not be used in
             notebooks
 
+        cpos : list(tuple(floats))
+            The camera position to use
+
         Returns
         -------
         cpos : list
@@ -3179,9 +3184,11 @@ class Plotter(BasePlotter):
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
-                if not renderer.camera_set:
+                if not renderer.camera_set and cpos is None:
                     renderer.camera_position = renderer.get_default_cam_pos()
                     renderer.ResetCamera()
+                elif cpos is not None:
+                    renderer.camera_position = cpos
             self._first_time = False
 
         if title:

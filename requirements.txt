@@ -1,5 +1,4 @@
 numpy
-imageio<=2.4.1
 vtk
 matplotlib
 appdirs
@@ -10,4 +9,5 @@ PyQt5==5.11.3
 pytest-qt
 nbval
 ipywidgets
+imageio>=2.5.0
 imageio-ffmpeg

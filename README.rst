@@ -24,7 +24,7 @@ software and we apologize for any confusion this may be causing**
 .. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/pyvista/pyvista
 
-.. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/pyvista.svg?label=AppVeyor&style=flat&logo=appveyor
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/80geek5ylh4ebnc6/branch/master?svg=true
    :target: https://ci.appveyor.com/project/banesullivan/pyvista/history
 
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
@@ -129,15 +129,14 @@ Here are a few open-source projects that leverage PyVista:
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
-.. _pymeshfix: https://github.com/akaszynski/pymeshfix
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: http://discretize.simpeg.xyz/en/master/
 .. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
-.. _pymeshfix: https://github.com/akaszynski/pymeshfix
+.. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
-.. _tetgen: https://github.com/akaszynski/tetgen
+.. _tetgen: https://github.com/pyvista/tetgen
 
 
 Authors
