@@ -56,6 +56,7 @@ rcParams = {
     },
     'cmap' : 'jet',
     'color' : 'white',
+    'floor_color' : 'gray',
     'nan_color' : 'darkgray',
     'edge_color' : 'black',
     'outline_color' : 'white',
@@ -1519,6 +1520,23 @@ class BasePlotter(object):
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
         renderer.remove_bounds_axes()
+
+
+    def add_floor(self, color=None, line_width=None, opacity=1.0,
+                  show_edges=False, lighting=False, face='-z',
+                  reset_camera=None, loc=None, i_resolution=10, j_resolution=10):
+        kwargs = locals()
+        _ = kwargs.pop('self')
+        _ = kwargs.pop('loc')
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.add_floor(**kwargs)
+
+    def remove_floor(self, loc=None):
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        renderer.remove_floor()
+
 
     def subplot(self, index_x, index_y):
         """

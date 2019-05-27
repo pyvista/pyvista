@@ -495,6 +495,101 @@ class Renderer(vtkRenderer):
 
         return self.bounding_box_actor
 
+
+    def add_floor(self, color=None, line_width=None, opacity=1.0,
+                  show_edges=False, lighting=False, face='-z', edge_color=None,
+                  reset_camera=None, loc=None, i_resolution=10, j_resolution=10):
+        """Show a floor mesh"""
+        self._floor_kwargs = locals()
+        self._floor_kwargs.pop('self')
+        if face.lower() in '-z':
+            center = np.array(self.center)
+            center[2] = self.bounds[4]
+            normal = (0,0,1)
+            i_size = self.bounds[1] - self.bounds[0]
+            j_size = self.bounds[3] - self.bounds[2]
+        elif face.lower() in '-y':
+            center = np.array(self.center)
+            center[1] = self.bounds[2]
+            normal = (0,1,0)
+            i_size = self.bounds[1] - self.bounds[0]
+            j_size = self.bounds[5] - self.bounds[4]
+        elif face.lower() in '-x':
+            center = np.array(self.center)
+            center[0] = self.bounds[0]
+            normal = (1,0,0)
+            i_size = self.bounds[5] - self.bounds[4]
+            j_size = self.bounds[3] - self.bounds[2]
+        elif face.lower() in '+z':
+            center = np.array(self.center)
+            center[2] = self.bounds[5]
+            normal = (0,0,-1)
+            i_size = self.bounds[1] - self.bounds[0]
+            j_size = self.bounds[3] - self.bounds[2]
+        elif face.lower() in '+y':
+            center = np.array(self.center)
+            center[1] = self.bounds[3]
+            normal = (0,-1,0)
+            i_size = self.bounds[1] - self.bounds[0]
+            j_size = self.bounds[5] - self.bounds[4]
+        elif face.lower() in '+x':
+            center = np.array(self.center)
+            center[0] = self.bounds[1]
+            normal = (-1,0,0)
+            i_size = self.bounds[5] - self.bounds[4]
+            j_size = self.bounds[3] - self.bounds[2]
+        else:
+            raise NotImplementedError('Face ({}) not implementd'.format(face))
+        self._floor = pyvista.Plane(center=center, direction=normal,
+                                    i_size=i_size, j_size=j_size,
+                                    i_resolution=i_resolution,
+                                    j_resolution=j_resolution)
+        name = 'Floor({})'.format(hex(id(self._floor)))
+        # use floor
+        if lighting is None:
+            lighting = rcParams['lighting']
+
+        if edge_color is None:
+            edge_color = rcParams['edge_color']
+
+        self.remove_bounding_box()
+        if color is None:
+            color = rcParams['floor_color']
+        rgb_color = parse_color(color)
+        mapper = vtk.vtkDataSetMapper()
+        mapper.SetInputData(self._floor)
+        self.floor_actor, prop = self.add_actor(mapper,
+                                                reset_camera=reset_camera,
+                                                name=name)
+
+        prop.SetColor(rgb_color)
+        prop.SetOpacity(opacity)
+
+        # edge display style
+        if show_edges:
+            prop.EdgeVisibilityOn()
+        prop.SetEdgeColor(parse_color(edge_color))
+
+        # lighting display style
+        if lighting is False:
+            prop.LightingOff()
+
+        # set line thickness
+        if line_width:
+            prop.SetLineWidth(line_width)
+
+        prop.SetRepresentationToSurface()
+
+        return self.floor_actor
+
+    def remove_floor(self):
+        """ Removes the floor """
+        if hasattr(self, '_floor'):
+            actor = self.floor_actor
+            self.floor_actor = None
+            del self._floor
+            self.remove_actor(actor, reset_camera=False)
+
     def remove_bounds_axes(self):
         """ Removes bounds axes """
         if hasattr(self, 'cube_axes_actor'):
@@ -680,6 +775,8 @@ class Renderer(vtkRenderer):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
+                self.remove_floor()
+                self.add_floor(**self._floor_kwargs)
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
