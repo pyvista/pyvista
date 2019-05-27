@@ -1107,18 +1107,18 @@ class BasePlotter(object):
 
         return actor
 
-    def add_volume(self, data, resolution=[1,1,1], opacity='linear', n_colors=256,
+    def add_volume(self, data, resolution=None, opacity='linear', n_colors=256,
                    cmap=None, flip_scalars=False, reset_camera=None, name=None,
                    ambient=0.0, categories=False, loc=None, backface_culling=False,
-                   **kwargs):
+                   multi_colors=False, blending='additive', **kwargs):
         """
-        Adds a volume, rendered using a GPU ray cast mapper.
+        Adds a volume, rendered using a fixed point ray cast mapper.
 
-        Requires a 3D numpy.ndarray.
+        Requires a 3D numpy.ndarray or pyvista.UniformGrid.
 
         Parameters
         ----------
-        data: 3D numpy.ndarray
+        data: 3D numpy.ndarray or pyvista.UnformGrid
             The input array to visualize, assuming the array values denote
             scalar intensities.
 
@@ -1137,6 +1137,7 @@ class BasePlotter(object):
         cmap : str, optional
            cmap string.  See available matplotlib cmaps. Only applicable for when
            displaying scalars.  Defaults to None (jet).  Requires matplotlib.
+           Will be overridden if multi_colors is set to True.
 
         name : str, optional
             The name for the added actor so that it can be easily
@@ -1163,6 +1164,16 @@ class BasePlotter(object):
             categories to use in that colormap. If set to ``True``, then
             the number of unique values in the scalar array will be used.
 
+        multi_colors : bool, optional
+            Whether or not to use multiple colors when plotting MultiBlock
+            object. Blocks will be colored sequentially as 'Reds', 'Greens',
+            'Blues', and 'Grays'.
+
+        blending : str, optional
+            Blending mode for visualisation of the input object(s). Can be
+            one of 'additive', 'maximum', 'minimum', 'composite', or
+            'average'. Defaults to 'additive'.
+
         Returns
         -------
         actor: vtk.vtkVolume
@@ -1172,17 +1183,52 @@ class BasePlotter(object):
         data = data.copy()
 
         # Make checks for types and dimensionality
-        if not isinstance(data, np.ndarray):
-            raise TypeError('Input array must be a numpy array.')
+        if isinstance(data, np.ndarray):
+            if not data.ndim == 3:
+                raise ValueError('Input array must be 3D.')
+            if resolution is None:
+                resolution = [1,1,1]
+            elif len(resolution) != 3:
+                raise ValueError('Invalid resolution dimensions.')
+        elif isinstance(data, pyvista.grid.UniformGrid):
+            if resolution is None:
+                resolution = data.GetSpacing()
+            extent = np.array(data.GetExtent()[1::2]) + 1
+            data = VN.vtk_to_numpy(data.GetPointData().GetArray(0))
+            data = data.reshape(extent, order='F')
+        elif isinstance(data, pyvista.MultiBlock):
+            # Now iteratively plot each element of the multiblock dataset
+            actors = []
+            for idx in range(data.GetNumberOfBlocks()):
+                if data[idx] is None:
+                    continue
+                # Get a good name to use
+                next_name = '{}-{}'.format(name, idx)
+                # Get the data object
+                block = wrap(data.GetBlock(idx))
+                if resolution is None:
+                    block_resolution = block.GetSpacing()
+                else:
+                    block_resolution = resolution
+                if multi_colors:
+                    color = ['Reds', 'Greens', 'Blues', 'Grays'][idx]
+                else:
+                    color = cmap
 
-        if not data.ndim == 3:
-            raise ValueError('Input array must be 3D.')
+                a = self.add_volume(block, resolution=block_resolution, opacity=opacity,
+                                    n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
+                                    reset_camera=reset_camera, name=next_name,
+                                    ambient=ambient, categories=categories, loc=loc,
+                                    backface_culling=backface_culling, **kwargs)
+
+                actors.append(a)
+            return actors
 
         if name is None:
             name = '{}({})'.format(type(data).__name__, str(hex(id(data))))
 
         # Set main values
-        data = data.copy().astype(np.float)
+        data = data.astype(np.float)
         data = ((data - np.min(data)) / (np.max(data) - np.min(data))) * 255
         data = data.astype(np.uint8)
 
@@ -1238,8 +1284,26 @@ class BasePlotter(object):
             opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
 
         # Define mapper, volume, and add the correct properties
-        self.mapper = vtk.vtkGPUVolumeRayCastMapper()
+        self.mapper = vtk.vtkFixedPointVolumeRayCastMapper()
         self.mapper.SetInputConnection(data_importer.GetOutputPort())
+
+        blending = blending.lower()
+        if blending in ['additive', 'add', 'sum']:
+            self.mapper.SetBlendModeToAdditive()
+#        elif blending in ['average', 'avg', 'average_intensity']:
+#            self.mapper.SetBlendModeToAverageIntensity()
+        elif blending in ['composite', 'comp']:
+            self.mapper.SetBlendModeToComposite()
+        elif blending in ['maximum', 'max', 'maximum_intensity']:
+            self.mapper.SetBlendModeToMaximumIntensity()
+        elif blending in ['minimum', 'min', 'minimum_intensity']:
+            self.mapper.SetBlendModeToMinimumIntensity()
+        else:
+            raise ValueError(f'Blending mode {blending} invalid. Please choose one ' +
+                             'of \'additive\', \'composite\', \'minimum\' or ' +
+                             '\'maximum\'.')
+        self.mapper.Update()
+
         self.volume = vtk.vtkVolume()
         self.volume.SetMapper(self.mapper)
 
