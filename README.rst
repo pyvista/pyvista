@@ -24,7 +24,7 @@ software and we apologize for any confusion this may be causing**
 .. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/pyvista/pyvista
 
-.. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/pyvista.svg?label=AppVeyor&style=flat&logo=appveyor
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/80geek5ylh4ebnc6/branch/master?svg=true
    :target: https://ci.appveyor.com/project/banesullivan/pyvista/history
 
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
