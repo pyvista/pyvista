@@ -782,7 +782,7 @@ class BasePlotter(object):
                 if scalars is not None:
                     scalars = scalars[ind]
 
-            mesh.compute_normals(cell_normals=False, inplace=True)
+            mesh.compute_normals(cell_normals=False, inplace=True, split_vertices=True)
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
