@@ -771,7 +771,17 @@ class BasePlotter(object):
         if not is_pyvista_obj(mesh):
             mesh = wrap(mesh)
 
+        # Compute surface normals if using smooth shading
         if smooth_shading:
+            # extract surface if mesh is exterior
+            if isinstance(mesh, (pyvista.UnstructuredGrid, pyvista.StructuredGrid)):
+                grid = mesh
+                mesh = grid.extract_surface()
+                ind = mesh.point_arrays['vtkOriginalPointIds']
+                # remap scalars
+                if scalars is not None:
+                    scalars = scalars[ind]
+
             mesh.compute_normals(cell_normals=False, inplace=True)
 
         if show_edges is None:
