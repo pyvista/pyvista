@@ -20,7 +20,10 @@ def test_clip_filter():
     for i, dataset in enumerate(datasets):
         clp = dataset.clip(normal=normals[i], invert=True)
         assert clp is not None
-        assert isinstance(clp, pyvista.UnstructuredGrid)
+        if isinstance(dataset, pyvista.PolyData):
+            assert isinstance(clp, pyvista.PolyData)
+        else:
+            assert isinstance(clp, pyvista.UnstructuredGrid)
 
 def test_clip_box():
     for i, dataset in enumerate(datasets):
