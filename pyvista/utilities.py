@@ -334,7 +334,11 @@ def wrap(vtkdataset):
         'vtkStructuredPoints' : pyvista.UniformGrid,
         'vtkMultiBlockDataSet' : pyvista.MultiBlock,
         }
-    key = vtkdataset.GetClassName()
+    # Otherwise, we assume a VTK data object was passed
+    if hasattr(vtkdataset, 'GetClassName'):
+        key = vtkdataset.GetClassName()
+    else:
+        raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
     try:
         wrapped = wrappers[key](vtkdataset)
     except:
