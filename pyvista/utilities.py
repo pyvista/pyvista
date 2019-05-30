@@ -334,27 +334,7 @@ def wrap(vtkdataset):
         'vtkStructuredPoints' : pyvista.UniformGrid,
         'vtkMultiBlockDataSet' : pyvista.MultiBlock,
         }
-    # First try grabbing the underlying PyVista types if what passed is from
-    # TetGen or PyMeshFix
-    try:
-        from pymeshfix import MeshFix
-    except ImportError:
-        MeshFix = None
-    try:
-        from tetgen import TetGen
-    except ImportError:
-        TetGen = None
-    acceptable = tuple([typ for typ in [MeshFix, TetGen] if typ is not None])
-    if len(acceptable) > 0 and isinstance(vtkdataset, acceptable):
-        # All the "acceptable" types have a ``.mesh`` property which returns a
-        # PyVista type
-        return vtkdataset.mesh
-    # Otherwise, we assume a VTK data object was passed
-    if hasattr(vtkdataset, 'GetClassName'):
-        key = vtkdataset.GetClassName()
-    else:
-        raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
-    # Try wrapping of the VTK data object
+    key = vtkdataset.GetClassName()
     try:
         wrapped = wrappers[key](vtkdataset)
     except:
