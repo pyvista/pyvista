@@ -55,6 +55,9 @@ def test_read(tmpdir):
     np.save(filename, arr)
     with pytest.raises(IOError):
         data = pyvista.read(filename)
+    # read non existing file
+    with pytest.raises(IOError):
+        data = pyvista.read('this_file_totally_does_not_exist.vtk')
 
 
 def test_get_scalar():
