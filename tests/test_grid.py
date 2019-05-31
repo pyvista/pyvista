@@ -261,14 +261,14 @@ def test_create_rectilinear_grid_from_file():
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
-    assert grid.n_scalars == 1
+    assert grid.n_arrays == 1
 
 def test_read_rectilinear_grid_from_file():
     grid = pyvista.read(examples.rectfile)
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
     assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
-    assert grid.n_scalars == 1
+    assert grid.n_arrays == 1
 
 
 def test_create_uniform_grid_from_specs():
@@ -309,7 +309,7 @@ def test_create_uniform_grid_from_file():
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
-    assert grid.n_scalars == 2
+    assert grid.n_arrays == 2
     assert grid.dimensions == [10, 10, 10]
 
 def test_read_uniform_grid_from_file():
@@ -317,7 +317,7 @@ def test_read_uniform_grid_from_file():
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
-    assert grid.n_scalars == 2
+    assert grid.n_arrays == 2
     assert grid.dimensions == [10, 10, 10]
 
 

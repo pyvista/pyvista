@@ -71,3 +71,8 @@ def test_disc():
 def test_supertoroid():
     geom = pyvista.SuperToroid()
     assert np.any(geom.points)
+
+
+def test_ellipsoid():
+    geom = pyvista.Ellipsoid()
+    assert np.any(geom.points)
