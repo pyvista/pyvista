@@ -98,7 +98,10 @@ class DataSetFilters(object):
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
         # run the clip
-        alg = vtk.vtkClipDataSet()
+        if isinstance(dataset, vtk.vtkPolyData):
+            alg = vtk.vtkClipPolyData()
+        else:
+            alg = vtk.vtkClipDataSet()
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
         alg.SetClipFunction(plane) # the the cutter to use the plane we made
         alg.SetInsideOut(invert) # invert the clip if needed
