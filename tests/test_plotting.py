@@ -321,7 +321,7 @@ def test_plot_clim():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_invalid_n_scalars():
+def test_invalid_n_arrays():
     with pytest.raises(Exception):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(sphere, scalars=np.arange(10))
