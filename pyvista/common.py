@@ -15,7 +15,8 @@ from pyvista import DataSetFilters
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
                                FIELD_DATA_FIELD, get_scalar,
                                vtk_bit_array_to_char, is_pyvista_obj,
-                               _raise_not_matching, convert_array)
+                               _raise_not_matching, convert_array,
+                               parse_field_choice)
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -657,11 +658,6 @@ class Common(DataSetFilters, object):
         return newobject
 
 
-    def _remove_point_scalar(self, key):
-        """ removes point scalars from point data """
-        self.GetPointData().RemoveArray(key)
-
-
     @property
     def point_arrays(self):
         """ Returns the all point arrays """
@@ -689,11 +685,6 @@ class Common(DataSetFilters, object):
         return self._point_arrays
 
 
-    def _remove_field_scalar(self, key):
-        """ removes field scalars from field data """
-        self.GetFieldData().RemoveArray(key)
-
-
     @property
     def field_arrays(self):
         """ Returns all field arrays """
@@ -716,28 +707,38 @@ class Common(DataSetFilters, object):
         self._field_arrays.enable_callback()
         return self._field_arrays
 
-    def _remove_cell_scalar(self, key):
-        """ removes cell scalars """
-        self.GetCellData().RemoveArray(key)
+
+    def _remove_array(self, field, key):
+        """internal helper to remove a single array by name from each field"""
+        field = parse_field_choice(field)
+        if field == POINT_DATA_FIELD:
+            self.GetPointData().RemoveArray(key)
+        elif field == CELL_DATA_FIELD:
+            self.GetCellData().RemoveArray(key)
+        elif field == FIELD_DATA_FIELD:
+            self.GetFieldData().RemoveArray(key)
+        else:
+            raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
+        return
 
 
     def clear_point_arrays(self):
         """ removes all point arrays """
         keys = self.point_arrays.keys()
         for key in keys:
-            self._remove_point_scalar(key)
+            self._remove_array(POINT_DATA_FIELD, key)
 
     def clear_cell_arrays(self):
         """ removes all cell arrays """
         keys = self.cell_arrays.keys()
         for key in keys:
-            self._remove_cell_scalar(key)
+            self._remove_array(CELL_DATA_FIELD, key)
 
     def clear_field_arrays(self):
         """ removes all field arrays """
         keys = self.field_arrays.keys()
         for key in keys:
-            self._remove_field_scalar(key)
+            self._remove_array(FIELD_DATA_FIELD, key)
 
     def clear_arrays(self):
         """ removes all arrays from point/cell/field data """
@@ -1116,7 +1117,7 @@ class CellScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_cell_scalar(key)
+        self.remover = lambda key: self.data._remove_array(CELL_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetCellData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):
@@ -1131,7 +1132,7 @@ class PointScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_point_scalar(key)
+        self.remover = lambda key: self.data._remove_array(POINT_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetPointData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):
@@ -1145,7 +1146,7 @@ class FieldScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_field_scalar(key)
+        self.remover = lambda key: self.data._remove_array(FIELD_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetFieldData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):

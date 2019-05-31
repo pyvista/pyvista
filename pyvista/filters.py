@@ -29,7 +29,8 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import get_scalar, is_inside_bounds, wrap
+from pyvista.utilities import (get_scalar, is_inside_bounds, wrap,
+                               CELL_DATA_FIELD, POINT_DATA_FIELD)
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -804,8 +805,8 @@ class DataSetFilters(object):
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
                 # or else object is collected.
-                b._remove_cell_scalar('RegionId')
-                b._remove_point_scalar('RegionId')
+                b._remove_array(CELL_DATA_FIELD, 'RegionId')
+                b._remove_array(POINT_DATA_FIELD, 'RegionId')
             bodies.append(b)
 
         return bodies
