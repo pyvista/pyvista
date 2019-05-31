@@ -27,7 +27,7 @@ def _get_vtk_file_url(filename):
 
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH, filename)
+    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
     local_path_no_zip = local_path.replace('.zip', '')
     if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
         return local_path_no_zip, None
@@ -228,7 +228,7 @@ def download_cad_model():
 
 def download_frog():
     # TODO: there are other files with this
-    return _download_and_read('Frog/frog.mhd')
+    return _download_and_read('froggy/frog.mhd')
 
 def download_prostate():
     return _download_and_read('prostate.img')
