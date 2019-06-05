@@ -619,6 +619,48 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
     parametric_function.SetClockwiseOrdering(clockwise)
 
 
+def Spline(points, n_points=None):
+    """Create a spline from points
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Array of points to build a spline out of.  Array must be 3D
+        and directionally ordered.
+
+    n_points : int, optional
+        Number of points to interpolate along the points array.
+
+    Returns
+    -------
+    spline : pyvista.PolyData
+        Line mesh of spline.
+
+    Examples
+    --------
+    Construct a spline
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+    >>> z = np.linspace(-2, 2, 100)
+    >>> r = z**2 + 1
+    >>> x = r * np.sin(theta)
+    >>> y = r * np.cos(theta)
+    >>> points = np.column_stack((x, y, z))
+    >>> spline = pv.Spline(points, 1000)
+    """
+    spline_function = vtk.vtkParametricSpline()
+    spline_function.SetPoints(pyvista.vtk_points(points, False))
+
+    # get interpolation density
+    u_res = n_points
+    if u_res is None:
+        u_res = points.shape[0]
+
+    u_res -= 1
+    return surface_from_para(spline_function, u_res)
+
+
 def surface_from_para(parametric_function, u_res=100, v_res=100,
                       w_res=100, **kwargs):
     """Construct a mesh from a parametric function.

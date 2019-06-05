@@ -333,6 +333,7 @@ def wrap(vtkdataset):
         'vtkImageData' : pyvista.UniformGrid,
         'vtkStructuredPoints' : pyvista.UniformGrid,
         'vtkMultiBlockDataSet' : pyvista.MultiBlock,
+        # 'vtkParametricSpline' : pyvista.Spline,
         }
     # Otherwise, we assume a VTK data object was passed
     if hasattr(vtkdataset, 'GetClassName'):
