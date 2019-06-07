@@ -68,23 +68,13 @@ def test_disc():
     assert np.any(geom.points)
 
 
-def test_supertoroid():
-    geom = pyvista.SuperToroid()
-    assert np.any(geom.points)
+# def test_supertoroid():
+#     geom = pyvista.SuperToroid()
+#     assert np.any(geom.points)
 
 
-def test_ellipsoid():
-    geom = pyvista.Ellipsoid()
-    assert np.any(geom.points)
+# def test_ellipsoid():
+#     geom = pyvista.Ellipsoid()
+#     assert np.any(geom.points)
 
 
-def test_spline():
-    theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
-    z = np.linspace(-2, 2, 100)
-    r = z**2 + 1
-    x = r * np.sin(theta)
-    y = r * np.cos(theta)
-
-    points = np.column_stack((x, y, z))
-    spline = pyvista.Spline(points, 1000)
-    assert spline.n_points == 1000

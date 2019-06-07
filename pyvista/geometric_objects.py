@@ -11,11 +11,8 @@ vtkCubeSource
 vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
-vtkParametricSuperToroid
 
 """
-from math import pi
-
 import numpy as np
 import vtk
 
@@ -434,256 +431,138 @@ def Text3D(string, depth=0.5):
     return pyvista.wrap(tri_filter.GetOutput())
 
 
-def SuperToroid(ring_radius=1.0, cross_section_radius=0.5,
-                x_radius=1.0, y_radius=1.0, z_radius=1.0, n_1=1.0,
-                n_2=1.0, **kwargs):
-    """Construct a supertoroid and return a mesh.
+# def SuperToroid(ring_radius=1.0, cross_section_radius=0.5,
+#                 x_radius=1.0, y_radius=1.0, z_radius=1.0, n_1=1.0,
+#                 n_2=1.0, **kwargs):
+#     """Construct a supertoroid and return a mesh.
 
-    Essentially a supertoroid is a torus with the sine and cosine
-    terms raised to a power. A supertoroid is a versatile primitive
-    that is controlled by four parameters r0, r1, n1 and n2. r0, r1
-    determine the type of torus whilst the value of n1 determines the
-    shape of the torus ring and n2 determines the shape of the cross
-    section of the ring. It is the different values of these powers
-    which give rise to a family of 3D shapes that are all basically
-    toroidal in shape.
+#     Essentially a supertoroid is a torus with the sine and cosine
+#     terms raised to a power. A supertoroid is a versatile primitive
+#     that is controlled by four parameters r0, r1, n1 and n2. r0, r1
+#     determine the type of torus whilst the value of n1 determines the
+#     shape of the torus ring and n2 determines the shape of the cross
+#     section of the ring. It is the different values of these powers
+#     which give rise to a family of 3D shapes that are all basically
+#     toroidal in shape.
 
-    By default torus whole points in the +x direction
+#     By default torus whole points in the +x direction
 
-    Parameters
-    ----------
-    ring_radius : float
-        The radius from the center to the middle of the ring of the
-        supertoroid.
+#     Parameters
+#     ----------
+#     ring_radius : float
+#         The radius from the center to the middle of the ring of the
+#         supertoroid.
 
-    cross_section_radius = 0.5
-        The radius of the cross section of ring of the supertoroid.
+#     cross_section_radius = 0.5
+#         The radius of the cross section of ring of the supertoroid.
 
-    x_radius : float, optional
-        Radius in the x direction.
+#     x_radius : float, optional
+#         Radius in the x direction.
 
-    y_radius : float, optional
-        Radius in the y direction.
+#     y_radius : float, optional
+#         Radius in the y direction.
 
-    z_radius : float, optional
-        Radius in the z direction.
+#     z_radius : float, optional
+#         Radius in the z direction.
 
-    n_1 : float
-        Controls shape of torus ring.
+#     n_1 : float
+#         Controls shape of torus ring.
 
-    n_2 = 1
-        Controls shape of cross section of the ring.
+#     n_2 = 1
+#         Controls shape of cross section of the ring.
 
-    **kwargs : keyword arguments
-        Additional settings to control mesh creation. See
+#     **kwargs : keyword arguments
+#         Additional settings to control mesh creation. See
 
-        - ``help(pyvista.parametric_keywords)``
-        - ``help(pyvista.surface_from_para)``
-        - ``help(pyvista.translate)``
+#         - ``help(pyvista.parametric_keywords)``
+#         - ``help(pyvista.surface_from_para)``
+#         - ``help(pyvista.translate)``
 
-    Notes
-    -----
-    Care needs to be taken specifying the bounds correctly. You may
-    need to carefully adjust MinimumU, MinimumV, MaximumU, MaximumV.
+#     Notes
+#     -----
+#     Care needs to be taken specifying the bounds correctly. You may
+#     need to carefully adjust MinimumU, MinimumV, MaximumU, MaximumV.
 
-    Examples
-    --------
-    Create default supertorid
-    >>> import pyvista
-    >>> mesh = pyvista.SuperToroid()
-    >>> mesh.plot(color='w')  # doctest:+SKIP
+#     Examples
+#     --------
+#     Create default supertorid
+#     >>> import pyvista
+#     >>> mesh = pyvista.SuperToroid()
+#     >>> mesh.plot(color='w')  # doctest:+SKIP
 
-    Alternative supertorid pointed in the y direction
-    >>> mesh = pyvista.SuperToroid(n_1=1, n_2=2, direction=[0, 1, 0])
-    """
-    # create parametric supertorus
-    parametric_function = vtk.vtkParametricSuperToroid()
-    parametric_function.SetRingRadius(ring_radius)
-    parametric_function.SetCrossSectionRadius(cross_section_radius)
-    parametric_function.SetXRadius(x_radius)
-    parametric_function.SetYRadius(y_radius)
-    parametric_function.SetZRadius(z_radius)
-    parametric_function.SetN1(n_1)
-    parametric_function.SetN2(n_2)
+#     Alternative supertorid pointed in the y direction
+#     >>> mesh = pyvista.SuperToroid(n_1=1, n_2=2, direction=[0, 1, 0])
+#     """
+#     # create parametric supertorus
+#     parametric_function = vtk.vtkParametricSuperToroid()
+#     parametric_function.SetRingRadius(ring_radius)
+#     parametric_function.SetCrossSectionRadius(cross_section_radius)
+#     parametric_function.SetXRadius(x_radius)
+#     parametric_function.SetYRadius(y_radius)
+#     parametric_function.SetZRadius(z_radius)
+#     parametric_function.SetN1(n_1)
+#     parametric_function.SetN2(n_2)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-    # default direction is +z, change to +x
-    surf.rotate_y(-90)
+#     surf = surface_from_para(parametric_function, **kwargs)
+#     # default direction is +z, change to +x
+#     surf.rotate_y(-90)
 
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [1., 0., 0.])
-    translate(surf, center, direction)
+#     center = kwargs.pop('center', [0., 0., 0.])
+#     direction = kwargs.pop('direction', [1., 0., 0.])
+#     translate(surf, center, direction)
 
-    return surf
-
-
-def Ellipsoid(x_radius=1.0, y_radius=1.0, z_radius=1.0, **kwargs):
-    """Construct an ellipsoid mesh.
-
-    If all the radii are the same, we have a sphere. An oblate
-    spheroid occurs if ``radius_x`` = ``radius_y`` >
-    ``radius_z``. Here the Z-axis forms the symmetry axis. To a first
-    approximation, this is the shape of the earth. A prolate spheroid
-    occurs if ``radius_x`` = ``radius_y`` < ``radius_z``.
-
-    Parameters
-    ----------
-    x_radius : float, optional
-        Radius in the x direction.
-
-    y_radius : float, optional
-        Radius in the y direction.
-
-    z_radius : float, optional
-        Radius in the z direction.
-
-    **kwargs : keyword arguments
-        Additional settings to control mesh creation. See
-
-        - ``help(pyvista.parametric_keywords)``
-        - ``help(pyvista.surface_from_para)``
-        - ``help(pyvista.translate)``
-
-    Examples
-    --------
-    Create an Ellipsoid
-    >>> import pyvista
-    >>> mesh = pyvista.Ellipsoid(10, 1, 2)
-    >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
-    """
-    # create parametric supertorus
-    parametric_function = vtk.vtkParametricEllipsoid()
-    parametric_function.SetXRadius(x_radius)
-    parametric_function.SetYRadius(y_radius)
-    parametric_function.SetZRadius(z_radius)
-
-    surf = surface_from_para(parametric_function, **kwargs)
-
-    # default direction is +z
-    surf.rotate_y(-90)
-
-    center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
-    translate(surf, center, direction)
-
-    return surf
+#     return surf
 
 
-def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
-                        min_v=0.0, max_v=2*pi, join_u=False, join_v=False,
-                        twist_u=False, twist_v=False, clockwise=True):
-    """Applys keyword arguments to a parametric function.
+# def Ellipsoid(x_radius=1.0, y_radius=1.0, z_radius=1.0, **kwargs):
+#     """Construct an ellipsoid mesh.
 
-    Parameters
-    ----------
-    min_u : float, optional
-        The minimum u-value.
+#     If all the radii are the same, we have a sphere. An oblate
+#     spheroid occurs if ``radius_x`` = ``radius_y`` >
+#     ``radius_z``. Here the Z-axis forms the symmetry axis. To a first
+#     approximation, this is the shape of the earth. A prolate spheroid
+#     occurs if ``radius_x`` = ``radius_y`` < ``radius_z``.
 
-    max_u : float, optional
-        The maximum u-value.
+#     Parameters
+#     ----------
+#     x_radius : float, optional
+#         Radius in the x direction.
 
-    min_v : float, optional
-        The minimum v-value.
+#     y_radius : float, optional
+#         Radius in the y direction.
 
-    max_v : float, optional
-        The maximum v-value.
+#     z_radius : float, optional
+#         Radius in the z direction.
 
-    join_u : bool, optional
-        Joins the first triangle strip to the last one with a twist in
-        the u direction.
+#     **kwargs : keyword arguments
+#         Additional settings to control mesh creation. See
 
-    join_v : bool, optional
-        joins the first triangle strip to the last one with a twist in
-        the v direction.
+#         - ``help(pyvista.parametric_keywords)``
+#         - ``help(pyvista.surface_from_para)``
+#         - ``help(pyvista.translate)``
 
-    twist_u : bool, optional
-        Joins the first triangle strip to the last one with a twist in
-        the u direction.
+#     Examples
+#     --------
+#     Create an Ellipsoid
+#     >>> import pyvista
+#     >>> mesh = pyvista.Ellipsoid(10, 1, 2)
+#     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+#     """
+#     # create parametric supertorus
+#     parametric_function = vtk.vtkParametricEllipsoid()
+#     parametric_function.SetXRadius(x_radius)
+#     parametric_function.SetYRadius(y_radius)
+#     parametric_function.SetZRadius(z_radius)
 
-    twist_v : bool, optional
-        Joins the first triangle strip to the last one with a twist in
-        the v direction.
+#     surf = surface_from_para(parametric_function, **kwargs)
 
-    clockwise : bool, optional
-        Determines the ordering of the vertices forming the triangle
-        strips.
-    """
-    parametric_function.SetMinimumU(min_u)
-    parametric_function.SetMaximumU(max_u)
-    parametric_function.SetMinimumV(min_v)
-    parametric_function.SetMaximumV(max_v)
-    parametric_function.SetJoinU(join_u)
-    parametric_function.SetJoinV(join_v)
-    parametric_function.SetTwistU(twist_u)
-    parametric_function.SetTwistV(twist_v)
-    parametric_function.SetClockwiseOrdering(clockwise)
+#     # default direction is +z
+#     surf.rotate_y(-90)
 
+#     center = kwargs.pop('center', [0., 0., 0.])
+#     direction = kwargs.pop('direction', [0., 0., 1.])
+#     translate(surf, center, direction)
 
-def Spline(points, n_points=None):
-    """Create a spline from points
-
-    Parameters
-    ----------
-    points : np.ndarray
-        Array of points to build a spline out of.  Array must be 3D
-        and directionally ordered.
-
-    n_points : int, optional
-        Number of points to interpolate along the points array.
-
-    Returns
-    -------
-    spline : pyvista.PolyData
-        Line mesh of spline.
-
-    Examples
-    --------
-    Construct a spline
-    >>> import numpy as np
-    >>> import pyvista as pv
-    >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
-    >>> z = np.linspace(-2, 2, 100)
-    >>> r = z**2 + 1
-    >>> x = r * np.sin(theta)
-    >>> y = r * np.cos(theta)
-    >>> points = np.column_stack((x, y, z))
-    >>> spline = pv.Spline(points, 1000)
-    """
-    spline_function = vtk.vtkParametricSpline()
-    spline_function.SetPoints(pyvista.vtk_points(points, False))
-
-    # get interpolation density
-    u_res = n_points
-    if u_res is None:
-        u_res = points.shape[0]
-
-    u_res -= 1
-    return surface_from_para(spline_function, u_res)
+#     return surf
 
 
-def surface_from_para(parametric_function, u_res=100, v_res=100,
-                      w_res=100, **kwargs):
-    """Construct a mesh from a parametric function.
-
-    Parameters
-    ----------
-    parametric_function : vtk.vtkParametricFunction
-        Parametric function to generate mesh from.
-
-    u_res : int, optional
-        Resolution in the u direction.
-
-    v_res : int, optional
-        Resolution in the v direction.
-
-    w_res : int, optional
-        Resolution in the w direction.
-    """
-    # convert to a mesh
-    para_source = vtk.vtkParametricFunctionSource()
-    para_source.SetParametricFunction(parametric_function)
-    para_source.SetUResolution(u_res)
-    para_source.SetVResolution(v_res)
-    para_source.SetWResolution(w_res)
-    para_source.Update()
-    return pyvista.wrap(para_source.GetOutput())
