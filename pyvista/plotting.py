@@ -139,13 +139,12 @@ def opacity_transfer_function(key, n_colors):
         raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
 
 
-def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
-         interactive=True, cpos=None, window_size=None,
-         show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         **kwargs):
-    """
-    Convenience plotting function for a vtk or numpy object.
+def plot(var_item, off_screen=None, full_screen=False,
+         screenshot=None, interactive=True, cpos=None,
+         window_size=None, show_bounds=False, show_axes=True,
+         notebook=None, background=None, text='', return_img=False,
+         eye_dome_lighting=False, use_panel=None, **kwargs):
+    """Convenience plotting function for a vtk or numpy object.
 
     Parameters
     ----------
