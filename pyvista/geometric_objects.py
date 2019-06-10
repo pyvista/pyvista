@@ -339,6 +339,7 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
         number of facets used to represent the cone
     """
     src = vtk.vtkConeSource()
+    src.SetDirection(direction)
     src.SetAngle(angle)
     src.SetCapping(capping)
     src.SetCenter(center)
@@ -564,5 +565,3 @@ def Text3D(string, depth=0.5):
 #     translate(surf, center, direction)
 
 #     return surf
-
-
