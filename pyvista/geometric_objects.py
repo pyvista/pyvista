@@ -259,7 +259,12 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     src.SetPoint2(*pointb)
     src.SetResolution(resolution)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+    line = pyvista.wrap(src.GetOutput())
+    # Compute distance of every point along line
+    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0)**2, axis=1))
+    distance = compute(np.array(pointa), line.points)
+    line['Distance'] = distance
+    return line
 
 
 def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
