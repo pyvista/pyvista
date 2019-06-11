@@ -1281,7 +1281,8 @@ class DataSetFilters(object):
 
 
     def plot_over_line(dataset, pointa, pointb, resolution=100, scalars=None,
-                       title=None, ylabel=None, figsize=None, figure=True):
+                       title=None, ylabel=None, figsize=None, figure=True,
+                       show=True):
         """Sample a dataset along a high resolution line and plot the variables
         of interest in 2D where the X-axis is distance from Point A and the
         Y-axis is the varaible of interest. Note that this filter returns None.
@@ -1312,6 +1313,9 @@ class DataSetFilters(object):
 
         figure : bool
             flag on whether or not to create a new figure
+
+        show : bool
+            Shows the matplotlib figure
         """
         # Ensure matplotlib is available
         try:
@@ -1350,4 +1354,5 @@ class DataSetFilters(object):
             plt.title('{} Profile'.format(scalars))
         else:
             plt.title(title)
-        plt.show()
+        if show:
+         return plt.show()
