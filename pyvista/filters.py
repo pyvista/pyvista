@@ -1280,10 +1280,11 @@ class DataSetFilters(object):
         return dataset.extract_geometry().tri_filter().decimate(target_reduction)
 
 
-    def plot_over_line(dataset, pointa, pointb, resolution=100, scalars=None):
+    def plot_over_line(dataset, pointa, pointb, resolution=100, scalars=None,
+                       title=None, ylabel=None, figsize=None, figure=True):
         """Sample a dataset along a high resolution line and plot the variables
         of interest in 2D where the X-axis is distance from Point A and the
-        Y-axis is the varaible of interest.
+        Y-axis is the varaible of interest. Note that this filter returns None.
 
         Parameters
         ----------
@@ -1299,11 +1300,25 @@ class DataSetFilters(object):
         scalars : str
             The string name of the variable in the input dataset to probe. The
             active scalar is used by default.
+
+        title : str
+            The string title of the `matplotlib` figure
+
+        ylabel : str
+            The string label of the Y-axis. Defaults to variable name
+
+        figsize : tuple(int)
+            the size of the new figure
+
+        figure : bool
+            flag on whether or not to create a new figure
         """
+        # Ensure matplotlib is available
         try:
             import matplotlib.pyplot as plt
         except ImportError:
             raise ImportError('matplotlib must be available to use this filter.')
+
         # TODO: implement a way to dynamically chose a "high" resolution based
         #       on the input dataset
         # Make a line and probe the dataset
@@ -1316,6 +1331,9 @@ class DataSetFilters(object):
         values = sampled.get_scalar(scalars)
         distance = sampled['Distance']
 
+        # Remainder of the is plotting
+        if figure:
+            plt.figure(figsize=figsize)
         # Plot it in 2D
         if values.ndim > 1:
             for i in range(values.shape[1]):
@@ -1324,6 +1342,12 @@ class DataSetFilters(object):
         else:
             plt.plot(distance, values)
         plt.xlabel('Distance')
-        plt.ylabel(scalars)
-        plt.title('Plot Variable Along Line')
+        if ylabel is None:
+            plt.ylabel(scalars)
+        else:
+            plt.ylabel(ylabel)
+        if title is None:
+            plt.title('{} Profile'.format(scalars))
+        else:
+            plt.title(title)
         plt.show()

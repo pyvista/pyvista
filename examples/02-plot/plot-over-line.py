@@ -50,8 +50,11 @@ line = pv.Line(a, b)
 p = pv.Plotter()
 p.add_mesh(mesh)
 p.add_mesh(line, color='white', line_width=10)
+p.add_point_labels([a, b], ['A', 'B'], font_size=48,
+                   point_color='red', text_color='red')
 p.show()
 
 ###############################################################################
 # Run the filter and produce a line plot
-mesh.plot_over_line(a, b, resolution=10000)
+mesh.plot_over_line(a, b, resolution=10000, title='Elevation Profile',
+                    ylabel='Height above sea level', figsize=(10, 5))
