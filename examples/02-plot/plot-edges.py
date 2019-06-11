@@ -22,4 +22,4 @@ face_view = [(194.57658338658473, -327.5539184202715, 28.106692235139377),
              (-0.05444711191580967, 0.13964269728441056, 0.9887039137674948)]
 
 
-nefertiti.plot(cpos=face_view, show_edges=True)
+nefertiti.plot(cpos=face_view, show_edges=True, color=True)
