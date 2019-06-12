@@ -1062,6 +1062,28 @@ class Common(DataSetFilters, object):
         return pyvista.filters._get_output(alg)
 
 
+    def save(self, filename, binary=True):
+        """
+        Writes this mesh to a file.
+
+        Parameters
+        ----------
+        filename : str
+            Filename of mesh to be written.  File type is inferred from
+            the extension of the filename unless overridden with
+            ftype.
+
+        binary : bool, optional
+            Writes the file as binary when True and ASCII when False.
+
+        Notes
+        -----
+        Binary files write much faster than ASCII and have a smaller
+        file size.
+        """
+        raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
+
+
 class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries"""
     def __init__(self, data):
