@@ -17,10 +17,15 @@ BibTex:
 .. code::
 
     @article{sullivan2019pyvista,
-      author = {Sullivan, C. Bane and Kaszynski, Alexander A.},
-      journal = {Journal of Open Source Software},
-      pages = {4(37), 1450},
-      title = {{PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)}},
-      year = {2019},
       doi = {10.21105/joss.01450},
+      url = {https://doi.org/10.21105/joss.01450},
+      year = {2019},
+      month = {may},
+      publisher = {The Open Journal},
+      volume = {4},
+      number = {37},
+      pages = {1450},
+      author = {C. Bane Sullivan and Alexander Kaszynski},
+      title = {{PyVista}: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit ({VTK})},
+      journal = {Journal of Open Source Software}
     }

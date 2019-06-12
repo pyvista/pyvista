@@ -228,7 +228,7 @@ def download_cad_model():
 
 def download_frog():
     # TODO: there are other files with this
-    return _download_and_read('Frog/frog.mhd')
+    return _download_and_read('froggy/frog.mhd')
 
 def download_prostate():
     return _download_and_read('prostate.img')

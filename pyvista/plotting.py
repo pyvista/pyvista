@@ -139,13 +139,12 @@ def opacity_transfer_function(key, n_colors):
         raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
 
 
-def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
-         interactive=True, cpos=None, window_size=None,
-         show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         **kwargs):
-    """
-    Convenience plotting function for a vtk or numpy object.
+def plot(var_item, off_screen=None, full_screen=False,
+         screenshot=None, interactive=True, cpos=None,
+         window_size=None, show_bounds=False, show_axes=True,
+         notebook=None, background=None, text='', return_img=False,
+         eye_dome_lighting=False, use_panel=None, **kwargs):
+    """Convenience plotting function for a vtk or numpy object.
 
     Parameters
     ----------
@@ -624,7 +623,7 @@ class BasePlotter(object):
                  interpolate_before_map=False, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None,
                  multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=None,
+                 render_points_as_spheres=None, smooth_shading=False,
                  render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
@@ -760,11 +759,6 @@ class BasePlotter(object):
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
-        # fixes lighting issue when using precalculated normals
-        if isinstance(mesh, vtk.vtkPolyData):
-            if mesh.GetPointData().HasArray('Normals'):
-                mesh.point_arrays['Normals'] = mesh.point_arrays.pop('Normals')
-
         if scalar_bar_args is None:
             scalar_bar_args = {}
 
@@ -775,6 +769,19 @@ class BasePlotter(object):
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_obj(mesh):
             mesh = wrap(mesh)
+
+        # Compute surface normals if using smooth shading
+        if smooth_shading:
+            # extract surface if mesh is exterior
+            if isinstance(mesh, (pyvista.UnstructuredGrid, pyvista.StructuredGrid)):
+                grid = mesh
+                mesh = grid.extract_surface()
+                ind = mesh.point_arrays['vtkOriginalPointIds']
+                # remap scalars
+                if scalars is not None:
+                    scalars = scalars[ind]
+
+            mesh.compute_normals(cell_normals=False, inplace=True)
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
@@ -1059,6 +1066,10 @@ class BasePlotter(object):
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
+        if smooth_shading:
+            prop.SetInterpolationToPhong()
+        else:
+            prop.SetInterpolationToFlat()
         # edge display style
         if show_edges:
             prop.EdgeVisibilityOn()
@@ -2703,7 +2714,7 @@ class BasePlotter(object):
         self.iren.SetPicker(area_picker)
 
 
-    def generate_orbital_path(self, factor=3., n_points=20, viewup=None, z_shift=None):
+    def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Genrates an orbital path around the data scene
 
         Parameters
@@ -2717,20 +2728,18 @@ class BasePlotter(object):
         viewup : list(float)
             the normal to the orbital plane
 
-        z_shift : float, optional
+        shift : float, optional
             shift the plane up/down from the center of the scene by this amount
         """
         if viewup is None:
             viewup = rcParams['camera']['viewup']
-        center = list(self.center)
-        bnds = list(self.bounds)
-        if z_shift is None:
-            z_shift = (bnds[5] - bnds[4]) * factor
-        center[2] = center[2] + z_shift
+        center = np.array(self.center)
+        bnds = np.array(self.bounds)
         radius = (bnds[1] - bnds[0]) * factor
         y = (bnds[3] - bnds[2]) * factor
         if y > radius:
             radius = y
+        center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
 
@@ -2742,7 +2751,8 @@ class BasePlotter(object):
         return self.iren.FlyTo(self.renderer, *point)
 
 
-    def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None, bkg=True):
+    def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
+                      bkg=True, write_frames=False):
         """Orbit on the given path focusing on the focus point
 
         Parameters
@@ -2759,6 +2769,10 @@ class BasePlotter(object):
 
         viewup : list(float)
             the normal to the orbital plane
+
+        write_frames : bool
+            Assume a file is open and write a frame on each camera view during
+            the orbit.
         """
         if focus is None:
             focus = self.center
@@ -2776,13 +2790,17 @@ class BasePlotter(object):
                 self.set_position(point)
                 self.set_focus(focus)
                 self.set_viewup(viewup)
-                time.sleep(step)
+                if bkg:
+                    time.sleep(step)
+                if write_frames:
+                    self.write_frame()
 
 
-        if bkg:
+        if bkg and isinstance(self, pyvista.BackgroundPlotter):
             thread = Thread(target=orbit)
             thread.start()
         else:
+            bkg = False
             orbit()
         return
 
@@ -2912,7 +2930,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=None):
+             screenshot=False, return_img=False, use_panel=None, cpos=None):
         """
         Creates plotting window
 
@@ -2943,6 +2961,9 @@ class Plotter(BasePlotter):
             If False, the interactive rendering from panel will not be used in
             notebooks
 
+        cpos : list(tuple(floats))
+            The camera position to use
+
         Returns
         -------
         cpos : list
@@ -2954,9 +2975,11 @@ class Plotter(BasePlotter):
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
-                if not renderer.camera_set:
+                if not renderer.camera_set and cpos is None:
                     renderer.camera_position = renderer.get_default_cam_pos()
                     renderer.ResetCamera()
+                elif cpos is not None:
+                    renderer.camera_position = cpos
             self._first_time = False
 
         if title:

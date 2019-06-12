@@ -1006,9 +1006,12 @@ class PolyData(vtkPolyData, pyvista.Common):
         comfilter.Update()
         return np.array(comfilter.GetCenter())
 
-    def compute_normals(self, cell_normals=True, point_normals=True, split_vertices=False,
-                        flip_normals=False, consistent_normals=True, auto_orient_normals=False,
-                        non_manifold_traversal=True, feature_angle=30.0, inplace=False):
+    def compute_normals(self, cell_normals=True, point_normals=True,
+                        split_vertices=False, flip_normals=False,
+                        consistent_normals=True,
+                        auto_orient_normals=False,
+                        non_manifold_traversal=True,
+                        feature_angle=30.0, inplace=False):
         """
         Compute point and/or cell normals for a mesh.
 

@@ -24,3 +24,5 @@ button at the top of this page and adding a link to your project!
    OpenFOAM Rendering <https://pswpswpsw.github.io/posts/2018/09/blog-post-modify-vtk-openfoam/>
    FORGE Geothermal Project <http://forge.pvgeo.org>
    PVGeo's example gallery <https://pvgeo.org/examples/index.html>
+   TetGen's example gallery <http://tetgen.pyvista.org/examples/index.html>
+   PyMeshFix's example gallery <http://pymeshfix.pyvista.org/examples/index.html>
