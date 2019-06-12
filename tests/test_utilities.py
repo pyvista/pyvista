@@ -42,12 +42,12 @@ def test_read(tmpdir):
     types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
              pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
     for i, filename in enumerate(fnames):
-        obj = readers.read(filename)
+        obj = fileio.read(filename)
         assert isinstance(obj, types[i])
     # Now test the standard_reader_routine
     for i, filename in enumerate(fnames):
         # Pass attrs to for the standard_reader_routine to be used
-        obj = readers.read(filename, attrs={'DebugOn': None})
+        obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'npy'))
