@@ -1280,7 +1280,7 @@ class DataSetFilters(object):
         return dataset.extract_geometry().tri_filter().decimate(target_reduction)
 
 
-    def plot_over_line(dataset, pointa, pointb, resolution=100, scalars=None,
+    def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
                        title=None, ylabel=None, figsize=None, figure=True,
                        show=True):
         """Sample a dataset along a high resolution line and plot the variables
@@ -1296,7 +1296,8 @@ class DataSetFilters(object):
             Location in [x, y, z].
 
         resolution : int
-            number of pieces to divide line into
+            number of pieces to divide line into. Defaults to number of cells
+            in the input mesh. Must be a positive integer.
 
         scalars : str
             The string name of the variable in the input dataset to probe. The
@@ -1323,8 +1324,10 @@ class DataSetFilters(object):
         except ImportError:
             raise ImportError('matplotlib must be available to use this filter.')
 
-        # TODO: implement a way to dynamically chose a "high" resolution based
-        #       on the input dataset
+        if resolution is None:
+            resolution = dataset.n_cells
+        if not isinstance(resolution, int) or resolution < 0:
+            raise RuntimeError('`resolution` must be a positive integer.')
         # Make a line and probe the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
         sampled = line.sample(dataset)
