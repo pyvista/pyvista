@@ -7,28 +7,21 @@ Linked Views in Subplots
 import numpy as np
 import pyvista as pv
 from pyvista import examples
-import pyacvd
 
 pv.set_plot_theme('document')
 
 # download mesh
 mesh = examples.download_cow()
 
-clus = pyacvd.Clustering(mesh)
-# mesh is not dense enough for uniform remeshing
-clus.subdivide(3)
-clus.cluster(20000)
-
-# remesh
-remesh = clus.create_mesh()
+decimated = mesh.decimate_boundary(target_reduction=0.75)
 
 p = pv.Plotter(notebook=0, shape=(1, 2), border=False)
 p.subplot(0, 0)
 p.add_text('Original mesh')
 p.add_mesh(mesh, show_edges=True, color=True)
 p.subplot(0, 1)
-p.add_text('Remeshed version')
-p.add_mesh(remesh, color=True, show_edges=True)
+p.add_text('Decimated version')
+p.add_mesh(decimated, color=True, show_edges=True)
 
 p.link_views()  # link all the views
 # Set a camera position to all linked views
