@@ -1561,8 +1561,11 @@ class BasePlotter(object):
                 renderer.camera = self.renderers[views].camera
         elif isinstance(views, collections.Iterable):
             for view_index in views:
-                self.renderers[view_index] = \
+                self.renderers[view_index].camera = \
                     self.renderers[views[0]].camera
+        else:
+            raise TypeError('Expected type is int, list or tuple:'
+                            '{} is given'.format(type(views)))
 
     def unlink_views(self, views=None):
         """
@@ -1570,8 +1573,9 @@ class BasePlotter(object):
 
         Parameters
         ----------
-        views : None | tuple or list
-            If ``views`` is None unlink all the views or if ``views``
+        views : None | int | tuple or list
+            If ``views`` is None unlink all the views, if ``views``
+            is int unlink the selected view's camera or if ``views``
             is a tuple or a list, unlink the given views cameras.
 
         """
@@ -1579,10 +1583,16 @@ class BasePlotter(object):
             for renderer in self.renderers:
                 renderer.camera = vtk.vtkCamera()
                 renderer.reset_camera()
+        elif isinstance(views, int):
+            self.renderers[views].camera = vtk.vtkCamera()
+            self.renderers[views].reset_camera()
         elif isinstance(views, collections.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = vtk.vtkCamera()
                 self.renderers[view_index].reset_camera()
+        else:
+            raise TypeError('Expected type is None, int, list or tuple:'
+                            '{} is given'.format(type(views)))
 
     def show_grid(self, **kwargs):
         """
@@ -2623,7 +2633,7 @@ class BasePlotter(object):
         Reset camera so it slides along the vector defined from camera
         position to focal point until all of the actors can be seen.
         """
-        self.renderer[self._active_renderer_index].reset_camera()
+        self.renderers[self._active_renderer_index].reset_camera()
         self._render()
 
     def isometric_view(self):
