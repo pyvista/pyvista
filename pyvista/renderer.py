@@ -546,6 +546,16 @@ class Renderer(vtkRenderer):
         """The active camera for the rendering scene"""
         return self.GetActiveCamera()
 
+    @camera.setter
+    def camera(self, camera):
+        """Set the active camera for the rendering scene"""
+        self.SetActiveCamera(camera)
+        self.camera_position = [
+            camera.GetPosition(),
+            camera.GetFocalPoint(),
+            camera.GetViewUp()
+        ]
+
     def remove_actor(self, actor, reset_camera=False):
         """
         Removes an actor from the Renderer.

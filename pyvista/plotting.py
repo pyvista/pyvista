@@ -1544,6 +1544,56 @@ class BasePlotter(object):
         """
         self._active_renderer_index = self.loc_to_index((index_x, index_y))
 
+    def link_views(self, views=0):
+        """
+        Links the views' cameras.
+
+        Parameters
+        ----------
+        views : int | tuple or list
+            If ``views`` is int, link the views to the given view
+            index or if ``views`` is a tuple or a list, link the given
+            views cameras.
+
+        """
+        if isinstance(views, int):
+            for renderer in self.renderers:
+                renderer.camera = self.renderers[views].camera
+        elif isinstance(views, collections.Iterable):
+            for view_index in views:
+                self.renderers[view_index].camera = \
+                    self.renderers[views[0]].camera
+        else:
+            raise TypeError('Expected type is int, list or tuple:'
+                            '{} is given'.format(type(views)))
+
+    def unlink_views(self, views=None):
+        """
+        Unlinks the views' cameras.
+
+        Parameters
+        ----------
+        views : None | int | tuple or list
+            If ``views`` is None unlink all the views, if ``views``
+            is int unlink the selected view's camera or if ``views``
+            is a tuple or a list, unlink the given views cameras.
+
+        """
+        if views is None:
+            for renderer in self.renderers:
+                renderer.camera = vtk.vtkCamera()
+                renderer.reset_camera()
+        elif isinstance(views, int):
+            self.renderers[views].camera = vtk.vtkCamera()
+            self.renderers[views].reset_camera()
+        elif isinstance(views, collections.Iterable):
+            for view_index in views:
+                self.renderers[view_index].camera = vtk.vtkCamera()
+                self.renderers[view_index].reset_camera()
+        else:
+            raise TypeError('Expected type is None, int, list or tuple:'
+                            '{} is given'.format(type(views)))
+
     def show_grid(self, **kwargs):
         """
         A wrapped implementation of ``show_bounds`` to change default
@@ -2571,19 +2621,19 @@ class BasePlotter(object):
     @property
     def camera_position(self):
         """ Returns camera position of the active render window """
-        return self.renderer.camera_position
+        return self.renderers[self._active_renderer_index].camera_position
 
     @camera_position.setter
     def camera_position(self, camera_location):
         """ Set camera position of the active render window """
-        self.renderer.camera_position = camera_location
+        self.renderers[self._active_renderer_index].camera_position = camera_location
 
     def reset_camera(self):
         """
         Reset camera so it slides along the vector defined from camera
         position to focal point until all of the actors can be seen.
         """
-        self.renderer.reset_camera()
+        self.renderers[self._active_renderer_index].reset_camera()
         self._render()
 
     def isometric_view(self):
