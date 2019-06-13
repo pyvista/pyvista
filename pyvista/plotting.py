@@ -1558,12 +1558,11 @@ class BasePlotter(object):
         """
         if isinstance(views, int):
             for renderer in self.renderers:
-                renderer.SetActiveCamera(self.renderers[views].camera)
+                renderer.camera = self.renderers[views].camera
         elif isinstance(views, collections.Iterable):
             for view_index in views:
-                self.renderers[view_index].SetActiveCamera(
+                self.renderers[view_index] = \
                     self.renderers[views[0]].camera
-                )
 
     def unlink_views(self, views=None):
         """
@@ -1578,11 +1577,12 @@ class BasePlotter(object):
         """
         if views is None:
             for renderer in self.renderers:
-                renderer.SetActiveCamera(vtk.vtkCamera())
+                renderer.camera = vtk.vtkCamera()
+                renderer.reset_camera()
         elif isinstance(views, collections.Iterable):
             for view_index in views:
-                #self.renderers[view_index].SetActiveCamera(vtk.vtkCamera())
-                self.renderers[view_index].SetActiveCamera(vtk.vtkCamera())
+                self.renderers[view_index].camera = vtk.vtkCamera()
+                self.renderers[view_index].reset_camera()
 
     def show_grid(self, **kwargs):
         """
@@ -2611,19 +2611,19 @@ class BasePlotter(object):
     @property
     def camera_position(self):
         """ Returns camera position of the active render window """
-        return self.renderer.camera_position
+        return self.renderers[self._active_renderer_index].camera_position
 
     @camera_position.setter
     def camera_position(self, camera_location):
         """ Set camera position of the active render window """
-        self.renderer.camera_position = camera_location
+        self.renderers[self._active_renderer_index].camera_position = camera_location
 
     def reset_camera(self):
         """
         Reset camera so it slides along the vector defined from camera
         position to focal point until all of the actors can be seen.
         """
-        self.renderer.reset_camera()
+        self.renderer[self._active_renderer_index].reset_camera()
         self._render()
 
     def isometric_view(self):
