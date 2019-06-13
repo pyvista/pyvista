@@ -312,7 +312,7 @@ def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
 
 
 def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
-         capping=True, angle=26.6, resolution=6):
+         capping=True, resolution=6):
     """Create a cone
 
     Parameters
@@ -340,7 +340,6 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
     """
     src = vtk.vtkConeSource()
     src.SetDirection(direction)
-    src.SetAngle(angle)
     src.SetCapping(capping)
     src.SetCenter(center)
     src.SetHeight(height)
