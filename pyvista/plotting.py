@@ -1544,6 +1544,46 @@ class BasePlotter(object):
         """
         self._active_renderer_index = self.loc_to_index((index_x, index_y))
 
+    def link_views(self, views=0):
+        """
+        Links the views' cameras.
+
+        Parameters
+        ----------
+        views : int | tuple or list
+            If ``views`` is int, link the views to the given view
+            index or if ``views`` is a tuple or a list, link the given
+            views cameras.
+
+        """
+        if isinstance(views, int):
+            for renderer in self.renderers:
+                renderer.SetActiveCamera(self.renderers[views].camera)
+        elif isinstance(views, collections.Iterable):
+            for view_index in views:
+                self.renderers[view_index].SetActiveCamera(
+                    self.renderers[views[0]].camera
+                )
+
+    def unlink_views(self, views=None):
+        """
+        Unlinks the views' cameras.
+
+        Parameters
+        ----------
+        views : None | tuple or list
+            If ``views`` is None unlink all the views or if ``views``
+            is a tuple or a list, unlink the given views cameras.
+
+        """
+        if views is None:
+            for renderer in self.renderers:
+                renderer.SetActiveCamera(vtk.vtkCamera())
+        elif isinstance(views, collections.Iterable):
+            for view_index in views:
+                #self.renderers[view_index].SetActiveCamera(vtk.vtkCamera())
+                self.renderers[view_index].SetActiveCamera(vtk.vtkCamera())
+
     def show_grid(self, **kwargs):
         """
         A wrapped implementation of ``show_bounds`` to change default
