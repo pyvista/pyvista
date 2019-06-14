@@ -674,7 +674,7 @@ class DataSetFilters(object):
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
         return # No return type because it is inplace
 
-    def compute_cell_sizes(dataset, length=False, area=True, volume=True):
+    def compute_cell_sizes(dataset, length=True, area=True, volume=True):
         """This filter computes sizes for 1D (length), 2D (area) and 3D (volume)
         cells.
 
