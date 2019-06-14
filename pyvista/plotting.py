@@ -139,12 +139,13 @@ def opacity_transfer_function(key, n_colors):
         raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
 
 
-def plot(var_item, off_screen=None, full_screen=False,
-         screenshot=None, interactive=True, cpos=None,
-         window_size=None, show_bounds=False, show_axes=True,
-         notebook=None, background=None, text='', return_img=False,
-         eye_dome_lighting=False, use_panel=None, **kwargs):
-    """Convenience plotting function for a vtk or numpy object.
+def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
+         interactive=True, cpos=None, window_size=None,
+         show_bounds=False, show_axes=True, notebook=None, background=None,
+         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
+         volume=False, **kwargs):
+    """
+    Convenience plotting function for a vtk or numpy object.
 
     Parameters
     ----------
@@ -181,6 +182,9 @@ def plot(var_item, off_screen=None, full_screen=False,
 
     text : str, optional
         Adds text at the bottom of the plot.
+
+    volume : bool, optional
+        Use the ``add_volume`` method for volume rendering.
 
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
@@ -220,18 +224,18 @@ def plot(var_item, off_screen=None, full_screen=False,
                 plotter.add_arrows(var_item[0], var_item[1])
             else:
                 for item in var_item:
-                    if isinstance(item, np.ndarray) and item.ndim == 3:
+                    if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
                         plotter.add_volume(item, **kwargs)
                     else:
                         plotter.add_mesh(item, **kwargs)
         else:
             for item in var_item:
-                if isinstance(item, np.ndarray) and item.ndim == 3:
+                if volume or (isinstance(item, np.ndarray) and item.ndim == 3):
                     plotter.add_volume(item, **kwargs)
                 else:
                     plotter.add_mesh(item, **kwargs)
     else:
-        if isinstance(var_item, np.ndarray) and var_item.ndim == 3:
+        if volume or (isinstance(var_item, np.ndarray) and var_item.ndim == 3):
             plotter.add_volume(var_item, **kwargs)
         else:
             plotter.add_mesh(var_item, **kwargs)
