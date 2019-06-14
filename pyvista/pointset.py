@@ -1410,8 +1410,12 @@ class PolyData(vtkPolyData, pyvista.Common):
             Length of the geodesic segment.
 
         """
-        length = self.geodesic(start_vertex, end_vertex).GetLength()
-        return length
+        path = self.geodesic(start_vertex, end_vertex)
+        sizes = path.compute_cell_sizes(length=True, area=False, volume=False)
+        distance = np.sum(sizes['Length'])
+        del path
+        del sizes
+        return distance
 
     def ray_trace(self, origin, end_point, first_point=False, plot=False,
                   off_screen=False):
