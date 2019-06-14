@@ -1034,12 +1034,17 @@ class DataSetFilters(object):
 
 
     def interpolate(dataset, points, sharpness=2, radius=1.0,
-            dimensions=(101, 101, 101), pass_cell_arrays=True, pass_point_arrays=True):
+            dimensions=(101, 101, 101), pass_cell_arrays=True,
+            pass_point_arrays=True, kernel='gaussian'):
         """Interpolate values onto this mesh from the point data of a given
         :class:`pyvista.PolyData` object (typically a point cloud).
 
         This uses a guassian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel.
+
+        Please note that the source dataset is first interpolated onto a fine
+        UniformGrid which is then sampled to this mesh. The interpolation grid's
+        dimensions will likely need to be tweaked for each individual use case.
 
         Parameters
         ----------

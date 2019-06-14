@@ -442,3 +442,13 @@ def test_remove_points_fail():
     arrow = pyvista.Arrow([0, 0, 0], [1, 0, 0])
     with pytest.raises(Exception):
         arrow.remove_points(range(10))
+
+
+def test_vertice_cells_on_read(tmpdir):
+    point_cloud = pyvista.PolyData(np.random.rand(100, 3))
+    filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
+    point_cloud.save(filename)
+    recovered = pyvista.read(filename)
+    assert recovered.n_cells == 100
+    recovered = pyvista.PolyData(filename)
+    assert recovered.n_cells == 100

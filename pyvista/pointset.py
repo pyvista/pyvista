@@ -78,12 +78,7 @@ class PolyData(vtkPolyData, pyvista.Common):
                 points = args[0]
                 if points.ndim != 2:
                     points = points.reshape((-1, 3))
-
-                npoints = points.shape[0]
-                cells = np.hstack((np.ones((npoints, 1)),
-                                   np.arange(npoints).reshape(-1, 1)))
-                cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-                cells = np.reshape(cells, (2*npoints))
+                cells = self._make_vertice_cells(points.shape[0])
                 self._from_arrays(points, cells, deep, verts=True)
             else:
                 raise TypeError('Invalid input type')
@@ -98,11 +93,24 @@ class PolyData(vtkPolyData, pyvista.Common):
         else:
             raise TypeError('Invalid input type')
 
+        # Check if need to make vertex cells
+        if self.n_points > 0 and self.n_cells == 0:
+            # make vertex cells
+            self.faces = self._make_vertice_cells(self.n_points)
+
     def __repr__(self):
         return pyvista.Common.__repr__(self)
 
     def __str__(self):
         return pyvista.Common.__str__(self)
+
+    @staticmethod
+    def _make_vertice_cells(npoints):
+        cells = np.hstack((np.ones((npoints, 1)),
+                           np.arange(npoints).reshape(-1, 1)))
+        cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
+        cells = np.reshape(cells, (2*npoints))
+        return cells
 
     def _load_file(self, filename):
         """Load a surface mesh from a mesh file.
