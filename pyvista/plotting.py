@@ -2321,6 +2321,9 @@ class BasePlotter(object):
         if text_color is None:
             text_color = rcParams['font']['color']
 
+        if isinstance(points, (list, tuple)):
+            points = np.array(points)
+
         if isinstance(points, np.ndarray):
             vtkpoints = pyvista.PolyData(points) # Cast to poly data
         elif is_pyvista_obj(points):

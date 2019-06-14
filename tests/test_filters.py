@@ -323,3 +323,12 @@ def test_streamlines():
                            source_center=(133.1, 116.3, 5.0) )
     assert stream.n_points > 0
     assert src.n_points == 25
+
+
+def test_plot_over_line():
+    """this requires matplotlib"""
+    mesh = examples.load_channels()
+    # Make two points to construct the line between
+    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    mesh.plot_over_line(a, b, resolution=1000, show=False)
