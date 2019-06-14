@@ -220,6 +220,10 @@ class Common(DataSetFilters, object):
             self._textures = {}
         return self._textures
 
+    def clear_textures(self):
+        """Clear the textures from this mesh"""
+        del self._textures
+
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates. This makes
         sure to not destroy old texture coordinates

@@ -1385,6 +1385,9 @@ class PolyData(vtkPolyData, pyvista.Common):
 
         output = _get_output(dijkstra)
 
+        # Do not copy textures from input
+        output.clear_textures()
+
         if inplace:
             self.overwrite(output)
         else:
