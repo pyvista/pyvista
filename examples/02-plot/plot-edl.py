@@ -12,8 +12,11 @@ To learn more, please see `this blog post`_.
 ################################################################################
 
 # sphinx_gallery_thumbnail_number = 1
-import vtki
-from vtki import examples
+import pyvista as pv
+from pyvista import examples
+
+# Eye dome lighting is not currently supported by VTKjs
+pv.rcParams['use_panel'] = False
 
 ################################################################################
 # Statue
@@ -24,12 +27,12 @@ from vtki import examples
 # statue:
 
 nefertiti = examples.download_nefertiti()
-nefertiti.plot(eye_dome_lighting=True, cpos=[-1,-1,0.2])
+nefertiti.plot(eye_dome_lighting=True, cpos=[-1,-1,0.2], color=True)
 
 ################################################################################
 # Here we will compare a EDL shading side by side with normal shading
 
-p = vtki.Plotter(shape=(1, 2), border=False)
+p = pv.Plotter(shape=(1, 2), border=False)
 
 # With eye-dome lighting
 p.subplot(0,0)
@@ -60,17 +63,17 @@ point_cloud = examples.download_lidar()
 # And now plot this point cloud as-is:
 
 # Plot a typical point cloud with no EDL
-p = vtki.Plotter()
+p = pv.Plotter()
 p.add_mesh(point_cloud, color='tan', point_size=5)
 p.show()
 
 
 ################################################################################
 # We can improve the depth mapping by enabling eye dome lighting on the renderer.
-# Reference :func:`vtki.Renderer.enable_eye_dome_lighting`.
+# Reference :func:`pyvista.Renderer.enable_eye_dome_lighting`.
 
 # Plot with EDL
-p = vtki.Plotter()
+p = pv.Plotter()
 p.add_mesh(point_cloud, color='tan', point_size=5)
 p.enable_eye_dome_lighting()
 p.show()
@@ -80,7 +83,7 @@ p.show()
 # The eye dome lighting mode can also handle plotting scalar arrays:
 
 # Plot with EDL and scalar data
-p = vtki.Plotter()
+p = pv.Plotter()
 p.add_mesh(point_cloud, scalars='Elevation', point_size=5)
 p.enable_eye_dome_lighting()
 p.show()

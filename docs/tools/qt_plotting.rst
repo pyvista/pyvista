@@ -1,13 +1,16 @@
 .. _qt_ref:
 
-vtki PyQt Interface
-===================
-``vtki`` has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``vtki.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
+PyVista PyQt Interface
+----------------------
+
+PyVista has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``pyvista.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
 
 
-Example PyQt5 vtki QtInteractor
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The following example shows how to create a simple application that adds a sphere to an empty plotting window.
+Example PyQt5 PyVista QtInteractor
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example shows how to create a simple application that adds a
+sphere to an empty plotting window.
 
 .. code:: python
 
@@ -16,7 +19,7 @@ The following example shows how to create a simple application that adds a spher
     from PyQt5 import Qt
     import numpy as np
 
-    import vtki
+    import pyvista as pv
 
 
     class MainWindow(Qt.QMainWindow):
@@ -28,8 +31,8 @@ The following example shows how to create a simple application that adds a spher
             self.frame = Qt.QFrame()
             vlayout = Qt.QVBoxLayout()
 
-	    # add the vtki interactor object
-            self.vtk_widget = vtki.QtInteractor(self.frame)
+	    # add the pyvista interactor object
+            self.vtk_widget = pv.QtInteractor(self.frame)
             vlayout.addWidget(self.vtk_widget)
 
             self.frame.setLayout(vlayout)
@@ -54,7 +57,7 @@ The following example shows how to create a simple application that adds a spher
 
         def add_sphere(self):
 	    """ add a sphere to the pyqt frame """
-            sphere = vtki.Sphere()
+            sphere = pv.Sphere()
             self.vtk_widget.add_mesh(sphere)
             self.vtk_widget.reset_camera()
 
@@ -68,20 +71,24 @@ The following example shows how to create a simple application that adds a spher
 .. figure:: ../images/user-generated/qt_plotting_sphere.png
     :width: 600pt
 
-    PyQt5 vtki QtInteractor
+    PyQt5 pyvista QtInteractor
 
 
 Background Plotting
 ~~~~~~~~~~~~~~~~~~~
-Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible to plot in the background and update the plotter in real-time using the ``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears and functions like a normal ``vtki`` ``Plotter`` instance.  For example:
+
+Normal PyVista plotting windows exhibit blocking behavior, but it is possible
+to plot in the background and update the plotter in real-time using the
+``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears
+and functions like a normal PyVista ``Plotter`` instance.  For example:
 
 .. code:: python
 
-    import vtki
+    import pyvista as pv
 
-    sphere = vtki.Sphere()
+    sphere = pv.Sphere()
 
-    plotter = vtki.BackgroundPlotter()
+    plotter = pv.BackgroundPlotter()
     plotter.add_mesh(sphere)
 
     # can now operate on the sphere and have it updated in the background
@@ -91,22 +98,22 @@ Normal ``vtki`` plotting windows exhibit blocking behavior, but it is possible t
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.BackgroundPlotter
+.. autoautosummary:: pyvista.BackgroundPlotter
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.BackgroundPlotter
+.. autoautosummary:: pyvista.BackgroundPlotter
    :methods:
 
-.. autoclass:: vtki.BackgroundPlotter
+.. autoclass:: pyvista.BackgroundPlotter
    :members:
    :undoc-members:
    :show-inheritance:
 
 
 
-.. autoclass:: vtki.ScaledPlotter
+.. autoclass:: pyvista.ScaledPlotter
   :members:
   :undoc-members:
   :show-inheritance:

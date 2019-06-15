@@ -3,30 +3,43 @@
 Installation
 ============
 
+PyVista is supported on Python versions 3.5+, with temporary support for
+Python 2.7 as outlined in `this issue`_.
+
+.. _this issue: https://github.com/pyvista/pyvista/issues/164
+
+Dependencies
+~~~~~~~~~~~~
+
+PyVista is built on top of the Visualization Toolkit (VTK) and NumPy - as such,
+the following projects are required dependencies of PyVista:
+
+* `vtk <https://pypi.org/project/vtk/>`_ - PyVista directly inherits types from the VTK library.
+* `numpy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
+* `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
+* `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+
 PyPI
 ~~~~
 
-.. image:: https://img.shields.io/pypi/v/vtki.svg?logo=python&logoColor=white
-   :target: https://pypi.org/project/vtki/
+.. image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
+   :target: https://pypi.org/project/pyvista/
 
-Installing ``vtki`` itself is quite straightforward as it can be installed
-from `PyPi <http://pypi.python.org/pypi/vtki>`_ using ``pip``::
+PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+using ``pip``::
 
-    pip install vtki
-
-``vtki`` requires ``numpy``, ``imageio``, and ``VTK`` version 7.0 or newer
-which should be installed by pip automatically.
+    pip install pyvista
 
 
 Anaconda
 ~~~~~~~~
 
-.. image:: https://img.shields.io/conda/vn/conda-forge/vtki.svg
-   :target: https://anaconda.org/conda-forge/vtki
+.. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg
+   :target: https://anaconda.org/conda-forge/pyvista
 
 To install this package with conda run::
 
-    conda install -c conda-forge vtki
+    conda install -c conda-forge pyvista
 
 
 Optional Dependencies
@@ -45,7 +58,7 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
-| ``sphinx_gallery``                | Capturing ``vtki`` output for docs      |
+| ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+
 
 
@@ -53,12 +66,12 @@ Source / Developers
 ~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can install the latest version from GitHub by visiting
-`vtki <https://github.com/vtkiorg/vtki>`_, downloading the source
+`PyVista <https://github.com/pyvista/pyvista>`_, downloading the source
 (or cloning), and running::
 
-    git clone https://github.com/vtkiorg/vtki.git
-    cd vtki
-    pip install -e .
+    git clone https://github.com/pyvista/pyvista.git
+    cd pyvista
+    python -m pip install -e .
 
 
 Test Installation
@@ -68,92 +81,127 @@ You can test your installation by running an example:
 
 .. testcode:: python
 
-    from vtki import examples
+    from pyvista import examples
     examples.plot_wave()
 
 See other examples:
 
 .. code:: python
 
-    from vtki import examples
+    from pyvista import examples
 
     # list all examples
     print(dir(examples))
 
 
-.. warning:: Developers, please see :ref:`testing_ref` for details on development testing
+.. note::
+
+    A more comprehensive testing suite is available after cloning the source
+    repository. For details on how to clone and test the PyVista source, please
+    see our `Contributing Guide`_ and specifically, the `Testing`_ section.
+
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
+.. _Testing: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md#testing
 
 
 Running on CI Services
 ~~~~~~~~~~~~~~~~~~~~~~
 
-This section is for advanced users that would like to install and use ``vtki``
-with headless displays and Docker containers. The steps here will work for
-using ``vtki`` on Linux based continuous integration services like Travis CI
-and on notebook hosting services like MyBinder_.
+
+Please head over to `pyvista/gl-ci-hepers`_ for details on setting up CI
+services like Travis and AppVeyor to run PyVista.
+
+.. _pyvista/gl-ci-hepers: https://github.com/pyvista/gl-ci-helpers
+
+
+Running on MyBinder
+~~~~~~~~~~~~~~~~~~~
+
+This section is for advanced users that would like to install and use PyVista
+with headless displays on notebook hosting services like MyBinder_.
 
 Please see `this project`_ for a convenient Cookiecutter_ to get started using
-``vtki`` on the notebook hosting service MyBinder_.
+PyVista on the notebook hosting service MyBinder_.
 
-.. _this project: https://github.com/vtkiorg/cookiecutter-vtki-binder
+.. _this project: https://github.com/pyvista/cookiecutter-pyvista-binder
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _MyBinder: https://mybinder.org
 
 To get started, the Docker container will need to have ``libgl1-mesa-dev`` and
-``xvfb`` installed through and ``apt-get``. In a Travis scripts, simply include
-the following in your ``.travis.yml`` file:
-
-.. code-block:: yaml
-
-    addons:
-      apt:
-        packages:
-          - xvfb
-
-and for MyBinder, include the following in a file called ``apt.txt``::
+``xvfb`` installed through ``apt-get``. For MyBinder, include the following in
+a file called ``apt.txt``::
 
     libgl1-mesa-dev
     xvfb
 
-Then, you need to configure the headless display, on Travis, add this to the
-``.travis.yml`` file:
-
-.. code-block:: yaml
-
-    before_script: # configure a headless display to test plot generation
-      - export DISPLAY=:99.0
-      - export VTKI_OFF_SCREEN=True
-      - which Xvfb
-      - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-      - sleep 3 # give xvfb some time to start
-
-
-Likewise for MyBinder, create a file called ``start`` and include the following
-set up script that will run everytime your Docker container is launched:
+Then, you need to configure the headless display, for MyBinder, create a file
+called ``start`` and include the following set up script that will run every
+time your Docker container is launched:
 
 .. code-block:: bash
 
     #!/bin/bash
+    set -x
     export DISPLAY=:99.0
-    export VTKI_OFF_SCREEN=True
+    export PYVISTA_OFF_SCREEN=true
+    export PYVISTA_USE_PANEL=true
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
+    set +x
     exec "$@"
 
 
-And that's it! Include ``vtki`` in your Python requirements and get to
-visualizing your data! If you need more help than this on setting up ``vtki``
-for CI-like services, hop on Slack and chat with the developers or take a look
-at `this repository`_ that is currently using ``vtki`` on MyBinder.
+And that's it! Include PyVista in your Python requirements and get to
+visualizing your data! If you need more help than this on setting up PyVista
+for these types of services, hop on Slack and chat with the developers or take
+a look at `this repository`_ that is currently using PyVista on MyBinder.
 
 .. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
 
-.. warning:: Offscreen rendering is required for headless displays
 
-    Note that ``vtki`` will have to be used in offscreen mode. This can be forced on import with:
+Running on Remote Servers
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    .. code-block:: python
+Using PyVista on remote servers requires similar setup steps as in the above
+Docker case. As an example, here are the complete steps to use PyVista on AWS
+EC2 Ubuntu 18.04 LTS (``ami-0a313d6098716f372`` in ``us-east-1``).
+Other servers would work similarly.
 
-        import vtki
-        vtki.OFF_SCREEN = True
+After logging into the remote server, install Miniconda and related packages:
+
+.. code-block:: bash
+
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+    bash miniconda.sh -b -p miniconda
+    echo '. $HOME/miniconda/etc/profile.d/conda.sh' >> ~/.bashrc && source ~/.bashrc
+    conda create --name vtk_env python=3.7
+    conda activate vtk_env
+    conda install nodejs  # required when importing pyvista in Jupyter
+    pip install jupyter pyvista panel
+
+    # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
+    # https://stackoverflow.com/q/32389599
+    # https://askubuntu.com/q/629692
+    sudo apt update && sudo apt install python-qt4 libgl1-mesa-glx
+
+Then, configure the headless display:
+
+.. code-block:: bash
+
+    sudo apt-get install xvfb
+    export DISPLAY=:99.0
+    export PYVISTA_OFF_SCREEN=true
+    export PYVISTA_USE_PANEL=true
+    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    sleep 3
+
+Reconnect to the server with port-forwarding, and start Jupyter:
+
+.. code-block:: bash
+
+    ssh -i "your-ssh-key" your-user-name@your-server-ip -L 8888:localhost:8888
+    conda activate vtk_env
+    jupyter notebook --NotebookApp.token='' --no-browser --port=8888
+
+Visit ``localhost:8888`` in the web browser.

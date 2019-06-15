@@ -7,43 +7,36 @@ Plotting Glyphs
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-# sphinx_gallery_thumbnail_number = 2
-import vtki
+# sphinx_gallery_thumbnail_number = 1
+import pyvista as pv
+from pyvista import examples
 import numpy as np
 
 ################################################################################
-# Glyphying can be done via the :func:`vtki.DataSetFilters.glyph` filter
+# Glyphying can be done via the :func:`pyvista.DataSetFilters.glyph` filter
 
-# Make a grid:
-x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
-                  np.linspace(-5, 5, 20),
-                  np.linspace(-5, 5, 5))
-
-grid = vtki.StructuredGrid(x, y, z)
-
-vectors = np.sin(grid.points)**3
-
-
-# Compute a direction for the vector field
-grid.point_arrays['mag'] = np.linalg.norm(vectors, axis=1)
-grid.point_arrays['vec'] = vectors
+mesh = examples.download_carotid().threshold(145, scalars='scalars')
 
 # Make a geometric obhect to use as the glyph
-geom = vtki.Arrow() # This could be any dataset
+geom = pv.Arrow() # This could be any dataset
 
 # Perform the glyph
-glyphs = grid.glyph(orient='vec', scale='mag', factor=0.8, geom=geom)
+glyphs = mesh.glyph(orient='vectors', scale='scalars', factor=0.005, geom=geom)
 
 # plot using the plotting class
-p = vtki.Plotter()
+p = pv.Plotter()
 p.add_mesh(glyphs)
+# Set a cool camera position
+p.camera_position = [(84.58052237950857, 77.76332116787425, 27.208569926456548),
+ (131.39486171068918, 99.871379394528, 20.082859824932008),
+ (0.13483731007732908, 0.033663777790747404, 0.9902957385932576)]
 p.show()
 
 ################################################################################
-# Another approach is to load the vectors directly to the grid object and then
-# access the :attr:`vtki.Common.arrows` property.
+# Another approach is to load the vectors directly to the mesh object and then
+# access the :attr:`pyvista.Common.arrows` property.
 
-sphere = vtki.Sphere(radius=3.14)
+sphere = pv.Sphere(radius=3.14)
 
 # make cool swirly pattern
 vectors = np.vstack((np.sin(sphere.points[:, 0]),
@@ -59,7 +52,7 @@ sphere.arrows.plot()
 ################################################################################
 
 # plot the arrows and the sphere
-p = vtki.Plotter()
+p = pv.Plotter()
 p.add_mesh(sphere.arrows, lighting=False, stitle='Vector Magnitude')
 p.add_mesh(sphere, color='grey', ambient=0.6, opacity=0.5, show_edges=False)
 p.show()

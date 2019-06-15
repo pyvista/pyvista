@@ -5,8 +5,8 @@ Plot with Opacity
 Plot a mesh's scalar array with an opacity trasfer funciton
 """
 
-import vtki
-from vtki import examples
+import pyvista as pv
+from pyvista import examples
 
 ################################################################################
 # It's possible to apply an opacity mapping to any scalar array plotted. You can
@@ -34,7 +34,7 @@ knee = examples.download_knee()
 ################################################################################
 # And here we inspect the DICOM image with a few different colormaps and opacity
 # mappings:
-p = vtki.Plotter(shape=(2,2), border=False)
+p = pv.Plotter(shape=(2,2), border=False)
 
 p.add_mesh(knee, cmap='bone', show_scalar_bar=0)
 p.view_xy()

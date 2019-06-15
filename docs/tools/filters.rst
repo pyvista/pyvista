@@ -1,26 +1,26 @@
 .. _filters_ref:
 
 Filters
-=======
+-------
 
 
-.. automodule:: vtki.filters
+.. automodule:: pyvista.filters
 
 
 Dataset Filters
----------------
+~~~~~~~~~~~~~~~
 
-The :class:`vtki.DataSetFilters` is inherited by :class:`vtki.Common` making
+The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.Common` making
 all the the following filters available as callable methods directly from any
-``vtki`` dataset.
+PyVista dataset.
 
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.DataSetFilters
+.. autoautosummary:: pyvista.DataSetFilters
    :methods:
 
 
-.. autoclass:: vtki.DataSetFilters
+.. autoclass:: pyvista.DataSetFilters
    :members:
    :undoc-members:

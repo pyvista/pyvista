@@ -8,13 +8,13 @@ Calculate mass properties such as the volume or area of datasets
 
 # sphinx_gallery_thumbnail_number = 4
 import numpy as np
-import vtki
-from vtki import examples
+import pyvista as pv
+from pyvista import examples
 
 ################################################################################
-# Computing mass properties such as the volume or area of datasetsin ``vtki``
-# is quite easy using the :func:`vtki.DataSetFilters.compute_cell_sizes` filter
-# and the :attr:`vtki.Common.volume` property on all ``vtki`` meshes.
+# Computing mass properties such as the volume or area of datasetsin PyVista
+# is quite easy using the :func:`pyvista.DataSetFilters.compute_cell_sizes` filter
+# and the :attr:`pyvista.Common.volume` property on all PyVista meshes.
 #
 # Let's get started with a simple gridded mesh:
 
@@ -95,8 +95,8 @@ largest.plot(show_grid=True, cpos=[-2,5,3])
 #
 # What if instead, we wanted to split all the different connected bodies/volumes
 # in a dataset like the one above? We could use the
-# :func:`vtki.DataSetFilters.split_bodies` filter to extract all the different
-# connected volumes in a dataset into blocks in a :class:`vtki.MultiBlock`
+# :func:`pyvista.DataSetFilters.split_bodies` filter to extract all the different
+# connected volumes in a dataset into blocks in a :class:`pyvista.MultiBlock`
 # dataset. For example, lets split the thresholded volume in the example above:
 
 # Load a simple example mesh

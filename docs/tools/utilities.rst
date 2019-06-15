@@ -1,27 +1,64 @@
 Utilities
-=========
+---------
+
+.. automodule:: pyvista.utilities
+
+.. autofunction:: pyvista.set_error_output_file
+
+.. autofunction:: pyvista.trans_from_matrix
+
+.. autofunction:: pyvista.is_inside_bounds
 
 
-.. automodule:: vtki.utilities
+Object Conversions
+~~~~~~~~~~~~~~~~~~
 
-.. autofunction:: vtki.wrap
+.. autofunction:: pyvista.wrap
 
-.. autofunction:: vtki.read
+.. autofunction:: pyvista.is_pyvista_obj
 
-.. autofunction:: vtki.read_exodus
+.. autofunction:: pyvista.image_to_texture
 
-.. autofunction:: vtki.read_texture
+.. autofunction:: pyvista.numpy_to_texture
 
-.. autofunction:: vtki.read_legacy
 
-.. autofunction:: vtki.lines_from_points
+File IO
+~~~~~~~
 
-.. autofunction:: vtki.vtk_points
+.. autofunction:: pyvista.read
 
-.. autofunction:: vtki.vector_poly_data
+.. autofunction:: pyvista.read_exodus
 
-.. autofunction:: vtki.fit_plane_to_points
+.. autofunction:: pyvista.read_texture
 
-.. autofunction:: vtki.trans_from_matrix
+.. autofunction:: pyvista.read_legacy
 
-.. autofunction:: vtki.set_error_output_file
+
+Mesh Creation
+~~~~~~~~~~~~~
+
+.. autofunction:: pyvista.lines_from_points
+
+.. autofunction:: pyvista.vtk_points
+
+.. autofunction:: pyvista.vector_poly_data
+
+.. autofunction:: pyvista.fit_plane_to_points
+
+
+Array Access
+~~~~~~~~~~~~
+
+.. autofunction:: pyvista.get_scalar
+
+.. autofunction:: pyvista.convert_array
+
+.. autofunction:: pyvista.point_scalar
+
+.. autofunction:: pyvista.cell_scalar
+
+.. autofunction:: pyvista.get_vtk_type
+
+.. autofunction:: pyvista.vtk_bit_array_to_char
+
+.. autofunction:: pyvista.convert_string_array

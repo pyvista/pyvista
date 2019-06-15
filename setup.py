@@ -1,5 +1,5 @@
 """
-Installation file for python vtki module
+Installation file for python pyvista module
 """
 import os
 import platform
@@ -9,7 +9,7 @@ from io import open as io_open
 
 from setuptools import setup
 
-package_name = 'vtki'
+package_name = 'pyvista'
 
 __version__ = None
 filepath = os.path.dirname(__file__)
@@ -29,8 +29,6 @@ if os.name == 'nt' and (py_ver < 3 or '64' not in platform.architecture()[0]):
     warnings.warn('\nYou will need to install VTK manually.' +
                   '  Try using Anaconda.  See:\n'
                   + 'https://anaconda.org/anaconda/vtk')
-# elif os.environ.get('READTHEDOCS') != 'True':
-    # pass  # don't install vtk for readthedocs
 else:
     install_requires.append(['vtk'])
 
@@ -39,12 +37,12 @@ readme_file = os.path.join(filepath, 'README.rst')
 
 setup(
     name=package_name,
-    packages=[package_name, 'vtki.examples'],
+    packages=[package_name, 'pyvista.examples'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=open(readme_file).read(),
-    author='Alex Kaszynski',
-    author_email='akascap@gmail.com',
+    author='PyVista Developers',
+    author_email='info@pyvista.org',
     license='MIT',
     classifiers=[
         'Development Status :: 4 - Beta',
@@ -60,12 +58,13 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
 
-    url='https://github.com/vtkiorg/vtki',
+    url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
-    package_data={'vtki.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
+    package_data={'pyvista.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
                                     'hexbeam.vtk', 'sphere.ply',
                                     'uniform.vtk', 'rectilinear.vtk',
                                     'globe.vtk', '2k_earth_daymap.jpg']},
+    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     install_requires=install_requires,
     extras_require={
         'ipy_tools': ['ipython', 'ipywidgets'],
