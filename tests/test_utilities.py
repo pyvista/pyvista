@@ -1,16 +1,16 @@
-""" test vtki.utilities """
+""" test pyvista.utilities """
 import os
 
 import numpy as np
 import pytest
 
-import vtki
-from vtki import examples as ex
-from vtki import utilities
-from vtki import readers
+import pyvista
+from pyvista import examples as ex
+from pyvista import utilities
+from pyvista import readers
 
 # Only set this here just the once.
-utilities.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
+pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
 
 
 def test_createvectorpolydata_error():
@@ -39,8 +39,8 @@ def test_createvectorpolydata():
 def test_read(tmpdir):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
               ex.uniformfile, ex.rectfile)
-    types = (vtki.PolyData, vtki.PolyData, vtki.UnstructuredGrid,
-             vtki.PolyData, vtki.UniformGrid, vtki.RectilinearGrid)
+    types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
+             pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
     for i, filename in enumerate(fnames):
         obj = readers.read(filename)
         assert isinstance(obj, types[i])
@@ -54,25 +54,31 @@ def test_read(tmpdir):
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
-        data = vtki.read(filename)
+        data = pyvista.read(filename)
+    # read non existing file
+    with pytest.raises(IOError):
+        data = pyvista.read('this_file_totally_does_not_exist.vtk')
 
 
 def test_get_scalar():
-    grid = vtki.UnstructuredGrid(ex.hexbeamfile)
+    grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
     grid._add_cell_scalar(carr, 'test_data')
     parr = np.random.rand(grid.n_points)
     grid._add_point_scalar(parr, 'test_data')
+    # add other data
     oarr = np.random.rand(grid.n_points)
     grid._add_point_scalar(oarr, 'other')
+    farr = np.random.rand(grid.n_points * grid.n_cells)
+    grid._add_field_scalar(farr, 'field_data')
     assert np.allclose(carr, utilities.get_scalar(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, utilities.get_scalar(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, utilities.get_scalar(grid, 'other'))
     assert None == utilities.get_scalar(grid, 'foo')
-    # check errors
-    with pytest.raises(RuntimeError):
-        foo = utilities.get_scalar(grid, 'test_data', preference='field')
+    assert utilities.get_scalar(grid, 'test_data', preference='field') is None
+    assert np.allclose(farr, utilities.get_scalar(grid, 'field_data', preference='field'))
+
 
 
 
@@ -84,3 +90,9 @@ def test_is_inside_bounds():
     assert not utilities.is_inside_bounds((5, 12, 5), bnds)
     assert not utilities.is_inside_bounds((5, 5, 12), bnds)
     assert not utilities.is_inside_bounds((12, 12, 12), bnds)
+
+
+def test_get_sg_image_scraper():
+    scraper = pyvista._get_sg_image_scraper()
+    assert isinstance(scraper, pyvista.Scraper)
+    assert callable(scraper)

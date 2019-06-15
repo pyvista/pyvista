@@ -1,11 +1,18 @@
 Point-Based Grids
 =================
 
-Structured and unstructured grids are designed to manage cells whereas a polydata object manage surfaces.  The ``vtk.UnstructuredGrid`` is derived class from ``vtk.vtkUnstructuredGrid`` designed to make creation, array access, and plotting more straightforward than using the vtk object.  The same goes with a ``vtk.StructuredGrid``.
+Structured and unstructured grids are designed to manage cells whereas a
+polydata object manage surfaces.  The ``vtk.UnstructuredGrid`` is derived class
+from ``vtk.vtkUnstructuredGrid`` designed to make creation, array access, and
+plotting more straightforward than using the vtk object.  The same goes with a
+``vtk.StructuredGrid``.
 
 
 Unstructured Grid Creation
 --------------------------
+
+See :ref:`ref_create_unstructured` for an example on how to create an
+unstructured grid from NumPy arrays.
 
 Empty Object
 ~~~~~~~~~~~~
@@ -13,64 +20,15 @@ An unstructured grid can be initialized with:
 
 .. testcode:: python
 
-    import vtki
-    grid = vtki.UnstructuredGrid()
+    import pyvista
+    grid = pyvista.UnstructuredGrid()
 
-This creates an empty grid, and is not useful until points and cells are added to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``, but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints`` objects, which need to be populated with values.  Grid creation is simplified by initializing the grid directly from numpy arrays as in the following section.
+This creates an empty grid, and is not useful until points and cells are added
+to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
+but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
+objects, which need to be populated with values.  Grid creation is simplified
+by initializing the grid directly from numpy arrays as in the following section.
 
-
-Creating from Numpy Arrays
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-An unstructured grid can be created directly from numpy arrays.  This is useful when creating a grid from scratch or copying it from another format.  See `vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_ for available cell types and their descriptions.
-
-.. testcode:: python
-
-    import vtki
-    import vtk
-    import numpy as np
-
-    # offset array.  Identifies the start of each cell in the cells array
-    offset = np.array([0, 9])
-
-    # Contains information on the points composing each cell.
-    # Each cell begins with the number of points in the cell and then the points
-    # composing the cell
-    cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
-
-    # cell type array. Contains the cell type of each cell
-    cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON])
-
-    cell1 = np.array([[0, 0, 0],
-                      [1, 0, 0],
-                      [1, 1, 0],
-                      [0, 1, 0],
-                      [0, 0, 1],
-                      [1, 0, 1],
-                      [1, 1, 1],
-                      [0, 1, 1]])
-
-    cell2 = np.array([[0, 0, 2],
-                      [1, 0, 2],
-                      [1, 1, 2],
-                      [0, 1, 2],
-                      [0, 0, 3],
-                      [1, 0, 3],
-                      [1, 1, 3],
-                      [0, 1, 3]])
-
-    # points of the cell array
-    points = np.vstack((cell1, cell2))
-
-    # create the unstructured grid directly from the numpy arrays
-    grid = vtki.UnstructuredGrid(offset, cells, cell_type, points)
-
-    # plot the grid
-    grid.plot(show_edges=True, screenshot='./images/twocubes.png')
-
-..
-   The resulting plot can be found in :numref:`twocubes`.
-
-.. image:: ../images/twocubes.png
 
 Loading from File
 ~~~~~~~~~~~~~~~~~
@@ -78,10 +36,10 @@ Unstructured grids can be loaded from a vtk file.
 
 .. testcode:: python
 
-    import vtki
-    from vtki import examples
+    import pyvista
+    from pyvista import examples
 
-    grid = vtki.UnstructuredGrid(examples.hexbeamfile)
+    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
 Structured Grid Creation
@@ -93,42 +51,24 @@ A structured grid can be initialized with:
 
 .. testcode:: python
 
-    import vtki
-    grid = vtki.StructuredGrid()
+    import pyvista
+    grid = pyvista.StructuredGrid()
 
-This creates an empty grid, and is not useful until points are added to it and the shape set using ``SetPoints`` and ``SetDimensions``.  This can be done with:
-
-
-.. testcode:: python
-
-    import vtki
-    import numpy as np
-
-    # create a cube of points
-    x = np.arange(-10, 10, 0.25)
-    y = np.arange(-10, 10, 0.25)
-    z = np.arange(-10, 10, 0.25)
-    x, y, z = np.meshgrid(x, y, z)
-
-    # convert
-    points = np.empty((x.size, 3))
-    points[:, 0] = x.ravel('F')
-    points[:, 1] = y.ravel('F')
-    points[:, 2] = z.ravel('F')
-
-    # Create structured grid
-    grid = vtki.StructuredGrid(x, y, z)
-    grid.SetDimensions(x.shape)
-    grid.SetPoints(vtki.vtk_points(points))
+This creates an empty grid, and is not useful until points are added
+to it.
 
 
 Creating from Numpy Arrays
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-A structured grid can be created directly from numpy arrays.  This is useful when creating a grid from scratch or copying it from another format.
+A structured grid can be created directly from numpy arrays.  This is useful
+when creating a grid from scratch or copying it from another format.
+
+Also see :ref:`ref_create_structured` for an example on creating a structured
+grid from NumPy arrays.
 
 .. testcode:: python
 
-    import vtki
+    import pyvista
     import numpy as np
 
     x = np.arange(-10, 10, 0.25)
@@ -137,34 +77,35 @@ A structured grid can be created directly from numpy arrays.  This is useful whe
     x, y, z = np.meshgrid(x, y, z)
 
     # create the unstructured grid directly from the numpy arrays and plot
-    grid = vtki.StructuredGrid(x, y, z)
-    grid.plot(show_edges=True, screenshot='./images/structured_cube.png')
+    grid = pyvista.StructuredGrid(x, y, z)
+    grid.plot(show_edges=True, screenshot='structured_cube.png')
 
-.. image:: ../images/structured_cube.png
+.. image:: ../images/auto-generated/structured_cube.png
 
 
 Loading from File
 ~~~~~~~~~~~~~~~~~
-Structured grids can be loaded from a vtk file.
+Structured grids can be loaded from a ``vtk`` file.
 
 .. code:: python
 
-    grid = vtki.StructuredGrid(filename)
+    grid = pyvista.StructuredGrid(filename)
 
 
 Plotting Grids
 --------------
-This example shows how you can load an unstructured grid from a vtk file and create a plot and gif movie by updating the plotting object.
+This example shows how you can load an unstructured grid from a ``vtk`` file and
+create a plot and gif movie by updating the plotting object.
 
 .. testcode:: python
 
     # Load module and example file
-    import vtki
-    from vtki import examples
+    import pyvista
+    from pyvista import examples
     import numpy as np
 
     # Load example beam grid
-    grid = vtki.UnstructuredGrid(examples.hexbeamfile)
+    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     # Create fictitious displacements as a function of Z location
     d = np.zeros_like(grid.points)
@@ -191,38 +132,43 @@ A more complex plot can be created using:
             (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
 
     # plot this displaced beam
-    plotter = vtki.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position = cpos
 
     # Don't let it close automatically so we can take a screenshot
-    cpos = plotter.plot(auto_close=False)
-    plotter.screenshot('./images/beam.png')
+    cpos = plotter.show(auto_close=False)
+    plotter.screenshot('beam.png')
     plotter.close()
 
-.. image:: ../images/beam.png
+.. image:: ../images/auto-generated/beam.png
 
-You can animate the motion of the beam by updating the positions and scalars of the grid copied to the plotting object.  First you have to setup the plotting object:
+You can animate the motion of the beam by updating the positions and scalars of
+the grid copied to the plotting object.
+First you have to setup the plotting object:
 
 .. testcode:: python
 
-    plotter = vtki.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   show_edges=True, rng=[-d.max(), d.max()],
                   interpolate_before_map=True)
     plotter.add_axes()
     plotter.camera_position = cpos
 
-You then open the render window by plotting before opening movie file.  Set auto_close to False so the plotter does not close automatically.  Disabling interactive means the plot will automatically continue without waiting for the user to exit the window.
+You then open the render window by plotting before opening movie file.
+Set auto_close to False so the plotter does not close automatically.
+Disabling interactive means the plot will automatically continue without waiting
+for the user to exit the window.
 
 .. testcode:: python
 
-    plotter.plot(interactive=False, auto_close=False, window_size=[800, 600])
+    plotter.show(interactive=False, auto_close=False, window_size=[800, 600])
 
     # open movie file.  A mp4 file can be written instead.  Requires moviepy
-    plotter.open_gif('./images/gifs/beam.gif')  # or beam.mp4
+    plotter.open_gif('beam.gif')  # or beam.mp4
 
     # Modify position of the beam cyclically
     pts = grid.points.copy()  # unmodified points
@@ -234,14 +180,14 @@ You then open the render window by plotting before opening movie file.  Set auto
     # Close the movie and plot
     plotter.close()
 
-.. image:: ../images/gifs/beam.gif
+.. image:: ../images/auto-generated/beam.gif
 
 You can also render the beam as as a wire-frame object:
 
 .. testcode:: python
 
     # Animate plot as a wire-frame
-    plotter = vtki.Plotter()
+    plotter = pyvista.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', show_edges=True,
                   rng=[-d.max(), d.max()], interpolate_before_map=True,
                   style='wireframe')
@@ -250,7 +196,7 @@ You can also render the beam as as a wire-frame object:
     plotter.show(interactive=False, auto_close=False, window_size=[800, 600])
 
     #plotter.OpenMovie('beam.mp4')
-    plotter.open_gif('./images/gifs/beam_wireframe.gif')
+    plotter.open_gif('beam_wireframe.gif')
     for phase in np.linspace(0, 2*np.pi, 20):
         plotter.update_coordinates(grid.points + d*np.cos(phase), render=False)
         plotter.update_scalars(d[:, 1]*np.cos(phase), render=False)
@@ -259,25 +205,31 @@ You can also render the beam as as a wire-frame object:
 
     plotter.close()
 
-.. image:: ../images/gifs/beam_wireframe.gif
+.. image:: ../images/auto-generated/beam_wireframe.gif
 
 
 Adding Labels to a Plot
 -----------------------
-Labels can be added to a plot using the ``add_point_labels`` function within the ``Plotter`` object.  The following example loads the included example beam, generates a plotting class, and sub-selects points along the y-z plane and labels their coordinates.  ``add_point_labels`` requires that the number of labels matches the number of points, and that labels is a list containing one entry per point.  The code automatically converts each item in the list to a string.
+Labels can be added to a plot using the ``add_point_labels`` function within the
+``Plotter`` object.  The following example loads the included example beam,
+generates a plotting class, and sub-selects points along the y-z plane and
+labels their coordinates.  ``add_point_labels`` requires that the number of
+labels matches the number of points, and that labels is a list containing one
+entry per point.  The code automatically converts each item in the list to a
+string.
 
 .. testcode:: python
 
     # Load module and example file
-    import vtki
-    from vtki import examples
+    import pyvista
+    from pyvista import examples
 
     # Load example beam file
-    grid = vtki.UnstructuredGrid(examples.hexbeamfile)
+    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     # Create plotting class and add the unstructured grid
-    plotter = vtki.Plotter()
-    plotter.add_mesh(grid, show_edges=True, color='orange')
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(grid, show_edges=True, color='tan')
 
     # Add labels to points on the yz plane (where x == 0)
     points = grid.points
@@ -289,11 +241,12 @@ Labels can be added to a plot using the ``add_point_labels`` function within the
                     (0.05268120500967251, 0.639442034364944, 1.204095304165153),
                     (0.2364061044392675, 0.9369426029156169, -0.25739213784721)]
 
-    plotter.show(screenshot='./images/labels0.png')
+    plotter.show(screenshot='labels0.png')
 
-.. image:: ../images/labels0.png
+.. image:: ../images/auto-generated/labels0.png
 
-This example is similar and shows how labels can be combined with a scalar bar to show the exact value of certain points.
+This example is similar and shows how labels can be combined with a scalar bar
+to show the exact value of certain points.
 
 .. testcode:: python
 
@@ -301,7 +254,7 @@ This example is similar and shows how labels can be combined with a scalar bar t
     values = grid.points[:, 2]
 
     # Create plotting class and add the unstructured grid
-    plotter = vtki.Plotter(notebook=False)
+    plotter = pyvista.Plotter(notebook=False)
     # color mesh according to z value
     plotter.add_mesh(grid, scalars=values, stitle='Z Position', show_edges=True)
 
@@ -313,53 +266,57 @@ This example is similar and shows how labels can be combined with a scalar bar t
     plotter.add_text('Example showing plot labels')
 
     plotter.view_vector((-6, -3, -4), (0.,-1., 0.))
-    plotter.show(screenshot='./images/labels1.png')
+    plotter.show(screenshot='labels1.png')
 
-.. image:: ../images/labels1.png
-
-
+.. image:: ../images/auto-generated/labels1.png
 
 
-vtki.Unstructured Grid Class Methods
+
+
+pyvista.Unstructured Grid Class Methods
 --------------------------------------------
-The following is a description of the methods available to a ``vtki.UnstructuredGrid`` object.  It inherits all methods from the original vtk object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
+The following is a description of the methods available to a
+``pyvista.UnstructuredGrid`` object.  It inherits all methods from the original
+``vtk`` object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.UnstructuredGrid
+.. autoautosummary:: pyvista.UnstructuredGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.UnstructuredGrid
+.. autoautosummary:: pyvista.UnstructuredGrid
    :methods:
 
 
-.. autoclass:: vtki.UnstructuredGrid
+.. autoclass:: pyvista.UnstructuredGrid
    :show-inheritance:
    :members:
    :undoc-members:
 
 
-vtki.Structured Grid Class Methods
+pyvista.Structured Grid Class Methods
 --------------------------------------------
-The following is a description of the methods available to a ``vtki.StructuredGrid`` object.  It inherits all methods from the original vtk object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
+The following is a description of the methods available to a
+``pyvista.StructuredGrid`` object.  It inherits all methods from the original
+``vtk`` object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.StructuredGrid
+.. autoautosummary:: pyvista.StructuredGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.StructuredGrid
+.. autoautosummary:: pyvista.StructuredGrid
    :methods:
 
-.. autoclass:: vtki.StructuredGrid
+.. autoclass:: pyvista.StructuredGrid
    :show-inheritance:
    :members:
    :undoc-members:
@@ -367,21 +324,22 @@ The following is a description of the methods available to a ``vtki.StructuredGr
 
 Methods in Common with Structured and Unstructured Grids
 --------------------------------------------------------
-These methods are in common to both ``vtki.StructuredGrid`` and ``vtki.UnstructuredGrid`` objects.
+These methods are in common to both ``pyvista.StructuredGrid`` and
+``pyvista.UnstructuredGrid`` objects.
 
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: vtki.PointGrid
+.. autoautosummary:: pyvista.PointGrid
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: vtki.PointGrid
+.. autoautosummary:: pyvista.PointGrid
    :methods:
 
-.. autoclass:: vtki.PointGrid
+.. autoclass:: pyvista.PointGrid
    :show-inheritance:
    :members:
    :undoc-members:

@@ -7,75 +7,177 @@ os:
 
 language: python
 
-python:
-  - '2.7'
-  - '3.5'
-  - '3.6'
-  - '3.7'
+env:
+  global:
+    # Doctr deploy key for pyvista/pyvista
+    - secure: "LffT6SJeAEvH2qD6nJXbw8E9VW5ji5vm6bLywUdEjequgKDuV8SvkKuZQq6pBrz2l1YEWlJ70c9oShz7lJ7H2mpteIpjvf5qDx6eXiRyOSwWdsvr8sbQe8C7J0nGxnfEWSANvZ9IA7gXwURbs3wzbnLoUpIiubW8UPnbfk8KAymh3S3wDwNrUXNszc4pzVE/0tkEjIRft1EYfdUpBQfZ1pABltkQcMFqGjDR6LFmkU7EONrRw4cKzg5IFSWRfHtS6S04i+c5PXuMoReM7EkFlUKO4j+fKHJhSxlSuMGYugVlroXWZUjVNZuEWjF1mKLuQnq13FzUHr1skbUXl2LgWHHmHGJ76+8ZtvSPhuOSll4kgWjTVplnW4iqbPcGWnvs3GnSeuAtz5gOjpKbY879/QpFanTXSA4a/WTy0D87aRKjn2p2zQ46/d8oeIfdo1ww59b983ubjJ4jccqlANVyw6AUuND1iXtktCN485SnUfX5bHEj5kEbpRmWBTIfDeMLgyYq7KM0ZHTfd5Zd+V1JD9idJxw3o3L7DytojPgjE190L+DhhyoZdWWZXGFF3DiivQdR/huKvaGG5o2Jg+k9/lBYmq1/AhnOJflakVHbcxQf2FR0DkylMclgLo8X5+MySkMsiSU9kHCCQgzzOOUPClRdxN+4i/tuXn1/H97SAPo="
 
-addons:
-  apt:
-    packages:
-      - xvfb
-
-before_script: # configure a headless display to test plot generation
-  - export DISPLAY=:99.0
-  - which Xvfb
-  - Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
-  # - ls -l /etc/init.d/
-  # - sh -e /etc/init.d/xvfb start
-  - sleep 3 # give xvfb some time to start
+before_install:
+  # configure a headless display
+  - git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
+  - source ./gl-ci-helpers/travis/setup_headless_display.sh
 
 install:
   - pip install -r requirements.txt
   - pip install -r requirements_docs.txt
-  - pip install pytest-cov
-  - pip install codecov
-  - |
-    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      pip install -r requirements_test.txt
-    fi
+  - pip install -U doctr
+  - pip install cookiecutter
   - pip install -e .
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
-  - python -c "import imageio; imageio.plugins.ffmpeg.download()"
   - pip list
 
-script:
-  # Run the test suite and generate coverage report
-  - pytest -v --cov vtki
-  # Run all code examples in the docstrings
-  - pytest -v --doctest-modules vtki
-  - |  # report code coverage
-    if [[ $TRAVIS_PYTHON_VERSION == 3.7 ]]; then
-      codecov
+before_script:
+  - echo $TRAVIS_COMMIT
+  - echo $TRAVIS_TAG
+  - echo $TRAVIS_BRANCH
+  - echo $TRAVIS_BUILD_NUMBER
+  - echo $TRAVIS_JOB_NUMBER
+  - echo $TRAVIS_REPO_SLUG
+
+matrix:
+  include:
+    # Test the core API on Python 3.5, 3.6, and 3.7
+    - name: Core API 3.5
+      python: 3.5
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov pyvista
+    - name: Core API 3.6
+      python: 3.6
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov pyvista
+    - name: Core API 3.7
+      python: 3.7
+      env:
+        - REPORT_COVERAGE: true
+        # Deploy to PyPI when core testing passes on 3.7 on tags
+        - PYVISTA_DEPLOY: true
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov pyvista
+
+    # Test the package docstrings on Python 3.5, 3.6, and 3.7
+    - name: Package Docstrings 3.5
+      python: 3.5
+      # Run all code examples in the docstrings
+      script: pytest -v --doctest-modules pyvista
+    - name: Package Docstrings 3.6
+      python: 3.6
+      # Run all code examples in the docstrings
+      script: pytest -v --cov --doctest-modules pyvista
+    - name: Package Docstrings 3.7
+      python: 3.7
+      env:
+        - REPORT_COVERAGE: true
+      # Run all code examples in the docstrings
+      script: pytest -v --cov --doctest-modules pyvista
+
+    # Test notebooks on Python 3.6 and 3.7
+    - name: Notebooks 3.6
+      python: 3.6
+      # Now make sure notebooks are running
+      # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+      script: |
+        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+    - name: Notebooks 3.6 with panel
+      python: 3.6
+      # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
+      script: |
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
+        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+    - name: Notebooks 3.7 with panel
+      python: 3.7
+      # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
+      script: |
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
+        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+    - name: Notebooks 3.7
+      python: 3.7
+      env:
+        - REPORT_COVERAGE: false
+      # Now make sure notebooks are running
+      script: |
+        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+
+    # Build/test/deploy documentation on 3.7 only
+    - name: Documentation Build/Deploy 3.7
+      python: 3.7
+      env:
+        - REPORT_COVERAGE: false
+        - DEPLOY_DOCS: true
+      # Run `make html` before `make doctest` to avoid segfault.
+      # Then rerun `make html` to use updated figures from `make doctest`
+      script: |
+        cd ./docs/;
+        export PYVISTA_OFFSCREEN=True;
+        set -e;
+        make html;
+        make doctest;
+        make html;
+        cd ..;
+  allow_failures:
+    - name: Notebooks 3.6 with panel
+      python: 3.6
+      # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
+      script: |
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
+        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+    - name: Notebooks 3.7 with panel
+      python: 3.7
+      # Now make sure notebooks are running
+      # Install panel from master branch to keep up with bug fixes
+      script: |
+        git clone https://github.com/pyviz/panel.git;
+        mv panel .panel
+        cd .panel
+        python setup.py install
+        cd ..
+        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
+        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
+
+
+after_success:
+  - if [[($TRAVIS_PYTHON_VERSION == 3.7) && ($REPORT_COVERAGE == 'true')]]; then
+      echo "Uploading coverage to Codecov";
+      codecov;
     fi
-  # Now make sure notebooks are running
-  # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-  - |
-    if [[ $TRAVIS_PYTHON_VERSION != 2.7 ]]; then
-      pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-    fi
-  # And test the documentation
-  - cd ./docs/
-  - make doctest
-  - make html
-  # And then clean up and changes from running examples with fileio
-  - cd ..
-  - git reset --hard # removes staged and working directory changes
 
 cache:
   directories:
   - "$HOME/.cache/pip"
 
 deploy:
-  provider: pypi
-  user: akaszynski
-  distributions: sdist
-  on:
-    condition: "$TRAVIS_PYTHON_VERSION == 3.6"
-    tags: true
-  password: $PYPI_PASSWORD
+  - provider: script
+    script: sh ./docs/deploy_docs_from_travis.sh
+    skip_cleanup: true
+    on:
+      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/pyvista') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES' && ($DEPLOY_DOCS == 'true'))
+  - provider: pypi
+    user: akaszynski
+    distributions: sdist
+    on:
+      condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($PYVISTA_DEPLOY == 'true')
+      tags: true
+    password: $PYPI_PASSWORD
 
 notifications:
   email: false

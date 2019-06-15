@@ -3,8 +3,8 @@ import sys
 import pytest
 
 
-import vtki
-from vtki.plotting import running_xserver
+import pyvista
+from pyvista.plotting import system_supports_plotting
 
 if __name__ != '__main__':
     OFF_SCREEN = 'pytest' in sys.modules
@@ -12,9 +12,9 @@ else:
     OFF_SCREEN = False
 
 
-@pytest.mark.skipif(not running_xserver(), reason="Requires X11")
+@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_camera_position():
-    plotter = vtki.Plotter(off_screen=OFF_SCREEN)
-    plotter.add_mesh(vtki.Sphere())
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(pyvista.Sphere())
     plotter.show()
     assert isinstance(plotter.camera_position, list)
