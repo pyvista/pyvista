@@ -17,12 +17,42 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
 
 import pyvista
 from pyvista.filters import _get_output
+from pyvista.utilities import get_scalar
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PolyData(vtkPolyData, pyvista.Common):
+class PointSet(pyvista.Common):
+    """PyVista's equivalant of vtk.vtkPointSet. This holds methods common to
+    PolyData and UnstructuredGrid.
+    """
+
+
+    def center_of_mass(self, scalars_weight=False):
+        """
+        Returns the coordinates for the center of mass of the mesh.
+
+        Parameters
+        ----------
+        scalars_weight : bool, optional
+            Flag for using the mesh scalars as weights. Defaults to False.
+
+        Return
+        ------
+        center : np.ndarray, float
+            Coordinates for the center of mass.
+
+        """
+        alg = vtk.vtkCenterOfMass()
+        alg.SetInputDataObject(self)
+        alg.SetUseScalarsAsWeights(scalars_weight)
+        alg.Update()
+        return np.array(alg.GetCenter())
+
+
+
+class PolyData(vtkPolyData, PointSet):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -994,26 +1024,6 @@ class PolyData(vtkPolyData, pyvista.Common):
         else:
             return mesh
 
-    def center_of_mass(self, scalars_weight=False):
-        """
-        Returns the coordinates for the center of mass of the mesh.
-
-        Parameters
-        ----------
-        scalars_weight : bool, optional
-            Flag for using the mesh scalars as weights. Defaults to False.
-
-        Return
-        ------
-        center : np.ndarray, float
-            Coordinates for the center of mass.
-        """
-        comfilter = vtk.vtkCenterOfMass()
-        comfilter.SetInputData(self)
-        comfilter.SetUseScalarsAsWeights(scalars_weight)
-        comfilter.Update()
-        return np.array(comfilter.GetCenter())
-
     def compute_normals(self, cell_normals=True, point_normals=True,
                         split_vertices=False, flip_normals=False,
                         consistent_normals=True,
@@ -1633,7 +1643,7 @@ class PolyData(vtkPolyData, pyvista.Common):
                              'spelling mistake. Please use `delaunay_2d`.')
 
 
-class PointGrid(pyvista.Common):
+class PointGrid(PointSet):
     """ Class in common with structured and unstructured grids """
 
     def __new__(cls, *args, **kwargs):
