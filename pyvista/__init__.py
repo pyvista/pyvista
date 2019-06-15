@@ -22,7 +22,7 @@ from pyvista.qt_plotting import QtInteractor
 from pyvista.qt_plotting import BackgroundPlotter
 from pyvista.export import export_plotter_vtkjs, get_vtkjs_url
 from pyvista.renderer import Renderer
-from vtki.plot_tools import OrthographicSlicer
+from pyvista.plot_tools import OrthographicSlicer
 
 # IPython interactive tools
 from pyvista.ipy_tools import OrthogonalSlicer

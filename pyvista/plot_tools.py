@@ -1,4 +1,4 @@
-import vtki
+import pyvista
 
 
 
@@ -10,8 +10,8 @@ class OrthographicSlicer(object):
                  notebook=False, border_color='k', window_size=None,
                  generate_triangles=False, contour=False, show_bounds=False,
                  background=False, **kwargs):
-        if not vtki.is_vtki_obj(dataset):
-            dataset = vtki.wrap(dataset)
+        if not pyvista.is_pyvista_obj(dataset):
+            dataset = pyvista.wrap(dataset)
 
         # Keep track of the input
         self.input_dataset = dataset
@@ -39,9 +39,9 @@ class OrthographicSlicer(object):
         self.contour = contour
         self.show_bounds = show_bounds
 
-        plotter = vtki.Plotter
+        plotter = pyvista.Plotter
         if background:
-            plotter = vtki.BackgroundPlotter
+            plotter = pyvista.BackgroundPlotter
 
         self.plotter = plotter(shape=(2, 2), border=border,
                         notebook=notebook, border_color=border_color,
@@ -62,7 +62,7 @@ class OrthographicSlicer(object):
 
     @location.setter
     def location(self, location):
-        if not vtki.is_inside_bounds(location, self.input_dataset.bounds):
+        if not pyvista.is_inside_bounds(location, self.input_dataset.bounds):
             raise ValueError('Point outside of data bounds.')
         self._location = location
         self.update()
