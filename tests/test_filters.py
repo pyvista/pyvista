@@ -20,7 +20,10 @@ def test_clip_filter():
     for i, dataset in enumerate(datasets):
         clp = dataset.clip(normal=normals[i], invert=True)
         assert clp is not None
-        assert isinstance(clp, pyvista.UnstructuredGrid)
+        if isinstance(dataset, pyvista.PolyData):
+            assert isinstance(clp, pyvista.PolyData)
+        else:
+            assert isinstance(clp, pyvista.UnstructuredGrid)
 
 def test_clip_box():
     for i, dataset in enumerate(datasets):
@@ -272,13 +275,13 @@ def test_warp_by_scalar():
 def test_cell_data_to_point_data():
     data = examples.load_uniform()
     foo = data.cell_data_to_point_data()
-    assert foo.n_scalars == 2
+    assert foo.n_arrays == 2
     assert len(foo.cell_arrays.keys()) == 0
 
 def test_point_data_to_cell_data():
     data = examples.load_uniform()
     foo = data.point_data_to_cell_data()
-    assert foo.n_scalars == 2
+    assert foo.n_arrays == 2
     assert len(foo.point_arrays.keys()) == 0
 
 
@@ -320,3 +323,12 @@ def test_streamlines():
                            source_center=(133.1, 116.3, 5.0) )
     assert stream.n_points > 0
     assert src.n_points == 25
+
+
+def test_plot_over_line():
+    """this requires matplotlib"""
+    mesh = examples.load_channels()
+    # Make two points to construct the line between
+    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    mesh.plot_over_line(a, b, resolution=1000, show=False)

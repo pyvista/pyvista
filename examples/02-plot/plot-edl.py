@@ -27,7 +27,7 @@ pv.rcParams['use_panel'] = False
 # statue:
 
 nefertiti = examples.download_nefertiti()
-nefertiti.plot(eye_dome_lighting=True, cpos=[-1,-1,0.2])
+nefertiti.plot(eye_dome_lighting=True, cpos=[-1,-1,0.2], color=True)
 
 ################################################################################
 # Here we will compare a EDL shading side by side with normal shading

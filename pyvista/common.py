@@ -15,7 +15,8 @@ from pyvista import DataSetFilters
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
                                FIELD_DATA_FIELD, get_scalar,
                                vtk_bit_array_to_char, is_pyvista_obj,
-                               _raise_not_matching, convert_array)
+                               _raise_not_matching, convert_array,
+                               parse_field_choice)
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -58,7 +59,7 @@ class Common(DataSetFilters, object):
                     name = None
 
         if name is None:
-            if self.n_scalars < 1:
+            if self.n_arrays < 1:
                 return field, name
             # find some array in the set field
             parr = self.GetPointData().GetArrayName(0)
@@ -218,6 +219,11 @@ class Common(DataSetFilters, object):
         if not hasattr(self, '_textures'):
             self._textures = {}
         return self._textures
+
+    def clear_textures(self):
+        """Clear the textures from this mesh"""
+        if hasattr(self, '_textures'):
+            del self._textures
 
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates. This makes
@@ -657,11 +663,6 @@ class Common(DataSetFilters, object):
         return newobject
 
 
-    def _remove_point_scalar(self, key):
-        """ removes point scalars from point data """
-        self.GetPointData().RemoveArray(key)
-
-
     @property
     def point_arrays(self):
         """ Returns the all point arrays """
@@ -689,11 +690,6 @@ class Common(DataSetFilters, object):
         return self._point_arrays
 
 
-    def _remove_field_scalar(self, key):
-        """ removes field scalars from field data """
-        self.GetFieldData().RemoveArray(key)
-
-
     @property
     def field_arrays(self):
         """ Returns all field arrays """
@@ -716,9 +712,45 @@ class Common(DataSetFilters, object):
         self._field_arrays.enable_callback()
         return self._field_arrays
 
-    def _remove_cell_scalar(self, key):
-        """ removes cell scalars """
-        self.GetCellData().RemoveArray(key)
+
+    def _remove_array(self, field, key):
+        """internal helper to remove a single array by name from each field"""
+        field = parse_field_choice(field)
+        if field == POINT_DATA_FIELD:
+            self.GetPointData().RemoveArray(key)
+        elif field == CELL_DATA_FIELD:
+            self.GetCellData().RemoveArray(key)
+        elif field == FIELD_DATA_FIELD:
+            self.GetFieldData().RemoveArray(key)
+        else:
+            raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
+        return
+
+
+    def clear_point_arrays(self):
+        """ removes all point arrays """
+        keys = self.point_arrays.keys()
+        for key in keys:
+            self._remove_array(POINT_DATA_FIELD, key)
+
+    def clear_cell_arrays(self):
+        """ removes all cell arrays """
+        keys = self.cell_arrays.keys()
+        for key in keys:
+            self._remove_array(CELL_DATA_FIELD, key)
+
+    def clear_field_arrays(self):
+        """ removes all field arrays """
+        keys = self.field_arrays.keys()
+        for key in keys:
+            self._remove_array(FIELD_DATA_FIELD, key)
+
+    def clear_arrays(self):
+        """ removes all arrays from point/cell/field data """
+        self.clear_point_arrays()
+        self.clear_cell_arrays()
+        self.clear_field_arrays()
+
 
     @property
     def cell_arrays(self):
@@ -869,11 +901,17 @@ class Common(DataSetFilters, object):
         return
 
     @property
-    def n_scalars(self):
-        """The number of scalara arrays present in the dataset"""
+    def n_arrays(self):
+        """The number of scalar arrays present in the dataset"""
         return self.GetPointData().GetNumberOfArrays() + \
                self.GetCellData().GetNumberOfArrays() + \
                self.GetFieldData().GetNumberOfArrays()
+
+    @property
+    def n_scalars(self):
+        """DEPRECATED: Please use `n_arrays`"""
+        warnings.warn('Deprecation Warning: `n_scalars` is now `n_arrays`', RuntimeWarning)
+        return self.n_arrays
 
     @property
     def scalar_names(self):
@@ -926,7 +964,7 @@ class Common(DataSetFilters, object):
                     fmt += row.format(attr[0], attr[2].format(*attr[1]))
                 except:
                     fmt += row.format(attr[0], attr[2].format(attr[1]))
-            fmt += row.format('N Scalars', self.n_scalars)
+            fmt += row.format('N Arrays', self.n_arrays)
             fmt += "</table>\n"
             fmt += "\n"
             if display:
@@ -943,7 +981,7 @@ class Common(DataSetFilters, object):
                 fmt += row.format(attr[0], attr[2].format(*attr[1]))
             except:
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
-        fmt += row.format('N Scalars', self.n_scalars)
+        fmt += row.format('N Arrays', self.n_arrays)
         return fmt
 
 
@@ -951,14 +989,14 @@ class Common(DataSetFilters, object):
         """A pretty representation for Jupyter notebooks that includes header
         details and information about all scalar arrays"""
         fmt = ""
-        if self.n_scalars > 0:
+        if self.n_arrays > 0:
             fmt += "<table>"
             fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
             fmt += "<tr><td>"
         # Get the header info
         fmt += self.head(display=False, html=True)
         # Fill out scalar arrays
-        if self.n_scalars > 0:
+        if self.n_arrays > 0:
             fmt += "</td><td>"
             fmt += "\n"
             fmt += "<table>\n"
@@ -1084,7 +1122,7 @@ class CellScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_cell_scalar(key)
+        self.remover = lambda key: self.data._remove_array(CELL_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetCellData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):
@@ -1099,7 +1137,7 @@ class PointScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_point_scalar(key)
+        self.remover = lambda key: self.data._remove_array(POINT_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetPointData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):
@@ -1113,7 +1151,7 @@ class FieldScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_field_scalar(key)
+        self.remover = lambda key: self.data._remove_array(FIELD_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetFieldData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):

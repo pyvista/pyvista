@@ -321,7 +321,7 @@ def test_plot_clim():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_invalid_n_scalars():
+def test_invalid_n_arrays():
     with pytest.raises(Exception):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(sphere, scalars=np.arange(10))
@@ -512,6 +512,30 @@ def test_multi_renderers():
     plotter.show_bounds(all_edges=True)
 
     plotter.update_bounds_axes()
+    plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_link_views():
+    plotter = pyvista.Plotter(shape=(1, 4), off_screen=OFF_SCREEN)
+    sphere = pyvista.Sphere()
+    plotter.subplot(0, 0)
+    plotter.add_mesh(sphere, smooth_shading=False, show_edges=False)
+    plotter.subplot(0, 1)
+    plotter.add_mesh(sphere, smooth_shading=True, show_edges=False)
+    plotter.subplot(0, 2)
+    plotter.add_mesh(sphere, smooth_shading=False, show_edges=True)
+    plotter.subplot(0, 3)
+    plotter.add_mesh(sphere, smooth_shading=True, show_edges=True)
+    with pytest.raises(TypeError):
+        plotter.link_views(views='foo')
+    plotter.link_views([0, 1])
+    plotter.link_views()
+    with pytest.raises(TypeError):
+        plotter.unlink_views(views='foo')
+    plotter.unlink_views([0, 1])
+    plotter.unlink_views(2)
+    plotter.unlink_views()
     plotter.show()
 
 

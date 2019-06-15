@@ -15,3 +15,4 @@ considered "The PyVista Developers":
 - Alex Kaszynski, (`@akaszynski <https://github.com/akaszynski/>`_)
 - Bane Sullivan, (`@banesullivan <https://github.com/banesullivan/>`_)
 - Henrik Åhl, (`@supersubscript <https://github.com/supersubscript/>`_)
+- Guillaume Favelier, (`@GuillaumeFavelier <https://github.com/GuillaumeFavelier/>`_)
