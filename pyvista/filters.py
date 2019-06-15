@@ -29,7 +29,8 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import get_scalar, is_inside_bounds, wrap
+from pyvista.utilities import (get_scalar, is_inside_bounds, wrap,
+                               CELL_DATA_FIELD, POINT_DATA_FIELD)
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -98,7 +99,10 @@ class DataSetFilters(object):
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
         # run the clip
-        alg = vtk.vtkClipDataSet()
+        if isinstance(dataset, vtk.vtkPolyData):
+            alg = vtk.vtkClipPolyData()
+        else:
+            alg = vtk.vtkClipDataSet()
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
         alg.SetClipFunction(plane) # the the cutter to use the plane we made
         alg.SetInsideOut(invert) # invert the clip if needed
@@ -587,7 +591,7 @@ class DataSetFilters(object):
 
         """
         # Make sure the input has scalars to contour on
-        if dataset.n_scalars < 1:
+        if dataset.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have scalar data.')
         alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(dataset)
@@ -670,7 +674,7 @@ class DataSetFilters(object):
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
         return # No return type because it is inplace
 
-    def compute_cell_sizes(dataset, length=False, area=True, volume=True):
+    def compute_cell_sizes(dataset, length=True, area=True, volume=True):
         """This filter computes sizes for 1D (length), 2D (area) and 3D (volume)
         cells.
 
@@ -804,8 +808,8 @@ class DataSetFilters(object):
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
                 # or else object is collected.
-                b._remove_cell_scalar('RegionId')
-                b._remove_point_scalar('RegionId')
+                b._remove_array(CELL_DATA_FIELD, 'RegionId')
+                b._remove_array(POINT_DATA_FIELD, 'RegionId')
             bodies.append(b)
 
         return bodies
@@ -1030,12 +1034,17 @@ class DataSetFilters(object):
 
 
     def interpolate(dataset, points, sharpness=2, radius=1.0,
-            dimensions=(101, 101, 101), pass_cell_arrays=True, pass_point_arrays=True):
+            dimensions=(101, 101, 101), pass_cell_arrays=True,
+            pass_point_arrays=True, kernel='gaussian'):
         """Interpolate values onto this mesh from the point data of a given
         :class:`pyvista.PolyData` object (typically a point cloud).
 
         This uses a guassian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel.
+
+        Please note that the source dataset is first interpolated onto a fine
+        UniformGrid which is then sampled to this mesh. The interpolation grid's
+        dimensions will likely need to be tweaked for each individual use case.
 
         Parameters
         ----------
@@ -1274,3 +1283,84 @@ class DataSetFilters(object):
             of the input triangles.
         """
         return dataset.extract_geometry().tri_filter().decimate(target_reduction)
+
+
+    def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
+                       title=None, ylabel=None, figsize=None, figure=True,
+                       show=True):
+        """Sample a dataset along a high resolution line and plot the variables
+        of interest in 2D where the X-axis is distance from Point A and the
+        Y-axis is the varaible of interest. Note that this filter returns None.
+
+        Parameters
+        ----------
+        pointa : np.ndarray or list
+            Location in [x, y, z].
+
+        pointb : np.ndarray or list
+            Location in [x, y, z].
+
+        resolution : int
+            number of pieces to divide line into. Defaults to number of cells
+            in the input mesh. Must be a positive integer.
+
+        scalars : str
+            The string name of the variable in the input dataset to probe. The
+            active scalar is used by default.
+
+        title : str
+            The string title of the `matplotlib` figure
+
+        ylabel : str
+            The string label of the Y-axis. Defaults to variable name
+
+        figsize : tuple(int)
+            the size of the new figure
+
+        figure : bool
+            flag on whether or not to create a new figure
+
+        show : bool
+            Shows the matplotlib figure
+        """
+        # Ensure matplotlib is available
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            raise ImportError('matplotlib must be available to use this filter.')
+
+        if resolution is None:
+            resolution = dataset.n_cells
+        if not isinstance(resolution, int) or resolution < 0:
+            raise RuntimeError('`resolution` must be a positive integer.')
+        # Make a line and probe the dataset
+        line = pyvista.Line(pointa, pointb, resolution=resolution)
+        sampled = line.sample(dataset)
+
+        # Get variable of interest
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        values = sampled.get_scalar(scalars)
+        distance = sampled['Distance']
+
+        # Remainder of the is plotting
+        if figure:
+            plt.figure(figsize=figsize)
+        # Plot it in 2D
+        if values.ndim > 1:
+            for i in range(values.shape[1]):
+                plt.plot(distance, values[:, i], label='Component {}'.format(i))
+            plt.legend()
+        else:
+            plt.plot(distance, values)
+        plt.xlabel('Distance')
+        if ylabel is None:
+            plt.ylabel(scalars)
+        else:
+            plt.ylabel(ylabel)
+        if title is None:
+            plt.title('{} Profile'.format(scalars))
+        else:
+            plt.title(title)
+        if show:
+         return plt.show()

@@ -12,8 +12,8 @@ software and we apologize for any confusion this may be causing**
 .. |zenodo| image:: https://zenodo.org/badge/92974124.svg
    :target: https://zenodo.org/badge/latestdoi/92974124
 
-.. |joss| image:: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
-   :target: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978
+.. |joss| image:: http://joss.theoj.org/papers/10.21105/joss.01450/status.svg
+   :target: https://doi.org/10.21105/joss.01450
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
@@ -24,7 +24,7 @@ software and we apologize for any confusion this may be causing**
 .. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/pyvista/pyvista
 
-.. |appveyor| image:: https://img.shields.io/appveyor/ci/banesullivan/pyvista.svg?label=AppVeyor&style=flat&logo=appveyor
+.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/80geek5ylh4ebnc6/branch/master?svg=true
    :target: https://ci.appveyor.com/project/banesullivan/pyvista/history
 
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
@@ -129,15 +129,14 @@ Here are a few open-source projects that leverage PyVista:
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
-.. _pymeshfix: https://github.com/akaszynski/pymeshfix
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: http://discretize.simpeg.xyz/en/master/
 .. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
-.. _pymeshfix: https://github.com/akaszynski/pymeshfix
+.. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
-.. _tetgen: https://github.com/akaszynski/tetgen
+.. _tetgen: https://github.com/pyvista/tetgen
 
 
 Authors
@@ -161,3 +160,34 @@ features to make this software a useful tool for all users. To learn more about
 contributing to PyVista, please see the `Contributing Guide`_.
 
 .. _Contributing Guide: http://docs.pyvista.org/dev/contributing.html
+
+
+Citing PyVista
+==============
+
+There is a `paper about PyVista <https://doi.org/10.21105/joss.01450>`_!
+
+If you are using PyVista in your scientific research, please help our scientific
+visibility by citing our work!
+
+
+    Sullivan et al., (2019). PyVista: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK). Journal of Open Source Software, 4(37), 1450, https://doi.org/10.21105/joss.01450
+
+
+BibTex:
+
+.. code::
+
+    @article{sullivan2019pyvista,
+      doi = {10.21105/joss.01450},
+      url = {https://doi.org/10.21105/joss.01450},
+      year = {2019},
+      month = {may},
+      publisher = {The Open Journal},
+      volume = {4},
+      number = {37},
+      pages = {1450},
+      author = {C. Bane Sullivan and Alexander Kaszynski},
+      title = {{PyVista}: 3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit ({VTK})},
+      journal = {Journal of Open Source Software}
+    }

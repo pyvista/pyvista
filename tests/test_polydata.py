@@ -330,11 +330,6 @@ def test_decimate_pro():
     assert mesh.n_faces < sphere.n_faces
 
 
-def test_center_of_mass():
-    sphere = SPHERE.copy()
-    assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
-
-
 def test_compute_normals():
     sphere = SPHERE.copy()
     sphere_normals = SPHERE.copy()
@@ -442,3 +437,23 @@ def test_remove_points_fail():
     arrow = pyvista.Arrow([0, 0, 0], [1, 0, 0])
     with pytest.raises(Exception):
         arrow.remove_points(range(10))
+
+
+def test_vertice_cells_on_read(tmpdir):
+    point_cloud = pyvista.PolyData(np.random.rand(100, 3))
+    filename = str(tmpdir.mkdir("tmpdir").join('foo.ply'))
+    point_cloud.save(filename)
+    recovered = pyvista.read(filename)
+    assert recovered.n_cells == 100
+    recovered = pyvista.PolyData(filename)
+    assert recovered.n_cells == 100
+
+
+def test_center_of_mass():
+    sphere = SPHERE.copy()
+    assert np.allclose(sphere.center_of_mass(), [0, 0, 0])
+    cloud = pyvista.PolyData(np.random.rand(100, 3))
+    assert len(cloud.center_of_mass()) == 3
+    cloud['weights'] = np.random.rand(cloud.n_points)
+    center = cloud.center_of_mass(True)
+    assert len(center) == 3

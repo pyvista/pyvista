@@ -150,6 +150,8 @@ def read(filename, attrs=None):
         value.
     """
     filename = os.path.abspath(os.path.expanduser(filename))
+    if not os.path.isfile(filename):
+        raise IOError('File ({}) not found'.format(filename))
     ext = get_ext(filename)
 
     # From the extension, decide which reader to use

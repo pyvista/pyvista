@@ -17,12 +17,42 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
 
 import pyvista
 from pyvista.filters import _get_output
+from pyvista.utilities import get_scalar
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PolyData(vtkPolyData, pyvista.Common):
+class PointSet(pyvista.Common):
+    """PyVista's equivalant of vtk.vtkPointSet. This holds methods common to
+    PolyData and UnstructuredGrid.
+    """
+
+
+    def center_of_mass(self, scalars_weight=False):
+        """
+        Returns the coordinates for the center of mass of the mesh.
+
+        Parameters
+        ----------
+        scalars_weight : bool, optional
+            Flag for using the mesh scalars as weights. Defaults to False.
+
+        Return
+        ------
+        center : np.ndarray, float
+            Coordinates for the center of mass.
+
+        """
+        alg = vtk.vtkCenterOfMass()
+        alg.SetInputDataObject(self)
+        alg.SetUseScalarsAsWeights(scalars_weight)
+        alg.Update()
+        return np.array(alg.GetCenter())
+
+
+
+class PolyData(vtkPolyData, PointSet):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -78,12 +108,7 @@ class PolyData(vtkPolyData, pyvista.Common):
                 points = args[0]
                 if points.ndim != 2:
                     points = points.reshape((-1, 3))
-
-                npoints = points.shape[0]
-                cells = np.hstack((np.ones((npoints, 1)),
-                                   np.arange(npoints).reshape(-1, 1)))
-                cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-                cells = np.reshape(cells, (2*npoints))
+                cells = self._make_vertice_cells(points.shape[0])
                 self._from_arrays(points, cells, deep, verts=True)
             else:
                 raise TypeError('Invalid input type')
@@ -98,11 +123,24 @@ class PolyData(vtkPolyData, pyvista.Common):
         else:
             raise TypeError('Invalid input type')
 
+        # Check if need to make vertex cells
+        if self.n_points > 0 and self.n_cells == 0:
+            # make vertex cells
+            self.faces = self._make_vertice_cells(self.n_points)
+
     def __repr__(self):
         return pyvista.Common.__repr__(self)
 
     def __str__(self):
         return pyvista.Common.__str__(self)
+
+    @staticmethod
+    def _make_vertice_cells(npoints):
+        cells = np.hstack((np.ones((npoints, 1)),
+                           np.arange(npoints).reshape(-1, 1)))
+        cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
+        cells = np.reshape(cells, (2*npoints))
+        return cells
 
     def _load_file(self, filename):
         """Load a surface mesh from a mesh file.
@@ -986,29 +1024,12 @@ class PolyData(vtkPolyData, pyvista.Common):
         else:
             return mesh
 
-    def center_of_mass(self, scalars_weight=False):
-        """
-        Returns the coordinates for the center of mass of the mesh.
-
-        Parameters
-        ----------
-        scalars_weight : bool, optional
-            Flag for using the mesh scalars as weights. Defaults to False.
-
-        Return
-        ------
-        center : np.ndarray, float
-            Coordinates for the center of mass.
-        """
-        comfilter = vtk.vtkCenterOfMass()
-        comfilter.SetInputData(self)
-        comfilter.SetUseScalarsAsWeights(scalars_weight)
-        comfilter.Update()
-        return np.array(comfilter.GetCenter())
-
-    def compute_normals(self, cell_normals=True, point_normals=True, split_vertices=False,
-                        flip_normals=False, consistent_normals=True, auto_orient_normals=False,
-                        non_manifold_traversal=True, feature_angle=30.0, inplace=False):
+    def compute_normals(self, cell_normals=True, point_normals=True,
+                        split_vertices=False, flip_normals=False,
+                        consistent_normals=True,
+                        auto_orient_normals=False,
+                        non_manifold_traversal=True,
+                        feature_angle=30.0, inplace=False):
         """
         Compute point and/or cell normals for a mesh.
 
@@ -1374,6 +1395,9 @@ class PolyData(vtkPolyData, pyvista.Common):
 
         output = _get_output(dijkstra)
 
+        # Do not copy textures from input
+        output.clear_textures()
+
         if inplace:
             self.overwrite(output)
         else:
@@ -1399,8 +1423,12 @@ class PolyData(vtkPolyData, pyvista.Common):
             Length of the geodesic segment.
 
         """
-        length = self.geodesic(start_vertex, end_vertex).GetLength()
-        return length
+        path = self.geodesic(start_vertex, end_vertex)
+        sizes = path.compute_cell_sizes(length=True, area=False, volume=False)
+        distance = np.sum(sizes['Length'])
+        del path
+        del sizes
+        return distance
 
     def ray_trace(self, origin, end_point, first_point=False, plot=False,
                   off_screen=False):
@@ -1615,7 +1643,7 @@ class PolyData(vtkPolyData, pyvista.Common):
                              'spelling mistake. Please use `delaunay_2d`.')
 
 
-class PointGrid(pyvista.Common):
+class PointGrid(PointSet):
     """ Class in common with structured and unstructured grids """
 
     def __new__(cls, *args, **kwargs):

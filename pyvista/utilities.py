@@ -140,6 +140,24 @@ def cell_scalar(mesh, name):
     return convert_array(vtkarr)
 
 
+def parse_field_choice(field):
+    if isinstance(field, str):
+        field = field.strip().lower()
+        if field in ['cell', 'c', 'cells']:
+            field = CELL_DATA_FIELD
+        elif field in ['point', 'p', 'points']:
+            field = POINT_DATA_FIELD
+        elif field in ['field', 'f', 'fields']:
+            field = FIELD_DATA_FIELD
+        else:
+            raise RuntimeError('Data field ({}) not supported.'.format(field))
+    elif isinstance(field, int):
+        pass
+    else:
+        raise RuntimeError('Data field ({}) not supported.'.format(field))
+    return field
+
+
 def get_scalar(mesh, name, preference='cell', info=False, err=False):
     """ Searches point, cell and field data for an array
 
@@ -163,16 +181,7 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
     farr = field_scalar(mesh, name)
-    if isinstance(preference, str):
-        preference = preference.strip().lower()
-        if preference in ['cell', 'c', 'cells']:
-            preference = CELL_DATA_FIELD
-        elif preference in ['point', 'p', 'points']:
-            preference = POINT_DATA_FIELD
-        elif preference in ['field', 'f', 'fields']:
-            preference = FIELD_DATA_FIELD
-        else:
-            raise RuntimeError('Data field ({}) not supported.'.format(preference))
+    preference = parse_field_choice(preference)
     if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
         if preference == CELL_DATA_FIELD:
             if info:
@@ -333,8 +342,13 @@ def wrap(vtkdataset):
         'vtkImageData' : pyvista.UniformGrid,
         'vtkStructuredPoints' : pyvista.UniformGrid,
         'vtkMultiBlockDataSet' : pyvista.MultiBlock,
+        # 'vtkParametricSpline' : pyvista.Spline,
         }
-    key = vtkdataset.GetClassName()
+    # Otherwise, we assume a VTK data object was passed
+    if hasattr(vtkdataset, 'GetClassName'):
+        key = vtkdataset.GetClassName()
+    else:
+        raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
     try:
         wrapped = wrappers[key](vtkdataset)
     except:
