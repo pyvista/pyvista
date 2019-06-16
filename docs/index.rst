@@ -71,11 +71,12 @@ This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
 
-Want to test-drive PyVista? Check out our live examples on MyBinder:
-
-.. image:: https://mybinder.org/badge_logo.svg
+.. |binder| image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder
+
+Want to test-drive PyVista? Check out our live examples on MyBinder: |binder|
+
 
 .. toctree::
    :hidden:
