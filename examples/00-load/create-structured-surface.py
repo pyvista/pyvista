@@ -61,7 +61,6 @@ print(grid.points)
 # For this example, we will create a small dataset and rotate the
 # coordinates such that they are not on orthogonal to cartesian reference frame.
 
-# Define a simple Gaussian surface
 def make_point_set():
     """Ignore the contents of this function. Just know that it returns an
     n by 3 numpy array of structured coordinates."""
@@ -104,7 +103,7 @@ plt.show()
 # dataset) the dimensions are ``[29, 32, 1]``, but you might not know the
 # dimensions of your pointset. There are a few ways to figure out the
 # dimensionality of structured grid including:
-
+#
 # * manually conting the the nodes along the edges of the pointset
 # * using a technique like principle component analysis to strip the rotation from the dataset and count the unique values along each axis for the new;y projected dataset.
 
