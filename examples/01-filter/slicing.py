@@ -65,17 +65,16 @@ slices.plot(cmap=cmap)
 
 
 ################################################################################
-# Slice Along Poly Line
-# +++++++++++++++++++++
+# Slice Along Line
+# ++++++++++++++++
 #
-# We can also slice a dataset along a :func:`pyvista.Spline` or ``PolyLine``
-# contained in :class:`pyvista.PolyData` using the
-# :func:`DataSetFilters.slice_along_line` filter.
+# We can also slice a dataset along a :func:`pyvista.Spline` or
+# :func:`pyvista.Line` using the :func:`DataSetFilters.slice_along_line` filter.
 #
-# First, define a spline/polyline through a datset of interest. Please note
+# First, define a line source through a datset of interest. Please note
 # that this type of slicing is computationally expensive and might take a while
-# if there are a lot of points in the spline - try to keep the resolution of
-# the spline low.
+# if there are a lot of points in the line - try to keep the resolution of
+# the line low.
 
 model = examples.load_channels()
 
