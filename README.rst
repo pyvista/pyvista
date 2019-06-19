@@ -53,7 +53,7 @@ and visual integration of spatially referenced datasets.
 
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh 3D rendering dependent
-Python modules; see :ref:`connections` for a list of projects that leverage
+Python modules; see Connections for a list of projects that leverage
 PyVista.
 
 
@@ -119,8 +119,6 @@ You can also visit `PyPi <http://pypi.python.org/pypi/pyvista>`_,
 
 See the `Installation <http://docs.pyvista.org/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
-
-.. _connections:
 
 Connections
 ===========
