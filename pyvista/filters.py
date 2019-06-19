@@ -287,14 +287,14 @@ class DataSetFilters(object):
         return output
 
 
-    def slice_along_line(dataset, spline, generate_triangles=False,
+    def slice_along_line(dataset, line, generate_triangles=False,
               contour=False):
         """Slices a dataset using a polyline/spline as the path. This also works
         for lines generated with :func:`pyvista.Line`
 
         Parameters
         ----------
-        spline : pyvista.PolyData
+        line : pyvista.PolyData
             A PolyData object containing one single PolyLine cell.
 
         generate_triangles: bool, optional
@@ -304,12 +304,12 @@ class DataSetFilters(object):
         contour : bool, optional
             If True, apply a ``contour`` filter after slicing
         """
-        # check that we have a PolyLine cell in the input spline
-        if spline.GetNumberOfCells() != 1:
-            raise AssertionError('Input spline must have only one cell.')
-        polyline = spline.GetCell(0)
+        # check that we have a PolyLine cell in the input line
+        if line.GetNumberOfCells() != 1:
+            raise AssertionError('Input line must have only one cell.')
+        polyline = line.GetCell(0)
         if not isinstance(polyline, vtk.vtkPolyLine):
-            raise TypeError('Input spline must have a PolyLine cell, not ({})'.format(type(polyline)))
+            raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
         # Generate PolyPlane
         polyplane = vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
