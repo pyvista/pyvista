@@ -8,6 +8,7 @@ Extract thin planar slices from a volume
 import pyvista as pv
 from pyvista import examples
 import matplotlib.pyplot as plt
+import numpy as np
 
 ################################################################################
 # PyVista meshes have several slicing filters bound directly to all datasets.
