@@ -101,6 +101,9 @@ class DataSetFilters(object):
         # run the clip
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
+        elif isinstance(dataset, vtk.vtkImageData):
+            alg = vtk.vtkClipVolume()
+            alg.SetMixed3DCellGeneration(True)
         else:
             alg = vtk.vtkClipDataSet()
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
