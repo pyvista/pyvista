@@ -287,6 +287,45 @@ class DataSetFilters(object):
         return output
 
 
+    def slice_along_line(dataset, line, generate_triangles=False,
+              contour=False):
+        """Slices a dataset using a polyline/spline as the path. This also works
+        for lines generated with :func:`pyvista.Line`
+
+        Parameters
+        ----------
+        line : pyvista.PolyData
+            A PolyData object containing one single PolyLine cell.
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+        """
+        # check that we have a PolyLine cell in the input line
+        if line.GetNumberOfCells() != 1:
+            raise AssertionError('Input line must have only one cell.')
+        polyline = line.GetCell(0)
+        if not isinstance(polyline, vtk.vtkPolyLine):
+            raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
+        # Generate PolyPlane
+        polyplane = vtk.vtkPolyPlane()
+        polyplane.SetPolyLine(polyline)
+        # Create slice
+        alg = vtk.vtkCutter() # Construct the cutter object
+        alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
+        alg.SetCutFunction(polyplane) # the the cutter to use the poly planes
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+        alg.Update() # Perfrom the Cut
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
+        return output
+
+
     def threshold(dataset, value=None, scalars=None, invert=False, continuous=False,
                   preference='cell'):
         """
