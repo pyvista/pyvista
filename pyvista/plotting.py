@@ -976,7 +976,7 @@ class BasePlotter(object):
                 else:
                     scalars = scalars.ravel()
 
-            if scalars.dtype == np.bool:
+            if scalars.dtype == np.bool or scalars.dtype == np.uint8:
                 scalars = scalars.astype(np.float)
 
             # Scalar interpolation approach
