@@ -76,7 +76,11 @@ class Common(DataSetFilters, object):
     def active_vectors_info(self):
         """Return the active scalar's field and name: [field, name]"""
         if not hasattr(self, '_active_vectors_info'):
-            self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
+            # Sometimes, precomputed normals aren't set as active
+            if 'Normals' in self.scalar_names:
+                self.set_active_vectors('Normals')
+            else:
+                self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
         _, name = self._active_vectors_info
 
         # rare error where scalar name isn't a valid scalar
@@ -152,18 +156,8 @@ class Common(DataSetFilters, object):
         """
         if self.active_vectors is None:
             return
-
-        arrow = vtk.vtkArrowSource()
-        arrow.Update()
-
-        alg = vtk.vtkGlyph3D()
-        alg.SetSourceData(arrow.GetOutput())
-        alg.SetOrient(True)
-        alg.SetInputData(self)
-        alg.SetVectorModeToUseVector()
-        alg.SetScaleModeToScaleByVector()
-        alg.Update()
-        return pyvista.wrap(alg.GetOutput())
+        name = self.active_vectors_name
+        return self.glyph(scale=name, orient=name)
 
     @property
     def vectors(self):
@@ -276,7 +270,7 @@ class Common(DataSetFilters, object):
             raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_scalar_info = [field, name]
 
-    def set_active_vectors(self, name, preference='cell'):
+    def set_active_vectors(self, name, preference='point'):
         """Finds the vectors by name and appropriately sets it as active"""
         _, field = get_scalar(self, name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:

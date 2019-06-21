@@ -758,7 +758,8 @@ class DataSetFilters(object):
         return output
 
 
-    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None):
+    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
+              subset=None):
         """
         Copies a geometric representation (called a glyph) to every
         point in the input dataset.  The glyph may be oriented along
@@ -778,7 +779,20 @@ class DataSetFilters(object):
 
         geom : vtk.vtkDataSet
             The geometry to use for the glyph
+
+        subset : float, optional
+            Take a percentage subset of the mesh's points. Float value is
+            percent subset between 0 and 1.
         """
+        if subset is not None:
+            if subset <= 0.0 or subset > 1.0:
+                raise RuntimeError('subset must be a percentage between 0 and 1.')
+            ids = np.random.random_integers(low=0, high=dataset.n_points-1,
+                                    size=int(dataset.n_points * subset))
+            small = pyvista.PolyData(dataset.points[ids])
+            for name in dataset.point_arrays.keys():
+                small.point_arrays[name] = dataset.point_arrays[name][ids]
+            dataset = small
         if geom is None:
             arrow = vtk.vtkArrowSource()
             arrow.Update()
