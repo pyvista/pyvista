@@ -1,13 +1,13 @@
 """
 .. _glyph_example:
 
-Plotting Glyphs
-~~~~~~~~~~~~~~~
+Plotting Glyphs (Vectors)
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-# sphinx_gallery_thumbnail_number = 1
+# sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
 import numpy as np
@@ -76,5 +76,5 @@ arrows = mesh.glyph(scale='Normals', orient='Normals', subset=0.05)
 
 p = pv.Plotter()
 p.add_mesh(arrows, color='black')
-p.add_mesh(mesh)
+p.add_mesh(mesh, scalars='Elevation', cmap='terrain')
 p.show()
