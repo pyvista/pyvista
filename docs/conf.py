@@ -241,7 +241,7 @@ class AutoAutoSummary(Autosummary):
                 documenter = get_documenter(AutoAutoSummary.app, safe_getattr(obj, name), obj)
             except AttributeError:
                 continue
-            if documenter.objtype == typ:
+            if documenter.objtype in typ:
                 items.append(name)
         public = [x for x in items if x in include_public or not x.startswith('_')]
         return public, items
@@ -253,12 +253,13 @@ class AutoAutoSummary(Autosummary):
             m = __import__(module_name, globals(), locals(), [class_name])
             c = getattr(m, class_name)
             if 'methods' in self.options:
-                _, methods = self.get_members(c, 'method', ['__init__'])
-
+                _, methods = self.get_members(c, ['method'], ['__init__'])
                 self.content = ["~%s.%s" % (clazz, method) for method in methods if not method.startswith('_')]
             if 'attributes' in self.options:
-                _, attribs = self.get_members(c, 'attribute')
+                _, attribs = self.get_members(c, ['attribute', 'property'])
                 self.content = ["~%s.%s" % (clazz, attrib) for attrib in attribs if not attrib.startswith('_')]
+        except:
+            print('Something went wrong when autodocumenting {}'.format(clazz))
         finally:
             return super(AutoAutoSummary, self).run()
 
