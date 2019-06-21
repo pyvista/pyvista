@@ -356,8 +356,7 @@ def test_arrows():
                          np.cos(sphere.points[:, 1]),
                          np.cos(sphere.points[:, 2]))).T
 
-    # add and scale
-    assert sphere.active_vectors is None
+    # add and scales
     sphere.vectors = vectors*0.3
     assert np.allclose(sphere.active_vectors, vectors*0.3)
     assert np.allclose(sphere.vectors, vectors*0.3)
