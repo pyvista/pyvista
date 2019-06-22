@@ -113,7 +113,6 @@ Here are a few open-source projects that leverage PyVista:
 * discretize_: Discretization tools for finite volume and inverse problems. ``discretize`` provides ``toVTK`` methods that return PyVista versions of their data types for `creating compelling visualizations`_.
 * pymeshfix_: Python/Cython wrapper of Marco Attene's wonderful, award-winning MeshFix software.
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
-* PyntCloud_: Python library for working with 3D point clouds
 
 
 .. _pyansys: https://github.com/akaszynski/pyansys
@@ -124,7 +123,6 @@ Here are a few open-source projects that leverage PyVista:
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/pyvista/tetgen
-.. _PyntCloud: https://github.com/daavoo/pyntcloud
 
 
 Citing PyVista
