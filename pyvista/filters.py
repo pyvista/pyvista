@@ -279,7 +279,7 @@ class DataSetFilters(object):
         if bounds is None:
             bounds = dataset.bounds
         if center is None:
-            bounds = dataset.center
+            center = dataset.center
         if tolerance is None:
             tolerance = (bounds[ax*2+1] - bounds[ax*2]) * 0.01
         rng = np.linspace(bounds[ax*2]+tolerance, bounds[ax*2+1]-tolerance, n)

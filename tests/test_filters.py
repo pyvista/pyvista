@@ -45,8 +45,8 @@ def test_slice_filter():
         assert slc is not None
         assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
-    with pytest.raises(AssertionError):
-        dataset.slice(origin=(10, 15, 15))
+    result = dataset.slice(origin=(10, 15, 15))
+    assert result.n_points < 1
 
 
 def test_slice_orthogonal_filter():

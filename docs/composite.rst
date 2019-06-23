@@ -1,7 +1,7 @@
 Composite Datasets
 ==================
 
-.. automodule:: pyvista.container
+.. automodule:: pyvista.composite
    :show-inheritance:
 
 .. rubric:: Attributes
