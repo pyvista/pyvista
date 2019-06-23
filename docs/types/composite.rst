@@ -4,6 +4,9 @@ Composite Datasets
 .. automodule:: pyvista.composite
    :show-inheritance:
 
+MultiBlock Datasets
+-------------------
+
 .. rubric:: Attributes
 
 .. autoautosummary:: pyvista.MultiBlock
@@ -21,7 +24,16 @@ Composite Datasets
    :undoc-members:
 
 
-.. autoclass:: pyvista.CompositeAlgorithms
+
+Composite Filters
+-----------------
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.CompositeFilters
+   :methods:
+
+.. autoclass:: pyvista.CompositeFilters
    :show-inheritance:
    :members:
    :undoc-members:
