@@ -1,5 +1,5 @@
-Multiple Block Datasets
-=======================
+Composite Datasets
+==================
 
 .. automodule:: pyvista.container
    :show-inheritance:
