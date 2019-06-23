@@ -19,3 +19,9 @@ Multiple Block Datasets
    :show-inheritance:
    :members:
    :undoc-members:
+
+
+.. autoclass:: pyvista.CompositeAlgorithms
+   :show-inheritance:
+   :members:
+   :undoc-members:

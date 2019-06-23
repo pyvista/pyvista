@@ -186,8 +186,6 @@ class DataSetFilters(object):
         # find center of data if origin not specified
         if origin is None:
             origin = dataset.center
-        if not is_inside_bounds(origin, dataset.bounds):
-            raise AssertionError('Slice is outside data bounds.')
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
         # create slice
@@ -206,7 +204,7 @@ class DataSetFilters(object):
     def slice_orthogonal(dataset, x=None, y=None, z=None,
                          generate_triangles=False, contour=False):
         """Creates three orthogonal slices through the dataset on the three
-        caresian planes. Yields a MutliBlock dataset of the three slices
+        caresian planes. Yields a MutliBlock dataset of the three slices.
 
         Parameters
         ----------
@@ -242,7 +240,8 @@ class DataSetFilters(object):
 
 
     def slice_along_axis(dataset, n=5, axis='x', tolerance=None,
-                         generate_triangles=False, contour=False):
+                         generate_triangles=False, contour=False,
+                         bounds=None, center=None):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -277,10 +276,14 @@ class DataSetFilters(object):
             except KeyError:
                 raise RuntimeError('Axis ({}) not understood'.format(axis))
         # get the locations along that axis
+        if bounds is None:
+            bounds = dataset.bounds
+        if center is None:
+            bounds = dataset.center
         if tolerance is None:
-            tolerance = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
-        rng = np.linspace(dataset.bounds[ax*2]+tolerance, dataset.bounds[ax*2+1]-tolerance, n)
-        center = list(dataset.center)
+            tolerance = (bounds[ax*2+1] - bounds[ax*2]) * 0.01
+        rng = np.linspace(bounds[ax*2]+tolerance, bounds[ax*2+1]-tolerance, n)
+        center = list(center)
         # Make each of the slices
         for i in range(n):
             center[ax] = rng[i]

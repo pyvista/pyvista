@@ -14,17 +14,440 @@ from vtk import vtkMultiBlockDataSet
 import pyvista
 from pyvista import plot
 from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
+from pyvista.filters import DataSetFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-
-class MultiBlock(vtkMultiBlockDataSet):
+class CompositeFilters(object):
+    """An internal class to manage filtes/algorithms for composite datasets.
     """
-    A container class to hold many data sets which can be iterated over.
+
+
+    def extract_geometry(composite):
+        """Combines the geomertry of all blocks into a single ``PolyData``
+        object. Place this filter at the end of a pipeline before a polydata
+        consumer such as a polydata mapper to extract geometry from all blocks
+        and append them to one polydata object.
+        """
+        gf = vtk.vtkCompositeDataGeometryFilter()
+        gf.SetInputData(composite)
+        gf.Update()
+        return wrap(gf.GetOutputDataObject(0))
+
+
+    def combine(composite, merge_points=False):
+        """Appends all blocks into a single unstructured grid.
+
+        Parameters
+        ----------
+        merge_points : bool, optional
+            Merge coincidental points.
+
+        """
+        alg = vtk.vtkAppendFilter()
+        for block in composite:
+            alg.AddInputData(block)
+        alg.SetMergePoints(merge_points)
+        alg.Update()
+        return wrap(alg.GetOutputDataObject(0))
+
+
+    def _dataset_filter_helper(composite, method, **kwargs):
+        """This is an internal routine to recursively call an algorithm on every
+        block of this composite and return a collected result.
+        """
+        output_blocks = MultiBlock()
+        for i in range(composite.n_blocks):
+            name = composite.get_block_name(i)
+            block = composite.get(i)
+            result = method(block, **kwargs)
+            output_blocks[-1, name] = result
+        return output_blocks
+
+    def clip(composite, normal='x', origin=None, invert=True):
+        """
+        Clip a all meshes in this dataset by a plane by specifying the origin
+        and normal. If no parameters are given the clip will occur in the center
+        of the entire dataset.
+
+        Parameters
+        ----------
+        normal : tuple(float) or str
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
+
+        origin : tuple(float)
+            The center ``(x,y,z)`` coordinate of the plane on which the clip
+            occurs
+
+        invert : bool
+            Flag on whether to flip/invert the clip
+
+        """
+        # find center of data if origin not specified
+        if origin is None:
+            origin = composite.center
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.clip
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def clip_box(composite, bounds=None, invert=True, factor=0.35):
+        """Clips a dataset by a bounding box defined by the bounds. If no bounds
+        are given, a corner of the dataset bounds will be removed.
+
+        Parameters
+        ----------
+        bounds : tuple(float)
+            Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax)
+
+        invert : bool
+            Flag on whether to flip/invert the clip
+
+        factor : float, optional
+            If bounds are not given this is the factor along each axis to
+            extract the default box.
+
+        """
+        kwargs = locals()
+        if bounds is None:
+            _get_quarter = lambda dmin, dmax: dmax - ((dmax - dmin) * factor)
+            xmin, xmax, ymin, ymax, zmin, zmax = composite.bounds
+            xmin = _get_quarter(xmin, xmax)
+            ymin = _get_quarter(ymin, ymax)
+            zmin = _get_quarter(zmin, zmax)
+            bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
+        kwargs["bounds"] = bounds
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.clip_box
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def slice(composite, normal='x', origin=None, generate_triangles=False,
+              contour=False):
+        """Slice a dataset by a plane at the specified origin and normal vector
+        orientation. If no origin is specified, the center of the input dataset will
+        be used.
+
+        Parameters
+        ----------
+        normal : tuple(float) or str
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)```, etc.
+
+        origin : tuple(float)
+            The center (x,y,z) coordinate of the plane on which the slice occurs
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
+        """
+        if origin is None:
+            origin = composite.center
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.slice
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def slice_orthogonal(composite, x=None, y=None, z=None,
+                         generate_triangles=False, contour=False):
+        """Creates three orthogonal slices through the dataset on the three
+        caresian planes. Yields a MutliBlock dataset of the three slices
+
+        Parameters
+        ----------
+        x : float
+            The X location of the YZ slice
+
+        y : float
+            The Y location of the XZ slice
+
+        z : float
+            The Z location of the XY slice
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
+        """
+        if x is None:
+            x = composite.center[0]
+        if y is None:
+            y = composite.center[1]
+        if z is None:
+            z = composite.center[2]
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.slice_orthogonal
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def slice_along_axis(composite, n=5, axis='x', tolerance=None,
+                         generate_triangles=False, contour=False):
+        """Create many slices of the input dataset along a specified axis.
+
+        Parameters
+        ----------
+        n : int
+            The number of slices to create
+
+        axis : str or int
+            The axis to generate the slices along. Perpendicular to the slices.
+            Can be string name (``'x'``, ``'y'``, or ``'z'``) or axis index
+            (``0``, ``1``, or ``2``).
+
+        tolerance : float, optional
+            The toleranceerance to the edge of the dataset bounds to create the slices
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
+        """
+        kwargs = locals()
+        kwargs["bounds"] = composite.bounds
+        kwargs["center"] = composite.center
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.slice_along_axis
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def slice_along_line(composite, line, generate_triangles=False,
+              contour=False):
+        """Slices a dataset using a polyline/spline as the path. This also works
+        for lines generated with :func:`pyvista.Line`
+
+        Parameters
+        ----------
+        line : pyvista.PolyData
+            A PolyData object containing one single PolyLine cell.
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+        """
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.slice_along_line
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def outline(composite, generate_faces=False):
+        """Produces an outline of the full extent for the input dataset.
+
+        Parameters
+        ----------
+        generate_faces : bool, optional
+            Generate solid faces for the box. This is off by default
+
+        """
+        box = pyvista.Box(bounds=composite.bounds)
+        return box.outline(generate_faces=generate_faces)
+
+
+    def outline_corners(composite, factor=0.2):
+        """Produces an outline of the corners for the input dataset.
+
+        Parameters
+        ----------
+        factor : float, optional
+            controls the relative size of the corners to the length of the
+            corresponding bounds
+
+        """
+        box = pyvista.Box(bounds=composite.bounds)
+        return box.outline_corners(factor=factor)
+
+
+    def wireframe(composite):
+        """Extract all the internal/external edges of all datasets as PolyData.
+        This produces a full wireframe representation of the input dataset.
+        """
+        method = DataSetFilters.wireframe
+        return composite._dataset_filter_helper(method)
+
+
+    def elevation(composite, low_point=None, high_point=None, scalar_range=None,
+                  preference='point', set_active=True):
+        """Generate scalar values on all datasets.  The scalar values lie within
+        a user specified range, and are generated by computing a projection of
+        each dataset point onto a line.
+        The line can be oriented arbitrarily.
+        A typical example is to generate scalars based on elevation or height
+        above a plane.
+
+        Parameters
+        ----------
+        low_point : tuple(float), optional
+            The low point of the projection line in 3D space. Default is bottom
+            center of the dataset. Otherwise pass a length 3 tuple(float).
+
+        high_point : tuple(float), optional
+            The high point of the projection line in 3D space. Default is top
+            center of the dataset. Otherwise pass a length 3 tuple(float).
+
+        scalar_range : str or tuple(float), optional
+            The scalar range to project to the low and high points on the line
+            that will be mapped to the dataset. If None given, the values will
+            be computed from the elevation (Z component) range between the
+            high and low points. Min and max of a range can be given as a length
+            2 tuple(float). If ``str`` name of scalara array present in the
+            dataset given, the valid range of that array will be used.
+
+        preference : str, optional
+            When a scalar name is specified for ``scalar_range``, this is the
+            perfered scalar type to search for in the dataset.
+            Must be either 'point' or 'cell'.
+
+        set_active : bool, optional
+            A boolean flag on whethter or not to set the new `Elevation` scalar
+            as the active scalar array on the output dataset.
+
+        Warning
+        -------
+        This will create a scalar array named `Elevation` on the point data of
+        the input dataset and overasdf write an array named `Elevation` if present.
+
+        """
+        # Fix the projection line:
+        if low_point is None:
+            low_point = list(composite.center)
+            low_point[2] = composite.bounds[4]
+        if high_point is None:
+            high_point = list(composite.center)
+            high_point[2] = composite.bounds[5]
+        # Fix scalar_range:
+        if scalar_range is None:
+            scalar_range = (low_point[2], high_point[2])
+        elif isinstance(scalar_range, str):
+            raise RuntimeError('String array names cannot be use with this filter on MultiBlock datasets.')
+        elif isinstance(scalar_range, collections.Iterable):
+            if len(scalar_range) != 2:
+                raise AssertionError('scalar_range must have a length of two defining the min and max')
+        else:
+            raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.elevation
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def compute_cell_sizes(composite, length=True, area=True, volume=True):
+        """This filter computes sizes for 1D (length), 2D (area) and 3D (volume)
+        cells across all datasets.
+
+        Parameters
+        ----------
+        length : bool
+            Specify whether or not to compute the length of 1D cells.
+
+        area : bool
+            Specify whether or not to compute the area of 2D cells.
+
+        volume : bool
+            Specify whether or not to compute the volume of 3D cells.
+
+        """
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.compute_cell_sizes
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def cell_centers(composite, vertex=True):
+        """Generate points at the center of the cells across all datasets.
+        These points can be used for placing glyphs / vectors.
+
+        Parameters
+        ----------
+        vertex : bool
+            Enable/disable the generation of vertex cells.
+        """
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.cell_centers
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def cell_data_to_point_data(composite, pass_cell_data=False):
+        """Transforms cell data (i.e., data specified per cell) into point data
+        (i.e., data specified at cell points).
+        The method of transformation is based on averaging the data values of
+        all cells using a particular point. Optionally, the input cell data can
+        be passed through to the output as well.
+
+        See aslo: :func:`pyvista.DataSetFilters.point_data_to_cell_data`
+
+        Parameters
+        ----------
+        pass_cell_data : bool
+            If enabled, pass the input cell data through to the output
+        """
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.cell_data_to_point_data
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def point_data_to_cell_data(composite, pass_point_data=False):
+        """Transforms point data (i.e., data specified per node) into cell data
+        (i.e., data specified within cells).
+        Optionally, the input point data can be passed through to the output.
+
+        See aslo: :func:`pyvista.DataSetFilters.cell_data_to_point_data`
+
+        Parameters
+        ----------
+        pass_point_data : bool
+            If enabled, pass the input point data through to the output
+        """
+        kwargs = locals()
+        _ = kwargs.pop("composite")
+        method = DataSetFilters.point_data_to_cell_data
+        return composite._dataset_filter_helper(method, **kwargs)
+
+
+    def triangulate(composite):
+        """
+        Returns an all triangle mesh.  More complex polygons will be broken
+        down into triangles.
+
+        Returns
+        -------
+        mesh : pyvista.UnstructuredGrid
+            Mesh containing only triangles.
+
+        """
+        method = DataSetFilters.triangulate
+        return composite._dataset_filter_helper(method)
+
+
+
+
+class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
+    """
+    A composite class to hold many data sets which can be iterated over.
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
-    easily plot these data sets and use the container in a Pythonic manner.
+    easily plot these data sets and use the composite in a Pythonic manner.
     """
 
     # Bind pyvista.plotting.plot to the object
@@ -54,33 +477,6 @@ class MultiBlock(vtkMultiBlockDataSet):
 
             # keep a reference of the args
             self.refs.append(args)
-
-    def extract_geometry(self):
-        """Combines the geomertry of all blocks into a single ``PolyData``
-        object. Place this filter at the end of a pipeline before a polydata
-        consumer such as a polydata mapper to extract geometry from all blocks
-        and append them to one polydata object.
-        """
-        gf = vtk.vtkCompositeDataGeometryFilter()
-        gf.SetInputData(self)
-        gf.Update()
-        return wrap(gf.GetOutputDataObject(0))
-
-    def combine(self, merge_points=False):
-        """Appends all blocks into a single unstructured grid.
-
-        Parameters
-        ----------
-        merge_points : bool, optional
-            Merge coincidental points.
-
-        """
-        alg = vtk.vtkAppendFilter()
-        for block in self:
-            alg.AddInputData(block)
-        alg.SetMergePoints(merge_points)
-        alg.Update()
-        return wrap(alg.GetOutputDataObject(0))
 
 
     def _load_file(self, filename):
@@ -177,6 +573,18 @@ class MultiBlock(vtkMultiBlockDataSet):
 
 
     @property
+    def center(self):
+        """ Center of the bounding box """
+        return np.array(self.bounds).reshape(3,2).mean(axis=1)
+
+
+    @property
+    def length(self):
+        """the length of the diagonal of the bounding box"""
+        return pyvista.Box(self.bounds).length
+
+
+    @property
     def n_blocks(self):
         """The total number of blocks set"""
         return self.GetNumberOfBlocks()
@@ -187,6 +595,23 @@ class MultiBlock(vtkMultiBlockDataSet):
         """The total number of blocks set"""
         self.SetNumberOfBlocks(n)
         self.Modified()
+
+
+    @property
+    def volume(self):
+        """
+        Total volume of all meshes in this dataast
+
+        Returns
+        -------
+        volume : float
+            Total volume of the mesh.
+
+        """
+        volume = 0.0
+        for block in self:
+            volume += block.volume
+        return volume
 
 
     def get_data_range(self, name):

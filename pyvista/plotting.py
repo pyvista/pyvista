@@ -887,7 +887,9 @@ class BasePlotter(object):
             color = rcParams['color']
 
         if mesh.n_points < 1:
-            raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
+            # raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
+            logging.warning('Input mesh has zero points: empty meshes cannot be plotted.')
+            return None
 
         # set main values
         self.mesh = mesh
