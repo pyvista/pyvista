@@ -34,9 +34,11 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # input dataset - I actaully think VTK might have this implemented
         # somewhere
         raise NotImplementedError('Please specifiy dimensions.')
-    dimensions = np.array(dimensions)
+    dimensions = np.array(dimensions, dtype=int)
     image = pyvista.UniformGrid()
     image.dimensions = dimensions
-    image.spacing = (bounds[1::2] - bounds[:-1:2]) / (dimensions - 1)
+    dims = (dimensions - 1)
+    dims[dims==0] = 1
+    image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]
     return image
