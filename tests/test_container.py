@@ -118,19 +118,19 @@ def test_multi_block_set_get_ers():
         idx = multi.get_index_by_name('foo')
 
 
-# def test_mutli_block_clean():
-#     # now test a clean of the null values
-#     multi = pyvista.MultiBlock()
-#     multi[1, 'rect'] = ex.load_rectilinear()
-#     multi[5, 'uni'] = ex.load_uniform()
-#     # perfromt he clean to remove all Null elements
-#     multi.clean()
-#     assert multi.n_blocks == 2
-#     assert multi.GetNumberOfBlocks() == 2
-#     assert isinstance(multi[0], pyvista.RectilinearGrid)
-#     assert isinstance(multi[1], pyvista.UniformGrid)
-#     assert multi.get_block_name(0) == 'rect'
-#     assert multi.get_block_name(1) == 'uni'
+def test_mutli_block_clean():
+    # now test a clean of the null values
+    multi = pyvista.MultiBlock()
+    multi[1, 'rect'] = ex.load_rectilinear()
+    multi[5, 'uni'] = ex.load_uniform()
+    # perfromt he clean to remove all Null elements
+    multi.clean()
+    assert multi.n_blocks == 2
+    assert multi.GetNumberOfBlocks() == 2
+    assert isinstance(multi[0], pyvista.RectilinearGrid)
+    assert isinstance(multi[1], pyvista.UniformGrid)
+    assert multi.get_block_name(0) == 'rect'
+    assert multi.get_block_name(1) == 'uni'
 
 
 

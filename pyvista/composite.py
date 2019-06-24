@@ -766,20 +766,19 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
         return data
 
 
-    ## TODO: I can't get this to work as expected
-    # def clean(self):
-    #     """This will remove any null blocks"""
-    #     nvalid = 0
-    #     for i in range(self.n_blocks):
-    #         print(i, type(self[i]), self[i], self.get_block_name(i))
-    #         if self[i] is None:
-    #             print('removing', i)
-    #             del self[i]
-    #         else:
-    #             nvalid += 1
-    #     #self.n_blocks = nvalid
-    #     print('nvalid', nvalid)
-    #     return
+    def clean(self):
+        """This will remove any null blocks in place"""
+        null_blocks = []
+        for i in range(self.n_blocks):
+            # print(i, type(self[i]), self[i], self.get_block_name(i))
+            if self[i] is None:
+                null_blocks.append(i)
+        null_blocks = np.array(null_blocks, dtype=int)
+        for i in range(len(null_blocks)):
+            print('removing', i, null_blocks[i])
+            del self[null_blocks[i]]
+            null_blocks -= 1
+        return
 
 
     def _get_attrs(self):
