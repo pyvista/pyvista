@@ -13,20 +13,36 @@ from pyvista.plotting import system_supports_plotting
 def test_multi_block_init_vtk():
     multi = vtk.vtkMultiBlockDataSet()
     multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkTable())
+    multi.SetBlock(1, vtk.vtkStructuredGrid())
     multi = pyvista.MultiBlock(multi)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
-    assert isinstance(multi[0], pyvista.RectilinearGrid)
-    assert isinstance(multi[1], vtk.vtkTable)
+    assert isinstance(multi.GetBlock(0), pyvista.RectilinearGrid)
+    assert isinstance(multi.GetBlock(1), pyvista.StructuredGrid)
     multi = vtk.vtkMultiBlockDataSet()
     multi.SetBlock(0, vtk.vtkRectilinearGrid())
-    multi.SetBlock(1, vtk.vtkTable())
+    multi.SetBlock(1, vtk.vtkStructuredGrid())
     multi = pyvista.MultiBlock(multi, deep=True)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
-    assert isinstance(multi[0], pyvista.RectilinearGrid)
-    assert isinstance(multi[1], vtk.vtkTable)
+    assert isinstance(multi.GetBlock(0), pyvista.RectilinearGrid)
+    assert isinstance(multi.GetBlock(1), pyvista.StructuredGrid)
+    # Test nested structure
+    multi = vtk.vtkMultiBlockDataSet()
+    multi.SetBlock(0, vtk.vtkRectilinearGrid())
+    multi.SetBlock(1, vtk.vtkImageData())
+    nested = vtk.vtkMultiBlockDataSet()
+    nested.SetBlock(0, vtk.vtkUnstructuredGrid())
+    nested.SetBlock(1, vtk.vtkStructuredGrid())
+    multi.SetBlock(2, nested)
+    # Wrap the nested structure
+    multi = pyvista.MultiBlock(multi)
+    assert isinstance(multi, pyvista.MultiBlock)
+    assert multi.n_blocks == 3
+    assert isinstance(multi.GetBlock(0), pyvista.RectilinearGrid)
+    assert isinstance(multi.GetBlock(1), pyvista.UniformGrid)
+    assert isinstance(multi.GetBlock(2), pyvista.MultiBlock)
+
 
 def test_multi_block_init_dict():
     data = dict()
@@ -36,9 +52,9 @@ def test_multi_block_init_dict():
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
     # Note that disctionaries do not maintain order
-    assert isinstance(multi[0], (pyvista.RectilinearGrid, pyvista.PolyData))
+    assert isinstance(multi.GetBlock(0), (pyvista.RectilinearGrid, pyvista.PolyData))
     assert multi.get_block_name(0) in ['grid','poly']
-    assert isinstance(multi[1], (pyvista.RectilinearGrid, pyvista.PolyData))
+    assert isinstance(multi.GetBlock(1), (pyvista.RectilinearGrid, pyvista.PolyData))
     assert multi.get_block_name(1) in ['grid','poly']
 
 def test_multi_block_init_list():
@@ -46,8 +62,8 @@ def test_multi_block_init_list():
     multi = pyvista.MultiBlock(data)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
-    assert isinstance(multi[0], pyvista.RectilinearGrid)
-    assert isinstance(multi[1], pyvista.PolyData)
+    assert isinstance(multi.GetBlock(0), pyvista.RectilinearGrid)
+    assert isinstance(multi.GetBlock(1), pyvista.PolyData)
 
 
 def test_multi_block_append():

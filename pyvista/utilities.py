@@ -347,11 +347,13 @@ def wrap(vtkdataset):
     # Otherwise, we assume a VTK data object was passed
     if hasattr(vtkdataset, 'GetClassName'):
         key = vtkdataset.GetClassName()
+    elif vtkdataset is None:
+        return None
     else:
         raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
     try:
         wrapped = wrappers[key](vtkdataset)
-    except:
+    except KeyError:
         logging.warning('VTK data type ({}) is not currently supported by pyvista.'.format(key))
         return vtkdataset # if not supported just passes the VTK data object
     return wrapped

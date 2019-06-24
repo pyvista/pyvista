@@ -47,9 +47,10 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
     """A helper to get the algorithm's output and copy input's pyvista meta info"""
     ido = algorithm.GetInputDataObject(iport, iconnection)
     data = wrap(algorithm.GetOutputDataObject(oport))
-    data.copy_meta_from(ido)
-    if active_scalar is not None:
-        data.set_active_scalar(active_scalar, preference=active_scalar_field)
+    if not isinstance(data, pyvista.MultiBlock):
+        data.copy_meta_from(ido)
+        if active_scalar is not None:
+            data.set_active_scalar(active_scalar, preference=active_scalar_field)
     return data
 
 
@@ -225,7 +226,6 @@ class DataSetFilters(object):
             If True, apply a ``contour`` filter after slicing
 
         """
-        output = pyvista.MultiBlock()
         # Create the three slices
         if x is None:
             x = dataset.center[0]
@@ -233,6 +233,13 @@ class DataSetFilters(object):
             y = dataset.center[1]
         if z is None:
             z = dataset.center[2]
+        output = pyvista.MultiBlock()
+        if isinstance(dataset, pyvista.MultiBlock):
+            for i in range(dataset.n_blocks):
+                output[i] = dataset[i].slice_orthogonal(x=x, y=y, z=z,
+                    generate_triangles=generate_triangles,
+                    contour=contour)
+            return output
         output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z], generate_triangles=generate_triangles)
         output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z], generate_triangles=generate_triangles)
         output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z], generate_triangles=generate_triangles)
@@ -266,7 +273,6 @@ class DataSetFilters(object):
 
         """
         axes = {'x':0, 'y':1, 'z':2}
-        output = pyvista.MultiBlock()
         if isinstance(axis, int):
             ax = axis
             axis = list(axes.keys())[list(axes.values()).index(ax)]
@@ -285,6 +291,13 @@ class DataSetFilters(object):
         rng = np.linspace(bounds[ax*2]+tolerance, bounds[ax*2+1]-tolerance, n)
         center = list(center)
         # Make each of the slices
+        output = pyvista.MultiBlock()
+        if isinstance(dataset, pyvista.MultiBlock):
+            for i in range(dataset.n_blocks):
+                output[i] = dataset[i].slice_along_axis(n=n, axis=axis,
+                    tolerance=tolerance, generate_triangles=generate_triangles,
+                    contour=contour, bounds=bounds, center=center)
+            return output
         for i in range(n):
             center[ax] = rng[i]
             slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
@@ -939,7 +952,10 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.SetPassCellData(pass_cell_data)
         alg.Update()
-        return _get_output(alg, active_scalar=dataset.active_scalar_name)
+        active_scalar = None
+        if not isinstance(dataset, pyvista.MultiBlock):
+            active_scalar = dataset.active_scalar_name
+        return _get_output(alg, active_scalar=active_scalar)
 
 
     def point_data_to_cell_data(dataset, pass_point_data=False):
@@ -958,7 +974,10 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.SetPassPointData(pass_point_data)
         alg.Update()
-        return _get_output(alg, active_scalar=dataset.active_scalar_name)
+        active_scalar = None
+        if not isinstance(dataset, pyvista.MultiBlock):
+            active_scalar = dataset.active_scalar_name
+        return _get_output(alg, active_scalar=active_scalar)
 
 
     def triangulate(dataset):
