@@ -250,6 +250,7 @@ def test_glyph():
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, subset=0.5)
 
 
 def test_split_and_connectivity():
