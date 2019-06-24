@@ -68,5 +68,6 @@ setup(
     install_requires=install_requires,
     extras_require={
         'ipy_tools': ['ipython', 'ipywidgets'],
+        'colormaps': ['matplotlib', 'colorcet']
     },
 )
