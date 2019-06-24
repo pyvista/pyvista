@@ -54,7 +54,7 @@ rcParams = {
         'color' : [1, 1, 1],
         'fmt' : None,
     },
-    'cmap' : 'jet',
+    'cmap' : 'viridis',
     'color' : 'white',
     'nan_color' : 'darkgray',
     'edge_color' : 'black',
