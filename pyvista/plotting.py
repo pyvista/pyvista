@@ -1022,7 +1022,7 @@ class BasePlotter(object):
                 if isinstance(cmap, str):
                     try:
                         import colorcet
-                        cmap = colorcet.cm[cmap]
+                        cmap = colorcet.cm.get(cmap)
                     except (ImportError, KeyError):
                         colorcet = None
                         pass
