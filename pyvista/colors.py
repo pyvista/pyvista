@@ -364,7 +364,7 @@ def string_to_rgb(string):
     return hex_to_rgb(colorhex)
 
 
-def safe_get_cmap(cmap):
+def get_cmap_safe(cmap):
     """Fetches a colormap by name from matplotlib, colorcet, or cmocean"""
     try:
         from matplotlib.cm import get_cmap

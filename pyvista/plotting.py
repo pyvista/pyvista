@@ -18,7 +18,7 @@ import pyvista
 from pyvista.export import export_plotter_vtkjs
 from pyvista.utilities import (get_scalar, is_pyvista_obj, numpy_to_texture, wrap,
                             _raise_not_matching, convert_array)
-from pyvista.colors import safe_get_cmap
+from pyvista.colors import get_cmap_safe
 
 _ALL_PLOTTERS = {}
 
@@ -1016,7 +1016,7 @@ class BasePlotter(object):
                     cmap = None
                     logging.warning('Please install matplotlib for color maps.')
             if cmap is not None:
-                cmap = safe_get_cmap(cmap)
+                cmap = get_cmap_safe(cmap)
                 if categories:
                     if categories is True:
                         n_colors = len(np.unique(scalars))
