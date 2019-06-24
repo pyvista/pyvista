@@ -387,5 +387,6 @@ def safe_get_cmap(cmap):
             pass
         else:
             return cmap
+        # Else use Matplotlib
         cmap = get_cmap(cmap)
     return cmap
