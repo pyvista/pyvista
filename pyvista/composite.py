@@ -766,16 +766,25 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
         return data
 
 
-    def clean(self):
-        """This will remove any null blocks in place"""
+    def clean(self, empty=True):
+        """This will remove any null blocks in place
+        Parameters
+        -----------
+        empty : bool
+            Remove any meshes that are empty as well (have zero points)
+        """
         null_blocks = []
         for i in range(self.n_blocks):
-            # print(i, type(self[i]), self[i], self.get_block_name(i))
-            if self[i] is None:
+            if isinstance(self[i], MultiBlock):
+                # Recursively move through nested structures
+                self[i].clean()
+            elif self[i] is None:
                 null_blocks.append(i)
+            elif empty and self[i].n_points < 1:
+                null_blocks.append(i)
+        # Now remove the null/empty meshes
         null_blocks = np.array(null_blocks, dtype=int)
         for i in range(len(null_blocks)):
-            print('removing', i, null_blocks[i])
             del self[null_blocks[i]]
             null_blocks -= 1
         return
