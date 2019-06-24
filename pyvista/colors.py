@@ -362,3 +362,30 @@ def string_to_rgb(string):
             raise ValueError('Invalid color string or hex string.')
 
     return hex_to_rgb(colorhex)
+
+
+def safe_get_cmap(cmap):
+    """Fetches a colormap by name from matplotlib, colorcet, or cmocean"""
+    try:
+        from matplotlib.cm import get_cmap
+    except ImportError:
+        raise Exception('cmap requires matplotlib')
+    if isinstance(cmap, str):
+        # Try colorcet first
+        try:
+            import colorcet
+            cmap = colorcet.cm[cmap]
+        except (ImportError, KeyError):
+            pass
+        else:
+            return cmap
+        # Try cmocean second
+        try:
+            import cmocean
+            cmap = getattr(cmocean.cm, cmap)
+        except (ImportError, AttributeError):
+            pass
+        else:
+            return cmap
+        cmap = get_cmap(cmap)
+    return cmap

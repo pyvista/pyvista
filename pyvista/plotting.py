@@ -18,6 +18,7 @@ import pyvista
 from pyvista.export import export_plotter_vtkjs
 from pyvista.utilities import (get_scalar, is_pyvista_obj, numpy_to_texture, wrap,
                             _raise_not_matching, convert_array)
+from pyvista.colors import safe_get_cmap
 
 _ALL_PLOTTERS = {}
 
@@ -1015,24 +1016,12 @@ class BasePlotter(object):
                     cmap = None
                     logging.warning('Please install matplotlib for color maps.')
             if cmap is not None:
-                try:
-                    from matplotlib.cm import get_cmap
-                except ImportError:
-                    raise Exception('cmap requires matplotlib')
-                if isinstance(cmap, str):
-                    try:
-                        import colorcet
-                        cmap = colorcet.cm.get(cmap)
-                    except (ImportError, KeyError):
-                        colorcet = None
-                        pass
-                    if categories:
-                        if categories is True:
-                            n_colors = len(np.unique(scalars))
-                        elif isinstance(categories, int):
-                            n_colors = categories
-                    cmap = get_cmap(cmap)
-                    # ELSE: assume cmap is callable
+                cmap = safe_get_cmap(cmap)
+                if categories:
+                    if categories is True:
+                        n_colors = len(np.unique(scalars))
+                    elif isinstance(categories, int):
+                        n_colors = categories
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
                 # Set opactities
