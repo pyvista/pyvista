@@ -843,8 +843,9 @@ class BasePlotter(object):
                         continue # move on if we can't plot it
                 else:
                     data = mesh.GetBlock(idx)
-                if data is None:
+                if data is None or (not isinstance(data, pyvista.MultiBlock) and data.n_points < 1):
                     # Note that a block can exist but be None type
+                    # or it could have zeros points (be empty) after filtering
                     continue
                 # Now check that scalars is available for this dataset
                 if isinstance(data, vtk.vtkMultiBlockDataSet) or get_scalar(data, scalars) is None:
@@ -887,9 +888,7 @@ class BasePlotter(object):
             color = rcParams['color']
 
         if mesh.n_points < 1:
-            # raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
-            logging.warning('Input mesh has zero points: empty meshes cannot be plotted.')
-            return None
+            raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
         # set main values
         self.mesh = mesh
