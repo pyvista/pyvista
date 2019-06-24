@@ -750,9 +750,8 @@ class BasePlotter(object):
             values as RGB+A colors! ``rgba`` is also accepted alias for this.
 
         categories : bool, optional
-            If fetching a colormap from matplotlib, this is the number of
-            categories to use in that colormap. If set to ``True``, then
-            the number of unique values in the scalar array will be used.
+            If set to ``True``, then the number of unique values in the scalar
+            array will be used as the ``n_colors`` argument.
 
         Returns
         -------
@@ -1021,12 +1020,18 @@ class BasePlotter(object):
                 except ImportError:
                     raise Exception('cmap requires matplotlib')
                 if isinstance(cmap, str):
+                    try:
+                        import colorcet
+                        cmap = colorcet.cm[cmap]
+                    except (ImportError, KeyError):
+                        colorcet = None
+                        pass
                     if categories:
                         if categories is True:
-                            categories = len(np.unique(scalars))
-                        cmap = get_cmap(cmap, categories)
-                    else:
-                        cmap = get_cmap(cmap)
+                            n_colors = len(np.unique(scalars))
+                        elif isinstance(categories, int):
+                            n_colors = categories
+                    cmap = get_cmap(cmap)
                     # ELSE: assume cmap is callable
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
