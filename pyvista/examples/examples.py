@@ -233,3 +233,22 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     plotter.close()
 
     return points
+
+
+def load_spline():
+    """Load an example spline mesh"""
+    theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+    z = np.linspace(-2, 2, 100)
+    r = z**2 + 1
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+    points = np.column_stack((x, y, z))
+    return pyvista.Spline(points, 1000)
+
+
+def load_random_hills():
+    """Uses the parametric random hill function to create hills oriented like
+    topography and add's an elevation array"""
+    mesh = pyvista.ParametricRandomHills()
+    mesh.rotate_y(90)
+    return mesh.elevation()

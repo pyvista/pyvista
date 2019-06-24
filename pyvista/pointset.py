@@ -17,12 +17,42 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
 
 import pyvista
 from pyvista.filters import _get_output
+from pyvista.utilities import get_scalar
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PolyData(vtkPolyData, pyvista.Common):
+class PointSet(pyvista.Common):
+    """PyVista's equivalant of vtk.vtkPointSet. This holds methods common to
+    PolyData and UnstructuredGrid.
+    """
+
+
+    def center_of_mass(self, scalars_weight=False):
+        """
+        Returns the coordinates for the center of mass of the mesh.
+
+        Parameters
+        ----------
+        scalars_weight : bool, optional
+            Flag for using the mesh scalars as weights. Defaults to False.
+
+        Return
+        ------
+        center : np.ndarray, float
+            Coordinates for the center of mass.
+
+        """
+        alg = vtk.vtkCenterOfMass()
+        alg.SetInputDataObject(self)
+        alg.SetUseScalarsAsWeights(scalars_weight)
+        alg.Update()
+        return np.array(alg.GetCenter())
+
+
+
+class PolyData(vtkPolyData, PointSet):
     """
     Extends the functionality of a vtk.vtkPolyData object
 
@@ -994,26 +1024,6 @@ class PolyData(vtkPolyData, pyvista.Common):
         else:
             return mesh
 
-    def center_of_mass(self, scalars_weight=False):
-        """
-        Returns the coordinates for the center of mass of the mesh.
-
-        Parameters
-        ----------
-        scalars_weight : bool, optional
-            Flag for using the mesh scalars as weights. Defaults to False.
-
-        Return
-        ------
-        center : np.ndarray, float
-            Coordinates for the center of mass.
-        """
-        comfilter = vtk.vtkCenterOfMass()
-        comfilter.SetInputData(self)
-        comfilter.SetUseScalarsAsWeights(scalars_weight)
-        comfilter.Update()
-        return np.array(comfilter.GetCenter())
-
     def compute_normals(self, cell_normals=True, point_normals=True,
                         split_vertices=False, flip_normals=False,
                         consistent_normals=True,
@@ -1385,6 +1395,9 @@ class PolyData(vtkPolyData, pyvista.Common):
 
         output = _get_output(dijkstra)
 
+        # Do not copy textures from input
+        output.clear_textures()
+
         if inplace:
             self.overwrite(output)
         else:
@@ -1410,8 +1423,12 @@ class PolyData(vtkPolyData, pyvista.Common):
             Length of the geodesic segment.
 
         """
-        length = self.geodesic(start_vertex, end_vertex).GetLength()
-        return length
+        path = self.geodesic(start_vertex, end_vertex)
+        sizes = path.compute_cell_sizes(length=True, area=False, volume=False)
+        distance = np.sum(sizes['Length'])
+        del path
+        del sizes
+        return distance
 
     def ray_trace(self, origin, end_point, first_point=False, plot=False,
                   off_screen=False):
@@ -1625,8 +1642,19 @@ class PolyData(vtkPolyData, pyvista.Common):
         raise AttributeError('`delauney_2d` is deprecated because we made a '\
                              'spelling mistake. Please use `delaunay_2d`.')
 
+    def compute_arc_length(self):
+        """Computes the arc length over the length of the probed line.
+        It adds a new point-data array named "arc_length" with the computed arc
+        length for each of the polylines in the input. For all other cell types,
+        the arc length is set to 0.
+        """
+        alg = vtk.vtkAppendArcLength()
+        alg.SetInputData(self)
+        alg.Update()
+        return _get_output(alg)
 
-class PointGrid(pyvista.Common):
+
+class PointGrid(PointSet):
     """ Class in common with structured and unstructured grids """
 
     def __new__(cls, *args, **kwargs):

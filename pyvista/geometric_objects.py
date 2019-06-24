@@ -259,7 +259,12 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     src.SetPoint2(*pointb)
     src.SetResolution(resolution)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+    line = pyvista.wrap(src.GetOutput())
+    # Compute distance of every point along line
+    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0)**2, axis=1))
+    distance = compute(np.array(pointa), line.points)
+    line['Distance'] = distance
+    return line
 
 
 def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
@@ -311,8 +316,8 @@ def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
     return Cube(bounds=bounds)
 
 
-def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
-         capping=True, angle=26.6, resolution=6):
+def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
+         capping=True, angle=None, resolution=6):
     """Create a cone
 
     Parameters
@@ -339,12 +344,19 @@ def Cone(center=(0., 0., 0.), direction=(1., 0., 0.), height=1.0, radius=0.5,
         number of facets used to represent the cone
     """
     src = vtk.vtkConeSource()
-    src.SetDirection(direction)
-    src.SetAngle(angle)
     src.SetCapping(capping)
+    src.SetDirection(direction)
     src.SetCenter(center)
     src.SetHeight(height)
-    src.SetRadius(radius)
+    # Contributed by @kjelljorner in #249:
+    if angle and radius:
+        raise Exception ("Both radius and angle specified. They are mutually exclusive.")
+    elif angle and not radius:
+        src.SetAngle(angle)
+    elif not angle and radius:
+        src.SetRadius(radius)
+    elif not angle and not radius:
+        src.SetRadius(0.5)
     src.SetResolution(resolution)
     src.Update()
     return pyvista.wrap(src.GetOutput())

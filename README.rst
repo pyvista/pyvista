@@ -52,7 +52,40 @@ VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
 and visual integration of spatially referenced datasets.
 
 This module can be used for scientific plotting for presentations and research
-papers as well as a supporting module for other mesh dependent Python modules.
+papers as well as a supporting module for other mesh 3D rendering dependent
+Python modules; see Connections for a list of projects that leverage
+PyVista.
+
+
+Highlights
+==========
+
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
+   :alt: Launch on Binder
+
+Head over to the `Quick Examples`_ page in the docs to explore our gallery of
+examples showcasing what PyVista can do! Want to test-drive PyVista?
+All of the examples from the gallery are live on MyBinder for you to test
+drive without installing anything locally: |binder|
+
+.. _Quick Examples: http://docs.pyvista.org/examples/index.html
+
+
+Overview of Features
+--------------------
+
+* Embeddable rendering in Jupyter Notebooks
+* Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
+* Direct access to mesh analysis and transformation routines (see Filters_)
+* Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
+* Import meshes from many common formats (use ``pyvista.read()``)
+* Export meshes as VTK, STL, OBJ, or PLY file types
+
+
+.. _IPython Tools: http://docs.pyvista.org/tools/ipy_tools.html
+.. _Filters: http://docs.pyvista.org/tools/filters.html
+.. _Plotting: http://docs.pyvista.org/tools/plotting.html
 
 
 Documentation
@@ -87,33 +120,6 @@ You can also visit `PyPi <http://pypi.python.org/pypi/pyvista>`_,
 See the `Installation <http://docs.pyvista.org/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
-
-Highlights
-==========
-
-Head over to the `Quick Examples`_ page in the docs to learn more about using
-PyVista.
-
-.. _Quick Examples: http://docs.pyvista.org/examples/index.html
-
-Want to test-drive PyVista? Check out our live examples on MyBinder:
-
-.. image:: https://mybinder.org/badge_logo.svg
-   :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
-   :alt: Launch on Binder
-
-
-* Pythonic interface to VTK's Python-C++ bindings
-* Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
-* Direct access to common VTK filters (see Filters_)
-* Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
-
-
-.. _IPython Tools: http://docs.pyvista.org/tools/ipy_tools.html
-.. _Filters: http://docs.pyvista.org/tools/filters.html
-.. _Plotting: http://docs.pyvista.org/tools/plotting.html
-
-
 Connections
 ===========
 
@@ -145,21 +151,23 @@ Authors
 Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
-.. _contributors page: https://GitHub.com/pyvista/pyvista/graphs/contributors/
+.. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
 .. _list of authors: http://docs.pyvista.org/authors
 
 
 Contributing
 ============
 
-We absolutely welcome contributions and we hope that this guide will facilitate
-an understanding of the PyVista code repository. It is important to note that
-the  PyVista software package is maintained on a volunteer basis and thus we
-need to foster a community that can support user questions and develop new
-features to make this software a useful tool for all users. To learn more about
-contributing to PyVista, please see the `Contributing Guide`_.
+We absolutely welcome contributions and we hope that our `Contributing Guide`_
+will facilitate your ability to make PyVista better. PyVista is mostly
+maintained on a volunteer basis and thus we need to foster a community that can
+support user questions and develop new features to make this software a useful
+tool for all users while encouraging every member of the commutinity to share
+their ideas. To learn more about contributing to PyVista, please see the
+`Contributing Guide`_ and our `Code of Conduct`_.
 
-.. _Contributing Guide: http://docs.pyvista.org/dev/contributing.html
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
+.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md
 
 
 Citing PyVista

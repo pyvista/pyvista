@@ -101,6 +101,9 @@ class DataSetFilters(object):
         # run the clip
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
+        elif isinstance(dataset, vtk.vtkImageData):
+            alg = vtk.vtkClipVolume()
+            alg.SetMixed3DCellGeneration(True)
         else:
             alg = vtk.vtkClipDataSet()
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
@@ -284,6 +287,45 @@ class DataSetFilters(object):
             slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
                     generate_triangles=generate_triangles, contour=contour)
             output[i, 'slice%.2d'%i] = slc
+        return output
+
+
+    def slice_along_line(dataset, line, generate_triangles=False,
+              contour=False):
+        """Slices a dataset using a polyline/spline as the path. This also works
+        for lines generated with :func:`pyvista.Line`
+
+        Parameters
+        ----------
+        line : pyvista.PolyData
+            A PolyData object containing one single PolyLine cell.
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+        """
+        # check that we have a PolyLine cell in the input line
+        if line.GetNumberOfCells() != 1:
+            raise AssertionError('Input line must have only one cell.')
+        polyline = line.GetCell(0)
+        if not isinstance(polyline, vtk.vtkPolyLine):
+            raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
+        # Generate PolyPlane
+        polyplane = vtk.vtkPolyPlane()
+        polyplane.SetPolyLine(polyline)
+        # Create slice
+        alg = vtk.vtkCutter() # Construct the cutter object
+        alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
+        alg.SetCutFunction(polyplane) # the the cutter to use the poly planes
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+        alg.Update() # Perfrom the Cut
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
         return output
 
 
@@ -674,7 +716,7 @@ class DataSetFilters(object):
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
         return # No return type because it is inplace
 
-    def compute_cell_sizes(dataset, length=False, area=True, volume=True):
+    def compute_cell_sizes(dataset, length=True, area=True, volume=True):
         """This filter computes sizes for 1D (length), 2D (area) and 3D (volume)
         cells.
 
@@ -716,7 +758,8 @@ class DataSetFilters(object):
         return output
 
 
-    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None):
+    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
+              subset=None):
         """
         Copies a geometric representation (called a glyph) to every
         point in the input dataset.  The glyph may be oriented along
@@ -736,7 +779,20 @@ class DataSetFilters(object):
 
         geom : vtk.vtkDataSet
             The geometry to use for the glyph
+
+        subset : float, optional
+            Take a percentage subset of the mesh's points. Float value is
+            percent subset between 0 and 1.
         """
+        if subset is not None:
+            if subset <= 0.0 or subset > 1.0:
+                raise RuntimeError('subset must be a percentage between 0 and 1.')
+            ids = np.random.random_integers(low=0, high=dataset.n_points-1,
+                                    size=int(dataset.n_points * subset))
+            small = pyvista.PolyData(dataset.points[ids])
+            for name in dataset.point_arrays.keys():
+                small.point_arrays[name] = dataset.point_arrays[name][ids]
+            dataset = small
         if geom is None:
             arrow = vtk.vtkArrowSource()
             arrow.Update()
@@ -1283,3 +1339,84 @@ class DataSetFilters(object):
             of the input triangles.
         """
         return dataset.extract_geometry().tri_filter().decimate(target_reduction)
+
+
+    def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
+                       title=None, ylabel=None, figsize=None, figure=True,
+                       show=True):
+        """Sample a dataset along a high resolution line and plot the variables
+        of interest in 2D where the X-axis is distance from Point A and the
+        Y-axis is the varaible of interest. Note that this filter returns None.
+
+        Parameters
+        ----------
+        pointa : np.ndarray or list
+            Location in [x, y, z].
+
+        pointb : np.ndarray or list
+            Location in [x, y, z].
+
+        resolution : int
+            number of pieces to divide line into. Defaults to number of cells
+            in the input mesh. Must be a positive integer.
+
+        scalars : str
+            The string name of the variable in the input dataset to probe. The
+            active scalar is used by default.
+
+        title : str
+            The string title of the `matplotlib` figure
+
+        ylabel : str
+            The string label of the Y-axis. Defaults to variable name
+
+        figsize : tuple(int)
+            the size of the new figure
+
+        figure : bool
+            flag on whether or not to create a new figure
+
+        show : bool
+            Shows the matplotlib figure
+        """
+        # Ensure matplotlib is available
+        try:
+            import matplotlib.pyplot as plt
+        except ImportError:
+            raise ImportError('matplotlib must be available to use this filter.')
+
+        if resolution is None:
+            resolution = dataset.n_cells
+        if not isinstance(resolution, int) or resolution < 0:
+            raise RuntimeError('`resolution` must be a positive integer.')
+        # Make a line and probe the dataset
+        line = pyvista.Line(pointa, pointb, resolution=resolution)
+        sampled = line.sample(dataset)
+
+        # Get variable of interest
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        values = sampled.get_scalar(scalars)
+        distance = sampled['Distance']
+
+        # Remainder of the is plotting
+        if figure:
+            plt.figure(figsize=figsize)
+        # Plot it in 2D
+        if values.ndim > 1:
+            for i in range(values.shape[1]):
+                plt.plot(distance, values[:, i], label='Component {}'.format(i))
+            plt.legend()
+        else:
+            plt.plot(distance, values)
+        plt.xlabel('Distance')
+        if ylabel is None:
+            plt.ylabel(scalars)
+        else:
+            plt.ylabel(ylabel)
+        if title is None:
+            plt.title('{} Profile'.format(scalars))
+        else:
+            plt.title(title)
+        if show:
+         return plt.show()

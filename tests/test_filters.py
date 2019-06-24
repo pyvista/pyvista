@@ -250,6 +250,7 @@ def test_glyph():
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, subset=0.5)
 
 
 def test_split_and_connectivity():
@@ -323,3 +324,40 @@ def test_streamlines():
                            source_center=(133.1, 116.3, 5.0) )
     assert stream.n_points > 0
     assert src.n_points == 25
+
+
+def test_plot_over_line():
+    """this requires matplotlib"""
+    mesh = examples.load_channels()
+    # Make two points to construct the line between
+    a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
+    b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
+    mesh.plot_over_line(a, b, resolution=1000, show=False)
+
+
+def test_slice_along_line():
+    model = examples.load_uniform()
+    def path(y):
+        """Equation: x = a(y-h)^2 + k"""
+        a = 0.5**2
+        x = a*y**2 + 0.0
+        return x, y
+    x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
+    zo = np.linspace(9.0, 11.0, num=len(y))
+    points = np.c_[x,y,zo]
+    spline = pyvista.Spline(points, 3)
+    slc = model.slice_along_line(spline)
+    assert slc.n_points > 0
+    # Now check a simple line
+    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
+    b = [model.bounds[1], model.bounds[3], model.bounds[5]]
+    line = pyvista.Line(a, b, resolution=10)
+    slc = model.slice_along_line(line)
+    assert slc.n_points > 0
+    # Now check a bad input
+    a = [model.bounds[0], model.bounds[2], model.bounds[4]]
+    b = [model.bounds[1], model.bounds[2], model.bounds[5]]
+    line2 = pyvista.Line(a, b, resolution=10)
+    line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
+    with pytest.raises(AssertionError):
+        slc = model.slice_along_line(line)
