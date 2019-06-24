@@ -783,9 +783,10 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
             elif empty and self[i].n_points < 1:
                 null_blocks.append(i)
         # Now remove the null/empty meshes
-        null_blocks = np.array(null_blocks, dtype=np.uint32)
+        null_blocks = np.array(null_blocks, dtype=int)
         for i in range(len(null_blocks)):
-            del self[null_blocks[i]]
+            # Cast as int because windows is super annoying
+            del self[int(null_blocks[i])]
             null_blocks -= 1
         return
 
