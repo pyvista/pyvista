@@ -15,10 +15,11 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.export import export_plotter_vtkjs
 from pyvista.utilities import (get_scalar, is_pyvista_obj, numpy_to_texture, wrap,
                             raise_not_matching, convert_array)
-from pyvista.colors import get_cmap_safe
+
+from .export_vtkjs import export_plotter_vtkjs
+from .colors import get_cmap_safe
 
 _ALL_PLOTTERS = {}
 

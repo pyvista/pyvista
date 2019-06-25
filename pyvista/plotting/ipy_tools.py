@@ -16,20 +16,22 @@ import logging
 import numpy as np
 
 import pyvista
-from pyvista.plotting import run_from_ipython
 from pyvista.utilities import is_pyvista_obj, wrap
 
+from .plotting import run_from_ipython
+from .qt_plotting import BackgroundPlotter
 
-class ScaledPlotter(pyvista.BackgroundPlotter):
+
+class ScaledPlotter(BackgroundPlotter):
     """
-    An extension of the ``pyvista.BackgroundPlotter`` that has
+    An extension of the ``BackgroundPlotter`` that has
     interactive widgets for scaling the axes in the rendering scene.
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
         if not run_from_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
-        pyvista.BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
+        BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
         self.continuous_update = bool(continuous_update)
         self.xslider = widgets.FloatSlider(min=0, max=xscale*2, value=xscale,
@@ -92,7 +94,7 @@ class InteractiveTool(object):
         self.continuous_update = continuous_update
 
         if plotter is None:
-            plotter = pyvista.BackgroundPlotter(**kwargs)
+            plotter = BackgroundPlotter(**kwargs)
             plotter.setWindowTitle(type(self).__name__)
         self._plotter = plotter
         self._loc = plotter.index_to_loc(plotter._active_renderer_index)

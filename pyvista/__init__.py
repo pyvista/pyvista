@@ -3,20 +3,7 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
-from pyvista.colors import *
 from pyvista.core import *
-from pyvista.qt_plotting import QtInteractor
-from pyvista.qt_plotting import BackgroundPlotter
-from pyvista.export import export_plotter_vtkjs, get_vtkjs_url
-from pyvista.renderer import Renderer
-
-# IPython interactive tools
-from pyvista.ipy_tools import OrthogonalSlicer
-from pyvista.ipy_tools import ManySlicesAlongAxis
-from pyvista.ipy_tools import Threshold
-from pyvista.ipy_tools import Clip
-from pyvista.ipy_tools import ScaledPlotter
-from pyvista.ipy_tools import Isocontour
 
 import numpy as np
 import vtk

@@ -10,8 +10,9 @@ import numpy as np
 from vtk import vtkRenderer
 
 import pyvista
-from pyvista.plotting import rcParams, parse_color, parse_font_family, MAX_N_COLOR_BARS
 from pyvista.utilities import wrap
+
+from .plotting import rcParams, parse_color, parse_font_family, MAX_N_COLOR_BARS
 
 
 class Renderer(vtkRenderer):
