@@ -2,7 +2,8 @@ from math import pi
 
 import vtk
 import pyvista
-from pyvista import translate
+
+from .geometric_objects import translate
 
 
 def Spline(points, n_points=None):

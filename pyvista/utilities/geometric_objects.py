@@ -17,7 +17,6 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista import PolyData
 
 
 def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
@@ -87,7 +86,7 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     cylinderSource.SetCapping(capping)
     cylinderSource.SetResolution(resolution)
     cylinderSource.Update()
-    surf = PolyData(cylinderSource.GetOutput())
+    surf = pyvista.PolyData(cylinderSource.GetOutput())
     surf.rotate_z(-90)
     translate(surf, center, direction)
     return surf
@@ -130,7 +129,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     arrow.SetShaftRadius(shaft_radius)
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
-    surf = PolyData(arrow.GetOutput())
+    surf = pyvista.PolyData(arrow.GetOutput())
     translate(surf, start, direction)
     return surf
 
@@ -185,7 +184,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     sphere.SetStartPhi(start_phi)
     sphere.SetEndPhi(end_phi)
     sphere.Update()
-    surf = PolyData(sphere.GetOutput())
+    surf = pyvista.PolyData(sphere.GetOutput())
     surf.rotate_y(-90)
     translate(surf, center, direction)
     return surf
@@ -227,7 +226,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     planeSource.SetYResolution(j_resolution)
     planeSource.Update()
 
-    surf = PolyData(planeSource.GetOutput())
+    surf = pyvista.PolyData(planeSource.GetOutput())
 
     surf.points[:, 0] *= i_size
     surf.points[:, 1] *= j_size

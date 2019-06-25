@@ -2,9 +2,8 @@ import warnings
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
-from pyvista.errors import *
+from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.colors import *
-from pyvista.features import *
 from pyvista.filters import DataSetFilters, CompositeFilters
 from pyvista.common import Common
 from pyvista.pointset import PointGrid
@@ -14,8 +13,6 @@ from pyvista.pointset import StructuredGrid
 from pyvista.grid import Grid
 from pyvista.grid import RectilinearGrid
 from pyvista.grid import UniformGrid
-from pyvista.geometric_objects import *
-from pyvista.parametric_objects import *
 from pyvista.composite import MultiBlock
 from pyvista.qt_plotting import QtInteractor
 from pyvista.qt_plotting import BackgroundPlotter
@@ -29,9 +26,6 @@ from pyvista.ipy_tools import Threshold
 from pyvista.ipy_tools import Clip
 from pyvista.ipy_tools import ScaledPlotter
 from pyvista.ipy_tools import Isocontour
-
-# Sphinx-gallery tools
-from pyvista.sphinx_gallery import Scraper, _get_sg_image_scraper
 
 import numpy as np
 import vtk
