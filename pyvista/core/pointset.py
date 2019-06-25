@@ -16,14 +16,16 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.filters import _get_output
 from pyvista.utilities import get_scalar
+
+from .common import Common
+from .filters import _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PointSet(pyvista.Common):
+class PointSet(Common):
     """PyVista's equivalant of vtk.vtkPointSet. This holds methods common to
     PolyData and UnstructuredGrid.
     """
@@ -129,10 +131,10 @@ class PolyData(vtkPolyData, PointSet):
             self.faces = self._make_vertice_cells(self.n_points)
 
     def __repr__(self):
-        return pyvista.Common.__repr__(self)
+        return Common.__repr__(self)
 
     def __str__(self):
-        return pyvista.Common.__str__(self)
+        return Common.__str__(self)
 
     @staticmethod
     def _make_vertice_cells(npoints):
@@ -1864,11 +1866,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid):
 
 
     def __repr__(self):
-        return pyvista.Common.__repr__(self)
+        return Common.__repr__(self)
 
 
     def __str__(self):
-        return pyvista.Common.__str__(self)
+        return Common.__str__(self)
 
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
@@ -2337,11 +2339,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
 
     def __repr__(self):
-        return pyvista.Common.__repr__(self)
+        return Common.__repr__(self)
 
 
     def __str__(self):
-        return pyvista.Common.__str__(self)
+        return Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):

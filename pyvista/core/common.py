@@ -11,7 +11,7 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-from pyvista import DataSetFilters
+from .filters import DataSetFilters
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
                                FIELD_DATA_FIELD, get_scalar,
                                vtk_bit_array_to_char, is_pyvista_obj,

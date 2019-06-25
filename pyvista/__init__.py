@@ -4,16 +4,7 @@ from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.colors import *
-from pyvista.filters import DataSetFilters, CompositeFilters
-from pyvista.common import Common
-from pyvista.pointset import PointGrid
-from pyvista.pointset import PolyData
-from pyvista.pointset import UnstructuredGrid
-from pyvista.pointset import StructuredGrid
-from pyvista.grid import Grid
-from pyvista.grid import RectilinearGrid
-from pyvista.grid import UniformGrid
-from pyvista.composite import MultiBlock
+from pyvista.core import *
 from pyvista.qt_plotting import QtInteractor
 from pyvista.qt_plotting import BackgroundPlotter
 from pyvista.export import export_plotter_vtkjs, get_vtkjs_url

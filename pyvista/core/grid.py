@@ -11,11 +11,13 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
 
+from .common import Common
+
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class Grid(pyvista.Common):
+class Grid(Common):
     """A class full of common methods for non-pointset grids """
 
     def __new__(cls, *args, **kwargs):
@@ -42,7 +44,7 @@ class Grid(pyvista.Common):
 
     def _get_attrs(self):
         """An internal helper for the representation methods"""
-        attrs = pyvista.Common._get_attrs(self)
+        attrs = Common._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
 
@@ -106,11 +108,11 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
     def __repr__(self):
-        return pyvista.Common.__repr__(self)
+        return Common.__repr__(self)
 
 
     def __str__(self):
-        return pyvista.Common.__str__(self)
+        return Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):
@@ -367,11 +369,11 @@ class UniformGrid(vtkImageData, Grid):
                 self._from_specs(args[0], args[1])
 
     def __repr__(self):
-        return pyvista.Common.__repr__(self)
+        return Common.__repr__(self)
 
 
     def __str__(self):
-        return pyvista.Common.__str__(self)
+        return Common.__str__(self)
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):

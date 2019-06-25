@@ -14,7 +14,7 @@ from vtk import vtkMultiBlockDataSet
 import pyvista
 from pyvista import plot
 from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
-from pyvista.filters import CompositeFilters
+from .filters import CompositeFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
