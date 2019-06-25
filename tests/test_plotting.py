@@ -357,7 +357,7 @@ def test_box_axes():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_axes(box=True)
     plotter.add_mesh(pyvista.Sphere())
-    plotter.plot()
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -592,3 +592,13 @@ def test_image_properties():
     # Get the depth image
     img = np.sum(p.image_depth, axis=2)
     p.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_volume_rendering():
+    vol = examples.download_knee_full()
+    vol.plot(off_screen=OFF_SCREEN, volume=True, opacity='linear')
+
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_volume(vol, opacity='sigmoid', mapper='smart')
+    plotter.show()

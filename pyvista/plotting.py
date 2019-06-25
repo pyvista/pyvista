@@ -126,13 +126,24 @@ def run_from_ipython():
 
 
 def opacity_transfer_function(key, n_colors):
-    """Get the opacity transfer function results: range from 0 to 255
+    """Get the opacity transfer function results: range from 0 to 255.
     """
+    sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
     transfer_func = {
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
         'linear_r': np.linspace(0, 255, n_colors, dtype=np.uint8)[::-1],
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
+        'sigmoid': sigmoid(np.linspace(-10.,10., n_colors)),
+        'sigmoid_3': sigmoid(np.linspace(-3.,3., n_colors)),
+        'sigmoid_4': sigmoid(np.linspace(-4.,4., n_colors)),
+        'sigmoid_5': sigmoid(np.linspace(-5.,5., n_colors)),
+        'sigmoid_6': sigmoid(np.linspace(-6.,6., n_colors)),
+        'sigmoid_7': sigmoid(np.linspace(-7.,7., n_colors)),
+        'sigmoid_8': sigmoid(np.linspace(-8.,8., n_colors)),
+        'sigmoid_9': sigmoid(np.linspace(-9.,9., n_colors)),
+        'sigmoid_10': sigmoid(np.linspace(-10.,10., n_colors)),
+
     }
     try:
         return transfer_func[key]
@@ -1119,7 +1130,8 @@ class BasePlotter(object):
     def add_volume(self, data, resolution=None, opacity='linear', n_colors=256,
                    cmap=None, flip_scalars=False, reset_camera=None, name=None,
                    ambient=0.0, categories=False, loc=None, backface_culling=False,
-                   multi_colors=False, blending='additive', **kwargs):
+                   multi_colors=False, blending='additive', mapper='fixed_point',
+                   **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper.
 
@@ -1273,13 +1285,15 @@ class BasePlotter(object):
             try:
                 from matplotlib.cm import get_cmap
             except ImportError:
-                raise Exception('cmap requires matplotlib')
-            if isinstance(cmap, str):
+                cmap = None
+                logging.warning('Please install matplotlib for color maps.')
+        if cmap is not None:
+            cmap = get_cmap_safe(cmap)
+            if categories:
                 if categories is True:
-                    categories = len(np.unique(data))
-                    cmap = get_cmap(cmap, categories)
-                else:
-                    cmap = get_cmap(cmap)
+                    n_colors = len(np.unique(scalars))
+                elif isinstance(categories, int):
+                    n_colors = categories
         if flip_scalars:
             cmap = cmap.reversed()
 
@@ -1298,14 +1312,22 @@ class BasePlotter(object):
             opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
 
         # Define mapper, volume, and add the correct properties
+        mappers = {
+            'fixed_point' : vtk.vtkFixedPointVolumeRayCastMapper,
+            'gpu' : vtk.vtkGPUVolumeRayCastMapper,
+            'open_gl' : vtk.vtkOpenGLGPUVolumeRayCastMapper,
+            'smart' : vtk.vtkSmartVolumeMapper,
+        }
+        if not isinstance(mapper, str) or mapper not in mappers.keys():
+            raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
         self.mapper = vtk.vtkFixedPointVolumeRayCastMapper()
         self.mapper.SetInputConnection(data_importer.GetOutputPort())
 
         blending = blending.lower()
         if blending in ['additive', 'add', 'sum']:
             self.mapper.SetBlendModeToAdditive()
-#        elif blending in ['average', 'avg', 'average_intensity']:
-#            self.mapper.SetBlendModeToAverageIntensity()
+        elif blending in ['average', 'avg', 'average_intensity']:
+            self.mapper.SetBlendModeToAverageIntensity()
         elif blending in ['composite', 'comp']:
             self.mapper.SetBlendModeToComposite()
         elif blending in ['maximum', 'max', 'maximum_intensity']:
