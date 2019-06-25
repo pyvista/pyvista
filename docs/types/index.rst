@@ -17,4 +17,4 @@ side to help new users understand which data types to use.
    points
    point-grids
    grids
-   container
+   composite
