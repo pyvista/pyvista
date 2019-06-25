@@ -1131,7 +1131,7 @@ class BasePlotter(object):
                    cmap=None, flip_scalars=False, reset_camera=None, name=None,
                    ambient=0.0, categories=False, loc=None, backface_culling=False,
                    multi_colors=False, blending='additive', mapper='fixed_point',
-                   **kwargs):
+                   rng=None, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper.
 
@@ -1201,6 +1201,9 @@ class BasePlotter(object):
             VTK volume of the input data.
         """
 
+        if rng is None:
+            rng = kwargs.get('clim', None)
+
         if isinstance(data, vtk.vtkImageData):
             data = pyvista.wrap(data)
         else:
@@ -1243,7 +1246,8 @@ class BasePlotter(object):
                                     n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
-                                    backface_culling=backface_culling, **kwargs)
+                                    backface_culling=backface_culling, rng=rng,
+                                    mapper=mapper, **kwargs)
 
                 actors.append(a)
             return actors
@@ -1254,8 +1258,16 @@ class BasePlotter(object):
             name = '{}({})'.format(type(data).__name__, str(hex(id(data))))
 
         # Set main values
+        if rng is None:
+            rng = [np.nanmin(data), np.nanmax(data)]
+        elif isinstance(rng, float) or isinstance(rng, int):
+            rng = [-rng, rng]
         data = data.astype(np.float)
-        data = ((data - np.min(data)) / (np.max(data) - np.min(data))) * 255
+        idxs0 = data < rng[0]
+        idxs1 = data > rng[1]
+        data[idxs0] = np.nan
+        data[idxs1] = np.nan
+        data = ((data - np.nanmin(data)) / (np.nanmax(data) - np.nanmin(data))) * 255
         data = data.astype(np.uint8)
 
         # Import data from array into VTK
