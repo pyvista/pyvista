@@ -1,10 +1,11 @@
 """Functions to download sampe datasets from the VTK data repository
 """
-import shutil
 import os
+import shutil
 import sys
-import vtk
 import zipfile
+
+import vtk
 
 import pyvista
 

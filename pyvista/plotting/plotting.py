@@ -6,8 +6,8 @@ import ctypes
 import logging
 import os
 import time
-from threading import Thread
 from subprocess import PIPE, Popen
+from threading import Thread
 
 import imageio
 import numpy as np
@@ -15,11 +15,11 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (get_scalar, is_pyvista_obj, numpy_to_texture, wrap,
-                            raise_not_matching, convert_array)
+from pyvista.utilities import (convert_array, get_scalar, is_pyvista_obj,
+                               numpy_to_texture, raise_not_matching, wrap)
 
-from .export_vtkjs import export_plotter_vtkjs
 from .colors import get_cmap_safe
+from .export_vtkjs import export_plotter_vtkjs
 
 _ALL_PLOTTERS = {}
 

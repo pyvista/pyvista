@@ -29,8 +29,8 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (get_scalar, is_inside_bounds, wrap,
-                               CELL_DATA_FIELD, POINT_DATA_FIELD)
+from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, get_scalar,
+                               is_inside_bounds, wrap)
 
 NORMALS = {
     'x': [1, 0, 0],

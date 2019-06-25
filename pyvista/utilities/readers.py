@@ -4,8 +4,8 @@ Contains a dictionary that maps file extensions to VTK readers
 import os
 
 import vtk
-import pyvista
 
+import pyvista
 
 READERS = {
     # Standard dataset readers:

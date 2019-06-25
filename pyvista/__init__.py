@@ -2,8 +2,9 @@ import warnings
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
-from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 from pyvista.core import *
+# Per contract with Sphinx-Gallery, this method must be availabe at top level
+from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 import numpy as np
 import vtk

@@ -3,16 +3,17 @@ Module containing pyvista implementation of vtkRenderer
 """
 import collections
 import logging
-import vtk
 from weakref import proxy
 
 import numpy as np
+import vtk
 from vtk import vtkRenderer
 
 import pyvista
 from pyvista.utilities import wrap
 
-from .plotting import rcParams, parse_color, parse_font_family, MAX_N_COLOR_BARS
+from .plotting import (MAX_N_COLOR_BARS, parse_color, parse_font_family,
+                       rcParams)
 
 
 class Renderer(vtkRenderer):

@@ -14,6 +14,7 @@ from vtk import vtkMultiBlockDataSet
 import pyvista
 from pyvista import plot
 from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
+
 from .filters import CompositeFilters
 
 log = logging.getLogger(__name__)
