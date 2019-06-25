@@ -920,7 +920,7 @@ class BasePlotter(object):
                 resolution = [1,1,1]
             elif len(resolution) != 3:
                 raise ValueError('Invalid resolution dimensions.')
-        elif isinstance(data, pyvista.grid.UniformGrid):
+        elif isinstance(data, pyvista.UniformGrid):
             if resolution is None:
                 resolution = data.GetSpacing()
             extent = np.array(data.GetExtent()[1::2]) + 1

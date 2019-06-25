@@ -470,12 +470,12 @@ def set_cell_vectors():
 
 def test_axis_rotation_invalid():
     with pytest.raises(Exception):
-        pyvista.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.common.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.core.common.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 

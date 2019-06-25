@@ -1252,7 +1252,7 @@ class PolyData(vtkPolyData, PointSet):
             Mesh with holes filled.  None when inplace=True
 
         """
-        logging.warning('pyvista.pointset.PolyData.fill_holes is known to segfault. ' +
+        logging.warning('pyvista.PolyData.fill_holes is known to segfault. ' +
                         'Use at your own risk')
         fill = vtk.vtkFillHolesFilter()
         fill.SetHoleSize(hole_size)
