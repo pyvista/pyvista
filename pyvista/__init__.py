@@ -16,7 +16,7 @@ from pyvista.grid import Grid
 from pyvista.grid import RectilinearGrid
 from pyvista.grid import UniformGrid
 from pyvista.geometric_objects import *
-from pyvista.parametric_geometry import *
+from pyvista.parametric_objects import *
 from pyvista.composite import MultiBlock
 from pyvista.qt_plotting import QtInteractor
 from pyvista.qt_plotting import BackgroundPlotter
