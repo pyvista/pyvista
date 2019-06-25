@@ -15,7 +15,7 @@ from pyvista import DataSetFilters
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
                                FIELD_DATA_FIELD, get_scalar,
                                vtk_bit_array_to_char, is_pyvista_obj,
-                               _raise_not_matching, convert_array,
+                               raise_not_matching, convert_array,
                                parse_field_choice)
 
 log = logging.getLogger(__name__)
@@ -891,7 +891,7 @@ class Common(DataSetFilters, object):
         else:
             # Field data must be set explicitly as it could be a point of
             # confusion for new users
-            _raise_not_matching(scalars, self)
+            raise_not_matching(scalars, self)
         return
 
     @property

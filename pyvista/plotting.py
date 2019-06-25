@@ -17,7 +17,7 @@ from vtk.util import numpy_support as VN
 import pyvista
 from pyvista.export import export_plotter_vtkjs
 from pyvista.utilities import (get_scalar, is_pyvista_obj, numpy_to_texture, wrap,
-                            _raise_not_matching, convert_array)
+                            raise_not_matching, convert_array)
 from pyvista.colors import get_cmap_safe
 
 _ALL_PLOTTERS = {}
@@ -1018,7 +1018,7 @@ class BasePlotter(object):
                 if interpolate_before_map:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
             else:
-                _raise_not_matching(scalars, mesh)
+                raise_not_matching(scalars, mesh)
 
             # Set scalar range
             if rng is None:
@@ -2202,7 +2202,7 @@ class BasePlotter(object):
         elif scalars.shape[0] == mesh.GetNumberOfCells():
             data = mesh.GetCellData()
         else:
-            _raise_not_matching(scalars, mesh)
+            raise_not_matching(scalars, mesh)
 
         vtk_scalars = data.GetScalars()
         if vtk_scalars is None:

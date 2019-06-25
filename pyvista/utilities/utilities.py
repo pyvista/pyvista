@@ -13,7 +13,7 @@ import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
-from pyvista.readers import standard_reader_routine, get_ext, get_reader
+from .readers import standard_reader_routine, get_ext, get_reader
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -425,7 +425,7 @@ def fit_plane_to_points(points, return_meta=False):
     return plane
 
 
-def _raise_not_matching(scalars, mesh):
+def raise_not_matching(scalars, mesh):
     raise Exception('Number of scalars ({})'.format(scalars.size) +
                     'must match either the number of points ' +
                     '({}) '.format(mesh.n_points) +

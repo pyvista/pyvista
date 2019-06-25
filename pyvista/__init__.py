@@ -3,7 +3,6 @@ from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.errors import *
-from pyvista.readers import *
 from pyvista.colors import *
 from pyvista.features import *
 from pyvista.filters import DataSetFilters, CompositeFilters
