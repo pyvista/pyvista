@@ -14,17 +14,17 @@ from vtk import vtkMultiBlockDataSet
 import pyvista
 from pyvista import plot
 from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
+from pyvista.filters import CompositeFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-
-class MultiBlock(vtkMultiBlockDataSet):
+class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
     """
-    A container class to hold many data sets which can be iterated over.
+    A composite class to hold many data sets which can be iterated over.
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
-    easily plot these data sets and use the container in a Pythonic manner.
+    easily plot these data sets and use the composite in a Pythonic manner.
     """
 
     # Bind pyvista.plotting.plot to the object
@@ -41,6 +41,7 @@ class MultiBlock(vtkMultiBlockDataSet):
                     self.DeepCopy(args[0])
                 else:
                     self.ShallowCopy(args[0])
+                self.wrap_nested()
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
@@ -55,32 +56,15 @@ class MultiBlock(vtkMultiBlockDataSet):
             # keep a reference of the args
             self.refs.append(args)
 
-    def extract_geometry(self):
-        """Combines the geomertry of all blocks into a single ``PolyData``
-        object. Place this filter at the end of a pipeline before a polydata
-        consumer such as a polydata mapper to extract geometry from all blocks
-        and append them to one polydata object.
-        """
-        gf = vtk.vtkCompositeDataGeometryFilter()
-        gf.SetInputData(self)
-        gf.Update()
-        return wrap(gf.GetOutputDataObject(0))
 
-    def combine(self, merge_points=False):
-        """Appends all blocks into a single unstructured grid.
-
-        Parameters
-        ----------
-        merge_points : bool, optional
-            Merge coincidental points.
-
-        """
-        alg = vtk.vtkAppendFilter()
-        for block in self:
-            alg.AddInputData(block)
-        alg.SetMergePoints(merge_points)
-        alg.Update()
-        return wrap(alg.GetOutputDataObject(0))
+    def wrap_nested(self):
+        """A helper to ensure all nested data structures are wrapped as PyVista
+        datasets. This is perfrom inplace"""
+        for i in range(self.n_blocks):
+            block = self.GetBlock(i)
+            if not is_pyvista_obj(block):
+                self.SetBlock(i, pyvista.wrap(block))
+        return
 
 
     def _load_file(self, filename):
@@ -165,15 +149,25 @@ class MultiBlock(vtkMultiBlockDataSet):
 
         # get bounds for each block and update
         for i in range(self.n_blocks):
-            try:
-                bnds = self[i].GetBounds()
-                for a in range(3):
-                    bounds = update_bounds(a, bnds, bounds)
-            except AttributeError:
-                # Data object doesn't have bounds or is None
-                pass
+            if self[i] is None:
+                continue
+            bnds = self[i].bounds
+            for a in range(3):
+                bounds = update_bounds(a, bnds, bounds)
 
         return bounds
+
+
+    @property
+    def center(self):
+        """ Center of the bounding box """
+        return np.array(self.bounds).reshape(3,2).mean(axis=1)
+
+
+    @property
+    def length(self):
+        """the length of the diagonal of the bounding box"""
+        return pyvista.Box(self.bounds).length
 
 
     @property
@@ -187,6 +181,23 @@ class MultiBlock(vtkMultiBlockDataSet):
         """The total number of blocks set"""
         self.SetNumberOfBlocks(n)
         self.Modified()
+
+
+    @property
+    def volume(self):
+        """
+        Total volume of all meshes in this dataast
+
+        Returns
+        -------
+        volume : float
+            Total volume of the mesh.
+
+        """
+        volume = 0.0
+        for block in self:
+            volume += block.volume
+        return volume
 
 
     def get_data_range(self, name):
@@ -341,20 +352,31 @@ class MultiBlock(vtkMultiBlockDataSet):
         return data
 
 
-    ## TODO: I can't get this to work as expected
-    # def clean(self):
-    #     """This will remove any null blocks"""
-    #     nvalid = 0
-    #     for i in range(self.n_blocks):
-    #         print(i, type(self[i]), self[i], self.get_block_name(i))
-    #         if self[i] is None:
-    #             print('removing', i)
-    #             del self[i]
-    #         else:
-    #             nvalid += 1
-    #     #self.n_blocks = nvalid
-    #     print('nvalid', nvalid)
-    #     return
+    def clean(self, empty=True):
+        """This will remove any null blocks in place
+        Parameters
+        -----------
+        empty : bool
+            Remove any meshes that are empty as well (have zero points)
+        """
+        null_blocks = []
+        for i in range(self.n_blocks):
+            if isinstance(self[i], MultiBlock):
+                # Recursively move through nested structures
+                self[i].clean()
+                if self[i].n_blocks < 1:
+                    null_blocks.append(i)
+            elif self[i] is None:
+                null_blocks.append(i)
+            elif empty and self[i].n_points < 1:
+                null_blocks.append(i)
+        # Now remove the null/empty meshes
+        null_blocks = np.array(null_blocks, dtype=int)
+        for i in range(len(null_blocks)):
+            # Cast as int because windows is super annoying
+            del self[int(null_blocks[i])]
+            null_blocks -= 1
+        return
 
 
     def _get_attrs(self):

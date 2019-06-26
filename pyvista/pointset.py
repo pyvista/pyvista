@@ -1642,6 +1642,17 @@ class PolyData(vtkPolyData, PointSet):
         raise AttributeError('`delauney_2d` is deprecated because we made a '\
                              'spelling mistake. Please use `delaunay_2d`.')
 
+    def compute_arc_length(self):
+        """Computes the arc length over the length of the probed line.
+        It adds a new point-data array named "arc_length" with the computed arc
+        length for each of the polylines in the input. For all other cell types,
+        the arc length is set to 0.
+        """
+        alg = vtk.vtkAppendArcLength()
+        alg.SetInputData(self)
+        alg.Update()
+        return _get_output(alg)
+
 
 class PointGrid(PointSet):
     """ Class in common with structured and unstructured grids """

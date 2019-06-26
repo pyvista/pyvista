@@ -44,7 +44,8 @@ def Spline(points, n_points=None):
         u_res = points.shape[0]
 
     u_res -= 1
-    return surface_from_para(spline_function, u_res)
+    spline = surface_from_para(spline_function, u_res)
+    return spline.compute_arc_length()
 
 
 def ParametricBohemianDome(a=None, **kwargs):
@@ -54,7 +55,7 @@ def ParametricBohemianDome(a=None, **kwargs):
     ----------
     a : double, optional
         Construct a Bohemian dome surface with the following parameters:
-     
+
     vtkGetMacro(A, double);
 
     Returns
@@ -112,11 +113,11 @@ def ParametricBour(**kwargs):
 
 def ParametricBoy(zscale=None, **kwargs):
     """Generate Boy's surface.
- 
+
     ParametricBoy generates Boy's surface.
     This is a Model of the projective plane without singularities.
     It was found by Werner Boy on assignment from David Hilbert.
- 
+
     For further information about this surface, please consult the
     technical description "Parametric surfaces" in http:www.vtk.orgpublications
     in the "VTK Technical Documents" section in the VTk.org web pages.
@@ -154,7 +155,7 @@ def ParametricBoy(zscale=None, **kwargs):
 
 def ParametricCatalanMinimal(**kwargs):
     """Generate Catalan's minimal surface.
- 
+
     ParametricCatalanMinimal generates Catalan's minimal surface
     parametrically. This minimal surface contains the cycloid as a
     geodesic.
@@ -586,7 +587,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
     ----------
     n : int, optional
         This is the number of folds in the conoid.
-     
+
     vtkGetMacro(N, int);
 
     Returns
@@ -616,7 +617,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
 
 def ParametricPseudosphere(**kwargs):
     """Generate a pseudosphere.
- 
+
     ParametricPseudosphere generates a parametric pseudosphere. The
     pseudosphere is generated as a surface of revolution of the
     tractrix about it's asymptote, and is a surface of constant

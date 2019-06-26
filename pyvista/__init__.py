@@ -6,7 +6,7 @@ from pyvista.errors import *
 from pyvista.readers import *
 from pyvista.colors import *
 from pyvista.features import *
-from pyvista.filters import DataSetFilters
+from pyvista.filters import DataSetFilters, CompositeFilters
 from pyvista.common import Common
 from pyvista.pointset import PointGrid
 from pyvista.pointset import PolyData
@@ -16,8 +16,8 @@ from pyvista.grid import Grid
 from pyvista.grid import RectilinearGrid
 from pyvista.grid import UniformGrid
 from pyvista.geometric_objects import *
-from pyvista.parametric_geometry import *
-from pyvista.container import MultiBlock
+from pyvista.parametric_objects import *
+from pyvista.composite import MultiBlock
 from pyvista.qt_plotting import QtInteractor
 from pyvista.qt_plotting import BackgroundPlotter
 from pyvista.export import export_plotter_vtkjs, get_vtkjs_url

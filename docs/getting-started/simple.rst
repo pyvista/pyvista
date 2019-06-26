@@ -82,7 +82,7 @@ First, check out some common meta data properties:
 
 
 Access the points by fetching the ``.points`` attribute on any
-PyVista data object:
+PyVista data object as a NumPy array:
 
 .. code-block:: python
 
@@ -90,22 +90,26 @@ PyVista data object:
     >>> isinstance(the_pts, np.ndarray)
     True
 
-Accessing the different data attributes on the points and cells of the data
-object is interfaces via dictionaries with callbacks to the VTK object.
+
+Accessing the different data attributes on the nodes and cells of the data
+object is interfaced via dictionaries with callbacks to the VTK object.
 These dictionaries of the different point and cell arrays can be directly
-accessed and modified.
+accessed and modified as NumPy arrays. In the example below, we load a dataset,
+access an array on that dataset, then add some more data:
 
 .. code-block:: python
 
     >>> data = examples.load_uniform()
-    >>> # Fetch a data array from the point data
+    >>> # Fetch a data array from the point data dictionary
     >>> arr = data.point_arrays['Spatial Point Data']
     >>> # Assign a new array to the cell data:
     >>> data.cell_arrays['foo'] = np.random.rand(data.n_cells)
     >>> # Don't remember if your array is point or cell data? Doesn't matter!
-    >>> foo = data.get_scalar('foo')
+    >>> foo = data['foo']
     >>> isinstance(foo, np.ndarray)
     True
+    >>> # Or maybe you just want to add an array where it fits
+    >>> data['new-array'] = np.random.rand(data.n_points)
 
 
 Plotting

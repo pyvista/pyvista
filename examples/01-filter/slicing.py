@@ -8,6 +8,7 @@ Extract thin planar slices from a volume
 import pyvista as pv
 from pyvista import examples
 import matplotlib.pyplot as plt
+import numpy as np
 
 ################################################################################
 # PyVista meshes have several slicing filters bound directly to all datasets.
@@ -61,3 +62,43 @@ p.show()
 slices = mesh.slice_along_axis(n=7, axis='y')
 
 slices.plot(cmap=cmap)
+
+
+################################################################################
+# Slice Along Line
+# ++++++++++++++++
+#
+# We can also slice a dataset along a :func:`pyvista.Spline` or
+# :func:`pyvista.Line` using the :func:`DataSetFilters.slice_along_line` filter.
+#
+# First, define a line source through a datset of interest. Please note
+# that this type of slicing is computationally expensive and might take a while
+# if there are a lot of points in the line - try to keep the resolution of
+# the line low.
+
+model = examples.load_channels()
+
+def path(y):
+    """Equation: x = a(y-h)^2 + k"""
+    a = 110.0 / 160.0**2
+    x = a*y**2 + 0.0
+    return x, y
+
+x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
+zo = np.linspace(9.0, 11.0, num=len(y))
+points = np.c_[x,y,zo]
+spline = pv.Spline(points, 15)
+print(spline)
+
+
+################################################################################
+# Then run the filter
+slc = model.slice_along_line(spline)
+print(slc)
+
+################################################################################
+
+p = pv.Plotter()
+p.add_mesh(slc)
+p.add_mesh(model.outline())
+p.show(cpos=[1,-1,1])

@@ -47,9 +47,10 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
     """A helper to get the algorithm's output and copy input's pyvista meta info"""
     ido = algorithm.GetInputDataObject(iport, iconnection)
     data = wrap(algorithm.GetOutputDataObject(oport))
-    data.copy_meta_from(ido)
-    if active_scalar is not None:
-        data.set_active_scalar(active_scalar, preference=active_scalar_field)
+    if not isinstance(data, pyvista.MultiBlock):
+        data.copy_meta_from(ido)
+        if active_scalar is not None:
+            data.set_active_scalar(active_scalar, preference=active_scalar_field)
     return data
 
 
@@ -101,6 +102,9 @@ class DataSetFilters(object):
         # run the clip
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
+        elif isinstance(dataset, vtk.vtkImageData):
+            alg = vtk.vtkClipVolume()
+            alg.SetMixed3DCellGeneration(True)
         else:
             alg = vtk.vtkClipDataSet()
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
@@ -183,8 +187,6 @@ class DataSetFilters(object):
         # find center of data if origin not specified
         if origin is None:
             origin = dataset.center
-        if not is_inside_bounds(origin, dataset.bounds):
-            raise AssertionError('Slice is outside data bounds.')
         # create the plane for clipping
         plane = _generate_plane(normal, origin)
         # create slice
@@ -203,7 +205,7 @@ class DataSetFilters(object):
     def slice_orthogonal(dataset, x=None, y=None, z=None,
                          generate_triangles=False, contour=False):
         """Creates three orthogonal slices through the dataset on the three
-        caresian planes. Yields a MutliBlock dataset of the three slices
+        caresian planes. Yields a MutliBlock dataset of the three slices.
 
         Parameters
         ----------
@@ -224,7 +226,6 @@ class DataSetFilters(object):
             If True, apply a ``contour`` filter after slicing
 
         """
-        output = pyvista.MultiBlock()
         # Create the three slices
         if x is None:
             x = dataset.center[0]
@@ -232,6 +233,13 @@ class DataSetFilters(object):
             y = dataset.center[1]
         if z is None:
             z = dataset.center[2]
+        output = pyvista.MultiBlock()
+        if isinstance(dataset, pyvista.MultiBlock):
+            for i in range(dataset.n_blocks):
+                output[i] = dataset[i].slice_orthogonal(x=x, y=y, z=z,
+                    generate_triangles=generate_triangles,
+                    contour=contour)
+            return output
         output[0, 'YZ'] = dataset.slice(normal='x', origin=[x,y,z], generate_triangles=generate_triangles)
         output[1, 'XZ'] = dataset.slice(normal='y', origin=[x,y,z], generate_triangles=generate_triangles)
         output[2, 'XY'] = dataset.slice(normal='z', origin=[x,y,z], generate_triangles=generate_triangles)
@@ -239,7 +247,8 @@ class DataSetFilters(object):
 
 
     def slice_along_axis(dataset, n=5, axis='x', tolerance=None,
-                         generate_triangles=False, contour=False):
+                         generate_triangles=False, contour=False,
+                         bounds=None, center=None):
         """Create many slices of the input dataset along a specified axis.
 
         Parameters
@@ -264,7 +273,6 @@ class DataSetFilters(object):
 
         """
         axes = {'x':0, 'y':1, 'z':2}
-        output = pyvista.MultiBlock()
         if isinstance(axis, int):
             ax = axis
             axis = list(axes.keys())[list(axes.values()).index(ax)]
@@ -274,16 +282,66 @@ class DataSetFilters(object):
             except KeyError:
                 raise RuntimeError('Axis ({}) not understood'.format(axis))
         # get the locations along that axis
+        if bounds is None:
+            bounds = dataset.bounds
+        if center is None:
+            center = dataset.center
         if tolerance is None:
-            tolerance = (dataset.bounds[ax*2+1] - dataset.bounds[ax*2]) * 0.01
-        rng = np.linspace(dataset.bounds[ax*2]+tolerance, dataset.bounds[ax*2+1]-tolerance, n)
-        center = list(dataset.center)
+            tolerance = (bounds[ax*2+1] - bounds[ax*2]) * 0.01
+        rng = np.linspace(bounds[ax*2]+tolerance, bounds[ax*2+1]-tolerance, n)
+        center = list(center)
         # Make each of the slices
+        output = pyvista.MultiBlock()
+        if isinstance(dataset, pyvista.MultiBlock):
+            for i in range(dataset.n_blocks):
+                output[i] = dataset[i].slice_along_axis(n=n, axis=axis,
+                    tolerance=tolerance, generate_triangles=generate_triangles,
+                    contour=contour, bounds=bounds, center=center)
+            return output
         for i in range(n):
             center[ax] = rng[i]
             slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
                     generate_triangles=generate_triangles, contour=contour)
             output[i, 'slice%.2d'%i] = slc
+        return output
+
+
+    def slice_along_line(dataset, line, generate_triangles=False,
+              contour=False):
+        """Slices a dataset using a polyline/spline as the path. This also works
+        for lines generated with :func:`pyvista.Line`
+
+        Parameters
+        ----------
+        line : pyvista.PolyData
+            A PolyData object containing one single PolyLine cell.
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+        """
+        # check that we have a PolyLine cell in the input line
+        if line.GetNumberOfCells() != 1:
+            raise AssertionError('Input line must have only one cell.')
+        polyline = line.GetCell(0)
+        if not isinstance(polyline, vtk.vtkPolyLine):
+            raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
+        # Generate PolyPlane
+        polyplane = vtk.vtkPolyPlane()
+        polyplane.SetPolyLine(polyline)
+        # Create slice
+        alg = vtk.vtkCutter() # Construct the cutter object
+        alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
+        alg.SetCutFunction(polyplane) # the the cutter to use the poly planes
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+        alg.Update() # Perfrom the Cut
+        output = _get_output(alg)
+        if contour:
+            return output.contour()
         return output
 
 
@@ -716,7 +774,8 @@ class DataSetFilters(object):
         return output
 
 
-    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None):
+    def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
+              subset=None):
         """
         Copies a geometric representation (called a glyph) to every
         point in the input dataset.  The glyph may be oriented along
@@ -736,7 +795,20 @@ class DataSetFilters(object):
 
         geom : vtk.vtkDataSet
             The geometry to use for the glyph
+
+        subset : float, optional
+            Take a percentage subset of the mesh's points. Float value is
+            percent subset between 0 and 1.
         """
+        if subset is not None:
+            if subset <= 0.0 or subset > 1.0:
+                raise RuntimeError('subset must be a percentage between 0 and 1.')
+            ids = np.random.random_integers(low=0, high=dataset.n_points-1,
+                                    size=int(dataset.n_points * subset))
+            small = pyvista.PolyData(dataset.points[ids])
+            for name in dataset.point_arrays.keys():
+                small.point_arrays[name] = dataset.point_arrays[name][ids]
+            dataset = small
         if geom is None:
             arrow = vtk.vtkArrowSource()
             arrow.Update()
@@ -880,7 +952,10 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.SetPassCellData(pass_cell_data)
         alg.Update()
-        return _get_output(alg, active_scalar=dataset.active_scalar_name)
+        active_scalar = None
+        if not isinstance(dataset, pyvista.MultiBlock):
+            active_scalar = dataset.active_scalar_name
+        return _get_output(alg, active_scalar=active_scalar)
 
 
     def point_data_to_cell_data(dataset, pass_point_data=False):
@@ -899,7 +974,10 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.SetPassPointData(pass_point_data)
         alg.Update()
-        return _get_output(alg, active_scalar=dataset.active_scalar_name)
+        active_scalar = None
+        if not isinstance(dataset, pyvista.MultiBlock):
+            active_scalar = dataset.active_scalar_name
+        return _get_output(alg, active_scalar=active_scalar)
 
 
     def triangulate(dataset):
@@ -1364,3 +1442,114 @@ class DataSetFilters(object):
             plt.title(title)
         if show:
          return plt.show()
+
+
+
+class CompositeFilters(object):
+    """An internal class to manage filtes/algorithms for composite datasets.
+    """
+
+
+    def extract_geometry(composite):
+        """Combines the geomertry of all blocks into a single ``PolyData``
+        object. Place this filter at the end of a pipeline before a polydata
+        consumer such as a polydata mapper to extract geometry from all blocks
+        and append them to one polydata object.
+        """
+        gf = vtk.vtkCompositeDataGeometryFilter()
+        gf.SetInputData(composite)
+        gf.Update()
+        return wrap(gf.GetOutputDataObject(0))
+
+
+    def combine(composite, merge_points=False):
+        """Appends all blocks into a single unstructured grid.
+
+        Parameters
+        ----------
+        merge_points : bool, optional
+            Merge coincidental points.
+
+        """
+        alg = vtk.vtkAppendFilter()
+        for block in composite:
+            alg.AddInputData(block)
+        alg.SetMergePoints(merge_points)
+        alg.Update()
+        return wrap(alg.GetOutputDataObject(0))
+
+
+    clip = DataSetFilters.clip
+
+
+    clip_box = DataSetFilters.clip_box
+
+
+    slice = DataSetFilters.slice
+
+
+    slice_orthogonal = DataSetFilters.slice_orthogonal
+
+
+    slice_along_axis = DataSetFilters.slice_along_axis
+
+
+    slice_along_line = DataSetFilters.slice_along_line
+
+
+    wireframe = DataSetFilters.wireframe
+
+
+    elevation = DataSetFilters.elevation
+
+
+    compute_cell_sizes = DataSetFilters.compute_cell_sizes
+
+
+    cell_centers = DataSetFilters.cell_centers
+
+
+    cell_data_to_point_data = DataSetFilters.cell_data_to_point_data
+
+
+    point_data_to_cell_data = DataSetFilters.point_data_to_cell_data
+
+
+    triangulate = DataSetFilters.triangulate
+
+
+    def outline(composite, generate_faces=False, nested=False):
+        """Produces an outline of the full extent for the all blocks in this
+        composite dataset.
+
+        Parameters
+        ----------
+        generate_faces : bool, optional
+            Generate solid faces for the box. This is off by default
+
+        nested : bool, optional
+            If True, these creates individual outlines for each nested dataset
+        """
+        if nested:
+            return DataSetFilters.outline(composite, generate_faces=generate_faces)
+        box = pyvista.Box(bounds=composite.bounds)
+        return box.outline(generate_faces=generate_faces)
+
+
+    def outline_corners(composite, factor=0.2, nested=False):
+        """Produces an outline of the corners for the all blocks in this
+        composite dataset.
+
+        Parameters
+        ----------
+        factor : float, optional
+            controls the relative size of the corners to the length of the
+            corresponding bounds
+
+        ested : bool, optional
+            If True, these creates individual outlines for each nested dataset
+        """
+        if nested:
+            return DataSetFilters.outline_corners(composite, factor=factor)
+        box = pyvista.Box(bounds=composite.bounds)
+        return box.outline_corners(factor=factor)

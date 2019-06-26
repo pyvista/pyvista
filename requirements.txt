@@ -11,3 +11,5 @@ nbval
 ipywidgets
 imageio>=2.5.0
 imageio-ffmpeg
+colorcet
+cmocean
