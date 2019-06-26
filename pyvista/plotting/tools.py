@@ -109,7 +109,6 @@ def opacity_transfer_function(key, n_colors):
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
     transfer_func = {
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
-        'linear_r': np.linspace(0, 255, n_colors, dtype=np.uint8)[::-1],
         'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
         'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
         'sigmoid': sigmoid(np.linspace(-10.,10., n_colors)),
@@ -123,6 +122,12 @@ def opacity_transfer_function(key, n_colors):
         'sigmoid_10': sigmoid(np.linspace(-10.,10., n_colors)),
 
     }
+    transfer_func['linear_r'] = transfer_func['linear'][::-1]
+    transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
+    for i in range(3, 11):
+        k = 'sigmoid_{}'.format(i)
+        rk = '{}_r'.format(k)
+        transfer_func[rk] = transfer_func[k][::-1]
     try:
         return transfer_func[key]
     except KeyError:

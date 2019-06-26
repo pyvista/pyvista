@@ -5,6 +5,8 @@ Volume Rendering
 Volume render uniform mesh types like :class:`pyvista.UniformGrid` or 3D
 NumPy arrays
 """
+
+# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -30,6 +32,6 @@ vol.plot(volume=True, cmap='bone', cpos=cpos)
 # Note that here we use a non-default opacity mapping to a sigmoid:
 
 p = pv.Plotter()
-p.add_volume(vol, cmap='viridis', opacity='sigmoid')
+p.add_volume(vol, cmap='bone', opacity='sigmoid')
 p.camera_position = cpos
 p.show()
