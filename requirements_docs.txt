@@ -6,4 +6,4 @@ sphinxcontrib-websupport
 pytest-sphinx
 sphinx-notfound-page>=0.3.0
 sphinx-copybutton
-sphinx-gallery
+sphinx-gallery>=0.4.0
