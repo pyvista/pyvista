@@ -12,7 +12,6 @@ Tools
 
    geometric
    plotting
-   filters
    ipy_tools
    qt_plotting
    utilities

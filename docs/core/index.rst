@@ -1,10 +1,10 @@
-Data Types
-==========
+Core API
+========
 
 The `Visualization Toolkit`_ (VTK), developed by Kitware_, has many mesh data
 types that PyVista wraps.
-This chapter is intended to describe these different mesh types on the VTK
-side to help new users understand which data types to use.
+This chapter is intended to describe these different mesh types and how we wrap
+and implement each of those mesh types in VTK.
 
 .. _Visualization Toolkit: https://vtk.org
 .. _Kitware: https://www.kitware.com
@@ -18,3 +18,4 @@ side to help new users understand which data types to use.
    point-grids
    grids
    composite
+   filters
