@@ -18,6 +18,9 @@ vol = examples.download_knee_full()
 print(vol)
 
 ################################################################################
+# Simple Volume Render
+# ++++++++++++++++++++
+#
 
 # A nice camera position
 cpos = [(-381.74, -46.02, 216.54),
@@ -28,10 +31,38 @@ vol.plot(volume=True, cmap='bone', cpos=cpos)
 
 
 ################################################################################
+# Opacity Mappings
+# ++++++++++++++++
+#
 # Or use the :func:`pyvista.BasePlotter.add_volume` method like below.
 # Note that here we use a non-default opacity mapping to a sigmoid:
 
 p = pv.Plotter()
 p.add_volume(vol, cmap='bone', opacity='sigmoid')
 p.camera_position = cpos
+p.show()
+
+
+################################################################################
+# Cool Volume Examples
+# ++++++++++++++++++++
+#
+# Here are a few more cool colume rendering examples
+
+head = examples.download_head()
+
+p = pv.Plotter()
+p.add_volume(head, cmap='cool', opacity='sigmoid_6',)
+p.camera_position = [(-228., -418., -158.),
+                     (94.0, 122.0, 82.0),
+                     (-0.2, -0.3, 0.9)]
+p.show()
+
+################################################################################
+
+bolt_nut = examples.download_bolt_nut()
+
+p = pv.Plotter()
+p.add_volume(bolt_nut, cmap='coolwarm',
+             opacity='sigmoid_5',)
 p.show()
