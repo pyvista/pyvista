@@ -14,12 +14,12 @@ dataset. Simply call one of these tools on your object.
 
 .. rubric:: Attributes
 
-.. autoautosummary:: pyvista.ipy_tools.InteractiveTool
+.. autoautosummary:: pyvista.plotting.ipy_tools.InteractiveTool
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: pyvista.ipy_tools.InteractiveTool
+.. autoautosummary:: pyvista.plotting.ipy_tools.InteractiveTool
    :methods:
 
 
