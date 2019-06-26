@@ -13,7 +13,6 @@ how all PyVista types have direct access to common VTK filters
 
 .. toctree::
    :maxdepth: 2
-   :hidden:
 
    common
    points

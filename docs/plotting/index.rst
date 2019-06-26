@@ -6,7 +6,6 @@ Plotting
 
 .. toctree::
    :maxdepth: 2
-   :hidden:
 
    plotting
    ipy_tools
