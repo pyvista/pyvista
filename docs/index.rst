@@ -185,7 +185,7 @@ Highlights of the API include:
 
    core/index
    plotting/index
-   tools/index
+   utilities/index
 
 
 

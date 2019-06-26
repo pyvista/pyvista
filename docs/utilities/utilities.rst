@@ -1,5 +1,5 @@
-Utilities
----------
+General Utilities
+-----------------
 
 .. automodule:: pyvista.utilities
 
