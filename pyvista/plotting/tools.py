@@ -1,4 +1,3 @@
-import ctypes
 import os
 from subprocess import PIPE, Popen
 
@@ -31,16 +30,6 @@ def system_supports_plotting():
         return p.returncode == 0
     except:
         return False
-
-
-def single_triangle():
-    """ A single PolyData triangle """
-    points = np.zeros((3, 3))
-    points[1] = [1, 0, 0]
-    points[2] = [0.5, 0.707, 0]
-    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
-    return pyvista.PolyData(points, cells)
-
 
 
 def create_axes_orientation_box(line_width=1, text_scale=0.366667,

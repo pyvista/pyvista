@@ -814,7 +814,7 @@ class BasePlotter(object):
         if label:
             if not isinstance(label, str):
                 raise AssertionError('Label must be a string')
-            geom = single_triangle()
+            geom = pyvista.single_triangle()
             if scalars is not None:
                 geom = pyvista.Box()
                 rgb_color = parse_color('black')
@@ -2637,7 +2637,7 @@ class BasePlotter(object):
 
         else:
             self.legend.SetNumberOfEntries(len(labels))
-            legendface = single_triangle()
+            legendface = pyvista.single_triangle()
             for i, (text, color) in enumerate(labels):
                 self.legend.SetEntry(i, legendface, text, parse_color(color))
 

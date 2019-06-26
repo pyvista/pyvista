@@ -1,3 +1,4 @@
+import ctypes
 import numpy as np
 
 import pyvista
@@ -42,3 +43,12 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]
     return image
+
+
+def single_triangle():
+    """ A single PolyData triangle """
+    points = np.zeros((3, 3))
+    points[1] = [1, 0, 0]
+    points[2] = [0.5, 0.707, 0]
+    cells = np.array([[3, 0, 1, 2]], ctypes.c_long)
+    return pyvista.PolyData(points, cells)
