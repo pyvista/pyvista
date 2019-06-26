@@ -79,6 +79,7 @@ p.add_mesh(outline, color='k')
 p.add_mesh(glyphs, show_scalar_bar=False)
 p.camera_position = [-2,5,3]
 
+p.link_views()
 p.show()
 
 ################################################################################
