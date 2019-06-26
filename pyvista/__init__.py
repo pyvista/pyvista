@@ -7,6 +7,7 @@ from pyvista.core import *
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 import numpy as np
+import scooby
 import vtk
 
 # get the int type from vtk
@@ -60,11 +61,13 @@ try:
         rcParams['use_panel'] = True
 except KeyError:
     pass
-try:
-    import panel
-    panel.extension('vtk')
-except ImportError:
-    pass
+# Only initialize panel if in a Jupyter environment
+if scooby.in_jupyter():
+    try:
+        import panel
+        panel.extension('vtk')
+    except ImportError:
+        pass
 
 # Set preferred plot theme
 try:
@@ -76,3 +79,27 @@ except KeyError:
 
 # Set a parameter to control default print format for floats
 FLOAT_FORMAT = "{:.3e}"
+
+
+def generate_report(additional=None, ncol=3, text_width=54):
+    """Generate an environment report using :module:`scooby`
+
+    Parameters
+    ----------
+    additional : list(ModuleType), list(str)
+        List of packages or package names to add to output information.
+
+    ncol : int, optional
+        Number of package-columns in html table; only has effect if
+        ``mode='HTML'`` or ``mode='html'``. Defaults to 3.
+
+    text_width : int, optional
+        The text width for non-HTML display modes
+
+    """
+    core = ['vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+    optional = ['matplotlib', ]
+    report = scooby.investigate(core=core, optional=optional, 
+                                additional=additional, ncol=ncol,
+                                text_width=text_width)
+    return report

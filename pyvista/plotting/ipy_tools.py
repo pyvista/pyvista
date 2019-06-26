@@ -14,11 +14,11 @@ import collections
 import logging
 
 import numpy as np
+import scooby
 
 import pyvista
 from pyvista.utilities import is_pyvista_obj, wrap
 
-from .plotting import run_from_ipython
 from .qt_plotting import BackgroundPlotter
 
 
@@ -29,7 +29,7 @@ class ScaledPlotter(BackgroundPlotter):
     """
     def __init__(self, xscale=1.0, yscale=1.0, zscale=1.0, show=True, app=None,
                  continuous_update=False, **kwargs):
-        if not run_from_ipython() or not IPY_AVAILABLE:
+        if not scooby.in_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         BackgroundPlotter.__init__(self, show=show, app=app, **kwargs)
         # Now set up the IPython scaling widgets
@@ -79,7 +79,7 @@ class InteractiveTool(object):
                  show_bounds=False, reset_camera=True, outline=None,
                  display_params=None, default_params=None,
                  continuous_update=False, clean=True, **kwargs):
-        if not run_from_ipython() or not IPY_AVAILABLE:
+        if not scooby.in_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
         if not is_pyvista_obj(dataset):

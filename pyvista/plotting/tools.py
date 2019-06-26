@@ -127,12 +127,3 @@ def opacity_transfer_function(key, n_colors):
         return transfer_func[key]
     except KeyError:
         raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
-
-
-def run_from_ipython():
-    """ returns True when run from IPython """
-    try:
-        py = __IPYTHON__
-        return True
-    except NameError:
-        return False

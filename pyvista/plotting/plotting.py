@@ -9,6 +9,7 @@ from threading import Thread
 
 import imageio
 import numpy as np
+import scooby
 import vtk
 from vtk.util import numpy_support as VN
 
@@ -2897,11 +2898,7 @@ class Plotter(BasePlotter):
             off_screen = pyvista.OFF_SCREEN
 
         if notebook is None:
-            if run_from_ipython():
-                try:
-                    notebook = type(get_ipython()).__module__.startswith('ipykernel.')
-                except NameError:
-                    pass
+            notebook = scooby.in_jupyter()
 
         self.notebook = notebook
         if self.notebook:

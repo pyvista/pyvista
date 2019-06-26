@@ -71,11 +71,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     """
     if notebook is None:
-        if run_from_ipython():
-            try:
-                notebook = type(get_ipython()).__module__.startswith('ipykernel.')
-            except NameError:
-                pass
+        notebook = scooby.in_jupyter()
 
     if notebook:
         off_screen = notebook

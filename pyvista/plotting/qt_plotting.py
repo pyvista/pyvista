@@ -4,10 +4,12 @@ import time
 from threading import Thread
 
 import numpy as np
+import scooby
 import vtk
 import vtk.qt
 
-from pyvista.plotting import BasePlotter, rcParams, run_from_ipython
+from .plotting import BasePlotter
+from .theme import rcParams
 
 # for display bugs due to older intel integrated GPUs
 vtk.qt.QVTKRWIBase = 'QGLWidget'
@@ -331,7 +333,7 @@ class BackgroundPlotter(QtInteractor):
         kwargs.pop('notebook', None)
 
         # ipython magic
-        if run_from_ipython():  # pragma: no cover
+        if scooby.in_ipython():  # pragma: no cover
             from IPython import get_ipython
             ipython = get_ipython()
             ipython.magic('gui qt')
