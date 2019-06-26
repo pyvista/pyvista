@@ -486,29 +486,14 @@ class BasePlotter(object):
         actor: vtk.vtkActor
             VTK actor of the mesh.
         """
-        if scalar_bar_args is None:
-            scalar_bar_args = {}
-
-        if isinstance(mesh, np.ndarray):
-            mesh = pyvista.PolyData(mesh)
-            style = 'points'
-
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_obj(mesh):
             mesh = wrap(mesh)
 
-        # Compute surface normals if using smooth shading
-        if smooth_shading:
-            # extract surface if mesh is exterior
-            if isinstance(mesh, (pyvista.UnstructuredGrid, pyvista.StructuredGrid)):
-                grid = mesh
-                mesh = grid.extract_surface()
-                ind = mesh.point_arrays['vtkOriginalPointIds']
-                # remap scalars
-                if scalars is not None:
-                    scalars = scalars[ind]
+        ##### Parse arguments to be used for all meshes #####
 
-            mesh.compute_normals(cell_normals=False, inplace=True)
+        if scalar_bar_args is None:
+            scalar_bar_args = {}
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
@@ -530,6 +515,8 @@ class BasePlotter(object):
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+
+        ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
             self.remove_actor(name, reset_camera=reset_camera)
@@ -606,6 +593,21 @@ class BasePlotter(object):
                     self.camera_set = False
                     self.reset_camera()
             return actors
+
+        ##### Plot a single PyVista mesh #####
+
+        # Compute surface normals if using smooth shading
+        if smooth_shading:
+            # extract surface if mesh is exterior
+            if isinstance(mesh, (pyvista.UnstructuredGrid, pyvista.StructuredGrid)):
+                grid = mesh
+                mesh = grid.extract_surface()
+                ind = mesh.point_arrays['vtkOriginalPointIds']
+                # remap scalars
+                if scalars is not None:
+                    scalars = scalars[ind]
+
+            mesh.compute_normals(cell_normals=False, inplace=True)
 
         if nan_color is None:
             nan_color = rcParams['nan_color']
@@ -831,13 +833,15 @@ class BasePlotter(object):
 
         return actor
 
-    def add_volume(self, data, resolution=None, opacity='linear', n_colors=256,
-                   cmap=None, flip_scalars=False, reset_camera=None, name=None,
-                   ambient=0.0, categories=False, loc=None, backface_culling=False,
-                   multi_colors=False, blending='additive', mapper='fixed_point',
-                   rng=None, **kwargs):
+
+    def add_volume(self, volume, scalars=None, resolution=None,
+                   opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
+                   reset_camera=None, name=None, ambient=0.0, categories=False,
+                   loc=None, backface_culling=False, multi_colors=False,
+                   blending='additive', mapper='fixed_point', rng=None,
+                   stitle=None, **kwargs):
         """
-        Adds a volume, rendered using a fixed point ray cast mapper.
+        Adds a volume, rendered using a fixed point ray cast mapper by default.
 
         Requires a 3D numpy.ndarray or pyvista.UniformGrid.
 
@@ -905,38 +909,40 @@ class BasePlotter(object):
             VTK volume of the input data.
         """
 
+        # Handle default arguments
+
+        if name is None:
+            name = '{}({})'.format(type(volume).__name__, str(hex(id(volume))))
+
         if rng is None:
             rng = kwargs.get('clim', None)
 
-        if isinstance(data, vtk.vtkImageData):
-            data = pyvista.wrap(data)
+        # Convert the VTK data object to a pyvista wrapped object if neccessary
+        if not is_pyvista_obj(volume):
+            if isinstance(volume, np.ndarray):
+                volume = wrap(volume)
+                if resolution is None:
+                    resolution = [1,1,1]
+                elif len(resolution) != 3:
+                    raise ValueError('Invalid resolution dimensions.')
+                volume.spacing = resolution
+            else:
+                volume = wrap(volume)
         else:
-            data = data.copy()
+            # HACK: Make a copy so the original object is not altered
+            volume = volume.copy()
 
-        # Make checks for types and dimensionality
-        if isinstance(data, np.ndarray):
-            if not data.ndim == 3:
-                raise ValueError('Input array must be 3D.')
-            if resolution is None:
-                resolution = [1,1,1]
-            elif len(resolution) != 3:
-                raise ValueError('Invalid resolution dimensions.')
-        elif isinstance(data, pyvista.UniformGrid):
-            if resolution is None:
-                resolution = data.GetSpacing()
-            extent = np.array(data.GetExtent()[1::2]) + 1
-            data = VN.vtk_to_numpy(data.GetPointData().GetArray(0))
-            data = data.reshape(extent, order='F')
-        elif isinstance(data, pyvista.MultiBlock):
+
+        if isinstance(volume, pyvista.MultiBlock):
             # Now iteratively plot each element of the multiblock dataset
             actors = []
-            for idx in range(data.GetNumberOfBlocks()):
-                if data[idx] is None:
+            for idx in range(volume.GetNumberOfBlocks()):
+                if volume[idx] is None:
                     continue
                 # Get a good name to use
                 next_name = '{}-{}'.format(name, idx)
                 # Get the data object
-                block = wrap(data.GetBlock(idx))
+                block = wrap(volume.GetBlock(idx))
                 if resolution is None:
                     block_resolution = block.GetSpacing()
                 else:
@@ -955,38 +961,83 @@ class BasePlotter(object):
 
                 actors.append(a)
             return actors
+
+
+        if scalars is None:
+            # Make sure scalar components are not vectors/tuples
+            scalars = volume.active_scalar
+            # Don't allow plotting of string arrays by default
+            if scalars is not None and np.issubdtype(scalars.dtype, np.number):
+                if stitle is None:
+                    stitle = volume.active_scalar_info[1]
+            else:
+                raise RuntimeError('No scalars to use for volume rendering.')
+        elif isinstance(scalars, str):
+            pass
+
+        ##############
+
+        title = 'Data' if stitle is None else stitle
+        append_scalars = False
+        if isinstance(scalars, str):
+            title = scalars
+            scalars = get_scalar(volume, scalars,
+                    preference=kwargs.get('preference', 'point'), err=True)
+            if stitle is None:
+                stitle = title
         else:
-            raise TypeError('Data type {} is not valid.'.format(type(data)))
+            append_scalars = True
 
-        if name is None:
-            name = '{}({})'.format(type(data).__name__, str(hex(id(data))))
+        if not isinstance(scalars, np.ndarray):
+            scalars = np.asarray(scalars)
 
-        # Set main values
+        if not np.issubdtype(scalars.dtype, np.number):
+            raise TypeError('Non-numeric scalars are currently not supported for plotting.')
+
+
+        if scalars.ndim != 1:
+            scalars = scalars.ravel()
+
+        if scalars.dtype == np.bool or scalars.dtype == np.uint8:
+            scalars = scalars.astype(np.float)
+
+        # Define mapper, volume, and add the correct properties
+        mappers = {
+            'fixed_point' : vtk.vtkFixedPointVolumeRayCastMapper,
+            'gpu' : vtk.vtkGPUVolumeRayCastMapper,
+            'open_gl' : vtk.vtkOpenGLGPUVolumeRayCastMapper,
+            'smart' : vtk.vtkSmartVolumeMapper,
+        }
+        if not isinstance(mapper, str) or mapper not in mappers.keys():
+            raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
+        self.mapper = mappers[mapper]()
+
+        # Scalar interpolation approach
+        if scalars.shape[0] == volume.n_points:
+            volume._add_point_scalar(scalars, title, append_scalars)
+            self.mapper.SetScalarModeToUsePointData()
+        elif scalars.shape[0] == volume.n_cells:
+            volume._add_cell_scalar(scalars, title, append_scalars)
+            self.mapper.SetScalarModeToUseCellData()
+        else:
+            raise_not_matching(scalars, volume)
+
+        # Set scalar range
         if rng is None:
-            rng = [np.nanmin(data), np.nanmax(data)]
+            rng = [np.nanmin(scalars), np.nanmax(scalars)]
         elif isinstance(rng, float) or isinstance(rng, int):
             rng = [-rng, rng]
-        data = data.astype(np.float)
-        idxs0 = data < rng[0]
-        idxs1 = data > rng[1]
-        data[idxs0] = np.nan
-        data[idxs1] = np.nan
-        data = ((data - np.nanmin(data)) / (np.nanmax(data) - np.nanmin(data))) * 255
-        data = data.astype(np.uint8)
 
-        # Import data from array into VTK
-        data_importer = vtk.vtkImageImport()
-        data_string = data.tostring(order='F') # Python-C array ordering differences
-        data_importer.CopyImportVoidPointer(data_string, len(data_string))
+        ###############
 
-        data_importer.SetDataScalarTypeToUnsignedChar()
-        data_importer.SetNumberOfScalarComponents(1)
-
-        # Set spatial aspects of image
-        d, w, h = data.shape
-        data_importer.SetDataExtent(0, d - 1, 0, w - 1, 0, h - 1)
-        data_importer.SetWholeExtent(0, d - 1, 0, w - 1, 0, h - 1)
-        data_importer.SetDataSpacing(resolution)
+        scalars = scalars.astype(np.float)
+        idxs0 = scalars < rng[0]
+        idxs1 = scalars > rng[1]
+        scalars[idxs0] = np.nan
+        scalars[idxs1] = np.nan
+        scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
+        scalars = scalars.astype(np.uint8)
+        volume[title] = scalars
 
         # Set colormap
         if cmap is None: # grab alias for cmaps: colormap
@@ -1027,17 +1078,7 @@ class BasePlotter(object):
         for ii in range(n_colors):
             opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
 
-        # Define mapper, volume, and add the correct properties
-        mappers = {
-            'fixed_point' : vtk.vtkFixedPointVolumeRayCastMapper,
-            'gpu' : vtk.vtkGPUVolumeRayCastMapper,
-            'open_gl' : vtk.vtkOpenGLGPUVolumeRayCastMapper,
-            'smart' : vtk.vtkSmartVolumeMapper,
-        }
-        if not isinstance(mapper, str) or mapper not in mappers.keys():
-            raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
-        self.mapper = vtk.vtkFixedPointVolumeRayCastMapper()
-        self.mapper.SetInputConnection(data_importer.GetOutputPort())
+        self.mapper.SetInputData(volume)
 
         blending = blending.lower()
         if blending in ['additive', 'add', 'sum']:

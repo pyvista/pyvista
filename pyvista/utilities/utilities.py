@@ -356,6 +356,7 @@ def wrap(vtkdataset):
         elif vtkdataset.ndim == 3:
             mesh = pyvista.UniformGrid(vtkdataset.shape)
             mesh['values'] = vtkdataset.ravel(order='F')
+            mesh.active_scalar_name = 'values'
             return mesh
         else:
             raise NotImplementedError('NumPy array could not be converted to PyVista.')
