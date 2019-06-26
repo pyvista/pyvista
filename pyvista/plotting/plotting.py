@@ -19,6 +19,7 @@ from pyvista.utilities import (convert_array, get_scalar, is_pyvista_obj,
 
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
+from .mapper import make_mapper
 from .theme import *
 from .tools import *
 
@@ -621,7 +622,7 @@ class BasePlotter(object):
 
         # set main values
         self.mesh = mesh
-        self.mapper = vtk.vtkDataSetMapper()
+        self.mapper = make_mapper(vtk.vtkDataSetMapper)
         self.mapper.SetInputData(self.mesh)
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
@@ -732,7 +733,7 @@ class BasePlotter(object):
                 rng = [-rng, rng]
 
             if np.any(rng) and not rgb:
-                self.mapper.SetScalarRange(rng[0], rng[1])
+                self.mapper.scalar_range = rng[0], rng[1]
             elif rgb:
                 self.mapper.SetColorModeToDirectScalars()
 
@@ -839,7 +840,8 @@ class BasePlotter(object):
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    loc=None, backface_culling=False, multi_colors=False,
                    blending='additive', mapper='fixed_point', rng=None,
-                   stitle=None, **kwargs):
+                   stitle=None, scalar_bar_args=None,
+                   show_scalar_bar=None, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -916,6 +918,12 @@ class BasePlotter(object):
 
         if rng is None:
             rng = kwargs.get('clim', None)
+
+        if scalar_bar_args is None:
+            scalar_bar_args = {}
+
+        if show_scalar_bar is None:
+            show_scalar_bar = rcParams['show_scalar_bar']
 
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_obj(volume):
@@ -1010,7 +1018,7 @@ class BasePlotter(object):
         }
         if not isinstance(mapper, str) or mapper not in mappers.keys():
             raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
-        self.mapper = mappers[mapper]()
+        self.mapper = make_mapper(mappers[mapper])
 
         # Scalar interpolation approach
         if scalars.shape[0] == volume.n_points:
@@ -1039,7 +1047,11 @@ class BasePlotter(object):
         scalars = scalars.astype(np.uint8)
         volume[title] = scalars
 
-        # Set colormap
+        self.mapper.scalar_range = rng
+
+        # Set colormap and build lookup table
+        table = vtk.vtkLookupTable()
+        # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
             if cmap is None: # Set default map if matplotlib is avaialble
@@ -1053,7 +1065,7 @@ class BasePlotter(object):
                 from matplotlib.cm import get_cmap
             except ImportError:
                 cmap = None
-                logging.warning('Please install matplotlib for color maps.')
+                raise RuntimeError('Please install matplotlib for volume rendering.')
         if cmap is not None:
             cmap = get_cmap_safe(cmap)
             if categories:
@@ -1063,6 +1075,7 @@ class BasePlotter(object):
                     n_colors = categories
         if flip_scalars:
             cmap = cmap.reversed()
+
 
         color_tf = vtk.vtkColorTransferFunction()
         for ii in range(n_colors):
@@ -1077,6 +1090,16 @@ class BasePlotter(object):
         opacity_tf = vtk.vtkPiecewiseFunction()
         for ii in range(n_colors):
             opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
+
+
+        # Now put color tf and opacity tf into a lookup table for the scalar bar
+        table.SetNumberOfTableValues(n_colors)
+        lut = cmap(np.array(range(n_colors))) * 255
+        lut[:,3] = opacity_values
+        lut = lut.astype(np.uint8)
+        table.SetTable(VN.numpy_to_vtk(lut))
+        table.SetRange(*rng)
+        self.mapper.lookup_table = table
 
         self.mapper.SetInputData(volume)
 
@@ -1109,6 +1132,12 @@ class BasePlotter(object):
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
                                      name=name, loc=loc, culling=backface_culling)
 
+
+        # Add scalar bar
+        if stitle is not None and show_scalar_bar:
+            self.add_scalar_bar(stitle, **scalar_bar_args)
+
+
         return actor
 
 
@@ -1130,13 +1159,17 @@ class BasePlotter(object):
         if name is None:
             if not hasattr(self, 'mapper'):
                 raise RuntimeError('This plotter does not have an active mapper.')
-            return self.mapper.SetScalarRange(*clim)
+            self.mappe.scalar_range = clim
+            return
+
         # Use the name to find the desired actor
-        def update_mapper(mapper):
-            return mapper.SetScalarRange(*clim)
+        def update_mapper(mapper_helper):
+            mapper_helper.scalar_range = clim
+            return
+
         try:
-            for m in self._scalar_bar_mappers[name]:
-                update_mapper(m)
+            for mh in self._scalar_bar_mappers[name]:
+                update_mapper(mh)
         except KeyError:
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
@@ -1759,7 +1792,7 @@ class BasePlotter(object):
 
         # check if maper exists
         if mapper is None:
-            if not hasattr(self, 'mapper'):
+            if self.mapper is None:
                 raise Exception('Mapper does not exist.  ' +
                                 'Add a mesh with scalars first.')
             mapper = self.mapper
@@ -1768,16 +1801,16 @@ class BasePlotter(object):
             # Check that this data hasn't already been plotted
             if title in list(self._scalar_bar_ranges.keys()):
                 rng = list(self._scalar_bar_ranges[title])
-                newrng = mapper.GetScalarRange()
+                newrng = mapper.scalar_range
                 oldmappers = self._scalar_bar_mappers[title]
                 # get max for range and reset everything
                 if newrng[0] < rng[0]:
                     rng[0] = newrng[0]
                 if newrng[1] > rng[1]:
                     rng[1] = newrng[1]
-                for m in oldmappers:
-                    m.SetScalarRange(rng[0], rng[1])
-                mapper.SetScalarRange(rng[0], rng[1])
+                for mh in oldmappers:
+                    mh.scalar_range = rng[0], rng[1]
+                mapper.scalar_range = rng[0], rng[1]
                 self._scalar_bar_mappers[title].append(mapper)
                 self._scalar_bar_ranges[title] = rng
                 # Color bar already present and ready to be used so returning
@@ -1815,7 +1848,7 @@ class BasePlotter(object):
 
         # Create scalar bar
         self.scalar_bar = vtk.vtkScalarBarActor()
-        self.scalar_bar.SetLookupTable(mapper.GetLookupTable())
+        self.scalar_bar.SetLookupTable(mapper.lookup_table)
         self.scalar_bar.SetNumberOfLabels(n_labels)
 
         # edit the size of the colorbar
@@ -1848,9 +1881,9 @@ class BasePlotter(object):
 
         # Set properties
         if title:
-            rng = mapper.GetScalarRange()
+            rng = self.mapper.scalar_range
             self._scalar_bar_ranges[title] = rng
-            self._scalar_bar_mappers[title] = [mapper]
+            self._scalar_bar_mappers[title] = [self.mapper]
 
             self.scalar_bar.SetTitle(title)
             title_text = self.scalar_bar.GetTitleTextProperty()
