@@ -1047,7 +1047,7 @@ class BasePlotter(object):
         scalars[idxs0] = np.nan
         scalars[idxs1] = np.nan
         scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
-        scalars = scalars.astype(np.uint8)
+        # scalars = scalars.astype(np.uint8)
         volume[title] = scalars
 
         self.mapper.scalar_range = rng
