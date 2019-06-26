@@ -184,6 +184,7 @@ Highlights of the API include:
    :hidden:
 
    core/index
+   plotting/index
    tools/index
 
 
