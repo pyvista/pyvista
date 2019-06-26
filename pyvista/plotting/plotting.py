@@ -970,6 +970,9 @@ class BasePlotter(object):
                 actors.append(a)
             return actors
 
+        if not isinstance(volume, pv.UniformGrid):
+            raise TypeError('Type ({}) not supported for volume rendering at this time. Use `pyvista.UniformGrid`.'
+
 
         if scalars is None:
             # Make sure scalar components are not vectors/tuples
