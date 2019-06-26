@@ -596,9 +596,10 @@ def test_image_properties():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_volume_rendering():
-    vol = examples.download_knee_full()
+    # Really just making sure no errors are thrown
+    vol = examples.load_uniform()
     vol.plot(off_screen=OFF_SCREEN, volume=True, opacity='linear')
 
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
-    plotter.add_volume(vol, opacity='sigmoid', mapper='smart')
+    plotter.add_volume(vol, opacity='sigmoid', cmap='jet', n_colors=15)
     plotter.show()
