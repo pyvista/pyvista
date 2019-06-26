@@ -350,6 +350,15 @@ def wrap(vtkdataset):
         key = vtkdataset.GetClassName()
     elif vtkdataset is None:
         return None
+    elif isinstance(vtkdataset, np.ndarray):
+        if vtkdataset.ndim > 1 and vtkdataset.shape[1] == 3:
+            return pyvista.PolyData(vtkdataset)
+        elif vtkdataset.ndim == 3:
+            mesh = pyvista.UniformGrid(vtkdataset.shape)
+            mesh['values'] = vtkdataset.ravel(order='F')
+            return mesh
+        else:
+            raise NotImplementedError('NumPy array could not be converted to PyVista.')
     else:
         raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
     try:
