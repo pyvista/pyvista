@@ -2762,7 +2762,9 @@ class BasePlotter(object):
             self.remove_actor(self.legend, reset_camera=False)
             self._render()
 
-    def enable_cell_picking(self, mesh=None, callback=None):
+    def enable_cell_picking(self, mesh=None, callback=None, show=True,
+                            style='wireframe', line_width=5, color='pink',
+                            **kwargs):
         """
         Enables picking of cells.  Press r to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
@@ -2779,7 +2781,13 @@ class BasePlotter(object):
         callback : function, optional
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
-            Default's to a function that will add a wireframe of the selection.
+
+        show : bool
+            Show the selection interactively
+
+        kwargs : optional
+            All remaining keyword arguments are used to control how the
+            selection is intereactively displayed
 
         """
         if hasattr(self, 'notebook') and self.notebook:
@@ -2790,15 +2798,6 @@ class BasePlotter(object):
                                 + 'or set it in this function')
             mesh = self.mesh
 
-        if callback is None:
-            def callback(selection):
-                # Use try incase selection is empty
-                try:
-                    self.add_mesh(selection, name='cell_picking_selection',
-                        style='wireframe',
-                        color='pink', line_width=5)
-                except RuntimeError:
-                    pass
 
         def pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
@@ -2807,6 +2806,14 @@ class BasePlotter(object):
             extract.SetImplicitFunction(picker.GetFrustum())
             extract.Update()
             self.picked_cells = pyvista.wrap(extract.GetOutput())
+
+            if show:
+                # Use try incase selection is empty
+                try:
+                    self.add_mesh(self.picked_cells, name='cell_picking_selection',
+                        style=style, color=color, line_width=line_width, **kwargs)
+                except RuntimeError:
+                    pass
 
             if callback is not None:
                 callback(self.picked_cells)
