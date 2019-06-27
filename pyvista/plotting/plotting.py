@@ -2072,7 +2072,10 @@ class BasePlotter(object):
             String name of the position or length 2 tuple of the pixelwise
             position to place the bottom left corner of the text box.
             Default is to find the top left corner of the renderering window
-            and place text box up there.
+            and place text box up there. Available position: ``'lower_left'``,
+            ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
+            ``'lower_edge'``, ``'upper_edge'``, ``'right_edge'``, and
+            ``'left_edge'``
 
         font : string, optional
             Font name may be courier, times, or arial
