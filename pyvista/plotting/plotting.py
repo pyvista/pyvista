@@ -3017,7 +3017,8 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=None, cpos=None):
+             screenshot=False, return_img=False, use_panel=None, cpos=None,
+             height=400):
         """
         Creates plotting window
 
@@ -3050,6 +3051,9 @@ class Plotter(BasePlotter):
 
         cpos : list(tuple(floats))
             The camera position to use
+
+        height : int, optional
+            height for panel pane. Only used with panel.
 
         Returns
         -------
@@ -3104,7 +3108,7 @@ class Plotter(BasePlotter):
             try:
                 from panel.pane import VTK as panel_display
                 disp = panel_display(self.ren_win, sizing_mode='stretch_width',
-                                     height=400)
+                                     height=height)
             except:
                 pass
         # NOTE: after this point, nothing from the render window can be accessed

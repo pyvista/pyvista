@@ -99,7 +99,7 @@ def generate_report(additional=None, ncol=3, text_width=54):
     """
     core = ['vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
     optional = ['matplotlib', ]
-    report = scooby.investigate(core=core, optional=optional, 
+    report = scooby.investigate(core=core, optional=optional,
                                 additional=additional, ncol=ncol,
                                 text_width=text_width)
     return report

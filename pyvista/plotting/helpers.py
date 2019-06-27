@@ -130,7 +130,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           full_screen=full_screen,
                           screenshot=screenshot,
                           return_img=return_img,
-                          use_panel=use_panel)
+                          use_panel=use_panel,
+                          height=kwargs.get('height', 400))
 
     # close and return camera position and maybe image
     plotter.close()
