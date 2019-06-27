@@ -2779,13 +2779,21 @@ class BasePlotter(object):
         callback : function, optional
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
+            Default's to a function that will add a wireframe of the selection.
 
         """
+        if self.notebook:
+            raise AssertionError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
                 raise Exception('Input a mesh into the Plotter class first or '
                                 + 'or set it in this function')
             mesh = self.mesh
+
+        if callback is None:
+            callback = lambda selection : self.add_mesh(selection,
+                name='cell_picking_selection', style='wireframe',
+                color='pink', line_width=5)
 
         def pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
@@ -2797,6 +2805,8 @@ class BasePlotter(object):
 
             if callback is not None:
                 callback(self.picked_cells)
+
+            # TODO: Deactivate selection tool
 
         area_picker = vtk.vtkAreaPicker()
         area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
