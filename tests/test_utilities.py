@@ -96,3 +96,8 @@ def test_get_sg_image_scraper():
     scraper = pyvista._get_sg_image_scraper()
     assert isinstance(scraper, pyvista.Scraper)
     assert callable(scraper)
+
+
+def test_voxelize():
+    # mesh = examples.load_airplane()
+    pass

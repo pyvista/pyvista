@@ -929,7 +929,9 @@ class DataSetFilters(object):
         alg.Update()
         output = _get_output(alg)
         if inplace:
-            dataset.points = output.points
+            if isinstance(dataset, (vtk.vtkImageData, vtk.vtkRectilinearGrid)):
+                raise TypeError("This filter cannot be applied inplace for this mesh type.")
+            dataset.overwrite(output)
             return
         return output
 
@@ -1071,7 +1073,10 @@ class DataSetFilters(object):
         alg.SetTolerance(tolerance)
         alg.SetCheckSurface(check_surface)
         alg.Update()
-        return _get_output(alg)
+        result = _get_output(alg)
+        out = dataset.copy()
+        out['SelectedPoints'] = result['SelectedPoints']
+        return out
 
 
 

@@ -197,6 +197,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
         """
         volume = 0.0
         for block in self:
+            if block is None:
+                continue
             volume += block.volume
         return volume
 

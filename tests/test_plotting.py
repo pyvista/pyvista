@@ -400,6 +400,7 @@ def test_scalars_by_name():
 def test_themes():
     pyvista.set_plot_theme('paraview')
     pyvista.set_plot_theme('document')
+    pyvista.set_plot_theme('night')
     pyvista.set_plot_theme('default')
 
 
@@ -603,3 +604,27 @@ def test_volume_rendering():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_volume(vol, opacity='sigmoid', cmap='jet', n_colors=15)
     plotter.show()
+
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_plot_compar_four():
+    # Really just making sure no errors are thrown
+    mesh = examples.load_uniform()
+    data_a = mesh.contour()
+    data_b = mesh.threshold_percent(0.5)
+    data_c = mesh.decimate_boundary(0.5)
+    data_d = mesh.glyph()
+    pyvista.plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs={'color':'w'},
+                      plotter_kwargs={'off_screen':OFF_SCREEN},)
+    return
+
+
+
+def test_plot_eye_dome_lighting():
+    mesh = examples.load_airplane()
+    mesh.plot(off_screen=OFF_SCREEN, eye_dome_lighting=True)
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.enable_eye_dome_lighting()
+    p.show()

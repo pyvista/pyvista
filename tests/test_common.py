@@ -515,3 +515,16 @@ def test_clear_arrays():
     assert grid.n_arrays == 3
     grid.clear_arrays()
     assert grid.n_arrays == 0
+
+
+def test_scalars_dict_update():
+    mesh = examples.load_uniform()
+    n = len(mesh.point_arrays)
+    arrays = {
+        'foo' : np.arange(mesh.n_points),
+        'rand' : np.random.random(mesh.n_points)
+    }
+    mesh.point_arrays.update(arrays)
+    assert 'foo' in mesh.scalar_names
+    assert 'rand' in mesh.scalar_names
+    assert len(mesh.point_arrays) == n + 2

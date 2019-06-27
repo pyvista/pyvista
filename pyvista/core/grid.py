@@ -12,6 +12,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 
 from .common import Common
+from .filters import _get_output
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -566,3 +567,11 @@ class UniformGrid(vtkImageData, Grid):
         fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT]*3)
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs
+
+
+    def cast_to_structured_grid(self):
+        """Cast this unifrom grid to a :class:`pyvista.StructuredGrid`"""
+        alg = vtk.vtkImageToStructuredGrid()
+        alg.SetInputData(self)
+        alg.Update()
+        return _get_output(alg)

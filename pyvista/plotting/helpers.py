@@ -165,7 +165,7 @@ def plot_arrows(cent, direction, **kwargs):
 def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                       plotter_kwargs=None, show_kwargs=None, screenshot=None,
                       camera_position=None, outline=None, outline_color='k',
-                      labels=('A', 'B', 'C', 'D')):
+                      labels=('A', 'B', 'C', 'D'), link=True, notebook=None):
     """Plot a 2 by 2 comparison of data objects. Plotting parameters and camera
     positions will all be the same.
     """
@@ -179,6 +179,8 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
     if show_kwargs is None:
         show_kwargs = {}
 
+    plotter_kwargs['notebook'] = notebook
+
     p = pyvista.Plotter(shape=(2,2), **plotter_kwargs)
 
     for i in range(2):
@@ -190,5 +192,8 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                 p.add_mesh(outline, color=outline_color)
             if camera_position is not None:
                 p.camera_position = camera_position
+
+    if link:
+        p.link_views()
 
     return p.show(screenshot=screenshot, **show_kwargs)
