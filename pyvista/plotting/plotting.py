@@ -2058,7 +2058,7 @@ class BasePlotter(object):
             except BaseException:
                 pass
 
-    def add_text(self, text, position=None, font_size=50, color=None,
+    def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, loc=None):
         """
         Adds text to plot object in the top left corner by default
@@ -2068,10 +2068,11 @@ class BasePlotter(object):
         text : str
             The text to add the the rendering
 
-        position : tuple(float)
-            Length 2 tuple of the pixelwise position to place the bottom
-            left corner of the text box. Default is to find the top left corner
-            of the renderering window and place text box up there.
+        position : str, tuple(float)
+            String name of the position or length 2 tuple of the pixelwise
+            position to place the bottom left corner of the text box.
+            Default is to find the top left corner of the renderering window
+            and place text box up there.
 
         font : string, optional
             Font name may be courier, times, or arial
@@ -2107,13 +2108,47 @@ class BasePlotter(object):
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
 
-        self.textActor = vtk.vtkTextActor()
-        self.textActor.SetPosition(position)
-        self.textActor.GetTextProperty().SetFontSize(font_size)
+        corner_mappings = {
+            'lower_left' : vtk.vtkCornerAnnotation.LowerLeft,
+            'lower_right' : vtk.vtkCornerAnnotation.LowerRight,
+            'upper_left' : vtk.vtkCornerAnnotation.UpperLeft,
+            'upper_right' : vtk.vtkCornerAnnotation.UpperRight,
+            'lower_edge' : vtk.vtkCornerAnnotation.LowerEdge,
+            'upper_edge' : vtk.vtkCornerAnnotation.UpperEdge,
+            'left_edge' : vtk.vtkCornerAnnotation.LeftEdge,
+            'right_edge' : vtk.vtkCornerAnnotation.RightEdge,
+
+        }
+        corner_mappings['ll'] = corner_mappings['lower_left']
+        corner_mappings['lr'] = corner_mappings['lower_right']
+        corner_mappings['ul'] = corner_mappings['upper_left']
+        corner_mappings['ur'] = corner_mappings['upper_right']
+        corner_mappings['top'] = corner_mappings['upper_edge']
+        corner_mappings['bottom'] = corner_mappings['lower_edge']
+        corner_mappings['right'] = corner_mappings['right_edge']
+        corner_mappings['r'] = corner_mappings['right_edge']
+        corner_mappings['left'] = corner_mappings['left_edge']
+        corner_mappings['l'] = corner_mappings['left_edge']
+
+        if isinstance(position, (int, str, bool)):
+            if isinstance(position, str):
+                position = corner_mappings[position]
+            elif position == True:
+                position = corner_mappings['upper_left']
+            self.textActor = vtk.vtkCornerAnnotation()
+            # This is how you set the font size with this actor
+            self.textActor.SetLinearFontScaleFactor(font_size // 2)
+            self.textActor.SetText(position, text)
+        else:
+            self.textActor = vtk.vtkTextActor()
+            self.textActor.SetInput(text)
+            self.textActor.SetPosition(position)
+            self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
+
         self.textActor.GetTextProperty().SetColor(parse_color(color))
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
-        self.textActor.SetInput(text)
+
         self.add_actor(self.textActor, reset_camera=False, name=name, loc=loc)
         return self.textActor
 
