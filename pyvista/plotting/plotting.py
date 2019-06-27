@@ -2791,9 +2791,14 @@ class BasePlotter(object):
             mesh = self.mesh
 
         if callback is None:
-            callback = lambda selection : self.add_mesh(selection,
-                name='cell_picking_selection', style='wireframe',
-                color='pink', line_width=5)
+            def callback(selection):
+                # Use try incase selection is empty
+                try:
+                    self.add_mesh(selection, name='cell_picking_selection',
+                        style='wireframe',
+                        color='pink', line_width=5)
+                except RuntimeError:
+                    pass
 
         def pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
