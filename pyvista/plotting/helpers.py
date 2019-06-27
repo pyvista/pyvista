@@ -71,7 +71,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     """
     if notebook is None:
-        notebook = scooby.in_jupyter()
+        notebook = scooby.in_ipykernel()
 
     if notebook:
         off_screen = notebook

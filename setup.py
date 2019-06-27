@@ -21,7 +21,7 @@ with io_open(version_file, mode='r') as fd:
 install_requires = ['numpy',
                     'imageio',
                     'appdirs',
-                    'scooby',
+                    'scooby>=0.2.0',
                     ]
 
 # add vtk if not windows and 2.7

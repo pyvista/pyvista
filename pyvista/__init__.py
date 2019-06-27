@@ -62,7 +62,7 @@ try:
 except KeyError:
     pass
 # Only initialize panel if in a Jupyter environment
-if scooby.in_jupyter():
+if scooby.in_ipykernel():
     try:
         import panel
         panel.extension('vtk')
