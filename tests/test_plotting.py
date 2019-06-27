@@ -620,7 +620,7 @@ def test_plot_compar_four():
     return
 
 
-
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_eye_dome_lighting():
     mesh = examples.load_airplane()
     mesh.plot(off_screen=OFF_SCREEN, eye_dome_lighting=True)
