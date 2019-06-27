@@ -2782,7 +2782,7 @@ class BasePlotter(object):
             Default's to a function that will add a wireframe of the selection.
 
         """
-        if self.notebook:
+        if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
