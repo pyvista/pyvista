@@ -2785,8 +2785,9 @@ class BasePlotter(object):
         show : bool
             Show the selection interactively
 
-        show_message : bool
-            Show the message about how to use the cell picking tool
+        show_message : bool, str
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
 
         kwargs : optional
             All remaining keyword arguments are used to control how the
@@ -2831,8 +2832,9 @@ class BasePlotter(object):
 
         # Now add text about cell-selection
         if show_message:
-            message = "Press R to toggle selection tool"
-            self.add_text(message, font_size=font_size)
+            if show_message == True:
+                show_message = "Press R to toggle selection tool"
+            self.add_text(str(show_message), font_size=font_size)
         return
 
 
