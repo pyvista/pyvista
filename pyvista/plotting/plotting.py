@@ -2763,8 +2763,8 @@ class BasePlotter(object):
             self._render()
 
     def enable_cell_picking(self, mesh=None, callback=None, show=True,
-                            style='wireframe', line_width=5, color='pink',
-                            **kwargs):
+                            show_message=True, style='wireframe', line_width=5,
+                            color='pink', font_size=18, **kwargs):
         """
         Enables picking of cells.  Press r to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
@@ -2784,6 +2784,9 @@ class BasePlotter(object):
 
         show : bool
             Show the selection interactively
+
+        show_message : bool
+            Show the message about how to use the cell picking tool
 
         kwargs : optional
             All remaining keyword arguments are used to control how the
@@ -2825,6 +2828,12 @@ class BasePlotter(object):
 
         self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
+
+        # Now add text about cell-selection
+        if show_message:
+            message = "Press R to toggle selection tool"
+            self.add_text(message, font_size=font_size)
+        return
 
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
