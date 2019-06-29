@@ -97,7 +97,7 @@ def generate_report(additional=None, ncol=3, text_width=54):
         The text width for non-HTML display modes
 
     """
-    core = ['vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+    core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
     optional = ['matplotlib', ]
     report = scooby.investigate(core=core, optional=optional,
                                 additional=additional, ncol=ncol,
