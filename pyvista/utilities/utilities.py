@@ -9,6 +9,7 @@ import os
 
 import imageio
 import numpy as np
+import scooby
 import vtk
 import vtk.util.numpy_support as nps
 
@@ -455,3 +456,31 @@ def generate_plane(normal, origin):
     plane.SetNormal(normal)
     plane.SetOrigin(origin)
     return plane
+
+
+def generate_report(additional=None, ncol=3, text_width=54, sort=False):
+    """Generate an environment report using :module:`scooby`
+
+    Parameters
+    ----------
+    additional : list(ModuleType), list(str)
+        List of packages or package names to add to output information.
+
+    ncol : int, optional
+        Number of package-columns in html table; only has effect if
+        ``mode='HTML'`` or ``mode='html'``. Defaults to 3.
+
+    text_width : int, optional
+        The text width for non-HTML display modes
+
+    sort : bool, optional
+        Alphabetically sort the packages
+
+    """
+    core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+                'cmocean']
+    report = scooby.Report(core=core, optional=optional,
+                           additional=additional, ncol=ncol,
+                           text_width=text_width, sort=sort)
+    return report
