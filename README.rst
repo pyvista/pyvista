@@ -151,21 +151,23 @@ Authors
 Please take a look at the `contributors page`_ and the active `list of authors`_
 to learn more about the developers of PyVista.
 
-.. _contributors page: https://GitHub.com/pyvista/pyvista/graphs/contributors/
+.. _contributors page: https://github.com/pyvista/pyvista/graphs/contributors/
 .. _list of authors: http://docs.pyvista.org/authors
 
 
 Contributing
 ============
 
-We absolutely welcome contributions and we hope that this guide will facilitate
-an understanding of the PyVista code repository. It is important to note that
-the  PyVista software package is maintained on a volunteer basis and thus we
-need to foster a community that can support user questions and develop new
-features to make this software a useful tool for all users. To learn more about
-contributing to PyVista, please see the `Contributing Guide`_.
+We absolutely welcome contributions and we hope that our `Contributing Guide`_
+will facilitate your ability to make PyVista better. PyVista is mostly
+maintained on a volunteer basis and thus we need to foster a community that can
+support user questions and develop new features to make this software a useful
+tool for all users while encouraging every member of the commutinity to share
+their ideas. To learn more about contributing to PyVista, please see the
+`Contributing Guide`_ and our `Code of Conduct`_.
 
-.. _Contributing Guide: http://docs.pyvista.org/dev/contributing.html
+.. _Contributing Guide: https://github.com/pyvista/pyvista/blob/master/CONTRIBUTING.md
+.. _Code of Conduct: https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md
 
 
 Citing PyVista

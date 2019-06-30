@@ -1,13 +1,13 @@
 """
 .. _glyph_example:
 
-Plotting Glyphs
-~~~~~~~~~~~~~~~
+Plotting Glyphs (Vectors)
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-# sphinx_gallery_thumbnail_number = 1
+# sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
 import numpy as np
@@ -55,4 +55,26 @@ sphere.arrows.plot()
 p = pv.Plotter()
 p.add_mesh(sphere.arrows, lighting=False, stitle='Vector Magnitude')
 p.add_mesh(sphere, color='grey', ambient=0.6, opacity=0.5, show_edges=False)
+p.show()
+
+
+################################################################################
+# Subset of Glyphs
+# ++++++++++++++++
+#
+# Sometimes you might not want glyphs for every node in the input dataset. In
+# this case, you can choose to build glyphs for a subset of the input dataset
+# by using a percentage of the points. Using this percentage, a uniform
+# distribuiton is used to select points from the input dataset and use them for
+# glyphing.
+
+# Example dataset with normals
+mesh = examples.load_random_hills()
+
+# create a subset of arrows using the glyph filter
+arrows = mesh.glyph(scale='Normals', orient='Normals', subset=0.05)
+
+p = pv.Plotter()
+p.add_mesh(arrows, color='black')
+p.add_mesh(mesh, scalars='Elevation', cmap='terrain')
 p.show()
