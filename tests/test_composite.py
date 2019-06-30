@@ -57,6 +57,17 @@ def test_multi_block_init_dict():
     assert isinstance(multi.GetBlock(1), (pyvista.RectilinearGrid, pyvista.PolyData))
     assert multi.get_block_name(1) in ['grid','poly']
 
+
+def test_multi_block_keys():
+    data = dict()
+    data['grid'] = ex.load_rectilinear()
+    data['poly'] = ex.load_airplane()
+    multi = pyvista.MultiBlock(data)
+    assert len(multi.keys()) == 2
+    assert 'grid' in multi.keys()
+    assert 'poly' in multi.keys()
+
+
 def test_multi_block_init_list():
     data = [ex.load_rectilinear(), ex.load_airplane()]
     multi = pyvista.MultiBlock(data)
@@ -138,6 +149,8 @@ def test_mutli_block_clean():
     # now test a clean of the null values
     multi = pyvista.MultiBlock()
     multi[1, 'rect'] = ex.load_rectilinear()
+    multi[2, 'empty'] = pyvista.PolyData()
+    multi[3, 'mempty'] = pyvista.MultiBlock()
     multi[5, 'uni'] = ex.load_uniform()
     # perfromt he clean to remove all Null elements
     multi.clean()
@@ -147,6 +160,24 @@ def test_mutli_block_clean():
     assert isinstance(multi[1], pyvista.UniformGrid)
     assert multi.get_block_name(0) == 'rect'
     assert multi.get_block_name(1) == 'uni'
+    # Test a nested data struct
+    foo = pyvista.MultiBlock()
+    foo[3] = ex.load_ant()
+    assert foo.n_blocks == 4
+    multi = pyvista.MultiBlock()
+    multi[1, 'rect'] = ex.load_rectilinear()
+    multi[5, 'multi'] = foo
+    # perfromt he clean to remove all Null elements
+    assert multi.n_blocks == 6
+    multi.clean()
+    assert multi.n_blocks == 2
+    assert multi.GetNumberOfBlocks() == 2
+    assert isinstance(multi[0], pyvista.RectilinearGrid)
+    assert isinstance(multi[1], pyvista.MultiBlock)
+    assert multi.get_block_name(0) == 'rect'
+    assert multi.get_block_name(1) == 'multi'
+    assert foo.n_blocks == 1
+
 
 
 
@@ -161,6 +192,8 @@ def test_multi_block_repr():
     # Now check everything
     assert multi.n_blocks == 5
     assert multi._repr_html_() is not None
+    assert repr(multi) is not None
+    assert str(multi) is not None
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -246,6 +279,11 @@ def test_multi_block_copy():
     assert multi.n_blocks == 5 == newobj.n_blocks
     assert id(multi[0]) != id(newobj[0])
     assert id(multi[-1]) != id(newobj[-1])
+    # Now check shallow
+    newobj = multi.copy(deep=False)
+    assert multi.n_blocks == 5 == newobj.n_blocks
+    assert id(multi[0]) == id(newobj[0])
+    assert id(multi[-1]) == id(newobj[-1])
     return
 
 
@@ -266,3 +304,26 @@ def test_multi_block_negative_index():
     with pytest.raises(IndexError):
         foo = multi[-6]
     return
+
+
+
+def test_multi_block_volume():
+    multi = pyvista.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(None)
+    assert multi.volume
+
+
+def test_multi_block_length():
+    multi = pyvista.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(None)
+    assert multi.length

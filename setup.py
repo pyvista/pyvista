@@ -21,6 +21,7 @@ with io_open(version_file, mode='r') as fd:
 install_requires = ['numpy',
                     'imageio',
                     'appdirs',
+                    'scooby>=0.2.2',
                     ]
 
 # add vtk if not windows and 2.7
@@ -37,7 +38,8 @@ readme_file = os.path.join(filepath, 'README.rst')
 
 setup(
     name=package_name,
-    packages=[package_name, 'pyvista.examples'],
+    packages=[package_name, 'pyvista.examples', 'pyvista.core',
+              'pyvista.plotting', 'pyvista.utilities'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=open(readme_file).read(),

@@ -183,8 +183,9 @@ Highlights of the API include:
    :caption: API Reference
    :hidden:
 
-   types/index
-   tools/index
+   core/index
+   plotting/index
+   utilities/index
 
 
 

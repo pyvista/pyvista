@@ -2,39 +2,12 @@ import warnings
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
-from pyvista.errors import *
-from pyvista.readers import *
-from pyvista.colors import *
-from pyvista.features import *
-from pyvista.filters import DataSetFilters, CompositeFilters
-from pyvista.common import Common
-from pyvista.pointset import PointGrid
-from pyvista.pointset import PolyData
-from pyvista.pointset import UnstructuredGrid
-from pyvista.pointset import StructuredGrid
-from pyvista.grid import Grid
-from pyvista.grid import RectilinearGrid
-from pyvista.grid import UniformGrid
-from pyvista.geometric_objects import *
-from pyvista.parametric_objects import *
-from pyvista.composite import MultiBlock
-from pyvista.qt_plotting import QtInteractor
-from pyvista.qt_plotting import BackgroundPlotter
-from pyvista.export import export_plotter_vtkjs, get_vtkjs_url
-from pyvista.renderer import Renderer
-
-# IPython interactive tools
-from pyvista.ipy_tools import OrthogonalSlicer
-from pyvista.ipy_tools import ManySlicesAlongAxis
-from pyvista.ipy_tools import Threshold
-from pyvista.ipy_tools import Clip
-from pyvista.ipy_tools import ScaledPlotter
-from pyvista.ipy_tools import Isocontour
-
-# Sphinx-gallery tools
-from pyvista.sphinx_gallery import Scraper, _get_sg_image_scraper
+from pyvista.core import *
+# Per contract with Sphinx-Gallery, this method must be availabe at top level
+from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 import numpy as np
+import scooby
 import vtk
 
 # get the int type from vtk
@@ -88,11 +61,13 @@ try:
         rcParams['use_panel'] = True
 except KeyError:
     pass
-try:
-    import panel
-    panel.extension('vtk')
-except ImportError:
-    pass
+# Only initialize panel if in a Jupyter environment
+if scooby.in_ipykernel():
+    try:
+        import panel
+        panel.extension('vtk')
+    except ImportError:
+        pass
 
 # Set preferred plot theme
 try:
@@ -104,3 +79,31 @@ except KeyError:
 
 # Set a parameter to control default print format for floats
 FLOAT_FORMAT = "{:.3e}"
+
+
+def generate_report(additional=None, ncol=3, text_width=54, sort=False):
+    """Generate an environment report using :module:`scooby`
+
+    Parameters
+    ----------
+    additional : list(ModuleType), list(str)
+        List of packages or package names to add to output information.
+
+    ncol : int, optional
+        Number of package-columns in html table; only has effect if
+        ``mode='HTML'`` or ``mode='html'``. Defaults to 3.
+
+    text_width : int, optional
+        The text width for non-HTML display modes
+
+    sort : bool, optional
+        Alphabetically sort the packages
+
+    """
+    core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+                'cmocean']
+    report = scooby.investigate(core=core, optional=optional,
+                                additional=additional, ncol=ncol,
+                                text_width=text_width, sort=sort)
+    return report

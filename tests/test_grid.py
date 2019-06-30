@@ -321,6 +321,12 @@ def test_read_uniform_grid_from_file():
     assert grid.dimensions == [10, 10, 10]
 
 
+def test_cast_uniform_to_structured():
+    grid = examples.load_uniform()
+    structured = grid.cast_to_structured_grid()
+    assert structured.n_points == grid.n_points
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtr', 'vtk'])
 def test_save_rectilinear(extension, binary, tmpdir):
@@ -393,4 +399,3 @@ def test_grid_extract_selection_points():
 
     sub_grid = grid.extract_selection_points(range(100))
     assert sub_grid.n_cells > 1
-    

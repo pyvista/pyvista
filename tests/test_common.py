@@ -470,12 +470,12 @@ def set_cell_vectors():
 
 def test_axis_rotation_invalid():
     with pytest.raises(Exception):
-        pyvista.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.common.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.core.common.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
@@ -515,3 +515,16 @@ def test_clear_arrays():
     assert grid.n_arrays == 3
     grid.clear_arrays()
     assert grid.n_arrays == 0
+
+
+def test_scalars_dict_update():
+    mesh = examples.load_uniform()
+    n = len(mesh.point_arrays)
+    arrays = {
+        'foo' : np.arange(mesh.n_points),
+        'rand' : np.random.random(mesh.n_points)
+    }
+    mesh.point_arrays.update(arrays)
+    assert 'foo' in mesh.scalar_names
+    assert 'rand' in mesh.scalar_names
+    assert len(mesh.point_arrays) == n + 2

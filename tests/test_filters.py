@@ -52,6 +52,9 @@ def test_slice_filter():
         assert slc is not None
         assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
+    slc = dataset.slice(contour=True)
+    assert slc is not None
+    assert isinstance(slc, pyvista.PolyData)
     result = dataset.slice(origin=(10, 15, 15))
     assert result.n_points < 1
     # Now test composite data structures
@@ -312,6 +315,16 @@ def test_warp_by_scalar():
     data = examples.load_uniform()
     warped = data.warp_by_scalar()
     assert data.n_points == warped.n_points
+    warped = data.warp_by_scalar(scale_factor=3)
+    assert data.n_points == warped.n_points
+    warped = data.warp_by_scalar(normal=[1,1,3])
+    assert data.n_points == warped.n_points
+    # Test in place!
+    foo = examples.load_hexbeam()
+    warped = foo.warp_by_scalar()
+    foo.warp_by_scalar(inplace=True)
+    assert np.allclose(foo.points, warped.points)
+
 
 
 def test_cell_data_to_point_data():
@@ -387,16 +400,13 @@ def test_plot_over_line():
 
 def test_slice_along_line():
     model = examples.load_uniform()
-    def path(y):
-        """Equation: x = a(y-h)^2 + k"""
-        a = 0.5**2
-        x = a*y**2 + 0.0
-        return x, y
-    x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
-    zo = np.linspace(9.0, 11.0, num=len(y))
-    points = np.c_[x,y,zo]
-    spline = pyvista.Spline(points, 3)
+    n = 5
+    x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
+    points = np.c_[x,y,z]
+    spline = pyvista.Spline(points, n)
     slc = model.slice_along_line(spline)
+    assert slc.n_points > 0
+    slc = model.slice_along_line(spline, contour=True)
     assert slc.n_points > 0
     # Now check a simple line
     a = [model.bounds[0], model.bounds[2], model.bounds[4]]
@@ -417,3 +427,27 @@ def test_slice_along_line():
     line = pyvista.Line(a, b, resolution=10)
     output = COMPOSITE.slice_along_line(line)
     assert output.n_blocks == COMPOSITE.n_blocks
+
+
+def test_interpolate():
+    surface = examples.download_saddle_surface()
+    points = examples.download_sparse_points()
+    # Run the interpolation
+    interpolated = surface.interpolate(points, radius=12.0)
+    assert interpolated.n_points
+    assert interpolated.n_arrays
+
+
+def test_select_enclosed_points():
+    mesh = examples.load_uniform()
+    surf = pyvista.Sphere(center=mesh.center, radius=mesh.length/2.)
+    result = mesh.select_enclosed_points(surf)
+    assert isinstance(result, type(mesh))
+    assert 'SelectedPoints' in result.scalar_names
+    assert result.n_arrays == mesh.n_arrays + 1
+
+
+def test_decimate_boundary():
+    mesh = examples.load_uniform()
+    boundary = mesh.decimate_boundary()
+    assert boundary.n_points
