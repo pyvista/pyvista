@@ -98,7 +98,8 @@ def generate_report(additional=None, ncol=3, text_width=54):
 
     """
     core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
-    optional = ['matplotlib', ]
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+                'cmocean']
     report = scooby.investigate(core=core, optional=optional,
                                 additional=additional, ncol=ncol,
                                 text_width=text_width)
