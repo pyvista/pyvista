@@ -66,3 +66,13 @@ p = pv.Plotter()
 p.add_volume(bolt_nut, cmap='coolwarm',
              opacity='sigmoid_5',)
 p.show()
+
+
+################################################################################
+
+frog = examples.download_frog()
+
+p = pv.Plotter()
+p.add_volume(frog, cmap='viridis',
+             opacity='sigmoid_5',)
+p.show()
