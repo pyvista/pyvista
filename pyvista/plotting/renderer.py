@@ -787,6 +787,15 @@ class Renderer(vtkRenderer):
         return
 
 
+    def get_pick_position(self):
+        """Get the pick position/area as x0, y0, x1, y1"""
+        x0 = int(self.GetPickX1())
+        x1 = int(self.GetPickX2())
+        y0 = int(self.GetPickY1())
+        y1 = int(self.GetPickY2())
+        return x0, y0, x1, y1
+
+
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""

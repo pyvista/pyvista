@@ -2800,37 +2800,38 @@ class BasePlotter(object):
             self.remove_actor(self.legend, reset_camera=False)
             self._render()
 
-    def enable_cell_picking(self, mesh=None, callback=None, show=True,
-                            show_message=True, style='wireframe', line_width=5,
-                            color='pink', font_size=18, **kwargs):
+    def get_pick_position(self):
+        """Get the pick position/area as x0, y0, x1, y1"""
+        return self.renderer.get_pick_position()
+
+    def enable_cell_picking(self, mesh=None, callback=None, through=True,
+                            show=True, show_message=True, style='wireframe',
+                            line_width=5, color='pink', font_size=18, **kwargs):
         """
         Enables picking of cells.  Press r to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
         saved to self.picked_cells.
-
         Uses last input mesh for input
-
         Parameters
         ----------
         mesh : vtk.UnstructuredGrid, optional
             UnstructuredGrid grid to select cells from.  Uses last
             input grid by default.
-
         callback : function, optional
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
-
+        through : bool, optional
+            When True (default) the picker will select all cells through the
+            mesh. When False, the picker will select only visible cells on the
+            mesh's surface.
         show : bool
             Show the selection interactively
-
         show_message : bool, str
             Show the message about how to use the cell picking tool. If this
             is a string, that will be the message shown.
-
         kwargs : optional
             All remaining keyword arguments are used to control how the
             selection is intereactively displayed
-
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
@@ -2841,14 +2842,7 @@ class BasePlotter(object):
             mesh = self.mesh
 
 
-        def pick_call_back(picker, event_id):
-            extract = vtk.vtkExtractGeometry()
-            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
-            extract.SetInputData(mesh)
-            extract.SetImplicitFunction(picker.GetFrustum())
-            extract.Update()
-            self.picked_cells = pyvista.wrap(extract.GetOutput())
-
+        def end_pick_helper(picker, event_id):
             if show:
                 # Use try incase selection is empty
                 try:
@@ -2861,9 +2855,43 @@ class BasePlotter(object):
                 callback(self.picked_cells)
 
             # TODO: Deactivate selection tool
+            return
 
-        area_picker = vtk.vtkAreaPicker()
-        area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
+
+        def through_pick_call_back(picker, event_id):
+            extract = vtk.vtkExtractGeometry()
+            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
+            extract.SetInputData(mesh)
+            extract.SetImplicitFunction(picker.GetFrustum())
+            extract.Update()
+            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            return end_pick_helper(picker, event_id)
+
+
+        def visible_pick_call_back(picker, event_id):
+            x0,y0,x1,y1 = self.get_pick_position()
+            selector = vtk.vtkOpenGLHardwareSelector()
+            selector.SetRenderer(self.renderer)
+            selector.SetArea(x0,y0,x1,y1)
+            cellids = selector.Select().GetNode(0)
+            if cellids is None:
+                # No selection
+                return
+            selection = vtk.vtkSelection()
+            selection.AddNode(cellids)
+            extract = vtk.vtkExtractSelectedIds()
+            extract.SetInputData(0, mesh)
+            extract.SetInputData(1, selection)
+            extract.Update()
+            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            return end_pick_helper(picker, event_id)
+
+
+        area_picker = vtk.vtkRenderedAreaPicker()
+        if through:
+            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
+        else:
+            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
