@@ -54,4 +54,5 @@ p.add_mesh(pro_decimated, **dargs)
 p.add_text('Pro Decimated mesh', font_size=24)
 p.camera_position = cpos
 p.reset_camera()
+p.link_views()
 p.show()

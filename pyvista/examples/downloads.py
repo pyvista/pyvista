@@ -28,7 +28,7 @@ def _get_vtk_file_url(filename):
 
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
+    local_path = os.path.join(pyvista.EXAMPLES_PATH,  os.path.basename(filename))
     local_path_no_zip = local_path.replace('.zip', '')
     if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
         return local_path_no_zip, None
@@ -42,6 +42,9 @@ def _retrieve_file(url, filename):
     # Perfrom download
     saved_file, resp = urlretrieve(url)
     # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
+    # Make sure folder exists!
+    if not os.path.isdir(os.path.dirname((local_path))):
+        os.makedirs(os.path.dirname((local_path)))
     shutil.move(saved_file, local_path)
     if pyvista.get_ext(local_path) in ['.zip']:
         _decompress(local_path)
@@ -229,6 +232,7 @@ def download_cad_model():
 
 def download_frog():
     # TODO: there are other files with this
+    _download_file('froggy/frog.zraw')
     return _download_and_read('froggy/frog.mhd')
 
 def download_prostate():

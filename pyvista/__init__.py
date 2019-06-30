@@ -81,7 +81,7 @@ except KeyError:
 FLOAT_FORMAT = "{:.3e}"
 
 
-def generate_report(additional=None, ncol=3, text_width=54):
+def generate_report(additional=None, ncol=3, text_width=54, sort=False):
     """Generate an environment report using :module:`scooby`
 
     Parameters
@@ -96,10 +96,14 @@ def generate_report(additional=None, ncol=3, text_width=54):
     text_width : int, optional
         The text width for non-HTML display modes
 
+    sort : bool, optional
+        Alphabetically sort the packages
+
     """
-    core = ['vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
-    optional = ['matplotlib', ]
-    report = scooby.investigate(core=core, optional=optional, 
+    core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+                'cmocean']
+    report = scooby.investigate(core=core, optional=optional,
                                 additional=additional, ncol=ncol,
-                                text_width=text_width)
+                                text_width=text_width, sort=sort)
     return report
