@@ -18,7 +18,7 @@ from pyvista import examples
 plotter = pv.Plotter(shape=(2, 2))
 
 plotter.subplot(0,0)
-plotter.add_text('Render Window 0', position=None, font_size=30)
+plotter.add_text('Render Window 0', font_size=30)
 plotter.add_mesh(examples.load_globe())
 
 plotter.subplot(0, 1)
