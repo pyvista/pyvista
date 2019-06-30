@@ -2762,7 +2762,9 @@ class BasePlotter(object):
             self.remove_actor(self.legend, reset_camera=False)
             self._render()
 
-    def enable_cell_picking(self, mesh=None, callback=None):
+    def enable_cell_picking(self, mesh=None, callback=None, show=True,
+                            show_message=True, style='wireframe', line_width=5,
+                            color='pink', font_size=18, **kwargs):
         """
         Enables picking of cells.  Press r to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
@@ -2780,12 +2782,26 @@ class BasePlotter(object):
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
 
+        show : bool
+            Show the selection interactively
+
+        show_message : bool, str
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
+
+        kwargs : optional
+            All remaining keyword arguments are used to control how the
+            selection is intereactively displayed
+
         """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
                 raise Exception('Input a mesh into the Plotter class first or '
                                 + 'or set it in this function')
             mesh = self.mesh
+
 
         def pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
@@ -2795,14 +2811,31 @@ class BasePlotter(object):
             extract.Update()
             self.picked_cells = pyvista.wrap(extract.GetOutput())
 
+            if show:
+                # Use try incase selection is empty
+                try:
+                    self.add_mesh(self.picked_cells, name='cell_picking_selection',
+                        style=style, color=color, line_width=line_width, **kwargs)
+                except RuntimeError:
+                    pass
+
             if callback is not None:
                 callback(self.picked_cells)
+
+            # TODO: Deactivate selection tool
 
         area_picker = vtk.vtkAreaPicker()
         area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
 
         self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
+
+        # Now add text about cell-selection
+        if show_message:
+            if show_message == True:
+                show_message = "Press R to toggle selection tool"
+            self.add_text(str(show_message), font_size=font_size)
+        return
 
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
