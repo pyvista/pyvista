@@ -445,3 +445,13 @@ def raise_not_matching(scalars, mesh):
                     '({}) '.format(mesh.n_points) +
                     'or the number of cells ' +
                     '({}). '.format(mesh.n_cells) )
+
+
+def generate_plane(normal, origin):
+    """ Returns a vtk.vtkPlane """
+    plane = vtk.vtkPlane()
+    # NORMAL MUST HAVE MAGNITUDE OF 1
+    normal = normal / np.linalg.norm(normal)
+    plane.SetNormal(normal)
+    plane.SetOrigin(origin)
+    return plane
