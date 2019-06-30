@@ -25,8 +25,148 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class Common(DataSetFilters, object):
-    """ Methods in common to grid and surface objects"""
+
+class DataObject(object):
+    """ Methods common to all wrapped data objects """
+    def __new__(cls, *args, **kwargs):
+        if cls is DataObject:
+            raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
+        return object.__new__(cls, *args, **kwargs)
+
+
+    def save(self, filename, binary=True):
+         """
+         Writes this mesh to a file.
+
+         Parameters
+         ----------
+         filename : str
+             Filename of mesh to be written.  File type is inferred from
+             the extension of the filename unless overridden with
+             ftype.
+
+         binary : bool, optional
+             Writes the file as binary when True and ASCII when False.
+
+         Notes
+         -----
+         Binary files write much faster than ASCII and have a smaller
+         file size.
+         """
+         raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
+
+
+    def _get_attrs(self):
+        """An internal helper for the representation methods"""
+        raise NotImplementedError
+
+
+    def head(self, display=True, html=None):
+        """Return the header stats of this dataset. If in IPython, this will
+        be formatted to HTML. Otherwise returns a console friendly string"""
+        # Generate the output
+        if html:
+            fmt = ""
+            # HTML version
+            fmt += "\n"
+            fmt += "<table>\n"
+            fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(type(self).__name__)
+            row = "<tr><td>{}</td><td>{}</td></tr>\n"
+            # now make a call on the object to get its attributes as a list of len 2 tuples
+            for attr in self._get_attrs():
+                try:
+                    fmt += row.format(attr[0], attr[2].format(*attr[1]))
+                except:
+                    fmt += row.format(attr[0], attr[2].format(attr[1]))
+            if hasattr(self, 'n_arrays'):
+                fmt += row.format('N Arrays', self.n_arrays)
+            fmt += "</table>\n"
+            fmt += "\n"
+            if display:
+                from IPython.display import display, HTML
+                display(HTML(fmt))
+                return
+            return fmt
+        # Otherwise return a string that is Python console friendly
+        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
+        # now make a call on the object to get its attributes as a list of len 2 tuples
+        row = "  {}:\t{}\n"
+        for attr in self._get_attrs():
+            try:
+                fmt += row.format(attr[0], attr[2].format(*attr[1]))
+            except:
+                fmt += row.format(attr[0], attr[2].format(attr[1]))
+        if hasattr(self, 'n_arrays'):
+            fmt += row.format('N Arrays', self.n_arrays)
+        return fmt
+
+
+    def _repr_html_(self):
+        """A pretty representation for Jupyter notebooks that includes header
+        details and information about all scalar arrays"""
+        raise NotImplemented
+
+
+    def copy_meta_from(self, ido):
+        """Copies pyvista meta data onto this object from another object"""
+        pass
+
+
+    def copy(self, deep=True):
+        """
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        deep : bool, optional
+            When True makes a full copy of the object.
+
+        Returns
+        -------
+        newobject : same as input
+           Deep or shallow copy of the input.
+        """
+        thistype = type(self)
+        newobject = thistype()
+        if deep:
+            newobject.DeepCopy(self)
+        else:
+            newobject.ShallowCopy(self)
+        newobject.copy_meta_from(self)
+        return newobject
+
+
+
+    def get_data_range(self, arr=None, preference='cell'):
+        """Get the non-NaN min and max of a named scalar array
+
+        Parameters
+        ----------
+        arr : str, np.ndarray, optional
+            The name of the array to get the range. If None, the active scalar
+            is used
+
+        preference : str, optional
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
+            or ``'field'``.
+
+        """
+        if arr is None:
+            # use active scalar array
+            _, arr = self.active_scalar_info
+        if isinstance(arr, str):
+            arr = get_scalar(self, arr, preference=preference)
+        # If array has no tuples return a NaN range
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+            return (np.nan, np.nan)
+        # Use the array range
+        return np.nanmin(arr), np.nanmax(arr)
+
+
+
+class Common(DataSetFilters, DataObject):
+    """ Methods in common to spatially referenced objects"""
 
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
@@ -633,29 +773,6 @@ class Common(DataSetFilters, object):
         if hasattr(ido, '_textures'):
             self._textures = ido._textures
 
-    def copy(self, deep=True):
-        """
-        Returns a copy of the object
-
-        Parameters
-        ----------
-        deep : bool, optional
-            When True makes a full copy of the object.
-
-        Returns
-        -------
-        newobject : same as input
-           Deep or shallow copy of the input.
-        """
-        thistype = type(self)
-        newobject = thistype()
-        if deep:
-            newobject.DeepCopy(self)
-        else:
-            newobject.ShallowCopy(self)
-        newobject.copy_meta_from(self)
-        return newobject
-
 
     @property
     def point_arrays(self):
@@ -830,31 +947,6 @@ class Common(DataSetFilters, object):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_arrays['Volume'])
 
-    def get_data_range(self, arr=None, preference='cell'):
-        """Get the non-NaN min and max of a named scalar array
-
-        Parameters
-        ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
-            is used
-
-        preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
-
-        """
-        if arr is None:
-            # use active scalar array
-            _, arr = self.active_scalar_info
-        if isinstance(arr, str):
-            arr = get_scalar(self, arr, preference=preference)
-        # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
-            return (np.nan, np.nan)
-        # Use the array range
-        return np.nanmin(arr), np.nanmax(arr)
 
     def get_scalar(self, name, preference='cell', info=False):
         """ Searches both point, cell and field data for an array """
@@ -941,44 +1033,6 @@ class Common(DataSetFilters, object):
         return attrs
 
 
-    def head(self, display=True, html=None):
-        """Return the header stats of this dataset. If in IPython, this will
-        be formatted to HTML. Otherwise returns a console friendly string"""
-        # Generate the output
-        if html:
-            fmt = ""
-            # HTML version
-            fmt += "\n"
-            fmt += "<table>\n"
-            fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(type(self).__name__)
-            row = "<tr><td>{}</td><td>{}</td></tr>\n"
-            # now make a call on the object to get its attributes as a list of len 2 tuples
-            for attr in self._get_attrs():
-                try:
-                    fmt += row.format(attr[0], attr[2].format(*attr[1]))
-                except:
-                    fmt += row.format(attr[0], attr[2].format(attr[1]))
-            fmt += row.format('N Arrays', self.n_arrays)
-            fmt += "</table>\n"
-            fmt += "\n"
-            if display:
-                from IPython.display import display, HTML
-                display(HTML(fmt))
-                return
-            return fmt
-        # Otherwise return a string that is Python console friendly
-        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
-        # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
-        fmt += row.format('N Arrays', self.n_arrays)
-        return fmt
-
-
     def _repr_html_(self):
         """A pretty representation for Jupyter notebooks that includes header
         details and information about all scalar arrays"""
@@ -1060,27 +1114,6 @@ class Common(DataSetFilters, object):
         alg.Update()
         return pyvista.filters._get_output(alg)
 
-
-    def save(self, filename, binary=True):
-         """
-         Writes this mesh to a file.
-
-         Parameters
-         ----------
-         filename : str
-             Filename of mesh to be written.  File type is inferred from
-             the extension of the filename unless overridden with
-             ftype.
-
-         binary : bool, optional
-             Writes the file as binary when True and ASCII when False.
-
-         Notes
-         -----
-         Binary files write much faster than ASCII and have a smaller
-         file size.
-         """
-         raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
 
 
 class _ScalarsDict(dict):

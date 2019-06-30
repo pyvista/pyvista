@@ -15,13 +15,14 @@ import pyvista
 from pyvista import plot
 from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
 
+from .common import DataObject
 from .filters import CompositeFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
+class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """
     A composite class to hold many data sets which can be iterated over.
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
@@ -444,35 +445,3 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
 
     def __str__(self):
         return MultiBlock.__repr__(self)
-
-
-    def copy_meta_from(self, ido):
-        """Copies pyvista meta data onto this object from another object"""
-        # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
-        # This method is here for consistency witht the rest of the API and
-        # incase we add meta data to this pbject down the road.
-        pass
-
-
-    def copy(self, deep=True):
-        """
-        Returns a copy of the object
-
-        Parameters
-        ----------
-        deep : bool, optional
-            When True makes a full copy of the object.
-
-        Returns
-        -------
-        newobject : same as input
-           Deep or shallow copy of the input.
-        """
-        thistype = type(self)
-        newobject = thistype()
-        if deep:
-            newobject.DeepCopy(self)
-        else:
-            newobject.ShallowCopy(self)
-        newobject.copy_meta_from(self)
-        return newobject
