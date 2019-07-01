@@ -459,24 +459,8 @@ def generate_plane(normal, origin):
 
 
 def generate_report(additional=None, ncol=3, text_width=54, sort=False):
-    """Generate an environment report using :module:`scooby`
-
-    Parameters
-    ----------
-    additional : list(ModuleType), list(str)
-        List of packages or package names to add to output information.
-
-    ncol : int, optional
-        Number of package-columns in html table; only has effect if
-        ``mode='HTML'`` or ``mode='html'``. Defaults to 3.
-
-    text_width : int, optional
-        The text width for non-HTML display modes
-
-    sort : bool, optional
-        Alphabetically sort the packages
-
-    """
+    """DEPRECATED: Please use :class:`pyvista.Report` instead."""
+    logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
     core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
     optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
                 'cmocean']
