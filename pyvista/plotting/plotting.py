@@ -2434,15 +2434,18 @@ class BasePlotter(object):
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
 
+        self.remove_actor('{}-points'.format(name), reset_camera=False)
+        self.remove_actor('{}-labels'.format(name), reset_camera=False)
+
         # add points
         if show_points:
             style = 'points'
         else:
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size)
+                      point_size=point_size, name='{}-points'.format(name))
 
-        self.add_actor(labelActor, reset_camera=False, name=name)
+        self.add_actor(labelActor, reset_camera=False, name='{}-lables'.format(name))
         return labelMapper
 
 
