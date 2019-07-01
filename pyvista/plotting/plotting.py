@@ -2860,7 +2860,7 @@ class BasePlotter(object):
                 except RuntimeError:
                     pass
 
-            if callback is not None:
+            if callback is not None and self.picked_cells.n_cells > 0:
                 callback(self.picked_cells)
 
             # TODO: Deactivate selection tool
