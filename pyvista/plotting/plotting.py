@@ -1208,6 +1208,12 @@ class BasePlotter(object):
         return self.renderer.bounds
 
     @property
+    def length(self):
+        """Returns the length of the diagonal of the bounding box of the scene
+        """
+        return pyvista.Box(self.bounds).length
+
+    @property
     def center(self):
         """ Returns the center of the active renderer """
         return self.renderer.center
@@ -2991,6 +2997,9 @@ class BasePlotter(object):
         if not is_pyvista_obj(path):
             path = pyvista.PolyData(path)
         points = path.points
+
+        # Make sure the whole scene is visible
+        self.camera.SetThickness(path.length)
 
         def orbit():
             """Internal thread for running the orbit"""
