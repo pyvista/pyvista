@@ -2323,7 +2323,8 @@ class BasePlotter(object):
                          font_size=None, text_color=None,
                          font_family=None, shadow=False,
                          show_points=True, point_color=None, point_size=5,
-                         name=None, **kwargs):
+                         name=None, shape_color='grey', shape='rounded_rect',
+                         fill_shape=True, margin=3, shape_opacity=1.0, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2379,6 +2380,23 @@ class BasePlotter(object):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
+
+        shape_color : string or 3 item list, optional. Color of points (if visible).
+            Either a string, rgb list, or hex color string.  For example:
+
+        shape : str, optional
+            The string name of the shape to use. Options are ``'rect'`` or
+            ``'rounded_rect'``. If you want no shape, pass ``None``
+
+        fill_shape : bool, optional
+            Fill the shape with the ``shape_color``. Outlines if ``False``.
+
+        margin : int, optional
+            The size of the margin on the label background shape. Default is 3.
+
+        shape_opacity : flaot
+            The opacity of the shape between zero and one.
+
         Returns
         -------
         labelMapper : vtk.vtkvtkLabeledDataMapper
@@ -2418,21 +2436,38 @@ class BasePlotter(object):
             vtklabels.InsertNextValue(str(item))
         vtkpoints.GetPointData().AddArray(vtklabels)
 
+        # Create heirarchy
+        hier = vtk.vtkPointSetToLabelHierarchy()
+        hier.SetInputData(vtkpoints)
+        # hier.SetOrientationArrayName('orientation')
+        hier.SetLabelArrayName('labels')
+
         # create label mapper
-        labelMapper = vtk.vtkLabeledDataMapper()
-        labelMapper.SetInputData(vtkpoints)
-        textprop = labelMapper.GetLabelTextProperty()
+        labelMapper = vtk.vtkLabelPlacementMapper()
+        labelMapper.SetInputConnection(hier.GetOutputPort())
+        if not isinstance(shape, str):
+            labelMapper.SetShapeToNone()
+        elif shape.lower() in 'rect':
+            labelMapper.SetShapeToRect()
+        elif shape.lower() in 'rounded_rect':
+            labelMapper.SetShapeToRoundedRect()
+        else:
+            raise RuntimeError('Shape ({}) not understood'.format(shape))
+        if fill_shape:
+            labelMapper.SetStyleToFilled()
+        else:
+            labelMapper.SetStyleToOutline()
+        labelMapper.SetBackgroundColor(parse_color(shape_color))
+        labelMapper.SetBackgroundOpacity(shape_opacity)
+        labelMapper.SetMargin(margin)
+
+        textprop = hier.GetTextProperty()
         textprop.SetItalic(italic)
         textprop.SetBold(bold)
         textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_font_family(font_family))
         textprop.SetColor(parse_color(text_color))
         textprop.SetShadow(shadow)
-        labelMapper.SetLabelModeToLabelFieldData()
-        labelMapper.SetFieldDataName('labels')
-
-        labelActor = vtk.vtkActor2D()
-        labelActor.SetMapper(labelMapper)
 
         self.remove_actor('{}-points'.format(name), reset_camera=False)
         self.remove_actor('{}-labels'.format(name), reset_camera=False)
@@ -2445,7 +2480,10 @@ class BasePlotter(object):
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size, name='{}-points'.format(name))
 
+        labelActor = vtk.vtkActor2D()
+        labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False, name='{}-lables'.format(name))
+
         return labelMapper
 
 
