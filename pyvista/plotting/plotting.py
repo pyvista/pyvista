@@ -942,6 +942,8 @@ class BasePlotter(object):
 
 
         if isinstance(volume, pyvista.MultiBlock):
+            from itertools import cycle
+            cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(volume.GetNumberOfBlocks()):
@@ -952,11 +954,14 @@ class BasePlotter(object):
                 # Get the data object
                 block = wrap(volume.GetBlock(idx))
                 if resolution is None:
-                    block_resolution = block.GetSpacing()
+                    try:
+                        block_resolution = block.GetSpacing()
+                    except:
+                        block_resolution = resolution
                 else:
                     block_resolution = resolution
                 if multi_colors:
-                    color = ['Reds', 'Greens', 'Blues', 'Grays'][idx]
+                    color = next(cycler)
                 else:
                     color = cmap
 
