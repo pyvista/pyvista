@@ -2,7 +2,13 @@
 Orbiting
 ~~~~~~~~~
 
-Orbit around a scene
+Orbit around a scene.
+
+NOTE: using ``p.open_movie('orbit.mp4')`` is better than
+``p.open_gif('orbit.gif')``
+
+For orbiting to work you first have to show the scene and leave the plotter open
+with ``.show(auto_close=False)``.
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -15,11 +21,22 @@ mesh = examples.download_st_helens().warp_by_scalar()
 
 p = pv.Plotter()
 p.add_mesh(mesh)
-
 p.show(auto_close=False)
-path = p.generate_orbital_path(n_points=36)
+path = p.generate_orbital_path(n_points=36, shift=1e4)
 p.open_gif('orbit.gif')
 p.orbit_on_path(path, write_frames=True)
+p.close()
+
+################################################################################
+
+p = pv.Plotter()
+p.add_mesh(mesh)
+p.show_grid()
+p.show(auto_close=False)
+viewup=[0.5,0.5,1]
+path = p.generate_orbital_path(factor=2.0, shift=10000, viewup=viewup, n_points=36)
+p.open_gif('orbit.gif')
+p.orbit_on_path(path, write_frames=True, viewup=[0,0,1])
 p.close()
 
 
@@ -31,7 +48,6 @@ viewup = [0,1,0]
 ################################################################################
 p = pv.Plotter()
 p.add_mesh(mesh)
-
 p.show(auto_close=False)
 path = p.generate_orbital_path(factor=2., n_points=36, viewup=viewup, shift=0.2)
 p.open_gif('orbit.gif')
