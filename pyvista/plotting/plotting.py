@@ -2434,15 +2434,18 @@ class BasePlotter(object):
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
 
+        self.remove_actor('{}-points'.format(name), reset_camera=False)
+        self.remove_actor('{}-labels'.format(name), reset_camera=False)
+
         # add points
         if show_points:
             style = 'points'
         else:
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size)
+                      point_size=point_size, name='{}-points'.format(name))
 
-        self.add_actor(labelActor, reset_camera=False, name=name)
+        self.add_actor(labelActor, reset_camera=False, name='{}-lables'.format(name))
         return labelMapper
 
 
@@ -2851,7 +2854,7 @@ class BasePlotter(object):
                 except RuntimeError:
                     pass
 
-            if callback is not None:
+            if callback is not None and self.picked_cells.n_cells > 0:
                 callback(self.picked_cells)
 
             # TODO: Deactivate selection tool
