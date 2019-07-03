@@ -9,6 +9,7 @@ import os
 
 import imageio
 import numpy as np
+import scooby
 import vtk
 import vtk.util.numpy_support as nps
 
@@ -465,3 +466,25 @@ def raise_not_matching(scalars, mesh):
                     '({}) '.format(mesh.n_points) +
                     'or the number of cells ' +
                     '({}). '.format(mesh.n_cells) )
+
+
+def generate_plane(normal, origin):
+    """ Returns a vtk.vtkPlane """
+    plane = vtk.vtkPlane()
+    # NORMAL MUST HAVE MAGNITUDE OF 1
+    normal = normal / np.linalg.norm(normal)
+    plane.SetNormal(normal)
+    plane.SetOrigin(origin)
+    return plane
+
+
+def generate_report(additional=None, ncol=3, text_width=54, sort=False):
+    """DEPRECATED: Please use :class:`pyvista.Report` instead."""
+    logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
+    core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+                'cmocean']
+    report = scooby.Report(core=core, optional=optional,
+                           additional=additional, ncol=ncol,
+                           text_width=text_width, sort=sort)
+    return report

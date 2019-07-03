@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import scooby
 
 import vtk
 
@@ -91,3 +92,35 @@ def send_errors_to_logging():
     error_win.SetInstance(error_output)
     obs = Observer()
     return obs.observe(error_output)
+
+
+class Report(scooby.Report):
+    def __init__(self, additional=None, ncol=3, text_width=80, sort=False):
+        """Generate a :class:`scooby.Report` instance.
+
+        Parameters
+        ----------
+        additional : list(ModuleType), list(str)
+            List of packages or package names to add to output information.
+
+        ncol : int, optional
+            Number of package-columns in html table; only has effect if
+            ``mode='HTML'`` or ``mode='html'``. Defaults to 3.
+
+        text_width : int, optional
+            The text width for non-HTML display modes
+
+        sort : bool, optional
+            Alphabetically sort the packages
+
+        """
+
+        # Mandatory packages.
+        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+
+        # Optional packages.
+        optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+                    'cmocean']
+
+        super().__init__(additional=additional, core=core, optional=optional,
+                         ncol=ncol, text_width=text_width, sort=sort)

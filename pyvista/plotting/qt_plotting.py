@@ -371,6 +371,9 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
         view_menu.addAction('Clear All', self.clear)
 
+        tool_menu = main_menu.addMenu('Tools')
+        tool_menu.addAction('Enable Cell Picking (r-key)', self.enable_cell_picking)
+
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Reset Camera', self.reset_camera)
         cam_menu.addAction('Isometric View', self.view_isometric)

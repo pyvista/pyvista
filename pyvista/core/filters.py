@@ -29,8 +29,9 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, get_scalar,
-                               is_inside_bounds, wrap)
+from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
+                               generate_plane, get_scalar, is_inside_bounds,
+                               wrap)
 
 NORMALS = {
     'x': [1, 0, 0],
@@ -52,14 +53,6 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
         if active_scalar is not None:
             data.set_active_scalar(active_scalar, preference=active_scalar_field)
     return data
-
-
-def _generate_plane(normal, origin):
-    """ Returns a vtk.vtkPlane """
-    plane = vtk.vtkPlane()
-    plane.SetNormal(normal[0], normal[1], normal[2])
-    plane.SetOrigin(origin[0], origin[1], origin[2])
-    return plane
 
 
 
@@ -98,7 +91,7 @@ class DataSetFilters(object):
         if origin is None:
             origin = dataset.center
         # create the plane for clipping
-        plane = _generate_plane(normal, origin)
+        plane = generate_plane(normal, origin)
         # run the clip
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -188,7 +181,7 @@ class DataSetFilters(object):
         if origin is None:
             origin = dataset.center
         # create the plane for clipping
-        plane = _generate_plane(normal, origin)
+        plane = generate_plane(normal, origin)
         # create slice
         alg = vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut

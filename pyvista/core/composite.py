@@ -43,7 +43,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                     self.DeepCopy(args[0])
                 else:
                     self.ShallowCopy(args[0])
-                self.wrap_nested()
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
@@ -57,6 +56,9 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
             # keep a reference of the args
             self.refs.append(args)
+
+        # Upon creation make sure all nested structures are wrapped
+        self.wrap_nested()
 
 
     def wrap_nested(self):

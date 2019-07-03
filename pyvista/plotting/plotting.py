@@ -632,6 +632,8 @@ class BasePlotter(object):
                                      name=name, loc=loc, culling=backface_culling)
 
         # Try to plot something if no preference given
+        if texture == False:
+            texture = None
         if scalars is None and color is None and texture is None:
             # Prefer texture first
             if len(list(mesh.textures.keys())) > 0:
@@ -942,6 +944,8 @@ class BasePlotter(object):
 
 
         if isinstance(volume, pyvista.MultiBlock):
+            from itertools import cycle
+            cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(volume.GetNumberOfBlocks()):
@@ -952,11 +956,14 @@ class BasePlotter(object):
                 # Get the data object
                 block = wrap(volume.GetBlock(idx))
                 if resolution is None:
-                    block_resolution = block.GetSpacing()
+                    try:
+                        block_resolution = block.GetSpacing()
+                    except:
+                        block_resolution = resolution
                 else:
                     block_resolution = resolution
                 if multi_colors:
-                    color = ['Reds', 'Greens', 'Blues', 'Grays'][idx]
+                    color = next(cycler)
                 else:
                     color = cmap
 
@@ -1201,6 +1208,12 @@ class BasePlotter(object):
     def bounds(self):
         """ Returns the bounds of the active renderer """
         return self.renderer.bounds
+
+    @property
+    def length(self):
+        """Returns the length of the diagonal of the bounding box of the scene
+        """
+        return pyvista.Box(self.bounds).length
 
     @property
     def center(self):
@@ -2058,7 +2071,7 @@ class BasePlotter(object):
             except BaseException:
                 pass
 
-    def add_text(self, text, position=None, font_size=50, color=None,
+    def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, loc=None):
         """
         Adds text to plot object in the top left corner by default
@@ -2068,10 +2081,14 @@ class BasePlotter(object):
         text : str
             The text to add the the rendering
 
-        position : tuple(float)
-            Length 2 tuple of the pixelwise position to place the bottom
-            left corner of the text box. Default is to find the top left corner
-            of the renderering window and place text box up there.
+        position : str, tuple(float)
+            String name of the position or length 2 tuple of the pixelwise
+            position to place the bottom left corner of the text box.
+            Default is to find the top left corner of the renderering window
+            and place text box up there. Available position: ``'lower_left'``,
+            ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
+            ``'lower_edge'``, ``'upper_edge'``, ``'right_edge'``, and
+            ``'left_edge'``
 
         font : string, optional
             Font name may be courier, times, or arial
@@ -2107,13 +2124,47 @@ class BasePlotter(object):
             y = (window_size[1] * 0.85) / self.shape[0]
             position = [x, y]
 
-        self.textActor = vtk.vtkTextActor()
-        self.textActor.SetPosition(position)
-        self.textActor.GetTextProperty().SetFontSize(font_size)
+        corner_mappings = {
+            'lower_left' : vtk.vtkCornerAnnotation.LowerLeft,
+            'lower_right' : vtk.vtkCornerAnnotation.LowerRight,
+            'upper_left' : vtk.vtkCornerAnnotation.UpperLeft,
+            'upper_right' : vtk.vtkCornerAnnotation.UpperRight,
+            'lower_edge' : vtk.vtkCornerAnnotation.LowerEdge,
+            'upper_edge' : vtk.vtkCornerAnnotation.UpperEdge,
+            'left_edge' : vtk.vtkCornerAnnotation.LeftEdge,
+            'right_edge' : vtk.vtkCornerAnnotation.RightEdge,
+
+        }
+        corner_mappings['ll'] = corner_mappings['lower_left']
+        corner_mappings['lr'] = corner_mappings['lower_right']
+        corner_mappings['ul'] = corner_mappings['upper_left']
+        corner_mappings['ur'] = corner_mappings['upper_right']
+        corner_mappings['top'] = corner_mappings['upper_edge']
+        corner_mappings['bottom'] = corner_mappings['lower_edge']
+        corner_mappings['right'] = corner_mappings['right_edge']
+        corner_mappings['r'] = corner_mappings['right_edge']
+        corner_mappings['left'] = corner_mappings['left_edge']
+        corner_mappings['l'] = corner_mappings['left_edge']
+
+        if isinstance(position, (int, str, bool)):
+            if isinstance(position, str):
+                position = corner_mappings[position]
+            elif position == True:
+                position = corner_mappings['upper_left']
+            self.textActor = vtk.vtkCornerAnnotation()
+            # This is how you set the font size with this actor
+            self.textActor.SetLinearFontScaleFactor(font_size // 2)
+            self.textActor.SetText(position, text)
+        else:
+            self.textActor = vtk.vtkTextActor()
+            self.textActor.SetInput(text)
+            self.textActor.SetPosition(position)
+            self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
+
         self.textActor.GetTextProperty().SetColor(parse_color(color))
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
-        self.textActor.SetInput(text)
+
         self.add_actor(self.textActor, reset_camera=False, name=name, loc=loc)
         return self.textActor
 
@@ -2285,7 +2336,8 @@ class BasePlotter(object):
                          font_size=None, text_color=None,
                          font_family=None, shadow=False,
                          show_points=True, point_color=None, point_size=5,
-                         name=None, **kwargs):
+                         name=None, shape_color='grey', shape='rounded_rect',
+                         fill_shape=True, margin=3, shape_opacity=1.0, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2341,6 +2393,23 @@ class BasePlotter(object):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
+
+        shape_color : string or 3 item list, optional. Color of points (if visible).
+            Either a string, rgb list, or hex color string.  For example:
+
+        shape : str, optional
+            The string name of the shape to use. Options are ``'rect'`` or
+            ``'rounded_rect'``. If you want no shape, pass ``None``
+
+        fill_shape : bool, optional
+            Fill the shape with the ``shape_color``. Outlines if ``False``.
+
+        margin : int, optional
+            The size of the margin on the label background shape. Default is 3.
+
+        shape_opacity : flaot
+            The opacity of the shape between zero and one.
+
         Returns
         -------
         labelMapper : vtk.vtkvtkLabeledDataMapper
@@ -2380,21 +2449,41 @@ class BasePlotter(object):
             vtklabels.InsertNextValue(str(item))
         vtkpoints.GetPointData().AddArray(vtklabels)
 
+        # Create heirarchy
+        hier = vtk.vtkPointSetToLabelHierarchy()
+        hier.SetInputData(vtkpoints)
+        # hier.SetOrientationArrayName('orientation')
+        hier.SetLabelArrayName('labels')
+
         # create label mapper
-        labelMapper = vtk.vtkLabeledDataMapper()
-        labelMapper.SetInputData(vtkpoints)
-        textprop = labelMapper.GetLabelTextProperty()
+        labelMapper = vtk.vtkLabelPlacementMapper()
+        labelMapper.SetInputConnection(hier.GetOutputPort())
+        if not isinstance(shape, str):
+            labelMapper.SetShapeToNone()
+        elif shape.lower() in 'rect':
+            labelMapper.SetShapeToRect()
+        elif shape.lower() in 'rounded_rect':
+            labelMapper.SetShapeToRoundedRect()
+        else:
+            raise RuntimeError('Shape ({}) not understood'.format(shape))
+        if fill_shape:
+            labelMapper.SetStyleToFilled()
+        else:
+            labelMapper.SetStyleToOutline()
+        labelMapper.SetBackgroundColor(parse_color(shape_color))
+        labelMapper.SetBackgroundOpacity(shape_opacity)
+        labelMapper.SetMargin(margin)
+
+        textprop = hier.GetTextProperty()
         textprop.SetItalic(italic)
         textprop.SetBold(bold)
         textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_font_family(font_family))
         textprop.SetColor(parse_color(text_color))
         textprop.SetShadow(shadow)
-        labelMapper.SetLabelModeToLabelFieldData()
-        labelMapper.SetFieldDataName('labels')
 
-        labelActor = vtk.vtkActor2D()
-        labelActor.SetMapper(labelMapper)
+        self.remove_actor('{}-points'.format(name), reset_camera=False)
+        self.remove_actor('{}-labels'.format(name), reset_camera=False)
 
         # add points
         if show_points:
@@ -2402,9 +2491,12 @@ class BasePlotter(object):
         else:
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size)
+                      point_size=point_size, name='{}-points'.format(name))
 
-        self.add_actor(labelActor, reset_camera=False, name=name)
+        labelActor = vtk.vtkActor2D()
+        labelActor.SetMapper(labelMapper)
+        self.add_actor(labelActor, reset_camera=False, name='{}-lables'.format(name))
+
         return labelMapper
 
 
@@ -2762,7 +2854,9 @@ class BasePlotter(object):
             self.remove_actor(self.legend, reset_camera=False)
             self._render()
 
-    def enable_cell_picking(self, mesh=None, callback=None):
+    def enable_cell_picking(self, mesh=None, callback=None, show=True,
+                            show_message=True, style='wireframe', line_width=5,
+                            color='pink', font_size=18, **kwargs):
         """
         Enables picking of cells.  Press r to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
@@ -2780,12 +2874,26 @@ class BasePlotter(object):
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
 
+        show : bool
+            Show the selection interactively
+
+        show_message : bool, str
+            Show the message about how to use the cell picking tool. If this
+            is a string, that will be the message shown.
+
+        kwargs : optional
+            All remaining keyword arguments are used to control how the
+            selection is intereactively displayed
+
         """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
                 raise Exception('Input a mesh into the Plotter class first or '
                                 + 'or set it in this function')
             mesh = self.mesh
+
 
         def pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
@@ -2795,14 +2903,31 @@ class BasePlotter(object):
             extract.Update()
             self.picked_cells = pyvista.wrap(extract.GetOutput())
 
-            if callback is not None:
+            if show:
+                # Use try incase selection is empty
+                try:
+                    self.add_mesh(self.picked_cells, name='cell_picking_selection',
+                        style=style, color=color, line_width=line_width, **kwargs)
+                except RuntimeError:
+                    pass
+
+            if callback is not None and self.picked_cells.n_cells > 0:
                 callback(self.picked_cells)
+
+            # TODO: Deactivate selection tool
 
         area_picker = vtk.vtkAreaPicker()
         area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
 
         self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
+
+        # Now add text about cell-selection
+        if show_message:
+            if show_message == True:
+                show_message = "Press R to toggle selection tool"
+            self.add_text(str(show_message), font_size=font_size)
+        return
 
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
@@ -2874,6 +2999,9 @@ class BasePlotter(object):
         if not is_pyvista_obj(path):
             path = pyvista.PolyData(path)
         points = path.points
+
+        # Make sure the whole scene is visible
+        self.camera.SetThickness(path.length)
 
         def orbit():
             """Internal thread for running the orbit"""
