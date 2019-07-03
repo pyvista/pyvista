@@ -21,100 +21,100 @@ def test_ParametricBohemianDome():
 
 
 def test_ParametricBour():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricBour()
     assert geom.n_points
 
 
 def test_ParametricBoy():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricBoy()
     assert geom.n_points
 
 
 def test_ParametricCatalanMinimal():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricCatalanMinimal()
     assert geom.n_points
 
 
 def test_ParametricConicSpiral():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricConicSpiral()
     assert geom.n_points
 
 
 def test_ParametricCrossCap():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricCrossCap()
     assert geom.n_points
 
 
 def test_ParametricDini():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricDini()
     assert geom.n_points
 
 
 def test_ParametricEllipsoid():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricEllipsoid()
     assert geom.n_points
 
 
 def test_ParametricEnneper():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricEnneper()
     assert geom.n_points
 
 
 def test_ParametricFigure8Klein():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricFigure8Klein()
     assert geom.n_points
 
 
 def test_ParametricHenneberg():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricHenneberg()
     assert geom.n_points
 
 
 def test_ParametricKlein():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricKlein()
     assert geom.n_points
 
 
 def test_ParametricKuen():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricKuen()
     assert geom.n_points
 
 
 def test_ParametricMobius():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricMobius()
     assert geom.n_points
 
 
 def test_ParametricPluckerConoid():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricPluckerConoid()
     assert geom.n_points
 
 
 def test_ParametricPseudosphere():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricPseudosphere()
     assert geom.n_points
 
 
 def test_ParametricRandomHills():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricRandomHills()
     assert geom.n_points
 
 
 def test_ParametricRoman():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricRoman()
     assert geom.n_points
 
 
 def test_ParametricSuperEllipsoid():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricSuperEllipsoid()
     assert geom.n_points
 
 
 def test_ParametricSuperToroid():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricSuperToroid()
     assert geom.n_points
 
 
 def test_ParametricTorus():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricTorus()
     assert geom.n_points
