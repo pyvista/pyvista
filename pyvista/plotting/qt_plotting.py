@@ -356,8 +356,6 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setFrameStyle(QFrame.NoFrame)
 
         QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
-        #self.signal_close.connect(self.app_window.close)
-        self.app_window.closed.connect(self.quit)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -543,7 +541,6 @@ class BackgroundPlotter(QtInteractor):
     def quit(self):
         self.app_window.close()
         self.iren.TerminateApp()
-        #self.close()
 
 class MainWindow(QMainWindow):
     closed = pyqtSignal()
