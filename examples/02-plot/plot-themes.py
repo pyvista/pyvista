@@ -7,10 +7,11 @@ PyVista has a few coloring themes for you to choose!
 import pyvista as pv
 from pyvista import examples
 
-################################################################################
+###############################################################################
 #  Define a simple plotting routine for comparing the themes
 
 mesh = examples.download_st_helens().warp_by_scalar()
+
 
 def plot_example():
     p = pv.Plotter()
@@ -18,7 +19,8 @@ def plot_example():
     p.add_bounding_box()
     return p.show()
 
-################################################################################
+
+###############################################################################
 # PyVista's default color theme is chosen to be generally easy on your eyes
 # and is best used when working long hours on your visualization project.
 # The grey background and warm colormaps are chosen to make sure 3D renderings
@@ -28,36 +30,36 @@ def plot_example():
 # Here's an example of our default plotting theme - this is what you would see
 # by default after running any of our examnples.
 
-pv.set_plot_theme('default')
+pv.set_plot_theme("default")
 
 plot_example()
 
-################################################################################
+###############################################################################
 # PyVista also ships with a few plotting themes:
 #
 # * ``'ParaView'``: this is designed to mimic ParaView's default plotting theme
 # * ``'night'``: this is designed to be night-mode friendly with dark backgrounds and color schemes
 # * ``'document'``: this is built for use in document style plotting and making publication quality figures
 
-################################################################################
+###############################################################################
 # Demo the ``'ParaView'`` theme
 
-pv.set_plot_theme('ParaView')
+pv.set_plot_theme("ParaView")
 
 plot_example()
 
 
-################################################################################
+###############################################################################
 # Demo the ``'night'`` theme
 
-pv.set_plot_theme('night')
+pv.set_plot_theme("night")
 
 plot_example()
 
-################################################################################
+###############################################################################
 # Demo the ``'document'`` theme
 
 
-pv.set_plot_theme('document')
+pv.set_plot_theme("document")
 
 plot_example()

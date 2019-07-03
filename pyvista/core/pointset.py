@@ -1,6 +1,7 @@
 """
 Sub-classes for vtk.vtkPolyData
 """
+import collections
 import logging
 import os
 
@@ -16,7 +17,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities import get_scalar
+from pyvista.utilities import generate_plane, get_scalar
 
 from .common import Common
 from .filters import _get_output
@@ -1654,6 +1655,29 @@ class PolyData(vtkPolyData, PointSet):
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)
+
+
+    def project_points_to_plane(self, origin=None, normal=(0,0,1), inplace=False):
+        """Project points of this mesh to a plane"""
+        if not isinstance(normal, collections.Iterable) or len(normal) != 3:
+            raise TypeError('Normal must be a length three vector')
+        if origin is None:
+            origin = np.array(self.center) - np.array(normal)*self.length/2.
+        # choose what mesh to use
+        if not inplace:
+            mesh = self.copy()
+        else:
+            mesh = self
+        # Make plane
+        plane = generate_plane(normal, origin)
+        print(plane.GetNormal())
+        print(plane.GetOrigin())
+        # Perform projection in place on the copied mesh
+        f = lambda p: plane.ProjectPoint(p, p)
+        np.apply_along_axis(f, 1, mesh.points)
+        if not inplace:
+            return mesh
+        return
 
 
 class PointGrid(PointSet):

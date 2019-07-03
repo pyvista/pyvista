@@ -457,3 +457,20 @@ def test_center_of_mass():
     cloud['weights'] = np.random.rand(cloud.n_points)
     center = cloud.center_of_mass(True)
     assert len(center) == 3
+
+
+def test_project_points_to_plane():
+    # Define a simple Gaussian surface
+    n = 20
+    x = np.linspace(-200,200, num=n) + np.random.uniform(-5, 5, size=n)
+    y = np.linspace(-200,200, num=n) + np.random.uniform(-5, 5, size=n)
+    xx, yy = np.meshgrid(x, y)
+    A, b = 100, 100
+    zz = A*np.exp(-0.5*((xx/b)**2. + (yy/b)**2.))
+    poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry()
+    poly['elev'] = zz.ravel(order='f')
+    # Test the filter
+    projected = poly.project_points_to_plane(origin=poly.center, normal=(0,0,1))
+    assert np.allclose(projected.points[:,-1], poly.center[-1])
+    projected = poly.project_points_to_plane(normal=(0,1,1))
+    assert projected.n_points

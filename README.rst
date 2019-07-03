@@ -83,9 +83,9 @@ Overview of Features
 * Export meshes as VTK, STL, OBJ, or PLY file types
 
 
-.. _IPython Tools: http://docs.pyvista.org/tools/ipy_tools.html
-.. _Filters: http://docs.pyvista.org/tools/filters.html
-.. _Plotting: http://docs.pyvista.org/tools/plotting.html
+.. _IPython Tools: https://docs.pyvista.org/plotting/ipy_tools.html
+.. _Filters: https://docs.pyvista.org/core/filters.html
+.. _Plotting: https://docs.pyvista.org/plotting/index.html
 
 
 Documentation
