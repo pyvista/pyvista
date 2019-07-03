@@ -355,7 +355,7 @@ class BasePlotter(object):
                  render_points_as_spheres=None, smooth_shading=False,
                  render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
-                 nan_opacity=1.0, loc=None, backface_culling=False,
+                 nan_opacity=1.0, loc=None, culling=None,
                  rgb=False, categories=False, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the
@@ -468,9 +468,9 @@ class BasePlotter(object):
             Opacity of NaN values.  Should be between 0 and 1.
             Default 1.0
 
-        backface_culling : bool optional
-            Does not render faces that should not be visible to the
-            plotter.  This can be helpful for dense surface meshes,
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
@@ -516,6 +516,11 @@ class BasePlotter(object):
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+
+        if culling is None:
+            culling = kwargs.get("backface_culling", False)
+            if culling is True:
+                culling = 'backface'
 
         ##### Handle composite datasets #####
 
@@ -629,7 +634,7 @@ class BasePlotter(object):
 
         actor, prop = self.add_actor(self.mapper,
                                      reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling)
+                                     name=name, loc=loc, culling=culling)
 
         # Try to plot something if no preference given
         if texture == False:
@@ -840,7 +845,7 @@ class BasePlotter(object):
     def add_volume(self, volume, scalars=None, resolution=None,
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
-                   loc=None, backface_culling=False, multi_colors=False,
+                   loc=None, culling=None, multi_colors=False,
                    blending='additive', mapper='fixed_point', rng=None,
                    stitle=None, scalar_bar_args=None,
                    show_scalar_bar=None, **kwargs):
@@ -886,9 +891,9 @@ class BasePlotter(object):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
-        backface_culling : bool optional
-            Does not render faces that should not be visible to the
-            plotter.  This can be helpful for dense surface meshes,
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
@@ -926,6 +931,11 @@ class BasePlotter(object):
 
         if show_scalar_bar is None:
             show_scalar_bar = rcParams['show_scalar_bar']
+
+        if culling is None:
+            culling = kwargs.get("backface_culling", False)
+            if culling is True:
+                culling = 'backface'
 
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_obj(volume):
@@ -971,7 +981,7 @@ class BasePlotter(object):
                                     n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
-                                    backface_culling=backface_culling, rng=rng,
+                                    culling=culling, rng=rng,
                                     mapper=mapper, **kwargs)
 
                 actors.append(a)
@@ -1140,7 +1150,7 @@ class BasePlotter(object):
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling)
+                                     name=name, loc=loc, culling=culling)
 
 
         # Add scalar bar
@@ -1292,9 +1302,9 @@ class BasePlotter(object):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
-        culling : bool optional
-            Does not render faces that should not be visible to the
-            plotter.  This can be helpful for dense surface meshes,
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
@@ -1310,7 +1320,8 @@ class BasePlotter(object):
         # add actor to the correct render window
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        return renderer.add_actor(uinput, reset_camera, name, culling)
+        return renderer.add_actor(uinput, reset_camera=reset_camera, name=name,
+                                  culling=culling)
 
     def loc_to_index(self, loc):
         """
@@ -1513,8 +1524,9 @@ class BasePlotter(object):
         return self.show_bounds(*args, **kwargs)
 
     def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
-                         opacity=1.0, render_lines_as_tubes=False, lighting=None,
-                         reset_camera=None, loc=None):
+                         opacity=1.0, render_lines_as_tubes=False,
+                         lighting=None, reset_camera=None, outline=True,
+                         culling='front', loc=None):
         """
         Adds an unlabeled and unticked box at the boundaries of
         plot.  Useful for when wanting to plot outer grids while
@@ -1536,6 +1548,14 @@ class BasePlotter(object):
 
         opacity : float, optional
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+
+        outline : bool
+            Default is ``True``. when False, a box with faces is shown with
+            the specified culling
+
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. Default is ``'front'`` for bounding box.
 
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
