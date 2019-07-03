@@ -498,10 +498,50 @@ class Renderer(vtkRenderer):
         return self.bounding_box_actor
 
 
-    def add_floor(self, color=None, line_width=None, opacity=1.0,
-                  show_edges=False, lighting=False, face='-z', edge_color=None,
-                  reset_camera=None, loc=None, i_resolution=10, j_resolution=10):
-        """Show a floor mesh"""
+    def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
+                  color=None, line_width=None, opacity=1.0, show_edges=False,
+                  lighting=False, edge_color=None, reset_camera=None,
+                  loc=None):
+        """Show a floor mesh. This generates planes at the boundaries of the
+        scene to behave like floors or walls.
+
+        Parameters
+        ----------
+        face : str
+            The face at which to place the plane. Options are (-z, -y, -x, +z,
+            +y, and +z). Where the -/+ sign indicates on which side of the
+            axis the plane will lie. I.e. ``'-z'`` would generate a floor on
+            the XY-plane and the bottom of the scene (minimum z).
+
+        i_resolution : int
+            Number of points on the plane in the i direction.
+
+        j_resolution : int
+            Number of points on the plane in the j direction.
+
+        color : string or 3 item list, optional
+            Color of all labels and axis titles.  Default gray.
+            Either a string, rgb list, or hex color string.
+
+        line_width : int
+            Thickness of the edges. Only if ``show_edges`` is ``True``
+
+        opacity : float
+            The opacity of the generated surface
+
+        show_edges : bool
+            Flag on whether to show the mesh edges for tiling.
+
+        ine_width : float, optional
+            Thickness of lines.  Only valid for wireframe and surface
+            representations.  Default None.
+
+        lighting : bool, optional
+            Enable or disable view direction lighting.  Default False.
+
+        edge_color : string or 3 item list, optional
+            Color of of the edges of the mesh.
+        """
         self._floor_kwargs = locals()
         self._floor_kwargs.pop('self')
         if face.lower() in '-z':
