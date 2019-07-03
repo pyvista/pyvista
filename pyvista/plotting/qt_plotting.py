@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from threading import Thread
 
 import numpy as np
 import scooby
@@ -340,6 +339,8 @@ class BackgroundPlotter(QtInteractor):
 
             from IPython.external.qt_for_kernel import QtGui
             QtGui.QApplication.instance()
+        else:
+            ipython = None
 
         # run within python
         if app is None:
@@ -414,7 +415,7 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        #self._spawn_background_rendering()
+        self._spawn_background_rendering()
 
         self.window_size = window_size
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
@@ -451,15 +452,9 @@ class BackgroundPlotter(QtInteractor):
         ensures the render window stays updated without consuming too
         many resources.
         """
-        self.render_trigger.connect(self.ren_win.Render)
         twait = rate**-1
-
-        def render():
-            while self.active:
-                time.sleep(twait)
-                self._render()
-
-        self.render_thread = Thread(target=render)
+        self.render_thread = RenderThread(self.ren_win, twait)
+        self.app_window.closed.connect(self.render_thread.disable)
         self.render_thread.start()
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
@@ -546,10 +541,9 @@ class BackgroundPlotter(QtInteractor):
         self.close()
 
     def quit(self):
-        self.active = False
-        self.iren.TerminateApp()
         self.app_window.close()
-        self.close()
+        self.iren.TerminateApp()
+        #self.close()
 
 class MainWindow(QMainWindow):
     closed = pyqtSignal()
@@ -563,11 +557,19 @@ class MainWindow(QMainWindow):
 
 class RenderThread(QThread):
 
-    def __init__(self):
+    def __init__(self, ren_win, twait):
         QThread.__init__(self)
+        self.ren_win = ren_win
+        self.twait = twait
+        self.active = True
 
     def __del__(self):
         self.wait()
 
+    def disable(self):
+        self.active = False
+
     def run(self):
-        pass
+        while self.active:
+            self.sleep(1)
+            self.ren_win.Render()
