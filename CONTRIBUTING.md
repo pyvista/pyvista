@@ -116,7 +116,7 @@ There are two important copyright guidelines:
    stackoverflow) or commercial use is prohibited. Those can undermine
    the license of the whole projects.
 
-
+Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md)
 
 ## Testing
 

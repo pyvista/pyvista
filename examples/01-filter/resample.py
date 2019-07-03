@@ -15,7 +15,7 @@ import numpy as np
 
 ###############################################################################
 # Querry a grids points onto a sphere
-mesh = pv.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
 data_to_probe = examples.load_uniform()
 
 ###############################################################################
@@ -30,9 +30,8 @@ p.show()
 result = mesh.sample(data_to_probe)
 
 # Plot result
-name = 'Spatial Point Data'
+name = "Spatial Point Data"
 result.plot(scalars=name, clim=data_to_probe.get_data_range(name))
-
 
 
 ###############################################################################
@@ -59,5 +58,5 @@ interpolated = surface.interpolate(points, radius=12.0)
 
 p = pv.Plotter()
 p.add_mesh(points, point_size=30.0, render_points_as_spheres=True)
-p.add_mesh(interpolated, scalars='val')
+p.add_mesh(interpolated, scalars="val")
 p.show()

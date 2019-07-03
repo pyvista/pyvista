@@ -1,160 +1,182 @@
 """
 .. _ref_parametric_example:
 
-Geometric Parametric Objects
+Parametric Geometric Objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Creating parametric objects
 """
+
+# sphinx_gallery_thumbnail_number = 12
 import pyvista as pv
 from math import pi
 
 ###############################################################################
 # This example demonstrates how to plot parametric objects using pyvista
-# Create a supertoroid
+#
+# Supertoroid
+# +++++++++++
 
 supertoroid = pv.ParametricSuperToroid(n1=0.5)
-supertoroid.plot(color='tan', smooth_shading=True)
+supertoroid.plot(color="tan", smooth_shading=True)
 
-################################################################################
-# Create a parametric ellipsoid
+###############################################################################
+# Parametric Ellipsoid
+# ++++++++++++++++++++
 
 # Ellipsoid with a long x axis
 ellipsoid = pv.ParametricEllipsoid(10, 5, 5)
-ellipsoid.plot(color='tan')
+ellipsoid.plot(color="tan")
 
 
-
-################################################################################
-# Create a partial parametric ellipsoid
+###############################################################################
+# Partial Parametric Ellipsoid
+# ++++++++++++++++++++++++++++
 
 # cool plotting direction
-cpos = [(21.9930, 21.1810, -30.3780),
-        (-1.1640, -1.3098, -0.1061),
-        (0.8498, -0.2515, 0.4631)]
+cpos = [
+    (21.9930, 21.1810, -30.3780),
+    (-1.1640, -1.3098, -0.1061),
+    (0.8498, -0.2515, 0.4631),
+]
 
 
 # half ellipsoid
-part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=pi/2)
-part_ellipsoid.plot(color='tan', smooth_shading=True, cpos=cpos)
+part_ellipsoid = pv.ParametricEllipsoid(10, 5, 5, max_v=pi / 2)
+part_ellipsoid.plot(color="tan", smooth_shading=True, cpos=cpos)
 
-
-################################################################################
-# Create a pseudosphere
-
-pseudosphere = pv.ParametricPseudosphere()
-pseudosphere.plot(color='tan', smooth_shading=True)
 
 ###############################################################################
-# Create a bohemiandome
+# Pseudosphere
+# ++++++++++++
+
+pseudosphere = pv.ParametricPseudosphere()
+pseudosphere.plot(color="tan", smooth_shading=True)
+
+###############################################################################
+# Bohemian Dome
+# +++++++++++++
+
 
 bohemiandome = pv.ParametricBohemianDome()
-bohemiandome.plot(color='tan')
+bohemiandome.plot(color="tan")
 
 ###############################################################################
-# Create a bour
+# Bour
+# ++++
 
 bour = pv.ParametricBour()
-bour.plot(color='tan')
+bour.plot(color="tan")
 
 ###############################################################################
-# Create a boy
+# Boy's Surface
+# +++++++++++++
 
 boy = pv.ParametricBoy()
-boy.plot(color='tan')
+boy.plot(color="tan")
 
 ###############################################################################
-# Create a catalanminimal
+# Catalan Minimal
+# +++++++++++++++
 
 catalanminimal = pv.ParametricCatalanMinimal()
-catalanminimal.plot(color='tan')
+catalanminimal.plot(color="tan")
 
 ###############################################################################
-# Create a conicspiral
+# Conic Spiral
+# ++++++++++++
 
 conicspiral = pv.ParametricConicSpiral()
-conicspiral.plot(color='tan')
+conicspiral.plot(color="tan")
 
 ###############################################################################
-# Create a crosscap
+# Cross Cap
+# +++++++++
 
 crosscap = pv.ParametricCrossCap()
-crosscap.plot(color='tan')
+crosscap.plot(color="tan")
 
 ###############################################################################
-# Create a dini
+# Dini
+# ++++
 
 dini = pv.ParametricDini()
-dini.plot(color='tan')
+dini.plot(color="tan")
 
 ###############################################################################
-# Create a enneper
+# Enneper
+# +++++++
 
 enneper = pv.ParametricEnneper()
-enneper.plot(color='tan')
+enneper.plot(cpos="yz")
 
 ###############################################################################
-# Create a figure8klein
+# Figure-8 Klein
+# ++++++++++++++
 
 figure8klein = pv.ParametricFigure8Klein()
-figure8klein.plot(color='tan')
+figure8klein.plot()
 
 ###############################################################################
-# Create a henneberg
+# Henneberg
+# +++++++++
 
 henneberg = pv.ParametricHenneberg()
-henneberg.plot(color='tan')
+henneberg.plot(color="tan")
 
 ###############################################################################
-# Create a klein
+# Klein
+# +++++
 
 klein = pv.ParametricKlein()
-klein.plot(color='tan')
+klein.plot(color="tan")
 
 ###############################################################################
-# Create a kuen
+# Kuen
+# ++++
 
 kuen = pv.ParametricKuen()
-kuen.plot(color='tan')
+kuen.plot(color="tan")
 
 ###############################################################################
-# Create a mobius
+# Mobius
+# ++++++
 
 mobius = pv.ParametricMobius()
-mobius.plot(color='tan')
+mobius.plot(color="tan")
 
 ###############################################################################
-# Create a pluckerconoid
+# Plucker Conoid
+# ++++++++++++++
 
 pluckerconoid = pv.ParametricPluckerConoid()
-pluckerconoid.plot(color='tan')
+pluckerconoid.plot(color="tan")
+
 
 ###############################################################################
-# Create a pseudosphere
-
-pseudosphere = pv.ParametricPseudosphere()
-pseudosphere.plot(color='tan')
-
-###############################################################################
-# Create a randomhills
+# Random Hills
+# ++++++++++++
 
 randomhills = pv.ParametricRandomHills()
-randomhills.plot(color='tan')
+randomhills.plot(color="tan")
 
 ###############################################################################
-# Create a roman
+# Roman
+# +++++
 
 roman = pv.ParametricRoman()
-roman.plot(color='tan')
+roman.plot(color="tan")
 
 ###############################################################################
-# Create a superellipsoid
+# Super Ellipsoid
+# +++++++++++++++
 
 superellipsoid = pv.ParametricSuperEllipsoid(n1=0.1, n2=2)
-superellipsoid.plot(color='tan')
+superellipsoid.plot(color="tan")
 
 ###############################################################################
-# Create a torus
+# Torus
+# +++++
 
 torus = pv.ParametricTorus()
-torus.plot(color='tan')
+torus.plot(color="tan")
