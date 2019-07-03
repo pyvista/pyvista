@@ -605,6 +605,17 @@ def test_volume_rendering():
     plotter.add_volume(vol, opacity='sigmoid', cmap='jet', n_colors=15)
     plotter.show()
 
+    # Now test MultiBlock rendering
+    data = pyvista.MultiBlock(dict(a=examples.load_uniform(),
+            b=examples.load_uniform(),
+            c=examples.load_uniform(),
+            d=examples.load_uniform(),))
+    data['a'].rename_scalar('Spatial Point Data', 'a')
+    data['b'].rename_scalar('Spatial Point Data', 'b')
+    data['c'].rename_scalar('Spatial Point Data', 'c')
+    data['d'].rename_scalar('Spatial Point Data', 'd')
+    data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
+
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

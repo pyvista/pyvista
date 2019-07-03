@@ -9,7 +9,7 @@ Extracts edges from a surface.
 import pyvista as pv
 from pyvista import examples
 
-################################################################################
+###############################################################################
 # From vtk documentation, the edges are one of the following:
 #
 # 1. boundary (used by one polygon) or a line cell
@@ -30,16 +30,14 @@ edges = mesh.extract_edges(12)
 # Render the edge lines ontop of the original mesh
 p = pv.Plotter()
 p.add_mesh(mesh, color=True)
-p.add_mesh(edges, color='red', line_width=5)
+p.add_mesh(edges, color="red", line_width=5)
 # Define a camera position that will zoom to her eye
-p.camera_position = [(96., -197., 45.),
-                     (7., -109., 22.),
-                     (0, 0, 1)]
+p.camera_position = [(96.0, -197.0, 45.0), (7.0, -109.0, 22.0), (0, 0, 1)]
 p.show()
 
-################################################################################
-# We can do this anaylsis for any :class:`pyvista.PolyData` object. Let's try the
-# cow mesh example:
+###############################################################################
+# We can do this anaylsis for any :class:`pyvista.PolyData` object. Let's try
+# the cow mesh example:
 
 mesh = examples.download_cow()
 
@@ -47,8 +45,6 @@ edges = mesh.extract_edges(20)
 
 p = pv.Plotter()
 p.add_mesh(mesh, color=True)
-p.add_mesh(edges, color='red', line_width=5)
-p.camera_position = [(9.5, 3., 5.5),
-                     (2.5, 1, 0),
-                     (0, 1, 0)]
+p.add_mesh(edges, color="red", line_width=5)
+p.camera_position = [(9.5, 3.0, 5.5), (2.5, 1, 0), (0, 1, 0)]
 p.show()

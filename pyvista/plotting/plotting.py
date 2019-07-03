@@ -632,6 +632,8 @@ class BasePlotter(object):
                                      name=name, loc=loc, culling=backface_culling)
 
         # Try to plot something if no preference given
+        if texture == False:
+            texture = None
         if scalars is None and color is None and texture is None:
             # Prefer texture first
             if len(list(mesh.textures.keys())) > 0:
@@ -942,6 +944,8 @@ class BasePlotter(object):
 
 
         if isinstance(volume, pyvista.MultiBlock):
+            from itertools import cycle
+            cycler = cycle(['Reds', 'Greens', 'Blues', 'Greys', 'Oranges', 'Purples'])
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(volume.GetNumberOfBlocks()):
@@ -952,11 +956,14 @@ class BasePlotter(object):
                 # Get the data object
                 block = wrap(volume.GetBlock(idx))
                 if resolution is None:
-                    block_resolution = block.GetSpacing()
+                    try:
+                        block_resolution = block.GetSpacing()
+                    except:
+                        block_resolution = resolution
                 else:
                     block_resolution = resolution
                 if multi_colors:
-                    color = ['Reds', 'Greens', 'Blues', 'Grays'][idx]
+                    color = next(cycler)
                 else:
                     color = cmap
 
@@ -1201,6 +1208,12 @@ class BasePlotter(object):
     def bounds(self):
         """ Returns the bounds of the active renderer """
         return self.renderer.bounds
+
+    @property
+    def length(self):
+        """Returns the length of the diagonal of the bounding box of the scene
+        """
+        return pyvista.Box(self.bounds).length
 
     @property
     def center(self):
@@ -2323,7 +2336,8 @@ class BasePlotter(object):
                          font_size=None, text_color=None,
                          font_family=None, shadow=False,
                          show_points=True, point_color=None, point_size=5,
-                         name=None, **kwargs):
+                         name=None, shape_color='grey', shape='rounded_rect',
+                         fill_shape=True, margin=3, shape_opacity=1.0, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2379,6 +2393,23 @@ class BasePlotter(object):
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
 
+
+        shape_color : string or 3 item list, optional. Color of points (if visible).
+            Either a string, rgb list, or hex color string.  For example:
+
+        shape : str, optional
+            The string name of the shape to use. Options are ``'rect'`` or
+            ``'rounded_rect'``. If you want no shape, pass ``None``
+
+        fill_shape : bool, optional
+            Fill the shape with the ``shape_color``. Outlines if ``False``.
+
+        margin : int, optional
+            The size of the margin on the label background shape. Default is 3.
+
+        shape_opacity : flaot
+            The opacity of the shape between zero and one.
+
         Returns
         -------
         labelMapper : vtk.vtkvtkLabeledDataMapper
@@ -2418,21 +2449,38 @@ class BasePlotter(object):
             vtklabels.InsertNextValue(str(item))
         vtkpoints.GetPointData().AddArray(vtklabels)
 
+        # Create heirarchy
+        hier = vtk.vtkPointSetToLabelHierarchy()
+        hier.SetInputData(vtkpoints)
+        # hier.SetOrientationArrayName('orientation')
+        hier.SetLabelArrayName('labels')
+
         # create label mapper
-        labelMapper = vtk.vtkLabeledDataMapper()
-        labelMapper.SetInputData(vtkpoints)
-        textprop = labelMapper.GetLabelTextProperty()
+        labelMapper = vtk.vtkLabelPlacementMapper()
+        labelMapper.SetInputConnection(hier.GetOutputPort())
+        if not isinstance(shape, str):
+            labelMapper.SetShapeToNone()
+        elif shape.lower() in 'rect':
+            labelMapper.SetShapeToRect()
+        elif shape.lower() in 'rounded_rect':
+            labelMapper.SetShapeToRoundedRect()
+        else:
+            raise RuntimeError('Shape ({}) not understood'.format(shape))
+        if fill_shape:
+            labelMapper.SetStyleToFilled()
+        else:
+            labelMapper.SetStyleToOutline()
+        labelMapper.SetBackgroundColor(parse_color(shape_color))
+        labelMapper.SetBackgroundOpacity(shape_opacity)
+        labelMapper.SetMargin(margin)
+
+        textprop = hier.GetTextProperty()
         textprop.SetItalic(italic)
         textprop.SetBold(bold)
         textprop.SetFontSize(font_size)
         textprop.SetFontFamily(parse_font_family(font_family))
         textprop.SetColor(parse_color(text_color))
         textprop.SetShadow(shadow)
-        labelMapper.SetLabelModeToLabelFieldData()
-        labelMapper.SetFieldDataName('labels')
-
-        labelActor = vtk.vtkActor2D()
-        labelActor.SetMapper(labelMapper)
 
         self.remove_actor('{}-points'.format(name), reset_camera=False)
         self.remove_actor('{}-labels'.format(name), reset_camera=False)
@@ -2445,7 +2493,10 @@ class BasePlotter(object):
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size, name='{}-points'.format(name))
 
+        labelActor = vtk.vtkActor2D()
+        labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False, name='{}-lables'.format(name))
+
         return labelMapper
 
 
@@ -2976,6 +3027,9 @@ class BasePlotter(object):
         if not is_pyvista_obj(path):
             path = pyvista.PolyData(path)
         points = path.points
+
+        # Make sure the whole scene is visible
+        self.camera.SetThickness(path.length)
 
         def orbit():
             """Internal thread for running the orbit"""
