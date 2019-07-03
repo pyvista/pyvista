@@ -636,6 +636,8 @@ class BasePlotter(object):
                                      name=name, loc=loc, culling=backface_culling)
 
         # Try to plot something if no preference given
+        if texture == False:
+            texture = None
         if scalars is None and color is None and texture is None:
             # Prefer texture first
             if len(list(mesh.textures.keys())) > 0:

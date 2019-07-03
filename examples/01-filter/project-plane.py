@@ -18,17 +18,18 @@ def make_example_data():
     poly = surface.interpolate(points, radius=12.0)
     return poly
 
+
 poly = make_example_data()
 poly.plot()
 
-################################################################################
+###############################################################################
 # Project that surface to a plane underneath the surface
 origin = poly.center
-origin[-1] -= poly.length / 3.
+origin[-1] -= poly.length / 3.0
 projected = poly.project_points_to_plane(origin=origin)
 
 # Display the results
 p = pv.Plotter()
-p.add_mesh(poly,)
-p.add_mesh(projected, )
+p.add_mesh(poly)
+p.add_mesh(projected)
 p.show()

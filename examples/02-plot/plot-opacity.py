@@ -8,7 +8,7 @@ Plot a mesh's scalar array with an opacity trasfer funciton
 import pyvista as pv
 from pyvista import examples
 
-################################################################################
+###############################################################################
 # It's possible to apply an opacity mapping to any scalar array plotted. You can
 # specify either a single static value to make the mesh opaque on all cells, or
 # use a transfer function where the scalar array plotted is mapped to the opacity.
@@ -25,31 +25,31 @@ from pyvista import examples
 # Load St Helens DEM and warp the topography
 mesh = examples.download_st_helens().warp_by_scalar()
 
-mesh.plot(opacity='linear')
+mesh.plot(opacity="linear")
 
 
-################################################################################
+###############################################################################
 # Opacity mapping is often useful when plotting DICOM images. For example,
 # download the sample knee DICOM image:
 knee = examples.download_knee()
 
-################################################################################
+###############################################################################
 # And here we inspect the DICOM image with a few different opacity mappings:
-p = pv.Plotter(shape=(2,2), border=False)
+p = pv.Plotter(shape=(2, 2), border=False)
 
-p.add_mesh(knee, cmap='bone', stitle='No Opacity')
+p.add_mesh(knee, cmap="bone", stitle="No Opacity")
 p.view_xy()
 
-p.subplot(0,1)
-p.add_mesh(knee, cmap='bone', opacity='linear', stitle='Linear Opacity')
+p.subplot(0, 1)
+p.add_mesh(knee, cmap="bone", opacity="linear", stitle="Linear Opacity")
 p.view_xy()
 
-p.subplot(1,0)
-p.add_mesh(knee, cmap='bone', opacity='sigmoid', stitle='Sigmoidal Opacity')
+p.subplot(1, 0)
+p.add_mesh(knee, cmap="bone", opacity="sigmoid", stitle="Sigmoidal Opacity")
 p.view_xy()
 
-p.subplot(1,1)
-p.add_mesh(knee, cmap='bone', opacity='geom_r', stitle='Log Scale Opacity')
+p.subplot(1, 1)
+p.add_mesh(knee, cmap="bone", opacity="geom_r", stitle="Log Scale Opacity")
 p.view_xy()
 
 p.show()
