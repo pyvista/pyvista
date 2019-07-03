@@ -1584,8 +1584,8 @@ class BasePlotter(object):
 
     def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
                   color=None, line_width=None, opacity=1.0, show_edges=False,
-                  lighting=False, edge_color=None, reset_camera=None,
-                  loc=None):
+                  lighting=False, edge_color=None, reset_camera=None, pad=0.01,
+                   offset=0.0, loc=None):
         """Show a floor mesh. This generates planes at the boundaries of the
         scene to behave like floors or walls.
 
@@ -1625,6 +1625,12 @@ class BasePlotter(object):
 
         edge_color : string or 3 item list, optional
             Color of of the edges of the mesh.
+
+        pad : float
+            Percantage padding between 0 and 1
+
+        offset : float
+            Percantage offset along plane normal
         """
         kwargs = locals()
         _ = kwargs.pop('self')

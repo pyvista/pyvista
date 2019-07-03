@@ -500,8 +500,8 @@ class Renderer(vtkRenderer):
 
     def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
                   color=None, line_width=None, opacity=1.0, show_edges=False,
-                  lighting=False, edge_color=None, reset_camera=None,
-                  loc=None):
+                  lighting=False, edge_color=None, reset_camera=None, pad=0.0,
+                  offset=0.0, loc=None):
         """Show a floor mesh. This generates planes at the boundaries of the
         scene to behave like floors or walls.
 
@@ -541,45 +541,48 @@ class Renderer(vtkRenderer):
 
         edge_color : string or 3 item list, optional
             Color of of the edges of the mesh.
+
+        pad : float
+            Percantage padding between 0 and 1
+
+        offset : float
+            Percantage offset along plane normal
         """
         self._floor_kwargs = locals()
         self._floor_kwargs.pop('self')
+        ranges = np.array(self.bounds).reshape(-1,2).ptp(axis=1)
+        ranges += (ranges * pad)
+        center = np.array(self.center)
         if face.lower() in '-z':
-            center = np.array(self.center)
-            center[2] = self.bounds[4]
+            center[2] = self.bounds[4] - (ranges[2] * offset)
             normal = (0,0,1)
-            i_size = self.bounds[1] - self.bounds[0]
-            j_size = self.bounds[3] - self.bounds[2]
+            i_size = ranges[0]
+            j_size = ranges[1]
         elif face.lower() in '-y':
-            center = np.array(self.center)
-            center[1] = self.bounds[2]
+            center[1] = self.bounds[2] - (ranges[1] * offset)
             normal = (0,1,0)
-            i_size = self.bounds[1] - self.bounds[0]
-            j_size = self.bounds[5] - self.bounds[4]
+            i_size = ranges[0]
+            j_size = ranges[2]
         elif face.lower() in '-x':
-            center = np.array(self.center)
-            center[0] = self.bounds[0]
+            center[0] = self.bounds[0] - (ranges[0] * offset)
             normal = (1,0,0)
-            i_size = self.bounds[5] - self.bounds[4]
-            j_size = self.bounds[3] - self.bounds[2]
+            i_size = ranges[2]
+            j_size = ranges[1]
         elif face.lower() in '+z':
-            center = np.array(self.center)
-            center[2] = self.bounds[5]
+            center[2] = self.bounds[5] + (ranges[2] * offset)
             normal = (0,0,-1)
-            i_size = self.bounds[1] - self.bounds[0]
-            j_size = self.bounds[3] - self.bounds[2]
+            i_size = ranges[0]
+            j_size = ranges[1]
         elif face.lower() in '+y':
-            center = np.array(self.center)
-            center[1] = self.bounds[3]
+            center[1] = self.bounds[3] + (ranges[1] * offset)
             normal = (0,-1,0)
-            i_size = self.bounds[1] - self.bounds[0]
-            j_size = self.bounds[5] - self.bounds[4]
+            i_size = ranges[0]
+            j_size = ranges[2]
         elif face.lower() in '+x':
-            center = np.array(self.center)
-            center[0] = self.bounds[1]
+            center[0] = self.bounds[1] + (ranges[0] * offset)
             normal = (-1,0,0)
-            i_size = self.bounds[5] - self.bounds[4]
-            j_size = self.bounds[3] - self.bounds[2]
+            i_size = ranges[2]
+            j_size = ranges[1]
         else:
             raise NotImplementedError('Face ({}) not implementd'.format(face))
         self._floor = pyvista.Plane(center=center, direction=normal,
