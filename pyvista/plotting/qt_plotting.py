@@ -568,5 +568,5 @@ class RenderThread(QThread):
 
     def run(self):
         while self.active:
-            self.sleep(1)
+            self.sleep(self.twait)
             self.ren_win.Render()
