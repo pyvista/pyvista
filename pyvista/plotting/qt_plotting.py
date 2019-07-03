@@ -48,7 +48,7 @@ class QFileDialog(object):
 
 
 try:
-    from PyQt5.QtCore import pyqtSignal
+    from PyQt5.QtCore import pyqtSignal, QThread
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
@@ -349,13 +349,14 @@ class BackgroundPlotter(QtInteractor):
                 app = QApplication([''])
 
         self.app = app
-        self.app_window = QMainWindow()
+        self.app_window = MainWindow()
 
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
         QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
-        self.signal_close.connect(self.app_window.close)
+        #self.signal_close.connect(self.app_window.close)
+        self.app_window.closed.connect(self.quit)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -413,7 +414,7 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        self._spawn_background_rendering()
+        #self._spawn_background_rendering()
 
         self.window_size = window_size
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
@@ -460,11 +461,6 @@ class BackgroundPlotter(QtInteractor):
 
         self.render_thread = Thread(target=render)
         self.render_thread.start()
-
-    def closeEvent(self, event):
-        self.active = False
-        self.app.quit()
-        self.close()
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
@@ -548,3 +544,30 @@ class BackgroundPlotter(QtInteractor):
 
     def __del__(self):  # pragma: no cover
         self.close()
+
+    def quit(self):
+        self.active = False
+        self.iren.TerminateApp()
+        self.app_window.close()
+        self.close()
+
+class MainWindow(QMainWindow):
+    closed = pyqtSignal()
+
+    def __init__(self, parent = None):
+        super(MainWindow, self).__init__(parent)
+
+    def closeEvent(self, event):
+        self.closed.emit()
+        event.accept()
+
+class RenderThread(QThread):
+
+    def __init__(self):
+        QThread.__init__(self)
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        pass
