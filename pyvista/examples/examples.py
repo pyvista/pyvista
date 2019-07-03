@@ -244,3 +244,11 @@ def load_spline():
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
     return pyvista.Spline(points, 1000)
+
+
+def load_random_hills():
+    """Uses the parametric random hill function to create hills oriented like
+    topography and add's an elevation array"""
+    mesh = pyvista.ParametricRandomHills()
+    mesh.rotate_y(90)
+    return mesh.elevation()

@@ -13,17 +13,17 @@ filename = examples.planefile
 mesh = pv.read(filename)
 
 
-################################################################################
-# You can also take a screenshot without creating an interactive plot window using
-# the ``Plotter``:
+###############################################################################
+# You can also take a screenshot without creating an interactive plot window
+# using the :class:`pyvista.Plotter`:
 
 plotter = pv.Plotter(off_screen=True)
-plotter.add_mesh(mesh, color='orange')
+plotter.add_mesh(mesh, color="orange")
 plotter.show(auto_close=False)
 # plotter.screenshot('airplane.png')
 plotter.close()
 
-################################################################################
+###############################################################################
 # The ``img`` array can be used to plot the screenshot in ``matplotlib``:
 
 plt.imshow(plotter.image)
