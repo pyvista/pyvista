@@ -47,7 +47,7 @@ class QFileDialog(object):
 
 
 try:
-    from PyQt5.QtCore import pyqtSignal, QThread
+    from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
@@ -364,7 +364,7 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.quit)
+        file_menu.addAction('Exit', self.close)
 
         view_menu = main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
@@ -538,9 +538,10 @@ class BackgroundPlotter(QtInteractor):
     def __del__(self):  # pragma: no cover
         self.close()
 
-    def quit(self):
+    def close(self):
         self.app_window.close()
         self.iren.TerminateApp()
+        self.app.quit()
 
 class MainWindow(QMainWindow):
     closed = pyqtSignal()
@@ -563,6 +564,7 @@ class RenderThread(QThread):
     def __del__(self):
         self.wait()
 
+    @pyqtSlot()
     def disable(self):
         self.active = False
 
