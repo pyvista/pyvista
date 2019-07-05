@@ -450,7 +450,7 @@ class BackgroundPlotter(QtInteractor):
         ensures the render window stays updated without consuming too
         many resources.
         """
-        twait = rate**-1
+        twait = (rate**-1) * 1000.0
         self.render_thread = RenderThread(self.ren_win, twait)
         self.app_window.closed.connect(self.render_thread.disable)
         self.render_thread.start()
@@ -570,5 +570,5 @@ class RenderThread(QThread):
 
     def run(self):
         while self.active:
-            self.sleep(self.twait)
+            self.msleep(self.twait)
             self.ren_win.Render()
