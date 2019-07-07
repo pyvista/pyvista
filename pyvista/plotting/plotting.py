@@ -695,13 +695,11 @@ class BasePlotter(object):
             except:
                 # Or get opacity trasfer function
                 opacity = opacity_transfer_function(opacity, n_colors)
-            if flip_opacity:
-                opacity = opacity[::-1]
         elif isinstance(opacity, np.ndarray):
             raise NotImplemented
-        elif isinstance(opacity, (float)):
-            if flip_opacity:
-                opacity = 1 - opacity
+
+        if flip_opacity:
+            opacity = 1 - opacity
 
         # Scalar formatting ===================================================
         if cmap is None: # grab alias for cmaps: colormap
