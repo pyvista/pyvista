@@ -69,4 +69,7 @@ frog = examples.download_frog()
 
 p = pv.Plotter()
 p.add_volume(frog, cmap="viridis", opacity="sigmoid_5")
+p.camera_position = [(929., 1067., -278.9),
+                     (249.5, 234.5, 101.25),
+                     (-0.2048, -0.2632, -0.9427)]
 p.show()
