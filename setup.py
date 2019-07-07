@@ -42,7 +42,7 @@ setup(
               'pyvista.plotting', 'pyvista.utilities'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
-    long_description=open(readme_file).read(),
+    long_description=open(readme_file, encoding="utf-8").read(),
     author='PyVista Developers',
     author_email='info@pyvista.org',
     license='MIT',
