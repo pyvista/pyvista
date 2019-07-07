@@ -680,12 +680,14 @@ class BasePlotter(object):
             self.mapper.SetScalarModeToUsePointFieldData()
 
         # Handle making opacity array =========================================
+        normalize = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
         _custom_opac = False
         if isinstance(opacity, str):
             try:
                 # Get array from mesh
                 opacity = get_scalar(mesh, opacity,
                         preference=kwargs.get('preference', 'cell'), err=True)
+                opacity = normalize(opacity)
                 _custom_opac = True
             except:
                 # Or get opacity trasfer function
@@ -694,7 +696,6 @@ class BasePlotter(object):
             raise NotImplemented
 
         # Scalar formatting ===================================================
-        normalize = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
         if cmap is None: # Set default map if matplotlib is avaialble
@@ -746,8 +747,6 @@ class BasePlotter(object):
 
             if np.any(rng) and not rgb:
                 self.mapper.scalar_range = rng[0], rng[1]
-            elif rgb or _custom_opac:
-                self.mapper.SetColorModeToDirectScalars()
 
             table = self.mapper.GetLookupTable()
             table.SetNanColor(nan_color)
@@ -793,6 +792,8 @@ class BasePlotter(object):
                 self.mapper.SetScalarModeToUseCellData()
             else:
                 raise_not_matching(scalars, mesh)
+            if rgb or _custom_opac:
+                self.mapper.SetColorModeToDirectScalars()
 
         else:
             self.mapper.SetScalarModeToUseFieldData()
