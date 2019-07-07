@@ -95,14 +95,16 @@ def parse_color(color):
         return string_to_rgb(color)
     elif len(color) == 3:
         return color
+    elif len(color) == 4:
+        return color[:3]
     else:
         raise Exception("""
-    Invalid color input
+    Invalid color input: ({})
     Must ba string, rgb list, or hex color string.  For example:
         color='white'
         color='w'
         color=[1, 1, 1]
-        color='#FFFFFF'""")
+        color='#FFFFFF'""".format(color))
 
 
 
