@@ -605,7 +605,7 @@ class BasePlotter(object):
                 mesh = grid.extract_surface()
                 ind = mesh.point_arrays['vtkOriginalPointIds']
                 # remap scalars
-                if scalars is not None:
+                if isinstance(scalars, np.ndarray):
                     scalars = scalars[ind]
 
             mesh.compute_normals(cell_normals=False, inplace=True)
