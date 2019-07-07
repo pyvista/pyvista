@@ -356,7 +356,7 @@ class BasePlotter(object):
                  render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
-                 rgb=False, categories=False, **kwargs):
+                 rgb=False, categories=False, flip_opacity=False, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the
         plotting object.
@@ -481,6 +481,9 @@ class BasePlotter(object):
         categories : bool, optional
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
+
+        flip_opacity : bool, optional
+            Invert the opacity mapping.
 
         Returns
         -------
@@ -692,8 +695,13 @@ class BasePlotter(object):
             except:
                 # Or get opacity trasfer function
                 opacity = opacity_transfer_function(opacity, n_colors)
+            if flip_opacity:
+                opacity = opacity[::-1]
         elif isinstance(opacity, np.ndarray):
             raise NotImplemented
+        elif isinstance(opacity, (float)):
+            if flip_opacity:
+                opacity = 1 - opacity
 
         # Scalar formatting ===================================================
         if cmap is None: # grab alias for cmaps: colormap
