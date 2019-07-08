@@ -3326,7 +3326,6 @@ class Plotter(BasePlotter):
             import PIL.Image
             # sanity check
             disp = PIL.Image.fromarray(self.last_image)
-            print('got screenshot')
 
         # Cleanup
         if auto_close:
