@@ -19,6 +19,7 @@ from pyvista.utilities import (convert_array, get_scalar, is_pyvista_obj,
 
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
+from .export_x3d import X3D_JAVASCRIPT, export_x3d
 from .mapper import make_mapper
 from .theme import *
 from .tools import *
@@ -3043,27 +3044,7 @@ class BasePlotter(object):
 
         If no filename given, the raw HTML for this scene with be returned
         """
-        if not hasattr(self, 'ren_win'):
-            raise RuntimeError('Export must be called before showing/closing the scene.')
-        exporter = vtk.vtkX3DExporter()
-        exporter.SetInput(self.ren_win)
-        exporter.FastestOff()
-        if speed:
-            exporter.SetSpeed(speed)
-        if filename is not None:
-            if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-                filename = os.path.join(pyvista.FIGURE_PATH, filename)
-            else:
-                filename = os.path.abspath(os.path.expanduser(filename))
-            exporter.SetFileName(filename)
-            exporter.SetBinary(binary)
-        else:
-            exporter.SetWriteToOutputString(True)
-        exporter.Update()
-        exporter.Write()
-        if filename is None:
-            return exporter.GetOutputString()
-        return
+        return export_x3d(self, filename=filename, binary=binary, speed=speed)
 
     def export_obj(self, file_prefix):
         """ writes the render window to wavefront .OBJ files in ASCII form.
@@ -3294,26 +3275,9 @@ class Plotter(BasePlotter):
                                          height=height)
                 except:
                     pass
-            elif nb_backend == 'x3d':
+            elif nb_backend in ['x3d', 'x3dom']:
                 scene_xml = self.export_x3d()
-                # remove first line of the header
-                # scene_xml = scene_xml.replace('<?xml version="1.0" encoding ="UTF-8"?>\n', '')
-                # index = scene_xml.find('\n')
-                # scene_xml = scene_xml[index::]
-                javascript = '''
-<?xml version="1.0" encoding ="UTF-8"?>
-<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN"
-   "http://www.web3d.org/specifications/x3d-3.3.dtd">
-<head>
-    <script type='text/javascript' src='http://www.x3dom.org/x3dom/release/x3dom.js'> </script>
-    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/x3dom/release/x3dom.css'></link>
-</head>
-<body>
-{}
-</body>
-'''.format(scene_xml)
-
-                disp = HTML(javascript)
+                disp = HTML(X3D_JAVASCRIPT.format(scene_xml))
 
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the

@@ -1,6 +1,7 @@
 from .colors import (color_char_to_word, get_cmap_safe, hex_to_rgb, hexcolors,
                      string_to_rgb)
 from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
+from .export_x3d import export_x3d, X3D_JAVASCRIPT
 from .helpers import plot, plot_arrows, plot_compare_four
 from .ipy_tools import (Clip, InteractiveTool, Isocontour, ManySlicesAlongAxis,
                         OrthogonalSlicer, ScaledPlotter, Threshold)
