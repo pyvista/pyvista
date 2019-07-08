@@ -56,7 +56,7 @@ rcParams = {
 # Choose default notebook backend based on availability
 try:
     import panel
-    rcParams['nb_backend'] = 'panel'
+    rcParams['nb_backend'] = 'vtkjs'
 except ImportError:
     rcParams['nb_backend'] = 'x3d'
 

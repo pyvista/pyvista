@@ -58,9 +58,9 @@ try:
     if os.environ['PYVISTA_USE_PANEL'].lower() == 'false':
         rcParams['nb_backend'] = False
     elif os.environ['PYVISTA_USE_PANEL'].lower() == 'true':
-        rcParams['nb_backend'] = 'panel'
-    elif os.environ['PYVISTA_NB_BACKEND'].lower() == 'panel':
-        rcParams['nb_backend'] = 'panel'
+        rcParams['nb_backend'] = 'vtkjs'
+    elif os.environ['PYVISTA_NB_BACKEND'].lower() == 'vtkjs':
+        rcParams['nb_backend'] = 'vtkjs'
     elif os.environ['PYVISTA_NB_BACKEND'].lower() == 'x3d':
         rcParams['nb_backend'] = 'x3d'
 except KeyError:

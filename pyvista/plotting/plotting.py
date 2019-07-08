@@ -3287,7 +3287,7 @@ class Plotter(BasePlotter):
                 self.close()
                 raise KeyboardInterrupt
         elif self.notebook and not hasattr(self, 'volume'):
-            if nb_backend == 'panel':
+            if nb_backend in ['panel', 'vtkjs']:
                 try:
                     from panel.pane import VTK as panel_display
                     disp = panel_display(self.ren_win, sizing_mode='stretch_width',
