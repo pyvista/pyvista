@@ -3298,12 +3298,14 @@ class Plotter(BasePlotter):
                 scene_xml = self.export_x3d()
                 # remove first line of the header
                 # scene_xml = scene_xml.replace('<?xml version="1.0" encoding ="UTF-8"?>\n', '')
-                index = scene_xml.find('\n')
-                scene_xml = scene_xml[index::]
+                # index = scene_xml.find('\n')
+                # scene_xml = scene_xml[index::]
                 javascript = '''
-                <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
-                <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
-                {}
+<head>
+    <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
+    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+</head>
+{}
                 '''.format(scene_xml)
 
                 disp = HTML(javascript)
