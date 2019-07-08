@@ -20,6 +20,7 @@ from pyvista.utilities import (convert_array, get_scalar, is_pyvista_obj,
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .export_x3d import X3D_JAVASCRIPT, export_x3d
+from .export_k3d import export_k3d
 from .mapper import make_mapper
 from .theme import *
 from .tools import *
@@ -3278,6 +3279,9 @@ class Plotter(BasePlotter):
             elif nb_backend in ['x3d', 'x3dom']:
                 scene_xml = self.export_x3d()
                 disp = HTML(X3D_JAVASCRIPT.format(scene_xml))
+            elif nb_backend in ['k3d',]:
+                raise NotImplementedError('K3D export script not yet implemented.')
+                # TODO: disp = export_k3d(self)
 
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
