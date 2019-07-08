@@ -3301,12 +3301,17 @@ class Plotter(BasePlotter):
                 # index = scene_xml.find('\n')
                 # scene_xml = scene_xml[index::]
                 javascript = '''
+<?xml version="1.0" encoding ="UTF-8"?>
+<!DOCTYPE X3D PUBLIC "ISO//Web3D//DTD X3D 3.3//EN"
+   "http://www.web3d.org/specifications/x3d-3.3.dtd">
 <head>
     <script type='text/javascript' src='http://www.x3dom.org/x3dom/release/x3dom.js'> </script>
     <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/x3dom/release/x3dom.css'></link>
 </head>
+<body>
 {}
-                '''.format(scene_xml)
+</body>
+'''.format(scene_xml)
 
                 disp = HTML(javascript)
 
