@@ -3302,8 +3302,8 @@ class Plotter(BasePlotter):
                 # scene_xml = scene_xml[index::]
                 javascript = '''
 <head>
-    <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
-    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+    <script type='text/javascript' src='http://www.x3dom.org/x3dom/release/x3dom.js'> </script>
+    <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/x3dom/release/x3dom.css'></link>
 </head>
 {}
                 '''.format(scene_xml)
