@@ -3036,6 +3036,53 @@ class BasePlotter(object):
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
 
+    def export_x3d(self, filename=None, binary=True, speed=4.0):
+        """Exports the scene to an X3D (XML-based format) for
+        representation 3D scenes (similar to VRML). Check out
+        http://www.web3d.org/x3d/ for more details.
+
+        If no filename given, the raw HTML for this scene with be returned
+        """
+        if not hasattr(self, 'ren_win'):
+            raise RuntimeError('Export must be called before showing/closing the scene.')
+        exporter = vtk.vtkX3DExporter()
+        exporter.SetInput(self.ren_win)
+        exporter.FastestOff()
+        if speed:
+            exporter.SetSpeed(speed)
+        if filename is not None:
+            if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+                filename = os.path.join(pyvista.FIGURE_PATH, filename)
+            else:
+                filename = os.path.abspath(os.path.expanduser(filename))
+            exporter.SetFileName(filename)
+            exporter.SetBinary(binary)
+        else:
+            exporter.SetWriteToOutputString(True)
+        exporter.Update()
+        exporter.Write()
+        if filename is None:
+            return exporter.GetOutputString()
+        return
+
+    def export_obj(self, file_prefix):
+        """ writes the render window to wavefront .OBJ files in ASCII form.
+        It also writes out a mtl file that contains the material properties.
+        The filenames are derived by appending the .obj and .mtl suffix onto
+        the user specified ``file_prefix``.
+        """
+        if not hasattr(self, 'ren_win'):
+            raise RuntimeError('Export must be called before showing/closing the scene.')
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(file_prefix):
+            file_prefix = os.path.join(pyvista.FIGURE_PATH, file_prefix)
+        else:
+            file_prefix = os.path.abspath(os.path.expanduser(file_prefix))
+        writer = vtk.vtkOBJExporter()
+        writer.SetRenderWindow(self.ren_win)
+        writer.SetFilePrefix(file_prefix)
+        return writer.Update()
+
+
 class Plotter(BasePlotter):
     """ Plotting object to display vtk meshes or numpy arrays.
 
