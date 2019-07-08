@@ -381,12 +381,12 @@ def test_screenshot():
 
 def test_invalid_color():
     with pytest.raises(Exception):
-        femorph.plotting.parse_color('not a color')
+        pyvista.plotting.parse_color('not a color')
 
 
 def test_invalid_font():
     with pytest.raises(Exception):
-        femorph.parse_font_family('not a font')
+        pyvista.plotting.parse_font_family('not a font')
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

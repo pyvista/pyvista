@@ -17,7 +17,7 @@ import pyvista
 from pyvista.utilities import (convert_array, get_scalar, is_pyvista_obj,
                                numpy_to_texture, raise_not_matching, wrap)
 
-from .colors import get_cmap_safe
+from .colors import get_cmap_safe, parse_color
 from .export_vtkjs import export_plotter_vtkjs
 from .export_x3d import X3D_JAVASCRIPT, export_x3d
 from .export_k3d import export_k3d

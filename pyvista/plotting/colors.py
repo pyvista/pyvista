@@ -156,6 +156,8 @@ yellowgreen
 
 """
 
+from .theme import rcParams
+
 # shamelessly copied from matplotlib.colors
 hexcolors = {
     'aliceblue':            '#F0F8FF',
@@ -390,3 +392,29 @@ def get_cmap_safe(cmap):
         # Else use Matplotlib
         cmap = get_cmap(cmap)
     return cmap
+
+
+def rgb_to_int(rgb):
+    """Return the integer number of a color from (r,g,b), with values 0<s<1"""
+    rgb = (int(rgb[0]*255), int(rgb[1]*255), int(rgb[2]*255))
+    return 65536*rgb[0]+256*rgb[1]+rgb[2]
+
+
+def parse_color(color):
+    """ Parses color into a vtk friendly rgb list """
+    if color is None:
+        color = rcParams['color']
+    if isinstance(color, str):
+        return string_to_rgb(color)
+    elif len(color) == 3:
+        return color
+    elif len(color) == 4:
+        return color[:3]
+    else:
+        raise Exception("""
+    Invalid color input: ({})
+    Must ba string, rgb list, or hex color string.  For example:
+        color='white'
+        color='w'
+        color=[1, 1, 1]
+        color='#FFFFFF'""".format(color))

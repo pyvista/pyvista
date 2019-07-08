@@ -1,8 +1,6 @@
 
 import vtk
 
-from .colors import string_to_rgb
-
 
 MAX_N_COLOR_BARS = 10
 PV_BACKGROUND = [82/255., 87/255., 110/255.]
@@ -92,26 +90,6 @@ def set_plot_theme(theme):
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
 
-
-
-def parse_color(color):
-    """ Parses color into a vtk friendly rgb list """
-    if color is None:
-        color = rcParams['color']
-    if isinstance(color, str):
-        return string_to_rgb(color)
-    elif len(color) == 3:
-        return color
-    elif len(color) == 4:
-        return color[:3]
-    else:
-        raise Exception("""
-    Invalid color input: ({})
-    Must ba string, rgb list, or hex color string.  For example:
-        color='white'
-        color='w'
-        color=[1, 1, 1]
-        color='#FFFFFF'""".format(color))
 
 
 

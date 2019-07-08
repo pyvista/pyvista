@@ -6,7 +6,7 @@ import vtk
 
 import pyvista
 
-from .theme import parse_color
+from .colors import parse_color
 
 def system_supports_plotting():
     """

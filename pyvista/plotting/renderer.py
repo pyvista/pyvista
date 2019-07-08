@@ -12,8 +12,9 @@ from vtk import vtkRenderer
 import pyvista
 from pyvista.utilities import wrap
 
-from .plotting import (MAX_N_COLOR_BARS, parse_color, parse_font_family,
-                       rcParams)
+from .plotting import MAX_N_COLOR_BARS
+from .colors import parse_color
+from .theme import rcParams, parse_font_family
 
 
 class Renderer(vtkRenderer):
