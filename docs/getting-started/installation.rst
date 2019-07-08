@@ -144,7 +144,7 @@ time your Docker container is launched:
     set -x
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_PANEL=true
+    export PYVISTA_NB_BACKEND="panel"
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
@@ -192,7 +192,7 @@ Then, configure the headless display:
     sudo apt-get install xvfb
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_PANEL=true
+    export PYVISTA_NB_BACKEND="panel"
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
 

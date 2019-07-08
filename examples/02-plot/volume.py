@@ -11,7 +11,7 @@ import pyvista as pv
 from pyvista import examples
 
 # Volume rednering is not supported with Panel yet
-pv.rcParams["use_panel"] = False
+pv.rcParams["nb_backend"] = False
 
 # Download a volumetric dataset
 vol = examples.download_knee_full()

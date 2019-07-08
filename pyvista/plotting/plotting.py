@@ -3192,7 +3192,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=True, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=None, cpos=None,
+             screenshot=False, return_img=False, nb_backend=None, cpos=None,
              height=400):
         """
         Creates plotting window
@@ -3220,9 +3220,10 @@ class Plotter(BasePlotter):
             Opens window in full screen.  When enabled, ignores
             window_size.  Default False.
 
-        use_panel : bool, optional
-            If False, the interactive rendering from panel will not be used in
-            notebooks
+        nb_backend : str, optional
+            Notebook rendering backend to use. Options include `'panel'` and
+            `'x3d'`. If ``False``, it will display a screenshot. If ``None``,
+            the default set in the ``rcParams`` will be used.
 
         cpos : list(tuple(floats))
             The camera position to use
@@ -3236,8 +3237,14 @@ class Plotter(BasePlotter):
             List of camera position, focal point, and view up
 
         """
-        if use_panel is None:
-            use_panel = rcParams['use_panel']
+        if self.notebook:
+            try:
+                import IPython
+                from IPython.display import HTML
+            except ImportError:
+                raise Exception('Install IPython to display image in a notebook')
+        if nb_backend is None:
+            nb_backend = rcParams['nb_backend']
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
@@ -3279,13 +3286,28 @@ class Plotter(BasePlotter):
                 log.debug('KeyboardInterrupt')
                 self.close()
                 raise KeyboardInterrupt
-        elif self.notebook and use_panel and not hasattr(self, 'volume'):
-            try:
-                from panel.pane import VTK as panel_display
-                disp = panel_display(self.ren_win, sizing_mode='stretch_width',
-                                     height=height)
-            except:
-                pass
+        elif self.notebook and not hasattr(self, 'volume'):
+            if nb_backend == 'panel':
+                try:
+                    from panel.pane import VTK as panel_display
+                    disp = panel_display(self.ren_win, sizing_mode='stretch_width',
+                                         height=height)
+                except:
+                    pass
+            elif nb_backend == 'x3d':
+                scene_xml = self.export_x3d()
+                # remove first line of the header
+                # scene_xml = scene_xml.replace('<?xml version="1.0" encoding ="UTF-8"?>\n', '')
+                index = scene_xml.find('\n')
+                scene_xml = scene_xml[index::]
+                javascript = '''
+                <script type='text/javascript' src='http://www.x3dom.org/download/x3dom.js'> </script>
+                <link rel='stylesheet' type='text/css' href='http://www.x3dom.org/download/x3dom.css'></link>
+                {}
+                '''.format(scene_xml)
+
+                disp = HTML(javascript)
+
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
@@ -3296,18 +3318,15 @@ class Plotter(BasePlotter):
         # Get camera position before closing
         cpos = self.camera_position
 
-        # NOTE: our conversion to panel currently does not support mult-view
+        # NOTE: our conversions to panel/x3d currently do not support mult-view
         #       so we should display the static screenshot in notebooks for
         #       multi-view plots until we implement this feature
         # If notebook is true and panel display failed:
         if self.notebook and (disp is None or self.shape != (1,1)):
             import PIL.Image
             # sanity check
-            try:
-                import IPython
-            except ImportError:
-                raise Exception('Install IPython to display image in a notebook')
-            disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
+            disp = PIL.Image.fromarray(self.last_image)
+            print('got screenshot')
 
         # Cleanup
         if auto_close:
@@ -3315,7 +3334,7 @@ class Plotter(BasePlotter):
 
         # Return the notebook display: either panel object or image display
         if self.notebook:
-            return disp
+            return IPython.display.display(disp)
 
         # If user asked for screenshot, return as numpy array after camera
         # position

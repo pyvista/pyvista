@@ -10,7 +10,7 @@ import pyvista as pv
 import numpy as np
 
 # Labels are not currently supported by the VTKjs conversion script
-pv.rcParams["use_panel"] = False
+pv.rcParams["nb_backend"] = False
 
 ###############################################################################
 # Label String Array

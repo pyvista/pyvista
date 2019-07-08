@@ -53,12 +53,16 @@ if not os.path.exists(EXAMPLES_PATH):
 send_errors_to_logging()
 
 
-# Set up panel for interactive notebook rendering
+# Set up notebook rendering backend preference
 try:
     if os.environ['PYVISTA_USE_PANEL'].lower() == 'false':
-        rcParams['use_panel'] = False
+        rcParams['nb_backend'] = False
     elif os.environ['PYVISTA_USE_PANEL'].lower() == 'true':
-        rcParams['use_panel'] = True
+        rcParams['nb_backend'] = 'panel'
+    elif os.environ['PYVISTA_NB_BACKEND'].lower() == 'panel':
+        rcParams['nb_backend'] = 'panel'
+    elif os.environ['PYVISTA_NB_BACKEND'].lower() == 'x3d':
+        rcParams['nb_backend'] = 'x3d'
 except KeyError:
     pass
 # Only initialize panel if in a Jupyter environment

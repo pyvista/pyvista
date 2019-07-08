@@ -49,9 +49,16 @@ rcParams = {
     'lighting' : True,
     'interactive' : False,
     'render_points_as_spheres' : False,
-    'use_panel' : True,
+    'nb_backend' : False,
     'transparent_background' : False
 }
+
+# Choose default notebook backend based on availability
+try:
+    import panel
+    rcParams['nb_backend'] = 'panel'
+except ImportError:
+    rcParams['nb_backend'] = 'x3d'
 
 DEFAULT_THEME = dict(rcParams)
 
