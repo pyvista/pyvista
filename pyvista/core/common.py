@@ -830,6 +830,20 @@ class Common(DataSetFilters, object):
         sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
         return np.sum(sizes.cell_arrays['Volume'])
 
+    @property
+    def area(self):
+        """
+        Mesh surface area
+
+        Returns
+        -------
+        area : float
+            Total area of the mesh.
+
+        """
+        sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
+        return np.sum(sizes.cell_arrays['Area'])
+
     def get_data_range(self, arr=None, preference='cell'):
         """Get the non-NaN min and max of a named scalar array
 

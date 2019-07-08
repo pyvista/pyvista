@@ -3280,8 +3280,7 @@ class Plotter(BasePlotter):
                 scene_xml = self.export_x3d()
                 disp = HTML(X3D_JAVASCRIPT.format(scene_xml))
             elif nb_backend in ['k3d',]:
-                raise NotImplementedError('K3D export script not yet implemented.')
-                # TODO: disp = export_k3d(self)
+                disp = export_k3d(self)
 
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
