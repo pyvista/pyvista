@@ -452,9 +452,8 @@ class BackgroundPlotter(QtInteractor):
         many resources.
         """
         twait = (rate**-1) * 1000.0
-        self.render_timer = QTimer()
+        self.render_timer = QTimer(parent=self.app_window)
         self.render_timer.timeout.connect(self._render)
-        self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
     def closeEvent(self, event):
@@ -528,6 +527,7 @@ class BackgroundPlotter(QtInteractor):
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
+        self.ren_win.Render() # force rendering
         return
 
     @property
