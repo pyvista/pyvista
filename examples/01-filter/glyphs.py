@@ -53,13 +53,13 @@ vectors = np.vstack(
 sphere.vectors = vectors * 0.3
 
 # plot just the arrows
-sphere.arrows.plot()
+sphere.arrows.plot(scalars='GlyphScale')
 
 ###############################################################################
 
 # plot the arrows and the sphere
 p = pv.Plotter()
-p.add_mesh(sphere.arrows, lighting=False, stitle="Vector Magnitude")
+p.add_mesh(sphere.arrows, scalars='GlyphScale', lighting=False, stitle="Vector Magnitude")
 p.add_mesh(sphere, color="grey", ambient=0.6, opacity=0.5, show_edges=False)
 p.show()
 
@@ -78,7 +78,7 @@ p.show()
 mesh = examples.load_random_hills()
 
 # create a subset of arrows using the glyph filter
-arrows = mesh.glyph(scale="Normals", orient="Normals", subset=0.05)
+arrows = mesh.glyph(scale="Normals", orient="Normals", tolerance=0.05)
 
 p = pv.Plotter()
 p.add_mesh(arrows, color="black")
