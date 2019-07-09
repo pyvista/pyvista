@@ -356,6 +356,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setFrameStyle(QFrame.NoFrame)
 
         QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
+        self.signal_close.connect(self.app_window.close)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -364,7 +365,7 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.close)
+        file_menu.addAction('Exit', self.quit)
 
         view_menu = main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
@@ -452,8 +453,13 @@ class BackgroundPlotter(QtInteractor):
         """
         twait = (rate**-1) * 1000.0
         self.render_thread = RenderThread(self.ren_win, twait)
-        self.app_window.closed.connect(self.render_thread.disable)
+        self.app_window.signal_close.connect(self.render_thread.disable)
         self.render_thread.start()
+
+    def closeEvent(self, event):
+        self.active = False
+        self.close()
+
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
@@ -538,23 +544,19 @@ class BackgroundPlotter(QtInteractor):
     def __del__(self):  # pragma: no cover
         self.close()
 
-    def close(self):
-        self.app_window.close()
-        self.iren.TerminateApp()
-        self.app.quit()
 
 class MainWindow(QMainWindow):
-    closed = pyqtSignal()
+    signal_close = pyqtSignal()
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
 
     def closeEvent(self, event):
-        self.closed.emit()
+        self.signal_close.emit()
         event.accept()
 
-class RenderThread(QThread):
 
+class RenderThread(QThread):
     def __init__(self, ren_win, twait):
         QThread.__init__(self)
         self.ren_win = ren_win
