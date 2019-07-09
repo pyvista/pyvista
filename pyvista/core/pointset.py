@@ -1322,21 +1322,6 @@ class PolyData(vtkPolyData, PointSet):
             return output
 
     @property
-    def area(self):
-        """
-        Mesh surface area
-
-        Returns
-        -------
-        area : float
-            Total area of the mesh.
-
-        """
-        mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self)
-        return mprop.GetSurfaceArea()
-
-    @property
     def volume(self):
         """
         Mesh volume - will throw a VTK error/warning if not a closed surface
