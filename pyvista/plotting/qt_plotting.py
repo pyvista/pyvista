@@ -454,6 +454,7 @@ class BackgroundPlotter(QtInteractor):
         twait = (rate**-1) * 1000.0
         self.render_timer = QTimer(parent=self.app_window)
         self.render_timer.timeout.connect(self._render)
+        self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
     def closeEvent(self, event):
