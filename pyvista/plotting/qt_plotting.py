@@ -47,7 +47,7 @@ class QFileDialog(object):
 
 
 try:
-    from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
+    from PyQt5.QtCore import pyqtSignal, pyqtSlot, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
@@ -452,9 +452,10 @@ class BackgroundPlotter(QtInteractor):
         many resources.
         """
         twait = (rate**-1) * 1000.0
-        self.render_thread = RenderThread(self.ren_win, twait)
-        self.app_window.signal_close.connect(self.render_thread.disable)
-        self.render_thread.start()
+        self.render_timer = QTimer()
+        self.render_timer.timeout.connect(self._render)
+        self.app_window.signal_close.connect(self.render_timer.stop)
+        self.render_timer.start(twait)
 
     def closeEvent(self, event):
         self.active = False
@@ -523,6 +524,7 @@ class BackgroundPlotter(QtInteractor):
             return self.renderer.disable_eye_dome_lighting()
         return self.renderer.enable_eye_dome_lighting()
 
+    @pyqtSlot()
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
@@ -554,23 +556,3 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.signal_close.emit()
         event.accept()
-
-
-class RenderThread(QThread):
-    def __init__(self, ren_win, twait):
-        QThread.__init__(self)
-        self.ren_win = ren_win
-        self.twait = twait
-        self.active = True
-
-    def __del__(self):
-        self.wait()
-
-    @pyqtSlot()
-    def disable(self):
-        self.active = False
-
-    def run(self):
-        while self.active:
-            self.msleep(self.twait)
-            self.ren_win.Render()
