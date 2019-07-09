@@ -1267,7 +1267,8 @@ class PolyData(vtkPolyData, PointSet):
             return mesh
 
     def clean(self, point_merging=True, merge_tol=None, lines_to_points=True,
-              polys_to_lines=True, strips_to_polys=True, inplace=False):
+              polys_to_lines=True, strips_to_polys=True, inplace=False,
+              absolute=True, **kwargs):
         """
         Cleans mesh by merging duplicate points, remove unused
         points, and/or remove degenerate cells.
@@ -1279,7 +1280,9 @@ class PolyData(vtkPolyData, PointSet):
 
         merge_tol : float, optional
             Set merging tolarance.  When enabled merging is set to
-            absolute distance
+            absolute distance. If ``absolute`` is False, then the merging
+            tolerance is a fraction of the bounding box legnth. The alias
+            ``tolerance`` is also excepted.
 
         lines_to_points : bool, optional
             Turn on/off conversion of degenerate lines to points.  Enabled by
@@ -1295,18 +1298,26 @@ class PolyData(vtkPolyData, PointSet):
         inplace : bool, optional
             Updates mesh in-place while returning nothing.  Default True.
 
+        absolute : bool, optional
+            Control if ``merge_tol`` is an absolute distance or a fraction.
+
         Returns
         -------
         mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
         """
+        if merge_tol is None:
+            merge_tol = kwargs.pop('tolerance', None)
         clean = vtk.vtkCleanPolyData()
         clean.SetConvertLinesToPoints(lines_to_points)
         clean.SetConvertPolysToLines(polys_to_lines)
         clean.SetConvertStripsToPolys(strips_to_polys)
-        if merge_tol:
-            clean.ToleranceIsAbsoluteOn()
-            clean.SetAbsoluteTolerance(merge_tol)
+        if isinstance(merge_tol, (int, float)):
+            if absolute:
+                clean.ToleranceIsAbsoluteOn()
+                clean.SetAbsoluteTolerance(merge_tol)
+            else:
+                clean.SetTolerance(merge_tol)
         clean.SetInputData(self)
         clean.Update()
 
