@@ -70,9 +70,8 @@ p.show()
 #
 # Sometimes you might not want glyphs for every node in the input dataset. In
 # this case, you can choose to build glyphs for a subset of the input dataset
-# by using a percentage of the points. Using this percentage, a uniform
-# distribuiton is used to select points from the input dataset and use them for
-# glyphing.
+# by using a merging tolerance. Here we specify a merging tolerance of five
+# percent which equats to five perfect of the bounding box's length.
 
 # Example dataset with normals
 mesh = examples.load_random_hills()
