@@ -120,7 +120,7 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
-                    'cmocean']
+                    'cmocean', 'panel', 'k3d']
 
         super().__init__(additional=additional, core=core, optional=optional,
                          ncol=ncol, text_width=text_width, sort=sort)
