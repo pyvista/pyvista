@@ -841,7 +841,7 @@ class BasePlotter(object):
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    loc=None, backface_culling=False, multi_colors=False,
-                   blending='additive', mapper='fixed_point', rng=None,
+                   blending='composite', mapper='smart', rng=None,
                    stitle=None, scalar_bar_args=None,
                    show_scalar_bar=None, **kwargs):
         """
