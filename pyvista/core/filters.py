@@ -796,7 +796,7 @@ class DataSetFilters(object):
         if subset is not None:
             if subset <= 0.0 or subset > 1.0:
                 raise RuntimeError('subset must be a percentage between 0 and 1.')
-            ids = np.random.random_integers(low=0, high=dataset.n_points-1,
+            ids = np.random.randint(low=0, high=dataset.n_points-1,
                                     size=int(dataset.n_points * subset))
             small = pyvista.PolyData(dataset.points[ids])
             for name in dataset.point_arrays.keys():
@@ -817,6 +817,8 @@ class DataSetFilters(object):
                     alg.SetScaleModeToScaleByVector()
                 else:
                     alg.SetScaleModeToScaleByScalar()
+        else:
+            alg.SetScaleModeToDataScalingOff()
         if isinstance(orient, str):
             dataset.active_vectors_name = orient
             orient = True
