@@ -46,6 +46,15 @@ class QFileDialog(object):
     pass
 
 
+def pyqtSlot(*args, **kwargs):
+    """dummy function for environments without pyqt5"""
+    return lambda *x: None
+
+
+class QMainWindow(object):
+    pass
+
+
 try:
     from PyQt5.QtCore import pyqtSignal, pyqtSlot, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
