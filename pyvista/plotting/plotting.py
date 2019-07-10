@@ -2900,7 +2900,7 @@ class BasePlotter(object):
             if show:
                 # Use try incase selection is empty
                 try:
-                    self.add_mesh(self.picked_cells, name='cell_picking_selection',
+                    self.add_mesh(self.picked_cells, name='_cell_picking_selection',
                         style=style, color=color, line_width=line_width, **kwargs)
                 except RuntimeError:
                     pass
@@ -2925,6 +2925,7 @@ class BasePlotter(object):
         def visible_pick_call_back(picker, event_id):
             x0,y0,x1,y1 = self.get_pick_position()
             selector = vtk.vtkOpenGLHardwareSelector()
+            selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
             selector.SetRenderer(self.renderer)
             selector.SetArea(x0,y0,x1,y1)
             cellids = selector.Select().GetNode(0)
@@ -2945,6 +2946,18 @@ class BasePlotter(object):
         if through:
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
         else:
+            # check if mesh is triangulated or not
+            # Reference:
+            #     https://github.com/pyvista/pyvista/issues/277
+            #     https://github.com/pyvista/pyvista/pull/281
+            message = "Surface picking non-triangulated meshes is known to "\
+                      "not work properly with non-NVIDIA GPUs. Please "\
+                      "consider triangulating your mesh:\n"\
+                      "\t`.extract_geometry().tri_filter()`"
+            if (not isinstance(mesh, pyvista.PolyData) or
+                    mesh.faces.size % 4 or
+                    not np.all(mesh.faces.reshape(-1, 4)[:,0] == 3)):
+                logging.warning(message)
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
@@ -2954,7 +2967,7 @@ class BasePlotter(object):
         if show_message:
             if show_message == True:
                 show_message = "Press R to toggle selection tool"
-            self.add_text(str(show_message), font_size=font_size)
+            self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
         return
 
 
