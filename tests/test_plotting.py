@@ -655,7 +655,7 @@ def test_opacity_by_array():
     mesh['unc'] = mesh['Spatial Point Data']
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',
-               flip_opacity=True)
+               use_transparency=True)
     p.show()
     # Test using mismatched arrays
     with pytest.raises(RuntimeError):
