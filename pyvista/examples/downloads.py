@@ -376,3 +376,7 @@ def download_tetra_dc_mesh():
     inv = pyvista.read(filename)
     inv.set_active_scalar('Resistivity(log10)')
     return pyvista.MultiBlock({'forward':fwd, 'inverse':inv})
+
+
+def download_model_with_variance():
+    return _download_and_read("model_with_variance.vtu")
