@@ -61,7 +61,7 @@ mesh.plot(opacity="sigmoid")
 # It's also possible to use your own transfer function that will be linearly
 # mapped to the scalar array plotted. For example, we can create an opacity
 # mapping as:
-opacity = [0, 0.2, 0.9, 0.2, 0.1]
+opacity = [0, 0.2, 0.9, 0.6, 0.3]
 
 ###############################################################################
 # When given a minimalized opacity mapping like that above, PyVista interplates
@@ -71,7 +71,7 @@ opacity = [0, 0.2, 0.9, 0.2, 0.1]
 # Curious what that opacity transfer function looks like? You can fetch it:
 
 # Have PyVista interpolate the transfer function
-tf = pv.opacity_transfer_function(opacity, 256)
+tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.
 
 import matplotlib.pyplot as plt
 plt.plot(tf)
@@ -82,7 +82,7 @@ plt.show()
 
 ###############################################################################
 # That opacity mapping will have an opacity of 0.0 at the minimum scalar range,
-# a value or 0.9 at the middle of the scalar range, and a value of 0.1 at the
+# a value or 0.9 at the middle of the scalar range, and a value of 0.3 at the
 # maximum of the scalar range:
 
 mesh.plot(opacity=opacity)
