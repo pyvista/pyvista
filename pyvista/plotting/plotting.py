@@ -1163,7 +1163,6 @@ class BasePlotter(object):
         elif isinstance(opacity, (np.ndarray, list, tuple)):
             opacity = np.array(opacity)
             opacity_values = opacity_transfer_function(opacity, n_colors)
-            self.opacity_values = opacity_values
 
         opacity_tf = vtk.vtkPiecewiseFunction()
         for ii in range(n_colors):
