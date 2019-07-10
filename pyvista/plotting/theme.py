@@ -50,7 +50,8 @@ rcParams = {
     'interactive' : False,
     'render_points_as_spheres' : False,
     'use_panel' : True,
-    'transparent_background' : False
+    'transparent_background' : False,
+    'title' : 'PyVista',
 }
 
 DEFAULT_THEME = dict(rcParams)

@@ -284,7 +284,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape)
+        BasePlotter.__init__(self, shape=shape, title=title)
         self.parent = parent
 
         # Create and start the interactive renderer
@@ -295,7 +295,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         self.background_color = rcParams['background']
 
-        if title:
+        if self.title:
             self.setWindowTitle(title)
 
         self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?

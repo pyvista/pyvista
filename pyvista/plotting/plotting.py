@@ -70,9 +70,13 @@ class BasePlotter(object):
         return object.__new__(cls)
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
-                 border_width=1.0):
+                 border_width=1.0, title=None):
         """ Initialize base plotter """
         self.image_transparent_background = rcParams['transparent_background']
+
+        if title is None:
+            title = rcParams['title']
+        self.title = str(title)
 
         # by default add border for multiple plots
         if border is None:
@@ -3201,8 +3205,12 @@ class Plotter(BasePlotter):
                     renderer.camera_position = cpos
             self._first_time = False
 
+        if title is None:
+            title = self.title
+
         if title:
             self.ren_win.SetWindowName(title)
+            self.title = title
 
         # if full_screen:
         if full_screen:
