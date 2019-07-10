@@ -63,6 +63,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         axes_actor.GetCubeProperty().SetOpacity(0)
 
         cube = pyvista.Cube()
+        cube.clear_arrays() # remove normals
         face_colors = np.array([x_face_color,
                                 x_face_color,
                                 y_face_color,

@@ -1,8 +1,9 @@
 """
-Custom Colormaps
+Colormap Choices
 ~~~~~~~~~~~~~~~~
 
-Use a custom built colormap when plotting scalar values.
+Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
+values.
 """
 
 from pyvista import examples
@@ -10,16 +11,17 @@ import pyvista as pv
 import matplotlib.pyplot as plt
 
 ###############################################################################
-# Any colormap built for ``matplotlib`` or ``colorcet`` is fully compatible
-# with PyVista. Colormaps are typically specified by passing the string name of
-# the ``matplotlib`` or ``colorcet`` colormap to the plotting routine via the
-# ``cmap`` argument.
+# Any colormap built for ``matplotlib``, ``colorcet``, or ``cmocean`` is fully
+# compatible with PyVista. Colormaps are typically specified by passing the
+# string name of the colormap to the plotting routine via the ``cmap``
+# argument.
 #
-# See `Matplotlib's complete list of available colormaps`_ and
-# `Colorcet's complete list`_.
+# See `Matplotlib's complete list of available colormaps`_,
+# `Colorcet's complete list`_, and `cmocean's complete list`_.
 #
 # .. _Matplotlib's complete list of available colormaps: https://matplotlib.org/tutorials/colors/colormaps.html
 # .. _Colorcet's complete list: http://colorcet.pyviz.org/user_guide/index.html
+# .. _cmocean's complete list: https://matplotlib.org/cmocean/
 #
 # To get started using a custom colormap, download some data with scalars to
 # plot.
@@ -48,6 +50,10 @@ mesh.plot(cmap=cmap, cpos="xy")
 #
 # The "hot" version washes out detail at the high end, as if the image is
 # overexposed, while "fire" makes detail visible throughout the data range.
+#
+# Please note that in order to use Colorcet's colormaps including "fire", you
+# must have Colorcet installed in your Python environment:
+# ``pip install colorcet``
 
 p = pv.Plotter(shape=(2, 2), border=False)
 p.subplot(0, 0)
