@@ -2866,6 +2866,14 @@ class BasePlotter(object):
         selection.  Press "r" again to turn it off.  Selection will be
         saved to self.picked_cells.
         Uses last input mesh for input
+
+        Warning
+        -------
+        Visible cell picking (``through=False``) is known to not perfrom well
+        and produce incorrect selections on non-triangulated meshes if using
+        any grpahics card other than NVIDIA. A warning will be thrown if the
+        mesh is not purely triangles when using visible cell selection.
+
         Parameters
         ----------
         mesh : vtk.UnstructuredGrid, optional
