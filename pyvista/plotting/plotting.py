@@ -642,11 +642,11 @@ class BasePlotter(object):
             # If no texture, plot any active scalar
             else:
                 # Make sure scalar components are not vectors/tuples
-                scalars = mesh.active_scalar
+                scalars = mesh.active_scalar_name
                 # Don't allow plotting of string arrays by default
-                if scalars is not None and np.issubdtype(scalars.dtype, np.number):
+                if scalars is not None and np.issubdtype(mesh.active_scalar.dtype, np.number):
                     if stitle is None:
-                        stitle = mesh.active_scalar_info[1]
+                        stitle = scalars
                 else:
                     scalars = None
 
@@ -663,13 +663,14 @@ class BasePlotter(object):
                                      name=name, loc=loc, culling=backface_culling)
 
         # Make sure scalars is a numpy array after this point
+        original_scalar_name = None
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
-            title = scalars
+            original_scalar_name = scalars
             scalars = get_scalar(mesh, scalars,
                     preference=kwargs.get('preference', 'cell'), err=True)
             if stitle is None:
-                stitle = title
+                stitle = original_scalar_name
 
 
         if texture == True or isinstance(texture, (str, int)):

@@ -47,6 +47,8 @@ class Common(DataSetFilters, object):
         """Return the active scalar's field and name: [field, name]"""
         if not hasattr(self, '_active_scalar_info'):
             self._active_scalar_info = [POINT_DATA_FIELD, None] # field and name
+        if not hasattr(self, '_last_active_scalar_name'):
+            self._last_active_scalar_name = None
         field, name = self._active_scalar_info
 
         # rare error where scalar name isn't a valid scalar
@@ -58,18 +60,33 @@ class Common(DataSetFilters, object):
                 else:
                     name = None
 
+        exclude = ['__custom_rgba', ]
+
+        def search_for_array(data):
+            arr = None
+            for i in range(data.GetNumberOfArrays()):
+                name = data.GetArrayName(i)
+                if name not in exclude:
+                    arr = name
+                    break
+            return arr
+
+        if name in exclude:
+            name = self._last_active_scalar_name
+
         if name is None:
             if self.n_arrays < 1:
                 return field, name
             # find some array in the set field
-            parr = self.GetPointData().GetArrayName(0)
-            carr = self.GetCellData().GetArrayName(0)
+            parr = search_for_array(self.GetPointData())
+            carr = search_for_array(self.GetCellData())
             if parr is not None:
                 self._active_scalar_info = [POINT_DATA_FIELD, parr]
                 self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
                 self._active_scalar_info = [CELL_DATA_FIELD, carr]
                 self.GetCellData().SetActiveScalars(carr)
+
         return self._active_scalar_info
 
     @property
@@ -262,6 +279,7 @@ class Common(DataSetFilters, object):
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
         _, field = get_scalar(self, name, preference=preference, info=True)
+        self._last_active_scalar_name = self._active_scalar_info[1]
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveScalars(name)
         elif field == CELL_DATA_FIELD:
