@@ -101,7 +101,7 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors):
+def opacity_transfer_function(mapping, n_colors, interpolate=True):
     """Get the opacity transfer function results: range from 0 to 255.
     """
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
@@ -144,6 +144,8 @@ def opacity_transfer_function(mapping, n_colors):
             xo = np.linspace(0, n_colors, len(mapping), dtype=np.int)
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int)
             try:
+                if not interpolate:
+                    raise AssertionError('No interpolation.')
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
                 # quadratic has best/smoothest results
@@ -152,7 +154,7 @@ def opacity_transfer_function(mapping, n_colors):
                 vals[vals<0] = 0.0
                 vals[vals>1.0] = 1.0
                 mapping = (vals * 255.).astype(np.uint8)
-            except ImportError:
+            except (ImportError, AssertionError):
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
