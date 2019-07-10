@@ -2858,37 +2858,46 @@ class BasePlotter(object):
             self.remove_actor(self.legend, reset_camera=False)
             self._render()
 
-    def enable_cell_picking(self, mesh=None, callback=None, show=True,
-                            show_message=True, style='wireframe', line_width=5,
-                            color='pink', font_size=18, **kwargs):
+    def get_pick_position(self):
+        """Get the pick position/area as x0, y0, x1, y1"""
+        return self.renderer.get_pick_position()
+
+    def enable_cell_picking(self, mesh=None, callback=None, through=True,
+                            show=True, show_message=True, style='wireframe',
+                            line_width=5, color='pink', font_size=18, **kwargs):
         """
         Enables picking of cells.  Press r to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
         saved to self.picked_cells.
-
         Uses last input mesh for input
+
+        Warning
+        -------
+        Visible cell picking (``through=False``) is known to not perfrom well
+        and produce incorrect selections on non-triangulated meshes if using
+        any grpahics card other than NVIDIA. A warning will be thrown if the
+        mesh is not purely triangles when using visible cell selection.
 
         Parameters
         ----------
         mesh : vtk.UnstructuredGrid, optional
             UnstructuredGrid grid to select cells from.  Uses last
             input grid by default.
-
         callback : function, optional
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
-
+        through : bool, optional
+            When True (default) the picker will select all cells through the
+            mesh. When False, the picker will select only visible cells on the
+            mesh's surface.
         show : bool
             Show the selection interactively
-
         show_message : bool, str
             Show the message about how to use the cell picking tool. If this
             is a string, that will be the message shown.
-
         kwargs : optional
             All remaining keyword arguments are used to control how the
             selection is intereactively displayed
-
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
@@ -2899,18 +2908,11 @@ class BasePlotter(object):
             mesh = self.mesh
 
 
-        def pick_call_back(picker, event_id):
-            extract = vtk.vtkExtractGeometry()
-            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
-            extract.SetInputData(mesh)
-            extract.SetImplicitFunction(picker.GetFrustum())
-            extract.Update()
-            self.picked_cells = pyvista.wrap(extract.GetOutput())
-
+        def end_pick_helper(picker, event_id):
             if show:
                 # Use try incase selection is empty
                 try:
-                    self.add_mesh(self.picked_cells, name='cell_picking_selection',
+                    self.add_mesh(self.picked_cells, name='_cell_picking_selection',
                         style=style, color=color, line_width=line_width, **kwargs)
                 except RuntimeError:
                     pass
@@ -2919,9 +2921,56 @@ class BasePlotter(object):
                 callback(self.picked_cells)
 
             # TODO: Deactivate selection tool
+            return
 
-        area_picker = vtk.vtkAreaPicker()
-        area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
+
+        def through_pick_call_back(picker, event_id):
+            extract = vtk.vtkExtractGeometry()
+            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
+            extract.SetInputData(mesh)
+            extract.SetImplicitFunction(picker.GetFrustum())
+            extract.Update()
+            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            return end_pick_helper(picker, event_id)
+
+
+        def visible_pick_call_back(picker, event_id):
+            x0,y0,x1,y1 = self.get_pick_position()
+            selector = vtk.vtkOpenGLHardwareSelector()
+            selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+            selector.SetRenderer(self.renderer)
+            selector.SetArea(x0,y0,x1,y1)
+            cellids = selector.Select().GetNode(0)
+            if cellids is None:
+                # No selection
+                return
+            selection = vtk.vtkSelection()
+            selection.AddNode(cellids)
+            extract = vtk.vtkExtractSelectedIds()
+            extract.SetInputData(0, mesh)
+            extract.SetInputData(1, selection)
+            extract.Update()
+            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            return end_pick_helper(picker, event_id)
+
+
+        area_picker = vtk.vtkRenderedAreaPicker()
+        if through:
+            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
+        else:
+            # check if mesh is triangulated or not
+            # Reference:
+            #     https://github.com/pyvista/pyvista/issues/277
+            #     https://github.com/pyvista/pyvista/pull/281
+            message = "Surface picking non-triangulated meshes is known to "\
+                      "not work properly with non-NVIDIA GPUs. Please "\
+                      "consider triangulating your mesh:\n"\
+                      "\t`.extract_geometry().tri_filter()`"
+            if (not isinstance(mesh, pyvista.PolyData) or
+                    mesh.faces.size % 4 or
+                    not np.all(mesh.faces.reshape(-1, 4)[:,0] == 3)):
+                logging.warning(message)
+            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
@@ -2930,7 +2979,7 @@ class BasePlotter(object):
         if show_message:
             if show_message == True:
                 show_message = "Press R to toggle selection tool"
-            self.add_text(str(show_message), font_size=font_size)
+            self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
         return
 
 
