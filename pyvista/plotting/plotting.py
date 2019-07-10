@@ -693,12 +693,7 @@ class BasePlotter(object):
             self.mapper.SetScalarModeToUsePointFieldData()
 
         # Handle making opacity array =========================================
-        def normalize(x, minimum=None, maximum=None):
-            if minimum is None:
-                minimum = np.nanmin(x)
-            if maximum is None:
-                maximum = np.nanmax(x)
-            return (x - minimum) / (maximum - minimum)
+
         _custom_opac = False
         if isinstance(opacity, str):
             try:
@@ -718,18 +713,8 @@ class BasePlotter(object):
             if scalars.shape[0] == opacity.shape[0]:
                 # User could pass an array of opacities for every point/cell
                 pass
-            elif opacity.shape[0] == n_colors:
-                # User could pass opacity transfer function ready for lookup table
-                pass
-            elif opacity.shape[0] < n_colors:
-                # User pass custom transfer function to be linearly interpolated
-                if np.max(opacity) > 1.0 or np.min(opacity) < 0.0:
-                    opacity = normalize(opacity)
-                # Interpolate transfer function to match lookup table
-                xo = np.linspace(0, n_colors, len(opacity), dtype=np.int)
-                opacity = (np.interp(np.linspace(0, n_colors, n_colors), xo, opacity) * 255).astype(np.uint8)
             else:
-                raise RuntimeError('Opacity transfer function cannot have more values than `n_colors`.')
+                opacity = opacity_transfer_function(opacity, n_colors)
 
         if use_transparency and np.max(opacity) <=1.0:
             opacity = 1 - opacity
@@ -1175,6 +1160,10 @@ class BasePlotter(object):
             opacity_values = [opacity] * n_colors
         elif isinstance(opacity, str):
             opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
+        elif isinstance(opacity, (np.ndarray, list, tuple)):
+            opacity = np.array(opacity)
+            opacity_values = opacity_transfer_function(opacity, n_colors)
+            self.opacity_values = opacity_values
 
         opacity_tf = vtk.vtkPiecewiseFunction()
         for ii in range(n_colors):

@@ -5,7 +5,7 @@ Plot with Opacity
 Plot a mesh's scalar array with an opacity trasfer funciton or opacity mapping
 based on a scalar array.
 """
-
+# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
@@ -23,7 +23,7 @@ mesh = image.warp_by_scalar()
 
 p = pv.Plotter()
 p.add_mesh(image.contour(), line_width=5,)
-p.add_mesh(mesh, opacity=0.4, color=True)
+p.add_mesh(mesh, opacity=0.85, color=True)
 p.show()
 
 ###############################################################################
@@ -62,6 +62,23 @@ mesh.plot(opacity="sigmoid")
 # mapped to the scalar array plotted. For example, we can create an opacity
 # mapping as:
 opacity = [0, 0.2, 0.9, 0.2, 0.1]
+
+###############################################################################
+# When given a minimalized opacity mapping like that above, PyVista interplates
+# it across a range of how many colors are shown when mapping the scalars.
+# If ``scipy`` is avaialble, then a quadratic interpolation is used -
+# otherwise, a simple linear interpolation is used.
+# Curious what that opacity transfer function looks like? You can fetch it:
+
+# Have PyVista interpolate the transfer function
+tf = pv.opacity_transfer_function(opacity, 256)
+
+import matplotlib.pyplot as plt
+plt.plot(tf)
+plt.title('My Interpolated Opacity Transfer Function')
+plt.ylabel('Opacity')
+plt.xlabel('Index along scalar mapping')
+plt.show()
 
 ###############################################################################
 # That opacity mapping will have an opacity of 0.0 at the minimum scalar range,

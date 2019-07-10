@@ -93,7 +93,15 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     return actor
 
 
-def opacity_transfer_function(key, n_colors):
+def normalize(x, minimum=None, maximum=None):
+    if minimum is None:
+        minimum = np.nanmin(x)
+    if maximum is None:
+        maximum = np.nanmax(x)
+    return (x - minimum) / (maximum - minimum)
+
+
+def opacity_transfer_function(mapping, n_colors):
     """Get the opacity transfer function results: range from 0 to 255.
     """
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
@@ -118,7 +126,36 @@ def opacity_transfer_function(key, n_colors):
         k = 'sigmoid_{}'.format(i)
         rk = '{}_r'.format(k)
         transfer_func[rk] = transfer_func[k][::-1]
-    try:
-        return transfer_func[key]
-    except KeyError:
-        raise KeyError('opactiy transfer function ({}) unknown.'.format(key))
+    if isinstance(mapping, str):
+        try:
+            return transfer_func[mapping]
+        except KeyError:
+            raise KeyError('opactiy transfer function ({}) unknown.'.format(mapping))
+    elif isinstance(mapping, (np.ndarray, list, tuple)):
+        mapping = np.array(mapping)
+        if mapping.size == n_colors:
+            # User could pass transfer function ready for lookup table
+            pass
+        elif mapping.size < n_colors:
+            # User pass custom transfer function to be linearly interpolated
+            if np.max(mapping) > 1.0 or np.min(mapping) < 0.0:
+                mapping = normalize(mapping)
+            # Interpolate transfer function to match lookup table
+            xo = np.linspace(0, n_colors, len(mapping), dtype=np.int)
+            xx = np.linspace(0, n_colors, n_colors, dtype=np.int)
+            try:
+                # Use a quadratic interp if scipy is available
+                from scipy.interpolate import interp1d
+                # quadratic has best/smoothest results
+                f = interp1d(xo, mapping, kind='quadratic')
+                vals = f(xx)
+                vals[vals<0] = 0.0
+                vals[vals>1.0] = 1.0
+                mapping = (vals * 255.).astype(np.uint8)
+            except ImportError:
+                # Otherwise use simple linear interp
+                mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
+        else:
+            raise RuntimeError('Transfer function cannot have more values than `n_colors`. This has {} elements'.format(mapping.size))
+        return mapping
+    raise TypeError('Transfer function type ({}) not understood'.format(type(mapping)))
