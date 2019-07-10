@@ -1,7 +1,6 @@
 import logging
 import os
 import time
-from threading import Thread
 
 import numpy as np
 import scooby
@@ -47,8 +46,17 @@ class QFileDialog(object):
     pass
 
 
+def pyqtSlot(*args, **kwargs):
+    """dummy function for environments without pyqt5"""
+    return lambda *x: None
+
+
+class QMainWindow(object):
+    pass
+
+
 try:
-    from PyQt5.QtCore import pyqtSignal
+    from PyQt5.QtCore import pyqtSignal, pyqtSlot, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
@@ -276,7 +284,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape)
+        BasePlotter.__init__(self, shape=shape, title=title)
         self.parent = parent
 
         # Create and start the interactive renderer
@@ -287,7 +295,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         self.background_color = rcParams['background']
 
-        if title:
+        if self.title:
             self.setWindowTitle(title)
 
         self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
@@ -340,6 +348,8 @@ class BackgroundPlotter(QtInteractor):
 
             from IPython.external.qt_for_kernel import QtGui
             QtGui.QApplication.instance()
+        else:
+            ipython = None
 
         # run within python
         if app is None:
@@ -349,7 +359,7 @@ class BackgroundPlotter(QtInteractor):
                 app = QApplication([''])
 
         self.app = app
-        self.app_window = QMainWindow()
+        self.app_window = MainWindow()
 
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
@@ -372,7 +382,9 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addAction('Clear All', self.clear)
 
         tool_menu = main_menu.addMenu('Tools')
-        tool_menu.addAction('Enable Cell Picking (r-key)', self.enable_cell_picking)
+
+        tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
+        tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Reset Camera', self.reset_camera)
@@ -450,21 +462,16 @@ class BackgroundPlotter(QtInteractor):
         ensures the render window stays updated without consuming too
         many resources.
         """
-        self.render_trigger.connect(self.ren_win.Render)
-        twait = rate**-1
-
-        def render():
-            while self.active:
-                time.sleep(twait)
-                self._render()
-
-        self.render_thread = Thread(target=render)
-        self.render_thread.start()
+        twait = (rate**-1) * 1000.0
+        self.render_timer = QTimer(parent=self.app_window)
+        self.render_timer.timeout.connect(self._render)
+        self.app_window.signal_close.connect(self.render_timer.stop)
+        self.render_timer.start(twait)
 
     def closeEvent(self, event):
         self.active = False
-        self.app.quit()
         self.close()
+
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
@@ -528,9 +535,11 @@ class BackgroundPlotter(QtInteractor):
             return self.renderer.disable_eye_dome_lighting()
         return self.renderer.enable_eye_dome_lighting()
 
+    @pyqtSlot()
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
+        self.ren_win.Render() # force rendering
         return
 
     @property
@@ -548,3 +557,14 @@ class BackgroundPlotter(QtInteractor):
 
     def __del__(self):  # pragma: no cover
         self.close()
+
+
+class MainWindow(QMainWindow):
+    signal_close = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+
+    def closeEvent(self, event):
+        self.signal_close.emit()
+        event.accept()
