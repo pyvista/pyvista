@@ -558,6 +558,12 @@ class BackgroundPlotter(QtInteractor):
     def __del__(self):  # pragma: no cover
         self.close()
 
+    def add_callback(self, callback, func, timeout=1000):
+        timer = QTimer(parent=self.app_window)
+        timer.timeout.connect(getattr(callback, func))
+        self.app_window.signal_close.connect(timer.stop)
+        timer.start(timeout)
+
 
 class MainWindow(QMainWindow):
     signal_close = pyqtSignal()
