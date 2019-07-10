@@ -279,7 +279,7 @@ class Common(DataSetFilters, object):
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
         _, field = get_scalar(self, name, preference=preference, info=True)
-        self._last_active_scalar_name = self._active_scalar_info[1]
+        self._last_active_scalar_name = self.active_scalar_info[1]
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveScalars(name)
         elif field == CELL_DATA_FIELD:
