@@ -382,7 +382,9 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addAction('Clear All', self.clear)
 
         tool_menu = main_menu.addMenu('Tools')
-        tool_menu.addAction('Enable Cell Picking (r-key)', self.enable_cell_picking)
+
+        tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
+        tool_menu.addAction('Enable Cell Picking (visible)', lambda *args: self.enable_cell_picking(*args, through=False))
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Reset Camera', self.reset_camera)
