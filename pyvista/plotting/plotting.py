@@ -414,10 +414,14 @@ class BasePlotter(object):
         point_size : float, optional
             Point size.  Applicable when style='points'.  Default 5.0
 
-        opacity : float, optional
+        opacity : float, str, array-like
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0.
             A string option can also be specified to map the scalar range
-            to the opacity. Options are: linear, linear_r, geom, geom_r
+            to a predefined opacity transfer function (options are: linear,
+            linear_r, geom, geom_r). A string could also be used to map a
+            scalar array to the the opacity (must have same number of elements
+            as the ``scalars`` argument). Or you can pass custum made trasfer
+            functions that are either ``n_colors`` in length or shorter.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
@@ -658,7 +662,7 @@ class BasePlotter(object):
                                      reset_camera=reset_camera,
                                      name=name, loc=loc, culling=backface_culling)
 
-        # Make sure scalars is a numpy arra after this point
+        # Make sure scalars is a numpy array after this point
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
             title = scalars
@@ -687,7 +691,12 @@ class BasePlotter(object):
             self.mapper.SetScalarModeToUsePointFieldData()
 
         # Handle making opacity array =========================================
-        normalize = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
+        def normalize(x, minimum=None, maximum=None):
+            if minimum is None:
+                minimum = np.nanmin(x)
+            if maximum is None:
+                maximum = np.nanmax(x)
+            return (x - minimum) / (maximum - minimum)
         _custom_opac = False
         if isinstance(opacity, str):
             try:
@@ -699,8 +708,26 @@ class BasePlotter(object):
             except:
                 # Or get opacity trasfer function
                 opacity = opacity_transfer_function(opacity, n_colors)
-        elif isinstance(opacity, np.ndarray):
-            raise NotImplemented
+            else:
+                if scalars.shape[0] != opacity.shape[0]:
+                    raise RuntimeError('Opacity array and scalars array must have the same number of elements.')
+        elif isinstance(opacity, (np.ndarray, list, tuple)):
+            opacity = np.array(opacity)
+            if scalars.shape[0] == opacity.shape[0]:
+                # User could pass an array of opacities for every point/cell
+                pass
+            elif opacity.shape[0] == n_colors:
+                # User could pass opacity transfer function ready for lookup table
+                pass
+            elif opacity.shape[0] < n_colors:
+                # User pass custom transfer function to be linearly interpolated
+                if np.max(opacity) > 1.0 or np.min(opacity) < 0.0:
+                    opacity = normalize(opacity)
+                # Interpolate transfer function to match lookup table
+                xo = np.linspace(0, n_colors, len(opacity), dtype=np.int)
+                opacity = (np.interp(np.linspace(0, n_colors, n_colors), xo, opacity) * 255).astype(np.uint8)
+            else:
+                raise RuntimeError('Opacity transfer function cannot have more values than `n_colors`.')
 
         if flip_opacity:
             opacity = 1 - opacity
@@ -749,6 +776,27 @@ class BasePlotter(object):
             if scalars.dtype == np.bool or (scalars.dtype == np.uint8 and not rgb):
                 scalars = scalars.astype(np.float)
 
+            def prepare_mapper(scalars):
+                # Scalar interpolation approach
+                if scalars.shape[0] == mesh.n_points:
+                    self.mesh._add_point_scalar(scalars, title, set_active)
+                    self.mapper.SetScalarModeToUsePointData()
+                elif scalars.shape[0] == mesh.n_cells:
+                    self.mesh._add_cell_scalar(scalars, title, set_active)
+                    self.mapper.SetScalarModeToUseCellData()
+                else:
+                    _raise_not_matching(scalars, mesh)
+                # Common tasks
+                self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
+                if interpolate_before_map:
+                    self.mapper.InterpolateScalarsBeforeMappingOn()
+                if rgb or _custom_opac:
+                    self.mapper.SetColorModeToDirectScalars()
+                return
+
+
+            prepare_mapper(scalars)
+
             # Set scalar range
             if rng is None:
                 rng = [np.nanmin(scalars), np.nanmax(scalars)]
@@ -782,31 +830,21 @@ class BasePlotter(object):
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
                 if _custom_opac:
-                    hue = normalize(scalars)
+                    hue = normalize(scalars, minimum=rng[0], maximum=rng[1])
                     scalars = cmap(hue)[:, :3]
+                    # combine colors and alpha into a Nx4 matrix
                     scalars = np.concatenate((scalars, opacity[:, None]), axis=1)
                     scalars = (scalars * 255).astype(np.uint8)
+                    prepare_mapper(scalars)
 
             else:  # no cmap specified
                 if flip_scalars:
                     table.SetHueRange(0.0, 0.66667)
                 else:
                     table.SetHueRange(0.66667, 0.0)
-
-            # Scalar interpolation approach
-            if scalars.shape[0] == mesh.n_points:
-                self.mesh._add_point_scalar(scalars, title, set_active)
-                self.mapper.SetScalarModeToUsePointData()
-            elif scalars.shape[0] == mesh.n_cells:
-                self.mesh._add_cell_scalar(scalars, title, set_active)
-                self.mapper.SetScalarModeToUseCellData()
-            else:
-                raise_not_matching(scalars, mesh)
-            if rgb or _custom_opac:
-                self.mapper.SetColorModeToDirectScalars()
-
         else:
             self.mapper.SetScalarModeToUseFieldData()
+
 
         # Set actor properties ================================================
 
@@ -868,7 +906,7 @@ class BasePlotter(object):
             prop.SetLineWidth(line_width)
 
         # Add scalar bar if available
-        if stitle is not None and show_scalar_bar and (not rgb and not _custom_opac):
+        if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
