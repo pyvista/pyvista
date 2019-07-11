@@ -60,7 +60,7 @@ class Common(DataSetFilters, object):
                 else:
                     name = None
 
-        exclude = ['__custom_rgba', ]
+        exclude = ['__custom_rgba', 'Normals', 'vtkOriginalPointIds',]
 
         def search_for_array(data):
             arr = None
