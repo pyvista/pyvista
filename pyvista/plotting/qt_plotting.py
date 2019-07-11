@@ -55,8 +55,12 @@ class QMainWindow(object):
     pass
 
 
+class QObject(object):
+    pass
+
+
 try:
-    from PyQt5.QtCore import pyqtSignal, pyqtSlot, QTimer
+    from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
@@ -333,6 +337,7 @@ class BackgroundPlotter(QtInteractor):
             raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
+        self.counters = []
 
         if window_size is None:
             window_size = rcParams['window_size']
@@ -559,6 +564,29 @@ class BackgroundPlotter(QtInteractor):
     def __del__(self):  # pragma: no cover
         self.close()
 
+    def add_callback(self, func, interval=1000, count=None):
+        """Add a function that can update the scene in the background
+
+        Parameters
+        ----------
+        func : callable
+            Function to be called with no arguments.
+        interval : int
+            Time interval between calls to `func` in milliseconds.
+        count : int, optional
+            Number of times `func` will be called. If None,
+            `func` will be called until the main window is closed.
+        """
+        timer = QTimer(parent=self.app_window)
+        timer.timeout.connect(func)
+        timer.start(interval)
+        self.app_window.signal_close.connect(timer.stop)
+        if count is not None:
+            counter = Counter(count)
+            counter.signal_finished.connect(timer.stop)
+            timer.timeout.connect(counter.decrease)
+            self.counters.append(counter)
+
 
 class MainWindow(QMainWindow):
     signal_close = pyqtSignal()
@@ -569,3 +597,23 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.signal_close.emit()
         event.accept()
+
+
+class Counter(QObject):
+    signal_finished = pyqtSignal()
+
+    def __init__(self, count):
+        super(Counter, self).__init__()
+        if isinstance(count, int) and count > 0:
+            self.count = count
+        elif count > 0:
+            raise TypeError('Expected `count` to be'
+                            '`int` but got: {}'.format(type(count)))
+        else:
+            raise ValueError('count is not strictly positive.')
+
+    @pyqtSlot()
+    def decrease(self):
+        self.count -= 1
+        if self.count <= 0:
+            self.signal_finished.emit()
