@@ -564,6 +564,18 @@ class BackgroundPlotter(QtInteractor):
         self.close()
 
     def add_callback(self, func, interval=1000, count=None):
+        """Add a function that can update the scene in the background
+
+        Parameters
+        ----------
+        func : callable
+            Function to be called with no arguments.
+        interval : int
+            Time interval between calls to `func` in milliseconds.
+        count : int, optional
+            Number of times `func` will be called. If None,
+            `func` will be called until the main window is closed.
+        """
         timer = QTimer(parent=self.app_window)
         timer.timeout.connect(func)
         timer.start(interval)
