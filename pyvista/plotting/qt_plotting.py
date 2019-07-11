@@ -360,6 +360,7 @@ class BackgroundPlotter(QtInteractor):
 
         self.app = app
         self.app_window = MainWindow()
+        self.app_window.setWindowTitle(kwargs.get('title', rcParams['title']))
 
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
