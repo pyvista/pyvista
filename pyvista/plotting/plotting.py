@@ -360,7 +360,7 @@ class BasePlotter(object):
                  render_lines_as_tubes=False, edge_color=None,
                  ambient=0.0, show_scalar_bar=None, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
-                 rgb=False, categories=False, **kwargs):
+                 rgb=False, categories=False, use_transparency=False, **kwargs):
         """
         Adds a unstructured, structured, or surface mesh to the
         plotting object.
@@ -414,10 +414,14 @@ class BasePlotter(object):
         point_size : float, optional
             Point size.  Applicable when style='points'.  Default 5.0
 
-        opacity : float, optional
+        opacity : float, str, array-like
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0.
             A string option can also be specified to map the scalar range
-            to the opacity. Options are: linear, linear_r, geom, geom_r
+            to a predefined opacity transfer function (options are: linear,
+            linear_r, geom, geom_r). A string could also be used to map a
+            scalar array to the the opacity (must have same number of elements
+            as the ``scalars`` argument). Or you can pass custum made trasfer
+            functions that are either ``n_colors`` in length or shorter.
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
@@ -486,6 +490,10 @@ class BasePlotter(object):
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
+        use_transparency : bool, optional
+            Invert the opacity mapping and make the values correspond to
+            transperency.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -520,6 +528,16 @@ class BasePlotter(object):
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+
+        if nan_color is None:
+            nan_color = rcParams['nan_color']
+        nanr, nanb, nang = parse_color(nan_color)
+        nan_color = nanr, nanb, nang, nan_opacity
+        if color is True:
+            color = rcParams['color']
+
+        if texture == False:
+            texture = None
 
         ##### Handle composite datasets #####
 
@@ -614,30 +632,10 @@ class BasePlotter(object):
 
             mesh.compute_normals(cell_normals=False, inplace=True)
 
-        if nan_color is None:
-            nan_color = rcParams['nan_color']
-        nanr, nanb, nang = parse_color(nan_color)
-        nan_color = nanr, nanb, nang, nan_opacity
-        if color is True:
-            color = rcParams['color']
-
         if mesh.n_points < 1:
             raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
-        # set main values
-        self.mesh = mesh
-        self.mapper = make_mapper(vtk.vtkDataSetMapper)
-        self.mapper.SetInputData(self.mesh)
-        if isinstance(scalars, str):
-            self.mapper.SetArrayName(scalars)
-
-        actor, prop = self.add_actor(self.mapper,
-                                     reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling)
-
         # Try to plot something if no preference given
-        if texture == False:
-            texture = None
         if scalars is None and color is None and texture is None:
             # Prefer texture first
             if len(list(mesh.textures.keys())) > 0:
@@ -645,13 +643,36 @@ class BasePlotter(object):
             # If no texture, plot any active scalar
             else:
                 # Make sure scalar components are not vectors/tuples
-                scalars = mesh.active_scalar
+                scalars = mesh.active_scalar_name
                 # Don't allow plotting of string arrays by default
-                if scalars is not None and np.issubdtype(scalars.dtype, np.number):
+                if scalars is not None and np.issubdtype(mesh.active_scalar.dtype, np.number):
                     if stitle is None:
-                        stitle = mesh.active_scalar_info[1]
+                        stitle = scalars
                 else:
                     scalars = None
+
+        # set main values
+        self.mesh = mesh
+        self.mapper = make_mapper(vtk.vtkDataSetMapper)
+        self.mapper.SetInputData(self.mesh)
+        self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
+        if interpolate_before_map:
+            self.mapper.InterpolateScalarsBeforeMappingOn()
+
+        actor, prop = self.add_actor(self.mapper,
+                                     reset_camera=reset_camera,
+                                     name=name, loc=loc, culling=backface_culling)
+
+        # Make sure scalars is a numpy array after this point
+        original_scalar_name = None
+        if isinstance(scalars, str):
+            self.mapper.SetArrayName(scalars)
+            original_scalar_name = scalars
+            scalars = get_scalar(mesh, scalars,
+                    preference=kwargs.get('preference', 'cell'), err=True)
+            if stitle is None:
+                stitle = original_scalar_name
+
 
         if texture == True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -671,6 +692,35 @@ class BasePlotter(object):
                 show_scalar_bar = False
             self.mapper.SetScalarModeToUsePointFieldData()
 
+        # Handle making opacity array =========================================
+
+        _custom_opac = False
+        if isinstance(opacity, str):
+            try:
+                # Get array from mesh
+                opacity = get_scalar(mesh, opacity,
+                        preference=kwargs.get('preference', 'cell'), err=True)
+                opacity = normalize(opacity)
+                _custom_opac = True
+            except:
+                # Or get opacity trasfer function
+                opacity = opacity_transfer_function(opacity, n_colors)
+            else:
+                if scalars.shape[0] != opacity.shape[0]:
+                    raise RuntimeError('Opacity array and scalars array must have the same number of elements.')
+        elif isinstance(opacity, (np.ndarray, list, tuple)):
+            opacity = np.array(opacity)
+            if scalars.shape[0] == opacity.shape[0]:
+                # User could pass an array of opacities for every point/cell
+                pass
+            else:
+                opacity = opacity_transfer_function(opacity, n_colors)
+
+        if use_transparency and np.max(opacity) <=1.0:
+            opacity = 1 - opacity
+        elif use_transparency and isinstance(opacity, np.ndarray):
+            opacity = 255 - opacity
+
         # Scalar formatting ===================================================
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
@@ -680,17 +730,16 @@ class BasePlotter(object):
                 cmap = rcParams['cmap']
             except ImportError:
                 pass
-        title = 'Data' if stitle is None else stitle
+        # Set the array title for when it is added back to the mesh
+        if _custom_opac:
+            title = '__custom_rgba'
+        elif stitle is None:
+            title = 'Data'
+        else:
+            title = stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
-            append_scalars = True
-            if isinstance(scalars, str):
-                title = scalars
-                scalars = get_scalar(mesh, scalars,
-                        preference=kwargs.get('preference', 'cell'), err=True)
-                if stitle is None:
-                    stitle = title
-                #append_scalars = False
+            set_active = True
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -716,21 +765,26 @@ class BasePlotter(object):
             if scalars.dtype == np.bool or (scalars.dtype == np.uint8 and not rgb):
                 scalars = scalars.astype(np.float)
 
-            # Scalar interpolation approach
-            if scalars.shape[0] == mesh.n_points:
-                self.mesh._add_point_scalar(scalars, title, append_scalars)
-                self.mapper.SetScalarModeToUsePointData()
+            def prepare_mapper(scalars):
+                # Scalar interpolation approach
+                if scalars.shape[0] == mesh.n_points:
+                    self.mesh._add_point_scalar(scalars, title, set_active)
+                    self.mapper.SetScalarModeToUsePointData()
+                elif scalars.shape[0] == mesh.n_cells:
+                    self.mesh._add_cell_scalar(scalars, title, set_active)
+                    self.mapper.SetScalarModeToUseCellData()
+                else:
+                    _raise_not_matching(scalars, mesh)
+                # Common tasks
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
                 if interpolate_before_map:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
-            elif scalars.shape[0] == mesh.n_cells:
-                self.mesh._add_cell_scalar(scalars, title, append_scalars)
-                self.mapper.SetScalarModeToUseCellData()
-                self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-                if interpolate_before_map:
-                    self.mapper.InterpolateScalarsBeforeMappingOn()
-            else:
-                raise_not_matching(scalars, mesh)
+                if rgb or _custom_opac:
+                    self.mapper.SetColorModeToDirectScalars()
+                return
+
+
+            prepare_mapper(scalars)
 
             # Set scalar range
             if rng is None:
@@ -740,10 +794,7 @@ class BasePlotter(object):
 
             if np.any(rng) and not rgb:
                 self.mapper.scalar_range = rng[0], rng[1]
-            elif rgb:
-                self.mapper.SetColorModeToDirectScalars()
 
-            # Flip if requested
             table = self.mapper.GetLookupTable()
             table.SetNanColor(nan_color)
             if cmap is not None:
@@ -762,20 +813,29 @@ class BasePlotter(object):
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
                 # Set opactities
-                if isinstance(opacity, str):
-                    ctable[:,-1] = opacity_transfer_function(opacity, n_colors)
+                if isinstance(opacity, np.ndarray) and not _custom_opac:
+                    ctable[:,-1] = opacity
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
+                if _custom_opac:
+                    hue = normalize(scalars, minimum=rng[0], maximum=rng[1])
+                    scalars = cmap(hue)[:, :3]
+                    # combine colors and alpha into a Nx4 matrix
+                    scalars = np.concatenate((scalars, opacity[:, None]), axis=1)
+                    scalars = (scalars * 255).astype(np.uint8)
+                    prepare_mapper(scalars)
 
             else:  # no cmap specified
                 if flip_scalars:
                     table.SetHueRange(0.0, 0.66667)
                 else:
                     table.SetHueRange(0.66667, 0.0)
-
         else:
             self.mapper.SetScalarModeToUseFieldData()
+
+
+        # Set actor properties ================================================
 
         # select view style
         if not style:
@@ -835,7 +895,7 @@ class BasePlotter(object):
             prop.SetLineWidth(line_width)
 
         # Add scalar bar if available
-        if stitle is not None and show_scalar_bar and not rgb:
+        if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
@@ -1000,7 +1060,7 @@ class BasePlotter(object):
         ##############
 
         title = 'Data' if stitle is None else stitle
-        append_scalars = False
+        set_active = False
         if isinstance(scalars, str):
             title = scalars
             scalars = get_scalar(volume, scalars,
@@ -1008,7 +1068,7 @@ class BasePlotter(object):
             if stitle is None:
                 stitle = title
         else:
-            append_scalars = True
+            set_active = True
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
@@ -1036,10 +1096,10 @@ class BasePlotter(object):
 
         # Scalar interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume._add_point_scalar(scalars, title, append_scalars)
+            volume._add_point_scalar(scalars, title, set_active)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume._add_cell_scalar(scalars, title, append_scalars)
+            volume._add_cell_scalar(scalars, title, set_active)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
@@ -1100,6 +1160,9 @@ class BasePlotter(object):
             opacity_values = [opacity] * n_colors
         elif isinstance(opacity, str):
             opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
+        elif isinstance(opacity, (np.ndarray, list, tuple)):
+            opacity = np.array(opacity)
+            opacity_values = opacity_transfer_function(opacity, n_colors)
 
         opacity_tf = vtk.vtkPiecewiseFunction()
         for ii in range(n_colors):

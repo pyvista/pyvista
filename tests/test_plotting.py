@@ -640,3 +640,30 @@ def test_plot_eye_dome_lighting():
     p.add_mesh(mesh)
     p.enable_eye_dome_lighting()
     p.show()
+
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_opacity_by_array():
+    mesh = examples.load_uniform()
+    # Test with opacity arry
+    mesh['opac'] = mesh['Spatial Point Data'] / 100.
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, scalars='Spatial Point Data', opacity='opac',)
+    p.show()
+    # Test with uncertainty array (transperancy)
+    mesh['unc'] = mesh['Spatial Point Data']
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',
+               use_transparency=True)
+    p.show()
+    # Test using mismatched arrays
+    with pytest.raises(RuntimeError):
+        p = pyvista.Plotter(off_screen=OFF_SCREEN)
+        p.add_mesh(mesh, scalars='Spatial Cell Data', opacity='unc',)
+        p.show()
+    # Test with user defined transfer function
+    opacities = [0,0.2,0.9,0.2,0.1]
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, scalars='Spatial Point Data', opacity=opacities,)
+    p.show()
