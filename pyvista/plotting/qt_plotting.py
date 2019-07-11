@@ -55,6 +55,10 @@ class QMainWindow(object):
     pass
 
 
+class QObject(object):
+    pass
+
+
 try:
     from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
