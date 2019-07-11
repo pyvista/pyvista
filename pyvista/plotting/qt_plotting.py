@@ -601,7 +601,6 @@ class Counter(QObject):
 
     @pyqtSlot()
     def decrease(self):
-        print(self.count)
         self.count -= 1
         if self.count <= 0:
             self.signal_finished.emit()
