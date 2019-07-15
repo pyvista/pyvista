@@ -309,15 +309,17 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         else:
             self.iren = self.ren_win.GetInteractor()
             self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
+
+            # Enter trackball camera mode
+            istyle = vtk.vtkInteractorStyleTrackballCamera()
+            self.SetInteractorStyle(istyle)
+            self.add_axes()
+
             self.iren.Initialize()
 
             # QVTKRenderWindowInteractor doesn't have a "q" quit event
             self.iren.AddObserver("KeyPressEvent", self.key_quit)
 
-        # Enter trackball camera mode
-        istyle = vtk.vtkInteractorStyleTrackballCamera()
-        self.SetInteractorStyle(istyle)
-        self.add_axes()
 
 
     def key_quit(self, obj=None, event=None):  # pragma: no cover
