@@ -1236,7 +1236,7 @@ class BasePlotter(object):
         if name is None:
             if not hasattr(self, 'mapper'):
                 raise RuntimeError('This plotter does not have an active mapper.')
-            self.mappe.scalar_range = clim
+            self.mapper.scalar_range = clim
             return
 
         # Use the name to find the desired actor
