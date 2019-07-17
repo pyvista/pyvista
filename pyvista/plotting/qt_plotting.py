@@ -321,7 +321,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         except:
             pass
 
-    def close(self):
+    def quit(self):
         self.iren.TerminateApp()
         QVTKRenderWindowInteractor.close(self)
 
@@ -369,7 +369,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setFrameStyle(QFrame.NoFrame)
 
         QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
-        self.app_window.signal_close.connect(self.close)
+        self.app_window.signal_close.connect(self.quit)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -472,8 +472,11 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
+    def quit(self):
+        QtInteractor.quit(self)
+
     def close(self):
-        QtInteractor.close(self)
+        self.app_window.close()
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
