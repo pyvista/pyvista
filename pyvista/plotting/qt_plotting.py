@@ -281,7 +281,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     """
     render_trigger = pyqtSignal()
     allow_quit_keypress = True
-    signal_close = pyqtSignal()
 
     def __init__(self, parent=None, title=None, shape=(1, 1), **kwargs):
         """ Initialize Qt interactor """
@@ -322,10 +321,9 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         except:
             pass
 
-    def quit(self):
+    def close(self):
         self.iren.TerminateApp()
-        self.close()
-        self.signal_close.emit()
+        QVTKRenderWindowInteractor.close(self)
 
 
 class BackgroundPlotter(QtInteractor):
@@ -371,7 +369,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setFrameStyle(QFrame.NoFrame)
 
         QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
-        self.signal_close.connect(self.app_window.close)
+        self.app_window.signal_close.connect(self.close)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -380,7 +378,7 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.quit)
+        file_menu.addAction('Exit', self.app_window.close)
 
         view_menu = main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
@@ -474,10 +472,8 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
-    def closeEvent(self, event):
-        self.active = False
-        self.close()
-
+    def close(self):
+        QtInteractor.close(self)
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
