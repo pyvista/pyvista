@@ -561,7 +561,7 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.setBaseSize(*window_size)
 
     def __del__(self):  # pragma: no cover
-        self.close()
+        self.app_window.close()
 
     def add_callback(self, func, interval=1000, count=None):
         """Add a function that can update the scene in the background
