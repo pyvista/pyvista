@@ -282,7 +282,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     """
     render_trigger = pyqtSignal()
     allow_quit_keypress = True
-    signal_close = pyqtSignal()
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None, **kwargs):
         """ Initialize Qt interactor """
@@ -332,10 +331,9 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             pass
 
     def quit(self):
-        if hasattr(self, 'iren'):
-            self.iren.TerminateApp()
-        self.close()
-        self.signal_close.emit()
+        """Quit application"""
+        self.iren.TerminateApp()
+        QVTKRenderWindowInteractor.close(self)
 
 
 class BackgroundPlotter(QtInteractor):
@@ -381,9 +379,10 @@ class BackgroundPlotter(QtInteractor):
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
-        QtInteractor.__init__(self, parent=self.frame, shape=shape,
+
+        QtInteractor.__init__(self, parent=self.frame, shape=shape, 
                               off_screen=off_screen, **kwargs)
-        self.signal_close.connect(self.app_window.close)
+        self.app_window.signal_close.connect(self.quit)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -392,7 +391,7 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.quit)
+        file_menu.addAction('Exit', self.app_window.close)
 
         view_menu = main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
@@ -489,10 +488,11 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
-    def closeEvent(self, event):
-        self.active = False
-        self.close()
+    def quit(self):
+        QtInteractor.quit(self)
 
+    def close(self):
+        self.app_window.close()
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
@@ -577,7 +577,7 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.setBaseSize(*window_size)
 
     def __del__(self):  # pragma: no cover
-        self.close()
+        self.app_window.close()
 
     def add_callback(self, func, interval=1000, count=None):
         """Add a function that can update the scene in the background

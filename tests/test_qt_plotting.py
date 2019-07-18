@@ -91,7 +91,7 @@ def test_background_plotting_axes_scale(qtbot):
     plotter._last_update_time = 0.0
     plotter.update_app_icon()
 
-    assert plotter.quit() is None
+    assert plotter.close() is None
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
