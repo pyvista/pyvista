@@ -575,6 +575,7 @@ class BackgroundPlotter(QtInteractor):
     def window_size(self, window_size):
         """ set the render window size """
         BasePlotter.window_size.fset(self, window_size)
+        self.app_window.setBaseSize(*window_size)
         self.app_window.resize(*window_size)
 
     def __del__(self):  # pragma: no cover
