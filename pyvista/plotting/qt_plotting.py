@@ -7,6 +7,7 @@ import scooby
 import vtk
 import vtk.qt
 
+import pyvista
 from .plotting import BasePlotter
 from .theme import rcParams
 
@@ -282,7 +283,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     render_trigger = pyqtSignal()
     allow_quit_keypress = True
 
-    def __init__(self, parent=None, title=None, shape=(1, 1), **kwargs):
+    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None, **kwargs):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -294,23 +295,31 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.ren_win = self.GetRenderWindow()
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
-        self.iren = self.ren_win.GetInteractor()
 
         self.background_color = rcParams['background']
-
         if self.title:
             self.setWindowTitle(title)
 
-        self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
-        self.iren.Initialize()
+        if off_screen is None:
+            off_screen = pyvista.OFF_SCREEN
 
-        # Enter trackball camera mode
-        istyle = vtk.vtkInteractorStyleTrackballCamera()
-        self.SetInteractorStyle(istyle)
-        self.add_axes()
+        if off_screen:
+            self.ren_win.SetOffScreenRendering(1)
+        else:
+            self.iren = self.ren_win.GetInteractor()
+            self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
 
-        # QVTKRenderWindowInteractor doesn't have a "q" quit event
-        self.iren.AddObserver("KeyPressEvent", self.key_quit)
+            # Enter trackball camera mode
+            istyle = vtk.vtkInteractorStyleTrackballCamera()
+            self.SetInteractorStyle(istyle)
+            self.add_axes()
+
+            self.iren.Initialize()
+
+            # QVTKRenderWindowInteractor doesn't have a "q" quit event
+            self.iren.AddObserver("KeyPressEvent", self.key_quit)
+
+
 
     def key_quit(self, obj=None, event=None):  # pragma: no cover
         try:
@@ -322,7 +331,9 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             pass
 
     def quit(self):
-        self.iren.TerminateApp()
+        """Quit application"""
+        if hasattr(self, 'iren'):
+            self.iren.TerminateApp()
         QVTKRenderWindowInteractor.close(self)
 
 
@@ -330,7 +341,8 @@ class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None, **kwargs):
+    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None,
+                 off_screen=None, **kwargs):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
@@ -368,7 +380,9 @@ class BackgroundPlotter(QtInteractor):
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
-        QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
+
+        QtInteractor.__init__(self, parent=self.frame, shape=shape, 
+                              off_screen=off_screen, **kwargs)
         self.app_window.signal_close.connect(self.quit)
 
         # build main menu
@@ -425,7 +439,10 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
 
-        if show:  # pragma: no cover
+        if off_screen is None:
+            off_screen = pyvista.OFF_SCREEN
+
+        if show and not off_screen:  # pragma: no cover
             self.app_window.show()
             self.show()
 
