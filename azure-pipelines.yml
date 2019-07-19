@@ -1,0 +1,50 @@
+jobs:
+- job: Windows
+  pool:
+    vmIMage: 'VS2017-Win2016'
+  variables:
+    AZURE_CI_WINDOWS: 'true'
+  strategy:
+    maxParallel: 4
+    matrix:
+      Python37-64bit:
+        PYTHON_VERSION: '3.7'
+        PYTHON_ARCH: 'x64'
+      Python36-64bit:
+        PYTHON_VERSION: '3.6'
+        PYTHON_ARCH: 'x64'
+      Python35-64bit:
+        PYTHON_VERSION: '3.5'
+        PYTHON_ARCH: 'x64'
+      Python37-32bit:
+        PYTHON_VERSION: '3.7'
+        PYTHON_ARCH: 'x32'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(PYTHON_VERSION)
+      architecture: $(PYTHON_ARCH)
+      addToPath: true
+  - powershell: |
+      Set-StrictMode -Version Latest
+      $ErrorActionPreference = "Stop"
+      $PSDefaultParameterValues['*:ErrorAction']='Stop'
+      git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
+      powershell gl-ci-helpers/appveyor/install_opengl.ps1
+    displayName: 'Install OpenGL'
+  - powershell: |
+      Set-StrictMode -Version Latest
+      $ErrorActionPreference = "Stop"
+      $PSDefaultParameterValues['*:ErrorAction']='Stop'
+      pip install -r requirements.txt
+    displayName: 'Install dependencies with pip'
+  - script: |
+      python setup.py sdist
+      python setup.py install
+    displayName: 'Install PyVista'
+  - script: |
+      del /Q tests\\test_qt_plotting.py
+      cd tests
+      python -m pytest --cov -v
+      cd ..
+    displayName: 'Run Tests'
