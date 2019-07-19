@@ -16,9 +16,6 @@ jobs:
       Python35-64bit:
         PYTHON_VERSION: '3.5'
         PYTHON_ARCH: 'x64'
-      Python37-32bit:
-        PYTHON_VERSION: '3.7'
-        PYTHON_ARCH: 'x86'
   steps:
   - task: UsePythonVersion@0
     inputs:
