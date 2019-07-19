@@ -18,6 +18,10 @@ environment:
       PYTHON_VERSION: "3.7.1"
       PYTHON_ARCH: "64"
 
+    - PYTHON: "C:\\Python37-x64\\python"
+      PYTHON_VERSION: "3.7.1"
+      PYTHON_ARCH: "32"
+
   # This is a pyvista flag to bypass X11 hooks
   ALLOW_PLOTTING: "True"
 
