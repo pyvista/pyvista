@@ -396,6 +396,10 @@ def test_plot_over_line():
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
     mesh.plot_over_line(a, b, resolution=1000, show=False)
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_line(a, b, resolution=None, scalars='foo',
+        title='My Stuff', ylabel='3 Values', show=False)
 
 
 def test_slice_along_line():
