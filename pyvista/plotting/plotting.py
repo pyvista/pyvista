@@ -2151,6 +2151,9 @@ class BasePlotter(object):
         position : str, tuple(float)
             String name of the position or length 2 tuple of the pixelwise
             position to place the bottom left corner of the text box.
+            If string name is used, returns a `vtkCornerAnnotation` object
+            normally used for fixed labels (like title or xlabel).
+            If tuple is used, returns a more general `vtkOpenGLTextActor`.
             Default is to find the top left corner of the renderering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
