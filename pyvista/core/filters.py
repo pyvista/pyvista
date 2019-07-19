@@ -1117,7 +1117,7 @@ class DataSetFilters(object):
 
     def interpolate(dataset, points, sharpness=2, radius=1.0,
             dimensions=(101, 101, 101), pass_cell_arrays=True,
-            pass_point_arrays=True, kernel='gaussian'):
+            pass_point_arrays=True, null_value=0.0):
         """Interpolate values onto this mesh from the point data of a given
         :class:`pyvista.PolyData` object (typically a point cloud).
 
@@ -1151,6 +1151,11 @@ class DataSetFilters(object):
 
         pass_point_arrays: bool, optional
             Preserve source mesh's original point data arrays
+
+        null_value : float, optional
+            Specify the null point value. When a null point is encountered
+            then all components of each null tuple are set to this value. By
+            default the null value is set to zero.
         """
         box = pyvista.create_grid(dataset, dimensions=dimensions)
 
@@ -1162,6 +1167,7 @@ class DataSetFilters(object):
         interpolator.SetInputData(box)
         interpolator.SetSourceData(points)
         interpolator.SetKernel(gaussian_kernel)
+        interpolator.SetNullValue(null_value)
         interpolator.Update()
 
         return dataset.sample(interpolator.GetOutput(),
