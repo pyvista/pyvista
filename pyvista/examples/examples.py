@@ -137,9 +137,7 @@ def beam_example(off_screen=False, notebook=None):
                      rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
-    cpos = plotter.show(auto_close=False)  # store camera position
-    # plotter.TakeScreenShot('beam.png')
-    plotter.close()
+    cpos = plotter.show()  # store camera position
 
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
@@ -195,7 +193,6 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     plotter.add_mesh(sgrid, scalars=Z.ravel())
     plotter.camera_position = cpos
     plotter.show(title='Wave Example', window_size=[800, 600],
-                 # auto_close=False, interactive=interactive)
                  auto_close=False, interactive_update=True)
 
     # Update Z and display a frame for each updated position
