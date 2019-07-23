@@ -1910,7 +1910,7 @@ class BasePlotter(object):
             if position_x is None:
                 if vertical:
                     position_x = rcParams['colorbar_vertical']['position_x']
-                    position_x -= slot * width
+                    position_x -= slot * (width + 0.2 * width)
                 else:
                     position_x = rcParams['colorbar_horizontal']['position_x']
 
