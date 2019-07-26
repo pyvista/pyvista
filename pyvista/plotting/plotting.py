@@ -774,7 +774,7 @@ class BasePlotter(object):
                     self.mesh._add_cell_scalar(scalars, title, set_active)
                     self.mapper.SetScalarModeToUseCellData()
                 else:
-                    _raise_not_matching(scalars, mesh)
+                    raise_not_matching(scalars, mesh)
                 # Common tasks
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
                 if interpolate_before_map:
