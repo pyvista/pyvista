@@ -69,7 +69,7 @@ if scooby.in_ipykernel():
     try:
         import panel
         panel.extension('vtk')
-    except ImportError:
+    except (ImportError, RuntimeError):
         pass
 
 # Set preferred plot theme
