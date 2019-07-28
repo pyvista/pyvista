@@ -3320,12 +3320,6 @@ class Plotter(BasePlotter):
                     renderer.camera_position = cpos
             self._first_time = False
 
-        if title is None:
-            title = self.title
-
-        if title:
-            self.ren_win.SetWindowName(title)
-            self.title = title
 
         # if full_screen:
         if full_screen:
@@ -3339,6 +3333,13 @@ class Plotter(BasePlotter):
         # Render
         log.debug('Rendering')
         self.ren_win.Render()
+
+        # This has to be after the first render for some reason
+        if title is None:
+            title = self.title
+        if title:
+            self.ren_win.SetWindowName(title)
+            self.title = title
 
         # Keep track of image for sphinx-gallery
         self.last_image = self.screenshot(screenshot, return_img=True)
