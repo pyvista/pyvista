@@ -1875,7 +1875,7 @@ class BasePlotter(object):
 
         # check if maper exists
         if mapper is None:
-            if self.mapper is None:
+            if not hasattr(self, 'mapper') or self.mapper is None:
                 raise Exception('Mapper does not exist.  ' +
                                 'Add a mesh with scalars first.')
             mapper = self.mapper
@@ -1964,9 +1964,9 @@ class BasePlotter(object):
 
         # Set properties
         if title:
-            rng = self.mapper.scalar_range
+            rng = mapper.scalar_range
             self._scalar_bar_ranges[title] = rng
-            self._scalar_bar_mappers[title] = [self.mapper]
+            self._scalar_bar_mappers[title] = [mapper]
 
             self.scalar_bar.SetTitle(title)
             title_text = self.scalar_bar.GetTitleTextProperty()
