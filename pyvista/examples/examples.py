@@ -74,7 +74,7 @@ def load_channels():
     """ Loads a uniform grid of fluvial channels in the subsurface """
     return pyvista.read(channelsfile)
 
-def plot_ants_plane(off_screen=False, notebook=None):
+def plot_ants_plane(off_screen=None, notebook=None):
     """
     Demonstrate how to create a plot class to plot multiple meshes while
     adding scalars and text.
@@ -109,7 +109,7 @@ def plot_ants_plane(off_screen=False, notebook=None):
     plotter.show()
 
 
-def beam_example(off_screen=False, notebook=None):
+def beam_example(off_screen=None, notebook=None):
     # Load module and example file
     hexfile = hexbeamfile
 
@@ -141,7 +141,7 @@ def beam_example(off_screen=False, notebook=None):
 
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
-              off_screen=False, notebook=None):
+              off_screen=None, notebook=None):
     """
     Plot a 3D moving wave in a render window.
 
