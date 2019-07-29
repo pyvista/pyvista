@@ -1086,17 +1086,19 @@ class DataSetFilters(object):
         enclosed surface. The filter produces a (0,1) mask
         (in the form of a vtkDataArray) that indicates whether points are
         outside (mask value=0) or inside (mask value=1) a provided surface.
-        (The name of the output vtkDataArray is "SelectedPointsArray".)
+        (The name of the output vtkDataArray is "SelectedPoints".)
 
+        This filter produces and output data array, but does not modify the
+        input dataset. If you wish to extract cells or poinrs, various
+        threshold filters are available (i.e., threshold the output array).
+
+        Warning
+        -------
         The filter assumes that the surface is closed and manifold. A boolean
         flag can be set to force the filter to first check whether this is
         true. If false, all points will be marked outside. Note that if this
         check is not performed and the surface is not closed, the results are
         undefined.
-
-        This filter produces and output data array, but does not modify the
-        input dataset. If you wish to extract cells or poinrs, various
-        threshold filters are available (i.e., threshold the output array).
 
         Parameters
         ----------
@@ -1116,17 +1118,25 @@ class DataSetFilters(object):
         check_surface : bool
             Specify whether to check the surface for closure. If on, then the
             algorithm first checks to see if the surface is closed and
-            manifold.
+            manifold. If the surface is not closed and manifold, a runtime
+            error is raised.
         """
+        if not isinstance(surface, pyvista.PolyData):
+            raise TypeError("`surface` must be `pyvista.PolyData`")
+        if check_surface and surface.n_open_edges > 0:
+            raise RuntimeError("Surface is not closed. Please read the warning in the documentation for this function and either pass `check_surface=False` or repair the surface.")
         alg = vtk.vtkSelectEnclosedPoints()
         alg.SetInputData(dataset)
         alg.SetSurfaceData(surface)
         alg.SetTolerance(tolerance)
-        alg.SetCheckSurface(check_surface)
+        alg.SetInsideOut(inside_out)
         alg.Update()
         result = _get_output(alg)
         out = dataset.copy()
-        out['SelectedPoints'] = result['SelectedPoints']
+        bools = result['SelectedPoints'].astype(np.uint8)
+        if len(bools) < 1:
+            bools = np.zeros(out.n_points, dtype=np.uint8)
+        out['SelectedPoints'] = bools
         return out
 
 

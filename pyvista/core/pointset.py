@@ -441,6 +441,18 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return self._obbTree
 
 
+    @property
+    def n_open_edges(self):
+        """ The number of open edges on this mesh """
+        alg = vtk.vtkFeatureEdges()
+        alg.FeatureEdgesOff()
+        alg.BoundaryEdgesOn()
+        alg.NonManifoldEdgesOn()
+        alg.SetInputDataObject(self)
+        alg.Update()
+        return alg.GetOutput().GetNumberOfCells()
+
+
 class PointGrid(PointSet):
     """ Class in common with structured and unstructured grids """
 
