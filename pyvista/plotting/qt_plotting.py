@@ -332,8 +332,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     def quit(self):
         """Quit application"""
-        if hasattr(self, 'iren'):
-            self.iren.TerminateApp()
+        BasePlotter.close(self)
         QVTKRenderWindowInteractor.close(self)
 
 
