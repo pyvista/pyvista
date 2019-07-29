@@ -43,3 +43,33 @@ inherits many but not all of the filters from :class:`pyvista.DataSetFilters`.
    :show-inheritance:
    :members:
    :undoc-members:
+
+
+PolyData Filters
+~~~~~~~~~~~~~~~~
+
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.PolyDataFilters
+   :methods:
+
+.. autoclass:: pyvista.PolyDataFilters
+   :show-inheritance:
+   :members:
+   :undoc-members:
+
+
+UnstructuredGrid Filters
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.UnstructuredGridFilters
+   :methods:
+
+.. autoclass:: pyvista.UnstructuredGridFilters
+   :show-inheritance:
+   :members:
+   :undoc-members:
