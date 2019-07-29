@@ -31,6 +31,10 @@ PyVista dataset.
 PolyData Filters
 ~~~~~~~~~~~~~~~~
 
+The :class:`pyvista.PolyDataFilters` is inherited by :class:`pyvista.PolyData`
+making all the the following filters available as callable methods directly
+from any PolyData mesh.
+
 
 .. rubric:: Methods
 
@@ -47,6 +51,9 @@ PolyData Filters
 UnstructuredGrid Filters
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+The :class:`pyvista.UnstructuredGridFilters` is inherited by
+:class:`pyvista.UnstructuredGrid` making all the the following filters
+available as callable methods directly from any UnstructuredGrid mesh.
 
 .. rubric:: Methods
 
