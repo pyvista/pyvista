@@ -358,12 +358,11 @@ def test_face_normals():
 
 def test_clip_plane():
     sphere = SPHERE.copy()
-    clipped_sphere = sphere.copy()
-    clipped_sphere = sphere.clip_with_plane([0, 0, 0], [0, 0, -1])
+    clipped_sphere = sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], invert=False)
     faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
-    clipped_sphere.clip_with_plane([0, 0, 0], [0, 0, -1], inplace=True)
+    sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False)
     faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
