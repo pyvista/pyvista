@@ -1664,7 +1664,8 @@ class DataSetFilters(object):
                      manifold_edges=True, inplace=False):
         """
         Extracts edges from the surface of the mesh. If the given mesh is not
-        PolyData, the external surface of the given mesh is extracted and used. From vtk documentation, the edges are one of the following
+        PolyData, the external surface of the given mesh is extracted and used.
+        From vtk documentation, the edges are one of the following
 
             1) boundary (used by one polygon) or a line cell
             2) non-manifold (used by three or more polygons)
@@ -1893,7 +1894,7 @@ class CompositeFilters(object):
 
 
 
-class PolyDataFilters(object):
+class PolyDataFilters(DataSetFilters):
 
     def __new__(cls, *args, **kwargs):
         if cls is PolyDataFilters:
@@ -3062,7 +3063,7 @@ class PolyDataFilters(object):
         return
 
 
-class UnstructuredGridFilters():
+class UnstructuredGridFilters(DataSetFilters):
 
     def __new__(cls, *args, **kwargs):
         if cls is UnstructuredGridFilters:
