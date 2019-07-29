@@ -453,3 +453,12 @@ def download_action_figure():
     url = "http://3dgallery.gks.com/2013/tigerfighter"
     filename, _ = _retrieve_file(url, 'tigerfighter.obj')
     return pyvista.read(filename)
+
+
+def download_turbine_blade():
+    """Scan of a turbine blade from
+        https://www.laserdesign.com/sample-files/blade/
+    """
+    url = "http://3dgallery.gks.com/2012/blade/blade.php"
+    filename, _ = _retrieve_file(url, 'turbine_blade.stl')
+    return pyvista.read(filename)
