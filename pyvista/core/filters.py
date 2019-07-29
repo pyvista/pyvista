@@ -2630,26 +2630,6 @@ class PolyDataFilters(object):
             return mesh
 
 
-    @property
-    def point_normals(self):
-        """ Point normals """
-        mesh = self.compute_normals(cell_normals=False, inplace=False)
-        return mesh.point_arrays['Normals']
-
-
-    @property
-    def cell_normals(self):
-        """ Cell normals  """
-        mesh = self.compute_normals(point_normals=False, inplace=False)
-        return mesh.cell_arrays['Normals']
-
-
-    @property
-    def face_normals(self):
-        """ Cell normals  """
-        return self.cell_normals
-
-
     def clip_with_plane(poly_data, origin, normal, value=0, invert=False, inplace=False):
         """DEPRECATED: Use ``.clip`` instead."""
         logging.warning('DEPRECATED: ``clip_with_plane`` is deprecated. Use ``.clip`` instead.')
@@ -2760,21 +2740,6 @@ class PolyDataFilters(object):
             poly_data.overwrite(output)
         else:
             return output
-
-    @property
-    def obbTree(poly_data):
-        """obbTree is an object to generate oriented bounding box (OBB)
-        trees. An oriented bounding box is a bounding box that does not
-        necessarily line up along coordinate axes. The OBB tree is a
-        hierarchical tree structure of such boxes, where deeper levels of OBB
-        confine smaller regions of space.
-        """
-        if not hasattr(poly_data, '_obbTree'):
-            poly_data._obbTree = vtk.vtkOBBTree()
-            poly_data._obbTree.SetDataSet(poly_data)
-            poly_data._obbTree.BuildLocator()
-
-        return poly_data._obbTree
 
 
     def geodesic(poly_data, start_vertex, end_vertex, inplace=False):

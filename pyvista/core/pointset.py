@@ -405,6 +405,42 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
 
+    @property
+    def point_normals(self):
+        """ Point normals """
+        mesh = self.compute_normals(cell_normals=False, inplace=False)
+        return mesh.point_arrays['Normals']
+
+
+    @property
+    def cell_normals(self):
+        """ Cell normals  """
+        mesh = self.compute_normals(point_normals=False, inplace=False)
+        return mesh.cell_arrays['Normals']
+
+
+    @property
+    def face_normals(self):
+        """ Cell normals  """
+        return self.cell_normals
+
+
+    @property
+    def obbTree(self):
+        """obbTree is an object to generate oriented bounding box (OBB)
+        trees. An oriented bounding box is a bounding box that does not
+        necessarily line up along coordinate axes. The OBB tree is a
+        hierarchical tree structure of such boxes, where deeper levels of OBB
+        confine smaller regions of space.
+        """
+        if not hasattr(self, '_obbTree'):
+            self._obbTree = vtk.vtkOBBTree()
+            self._obbTree.SetDataSet(self)
+            self._obbTree.BuildLocator()
+
+        return self._obbTree
+
+
 class PointGrid(PointSet):
     """ Class in common with structured and unstructured grids """
 
