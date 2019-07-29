@@ -1781,6 +1781,10 @@ class DataSetFilters(object):
 class CompositeFilters(object):
     """An internal class to manage filtes/algorithms for composite datasets.
     """
+    def __new__(cls, *args, **kwargs):
+        if cls is CompositeFilters:
+            raise TypeError("pyvista.CompositeFilters is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
 
 
     def extract_geometry(composite):
@@ -1890,6 +1894,11 @@ class CompositeFilters(object):
 
 
 class PolyDataFilters(object):
+
+    def __new__(cls, *args, **kwargs):
+        if cls is PolyDataFilters:
+            raise TypeError("pyvista.PolyDataFilters is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
 
     def edge_mask(poly_data, angle):
         """
@@ -3089,6 +3098,11 @@ class PolyDataFilters(object):
 
 
 class UnstructuredGridFilters():
+
+    def __new__(cls, *args, **kwargs):
+        if cls is UnstructuredGridFilters:
+            raise TypeError("pyvista.UnstructuredGridFilters is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False):
         """Apply a delaunay 2D filter along the best fitting plane. This
