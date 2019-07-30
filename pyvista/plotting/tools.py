@@ -33,8 +33,8 @@ def system_supports_plotting():
 
 
 def create_axes_orientation_box(line_width=1, text_scale=0.366667,
-                                edge_color='black', x_color='tomato',
-                                y_color='gold', z_color='seagreen',
+                                edge_color='black', x_color=None,
+                                y_color=None, z_color=None,
                                 x_label='X', y_label='Y', z_label='Z',
                                 x_face_color=(255, 0, 0),
                                 y_face_color=(0, 255, 0),
@@ -42,6 +42,12 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 color_box=False):
     """Create a Box axes orientation widget with labels.
     """
+    if x_color is None:
+        x_color = rcParams['axes']['x_color']
+    if y_color is None:
+        y_color = rcParams['axes']['y_color']
+    if z_color is None:
+        z_color = rcParams['axes']['z_color']
     axes_actor = vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     axes_actor.SetXPlusFaceText("+{}".format(x_label))
