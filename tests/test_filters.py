@@ -450,10 +450,10 @@ def test_select_enclosed_points():
     assert 'SelectedPoints' in result.scalar_names
     assert result.n_arrays == mesh.n_arrays + 1
     # Now check non-closed surface
-    mesh = pv.ParametricEllipsoid(0.2, 0.7, 0.7, )
-    surf = e1.copy()
+    mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
+    surf = mesh.copy()
     surf.rotate_x(90)
-    result = mesh.select_enclosed_points(surf)
+    result = mesh.select_enclosed_points(surf, check_surface=False)
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.scalar_names
     assert result.n_arrays == mesh.n_arrays + 1
