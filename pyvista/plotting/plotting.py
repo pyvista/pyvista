@@ -243,7 +243,10 @@ class BasePlotter(object):
             elif not self._first_time:
                 self.render()
 
-    def add_axes(self, interactive=None, color=None, box=False, box_arguments=None):
+    def add_axes(self, interactive=None, color=None, x_color=None,
+                 y_color=None, z_color=None,
+                 x_label='X', y_label='Y', z_label='Z',
+                 box=False, box_arguments=None):
         """ Add an interactive axes widget """
         if interactive is None:
             interactive = rcParams['interactive']
@@ -251,14 +254,36 @@ class BasePlotter(object):
             self.axes_widget.SetInteractive(interactive)
             self._update_axes_color(color)
             return
+        if x_color is None:
+            x_color = rcParams['axes']['x_color']
+        if y_color is None:
+            y_color = rcParams['axes']['y_color']
+        if z_color is None:
+            z_color = rcParams['axes']['z_color']
         # Chose widget type
         if box:
             if box_arguments is None:
                 box_arguments = {}
-            prop_assembly = create_axes_orientation_box(**box_arguments)
+            prop_assembly = create_axes_orientation_box(x_color=x_color,
+                y_color=y_color, z_color=z_color, x_label=x_label,
+                y_label=y_label, z_label=z_label, **box_arguments)
             self.axes_actor = prop_assembly
         else:
             self.axes_actor = vtk.vtkAxesActor()
+            self.axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
+            self.axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
+            self.axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
+            self.axes_actor.GetYAxisTipProperty().SetColor(parse_color(y_color))
+            self.axes_actor.GetZAxisShaftProperty().SetColor(parse_color(z_color))
+            self.axes_actor.GetZAxisTipProperty().SetColor(parse_color(z_color))
+            # Set labels
+            self.axes_actor.SetXAxisLabelText(x_label)
+            self.axes_actor.SetYAxisLabelText(y_label)
+            self.axes_actor.SetZAxisLabelText(z_label)
+            # Set Line width
+            self.axes_actor.GetXAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetYAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetZAxisShaftProperty().SetLineWidth(2)
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):

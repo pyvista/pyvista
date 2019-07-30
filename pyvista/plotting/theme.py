@@ -52,6 +52,11 @@ rcParams = {
     'use_panel' : True,
     'transparent_background' : False,
     'title' : 'PyVista',
+    'axes': {
+        'x_color': 'tomato',
+        'y_color': 'seagreen',
+        'z_color': 'blue',
+    }
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -63,7 +68,13 @@ def set_plot_theme(theme):
         rcParams['cmap'] = 'coolwarm'
         rcParams['font']['family'] = 'arial'
         rcParams['font']['label_size'] = 16
+        rcParams['font']['color'] = 'white'
         rcParams['show_edges'] = False
+        rcParams['color'] = 'white'
+        rcParams['outline_color'] = 'white'
+        rcParams['axes']['x_color'] = 'tomato'
+        rcParams['axes']['y_color'] = 'gold'
+        rcParams['axes']['z_color'] = 'green'
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
         rcParams['cmap'] = 'viridis'
@@ -74,6 +85,9 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'black'
+        rcParams['axes']['x_color'] = 'tomato'
+        rcParams['axes']['y_color'] = 'seagreen'
+        rcParams['axes']['z_color'] = 'blue'
     elif theme.lower() in ['night', 'dark']:
         rcParams['background'] = 'black'
         rcParams['cmap'] = 'viridis'
@@ -82,6 +96,9 @@ def set_plot_theme(theme):
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'white'
         rcParams['edge_color'] = 'white'
+        rcParams['axes']['x_color'] = 'tomato'
+        rcParams['axes']['y_color'] = 'seagreen'
+        rcParams['axes']['z_color'] = 'blue'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
