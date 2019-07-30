@@ -2642,16 +2642,49 @@ class BasePlotter(object):
         """Internal helper for saving a NumPy image array"""
         if not image.size:
             raise Exception('Empty image.  Have you run plot() first?')
-
         # write screenshot to file
         if isinstance(filename, str):
             if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
                 filename = os.path.join(pyvista.FIGURE_PATH, filename)
+            filename = os.path.abspath(os.path.expanduser(filename))
+            w = imageio.imwrite(filename, image)
             if not return_img:
-                return imageio.imwrite(filename, image)
-            imageio.imwrite(filename, image)
-
+                return w
         return image
+
+
+    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
+        """Save a screenshot of the rendering window as a graphic file:
+        '.svg', '.eps', '.ps', '.pdf', '.tex'
+        """
+        if not hasattr(self, 'ren_win'):
+            raise AttributeError('This plotter is closed and unable to save a screenshot.')
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        filename = os.path.abspath(os.path.expanduser(filename))
+        extension = pyvista.utilities.get_ext(filename)
+        valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
+        if extension not in valid:
+            raise RuntimeError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
+        writer = vtk.vtkGL2PSExporter()
+        modes = {
+            '.svg': writer.SetFileFormatToSVG,
+            '.eps': writer.SetFileFormatToEPS,
+            '.ps': writer.SetFileFormatToPS,
+            '.pdf': writer.SetFileFormatToPDF,
+            '.tex': writer.SetFileFormatToTeX,
+        }
+        writer.CompressOff()
+        writer.SetFilePrefix(filename.replace(extension, ''))
+        writer.SetInput(self.ren_win)
+        modes[extension]()
+        writer.SetTitle(title)
+        writer.SetWrite3DPropsAsRasterImage(raster)
+        if painter:
+            writer.UsePainterSettings()
+        writer.Update()
+        return
+
 
     def screenshot(self, filename=None, transparent_background=None,
                    return_img=None, window_size=None):
@@ -2702,7 +2735,7 @@ class BasePlotter(object):
                 # Save last image
                 return self._save_image(self.last_image, filename, return_img)
             # Plotter hasn't been rendered or was improperly closed
-            raise AttributeError('This plotter is unable to save a screenshot.')
+            raise AttributeError('This plotter is closed and unable to save a screenshot.')
 
         if isinstance(self, Plotter):
             # TODO: we need a consistent rendering function
