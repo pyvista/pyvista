@@ -274,6 +274,10 @@ class BasePlotter(object):
             self.axes_actor.SetXAxisLabelText(x_label)
             self.axes_actor.SetYAxisLabelText(y_label)
             self.axes_actor.SetZAxisLabelText(z_label)
+            # Set Line width
+            self.axes_actor.GetXAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetYAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetZAxisShaftProperty().SetLineWidth(2)
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
