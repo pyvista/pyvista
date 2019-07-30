@@ -33,8 +33,9 @@ def system_supports_plotting():
 
 
 def create_axes_orientation_box(line_width=1, text_scale=0.366667,
-                                edge_color='black', x_color='lightblue',
-                                y_color='seagreen', z_color='tomato',
+                                edge_color='black', x_color='tomato',
+                                y_color='gold', z_color='seagreen',
+                                x_label='X', y_label='Y', z_label='Z',
                                 x_face_color=(255, 0, 0),
                                 y_face_color=(0, 255, 0),
                                 z_face_color=(0, 0, 255),
@@ -43,12 +44,12 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     """
     axes_actor = vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
-    axes_actor.SetXPlusFaceText("X+")
-    axes_actor.SetXMinusFaceText("X-")
-    axes_actor.SetYPlusFaceText("Y+")
-    axes_actor.SetYMinusFaceText("Y-")
-    axes_actor.SetZPlusFaceText("Z+")
-    axes_actor.SetZMinusFaceText("Z-")
+    axes_actor.SetXPlusFaceText("+{}".format(x_label))
+    axes_actor.SetXMinusFaceText("-{}".format(x_label))
+    axes_actor.SetYPlusFaceText("+{}".format(y_label))
+    axes_actor.SetYMinusFaceText("-{}".format(y_label))
+    axes_actor.SetZPlusFaceText("+{}".format(z_label))
+    axes_actor.SetZMinusFaceText("-{}".format(z_label))
     axes_actor.GetTextEdgesProperty().SetColor(parse_color(edge_color))
     axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(parse_color(x_color))
