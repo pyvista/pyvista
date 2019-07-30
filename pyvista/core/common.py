@@ -1078,6 +1078,37 @@ class Common(DataSetFilters, object):
         alg.Update()
         return pyvista.filters._get_output(alg)
 
+    @property
+    def quality(self):
+        """
+        Returns cell quality using PyANSYS. Computes the minimum scaled
+        jacobian of each cell.  Cells that have values below 0 are invalid for
+        a finite element analysis.
+
+        Note
+        ----
+        This casts the input to an unstructured grid
+
+        Returns
+        -------
+        cellquality : np.ndarray
+            Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
+
+        Notes
+        -----
+        Requires pyansys to be installed.
+
+        """
+        try:
+            import pyansys
+        except:
+            raise Exception('Install pyansys for this function')
+        if not isinstance(self, pyvista.UnstructuredGrid):
+            dataset = self.cast_to_unstructured_grid()
+        else:
+            dataset = self
+        return pyansys.CellQuality(dataset)
+
 
     def save(self, filename, binary=True):
          """

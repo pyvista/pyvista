@@ -33,16 +33,16 @@ rcParams = {
     'outline_color' : 'white',
     'colorbar_orientation' : 'horizontal',
     'colorbar_horizontal' : {
-        'width' : 0.60,
+        'width' : 0.6,
         'height' : 0.08,
         'position_x' : 0.35,
         'position_y' : 0.02,
     },
     'colorbar_vertical' : {
-        'width' : 0.1,
-        'height' : 0.8,
-        'position_x' : 0.85,
-        'position_y' : 0.1,
+        'width' : 0.08,
+        'height' : 0.45,
+        'position_x' : 0.9,
+        'position_y' : 0.02,
     },
     'show_scalar_bar' : True,
     'show_edges' : False,
@@ -52,6 +52,11 @@ rcParams = {
     'use_panel' : True,
     'transparent_background' : False,
     'title' : 'PyVista',
+    'axes': {
+        'x_color': 'tomato',
+        'y_color': 'seagreen',
+        'z_color': 'blue',
+    }
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -63,7 +68,13 @@ def set_plot_theme(theme):
         rcParams['cmap'] = 'coolwarm'
         rcParams['font']['family'] = 'arial'
         rcParams['font']['label_size'] = 16
+        rcParams['font']['color'] = 'white'
         rcParams['show_edges'] = False
+        rcParams['color'] = 'white'
+        rcParams['outline_color'] = 'white'
+        rcParams['axes']['x_color'] = 'tomato'
+        rcParams['axes']['y_color'] = 'gold'
+        rcParams['axes']['z_color'] = 'green'
     elif theme.lower() in ['document', 'doc', 'paper', 'report']:
         rcParams['background'] = 'white'
         rcParams['cmap'] = 'viridis'
@@ -74,6 +85,9 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'black'
+        rcParams['axes']['x_color'] = 'tomato'
+        rcParams['axes']['y_color'] = 'seagreen'
+        rcParams['axes']['z_color'] = 'blue'
     elif theme.lower() in ['night', 'dark']:
         rcParams['background'] = 'black'
         rcParams['cmap'] = 'viridis'
@@ -82,6 +96,9 @@ def set_plot_theme(theme):
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'white'
         rcParams['edge_color'] = 'white'
+        rcParams['axes']['x_color'] = 'tomato'
+        rcParams['axes']['y_color'] = 'seagreen'
+        rcParams['axes']['z_color'] = 'blue'
     elif theme.lower() in ['default']:
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v

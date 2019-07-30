@@ -7,6 +7,7 @@ Filters
 .. automodule:: pyvista.filters
 
 
+
 Dataset Filters
 ~~~~~~~~~~~~~~~
 
@@ -22,6 +23,45 @@ PyVista dataset.
 
 
 .. autoclass:: pyvista.DataSetFilters
+   :members:
+   :undoc-members:
+
+
+
+PolyData Filters
+~~~~~~~~~~~~~~~~
+
+The :class:`pyvista.PolyDataFilters` is inherited by :class:`pyvista.PolyData`
+making all the the following filters available as callable methods directly
+from any PolyData mesh.
+
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.PolyDataFilters
+   :methods:
+
+.. autoclass:: pyvista.PolyDataFilters
+   :show-inheritance:
+   :members:
+   :undoc-members:
+
+
+
+UnstructuredGrid Filters
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The :class:`pyvista.UnstructuredGridFilters` is inherited by
+:class:`pyvista.UnstructuredGrid` making all the the following filters
+available as callable methods directly from any UnstructuredGrid mesh.
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.UnstructuredGridFilters
+   :methods:
+
+.. autoclass:: pyvista.UnstructuredGridFilters
+   :show-inheritance:
    :members:
    :undoc-members:
 

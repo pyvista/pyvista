@@ -449,6 +449,16 @@ def test_select_enclosed_points():
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.scalar_names
     assert result.n_arrays == mesh.n_arrays + 1
+    # Now check non-closed surface
+    mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
+    surf = mesh.copy()
+    surf.rotate_x(90)
+    result = mesh.select_enclosed_points(surf, check_surface=False)
+    assert isinstance(result, type(mesh))
+    assert 'SelectedPoints' in result.scalar_names
+    assert result.n_arrays == mesh.n_arrays + 1
+    with pytest.raises(RuntimeError):
+        result = mesh.select_enclosed_points(surf, check_surface=True)
 
 
 def test_decimate_boundary():

@@ -243,7 +243,10 @@ class BasePlotter(object):
             elif not self._first_time:
                 self.render()
 
-    def add_axes(self, interactive=None, color=None, box=False, box_arguments=None):
+    def add_axes(self, interactive=None, color=None, x_color=None,
+                 y_color=None, z_color=None,
+                 x_label='X', y_label='Y', z_label='Z',
+                 box=False, box_arguments=None):
         """ Add an interactive axes widget """
         if interactive is None:
             interactive = rcParams['interactive']
@@ -251,14 +254,36 @@ class BasePlotter(object):
             self.axes_widget.SetInteractive(interactive)
             self._update_axes_color(color)
             return
+        if x_color is None:
+            x_color = rcParams['axes']['x_color']
+        if y_color is None:
+            y_color = rcParams['axes']['y_color']
+        if z_color is None:
+            z_color = rcParams['axes']['z_color']
         # Chose widget type
         if box:
             if box_arguments is None:
                 box_arguments = {}
-            prop_assembly = create_axes_orientation_box(**box_arguments)
+            prop_assembly = create_axes_orientation_box(x_color=x_color,
+                y_color=y_color, z_color=z_color, x_label=x_label,
+                y_label=y_label, z_label=z_label, **box_arguments)
             self.axes_actor = prop_assembly
         else:
             self.axes_actor = vtk.vtkAxesActor()
+            self.axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
+            self.axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
+            self.axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
+            self.axes_actor.GetYAxisTipProperty().SetColor(parse_color(y_color))
+            self.axes_actor.GetZAxisShaftProperty().SetColor(parse_color(z_color))
+            self.axes_actor.GetZAxisTipProperty().SetColor(parse_color(z_color))
+            # Set labels
+            self.axes_actor.SetXAxisLabelText(x_label)
+            self.axes_actor.SetYAxisLabelText(y_label)
+            self.axes_actor.SetZAxisLabelText(z_label)
+            # Set Line width
+            self.axes_actor.GetXAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetYAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetZAxisShaftProperty().SetLineWidth(2)
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
@@ -774,7 +799,7 @@ class BasePlotter(object):
                     self.mesh._add_cell_scalar(scalars, title, set_active)
                     self.mapper.SetScalarModeToUseCellData()
                 else:
-                    _raise_not_matching(scalars, mesh)
+                    raise_not_matching(scalars, mesh)
                 # Common tasks
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
                 if interpolate_before_map:
@@ -1875,7 +1900,7 @@ class BasePlotter(object):
 
         # check if maper exists
         if mapper is None:
-            if self.mapper is None:
+            if not hasattr(self, 'mapper') or self.mapper is None:
                 raise Exception('Mapper does not exist.  ' +
                                 'Add a mesh with scalars first.')
             mapper = self.mapper
@@ -1910,7 +1935,7 @@ class BasePlotter(object):
             if position_x is None:
                 if vertical:
                     position_x = rcParams['colorbar_vertical']['position_x']
-                    position_x -= slot * width
+                    position_x -= slot * (width + 0.2 * width)
                 else:
                     position_x = rcParams['colorbar_horizontal']['position_x']
 
@@ -1964,9 +1989,9 @@ class BasePlotter(object):
 
         # Set properties
         if title:
-            rng = self.mapper.scalar_range
+            rng = mapper.scalar_range
             self._scalar_bar_ranges[title] = rng
-            self._scalar_bar_mappers[title] = [self.mapper]
+            self._scalar_bar_mappers[title] = [mapper]
 
             self.scalar_bar.SetTitle(title)
             title_text = self.scalar_bar.GetTitleTextProperty()
@@ -2107,15 +2132,20 @@ class BasePlotter(object):
 
     def close(self):
         """ closes render window """
-        # must close out axes marker
+        # must close out widgets first
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
+
+        if hasattr(self, 'scalar_widget'):
+            del self.scalar_widget
 
         # reset scalar bar stuff
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
+        self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
 
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
@@ -3328,12 +3358,6 @@ class Plotter(BasePlotter):
                     renderer.camera_position = cpos
             self._first_time = False
 
-        if title is None:
-            title = self.title
-
-        if title:
-            self.ren_win.SetWindowName(title)
-            self.title = title
 
         # if full_screen:
         if full_screen:
@@ -3347,6 +3371,13 @@ class Plotter(BasePlotter):
         # Render
         log.debug('Rendering')
         self.ren_win.Render()
+
+        # This has to be after the first render for some reason
+        if title is None:
+            title = self.title
+        if title:
+            self.ren_win.SetWindowName(title)
+            self.title = title
 
         # Keep track of image for sphinx-gallery
         self.last_image = self.screenshot(screenshot, return_img=True)
