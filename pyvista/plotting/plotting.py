@@ -2169,13 +2169,6 @@ class BasePlotter(object):
             except BaseException:
                 pass
 
-        for renderer in self.renderers:
-            renderer.camera_position = None
-            renderer.RemoveAllViewProps()
-            renderer._actors = {}
-            del renderer
-        self.renderers = []
-
     def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, loc=None):
         """
@@ -3191,6 +3184,15 @@ class BasePlotter(object):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+
+
+    def __del__(self):
+        for renderer in self.renderers:
+            renderer.camera_position = None
+            renderer.RemoveAllViewProps()
+            renderer._actors = {}
+            del renderer
+        self.renderers = []
 
 
 class Plotter(BasePlotter):
