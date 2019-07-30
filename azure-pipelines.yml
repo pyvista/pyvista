@@ -41,7 +41,5 @@ jobs:
     displayName: 'Install PyVista'
   - script: |
       del /Q tests\\test_qt_plotting.py
-      cd tests
-      python -m pytest --cov -v
-      cd ..
+      python -m pytest --cov -v pyvista
     displayName: 'Run Tests'
