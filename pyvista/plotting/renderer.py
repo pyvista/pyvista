@@ -796,7 +796,7 @@ class Renderer(vtkRenderer):
         return x0, y0, x1, y1
 
 
-    def deep_clear(self):
+    def deep_clean(self):
         self.RemoveAllViewProps()
         self._actors = None
         self.parent = None
