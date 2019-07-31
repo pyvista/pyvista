@@ -7,7 +7,7 @@ import pyvista
 from pyvista import QtInteractor, examples
 from pyvista.plotting import system_supports_plotting
 
-NO_PLOTTING = NO_PLOTTING
+NO_PLOTTING = not system_supports_plotting()
 
 try:
     import PyQt5
