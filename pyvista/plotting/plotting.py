@@ -3515,6 +3515,7 @@ class Plotter(BasePlotter):
 
     def plot(self, *args, **kwargs):
         """ Present for backwards compatibility. Use `show()` instead """
+        logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
 
     def render(self):
