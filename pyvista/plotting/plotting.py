@@ -375,101 +375,124 @@ class BasePlotter(object):
                 self.iren.Render()
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
-                 rng=None, stitle=None, show_edges=None,
-                 point_size=5.0, opacity=1.0, line_width=None,
+                 clim=None, show_edges=None, edge_color=None,
+                 point_size=5.0, line_width=None, opacity=1.0,
                  flip_scalars=False, lighting=None, n_colors=256,
                  interpolate_before_map=False, cmap=None, label=None,
-                 reset_camera=None, scalar_bar_args=None,
-                 multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=None, smooth_shading=False,
-                 render_lines_as_tubes=False, edge_color=None,
-                 ambient=0.0, show_scalar_bar=None, nan_color=None,
+                 reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
+                 stitle=None, multi_colors=False, name=None, texture=None,
+                 render_points_as_spheres=None, render_lines_as_tubes=False,
+                 smooth_shading=False, ambient=0.0, nan_color=None,
                  nan_opacity=1.0, loc=None, backface_culling=False,
                  rgb=False, categories=False, use_transparency=False, **kwargs):
         """
-        Adds a unstructured, structured, or surface mesh to the
-        plotting object.
-
-        Also accepts a 3D numpy.ndarray
+        Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
+        scene. This method using a mesh representation to view the surfaces
+        and/or geometry of datasets. For volume rendering, see
+        :func:`pyvista.BasePlotter.add_volume`.
 
         Parameters
         ----------
-        mesh : vtk unstructured, structured, polymesh, or 3D numpy.ndarray
-            A vtk unstructured, structured, or polymesh to plot.
+        mesh : pyvista.Common or pyvista.MultiBlock
+            Any PyVista or VTK mesh is supported. Also, any dataset
+            that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
+            points.
 
         color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
-
-            Color will be overridden when scalars are input.
+            Use to make the entire mesh have a single solid color.
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='#FFFFFF'``. Color will be overridden if scalars are
+            specified.
 
         style : string, optional
-            Visualization style of the vtk mesh.  One for the following:
-                style='surface'
-                style='wireframe'
-                style='points'
+            Visualization style of the mesh.  One of the following:
+            ``style='surface'``, ``style='wireframe'``, ``style='points'``.
+            Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
+            wireframe of the outer geometry.
 
-            Defaults to 'surface'
-
-        scalars : numpy array, optional
-            Scalars used to "color" the mesh.  Accepts an array equal
+        scalars : str or numpy.ndarray, optional
+            Scalars used to "color" the mesh.  Accepts a string name of an
+            array that is present on the mesh or an array equal
             to the number of cells or the number of points in the
             mesh.  Array should be sized as a single vector. If both
-            color and scalars are None, then the active scalars are
-            used
+            ``color`` and ``scalars`` are ``None``, then the active scalars are
+            used.
 
-        rng : 2 item list, optional
-            Range of mapper for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``clim``
+        clim : 2 item list, optional
+            Color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
-
-        stitle : string, optional
-            Scalar title.  By default there is no scalar legend bar.
-            Setting this creates the legend bar and adds a title to
-            it.  To create a bar with no title, use an empty string
-            (i.e. '').
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        point_size : float, optional
-            Point size.  Applicable when style='points'.  Default 5.0
+        edge_color : string or 3 item list, optional, defaults to black
+            The solid color to give the edges when ``show_edges=True``.
+            Either a string, RGB list, or hex color string.
 
-        opacity : float, str, array-like
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0.
-            A string option can also be specified to map the scalar range
-            to a predefined opacity transfer function (options are: linear,
-            linear_r, geom, geom_r). A string could also be used to map a
-            scalar array to the the opacity (must have same number of elements
-            as the ``scalars`` argument). Or you can pass custum made trasfer
-            functions that are either ``n_colors`` in length or shorter.
+        point_size : float, optional
+            Point size of any nodes in the dataset plotted. Also applicable
+            when style='points'. Default ``5.0``
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default None.
 
+        opacity : float, str, array-like
+            Opacity of the mesh. If a siblge float value is given, it will be
+            the global opacity of the mesh and uniformly applied everywhere -
+            should be between 0 and 1. A string can also be specified to map
+            the scalar range to a predefined opacity transfer function
+            (options include: 'linear', 'linear_r', 'geom', 'geom_r').
+            A string could also be used to map a scalar array from the mesh to
+            the the opacity (must have same number of elements as the
+            ``scalars`` argument). Or you can pass a custum made trasfer
+            function that is an aray either ``n_colors`` in length or shorter.
+
         flip_scalars : bool, optional
-            Flip direction of cmap.
+            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            this as well.
 
         lighting : bool, optional
-            Enable or disable view direction lighting.  Default False.
+            Enable or disable view direction lighting. Default False.
 
         n_colors : int, optional
-            Number of colors to use when displaying scalars.  Default
-            256.
+            Number of colors to use when displaying scalars. Defaults to 256.
+            The scalar bar will also have this many colors.
 
         interpolate_before_map : bool, optional
             Enabling makes for a smoother scalar display.  Default
             False
 
         cmap : str, optional
-           cmap string.  See available matplotlib cmaps.  Only
-           applicable for when displaying scalars.  Defaults None
-           (rainbow).  Requires matplotlib.
+           Name of the Matplotlib colormap to us when mapping the ``scalars``.
+           See available Matplotlib colormaps.  Only applicable for when
+           displaying ``scalars``. Requires Matplotlib to be installed.
+           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+           ``cmocean`` are installed, their colormaps can be specified by name.
+
+        label : str, optional
+            String label to use when adding a legend to the scene with
+            :func:`pyvista.BasePlotter.add_legend`
+
+        reset_camera : bool, optional
+            Reset the camera after adding this mesh to the scene
+
+        scalar_bar_args : dict, optional
+            Dictionary of keyword arguments to pass when adding the scalar bar
+            to the scene. For options, see
+            :func:`pyvista.BasePlotter.add_scalar_bar`.
+
+        show_scalar_bar : bool
+            If False, a scalar bar will not be added to the scene. Defaults
+            to ``True``.
+
+        stitle : string, optional
+            Scalar bar title. By default the scalar bar is given a title of the
+            the scalar array used to color the mesh.
+            To create a bar with no title, use an empty string (i.e. '').
 
         multi_colors : bool, optional
             If a ``MultiBlock`` dataset is given this will color each
@@ -488,35 +511,47 @@ class BasePlotter(object):
             will pull a texture with that name associated to the input
             mesh.
 
+        render_points_as_spheres : bool, optional
+
+        render_lines_as_tubes : bool, optional
+
+        smooth_shading : bool, optional
+
         ambient : float, optional
             When lighting is enabled, this is the amount of light from
             0 to 1 that reaches the actor when not directed at the
-            light source emitted from the viewer.  Default 0.2.
+            light source emitted from the viewer.  Default 0.0.
 
         nan_color : string or 3 item list, optional, defaults to gray
-            The color to use for all NaN values in the plotted scalar
+            The color to use for all ``NaN`` values in the plotted scalar
             array.
 
         nan_opacity : float, optional
-            Opacity of NaN values.  Should be between 0 and 1.
+            Opacity of ``NaN`` values.  Should be between 0 and 1.
             Default 1.0
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example,
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
 
         backface_culling : bool optional
             Does not render faces that should not be visible to the
             plotter.  This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
-            meshes to be partially displayed.  Default False.
+            meshes to be partially displayed.  Defaults ``False``.
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot those
-            values as RGB+A colors! ``rgba`` is also accepted alias for this.
+            values as RGB(A) colors! ``rgba`` is also accepted alias for this.
+            Opacity (the A) is optional.
 
         categories : bool, optional
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
 
         use_transparency : bool, optional
-            Invert the opacity mapping and make the values correspond to
+            Invert the opacity mappings and make the values correspond to
             transperency.
 
         Returns
@@ -545,8 +580,8 @@ class BasePlotter(object):
         if lighting is None:
             lighting = rcParams['lighting']
 
-        if rng is None:
-            rng = kwargs.get('clim', None)
+        if clim is None:
+            clim = kwargs.get('rng', None)
 
         if render_points_as_spheres is None:
             render_points_as_spheres = rcParams['render_points_as_spheres']
@@ -569,11 +604,11 @@ class BasePlotter(object):
         if isinstance(mesh, pyvista.MultiBlock):
             self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
-            if rng is None and scalars is not None:
+            if clim is None and scalars is not None:
                 # Get the data range across the array for all blocks
                 # if scalar specified
                 if isinstance(scalars, str):
-                    rng = mesh.get_data_range(scalars)
+                    clim = mesh.get_data_range(scalars)
                 else:
                     # TODO: an array was given... how do we deal with
                     #       that? Possibly a 2D arrays or list of
@@ -617,7 +652,7 @@ class BasePlotter(object):
                 if multi_colors:
                     color = next(colors)['color']
                 a = self.add_mesh(data, color=color, style=style,
-                                  scalars=ts, rng=rng, stitle=stitle,
+                                  scalars=ts, clim=clim, stitle=stitle,
                                   show_edges=show_edges,
                                   point_size=point_size, opacity=opacity,
                                   line_width=line_width,
@@ -812,13 +847,13 @@ class BasePlotter(object):
             prepare_mapper(scalars)
 
             # Set scalar range
-            if rng is None:
-                rng = [np.nanmin(scalars), np.nanmax(scalars)]
-            elif isinstance(rng, float) or isinstance(rng, int):
-                rng = [-rng, rng]
+            if clim is None:
+                clim = [np.nanmin(scalars), np.nanmax(scalars)]
+            elif isinstance(clim, float) or isinstance(clim, int):
+                clim = [-clim, clim]
 
-            if np.any(rng) and not rgb:
-                self.mapper.scalar_range = rng[0], rng[1]
+            if np.any(clim) and not rgb:
+                self.mapper.scalar_range = clim[0], clim[1]
 
             table = self.mapper.GetLookupTable()
             table.SetNanColor(nan_color)
@@ -844,7 +879,7 @@ class BasePlotter(object):
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
                 if _custom_opac:
-                    hue = normalize(scalars, minimum=rng[0], maximum=rng[1])
+                    hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
                     scalars = cmap(hue)[:, :3]
                     # combine colors and alpha into a Nx4 matrix
                     scalars = np.concatenate((scalars, opacity[:, None]), axis=1)
@@ -926,28 +961,47 @@ class BasePlotter(object):
         return actor
 
 
-    def add_volume(self, volume, scalars=None, resolution=None,
+    def add_volume(self, volume, scalars=None, clim=None, resolution=None,
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    loc=None, backface_culling=False, multi_colors=False,
-                   blending='composite', mapper='fixed_point', rng=None,
+                   blending='composite', mapper='fixed_point',
                    stitle=None, scalar_bar_args=None,
                    show_scalar_bar=None, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
-        Requires a 3D numpy.ndarray or pyvista.UniformGrid.
+        Requires a 3D :class:`numpy.ndarray` or :class:`pyvista.UniformGrid`.
 
         Parameters
         ----------
-        data: 3D numpy.ndarray or pyvista.UnformGrid
-            The input array to visualize, assuming the array values denote
-            scalar intensities.
+        volume : 3D numpy.ndarray or pyvista.UnformGrid
+            The input volume to visualize. 3D numpy arrays are accepted.
 
-        opacity : float or string, optional
-            Opacity of input array. Options are: linear, linear_r, geom, geom_r.
-            Defaults to 'linear'. Can also be given as a scalar value between 0
-            and 1.
+        scalars : str or numpy.ndarray, optional
+            Scalars used to "color" the mesh.  Accepts a string name of an
+            array that is present on the mesh or an array equal
+            to the number of cells or the number of points in the
+            mesh.  Array should be sized as a single vector. If both
+            ``color`` and ``scalars`` are ``None``, then the active scalars are
+            used.
+
+        clim : 2 item list, optional
+            Color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
+            is also an accepted alias for this.
+
+        opacity : string or numpy.ndarray, optional
+            Opacity mapping for the scalars array.
+            A string can also be specified to map the scalar range to a
+            predefined opacity transfer function (options include: 'linear',
+            'linear_r', 'geom', 'geom_r'). Or you can pass a custum made
+            trasfer function that is an aray either ``n_colors`` in length or
+            shorter.
+
+        n_colors : int, optional
+            Number of colors to use when displaying scalars. Defaults to 256.
+            The scalar bar will also have this many colors.
 
         flip_scalars : bool, optional
             Flip direction of cmap.
@@ -957,9 +1011,18 @@ class BasePlotter(object):
             256.
 
         cmap : str, optional
-           cmap string.  See available matplotlib cmaps. Only applicable for when
-           displaying scalars.  Defaults to None (jet).  Requires matplotlib.
-           Will be overridden if multi_colors is set to True.
+           Name of the Matplotlib colormap to us when mapping the ``scalars``.
+           See available Matplotlib colormaps.  Only applicable for when
+           displaying ``scalars``. Requires Matplotlib to be installed.
+           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+           ``cmocean`` are installed, their colormaps can be specified by name.
+
+        flip_scalars : bool, optional
+            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            this as well.
+
+        reset_camera : bool, optional
+            Reset the camera after adding this mesh to the scene
 
         name : str, optional
             The name for the added actor so that it can be easily
@@ -967,8 +1030,9 @@ class BasePlotter(object):
             rendering window, it will be replaced by the new actor.
 
         ambient : float, optional
-            The amount of light from 0 to 1 that reaches the actor when not
-            directed at the light source emitted from the viewer.  Default 0.0.
+            When lighting is enabled, this is the amount of light from
+            0 to 1 that reaches the actor when not directed at the
+            light source emitted from the viewer.  Default 0.0.
 
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
@@ -982,9 +1046,8 @@ class BasePlotter(object):
             meshes to be partially displayed.  Default False.
 
         categories : bool, optional
-            If fetching a colormap from matplotlib, this is the number of
-            categories to use in that colormap. If set to ``True``, then
-            the number of unique values in the scalar array will be used.
+            If set to ``True``, then the number of unique values in the scalar
+            array will be used as the ``n_colors`` argument.
 
         multi_colors : bool, optional
             Whether or not to use multiple colors when plotting MultiBlock
@@ -995,6 +1058,24 @@ class BasePlotter(object):
             Blending mode for visualisation of the input object(s). Can be
             one of 'additive', 'maximum', 'minimum', 'composite', or
             'average'. Defaults to 'additive'.
+
+        mapper : str, optional
+            Volume mapper to use given by name. Options include:
+            ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and ``'smart'``.
+
+        scalar_bar_args : dict, optional
+            Dictionary of keyword arguments to pass when adding the scalar bar
+            to the scene. For options, see
+            :func:`pyvista.BasePlotter.add_scalar_bar`.
+
+        show_scalar_bar : bool
+            If False, a scalar bar will not be added to the scene. Defaults
+            to ``True``.
+
+        stitle : string, optional
+            Scalar bar title. By default the scalar bar is given a title of the
+            the scalar array used to color the mesh.
+            To create a bar with no title, use an empty string (i.e. '').
 
         Returns
         -------
@@ -1007,8 +1088,8 @@ class BasePlotter(object):
         if name is None:
             name = '{}({})'.format(type(volume).__name__, str(hex(id(volume))))
 
-        if rng is None:
-            rng = kwargs.get('clim', None)
+        if clim is None:
+            clim = kwargs.get('rng', None)
 
         if scalar_bar_args is None:
             scalar_bar_args = {}
@@ -1060,7 +1141,7 @@ class BasePlotter(object):
                                     n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
-                                    backface_culling=backface_culling, rng=rng,
+                                    backface_culling=backface_culling, clim=clim,
                                     mapper=mapper, **kwargs)
 
                 actors.append(a)
@@ -1130,23 +1211,23 @@ class BasePlotter(object):
             raise_not_matching(scalars, volume)
 
         # Set scalar range
-        if rng is None:
-            rng = [np.nanmin(scalars), np.nanmax(scalars)]
-        elif isinstance(rng, float) or isinstance(rng, int):
-            rng = [-rng, rng]
+        if clim is None:
+            clim = [np.nanmin(scalars), np.nanmax(scalars)]
+        elif isinstance(clim, float) or isinstance(clim, int):
+            clim = [-clim, clim]
 
         ###############
 
         scalars = scalars.astype(np.float)
-        idxs0 = scalars < rng[0]
-        idxs1 = scalars > rng[1]
+        idxs0 = scalars < clim[0]
+        idxs1 = scalars > clim[1]
         scalars[idxs0] = np.nan
         scalars[idxs1] = np.nan
         scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
         # scalars = scalars.astype(np.uint8)
         volume[title] = scalars
 
-        self.mapper.scalar_range = rng
+        self.mapper.scalar_range = clim
 
         # Set colormap and build lookup table
         table = vtk.vtkLookupTable()
@@ -1200,7 +1281,7 @@ class BasePlotter(object):
         lut[:,3] = opacity_values
         lut = lut.astype(np.uint8)
         table.SetTable(VN.numpy_to_vtk(lut))
-        table.SetRange(*rng)
+        table.SetRange(*clim)
         self.mapper.lookup_table = table
 
         self.mapper.SetInputData(volume)
@@ -1908,19 +1989,19 @@ class BasePlotter(object):
         if title:
             # Check that this data hasn't already been plotted
             if title in list(self._scalar_bar_ranges.keys()):
-                rng = list(self._scalar_bar_ranges[title])
+                clim = list(self._scalar_bar_ranges[title])
                 newrng = mapper.scalar_range
                 oldmappers = self._scalar_bar_mappers[title]
                 # get max for range and reset everything
-                if newrng[0] < rng[0]:
-                    rng[0] = newrng[0]
-                if newrng[1] > rng[1]:
-                    rng[1] = newrng[1]
+                if newrng[0] < clim[0]:
+                    clim[0] = newrng[0]
+                if newrng[1] > clim[1]:
+                    clim[1] = newrng[1]
                 for mh in oldmappers:
-                    mh.scalar_range = rng[0], rng[1]
-                mapper.scalar_range = rng[0], rng[1]
+                    mh.scalar_range = clim[0], clim[1]
+                mapper.scalar_range = clim[0], clim[1]
                 self._scalar_bar_mappers[title].append(mapper)
-                self._scalar_bar_ranges[title] = rng
+                self._scalar_bar_ranges[title] = clim
                 # Color bar already present and ready to be used so returning
                 return
 
@@ -1989,8 +2070,8 @@ class BasePlotter(object):
 
         # Set properties
         if title:
-            rng = mapper.scalar_range
-            self._scalar_bar_ranges[title] = rng
+            clim = mapper.scalar_range
+            self._scalar_bar_ranges[title] = clim
             self._scalar_bar_mappers[title] = [mapper]
 
             self.scalar_bar.SetTitle(title)
