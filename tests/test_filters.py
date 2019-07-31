@@ -391,7 +391,7 @@ def test_streamlines():
 
 def test_plot_over_line():
     """this requires matplotlib"""
-    mesh = examples.load_channels()
+    mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
