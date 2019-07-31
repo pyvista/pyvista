@@ -796,6 +796,11 @@ class Renderer(vtkRenderer):
         return x0, y0, x1, y1
 
 
+    def deep_clear(self):
+        self.RemoveAllViewProps()
+        self._actors = None
+        self.parent = None
+
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):
     """removes this actor's mapper from the given plotter's _scalar_bar_mappers"""
