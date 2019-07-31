@@ -561,8 +561,7 @@ class BackgroundPlotter(QtInteractor):
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
-        if hasattr(self, 'ren_win') and self.ren_win is not None:
-            self.ren_win.Render() # force rendering
+        self.ren_win.Render() # force rendering
         return
 
     @property
