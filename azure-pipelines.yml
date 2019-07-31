@@ -36,7 +36,8 @@ jobs:
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
       $PSDefaultParameterValues['*:ErrorAction']='Stop'
-      pip install -r requirements.txt
+      pip install --upgrade numpy vtk
+      pip install --upgrade -r requirements.txt
     displayName: 'Install dependencies with pip'
   - script: |
       python setup.py sdist
