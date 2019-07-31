@@ -797,15 +797,18 @@ class Renderer(vtkRenderer):
 
 
     def deep_clean(self):
-        self.RemoveAllViewProps()
-        self._actors = None
-        self.parent = None
         if hasattr(self, 'cube_axes_actor'):
             del self.cube_axes_actor
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box()
+
+        self.RemoveAllViewProps()
+        self._actors = None
+        # remove reference to parent last
+        self.parent = None
+        return
 
 
     def __del__(self):
