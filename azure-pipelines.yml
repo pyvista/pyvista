@@ -1,3 +1,6 @@
+variables:
+  ALLOW_PLOTTING: true
+
 jobs:
 - job: Windows
   pool:
