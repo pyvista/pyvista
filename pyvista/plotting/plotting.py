@@ -26,7 +26,7 @@ from .tools import *
 _ALL_PLOTTERS = {}
 
 def close_all():
-    """Close all open/active plotters"""
+    """Close all open/active plotters and clean up memory"""
     for key, p in _ALL_PLOTTERS.items():
         p.close()
         p.deep_clean()
@@ -2222,12 +2222,7 @@ class BasePlotter(object):
             del self.scalar_widget
 
         # reset scalar bar stuff
-        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
-        self._scalar_bar_slot_lookup = {}
-        self._scalar_bar_ranges = {}
-        self._scalar_bar_mappers = {}
-        self._scalar_bar_actors = {}
-        self._scalar_bar_widgets = {}
+        self.clear()
 
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
@@ -2254,8 +2249,8 @@ class BasePlotter(object):
     def deep_clean(self):
         for renderer in self.renderers:
             renderer.deep_clean()
-        self.renderers = None
-        self._actors = None
+        self.renderers = []
+        self._actors = {}
         self.mesh = None
         self.mapper = None
 
