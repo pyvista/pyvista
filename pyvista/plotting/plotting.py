@@ -29,6 +29,7 @@ def close_all():
     """Close all open/active plotters"""
     for key, p in _ALL_PLOTTERS.items():
         p.close()
+        p.deep_clear()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -2169,6 +2170,14 @@ class BasePlotter(object):
             except BaseException:
                 pass
 
+    def deep_clear(self):
+        for renderer in self.renderers:
+            renderer.deep_clear()
+        self.renderers = None
+        self._actors = None
+        self.mesh = None
+        self.mapper = None
+
     def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, loc=None):
         """
@@ -3187,12 +3196,8 @@ class BasePlotter(object):
 
 
     def __del__(self):
-        for renderer in self.renderers:
-            renderer.camera_position = None
-            renderer.RemoveAllViewProps()
-            renderer._actors = {}
-            del renderer
-        self.renderers = []
+        self.close()
+        self.deep_clear()
 
 
 class Plotter(BasePlotter):
