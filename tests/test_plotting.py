@@ -701,8 +701,8 @@ def test_closing_and_mem_cleanup():
     n = 5
     for i in range(n):
         for j in range(n):
-            p = pv.Plotter(off_screen=OFF_SCREEN)
+            p = pyvista.Plotter(off_screen=OFF_SCREEN)
             for k in range(n):
-                p.add_mesh(pv.Sphere(radius=k))
+                pyvista.add_mesh(pyvista.Sphere(radius=k))
             p.show()
-        pv.close_all()
+        pyvista.close_all()
