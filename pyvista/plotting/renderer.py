@@ -307,9 +307,10 @@ class Renderer(vtkRenderer):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
             else:
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
-            cube_axes_actor.DrawXGridlinesOn()
-            cube_axes_actor.DrawYGridlinesOn()
-            cube_axes_actor.DrawZGridlinesOn()
+            # Only show user desired grid lines
+            cube_axes_actor.SetDrawXGridlines(show_xaxis)
+            cube_axes_actor.SetDrawYGridlines(show_yaxis)
+            cube_axes_actor.SetDrawZGridlines(show_zaxis)
             # Set the colors
             cube_axes_actor.GetXAxesGridlinesProperty().SetColor(color)
             cube_axes_actor.GetYAxesGridlinesProperty().SetColor(color)
