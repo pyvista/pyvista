@@ -144,7 +144,7 @@ class Renderer(vtkRenderer):
         self.marker_actor = vtk.vtkAxesActor()
         # renderer = self.renderers[self.loc_to_index(loc)]
         self.AddActor(self.marker_actor)
-        self.parent._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
+        self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
