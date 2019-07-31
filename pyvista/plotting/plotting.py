@@ -2248,7 +2248,7 @@ class BasePlotter(object):
     def deep_clean(self):
         for renderer in self.renderers:
             renderer.deep_clean()
-        # self.renderers = []
+        # Do not remove the renderers on the clean
         self.mesh = None
         self.mapper = None
 
@@ -3272,6 +3272,7 @@ class BasePlotter(object):
     def __del__(self):
         self.close()
         self.deep_clean()
+        del self.renderers
 
 
 class Plotter(BasePlotter):
