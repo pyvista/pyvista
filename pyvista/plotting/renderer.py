@@ -800,6 +800,16 @@ class Renderer(vtkRenderer):
         self.RemoveAllViewProps()
         self._actors = None
         self.parent = None
+        if hasattr(self, 'cube_axes_actor'):
+            del self.cube_axes_actor
+        if hasattr(self, 'edl_pass'):
+            del self.edl_pass
+        if hasattr(self, '_box_object'):
+            self.remove_bounding_box()
+
+
+    def __del__(self):
+        self.deep_clean()
 
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):

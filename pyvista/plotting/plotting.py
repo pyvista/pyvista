@@ -110,7 +110,6 @@ class BasePlotter(object):
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
-        self._actors = {}
         # track if the camera has been setup
         # self.camera_set = False
         self._first_time = True
@@ -2249,8 +2248,7 @@ class BasePlotter(object):
     def deep_clean(self):
         for renderer in self.renderers:
             renderer.deep_clean()
-        self.renderers = []
-        self._actors = {}
+        # self.renderers = []
         self.mesh = None
         self.mapper = None
 
