@@ -246,7 +246,7 @@ class BasePlotter(object):
     def add_axes(self, interactive=None, line_width=2,
                  color=None, x_color=None, y_color=None, z_color=None,
                  xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
-                 box=False, box_args=None):
+                 box=None, box_args=None):
         """ Add an interactive axes widget """
         if interactive is None:
             interactive = rcParams['interactive']
@@ -254,6 +254,8 @@ class BasePlotter(object):
             self.axes_widget.SetInteractive(interactive)
             update_axes_label_color(color)
             return
+        if box is None:
+            box = rcParams['axes']['box']
         if box:
             if box_args is None:
                 box_args = {}

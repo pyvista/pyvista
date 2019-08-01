@@ -56,6 +56,7 @@ rcParams = {
         'x_color': 'tomato',
         'y_color': 'seagreen',
         'z_color': 'mediumblue',
+        'box': False,
     }
 }
 
