@@ -515,6 +515,26 @@ def test_multi_renderers():
     plotter.update_bounds_axes()
     plotter.show()
 
+    # Test subplot indices (2 rows by 1 column)
+    plotter = pyvista.Plotter(shape=(2, 1), off_screen=OFF_SCREEN)
+    # First row
+    plotter.subplot(0,0)
+    plotter.add_mesh(pyvista.Sphere())
+    # Second row
+    plotter.subplot(1,0)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.show()
+
+    # Test subplot indices (1 row by 2 columns)
+    plotter = pyvista.Plotter(shape=(1, 2), off_screen=OFF_SCREEN)
+    # First column
+    plotter.subplot(0,0)
+    plotter.add_mesh(pyvista.Sphere())
+    # Second column
+    plotter.subplot(0,1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.show()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_link_views():
