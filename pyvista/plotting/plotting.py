@@ -26,9 +26,10 @@ from .tools import *
 _ALL_PLOTTERS = {}
 
 def close_all():
-    """Close all open/active plotters"""
+    """Close all open/active plotters and clean up memory"""
     for key, p in _ALL_PLOTTERS.items():
         p.close()
+        p.deep_clean()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -109,7 +110,6 @@ class BasePlotter(object):
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
-        self._actors = {}
         # track if the camera has been setup
         # self.camera_set = False
         self._first_time = True
@@ -2194,12 +2194,7 @@ class BasePlotter(object):
             del self.scalar_widget
 
         # reset scalar bar stuff
-        self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
-        self._scalar_bar_slot_lookup = {}
-        self._scalar_bar_ranges = {}
-        self._scalar_bar_mappers = {}
-        self._scalar_bar_actors = {}
-        self._scalar_bar_widgets = {}
+        self.clear()
 
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
@@ -2210,6 +2205,7 @@ class BasePlotter(object):
 
         if hasattr(self, 'iren'):
             self.iren.RemoveAllObservers()
+            self.iren.TerminateApp()
             del self.iren
 
         if hasattr(self, 'textActor'):
@@ -2221,6 +2217,13 @@ class BasePlotter(object):
                 self.mwriter.close()
             except BaseException:
                 pass
+
+    def deep_clean(self):
+        for renderer in self.renderers:
+            renderer.deep_clean()
+        # Do not remove the renderers on the clean
+        self.mesh = None
+        self.mapper = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, loc=None):
@@ -3237,6 +3240,12 @@ class BasePlotter(object):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+
+
+    def __del__(self):
+        self.close()
+        self.deep_clean()
+        del self.renderers
 
 
 class Plotter(BasePlotter):

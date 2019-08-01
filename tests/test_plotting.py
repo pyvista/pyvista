@@ -694,3 +694,15 @@ def test_opacity_transfer_functions():
     foo = [3, 5, 6, 10]
     mapping = pyvista.opacity_transfer_function(foo, n)
     assert len(mapping) == n
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_closing_and_mem_cleanup():
+    n = 5
+    for i in range(n):
+        for j in range(n):
+            p = pyvista.Plotter(off_screen=OFF_SCREEN)
+            for k in range(n):
+                p.add_mesh(pyvista.Sphere(radius=k))
+            p.show()
+        pyvista.close_all()

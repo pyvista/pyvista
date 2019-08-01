@@ -148,7 +148,7 @@ class Renderer(vtkRenderer):
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
         self.AddActor(self.marker_actor)
-        self.parent._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
+        self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
@@ -800,6 +800,24 @@ class Renderer(vtkRenderer):
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
 
+
+    def deep_clean(self):
+        if hasattr(self, 'cube_axes_actor'):
+            del self.cube_axes_actor
+        if hasattr(self, 'edl_pass'):
+            del self.edl_pass
+        if hasattr(self, '_box_object'):
+            self.remove_bounding_box()
+
+        self.RemoveAllViewProps()
+        self._actors = None
+        # remove reference to parent last
+        self.parent = None
+        return
+
+
+    def __del__(self):
+        self.deep_clean()
 
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):
