@@ -18,7 +18,7 @@ mesh.plot(cmap="gist_earth", show_scalar_bar=False)
 
 ###############################################################################
 # Now we have a surface dataset of the globe loaded - unfortunately, the
-# dataset shows the globe with a uniform radius which hides topographic releif.
+# dataset shows the globe with a uniform radius which hides topographic relief.
 # Using :func:`pyvista.PolyData.compute_normals`, we can compute the normal
 # vectors on the globe at all points in the dataset, then use the values given
 # in the dataset to warp the surface in the normals direction to create some

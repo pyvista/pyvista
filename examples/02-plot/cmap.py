@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 # .. _Colorcet's complete list: http://colorcet.pyviz.org/user_guide/index.html
 # .. _cmocean's complete list: https://matplotlib.org/cmocean/
 #
-# To get started using a custom colormap, download some data with scalars to
+# To get started using a custom colormap, download some data with scalar values to
 # plot.
 
 mesh = examples.download_st_helens().warp_by_scalar()

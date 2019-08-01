@@ -72,12 +72,12 @@ curvsurf.plot(texture=tex)
 # NumPy Arrays as Textures
 # ++++++++++++++++++++++++
 #
-# Wan't to use a programmaticaly built image? :class:`pyvista.UniformGrid`
+# Want to use a programmatically built image? :class:`pyvista.UniformGrid`
 # objects can be converted to textures using :func:`pyvista.image_to_texture`
 # and 3D NumPy (X by Y by RGB) arrays can be converted to textures using
 # :func:`pyvista.numpy_to_texture`.
 
-# create an image using Numpy,
+# create an image using numpy,
 xx, yy = np.meshgrid(np.linspace(-200, 200, 20), np.linspace(-200, 200, 20))
 A, b = 500, 100
 zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
@@ -115,8 +115,8 @@ xxc, yyc = np.meshgrid(xc, yc)
 puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 
 ###############################################################################
-# By defining texture coordinates that range ``(0, 4)`` on eaxh axis, we will
-# produce 4 repitions of the same texture on this mesh.
+# By defining texture coordinates that range ``(0, 4)`` on each axis, we will
+# produce 4 repetitons of the same texture on this mesh.
 #
 # Then we must associate those texture coordinates with the mesh through the
 # :attr:`pyvista.Common.t_coords` property.

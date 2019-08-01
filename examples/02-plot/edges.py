@@ -8,7 +8,7 @@ Show the edges of all geometries within a mesh
 # Sometimes it can be useful to show all of the edges of a mesh when rendering
 # to communicate aspects of the dataset like resolution.
 #
-# Showing the edges for any rendered dataset is a simple as specifying the
+# Showing the edges for any rendered dataset is as simple as specifying the
 # the ``show_edges`` keyword argument to ``True`` when plotting a dataset.
 
 # sphinx_gallery_thumbnail_number = 1
