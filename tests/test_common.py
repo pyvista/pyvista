@@ -71,7 +71,7 @@ def test_cell_arrays_bad_value():
         grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
 
 
-def test_cell_arrays():
+def test_field_arrays():
     key = 'test_array_field'
     grid = GRID.copy()
     # Add array of lenght not equal to n_cells or n_points
@@ -88,7 +88,7 @@ def test_cell_arrays():
     assert key not in grid.field_arrays
 
 
-def test_cell_arrays_bad_value():
+def test_field_arrays_bad_value():
     grid = GRID.copy()
     with pytest.raises(TypeError):
         grid.field_arrays['new_array'] = None
@@ -323,6 +323,12 @@ def test_texture():
     # now grab the texture coordinates
     foo = mesh.t_coords
     assert np.allclose(foo, t_coords)
+    texture = pyvista.read_texture(examples.mapfile)
+    mesh.textures['map'] = texture
+    assert mesh.textures['map'] is not None
+    mesh.clear_textures()
+    assert len(mesh.textures) == 0
+
 
 
 def test_invalid_vector():

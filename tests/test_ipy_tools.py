@@ -7,6 +7,8 @@ import pyvista
 from pyvista import QtInteractor, examples
 from pyvista.plotting import system_supports_plotting
 
+NO_PLOTTING = not system_supports_plotting()
+
 try:
     import PyQt5
     has_pyqt5 = True
@@ -15,7 +17,7 @@ except:
 
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_scaled_plotter(qtbot):
     data = examples.load_uniform()
@@ -23,7 +25,7 @@ def test_ipy_scaled_plotter(qtbot):
     p.add_mesh(data)
     p.close()
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_orthoganl_slicer(qtbot):
     data = examples.load_uniform()
@@ -33,7 +35,7 @@ def test_ipy_orthoganl_slicer(qtbot):
     tool.plotter.close()
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_many_slices_along_axis(qtbot):
     data = examples.load_uniform()
@@ -43,7 +45,7 @@ def test_ipy_many_slices_along_axis(qtbot):
     tool.plotter.close()
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_threshold(qtbot):
     data = examples.load_uniform()
@@ -53,7 +55,7 @@ def test_ipy_threshold(qtbot):
     tool.plotter.close()
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_clip(qtbot):
     data = examples.load_uniform()
@@ -63,7 +65,7 @@ def test_ipy_clip(qtbot):
     tool.plotter.close()
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_integrated(qtbot):
     data = examples.load_uniform()
@@ -75,7 +77,7 @@ def test_ipy_integrated(qtbot):
     clipper = pyvista.Clip(data, plotter=p)
     p.close()
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_ipy_isocontour(qtbot):
     data = examples.load_uniform()
