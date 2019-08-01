@@ -88,7 +88,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 xlabel='X', ylabel='Y', zlabel='Z',
                                 x_face_color='red',
                                 y_face_color='green',
-                                z_face_color='mediumblue',
+                                z_face_color='blue',
                                 color_box=False, label_color=None,
                                 labels_off=False, opacity=0.5,):
     """Create a Box axes orientation widget with labels.
