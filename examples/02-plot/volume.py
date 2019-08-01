@@ -6,7 +6,7 @@ Volume render uniform mesh types like :class:`pyvista.UniformGrid` or 3D
 NumPy arrays
 """
 
-# sphinx_gallery_thumbnail_number = 2
+# sphinx_gallery_thumbnail_number = 3
 import pyvista as pv
 from pyvista import examples
 
@@ -37,6 +37,15 @@ vol.plot(volume=True, cmap="bone", cpos=cpos)
 
 p = pv.Plotter()
 p.add_volume(vol, cmap="bone", opacity="sigmoid")
+p.camera_position = cpos
+p.show()
+
+###############################################################################
+# You can also use a custom opactiy mapping
+opacity = [0, 0, 0, 0.1, 0.3, 0.6, 1]
+
+p = pv.Plotter()
+p.add_volume(vol, cmap="viridis", opacity=opacity)
 p.camera_position = cpos
 p.show()
 

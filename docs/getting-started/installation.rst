@@ -109,7 +109,7 @@ Running on CI Services
 
 
 Please head over to `pyvista/gl-ci-hepers`_ for details on setting up CI
-services like Travis and AppVeyor to run PyVista.
+services like Travis and Azure Pipelines to run PyVista.
 
 .. _pyvista/gl-ci-hepers: https://github.com/pyvista/gl-ci-helpers
 

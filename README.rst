@@ -24,8 +24,8 @@ software and we apologize for any confusion this may be causing**
 .. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
    :target: https://travis-ci.org/pyvista/pyvista
 
-.. |appveyor| image:: https://ci.appveyor.com/api/projects/status/80geek5ylh4ebnc6/branch/master?svg=true
-   :target: https://ci.appveyor.com/project/banesullivan/pyvista/history
+.. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
+   :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
 
 .. |codecov| image:: https://codecov.io/gh/pyvista/pyvista/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/pyvista/pyvista
@@ -37,7 +37,7 @@ software and we apologize for any confusion this may be causing**
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
 +----------------------+------------------------+
-| Build Status         | |travis| |appveyor|    |
+| Build Status         | |travis| |azure|       |
 +----------------------+------------------------+
 | Metrics              | |codacy| |codecov|     |
 +----------------------+------------------------+
