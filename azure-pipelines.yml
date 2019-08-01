@@ -1,3 +1,6 @@
+variables:
+  ALLOW_PLOTTING: true
+
 jobs:
 - job: Windows
   pool:
@@ -41,7 +44,6 @@ jobs:
     displayName: 'Install PyVista'
   - script: |
       del /Q tests\\test_qt_plotting.py
-      cd tests
-      python -m pytest --cov -v
-      cd ..
+      del /Q tests\\test_ipy_tools.py
+      python -m pytest --cov -v .
     displayName: 'Run Tests'
