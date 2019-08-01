@@ -382,11 +382,10 @@ class BasePlotter(object):
                  reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
                  stitle=None, multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None, render_lines_as_tubes=False,
-                 smooth_shading=False, ambient=0.0, ambient_color='white',
-                 diffuse=1.0, diffuse_color='white',
-                 specular=0.0, specular_power=100.0, specular_color='white',
-                 nan_color=None, nan_opacity=1.0, loc=None, backface_culling=False,
-                 rgb=False, categories=False, use_transparency=False, **kwargs):
+                 smooth_shading=False, ambient=0.0, diffuse=1.0, specular=0.0,
+                 specular_power=100.0, nan_color=None, nan_opacity=1.0,
+                 loc=None, backface_culling=False, rgb=False, categories=False,
+                 use_transparency=False, **kwargs):
         """
         Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
         scene. This method using a mesh representation to view the surfaces
@@ -524,23 +523,14 @@ class BasePlotter(object):
             0 to 1 that reaches the actor when not directed at the
             light source emitted from the viewer.  Default 0.0
 
-        ambient_color : string or 3 item list, optional, defaults to white
-            Color used for ambient lighting
-
         diffuse : float, optional
             The diffuse lighting coefficient. Default 1.0
-
-        diffuse_color : string or 3 item list, optional, defaults to white
-            Color used for diffuse
 
         specular : float, optional
             The specular lighting coefficient. Default 0.0
 
         specular_power : float, optional
             The specular power. Bewteen 0.0 and 128.0
-
-        specular_color : string or 3 item list, optional, defaults to white
-            Color used for specular
 
         nan_color : string or 3 item list, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted scalar
@@ -933,12 +923,9 @@ class BasePlotter(object):
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
-        prop.SetAmbientColor(parse_color(ambient_color))
         prop.SetDiffuse(diffuse)
-        prop.SetDiffuseColor(parse_color(diffuse_color))
         prop.SetSpecular(specular)
         prop.SetSpecularPower(specular_power)
-        prop.SetSpecularColor(parse_color(specular_color))
 
         if smooth_shading:
             prop.SetInterpolationToPhong()
