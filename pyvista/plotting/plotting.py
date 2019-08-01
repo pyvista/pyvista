@@ -382,8 +382,10 @@ class BasePlotter(object):
                  reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
                  stitle=None, multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None, render_lines_as_tubes=False,
-                 smooth_shading=False, ambient=0.0, nan_color=None,
-                 nan_opacity=1.0, loc=None, backface_culling=False,
+                 smooth_shading=False, ambient=0.0, ambient_color='white',
+                 diffuse=1.0, diffuse_color='white',
+                 specular=0.0, specular_power=100.0, specular_color='white',
+                 nan_color=None, nan_opacity=1.0, loc=None, backface_culling=False,
                  rgb=False, categories=False, use_transparency=False, **kwargs):
         """
         Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
@@ -520,7 +522,25 @@ class BasePlotter(object):
         ambient : float, optional
             When lighting is enabled, this is the amount of light from
             0 to 1 that reaches the actor when not directed at the
-            light source emitted from the viewer.  Default 0.0.
+            light source emitted from the viewer.  Default 0.0
+
+        ambient_color : string or 3 item list, optional, defaults to white
+            Color used for ambient lighting
+
+        diffuse : float, optional
+            The diffuse lighting coefficient. Default 1.0
+
+        diffuse_color : string or 3 item list, optional, defaults to white
+            Color used for diffuse
+
+        specular : float, optional
+            The specular lighting coefficient. Default 0.0
+
+        specular_power : float, optional
+            The specular power. Bewteen 0.0 and 128.0
+
+        specular_color : string or 3 item list, optional, defaults to white
+            Color used for specular
 
         nan_color : string or 3 item list, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted scalar
@@ -616,6 +636,12 @@ class BasePlotter(object):
                     #       the block? This could get complicated real
                     #       quick.
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
+
+            the_arguments = locals()
+            the_arguments.update(kwargs)
+            the_arguments.pop('self')
+            the_arguments.pop('mesh')
+
             if multi_colors:
                 # Compute unique colors for each index of the block
                 try:
@@ -651,25 +677,15 @@ class BasePlotter(object):
                     ts = scalars
                 if multi_colors:
                     color = next(colors)['color']
-                a = self.add_mesh(data, color=color, style=style,
-                                  scalars=ts, clim=clim, stitle=stitle,
-                                  show_edges=show_edges,
-                                  point_size=point_size, opacity=opacity,
-                                  line_width=line_width,
-                                  flip_scalars=flip_scalars,
-                                  lighting=lighting, n_colors=n_colors,
-                                  interpolate_before_map=interpolate_before_map,
-                                  cmap=cmap, label=label,
-                                  scalar_bar_args=scalar_bar_args,
-                                  reset_camera=reset_camera, name=next_name,
-                                  texture=None,
-                                  render_points_as_spheres=render_points_as_spheres,
-                                  render_lines_as_tubes=render_lines_as_tubes,
-                                  edge_color=edge_color,
-                                  show_scalar_bar=show_scalar_bar, nan_color=nan_color,
-                                  nan_opacity=nan_opacity,
-                                  loc=loc, rgb=rgb, **kwargs)
+
+                ## Add to the scene
+                the_arguments['color'] = color
+                the_arguments['scalars'] = ts
+                the_arguments['name'] = next_name
+                the_arguments['texture'] = None
+                a = self.add_mesh(data, **the_arguments)
                 actors.append(a)
+
                 if (reset_camera is None and not self.camera_set) or reset_camera:
                     cpos = self.get_default_cam_pos()
                     self.camera_position = cpos
@@ -917,6 +933,13 @@ class BasePlotter(object):
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
+        prop.SetAmbientColor(parse_color(ambient_color))
+        prop.SetDiffuse(diffuse)
+        prop.SetDiffuseColor(parse_color(diffuse_color))
+        prop.SetSpecular(specular)
+        prop.SetSpecularPower(specular_power)
+        prop.SetSpecularColor(parse_color(specular_color))
+
         if smooth_shading:
             prop.SetInterpolationToPhong()
         else:
