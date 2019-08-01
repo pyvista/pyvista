@@ -14,6 +14,7 @@ from pyvista.utilities import wrap
 
 from .plotting import (MAX_N_COLOR_BARS, parse_color, parse_font_family,
                        rcParams)
+from .tools import create_axes_marker
 
 
 class Renderer(vtkRenderer):
@@ -132,7 +133,9 @@ class Renderer(vtkRenderer):
 
         return actor, actor.GetProperty()
 
-    def add_axes_at_origin(self):
+    def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
+                    xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
+                    labels_off=False):
         """
         Add axes actor at origin
 
@@ -141,8 +144,9 @@ class Renderer(vtkRenderer):
         marker_actor : vtk.vtkAxesActor
             vtkAxesActor actor
         """
-        self.marker_actor = vtk.vtkAxesActor()
-        # renderer = self.renderers[self.loc_to_index(loc)]
+        self.marker_actor = create_axes_marker(line_width=line_width,
+            x_color=x_color, y_color=y_color, z_color=z_color,
+            xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
         self.AddActor(self.marker_actor)
         self.parent._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor

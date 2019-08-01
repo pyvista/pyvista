@@ -355,7 +355,7 @@ def test_axes():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_box_axes():
     plotter = pyvista.Plotter(off_screen=True)
-    plotter.add_axes(box=True, box_arguments={'color_box':True})
+    plotter.add_axes(box=True, box_args={'color_box':True})
     plotter.add_mesh(pyvista.Sphere())
     plotter.show()
 
