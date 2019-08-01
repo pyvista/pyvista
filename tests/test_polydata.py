@@ -358,12 +358,11 @@ def test_face_normals():
 
 def test_clip_plane():
     sphere = SPHERE.copy()
-    clipped_sphere = sphere.copy()
-    clipped_sphere = sphere.clip_with_plane([0, 0, 0], [0, 0, -1])
+    clipped_sphere = sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], invert=False)
     faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
-    clipped_sphere.clip_with_plane([0, 0, 0], [0, 0, -1], inplace=True)
+    sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False)
     faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
@@ -474,3 +473,26 @@ def test_project_points_to_plane():
     assert np.allclose(projected.points[:,-1], poly.center[-1])
     projected = poly.project_points_to_plane(normal=(0,1,1))
     assert projected.n_points
+
+
+def test_tube():
+    # Simple
+    mesh = pyvista.Line()
+    tube = mesh.tube(n_sides=2)
+    # Complicated
+    mesh = examples.load_spline()
+    tube = mesh.tube(radius=5, scalars='arc_length')
+
+
+def test_delaunay_2d():
+    n = 20
+    x = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    y = np.linspace(-200, 200, num=n) + np.random.uniform(-5, 5, size=n)
+    xx, yy = np.meshgrid(x, y)
+    A, b = 100, 100
+    zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
+    # Get the points as a 2D NumPy array (N by 3)
+    points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
+    surf = pyvista.PolyData(points).delaunay_2d()
+    # Make sure we have an all triangle mesh now
+    assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)

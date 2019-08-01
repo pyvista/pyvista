@@ -1,4 +1,6 @@
 """
+.. _ref_edl:
+
 Eye Dome Lighting
 ~~~~~~~~~~~~~~~~~
 

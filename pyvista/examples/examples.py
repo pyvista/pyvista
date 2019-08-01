@@ -74,7 +74,7 @@ def load_channels():
     """ Loads a uniform grid of fluvial channels in the subsurface """
     return pyvista.read(channelsfile)
 
-def plot_ants_plane(off_screen=False, notebook=None):
+def plot_ants_plane(off_screen=None, notebook=None):
     """
     Demonstrate how to create a plot class to plot multiple meshes while
     adding scalars and text.
@@ -109,7 +109,7 @@ def plot_ants_plane(off_screen=False, notebook=None):
     plotter.show()
 
 
-def beam_example(off_screen=False, notebook=None):
+def beam_example(off_screen=None, notebook=None):
     # Load module and example file
     hexfile = hexbeamfile
 
@@ -137,13 +137,11 @@ def beam_example(off_screen=False, notebook=None):
                      rng=[-d.max(), d.max()], cmap=cmap)
     plotter.camera_position = cpos
     plotter.add_text('Static Beam Example')
-    cpos = plotter.show(auto_close=False)  # store camera position
-    # plotter.TakeScreenShot('beam.png')
-    plotter.close()
+    cpos = plotter.show()  # store camera position
 
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
-              off_screen=False, notebook=None):
+              off_screen=None, notebook=None):
     """
     Plot a 3D moving wave in a render window.
 
@@ -195,7 +193,6 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
     plotter.add_mesh(sgrid, scalars=Z.ravel())
     plotter.camera_position = cpos
     plotter.show(title='Wave Example', window_size=[800, 600],
-                 # auto_close=False, interactive=interactive)
                  auto_close=False, interactive_update=True)
 
     # Update Z and display a frame for each updated position
