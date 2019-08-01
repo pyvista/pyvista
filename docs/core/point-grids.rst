@@ -20,8 +20,8 @@ An unstructured grid can be initialized with:
 
 .. testcode:: python
 
-    import pyvista
-    grid = pyvista.UnstructuredGrid()
+    import pyvista as pv
+    grid = pv.UnstructuredGrid()
 
 This creates an empty grid, and is not useful until points and cells are added
 to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
@@ -36,10 +36,10 @@ Unstructured grids can be loaded from a vtk file.
 
 .. testcode:: python
 
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
-    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
 
 Structured Grid Creation
@@ -51,8 +51,8 @@ A structured grid can be initialized with:
 
 .. testcode:: python
 
-    import pyvista
-    grid = pyvista.StructuredGrid()
+    import pyvista as pv
+    grid = pv.StructuredGrid()
 
 This creates an empty grid, and is not useful until points are added
 to it.
@@ -68,7 +68,7 @@ grid from NumPy arrays.
 
 .. testcode:: python
 
-    import pyvista
+    import pyvista as pv
     import numpy as np
 
     x = np.arange(-10, 10, 0.25)
@@ -77,7 +77,7 @@ grid from NumPy arrays.
     x, y, z = np.meshgrid(x, y, z)
 
     # create the unstructured grid directly from the numpy arrays and plot
-    grid = pyvista.StructuredGrid(x, y, z)
+    grid = pv.StructuredGrid(x, y, z)
     grid.plot(show_edges=True, screenshot='structured_cube.png')
 
 .. image:: ../images/auto-generated/structured_cube.png
@@ -89,7 +89,7 @@ Structured grids can be loaded from a ``vtk`` file.
 
 .. code:: python
 
-    grid = pyvista.StructuredGrid(filename)
+    grid = pv.StructuredGrid(filename)
 
 
 Plotting Grids
@@ -100,12 +100,12 @@ create a plot and gif movie by updating the plotting object.
 .. testcode:: python
 
     # Load module and example file
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
     import numpy as np
 
     # Load example beam grid
-    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
     # Create fictitious displacements as a function of Z location
     d = np.zeros_like(grid.points)
@@ -132,16 +132,13 @@ A more complex plot can be created using:
             (-0.42546442225230097, 0.9024244135964158, -0.06789847673314177)]
 
     # plot this displaced beam
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   rng=[-d.max(), d.max()])
     plotter.add_axes()
     plotter.camera_position = cpos
 
-    # Don't let it close automatically so we can take a screenshot
-    cpos = plotter.show(auto_close=False)
-    plotter.screenshot('beam.png')
-    plotter.close()
+    plotter.show(screenshot='beam.png')
 
 .. image:: ../images/auto-generated/beam.png
 
@@ -151,7 +148,7 @@ First you have to setup the plotting object:
 
 .. testcode:: python
 
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement',
                   show_edges=True, rng=[-d.max(), d.max()],
                   interpolate_before_map=True)
@@ -187,7 +184,7 @@ You can also render the beam as as a wire-frame object:
 .. testcode:: python
 
     # Animate plot as a wire-frame
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.add_mesh(grid, scalars=d[:, 1], stitle='Y Displacement', show_edges=True,
                   rng=[-d.max(), d.max()], interpolate_before_map=True,
                   style='wireframe')
@@ -221,14 +218,14 @@ string.
 .. testcode:: python
 
     # Load module and example file
-    import pyvista
+    import pyvista as pv
     from pyvista import examples
 
     # Load example beam file
-    grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
     # Create plotting class and add the unstructured grid
-    plotter = pyvista.Plotter()
+    plotter = pv.Plotter()
     plotter.add_mesh(grid, show_edges=True, color='tan')
 
     # Add labels to points on the yz plane (where x == 0)
@@ -254,7 +251,7 @@ to show the exact value of certain points.
     values = grid.points[:, 2]
 
     # Create plotting class and add the unstructured grid
-    plotter = pyvista.Plotter(notebook=False)
+    plotter = pv.Plotter(notebook=False)
     # color mesh according to z value
     plotter.add_mesh(grid, scalars=values, stitle='Z Position', show_edges=True)
 
@@ -273,10 +270,10 @@ to show the exact value of certain points.
 
 
 
-pyvista.Unstructured Grid Class Methods
+pv.Unstructured Grid Class Methods
 --------------------------------------------
 The following is a description of the methods available to a
-``pyvista.UnstructuredGrid`` object.  It inherits all methods from the original
+``pv.UnstructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkUnstructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkUnstructuredGrid.html>`_.
 
 
@@ -298,10 +295,10 @@ The following is a description of the methods available to a
    :undoc-members:
 
 
-pyvista.Structured Grid Class Methods
+pv.Structured Grid Class Methods
 --------------------------------------------
 The following is a description of the methods available to a
-``pyvista.StructuredGrid`` object.  It inherits all methods from the original
+``pv.StructuredGrid`` object.  It inherits all methods from the original
 ``vtk`` object, `vtk.vtkStructuredGrid <https://www.vtk.org/doc/nightly/html/classvtkStructuredGrid.html>`_.
 
 
@@ -324,8 +321,8 @@ The following is a description of the methods available to a
 
 Methods in Common with Structured and Unstructured Grids
 --------------------------------------------------------
-These methods are in common to both ``pyvista.StructuredGrid`` and
-``pyvista.UnstructuredGrid`` objects.
+These methods are in common to both ``pv.StructuredGrid`` and
+``pv.UnstructuredGrid`` objects.
 
 
 
