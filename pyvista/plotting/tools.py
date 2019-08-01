@@ -32,7 +32,7 @@ def system_supports_plotting():
         return False
 
 
-def _update_axes_label_color(axes_actor, color=None):
+def update_axes_label_color(axes_actor, color=None):
     """Internal helper to set the axes label color"""
     if color is None:
         color = rcParams['font']['color']
@@ -77,7 +77,7 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
     axes_actor.GetYAxisShaftProperty().SetLineWidth(line_width)
     axes_actor.GetZAxisShaftProperty().SetLineWidth(line_width)
 
-    _update_axes_label_color(axes_actor, label_color)
+    update_axes_label_color(axes_actor, label_color)
 
     return axes_actor
 
@@ -165,7 +165,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     else:
         actor = axes_actor
 
-    _update_axes_label_color(actor, label_color)
+    update_axes_label_color(actor, label_color)
 
     return actor
 

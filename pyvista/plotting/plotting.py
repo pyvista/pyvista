@@ -252,7 +252,7 @@ class BasePlotter(object):
             interactive = rcParams['interactive']
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
-            _update_axes_label_color(color)
+            update_axes_label_color(color)
             return
         if box:
             if box_args is None:
