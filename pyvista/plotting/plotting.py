@@ -243,55 +243,37 @@ class BasePlotter(object):
             elif not self._first_time:
                 self.render()
 
-    def add_axes(self, interactive=None, color=None, x_color=None,
-                 y_color=None, z_color=None,
-                 x_label='X', y_label='Y', z_label='Z',
-                 box=False, box_arguments=None):
+    def add_axes(self, interactive=None, line_width=2,
+                 color=None, x_color=None, y_color=None, z_color=None,
+                 xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
+                 box=False, box_args=None):
         """ Add an interactive axes widget """
         if interactive is None:
             interactive = rcParams['interactive']
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
-            self._update_axes_color(color)
+            _update_axes_label_color(color)
             return
-        if x_color is None:
-            x_color = rcParams['axes']['x_color']
-        if y_color is None:
-            y_color = rcParams['axes']['y_color']
-        if z_color is None:
-            z_color = rcParams['axes']['z_color']
-        # Chose widget type
         if box:
-            if box_arguments is None:
-                box_arguments = {}
-            prop_assembly = create_axes_orientation_box(x_color=x_color,
-                y_color=y_color, z_color=z_color, x_label=x_label,
-                y_label=y_label, z_label=z_label, **box_arguments)
-            self.axes_actor = prop_assembly
+            if box_args is None:
+                box_args = {}
+            self.axes_actor = create_axes_orientation_box(
+                label_color=color, line_width=line_width,
+                x_color=x_color, y_color=y_color, z_color=z_color,
+                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel,
+                labels_off=labels_off, **box_args)
         else:
-            self.axes_actor = vtk.vtkAxesActor()
-            self.axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
-            self.axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
-            self.axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
-            self.axes_actor.GetYAxisTipProperty().SetColor(parse_color(y_color))
-            self.axes_actor.GetZAxisShaftProperty().SetColor(parse_color(z_color))
-            self.axes_actor.GetZAxisTipProperty().SetColor(parse_color(z_color))
-            # Set labels
-            self.axes_actor.SetXAxisLabelText(x_label)
-            self.axes_actor.SetYAxisLabelText(y_label)
-            self.axes_actor.SetZAxisLabelText(z_label)
-            # Set Line width
-            self.axes_actor.GetXAxisShaftProperty().SetLineWidth(2)
-            self.axes_actor.GetYAxisShaftProperty().SetLineWidth(2)
-            self.axes_actor.GetZAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor = create_axes_marker(
+                label_color=color, line_width=line_width,
+                x_color=x_color, y_color=y_color, z_color=z_color,
+                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
             self.axes_widget.SetInteractor(self.iren)
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
-        # Set the color
-        self._update_axes_color(color)
+        return
 
     def hide_axes(self):
         """Hide the axes orientation widget"""
@@ -1525,7 +1507,9 @@ class BasePlotter(object):
         """ The active camera of the active renderer """
         return self.renderer.camera
 
-    def add_axes_at_origin(self, loc=None):
+    def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
+                    xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
+                    labels_off=False, loc=None):
         """
         Add axes actor at the origin of a render window.
 
@@ -1541,8 +1525,11 @@ class BasePlotter(object):
         marker_actor : vtk.vtkAxesActor
             vtkAxesActor actor
         """
+        kwargs = locals()
+        _ = kwargs.pop('self')
+        _ = kwargs.pop('loc')
         self._active_renderer_index = self.loc_to_index(loc)
-        return self.renderers[self._active_renderer_index].add_axes_at_origin()
+        return self.renderers[self._active_renderer_index].add_axes_at_origin(**kwargs)
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                         show_yaxis=True, show_zaxis=True, show_xlabels=True,
@@ -1859,22 +1846,6 @@ class BasePlotter(object):
         """ The scaling of the active renderer. """
         return self.renderer.scale
 
-    def _update_axes_color(self, color):
-        """Internal helper to set the axes label color"""
-        if color is None:
-            color = rcParams['font']['color']
-        color = parse_color(color)
-        if isinstance(self.axes_actor, vtk.vtkAxesActor):
-            prop_x = self.axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
-            prop_y = self.axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
-            prop_z = self.axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
-            for prop in [prop_x, prop_y, prop_z]:
-                prop.SetColor(color[0], color[1], color[2])
-                prop.SetShadow(False)
-        elif isinstance(self.axes_actor, vtk.vtkAnnotatedCubeActor):
-            self.axes_actor.GetTextEdgesProperty().SetColor(color)
-
-        return
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
                        bold=True, title_font_size=None,
