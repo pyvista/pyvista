@@ -535,6 +535,14 @@ def test_multi_renderers():
     plotter.add_mesh(pyvista.Cube())
     plotter.show()
 
+    with pytest.raises(IndexError):
+        # Test bad indices
+        plotter = pyvista.Plotter(shape=(1, 2), off_screen=OFF_SCREEN)
+        plotter.subplot(0,0)
+        plotter.add_mesh(pyvista.Sphere())
+        plotter.subplot(1,0)
+        plotter.add_mesh(pyvista.Cube())
+        plotter.show()
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_link_views():
