@@ -1508,7 +1508,9 @@ class BasePlotter(object):
                 raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
             if index_column < 0 or index_column >= self.shape[1]:
                 raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
-            return (index_row * (self.shape[0] - 1)) + index_column
+            sz = int(self.shape[0] * self.shape[1])
+            idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
+            return idxs[index_row, index_column]
 
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid
