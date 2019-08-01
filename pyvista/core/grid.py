@@ -151,7 +151,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         y = vtk_to_numpy(self.GetYCoordinates())
         z = vtk_to_numpy(self.GetZCoordinates())
         xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
-        return np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
     def points(self, points):
@@ -419,7 +419,7 @@ class UniformGrid(vtkImageData, Grid):
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
         xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
-        return np.c_[xx.ravel(), yy.ravel(), zz.ravel()]
+        return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
     def points(self, points):

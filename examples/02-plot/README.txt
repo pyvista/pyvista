@@ -1,9 +1,9 @@
-Plotting Examples
------------------
+Plotting
+--------
 
-These examples show case many of the possibilites for altering how you display
+These examples show case many of the possibilities for altering how you display
 spatial data. Explore these examples to learn how to leverage our powerful 3D
-plotting routines to perfrom tasks like:
+plotting routines to perform tasks like:
 
 * Color mapping scalar values with ``matplotlib`` colormaps
 * Creating animations as GIFs or movie files

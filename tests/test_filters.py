@@ -294,7 +294,7 @@ def test_glyph():
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, subset=0.5)
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
 
 
 def test_split_and_connectivity():
@@ -396,6 +396,10 @@ def test_plot_over_line():
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
     mesh.plot_over_line(a, b, resolution=1000, show=False)
+    # Test multicomponent
+    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_line(a, b, resolution=None, scalars='foo',
+        title='My Stuff', ylabel='3 Values', show=False)
 
 
 def test_slice_along_line():
@@ -445,6 +449,16 @@ def test_select_enclosed_points():
     assert isinstance(result, type(mesh))
     assert 'SelectedPoints' in result.scalar_names
     assert result.n_arrays == mesh.n_arrays + 1
+    # Now check non-closed surface
+    mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
+    surf = mesh.copy()
+    surf.rotate_x(90)
+    result = mesh.select_enclosed_points(surf, check_surface=False)
+    assert isinstance(result, type(mesh))
+    assert 'SelectedPoints' in result.scalar_names
+    assert result.n_arrays == mesh.n_arrays + 1
+    with pytest.raises(RuntimeError):
+        result = mesh.select_enclosed_points(surf, check_surface=True)
 
 
 def test_decimate_boundary():

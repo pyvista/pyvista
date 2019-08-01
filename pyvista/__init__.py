@@ -11,8 +11,11 @@ import scooby
 import vtk
 
 # get the int type from vtk
+VTK_ID_TYPE_SIZE = vtk.vtkIdTypeArray().GetDataTypeSize()
 ID_TYPE = np.int32
-if vtk.VTK_ID_TYPE == 12:
+if VTK_ID_TYPE_SIZE == 4:
+    ID_TYPE = np.int32
+elif VTK_ID_TYPE_SIZE == 8:
     ID_TYPE = np.int64
 
 
@@ -66,8 +69,8 @@ if scooby.in_ipykernel():
     try:
         import panel
         panel.extension('vtk')
-    except ImportError:
-        pass
+    except (ImportError, RuntimeError):
+        rcParams['use_panel'] = False
 
 # Set preferred plot theme
 try:

@@ -101,3 +101,8 @@ def test_get_sg_image_scraper():
 def test_voxelize():
     # mesh = examples.load_airplane()
     pass
+
+
+def test_report():
+    report = pyvista.Report()
+    assert report is not None
