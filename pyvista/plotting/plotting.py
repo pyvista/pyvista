@@ -1500,8 +1500,17 @@ class BasePlotter(object):
         elif isinstance(loc, int):
             return loc
         elif isinstance(loc, collections.Iterable):
-            assert len(loc) == 2, '"loc" must contain two items'
-            return loc[0]*self.shape[0] + loc[1]
+            if not len(loc) == 2:
+                raise AssertionError('"loc" must contain two items')
+            index_row = loc[0]
+            index_column = loc[1]
+            if index_row < 0 or index_row >= self.shape[0]:
+                raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
+            if index_column < 0 or index_column >= self.shape[1]:
+                raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
+            sz = int(self.shape[0] * self.shape[1])
+            idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
+            return idxs[index_row, index_column]
 
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid
@@ -1752,20 +1761,24 @@ class BasePlotter(object):
         renderer = self.renderers[self._active_renderer_index]
         renderer.remove_bounds_axes()
 
-    def subplot(self, index_x, index_y):
+    def subplot(self, index_row, index_column):
         """
         Sets the active subplot.
 
         Parameters
         ----------
-        index_x : int
-            Index of the subplot to activate in the x direction.
+        index_row : int
+            Index of the subplot to activate along the rows.
 
-        index_y : int
-            Index of the subplot to activate in the y direction.
+        index_column : int
+            Index of the subplot to activate along the columns.
 
         """
-        self._active_renderer_index = self.loc_to_index((index_x, index_y))
+        if index_row < 0 or index_row >= self.shape[0]:
+            raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
+        if index_column < 0 or index_column >= self.shape[1]:
+            raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
+        self._active_renderer_index = self.loc_to_index((index_row, index_column))
 
     def link_views(self, views=0):
         """
