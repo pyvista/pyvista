@@ -70,9 +70,13 @@ class BasePlotter(object):
         return object.__new__(cls)
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
-                 border_width=1.0):
+                 border_width=1.0, title=None):
         """ Initialize base plotter """
         self.image_transparent_background = rcParams['transparent_background']
+
+        if title is None:
+            title = rcParams['title']
+        self.title = str(title)
 
         # by default add border for multiple plots
         if border is None:
@@ -239,7 +243,10 @@ class BasePlotter(object):
             elif not self._first_time:
                 self.render()
 
-    def add_axes(self, interactive=None, color=None, box=False, box_arguments=None):
+    def add_axes(self, interactive=None, color=None, x_color=None,
+                 y_color=None, z_color=None,
+                 x_label='X', y_label='Y', z_label='Z',
+                 box=False, box_arguments=None):
         """ Add an interactive axes widget """
         if interactive is None:
             interactive = rcParams['interactive']
@@ -247,14 +254,36 @@ class BasePlotter(object):
             self.axes_widget.SetInteractive(interactive)
             self._update_axes_color(color)
             return
+        if x_color is None:
+            x_color = rcParams['axes']['x_color']
+        if y_color is None:
+            y_color = rcParams['axes']['y_color']
+        if z_color is None:
+            z_color = rcParams['axes']['z_color']
         # Chose widget type
         if box:
             if box_arguments is None:
                 box_arguments = {}
-            prop_assembly = create_axes_orientation_box(**box_arguments)
+            prop_assembly = create_axes_orientation_box(x_color=x_color,
+                y_color=y_color, z_color=z_color, x_label=x_label,
+                y_label=y_label, z_label=z_label, **box_arguments)
             self.axes_actor = prop_assembly
         else:
             self.axes_actor = vtk.vtkAxesActor()
+            self.axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
+            self.axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
+            self.axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
+            self.axes_actor.GetYAxisTipProperty().SetColor(parse_color(y_color))
+            self.axes_actor.GetZAxisShaftProperty().SetColor(parse_color(z_color))
+            self.axes_actor.GetZAxisTipProperty().SetColor(parse_color(z_color))
+            # Set labels
+            self.axes_actor.SetXAxisLabelText(x_label)
+            self.axes_actor.SetYAxisLabelText(y_label)
+            self.axes_actor.SetZAxisLabelText(z_label)
+            # Set Line width
+            self.axes_actor.GetXAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetYAxisShaftProperty().SetLineWidth(2)
+            self.axes_actor.GetZAxisShaftProperty().SetLineWidth(2)
         self.axes_widget = vtk.vtkOrientationMarkerWidget()
         self.axes_widget.SetOrientationMarker(self.axes_actor)
         if hasattr(self, 'iren'):
@@ -346,97 +375,124 @@ class BasePlotter(object):
                 self.iren.Render()
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
-                 rng=None, stitle=None, show_edges=None,
-                 point_size=5.0, opacity=1.0, line_width=None,
+                 clim=None, show_edges=None, edge_color=None,
+                 point_size=5.0, line_width=None, opacity=1.0,
                  flip_scalars=False, lighting=None, n_colors=256,
                  interpolate_before_map=False, cmap=None, label=None,
-                 reset_camera=None, scalar_bar_args=None,
-                 multi_colors=False, name=None, texture=None,
-                 render_points_as_spheres=None, smooth_shading=False,
-                 render_lines_as_tubes=False, edge_color=None,
-                 ambient=0.0, show_scalar_bar=None, nan_color=None,
+                 reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
+                 stitle=None, multi_colors=False, name=None, texture=None,
+                 render_points_as_spheres=None, render_lines_as_tubes=False,
+                 smooth_shading=False, ambient=0.0, nan_color=None,
                  nan_opacity=1.0, loc=None, culling=None,
-                 rgb=False, categories=False, **kwargs):
+                 rgb=False, categories=False, use_transparency=False, **kwargs):
         """
-        Adds a unstructured, structured, or surface mesh to the
-        plotting object.
-
-        Also accepts a 3D numpy.ndarray
+        Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
+        scene. This method using a mesh representation to view the surfaces
+        and/or geometry of datasets. For volume rendering, see
+        :func:`pyvista.BasePlotter.add_volume`.
 
         Parameters
         ----------
-        mesh : vtk unstructured, structured, polymesh, or 3D numpy.ndarray
-            A vtk unstructured, structured, or polymesh to plot.
+        mesh : pyvista.Common or pyvista.MultiBlock
+            Any PyVista or VTK mesh is supported. Also, any dataset
+            that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
+            points.
 
         color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
-
-            Color will be overridden when scalars are input.
+            Use to make the entire mesh have a single solid color.
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='#FFFFFF'``. Color will be overridden if scalars are
+            specified.
 
         style : string, optional
-            Visualization style of the vtk mesh.  One for the following:
-                style='surface'
-                style='wireframe'
-                style='points'
+            Visualization style of the mesh.  One of the following:
+            ``style='surface'``, ``style='wireframe'``, ``style='points'``.
+            Defaults to ``'surface'``. Note that ``'wireframe'`` only shows a
+            wireframe of the outer geometry.
 
-            Defaults to 'surface'
-
-        scalars : numpy array, optional
-            Scalars used to "color" the mesh.  Accepts an array equal
+        scalars : str or numpy.ndarray, optional
+            Scalars used to "color" the mesh.  Accepts a string name of an
+            array that is present on the mesh or an array equal
             to the number of cells or the number of points in the
             mesh.  Array should be sized as a single vector. If both
-            color and scalars are None, then the active scalars are
-            used
+            ``color`` and ``scalars`` are ``None``, then the active scalars are
+            used.
 
-        rng : 2 item list, optional
-            Range of mapper for scalars.  Defaults to minimum and
-            maximum of scalars array.  Example: ``[-1, 2]``. ``clim``
+        clim : 2 item list, optional
+            Color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
             is also an accepted alias for this.
-
-        stitle : string, optional
-            Scalar title.  By default there is no scalar legend bar.
-            Setting this creates the legend bar and adds a title to
-            it.  To create a bar with no title, use an empty string
-            (i.e. '').
 
         show_edges : bool, optional
             Shows the edges of a mesh.  Does not apply to a wireframe
             representation.
 
-        point_size : float, optional
-            Point size.  Applicable when style='points'.  Default 5.0
+        edge_color : string or 3 item list, optional, defaults to black
+            The solid color to give the edges when ``show_edges=True``.
+            Either a string, RGB list, or hex color string.
 
-        opacity : float, optional
-            Opacity of mesh.  Should be between 0 and 1.  Default 1.0.
-            A string option can also be specified to map the scalar range
-            to the opacity. Options are: linear, linear_r, geom, geom_r
+        point_size : float, optional
+            Point size of any nodes in the dataset plotted. Also applicable
+            when style='points'. Default ``5.0``
 
         line_width : float, optional
             Thickness of lines.  Only valid for wireframe and surface
             representations.  Default None.
 
+        opacity : float, str, array-like
+            Opacity of the mesh. If a siblge float value is given, it will be
+            the global opacity of the mesh and uniformly applied everywhere -
+            should be between 0 and 1. A string can also be specified to map
+            the scalar range to a predefined opacity transfer function
+            (options include: 'linear', 'linear_r', 'geom', 'geom_r').
+            A string could also be used to map a scalar array from the mesh to
+            the the opacity (must have same number of elements as the
+            ``scalars`` argument). Or you can pass a custum made trasfer
+            function that is an aray either ``n_colors`` in length or shorter.
+
         flip_scalars : bool, optional
-            Flip direction of cmap.
+            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            this as well.
 
         lighting : bool, optional
-            Enable or disable view direction lighting.  Default False.
+            Enable or disable view direction lighting. Default False.
 
         n_colors : int, optional
-            Number of colors to use when displaying scalars.  Default
-            256.
+            Number of colors to use when displaying scalars. Defaults to 256.
+            The scalar bar will also have this many colors.
 
         interpolate_before_map : bool, optional
             Enabling makes for a smoother scalar display.  Default
             False
 
         cmap : str, optional
-           cmap string.  See available matplotlib cmaps.  Only
-           applicable for when displaying scalars.  Defaults None
-           (rainbow).  Requires matplotlib.
+           Name of the Matplotlib colormap to us when mapping the ``scalars``.
+           See available Matplotlib colormaps.  Only applicable for when
+           displaying ``scalars``. Requires Matplotlib to be installed.
+           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+           ``cmocean`` are installed, their colormaps can be specified by name.
+
+        label : str, optional
+            String label to use when adding a legend to the scene with
+            :func:`pyvista.BasePlotter.add_legend`
+
+        reset_camera : bool, optional
+            Reset the camera after adding this mesh to the scene
+
+        scalar_bar_args : dict, optional
+            Dictionary of keyword arguments to pass when adding the scalar bar
+            to the scene. For options, see
+            :func:`pyvista.BasePlotter.add_scalar_bar`.
+
+        show_scalar_bar : bool
+            If False, a scalar bar will not be added to the scene. Defaults
+            to ``True``.
+
+        stitle : string, optional
+            Scalar bar title. By default the scalar bar is given a title of the
+            the scalar array used to color the mesh.
+            To create a bar with no title, use an empty string (i.e. '').
 
         multi_colors : bool, optional
             If a ``MultiBlock`` dataset is given this will color each
@@ -455,32 +511,48 @@ class BasePlotter(object):
             will pull a texture with that name associated to the input
             mesh.
 
+        render_points_as_spheres : bool, optional
+
+        render_lines_as_tubes : bool, optional
+
+        smooth_shading : bool, optional
+
         ambient : float, optional
             When lighting is enabled, this is the amount of light from
             0 to 1 that reaches the actor when not directed at the
-            light source emitted from the viewer.  Default 0.2.
+            light source emitted from the viewer.  Default 0.0.
 
         nan_color : string or 3 item list, optional, defaults to gray
-            The color to use for all NaN values in the plotted scalar
+            The color to use for all ``NaN`` values in the plotted scalar
             array.
 
         nan_opacity : float, optional
-            Opacity of NaN values.  Should be between 0 and 1.
+            Opacity of ``NaN`` values.  Should be between 0 and 1.
             Default 1.0
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example,
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
 
         culling : str, optional
             Does not render faces that are culled. Options are ``'front'`` or
             ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
-            meshes to be partially displayed.  Default False.
+            meshes to be partially displayed.  Defaults ``False``.
 
         rgb : bool, optional
             If an 2 dimensional array is passed as the scalars, plot those
-            values as RGB+A colors! ``rgba`` is also accepted alias for this.
+            values as RGB(A) colors! ``rgba`` is also accepted alias for this.
+            Opacity (the A) is optional.
 
         categories : bool, optional
             If set to ``True``, then the number of unique values in the scalar
             array will be used as the ``n_colors`` argument.
+
+        use_transparency : bool, optional
+            Invert the opacity mappings and make the values correspond to
+            transperency.
 
         Returns
         -------
@@ -508,14 +580,24 @@ class BasePlotter(object):
         if lighting is None:
             lighting = rcParams['lighting']
 
-        if rng is None:
-            rng = kwargs.get('clim', None)
+        if clim is None:
+            clim = kwargs.get('rng', None)
 
         if render_points_as_spheres is None:
             render_points_as_spheres = rcParams['render_points_as_spheres']
 
         if name is None:
             name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+
+        if nan_color is None:
+            nan_color = rcParams['nan_color']
+        nanr, nanb, nang = parse_color(nan_color)
+        nan_color = nanr, nanb, nang, nan_opacity
+        if color is True:
+            color = rcParams['color']
+
+        if texture == False:
+            texture = None
 
         if culling is None:
             culling = kwargs.get("backface_culling", False)
@@ -527,11 +609,11 @@ class BasePlotter(object):
         if isinstance(mesh, pyvista.MultiBlock):
             self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
-            if rng is None and scalars is not None:
+            if clim is None and scalars is not None:
                 # Get the data range across the array for all blocks
                 # if scalar specified
                 if isinstance(scalars, str):
-                    rng = mesh.get_data_range(scalars)
+                    clim = mesh.get_data_range(scalars)
                 else:
                     # TODO: an array was given... how do we deal with
                     #       that? Possibly a 2D arrays or list of
@@ -575,7 +657,7 @@ class BasePlotter(object):
                 if multi_colors:
                     color = next(colors)['color']
                 a = self.add_mesh(data, color=color, style=style,
-                                  scalars=ts, rng=rng, stitle=stitle,
+                                  scalars=ts, clim=clim, stitle=stitle,
                                   show_edges=show_edges,
                                   point_size=point_size, opacity=opacity,
                                   line_width=line_width,
@@ -605,22 +687,15 @@ class BasePlotter(object):
         # Compute surface normals if using smooth shading
         if smooth_shading:
             # extract surface if mesh is exterior
-            if isinstance(mesh, (pyvista.UnstructuredGrid, pyvista.StructuredGrid)):
+            if not isinstance(mesh, pyvista.PolyData):
                 grid = mesh
                 mesh = grid.extract_surface()
                 ind = mesh.point_arrays['vtkOriginalPointIds']
                 # remap scalars
-                if scalars is not None:
+                if isinstance(scalars, np.ndarray):
                     scalars = scalars[ind]
 
             mesh.compute_normals(cell_normals=False, inplace=True)
-
-        if nan_color is None:
-            nan_color = rcParams['nan_color']
-        nanr, nanb, nang = parse_color(nan_color)
-        nan_color = nanr, nanb, nang, nan_opacity
-        if color is True:
-            color = rcParams['color']
 
         if mesh.n_points < 1:
             raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
@@ -637,8 +712,6 @@ class BasePlotter(object):
                                      name=name, loc=loc, culling=culling)
 
         # Try to plot something if no preference given
-        if texture == False:
-            texture = None
         if scalars is None and color is None and texture is None:
             # Prefer texture first
             if len(list(mesh.textures.keys())) > 0:
@@ -646,13 +719,36 @@ class BasePlotter(object):
             # If no texture, plot any active scalar
             else:
                 # Make sure scalar components are not vectors/tuples
-                scalars = mesh.active_scalar
+                scalars = mesh.active_scalar_name
                 # Don't allow plotting of string arrays by default
-                if scalars is not None and np.issubdtype(scalars.dtype, np.number):
+                if scalars is not None and np.issubdtype(mesh.active_scalar.dtype, np.number):
                     if stitle is None:
-                        stitle = mesh.active_scalar_info[1]
+                        stitle = scalars
                 else:
                     scalars = None
+
+        # set main values
+        self.mesh = mesh
+        self.mapper = make_mapper(vtk.vtkDataSetMapper)
+        self.mapper.SetInputData(self.mesh)
+        self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
+        if interpolate_before_map:
+            self.mapper.InterpolateScalarsBeforeMappingOn()
+
+        actor, prop = self.add_actor(self.mapper,
+                                     reset_camera=reset_camera,
+                                     name=name, loc=loc, culling=backface_culling)
+
+        # Make sure scalars is a numpy array after this point
+        original_scalar_name = None
+        if isinstance(scalars, str):
+            self.mapper.SetArrayName(scalars)
+            original_scalar_name = scalars
+            scalars = get_scalar(mesh, scalars,
+                    preference=kwargs.get('preference', 'cell'), err=True)
+            if stitle is None:
+                stitle = original_scalar_name
+
 
         if texture == True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -672,6 +768,35 @@ class BasePlotter(object):
                 show_scalar_bar = False
             self.mapper.SetScalarModeToUsePointFieldData()
 
+        # Handle making opacity array =========================================
+
+        _custom_opac = False
+        if isinstance(opacity, str):
+            try:
+                # Get array from mesh
+                opacity = get_scalar(mesh, opacity,
+                        preference=kwargs.get('preference', 'cell'), err=True)
+                opacity = normalize(opacity)
+                _custom_opac = True
+            except:
+                # Or get opacity trasfer function
+                opacity = opacity_transfer_function(opacity, n_colors)
+            else:
+                if scalars.shape[0] != opacity.shape[0]:
+                    raise RuntimeError('Opacity array and scalars array must have the same number of elements.')
+        elif isinstance(opacity, (np.ndarray, list, tuple)):
+            opacity = np.array(opacity)
+            if scalars.shape[0] == opacity.shape[0]:
+                # User could pass an array of opacities for every point/cell
+                pass
+            else:
+                opacity = opacity_transfer_function(opacity, n_colors)
+
+        if use_transparency and np.max(opacity) <=1.0:
+            opacity = 1 - opacity
+        elif use_transparency and isinstance(opacity, np.ndarray):
+            opacity = 255 - opacity
+
         # Scalar formatting ===================================================
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
@@ -681,17 +806,16 @@ class BasePlotter(object):
                 cmap = rcParams['cmap']
             except ImportError:
                 pass
-        title = 'Data' if stitle is None else stitle
+        # Set the array title for when it is added back to the mesh
+        if _custom_opac:
+            title = '__custom_rgba'
+        elif stitle is None:
+            title = 'Data'
+        else:
+            title = stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
-            append_scalars = True
-            if isinstance(scalars, str):
-                title = scalars
-                scalars = get_scalar(mesh, scalars,
-                        preference=kwargs.get('preference', 'cell'), err=True)
-                if stitle is None:
-                    stitle = title
-                #append_scalars = False
+            set_active = True
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -717,34 +841,36 @@ class BasePlotter(object):
             if scalars.dtype == np.bool or (scalars.dtype == np.uint8 and not rgb):
                 scalars = scalars.astype(np.float)
 
-            # Scalar interpolation approach
-            if scalars.shape[0] == mesh.n_points:
-                self.mesh._add_point_scalar(scalars, title, append_scalars)
-                self.mapper.SetScalarModeToUsePointData()
+            def prepare_mapper(scalars):
+                # Scalar interpolation approach
+                if scalars.shape[0] == mesh.n_points:
+                    self.mesh._add_point_scalar(scalars, title, set_active)
+                    self.mapper.SetScalarModeToUsePointData()
+                elif scalars.shape[0] == mesh.n_cells:
+                    self.mesh._add_cell_scalar(scalars, title, set_active)
+                    self.mapper.SetScalarModeToUseCellData()
+                else:
+                    raise_not_matching(scalars, mesh)
+                # Common tasks
                 self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
                 if interpolate_before_map:
                     self.mapper.InterpolateScalarsBeforeMappingOn()
-            elif scalars.shape[0] == mesh.n_cells:
-                self.mesh._add_cell_scalar(scalars, title, append_scalars)
-                self.mapper.SetScalarModeToUseCellData()
-                self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-                if interpolate_before_map:
-                    self.mapper.InterpolateScalarsBeforeMappingOn()
-            else:
-                raise_not_matching(scalars, mesh)
+                if rgb or _custom_opac:
+                    self.mapper.SetColorModeToDirectScalars()
+                return
+
+
+            prepare_mapper(scalars)
 
             # Set scalar range
-            if rng is None:
-                rng = [np.nanmin(scalars), np.nanmax(scalars)]
-            elif isinstance(rng, float) or isinstance(rng, int):
-                rng = [-rng, rng]
+            if clim is None:
+                clim = [np.nanmin(scalars), np.nanmax(scalars)]
+            elif isinstance(clim, float) or isinstance(clim, int):
+                clim = [-clim, clim]
 
-            if np.any(rng) and not rgb:
-                self.mapper.scalar_range = rng[0], rng[1]
-            elif rgb:
-                self.mapper.SetColorModeToDirectScalars()
+            if np.any(clim) and not rgb:
+                self.mapper.scalar_range = clim[0], clim[1]
 
-            # Flip if requested
             table = self.mapper.GetLookupTable()
             table.SetNanColor(nan_color)
             if cmap is not None:
@@ -763,20 +889,29 @@ class BasePlotter(object):
                 ctable = cmap(np.linspace(0, 1, n_colors))*255
                 ctable = ctable.astype(np.uint8)
                 # Set opactities
-                if isinstance(opacity, str):
-                    ctable[:,-1] = opacity_transfer_function(opacity, n_colors)
+                if isinstance(opacity, np.ndarray) and not _custom_opac:
+                    ctable[:,-1] = opacity
                 if flip_scalars:
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
+                if _custom_opac:
+                    hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
+                    scalars = cmap(hue)[:, :3]
+                    # combine colors and alpha into a Nx4 matrix
+                    scalars = np.concatenate((scalars, opacity[:, None]), axis=1)
+                    scalars = (scalars * 255).astype(np.uint8)
+                    prepare_mapper(scalars)
 
             else:  # no cmap specified
                 if flip_scalars:
                     table.SetHueRange(0.0, 0.66667)
                 else:
                     table.SetHueRange(0.66667, 0.0)
-
         else:
             self.mapper.SetScalarModeToUseFieldData()
+
+
+        # Set actor properties ================================================
 
         # select view style
         if not style:
@@ -836,34 +971,53 @@ class BasePlotter(object):
             prop.SetLineWidth(line_width)
 
         # Add scalar bar if available
-        if stitle is not None and show_scalar_bar and not rgb:
+        if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
         return actor
 
 
-    def add_volume(self, volume, scalars=None, resolution=None,
+    def add_volume(self, volume, scalars=None, clim=None, resolution=None,
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
-                   loc=None, culling=None, multi_colors=False,
-                   blending='additive', mapper='fixed_point', rng=None,
+                   loc=None, culling=False, multi_colors=False,
+                   blending='composite', mapper='fixed_point',
                    stitle=None, scalar_bar_args=None,
                    show_scalar_bar=None, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
-        Requires a 3D numpy.ndarray or pyvista.UniformGrid.
+        Requires a 3D :class:`numpy.ndarray` or :class:`pyvista.UniformGrid`.
 
         Parameters
         ----------
-        data: 3D numpy.ndarray or pyvista.UnformGrid
-            The input array to visualize, assuming the array values denote
-            scalar intensities.
+        volume : 3D numpy.ndarray or pyvista.UnformGrid
+            The input volume to visualize. 3D numpy arrays are accepted.
 
-        opacity : float or string, optional
-            Opacity of input array. Options are: linear, linear_r, geom, geom_r.
-            Defaults to 'linear'. Can also be given as a scalar value between 0
-            and 1.
+        scalars : str or numpy.ndarray, optional
+            Scalars used to "color" the mesh.  Accepts a string name of an
+            array that is present on the mesh or an array equal
+            to the number of cells or the number of points in the
+            mesh.  Array should be sized as a single vector. If both
+            ``color`` and ``scalars`` are ``None``, then the active scalars are
+            used.
+
+        clim : 2 item list, optional
+            Color bar range for scalars.  Defaults to minimum and
+            maximum of scalars array.  Example: ``[-1, 2]``. ``rng``
+            is also an accepted alias for this.
+
+        opacity : string or numpy.ndarray, optional
+            Opacity mapping for the scalars array.
+            A string can also be specified to map the scalar range to a
+            predefined opacity transfer function (options include: 'linear',
+            'linear_r', 'geom', 'geom_r'). Or you can pass a custum made
+            trasfer function that is an aray either ``n_colors`` in length or
+            shorter.
+
+        n_colors : int, optional
+            Number of colors to use when displaying scalars. Defaults to 256.
+            The scalar bar will also have this many colors.
 
         flip_scalars : bool, optional
             Flip direction of cmap.
@@ -873,9 +1027,18 @@ class BasePlotter(object):
             256.
 
         cmap : str, optional
-           cmap string.  See available matplotlib cmaps. Only applicable for when
-           displaying scalars.  Defaults to None (jet).  Requires matplotlib.
-           Will be overridden if multi_colors is set to True.
+           Name of the Matplotlib colormap to us when mapping the ``scalars``.
+           See available Matplotlib colormaps.  Only applicable for when
+           displaying ``scalars``. Requires Matplotlib to be installed.
+           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+           ``cmocean`` are installed, their colormaps can be specified by name.
+
+        flip_scalars : bool, optional
+            Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
+            this as well.
+
+        reset_camera : bool, optional
+            Reset the camera after adding this mesh to the scene
 
         name : str, optional
             The name for the added actor so that it can be easily
@@ -883,8 +1046,9 @@ class BasePlotter(object):
             rendering window, it will be replaced by the new actor.
 
         ambient : float, optional
-            The amount of light from 0 to 1 that reaches the actor when not
-            directed at the light source emitted from the viewer.  Default 0.0.
+            When lighting is enabled, this is the amount of light from
+            0 to 1 that reaches the actor when not directed at the
+            light source emitted from the viewer.  Default 0.0.
 
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
@@ -895,12 +1059,11 @@ class BasePlotter(object):
             Does not render faces that are culled. Options are ``'front'`` or
             ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
-            meshes to be partially displayed.  Default False.
+            meshes to be partially displayed.  Defaults ``False``.
 
         categories : bool, optional
-            If fetching a colormap from matplotlib, this is the number of
-            categories to use in that colormap. If set to ``True``, then
-            the number of unique values in the scalar array will be used.
+            If set to ``True``, then the number of unique values in the scalar
+            array will be used as the ``n_colors`` argument.
 
         multi_colors : bool, optional
             Whether or not to use multiple colors when plotting MultiBlock
@@ -911,6 +1074,24 @@ class BasePlotter(object):
             Blending mode for visualisation of the input object(s). Can be
             one of 'additive', 'maximum', 'minimum', 'composite', or
             'average'. Defaults to 'additive'.
+
+        mapper : str, optional
+            Volume mapper to use given by name. Options include:
+            ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and ``'smart'``.
+
+        scalar_bar_args : dict, optional
+            Dictionary of keyword arguments to pass when adding the scalar bar
+            to the scene. For options, see
+            :func:`pyvista.BasePlotter.add_scalar_bar`.
+
+        show_scalar_bar : bool
+            If False, a scalar bar will not be added to the scene. Defaults
+            to ``True``.
+
+        stitle : string, optional
+            Scalar bar title. By default the scalar bar is given a title of the
+            the scalar array used to color the mesh.
+            To create a bar with no title, use an empty string (i.e. '').
 
         Returns
         -------
@@ -923,8 +1104,8 @@ class BasePlotter(object):
         if name is None:
             name = '{}({})'.format(type(volume).__name__, str(hex(id(volume))))
 
-        if rng is None:
-            rng = kwargs.get('clim', None)
+        if clim is None:
+            clim = kwargs.get('rng', None)
 
         if scalar_bar_args is None:
             scalar_bar_args = {}
@@ -981,7 +1162,7 @@ class BasePlotter(object):
                                     n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
-                                    culling=culling, rng=rng,
+                                    culling=backface_culling, clim=clim,
                                     mapper=mapper, **kwargs)
 
                 actors.append(a)
@@ -1006,7 +1187,7 @@ class BasePlotter(object):
         ##############
 
         title = 'Data' if stitle is None else stitle
-        append_scalars = False
+        set_active = False
         if isinstance(scalars, str):
             title = scalars
             scalars = get_scalar(volume, scalars,
@@ -1014,7 +1195,7 @@ class BasePlotter(object):
             if stitle is None:
                 stitle = title
         else:
-            append_scalars = True
+            set_active = True
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
@@ -1042,32 +1223,32 @@ class BasePlotter(object):
 
         # Scalar interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume._add_point_scalar(scalars, title, append_scalars)
+            volume._add_point_scalar(scalars, title, set_active)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume._add_cell_scalar(scalars, title, append_scalars)
+            volume._add_cell_scalar(scalars, title, set_active)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
 
         # Set scalar range
-        if rng is None:
-            rng = [np.nanmin(scalars), np.nanmax(scalars)]
-        elif isinstance(rng, float) or isinstance(rng, int):
-            rng = [-rng, rng]
+        if clim is None:
+            clim = [np.nanmin(scalars), np.nanmax(scalars)]
+        elif isinstance(clim, float) or isinstance(clim, int):
+            clim = [-clim, clim]
 
         ###############
 
         scalars = scalars.astype(np.float)
-        idxs0 = scalars < rng[0]
-        idxs1 = scalars > rng[1]
+        idxs0 = scalars < clim[0]
+        idxs1 = scalars > clim[1]
         scalars[idxs0] = np.nan
         scalars[idxs1] = np.nan
         scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
         # scalars = scalars.astype(np.uint8)
         volume[title] = scalars
 
-        self.mapper.scalar_range = rng
+        self.mapper.scalar_range = clim
 
         # Set colormap and build lookup table
         table = vtk.vtkLookupTable()
@@ -1106,6 +1287,9 @@ class BasePlotter(object):
             opacity_values = [opacity] * n_colors
         elif isinstance(opacity, str):
             opacity_values = pyvista.opacity_transfer_function(opacity, n_colors)
+        elif isinstance(opacity, (np.ndarray, list, tuple)):
+            opacity = np.array(opacity)
+            opacity_values = opacity_transfer_function(opacity, n_colors)
 
         opacity_tf = vtk.vtkPiecewiseFunction()
         for ii in range(n_colors):
@@ -1118,7 +1302,7 @@ class BasePlotter(object):
         lut[:,3] = opacity_values
         lut = lut.astype(np.uint8)
         table.SetTable(VN.numpy_to_vtk(lut))
-        table.SetRange(*rng)
+        table.SetRange(*clim)
         self.mapper.lookup_table = table
 
         self.mapper.SetInputData(volume)
@@ -1179,7 +1363,7 @@ class BasePlotter(object):
         if name is None:
             if not hasattr(self, 'mapper'):
                 raise RuntimeError('This plotter does not have an active mapper.')
-            self.mappe.scalar_range = clim
+            self.mapper.scalar_range = clim
             return
 
         # Use the name to find the desired actor
@@ -1828,7 +2012,7 @@ class BasePlotter(object):
 
         # check if maper exists
         if mapper is None:
-            if self.mapper is None:
+            if not hasattr(self, 'mapper') or self.mapper is None:
                 raise Exception('Mapper does not exist.  ' +
                                 'Add a mesh with scalars first.')
             mapper = self.mapper
@@ -1836,19 +2020,19 @@ class BasePlotter(object):
         if title:
             # Check that this data hasn't already been plotted
             if title in list(self._scalar_bar_ranges.keys()):
-                rng = list(self._scalar_bar_ranges[title])
+                clim = list(self._scalar_bar_ranges[title])
                 newrng = mapper.scalar_range
                 oldmappers = self._scalar_bar_mappers[title]
                 # get max for range and reset everything
-                if newrng[0] < rng[0]:
-                    rng[0] = newrng[0]
-                if newrng[1] > rng[1]:
-                    rng[1] = newrng[1]
+                if newrng[0] < clim[0]:
+                    clim[0] = newrng[0]
+                if newrng[1] > clim[1]:
+                    clim[1] = newrng[1]
                 for mh in oldmappers:
-                    mh.scalar_range = rng[0], rng[1]
-                mapper.scalar_range = rng[0], rng[1]
+                    mh.scalar_range = clim[0], clim[1]
+                mapper.scalar_range = clim[0], clim[1]
                 self._scalar_bar_mappers[title].append(mapper)
-                self._scalar_bar_ranges[title] = rng
+                self._scalar_bar_ranges[title] = clim
                 # Color bar already present and ready to be used so returning
                 return
 
@@ -1863,7 +2047,7 @@ class BasePlotter(object):
             if position_x is None:
                 if vertical:
                     position_x = rcParams['colorbar_vertical']['position_x']
-                    position_x -= slot * width
+                    position_x -= slot * (width + 0.2 * width)
                 else:
                     position_x = rcParams['colorbar_horizontal']['position_x']
 
@@ -1917,9 +2101,9 @@ class BasePlotter(object):
 
         # Set properties
         if title:
-            rng = self.mapper.scalar_range
-            self._scalar_bar_ranges[title] = rng
-            self._scalar_bar_mappers[title] = [self.mapper]
+            clim = mapper.scalar_range
+            self._scalar_bar_ranges[title] = clim
+            self._scalar_bar_mappers[title] = [mapper]
 
             self.scalar_bar.SetTitle(title)
             title_text = self.scalar_bar.GetTitleTextProperty()
@@ -2060,15 +2244,20 @@ class BasePlotter(object):
 
     def close(self):
         """ closes render window """
-        # must close out axes marker
+        # must close out widgets first
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
+
+        if hasattr(self, 'scalar_widget'):
+            del self.scalar_widget
 
         # reset scalar bar stuff
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
+        self._scalar_bar_actors = {}
+        self._scalar_bar_widgets = {}
 
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
@@ -2104,6 +2293,9 @@ class BasePlotter(object):
         position : str, tuple(float)
             String name of the position or length 2 tuple of the pixelwise
             position to place the bottom left corner of the text box.
+            If string name is used, returns a `vtkCornerAnnotation` object
+            normally used for fixed labels (like title or xlabel).
+            If tuple is used, returns a more general `vtkOpenGLTextActor`.
             Default is to find the top left corner of the renderering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
@@ -2874,37 +3066,46 @@ class BasePlotter(object):
             self.remove_actor(self.legend, reset_camera=False)
             self._render()
 
-    def enable_cell_picking(self, mesh=None, callback=None, show=True,
-                            show_message=True, style='wireframe', line_width=5,
-                            color='pink', font_size=18, **kwargs):
+    def get_pick_position(self):
+        """Get the pick position/area as x0, y0, x1, y1"""
+        return self.renderer.get_pick_position()
+
+    def enable_cell_picking(self, mesh=None, callback=None, through=True,
+                            show=True, show_message=True, style='wireframe',
+                            line_width=5, color='pink', font_size=18, **kwargs):
         """
         Enables picking of cells.  Press r to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
         saved to self.picked_cells.
-
         Uses last input mesh for input
+
+        Warning
+        -------
+        Visible cell picking (``through=False``) is known to not perfrom well
+        and produce incorrect selections on non-triangulated meshes if using
+        any grpahics card other than NVIDIA. A warning will be thrown if the
+        mesh is not purely triangles when using visible cell selection.
 
         Parameters
         ----------
         mesh : vtk.UnstructuredGrid, optional
             UnstructuredGrid grid to select cells from.  Uses last
             input grid by default.
-
         callback : function, optional
             When input, calls this function after a selection is made.
             The picked_cells are input as the first parameter to this function.
-
+        through : bool, optional
+            When True (default) the picker will select all cells through the
+            mesh. When False, the picker will select only visible cells on the
+            mesh's surface.
         show : bool
             Show the selection interactively
-
         show_message : bool, str
             Show the message about how to use the cell picking tool. If this
             is a string, that will be the message shown.
-
         kwargs : optional
             All remaining keyword arguments are used to control how the
             selection is intereactively displayed
-
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
@@ -2915,18 +3116,11 @@ class BasePlotter(object):
             mesh = self.mesh
 
 
-        def pick_call_back(picker, event_id):
-            extract = vtk.vtkExtractGeometry()
-            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
-            extract.SetInputData(mesh)
-            extract.SetImplicitFunction(picker.GetFrustum())
-            extract.Update()
-            self.picked_cells = pyvista.wrap(extract.GetOutput())
-
+        def end_pick_helper(picker, event_id):
             if show:
                 # Use try incase selection is empty
                 try:
-                    self.add_mesh(self.picked_cells, name='cell_picking_selection',
+                    self.add_mesh(self.picked_cells, name='_cell_picking_selection',
                         style=style, color=color, line_width=line_width, **kwargs)
                 except RuntimeError:
                     pass
@@ -2935,9 +3129,56 @@ class BasePlotter(object):
                 callback(self.picked_cells)
 
             # TODO: Deactivate selection tool
+            return
 
-        area_picker = vtk.vtkAreaPicker()
-        area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, pick_call_back)
+
+        def through_pick_call_back(picker, event_id):
+            extract = vtk.vtkExtractGeometry()
+            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
+            extract.SetInputData(mesh)
+            extract.SetImplicitFunction(picker.GetFrustum())
+            extract.Update()
+            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            return end_pick_helper(picker, event_id)
+
+
+        def visible_pick_call_back(picker, event_id):
+            x0,y0,x1,y1 = self.get_pick_position()
+            selector = vtk.vtkOpenGLHardwareSelector()
+            selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
+            selector.SetRenderer(self.renderer)
+            selector.SetArea(x0,y0,x1,y1)
+            cellids = selector.Select().GetNode(0)
+            if cellids is None:
+                # No selection
+                return
+            selection = vtk.vtkSelection()
+            selection.AddNode(cellids)
+            extract = vtk.vtkExtractSelectedIds()
+            extract.SetInputData(0, mesh)
+            extract.SetInputData(1, selection)
+            extract.Update()
+            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            return end_pick_helper(picker, event_id)
+
+
+        area_picker = vtk.vtkRenderedAreaPicker()
+        if through:
+            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
+        else:
+            # check if mesh is triangulated or not
+            # Reference:
+            #     https://github.com/pyvista/pyvista/issues/277
+            #     https://github.com/pyvista/pyvista/pull/281
+            message = "Surface picking non-triangulated meshes is known to "\
+                      "not work properly with non-NVIDIA GPUs. Please "\
+                      "consider triangulating your mesh:\n"\
+                      "\t`.extract_geometry().tri_filter()`"
+            if (not isinstance(mesh, pyvista.PolyData) or
+                    mesh.faces.size % 4 or
+                    not np.all(mesh.faces.reshape(-1, 4)[:,0] == 3)):
+                logging.warning(message)
+            area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
         self.iren.SetPicker(area_picker)
@@ -2946,7 +3187,7 @@ class BasePlotter(object):
         if show_message:
             if show_message == True:
                 show_message = "Press R to toggle selection tool"
-            self.add_text(str(show_message), font_size=font_size)
+            self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
         return
 
 
@@ -3221,8 +3462,6 @@ class Plotter(BasePlotter):
                     renderer.camera_position = cpos
             self._first_time = False
 
-        if title:
-            self.ren_win.SetWindowName(title)
 
         # if full_screen:
         if full_screen:
@@ -3236,6 +3475,13 @@ class Plotter(BasePlotter):
         # Render
         log.debug('Rendering')
         self.ren_win.Render()
+
+        # This has to be after the first render for some reason
+        if title is None:
+            title = self.title
+        if title:
+            self.ren_win.SetWindowName(title)
+            self.title = title
 
         # Keep track of image for sphinx-gallery
         self.last_image = self.screenshot(screenshot, return_img=True)
@@ -3300,6 +3546,7 @@ class Plotter(BasePlotter):
 
     def plot(self, *args, **kwargs):
         """ Present for backwards compatibility. Use `show()` instead """
+        logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
 
     def render(self):

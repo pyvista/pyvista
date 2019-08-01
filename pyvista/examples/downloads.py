@@ -376,3 +376,89 @@ def download_tetra_dc_mesh():
     inv = pyvista.read(filename)
     inv.set_active_scalar('Resistivity(log10)')
     return pyvista.MultiBlock({'forward':fwd, 'inverse':inv})
+
+
+def download_model_with_variance():
+    return _download_and_read("model_with_variance.vtu")
+
+
+def download_carburator():
+    """Scan of a carburator from
+        https://www.laserdesign.com/sample-files/carburetor/
+    """
+    url = "http://3dgallery.gks.com/2012/carburator/carburator2.php"
+    filename, _ = _retrieve_file(url, 'carburator.ply')
+    return pyvista.read(filename)
+
+
+def download_woman():
+    """Scan of a woman from
+        https://www.laserdesign.com/sample-files/full-body-scan-with-texture/
+    """
+    url = "http://3dgallery.gks.com/2012/bodyscan/bodyscan3.php"
+    filename, _ = _retrieve_file(url, 'woman.stl')
+    return pyvista.read(filename)
+
+
+def download_lobster():
+    """Scan of a lobster from
+        https://www.laserdesign.com/lobster-scan-data
+    """
+    url = "http://3dgallery.gks.com/2016/lobster/index2.php"
+    filename, _ = _retrieve_file(url, 'lobster.ply')
+    return pyvista.read(filename)
+
+
+def download_face2():
+    """Scan of a man's face from
+        https://www.laserdesign.com/sample-files/mans-face/
+    """
+    url = "http://3dgallery.gks.com/2012/face/"
+    filename, _ = _retrieve_file(url, 'man_face.stl')
+    return pyvista.read(filename)
+
+
+def download_urn():
+    """Scan of a burial urn from
+        https://www.laserdesign.com/sample-files/burial-urn/
+    """
+    url = "http://3dgallery.gks.com/2012/urn/urn3.php"
+    filename, _ = _retrieve_file(url, 'urn.stl')
+    return pyvista.read(filename)
+
+
+def download_pepper():
+    """Scan of a burial urn from
+        https://www.laserdesign.com/sample-files/hot-red-pepper/
+    """
+    url = "http://3dgallery.gks.com/2012/redpepper/redpepper2.php"
+    filename, _ = _retrieve_file(url, 'pepper.ply')
+    return pyvista.read(filename)
+
+
+def download_drill():
+    """Scan of a power drill from
+        https://www.laserdesign.com/drill-scan-data
+    """
+    url = "http://3dgallery.gks.com/2015/ryobi/index1.php"
+    filename, _ = _retrieve_file(url, 'pepper.obj')
+    return pyvista.read(filename)
+
+
+
+def download_action_figure():
+    """Scan of an action figure from
+        https://www.laserdesign.com/sample-files/action-figure/
+    """
+    url = "http://3dgallery.gks.com/2013/tigerfighter"
+    filename, _ = _retrieve_file(url, 'tigerfighter.obj')
+    return pyvista.read(filename)
+
+
+def download_turbine_blade():
+    """Scan of a turbine blade from
+        https://www.laserdesign.com/sample-files/blade/
+    """
+    url = "http://3dgallery.gks.com/2012/blade/blade.php"
+    filename, _ = _retrieve_file(url, 'turbine_blade.stl')
+    return pyvista.read(filename)

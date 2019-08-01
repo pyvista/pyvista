@@ -159,9 +159,7 @@ manually interact with the plotting window:
     plotter = pv.Plotter(off_screen=True)
     plotter.add_mesh(data, color='tan')
     plotter.camera_position = cpos
-    plotter.show(auto_close=False)
-    # plotter.screenshot('airplane.png')
-    plotter.close()
+    plotter.show(screenshot='airplane.png')
 
 
 Be sure to check out all the available plotters for your use case:

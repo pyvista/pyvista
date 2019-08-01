@@ -74,10 +74,12 @@ print("Original volume: {}".format(dataset.volume))
 
 ###############################################################################
 # Or better yet, you could simply extract the largest volume from your
-# thresholded dataset:
+# thresholded dataset by passing ``largest=True`` to the ``connectivity``
+# filter or by using ``extract_largest`` filter (both are equivalent).
 
 # Grab the largest connected volume present
-largest = threshed.connectivity(largest=1)
+largest = threshed.connectivity(largest=True)
+# or: largest = threshed.extract_largest()
 
 # Get volume as numeric value
 large_volume = largest.volume

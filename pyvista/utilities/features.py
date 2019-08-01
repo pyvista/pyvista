@@ -21,7 +21,7 @@ def voxelize(mesh, density):
     mask = selection.point_arrays['SelectedPoints'].view(np.bool)
 
     # extract cells from point indices
-    return ugrid.extract_selection_points(mask)
+    return ugrid.extract_points(mask)
 
 
 def create_grid(dataset, dimensions=(101, 101, 101)):
