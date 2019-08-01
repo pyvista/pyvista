@@ -4,7 +4,7 @@
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
 
-Create a spline from a numpy array of XYZ vertices
+Create a spline/polyline from a numpy array of XYZ vertices
 """
 
 # sphinx_gallery_thumbnail_number = 2
