@@ -737,7 +737,7 @@ class BasePlotter(object):
 
         actor, prop = self.add_actor(self.mapper,
                                      reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling)
+                                     name=name, loc=loc, culling=culling)
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
@@ -1162,7 +1162,7 @@ class BasePlotter(object):
                                     n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
-                                    culling=backface_culling, clim=clim,
+                                    culling=culling, clim=clim,
                                     mapper=mapper, **kwargs)
 
                 actors.append(a)

@@ -479,7 +479,7 @@ def test_camera():
     plotter.view_xy()
     plotter.view_xz()
     plotter.view_yz()
-    plotter.add_mesh(examples.load_uniform(), reset_camera=True, backface_culling=True)
+    plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
     plotter.view_xy(True)
     plotter.view_xz(True)
     plotter.view_yz(True)
@@ -508,7 +508,7 @@ def test_multi_renderers():
     plotter.subplot(1, 1)
     plotter.add_text('Render Window 3', loc=loc, font_size=30)
     plotter.add_mesh(pyvista.Cone(), color='g', loc=loc, show_edges=True,
-                     backface_culling=True)
+                     culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
     plotter.show_bounds(all_edges=True)
 
