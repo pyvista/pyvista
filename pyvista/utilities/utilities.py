@@ -334,7 +334,11 @@ def trans_from_matrix(matrix):
 
 def wrap(vtkdataset):
     """This is a convenience method to safely wrap any given VTK data object
-    to its appropriate PyVista data object.
+    to its appropriate PyVista data object. Other formats that are supported
+    include:
+
+    * 2D :class:`numpy.ndarray` of XYZ vertices
+    * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     """
     wrappers = {
         'vtkUnstructuredGrid' : pyvista.UnstructuredGrid,

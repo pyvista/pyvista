@@ -355,7 +355,7 @@ def test_axes():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_box_axes():
     plotter = pyvista.Plotter(off_screen=True)
-    plotter.add_axes(box=True)
+    plotter.add_axes(box=True, box_arguments={'color_box':True})
     plotter.add_mesh(pyvista.Sphere())
     plotter.show()
 
@@ -640,3 +640,57 @@ def test_plot_eye_dome_lighting():
     p.add_mesh(mesh)
     p.enable_eye_dome_lighting()
     p.show()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.enable_eye_dome_lighting()
+    p.disable_eye_dome_lighting()
+    p.show()
+
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_opacity_by_array():
+    mesh = examples.load_uniform()
+    # Test with opacity arry
+    mesh['opac'] = mesh['Spatial Point Data'] / 100.
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, scalars='Spatial Point Data', opacity='opac',)
+    p.show()
+    # Test with uncertainty array (transperancy)
+    mesh['unc'] = mesh['Spatial Point Data']
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',
+               use_transparency=True)
+    p.show()
+    # Test using mismatched arrays
+    with pytest.raises(RuntimeError):
+        p = pyvista.Plotter(off_screen=OFF_SCREEN)
+        p.add_mesh(mesh, scalars='Spatial Cell Data', opacity='unc',)
+        p.show()
+    # Test with user defined transfer function
+    opacities = [0,0.2,0.9,0.2,0.1]
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, scalars='Spatial Point Data', opacity=opacities,)
+    p.show()
+
+
+def test_opacity_transfer_functions():
+    n = 256
+    mapping = pyvista.opacity_transfer_function('linear', n)
+    assert len(mapping) == n
+    mapping = pyvista.opacity_transfer_function('sigmoid_10', n)
+    assert len(mapping) == n
+    with pytest.raises(KeyError):
+        mapping = pyvista.opacity_transfer_function('foo', n)
+    with pytest.raises(RuntimeError):
+        mapping = pyvista.opacity_transfer_function(np.linspace(0, 1, 2*n), n)
+    foo = np.linspace(0, n, n)
+    mapping = pyvista.opacity_transfer_function(foo, n)
+    assert np.allclose(foo, mapping)
+    foo = [0,0.2,0.9,0.2,0.1]
+    mapping = pyvista.opacity_transfer_function(foo, n, interpolate=False)
+    assert len(mapping) == n
+    foo = [3, 5, 6, 10]
+    mapping = pyvista.opacity_transfer_function(foo, n)
+    assert len(mapping) == n

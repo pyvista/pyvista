@@ -1,13 +1,13 @@
 import logging
 import os
 import time
-from threading import Thread
 
 import numpy as np
 import scooby
 import vtk
 import vtk.qt
 
+import pyvista
 from .plotting import BasePlotter
 from .theme import rcParams
 
@@ -47,8 +47,21 @@ class QFileDialog(object):
     pass
 
 
+def pyqtSlot(*args, **kwargs):
+    """dummy function for environments without pyqt5"""
+    return lambda *x: None
+
+
+class QMainWindow(object):
+    pass
+
+
+class QObject(object):
+    pass
+
+
 try:
-    from PyQt5.QtCore import pyqtSignal
+    from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
     from PyQt5 import QtGui
     from PyQt5 import QtCore
@@ -269,37 +282,44 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     """
     render_trigger = pyqtSignal()
     allow_quit_keypress = True
-    signal_close = pyqtSignal()
 
-    def __init__(self, parent=None, title=None, shape=(1, 1), **kwargs):
+    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None, **kwargs):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape)
+        BasePlotter.__init__(self, shape=shape, title=title)
         self.parent = parent
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
-        self.iren = self.ren_win.GetInteractor()
 
         self.background_color = rcParams['background']
-
-        if title:
+        if self.title:
             self.setWindowTitle(title)
 
-        self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
-        self.iren.Initialize()
+        if off_screen is None:
+            off_screen = pyvista.OFF_SCREEN
 
-        # Enter trackball camera mode
-        istyle = vtk.vtkInteractorStyleTrackballCamera()
-        self.SetInteractorStyle(istyle)
-        self.add_axes()
+        if off_screen:
+            self.ren_win.SetOffScreenRendering(1)
+        else:
+            self.iren = self.ren_win.GetInteractor()
+            self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
 
-        # QVTKRenderWindowInteractor doesn't have a "q" quit event
-        self.iren.AddObserver("KeyPressEvent", self.key_quit)
+            # Enter trackball camera mode
+            istyle = vtk.vtkInteractorStyleTrackballCamera()
+            self.SetInteractorStyle(istyle)
+            self.add_axes()
+
+            self.iren.Initialize()
+
+            # QVTKRenderWindowInteractor doesn't have a "q" quit event
+            self.iren.AddObserver("KeyPressEvent", self.key_quit)
+
+
 
     def key_quit(self, obj=None, event=None):  # pragma: no cover
         try:
@@ -311,20 +331,23 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             pass
 
     def quit(self):
-        self.iren.TerminateApp()
-        self.close()
-        self.signal_close.emit()
+        """Quit application"""
+        if hasattr(self, 'iren'):
+            self.iren.TerminateApp()
+        QVTKRenderWindowInteractor.close(self)
 
 
 class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None, **kwargs):
+    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None,
+                 off_screen=None, **kwargs):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
         self.saved_camera_positions = []
+        self.counters = []
 
         if window_size is None:
             window_size = rcParams['window_size']
@@ -340,6 +363,8 @@ class BackgroundPlotter(QtInteractor):
 
             from IPython.external.qt_for_kernel import QtGui
             QtGui.QApplication.instance()
+        else:
+            ipython = None
 
         # run within python
         if app is None:
@@ -349,13 +374,16 @@ class BackgroundPlotter(QtInteractor):
                 app = QApplication([''])
 
         self.app = app
-        self.app_window = QMainWindow()
+        self.app_window = MainWindow()
+        self.app_window.setWindowTitle(kwargs.get('title', rcParams['title']))
 
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
-        QtInteractor.__init__(self, parent=self.frame, shape=shape, **kwargs)
-        self.signal_close.connect(self.app_window.close)
+
+        QtInteractor.__init__(self, parent=self.frame, shape=shape, 
+                              off_screen=off_screen, **kwargs)
+        self.app_window.signal_close.connect(self.quit)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -364,7 +392,7 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.quit)
+        file_menu.addAction('Exit', self.app_window.close)
 
         view_menu = main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
@@ -372,7 +400,9 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addAction('Clear All', self.clear)
 
         tool_menu = main_menu.addMenu('Tools')
-        tool_menu.addAction('Enable Cell Picking (r-key)', self.enable_cell_picking)
+
+        tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
+        tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Reset Camera', self.reset_camera)
@@ -409,7 +439,10 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
 
-        if show:  # pragma: no cover
+        if off_screen is None:
+            off_screen = pyvista.OFF_SCREEN
+
+        if show and not off_screen:  # pragma: no cover
             self.app_window.show()
             self.show()
 
@@ -450,21 +483,17 @@ class BackgroundPlotter(QtInteractor):
         ensures the render window stays updated without consuming too
         many resources.
         """
-        self.render_trigger.connect(self.ren_win.Render)
-        twait = rate**-1
+        twait = (rate**-1) * 1000.0
+        self.render_timer = QTimer(parent=self.app_window)
+        self.render_timer.timeout.connect(self._render)
+        self.app_window.signal_close.connect(self.render_timer.stop)
+        self.render_timer.start(twait)
 
-        def render():
-            while self.active:
-                time.sleep(twait)
-                self._render()
+    def quit(self):
+        QtInteractor.quit(self)
 
-        self.render_thread = Thread(target=render)
-        self.render_thread.start()
-
-    def closeEvent(self, event):
-        self.active = False
-        self.app.quit()
-        self.close()
+    def close(self):
+        self.app_window.close()
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
@@ -528,9 +557,11 @@ class BackgroundPlotter(QtInteractor):
             return self.renderer.disable_eye_dome_lighting()
         return self.renderer.enable_eye_dome_lighting()
 
+    @pyqtSlot()
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
+        self.ren_win.Render() # force rendering
         return
 
     @property
@@ -545,6 +576,61 @@ class BackgroundPlotter(QtInteractor):
         """ set the render window size """
         BasePlotter.window_size.fset(self, window_size)
         self.app_window.setBaseSize(*window_size)
+        self.app_window.resize(*window_size)
 
     def __del__(self):  # pragma: no cover
-        self.close()
+        self.app_window.close()
+
+    def add_callback(self, func, interval=1000, count=None):
+        """Add a function that can update the scene in the background
+
+        Parameters
+        ----------
+        func : callable
+            Function to be called with no arguments.
+        interval : int
+            Time interval between calls to `func` in milliseconds.
+        count : int, optional
+            Number of times `func` will be called. If None,
+            `func` will be called until the main window is closed.
+        """
+        timer = QTimer(parent=self.app_window)
+        timer.timeout.connect(func)
+        timer.start(interval)
+        self.app_window.signal_close.connect(timer.stop)
+        if count is not None:
+            counter = Counter(count)
+            counter.signal_finished.connect(timer.stop)
+            timer.timeout.connect(counter.decrease)
+            self.counters.append(counter)
+
+
+class MainWindow(QMainWindow):
+    signal_close = pyqtSignal()
+
+    def __init__(self, parent=None):
+        super(MainWindow, self).__init__(parent)
+
+    def closeEvent(self, event):
+        self.signal_close.emit()
+        event.accept()
+
+
+class Counter(QObject):
+    signal_finished = pyqtSignal()
+
+    def __init__(self, count):
+        super(Counter, self).__init__()
+        if isinstance(count, int) and count > 0:
+            self.count = count
+        elif count > 0:
+            raise TypeError('Expected `count` to be'
+                            '`int` but got: {}'.format(type(count)))
+        else:
+            raise ValueError('count is not strictly positive.')
+
+    @pyqtSlot()
+    def decrease(self):
+        self.count -= 1
+        if self.count <= 0:
+            self.signal_finished.emit()

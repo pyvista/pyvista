@@ -4,7 +4,8 @@
 Create PolyData
 ~~~~~~~~~~~~~~~
 
-Creating a PolyData object from NumPy arrays
+Creating a PolyData (triangulated surface) object from NumPy arrays of the
+vertices and faces.
 
 """
 

@@ -1,5 +1,5 @@
-Loading and Creating Meshes
----------------------------
+Mesh Generation
+---------------
 
 These examples demo how to read various file types into PyVista mesh objects,
 create meshes from NumPy arrays, and how to create primitive geometric objects
