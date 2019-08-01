@@ -682,7 +682,7 @@ class BasePlotter(object):
         # Compute surface normals if using smooth shading
         if smooth_shading:
             # extract surface if mesh is exterior
-            if isinstance(mesh, (pyvista.UnstructuredGrid, pyvista.StructuredGrid)):
+            if not isinstance(mesh, pyvista.PolyData):
                 grid = mesh
                 mesh = grid.extract_surface()
                 ind = mesh.point_arrays['vtkOriginalPointIds']
@@ -3524,6 +3524,7 @@ class Plotter(BasePlotter):
 
     def plot(self, *args, **kwargs):
         """ Present for backwards compatibility. Use `show()` instead """
+        logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
 
     def render(self):
