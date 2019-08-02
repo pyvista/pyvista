@@ -380,7 +380,7 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setFrameStyle(QFrame.NoFrame)
 
 
-        QtInteractor.__init__(self, parent=self.frame, shape=shape, 
+        QtInteractor.__init__(self, parent=self.frame, shape=shape,
                               off_screen=off_screen, **kwargs)
         self.app_window.signal_close.connect(self.quit)
 
@@ -399,11 +399,11 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addAction('Clear All', self.clear)
 
         tool_menu = main_menu.addMenu('Tools')
-
         tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
         tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
 
         cam_menu = view_menu.addMenu('Camera')
+        cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
         cam_menu.addAction('Reset Camera', self.reset_camera)
         cam_menu.addAction('Isometric View', self.view_isometric)
         cam_menu.addAction('View XY Plane', self.view_xy)
@@ -555,6 +555,11 @@ class BackgroundPlotter(QtInteractor):
         if hasattr(self.renderer, 'edl_pass'):
             return self.renderer.disable_eye_dome_lighting()
         return self.renderer.enable_eye_dome_lighting()
+
+    def _toggle_parallel_projection(self):
+        if self.camera.GetParallelProjection():
+            return self.disable_parallel_projection()
+        return self.enable_parallel_projection()
 
     @pyqtSlot()
     def _render(self):

@@ -1528,6 +1528,24 @@ class BasePlotter(object):
         """ The active camera of the active renderer """
         return self.renderer.camera
 
+    @camera.setter
+    def camera(self, camera):
+        """Set the active camera for the rendering scene"""
+        self.renderer.camera = camera
+
+
+    def enable_parallel_projection(self):
+        """Set use parallel projection. The camera will have a parallel
+        projection. Parallel projection is often useful when viewing images or
+        2D datasets.
+        """
+        return self.renderer.enable_parallel_projection()
+
+
+    def disable_parallel_projection(self):
+        """Reset the camera to use perspective projection."""
+        return self.renderer.disable_parallel_projection()
+
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
                     xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
                     labels_off=False, loc=None):

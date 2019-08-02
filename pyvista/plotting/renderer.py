@@ -563,6 +563,19 @@ class Renderer(vtkRenderer):
             camera.GetViewUp()
         ]
 
+
+    def enable_parallel_projection(self):
+        """Set use parallel projection. The camera will have a parallel
+        projection. Parallel projection is often useful when viewing images or
+        2D datasets.
+        """
+        self.camera.SetParallelProjection(True)
+
+
+    def disable_parallel_projection(self):
+        """Reset the camera to use perspective projection."""
+        self.camera.SetParallelProjection(False)
+
     def remove_actor(self, actor, reset_camera=False):
         """
         Removes an actor from the Renderer.
