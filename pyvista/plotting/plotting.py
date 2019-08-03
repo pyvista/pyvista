@@ -1001,7 +1001,8 @@ class BasePlotter(object):
                    loc=None, backface_culling=False, multi_colors=False,
                    blending='composite', mapper='fixed_point',
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
-                   below_color=None, above_color=None,**kwargs):
+                   below_color=None, above_color=None, annotations=None,
+                   **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
