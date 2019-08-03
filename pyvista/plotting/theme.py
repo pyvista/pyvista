@@ -106,7 +106,7 @@ def set_plot_theme(theme):
 
 
 
-def parse_color(color):
+def parse_color(color, opacity=None):
     """Parses color into a vtk friendly rgb list.
     Values returned will be between 0 and 1.
     """
@@ -126,6 +126,8 @@ def parse_color(color):
         color='w'
         color=[1, 1, 1]
         color='#FFFFFF'""".format(color))
+    if opacity is not None and isinstance(opacity, (float, int)):
+        color = [color[0], color[1], color[2], opacity]
     return color
 
 

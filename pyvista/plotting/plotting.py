@@ -880,11 +880,11 @@ class BasePlotter(object):
             table.SetNanColor(nan_color)
             if above_color:
                 table.SetUseAboveRangeColor(True)
-                table.SetAboveRangeColor(*parse_color(above_color), 1)
+                table.SetAboveRangeColor(*parse_color(above_color, opacity=1))
                 scalar_bar_args.setdefault('above_label', 'Above')
             if below_color:
                 table.SetUseBelowRangeColor(True)
-                table.SetBelowRangeColor(*parse_color(below_color), 1)
+                table.SetBelowRangeColor(*parse_color(below_color, opacity=1))
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
