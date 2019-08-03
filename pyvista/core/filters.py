@@ -1728,7 +1728,7 @@ class DataSetFilters(object):
             return mesh
 
 
-    def merge(dataset, grid=None, merge_points=True, inplace=False,
+    def merge(dataset, grid=None, merge_points=False, inplace=False,
               main_has_priority=True):
         """
         Join one or many other grids to this grid.  Grid is updated
@@ -1744,10 +1744,11 @@ class DataSetFilters(object):
 
         merge_points : bool, optional
             Points in exactly the same location will be merged between
-            the two meshes.
+            the two meshes. Warning: this can leave degenerate point data.
 
         inplace : bool, optional
-            Updates grid inplace when True.
+            Updates grid inplace when True if the input type is an
+            :class:`pyvista.UnstructuredGrid`.
 
         main_has_priority : bool, optional
             When this parameter is true and merge_points is true,
@@ -1771,9 +1772,9 @@ class DataSetFilters(object):
         if not main_has_priority:
             append_filter.AddInputData(dataset)
 
-        if isinstance(grid, pyvista.UnstructuredGrid):
+        if isinstance(grid, pyvista.Common):
             append_filter.AddInputData(grid)
-        elif isinstance(grid, list):
+        elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
             for grid in grids:
                 append_filter.AddInputData(grid)
@@ -1784,9 +1785,18 @@ class DataSetFilters(object):
         append_filter.Update()
         merged = _get_output(append_filter)
         if inplace:
-            dataset.DeepCopy(merged)
+            if type(dataset) == type(merged):
+                dataset.DeepCopy(merged)
+            else:
+                raise TypeError("Mesh tpye {} not able to be overridden by output.".format(type(dataset)))
         else:
             return merged
+
+
+    def __add__(dataset, grid):
+        """Combine this mesh with another into an
+        :class:`pyvista.UnstructuredGrid`"""
+        return DataSetFilters.merge(dataset, grid)
 
 
 class CompositeFilters(object):
@@ -2004,11 +2014,6 @@ class PolyDataFilters(DataSetFilters):
             poly_data.overwrite(mesh)
         else:
             return mesh
-
-
-    def __add__(poly_data, mesh):
-        """ adds two meshes together using ``boolean_add`` """
-        return poly_data.boolean_add(poly_data)
 
 
     def boolean_union(poly_data, mesh, inplace=False):
