@@ -66,7 +66,7 @@ try:
     from PyQt5 import QtGui
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
-                                 QFrame, QMainWindow, QSlider,
+                                 QFrame, QMainWindow, QSlider, QAction,
                                  QSpinBox, QHBoxLayout, QDialog,
                                  QFormLayout, QGroupBox, QFileDialog)
     has_pyqt = True
@@ -281,6 +281,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     """
     render_trigger = pyqtSignal()
+    signal_set_view_vector = pyqtSignal(tuple, tuple)
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None, **kwargs):
@@ -290,6 +291,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         QVTKRenderWindowInteractor.__init__(self, parent)
         BasePlotter.__init__(self, shape=shape, title=title)
         self.parent = parent
+
+        self.signal_set_view_vector.connect(self.view_vector)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -318,6 +321,25 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
             # QVTKRenderWindowInteractor doesn't have a "q" quit event
             self.iren.AddObserver("KeyPressEvent", self.key_quit)
+
+
+
+    def add_camera_views_toolbar(self, main_window):
+        _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
+        cvec_setters = {
+            # Viewing vector then view up vector
+            'Top (-Z)': lambda: _view_vector((0,0,1), (0,1,0)),
+            'Bottom (+Z)': lambda: _view_vector((0,0,-1), (0,1,0)),
+            'Front (-Y)': lambda: _view_vector((0,1,0), (0,0,1)),
+            'Back (+Y)': lambda: _view_vector((0,-1,0), (0,0,1)),
+            'Left (-X)': lambda: _view_vector((1,0,0), (0,0,1)),
+            'Right (+X)': lambda: _view_vector((-1,0,0), (0,0,1)),
+        }
+        tool_bar = main_window.addToolBar('Camera Position')
+        for key, method in cvec_setters.items():
+            action = QAction(key, main_window)
+            action.triggered.connect(method)
+            tool_bar.addAction(action)
 
 
 
@@ -383,6 +405,7 @@ class BackgroundPlotter(QtInteractor):
         QtInteractor.__init__(self, parent=self.frame, shape=shape,
                               off_screen=off_screen, **kwargs)
         self.app_window.signal_close.connect(self.quit)
+        self.add_camera_views_toolbar(self.app_window)
 
         # build main menu
         main_menu = self.app_window.menuBar()
@@ -451,6 +474,8 @@ class BackgroundPlotter(QtInteractor):
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
+
+
 
     def scale_axes_dialog(self, show=True):
         """ Open scale axes dialog """
