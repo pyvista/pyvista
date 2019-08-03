@@ -448,6 +448,10 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
         return MultiBlock.__repr__(self)
 
 
+    def __len__(self):
+        return self.n_blocks
+
+
     def copy_meta_from(self, ido):
         """Copies pyvista meta data onto this object from another object"""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
