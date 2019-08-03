@@ -465,3 +465,16 @@ def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary()
     assert boundary.n_points
+
+
+def test_merge_general():
+    mesh = examples.load_uniform()
+    thresh = mesh.threshold_percent([0.2, 0.5]) # unstructured grid
+    con = mesh.contour() # poly data
+    merged = thresh + con
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+    merged = con + thresh
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+    # Pure PolyData inputs should yield poly data output
+    merged = mesh.extract_surface() + con
+    assert isinstance(merged, pyvista.PolyData)
