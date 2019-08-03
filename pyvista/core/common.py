@@ -272,7 +272,7 @@ class Common(DataSetFilters, object):
             # Grab old coordinates
             if name in mesh.scalar_names:
                 old_tcoord = mesh.GetPointData().GetTCoords()
-                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(name))
+                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetAbstractArray(name))
                 mesh.GetPointData().AddArray(old_tcoord)
                 mesh.Modified()
         return texture
@@ -699,7 +699,7 @@ class Common(DataSetFilters, object):
             name = pdata.GetArrayName(i)
             if name is None or len(name) < 1:
                 name = 'Point Array {}'.format(i)
-                pdata.GetArray(i).SetName(name)
+                pdata.GetAbstractArray(i).SetName(name)
             self._point_arrays[name] = self._point_scalar(name)
 
         self._point_arrays.enable_callback()
@@ -725,7 +725,7 @@ class Common(DataSetFilters, object):
             name = fdata.GetArrayName(i)
             if name is None or len(name) < 1:
                 name = 'Field Array {}'.format(i)
-                fdata.GetArray(i).SetName(name)
+                fdata.GetAbstractArray(i).SetName(name)
             self._field_arrays[name] = self._field_scalar(name)
 
         self._field_arrays.enable_callback()
@@ -794,7 +794,7 @@ class Common(DataSetFilters, object):
             name = cdata.GetArrayName(i)
             if name is None or len(name) < 1:
                 name = 'Cell Array {}'.format(i)
-                cdata.GetArray(i).SetName(name)
+                cdata.GetAbstractArray(i).SetName(name)
             self._cell_arrays[name] = self._cell_scalar(name)
 
         self._cell_arrays.enable_callback()
