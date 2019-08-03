@@ -282,6 +282,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     """
     render_trigger = pyqtSignal()
     signal_set_view_vector = pyqtSignal(tuple, tuple)
+    signal_reset_camera = pyqtSignal()
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None, **kwargs):
@@ -293,6 +294,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.parent = parent
 
         self.signal_set_view_vector.connect(self.view_vector)
+        self.signal_reset_camera.connect(self.reset_camera)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -324,7 +326,15 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
 
-    def add_camera_views_toolbar(self, main_window):
+    def add_toolbars(self, main_window):
+
+        def _add_action(tool_bar, key, method):
+            action = QAction(key, main_window)
+            action.triggered.connect(method)
+            tool_bar.addAction(action)
+
+        # Camera toolbar
+        tool_bar = main_window.addToolBar('Camera Position')
         _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
         cvec_setters = {
             # Viewing vector then view up vector
@@ -334,13 +344,13 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             'Back (+Y)': lambda: _view_vector((0,-1,0), (0,0,1)),
             'Left (-X)': lambda: _view_vector((1,0,0), (0,0,1)),
             'Right (+X)': lambda: _view_vector((-1,0,0), (0,0,1)),
+            'Isometric' : lambda: _view_vector((1,1,1), (0,0,1))
         }
-        tool_bar = main_window.addToolBar('Camera Position')
         for key, method in cvec_setters.items():
-            action = QAction(key, main_window)
-            action.triggered.connect(method)
-            tool_bar.addAction(action)
+            _add_action(tool_bar, key, method)
+        _add_action(tool_bar, 'Reset', self.signal_reset_camera.emit)
 
+        return
 
 
     def key_quit(self, obj=None, event=None):  # pragma: no cover
@@ -427,11 +437,6 @@ class BackgroundPlotter(QtInteractor):
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
-        cam_menu.addAction('Reset Camera', self.reset_camera)
-        cam_menu.addAction('Isometric View', self.view_isometric)
-        cam_menu.addAction('View XY Plane', self.view_xy)
-        cam_menu.addAction('View XZ Plane', self.view_xz)
-        cam_menu.addAction('View YZ Plane', self.view_yz)
         cam_menu.addSeparator()
         cam_menu.addAction('Save Current Camera Position', self.save_camera_position)
         cam_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
