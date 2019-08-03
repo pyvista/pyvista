@@ -371,7 +371,7 @@ class BasePlotter(object):
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  loc=None, backface_culling=False, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
-                 **kwargs):
+                 annotations=None, **kwargs):
         """
         Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
         scene. This method using a mesh representation to view the surfaces
@@ -557,6 +557,11 @@ class BasePlotter(object):
         above_color : string or 3 item list, optional
             Solid color for values below the scalar range (``clim``). This will
             automatically set the scalar bar ``above_label`` to ``'Above'``
+
+        annotations : dict, optional
+            Pass a dictionary of annotations. Keys are the string annotations
+            and values are float values in the scalar range to annotate on the
+            scalar bar.
 
         Returns
         -------
@@ -859,6 +864,10 @@ class BasePlotter(object):
             if _using_labels:
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
+            if isinstance(annotations, dict):
+                for key, val in annotations.items():
+                    table.SetAnnotation(float(val), key)
+
             # Set scalar range
             if clim is None:
                 clim = [np.nanmin(scalars), np.nanmax(scalars)]
@@ -1110,6 +1119,11 @@ class BasePlotter(object):
             Solid color for values below the scalar range (``clim``). This will
             automatically set the scalar bar ``above_label`` to ``'Above'``
 
+        annotations : dict, optional
+            Pass a dictionary of annotations. Keys are the string annotations
+            and values are float values in the scalar range to annotate on the
+            scalar bar.
+
         Returns
         -------
         actor: vtk.vtkVolume
@@ -1273,6 +1287,11 @@ class BasePlotter(object):
             table.SetUseBelowRangeColor(True)
             table.SetBelowRangeColor(*parse_color(below_color), 1)
             scalar_bar_args.setdefault('below_label', 'Below')
+
+        if isinstance(annotations, dict):
+            avals = np.array(annotations.values())
+            alabels = np.array(annotations.keys())
+            table.SetAnnotations(convert_array(avals), convert_string_array(alabels))
 
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
