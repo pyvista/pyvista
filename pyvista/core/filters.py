@@ -2016,6 +2016,12 @@ class PolyDataFilters(DataSetFilters):
             return mesh
 
 
+    def __add__(poly_data, mesh):
+        if not isinstance(mesh, vtk.vtkPolyData):
+            return DataSetFilters.__add__(poly_data, mesh)
+        return PolyDataFilters.boolean_add(poly_data, mesh)
+
+
     def boolean_union(poly_data, mesh, inplace=False):
         """
         Combines two meshes and attempts to create a manifold mesh.
