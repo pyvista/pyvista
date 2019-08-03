@@ -87,12 +87,12 @@ p.show()
 
 ###############################################################################
 # Annotate values of interest using a dictionary. The key of the dictionary
-# will be the annotation, and the value will be the float value to label.
+# must be the value to annotate, and the value must be the string label.
 
 # Make a dictionary for the annotations
 annotations = {
-    "High" : 2300,
-    'Cutoff value': 800,
+    2300 : "High",
+    805.3 : "Cutoff value",
 }
 
 p = pv.Plotter()

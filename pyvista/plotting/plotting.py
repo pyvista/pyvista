@@ -559,9 +559,9 @@ class BasePlotter(object):
             automatically set the scalar bar ``above_label`` to ``'Above'``
 
         annotations : dict, optional
-            Pass a dictionary of annotations. Keys are the string annotations
-            and values are float values in the scalar range to annotate on the
-            scalar bar.
+            Pass a dictionary of annotations. Keys are the float values in the
+            scalar range to annotate on the scalar bar and the values are the
+            the string annotations.
 
         Returns
         -------
@@ -865,8 +865,8 @@ class BasePlotter(object):
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
             if isinstance(annotations, dict):
-                for key, val in annotations.items():
-                    table.SetAnnotation(float(val), key)
+                for val, anno in annotations.items():
+                    table.SetAnnotation(float(val), anno)
 
             # Set scalar range
             if clim is None:
@@ -1121,9 +1121,9 @@ class BasePlotter(object):
             automatically set the scalar bar ``above_label`` to ``'Above'``
 
         annotations : dict, optional
-            Pass a dictionary of annotations. Keys are the string annotations
-            and values are float values in the scalar range to annotate on the
-            scalar bar.
+            Pass a dictionary of annotations. Keys are the float values in the
+            scalar range to annotate on the scalar bar and the values are the
+            the string annotations.
 
         Returns
         -------
@@ -1282,7 +1282,8 @@ class BasePlotter(object):
         # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
         if above_color:
             table.SetUseAboveRangeColor(True)
-            table.SetAboveRangeColor(*parse_color(above_color), 1)
+            c = parse_color(above_color)
+            table.SetAboveRangeColor(c[0], c[1], c[2], 1)
             scalar_bar_args.setdefault('above_label', 'Above')
         if below_color:
             table.SetUseBelowRangeColor(True)
@@ -1290,9 +1291,8 @@ class BasePlotter(object):
             scalar_bar_args.setdefault('below_label', 'Below')
 
         if isinstance(annotations, dict):
-            avals = np.array(annotations.values())
-            alabels = np.array(annotations.keys())
-            table.SetAnnotations(convert_array(avals), convert_string_array(alabels))
+            for val, anno in annotations.items():
+                table.SetAnnotation(float(val), anno)
 
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
