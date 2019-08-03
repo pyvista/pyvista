@@ -734,3 +734,11 @@ def test_closing_and_mem_cleanup():
                 p.add_mesh(pyvista.Sphere(radius=k))
             p.show()
         pyvista.close_all()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_above_below_scalar_range_annotations():
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
+           below_color='blue', above_color='red')
+    p.show()

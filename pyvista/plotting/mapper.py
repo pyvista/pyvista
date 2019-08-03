@@ -27,6 +27,8 @@ def make_mapper(mapper_class):
         def scalar_range(self, clim):
             if hasattr(self, 'SetScalarRange'):
                 self.SetScalarRange(*clim)
+            if self.lookup_table is not None:
+                self.lookup_table.SetRange(*clim)
             self._scalar_range = clim
 
 

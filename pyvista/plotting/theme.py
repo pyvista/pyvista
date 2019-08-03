@@ -36,7 +36,7 @@ rcParams = {
         'width' : 0.6,
         'height' : 0.08,
         'position_x' : 0.35,
-        'position_y' : 0.02,
+        'position_y' : 0.05,
     },
     'colorbar_vertical' : {
         'width' : 0.08,
