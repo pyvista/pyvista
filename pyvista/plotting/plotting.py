@@ -866,7 +866,7 @@ class BasePlotter(object):
 
             if isinstance(annotations, dict):
                 for val, anno in annotations.items():
-                    table.SetAnnotation(float(val), anno)
+                    table.SetAnnotation(float(val), str(anno))
 
             # Set scalar range
             if clim is None:
@@ -1275,7 +1275,7 @@ class BasePlotter(object):
 
         if isinstance(annotations, dict):
             for val, anno in annotations.items():
-                table.SetAnnotation(float(val), anno)
+                table.SetAnnotation(float(val), str(anno))
 
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
