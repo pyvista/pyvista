@@ -83,3 +83,18 @@ p.add_mesh(mesh, clim=[1000, 2000],
            below_color='blue', above_color='red',
            scalar_bar_args=sargs)
 p.show()
+
+
+###############################################################################
+# Annotate values of interest using a dictionary. The key of the dictionary
+# will be the annotation, and the value will be the float value to label.
+
+# Make a dictionary for the annotations
+annotations = {
+    "High" : 2300,
+    'Cutoff value': 800,
+}
+
+p = pv.Plotter()
+p.add_mesh(mesh, scalars='Elevation', annotations=annotations)
+p.show()
