@@ -12,8 +12,7 @@ from vtk import vtkRenderer
 import pyvista
 from pyvista.utilities import wrap
 
-from .plotting import (MAX_N_COLOR_BARS, parse_color, parse_font_family,
-                       rcParams)
+from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import create_axes_marker
 
 
@@ -36,6 +35,7 @@ class Renderer(vtkRenderer):
         if border:
             self.add_border(border_color, border_width)
 
+
     def add_border(self, color=[1, 1, 1], width=2.0):
         points = np.array([[1., 1., 0.],
                            [0., 1., 0.],
@@ -56,14 +56,14 @@ class Renderer(vtkRenderer):
 
         mapper = vtk.vtkPolyDataMapper2D()
         mapper.SetInputData(poly);
-        mapper.SetTransformCoordinate(coordinate);
+        mapper.SetTransformCoordinate(coordinate)
 
         actor = vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(parse_color(color))
         actor.GetProperty().SetLineWidth(width)
 
-        self.add_actor(actor)
+        self.AddViewProp(actor)
 
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,

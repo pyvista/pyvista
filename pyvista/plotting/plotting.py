@@ -72,7 +72,7 @@ class BasePlotter(object):
         return object.__new__(cls)
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
-                 border_width=1.0, title=None):
+                 border_width=2.0, title=None):
         """ Initialize base plotter """
         self.image_transparent_background = rcParams['transparent_background']
 
@@ -3419,7 +3419,7 @@ class Plotter(BasePlotter):
     right_timer_id = -1
 
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
-                 border=None, border_color='k', border_width=1.0,
+                 border=None, border_color='k', border_width=2.0,
                  window_size=None):
         """
         Initialize a vtk plotting object
