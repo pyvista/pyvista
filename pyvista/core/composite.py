@@ -214,7 +214,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
                 continue
             # get the scalar if availble
             arr = get_scalar(data, name)
-            if arr is None:
+            if arr is None or not np.issubdtype(arr.dtype, np.number):
                 continue
             tmi, tma = np.nanmin(arr), np.nanmax(arr)
             if tmi < mini:

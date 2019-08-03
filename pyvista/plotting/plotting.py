@@ -14,8 +14,9 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (convert_array, get_scalar, is_pyvista_obj,
-                               numpy_to_texture, raise_not_matching, wrap)
+from pyvista.utilities import (convert_array, convert_string_array, get_scalar,
+                               is_pyvista_obj, numpy_to_texture,
+                               raise_not_matching, wrap)
 
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
@@ -704,7 +705,7 @@ class BasePlotter(object):
                 # Make sure scalar components are not vectors/tuples
                 scalars = mesh.active_scalar_name
                 # Don't allow plotting of string arrays by default
-                if scalars is not None and np.issubdtype(mesh.active_scalar.dtype, np.number):
+                if scalars is not None:# and np.issubdtype(mesh.active_scalar.dtype, np.number):
                     if stitle is None:
                         stitle = scalars
                 else:
@@ -803,8 +804,17 @@ class BasePlotter(object):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
+            _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):
-                raise TypeError('Non-numeric scalars are currently not supported for plotting.')
+                # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
+                # TODO: If str array, digitive and annotate
+                cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
+                values = np.unique(scalars)
+                clim = [np.min(values) - 0.5, np.max(values) + 0.5]
+                title = '{}-digitized'.format(title)
+                n_colors = len(cats)
+                scalar_bar_args.setdefault('n_labels', 0)
+                _using_labels = True
 
             if rgb is False or rgb is None:
                 rgb = kwargs.get('rgba', False)
@@ -844,6 +854,10 @@ class BasePlotter(object):
 
 
             prepare_mapper(scalars)
+            table = self.mapper.GetLookupTable()
+
+            if _using_labels:
+                table.SetAnnotations(convert_array(values), convert_string_array(cats))
 
             # Set scalar range
             if clim is None:
@@ -854,7 +868,6 @@ class BasePlotter(object):
             if np.any(clim) and not rgb:
                 self.mapper.scalar_range = clim[0], clim[1]
 
-            table = self.mapper.GetLookupTable()
             table.SetNanColor(nan_color)
             if above_color:
                 table.SetUseAboveRangeColor(True)
