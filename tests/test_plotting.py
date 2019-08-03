@@ -749,6 +749,9 @@ def test_user_annotations_scalar_bar():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(examples.load_uniform(), annotations={100.:'yum'})
     p.show()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_volume(examples.load_uniform(), annotations={100.:'yum'})
+    p.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

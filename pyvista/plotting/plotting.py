@@ -1001,8 +1001,7 @@ class BasePlotter(object):
                    loc=None, backface_culling=False, multi_colors=False,
                    blending='composite', mapper='fixed_point',
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
-                   below_color=None, above_color=None, annotations=None,
-                   **kwargs):
+                   annotations=None, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -1112,14 +1111,6 @@ class BasePlotter(object):
             the scalar array used to color the mesh.
             To create a bar with no title, use an empty string (i.e. '').
 
-        below_color : string or 3 item list, optional
-            Solid color for values below the scalar range (``clim``). This will
-            automatically set the scalar bar ``below_label`` to ``'Below'``
-
-        above_color : string or 3 item list, optional
-            Solid color for values below the scalar range (``clim``). This will
-            automatically set the scalar bar ``above_label`` to ``'Above'``
-
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float values in the
             scalar range to annotate on the scalar bar and the values are the
@@ -1228,7 +1219,7 @@ class BasePlotter(object):
             scalars = np.asarray(scalars)
 
         if not np.issubdtype(scalars.dtype, np.number):
-            raise TypeError('Non-numeric scalars are currently not supported for plotting.')
+            raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
 
 
         if scalars.ndim != 1:
@@ -1280,15 +1271,7 @@ class BasePlotter(object):
         # Set colormap and build lookup table
         table = vtk.vtkLookupTable()
         # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
-        if above_color:
-            table.SetUseAboveRangeColor(True)
-            c = parse_color(above_color)
-            table.SetAboveRangeColor(c[0], c[1], c[2], 1)
-            scalar_bar_args.setdefault('above_label', 'Above')
-        if below_color:
-            table.SetUseBelowRangeColor(True)
-            table.SetBelowRangeColor(*parse_color(below_color), 1)
-            scalar_bar_args.setdefault('below_label', 'Below')
+        # above/below colors not supported with volume rendering
 
         if isinstance(annotations, dict):
             for val, anno in annotations.items():
