@@ -534,3 +534,13 @@ def test_scalars_dict_update():
     assert 'foo' in mesh.scalar_names
     assert 'rand' in mesh.scalar_names
     assert len(mesh.point_arrays) == n + 2
+
+
+def test_hanlde_array_with_null_name():
+    poly = pyvista.PolyData()
+    # Add array with no name
+    poly.GetPointData().AddArray(pyvista.convert_array(np.array([])))
+    html = poly._repr_html_()
+    assert html is not None
+    pdata = poly.point_arrays
+    assert pdata is not None
