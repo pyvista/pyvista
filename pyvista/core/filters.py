@@ -2729,6 +2729,7 @@ class PolyDataFilters(DataSetFilters):
         if merge_tol is None:
             merge_tol = kwargs.pop('tolerance', None)
         clean = vtk.vtkCleanPolyData()
+        clean.SetPointMerging(point_merging)
         clean.SetConvertLinesToPoints(lines_to_points)
         clean.SetConvertPolysToLines(polys_to_lines)
         clean.SetConvertStripsToPolys(strips_to_polys)

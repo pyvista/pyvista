@@ -29,7 +29,7 @@ import numpy as np
 # Custom Made Colormaps
 # +++++++++++++++++++++
 #
-# To get started using a custom colormap, download some data with scalars to
+# To get started using a custom colormap, download some data with scalar values to
 # plot.
 
 mesh = examples.download_st_helens().warp_by_scalar()

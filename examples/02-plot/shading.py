@@ -9,8 +9,8 @@ import pyvista
 
 pyvista.set_plot_theme("document")
 ###############################################################################
-# pyvista supports two types of shading, flat and smooth shading that uses
-# VTK's phong shading algorthim.
+# PyVista supports two types of shading, flat and smooth shading that uses
+# VTK's Phong shading algorithm.
 #
 # This is a plot with the default flat shading:
 sphere = pyvista.Sphere()

@@ -387,6 +387,9 @@ def test_clean():
     mesh.clean(merge_tol=1E-5, inplace=True)
     assert mesh.n_points == sphere.n_points
 
+    cleaned = mesh.clean(point_merging=False)
+    assert cleaned.n_points == mesh.n_points
+
 
 def test_area():
     dense_sphere = SPHERE_DENSE.copy()
