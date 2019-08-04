@@ -49,13 +49,14 @@ rcParams = {
     'lighting' : True,
     'interactive' : False,
     'render_points_as_spheres' : False,
-    'use_panel' : True,
+    'use_panel' : False,
     'transparent_background' : False,
     'title' : 'PyVista',
     'axes': {
         'x_color': 'tomato',
         'y_color': 'seagreen',
-        'z_color': 'blue',
+        'z_color': 'mediumblue',
+        'box': False,
     }
 }
 
@@ -106,15 +107,17 @@ def set_plot_theme(theme):
 
 
 def parse_color(color):
-    """ Parses color into a vtk friendly rgb list """
+    """Parses color into a vtk friendly rgb list.
+    Values returned will be between 0 and 1.
+    """
     if color is None:
         color = rcParams['color']
     if isinstance(color, str):
-        return string_to_rgb(color)
+        color = string_to_rgb(color)
     elif len(color) == 3:
-        return color
+        pass
     elif len(color) == 4:
-        return color[:3]
+        color = color[:3]
     else:
         raise Exception("""
     Invalid color input: ({})
@@ -123,6 +126,7 @@ def parse_color(color):
         color='w'
         color=[1, 1, 1]
         color='#FFFFFF'""".format(color))
+    return color
 
 
 

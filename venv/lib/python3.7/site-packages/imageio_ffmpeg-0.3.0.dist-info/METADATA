@@ -1,0 +1,38 @@
+Metadata-Version: 2.1
+Name: imageio-ffmpeg
+Version: 0.3.0
+Summary: FFMPEG wrapper for Python
+Home-page: https://github.com/imageio/imageio-ffmpeg
+Author: imageio contributors
+Author-email: almar.klein@gmail.com
+License: (new) BSD
+Download-URL: http://pypi.python.org/pypi/imageio-ffmpeg
+Keywords: video ffmpeg
+Platform: any
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Provides: imageio_ffmpeg
+
+FFMPEG wrapper for Python.
+
+Note that the platform-specific wheels contain the binary executable
+of ffmpeg, which makes this package around 60 MiB in size.
+I guess that's the cost for being able to read/write video files.
+
+For Linux users: the above is not the case when installing via your
+Linux package manager (if that is possible), because this package would
+simply depend on ffmpeg in that case.
+
+

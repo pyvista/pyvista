@@ -1,0 +1,51 @@
+Metadata-Version: 2.1
+Name: sphinx-copybutton
+Version: 0.2.5
+Summary: A small sphinx extension to add "copy" buttons to code blocks.
+Home-page: https://github.com/choldgraf/sphinx-copybutton
+License: UNKNOWN
+Keywords: documentation css copy code-cells
+Author: Chris Holdgraf
+Author-email: choldgraf@berkeley.edu
+Description-Content-Type: text/markdown
+Classifier: License :: OSI Approved :: MIT License
+Project-URL: Documentation, http://predictablynoisy.com/sphinx-copybutton
+
+# sphinx-copybutton
+
+[![PyPI](https://img.shields.io/pypi/v/sphinx-copybutton.svg)](https://pypi.org/project/sphinx_copybutton/) | [![Documentation](https://readthedocs.org/projects/sphinx-copybutton/badge/?version=latest)](https://sphinx-copybutton.readthedocs.io/en/latest/?badge=latest)
+
+A small sphinx extension to add a "copy" button to code blocks.
+
+See [the sphinx-copybutton documentation](https://readthedocs.org/projects/sphinx-copybutton/badge/?version=latest) for more details!
+
+![](doc/_static/copybutton.gif)
+
+## Installation
+
+You can install `sphinx-copybutton` with `pip`:
+
+```
+pip install sphinx-copybutton
+```
+
+## Usage
+
+In your `conf.py` configuration file, add `sphinx_copybutton` to your extensions list.
+E.g.:
+
+```
+extensions = [
+    ...
+    'sphinx_copybutton'
+    ...
+]
+```
+
+When you build your site, your code blocks should now have little copy buttons to their
+right. Clicking the button will copy the code inside!
+
+## Customization
+
+If you'd like to customize the look of the copy buttons, you can over-write any of the
+CSS rules specified in the Sphinx-CopyButton CSS file ([link](sphinx_copybutton/_static/copybutton.css))

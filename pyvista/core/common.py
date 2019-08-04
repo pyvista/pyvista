@@ -60,7 +60,8 @@ class Common(DataSetFilters, object):
                 else:
                     name = None
 
-        exclude = ['__custom_rgba', 'Normals', 'vtkOriginalPointIds',]
+        exclude = ['__custom_rgba', 'Normals', 'vtkOriginalPointIds',
+                   'TCoords']
 
         def search_for_array(data):
             arr = None
@@ -271,7 +272,7 @@ class Common(DataSetFilters, object):
             # Grab old coordinates
             if name in mesh.scalar_names:
                 old_tcoord = mesh.GetPointData().GetTCoords()
-                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetArray(name))
+                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetAbstractArray(name))
                 mesh.GetPointData().AddArray(old_tcoord)
                 mesh.Modified()
         return texture
@@ -696,6 +697,9 @@ class Common(DataSetFilters, object):
 
         for i in range(narr):
             name = pdata.GetArrayName(i)
+            if name is None or len(name) < 1:
+                name = 'Point Array {}'.format(i)
+                pdata.GetAbstractArray(i).SetName(name)
             self._point_arrays[name] = self._point_scalar(name)
 
         self._point_arrays.enable_callback()
@@ -719,6 +723,9 @@ class Common(DataSetFilters, object):
 
         for i in range(narr):
             name = fdata.GetArrayName(i)
+            if name is None or len(name) < 1:
+                name = 'Field Array {}'.format(i)
+                fdata.GetAbstractArray(i).SetName(name)
             self._field_arrays[name] = self._field_scalar(name)
 
         self._field_arrays.enable_callback()
@@ -785,6 +792,9 @@ class Common(DataSetFilters, object):
 
         for i in range(narr):
             name = cdata.GetArrayName(i)
+            if name is None or len(name) < 1:
+                name = 'Cell Array {}'.format(i)
+                cdata.GetAbstractArray(i).SetName(name)
             self._cell_arrays[name] = self._cell_scalar(name)
 
         self._cell_arrays.enable_callback()
@@ -1017,29 +1027,25 @@ class Common(DataSetFilters, object):
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
             row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
 
-            def format_array(key, field):
+            def format_array(name, arr, field):
                 """internal helper to foramt array information for printing"""
-                arr = get_scalar(self, key, preference=field)
-                dl, dh = self.get_data_range(key)
+                dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
-                if key == self.active_scalar_info[1]:
-                    key = '<b>{}</b>'.format(key)
+                if name == self.active_scalar_info[1]:
+                    name = '<b>{}</b>'.format(name)
                 if arr.ndim > 1:
                     ncomp = arr.shape[1]
                 else:
                     ncomp = 1
-                return row.format(key, field, arr.dtype, ncomp, dl, dh)
+                return row.format(name, field, arr.dtype, ncomp, dl, dh)
 
-            for i in range(self.GetPointData().GetNumberOfArrays()):
-                key = self.GetPointData().GetArrayName(i)
-                fmt += format_array(key, field='Points')
-            for i in range(self.GetCellData().GetNumberOfArrays()):
-                key = self.GetCellData().GetArrayName(i)
-                fmt += format_array(key, field='Cells')
-            for i in range(self.GetFieldData().GetNumberOfArrays()):
-                key = self.GetFieldData().GetArrayName(i)
-                fmt += format_array(key, field='Fields')
+            for key, arr in self.point_arrays.items():
+                fmt += format_array(key, arr, 'Points')
+            for key, arr in self.cell_arrays.items():
+                fmt += format_array(key, arr, 'Cells')
+            for key, arr in self.field_arrays.items():
+                fmt += format_array(key, arr, 'Fields')
 
             fmt += "</table>\n"
             fmt += "\n"

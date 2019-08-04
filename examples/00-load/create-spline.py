@@ -4,7 +4,7 @@
 Creating a Spline
 ~~~~~~~~~~~~~~~~~
 
-Create a spline from numpy arrays
+Create a spline/polyline from a numpy array of XYZ vertices
 """
 
 # sphinx_gallery_thumbnail_number = 2
@@ -15,17 +15,63 @@ import numpy as np
 ###############################################################################
 # Create a dataset to plot
 
-# data
-n_points = 100
-theta = np.linspace(-4 * np.pi, 4 * np.pi, n_points)
-z = np.linspace(-2, 2, n_points)
-r = z ** 2 + 1
-x = r * np.sin(theta)
-y = r * np.cos(theta)
-points = np.column_stack((x, y, z))
+def make_points():
+    """Helper to make XYZ points"""
+    theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+    z = np.linspace(-2, 2, 100)
+    r = z**2 + 1
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+    return np.column_stack((x, y, z))
+
+points = make_points()
+print(points[0:5, :])
 
 ###############################################################################
-# Now pass the NumPy data to PyVista
+# Now let's make a function that can create line cells on a
+# :class:`pyvista.PolyData` mesh given that the points are in order for the
+# segments they make.
+
+def lines_from_points(points):
+    """Given an array of points, make a line set"""
+    poly = pv.PolyData()
+    poly.points = points
+    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
+    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
+    cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    poly.lines = cells
+    return poly
+
+
+line = lines_from_points(points)
+print(line)
+
+###############################################################################
+line["scalars"] = np.arange(line.n_points)
+tube = line.tube(radius=0.1)
+tube.plot(smooth_shading=True)
+
+
+###############################################################################
+# That tube has sharp edges at each line segment. This can be mitigated by
+# creating a single PolyLine cell for all of the points
+
+def polyline_from_points(points):
+    poly = pv.PolyData()
+    poly.points = points
+    the_cell = np.arange(0, len(points), dtype=np.int)
+    the_cell = np.insert(the_cell, 0, len(points))
+    poly.lines = the_cell
+    return poly
+
+polyline = polyline_from_points(points)
+polyline["scalars"] = np.arange(polyline.n_points)
+tube = polyline.tube(radius=0.1)
+tube.plot(smooth_shading=True)
+
+
+###############################################################################
+# You could also interpolate those points onto a parametric spline
 
 # Create spline with 1000 interpolation points
 spline = pv.Spline(points, 1000)
@@ -39,7 +85,7 @@ tube = spline.tube(radius=0.1)
 tube.plot(smooth_shading=True)
 
 ###############################################################################
-# Line can also be plotted as a plain line
+# The spline can also be plotted as a plain line
 
 # generate same spline with 400 interpolation points
 spline = pv.Spline(points, 400)
