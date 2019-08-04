@@ -146,7 +146,7 @@ def test_plot_label_fmt():
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_show_bounds_params(grid, location):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
-    plotter.add_mesh(sphere)
+    plotter.add_mesh(pyvista.Cube())
     plotter.show_bounds(grid=grid, ticks='inside', location=location)
     plotter.show_bounds(grid=grid, ticks='outside', location=location)
     plotter.show_bounds(grid=grid, ticks='both', location=location)
@@ -455,18 +455,31 @@ def test_read_texture_from_numpy():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_rgb():
     """"Test adding a texture to a plot"""
-    image = pyvista.read(examples.mapfile)
+    cube = pyvista.Cube()
+    cube.clear_arrays()
+    x_face_color=(255, 0, 0)
+    y_face_color=(0, 255, 0)
+    z_face_color=(0, 0, 255)
+    face_colors = np.array([x_face_color,
+                            x_face_color,
+                            y_face_color,
+                            y_face_color,
+                            z_face_color,
+                            z_face_color,
+                           ], dtype=np.uint8)
+    cube.cell_arrays['face_colors'] = face_colors
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
-    plotter.add_mesh(image, rgb=True)
+    plotter.add_mesh(cube, scalars='face_colors', rgb=True)
     plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_multi_component_array():
     """"Test adding a texture to a plot"""
-    image = pyvista.read(examples.mapfile)
+    image = pyvista.UniformGrid((3,3,3))
+    image['array'] = np.random.randn(*image.dimensions).ravel(order='f')
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
-    plotter.add_mesh(image)
+    plotter.add_mesh(image, scalars='array')
     plotter.show()
 
 
