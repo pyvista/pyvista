@@ -415,7 +415,7 @@ class BackgroundPlotter(QtInteractor):
         QtInteractor.__init__(self, parent=self.frame, shape=shape,
                               off_screen=off_screen, **kwargs)
         self.app_window.signal_close.connect(self.quit)
-        self.add_camera_views_toolbar(self.app_window)
+        self.add_toolbars(self.app_window)
 
         # build main menu
         main_menu = self.app_window.menuBar()
