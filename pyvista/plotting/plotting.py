@@ -3206,11 +3206,13 @@ class BasePlotter(object):
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
 
-    def fly_to(point):
+    def fly_to(self, point):
         """Given a position point, move the current camera's focal point to that
         point. The movement is animated over the number of frames specified in
         NumberOfFlyFrames. The LOD desired frame rate is used.
         """
+        if not hasattr(self, 'iren'):
+            raise AttributeError('This plotter does not have an interactive window')
         return self.iren.FlyTo(self.renderer, *point)
 
 
