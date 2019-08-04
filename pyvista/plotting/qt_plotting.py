@@ -326,15 +326,17 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
 
+
     def add_toolbars(self, main_window):
 
         def _add_action(tool_bar, key, method):
             action = QAction(key, main_window)
             action.triggered.connect(method)
             tool_bar.addAction(action)
+            return
 
         # Camera toolbar
-        tool_bar = main_window.addToolBar('Camera Position')
+        self.default_camera_tool_bar = main_window.addToolBar('Camera Position')
         _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
         cvec_setters = {
             # Viewing vector then view up vector
@@ -347,8 +349,38 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             'Isometric' : lambda: _view_vector((1,1,1), (0,0,1))
         }
         for key, method in cvec_setters.items():
-            _add_action(tool_bar, key, method)
-        _add_action(tool_bar, 'Reset', self.signal_reset_camera.emit)
+            _add_action(self.default_camera_tool_bar, key, method)
+        _add_action(self.default_camera_tool_bar, 'Reset', self.signal_reset_camera.emit)
+
+        # Saved camera locations toolbar
+        self.saved_camera_positions = []
+        self.saved_cameras_tool_bar = main_window.addToolBar('Saved Camera Positions')
+        save_cam_button_text = 'Save Camera'
+        clear_cams_button_text = 'Clear Cameras'
+
+        def _clear_camera_positions():
+            """ clears all camera positions """
+            for action in self.saved_cameras_tool_bar.actions():
+                if action.text() not in [save_cam_button_text, clear_cams_button_text]:
+                    self.saved_cameras_tool_bar.removeAction(action)
+            self.saved_camera_positions = []
+            return
+
+        def _save_camera_position():
+            """ Saves camera position to saved camera menu for recall """
+            self.saved_camera_positions.append(self.camera_position)
+            ncam = len(self.saved_camera_positions)
+            camera_position = self.camera_position[:]  # py2.7 copy compatibility
+
+            def load_camera_position():
+                self.camera_position = camera_position
+
+            self.saved_cameras_tool_bar.addAction('Cam %2d' % ncam,
+                                             load_camera_position)
+            return
+
+        _add_action(self.saved_cameras_tool_bar, save_cam_button_text, _save_camera_position)
+        _add_action(self.saved_cameras_tool_bar, clear_cams_button_text, _clear_camera_positions)
 
         return
 
@@ -377,7 +409,6 @@ class BackgroundPlotter(QtInteractor):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
-        self.saved_camera_positions = []
         self.counters = []
 
         if window_size is None:
@@ -437,9 +468,6 @@ class BackgroundPlotter(QtInteractor):
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
-        cam_menu.addSeparator()
-        cam_menu.addAction('Save Current Camera Position', self.save_camera_position)
-        cam_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
 
         view_menu.addSeparator()
         # Orientation marker
@@ -457,8 +485,6 @@ class BackgroundPlotter(QtInteractor):
 
         # A final separator to seperate OS options
         view_menu.addSeparator()
-
-        self.saved_camera_menu = main_menu.addMenu('Camera Positions')
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self)
@@ -486,22 +512,6 @@ class BackgroundPlotter(QtInteractor):
         """ Open scale axes dialog """
         return ScaleAxesDialog(self.app_window, self, show=show)
 
-    def clear_camera_positions(self):
-        """ clears all camera positions """
-        for action in self.saved_camera_menu.actions():
-            self.saved_camera_menu.removeAction(action)
-
-    def save_camera_position(self):
-        """ Saves camera position to saved camera menu for recall """
-        self.saved_camera_positions.append(self.camera_position)
-        ncam = len(self.saved_camera_positions)
-        camera_position = self.camera_position[:]  # py2.7 copy compatibility
-
-        def load_camera_position():
-            self.camera_position = camera_position
-
-        self.saved_camera_menu.addAction('Camera Position %2d' % ncam,
-                                         load_camera_position)
 
     def _spawn_background_rendering(self, rate=5.0):
         """
