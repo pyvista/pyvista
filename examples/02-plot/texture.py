@@ -116,7 +116,7 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 
 ###############################################################################
 # By defining texture coordinates that range ``(0, 4)`` on each axis, we will
-# produce 4 repetitons of the same texture on this mesh.
+# produce 4 repetitions of the same texture on this mesh.
 #
 # Then we must associate those texture coordinates with the mesh through the
 # :attr:`pyvista.Common.t_coords` property.

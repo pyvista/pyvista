@@ -1,10 +1,10 @@
 .. _install_ref:
 
 Installation
-============!
+============
 
 PyVista is supported on Python versions 3.5+, with temporary support for
-Python 2.7 as outlined https://github.com/pyvista/pyvista.gitin `this issue`_.
+Python 2.7 as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
 
