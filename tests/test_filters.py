@@ -465,3 +465,18 @@ def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary()
     assert boundary.n_points
+
+
+
+def test_compute_cell_quality():
+    mesh = pyvista.ParametricEllipsoid().decimate(0.8)
+    qual = mesh.compute_cell_quality()
+    assert 'CellQuality' in qual.scalar_names
+
+
+def test_compute_gradients():
+    mesh = examples.load_random_hills()
+    grad = mesh.compute_gradient()
+    assert 'gradient' in grad.scalar_names
+    assert np.shape(grad['gradient'])[0] == mesh.n_points
+    assert np.shape(grad['gradient'])[1] == 3

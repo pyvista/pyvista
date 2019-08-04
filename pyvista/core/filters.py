@@ -1789,6 +1789,131 @@ class DataSetFilters(object):
             return merged
 
 
+    def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0):
+        """compute a function of (geometric) quality for each cell of a mesh.
+        The per-cell quality is added to the mesh's cell data, in an array
+        named "CellQuality". Cell types not supported by this filter or
+        undefined quality of supported cell types will have an entry of -1.
+
+        Defaults to computing the scaled jacobian.
+
+        Options for cell quality measure:
+
+        - ``'area'``
+        - ``'aspect_beta'``
+        - ``'aspect_frobenius'``
+        - ``'aspect_gamma'``
+        - ``'aspect_ratio'``
+        - ``'collapse_ratio'``
+        - ``'condition'``
+        - ``'diagonal'``
+        - ``'dimension'``
+        - ``'distortion'``
+        - ``'jacobian'``
+        - ``'max_angle'``
+        - ``'max_aspect_frobenius'``
+        - ``'max_edge_ratio'``
+        - ``'med_aspect_frobenius'``
+        - ``'min_angle'``
+        - ``'oddy'``
+        - ``'radius_ratio'``
+        - ``'relative_size_squared'``
+        - ``'scaled_jacobian'``
+        - ``'shape'``
+        - ``'shape_and_size'``
+        - ``'shear'``
+        - ``'shear_and_size'``
+        - ``'skew'``
+        - ``'stretch'``
+        - ``'taper'``
+        - ``'volume'``
+        - ``'warpage'``
+
+        Parameters
+        ----------
+        quality_measure : str
+            The cell quality measure to use
+
+        null_value : float
+            Float value for undefined quality. Undefined quality are qualities
+            that could be addressed by this filter but is not well defined for
+            the particular geometry of cell in question, e.g. a volume query
+            for a triangle. Undefined quality will always be undefined.
+            The default value is -1.
+
+        """
+        alg = vtk.vtkCellQuality()
+        measure_setters = {
+            'area' : alg.SetQualityMeasureToArea,
+            'aspect_beta' : alg.SetQualityMeasureToAspectBeta,
+            'aspect_frobenius' : alg.SetQualityMeasureToAspectFrobenius,
+            'aspect_gamma' : alg.SetQualityMeasureToAspectGamma,
+            'aspect_ratio' : alg.SetQualityMeasureToAspectRatio,
+            'collapse_ratio' : alg.SetQualityMeasureToCollapseRatio,
+            'condition' : alg.SetQualityMeasureToCondition,
+            'diagonal' : alg.SetQualityMeasureToDiagonal,
+            'dimension' : alg.SetQualityMeasureToDimension,
+            'distortion' : alg.SetQualityMeasureToDistortion,
+            'jacobian' : alg.SetQualityMeasureToJacobian,
+            'max_angle' : alg.SetQualityMeasureToMaxAngle,
+            'max_aspect_frobenius' : alg.SetQualityMeasureToMaxAspectFrobenius,
+            'max_edge_ratio' : alg.SetQualityMeasureToMaxEdgeRatio,
+            'med_aspect_frobenius' : alg.SetQualityMeasureToMedAspectFrobenius,
+            'min_angle' : alg.SetQualityMeasureToMinAngle,
+            'oddy' : alg.SetQualityMeasureToOddy,
+            'radius_ratio' : alg.SetQualityMeasureToRadiusRatio,
+            'relative_size_squared' : alg.SetQualityMeasureToRelativeSizeSquared,
+            'scaled_jacobian' : alg.SetQualityMeasureToScaledJacobian,
+            'shape' : alg.SetQualityMeasureToShape,
+            'shape_and_size' : alg.SetQualityMeasureToShapeAndSize,
+            'shear' : alg.SetQualityMeasureToShear,
+            'shear_and_size' : alg.SetQualityMeasureToShearAndSize,
+            'skew' : alg.SetQualityMeasureToSkew,
+            'stretch' : alg.SetQualityMeasureToStretch,
+            'taper' : alg.SetQualityMeasureToTaper,
+            'volume' : alg.SetQualityMeasureToVolume,
+            'warpage' : alg.SetQualityMeasureToWarpage
+        }
+        try:
+            # Set user specified quality measure
+            measure_setters[quality_measure]()
+        except KeyError:
+            options = ', '.join(["'{}'".format(s) for s in measure_setters.keys()])
+            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(options))
+        alg.SetInputData(dataset)
+        alg.SetUndefinedQuality(null_value)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def compute_gradient(dataset, scalars=None, gradient_name='gradient',
+                         preference='point'):
+        """Computes per cell gradient of point scalar field or per point
+        gradient of cell scalar field.
+
+        Parameters
+        ----------
+        scalars : str
+            String name of the scalars array to use when computing gradient.
+
+        gradient_name : str, optional
+            The name of the output array of the computed gradient.
+        """
+        alg = vtk.vtkGradientFilter()
+        # Check if scalar array given
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        if not isinstance(scalars, str):
+            raise TypeError('Scalar array must be given as a string name')
+        _, field = dataset.get_scalar(scalars, preference=preference, info=True)
+        # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
+        alg.SetInputData(dataset)
+        alg.SetResultArrayName(gradient_name)
+        alg.Update()
+        return _get_output(alg)
+
+
 class CompositeFilters(object):
     """An internal class to manage filtes/algorithms for composite datasets.
     """
