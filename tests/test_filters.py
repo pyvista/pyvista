@@ -29,6 +29,7 @@ def test_clip_filter():
     output = COMPOSITE.clip(normal=normals[0], invert=False)
     assert output.n_blocks == COMPOSITE.n_blocks
 
+
 def test_clip_box():
     for i, dataset in enumerate(DATASETS):
         clp = dataset.clip_box(invert=True)
@@ -44,6 +45,16 @@ def test_clip_box():
     # Now test composite data structures
     output = COMPOSITE.clip_box(invert=False)
     assert output.n_blocks == COMPOSITE.n_blocks
+
+
+def test_clip_surface():
+    surface = pyvista.Cone(direction=(0,0,-1),
+                  height=3.0, radius=1, resolution=50, )
+    xx = yy = zz = 1 - np.linspace(0, 51, 51) * 2 / 50
+    dataset = pyvista.RectilinearGrid(xx, yy, zz)
+    clipped = dataset.clip_surface(surface, invert=False)
+    assert clipped.n_points < dataset.n_points
+
 
 def test_slice_filter():
     """This tests the slice filter on all datatypes avaialble filters"""

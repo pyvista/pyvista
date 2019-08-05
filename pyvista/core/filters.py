@@ -68,6 +68,23 @@ class DataSetFilters(object):
         return object.__new__(cls)
 
 
+    def _clip_with_function(dataset, function, invert=True, value=0.0):
+        """Internal helper to clip using an implicit function"""
+        if isinstance(dataset, vtk.vtkPolyData):
+            alg = vtk.vtkClipPolyData()
+        # elif isinstance(dataset, vtk.vtkImageData):
+        #     alg = vtk.vtkClipVolume()
+        #     alg.SetMixed3DCellGeneration(True)
+        else:
+            alg = vtk.vtkTableBasedClipDataSet()
+        alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
+        alg.SetValue(value)
+        alg.SetClipFunction(function) # the implicit function
+        alg.SetInsideOut(invert) # invert the clip if needed
+        alg.Update() # Perfrom the Cut
+        return _get_output(alg)
+
+
     def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False):
         """
         Clip a dataset by a plane by specifying the origin and normal. If no
@@ -101,25 +118,15 @@ class DataSetFilters(object):
         if origin is None:
             origin = dataset.center
         # create the plane for clipping
-        plane = generate_plane(normal, origin)
+        function = generate_plane(normal, origin)
         # run the clip
-        if isinstance(dataset, vtk.vtkPolyData):
-            alg = vtk.vtkClipPolyData()
-        # elif isinstance(dataset, vtk.vtkImageData):
-        #     alg = vtk.vtkClipVolume()
-        #     alg.SetMixed3DCellGeneration(True)
-        else:
-            alg = vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
-        alg.SetValue(value)
-        alg.SetClipFunction(plane) # the the cutter to use the plane we made
-        alg.SetInsideOut(invert) # invert the clip if needed
-        alg.Update() # Perfrom the Cut
-        result = _get_output(alg)
+        result = DataSetFilters._clip_with_function(dataset, function,
+                        invert=invert, value=value)
         if inplace:
             dataset.overwrite(result)
         else:
             return result
+
 
     def clip_box(dataset, bounds=None, invert=True, factor=0.35):
         """Clips a dataset by a bounding box defined by the bounds. If no bounds
@@ -165,6 +172,47 @@ class DataSetFilters(object):
             alg.GenerateClippedOutputOn()
         alg.Update()
         return _get_output(alg, oport=port)
+
+
+    def clip_surface(dataset, surface, invert=True, value=0.0,
+                          compute_distance=False):
+        """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
+        This will return a :class:`pyvista.UnstructuredGrid` of the clipped
+        mesh. Geometry of the input dataset will be preserved where possible -
+        geometries near the clip intersection will be triangulated/tesselated.
+
+        Parameters
+        ----------
+        surface : pyvista.PolyData
+            The PolyData surface mesh to use as a clipping function.
+
+        invert : bool
+            Flag on whether to flip/invert the clip
+
+        value : float:
+            Set the clipping value of the implicit function (if clipping with
+            implicit function) or scalar value (if clipping with scalars).
+            The default value is 0.0.
+
+        compute_distance : bool, optional
+            Compute the implicit distance from the mesh onto the input dataset.
+            A new array called ``'implicit_distance'`` will be added to the
+            output clipped mesh.
+        """
+        if not isinstance(surface, vtk.vtkPolyData):
+            raise TypeError('`surface` mesh must be PolyData, not ({})'.format(type(surface)))
+        function = vtk.vtkImplicitPolyDataDistance()
+        function.SetInput(surface)
+        if compute_distance:
+            points = pv.convert_array(dataset.points)
+            dists = vtk.vtkDoubleArray()
+            function.FunctionValue(points, dists)
+            dataset['implicit_distance'] = pv.convert_array(dists)
+        # run the clip
+        result = DataSetFilters._clip_with_function(dataset, function,
+                        invert=invert, value=value)
+        return result
+
 
     def slice(dataset, normal='x', origin=None, generate_triangles=False,
               contour=False):
