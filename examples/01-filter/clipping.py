@@ -79,3 +79,19 @@ p.add_mesh(surface, color='w', opacity=0.75, label='Surface')
 p.add_mesh(clipped, color='gold', show_edges=True, label="clipped")
 p.add_legend()
 p.show()
+
+
+###############################################################################
+# Here is another example of clipping a mesh by a surface. This time, we'll
+# generate a :class:`pyvista.UniformGrid` around a topography surface and then
+# clip that grid using the surface to create a closed 3D model of the surface
+surface = examples.load_random_hills()
+
+# Create a grid around that surface
+grid = pv.create_grid(surface)
+
+# Clip the grid using the surface
+model = grid.clip_surface(surface)
+
+# Compute height nd display it
+model.elevation().plot()

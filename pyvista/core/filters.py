@@ -184,7 +184,8 @@ class DataSetFilters(object):
         Parameters
         ----------
         surface : pyvista.PolyData
-            The PolyData surface mesh to use as a clipping function.
+            The PolyData surface mesh to use as a clipping function. If this
+            mesh is not PolyData, the external surface will be extracted.
 
         invert : bool
             Flag on whether to flip/invert the clip
@@ -200,7 +201,7 @@ class DataSetFilters(object):
             output clipped mesh.
         """
         if not isinstance(surface, vtk.vtkPolyData):
-            raise TypeError('`surface` mesh must be PolyData, not ({})'.format(type(surface)))
+            surface = DataSetFilters.extract_surface(surface)
         function = vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
