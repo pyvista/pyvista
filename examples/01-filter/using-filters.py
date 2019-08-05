@@ -59,7 +59,7 @@ slices = dataset.slice_orthogonal()
 glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere())
 
 p = pv.Plotter(shape=(2, 2))
-# Show the theshold
+# Show the threshold
 p.add_mesh(outline, color="k")
 p.add_mesh(threshed, show_scalar_bar=False)
 p.camera_position = [-2, 5, 3]
