@@ -747,3 +747,34 @@ def test_closing_and_mem_cleanup():
                 p.add_mesh(pyvista.Sphere(radius=k))
             p.show()
         pyvista.close_all()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_above_below_scalar_range_annotations():
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
+           below_color='blue', above_color='red')
+    p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_user_annotations_scalar_bar():
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(examples.load_uniform(), annotations={100.:'yum'})
+    p.show()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_volume(examples.load_uniform(), annotations={100.:'yum'})
+    p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_plot_string_array():
+    mesh = examples.load_uniform()
+    labels = np.empty(mesh.n_cells, dtype='<U10')
+    labels[:] = 'High'
+    labels[mesh['Spatial Cell Data'] < 300] = 'Medium'
+    labels[mesh['Spatial Cell Data'] < 100] = 'Low'
+    mesh['labels'] = labels
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, scalars='labels')
+    p.show()

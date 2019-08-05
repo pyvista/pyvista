@@ -14,8 +14,9 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (convert_array, get_scalar, is_pyvista_obj,
-                               numpy_to_texture, raise_not_matching, wrap)
+from pyvista.utilities import (convert_array, convert_string_array, get_scalar,
+                               is_pyvista_obj, numpy_to_texture,
+                               raise_not_matching, wrap)
 
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
@@ -369,7 +370,8 @@ class BasePlotter(object):
                  smooth_shading=False, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  loc=None, backface_culling=False, rgb=False, categories=False,
-                 use_transparency=False, **kwargs):
+                 use_transparency=False, below_color=None, above_color=None,
+                 annotations=None, **kwargs):
         """
         Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
         scene. This method using a mesh representation to view the surfaces
@@ -548,6 +550,19 @@ class BasePlotter(object):
             Invert the opacity mappings and make the values correspond to
             transperency.
 
+        below_color : string or 3 item list, optional
+            Solid color for values below the scalar range (``clim``). This will
+            automatically set the scalar bar ``below_label`` to ``'Below'``
+
+        above_color : string or 3 item list, optional
+            Solid color for values below the scalar range (``clim``). This will
+            automatically set the scalar bar ``above_label`` to ``'Above'``
+
+        annotations : dict, optional
+            Pass a dictionary of annotations. Keys are the float values in the
+            scalar range to annotate on the scalar bar and the values are the
+            the string annotations.
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -695,7 +710,7 @@ class BasePlotter(object):
                 # Make sure scalar components are not vectors/tuples
                 scalars = mesh.active_scalar_name
                 # Don't allow plotting of string arrays by default
-                if scalars is not None and np.issubdtype(mesh.active_scalar.dtype, np.number):
+                if scalars is not None:# and np.issubdtype(mesh.active_scalar.dtype, np.number):
                     if stitle is None:
                         stitle = scalars
                 else:
@@ -794,8 +809,17 @@ class BasePlotter(object):
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
 
+            _using_labels = False
             if not np.issubdtype(scalars.dtype, np.number):
-                raise TypeError('Non-numeric scalars are currently not supported for plotting.')
+                # raise TypeError('Non-numeric scalars are currently not supported for plotting.')
+                # TODO: If str array, digitive and annotate
+                cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
+                values = np.unique(scalars)
+                clim = [np.min(values) - 0.5, np.max(values) + 0.5]
+                title = '{}-digitized'.format(title)
+                n_colors = len(cats)
+                scalar_bar_args.setdefault('n_labels', 0)
+                _using_labels = True
 
             if rgb is False or rgb is None:
                 rgb = kwargs.get('rgba', False)
@@ -835,6 +859,14 @@ class BasePlotter(object):
 
 
             prepare_mapper(scalars)
+            table = self.mapper.GetLookupTable()
+
+            if _using_labels:
+                table.SetAnnotations(convert_array(values), convert_string_array(cats))
+
+            if isinstance(annotations, dict):
+                for val, anno in annotations.items():
+                    table.SetAnnotation(float(val), str(anno))
 
             # Set scalar range
             if clim is None:
@@ -845,8 +877,16 @@ class BasePlotter(object):
             if np.any(clim) and not rgb:
                 self.mapper.scalar_range = clim[0], clim[1]
 
-            table = self.mapper.GetLookupTable()
             table.SetNanColor(nan_color)
+            if above_color:
+                table.SetUseAboveRangeColor(True)
+                table.SetAboveRangeColor(*parse_color(above_color, opacity=1))
+                scalar_bar_args.setdefault('above_label', 'Above')
+            if below_color:
+                table.SetUseBelowRangeColor(True)
+                table.SetBelowRangeColor(*parse_color(below_color, opacity=1))
+                scalar_bar_args.setdefault('below_label', 'Below')
+
             if cmap is not None:
                 try:
                     from matplotlib.cm import get_cmap
@@ -960,8 +1000,8 @@ class BasePlotter(object):
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    loc=None, backface_culling=False, multi_colors=False,
                    blending='composite', mapper='fixed_point',
-                   stitle=None, scalar_bar_args=None,
-                   show_scalar_bar=None, **kwargs):
+                   stitle=None, scalar_bar_args=None, show_scalar_bar=None,
+                   annotations=None, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -1071,6 +1111,11 @@ class BasePlotter(object):
             the scalar array used to color the mesh.
             To create a bar with no title, use an empty string (i.e. '').
 
+        annotations : dict, optional
+            Pass a dictionary of annotations. Keys are the float values in the
+            scalar range to annotate on the scalar bar and the values are the
+            the string annotations.
+
         Returns
         -------
         actor: vtk.vtkVolume
@@ -1174,7 +1219,7 @@ class BasePlotter(object):
             scalars = np.asarray(scalars)
 
         if not np.issubdtype(scalars.dtype, np.number):
-            raise TypeError('Non-numeric scalars are currently not supported for plotting.')
+            raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
 
 
         if scalars.ndim != 1:
@@ -1226,6 +1271,12 @@ class BasePlotter(object):
         # Set colormap and build lookup table
         table = vtk.vtkLookupTable()
         # table.SetNanColor(nan_color) # NaN's are chopped out with current implementation
+        # above/below colors not supported with volume rendering
+
+        if isinstance(annotations, dict):
+            for val, anno in annotations.items():
+                table.SetAnnotation(float(val), str(anno))
+
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
             if cmap is None: # Set default map if matplotlib is avaialble
@@ -1897,7 +1948,8 @@ class BasePlotter(object):
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
                        interactive=False, fmt=None, use_opacity=True,
-                       outline=False):
+                       outline=False, nan_annotation=False,
+                       below_label=None, above_label=None):
         """
         Creates scalar bar using the ranges as set by the last input
         mesh.
@@ -1960,6 +2012,15 @@ class BasePlotter(object):
         outline : bool, optional
             Optionally outline the scalar bar to make opacity mappings more
             obvious.
+
+        nan_annotation : bool, optional
+            Annotate the NaN color
+
+        below_label : str, optional
+            String annotation for values below the scalar range
+
+        above_label : str, optional
+            String annotation for values above the scalar range
 
         Notes
         -----
@@ -2052,7 +2113,21 @@ class BasePlotter(object):
         # Create scalar bar
         self.scalar_bar = vtk.vtkScalarBarActor()
         self.scalar_bar.SetLookupTable(mapper.lookup_table)
-        self.scalar_bar.SetNumberOfLabels(n_labels)
+
+        if n_labels < 1:
+            self.scalar_bar.DrawTickLabelsOff()
+        else:
+            self.scalar_bar.SetNumberOfLabels(n_labels)
+
+        if nan_annotation:
+            self.scalar_bar.DrawNanAnnotationOn()
+
+        if above_label:
+            self.scalar_bar.DrawAboveRangeSwatchOn()
+            self.scalar_bar.SetAboveRangeAnnotation(above_label)
+        if below_label:
+            self.scalar_bar.DrawBelowRangeSwatchOn()
+            self.scalar_bar.SetBelowRangeAnnotation(below_label)
 
         # edit the size of the colorbar
         self.scalar_bar.SetHeight(height)
@@ -2069,18 +2144,25 @@ class BasePlotter(object):
 
         if label_font_size is None or title_font_size is None:
             self.scalar_bar.UnconstrainedFontSizeOn()
+            self.scalar_bar.AnnotationTextScalingOn()
 
-        if n_labels:
-            label_text = self.scalar_bar.GetLabelTextProperty()
-            label_text.SetColor(color)
-            label_text.SetShadow(shadow)
+        label_text = self.scalar_bar.GetLabelTextProperty()
+        anno_text = self.scalar_bar.GetAnnotationTextProperty()
+        label_text.SetColor(color)
+        anno_text.SetColor(color)
+        label_text.SetShadow(shadow)
+        anno_text.SetShadow(shadow)
 
-            # Set font
-            label_text.SetFontFamily(parse_font_family(font_family))
-            label_text.SetItalic(italic)
-            label_text.SetBold(bold)
-            if label_font_size:
-                label_text.SetFontSize(label_font_size)
+        # Set font
+        label_text.SetFontFamily(parse_font_family(font_family))
+        anno_text.SetFontFamily(parse_font_family(font_family))
+        label_text.SetItalic(italic)
+        anno_text.SetItalic(italic)
+        label_text.SetBold(bold)
+        anno_text.SetBold(bold)
+        if label_font_size:
+            label_text.SetFontSize(label_font_size)
+            anno_text.SetFontSize(label_font_size)
 
         # Set properties
         if title:
