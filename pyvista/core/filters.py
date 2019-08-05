@@ -2008,7 +2008,7 @@ class PolyDataFilters(DataSetFilters):
 
     def __add__(poly_data, mesh):
         """ adds two meshes together using ``boolean_add`` """
-        return poly_data.boolean_add(poly_data)
+        return poly_data.boolean_add(mesh)
 
 
     def boolean_union(poly_data, mesh, inplace=False):
