@@ -68,6 +68,23 @@ class DataSetFilters(object):
         return object.__new__(cls)
 
 
+    def _clip_with_function(dataset, function, invert=True, value=0.0):
+        """Internal helper to clip using an implicit function"""
+        if isinstance(dataset, vtk.vtkPolyData):
+            alg = vtk.vtkClipPolyData()
+        # elif isinstance(dataset, vtk.vtkImageData):
+        #     alg = vtk.vtkClipVolume()
+        #     alg.SetMixed3DCellGeneration(True)
+        else:
+            alg = vtk.vtkTableBasedClipDataSet()
+        alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
+        alg.SetValue(value)
+        alg.SetClipFunction(function) # the implicit function
+        alg.SetInsideOut(invert) # invert the clip if needed
+        alg.Update() # Perfrom the Cut
+        return _get_output(alg)
+
+
     def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False):
         """
         Clip a dataset by a plane by specifying the origin and normal. If no
@@ -101,25 +118,15 @@ class DataSetFilters(object):
         if origin is None:
             origin = dataset.center
         # create the plane for clipping
-        plane = generate_plane(normal, origin)
+        function = generate_plane(normal, origin)
         # run the clip
-        if isinstance(dataset, vtk.vtkPolyData):
-            alg = vtk.vtkClipPolyData()
-        # elif isinstance(dataset, vtk.vtkImageData):
-        #     alg = vtk.vtkClipVolume()
-        #     alg.SetMixed3DCellGeneration(True)
-        else:
-            alg = vtk.vtkTableBasedClipDataSet()
-        alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
-        alg.SetValue(value)
-        alg.SetClipFunction(plane) # the the cutter to use the plane we made
-        alg.SetInsideOut(invert) # invert the clip if needed
-        alg.Update() # Perfrom the Cut
-        result = _get_output(alg)
+        result = DataSetFilters._clip_with_function(dataset, function,
+                        invert=invert, value=value)
         if inplace:
             dataset.overwrite(result)
         else:
             return result
+
 
     def clip_box(dataset, bounds=None, invert=True, factor=0.35):
         """Clips a dataset by a bounding box defined by the bounds. If no bounds
@@ -165,6 +172,48 @@ class DataSetFilters(object):
             alg.GenerateClippedOutputOn()
         alg.Update()
         return _get_output(alg, oport=port)
+
+
+    def clip_surface(dataset, surface, invert=True, value=0.0,
+                          compute_distance=False):
+        """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
+        This will return a :class:`pyvista.UnstructuredGrid` of the clipped
+        mesh. Geometry of the input dataset will be preserved where possible -
+        geometries near the clip intersection will be triangulated/tesselated.
+
+        Parameters
+        ----------
+        surface : pyvista.PolyData
+            The PolyData surface mesh to use as a clipping function. If this
+            mesh is not PolyData, the external surface will be extracted.
+
+        invert : bool
+            Flag on whether to flip/invert the clip
+
+        value : float:
+            Set the clipping value of the implicit function (if clipping with
+            implicit function) or scalar value (if clipping with scalars).
+            The default value is 0.0.
+
+        compute_distance : bool, optional
+            Compute the implicit distance from the mesh onto the input dataset.
+            A new array called ``'implicit_distance'`` will be added to the
+            output clipped mesh.
+        """
+        if not isinstance(surface, vtk.vtkPolyData):
+            surface = DataSetFilters.extract_surface(surface)
+        function = vtk.vtkImplicitPolyDataDistance()
+        function.SetInput(surface)
+        if compute_distance:
+            points = pv.convert_array(dataset.points)
+            dists = vtk.vtkDoubleArray()
+            function.FunctionValue(points, dists)
+            dataset['implicit_distance'] = pv.convert_array(dists)
+        # run the clip
+        result = DataSetFilters._clip_with_function(dataset, function,
+                        invert=invert, value=value)
+        return result
+
 
     def slice(dataset, normal='x', origin=None, generate_triangles=False,
               contour=False):
@@ -1797,6 +1846,131 @@ class DataSetFilters(object):
         """Combine this mesh with another into an
         :class:`pyvista.UnstructuredGrid`"""
         return DataSetFilters.merge(dataset, grid)
+
+
+    def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0):
+        """compute a function of (geometric) quality for each cell of a mesh.
+        The per-cell quality is added to the mesh's cell data, in an array
+        named "CellQuality". Cell types not supported by this filter or
+        undefined quality of supported cell types will have an entry of -1.
+
+        Defaults to computing the scaled jacobian.
+
+        Options for cell quality measure:
+
+        - ``'area'``
+        - ``'aspect_beta'``
+        - ``'aspect_frobenius'``
+        - ``'aspect_gamma'``
+        - ``'aspect_ratio'``
+        - ``'collapse_ratio'``
+        - ``'condition'``
+        - ``'diagonal'``
+        - ``'dimension'``
+        - ``'distortion'``
+        - ``'jacobian'``
+        - ``'max_angle'``
+        - ``'max_aspect_frobenius'``
+        - ``'max_edge_ratio'``
+        - ``'med_aspect_frobenius'``
+        - ``'min_angle'``
+        - ``'oddy'``
+        - ``'radius_ratio'``
+        - ``'relative_size_squared'``
+        - ``'scaled_jacobian'``
+        - ``'shape'``
+        - ``'shape_and_size'``
+        - ``'shear'``
+        - ``'shear_and_size'``
+        - ``'skew'``
+        - ``'stretch'``
+        - ``'taper'``
+        - ``'volume'``
+        - ``'warpage'``
+
+        Parameters
+        ----------
+        quality_measure : str
+            The cell quality measure to use
+
+        null_value : float
+            Float value for undefined quality. Undefined quality are qualities
+            that could be addressed by this filter but is not well defined for
+            the particular geometry of cell in question, e.g. a volume query
+            for a triangle. Undefined quality will always be undefined.
+            The default value is -1.
+
+        """
+        alg = vtk.vtkCellQuality()
+        measure_setters = {
+            'area' : alg.SetQualityMeasureToArea,
+            'aspect_beta' : alg.SetQualityMeasureToAspectBeta,
+            'aspect_frobenius' : alg.SetQualityMeasureToAspectFrobenius,
+            'aspect_gamma' : alg.SetQualityMeasureToAspectGamma,
+            'aspect_ratio' : alg.SetQualityMeasureToAspectRatio,
+            'collapse_ratio' : alg.SetQualityMeasureToCollapseRatio,
+            'condition' : alg.SetQualityMeasureToCondition,
+            'diagonal' : alg.SetQualityMeasureToDiagonal,
+            'dimension' : alg.SetQualityMeasureToDimension,
+            'distortion' : alg.SetQualityMeasureToDistortion,
+            'jacobian' : alg.SetQualityMeasureToJacobian,
+            'max_angle' : alg.SetQualityMeasureToMaxAngle,
+            'max_aspect_frobenius' : alg.SetQualityMeasureToMaxAspectFrobenius,
+            'max_edge_ratio' : alg.SetQualityMeasureToMaxEdgeRatio,
+            'med_aspect_frobenius' : alg.SetQualityMeasureToMedAspectFrobenius,
+            'min_angle' : alg.SetQualityMeasureToMinAngle,
+            'oddy' : alg.SetQualityMeasureToOddy,
+            'radius_ratio' : alg.SetQualityMeasureToRadiusRatio,
+            'relative_size_squared' : alg.SetQualityMeasureToRelativeSizeSquared,
+            'scaled_jacobian' : alg.SetQualityMeasureToScaledJacobian,
+            'shape' : alg.SetQualityMeasureToShape,
+            'shape_and_size' : alg.SetQualityMeasureToShapeAndSize,
+            'shear' : alg.SetQualityMeasureToShear,
+            'shear_and_size' : alg.SetQualityMeasureToShearAndSize,
+            'skew' : alg.SetQualityMeasureToSkew,
+            'stretch' : alg.SetQualityMeasureToStretch,
+            'taper' : alg.SetQualityMeasureToTaper,
+            'volume' : alg.SetQualityMeasureToVolume,
+            'warpage' : alg.SetQualityMeasureToWarpage
+        }
+        try:
+            # Set user specified quality measure
+            measure_setters[quality_measure]()
+        except KeyError:
+            options = ', '.join(["'{}'".format(s) for s in measure_setters.keys()])
+            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(options))
+        alg.SetInputData(dataset)
+        alg.SetUndefinedQuality(null_value)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def compute_gradient(dataset, scalars=None, gradient_name='gradient',
+                         preference='point'):
+        """Computes per cell gradient of point scalar field or per point
+        gradient of cell scalar field.
+
+        Parameters
+        ----------
+        scalars : str
+            String name of the scalars array to use when computing gradient.
+
+        gradient_name : str, optional
+            The name of the output array of the computed gradient.
+        """
+        alg = vtk.vtkGradientFilter()
+        # Check if scalar array given
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        if not isinstance(scalars, str):
+            raise TypeError('Scalar array must be given as a string name')
+        _, field = dataset.get_scalar(scalars, preference=preference, info=True)
+        # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
+        alg.SetInputData(dataset)
+        alg.SetResultArrayName(gradient_name)
+        alg.Update()
+        return _get_output(alg)
 
 
 class CompositeFilters(object):

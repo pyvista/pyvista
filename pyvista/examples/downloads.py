@@ -462,3 +462,7 @@ def download_turbine_blade():
     url = "http://3dgallery.gks.com/2012/blade/blade.php"
     filename, _ = _retrieve_file(url, 'turbine_blade.stl')
     return pyvista.read(filename)
+
+
+def download_pine_roots():
+    return _download_and_read('pine_root.tri')

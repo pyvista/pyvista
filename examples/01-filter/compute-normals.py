@@ -25,7 +25,7 @@ mesh.plot(cmap="gist_earth", show_scalar_bar=False)
 # exaggerated topographic relief.
 
 # Compute the normals in-place and use them to warp the globe
-mesh.compute_normals()  # this activates the normals as well
+mesh.compute_normals(inplace=True)  # this activates the normals as well
 
 # Now use those normals to warp the surface
 warp = mesh.warp_by_scalar(factor=0.5e-5)
