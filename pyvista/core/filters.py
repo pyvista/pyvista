@@ -3363,8 +3363,8 @@ class UnstructuredGridFilters(DataSetFilters):
         return output
 
 
-    def clean(ugrid):
+    def clean(ugrid, tolerance=None):
         """First pass at clean algorithm for UnstructuredGrids"""
-        output = UnstructuredGridFilters._clean_ugrid_pts(ugrid)
+        output = UnstructuredGridFilters._clean_ugrid_pts(ugrid, tolerance=tolerance)
         output = UnstructuredGridFilters._clean_ugrid_cells(output)
         return output
