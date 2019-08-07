@@ -205,10 +205,10 @@ class DataSetFilters(object):
         function = vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
-            points = pv.convert_array(dataset.points)
+            points = pyvista.convert_array(dataset.points)
             dists = vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            dataset['implicit_distance'] = pv.convert_array(dists)
+            dataset['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
                         invert=invert, value=value)
@@ -2097,7 +2097,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not isinstance(poly_data, pyvista.PolyData):
-            poly_data = pv.PolyData(poly_data)
+            poly_data = pyvista.PolyData(poly_data)
         poly_data.point_arrays['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -2507,7 +2507,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not isinstance(poly_data, pyvista.PolyData):
-            poly_data = pv.PolyData(poly_data)
+            poly_data = pyvista.PolyData(poly_data)
         if n_sides < 3:
             n_sides = 3
         tube = vtk.vtkTubeFilter()
