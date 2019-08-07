@@ -409,3 +409,6 @@ def test_clean_unstructured_grid():
     clean_mesh = bad_mesh.clean()
     assert clean_mesh.n_points < bad_mesh.n_points
     assert clean_mesh.n_cells < bad_mesh.n_cells
+    clean_mesh = bad_mesh.clean_fast()
+    assert clean_mesh.n_points < bad_mesh.n_points
+    assert clean_mesh.n_cells < bad_mesh.n_cells
