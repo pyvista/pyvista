@@ -3261,3 +3261,97 @@ class UnstructuredGridFilters(DataSetFilters):
         """
         return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
                                                  offset=offset, bound=bound)
+
+
+    @staticmethod
+    def _clean_ugrid_pts(grid):
+        output = pyvista.UnstructuredGrid()
+        output.GetPointData().CopyAllocate(grid.GetPointData())
+        output.GetCellData().PassData(grid.GetCellData())
+
+        locator = vtk.vtkMergePoints()
+        new_points = vtk.vtkPoints()
+        locator.InitPointInsertion(new_points, grid.bounds, grid.n_points)
+        ptMap = []
+
+        for i, point in enumerate(grid.points):
+            pid = vtk.reference(0)
+            if locator.InsertUniquePoint(point, pid):
+                output.GetPointData().CopyData(grid.GetPointData(), i, pid)
+            ptMap.append(pid)
+        output.SetPoints(new_points)
+
+        cell_points = vtk.vtkIdList()
+        output.Allocate(grid.n_cells)
+
+        for i in range(grid.n_cells):
+            # special handling for polyhedron cells
+            if (vtk.vtkUnstructuredGrid.SafeDownCast(grid) and grid.GetCellType(i) == vtk.VTK_POLYHEDRON):
+                vtkUnstructuredGrid.SafeDownCast(grid).GetFaceStream(i, cell_points)
+                vtkUnstructuredGrid.ConvertFaceStreamPointIds(cell_points, ptMap)
+            else:
+                grid.GetCellPoints(i, cell_points)
+                for j in range(cell_points.GetNumberOfIds()):
+                    cell_pt_id = cell_points.GetId(j)
+                    try:
+                        new_id = ptMap[cell_pt_id]
+                    except:
+                        print(cell_pt_id, cell_points)
+                        raise RuntimeError()
+                    cell_points.SetId(j, new_id)
+            output.InsertNextCell(grid.GetCellType(i), cell_points)
+        return output
+
+
+    @staticmethod
+    def _clean_ugrid_cells(grid):
+
+        output = pyvista.UnstructuredGrid()
+
+        # Copy over the original points. Assume there are no degenerate points.
+        output.SetPoints(grid.GetPoints())
+        output.GetPointData().ShallowCopy(grid.GetPointData())
+
+        out_cell_data = output.GetCellData()
+        out_cell_data.CopyGlobalIdsOn()
+        out_cell_data.CopyAllocate(grid.GetCellData())
+
+        # Now copy the cells.
+        cell_points = vtk.vtkIdList()
+
+        output.Allocate(grid.n_cells)
+
+        cell_set = set()
+
+        for i in range(grid.n_cells):
+            # duplicate points do not make poly vertices or triangle
+            # strips degenerate so don't remove them
+            cell_type = grid.GetCellType(i)
+            if (cell_type == vtk.VTK_POLY_VERTEX or cell_type == vtk.VTK_TRIANGLE_STRIP):
+                grid.GetCellPoints(i, cell_points)
+                new_cell_id = output.InsertNextCell(cell_type, cell_points)
+                out_cell_data.CopyData(grid.GetCellData(), i, new_cell_id)
+                continue
+
+            grid.GetCellPoints(i, cell_points)
+            nn = set()
+            for j in range(cell_points.GetNumberOfIds()):
+                cell_pt_id = cell_points.GetId(j)
+                nn.add(cell_pt_id)
+
+                #this conditional may generate non-referenced nodes
+                is_unique = not (frozenset(nn) in cell_set)
+
+                #only copy a cell to the output if it is neither degenerate nor duplicate
+                if len(nn) == cell_points.GetNumberOfIds() and is_unique:
+                    new_cell_id = output.InsertNextCell(grid.GetCellType(i), cell_points)
+                    out_cell_data.CopyData(grid.GetCellData(), i, new_cell_id)
+                    cell_set.add(frozenset(nn))
+        return output
+
+
+    def clean(ugrid):
+        """First pass at clean algorithm for UnstructuredGrids"""
+        output = UnstructuredGridFilters._clean_ugrid_pts(ugrid)
+        output = UnstructuredGridFilters._clean_ugrid_cells(output)
+        return output

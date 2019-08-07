@@ -399,3 +399,13 @@ def test_grid_extract_selection_points():
 
     sub_grid = grid.extract_selection_points(range(100))
     assert sub_grid.n_cells > 1
+
+
+
+def test_clean_unstructured_grid():
+    mesh = examples.load_uniform()
+    # Create a mesh with duplicate points and cells
+    bad_mesh = mesh.clip('x').merge(mesh.clip('y'), merge_points=False)
+    clean_mesh = bad_mesh.clean()
+    assert clean_mesh.n_points < bad_mesh.n_points
+    assert clean_mesh.n_cells < bad_mesh.n_cells
