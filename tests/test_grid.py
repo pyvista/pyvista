@@ -159,7 +159,7 @@ def test_merge():
     grid.points[:, 0] += 1
     unmerged = grid.merge(beam, inplace=False, merge_points=False)
 
-    grid.merge(beam, inplace=True)
+    grid.merge(beam, inplace=True, merge_points=True)
     assert grid.n_points > beam.n_points
     assert grid.n_points < unmerged.n_points
 
@@ -170,7 +170,7 @@ def test_merge_not_main():
     unmerged = grid.merge(beam, inplace=False, merge_points=False,
                           main_has_priority=False)
 
-    grid.merge(beam, inplace=True)
+    grid.merge(beam, inplace=True, merge_points=True)
     assert grid.n_points > beam.n_points
     assert grid.n_points < unmerged.n_points
 
@@ -182,7 +182,7 @@ def test_merge_list():
     grid_b = beam.copy()
     grid_b.points[:, 1] += 1
 
-    grid_a.merge([beam, grid_b], inplace=True)
+    grid_a.merge([beam, grid_b], inplace=True, merge_points=True)
     assert grid_a.n_points > beam.n_points
 
 
