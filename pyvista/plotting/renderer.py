@@ -12,8 +12,8 @@ from vtk import vtkRenderer
 import pyvista
 from pyvista.utilities import wrap
 
-from .plotting import (MAX_N_COLOR_BARS, parse_color, parse_font_family,
-                       rcParams)
+from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
+from .tools import create_axes_marker
 
 
 class Renderer(vtkRenderer):
@@ -35,6 +35,7 @@ class Renderer(vtkRenderer):
         if border:
             self.add_border(border_color, border_width)
 
+
     def add_border(self, color=[1, 1, 1], width=2.0):
         points = np.array([[1., 1., 0.],
                            [0., 1., 0.],
@@ -55,14 +56,14 @@ class Renderer(vtkRenderer):
 
         mapper = vtk.vtkPolyDataMapper2D()
         mapper.SetInputData(poly);
-        mapper.SetTransformCoordinate(coordinate);
+        mapper.SetTransformCoordinate(coordinate)
 
         actor = vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(parse_color(color))
         actor.GetProperty().SetLineWidth(width)
 
-        self.add_actor(actor)
+        self.AddViewProp(actor)
 
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
@@ -132,7 +133,9 @@ class Renderer(vtkRenderer):
 
         return actor, actor.GetProperty()
 
-    def add_axes_at_origin(self):
+    def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
+                    xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
+                    labels_off=False):
         """
         Add axes actor at origin
 
@@ -141,10 +144,11 @@ class Renderer(vtkRenderer):
         marker_actor : vtk.vtkAxesActor
             vtkAxesActor actor
         """
-        self.marker_actor = vtk.vtkAxesActor()
-        # renderer = self.renderers[self.loc_to_index(loc)]
+        self.marker_actor = create_axes_marker(line_width=line_width,
+            x_color=x_color, y_color=y_color, z_color=z_color,
+            xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
         self.AddActor(self.marker_actor)
-        self.parent._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
+        self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
@@ -559,6 +563,19 @@ class Renderer(vtkRenderer):
             camera.GetViewUp()
         ]
 
+
+    def enable_parallel_projection(self):
+        """Set use parallel projection. The camera will have a parallel
+        projection. Parallel projection is often useful when viewing images or
+        2D datasets.
+        """
+        self.camera.SetParallelProjection(True)
+
+
+    def disable_parallel_projection(self):
+        """Reset the camera to use perspective projection."""
+        self.camera.SetParallelProjection(False)
+
     def remove_actor(self, actor, reset_camera=False):
         """
         Removes an actor from the Renderer.
@@ -796,6 +813,24 @@ class Renderer(vtkRenderer):
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
 
+
+    def deep_clean(self):
+        if hasattr(self, 'cube_axes_actor'):
+            del self.cube_axes_actor
+        if hasattr(self, 'edl_pass'):
+            del self.edl_pass
+        if hasattr(self, '_box_object'):
+            self.remove_bounding_box()
+
+        self.RemoveAllViewProps()
+        self._actors = None
+        # remove reference to parent last
+        self.parent = None
+        return
+
+
+    def __del__(self):
+        self.deep_clean()
 
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):

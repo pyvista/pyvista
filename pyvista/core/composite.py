@@ -215,7 +215,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 continue
             # get the scalar if availble
             arr = get_scalar(data, name)
-            if arr is None:
+            if arr is None or not np.issubdtype(arr.dtype, np.number):
                 continue
             tmi, tma = np.nanmin(arr), np.nanmax(arr)
             if tmi < mini:
@@ -447,3 +447,39 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def __str__(self):
         return MultiBlock.__repr__(self)
+
+
+    def __len__(self):
+        return self.n_blocks
+
+
+    def copy_meta_from(self, ido):
+        """Copies pyvista meta data onto this object from another object"""
+        # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
+        # This method is here for consistency witht the rest of the API and
+        # incase we add meta data to this pbject down the road.
+        pass
+
+
+    def copy(self, deep=True):
+        """
+        Returns a copy of the object
+
+        Parameters
+        ----------
+        deep : bool, optional
+            When True makes a full copy of the object.
+
+        Returns
+        -------
+        newobject : same as input
+           Deep or shallow copy of the input.
+        """
+        thistype = type(self)
+        newobject = thistype()
+        if deep:
+            newobject.DeepCopy(self)
+        else:
+            newobject.ShallowCopy(self)
+        newobject.copy_meta_from(self)
+        return newobject

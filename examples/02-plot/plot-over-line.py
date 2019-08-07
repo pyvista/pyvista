@@ -13,7 +13,7 @@ from pyvista import examples
 # Volumetric Mesh
 # +++++++++++++++
 #
-# First a 3D mesh example to demonstrate a
+# First a 3D mesh example to demonstrate
 mesh = examples.download_kitchen()
 
 # Make two points to construct the line between

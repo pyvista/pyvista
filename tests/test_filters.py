@@ -29,6 +29,7 @@ def test_clip_filter():
     output = COMPOSITE.clip(normal=normals[0], invert=False)
     assert output.n_blocks == COMPOSITE.n_blocks
 
+
 def test_clip_box():
     for i, dataset in enumerate(DATASETS):
         clp = dataset.clip_box(invert=True)
@@ -44,6 +45,16 @@ def test_clip_box():
     # Now test composite data structures
     output = COMPOSITE.clip_box(invert=False)
     assert output.n_blocks == COMPOSITE.n_blocks
+
+
+def test_clip_surface():
+    surface = pyvista.Cone(direction=(0,0,-1),
+                  height=3.0, radius=1, resolution=50, )
+    xx = yy = zz = 1 - np.linspace(0, 51, 51) * 2 / 50
+    dataset = pyvista.RectilinearGrid(xx, yy, zz)
+    clipped = dataset.clip_surface(surface, invert=False)
+    assert clipped.n_points < dataset.n_points
+
 
 def test_slice_filter():
     """This tests the slice filter on all datatypes avaialble filters"""
@@ -391,7 +402,7 @@ def test_streamlines():
 
 def test_plot_over_line():
     """this requires matplotlib"""
-    mesh = examples.load_channels()
+    mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
@@ -465,3 +476,30 @@ def test_decimate_boundary():
     mesh = examples.load_uniform()
     boundary = mesh.decimate_boundary()
     assert boundary.n_points
+
+
+def test_merge_general():
+    mesh = examples.load_uniform()
+    thresh = mesh.threshold_percent([0.2, 0.5]) # unstructured grid
+    con = mesh.contour() # poly data
+    merged = thresh + con
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+    merged = con + thresh
+    assert isinstance(merged, pyvista.UnstructuredGrid)
+    # Pure PolyData inputs should yield poly data output
+    merged = mesh.extract_surface() + con
+    assert isinstance(merged, pyvista.PolyData)
+
+
+def test_compute_cell_quality():
+    mesh = pyvista.ParametricEllipsoid().decimate(0.8)
+    qual = mesh.compute_cell_quality()
+    assert 'CellQuality' in qual.scalar_names
+
+
+def test_compute_gradients():
+    mesh = examples.load_random_hills()
+    grad = mesh.compute_gradient()
+    assert 'gradient' in grad.scalar_names
+    assert np.shape(grad['gradient'])[0] == mesh.n_points
+    assert np.shape(grad['gradient'])[1] == 3

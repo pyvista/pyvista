@@ -12,7 +12,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         volume=False, **kwargs):
+         volume=False, parallel_projection=False, **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
 
@@ -123,6 +123,9 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()
+
+    if parallel_projection:
+        plotter.enable_parallel_projection()
 
     result = plotter.show(window_size=window_size,
                           auto_close=False,

@@ -201,11 +201,14 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         if lines.dtype != pyvista.ID_TYPE:
             lines = lines.astype(pyvista.ID_TYPE)
 
-        # get number of faces
+        # get number of lines
         if lines.ndim == 1:
-            div = lines.size / 3.0
-            assert not div % 1, 'Invalid lines array'
-            nlines = int(div)
+            log.debug('efficiency warning')
+            c = 0
+            nlines = 0
+            while c < lines.size:
+                c += lines[c] + 1
+                nlines += 1
         else:
             nlines = lines.shape[0]
 
