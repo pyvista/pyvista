@@ -1777,7 +1777,7 @@ class DataSetFilters(object):
             return mesh
 
 
-    def merge(dataset, grid=None, merge_points=False, inplace=False,
+    def merge(dataset, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
         """
         Join one or many other grids to this grid.  Grid is updated
