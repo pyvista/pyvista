@@ -3286,11 +3286,11 @@ class UnstructuredGridFilters(DataSetFilters):
         cell_points = vtk.vtkIdList()
         for i in range(grid.n_cells):
             # special handling for polyhedron cells
+            grid.GetCellPoints(i, cell_points)
             if (grid.GetCellType(i) == vtk.VTK_POLYHEDRON):
                 vtkUnstructuredGrid.SafeDownCast(grid).GetFaceStream(i, cell_points)
                 vtkUnstructuredGrid.ConvertFaceStreamPointIds(cell_points, ind_nodes)
             else:
-                grid.GetCellPoints(i, cell_points)
                 for j in range(cell_points.GetNumberOfIds()):
                     cell_pt_id = cell_points.GetId(j)
                     new_id = ind_nodes[cell_pt_id]
@@ -3320,13 +3320,13 @@ class UnstructuredGridFilters(DataSetFilters):
             # duplicate points do not make poly vertices or triangle
             # strips degenerate so don't remove them
             cell_type = grid.GetCellType(i)
+            grid.GetCellPoints(i, cell_points)
             if (cell_type == vtk.VTK_POLY_VERTEX or cell_type == vtk.VTK_TRIANGLE_STRIP):
                 grid.GetCellPoints(i, cell_points)
                 new_cell_id = output.InsertNextCell(cell_type, cell_points)
                 out_cell_data.CopyData(grid.GetCellData(), i, new_cell_id)
                 continue
 
-            grid.GetCellPoints(i, cell_points)
             nn = set()
             for j in range(cell_points.GetNumberOfIds()):
                 cell_pt_id = cell_points.GetId(j)
@@ -3353,7 +3353,7 @@ class UnstructuredGridFilters(DataSetFilters):
     def clean_fast(ugrid, tolerance=None):
         """Temporary reimplimentation of the algorithm to be faster.
 
-        Has seen 1.17 times speedup
+        Has seen 1.1-1.5 times speedup so far
         """
         output = pyvista.UnstructuredGrid()
         output.Allocate(ugrid.n_cells)
