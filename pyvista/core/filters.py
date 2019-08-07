@@ -3286,18 +3286,14 @@ class UnstructuredGridFilters(DataSetFilters):
 
         for i in range(grid.n_cells):
             # special handling for polyhedron cells
-            if (vtk.vtkUnstructuredGrid.SafeDownCast(grid) and grid.GetCellType(i) == vtk.VTK_POLYHEDRON):
+            if (grid.GetCellType(i) == vtk.VTK_POLYHEDRON):
                 vtkUnstructuredGrid.SafeDownCast(grid).GetFaceStream(i, cell_points)
                 vtkUnstructuredGrid.ConvertFaceStreamPointIds(cell_points, ptMap)
             else:
                 grid.GetCellPoints(i, cell_points)
                 for j in range(cell_points.GetNumberOfIds()):
                     cell_pt_id = cell_points.GetId(j)
-                    try:
-                        new_id = ptMap[cell_pt_id]
-                    except:
-                        print(cell_pt_id, cell_points)
-                        raise RuntimeError()
+                    new_id = ptMap[cell_pt_id]
                     cell_points.SetId(j, new_id)
             output.InsertNextCell(grid.GetCellType(i), cell_points)
         return output
