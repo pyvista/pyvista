@@ -205,10 +205,10 @@ class DataSetFilters(object):
         function = vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
-            points = pv.convert_array(dataset.points)
+            points = pyvista.convert_array(dataset.points)
             dists = vtk.vtkDoubleArray()
             function.FunctionValue(points, dists)
-            dataset['implicit_distance'] = pv.convert_array(dists)
+            dataset['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
                         invert=invert, value=value)
@@ -2107,7 +2107,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not isinstance(poly_data, pyvista.PolyData):
-            poly_data = pv.PolyData(poly_data)
+            poly_data = pyvista.PolyData(poly_data)
         poly_data.point_arrays['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = vtk.vtkFeatureEdges()
         featureEdges.SetInputData(poly_data)
@@ -2519,7 +2519,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not isinstance(poly_data, pyvista.PolyData):
-            poly_data = pv.PolyData(poly_data)
+            poly_data = pyvista.PolyData(poly_data)
         if n_sides < 3:
             n_sides = 3
         tube = vtk.vtkTubeFilter()
@@ -2872,7 +2872,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
-    def clean(poly_data, point_merging=True, merge_tol=None, lines_to_points=True,
+    def clean(poly_data, point_merging=True, tolerance=None, lines_to_points=True,
               polys_to_lines=True, strips_to_polys=True, inplace=False,
               absolute=True, **kwargs):
         """
@@ -2884,11 +2884,11 @@ class PolyDataFilters(DataSetFilters):
         point_merging : bool, optional
             Enables point merging.  On by default.
 
-        merge_tol : float, optional
-            Set merging tolarance.  When enabled merging is set to
+        tolerance : float, optional
+            Set merging tolerance.  When enabled merging is set to
             absolute distance. If ``absolute`` is False, then the merging
             tolerance is a fraction of the bounding box legnth. The alias
-            ``tolerance`` is also excepted.
+            ``merge_tol`` is also excepted.
 
         lines_to_points : bool, optional
             Turn on/off conversion of degenerate lines to points.  Enabled by
@@ -2905,26 +2905,26 @@ class PolyDataFilters(DataSetFilters):
             Updates mesh in-place while returning nothing.  Default True.
 
         absolute : bool, optional
-            Control if ``merge_tol`` is an absolute distance or a fraction.
+            Control if ``tolerance`` is an absolute distance or a fraction.
 
         Returns
         -------
         mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
         """
-        if merge_tol is None:
-            merge_tol = kwargs.pop('tolerance', None)
+        if tolerance is None:
+            tolerance = kwargs.pop('merge_tol', None)
         clean = vtk.vtkCleanPolyData()
         clean.SetPointMerging(point_merging)
         clean.SetConvertLinesToPoints(lines_to_points)
         clean.SetConvertPolysToLines(polys_to_lines)
         clean.SetConvertStripsToPolys(strips_to_polys)
-        if isinstance(merge_tol, (int, float)):
+        if isinstance(tolerance, (int, float)):
             if absolute:
                 clean.ToleranceIsAbsoluteOn()
-                clean.SetAbsoluteTolerance(merge_tol)
+                clean.SetAbsoluteTolerance(tolerance)
             else:
-                clean.SetTolerance(merge_tol)
+                clean.SetTolerance(tolerance)
         clean.SetInputData(poly_data)
         clean.Update()
 
