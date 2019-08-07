@@ -3264,38 +3264,54 @@ class UnstructuredGridFilters(DataSetFilters):
 
 
     @staticmethod
-    def _clean_ugrid_pts(grid):
+    def _clean_ugrid_pts(grid, tolerance=None):
         output = pyvista.UnstructuredGrid()
         output.GetPointData().CopyAllocate(grid.GetPointData())
         output.GetCellData().PassData(grid.GetCellData())
-
-        locator = vtk.vtkMergePoints()
-        new_points = vtk.vtkPoints()
-        locator.InitPointInsertion(new_points, grid.bounds, grid.n_points)
-        ptMap = []
-
-        for i, point in enumerate(grid.points):
-            pid = vtk.reference(0)
-            if locator.InsertUniquePoint(point, pid):
-                output.GetPointData().CopyData(grid.GetPointData(), i, pid)
-            ptMap.append(pid)
-        output.SetPoints(new_points)
-
-        cell_points = vtk.vtkIdList()
         output.Allocate(grid.n_cells)
 
+        ### Method 1
+        # locator = vtk.vtkMergePoints()
+        # # TODO: set tolerance
+        # new_points = vtk.vtkPoints()
+        # locator.InitPointInsertion(new_points, grid.bounds, grid.n_points)
+        # ind_nodes = []
+        #
+        # for i, point in enumerate(grid.points):
+        #     pid = vtk.reference(0)
+        #     if locator.InsertUniquePoint(point, pid):
+        #         output.GetPointData().CopyData(grid.GetPointData(), i, pid)
+        #     ind_nodes.append(pid)
+        # output.SetPoints(new_points)
+        ###
+
+        ### Method 2 - TODO - we need to verify this
+        if tolerance is None:
+            tolerance = grid.length * 1e-6
+        all_nodes = grid.points.copy()
+        all_nodes = np.around(all_nodes / tolerance)
+        unique_nodes, index, ind_nodes = np.unique(all_nodes, return_index=True, return_inverse=True, axis=0)
+        unique_nodes *= tolerance
+        new_points = pyvista.vtk_points(unique_nodes)
+        output.SetPoints(new_points)
+        for name, arr in grid.point_arrays.items():
+            output[name] = arr[index]
+        ###
+
+        cell_points = vtk.vtkIdList()
         for i in range(grid.n_cells):
             # special handling for polyhedron cells
             if (grid.GetCellType(i) == vtk.VTK_POLYHEDRON):
                 vtkUnstructuredGrid.SafeDownCast(grid).GetFaceStream(i, cell_points)
-                vtkUnstructuredGrid.ConvertFaceStreamPointIds(cell_points, ptMap)
+                vtkUnstructuredGrid.ConvertFaceStreamPointIds(cell_points, ind_nodes)
             else:
                 grid.GetCellPoints(i, cell_points)
                 for j in range(cell_points.GetNumberOfIds()):
                     cell_pt_id = cell_points.GetId(j)
-                    new_id = ptMap[cell_pt_id]
+                    new_id = ind_nodes[cell_pt_id]
                     cell_points.SetId(j, new_id)
             output.InsertNextCell(grid.GetCellType(i), cell_points)
+
         return output
 
 
@@ -3343,6 +3359,7 @@ class UnstructuredGridFilters(DataSetFilters):
                     new_cell_id = output.InsertNextCell(grid.GetCellType(i), cell_points)
                     out_cell_data.CopyData(grid.GetCellData(), i, new_cell_id)
                     cell_set.add(frozenset(nn))
+
         return output
 
 
