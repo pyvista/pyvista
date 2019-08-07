@@ -13,7 +13,7 @@ from vtk import vtkMultiBlockDataSet
 
 import pyvista
 from pyvista import plot
-from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
+from pyvista.utilities import get_scalar, is_pyvista_dataset, wrap
 
 from .common import DataObject
 from .filters import CompositeFilters
@@ -66,7 +66,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         datasets. This is perfrom inplace"""
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
-            if not is_pyvista_obj(block):
+            if not is_pyvista_dataset(block):
                 self.SetBlock(i, pyvista.wrap(block))
         return
 
@@ -245,7 +245,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         data = self.GetBlock(index)
         if data is None:
             return data
-        if data is not None and not is_pyvista_obj(data):
+        if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if data not in self.refs:
             self.refs.append(data)
@@ -313,7 +313,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             name = index
         else:
             i, name = index, None
-        if data is not None and not is_pyvista_obj(data):
+        if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if i == -1:
             self.append(data)

@@ -17,7 +17,7 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.utilities import is_pyvista_obj, wrap
+from pyvista.utilities import is_pyvista_dataset, wrap
 
 from .qt_plotting import BackgroundPlotter
 
@@ -82,9 +82,9 @@ class InteractiveTool(object):
         if not scooby.in_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
-        if not is_pyvista_obj(dataset):
+        if not is_pyvista_dataset(dataset):
             dataset = wrap(dataset)
-            if not is_pyvista_obj(dataset):
+            if not is_pyvista_dataset(dataset):
                 raise RuntimeError('Object not supported for plotting in pyvista.')
 
         # Make the input/output of this tool available

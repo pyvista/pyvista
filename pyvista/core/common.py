@@ -13,7 +13,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
                                POINT_DATA_FIELD, convert_array, get_scalar,
-                               is_pyvista_obj, parse_field_choice,
+                               is_pyvista_dataset, parse_field_choice,
                                raise_not_matching, vtk_bit_array_to_char)
 
 from .filters import DataSetFilters
@@ -1126,7 +1126,7 @@ class Common(DataSetFilters, DataObject):
 
         """
         self.DeepCopy(mesh)
-        if is_pyvista_obj(mesh):
+        if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
 
     def cast_to_unstructured_grid(self):
