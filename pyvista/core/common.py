@@ -228,6 +228,13 @@ class DataObject(object):
         vtkarr.SetName(name)
         self.GetFieldData().AddArray(vtkarr)
 
+
+    def _add_field_scalar(self, scalars, name, set_active=False, deep=True):
+        """DEPRECATED: Please use `_add_field_array`"""
+        warnings.warn('Deprecation Warning: `_add_field_scalar` is now `_add_field_array`', RuntimeWarning)
+        return self._add_field_array(scalars, name, set_active=set_active, deep=deep)
+
+
     def add_field_array(self, scalars, name, deep=True):
         self._add_field_array(scalars, name, deep=deep)
 
@@ -649,6 +656,12 @@ class Common(DataSetFilters, DataObject):
             self._active_scalar_info = [POINT_DATA_FIELD, name]
 
 
+    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
+        """DEPRECATED: Please use `_add_point_array`"""
+        warnings.warn('Deprecation Warning: `_add_point_scalar` is now `_add_point_array`', RuntimeWarning)
+        return self._add_point_array(scalars, name, set_active=set_active, deep=deep)
+
+
     def get_data_range(self, arr=None, preference='cell'):
         """Get the non-NaN min and max of a named scalar array
 
@@ -841,6 +854,13 @@ class Common(DataSetFilters, DataObject):
         if set_active or self.active_scalar_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
             self._active_scalar_info = [CELL_DATA_FIELD, name]
+
+
+    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
+        """DEPRECATED: Please use `_add_cell_array`"""
+        warnings.warn('Deprecation Warning: `_add_cell_scalar` is now `_add_cell_array`', RuntimeWarning)
+        return self._add_cell_array(scalars, name, set_active=set_active, deep=deep)
+
 
     def copy_meta_from(self, ido):
         """Copies pyvista meta data onto this object from another object"""
