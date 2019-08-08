@@ -4,6 +4,10 @@ sort of spatial reference.
 import collections
 import vtk
 import numpy as np
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 
 
 import pyvista
@@ -39,6 +43,8 @@ class Table(vtk.vtkTable, DataObject):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
+            elif pd is not None and isinstance(args[0], pd.DataFrame):
+                self._from_pandas(args[0])
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
@@ -61,6 +67,12 @@ class Table(vtk.vtkTable, DataObject):
                 raise RuntimeError('Dictionaty must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
+        return
+
+
+    def _from_pandas(self, data_frame):
+        for name in data_frame.keys():
+            self.row_arrays[name] = df[name]
         return
 
 
@@ -327,6 +339,19 @@ class Table(vtk.vtkTable, DataObject):
         return self.head(display=False, html=False)
 
 
+    def to_pandas(self):
+        """Create a Pandas DataFrame from this Table"""
+        if pd is None:
+            raise ImportError('You must have Pandas installed.')
+        data_frame = pd.DataFrame()
+        for name, array in self.items():
+            data_frame[name] = array
+        return data_frame
+
+
+    def save(self, *args, **kwargs):
+        raise NotImplementedError("Please use the `to_pandas` method and"
+                " harness Pandas' wonderful file IO methods.")
 
 
 
