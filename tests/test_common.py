@@ -33,6 +33,9 @@ def test_point_arrays():
     grid.clear_point_arrays()
     assert len(grid.point_arrays.keys()) == 0
 
+    grid.point_arrays['list'] = np.arange(grid.n_points).tolist()
+    assert np.allclose(grid.point_arrays['list'], np.arange(grid.n_points))
+
 
 def test_point_arrays_bad_value():
     grid = GRID.copy()
@@ -60,6 +63,9 @@ def test_cell_arrays():
     assert key in grid.cell_arrays
 
     assert np.allclose(grid[key], np.arange(grid.n_cells))
+
+    grid.cell_arrays['list'] = np.arange(grid.n_cells).tolist()
+    assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
 
 
 def test_cell_arrays_bad_value():
@@ -89,6 +95,9 @@ def test_field_arrays():
 
     del grid.field_arrays[key]
     assert key not in grid.field_arrays
+
+    grid.field_arrays['list'] = np.arange(n).tolist()
+    assert np.allclose(grid.field_arrays['list'], np.arange(n))
 
 
 

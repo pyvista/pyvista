@@ -142,7 +142,7 @@ def cell_scalar(mesh, name):
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
-def row_scalar(data_object, name):
+def row_array(data_object, name):
     """ Returns cell scalars of a vtk object """
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
@@ -188,7 +188,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
 
     """
     if isinstance(mesh, vtk.vtkTable):
-        arr = row_scalar(mesh, name)
+        arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
         field = ROW_DATA_FIELD

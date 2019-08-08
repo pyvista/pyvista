@@ -201,7 +201,7 @@ class DataSetFilters(object):
             output clipped mesh.
         """
         if not isinstance(surface, vtk.vtkPolyData):
-            surface = DataSetFilters.extract_surface(surface)
+            surface = DataSetFilters.extract_geometry(surface)
         function = vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -1936,9 +1936,9 @@ class DataSetFilters(object):
         try:
             # Set user specified quality measure
             measure_setters[quality_measure]()
-        except KeyError:
-            options = ', '.join(["'{}'".format(s) for s in measure_setters.keys()])
-            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(options))
+        except (KeyError, IndexError):
+            options = ', '.join(["'{}'".format(s) for s in list(measure_setters.keys())])
+            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(quality_measure, options))
         alg.SetInputData(dataset)
         alg.SetUndefinedQuality(null_value)
         alg.Update()

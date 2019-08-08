@@ -54,6 +54,9 @@ def test_clip_surface():
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False)
     assert clipped.n_points < dataset.n_points
+    clipped = dataset.clip_surface(surface, invert=False, compute_distance=True)
+    assert clipped.n_points < dataset.n_points
+    assert 'implicit_distance' in clipped.array_names
 
 
 def test_slice_filter():
@@ -388,6 +391,10 @@ def test_resample():
     name = 'Spatial Point Data'
     assert name in result.array_names
     assert isinstance(result, type(mesh))
+    result = mesh.sample(data_to_probe, tolerance=1.0)
+    name = 'Spatial Point Data'
+    assert name in result.array_names
+    assert isinstance(result, type(mesh))
 
 
 def test_streamlines():
@@ -495,6 +502,8 @@ def test_compute_cell_quality():
     mesh = pyvista.ParametricEllipsoid().decimate(0.8)
     qual = mesh.compute_cell_quality()
     assert 'CellQuality' in qual.array_names
+    with pytest.raises(KeyError):
+        qual = mesh.compute_cell_quality(quality_measure='foo')
 
 
 def test_compute_gradients():

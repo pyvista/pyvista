@@ -9,7 +9,7 @@ import vtk
 import pyvista
 from pyvista.utilities import (ROW_DATA_FIELD, convert_array, get_array,
                                parse_field_choice, raise_not_matching,
-                               row_scalar)
+                               row_array)
 
 from .common import DataObject, _ScalarsDict
 
@@ -78,7 +78,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def _from_pandas(self, data_frame):
         for name in data_frame.keys():
-            self.row_arrays[name] = df[name]
+            self.row_arrays[name] = data_frame[name]
         return
 
 
@@ -102,7 +102,7 @@ class Table(vtk.vtkTable, DataObject):
         return self.n_columns
 
 
-    def _row_scalar(self, name=None):
+    def _row_array(self, name=None):
         """
         Returns row scalars of a vtk object
 
@@ -159,7 +159,7 @@ class Table(vtk.vtkTable, DataObject):
 
         for i in range(narr):
             name = pdata.GetArrayName(i)
-            self._row_arrays[name] = self._row_scalar(name)
+            self._row_arrays[name] = self._row_array(name)
 
         self._row_arrays.enable_callback()
         return self._row_arrays
@@ -186,7 +186,7 @@ class Table(vtk.vtkTable, DataObject):
         return self.row_arrays.pop(name)
 
 
-    def _add_row_scalar(self, scalars, name, deep=True):
+    def _add_row_array(self, scalars, name, deep=True):
         """
         Adds scalars to the vtk object.
 
@@ -235,7 +235,7 @@ class Table(vtk.vtkTable, DataObject):
             name = self.GetRowData().GetArrayName(index)
         else:
             raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
-        return row_scalar(self, name)
+        return row_array(self, name)
 
 
     def get(self, index):
@@ -315,7 +315,7 @@ class Table(vtk.vtkTable, DataObject):
 
             def format_array(key):
                 """internal helper to foramt array information for printing"""
-                arr = row_scalar(self, key)
+                arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
@@ -401,4 +401,4 @@ class RowScalarsDict(_ScalarsDict):
 
 
     def adder(self, scalars, name, set_active=False, deep=True):
-        self.data._add_row_scalar(scalars, name, deep=deep)
+        self.data._add_row_array(scalars, name, deep=deep)

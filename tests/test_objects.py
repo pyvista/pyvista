@@ -10,6 +10,11 @@ import vtk
 import pyvista
 from pyvista import examples
 
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
+
 
 
 def test_table_init(tmpdir):
@@ -136,6 +141,26 @@ def test_table_row_arrays():
     return
 
 
+def test_table_row_np_bool():
+    n = 50
+    table = pyvista.Table()
+    bool_arr = np.zeros(n, np.bool)
+    table.row_arrays['bool_arr'] = bool_arr
+    bool_arr[:] = True
+    assert table.row_arrays['bool_arr'].all()
+    assert table._row_array('bool_arr').all()
+    assert table._row_array('bool_arr').dtype == np.bool
+
+
+def test_table_row_uint8():
+    n = 50
+    table = pyvista.Table()
+    arr = np.zeros(n, np.uint8)
+    table.row_arrays['arr'] = arr
+    arr[:] = np.arange(n)
+    assert np.allclose(table.row_arrays['arr'], np.arange(n))
+
+
 def test_table_repr():
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
@@ -146,3 +171,26 @@ def test_table_repr():
     assert isinstance(text, str)
     text = table.__str__()
     assert isinstance(text, str)
+
+
+@pytest.mark.skipif(pd is None, reason="Requires Pandas")
+def test_table_pandas():
+    nr, nc = 50, 3
+    arrays = np.random.rand(nr, nc)
+    df = pd.DataFrame()
+    for i in range(nc):
+        df['foo{}'.format(i)] = arrays[:, i].copy()
+    table = pyvista.Table(df)
+    assert table.n_rows == nr
+    assert table.n_columns == nc
+    for i in range(nc):
+        assert np.allclose(table.row_arrays['foo{}'.format(i)], arrays[:, i])
+    assert df.equals(table.to_pandas())
+
+
+def test_table_iter():
+    nr, nc = 50, 3
+    arrays = np.random.rand(nr, nc)
+    table = pyvista.Table(arrays)
+    for i, array in enumerate(table):
+        assert np.allclose(array, arrays[:, i])
