@@ -49,7 +49,7 @@ Mesh Creation
 Array Access
 ~~~~~~~~~~~~
 
-.. autofunction:: pyvista.get_scalar
+.. autofunction:: pyvista.get_array
 
 .. autofunction:: pyvista.convert_array
 

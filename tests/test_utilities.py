@@ -60,7 +60,7 @@ def test_read(tmpdir):
         data = pyvista.read('this_file_totally_does_not_exist.vtk')
 
 
-def test_get_scalar():
+def test_get_array():
     grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
@@ -72,12 +72,12 @@ def test_get_scalar():
     grid._add_point_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
     grid._add_field_array(farr, 'field_data')
-    assert np.allclose(carr, utilities.get_scalar(grid, 'test_data', preference='cell'))
-    assert np.allclose(parr, utilities.get_scalar(grid, 'test_data', preference='point'))
-    assert np.allclose(oarr, utilities.get_scalar(grid, 'other'))
-    assert None == utilities.get_scalar(grid, 'foo')
-    assert utilities.get_scalar(grid, 'test_data', preference='field') is None
-    assert np.allclose(farr, utilities.get_scalar(grid, 'field_data', preference='field'))
+    assert np.allclose(carr, utilities.get_array(grid, 'test_data', preference='cell'))
+    assert np.allclose(parr, utilities.get_array(grid, 'test_data', preference='point'))
+    assert np.allclose(oarr, utilities.get_array(grid, 'other'))
+    assert None == utilities.get_array(grid, 'foo')
+    assert utilities.get_array(grid, 'test_data', preference='field') is None
+    assert np.allclose(farr, utilities.get_array(grid, 'field_data', preference='field'))
 
 
 

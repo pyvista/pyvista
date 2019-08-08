@@ -12,7 +12,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
-                               POINT_DATA_FIELD, convert_array, get_scalar,
+                               POINT_DATA_FIELD, convert_array, get_array,
                                is_pyvista_dataset, parse_field_choice,
                                raise_not_matching, vtk_bit_array_to_char)
 
@@ -336,7 +336,7 @@ class Common(DataSetFilters, DataObject):
         """Return the active scalar's field and name: [field, name]"""
         if not hasattr(self, '_active_vectors_info'):
             # Sometimes, precomputed normals aren't set as active
-            if 'Normals' in self.scalar_names:
+            if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
             else:
                 self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
@@ -511,7 +511,7 @@ class Common(DataSetFilters, DataObject):
         else:
             # Be sure to reset the tcoords if present
             # Grab old coordinates
-            if name in mesh.scalar_names:
+            if name in mesh.array_names:
                 old_tcoord = mesh.GetPointData().GetTCoords()
                 mesh.GetPointData().SetTCoords(mesh.GetPointData().GetAbstractArray(name))
                 mesh.GetPointData().AddArray(old_tcoord)
@@ -520,7 +520,7 @@ class Common(DataSetFilters, DataObject):
 
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
-        _, field = get_scalar(self, name, preference=preference, info=True)
+        _, field = get_array(self, name, preference=preference, info=True)
         self._last_active_scalar_name = self.active_scalar_info[1]
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveScalars(name)
@@ -532,7 +532,7 @@ class Common(DataSetFilters, DataObject):
 
     def set_active_vectors(self, name, preference='point'):
         """Finds the vectors by name and appropriately sets it as active"""
-        _, field = get_scalar(self, name, preference=preference, info=True)
+        _, field = get_array(self, name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveVectors(name)
         elif field == CELL_DATA_FIELD:
@@ -543,7 +543,7 @@ class Common(DataSetFilters, DataObject):
 
     def rename_scalar(self, old_name, new_name, preference='cell'):
         """Changes array name by searching for the array then renaming it"""
-        _, field = get_scalar(self, old_name, preference=preference, info=True)
+        _, field = get_array(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == CELL_DATA_FIELD:
@@ -668,7 +668,7 @@ class Common(DataSetFilters, DataObject):
             # use active scalar array
             _, arr = self.active_scalar_info
         if isinstance(arr, str):
-            arr = get_scalar(self, arr, preference=preference)
+            arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
         if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
@@ -987,6 +987,15 @@ class Common(DataSetFilters, DataObject):
         if hasattr(self, 'GetExtent'):
             return list(self.GetExtent())
 
+
+    @extent.setter
+    def extent(self, extent):
+        """ The range of the bounding box """
+        if hasattr(self, 'SetExtent'):
+            return self.SetExtent(extent)
+        else:
+            raise AttributeError('This mesh type does not handle extents.')
+
     @property
     def volume(self):
         """
@@ -1002,9 +1011,9 @@ class Common(DataSetFilters, DataObject):
         return np.sum(sizes.cell_arrays['Volume'])
 
 
-    def get_scalar(self, name, preference='cell', info=False):
+    def get_array(self, name, preference='cell', info=False):
         """ Searches both point, cell and field data for an array """
-        return get_scalar(self, name, preference=preference, info=info)
+        return get_array(self, name, preference=preference, info=info)
 
 
     def __getitem__(self, index):
@@ -1016,7 +1025,7 @@ class Common(DataSetFilters, DataObject):
             preference = 'cell'
         else:
             raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
-        return self.get_scalar(name, preference=preference, info=False)
+        return self.get_array(name, preference=preference, info=False)
 
     def __setitem__(self, name, scalars):
         """Add/set an array in the point_arrays, or cell_arrays depending on the
@@ -1054,7 +1063,7 @@ class Common(DataSetFilters, DataObject):
         return self.n_arrays
 
     @property
-    def scalar_names(self):
+    def array_names(self):
         """A list of scalar names for the dataset. This makes
         sure to put the active scalar's name first in the list."""
         names = []
@@ -1070,6 +1079,13 @@ class Common(DataSetFilters, DataObject):
         except ValueError:
             pass
         return names
+
+
+    @property
+    def scalar_names(self):
+        """DEPRECATED: Please use `array_names`"""
+        warnings.warn('Deprecation Warning: `scalar_names` is now `array_names`', RuntimeWarning)
+        return self.array_names
 
 
     def _get_attrs(self):

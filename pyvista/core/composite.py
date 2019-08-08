@@ -13,7 +13,7 @@ from vtk import vtkMultiBlockDataSet
 
 import pyvista
 from pyvista import plot
-from pyvista.utilities import get_scalar, is_pyvista_dataset, wrap
+from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 
 from .common import DataObject
 from .filters import CompositeFilters
@@ -214,7 +214,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             if data is None:
                 continue
             # get the scalar if availble
-            arr = get_scalar(data, name)
+            arr = get_array(data, name)
             if arr is None or not np.issubdtype(arr.dtype, np.number):
                 continue
             tmi, tma = np.nanmin(arr), np.nanmax(arr)

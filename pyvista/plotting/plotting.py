@@ -14,7 +14,7 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (convert_array, convert_string_array, get_scalar,
+from pyvista.utilities import (convert_array, convert_string_array, get_array,
                                is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
@@ -662,7 +662,7 @@ class BasePlotter(object):
                     # or it could have zeros points (be empty) after filtering
                     continue
                 # Now check that scalars is available for this dataset
-                if isinstance(data, vtk.vtkMultiBlockDataSet) or get_scalar(data, scalars) is None:
+                if isinstance(data, vtk.vtkMultiBlockDataSet) or get_array(data, scalars) is None:
                     ts = None
                 else:
                     ts = scalars
@@ -735,7 +735,7 @@ class BasePlotter(object):
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
             original_scalar_name = scalars
-            scalars = get_scalar(mesh, scalars,
+            scalars = get_array(mesh, scalars,
                     preference=kwargs.get('preference', 'cell'), err=True)
             if stitle is None:
                 stitle = original_scalar_name
@@ -765,7 +765,7 @@ class BasePlotter(object):
         if isinstance(opacity, str):
             try:
                 # Get array from mesh
-                opacity = get_scalar(mesh, opacity,
+                opacity = get_array(mesh, opacity,
                         preference=kwargs.get('preference', 'cell'), err=True)
                 opacity = normalize(opacity)
                 _custom_opac = True
@@ -1212,7 +1212,7 @@ class BasePlotter(object):
         set_active = False
         if isinstance(scalars, str):
             title = scalars
-            scalars = get_scalar(volume, scalars,
+            scalars = get_array(volume, scalars,
                     preference=kwargs.get('preference', 'point'), err=True)
             if stitle is None:
                 stitle = title
@@ -2256,7 +2256,7 @@ class BasePlotter(object):
 
         if isinstance(scalars, str):
             # Grab scalar array if name given
-            scalars = get_scalar(mesh, scalars)
+            scalars = get_array(mesh, scalars)
 
         if scalars is None:
             if render:

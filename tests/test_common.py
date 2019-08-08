@@ -74,18 +74,23 @@ def test_cell_arrays_bad_value():
 def test_field_arrays():
     key = 'test_array_field'
     grid = GRID.copy()
-    # Add array of lenght not equal to n_cells or n_points
+    # Add array of length not equal to n_cells or n_points
     n = grid.n_cells // 3
     grid.field_arrays[key] = np.arange(n)
     assert key in grid.field_arrays
     assert np.allclose(grid.field_arrays[key], np.arange(n))
+    assert np.allclose(grid[key], np.arange(n))
 
     orig_value = grid.field_arrays[key][0]/1.0
     grid.field_arrays[key][0] += 1
     assert orig_value == grid.field_arrays[key][0] -1
 
+    assert key in grid.array_names
+
     del grid.field_arrays[key]
     assert key not in grid.field_arrays
+
+
 
 
 def test_field_arrays_bad_value():
@@ -256,6 +261,15 @@ def test_points_uint8():
     grid.point_arrays['arr'] = arr
     arr[:] = np.arange(grid.n_points)
     assert np.allclose(grid.point_arrays['arr'], np.arange(grid.n_points))
+
+
+def test_field_uint8():
+    grid = GRID.copy()
+    n = grid.n_points//3
+    arr = np.zeros(n, np.uint8)
+    grid.field_arrays['arr'] = arr
+    arr[:] = np.arange(n)
+    assert np.allclose(grid.field_arrays['arr'], np.arange(n))
 
 
 def test_bitarray_points():
@@ -476,6 +490,17 @@ def test_rename_scalar_cell():
     assert old_name not in grid.cell_arrays
 
 
+def test_rename_scalar_field():
+    grid = GRID.copy()
+    grid.field_arrays['fieldfoo'] = np.array([8, 6, 7])
+    field_keys = list(grid.field_arrays.keys())
+    old_name = field_keys[0]
+    new_name = 'cell changed'
+    grid.rename_scalar(old_name, new_name)
+    assert new_name in grid.field_arrays
+    assert old_name not in grid.field_arrays
+
+
 def test_change_name_fail():
     grid = GRID.copy()
     with pytest.raises(RuntimeError):
@@ -557,24 +582,39 @@ def test_scalars_dict_update():
         'rand' : np.random.random(mesh.n_points)
     }
     mesh.point_arrays.update(arrays)
-    assert 'foo' in mesh.scalar_names
-    assert 'rand' in mesh.scalar_names
+    assert 'foo' in mesh.array_names
+    assert 'rand' in mesh.array_names
     assert len(mesh.point_arrays) == n + 2
 
     # Test update from Table
     table = pyvista.Table(arrays)
     mesh = examples.load_uniform()
     mesh.point_arrays.update(table)
-    assert 'foo' in mesh.scalar_names
-    assert 'rand' in mesh.scalar_names
+    assert 'foo' in mesh.array_names
+    assert 'rand' in mesh.array_names
     assert len(mesh.point_arrays) == n + 2
 
 
 def test_hanlde_array_with_null_name():
     poly = pyvista.PolyData()
-    # Add array with no name
+    # Add point array with no name
     poly.GetPointData().AddArray(pyvista.convert_array(np.array([])))
     html = poly._repr_html_()
     assert html is not None
     pdata = poly.point_arrays
     assert pdata is not None
+    assert len(pdata) == 1
+    # Add cell array with no name
+    poly.GetCellData().AddArray(pyvista.convert_array(np.array([])))
+    html = poly._repr_html_()
+    assert html is not None
+    cdata = poly.cell_arrays
+    assert cdata is not None
+    assert len(cdata) == 1
+    # Add field array with no name
+    poly.GetFieldData().AddArray(pyvista.convert_array(np.array([5, 6])))
+    html = poly._repr_html_()
+    assert html is not None
+    fdata = poly.field_arrays
+    assert fdata is not None
+    assert len(fdata) == 1

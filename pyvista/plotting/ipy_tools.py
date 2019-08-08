@@ -132,7 +132,7 @@ class InteractiveTool(object):
         self.tool(default_params=default_params, **kwargs)
 
 
-    def _get_scalar_names(self, limit=None):
+    def _get_array_names(self, limit=None):
         """Only give scalar options that have a varying range"""
         names = []
         if limit == 'point':
@@ -140,9 +140,9 @@ class InteractiveTool(object):
         elif limit == 'cell':
             inpnames = list(self.input_dataset.cell_arrays.keys())
         else:
-            inpnames = self.input_dataset.scalar_names
+            inpnames = self.input_dataset.array_names
         for name in inpnames:
-            arr = self.input_dataset.get_scalar(name)
+            arr = self.input_dataset.get_array(name)
             rng = self.input_dataset.get_data_range(name)
             if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
                 names.append(name)
@@ -331,7 +331,7 @@ class OrthogonalSlicer(InteractiveTool):
 
         # Create/display the widgets
         return interact(update, x=xsl, y=ysl, z=zsl,
-                        scalars=self._get_scalar_names())
+                        scalars=self._get_array_names())
 
 
 class ManySlicesAlongAxis(InteractiveTool):
@@ -405,7 +405,7 @@ class ManySlicesAlongAxis(InteractiveTool):
         del axes[idx]
         axes.insert(0, axis)
         return interact(update, n=nsl, axis=axes,
-                        scalars=self._get_scalar_names())
+                        scalars=self._get_array_names())
 
 
 class Threshold(InteractiveTool):
@@ -510,7 +510,7 @@ class Threshold(InteractiveTool):
 
 
         # Create/display the widgets
-        scalars = self._get_scalar_names()
+        scalars = self._get_array_names()
         name = default_params.get("scalars", scalars[0])
         idx = scalars.index(name)
         del scalars[idx]
@@ -599,7 +599,7 @@ class Clip(InteractiveTool):
         # Create/display the widgets
         self._last_normal = 'x'
         return interact(update, location=locsl, normal=axchoices, invert=True,
-                        scalars=self._get_scalar_names())
+                        scalars=self._get_array_names())
 
 
 
@@ -694,7 +694,7 @@ class Isocontour(InteractiveTool):
 
         # Create/display the widgets
         # NOTE: Contour filter can only contour by point data
-        scalars = self._get_scalar_names(limit='point')
+        scalars = self._get_array_names(limit='point')
         name = default_params.get("scalars", scalars[0])
         idx = scalars.index(name)
         del scalars[idx]

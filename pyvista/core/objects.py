@@ -7,7 +7,7 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (ROW_DATA_FIELD, convert_array, get_scalar,
+from pyvista.utilities import (ROW_DATA_FIELD, convert_array, get_array,
                                parse_field_choice, raise_not_matching,
                                row_scalar)
 
@@ -379,7 +379,7 @@ class Table(vtk.vtkTable, DataObject):
             # use the first array in the row data
             self.GetRowData().GetArrayName(0)
         if isinstance(arr, str):
-            arr = get_scalar(self, arr, preference=preference)
+            arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
         if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)

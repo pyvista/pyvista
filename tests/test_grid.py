@@ -276,6 +276,7 @@ def test_create_uniform_grid_from_specs():
     dims = [10, 10, 10]
     grid = pyvista.UniformGrid(dims) # Using default spacing and origin
     assert grid.dimensions == [10, 10, 10]
+    assert grid.extent == [0, 9, 0, 9, 0, 9]
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [1.0, 1.0, 1.0]
     spacing = [2, 1, 5]

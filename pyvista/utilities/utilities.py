@@ -167,7 +167,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_scalar(mesh, name, preference='cell', info=False, err=False):
+def get_array(mesh, name, preference='cell', info=False, err=False):
     """ Searches point, cell and field data for an array
 
     Parameters
