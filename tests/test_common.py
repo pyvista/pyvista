@@ -535,6 +535,14 @@ def test_scalars_dict_update():
     assert 'rand' in mesh.scalar_names
     assert len(mesh.point_arrays) == n + 2
 
+    # Test update from Table
+    table = pyvista.Table(arrays)
+    mesh = examples.load_uniform()
+    mesh.point_arrays.update(table)
+    assert 'foo' in mesh.scalar_names
+    assert 'rand' in mesh.scalar_names
+    assert len(mesh.point_arrays) == n + 2
+
 
 def test_hanlde_array_with_null_name():
     poly = pyvista.PolyData()

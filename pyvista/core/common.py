@@ -1195,8 +1195,8 @@ class _ScalarsDict(dict):
         Update this dictionary with th key-value pairs from a given
         dictionary
         """
-        if not isinstance(data, dict):
-            raise TypeError('Data to update must be in a dictionary.')
+        if not isinstance(data, (dict, pyvista.Table)):
+            raise TypeError('Data to update must be in a dictionary or PyVista Table.')
         for k, v in data.items():
             arr = np.array(v)
             try:
