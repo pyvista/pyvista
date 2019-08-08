@@ -190,6 +190,7 @@ class DataObject(object):
             array = array.view(np.bool)
         return array
 
+
     def _add_field_array(self, scalars, name, deep=True):
         """
         Adds field scalars to the mesh
@@ -279,16 +280,19 @@ class Common(DataSetFilters, DataObject):
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
 
+
     def __new__(cls, *args, **kwargs):
         if cls is Common:
             raise TypeError("pyvista.Common is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
+
 
     def __init__(self, *args, **kwargs):
         super(Common, self).__init__()
         self.references = []
         self._point_bool_array_names = []
         self._cell_bool_array_names = []
+
 
     @property
     def active_scalar_info(self):
@@ -338,6 +342,7 @@ class Common(DataSetFilters, DataObject):
 
         return self._active_scalar_info
 
+
     @property
     def active_vectors_info(self):
         """Return the active scalar's field and name: [field, name]"""
@@ -360,6 +365,7 @@ class Common(DataSetFilters, DataObject):
 
         return self._active_vectors_info
 
+
     @property
     def active_vectors(self):
         """The active vectors array"""
@@ -370,25 +376,30 @@ class Common(DataSetFilters, DataObject):
             if field is CELL_DATA_FIELD:
                 return self.cell_arrays[name]
 
+
     @property
     def active_vectors_name(self):
         """The name of the active vectors array"""
         return self.active_vectors_info[1]
+
 
     @active_vectors_name.setter
     def active_vectors_name(self, name):
         """Set the name of the active vector"""
         return self.set_active_vectors(name)
 
+
     @property
     def active_scalar_name(self):
         """Returns the active scalar's name"""
         return self.active_scalar_info[1]
 
+
     @active_scalar_name.setter
     def active_scalar_name(self, name):
         """Set the name of the active scalar"""
         return self.set_active_scalar(name)
+
 
     @property
     def points(self):
@@ -396,6 +407,7 @@ class Common(DataSetFilters, DataObject):
         vtk_data = self.GetPoints().GetData()
         arr = vtk_to_numpy(vtk_data)
         return pyvista_ndarray(arr, vtk_data)
+
 
     @points.setter
     def points(self, points):
@@ -406,6 +418,7 @@ class Common(DataSetFilters, DataObject):
         self.SetPoints(vtk_points)
         self.GetPoints().Modified()
         self.Modified()
+
 
     @property
     def arrows(self):
@@ -425,10 +438,12 @@ class Common(DataSetFilters, DataObject):
         name = self.active_vectors_name
         return self.glyph(scale=name, orient=name)
 
+
     @property
     def vectors(self):
         """ Returns active vectors """
         return self.active_vectors
+
 
     @vectors.setter
     def vectors(self, array):
@@ -443,12 +458,14 @@ class Common(DataSetFilters, DataObject):
         self.point_arrays[DEFAULT_VECTOR_KEY] = array
         self.active_vectors_name = DEFAULT_VECTOR_KEY
 
+
     @property
     def t_coords(self):
         """The active texture coordinates on the points"""
         if self.GetPointData().GetTCoords() is not None:
             return vtk_to_numpy(self.GetPointData().GetTCoords())
         return None
+
 
     @t_coords.setter
     def t_coords(self, t_coords):
@@ -470,6 +487,7 @@ class Common(DataSetFilters, DataObject):
         self.GetPointData().Modified()
         return
 
+
     @property
     def textures(self):
         """A dictionary to hold ``vtk.vtkTexture`` objects that can be
@@ -480,10 +498,12 @@ class Common(DataSetFilters, DataObject):
             self._textures = {}
         return self._textures
 
+
     def clear_textures(self):
         """Clear the textures from this mesh"""
         if hasattr(self, '_textures'):
             del self._textures
+
 
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates. This makes
@@ -525,6 +545,7 @@ class Common(DataSetFilters, DataObject):
                 mesh.Modified()
         return texture
 
+
     def set_active_scalar(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active"""
         _, field = get_array(self, name, preference=preference, info=True)
@@ -537,6 +558,7 @@ class Common(DataSetFilters, DataObject):
             raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_scalar_info = [field, name]
 
+
     def set_active_vectors(self, name, preference='point'):
         """Finds the vectors by name and appropriately sets it as active"""
         _, field = get_array(self, name, preference=preference, info=True)
@@ -547,6 +569,7 @@ class Common(DataSetFilters, DataObject):
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
         self._active_vectors_info = [field, name]
+
 
     def rename_scalar(self, old_name, new_name, preference='cell'):
         """Changes array name by searching for the array then renaming it"""
@@ -562,6 +585,7 @@ class Common(DataSetFilters, DataObject):
         if self.active_scalar_info[1] == old_name:
             self.set_active_scalar(new_name, preference=field)
 
+
     @property
     def active_scalar(self):
         """Returns the active scalar as an array"""
@@ -572,6 +596,7 @@ class Common(DataSetFilters, DataObject):
             return self._point_array(name)
         elif field == CELL_DATA_FIELD:
             return self._cell_array(name)
+
 
     def _point_array(self, name=None):
         """
@@ -607,6 +632,7 @@ class Common(DataSetFilters, DataObject):
         if array.dtype == np.uint8 and name in self._point_bool_array_names:
             array = array.view(np.bool)
         return array
+
 
     def _add_point_array(self, scalars, name, set_active=False, deep=True):
         """
@@ -707,6 +733,7 @@ class Common(DataSetFilters, DataObject):
         """
         axis_rotation(self.points, angle, inplace=True, axis='x')
 
+
     def rotate_y(self, angle):
         """
         Rotates mesh about the y-axis.
@@ -718,6 +745,7 @@ class Common(DataSetFilters, DataObject):
 
         """
         axis_rotation(self.points, angle, inplace=True, axis='y')
+
 
     def rotate_z(self, angle):
         """
@@ -731,6 +759,7 @@ class Common(DataSetFilters, DataObject):
         """
         axis_rotation(self.points, angle, inplace=True, axis='z')
 
+
     def translate(self, xyz):
         """
         Translates the mesh.
@@ -742,6 +771,7 @@ class Common(DataSetFilters, DataObject):
 
         """
         self.points += np.asarray(xyz)
+
 
     def transform(self, trans):
         """
@@ -775,6 +805,7 @@ class Common(DataSetFilters, DataObject):
         self.points[:, 0] = x
         self.points[:, 1] = y
         self.points[:, 2] = z
+
 
     def _cell_array(self, name=None):
         """
@@ -811,6 +842,7 @@ class Common(DataSetFilters, DataObject):
         if array.dtype == np.uint8 and name in self._cell_bool_array_names:
             array = array.view(np.bool)
         return array
+
 
     def _add_cell_array(self, scalars, name, set_active=False, deep=True):
         """
@@ -921,11 +953,13 @@ class Common(DataSetFilters, DataObject):
         for key in keys:
             self._remove_array(POINT_DATA_FIELD, key)
 
+
     def clear_cell_arrays(self):
         """ removes all cell arrays """
         keys = self.cell_arrays.keys()
         for key in keys:
             self._remove_array(CELL_DATA_FIELD, key)
+
 
     def clear_arrays(self):
         """ removes all arrays from point/cell/field data """
@@ -963,25 +997,30 @@ class Common(DataSetFilters, DataObject):
         self._cell_arrays.enable_callback()
         return self._cell_arrays
 
+
     @property
     def n_points(self):
         """The number of points in the entire dataset"""
         return self.GetNumberOfPoints()
+
 
     @property
     def n_cells(self):
         """The number of cells in the entire dataset"""
         return self.GetNumberOfCells()
 
+
     @property
     def number_of_points(self):  # pragma: no cover
         """ returns the number of points """
         return self.GetNumberOfPoints()
 
+
     @property
     def number_of_cells(self):  # pragma: no cover
         """ returns the number of cells """
         return self.GetNumberOfCells()
+
 
     @property
     def bounds(self):
@@ -991,15 +1030,18 @@ class Common(DataSetFilters, DataObject):
         """
         return list(self.GetBounds())
 
+
     @property
     def length(self):
         """the length of the diagonal of the bounding box"""
         return self.GetLength()
 
+
     @property
     def center(self):
         """ Center of the bounding box """
         return list(self.GetCenter())
+
 
     @property
     def extent(self):
@@ -1015,6 +1057,7 @@ class Common(DataSetFilters, DataObject):
             return self.SetExtent(extent)
         else:
             raise AttributeError('This mesh type does not handle extents.')
+
 
     @property
     def volume(self):
@@ -1047,6 +1090,7 @@ class Common(DataSetFilters, DataObject):
             raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
         return self.get_array(name, preference=preference, info=False)
 
+
     def __setitem__(self, name, scalars):
         """Add/set an array in the point_arrays, or cell_arrays depending on the
         array's length, or specified mode.
@@ -1069,6 +1113,7 @@ class Common(DataSetFilters, DataObject):
             raise_not_matching(scalars, self)
         return
 
+
     @property
     def n_arrays(self):
         """The number of scalar arrays present in the dataset"""
@@ -1076,11 +1121,13 @@ class Common(DataSetFilters, DataObject):
                self.GetCellData().GetNumberOfArrays() + \
                self.GetFieldData().GetNumberOfArrays()
 
+
     @property
     def n_scalars(self):
         """DEPRECATED: Please use `n_arrays`"""
         warnings.warn('Deprecation Warning: `n_scalars` is now `n_arrays`', RuntimeWarning)
         return self.n_arrays
+
 
     @property
     def array_names(self):
@@ -1173,9 +1220,11 @@ class Common(DataSetFilters, DataObject):
         """Object representation"""
         return self.head(display=False, html=False)
 
+
     def __str__(self):
         """Object string representation"""
         return self.head(display=False, html=False)
+
 
     def overwrite(self, mesh):
         """
@@ -1191,6 +1240,7 @@ class Common(DataSetFilters, DataObject):
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
 
+
     def cast_to_unstructured_grid(self):
         """Get a new representation of this object as an
         :class:`pyvista.UnstructuredGrid`
@@ -1199,6 +1249,7 @@ class Common(DataSetFilters, DataObject):
         alg.AddInputData(self)
         alg.Update()
         return pyvista.filters._get_output(alg)
+
 
     @property
     def quality(self):
@@ -1242,15 +1293,22 @@ class _ScalarsDict(dict):
         self.remover = None
         self.modifier = None
 
+
     def enable_callback(self):
         """Enable callbacks to be set True"""
         self.callback_enabled = True
+
+
+    def adder(self, scalars, name, set_active=False, deep=True):
+        raise NotImplementedError()
+
 
     def pop(self, key):
         """Get and remove an element by key name"""
         arr = dict.pop(self, key).copy()
         self.remover(key)
         return arr
+
 
     def update(self, data):
         """
@@ -1267,12 +1325,14 @@ class _ScalarsDict(dict):
                 logging.warning("Values under key ({}) not supported by VTK".format(k))
         return
 
+
     def __setitem__(self, key, val):
         """ overridden to assure data is contigious """
         if self.callback_enabled:
             self.adder(val, key, deep=False)
         dict.__setitem__(self, key, val)
         self.modifier()
+
 
     def __delitem__(self, key):
         """Remove item by key name"""
@@ -1285,11 +1345,11 @@ class CellScalarsDict(_ScalarsDict):
     Updates internal cell data when an array is added or removed from
     the dictionary.
     """
-
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(CELL_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetCellData().Modified()
+
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_cell_array(scalars, name, set_active=False, deep=deep)
@@ -1300,25 +1360,26 @@ class PointScalarsDict(_ScalarsDict):
     Updates internal point data when an array is added or removed from
     the dictionary.
     """
-
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(POINT_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetPointData().Modified()
 
+
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_point_array(scalars, name, set_active=False, deep=deep)
+
 
 class FieldScalarsDict(_ScalarsDict):
     """
     Updates internal field data when an array is added or removed from
     the dictionary.
     """
-
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(FIELD_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetFieldData().Modified()
+
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_field_array(scalars, name, deep=deep)
