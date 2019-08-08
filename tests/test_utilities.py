@@ -71,7 +71,7 @@ def test_get_scalar():
     oarr = np.random.rand(grid.n_points)
     grid._add_point_scalar(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid._add_field_scalar(farr, 'field_data')
+    grid._add_field_array(farr, 'field_data')
     assert np.allclose(carr, utilities.get_scalar(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, utilities.get_scalar(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, utilities.get_scalar(grid, 'other'))

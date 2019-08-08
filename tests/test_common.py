@@ -232,6 +232,16 @@ def test_cells_np_bool():
     assert grid._cell_scalar('bool_arr').dtype == np.bool
 
 
+def test_field_np_bool():
+    grid = GRID.copy()
+    bool_arr = np.zeros(grid.n_cells // 3, np.bool)
+    grid.field_arrays['bool_arr'] = bool_arr
+    bool_arr[:] = True
+    assert grid.field_arrays['bool_arr'].all()
+    assert grid._field_array('bool_arr').all()
+    assert grid._field_array('bool_arr').dtype == np.bool
+
+
 def test_cells_uint8():
     grid = GRID.copy()
     arr = np.zeros(grid.n_cells, np.uint8)
@@ -278,6 +288,22 @@ def test_bitarray_cells():
 
     grid.GetCellData().AddArray(vtk_array)
     assert np.allclose(grid.cell_arrays['bint_arr'], np_array)
+
+
+def test_bitarray_field():
+    grid = GRID.copy()
+    n = grid.n_cells // 3
+    vtk_array = vtk.vtkBitArray()
+    np_array = np.empty(n, np.bool)
+    vtk_array.SetNumberOfTuples(n)
+    vtk_array.SetName('bint_arr')
+    for i in range(n):
+        value = i%2
+        vtk_array.SetValue(i, value)
+        np_array[i] = value
+
+    grid.GetFieldData().AddArray(vtk_array)
+    assert np.allclose(grid.field_arrays['bint_arr'], np_array)
 
 
 def test_html_repr():

@@ -2,19 +2,25 @@
 sort of spatial reference.
 """
 import collections
-import vtk
+
 import numpy as np
+import vtk
+
+import pyvista
+from pyvista.utilities import (ROW_DATA_FIELD, convert_array, get_scalar,
+                               parse_field_choice, raise_not_matching,
+                               row_scalar)
+
+from .common import DataObject, _ScalarsDict
+
 try:
     import pandas as pd
 except ImportError:
     pd = None
 
 
-import pyvista
-from pyvista.utilities import convert_array, row_scalar, raise_not_matching, ROW_DATA_FIELD, parse_field_choice
 
 
-from .common import DataObject, _ScalarsDict
 
 
 class Table(vtk.vtkTable, DataObject):
@@ -352,6 +358,33 @@ class Table(vtk.vtkTable, DataObject):
     def save(self, *args, **kwargs):
         raise NotImplementedError("Please use the `to_pandas` method and"
                 " harness Pandas' wonderful file IO methods.")
+
+
+    def get_data_range(self, arr=None, preference='row'):
+        """Get the non-NaN min and max of a named scalar array
+
+        Parameters
+        ----------
+        arr : str, np.ndarray, optional
+            The name of the array to get the range. If None, the active scalar
+            is used
+
+        preference : str, optional
+            When scalars is specified, this is the perfered scalar type to
+            search for in the dataset.  Must be either ``'row'`` or
+            ``'field'``.
+
+        """
+        if arr is None:
+            # use the first array in the row data
+            self.GetRowData().GetArrayName(0)
+        if isinstance(arr, str):
+            arr = get_scalar(self, arr, preference=preference)
+        # If array has no tuples return a NaN range
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+            return (np.nan, np.nan)
+        # Use the array range
+        return np.nanmin(arr), np.nanmax(arr)
 
 
 
