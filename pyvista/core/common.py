@@ -562,11 +562,11 @@ class Common(DataSetFilters, DataObject):
         if name is None:
             return None
         if field == POINT_DATA_FIELD:
-            return self._point_scalar(name)
+            return self._point_array(name)
         elif field == CELL_DATA_FIELD:
-            return self._cell_scalar(name)
+            return self._cell_array(name)
 
-    def _point_scalar(self, name=None):
+    def _point_array(self, name=None):
         """
         Returns point scalars of a vtk object
 
@@ -601,7 +601,7 @@ class Common(DataSetFilters, DataObject):
             array = array.view(np.bool)
         return array
 
-    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
+    def _add_point_array(self, scalars, name, set_active=False, deep=True):
         """
         Adds point scalars to the mesh
 
@@ -763,7 +763,7 @@ class Common(DataSetFilters, DataObject):
         self.points[:, 1] = y
         self.points[:, 2] = z
 
-    def _cell_scalar(self, name=None):
+    def _cell_array(self, name=None):
         """
         Returns the cell scalars of a vtk object
 
@@ -799,7 +799,7 @@ class Common(DataSetFilters, DataObject):
             array = array.view(np.bool)
         return array
 
-    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
+    def _add_cell_array(self, scalars, name, set_active=False, deep=True):
         """
         Adds cell scalars to the vtk object.
 
@@ -874,7 +874,7 @@ class Common(DataSetFilters, DataObject):
             if name is None or len(name) < 1:
                 name = 'Point Array {}'.format(i)
                 pdata.GetAbstractArray(i).SetName(name)
-            self._point_arrays[name] = self._point_scalar(name)
+            self._point_arrays[name] = self._point_array(name)
 
         self._point_arrays.enable_callback()
         return self._point_arrays
@@ -938,7 +938,7 @@ class Common(DataSetFilters, DataObject):
             if name is None or len(name) < 1:
                 name = 'Cell Array {}'.format(i)
                 cdata.GetAbstractArray(i).SetName(name)
-            self._cell_arrays[name] = self._cell_scalar(name)
+            self._cell_arrays[name] = self._cell_array(name)
 
         self._cell_arrays.enable_callback()
         return self._cell_arrays
@@ -1256,7 +1256,7 @@ class CellScalarsDict(_ScalarsDict):
         self.modifier = lambda *args: self.data.GetCellData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):
-        self.data._add_cell_scalar(scalars, name, set_active=False, deep=deep)
+        self.data._add_cell_array(scalars, name, set_active=False, deep=deep)
 
 
 class PointScalarsDict(_ScalarsDict):
@@ -1271,7 +1271,7 @@ class PointScalarsDict(_ScalarsDict):
         self.modifier = lambda *args: self.data.GetPointData().Modified()
 
     def adder(self, scalars, name, set_active=False, deep=True):
-        self.data._add_point_scalar(scalars, name, set_active=False, deep=deep)
+        self.data._add_point_array(scalars, name, set_active=False, deep=deep)
 
 class FieldScalarsDict(_ScalarsDict):
     """

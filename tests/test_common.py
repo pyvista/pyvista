@@ -20,7 +20,7 @@ def test_point_arrays():
 
     orig_value = grid.point_arrays[key][0]/1.0
     grid.point_arrays[key][0] += 1
-    assert orig_value == grid._point_scalar(key)[0] -1
+    assert orig_value == grid._point_array(key)[0] -1
 
     del grid.point_arrays[key]
     assert key not in grid.point_arrays
@@ -218,8 +218,8 @@ def test_points_np_bool():
     grid.point_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.point_arrays['bool_arr'].all()
-    assert grid._point_scalar('bool_arr').all()
-    assert grid._point_scalar('bool_arr').dtype == np.bool
+    assert grid._point_array('bool_arr').all()
+    assert grid._point_array('bool_arr').dtype == np.bool
 
 
 def test_cells_np_bool():
@@ -228,8 +228,8 @@ def test_cells_np_bool():
     grid.cell_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.cell_arrays['bool_arr'].all()
-    assert grid._cell_scalar('bool_arr').all()
-    assert grid._cell_scalar('bool_arr').dtype == np.bool
+    assert grid._cell_array('bool_arr').all()
+    assert grid._cell_array('bool_arr').dtype == np.bool
 
 
 def test_field_np_bool():
@@ -482,10 +482,10 @@ def test_change_name_fail():
         grid.rename_scalar('not a key', '')
 
 
-def test_get_cell_scalar_fail():
+def test_get_cell_array_fail():
     sphere = pyvista.Sphere()
     with pytest.raises(RuntimeError):
-        sphere._cell_scalar(name=None)
+        sphere._cell_array(name=None)
 
 
 def test_extent():
