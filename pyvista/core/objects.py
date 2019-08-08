@@ -14,20 +14,65 @@ from .common import DataObject, _ScalarsDict
 
 
 class Table(vtk.vtkTable, DataObject):
-    """Wrapper for the ``vtkTable`` class"""
+    """Wrapper for the ``vtkTable`` class. Create by passing a 2D NumPy array
+    of shape (``n_rows`` by ``n_columns``) or from a dictionary containing
+    NumPy arrays.
+
+    Example
+    -------
+    >>> import pyvista as pv
+    >>> import numpy as np
+    >>> arrays = np.random.rand(100, 3)
+    >>> table = pv.Table(arrays)
+
+    """
     def __init__(self, *args, **kwargs):
+
+        if len(args) == 1:
+            if isinstance(args[0], vtk.vtkTable):
+                deep = kwargs.get('deep', True)
+                if deep:
+                    self.DeepCopy(args[0])
+                else:
+                    self.ShallowCopy(args[0])
+            elif isinstance(args[0], np.ndarray):
+                self._from_arrays(args[0])
+            elif isinstance(args[0], dict):
+                self._from_dict(args[0])
+            else:
+                raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
+
+
         self._row_bool_array_names = []
+
+
+    def _from_arrays(self, arrays):
+        if not arrays.ndim == 2:
+            raise AssertionError('Only 2D arrays are supported by Tables.')
+        np_table = arrays.T
+        for i, array in enumerate(np_table):
+            self.row_arrays['Array {}'.format(i)] = array
+        return
+
+
+    def _from_dict(self, array_dict):
+        for array in array_dict.values():
+            if not isinstance(array, (np.ndarray)) and array.ndim < 3:
+                raise RuntimeError('Dictionaty must contain only NumPy arrays with maximum of 2D.')
+        for name, array in array_dict.items():
+            self.row_arrays[name] = array
+        return
 
 
     @property
     def n_rows(self):
         return self.GetNumberOfRows()
 
+
     @n_rows.setter
     def n_rows(self, n):
-        print('hmmmm')
         self.SetNumberOfRows(n)
-        print(self.GetNumberOfRows())
+
 
     @property
     def n_columns(self):
@@ -37,6 +82,42 @@ class Table(vtk.vtkTable, DataObject):
     @property
     def n_arrays(self):
         return self.n_columns
+
+
+    def _row_scalar(self, name=None):
+        """
+        Returns row scalars of a vtk object
+
+        Parameters
+        ----------
+        name : str
+            Name of row scalars to retrieve.
+
+        Returns
+        -------
+        scalars : np.ndarray
+            Numpy array of scalars
+
+        """
+        if name is None:
+            # use first array
+            name = self.GetRowData().GetArrayName(0)
+            if name is None:
+                raise RuntimeError('No arrays present to fetch.')
+        vtkarr = self.GetRowData().GetAbstractArray(name)
+        if vtkarr is None:
+            raise AssertionError('({}) is not a row scalar'.format(name))
+
+        # numpy does not support bit array data types
+        if isinstance(vtkarr, vtk.vtkBitArray):
+            vtkarr = vtk_bit_array_to_char(vtkarr)
+            if name not in self._row_bool_array_names:
+                self._row_bool_array_names.append(name)
+
+        array = convert_array(vtkarr)
+        if array.dtype == np.uint8 and name in self._row_bool_array_names:
+            array = array.view(np.bool)
+        return array
 
 
     @property
@@ -67,11 +148,16 @@ class Table(vtk.vtkTable, DataObject):
 
 
     def keys(self):
-        return self.row_arrays.keys()
+        return list(self.row_arrays.keys())
 
 
     def items(self):
         return self.row_arrays.items()
+
+
+    def values(self):
+        return self.row_arrays.values()
+
 
     def update(self, data):
         self.row_arrays.update(data)
@@ -112,7 +198,7 @@ class Table(vtk.vtkTable, DataObject):
                             % self.n_rows)
 
         if not scalars.flags.c_contiguous:
-            raise AssertionError('Array must be contigious')
+            scalars = np.ascontiguousarray(scalars)
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._row_bool_array_names.append(name)
@@ -235,6 +321,7 @@ class Table(vtk.vtkTable, DataObject):
         """Object representation"""
         return self.head(display=False, html=False)
 
+
     def __str__(self):
         """Object string representation"""
         return self.head(display=False, html=False)
@@ -253,6 +340,7 @@ class RowScalarsDict(_ScalarsDict):
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(ROW_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetRowData().Modified()
+
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_row_scalar(scalars, name, deep=deep)

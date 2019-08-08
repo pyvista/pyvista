@@ -571,6 +571,8 @@ class BasePlotter(object):
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
+            if not is_pyvista_dataset(mesh):
+                raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(mesh)))
 
         ##### Parse arguments to be used for all meshes #####
 
@@ -1147,6 +1149,8 @@ class BasePlotter(object):
                 volume.spacing = resolution
             else:
                 volume = wrap(volume)
+                if not is_pyvista_dataset(volume):
+                    raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(volume)))
         else:
             # HACK: Make a copy so the original object is not altered
             volume = volume.copy()

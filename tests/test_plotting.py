@@ -778,3 +778,14 @@ def test_plot_string_array():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='labels')
     p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_fail_plot_table():
+    """Make sure tables cannot be plotted"""
+    table = pyvista.Table(np.random.rand(50, 3))
+    with pytest.raises(TypeError):
+        pyvista.plot(table)
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(table)

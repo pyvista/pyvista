@@ -85,7 +85,7 @@ class InteractiveTool(object):
         if not is_pyvista_dataset(dataset):
             dataset = wrap(dataset)
             if not is_pyvista_dataset(dataset):
-                raise RuntimeError('Object not supported for plotting in pyvista.')
+                raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(dataset)))
 
         # Make the input/output of this tool available
         self.input_dataset = dataset
