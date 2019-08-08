@@ -34,6 +34,7 @@ def test_point_arrays():
     assert len(grid.point_arrays.keys()) == 0
 
     grid.point_arrays['list'] = np.arange(grid.n_points).tolist()
+    assert isinstance(grid.point_arrays['list'], np.ndarray)
     assert np.allclose(grid.point_arrays['list'], np.arange(grid.n_points))
 
 
@@ -65,6 +66,7 @@ def test_cell_arrays():
     assert np.allclose(grid[key], np.arange(grid.n_cells))
 
     grid.cell_arrays['list'] = np.arange(grid.n_cells).tolist()
+    assert isinstance(grid.cell_arrays['list'], np.ndarray)
     assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
 
 
@@ -97,6 +99,7 @@ def test_field_arrays():
     assert key not in grid.field_arrays
 
     grid.field_arrays['list'] = np.arange(n).tolist()
+    assert isinstance(grid.field_arrays['list'], np.ndarray)
     assert np.allclose(grid.field_arrays['list'], np.arange(n))
 
 

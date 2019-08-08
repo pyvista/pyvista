@@ -1328,6 +1328,8 @@ class _ScalarsDict(dict):
 
     def __setitem__(self, key, val):
         """ overridden to assure data is contigious """
+        if isinstance(val, (list, tuple)):
+            val = np.array(val)
         if self.callback_enabled:
             self.adder(val, key, deep=False)
         dict.__setitem__(self, key, val)
