@@ -44,7 +44,7 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[i])
+        assert np.allclose(arrays[:,i], table['foo{}'.format(i)])
 
     dataset = examples.load_hexbeam()
     array_dict = dataset.point_arrays
