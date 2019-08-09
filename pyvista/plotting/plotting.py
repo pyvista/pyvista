@@ -14,8 +14,8 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (convert_array, convert_string_array, get_scalar,
-                               is_pyvista_obj, numpy_to_texture,
+from pyvista.utilities import (convert_array, convert_string_array, get_array,
+                               is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
 from .colors import get_cmap_safe
@@ -569,8 +569,10 @@ class BasePlotter(object):
             VTK actor of the mesh.
         """
         # Convert the VTK data object to a pyvista wrapped object if neccessary
-        if not is_pyvista_obj(mesh):
+        if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
+            if not is_pyvista_dataset(mesh):
+                raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(mesh)))
 
         ##### Parse arguments to be used for all meshes #####
 
@@ -649,9 +651,9 @@ class BasePlotter(object):
                 # Get a good name to use
                 next_name = '{}-{}'.format(name, idx)
                 # Get the data object
-                if not is_pyvista_obj(mesh[idx]):
+                if not is_pyvista_dataset(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
-                    if not is_pyvista_obj(mesh[idx]):
+                    if not is_pyvista_dataset(mesh[idx]):
                         continue # move on if we can't plot it
                 else:
                     data = mesh.GetBlock(idx)
@@ -660,7 +662,7 @@ class BasePlotter(object):
                     # or it could have zeros points (be empty) after filtering
                     continue
                 # Now check that scalars is available for this dataset
-                if isinstance(data, vtk.vtkMultiBlockDataSet) or get_scalar(data, scalars) is None:
+                if isinstance(data, vtk.vtkMultiBlockDataSet) or get_array(data, scalars) is None:
                     ts = None
                 else:
                     ts = scalars
@@ -733,7 +735,7 @@ class BasePlotter(object):
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
             original_scalar_name = scalars
-            scalars = get_scalar(mesh, scalars,
+            scalars = get_array(mesh, scalars,
                     preference=kwargs.get('preference', 'cell'), err=True)
             if stitle is None:
                 stitle = original_scalar_name
@@ -763,7 +765,7 @@ class BasePlotter(object):
         if isinstance(opacity, str):
             try:
                 # Get array from mesh
-                opacity = get_scalar(mesh, opacity,
+                opacity = get_array(mesh, opacity,
                         preference=kwargs.get('preference', 'cell'), err=True)
                 opacity = normalize(opacity)
                 _custom_opac = True
@@ -842,10 +844,10 @@ class BasePlotter(object):
             def prepare_mapper(scalars):
                 # Scalar interpolation approach
                 if scalars.shape[0] == mesh.n_points:
-                    self.mesh._add_point_scalar(scalars, title, set_active)
+                    self.mesh._add_point_array(scalars, title, set_active)
                     self.mapper.SetScalarModeToUsePointData()
                 elif scalars.shape[0] == mesh.n_cells:
-                    self.mesh._add_cell_scalar(scalars, title, set_active)
+                    self.mesh._add_cell_array(scalars, title, set_active)
                     self.mapper.SetScalarModeToUseCellData()
                 else:
                     raise_not_matching(scalars, mesh)
@@ -1137,7 +1139,7 @@ class BasePlotter(object):
             show_scalar_bar = rcParams['show_scalar_bar']
 
         # Convert the VTK data object to a pyvista wrapped object if neccessary
-        if not is_pyvista_obj(volume):
+        if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
                 volume = wrap(volume)
                 if resolution is None:
@@ -1147,6 +1149,8 @@ class BasePlotter(object):
                 volume.spacing = resolution
             else:
                 volume = wrap(volume)
+                if not is_pyvista_dataset(volume):
+                    raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(volume)))
         else:
             # HACK: Make a copy so the original object is not altered
             volume = volume.copy()
@@ -1208,7 +1212,7 @@ class BasePlotter(object):
         set_active = False
         if isinstance(scalars, str):
             title = scalars
-            scalars = get_scalar(volume, scalars,
+            scalars = get_array(volume, scalars,
                     preference=kwargs.get('preference', 'point'), err=True)
             if stitle is None:
                 stitle = title
@@ -1241,10 +1245,10 @@ class BasePlotter(object):
 
         # Scalar interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume._add_point_scalar(scalars, title, set_active)
+            volume._add_point_array(scalars, title, set_active)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume._add_cell_scalar(scalars, title, set_active)
+            volume._add_cell_array(scalars, title, set_active)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
@@ -2252,7 +2256,7 @@ class BasePlotter(object):
 
         if isinstance(scalars, str):
             # Grab scalar array if name given
-            scalars = get_scalar(mesh, scalars)
+            scalars = get_array(mesh, scalars)
 
         if scalars is None:
             if render:
@@ -2713,7 +2717,7 @@ class BasePlotter(object):
 
         if isinstance(points, np.ndarray):
             vtkpoints = pyvista.PolyData(points) # Cast to poly data
-        elif is_pyvista_obj(points):
+        elif is_pyvista_dataset(points):
             vtkpoints = pyvista.PolyData(points.points)
             if isinstance(labels, str):
                 labels = points.point_arrays[labels].astype(str)
@@ -2795,7 +2799,7 @@ class BasePlotter(object):
         fmt : str
             String formatter used to format numerical data
         """
-        if not is_pyvista_obj(points):
+        if not is_pyvista_dataset(points):
             raise TypeError('input points must be a pyvista dataset, not: {}'.format(type(points)))
         if not isinstance(labels, str):
             raise TypeError('labels must be a string name of the scalar array to use')
@@ -3327,7 +3331,7 @@ class BasePlotter(object):
             viewup = rcParams['camera']['viewup']
         if path is None:
             path = self.generate_orbital_path(viewup=viewup)
-        if not is_pyvista_obj(path):
+        if not is_pyvista_dataset(path):
             path = pyvista.PolyData(path)
         points = path.points
 

@@ -192,7 +192,7 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
             p.subplot(i, j)
             p.add_mesh(datasets[i][j], **disply_kwargs)
             p.add_text(labels[i][j])
-            if is_pyvista_obj(outline):
+            if is_pyvista_dataset(outline):
                 p.add_mesh(outline, color=outline_color)
             if camera_position is not None:
                 p.camera_position = camera_position

@@ -33,7 +33,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
 
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
-                               generate_plane, get_scalar, is_inside_bounds,
+                               generate_plane, get_array, is_inside_bounds,
                                wrap)
 
 NORMALS = {
@@ -201,7 +201,7 @@ class DataSetFilters(object):
             output clipped mesh.
         """
         if not isinstance(surface, vtk.vtkPolyData):
-            surface = DataSetFilters.extract_surface(surface)
+            surface = DataSetFilters.extract_geometry(surface)
         function = vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -439,7 +439,7 @@ class DataSetFilters(object):
         # set the scalaras to threshold on
         if scalars is None:
             field, scalars = dataset.active_scalar_info
-        arr, field = get_scalar(dataset, scalars, preference=preference, info=True)
+        arr, field = get_array(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
             raise AssertionError('No arrays present to threshold.')
@@ -717,7 +717,7 @@ class DataSetFilters(object):
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         else:
-            _, field = get_scalar(dataset, scalars, preference=preference, info=True)
+            _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.POINT_DATA_FIELD:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
@@ -1001,7 +1001,7 @@ class DataSetFilters(object):
         """
         if scalars is None:
             field, scalars = dataset.active_scalar_info
-        arr, field = get_scalar(dataset, scalars, preference='point', info=True)
+        arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != pyvista.POINT_DATA_FIELD:
             raise AssertionError('Dataset can only by warped by a point data array.')
         scale_factor = kwargs.get('scale_factor', None)
@@ -1538,7 +1538,7 @@ class DataSetFilters(object):
         # Get variable of interest
         if scalars is None:
             field, scalars = dataset.active_scalar_info
-        values = sampled.get_scalar(scalars)
+        values = sampled.get_array(scalars)
         distance = sampled['Distance']
 
         # Remainder of the is plotting
@@ -1936,9 +1936,9 @@ class DataSetFilters(object):
         try:
             # Set user specified quality measure
             measure_setters[quality_measure]()
-        except KeyError:
-            options = ', '.join(["'{}'".format(s) for s in measure_setters.keys()])
-            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(options))
+        except (KeyError, IndexError):
+            options = ', '.join(["'{}'".format(s) for s in list(measure_setters.keys())])
+            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(quality_measure, options))
         alg.SetInputData(dataset)
         alg.SetUndefinedQuality(null_value)
         alg.Update()
@@ -1964,7 +1964,7 @@ class DataSetFilters(object):
             field, scalars = dataset.active_scalar_info
         if not isinstance(scalars, str):
             raise TypeError('Scalar array must be given as a string name')
-        _, field = dataset.get_scalar(scalars, preference=preference, info=True)
+        _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
         alg.SetInputData(dataset)
@@ -2534,7 +2534,7 @@ class PolyDataFilters(DataSetFilters):
         if scalars is not None:
             if not isinstance(scalars, str):
                 raise TypeError('Scalar array must be given as a string name')
-            _, field = poly_data.get_scalar(scalars, preference=preference, info=True)
+            _, field = poly_data.get_array(scalars, preference=preference, info=True)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field, scalars)
             tube.SetVaryRadiusToVaryRadiusByScalar()

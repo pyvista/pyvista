@@ -20,6 +20,7 @@ from .fileio import get_ext, get_reader, standard_reader_routine
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
 FIELD_DATA_FIELD = 2
+ROW_DATA_FIELD = 6
 
 
 def get_vtk_type(typ):
@@ -121,7 +122,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
 
 
 
-def is_pyvista_obj(obj):
+def is_pyvista_dataset(obj):
     """ Return True if the Object is a PyVista wrapped dataset """
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
 
@@ -141,6 +142,10 @@ def cell_scalar(mesh, name):
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+def row_array(data_object, name):
+    """ Returns cell scalars of a vtk object """
+    vtkarr = data_object.GetRowData().GetAbstractArray(name)
+    return convert_array(vtkarr)
 
 def parse_field_choice(field):
     if isinstance(field, str):
@@ -151,6 +156,8 @@ def parse_field_choice(field):
             field = POINT_DATA_FIELD
         elif field in ['field', 'f', 'fields']:
             field = FIELD_DATA_FIELD
+        elif field in ['row', 'r',]:
+            field = ROW_DATA_FIELD
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(field))
     elif isinstance(field, int):
@@ -160,7 +167,7 @@ def parse_field_choice(field):
     return field
 
 
-def get_scalar(mesh, name, preference='cell', info=False, err=False):
+def get_array(mesh, name, preference='cell', info=False, err=False):
     """ Searches point, cell and field data for an array
 
     Parameters
@@ -180,6 +187,15 @@ def get_scalar(mesh, name, preference='cell', info=False, err=False):
         Boolean to control whether to throw an error if array is not present.
 
     """
+    if isinstance(mesh, vtk.vtkTable):
+        arr = row_array(mesh, name)
+        if arr is None and err:
+            raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
+        field = ROW_DATA_FIELD
+        if info:
+            return arr, field
+        return arr
+
     parr = point_scalar(mesh, name)
     carr = cell_scalar(mesh, name)
     farr = field_scalar(mesh, name)
@@ -348,6 +364,7 @@ def wrap(vtkdataset):
         'vtkImageData' : pyvista.UniformGrid,
         'vtkStructuredPoints' : pyvista.UniformGrid,
         'vtkMultiBlockDataSet' : pyvista.MultiBlock,
+        'vtkTable' : pyvista.Table,
         # 'vtkParametricSpline' : pyvista.Spline,
         }
     # Otherwise, we assume a VTK data object was passed
@@ -445,6 +462,10 @@ def fit_plane_to_points(points, return_meta=False):
 
 
 def raise_not_matching(scalars, mesh):
+    if isinstance(mesh, vtk.vtkTable):
+        raise Exception('Number of scalars ({})'.format(scalars.size) +
+                        'must match number of rows ' +
+                        '({}).'.format(mesh.n_rows) )
     raise Exception('Number of scalars ({})'.format(scalars.size) +
                     'must match either the number of points ' +
                     '({}) '.format(mesh.n_points) +

@@ -54,6 +54,9 @@ def test_clip_surface():
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False)
     assert clipped.n_points < dataset.n_points
+    clipped = dataset.clip_surface(surface, invert=False, compute_distance=True)
+    assert clipped.n_points < dataset.n_points
+    assert 'implicit_distance' in clipped.array_names
 
 
 def test_slice_filter():
@@ -210,7 +213,7 @@ def test_elevation():
     dataset = examples.load_uniform()
     # Test default params
     elev = dataset.elevation()
-    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalar_name
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
     # test vector args
@@ -218,21 +221,21 @@ def test_elevation():
     t = list(c) # cast so it doesnt point to `c`
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t)
-    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalar_name
     assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
     # Test not setting active
     elev = dataset.elevation(set_active=False)
-    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' in elev.array_names
     assert 'Elevation' != elev.active_scalar_name
     # Set use a range by scalar name
     elev = dataset.elevation(scalar_range='Spatial Point Data')
-    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalar_name
     assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
     # Set use a user defined range
     elev = dataset.elevation(scalar_range=[1.0, 100.0])
-    assert 'Elevation' in elev.scalar_names
+    assert 'Elevation' in elev.array_names
     assert 'Elevation' == elev.active_scalar_name
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
@@ -255,10 +258,10 @@ def test_texture_map_to_plane():
     point_v = (bnds[0], bnds[3], bnds[4])
     out = dataset.texture_map_to_plane(origin=origin, point_u=point_u, point_v=point_v)
     assert isinstance(out, type(dataset))
-    assert 'Texture Coordinates' in out.scalar_names
+    assert 'Texture Coordinates' in out.array_names
     # FINAL: Test in place modifiacation
     dataset.texture_map_to_plane(inplace=True)
-    assert 'Texture Coordinates' in dataset.scalar_names
+    assert 'Texture Coordinates' in dataset.array_names
 
 
 
@@ -267,8 +270,8 @@ def test_compute_cell_sizes():
         result = dataset.compute_cell_sizes()
         assert result is not None
         assert isinstance(result, type(dataset))
-        assert 'Area' in result.scalar_names
-        assert 'Volume' in result.scalar_names
+        assert 'Area' in result.array_names
+        assert 'Volume' in result.array_names
     # Test the volume property
     grid = pyvista.UniformGrid((10,10,10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
@@ -386,7 +389,11 @@ def test_resample():
     data_to_probe = examples.load_uniform()
     result = mesh.sample(data_to_probe)
     name = 'Spatial Point Data'
-    assert name in result.scalar_names
+    assert name in result.array_names
+    assert isinstance(result, type(mesh))
+    result = mesh.sample(data_to_probe, tolerance=1.0)
+    name = 'Spatial Point Data'
+    assert name in result.array_names
     assert isinstance(result, type(mesh))
 
 
@@ -458,7 +465,7 @@ def test_select_enclosed_points():
     surf = pyvista.Sphere(center=mesh.center, radius=mesh.length/2.)
     result = mesh.select_enclosed_points(surf)
     assert isinstance(result, type(mesh))
-    assert 'SelectedPoints' in result.scalar_names
+    assert 'SelectedPoints' in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     # Now check non-closed surface
     mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
@@ -466,7 +473,7 @@ def test_select_enclosed_points():
     surf.rotate_x(90)
     result = mesh.select_enclosed_points(surf, check_surface=False)
     assert isinstance(result, type(mesh))
-    assert 'SelectedPoints' in result.scalar_names
+    assert 'SelectedPoints' in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     with pytest.raises(RuntimeError):
         result = mesh.select_enclosed_points(surf, check_surface=True)
@@ -494,12 +501,14 @@ def test_merge_general():
 def test_compute_cell_quality():
     mesh = pyvista.ParametricEllipsoid().decimate(0.8)
     qual = mesh.compute_cell_quality()
-    assert 'CellQuality' in qual.scalar_names
+    assert 'CellQuality' in qual.array_names
+    with pytest.raises(KeyError):
+        qual = mesh.compute_cell_quality(quality_measure='foo')
 
 
 def test_compute_gradients():
     mesh = examples.load_random_hills()
     grad = mesh.compute_gradient()
-    assert 'gradient' in grad.scalar_names
+    assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3

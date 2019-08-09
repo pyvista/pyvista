@@ -13,15 +13,16 @@ from vtk import vtkMultiBlockDataSet
 
 import pyvista
 from pyvista import plot
-from pyvista.utilities import get_scalar, is_pyvista_obj, wrap
+from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 
+from .common import DataObject
 from .filters import CompositeFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
+class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """
     A composite class to hold many data sets which can be iterated over.
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
@@ -65,7 +66,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
         datasets. This is perfrom inplace"""
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
-            if not is_pyvista_obj(block):
+            if not is_pyvista_dataset(block):
                 self.SetBlock(i, pyvista.wrap(block))
         return
 
@@ -213,7 +214,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
             if data is None:
                 continue
             # get the scalar if availble
-            arr = get_scalar(data, name)
+            arr = get_array(data, name)
             if arr is None or not np.issubdtype(arr.dtype, np.number):
                 continue
             tmi, tma = np.nanmin(arr), np.nanmax(arr)
@@ -244,7 +245,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
         data = self.GetBlock(index)
         if data is None:
             return data
-        if data is not None and not is_pyvista_obj(data):
+        if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if data not in self.refs:
             self.refs.append(data)
@@ -312,7 +313,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters):
             name = index
         else:
             i, name = index, None
-        if data is not None and not is_pyvista_obj(data):
+        if data is not None and not is_pyvista_dataset(data):
             data = wrap(data)
         if i == -1:
             self.append(data)
