@@ -274,10 +274,11 @@ def lines_from_points(points):
 
     """
     # Assuming ordered points, create array defining line order
-    npoints = points.shape[0] - 1
-    lines = np.vstack((2 * np.ones(npoints, np.int),
-                       np.arange(npoints),
-                       np.arange(1, npoints + 1))).T.ravel()
+    n_points = len(points)
+    n_lines = n_points // 2
+    lines = np.c_[(2 * np.ones(n_lines, np.int),
+                   np.arange(0, n_points-1, step=2),
+                   np.arange(1, n_points+1, step=2))]
     poly = pyvista.PolyData()
     poly.points = points
     poly.lines = lines
