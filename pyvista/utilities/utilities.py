@@ -278,8 +278,10 @@ def lines_from_points(points):
     lines = np.vstack((2 * np.ones(npoints, np.int),
                        np.arange(npoints),
                        np.arange(1, npoints + 1))).T.ravel()
-
-    return pyvista.PolyData(points, lines)
+    poly = pyvista.PolyData()
+    poly.points = points
+    poly.lines = lines
+    return poly
 
 
 def vector_poly_data(orig, vec):
