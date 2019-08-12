@@ -46,6 +46,8 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     """
     Create the surface of a cylinder.
 
+    See also :func:`pyvista.CylinderStructured`
+
     Parameters
     ----------
     center : list or np.ndarray
