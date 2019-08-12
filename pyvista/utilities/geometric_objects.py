@@ -92,25 +92,27 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     return surf
 
 
-def CylinderStructured(center=(0.,0.,0.), direction=(1.,0.,0.),
-                       radius=0.5, height=1.0,
+def CylinderStructured(radius=0.5, height=1.0,
+                       center=(0.,0.,0.), direction=(1.,0.,0.),
                        theta_resolution=32, z_resolution=10):
-    """Create a cylinder surface mesh as a :class:`pyvista.StructuredGrid`.
-    The end caps are left open.
+    """Create a cylinder mesh as a :class:`pyvista.StructuredGrid`.
+    The end caps are left open. This can create a surface mesh if a single
+    value for the ``radius`` is given or a 3D mesh if multiple radii are given
+    as a list/array in the ``radius`` argument.
 
     Parameters
     ----------
+    radius : float
+        Radius of the cylinder. If an iterable
+
+    height : float
+        Height (length) of the cylinder along its Z-axis
+
     center : list or np.ndarray
         Location of the centroid in [x, y, z]
 
     direction : list or np.ndarray
         Direction cylinder Z-axis in [x, y, z]
-
-    radius : float
-        Radius of the cylinder.
-
-    height : float
-        Height (length) of the cylinder along its Z-axis
 
     theta_resolution : int
         Number of points on the circular face of the cylinder.
@@ -119,7 +121,8 @@ def CylinderStructured(center=(0.,0.,0.), direction=(1.,0.,0.),
         Number of points along the height (Z-axis) of the cylinder
     """
     # Define grid in polar coordinates
-    r = np.array([radius])
+    r = np.array([radius]).ravel()
+    nr = len(r)
     theta = np.linspace(0, 2*np.pi, num=theta_resolution)
     radius_matrix, theta_matrix = np.meshgrid(r,theta)
 
@@ -132,19 +135,18 @@ def CylinderStructured(center=(0.,0.,0.), direction=(1.,0.,0.),
     Y = np.append(Y, Y[0])
 
     # Make all the nodes in the grid
-    n = X.size
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
     dz = height / z_resolution
     zz = np.empty(yy.size)
-    zz = np.full((n, z_resolution), dz)
+    zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
     zz = zz.ravel(order='f')
 
     # Create the grid
     grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
-    grid.dimensions = [1, n, z_resolution]
+    grid.dimensions = [nr, theta_resolution+1, z_resolution]
 
     # Orient properly in user direction
     direction = np.array(direction)
