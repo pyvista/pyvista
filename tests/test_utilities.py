@@ -106,3 +106,13 @@ def test_voxelize():
 def test_report():
     report = pyvista.Report()
     assert report is not None
+
+
+def test_lines_from_points():
+    points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+    poly = pyvista.lines_from_points(points)
+    assert poly.n_cells == 2
+    assert poly.n_points == 4
+    cells = poly.lines
+    assert np.allclose(cells[0], [2, 0,1])
+    assert np.allclose(cells[1], [2, 2,3])
