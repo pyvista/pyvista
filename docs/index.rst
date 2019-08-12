@@ -161,6 +161,7 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    :hidden:
 
    getting-started/installation
+   getting-started/what-is-a-mesh
    getting-started/simple
    examples/index
    external_examples
