@@ -525,3 +525,10 @@ def test_lines():
     poly.lines = the_cell
     assert poly.n_points == len(points)
     assert poly.n_cells == 1
+
+
+def test_ribbon_filter():
+    line = examples.load_spline().compute_arc_length()
+    ribbon = line.ribbon(width=0.5)
+    ribbon = line.ribbon(width=0.5, scalars='arc_length')
+    ribbon = line.ribbon(width=0.5, tcoords=True)

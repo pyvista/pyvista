@@ -3260,6 +3260,71 @@ class PolyDataFilters(DataSetFilters):
         return
 
 
+    def ribbon(poly_data, width=None, scalars=None, angle=0.0, factor=2.0,
+               normal=None, tcoords=False, preference='points'):
+        """Create a ribbon of the lines in this dataset.
+
+        Note
+        ----
+        If there are no lines in the input dataset, then the output will be
+        an empty PolyData mesh.
+
+        Parameters
+        ----------
+        width : float
+            Set the "half" width of the ribbon. If the width is allowed to
+            vary, this is the minimum width. The default is 10% the length
+
+        scalars : str, optional
+            String name of the scalars array to use to vary the ribbon width.
+            This is only used if a scalars array is specified.
+
+        angle : float
+            Set the offset angle of the ribbon from the line normal. (The
+            angle is expressed in degrees.) The default is 0.0
+
+        factor : float
+            Set the maximum ribbon width in terms of a multiple of the
+            minimum width. The default is 2.0
+
+        normal : tuple(float), optional
+            Normal to use as default
+
+        tcoords : bool, str, optional
+            If True, generate texture coordinates along the ribbon. This can
+            also be specified to generate the texture coordinates in the
+            following ways: ``'length'``, ``'normalized'``,
+        """
+        if scalars is not None:
+            arr, field = get_array(poly_data, scalars, preference=preference, info=True)
+        if width is None:
+            width = poly_data.length * 0.1
+        alg = vtk.vtkRibbonFilter()
+        alg.SetInputDataObject(poly_data)
+        alg.SetWidth(width)
+        if normal is not None:
+            alg.SetUseDefaultNormal(True)
+            alg.SetDefaultNormal(normal)
+        alg.SetAngle(angle)
+        alg.SetWidthFactor(factor)
+        if scalars is not None:
+            alg.SetVaryWidth(True)
+            alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        if tcoords:
+            alg.SetGenerateTCoords(True)
+            if isinstance(tcoords, str):
+                if tcoords.lower() == 'length':
+                    alg.SetGenerateTCoordsToUseLength()
+                elif tcoords.lower() == 'normalized':
+                    alg.SetGenerateTCoordsToNormalizedLength()
+            else:
+                alg.SetGenerateTCoordsToUseLength()
+        else:
+            alg.SetGenerateTCoordsToOff()
+        alg.Update()
+        return _get_output(alg)
+
+
 class UnstructuredGridFilters(DataSetFilters):
 
     def __new__(cls, *args, **kwargs):
