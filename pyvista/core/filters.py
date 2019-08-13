@@ -3250,8 +3250,6 @@ class PolyDataFilters(DataSetFilters):
             mesh = poly_data
         # Make plane
         plane = generate_plane(normal, origin)
-        print(plane.GetNormal())
-        print(plane.GetOrigin())
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
         np.apply_along_axis(f, 1, mesh.points)
