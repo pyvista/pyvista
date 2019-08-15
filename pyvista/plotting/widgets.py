@@ -282,6 +282,7 @@ class WidgetHelper(object):
         self.line_widget.Modified()
         self.line_widget.On()
         self.line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(self.line_widget, None)
 
         return self.line_widget
 

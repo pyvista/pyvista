@@ -1282,7 +1282,7 @@ class DataSetFilters(object):
                     max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
                     max_time=None, compute_vorticity=True, rotation_scale=1.0,
                     interpolator_type='point', start_position=(0.0, 0.0, 0.0),
-                    return_source=False):
+                    return_source=False, pointa=None, pointb=None):
         """Integrate a vector field to generate streamlines. The integration is
         performed using a specified integrator, by default Runge-Kutta2.
         This supports integration through any type of dataset.
@@ -1382,6 +1382,10 @@ class DataSetFilters(object):
         return_source : bool
             Return the source particles as :class:`pyvista.PolyData` as well as the
             streamlines. This will be the second value returned if ``True``.
+
+        pointa, pointb : tuple(flaot)
+            The coordinates of a start and end point for a line source. This
+            will override the sphere point source.
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
@@ -1405,10 +1409,16 @@ class DataSetFilters(object):
             source_center = dataset.center
         if source_radius is None:
             source_radius = dataset.length / 10.0
-        source = vtk.vtkPointSource()
-        source.SetNumberOfPoints(n_points);
-        source.SetCenter(source_center);
-        source.SetRadius(source_radius);
+        if pointa is not None and pointb is not None:
+            source = vtk.vtkLineSource()
+            source.SetPoint1(pointa)
+            source.SetPoint2(pointb)
+            source.SetResolution(n_points)
+        else:
+            source = vtk.vtkPointSource()
+            source.SetCenter(source_center)
+            source.SetRadius(source_radius)
+            source.SetNumberOfPoints(n_points);
         # Build the algorithm
         alg = vtk.vtkStreamTracer()
         # Inputs
