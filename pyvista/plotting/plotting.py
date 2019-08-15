@@ -3263,6 +3263,122 @@ class BasePlotter(object):
         return
 
 
+    def enable_point_picking(self, callback=None, show_message=True,
+                            font_size=18, color='pink', point_size=10,
+                            use_mesh=False, show_point=True, **kwargs):
+        """Enable picking a point at the mouse location in the render view
+        using the ``P`` key. This point is saved to the ``.picked_point``
+        attrbute on the plotter. Pass a callback function that takes that
+        point as an argument. The picked point can either be a point on the
+        first intersecting mesh, or a point in the 3D window.
+
+        If ``use_mesh`` is True, the callback function will be passed a pointer
+        to the picked mesh and the point ID of the selcted mesh.
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Cell picking not available in notebook plotting')
+
+        def _end_pick_event(picker, event):
+            self.picked_point = np.array(picker.GetPickPosition())
+            self.picked_mesh = picker.GetDataSet()
+            self.picked_point_id = picker.GetPointId()
+            if show_point:
+                self.add_mesh(self.picked_point, color=color,
+                              point_size=point_size, name='_picked_point')
+            if hasattr(callback, '__call__'):
+                if use_mesh:
+                    callback(self.picked_mesh, self.picked_point_id)
+                else:
+                    callback(self.picked_point)
+
+        point_picker = vtk.vtkPointPicker()
+        point_picker.AddObserver(vtk.vtkCommand.EndPickEvent, _end_pick_event)
+
+        self.enable_trackball_style()
+        self.iren.SetPicker(point_picker)
+
+        # Now add text about cell-selection
+        if show_message:
+            if show_message == True:
+                show_message = "Press P to pick over the mouse"
+            self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
+        return
+
+
+    def enable_path_picking(self, callback=None, show_message=True,
+                            font_size=18, color='pink', point_size=10,
+                            line_width=5):
+        """This is a conveinance method for ``enable_point_picking`` to keep
+        track of the picked points and create a line using those points.
+
+        The line is saved to the ``.picked_line`` attribute of this plotter
+        """
+        def make_line_cells(n_points):
+            cells = np.full((n_points-1, 3), 2, dtype=np.int)
+            cells[:, 1] = np.arange(0, n_points-1, dtype=np.int)
+            cells[:, 2] = np.arange(1, n_points, dtype=np.int)
+            return cells
+
+        the_points = []
+        the_ids = []
+
+        def _the_callback(mesh, idx):
+            if mesh is None:
+                return
+            the_ids.append(idx)
+            the_points.append(mesh.points[idx])
+            self.picked_line = pyvista.PolyData(np.array(the_points))
+            self.picked_line.lines = make_line_cells(len(the_points))
+
+            self.add_mesh(self.picked_line, color=color, name='_picked_line',
+                          line_width=line_width, point_size=point_size)
+            if hasattr(callback, '__call__'):
+                callback(self.picked_line)
+            return
+
+        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
+                font_size=font_size, show_message=show_message, show_point=False)
+
+
+    def enable_geodesic_picking(self, callback=None, show_message=True,
+                            font_size=18, color='pink', point_size=10,
+                            line_width=5):
+        """This is a conveinance method for ``enable_point_picking`` to keep
+        track of the picked points and create a geodesic path using those
+        points.
+
+        The geodesic path is saved to the ``.picked_geodesic`` attribute of
+        this plotter
+        """
+        self.picked_geodesic = pyvista.PolyData()
+        self._last_picked_idx = None
+
+        def _the_callback(mesh, idx):
+            if mesh is None:
+                return
+            point = mesh.points[idx]
+            if self._last_picked_idx is None:
+                self.picked_geodesic = pyvista.PolyData(point)
+            else:
+                surface = mesh.extract_surface().triangulate()
+                locator = vtk.vtkPointLocator()
+                locator.SetDataSet(surface)
+                locator.BuildLocator()
+                start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
+                end_idx = locator.FindClosestPoint(point)
+                self.picked_geodesic = self.picked_geodesic + surface.geodesic(start_idx, end_idx)
+            self._last_picked_idx = idx
+
+            self.add_mesh(self.picked_geodesic, color=color, name='_picked_line',
+                          line_width=line_width, point_size=point_size)
+            if hasattr(callback, '__call__'):
+                callback(self.picked_geodesic)
+            return
+
+        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
+                font_size=font_size, show_message=show_message, show_point=False)
+
+
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Genrates an orbital path around the data scene
 
