@@ -11,7 +11,7 @@ class WidgetHelper(object):
     """An internal class to manage widgets and other helper methods involving
     widgets"""
 
-    def enable_box_widget(self, callback, bounds=None, factor=1.0,
+    def enable_box_widget(self, callback, bounds=None, factor=1.25,
                           rotation_enabled=True, color=None, use_planes=False,
                           **kwargs):
         """Add a box widget to the scene. This is useless without a callback
@@ -47,6 +47,8 @@ class WidgetHelper(object):
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Box widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if bounds is None:
             bounds = self.bounds
 
@@ -80,7 +82,8 @@ class WidgetHelper(object):
 
     def disable_box_widget(self):
         """ Disables the last active box widget """
-        self.box_widget.Off()
+        if hasattr(self, 'box_widget'):
+            self.box_widget.Off()
         return
 
 
@@ -163,6 +166,8 @@ class WidgetHelper(object):
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Plane widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if origin is None:
             origin = self.center
         if bounds is None:
@@ -202,7 +207,8 @@ class WidgetHelper(object):
 
     def disable_plane_widget(self):
         """ Disables the last active plane widget """
-        self.plane_widget.Off()
+        if hasattr(self, 'plane_widget'):
+            self.plane_widget.Off()
         return
 
 
@@ -305,7 +311,7 @@ class WidgetHelper(object):
 
 
 
-    def enable_line_widget(self, callback, bounds=None, factor=1.0,
+    def enable_line_widget(self, callback, bounds=None, factor=1.25,
                            resolution=100, color=None, use_vertices=False,
                            **kwargs):
         """Add a line widget to the scene. This is useless without a callback
@@ -339,6 +345,8 @@ class WidgetHelper(object):
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Box widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if bounds is None:
             bounds = self.bounds
 
@@ -372,7 +380,8 @@ class WidgetHelper(object):
 
     def disable_line_widget(self):
         """ Disables the last active line widget """
-        self.line_widget.Off()
+        if hasattr(self, 'line_widget'):
+            self.line_widget.Off()
         return
 
 
@@ -455,7 +464,8 @@ class WidgetHelper(object):
 
     def disable_slider_widget(self):
         """ Disables the last active slider widget """
-        self.slider_widget.Off()
+        if hasattr(self, 'slider_widget'):
+            self.slider_widget.Off()
         return
 
 
