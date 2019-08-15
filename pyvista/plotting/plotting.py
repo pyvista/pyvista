@@ -3297,6 +3297,46 @@ class BasePlotter(object):
         return the_box
 
 
+    def add_mesh_clip_box(self, mesh, invert=True, value=0.0, **kwargs):
+        """Add a mesh to the scene with a box widget that is used to clip
+        the mesh interactively.
+
+        The clipped mesh is saved to the ``.box_clipped_mesh`` attribute on
+        the plotter.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common
+            The input dataset to add to the scene and clip
+
+        invert : bool
+            Flag on whether to flip/invert the clip
+
+        value : float:
+            Set the clipping value of the implicit function (if clipping with
+            implicit function) or scalar value (if clipping with scalars).
+            The default value is 0.0.
+
+        kwargs : dict
+            All additional keyword arguments are passed to ``add_mesh`` to
+            control how the mesh is displayed.
+        """
+        if isinstance(mesh, pyvista.MultiBlock):
+            raise TypeError('MultiBlock datasets are not supported for box widget clipping.')
+        name = kwargs.pop('name', str(hex(id(mesh))))
+        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+
+        actor = self.add_mesh(mesh, name=name, **kwargs)
+
+        def callback(box):
+            self.box_clipped_mesh = mesh.clip_surface(box, invert=invert, value=value)
+            self.add_mesh(self.box_clipped_mesh, name=name, **kwargs)
+
+        self.enable_box_widget(bounds=mesh.bounds, factor=1.25, callback=callback)
+
+        return actor
+
+
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Genrates an orbital path around the data scene
 
