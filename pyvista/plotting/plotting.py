@@ -3300,7 +3300,12 @@ class BasePlotter(object):
         return the_box
 
 
-    def add_mesh_clip_box(self, mesh, invert=True, value=0.0, **kwargs):
+    def disable_box_widget(self):
+        self.box_widget.Off()
+        return
+
+
+    def add_mesh_clip_box(self, mesh, invert=False, value=0.0, **kwargs):
         """Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
 
@@ -3332,7 +3337,15 @@ class BasePlotter(object):
         actor = self.add_mesh(mesh, name=name, **kwargs)
 
         def callback(box):
-            self.box_clipped_mesh = mesh.clip_surface(box, invert=invert, value=value)
+            planes = vtk.vtkPlanes()
+            self.box_widget.GetPlanes(planes)
+            bounds = []
+            for i in range(planes.GetNumberOfPlanes()):
+                plane = planes.GetPlane(i)
+                bounds.append(plane.GetNormal())
+                bounds.append(plane.GetOrigin())
+
+            self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert, value=value)
             self.add_mesh(self.box_clipped_mesh, name=name, **kwargs)
 
         self.enable_box_widget(bounds=mesh.bounds, factor=1.25, callback=callback)
