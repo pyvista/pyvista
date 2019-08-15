@@ -32,18 +32,9 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
+from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
                                generate_plane, get_array, is_inside_bounds,
                                wrap)
-
-NORMALS = {
-    'x': [1, 0, 0],
-    'y': [0, 1, 0],
-    'z': [0, 0, 1],
-    '-x': [-1, 0, 0],
-    '-y': [0, -1, 0],
-    '-z': [0, 0, -1],
-}
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,

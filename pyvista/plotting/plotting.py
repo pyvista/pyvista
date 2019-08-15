@@ -14,8 +14,8 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (convert_array, convert_string_array, get_array,
-                               is_pyvista_dataset, numpy_to_texture,
+from pyvista.utilities import (NORMALS, convert_array, convert_string_array,
+                               get_array, is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
 from .colors import get_cmap_safe
@@ -2318,8 +2318,10 @@ class BasePlotter(object):
             del self.axes_widget
 
         if hasattr(self, 'box_widget'):
-            self.box_widget.Off()
             del self.box_widget
+
+        if hasattr(self, 'plane_widget'):
+            del self.plane_widget
 
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
@@ -3285,6 +3287,7 @@ class BasePlotter(object):
         the_box = pyvista.PolyData()
 
         def _the_callback(widget, event_id):
+            self.box_widget.GetPolyData(the_box)
             if hasattr(callback, '__call__'):
                 callback(the_box)
             return
@@ -3345,6 +3348,94 @@ class BasePlotter(object):
             self.add_mesh(self.box_clipped_mesh, name=name, **kwargs)
 
         self.enable_box_widget(bounds=mesh.bounds, factor=1.25, callback=callback)
+
+        return actor
+
+
+    def enable_plane_widget(self, origin=None, normal='x', factor=1.25,
+                            callback=None, bounds=None, **kwargs):
+        """Add a plane widget to the scene.
+
+        You can also pass a callable function that will takes a single
+        argument, the plane, and performs a task with that box.
+
+        Returns a pointer to the ``vtkPlane``
+
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Plane widget not available in notebook plotting')
+        if origin is None:
+            origin = self.center
+        if bounds is None:
+            bounds = self.bounds
+
+        if isinstance(normal, str):
+            normal = NORMALS[normal.lower()]
+
+        # This dataset is continually updated by the widget and is return to
+        # the user for use
+        the_plane = vtk.vtkPlane()
+
+        def _the_callback(widget, event_id):
+            self.plane_widget.GetPlane(the_plane)
+            if hasattr(callback, '__call__'):
+                callback(the_plane)
+            return
+
+        self.plane_widget = vtk.vtkImplicitPlaneWidget()
+        self.plane_widget.SetInteractor(self.iren)
+        self.plane_widget.SetPlaceFactor(factor)
+        self.plane_widget.PlaceWidget(bounds)
+        self.plane_widget.SetOrigin(origin)
+        self.plane_widget.SetNormal(normal)
+        self.plane_widget.Modified()
+        self.plane_widget.UpdatePlacement()
+        self.plane_widget.On()
+        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        self.plane_widget.GetPlane(the_plane)
+        _the_callback(None, None) # Trigger immediate update
+
+        return the_plane
+
+
+    def disable_plane_widget(self):
+        self.plane_widget.Off()
+        return
+
+
+    def add_mesh_clip_plane(self, mesh, invert=False, normal='x', **kwargs):
+        """Add a mesh to the scene with a plane widget that is used to clip
+        the mesh interactively.
+
+        The clipped mesh is saved to the ``.plane_clipped_mesh`` attribute on
+        the plotter.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common
+            The input dataset to add to the scene and clip
+
+        invert : bool
+            Flag on whether to flip/invert the clip
+
+        kwargs : dict
+            All additional keyword arguments are passed to ``add_mesh`` to
+            control how the mesh is displayed.
+        """
+        if isinstance(mesh, pyvista.MultiBlock):
+            raise TypeError('MultiBlock datasets are not supported for plane widget clipping.')
+        name = kwargs.pop('name', str(hex(id(mesh))))
+        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+
+        actor = self.add_mesh(mesh, name=name, **kwargs)
+
+        def callback(plane):
+            self.plane_clipped_mesh = pyvista.DataSetFilters._clip_with_function(mesh, plane,
+                            invert=invert)
+            self.add_mesh(self.plane_clipped_mesh, name=name, **kwargs)
+
+        self.enable_plane_widget(bounds=mesh.bounds, factor=1.25, normal=normal,
+                                 callback=callback)
 
         return actor
 
