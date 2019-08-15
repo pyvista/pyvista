@@ -48,10 +48,11 @@ class WidgetHelper(object):
         self.box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(self.box_widget, None)
 
-        return
+        return self.box_widget
 
 
     def disable_box_widget(self):
+        """ Disables the last active box widget """
         self.box_widget.Off()
         return
 
@@ -143,10 +144,11 @@ class WidgetHelper(object):
         self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(self.plane_widget, None) # Trigger immediate update
 
-        return
+        return self.plane_widget
 
 
     def disable_plane_widget(self):
+        """ Disables the last active plane widget """
         self.plane_widget.Off()
         return
 
@@ -260,11 +262,8 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['font']['color']
 
-        # This dataset is continually updated by the widget and is return to
-        # the user for use
-        the_line = pyvista.PolyData()
-
         def _the_callback(widget, event_id):
+            the_line = pyvista.PolyData()
             pointa = self.line_widget.GetPoint1()
             pointb = self.line_widget.GetPoint2()
             the_line.DeepCopy(pyvista.Line(pointa, pointb, resolution=resolution))
@@ -282,12 +281,11 @@ class WidgetHelper(object):
         self.line_widget.On()
         self.line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
 
-        self.line_widget.GetPolyData(the_line)
-
-        return the_line
+        return self.line_widget
 
 
     def disable_line_widget(self):
+        """ Disables the last active line widget """
         self.line_widget.Off()
         return
 
@@ -339,10 +337,11 @@ class WidgetHelper(object):
         self.slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(self.slider_widget, None)
 
-        return
+        return self.slider_widget
 
 
     def disable_slider_widget(self):
+        """ Disables the last active slider widget """
         self.slider_widget.Off()
         return
 
