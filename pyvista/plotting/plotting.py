@@ -3263,6 +3263,40 @@ class BasePlotter(object):
         return
 
 
+    def enable_box_widget(self, bounds=None, factor=1.0, callback=None, **kwargs):
+        """Add a box widget to the scene. This function returns a pointer
+        to a :class:`pyvista.PolyData` mesh that will continually update with
+        the box widget.
+
+        You can also pass a callable function that will takes a single
+        argument, the PolyData box, and performs a task with that box.
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Box widget not available in notebook plotting')
+        if bounds is None:
+            bounds = self.bounds
+
+        # This dataset is continually updated by the widget and is return to
+        # the user for use
+        the_box = pyvista.PolyData()
+
+        def _the_callback(widget, event_id):
+            if hasattr(callback, '__call__'):
+                callback(the_box)
+            return
+
+        self.box_widget = vtk.vtkBoxWidget()
+        self.box_widget.SetInteractor(self.iren)
+        self.box_widget.SetPlaceFactor(factor)
+        self.box_widget.PlaceWidget(bounds)
+        self.box_widget.On()
+        self.box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+
+        self.box_widget.GetPolyData(the_box)
+
+        return the_box
+
+
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Genrates an orbital path around the data scene
 
