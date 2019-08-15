@@ -14,7 +14,7 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (NORMALS, convert_array, convert_string_array,
+from pyvista.utilities import (convert_array, convert_string_array,
                                get_array, is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
@@ -23,6 +23,7 @@ from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .theme import *
 from .tools import *
+from .widgets import WidgetHelper
 
 _ALL_PLOTTERS = {}
 
@@ -40,7 +41,7 @@ log.setLevel('CRITICAL')
 
 
 
-class BasePlotter(object):
+class BasePlotter(WidgetHelper):
     """
     To be used by the Plotter and QtInteractor classes.
 
@@ -2314,17 +2315,10 @@ class BasePlotter(object):
     def close(self):
         """ closes render window """
         # must close out widgets first
+        super(BasePlotter, self).close()
+
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
-
-        if hasattr(self, 'box_widget'):
-            del self.box_widget
-
-        if hasattr(self, 'plane_widget'):
-            del self.plane_widget
-
-        if hasattr(self, 'line_widget'):
-            del self.line_widget
 
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
@@ -3269,280 +3263,6 @@ class BasePlotter(object):
             if show_message == True:
                 show_message = "Press R to toggle selection tool"
             self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
-        return
-
-
-    def enable_box_widget(self, bounds=None, factor=1.0, callback=None,
-                          rotation_enabled=True,**kwargs):
-        """Add a box widget to the scene. This function returns a pointer
-        to a :class:`pyvista.PolyData` mesh that will continually update with
-        the box widget.
-
-        You can also pass a callable function that will takes a single
-        argument, the PolyData box, and performs a task with that box.
-        """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Box widget not available in notebook plotting')
-        if bounds is None:
-            bounds = self.bounds
-
-        # This dataset is continually updated by the widget and is return to
-        # the user for use
-        the_box = pyvista.PolyData()
-
-        def _the_callback(widget, event_id):
-            self.box_widget.GetPolyData(the_box)
-            if hasattr(callback, '__call__'):
-                callback(the_box)
-            return
-
-        self.box_widget = vtk.vtkBoxWidget()
-        self.box_widget.SetInteractor(self.iren)
-        self.box_widget.SetPlaceFactor(factor)
-        self.box_widget.SetRotationEnabled(rotation_enabled)
-        self.box_widget.PlaceWidget(bounds)
-        self.box_widget.On()
-        self.box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-
-        self.box_widget.GetPolyData(the_box)
-
-        return the_box
-
-
-    def disable_box_widget(self):
-        self.box_widget.Off()
-        return
-
-
-    def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True, **kwargs):
-        """Add a mesh to the scene with a box widget that is used to clip
-        the mesh interactively.
-
-        The clipped mesh is saved to the ``.box_clipped_mesh`` attribute on
-        the plotter.
-
-        Parameters
-        ----------
-        mesh : pyvista.Common
-            The input dataset to add to the scene and clip
-
-        invert : bool
-            Flag on whether to flip/invert the clip
-
-        kwargs : dict
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
-        """
-        if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError('MultiBlock datasets are not supported for box widget clipping.')
-        name = kwargs.pop('name', str(hex(id(mesh))))
-        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
-
-        actor = self.add_mesh(mesh, name=name, **kwargs)
-
-        def callback(box):
-            planes = vtk.vtkPlanes()
-            self.box_widget.GetPlanes(planes)
-            bounds = []
-            for i in range(planes.GetNumberOfPlanes()):
-                plane = planes.GetPlane(i)
-                bounds.append(plane.GetNormal())
-                bounds.append(plane.GetOrigin())
-
-            self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert)
-            self.add_mesh(self.box_clipped_mesh, name=name, **kwargs)
-
-        self.enable_box_widget(bounds=mesh.bounds, factor=1.25,
-                rotation_enabled=rotation_enabled, callback=callback)
-
-        return actor
-
-
-    def enable_plane_widget(self, origin=None, normal='x', factor=1.25,
-                            callback=None, bounds=None, **kwargs):
-        """Add a plane widget to the scene.
-
-        You can also pass a callable function that will takes a single
-        argument, the plane, and performs a task with that box.
-
-        Returns a pointer to the ``vtkPlane``
-
-        """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Plane widget not available in notebook plotting')
-        if origin is None:
-            origin = self.center
-        if bounds is None:
-            bounds = self.bounds
-
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
-
-        # This dataset is continually updated by the widget and is return to
-        # the user for use
-        the_plane = vtk.vtkPlane()
-
-        def _the_callback(widget, event_id):
-            self.plane_widget.GetPlane(the_plane)
-            if hasattr(callback, '__call__'):
-                callback(the_plane)
-            return
-
-        self.plane_widget = vtk.vtkImplicitPlaneWidget()
-        self.plane_widget.SetInteractor(self.iren)
-        self.plane_widget.SetPlaceFactor(factor)
-        self.plane_widget.PlaceWidget(bounds)
-        self.plane_widget.SetOrigin(origin)
-        self.plane_widget.SetNormal(normal)
-        self.plane_widget.Modified()
-        self.plane_widget.UpdatePlacement()
-        self.plane_widget.On()
-        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        self.plane_widget.GetPlane(the_plane)
-        _the_callback(None, None) # Trigger immediate update
-
-        return the_plane
-
-
-    def disable_plane_widget(self):
-        self.plane_widget.Off()
-        return
-
-
-    def add_mesh_clip_plane(self, mesh, invert=False, normal='x', **kwargs):
-        """Add a mesh to the scene with a plane widget that is used to clip
-        the mesh interactively.
-
-        The clipped mesh is saved to the ``.plane_clipped_mesh`` attribute on
-        the plotter.
-
-        Parameters
-        ----------
-        mesh : pyvista.Common
-            The input dataset to add to the scene and clip
-
-        invert : bool
-            Flag on whether to flip/invert the clip
-
-        kwargs : dict
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
-        """
-        if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError('MultiBlock datasets are not supported for plane widget clipping.')
-        name = kwargs.pop('name', str(hex(id(mesh))))
-        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
-
-        actor = self.add_mesh(mesh, name=name, **kwargs)
-
-        def callback(plane):
-            self.plane_clipped_mesh = pyvista.DataSetFilters._clip_with_function(mesh, plane,
-                            invert=invert)
-            self.add_mesh(self.plane_clipped_mesh, name=name, **kwargs)
-
-        self.enable_plane_widget(bounds=mesh.bounds, factor=1.25, normal=normal,
-                                 callback=callback)
-
-        return actor
-
-
-
-    def add_mesh_slice(self, mesh, normal='x', contour=False, generate_triangles=False,
-                       **kwargs):
-        """Add a mesh to the scene with a plane widget that is used to slice
-        the mesh interactively.
-
-        The sliced mesh is saved to the ``.plane_sliced_mesh`` attribute on
-        the plotter.
-
-        Parameters
-        ----------
-        mesh : pyvista.Common
-            The input dataset to add to the scene and clip
-
-        contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
-
-        generate_triangles: bool, optional
-            If this is enabled (``False`` by default), the output will be
-            triangles otherwise, the output will be the intersection polygons.
-
-        kwargs : dict
-            All additional keyword arguments are passed to ``add_mesh`` to
-            control how the mesh is displayed.
-        """
-        if isinstance(mesh, pyvista.MultiBlock):
-            raise TypeError('MultiBlock datasets are not supported for plane widget clipping.')
-        name = kwargs.pop('name', str(hex(id(mesh))))
-        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
-
-        actor = self.add_mesh(mesh, name=name, **kwargs)
-
-
-        def callback(plane):
-            normal = plane.GetNormal()
-            origin = plane.GetOrigin()
-            self.plane_sliced_mesh = pyvista.DataSetFilters.slice(mesh,
-                        normal=normal, origin=origin, contour=contour,
-                        generate_triangles=generate_triangles)
-            self.add_mesh(self.plane_sliced_mesh, name=name, **kwargs)
-
-        self.enable_plane_widget(bounds=mesh.bounds, factor=1.25, normal=normal,
-                                 callback=callback)
-
-        _start_interact = lambda obj, event: self.plane_widget.SetDrawPlane(True)
-        _stop_interact = lambda obj, event: self.plane_widget.SetDrawPlane(False)
-
-        self.plane_widget.SetDrawPlane(False)
-        self.plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
-        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
-
-        return actor
-
-
-
-    def enable_line_widget(self, bounds=None, factor=1.0, callback=None,
-                           rotation_enabled=True, resolution=100, **kwargs):
-        """Add a line widget to the scene. This function returns a pointer
-        to a :class:`pyvista.PolyData` mesh that will continually update with
-        the kine widget.
-
-        You can also pass a callable function that will take a single
-        argument, the PolyData line, and performs a task with that line.
-        """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Box widget not available in notebook plotting')
-        if bounds is None:
-            bounds = self.bounds
-
-        # This dataset is continually updated by the widget and is return to
-        # the user for use
-        the_line = pyvista.PolyData()
-
-        def _the_callback(widget, event_id):
-            pointa = self.line_widget.GetPoint1()
-            pointb = self.line_widget.GetPoint2()
-            the_line.DeepCopy(pyvista.Line(pointa, pointb, resolution=resolution))
-            if hasattr(callback, '__call__'):
-                callback(the_line)
-            return
-
-        self.line_widget = vtk.vtkLineWidget()
-        self.line_widget.SetInteractor(self.iren)
-        self.line_widget.SetPlaceFactor(factor)
-        self.line_widget.PlaceWidget(bounds)
-        self.line_widget.SetResolution(resolution)
-        self.line_widget.Modified()
-        self.line_widget.On()
-        self.line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-
-        self.line_widget.GetPolyData(the_line)
-
-        return the_line
-
-
-    def disable_line_widget(self):
-        self.line_widget.Off()
         return
 
 
