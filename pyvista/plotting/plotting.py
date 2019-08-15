@@ -2323,6 +2323,9 @@ class BasePlotter(object):
         if hasattr(self, 'plane_widget'):
             del self.plane_widget
 
+        if hasattr(self, 'line_widget'):
+            del self.line_widget
+
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
 
@@ -3441,6 +3444,52 @@ class BasePlotter(object):
                                  callback=callback)
 
         return actor
+
+
+
+    def enable_line_widget(self, bounds=None, factor=1.0, callback=None,
+                           rotation_enabled=True, resolution=100, **kwargs):
+        """Add a line widget to the scene. This function returns a pointer
+        to a :class:`pyvista.PolyData` mesh that will continually update with
+        the kine widget.
+
+        You can also pass a callable function that will take a single
+        argument, the PolyData line, and performs a task with that line.
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Box widget not available in notebook plotting')
+        if bounds is None:
+            bounds = self.bounds
+
+        # This dataset is continually updated by the widget and is return to
+        # the user for use
+        the_line = pyvista.PolyData()
+
+        def _the_callback(widget, event_id):
+            pointa = self.line_widget.GetPoint1()
+            pointb = self.line_widget.GetPoint2()
+            the_line.DeepCopy(pyvista.Line(pointa, pointb, resolution=resolution))
+            if hasattr(callback, '__call__'):
+                callback(the_line)
+            return
+
+        self.line_widget = vtk.vtkLineWidget()
+        self.line_widget.SetInteractor(self.iren)
+        self.line_widget.SetPlaceFactor(factor)
+        self.line_widget.PlaceWidget(bounds)
+        self.line_widget.SetResolution(resolution)
+        self.line_widget.Modified()
+        self.line_widget.On()
+        self.line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+
+        self.line_widget.GetPolyData(the_line)
+
+        return the_line
+
+
+    def disable_line_widget(self):
+        self.line_widget.Off()
+        return
 
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
