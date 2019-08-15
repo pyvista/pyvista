@@ -2318,6 +2318,7 @@ class BasePlotter(object):
             del self.axes_widget
 
         if hasattr(self, 'box_widget'):
+            self.box_widget.Off()
             del self.box_widget
 
         if hasattr(self, 'scalar_widget'):
@@ -3305,7 +3306,7 @@ class BasePlotter(object):
         return
 
 
-    def add_mesh_clip_box(self, mesh, invert=False, value=0.0, **kwargs):
+    def add_mesh_clip_box(self, mesh, invert=False, **kwargs):
         """Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
 
@@ -3319,11 +3320,6 @@ class BasePlotter(object):
 
         invert : bool
             Flag on whether to flip/invert the clip
-
-        value : float:
-            Set the clipping value of the implicit function (if clipping with
-            implicit function) or scalar value (if clipping with scalars).
-            The default value is 0.0.
 
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -3345,7 +3341,7 @@ class BasePlotter(object):
                 bounds.append(plane.GetNormal())
                 bounds.append(plane.GetOrigin())
 
-            self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert, value=value)
+            self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert)
             self.add_mesh(self.box_clipped_mesh, name=name, **kwargs)
 
         self.enable_box_widget(bounds=mesh.bounds, factor=1.25, callback=callback)
