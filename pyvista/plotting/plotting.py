@@ -3269,7 +3269,8 @@ class BasePlotter(object):
         return
 
 
-    def enable_box_widget(self, bounds=None, factor=1.0, callback=None, **kwargs):
+    def enable_box_widget(self, bounds=None, factor=1.0, callback=None,
+                          rotation_enabled=True,**kwargs):
         """Add a box widget to the scene. This function returns a pointer
         to a :class:`pyvista.PolyData` mesh that will continually update with
         the box widget.
@@ -3295,6 +3296,7 @@ class BasePlotter(object):
         self.box_widget = vtk.vtkBoxWidget()
         self.box_widget.SetInteractor(self.iren)
         self.box_widget.SetPlaceFactor(factor)
+        self.box_widget.SetRotationEnabled(rotation_enabled)
         self.box_widget.PlaceWidget(bounds)
         self.box_widget.On()
         self.box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
@@ -3309,7 +3311,7 @@ class BasePlotter(object):
         return
 
 
-    def add_mesh_clip_box(self, mesh, invert=False, **kwargs):
+    def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True, **kwargs):
         """Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
 
@@ -3347,7 +3349,8 @@ class BasePlotter(object):
             self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert)
             self.add_mesh(self.box_clipped_mesh, name=name, **kwargs)
 
-        self.enable_box_widget(bounds=mesh.bounds, factor=1.25, callback=callback)
+        self.enable_box_widget(bounds=mesh.bounds, factor=1.25,
+                rotation_enabled=rotation_enabled, callback=callback)
 
         return actor
 
