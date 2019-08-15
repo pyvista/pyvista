@@ -3447,6 +3447,60 @@ class BasePlotter(object):
 
 
 
+    def add_mesh_slice(self, mesh, normal='x', contour=False, generate_triangles=False,
+                       **kwargs):
+        """Add a mesh to the scene with a plane widget that is used to slice
+        the mesh interactively.
+
+        The sliced mesh is saved to the ``.plane_sliced_mesh`` attribute on
+        the plotter.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common
+            The input dataset to add to the scene and clip
+
+        contour : bool, optional
+            If True, apply a ``contour`` filter after slicing
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        kwargs : dict
+            All additional keyword arguments are passed to ``add_mesh`` to
+            control how the mesh is displayed.
+        """
+        if isinstance(mesh, pyvista.MultiBlock):
+            raise TypeError('MultiBlock datasets are not supported for plane widget clipping.')
+        name = kwargs.pop('name', str(hex(id(mesh))))
+        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+
+        actor = self.add_mesh(mesh, name=name, **kwargs)
+
+
+        def callback(plane):
+            normal = plane.GetNormal()
+            origin = plane.GetOrigin()
+            self.plane_sliced_mesh = pyvista.DataSetFilters.slice(mesh,
+                        normal=normal, origin=origin, contour=contour,
+                        generate_triangles=generate_triangles)
+            self.add_mesh(self.plane_sliced_mesh, name=name, **kwargs)
+
+        self.enable_plane_widget(bounds=mesh.bounds, factor=1.25, normal=normal,
+                                 callback=callback)
+
+        _start_interact = lambda obj, event: self.plane_widget.SetDrawPlane(True)
+        _stop_interact = lambda obj, event: self.plane_widget.SetDrawPlane(False)
+
+        self.plane_widget.SetDrawPlane(False)
+        self.plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
+        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+
+        return actor
+
+
+
     def enable_line_widget(self, bounds=None, factor=1.0, callback=None,
                            rotation_enabled=True, resolution=100, **kwargs):
         """Add a line widget to the scene. This function returns a pointer
