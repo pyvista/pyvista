@@ -2,7 +2,7 @@ import logging
 import vtk
 
 import pyvista
-from pyvista.utilities import NORMALS, try_callback
+from pyvista.utilities import NORMALS, get_array, try_callback
 
 from .theme import *
 
@@ -202,6 +202,13 @@ class WidgetHelper(object):
         self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(self.plane_widget, None) # Trigger immediate update
 
+        _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)
+        _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
+
+        self.plane_widget.SetDrawPlane(False)
+        self.plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
+        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+
         return self.plane_widget
 
 
@@ -299,13 +306,6 @@ class WidgetHelper(object):
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
-
-        _start_interact = lambda obj, event: self.plane_widget.SetDrawPlane(True)
-        _stop_interact = lambda obj, event: self.plane_widget.SetDrawPlane(False)
-
-        self.plane_widget.SetDrawPlane(False)
-        self.plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
-        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
 
         return actor
 
@@ -467,6 +467,61 @@ class WidgetHelper(object):
         if hasattr(self, 'slider_widget'):
             self.slider_widget.Off()
         return
+
+
+    def add_mesh_threshold(self, mesh, scalars=None, invert=False,
+                           widget_color=None, preference='cell',
+                           title=None, pointa=(.4 ,.9), pointb=(.9, .9),
+                           **kwargs):
+        """Add a mesh to the scene with a slider widget that is used to
+        threshold the mesh interactively.
+
+        The threshold mesh is saved to the ``.threshold_mesh`` attribute on
+        the plotter.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common
+            The input dataset to add to the scene and clip
+
+        scalars : str
+            The string name of the scalars on the mesh to threshold and display
+
+        invert : bool
+            Invert/flip the threshold
+
+        kwargs : dict
+            All additional keyword arguments are passed to ``add_mesh`` to
+            control how the mesh is displayed.
+        """
+        if isinstance(mesh, pyvista.MultiBlock):
+            raise TypeError('MultiBlock datasets are not supported for threshold widget.')
+        name = kwargs.pop('name', str(hex(id(mesh))))
+        if scalars is None:
+            field, scalars = mesh.active_scalar_info
+        arr, field = get_array(mesh, scalars, preference=preference, info=True)
+        if arr is None:
+            raise AssertionError('No arrays present to threshold.')
+        rng = mesh.get_data_range(scalars)
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        if title is None:
+            title = scalars
+
+        actor = self.add_mesh(mesh, name=name, **kwargs)
+
+        def callback(value):
+            self.threshold_mesh = pyvista.DataSetFilters.threshold(mesh, value,
+                        scalars=scalars, preference=preference, invert=invert)
+            if self.threshold_mesh.n_points < 1:
+                self.remove_actor(name)
+            else:
+                self.add_mesh(self.threshold_mesh, name=name, **kwargs)
+
+        self.enable_slider_widget(callback=callback, rng=rng, title=title,
+                                  color=widget_color, pointa=pointa,
+                                  pointb=pointb)
+
+        return actor
 
 
     def close(self):

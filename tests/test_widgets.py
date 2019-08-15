@@ -71,3 +71,8 @@ def test_widget_slider():
     p.enable_slider_widget(callback=func, rng=[0,10])
     p.disable_slider_widget()
     p.close()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh_threshold(mesh)
+    p.add_mesh(mesh.outline())
+    p.show()
