@@ -18,6 +18,32 @@ class WidgetHelper(object):
         function. You can pass a callable function that takes a single
         argument, the PolyData box output from this widget, and performs a
         task with that box.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called everytime the box is updated. This has two
+            options: Take a single argument, the ``PolyData`` box (defualt) or
+            if ``use_planes=True``, then it takes a single argument of the
+            plane collection as a ``vtkPlanes`` object.
+
+        bounds : tuple(float)
+            Length 6 tuple of the bounding box where the widget is placed.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing
+
+        rotation_enabled : bool
+            If ``False``, the box widget cannot be rotated and is strictly
+            orthogonal to the cartesian axes.
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        use_planes : bool, optional
+            Changes the arguments passed to the callback to the planes that
+            make up the box.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Box widget not available in notebook plotting')
@@ -74,6 +100,10 @@ class WidgetHelper(object):
         invert : bool
             Flag on whether to flip/invert the clip
 
+        rotation_enabled : bool
+            If ``False``, the box widget cannot be rotated and is strictly
+            orthogonal to the cartesian axes.
+
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
@@ -102,12 +132,34 @@ class WidgetHelper(object):
         return actor
 
 
-    def enable_plane_widget(self, callback, origin=None, normal='x',
-                            factor=1.25, bounds=None, color=None, **kwargs):
+    def enable_plane_widget(self, callback, normal='x', origin=None,
+                            bounds=None, factor=1.25, color=None, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the vtkPlane implicit function output from this widget, and
         performs a task with that plane.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called everytime the plane is updated. Takes a single
+            argument, the ``vtkPlane`` implicit function.
+
+        noraml : str or tuple(flaot)
+            The starting normal vector of the plane
+
+        origin : tuple(float)
+            The starting coordinate of the center of the place
+
+        bounds : tuple(float)
+            Length 6 tuple of the bounding box where the widget is placed.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Plane widget not available in notebook plotting')
@@ -154,7 +206,7 @@ class WidgetHelper(object):
         return
 
 
-    def add_mesh_clip_plane(self, mesh, invert=False, normal='x',
+    def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
@@ -166,6 +218,9 @@ class WidgetHelper(object):
         ----------
         mesh : pyvista.Common
             The input dataset to add to the scene and clip
+
+        noraml : str or tuple(flaot)
+            The starting normal vector of the plane
 
         invert : bool
             Flag on whether to flip/invert the clip
@@ -205,6 +260,9 @@ class WidgetHelper(object):
         ----------
         mesh : pyvista.Common
             The input dataset to add to the scene and clip
+
+        noraml : str or tuple(flaot)
+            The starting normal vector of the plane
 
         contour : bool, optional
             If True, apply a ``contour`` filter after slicing
@@ -248,12 +306,36 @@ class WidgetHelper(object):
 
 
     def enable_line_widget(self, callback, bounds=None, factor=1.0,
-                           rotation_enabled=True, resolution=100,
-                           color=None, use_vertices=False, **kwargs):
+                           resolution=100, color=None, use_vertices=False,
+                           **kwargs):
         """Add a line widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData line output from this widget, and performs a
         task with that line.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called everytime the line is updated. This has two
+            options: Take a single argument, the ``PolyData`` line (defualt) or
+            if ``use_vertices=True``, then it can take two arguments of the
+            coordinates of the line's end points.
+
+        bounds : tuple(float)
+            Length 6 tuple of the bounding box where the widget is placed.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing
+
+        resolution : int
+            The number of points in the line created
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        use_vertices : bool, optional
+            Changess the arguments of the callback method to take the end
+            points of the line instead of a PolyData object.
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Box widget not available in notebook plotting')
@@ -294,14 +376,41 @@ class WidgetHelper(object):
         return
 
 
-    def enable_slider_widget(self, callback, min, max, value=None, title=None,
+    def enable_slider_widget(self, callback, rng, value=None, title=None,
                              pointa=(.4 ,.9), pointb=(.9, .9),
                              color=None):
         """Add a slider bar widget. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the value of this slider widget, and performs a
         task with that value.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called everytime the slider is updated. This should take
+            a single parameter: the float value of the slider
+
+        rng : tuple(float)
+            Length two tuple of the minimum and maximum ranges of the slider
+
+        value : float, optional
+            The starting value of the slider
+
+        title : str
+            The string label of the slider widget
+
+        pointa : tuple(float)
+            The relative coordinates of the left point of the slider on the
+            display port
+
+        pointb : tuple(float)
+            The relative coordinates of the right point of the slider on the
+            display port
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
         """
+        min, max = rng
 
         if value is None:
             value = ((max-min) / 2) + min
