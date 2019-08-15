@@ -248,7 +248,7 @@ class WidgetHelper(object):
 
     def enable_line_widget(self, bounds=None, factor=1.0, callback=None,
                            rotation_enabled=True, resolution=100,
-                           color=None, **kwargs):
+                           color=None, use_vertices=False, **kwargs):
         """Add a line widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData line output from this widget, and performs a
@@ -263,12 +263,14 @@ class WidgetHelper(object):
             color = rcParams['font']['color']
 
         def _the_callback(widget, event_id):
-            the_line = pyvista.PolyData()
             pointa = self.line_widget.GetPoint1()
             pointb = self.line_widget.GetPoint2()
-            the_line.DeepCopy(pyvista.Line(pointa, pointb, resolution=resolution))
             if hasattr(callback, '__call__'):
-                callback(the_line)
+                if use_vertices:
+                    callback(pointa, pointb)
+                else:
+                    the_line = pyvista.Line(pointa, pointb, resolution=resolution)
+                    callback(the_line)
             return
 
         self.line_widget = vtk.vtkLineWidget()
