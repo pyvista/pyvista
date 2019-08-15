@@ -75,4 +75,4 @@ def test_widget_slider():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh_threshold(mesh)
     p.add_mesh(mesh.outline())
-    p.show()
+    p.close()
