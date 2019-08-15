@@ -2317,6 +2317,9 @@ class BasePlotter(object):
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
 
+        if hasattr(self, 'box_widget'):
+            del self.box_widget
+
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
 
