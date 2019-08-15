@@ -1,7 +1,8 @@
+import logging
 import vtk
 
 import pyvista
-from pyvista.utilities import NORMALS
+from pyvista.utilities import NORMALS, try_callback
 
 from .theme import *
 
@@ -10,7 +11,7 @@ class WidgetHelper(object):
     """An internal class to manage widgets and other helper methods involving
     widgets"""
 
-    def enable_box_widget(self, bounds=None, factor=1.0, callback=None,
+    def enable_box_widget(self, callback, bounds=None, factor=1.0,
                           rotation_enabled=True, color=None, use_planes=False,
                           **kwargs):
         """Add a box widget to the scene. This is useless without a callback
@@ -33,9 +34,9 @@ class WidgetHelper(object):
             box_widget.GetPlanes(planes)
             if hasattr(callback, '__call__'):
                 if use_planes:
-                    callback(planes)
+                    try_callback(callback, planes)
                 else:
-                    callback(the_box)
+                    try_callback(callback, the_box)
             return
 
         self.box_widget = vtk.vtkBoxWidget()
@@ -94,15 +95,15 @@ class WidgetHelper(object):
             self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert)
             self.add_mesh(self.box_clipped_mesh, name=name, **kwargs)
 
-        self.enable_box_widget(bounds=mesh.bounds, factor=1.25,
-                rotation_enabled=rotation_enabled, callback=callback,
+        self.enable_box_widget(callback=callback, bounds=mesh.bounds,
+                factor=1.25, rotation_enabled=rotation_enabled,
                 use_planes=True, color=widget_color)
 
         return actor
 
 
-    def enable_plane_widget(self, origin=None, normal='x', factor=1.25,
-                            callback=None, bounds=None, color=None, **kwargs):
+    def enable_plane_widget(self, callback, origin=None, normal='x',
+                            factor=1.25, bounds=None, color=None, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the vtkPlane implicit function output from this widget, and
@@ -125,7 +126,7 @@ class WidgetHelper(object):
             the_plane = vtk.vtkPlane()
             plane_widget.GetPlane(the_plane)
             if hasattr(callback, '__call__'):
-                callback(the_plane)
+                try_callback(callback, the_plane)
             return
 
         self.plane_widget = vtk.vtkImplicitPlaneWidget()
@@ -185,8 +186,8 @@ class WidgetHelper(object):
                             invert=invert)
             self.add_mesh(self.plane_clipped_mesh, name=name, **kwargs)
 
-        self.enable_plane_widget(bounds=mesh.bounds, factor=1.25, normal=normal,
-                                 callback=callback, color=widget_color)
+        self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
+                                 factor=1.25, normal=normal, color=widget_color)
 
         return actor
 
@@ -232,8 +233,8 @@ class WidgetHelper(object):
                         generate_triangles=generate_triangles)
             self.add_mesh(self.plane_sliced_mesh, name=name, **kwargs)
 
-        self.enable_plane_widget(bounds=mesh.bounds, factor=1.25, normal=normal,
-                                 callback=callback, color=widget_color)
+        self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
+                                 factor=1.25, normal=normal, color=widget_color)
 
         _start_interact = lambda obj, event: self.plane_widget.SetDrawPlane(True)
         _stop_interact = lambda obj, event: self.plane_widget.SetDrawPlane(False)
@@ -246,7 +247,7 @@ class WidgetHelper(object):
 
 
 
-    def enable_line_widget(self, bounds=None, factor=1.0, callback=None,
+    def enable_line_widget(self, callback, bounds=None, factor=1.0,
                            rotation_enabled=True, resolution=100,
                            color=None, use_vertices=False, **kwargs):
         """Add a line widget to the scene. This is useless without a callback
@@ -267,10 +268,10 @@ class WidgetHelper(object):
             pointb = self.line_widget.GetPoint2()
             if hasattr(callback, '__call__'):
                 if use_vertices:
-                    callback(pointa, pointb)
+                    try_callback(callback, pointa, pointb)
                 else:
                     the_line = pyvista.Line(pointa, pointb, resolution=resolution)
-                    callback(the_line)
+                    try_callback(callback, the_line)
             return
 
         self.line_widget = vtk.vtkLineWidget()
@@ -293,8 +294,8 @@ class WidgetHelper(object):
         return
 
 
-    def enable_slider_widget(self, min, max, value=None, title=None,
-                             pointa=(.4 ,.9), pointb=(.9, .9), callback=None,
+    def enable_slider_widget(self, callback, min, max, value=None, title=None,
+                             pointa=(.4 ,.9), pointb=(.9, .9),
                              color=None):
         """Add a slider bar widget. This is useless without a callback
         function. You can pass a callable function that takes a single
@@ -330,7 +331,7 @@ class WidgetHelper(object):
         def _the_callback(slider, event):
             value = slider.GetRepresentation().GetValue()
             if hasattr(callback, '__call__'):
-                callback(value)
+                try_callback(callback, value)
             return
 
         self.slider_widget = vtk.vtkSliderWidget()
