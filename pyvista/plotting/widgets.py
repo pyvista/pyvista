@@ -515,7 +515,8 @@ class WidgetHelper(object):
             if self.threshold_mesh.n_points < 1:
                 self.remove_actor(name)
             else:
-                self.add_mesh(self.threshold_mesh, name=name, **kwargs)
+                self.add_mesh(self.threshold_mesh, name=name, scalars=scalars,
+                              **kwargs)
 
         self.enable_slider_widget(callback=callback, rng=rng, title=title,
                                   color=widget_color, pointa=pointa,
