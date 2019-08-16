@@ -404,7 +404,10 @@ class Common(DataSetFilters, DataObject):
     @property
     def points(self):
         """ returns a pointer to the points as a numpy object """
-        vtk_data = self.GetPoints().GetData()
+        pts = self.GetPoints()
+        if pts is None:
+            return None
+        vtk_data = pts.GetData()
         arr = vtk_to_numpy(vtk_data)
         return pyvista_ndarray(arr, vtk_data)
 

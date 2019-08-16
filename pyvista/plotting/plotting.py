@@ -364,7 +364,7 @@ class BasePlotter(WidgetHelper):
                  clim=None, show_edges=None, edge_color=None,
                  point_size=5.0, line_width=None, opacity=1.0,
                  flip_scalars=False, lighting=None, n_colors=256,
-                 interpolate_before_map=False, cmap=None, label=None,
+                 interpolate_before_map=True, cmap=None, label=None,
                  reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
                  stitle=None, multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None, render_lines_as_tubes=False,
@@ -451,8 +451,9 @@ class BasePlotter(WidgetHelper):
             The scalar bar will also have this many colors.
 
         interpolate_before_map : bool, optional
-            Enabling makes for a smoother scalar display.  Default
-            False
+            Enabling makes for a smoother scalar display.  Default is True.
+            When False, OpenGL will interpolate the mapped colors which can
+            result is showing colors that are not present in the color map.
 
         cmap : str, optional
            Name of the Matplotlib colormap to us when mapping the ``scalars``.

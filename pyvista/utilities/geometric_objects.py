@@ -536,3 +536,22 @@ def SuperToroid(**kwargs):
 def Ellipsoid(**kwargs):
     """DEPRECATED: use :func:`pyvista.ParametricEllipsoid`"""
     raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
+
+
+def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
+            x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
+            std=0.5, subsample_rate=1):
+    wavelet_source = vtk.vtkRTAnalyticSource()
+    wavelet_source.SetWholeExtent(*extent)
+    wavelet_source.SetCenter(center)
+    wavelet_source.SetMaximum(maximum)
+    wavelet_source.SetXFreq(x_freq)
+    wavelet_source.SetYFreq(y_freq)
+    wavelet_source.SetZFreq(z_freq)
+    wavelet_source.SetXMag(x_mag)
+    wavelet_source.SetYMag(y_mag)
+    wavelet_source.SetZMag(z_mag)
+    wavelet_source.SetStandardDeviation(std)
+    wavelet_source.SetSubsampleRate(subsample_rate)
+    wavelet_source.Update()
+    return pyvista.wrap(wavelet_source.GetOutput())
