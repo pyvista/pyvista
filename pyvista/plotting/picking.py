@@ -220,15 +220,13 @@ class PickingHelper(object):
                 callback(self.picked_line)
             return
 
-        def _clear_path_event_watcher(obj, event):
-            key = self.iren.GetKeySym()
-            if key == 'c':
-                del the_points[:]
-                del the_ids[:]
-                self.remove_actor('_picked_line')
+        def _clear_path_event_watcher():
+            del the_points[:]
+            del the_ids[:]
+            self.remove_actor('_picked_line')
             return
 
-        self.iren.AddObserver("KeyPressEvent", _clear_path_event_watcher)
+        self.add_key_event('c', _clear_path_event_watcher)
         if show_message == True:
             show_message = "Press P to pick over the mouse\nPress C to clear"
 
@@ -274,15 +272,13 @@ class PickingHelper(object):
                 callback(self.picked_geodesic)
             return
 
-        def _clear_path_event_watcher(obj, event):
-            key = self.iren.GetKeySym()
-            if key == 'c':
-                self.picked_geodesic = pyvista.PolyData()
-                self.remove_actor('_picked_line')
-                self._last_picked_idx = None
+        def _clear_g_path_event_watcher():
+            self.picked_geodesic = pyvista.PolyData()
+            self.remove_actor('_picked_line')
+            self._last_picked_idx = None
             return
 
-        self.iren.AddObserver("KeyPressEvent", _clear_path_event_watcher)
+        self.add_key_event('c', _clear_g_path_event_watcher)
         if show_message == True:
             show_message = "Press P to pick over the mouse\nPress C to clear"
 

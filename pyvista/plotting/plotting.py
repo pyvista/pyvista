@@ -131,6 +131,58 @@ class BasePlotter(PickingHelper):
             self.lighting.AddLightsToRenderer(renderer)
             renderer.LightFollowCameraOn()
 
+        # Key bindings
+        self.reset_key_press_callbacks()
+
+
+    def add_key_event(self, key, callback):
+        """Add a function to callback when the given key is pressed. These are
+        non-unique - thus a key could map to many callback functions.
+
+        The callback function must not have any arguments
+        """
+        self._key_press_event_callbacks[key].append(callback)
+
+
+    def reset_key_press_callbacks(self):
+        self._key_press_event_callbacks = collections.defaultdict(list)
+
+        def _close_callback():
+            """ Make sure a screenhsot is acquired before closing"""
+            self.q_pressed = True
+            # Grab screenshot right before renderer closes
+            self.last_image = self.screenshot(True, return_img=True)
+
+        self.add_key_event('q', _close_callback)
+        b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
+        self.add_key_event('b', b_left_down_callback)
+        self.add_key_event('v', lambda: self.isometric_view_interactive())
+
+
+    def key_press_event(self, obj, event):
+        """ Listens for key press event """
+        key = self.iren.GetKeySym()
+        log.debug('Key %s pressed' % key)
+        if key in self._key_press_event_callbacks.keys():
+            # Note that defaultdict's will never throw a key error
+            callbacks = self._key_press_event_callbacks[key]
+            for func in callbacks:
+                func()
+
+
+    def left_button_down(self, obj, event_type):
+        """Register the event for a left button down click"""
+        # Get 2D click location on window
+        click_pos = self.iren.GetEventPosition()
+
+        # Get corresponding click location in the 3D plot
+        picker = vtk.vtkWorldPointPicker()
+        picker.Pick(click_pos[0], click_pos[1], 0, self.renderer)
+        self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
+        if np.any(np.isnan(self.pickpoint)):
+            self.pickpoint[:] = 0
+
+
     def update_style(self):
         if not hasattr(self, '_style'):
             self._style = vtk.vtkInteractorStyleTrackballCamera()
@@ -290,32 +342,6 @@ class BasePlotter(PickingHelper):
             self.axes_widget.EnabledOn()
         else:
             self.add_axes()
-
-    def key_press_event(self, obj, event):
-        """ Listens for key press event """
-        key = self.iren.GetKeySym()
-        log.debug('Key %s pressed' % key)
-        if key == 'q':
-            self.q_pressed = True
-            # Grab screenshot right before renderer closes
-            self.last_image = self.screenshot(True, return_img=True)
-        elif key == 'b':
-            self.observer = self.iren.AddObserver('LeftButtonPressEvent',
-                                                  self.left_button_down)
-        elif key == 'v':
-            self.isometric_view_interactive()
-
-    def left_button_down(self, obj, event_type):
-        """Register the event for a left button down click"""
-        # Get 2D click location on window
-        click_pos = self.iren.GetEventPosition()
-
-        # Get corresponding click location in the 3D plot
-        picker = vtk.vtkWorldPointPicker()
-        picker.Pick(click_pos[0], click_pos[1], 0, self.renderer)
-        self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
-        if np.any(np.isnan(self.pickpoint)):
-            self.pickpoint[:] = 0
 
     def isometric_view_interactive(self):
         """ sets the current interactive render window to isometric view """
