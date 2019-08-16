@@ -138,15 +138,15 @@ class WidgetHelper(object):
     def enable_plane_widget(self, callback, normal='x', origin=None,
                             bounds=None, factor=1.25, color=None, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
-        function. You can pass a callable function that takes a single
-        argument, the vtkPlane implicit function output from this widget, and
-        performs a task with that plane.
+        function. You can pass a callable function that takes two
+        arguments, the normal and origin of the plane in that order output
+        from this widget, and performs a task with that plane.
 
         Parameters
         ----------
         callback : callable
-            The method called everytime the plane is updated. Takes a single
-            argument, the ``vtkPlane`` implicit function.
+            The method called everytime the plane is updated. Takes two
+            arguments, the normal and origin of the plane in that order.
 
         noraml : str or tuple(flaot)
             The starting normal vector of the plane
@@ -183,7 +183,7 @@ class WidgetHelper(object):
             the_plane = vtk.vtkPlane()
             plane_widget.GetPlane(the_plane)
             if hasattr(callback, '__call__'):
-                try_callback(callback, the_plane)
+                try_callback(callback, normal, origin)
             return
 
         self.plane_widget = vtk.vtkImplicitPlaneWidget()
@@ -249,9 +249,9 @@ class WidgetHelper(object):
 
         actor = self.add_mesh(mesh, name=name, **kwargs)
 
-        def callback(plane):
-            self.plane_clipped_mesh = pyvista.DataSetFilters._clip_with_function(mesh, plane,
-                            invert=invert)
+        def callback(normal, origin):
+            self.plane_clipped_mesh = pyvista.DataSetFilters.clip(mesh,
+                            normal=normal, origin=origin, invert=invert)
             self.add_mesh(self.plane_clipped_mesh, name=name, **kwargs)
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
@@ -296,9 +296,7 @@ class WidgetHelper(object):
         actor = self.add_mesh(mesh, name=name, **kwargs)
 
 
-        def callback(plane):
-            normal = plane.GetNormal()
-            origin = plane.GetOrigin()
+        def callback(normal, origin):
             self.plane_sliced_mesh = pyvista.DataSetFilters.slice(mesh,
                         normal=normal, origin=origin, contour=contour,
                         generate_triangles=generate_triangles)

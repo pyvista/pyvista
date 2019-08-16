@@ -31,7 +31,7 @@ def test_widget_box():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_plane():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda plane: plane # Does nothing
+    func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.enable_plane_widget(callback=func)
     p.disable_plane_widget()

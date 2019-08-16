@@ -94,9 +94,7 @@ vector field along that plane.
     p = pv.Plotter(notebook=False)
     p.add_mesh(mesh.contour(8).extract_largest(), opacity=0.5)
 
-    def my_plane_func(plane):
-        normal = plane.GetNormal()
-        origin = plane.GetOrigin()
+    def my_plane_func(normal, origin):
         slc = mesh.slice(normal=normal, origin=origin)
         arrows = slc.glyph(orient='vectors', scale="scalars", factor=0.01)
         p.add_mesh(arrows, name='arrows')
