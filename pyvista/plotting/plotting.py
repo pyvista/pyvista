@@ -132,19 +132,28 @@ class BasePlotter(PickingHelper):
             renderer.LightFollowCameraOn()
 
         # Key bindings
-        self.reset_key_press_callbacks()
+        self.reset_key_events()
 
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed. These are
         non-unique - thus a key could map to many callback functions.
 
-        The callback function must not have any arguments
+        The callback function must not have any arguments.
+
+        Parameters
+        ----------
+        key : str
+            The key to trigger the event
+
+        callback : callable
+            A callable that takes no arguments
         """
         self._key_press_event_callbacks[key].append(callback)
 
 
-    def reset_key_press_callbacks(self):
+    def reset_key_events(self):
+        """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
 
         def _close_callback():
