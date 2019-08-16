@@ -371,7 +371,7 @@ class BasePlotter(object):
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  loc=None, backface_culling=False, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
-                 annotations=None, **kwargs):
+                 annotations=None, pickable=True, **kwargs):
         """
         Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
         scene. This method using a mesh representation to view the surfaces
@@ -563,6 +563,9 @@ class BasePlotter(object):
             scalar range to annotate on the scalar bar and the values are the
             the string annotations.
 
+        pickable : bool
+            Set whether this mesh is pickable
+
         Returns
         -------
         actor: vtk.vtkActor
@@ -728,7 +731,8 @@ class BasePlotter(object):
 
         actor, prop = self.add_actor(self.mapper,
                                      reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling)
+                                     name=name, loc=loc, culling=backface_culling,
+                                     pickable=pickable)
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
@@ -1003,7 +1007,7 @@ class BasePlotter(object):
                    loc=None, backface_culling=False, multi_colors=False,
                    blending='composite', mapper='fixed_point',
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
-                   annotations=None, **kwargs):
+                   annotations=None, pickable=True, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -1185,7 +1189,7 @@ class BasePlotter(object):
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
                                     backface_culling=backface_culling, clim=clim,
-                                    mapper=mapper, **kwargs)
+                                    mapper=mapper, pickable=pickable, **kwargs)
 
                 actors.append(a)
             return actors
@@ -1362,7 +1366,8 @@ class BasePlotter(object):
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling)
+                                     name=name, loc=loc, culling=backface_culling,
+                                     pickable=pickable)
 
 
         # Add scalar bar
@@ -1496,7 +1501,7 @@ class BasePlotter(object):
         return True
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
-                  culling=False):
+                  culling=False, pickable=True):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -1532,7 +1537,8 @@ class BasePlotter(object):
         # add actor to the correct render window
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        return renderer.add_actor(uinput, reset_camera, name, culling)
+        return renderer.add_actor(uinput=uinput, reset_camera=reset_camera,
+                    name=name, culling=culling, pickable=pickable)
 
     def loc_to_index(self, loc):
         """
@@ -2224,7 +2230,7 @@ class BasePlotter(object):
         else:
             self.scalar_bar.SetDrawFrame(False)
 
-        self.add_actor(self.scalar_bar, reset_camera=False)
+        self.add_actor(self.scalar_bar, reset_camera=False, pickable=False)
 
     def update_scalars(self, scalars, mesh=None, render=True):
         """
@@ -2449,7 +2455,7 @@ class BasePlotter(object):
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
 
-        self.add_actor(self.textActor, reset_camera=False, name=name, loc=loc)
+        self.add_actor(self.textActor, reset_camera=False, name=name, loc=loc, pickable=False)
         return self.textActor
 
     def open_movie(self, filename, framerate=24):
@@ -2607,7 +2613,7 @@ class BasePlotter(object):
         self.scalar_bar.GetProperty().LightingOff()
 
         # Add to renderer
-        self.add_actor(self.scalar_bar, reset_camera=False, name=name)
+        self.add_actor(self.scalar_bar, reset_camera=False, name=name, pickable=False)
         return self.scalar_bar
 
     def remove_scalar_bar(self):
@@ -2621,7 +2627,8 @@ class BasePlotter(object):
                          font_family=None, shadow=False,
                          show_points=True, point_color=None, point_size=5,
                          name=None, shape_color='grey', shape='rounded_rect',
-                         fill_shape=True, margin=3, shape_opacity=1.0, **kwargs):
+                         fill_shape=True, margin=3, shape_opacity=1.0,
+                         pickable=True, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2779,7 +2786,8 @@ class BasePlotter(object):
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
-        self.add_actor(labelActor, reset_camera=False, name='{}-lables'.format(name))
+        self.add_actor(labelActor, reset_camera=False,
+                       name='{}-lables'.format(name), pickable=pickable)
 
         return labelMapper
 
@@ -3032,7 +3040,7 @@ class BasePlotter(object):
             self.legend.BorderOff()
 
         # Add to renderer
-        self.add_actor(self.legend, reset_camera=False, name=name)
+        self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
         return self.legend
 
     @property
@@ -3408,7 +3416,7 @@ class BasePlotter(object):
 
         Parameters
         ----------
-        facotr : float
+        factor : float
             A scaling factor when biulding the orbital extent
 
         n_points : int

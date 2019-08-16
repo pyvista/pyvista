@@ -495,11 +495,13 @@ class BackgroundPlotter(QtInteractor):
     def close(self):
         self.app_window.close()
 
-    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
+    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False, pickable=True):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
-                                                               reset_camera,
-                                                               name,
-                                                               loc)
+                                                               reset_camera=reset_camera,
+                                                               name=name,
+                                                               loc=loc, 
+                                                               culling=culling,
+                                                               pickable=pickable)
         self.update_app_icon()
         return actor, prop
 
