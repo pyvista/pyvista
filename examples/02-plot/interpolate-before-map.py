@@ -39,10 +39,10 @@ dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
 p = pv.Plotter(shape=(1,2))
 p.add_mesh(cyl, interpolate_before_map=False,
-           stitle='Elevation - not mapped', **dargs)
+           stitle='Elevation - not interpolated', **dargs)
 p.subplot(0,1)
 p.add_mesh(cyl, interpolate_before_map=True,
-           stitle='Elevation - mapped', **dargs)
+           stitle='Elevation - interpolated', **dargs)
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06),
                      (0.0, 0.0, 0.0),
@@ -63,10 +63,10 @@ dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True,
 
 p = pv.Plotter(shape=(1,2))
 p.add_mesh(cyl, interpolate_before_map=False,
-           stitle='Elevation - not mapped', **dargs)
+           stitle='Elevation - not interpolated', **dargs)
 p.subplot(0,1)
 p.add_mesh(cyl, interpolate_before_map=True,
-           stitle='Elevation - mapped', **dargs)
+           stitle='Elevation - interpolated', **dargs)
 p.link_views()
 p.camera_position = [(-1.67, -5.10, 2.06),
                      (0.0, 0.0, 0.0),
@@ -89,10 +89,10 @@ dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True)
 
 p = pv.Plotter(shape=(1,2))
 p.add_mesh(wavelet, interpolate_before_map=False,
-           stitle='RTData - not mapped', **dargs)
+           stitle='RTData - not interpolated', **dargs)
 p.subplot(0,1)
 p.add_mesh(wavelet, interpolate_before_map=True,
-           stitle='RTData - mapped', **dargs)
+           stitle='RTData - interpolated', **dargs)
 p.link_views()
 p.camera_position = [(55., 16, 31),
                      (-5.0, 0.0, 0.0),
