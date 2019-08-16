@@ -2783,12 +2783,13 @@ class BasePlotter(object):
         else:
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size, name='{}-points'.format(name))
+                      point_size=point_size, name='{}-points'.format(name),
+                      pickable=pickable)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False,
-                       name='{}-lables'.format(name), pickable=pickable)
+                       name='{}-lables'.format(name), pickable=False)
 
         return labelMapper
 
@@ -3202,7 +3203,8 @@ class BasePlotter(object):
                 # Use try incase selection is empty
                 try:
                     self.add_mesh(self.picked_cells, name='_cell_picking_selection',
-                        style=style, color=color, line_width=line_width, **kwargs)
+                        style=style, color=color, line_width=line_width,
+                        pickable=False, **kwargs)
                 except RuntimeError:
                     pass
 
@@ -3293,7 +3295,8 @@ class BasePlotter(object):
             self.picked_point_id = picker.GetPointId()
             if show_point:
                 self.add_mesh(self.picked_point, color=color,
-                              point_size=point_size, name='_picked_point')
+                              point_size=point_size, name='_picked_point',
+                              pickable=False)
             if hasattr(callback, '__call__'):
                 if use_mesh:
                     callback(self.picked_mesh, self.picked_point_id)
@@ -3323,9 +3326,11 @@ class BasePlotter(object):
         The line is saved to the ``.picked_line`` attribute of this plotter
         """
         def make_line_cells(n_points):
-            cells = np.full((n_points-1, 3), 2, dtype=np.int)
-            cells[:, 1] = np.arange(0, n_points-1, dtype=np.int)
-            cells[:, 2] = np.arange(1, n_points, dtype=np.int)
+            # cells = np.full((n_points-1, 3), 2, dtype=np.int)
+            # cells[:, 1] = np.arange(0, n_points-1, dtype=np.int)
+            # cells[:, 2] = np.arange(1, n_points, dtype=np.int)
+            cells = np.arange(0, n_points, dtype=np.int)
+            cells = np.insert(cells, 0, n_points)
             return cells
 
         the_points = []
@@ -3340,7 +3345,8 @@ class BasePlotter(object):
             self.picked_line.lines = make_line_cells(len(the_points))
 
             self.add_mesh(self.picked_line, color=color, name='_picked_line',
-                          line_width=line_width, point_size=point_size)
+                          line_width=line_width, point_size=point_size,
+                          pickable=False)
             if hasattr(callback, '__call__'):
                 callback(self.picked_line)
             return
@@ -3391,7 +3397,8 @@ class BasePlotter(object):
             self._last_picked_idx = idx
 
             self.add_mesh(self.picked_geodesic, color=color, name='_picked_line',
-                          line_width=line_width, point_size=point_size)
+                          line_width=line_width, point_size=point_size,
+                          pickable=False)
             if hasattr(callback, '__call__'):
                 callback(self.picked_geodesic)
             return
