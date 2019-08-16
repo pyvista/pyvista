@@ -5,7 +5,7 @@ import vtk
 import pyvista
 
 class PickingHelper(object):
-    """An internal class to hold picking related featers
+    """An internal class to hold picking related features
     """
 
     def get_pick_position(self):
