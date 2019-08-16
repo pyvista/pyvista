@@ -3276,7 +3276,7 @@ class BasePlotter(object):
         to the picked mesh and the point ID of the selcted mesh.
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Cell picking not available in notebook plotting')
+            raise AssertionError('Point picking not available in notebook plotting')
 
         def _end_pick_event(picker, event):
             self.picked_point = np.array(picker.GetPickPosition())
