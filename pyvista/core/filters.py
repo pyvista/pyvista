@@ -3304,10 +3304,12 @@ class PolyDataFilters(DataSetFilters):
             alg.SetUseDefaultNormal(True)
             alg.SetDefaultNormal(normal)
         alg.SetAngle(angle)
-        alg.SetWidthFactor(factor)
         if scalars is not None:
             alg.SetVaryWidth(True)
             alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+            alg.SetWidthFactor(factor)
+        else:
+            alg.SetVaryWidth(False)
         if tcoords:
             alg.SetGenerateTCoords(True)
             if isinstance(tcoords, str):
