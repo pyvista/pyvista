@@ -185,11 +185,11 @@ class PickingHelper(object):
 
     def enable_path_picking(self, callback=None, show_message=True,
                             font_size=18, color='pink', point_size=10,
-                            line_width=5, **kwargs):
+                            line_width=5, show_path=True, **kwargs):
         """This is a conveinance method for ``enable_point_picking`` to keep
         track of the picked points and create a line using those points.
 
-        The line is saved to the ``.picked_line`` attribute of this plotter
+        The line is saved to the ``.picked_path`` attribute of this plotter
         """
         kwargs.setdefault('pickable', False)
 
@@ -210,20 +210,20 @@ class PickingHelper(object):
                 return
             the_ids.append(idx)
             the_points.append(mesh.points[idx])
-            self.picked_line = pyvista.PolyData(np.array(the_points))
-            self.picked_line.lines = make_line_cells(len(the_points))
-
-            self.add_mesh(self.picked_line, color=color, name='_picked_line',
-                          line_width=line_width, point_size=point_size,
-                          **kwargs)
+            self.picked_path = pyvista.PolyData(np.array(the_points))
+            self.picked_path.lines = make_line_cells(len(the_points))
+            if show_path:
+                self.add_mesh(self.picked_path, color=color, name='_picked_path',
+                              line_width=line_width, point_size=point_size,
+                              **kwargs)
             if hasattr(callback, '__call__'):
-                callback(self.picked_line)
+                callback(self.picked_path)
             return
 
         def _clear_path_event_watcher():
             del the_points[:]
             del the_ids[:]
-            self.remove_actor('_picked_line')
+            self.remove_actor('_picked_path')
             return
 
         self.add_key_event('c', _clear_path_event_watcher)
@@ -265,7 +265,7 @@ class PickingHelper(object):
                 self.picked_geodesic = self.picked_geodesic + surface.geodesic(start_idx, end_idx)
             self._last_picked_idx = idx
 
-            self.add_mesh(self.picked_geodesic, color=color, name='_picked_line',
+            self.add_mesh(self.picked_geodesic, color=color, name='_picked_path',
                           line_width=line_width, point_size=point_size,
                           **kwargs)
             if hasattr(callback, '__call__'):
@@ -274,7 +274,7 @@ class PickingHelper(object):
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
-            self.remove_actor('_picked_line')
+            self.remove_actor('_picked_path')
             self._last_picked_idx = None
             return
 
@@ -284,3 +284,34 @@ class PickingHelper(object):
 
         return self.enable_point_picking(callback=_the_callback, use_mesh=True,
                 font_size=font_size, show_message=show_message, show_point=False)
+
+
+
+    def enable_horizon_picking(self, callback=None, normal=(0,0,1),
+                               width=None, show_message=True,
+                               font_size=18, color='pink', point_size=10,
+                               line_width=5, show_path=True, opacity=0.75,
+                               show_horizon=True, **kwargs):
+        """Helper for the ``enable_path_picking`` method to also show a ribbon
+        surface along the picked path.
+        """
+
+        self.add_key_event('c', lambda: self.remove_actor('_horizon'))
+
+        def _the_callback(path):
+            if path.n_points < 2:
+                self.remove_actor('_horizon')
+                return
+            self.picked_horizon = path.ribbon(normal=normal, width=width)
+
+            if show_horizon:
+                self.add_mesh(self.picked_horizon, name='_horizon', color=color,
+                       opacity=opacity, pickable=False)
+
+            if hasattr(callback, '__call__'):
+                callback(path)
+
+        self.enable_path_picking(callback=_the_callback,
+            show_message=show_message, font_size=font_size, color=color,
+            point_size=point_size, line_width=line_width, show_path=show_path,
+            **kwargs)
