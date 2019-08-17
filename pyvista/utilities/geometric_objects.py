@@ -19,6 +19,16 @@ import vtk
 import pyvista
 
 
+NORMALS = {
+    'x': [1, 0, 0],
+    'y': [0, 1, 0],
+    'z': [0, 0, 1],
+    '-x': [-1, 0, 0],
+    '-y': [0, -1, 0],
+    '-z': [0, 0, -1],
+}
+
+
 def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
     """
     Translates and orientates a mesh centered at the origin and
