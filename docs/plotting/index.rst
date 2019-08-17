@@ -10,3 +10,4 @@ Plotting
    plotting
    ipy_tools
    qt_plotting
+   widgets

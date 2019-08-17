@@ -14,8 +14,8 @@ import vtk
 from vtk.util import numpy_support as VN
 
 import pyvista
-from pyvista.utilities import (convert_array, convert_string_array, get_array,
-                               is_pyvista_dataset, numpy_to_texture,
+from pyvista.utilities import (convert_array, convert_string_array,
+                               get_array, is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
 from .colors import get_cmap_safe
@@ -23,6 +23,7 @@ from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .theme import *
 from .tools import *
+from .widgets import WidgetHelper
 
 _ALL_PLOTTERS = {}
 
@@ -40,7 +41,7 @@ log.setLevel('CRITICAL')
 
 
 
-class BasePlotter(object):
+class BasePlotter(WidgetHelper):
     """
     To be used by the Plotter and QtInteractor classes.
 
@@ -2315,6 +2316,8 @@ class BasePlotter(object):
     def close(self):
         """ closes render window """
         # must close out widgets first
+        super(BasePlotter, self).close()
+
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
 

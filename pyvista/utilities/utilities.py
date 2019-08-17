@@ -496,3 +496,12 @@ def generate_report(additional=None, ncol=3, text_width=54, sort=False):
                            additional=additional, ncol=ncol,
                            text_width=text_width, sort=sort)
     return report
+
+
+def try_callback(func, *args):
+
+    try:
+        func(*args)
+    except Exception as e:
+        logging.warning('Encountered issue in callback: {}'.format(e))
+    return
