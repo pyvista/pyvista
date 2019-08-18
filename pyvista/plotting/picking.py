@@ -70,7 +70,7 @@ class PickingHelper(object):
                 try:
                     self.add_mesh(self.picked_cells, name='_cell_picking_selection',
                         style=style, color=color, line_width=line_width,
-                        pickable=False, **kwargs)
+                        pickable=False, reset_camera=False, **kwargs)
                 except RuntimeError:
                     pass
 
@@ -162,7 +162,7 @@ class PickingHelper(object):
             if show_point:
                 self.add_mesh(self.picked_point, color=color,
                               point_size=point_size, name='_picked_point',
-                              pickable=False, **kwargs)
+                              pickable=False, reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
                 if use_mesh:
                     callback(self.picked_mesh, self.picked_point_id)
@@ -215,7 +215,7 @@ class PickingHelper(object):
             if show_path:
                 self.add_mesh(self.picked_path, color=color, name='_picked_path',
                               line_width=line_width, point_size=point_size,
-                              **kwargs)
+                              reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
                 callback(self.picked_path)
             return
@@ -267,7 +267,7 @@ class PickingHelper(object):
 
             self.add_mesh(self.picked_geodesic, color=color, name='_picked_path',
                           line_width=line_width, point_size=point_size,
-                          **kwargs)
+                          reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
                 callback(self.picked_geodesic)
             return
@@ -306,7 +306,7 @@ class PickingHelper(object):
 
             if show_horizon:
                 self.add_mesh(self.picked_horizon, name='_horizon', color=color,
-                       opacity=opacity, pickable=False)
+                       opacity=opacity, pickable=False, reset_camera=False)
 
             if hasattr(callback, '__call__'):
                 callback(path)
