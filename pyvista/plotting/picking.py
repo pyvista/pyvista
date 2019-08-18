@@ -135,7 +135,7 @@ class PickingHelper(object):
         # Now add text about cell-selection
         if show_message:
             if show_message == True:
-                show_message = "Press R to toggle selection tool"
+                show_message = "Press R to toggle selection tool\nPress P to pick a single cell under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
         return
 
@@ -178,7 +178,7 @@ class PickingHelper(object):
         # Now add text about cell-selection
         if show_message:
             if show_message == True:
-                show_message = "Press P to pick over the mouse"
+                show_message = "Press P to pick under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
         return
 
@@ -228,7 +228,7 @@ class PickingHelper(object):
 
         self.add_key_event('c', _clear_path_event_watcher)
         if show_message == True:
-            show_message = "Press P to pick over the mouse\nPress C to clear"
+            show_message = "Press P to pick under the mouse\nPress C to clear"
 
         return self.enable_point_picking(callback=_the_callback, use_mesh=True,
                 font_size=font_size, show_message=show_message, show_point=False)
@@ -280,7 +280,7 @@ class PickingHelper(object):
 
         self.add_key_event('c', _clear_g_path_event_watcher)
         if show_message == True:
-            show_message = "Press P to pick over the mouse\nPress C to clear"
+            show_message = "Press P to pick under the mouse\nPress C to clear"
 
         return self.enable_point_picking(callback=_the_callback, use_mesh=True,
                 font_size=font_size, show_message=show_message, show_point=False)
