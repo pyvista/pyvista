@@ -171,7 +171,6 @@ deploy:
     skip_cleanup: true
     on:
       condition: ($TRAVIS_PYTHON_VERSION == 3.7) && ($TRAVIS_REPO_SLUG == 'pyvista/pyvista') && ($TRAVIS_BRANCH == 'master') && ($DOCS_TRIGGER == 'BANE_RULES' && ($DEPLOY_DOCS == 'true'))
-      tags: true
   - provider: pypi
     user: akaszynski
     distributions: sdist
