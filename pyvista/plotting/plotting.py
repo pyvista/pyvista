@@ -150,7 +150,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         callback : callable
             A callable that takes no arguments
         """
+        if not hasattr(callback, '__call__'):
+            raise TypeError('callback must be callable.')
         self._key_press_event_callbacks[key].append(callback)
+
+
+    def clear_events_for_key(self, key):
+        self._key_press_event_callbacks.pop(key)
 
 
     def reset_key_events(self):

@@ -17,10 +17,12 @@ class PickingHelper(object):
                             show=True, show_message=True, style='wireframe',
                             line_width=5, color='pink', font_size=18, **kwargs):
         """
-        Enables picking of cells.  Press r to enable retangle based
+        Enables picking of cells.  Press "r" to enable retangle based
         selection.  Press "r" again to turn it off.  Selection will be
-        saved to self.picked_cells.
-        Uses last input mesh for input
+        saved to ``self.picked_cells``. Also press "p" to pick a single cell
+        under the mouse location.
+
+        Uses last input mesh for input by default.
 
         Warning
         -------
@@ -31,7 +33,7 @@ class PickingHelper(object):
 
         Parameters
         ----------
-        mesh : vtk.UnstructuredGrid, optional
+        mesh : pyvista.Common, optional
             UnstructuredGrid grid to select cells from.  Uses last
             input grid by default.
 
@@ -295,17 +297,17 @@ class PickingHelper(object):
         """Helper for the ``enable_path_picking`` method to also show a ribbon
         surface along the picked path.
         """
-
-        self.add_key_event('c', lambda: self.remove_actor('_horizon'))
+        name = '_horizon'
+        self.add_key_event('c', lambda: self.remove_actor(name))
 
         def _the_callback(path):
             if path.n_points < 2:
-                self.remove_actor('_horizon')
+                self.remove_actor(name)
                 return
             self.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                self.add_mesh(self.picked_horizon, name='_horizon', color=color,
+                self.add_mesh(self.picked_horizon, name=name, color=color,
                        opacity=opacity, pickable=False, reset_camera=False)
 
             if hasattr(callback, '__call__'):
