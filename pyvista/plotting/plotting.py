@@ -2674,7 +2674,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          show_points=True, point_color=None, point_size=5,
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
-                         pickable=True, **kwargs):
+                         pickable=False, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2786,10 +2786,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             vtklabels.InsertNextValue(str(item))
         vtkpoints.GetPointData().AddArray(vtklabels)
 
+        # Only show visible points
+        vis_points = vtk.vtkSelectVisiblePoints()
+        vis_points.SetInputData(vtkpoints)
+        vis_points.SetRenderer(self.renderer)
+
         # Create heirarchy
         hier = vtk.vtkPointSetToLabelHierarchy()
-        hier.SetInputData(vtkpoints)
-        # hier.SetOrientationArrayName('orientation')
+        hier.SetInputConnection(vis_points.GetOutputPort())
         hier.SetLabelArrayName('labels')
 
         # create label mapper
