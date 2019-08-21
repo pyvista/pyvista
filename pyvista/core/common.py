@@ -550,7 +550,13 @@ class Common(DataSetFilters, DataObject):
 
 
     def set_active_scalar(self, name, preference='cell'):
-        """Finds the scalar by name and appropriately sets it as active"""
+        """Finds the scalar by name and appropriately sets it as active.
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+        """
+        if name is None:
+            self.GetCellData().SetActiveScalars(None)
+            self.GetPointData().SetActiveScalars(None)
+            return
         _, field = get_array(self, name, preference=preference, info=True)
         self._last_active_scalar_name = self.active_scalar_info[1]
         if field == POINT_DATA_FIELD:
@@ -563,7 +569,13 @@ class Common(DataSetFilters, DataObject):
 
 
     def set_active_vectors(self, name, preference='point'):
-        """Finds the vectors by name and appropriately sets it as active"""
+        """Finds the vectors by name and appropriately sets it as active
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+        """
+        if name is None:
+            self.GetCellData().SetActiveVectors(None)
+            self.GetPointData().SetActiveVectors(None)
+            return
         _, field = get_array(self, name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveVectors(name)
