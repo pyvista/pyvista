@@ -429,8 +429,7 @@ def test_arrows():
 
 def test_set_active_vectors_name():
     grid = GRID.copy()
-    with pytest.raises(RuntimeError):
-        grid.active_vectors_name = None
+    grid.active_vectors_name = None
 
 
 def test_set_active_scalars_name():
@@ -472,8 +471,10 @@ def test_set_active_scalars():
     grid_copy.cell_arrays['tmp'] = arr
     grid_copy.set_active_scalar('tmp')
     assert np.allclose(grid_copy.active_scalar, arr)
-    with pytest.raises(RuntimeError):
-        grid_copy.set_active_scalar(None)
+    # Make sure we can set no active scalars
+    grid_copy.set_active_scalar(None)
+    assert grid_copy.GetPointData().GetScalars() is None
+    assert grid_copy.GetCellData().GetScalars() is None
 
 def test_set_active_scalar_name():
     grid = GRID.copy()
