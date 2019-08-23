@@ -298,7 +298,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
-                 multi_samples=4, line_smoothing=False,
+                 multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False, **kwargs):
         """ Initialize Qt interactor """
         if not has_pyqt:
@@ -306,6 +306,9 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         QVTKRenderWindowInteractor.__init__(self, parent)
         BasePlotter.__init__(self, shape=shape, title=title)
         self.parent = parent
+
+        if multi_samples is None:
+            multi_samples = rcParams['multi_samples']
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()

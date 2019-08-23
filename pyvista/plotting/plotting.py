@@ -3371,7 +3371,7 @@ class Plotter(BasePlotter):
 
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
                  border=None, border_color='k', border_width=2.0,
-                 window_size=None, multi_samples=4, line_smoothing=False,
+                 window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False):
         """
         Initialize a vtk plotting object
@@ -3398,7 +3398,10 @@ class Plotter(BasePlotter):
         self.off_screen = off_screen
 
         if window_size is None:
-            window_size = pyvista.rcParams['window_size']
+            window_size = rcParams['window_size']
+
+        if multi_samples is None:
+            multi_samples = rcParams['multi_samples']
 
         # initialize render window
         self.ren_win = vtk.vtkRenderWindow()
