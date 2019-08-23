@@ -137,7 +137,9 @@ class PickingHelper(object):
         # Now add text about cell-selection
         if show_message:
             if show_message == True:
-                show_message = "Press R to toggle selection tool\nPress P to pick a single cell under the mouse"
+                show_message = "Press R to toggle selection tool"
+                if not through:
+                    show_message += "\nPress P to pick a single cell under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
         return
 
