@@ -279,11 +279,27 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     title : string, optional
         Title of plotting window.
 
+    multi_samples : int
+        The number of multi-samples used to mitigate aliasing. 4 is a good
+        default but 8 will have better results with a potential impact on
+        perfromance.
+
+    line_smoothing : bool
+        If True, enable line smothing
+
+    point_smoothing : bool
+        If True, enable point smothing
+
+    polygon_smoothing : bool
+        If True, enable polygon smothing
+
     """
     render_trigger = pyqtSignal()
     allow_quit_keypress = True
 
-    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None, **kwargs):
+    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
+                 multi_samples=4, line_smoothing=False,
+                 point_smoothing=False, polygon_smoothing=False, **kwargs):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -293,6 +309,14 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
+        self.ren_win.SetMultiSamples(multi_samples)
+        if line_smoothing:
+            self.ren_win.LineSmoothingOn()
+        if point_smoothing:
+            self.ren_win.PointSmoothingOn()
+        if polygon_smoothing:
+            self.ren_win.PolygonSmoothingOn()
+
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
 
@@ -499,7 +523,7 @@ class BackgroundPlotter(QtInteractor):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
                                                                reset_camera=reset_camera,
                                                                name=name,
-                                                               loc=loc, 
+                                                               loc=loc,
                                                                culling=culling,
                                                                pickable=pickable)
         self.update_app_icon()
