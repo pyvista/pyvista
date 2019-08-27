@@ -32,18 +32,9 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD,
-                               generate_plane, get_scalar, is_inside_bounds,
+from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
+                               generate_plane, get_array, is_inside_bounds,
                                wrap)
-
-NORMALS = {
-    'x': [1, 0, 0],
-    'y': [0, 1, 0],
-    'z': [0, 0, 1],
-    '-x': [-1, 0, 0],
-    '-y': [0, -1, 0],
-    '-z': [0, 0, -1],
-}
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
@@ -159,12 +150,11 @@ class DataSetFilters(object):
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
-        if not isinstance(bounds, collections.Iterable) or len(bounds) != 6:
-            raise AssertionError('Bounds must be a length 6 iterable of floats')
-        xmin, xmax, ymin, ymax, zmin, zmax = bounds
+        if not isinstance(bounds, collections.Iterable) or not (len(bounds) == 6 or len(bounds) == 12):
+            raise AssertionError('Bounds must be a length 6 iterable of floats.')
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(dataset)
-        alg.SetBoxClip(xmin, xmax, ymin, ymax, zmin, zmax)
+        alg.SetBoxClip(*bounds)
         port = 0
         if invert:
             # invert the clip if needed
@@ -201,7 +191,7 @@ class DataSetFilters(object):
             output clipped mesh.
         """
         if not isinstance(surface, vtk.vtkPolyData):
-            surface = DataSetFilters.extract_surface(surface)
+            surface = DataSetFilters.extract_geometry(surface)
         function = vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
         if compute_distance:
@@ -439,7 +429,7 @@ class DataSetFilters(object):
         # set the scalaras to threshold on
         if scalars is None:
             field, scalars = dataset.active_scalar_info
-        arr, field = get_scalar(dataset, scalars, preference=preference, info=True)
+        arr, field = get_array(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
             raise AssertionError('No arrays present to threshold.')
@@ -717,7 +707,7 @@ class DataSetFilters(object):
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         else:
-            _, field = get_scalar(dataset, scalars, preference=preference, info=True)
+            _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.POINT_DATA_FIELD:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
@@ -1001,7 +991,7 @@ class DataSetFilters(object):
         """
         if scalars is None:
             field, scalars = dataset.active_scalar_info
-        arr, field = get_scalar(dataset, scalars, preference='point', info=True)
+        arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != pyvista.POINT_DATA_FIELD:
             raise AssertionError('Dataset can only by warped by a point data array.')
         scale_factor = kwargs.get('scale_factor', None)
@@ -1292,7 +1282,7 @@ class DataSetFilters(object):
                     max_steps=2000, terminal_speed=1e-12, max_error=1e-6,
                     max_time=None, compute_vorticity=True, rotation_scale=1.0,
                     interpolator_type='point', start_position=(0.0, 0.0, 0.0),
-                    return_source=False):
+                    return_source=False, pointa=None, pointb=None):
         """Integrate a vector field to generate streamlines. The integration is
         performed using a specified integrator, by default Runge-Kutta2.
         This supports integration through any type of dataset.
@@ -1392,6 +1382,10 @@ class DataSetFilters(object):
         return_source : bool
             Return the source particles as :class:`pyvista.PolyData` as well as the
             streamlines. This will be the second value returned if ``True``.
+
+        pointa, pointb : tuple(flaot)
+            The coordinates of a start and end point for a line source. This
+            will override the sphere point source.
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
@@ -1415,10 +1409,16 @@ class DataSetFilters(object):
             source_center = dataset.center
         if source_radius is None:
             source_radius = dataset.length / 10.0
-        source = vtk.vtkPointSource()
-        source.SetNumberOfPoints(n_points);
-        source.SetCenter(source_center);
-        source.SetRadius(source_radius);
+        if pointa is not None and pointb is not None:
+            source = vtk.vtkLineSource()
+            source.SetPoint1(pointa)
+            source.SetPoint2(pointb)
+            source.SetResolution(n_points)
+        else:
+            source = vtk.vtkPointSource()
+            source.SetCenter(source_center)
+            source.SetRadius(source_radius)
+            source.SetNumberOfPoints(n_points);
         # Build the algorithm
         alg = vtk.vtkStreamTracer()
         # Inputs
@@ -1538,7 +1538,7 @@ class DataSetFilters(object):
         # Get variable of interest
         if scalars is None:
             field, scalars = dataset.active_scalar_info
-        values = sampled.get_scalar(scalars)
+        values = sampled.get_array(scalars)
         distance = sampled['Distance']
 
         # Remainder of the is plotting
@@ -1793,10 +1793,11 @@ class DataSetFilters(object):
 
         merge_points : bool, optional
             Points in exactly the same location will be merged between
-            the two meshes.
+            the two meshes. Warning: this can leave degenerate point data.
 
         inplace : bool, optional
-            Updates grid inplace when True.
+            Updates grid inplace when True if the input type is an
+            :class:`pyvista.UnstructuredGrid`.
 
         main_has_priority : bool, optional
             When this parameter is true and merge_points is true,
@@ -1820,9 +1821,9 @@ class DataSetFilters(object):
         if not main_has_priority:
             append_filter.AddInputData(dataset)
 
-        if isinstance(grid, pyvista.UnstructuredGrid):
+        if isinstance(grid, pyvista.Common):
             append_filter.AddInputData(grid)
-        elif isinstance(grid, list):
+        elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid
             for grid in grids:
                 append_filter.AddInputData(grid)
@@ -1833,9 +1834,18 @@ class DataSetFilters(object):
         append_filter.Update()
         merged = _get_output(append_filter)
         if inplace:
-            dataset.DeepCopy(merged)
+            if type(dataset) == type(merged):
+                dataset.DeepCopy(merged)
+            else:
+                raise TypeError("Mesh tpye {} not able to be overridden by output.".format(type(dataset)))
         else:
             return merged
+
+
+    def __add__(dataset, grid):
+        """Combine this mesh with another into an
+        :class:`pyvista.UnstructuredGrid`"""
+        return DataSetFilters.merge(dataset, grid)
 
 
     def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0):
@@ -1926,9 +1936,9 @@ class DataSetFilters(object):
         try:
             # Set user specified quality measure
             measure_setters[quality_measure]()
-        except KeyError:
-            options = ', '.join(["'{}'".format(s) for s in measure_setters.keys()])
-            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(options))
+        except (KeyError, IndexError):
+            options = ', '.join(["'{}'".format(s) for s in list(measure_setters.keys())])
+            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(quality_measure, options))
         alg.SetInputData(dataset)
         alg.SetUndefinedQuality(null_value)
         alg.Update()
@@ -1954,7 +1964,7 @@ class DataSetFilters(object):
             field, scalars = dataset.active_scalar_info
         if not isinstance(scalars, str):
             raise TypeError('Scalar array must be given as a string name')
-        _, field = dataset.get_scalar(scalars, preference=preference, info=True)
+        _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
         alg.SetInputData(dataset)
@@ -2181,8 +2191,10 @@ class PolyDataFilters(DataSetFilters):
 
 
     def __add__(poly_data, mesh):
-        """ adds two meshes together using ``boolean_add`` """
-        return poly_data.boolean_add(mesh)
+        """Merge these two meshes"""
+        if not isinstance(mesh, vtk.vtkPolyData):
+            return DataSetFilters.__add__(poly_data, mesh)
+        return PolyDataFilters.boolean_add(poly_data, mesh)
 
 
     def boolean_union(poly_data, mesh, inplace=False):
@@ -2522,7 +2534,7 @@ class PolyDataFilters(DataSetFilters):
         if scalars is not None:
             if not isinstance(scalars, str):
                 raise TypeError('Scalar array must be given as a string name')
-            _, field = poly_data.get_scalar(scalars, preference=preference, info=True)
+            _, field = poly_data.get_array(scalars, preference=preference, info=True)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field, scalars)
             tube.SetVaryRadiusToVaryRadiusByScalar()
@@ -2860,7 +2872,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
-    def clean(poly_data, point_merging=True, merge_tol=None, lines_to_points=True,
+    def clean(poly_data, point_merging=True, tolerance=None, lines_to_points=True,
               polys_to_lines=True, strips_to_polys=True, inplace=False,
               absolute=True, **kwargs):
         """
@@ -2872,11 +2884,11 @@ class PolyDataFilters(DataSetFilters):
         point_merging : bool, optional
             Enables point merging.  On by default.
 
-        merge_tol : float, optional
-            Set merging tolarance.  When enabled merging is set to
+        tolerance : float, optional
+            Set merging tolerance.  When enabled merging is set to
             absolute distance. If ``absolute`` is False, then the merging
             tolerance is a fraction of the bounding box legnth. The alias
-            ``tolerance`` is also excepted.
+            ``merge_tol`` is also excepted.
 
         lines_to_points : bool, optional
             Turn on/off conversion of degenerate lines to points.  Enabled by
@@ -2893,26 +2905,26 @@ class PolyDataFilters(DataSetFilters):
             Updates mesh in-place while returning nothing.  Default True.
 
         absolute : bool, optional
-            Control if ``merge_tol`` is an absolute distance or a fraction.
+            Control if ``tolerance`` is an absolute distance or a fraction.
 
         Returns
         -------
         mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
         """
-        if merge_tol is None:
-            merge_tol = kwargs.pop('tolerance', None)
+        if tolerance is None:
+            tolerance = kwargs.pop('merge_tol', None)
         clean = vtk.vtkCleanPolyData()
         clean.SetPointMerging(point_merging)
         clean.SetConvertLinesToPoints(lines_to_points)
         clean.SetConvertPolysToLines(polys_to_lines)
         clean.SetConvertStripsToPolys(strips_to_polys)
-        if isinstance(merge_tol, (int, float)):
+        if isinstance(tolerance, (int, float)):
             if absolute:
                 clean.ToleranceIsAbsoluteOn()
-                clean.SetAbsoluteTolerance(merge_tol)
+                clean.SetAbsoluteTolerance(tolerance)
             else:
-                clean.SetTolerance(merge_tol)
+                clean.SetTolerance(tolerance)
         clean.SetInputData(poly_data)
         clean.Update()
 
@@ -3238,14 +3250,79 @@ class PolyDataFilters(DataSetFilters):
             mesh = poly_data
         # Make plane
         plane = generate_plane(normal, origin)
-        print(plane.GetNormal())
-        print(plane.GetOrigin())
         # Perform projection in place on the copied mesh
         f = lambda p: plane.ProjectPoint(p, p)
         np.apply_along_axis(f, 1, mesh.points)
         if not inplace:
             return mesh
         return
+
+
+    def ribbon(poly_data, width=None, scalars=None, angle=0.0, factor=2.0,
+               normal=None, tcoords=False, preference='points'):
+        """Create a ribbon of the lines in this dataset.
+
+        Note
+        ----
+        If there are no lines in the input dataset, then the output will be
+        an empty PolyData mesh.
+
+        Parameters
+        ----------
+        width : float
+            Set the "half" width of the ribbon. If the width is allowed to
+            vary, this is the minimum width. The default is 10% the length
+
+        scalars : str, optional
+            String name of the scalars array to use to vary the ribbon width.
+            This is only used if a scalars array is specified.
+
+        angle : float
+            Set the offset angle of the ribbon from the line normal. (The
+            angle is expressed in degrees.) The default is 0.0
+
+        factor : float
+            Set the maximum ribbon width in terms of a multiple of the
+            minimum width. The default is 2.0
+
+        normal : tuple(float), optional
+            Normal to use as default
+
+        tcoords : bool, str, optional
+            If True, generate texture coordinates along the ribbon. This can
+            also be specified to generate the texture coordinates in the
+            following ways: ``'length'``, ``'normalized'``,
+        """
+        if scalars is not None:
+            arr, field = get_array(poly_data, scalars, preference=preference, info=True)
+        if width is None:
+            width = poly_data.length * 0.1
+        alg = vtk.vtkRibbonFilter()
+        alg.SetInputDataObject(poly_data)
+        alg.SetWidth(width)
+        if normal is not None:
+            alg.SetUseDefaultNormal(True)
+            alg.SetDefaultNormal(normal)
+        alg.SetAngle(angle)
+        if scalars is not None:
+            alg.SetVaryWidth(True)
+            alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+            alg.SetWidthFactor(factor)
+        else:
+            alg.SetVaryWidth(False)
+        if tcoords:
+            alg.SetGenerateTCoords(True)
+            if isinstance(tcoords, str):
+                if tcoords.lower() == 'length':
+                    alg.SetGenerateTCoordsToUseLength()
+                elif tcoords.lower() == 'normalized':
+                    alg.SetGenerateTCoordsToNormalizedLength()
+            else:
+                alg.SetGenerateTCoordsToUseLength()
+        else:
+            alg.SetGenerateTCoordsToOff()
+        alg.Update()
+        return _get_output(alg)
 
 
 class UnstructuredGridFilters(DataSetFilters):

@@ -17,7 +17,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities import generate_plane, get_scalar
+from pyvista.utilities import generate_plane, get_array
 
 from .common import Common
 from .filters import _get_output, PolyDataFilters, UnstructuredGridFilters

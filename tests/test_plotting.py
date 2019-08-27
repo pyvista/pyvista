@@ -303,7 +303,7 @@ def test_update():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_plot_cell_scalars():
+def test_plot_cell_arrays():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
@@ -410,7 +410,7 @@ def test_multi_block_plot():
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
     arr = np.random.rand(uni.n_cells)
-    uni._add_cell_scalar(arr, 'Random Data')
+    uni._add_cell_array(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
@@ -778,3 +778,14 @@ def test_plot_string_array():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='labels')
     p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_fail_plot_table():
+    """Make sure tables cannot be plotted"""
+    table = pyvista.Table(np.random.rand(50, 3))
+    with pytest.raises(TypeError):
+        pyvista.plot(table)
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(table)
