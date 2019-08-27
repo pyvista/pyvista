@@ -401,16 +401,18 @@ def rgb_to_int(rgb):
     return 65536*rgb[0]+256*rgb[1]+rgb[2]
 
 
-def parse_color(color):
-    """ Parses color into a vtk friendly rgb list """
+def parse_color(color, opacity=None):
+    """Parses color into a vtk friendly rgb list.
+    Values returned will be between 0 and 1.
+    """
     if color is None:
         color = rcParams['color']
     if isinstance(color, str):
-        return string_to_rgb(color)
+        color = string_to_rgb(color)
     elif len(color) == 3:
-        return color
+        pass
     elif len(color) == 4:
-        return color[:3]
+        color = color[:3]
     else:
         raise Exception("""
     Invalid color input: ({})
@@ -419,3 +421,6 @@ def parse_color(color):
         color='w'
         color=[1, 1, 1]
         color='#FFFFFF'""".format(color))
+    if opacity is not None and isinstance(opacity, (float, int)):
+        color = [color[0], color[1], color[2], opacity]
+    return color

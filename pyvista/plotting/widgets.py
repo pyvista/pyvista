@@ -4,6 +4,7 @@ import vtk
 import pyvista
 from pyvista.utilities import NORMALS, get_array, try_callback
 
+from .colors import parse_color
 from .theme import *
 
 
