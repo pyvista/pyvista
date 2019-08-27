@@ -387,6 +387,9 @@ def test_clean():
     mesh.clean(merge_tol=1E-5, inplace=True)
     assert mesh.n_points == sphere.n_points
 
+    cleaned = mesh.clean(point_merging=False)
+    assert cleaned.n_points == mesh.n_points
+
 
 def test_area():
     dense_sphere = SPHERE_DENSE.copy()
@@ -496,3 +499,36 @@ def test_delaunay_2d():
     surf = pyvista.PolyData(points).delaunay_2d()
     # Make sure we have an all triangle mesh now
     assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)
+
+
+def test_lines():
+    theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
+    z = np.linspace(-2, 2, 100)
+    r = z**2 + 1
+    x = r * np.sin(theta)
+    y = r * np.cos(theta)
+    points = np.column_stack((x, y, z))
+    # Creat line segments
+    poly = pyvista.PolyData()
+    poly.points = points
+    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
+    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
+    cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    poly.lines = cells
+    assert poly.n_points == len(points)
+    assert poly.n_cells == len(points) - 1
+    # Create a poly line
+    poly = pyvista.PolyData()
+    poly.points = points
+    the_cell = np.arange(0, len(points), dtype=np.int)
+    the_cell = np.insert(the_cell, 0, len(points))
+    poly.lines = the_cell
+    assert poly.n_points == len(points)
+    assert poly.n_cells == 1
+
+
+def test_ribbon_filter():
+    line = examples.load_spline().compute_arc_length()
+    ribbon = line.ribbon(width=0.5)
+    ribbon = line.ribbon(width=0.5, scalars='arc_length')
+    ribbon = line.ribbon(width=0.5, tcoords=True)
