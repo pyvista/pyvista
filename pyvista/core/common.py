@@ -1102,31 +1102,6 @@ class Common(DataSetFilters, DataObject):
         sizes = self.compute_cell_sizes(length=False, area=True, volume=False)
         return np.sum(sizes.cell_arrays['Area'])
 
-    def get_data_range(self, arr=None, preference='cell'):
-        """Get the non-NaN min and max of a named scalar array
-
-        Parameters
-        ----------
-        arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
-            is used
-
-        preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
-
-        """
-        if arr is None:
-            # use active scalar array
-            _, arr = self.active_scalar_info
-        if isinstance(arr, str):
-            arr = get_array(self, arr, preference=preference)
-        # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
-            return (np.nan, np.nan)
-        # Use the array range
-        return np.nanmin(arr), np.nanmax(arr)
 
     def get_array(self, name, preference='cell', info=False):
         """ Searches both point, cell and field data for an array """
