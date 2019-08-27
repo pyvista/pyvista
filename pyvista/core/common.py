@@ -1121,7 +1121,7 @@ class Common(DataSetFilters, DataObject):
             # use active scalar array
             _, arr = self.active_scalar_info
         if isinstance(arr, str):
-            arr = get_scalar(self, arr, preference=preference)
+            arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
         if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
