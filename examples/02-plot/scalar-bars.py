@@ -74,3 +74,27 @@ sargs = dict(
 p = pv.Plotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
+
+
+###############################################################################
+# Labelling values outside of the scalar range
+p = pv.Plotter()
+p.add_mesh(mesh, clim=[1000, 2000],
+           below_color='blue', above_color='red',
+           scalar_bar_args=sargs)
+p.show()
+
+
+###############################################################################
+# Annotate values of interest using a dictionary. The key of the dictionary
+# must be the value to annotate, and the value must be the string label.
+
+# Make a dictionary for the annotations
+annotations = {
+    2300 : "High",
+    805.3 : "Cutoff value",
+}
+
+p = pv.Plotter()
+p.add_mesh(mesh, scalars='Elevation', annotations=annotations)
+p.show()

@@ -14,7 +14,7 @@ from pyvista import examples
 import numpy as np
 
 ###############################################################################
-# Querry a grids points onto a sphere
+# Query a grids points onto a sphere
 mesh = pv.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
 data_to_probe = examples.load_uniform()
 
@@ -38,7 +38,7 @@ result.plot(scalars=name, clim=data_to_probe.get_data_range(name))
 # Interpolate
 # +++++++++++
 #
-# Run a resampling from an interpolation built using a Gaussian kernal
+# Resample the points' arrays onto a surface using an interpolation from a Gaussian Kernel
 
 # Download sample data
 surface = examples.download_saddle_surface()

@@ -449,20 +449,21 @@ class BackgroundPlotter(QtInteractor):
         self.add_toolbars(self.app_window)
 
         # build main menu
-        main_menu = self.app_window.menuBar()
+        self.main_menu = QMenuBar(parent=self.app_window)
+        self.app_window.signal_close.connect(self.main_menu.clear)
 
-        file_menu = main_menu.addMenu('File')
+        file_menu = self.main_menu.addMenu('File')
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
         file_menu.addAction('Exit', self.app_window.close)
 
-        view_menu = main_menu.addMenu('View')
+        view_menu = self.main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
         view_menu.addAction('Clear All', self.clear)
 
-        tool_menu = main_menu.addMenu('Tools')
+        tool_menu = self.main_menu.addMenu('Tools')
         tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
         tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
 
@@ -534,11 +535,13 @@ class BackgroundPlotter(QtInteractor):
     def close(self):
         self.app_window.close()
 
-    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False):
+    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False, pickable=True):
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
-                                                               reset_camera,
-                                                               name,
-                                                               loc)
+                                                               reset_camera=reset_camera,
+                                                               name=name,
+                                                               loc=loc,
+                                                               culling=culling,
+                                                               pickable=pickable)
         self.update_app_icon()
         return actor, prop
 

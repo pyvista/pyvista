@@ -67,7 +67,7 @@ class Renderer(vtkRenderer):
 
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
-                  culling=False):
+                  culling=False, pickable=True):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -130,6 +130,8 @@ class Renderer(vtkRenderer):
                 actor.GetProperty().BackfaceCullingOn()
             except AttributeError:  # pragma: no cover
                 pass
+
+        actor.SetPickable(pickable)
 
         return actor, actor.GetProperty()
 
@@ -424,7 +426,7 @@ class Renderer(vtkRenderer):
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cube_axes_actor, reset_camera=False)
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False)
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
@@ -483,7 +485,7 @@ class Renderer(vtkRenderer):
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(mapper,
                                                        reset_camera=reset_camera,
-                                                       name=name)
+                                                       name=name, pickable=False)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)

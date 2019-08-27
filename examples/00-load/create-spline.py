@@ -92,3 +92,14 @@ spline = pv.Spline(points, 400)
 
 # plot without scalars
 spline.plot(line_width=4, color="k")
+
+
+###############################################################################
+# Ribbons
+# +++++++
+#
+# Ayy of the lines from the examples above can be used to create ribbons.
+# Take a look at the :func:`pyvista.PolyDataFilters.ribbon` filter.
+
+ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
+ribbon.plot(color=True)

@@ -7,6 +7,7 @@ another mesh
 
 """
 ###############################################################################
+
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
@@ -39,7 +40,7 @@ inside = select.threshold(0.5)
 outside = select.threshold(0.5, invert=True)
 
 ###############################################################################
-# disply the results
+# display the results
 
 p = pv.Plotter()
 p.add_mesh(outside, color="Crimson", **dargs)

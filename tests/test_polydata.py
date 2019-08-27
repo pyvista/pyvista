@@ -387,6 +387,9 @@ def test_clean():
     mesh.clean(merge_tol=1E-5, inplace=True)
     assert mesh.n_points == sphere.n_points
 
+    cleaned = mesh.clean(point_merging=False)
+    assert cleaned.n_points == mesh.n_points
+
 
 def test_area():
     dense_sphere = SPHERE_DENSE.copy()
@@ -522,3 +525,10 @@ def test_lines():
     poly.lines = the_cell
     assert poly.n_points == len(points)
     assert poly.n_cells == 1
+
+
+def test_ribbon_filter():
+    line = examples.load_spline().compute_arc_length()
+    ribbon = line.ribbon(width=0.5)
+    ribbon = line.ribbon(width=0.5, scalars='arc_length')
+    ribbon = line.ribbon(width=0.5, tcoords=True)
