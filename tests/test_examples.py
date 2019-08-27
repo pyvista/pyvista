@@ -460,5 +460,10 @@ if TEST_DOWNLOADS:
         assert data.n_cells
 
 
+    def test_pine_roots():
+        data = examples.download_pine_roots()
+        assert data.n_points
+
+
 
 # End of download tests

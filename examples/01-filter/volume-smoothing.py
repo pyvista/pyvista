@@ -38,7 +38,7 @@ smooth = surf.smooth()
 smooth.plot(show_edges=True, cpos=cpos)
 
 ###############################################################################
-# Not smooth enough? Try increasing the number of iterations for the laplacian
+# Not smooth enough? Try increasing the number of iterations for the Laplacian
 # smoothing algorithm:
 
 # Smooth the surface even more
@@ -46,7 +46,7 @@ smooth = surf.smooth(n_iter=100)
 smooth.plot(show_edges=True, cpos=cpos)
 
 ###############################################################################
-# Still not smooth enough? Increase the number of iterations for the laplacian
+# Still not smooth enough? Increase the number of iterations for the Laplacian
 # smoothing algorithm to a crazy high value:
 
 # Smooth the surface EVEN MORE

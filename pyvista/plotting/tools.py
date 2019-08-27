@@ -6,7 +6,7 @@ import vtk
 
 import pyvista
 
-from .colors import parse_color
+from .theme import parse_color, rcParams
 
 def system_supports_plotting():
     """
@@ -32,14 +32,65 @@ def system_supports_plotting():
         return False
 
 
+def update_axes_label_color(axes_actor, color=None):
+    """Internal helper to set the axes label color"""
+    if color is None:
+        color = rcParams['font']['color']
+    color = parse_color(color)
+    if isinstance(axes_actor, vtk.vtkAxesActor):
+        prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_y = axes_actor.GetYAxisCaptionActor2D().GetCaptionTextProperty()
+        prop_z = axes_actor.GetZAxisCaptionActor2D().GetCaptionTextProperty()
+        for prop in [prop_x, prop_y, prop_z]:
+            prop.SetColor(color[0], color[1], color[2])
+            prop.SetShadow(False)
+    elif isinstance(axes_actor, vtk.vtkAnnotatedCubeActor):
+        axes_actor.GetTextEdgesProperty().SetColor(color)
+
+    return
+
+
+def create_axes_marker(label_color=None, x_color=None, y_color=None,
+                       z_color=None, xlabel='X', ylabel='Y', zlabel='Z',
+                       labels_off=False, line_width=2):
+    if x_color is None:
+        x_color = rcParams['axes']['x_color']
+    if y_color is None:
+        y_color = rcParams['axes']['y_color']
+    if z_color is None:
+        z_color = rcParams['axes']['z_color']
+    axes_actor = vtk.vtkAxesActor()
+    axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
+    axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
+    axes_actor.GetYAxisShaftProperty().SetColor(parse_color(y_color))
+    axes_actor.GetYAxisTipProperty().SetColor(parse_color(y_color))
+    axes_actor.GetZAxisShaftProperty().SetColor(parse_color(z_color))
+    axes_actor.GetZAxisTipProperty().SetColor(parse_color(z_color))
+    # Set labels
+    axes_actor.SetXAxisLabelText(xlabel)
+    axes_actor.SetYAxisLabelText(ylabel)
+    axes_actor.SetZAxisLabelText(zlabel)
+    if labels_off:
+        axes_actor.AxisLabelsOff()
+    # Set Line width
+    axes_actor.GetXAxisShaftProperty().SetLineWidth(line_width)
+    axes_actor.GetYAxisShaftProperty().SetLineWidth(line_width)
+    axes_actor.GetZAxisShaftProperty().SetLineWidth(line_width)
+
+    update_axes_label_color(axes_actor, label_color)
+
+    return axes_actor
+
+
 def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 edge_color='black', x_color=None,
                                 y_color=None, z_color=None,
-                                x_label='X', y_label='Y', z_label='Z',
-                                x_face_color=(255, 0, 0),
-                                y_face_color=(0, 255, 0),
-                                z_face_color=(0, 0, 255),
-                                color_box=False):
+                                xlabel='X', ylabel='Y', zlabel='Z',
+                                x_face_color='red',
+                                y_face_color='green',
+                                z_face_color='blue',
+                                color_box=False, label_color=None,
+                                labels_off=False, opacity=0.5,):
     """Create a Box axes orientation widget with labels.
     """
     if x_color is None:
@@ -48,16 +99,23 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         y_color = rcParams['axes']['y_color']
     if z_color is None:
         z_color = rcParams['axes']['z_color']
+    if edge_color is None:
+        edge_color = rcParams['edge_color']
     axes_actor = vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
-    axes_actor.SetXPlusFaceText("+{}".format(x_label))
-    axes_actor.SetXMinusFaceText("-{}".format(x_label))
-    axes_actor.SetYPlusFaceText("+{}".format(y_label))
-    axes_actor.SetYMinusFaceText("-{}".format(y_label))
-    axes_actor.SetZPlusFaceText("+{}".format(z_label))
-    axes_actor.SetZMinusFaceText("-{}".format(z_label))
-    axes_actor.GetTextEdgesProperty().SetColor(parse_color(edge_color))
-    axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
+    if xlabel is not None:
+        axes_actor.SetXPlusFaceText("+{}".format(xlabel))
+        axes_actor.SetXMinusFaceText("-{}".format(xlabel))
+    if ylabel is not None:
+        axes_actor.SetYPlusFaceText("+{}".format(ylabel))
+        axes_actor.SetYMinusFaceText("-{}".format(ylabel))
+    if zlabel is not None:
+        axes_actor.SetZPlusFaceText("+{}".format(zlabel))
+        axes_actor.SetZMinusFaceText("-{}".format(zlabel))
+    axes_actor.SetFaceTextVisibility(not labels_off)
+    axes_actor.SetTextEdgesVisibility(False)
+    # axes_actor.GetTextEdgesProperty().SetColor(parse_color(edge_color))
+    # axes_actor.GetTextEdgesProperty().SetLineWidth(line_width)
     axes_actor.GetXPlusFaceProperty().SetColor(parse_color(x_color))
     axes_actor.GetXMinusFaceProperty().SetColor(parse_color(x_color))
     axes_actor.GetYPlusFaceProperty().SetColor(parse_color(y_color))
@@ -65,20 +123,29 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     axes_actor.GetZPlusFaceProperty().SetColor(parse_color(z_color))
     axes_actor.GetZMinusFaceProperty().SetColor(parse_color(z_color))
 
+    axes_actor.GetCubeProperty().SetOpacity(opacity)
+    # axes_actor.GetCubeProperty().SetEdgeColor(parse_color(edge_color))
+    axes_actor.GetCubeProperty().SetEdgeVisibility(True)
+    axes_actor.GetCubeProperty().BackfaceCullingOn()
+    if opacity < 1.0:
+        # Hide the text edges
+        axes_actor.GetTextEdgesProperty().SetOpacity(0)
+
     if color_box:
         # Hide the cube so we can color each face
         axes_actor.GetCubeProperty().SetOpacity(0)
+        axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
         cube = pyvista.Cube()
         cube.clear_arrays() # remove normals
-        face_colors = np.array([x_face_color,
-                                x_face_color,
-                                y_face_color,
-                                y_face_color,
-                                z_face_color,
-                                z_face_color,
-                               ], dtype=np.uint8)
-
+        face_colors = np.array([parse_color(x_face_color),
+                                parse_color(x_face_color),
+                                parse_color(y_face_color),
+                                parse_color(y_face_color),
+                                parse_color(z_face_color),
+                                parse_color(z_face_color),
+                               ])
+        face_colors = (face_colors * 255).astype(np.uint8)
         cube.cell_arrays['face_colors'] = face_colors
 
         cube_mapper = vtk.vtkPolyDataMapper()
@@ -89,6 +156,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         cube_actor = vtk.vtkActor()
         cube_actor.SetMapper(cube_mapper)
         cube_actor.GetProperty().BackfaceCullingOn()
+        cube_actor.GetProperty().SetOpacity(opacity)
 
         prop_assembly = vtk.vtkPropAssembly()
         prop_assembly.AddPart(axes_actor)
@@ -96,6 +164,8 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         actor = prop_assembly
     else:
         actor = axes_actor
+
+    update_axes_label_color(actor, label_color)
 
     return actor
 

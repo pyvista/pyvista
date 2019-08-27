@@ -34,7 +34,7 @@ rcParams = {
         'width' : 0.6,
         'height' : 0.08,
         'position_x' : 0.35,
-        'position_y' : 0.02,
+        'position_y' : 0.05,
     },
     'colorbar_vertical' : {
         'width' : 0.08,
@@ -53,7 +53,8 @@ rcParams = {
     'axes': {
         'x_color': 'tomato',
         'y_color': 'seagreen',
-        'z_color': 'blue',
+        'z_color': 'mediumblue',
+        'box': False,
     }
 }
 
@@ -108,6 +109,31 @@ def set_plot_theme(theme):
         for k,v in DEFAULT_THEME.items():
             rcParams[k] = v
 
+
+
+def parse_color(color, opacity=None):
+    """Parses color into a vtk friendly rgb list.
+    Values returned will be between 0 and 1.
+    """
+    if color is None:
+        color = rcParams['color']
+    if isinstance(color, str):
+        color = string_to_rgb(color)
+    elif len(color) == 3:
+        pass
+    elif len(color) == 4:
+        color = color[:3]
+    else:
+        raise Exception("""
+    Invalid color input: ({})
+    Must ba string, rgb list, or hex color string.  For example:
+        color='white'
+        color='w'
+        color=[1, 1, 1]
+        color='#FFFFFF'""".format(color))
+    if opacity is not None and isinstance(opacity, (float, int)):
+        color = [color[0], color[1], color[2], opacity]
+    return color
 
 
 

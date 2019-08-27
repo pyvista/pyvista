@@ -12,7 +12,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, nb_backend=None,
-         volume=False, **kwargs):
+         volume=False, parallel_projection=False, **kwargs):
     """
     Convenience plotting function for a vtk or numpy object.
 
@@ -124,6 +124,9 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()
 
+    if parallel_projection:
+        plotter.enable_parallel_projection()
+
     result = plotter.show(window_size=window_size,
                           auto_close=False,
                           interactive=interactive,
@@ -189,7 +192,7 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
             p.subplot(i, j)
             p.add_mesh(datasets[i][j], **disply_kwargs)
             p.add_text(labels[i][j])
-            if is_pyvista_obj(outline):
+            if is_pyvista_dataset(outline):
                 p.add_mesh(outline, color=outline_color)
             if camera_position is not None:
                 p.camera_position = camera_position

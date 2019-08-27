@@ -72,7 +72,7 @@ plotter.show()
 # Label Scalar Values
 # +++++++++++++++++++
 #
-# This example will label pooints with their scalar values
+# This example will label each point with their scalar values
 
 mesh = examples.load_uniform().slice()
 

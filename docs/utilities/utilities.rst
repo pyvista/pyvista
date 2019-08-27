@@ -15,7 +15,7 @@ Object Conversions
 
 .. autofunction:: pyvista.wrap
 
-.. autofunction:: pyvista.is_pyvista_obj
+.. autofunction:: pyvista.is_pyvista_dataset
 
 .. autofunction:: pyvista.image_to_texture
 
@@ -49,7 +49,7 @@ Mesh Creation
 Array Access
 ~~~~~~~~~~~~
 
-.. autofunction:: pyvista.get_scalar
+.. autofunction:: pyvista.get_array
 
 .. autofunction:: pyvista.convert_array
 
