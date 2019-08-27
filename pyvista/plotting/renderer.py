@@ -12,8 +12,7 @@ from vtk import vtkRenderer
 import pyvista
 from pyvista.utilities import wrap
 
-from .plotting import (MAX_N_COLOR_BARS, parse_color, parse_font_family,
-                       rcParams)
+from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import create_axes_marker
 
 
@@ -36,6 +35,7 @@ class Renderer(vtkRenderer):
         if border:
             self.add_border(border_color, border_width)
 
+
     def add_border(self, color=[1, 1, 1], width=2.0):
         points = np.array([[1., 1., 0.],
                            [0., 1., 0.],
@@ -56,18 +56,18 @@ class Renderer(vtkRenderer):
 
         mapper = vtk.vtkPolyDataMapper2D()
         mapper.SetInputData(poly);
-        mapper.SetTransformCoordinate(coordinate);
+        mapper.SetTransformCoordinate(coordinate)
 
         actor = vtk.vtkActor2D()
         actor.SetMapper(mapper)
         actor.GetProperty().SetColor(parse_color(color))
         actor.GetProperty().SetLineWidth(width)
 
-        self.add_actor(actor)
+        self.AddViewProp(actor)
 
 
-    def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
-                  loc=None):
+    def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
+                  culling=False, pickable=True):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -141,6 +141,8 @@ class Renderer(vtkRenderer):
                     pass
             else:
                 raise RuntimeError('Culling option ({}) not understood.'.format(culling))
+
+        actor.SetPickable(pickable)
 
         return actor, actor.GetProperty()
 
@@ -435,7 +437,7 @@ class Renderer(vtkRenderer):
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cube_axes_actor, reset_camera=False)
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False)
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
@@ -522,7 +524,8 @@ class Renderer(vtkRenderer):
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(mapper,
                                                        reset_camera=reset_camera,
-                                                       name=name, culling=culling)
+                                                       name=name, culling=culling,
+                                                       pickable=False)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
@@ -601,6 +604,19 @@ class Renderer(vtkRenderer):
             camera.GetFocalPoint(),
             camera.GetViewUp()
         ]
+
+
+    def enable_parallel_projection(self):
+        """Set use parallel projection. The camera will have a parallel
+        projection. Parallel projection is often useful when viewing images or
+        2D datasets.
+        """
+        self.camera.SetParallelProjection(True)
+
+
+    def disable_parallel_projection(self):
+        """Reset the camera to use perspective projection."""
+        self.camera.SetParallelProjection(False)
 
     def remove_actor(self, actor, reset_camera=False):
         """
