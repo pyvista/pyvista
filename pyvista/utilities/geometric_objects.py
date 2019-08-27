@@ -19,6 +19,16 @@ import vtk
 import pyvista
 
 
+NORMALS = {
+    'x': [1, 0, 0],
+    'y': [0, 1, 0],
+    'z': [0, 0, 1],
+    '-x': [-1, 0, 0],
+    '-y': [0, -1, 0],
+    '-z': [0, 0, -1],
+}
+
+
 def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
     """
     Translates and orientates a mesh centered at the origin and
@@ -45,6 +55,8 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
 
     """
     Create the surface of a cylinder.
+
+    See also :func:`pyvista.CylinderStructured`
 
     Parameters
     ----------
@@ -90,6 +102,79 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     surf.rotate_z(-90)
     translate(surf, center, direction)
     return surf
+
+
+def CylinderStructured(radius=0.5, height=1.0,
+                       center=(0.,0.,0.), direction=(1.,0.,0.),
+                       theta_resolution=32, z_resolution=10):
+    """Create a cylinder mesh as a :class:`pyvista.StructuredGrid`.
+    The end caps are left open. This can create a surface mesh if a single
+    value for the ``radius`` is given or a 3D mesh if multiple radii are given
+    as a list/array in the ``radius`` argument.
+
+    Parameters
+    ----------
+    radius : float
+        Radius of the cylinder. If an iterable
+
+    height : float
+        Height (length) of the cylinder along its Z-axis
+
+    center : list or np.ndarray
+        Location of the centroid in [x, y, z]
+
+    direction : list or np.ndarray
+        Direction cylinder Z-axis in [x, y, z]
+
+    theta_resolution : int
+        Number of points on the circular face of the cylinder.
+
+    z_resolution : int
+        Number of points along the height (Z-axis) of the cylinder
+    """
+    # Define grid in polar coordinates
+    r = np.array([radius]).ravel()
+    nr = len(r)
+    theta = np.linspace(0, 2*np.pi, num=theta_resolution)
+    radius_matrix, theta_matrix = np.meshgrid(r,theta)
+
+    # Transform to cartesian space
+    X = radius_matrix * np.cos(theta_matrix)
+    Y = radius_matrix * np.sin(theta_matrix)
+
+    # Duplicate the first point to close loop
+    X = np.append(X, X[0])
+    Y = np.append(Y, Y[0])
+
+    # Make all the nodes in the grid
+    xx = np.array([X] * z_resolution).ravel()
+    yy = np.array([Y] * z_resolution).ravel()
+    dz = height / z_resolution
+    zz = np.empty(yy.size)
+    zz = np.full((X.size, z_resolution), dz)
+    zz *= np.arange(z_resolution)
+    zz = zz.ravel(order='f')
+
+    # Create the grid
+    grid = pyvista.StructuredGrid()
+    grid.points = np.c_[xx, yy, zz]
+    grid.dimensions = [nr, theta_resolution+1, z_resolution]
+
+    # Orient properly in user direction
+    direction = np.array(direction)
+    direction = direction / np.linalg.norm(direction)
+    vx = np.random.randn(3)
+    vx -= vx.dot(direction) * direction
+    vx /= np.linalg.norm(vx)
+    vy = np.cross(direction, vx)
+    rmtx = np.array([vx, vy, direction])
+    grid.points = grid.points.dot(rmtx)
+
+    # Translate to given center
+    grid.points -= np.array(grid.center)
+    grid.points += np.array(center)
+
+    return grid
 
 
 def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
@@ -451,3 +536,22 @@ def SuperToroid(**kwargs):
 def Ellipsoid(**kwargs):
     """DEPRECATED: use :func:`pyvista.ParametricEllipsoid`"""
     raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
+
+
+def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
+            x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
+            std=0.5, subsample_rate=1):
+    wavelet_source = vtk.vtkRTAnalyticSource()
+    wavelet_source.SetWholeExtent(*extent)
+    wavelet_source.SetCenter(center)
+    wavelet_source.SetMaximum(maximum)
+    wavelet_source.SetXFreq(x_freq)
+    wavelet_source.SetYFreq(y_freq)
+    wavelet_source.SetZFreq(z_freq)
+    wavelet_source.SetXMag(x_mag)
+    wavelet_source.SetYMag(y_mag)
+    wavelet_source.SetZMag(z_mag)
+    wavelet_source.SetStandardDeviation(std)
+    wavelet_source.SetSubsampleRate(subsample_rate)
+    wavelet_source.Update()
+    return pyvista.wrap(wavelet_source.GetOutput())

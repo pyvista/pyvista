@@ -70,6 +70,7 @@ The base plotter class that all PyVista plotters inherit. Please note that the
 .. autoclass:: pyvista.BasePlotter
    :show-inheritance:
    :members:
+   :inherited-members:
    :undoc-members:
 
 

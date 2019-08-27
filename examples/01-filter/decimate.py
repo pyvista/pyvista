@@ -2,7 +2,7 @@
 Decimation
 ~~~~~~~~~~
 
-Decaimate a mesh
+Decimate a mesh
 
 """
 # sphinx_gallery_thumbnail_number = 4

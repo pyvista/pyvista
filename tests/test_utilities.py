@@ -60,24 +60,24 @@ def test_read(tmpdir):
         data = pyvista.read('this_file_totally_does_not_exist.vtk')
 
 
-def test_get_scalar():
+def test_get_array():
     grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
-    grid._add_cell_scalar(carr, 'test_data')
+    grid._add_cell_array(carr, 'test_data')
     parr = np.random.rand(grid.n_points)
-    grid._add_point_scalar(parr, 'test_data')
+    grid._add_point_array(parr, 'test_data')
     # add other data
     oarr = np.random.rand(grid.n_points)
-    grid._add_point_scalar(oarr, 'other')
+    grid._add_point_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid._add_field_scalar(farr, 'field_data')
-    assert np.allclose(carr, utilities.get_scalar(grid, 'test_data', preference='cell'))
-    assert np.allclose(parr, utilities.get_scalar(grid, 'test_data', preference='point'))
-    assert np.allclose(oarr, utilities.get_scalar(grid, 'other'))
-    assert None == utilities.get_scalar(grid, 'foo')
-    assert utilities.get_scalar(grid, 'test_data', preference='field') is None
-    assert np.allclose(farr, utilities.get_scalar(grid, 'field_data', preference='field'))
+    grid._add_field_array(farr, 'field_data')
+    assert np.allclose(carr, utilities.get_array(grid, 'test_data', preference='cell'))
+    assert np.allclose(parr, utilities.get_array(grid, 'test_data', preference='point'))
+    assert np.allclose(oarr, utilities.get_array(grid, 'other'))
+    assert None == utilities.get_array(grid, 'foo')
+    assert utilities.get_array(grid, 'test_data', preference='field') is None
+    assert np.allclose(farr, utilities.get_array(grid, 'field_data', preference='field'))
 
 
 
@@ -106,3 +106,13 @@ def test_voxelize():
 def test_report():
     report = pyvista.Report()
     assert report is not None
+
+
+def test_lines_from_points():
+    points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
+    poly = pyvista.lines_from_points(points)
+    assert poly.n_cells == 2
+    assert poly.n_points == 4
+    cells = poly.lines
+    assert np.allclose(cells[0], [2, 0,1])
+    assert np.allclose(cells[1], [2, 2,3])

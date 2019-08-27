@@ -2,7 +2,7 @@
 Plot with Opacity
 ~~~~~~~~~~~~~~~~~
 
-Plot a mesh's scalar array with an opacity trasfer funciton or opacity mapping
+Plot a mesh's scalar array with an opacity transfer funciton or opacity mapping
 based on a scalar array.
 """
 # sphinx_gallery_thumbnail_number = 2
@@ -28,7 +28,7 @@ p.show()
 
 ###############################################################################
 # Note that you can specify ``use_transparency=True`` to convert opacities to
-# transperencies in any of the following examples.
+# transparencies in any of the following examples.
 
 
 ###############################################################################
@@ -64,9 +64,9 @@ mesh.plot(opacity="sigmoid")
 opacity = [0, 0.2, 0.9, 0.6, 0.3]
 
 ###############################################################################
-# When given a minimalized opacity mapping like that above, PyVista interplates
+# When given a minimized opacity mapping like that above, PyVista interpolates
 # it across a range of how many colors are shown when mapping the scalars.
-# If ``scipy`` is avaialble, then a quadratic interpolation is used -
+# If ``scipy`` is available, then a quadratic interpolation is used -
 # otherwise, a simple linear interpolation is used.
 # Curious what that opacity transfer function looks like? You can fetch it:
 
@@ -118,20 +118,20 @@ p.show()
 # ++++++++++++++++
 #
 # You can also use a scalar array associated with the mesh to give each cell
-# its own opacity/transperency value derived from a scalar field. For exmple,
+# its own opacity/transparency value derived from a scalar field. For example,
 # an uncertainty array from a modelling result could be used to hide regions of
 # a mesh that are uncertain and highlight regions that are well resolved.
 #
-# The following is a demonstartion of plotting a mesh with colored values and
-# using a second array to control the transperancy of the mesh
+# The following is a demonstration of plotting a mesh with colored values and
+# using a second array to control the transparancy of the mesh
 
 model = examples.download_model_with_variance()
 contours = model.contour(10, scalars='Temperature')
-print(contours.scalar_names)
+print(contours.array_names)
 
 ###############################################################################
 # Make sure to flag ``use_transparency=True`` since we want areas of high
-# variance to have high transperency.
+# variance to have high transparency.
 
 p = pv.Plotter(shape=(1,2))
 

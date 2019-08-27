@@ -25,7 +25,7 @@ pv.rcParams["use_panel"] = False
 # +++++++++++
 #
 # Eye-Dome Lighting can dramatically improve depth perception when plotting
-# incredebily sophisticated meshes like the creative commons Queen Nefertiti
+# incredibly sophisticated meshes like the creative commons Queen Nefertiti
 # statue:
 
 nefertiti = examples.download_nefertiti()
@@ -72,7 +72,7 @@ p.show()
 
 ###############################################################################
 # We can improve the depth mapping by enabling eye dome lighting on the
-# renderer. Reference :func:`pyvista.Renderer.enable_eye_dome_lighting`.
+# renderer with :func:`pyvista.Renderer.enable_eye_dome_lighting`.
 
 # Plot with EDL
 p = pv.Plotter()

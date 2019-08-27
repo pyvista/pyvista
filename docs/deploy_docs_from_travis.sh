@@ -15,5 +15,5 @@ git config --global user.email "${GH_EMAIL}";
 git remote add origin ${REMOTE};
 git push -uf origin master;
 cd ../pyvista/
-doctr deploy --built-docs ./docs/_build/html .;
+doctr deploy --built-docs ./docs/_build/html --deploy-repo pyvista/pyvista-docs .;
 set +x

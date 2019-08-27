@@ -7,6 +7,7 @@ functions create, check out the example: :ref:`ref_geometric_example`.
 
 .. autofunction:: pyvista.Sphere
 .. autofunction:: pyvista.Cylinder
+.. autofunction:: pyvista.CylinderStructured
 .. autofunction:: pyvista.Arrow
 .. autofunction:: pyvista.Plane
 .. autofunction:: pyvista.Line

@@ -4,6 +4,7 @@ matplotlib
 appdirs
 pytest
 pytest-cov
+pytest-memprof
 codecov
 PyQt5==5.11.3
 pytest-qt
