@@ -3350,6 +3350,20 @@ class Plotter(BasePlotter):
     window_size : list, optional
         Window size in pixels.  Defaults to [1024, 768]
 
+    multi_samples : int
+        The number of multi-samples used to mitigate aliasing. 4 is a good
+        default but 8 will have better results with a potential impact on
+        perfromance.
+
+    line_smoothing : bool
+        If True, enable line smothing
+
+    point_smoothing : bool
+        If True, enable point smothing
+
+    polygon_smoothing : bool
+        If True, enable polygon smothing
+
     """
     last_update_time = 0.0
     q_pressed = False
@@ -3357,7 +3371,8 @@ class Plotter(BasePlotter):
 
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
                  border=None, border_color='k', border_width=2.0,
-                 window_size=None):
+                 window_size=None, multi_samples=None, line_smoothing=False,
+                 point_smoothing=False, polygon_smoothing=False):
         """
         Initialize a vtk plotting object
         """
@@ -3383,11 +3398,22 @@ class Plotter(BasePlotter):
         self.off_screen = off_screen
 
         if window_size is None:
-            window_size = pyvista.rcParams['window_size']
+            window_size = rcParams['window_size']
+
+        if multi_samples is None:
+            multi_samples = rcParams['multi_samples']
 
         # initialize render window
         self.ren_win = vtk.vtkRenderWindow()
+        self.ren_win.SetMultiSamples(multi_samples)
         self.ren_win.SetBorders(True)
+        if line_smoothing:
+            self.ren_win.LineSmoothingOn()
+        if point_smoothing:
+            self.ren_win.PointSmoothingOn()
+        if polygon_smoothing:
+            self.ren_win.PolygonSmoothingOn()
+
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
 

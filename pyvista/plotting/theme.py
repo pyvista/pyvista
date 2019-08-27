@@ -57,7 +57,8 @@ rcParams = {
         'y_color': 'seagreen',
         'z_color': 'mediumblue',
         'box': False,
-    }
+    },
+    'multi_samples' : 4,
 }
 
 DEFAULT_THEME = dict(rcParams)
