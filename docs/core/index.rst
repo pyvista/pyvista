@@ -33,6 +33,7 @@ PyVista has the following mesh types:
 .. toctree::
    :maxdepth: 2
 
+   objects
    common
    points
    point-grids
