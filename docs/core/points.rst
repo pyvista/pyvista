@@ -1,7 +1,7 @@
 Point Data
 ==========
 The ``pyvista.PolyData`` object adds additional functionality to the
-``vtk.vtkPolyData`` object, to include direct array access through numpy,
+``vtk.vtkPolyData`` object, to include direct array access through NumPy,
 one line plotting, and other mesh functions.
 
 
@@ -24,14 +24,14 @@ This creates an empty grid, and is not useful until points and cells are added
 to it.  VTK points and cells can be added with ``SetPoints`` and ``SetCells``,
 but the inputs to these need to be ``vtk.vtkCellArray`` and ``vtk.vtkPoints``
 objects, which need to be populated with values.
-Grid creation is simplified by initializing the grid directly from numpy
+Grid creation is simplified by initializing the grid directly from NumPy
 arrays as in the following section.
 
 
 Initialize from a File
 ~~~~~~~~~~~~~~~~~~~~~~
-Both binary and ASCII .ply, .stl, and .vtk files can be read using pyvista.
-For example, the pyvista package contains example meshes and these can be loaded with:
+Both binary and ASCII .ply, .stl, and .vtk files can be read using PyVista.
+For example, the PyVista package contains example meshes and these can be loaded with:
 
 .. testcode:: python
 
@@ -66,7 +66,7 @@ These meshes are identical.
 
 Mesh Manipulation and Plotting
 ------------------------------
-Meshes can be directly manipulated using numpy or with the built-in translation
+Meshes can be directly manipulated using NumPy or with the built-in translation
 and rotation routines.
 This example loads two meshes and moves, scales, and copies them.
 

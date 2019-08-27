@@ -56,7 +56,7 @@ READERS = {
     #TODO: '.pht': vtk.vtkPhasta??????,
     #TODO: '.vpc': vtk.vtkVPIC?????,
     # '.bin': vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
-    # '.tri': vtk.vtkMCubesReader, # TODO: Breaks pyvista wrapping on point arrays
+    '.tri': vtk.vtkMCubesReader,
 }
 
 

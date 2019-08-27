@@ -17,7 +17,7 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.utilities import is_pyvista_obj, wrap
+from pyvista.utilities import is_pyvista_dataset, wrap
 
 from .qt_plotting import BackgroundPlotter
 
@@ -85,10 +85,10 @@ class InteractiveTool(object):
         if not scooby.in_ipython() or not IPY_AVAILABLE:
             logging.warning('Interactive plotting tools require IPython and the ``ipywidgets`` package.')
         # Check the input dataset to make sure its compatible
-        if not is_pyvista_obj(dataset):
+        if not is_pyvista_dataset(dataset):
             dataset = wrap(dataset)
-            if not is_pyvista_obj(dataset):
-                raise RuntimeError('Object not supported for plotting in pyvista.')
+            if not is_pyvista_dataset(dataset):
+                raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(dataset)))
 
         # Make the input/output of this tool available
         self.input_dataset = dataset
@@ -220,7 +220,7 @@ class InteractiveTool(object):
         self._display_widget = interact(_update_display_params, **i_display_params)
 
 
-    def _get_scalar_names(self, limit=None):
+    def _get_array_names(self, limit=None):
         """Only give scalar options that have a varying range"""
         names = []
         if limit == 'point':
@@ -228,9 +228,9 @@ class InteractiveTool(object):
         elif limit == 'cell':
             inpnames = list(self.input_dataset.cell_arrays.keys())
         else:
-            inpnames = self.input_dataset.scalar_names
+            inpnames = self.input_dataset.array_names
         for name in inpnames:
-            arr = self.input_dataset.get_scalar(name)
+            arr = self.input_dataset.get_array(name)
             rng = self.input_dataset.get_data_range(name)
             if arr is not None and arr.size > 0 and (rng[1]-rng[0] > 0.0):
                 names.append(name)
@@ -438,7 +438,7 @@ class OrthogonalSlicer(InteractiveTool):
 
         # Create/display the widgets
         self._tool_widget = interact(update, x=xsl, y=ysl, z=zsl,
-                        scalars=self._get_scalar_names())
+                        scalars=self._get_array_names())
 
 
 class ManySlicesAlongAxis(InteractiveTool):
@@ -513,7 +513,7 @@ class ManySlicesAlongAxis(InteractiveTool):
         del axes[idx]
         axes.insert(0, axis)
         self._tool_widget = interact(update, n=nsl, axis=axes,
-                        scalars=self._get_scalar_names())
+                        scalars=self._get_array_names())
 
 
 class Threshold(InteractiveTool):
@@ -622,7 +622,7 @@ class Threshold(InteractiveTool):
 
 
         # Create/display the widgets
-        scalars = self._get_scalar_names()
+        scalars = self._get_array_names()
         name = default_params.get("scalars", scalars[0])
         idx = scalars.index(name)
         del scalars[idx]
@@ -719,7 +719,7 @@ class Clip(InteractiveTool):
         # Create/display the widgets
         self._last_normal = 'x'
         self._tool_widget = interact(update, location=locsl, normal=axchoices, invert=True,
-                        scalars=self._get_scalar_names())
+                        scalars=self._get_array_names())
 
 
 
@@ -814,7 +814,7 @@ class Isocontour(InteractiveTool):
 
 
         # Create/display the widgets
-        scalars = self._get_scalar_names(limit='point')
+        scalars = self._get_array_names(limit='point')
         name = default_params.get("contour_by", scalars[0])
         idx = scalars.index(name)
         del scalars[idx]

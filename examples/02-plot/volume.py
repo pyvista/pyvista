@@ -10,7 +10,7 @@ NumPy arrays
 import pyvista as pv
 from pyvista import examples
 
-# Volume rednering is not supported with Panel yet
+# Volume rendering is not supported with Panel yet
 pv.rcParams["use_panel"] = False
 
 # Download a volumetric dataset
@@ -41,7 +41,7 @@ p.camera_position = cpos
 p.show()
 
 ###############################################################################
-# You can also use a custom opactiy mapping
+# You can also use a custom opacity mapping
 opacity = [0, 0, 0, 0.1, 0.3, 0.6, 1]
 
 p = pv.Plotter()
@@ -54,7 +54,7 @@ p.show()
 # Cool Volume Examples
 # ++++++++++++++++++++
 #
-# Here are a few more cool colume rendering examples
+# Here are a few more cool volume rendering examples
 
 head = examples.download_head()
 
