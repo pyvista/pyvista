@@ -133,7 +133,10 @@ class Renderer(vtkRenderer):
 
         actor.SetPickable(pickable)
 
+        self.ResetCameraClippingRange()
+
         return actor, actor.GetProperty()
+
 
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
                     xlabel='X', ylabel='Y', zlabel='Z', line_width=2,

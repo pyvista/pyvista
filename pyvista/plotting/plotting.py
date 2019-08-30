@@ -3442,7 +3442,7 @@ class Plotter(BasePlotter):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
 
     def show(self, title=None, window_size=None, interactive=True,
-             auto_close=True, interactive_update=False, full_screen=False,
+             auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
              height=400):
         """
@@ -3489,6 +3489,10 @@ class Plotter(BasePlotter):
         """
         if use_panel is None:
             use_panel = rcParams['use_panel']
+
+        if auto_close is None:
+            auto_close = rcParams['auto_close']
+
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:

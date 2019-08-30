@@ -40,6 +40,13 @@ try:
 except KeyError:
     pass
 
+# Grab system flag for auto-closing because of Panel issues
+try:
+    # This only sets to false if PYVISTA_AUTO_CLOSE is false
+    rcParams['auto_close'] = not os.environ['PYVISTA_AUTO_CLOSE'].lower() == 'false'
+except KeyError:
+    pass
+
 # A threshold for the max cells to compute a volume for when repr-ing
 REPR_VOLUME_MAX_CELLS = 1e6
 
