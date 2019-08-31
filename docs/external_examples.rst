@@ -18,11 +18,11 @@ button at the top of this page and adding a link to your project!
 .. toctree::
    :maxdepth: 2
 
-   3D visualization for the Open Mining Format (omf) <https://github.com/OpenGeoVis/omfvista/blob/master/Example.ipynb>
+   3D visualization for the Open Mining Format (omf) <https://opengeovis.github.io/omfvista/examples/index.html>
    Live example notebook showcasing omfvista <https://mybinder.org/v2/gh/OpenGeoVis/omfvista-demo/master?filepath=notebooks%2FExample.ipynb>
-   3D Rendering with Discretize <http://discretize.simpeg.xyz/en/master/auto_examples/pyvista_demo.html#sphx-glr-auto-examples-pyvista-demo-py>
+   3D Rendering with Discretize <http://discretize.simpeg.xyz/en/master/examples/plot_pyvista_laguna.html>
    OpenFOAM Rendering <https://pswpswpsw.github.io/posts/2018/09/blog-post-modify-vtk-openfoam/>
-   FORGE Geothermal Project <http://forge.pvgeo.org>
+   FORGE Geothermal Project <https://forge.pvgeo.org/project/index.html>
    PVGeo's example gallery <https://pvgeo.org/examples/index.html>
    TetGen's example gallery <http://tetgen.pyvista.org/examples/index.html>
    PyMeshFix's example gallery <http://pymeshfix.pyvista.org/examples/index.html>
