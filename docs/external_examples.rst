@@ -26,3 +26,5 @@ button at the top of this page and adding a link to your project!
    PVGeo's example gallery <https://pvgeo.org/examples/index.html>
    TetGen's example gallery <http://tetgen.pyvista.org/examples/index.html>
    PyMeshFix's example gallery <http://pymeshfix.pyvista.org/examples/index.html>
+   Orvisu Demo Application <https://github.com/BartheG/Orvisu>
+   AeorSanBox <https://peterdsharpe.github.io/AeroSandbox/>
