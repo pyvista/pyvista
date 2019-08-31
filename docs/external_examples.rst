@@ -112,14 +112,14 @@ button at the top of this page and adding a link to your project!
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="AeorSanBox">
+    <div class="sphx-glr-thumbcontainer" tooltip="AeroSandbox">
 
 .. only:: html
 
-    .. figure:: ./images/external-examples/AeorSanBox.png
+    .. figure:: ./images/external-examples/AeroSandbox.png
        :target: https://peterdsharpe.github.io/AeroSandbox/
 
-       AeorSanBox
+       AeroSandbox
 
 
 .. raw:: html
@@ -130,7 +130,7 @@ button at the top of this page and adding a link to your project!
 .. toctree::
    :hidden:
 
-   AeorSanBox <https://peterdsharpe.github.io/AeroSandbox/>
+   AeroSandbox <https://peterdsharpe.github.io/AeroSandbox/>
 
 
 
