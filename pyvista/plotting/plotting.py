@@ -3414,8 +3414,11 @@ class Plotter(BasePlotter):
         if polygon_smoothing:
             self.ren_win.PolygonSmoothingOn()
 
+        self.ren_win.SetNumberOfLayers(2)
+
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
+            self.ren_win.AddRenderer(renderer.etc_renderer)
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)

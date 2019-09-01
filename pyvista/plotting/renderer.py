@@ -27,6 +27,11 @@ class Renderer(vtkRenderer):
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
 
+        self.SetLayer(0)
+        self.etc_renderer = vtkRenderer()
+        self.etc_renderer.SetLayer(1)
+        self.etc_renderer.SetActiveCamera(self.camera)
+
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
@@ -34,6 +39,14 @@ class Renderer(vtkRenderer):
 
         if border:
             self.add_border(border_color, border_width)
+
+
+
+    def SetViewport(self, *args):
+        # Overide so that the etc renderer and this renderer share the same viewport
+        vtkRenderer.SetViewport(self, *args)
+        self.etc_renderer.SetViewport(*args)
+        return
 
 
     def add_border(self, color=[1, 1, 1], width=2.0):
@@ -63,11 +76,11 @@ class Renderer(vtkRenderer):
         actor.GetProperty().SetColor(parse_color(color))
         actor.GetProperty().SetLineWidth(width)
 
-        self.AddViewProp(actor)
+        self.etc_renderer.AddViewProp(actor)
 
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
-                  culling=False, pickable=True):
+                  culling=False, pickable=True, etc=False):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -108,7 +121,10 @@ class Renderer(vtkRenderer):
         else:
             actor = uinput
 
-        self.AddActor(actor)
+        if etc:
+            self.etc_renderer.AddActor(actor)
+        else:
+            self.AddActor(actor)
         actor.renderer = proxy(self)
 
         if name is None:
@@ -152,7 +168,7 @@ class Renderer(vtkRenderer):
         self.marker_actor = create_axes_marker(line_width=line_width,
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.AddActor(self.marker_actor)
+        self.etc_renderer.AddActor(self.marker_actor)
         self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
@@ -429,7 +445,7 @@ class Renderer(vtkRenderer):
             cube_axes_actor.GetLabelTextProperty(i).SetFontFamily(font_family)
             cube_axes_actor.GetLabelTextProperty(i).SetBold(bold)
 
-        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False)
+        self.add_actor(cube_axes_actor, reset_camera=False, pickable=False, etc=True)
         self.cube_axes_actor = cube_axes_actor
 
         if all_edges:
@@ -488,7 +504,8 @@ class Renderer(vtkRenderer):
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(mapper,
                                                        reset_camera=reset_camera,
-                                                       name=name, pickable=False)
+                                                       name=name, pickable=False,
+                                                       etc=True)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
