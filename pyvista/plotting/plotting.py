@@ -1545,7 +1545,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return True
 
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
-                  culling=False, pickable=True):
+                  culling=False, pickable=True, etc=False):
         """
         Adds an actor to render window.  Creates an actor if input is
         a mapper.
@@ -1582,7 +1582,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
         return renderer.add_actor(uinput=uinput, reset_camera=reset_camera,
-                    name=name, culling=culling, pickable=pickable)
+                    name=name, culling=culling, pickable=pickable, etc=etc)
 
     def loc_to_index(self, loc):
         """
@@ -2274,7 +2274,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.scalar_bar.SetDrawFrame(False)
 
-        self.add_actor(self.scalar_bar, reset_camera=False, pickable=False)
+        self.add_actor(self.scalar_bar, reset_camera=False, pickable=False, etc=True)
 
     def update_scalars(self, scalars, mesh=None, render=True):
         """
