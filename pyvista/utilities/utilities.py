@@ -401,22 +401,14 @@ def wrap(vtkdataset):
 def image_to_texture(image):
     """Converts ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``
     """
-    vtex = vtk.vtkTexture()
-    vtex.SetInputDataObject(image)
-    vtex.Update()
-    return vtex
+    return pyvista.Texture(image)
 
 
 def numpy_to_texture(image):
     """Convert a NumPy image array to a vtk.vtkTexture"""
     if not isinstance(image, np.ndarray):
         raise TypeError('Unknown input type ({})'.format(type(image)))
-    if image.ndim != 3 or image.shape[2] != 3:
-        raise AssertionError('Input image must be nn by nm by RGB')
-    grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-    grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
-    grid.set_active_scalar('Image')
-    return image_to_texture(grid)
+    return pyvista.Texture(image)
 
 
 def is_inside_bounds(point, bounds):
