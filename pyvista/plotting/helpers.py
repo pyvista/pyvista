@@ -121,6 +121,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     else:
         plotter.camera_position = cpos
 
+    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()
 
