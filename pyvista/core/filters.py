@@ -729,7 +729,8 @@ class DataSetFilters(object):
 
 
     def texture_map_to_plane(dataset, origin=None, point_u=None, point_v=None,
-                             inplace=False, name='Texture Coordinates'):
+                             inplace=False, name='Texture Coordinates',
+                             use_bounds=False):
         """Texture map this dataset to a user defined plane. This is often used
         to define a plane to texture map an image to this dataset. The plane
         defines the spatial reference and extent of that image.
@@ -757,12 +758,20 @@ class DataSetFilters(object):
             The string name to give the new texture coordinates if applying
             the filter inplace.
 
+        use_bounds : bool
+            Use the bounds to set the mapping plane by default (bottom plane
+            of the bounding box).
         """
+        if use_bounds:
+            b = dataset.GetBounds()
+            origin = [b[0], b[2], b[4]]   # BOTTOM LEFT CORNER
+            point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
+            point_v = [ b[0], b[3], b[4]] # TOP LEFT CORNER
         alg = vtk.vtkTextureMapToPlane()
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
         else:
-            alg.SetOrigin(origin) # BOTTOM LEFT CORNER
+            alg.SetOrigin(origin)  # BOTTOM LEFT CORNER
             alg.SetPoint1(point_u) # BOTTOM RIGHT CORNER
             alg.SetPoint2(point_v) # TOP LEFT CORNER
         alg.SetInputDataObject(dataset)
