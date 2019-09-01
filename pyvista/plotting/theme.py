@@ -12,6 +12,7 @@ FONT_KEYS = {'arial': vtk.VTK_ARIAL,
 
 
 rcParams = {
+    'auto_close': True, # DANGER: set to False with extreme caution
     'background' : [0.3, 0.3, 0.3],
     'camera' : {
         'position' : [1, 1, 1],
@@ -58,7 +59,8 @@ rcParams = {
         'y_color': 'seagreen',
         'z_color': 'mediumblue',
         'box': False,
-    }
+    },
+    'multi_samples' : 4,
 }
 
 DEFAULT_THEME = dict(rcParams)

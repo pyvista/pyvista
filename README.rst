@@ -2,7 +2,7 @@
 PyVista
 #######
 
-**🚨🚨 PyVista was formerly vtki 🚨🚨 We recently had to change the name of this
+**🚨🚨 PyVista was formerly vtki 🚨🚨 We recently changed the name of this
 software and we apologize for any confusion this may be causing**
 
 .. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
