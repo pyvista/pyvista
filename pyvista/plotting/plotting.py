@@ -2571,11 +2571,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def image_depth(self):
         """ Returns an image array of current render window """
+        self.ren_win.SetNumberOfLayers(1)
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()
-        return self._run_image_filter(ifilter)
+        image = self._run_image_filter(ifilter)
+        self.ren_win.SetNumberOfLayers(2)
+        return image
 
     @property
     def image(self):
