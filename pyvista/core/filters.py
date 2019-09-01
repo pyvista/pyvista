@@ -1048,6 +1048,11 @@ class DataSetFilters(object):
         return _get_output(alg, active_scalar=active_scalar)
 
 
+    def ctp(dataset, pass_cell_data=False):
+        """An alias/shortcut for ``cell_data_to_point_data``"""
+        return DataSetFilters.cell_data_to_point_data(dataset, pass_cell_data=pass_cell_data)
+
+
     def point_data_to_cell_data(dataset, pass_point_data=False):
         """Transforms point data (i.e., data specified per node) into cell data
         (i.e., data specified within cells).
@@ -1068,6 +1073,11 @@ class DataSetFilters(object):
         if not isinstance(dataset, pyvista.MultiBlock):
             active_scalar = dataset.active_scalar_name
         return _get_output(alg, active_scalar=active_scalar)
+
+
+    def ptc(dataset, pass_point_data=False):
+        """An alias/shortcut for ``point_data_to_cell_data``"""
+        return DataSetFilters.point_data_to_cell_data(dataset, pass_point_data=pass_point_data)
 
 
     def triangulate(dataset, inplace=False):
