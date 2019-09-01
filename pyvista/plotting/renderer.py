@@ -579,6 +579,7 @@ class Renderer(vtkRenderer):
     def camera(self, camera):
         """Set the active camera for the rendering scene"""
         self.SetActiveCamera(camera)
+        self.etc_renderer.SetActiveCamera(camera)
         self.camera_position = [
             camera.GetPosition(),
             camera.GetFocalPoint(),
