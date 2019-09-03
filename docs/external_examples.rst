@@ -290,6 +290,33 @@ button at the top of this page and adding a link to your project!
 
 
 
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="FLEM: A diffusive landscape evolution model">
+
+.. only:: html
+
+    .. figure:: ./images/external-examples/flem.png
+       :target: https://github.com/johnjarmitage/flem
+
+       FLEM: A diffusive landscape evolution model
+
+
+.. raw:: html
+
+    </div>
+
+
+.. toctree::
+   :hidden:
+
+   FLEM: diffusive landscape evolution model <https://github.com/johnjarmitage/flem>
+
+
+
+
+
+
 
 .. raw:: html
 
