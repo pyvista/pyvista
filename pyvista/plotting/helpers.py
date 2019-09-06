@@ -138,7 +138,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           height=kwargs.get('height', 400))
 
     # close and return camera position and maybe image
-    if rcParams['auto_close']:
+    if kwargs.get('auto_close', rcParams['auto_close']):
         plotter.close()
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
