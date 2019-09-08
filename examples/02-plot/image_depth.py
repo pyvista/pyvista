@@ -1,6 +1,6 @@
 """
 Render a depth image
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
 
 Plot a depth image as viewed from a camera overlooking the "hills" example mesh.
 """
@@ -22,6 +22,9 @@ p.show(auto_close=False)
 zval = p.get_image_depth()
 zval_filled_by_42s = p.get_image_depth(fill_value=42)
 
+# Close the plotter after obtaining depth image
+p.close()
+
 # Visualize depth images
 plt.figure()
 plt.imshow(zval)
@@ -30,7 +33,6 @@ plt.title('Depth image')
 plt.xlabel('X Pixel')
 plt.ylabel('Y Pixel')
 plt.show()
-
 
 plt.figure()
 plt.imshow(zval_filled_by_42s)
