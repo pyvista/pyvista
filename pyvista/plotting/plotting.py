@@ -2003,7 +2003,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        position_y=None, vertical=None,
                        interactive=False, fmt=None, use_opacity=True,
                        outline=False, nan_annotation=False,
-                       below_label=None, above_label=None):
+                       below_label=None, above_label=None,
+                       background_color=None, n_colors=None):
         """
         Creates scalar bar using the ranges as set by the last input
         mesh.
@@ -2075,6 +2076,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         above_label : str, optional
             String annotation for values above the scalar range
+
+        background_color: array, optional
+            The color used for the background in RGB format.
+
+        n_colors: int, optional
+            The maximum number of color displayed in the scalar bar.
 
         Notes
         -----
@@ -2166,7 +2173,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Create scalar bar
         self.scalar_bar = vtk.vtkScalarBarActor()
-        self.scalar_bar.SetLookupTable(mapper.lookup_table)
+        if background_color is not None:
+            from ..core.common import vtk_to_numpy, numpy_to_vtk
+            if not isinstance(background_color, collections.Iterable):
+                raise TypeError('Expected type for `background_color`'
+                                'is list, tuple or np.ndarray: '
+                                '{} is given'.format(type(background_color)))
+            if len(background_color) != 3:
+                raise ValueError('Expected length for `background_color` is 3: '
+                                 '{} is given'.format(len(background_color)))
+            background_color = np.asarray(background_color)
+            background_color = np.append(background_color, 1.0) * 255.
+
+            lut = vtk.vtkLookupTable()
+            lut.DeepCopy(mapper.lookup_table)
+            ctable = vtk_to_numpy(lut.GetTable())
+            alphas = ctable[:, -1][:, np.newaxis] / 255.
+            use_table = ctable.copy()
+            use_table[:, -1] = 255.
+            ctable = (use_table * alphas) + background_color * (1 - alphas)
+            lut.SetTable(numpy_to_vtk(ctable, array_type=vtk.VTK_UNSIGNED_CHAR))
+        else:
+            lut = mapper.lookup_table
+        self.scalar_bar.SetLookupTable(lut)
+        if n_colors is not None:
+            self.scalar_bar.SetMaximumNumberOfColors(n_colors)
 
         if n_labels < 1:
             self.scalar_bar.DrawTickLabelsOff()
