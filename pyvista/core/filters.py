@@ -2387,7 +2387,8 @@ class PolyDataFilters(DataSetFilters):
         return PolyDataFilters.triangulate(poly_data, inplace=inplace)
 
 
-    def smooth(poly_data, n_iter=20, convergence=0.0, edge_angle=15, feature_angle=45,
+    def smooth(poly_data, n_iter=20, relaxation_factor=0.01, convergence=0.0,
+               edge_angle=15, feature_angle=45,
                boundary_smoothing=True, feature_smoothing=False, inplace=False):
         """Adjust point coordinates using Laplacian smoothing.
         The effect is to "relax" the mesh, making the cells better shaped and
@@ -2396,7 +2397,12 @@ class PolyDataFilters(DataSetFilters):
         Parameters
         ----------
         n_iter : int
-            Number of iterations for Laplacian smoothing,
+            Number of iterations for Laplacian smoothing.
+
+        relaxation_factor : float, optional
+            Relaxation factor controls the amount of displacement in a single
+            iteration. Generally a lower relaxation factor and higher number of
+            iterations is numerically more stable.
 
         convergence : float, optional
             Convergence criterion for the iteration process. Smaller numbers
@@ -2431,6 +2437,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetFeatureAngle(feature_angle)
         alg.SetEdgeAngle(edge_angle)
         alg.SetBoundarySmoothing(boundary_smoothing)
+        alg.SetRelaxationFactor(relaxation_factor)
         alg.Update()
 
         mesh = _get_output(alg)
