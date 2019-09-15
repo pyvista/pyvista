@@ -114,7 +114,16 @@ class WidgetHelper(object):
         name = kwargs.pop('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        port = 1 if invert else 0
+
+        alg = vtk.vtkBoxClipDataSet()
+        alg.SetInputDataObject(mesh)
+        alg.GenerateClippedOutputOn()
+        if port == 1:
+            self.box_clipped_mesh = alg.GetOutput(port)
+        else:
+            self.box_clipped_mesh = pyvista.UnstructuredGrid()
+            alg.SetOutput(self.box_clipped_mesh)
 
         def callback(planes):
             bounds = []
@@ -123,13 +132,19 @@ class WidgetHelper(object):
                 bounds.append(plane.GetNormal())
                 bounds.append(plane.GetOrigin())
 
-            self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert)
-            self.add_mesh(self.box_clipped_mesh, name=name, reset_camera=False,
-                          **kwargs)
+            alg.SetBoxClip(*bounds)
+            alg.Update()
+            self.box_clipped_mesh.Modified()
+            if port == 1:
+                _ = self.add_mesh(self.box_clipped_mesh, name=name, reset_camera=False,
+                              **kwargs)
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
                 factor=1.25, rotation_enabled=rotation_enabled,
                 use_planes=True, color=widget_color)
+
+        actor = self.add_mesh(self.box_clipped_mesh, name=name, reset_camera=False,
+                      **kwargs)
 
         return actor
 
