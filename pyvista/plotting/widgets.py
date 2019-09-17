@@ -497,7 +497,7 @@ class WidgetHelper(object):
     def add_mesh_threshold(self, mesh, scalars=None, invert=False,
                            widget_color=None, preference='cell',
                            title=None, pointa=(.4 ,.9), pointb=(.9, .9),
-                           **kwargs):
+                           continuous=False, **kwargs):
         """Add a mesh to the scene with a slider widget that is used to
         threshold the mesh interactively.
 
@@ -532,20 +532,31 @@ class WidgetHelper(object):
         if title is None:
             title = scalars
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh, name=name, **kwargs)
+
+        alg = vtk.vtkThreshold()
+        alg.SetInputDataObject(mesh)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetUseContinuousCellRange(continuous)
+        self.threshold_mesh = pyvista.wrap(alg.GetOutput())
+
 
         def callback(value):
-            self.threshold_mesh = pyvista.DataSetFilters.threshold(mesh, value,
-                        scalars=scalars, preference=preference, invert=invert)
-            if self.threshold_mesh.n_points < 1:
-                self.remove_actor(name)
+            if invert:
+                alg.ThresholdByLower(value)
             else:
-                self.add_mesh(self.threshold_mesh, name=name, scalars=scalars,
-                              reset_camera=False, **kwargs)
+                alg.ThresholdByUpper(value)
+            alg.Update()
+            self.threshold_mesh.ShallowCopy(alg.GetOutput())
+
 
         self.enable_slider_widget(callback=callback, rng=rng, title=title,
                                   color=widget_color, pointa=pointa,
                                   pointb=pointb)
+
+        kwargs.setdefault("reset_camera", False)
+        actor = self.add_mesh(self.threshold_mesh, name=name, scalars=scalars,
+                              **kwargs)
 
         return actor
 
