@@ -636,7 +636,7 @@ def test_hanlde_array_with_null_name():
 
 
 def test_shallow_copy_back_propagation():
-    """Test that the original data object's points get modieifed after a
+    """Test that the original data object's points get modified after a
     shallow copy.
 
     Reference: https://github.com/pyvista/pyvista/issues/375#issuecomment-531691483
