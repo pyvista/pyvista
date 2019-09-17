@@ -39,10 +39,12 @@ class DataObject(object):
 
 
     def shallow_copy(self, to_copy):
+        """Shallow copy the given mesh to this mesh"""
         return self.ShallowCopy(to_copy)
 
 
     def deep_copy(self, to_copy):
+        """Overwrite this mesh with the given mesh as a deep copy"""
         return self.DeepCopy(to_copy)
 
 
