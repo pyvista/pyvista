@@ -632,7 +632,7 @@ def test_image_properties():
     # Get RGB image
     img = p.image
     # Get the depth image
-    img = np.sum(p.image_depth, axis=2)
+    img = p.get_image_depth()
     p.close()
 
 

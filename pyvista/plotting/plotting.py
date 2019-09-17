@@ -2601,12 +2601,57 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def image_depth(self):
-        """ Returns an image array of current render window """
+        raise AttributeError("Use Plotter.get_image_depth() please.")
+
+
+    def get_image_depth(self,
+                        fill_value=np.nan,
+                        reset_camera_clipping_range=True):
+        """ Returns a depth image representing current render window
+
+        Parameters
+        ----------
+        fill_value : float
+            Fill value for points in image that don't include objects in scene
+
+        reset_camera_clipping_range : bool
+            Reset the camera clipping range to include data in view?
+
+        Returns
+        -------
+        image_depth : numpy.ndarray
+            Image of depth values from camera orthogonal to image plane
+
+        Notes
+        -----
+        Values in image_depth are negative to adhere to a
+        right-handed coordinate system.
+
+        """
+        # Ensure points in view are within clipping range of renderer?
+        if reset_camera_clipping_range:
+            self.renderer.ResetCameraClippingRange()
+
+        # Get the z-buffer image
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
         ifilter.ReadFrontBufferOff()
         ifilter.SetInputBufferTypeToZBuffer()
-        return self._run_image_filter(ifilter)
+        zbuff = self._run_image_filter(ifilter)[:, :, 0]
+
+        # Convert z-buffer values to depth from camera
+        near, far = self.camera.GetClippingRange()
+        if self.camera.GetParallelProjection():
+            z_val = (zbuff - near) / (far - near)
+        else:
+            zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
+
+        # Consider image values outside clipping range as nans
+        zval[zval <= -far] = fill_value
+
+        return zval
+
+
 
     @property
     def image(self):
