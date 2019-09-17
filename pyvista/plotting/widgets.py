@@ -2,7 +2,7 @@ import logging
 import vtk
 
 import pyvista
-from pyvista.utilities import NORMALS, get_array, try_callback
+from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
 
 from .theme import *
 
@@ -111,10 +111,17 @@ class WidgetHelper(object):
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
         """
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+
+        port = 1 if invert else 0
+
+        alg = vtk.vtkBoxClipDataSet()
+        alg.SetInputDataObject(mesh)
+        alg.GenerateClippedOutputOn()
+        self.box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
 
         def callback(planes):
             bounds = []
@@ -123,13 +130,16 @@ class WidgetHelper(object):
                 bounds.append(plane.GetNormal())
                 bounds.append(plane.GetOrigin())
 
-            self.box_clipped_mesh = mesh.clip_box(bounds=bounds, invert=invert)
-            self.add_mesh(self.box_clipped_mesh, name=name, reset_camera=False,
-                          **kwargs)
+            alg.SetBoxClip(*bounds)
+            alg.Update()
+            self.box_clipped_mesh.ShallowCopy(alg.GetOutput(port))
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
                 factor=1.25, rotation_enabled=rotation_enabled,
                 use_planes=True, color=widget_color)
+
+        actor = self.add_mesh(self.box_clipped_mesh, reset_camera=False,
+                      **kwargs)
 
         return actor
 
@@ -221,7 +231,7 @@ class WidgetHelper(object):
 
 
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
-                            widget_color=None, **kwargs):
+                            widget_color=None, value=0.0, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
@@ -243,26 +253,41 @@ class WidgetHelper(object):
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
         """
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+
+        if isinstance(mesh, vtk.vtkPolyData):
+            alg = vtk.vtkClipPolyData()
+        # elif isinstance(mesh, vtk.vtkImageData):
+        #     alg = vtk.vtkClipVolume()
+        #     alg.SetMixed3DCellGeneration(True)
+        else:
+            alg = vtk.vtkTableBasedClipDataSet()
+        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        alg.SetValue(value)
+        alg.SetInsideOut(invert) # invert the clip if needed
+
+        self.plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
 
         def callback(normal, origin):
-            self.plane_clipped_mesh = mesh.clip(normal=normal, origin=origin,
-                                                invert=invert)
-            self.add_mesh(self.plane_clipped_mesh, name=name,
-                          reset_camera=False, **kwargs)
+            function = generate_plane(normal, origin)
+            alg.SetClipFunction(function) # the implicit function
+            alg.Update() # Perfrom the Cut
+            self.plane_clipped_mesh.ShallowCopy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
+
+        actor = self.add_mesh(self.plane_clipped_mesh, **kwargs)
 
         return actor
 
 
 
-    def add_mesh_slice(self, mesh, normal='x', contour=False,
-                       generate_triangles=False, widget_color=None, **kwargs):
+    def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
+                       widget_color=None, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
@@ -277,9 +302,6 @@ class WidgetHelper(object):
         noraml : str or tuple(flaot)
             The starting normal vector of the plane
 
-        contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
-
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
@@ -288,20 +310,29 @@ class WidgetHelper(object):
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
         """
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
+        alg = vtk.vtkCutter() # Construct the cutter object
+        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+
+        self.plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
 
         def callback(normal, origin):
-            self.plane_sliced_mesh = mesh.slice(normal=normal, origin=origin,
-                        contour=contour, generate_triangles=generate_triangles)
-            self.add_mesh(self.plane_sliced_mesh, name=name, reset_camera=False,
-                          **kwargs)
+            # create the plane for clipping
+            plane = generate_plane(normal, origin)
+            alg.SetCutFunction(plane) # the the cutter to use the plane we made
+            alg.Update() # Perfrom the Cut
+            self.plane_sliced_mesh.ShallowCopy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
+
+        actor = self.add_mesh(self.plane_sliced_mesh, **kwargs)
 
         return actor
 
@@ -468,7 +499,7 @@ class WidgetHelper(object):
     def add_mesh_threshold(self, mesh, scalars=None, invert=False,
                            widget_color=None, preference='cell',
                            title=None, pointa=(.4 ,.9), pointb=(.9, .9),
-                           **kwargs):
+                           continuous=False, **kwargs):
         """Add a mesh to the scene with a slider widget that is used to
         threshold the mesh interactively.
 
@@ -492,7 +523,7 @@ class WidgetHelper(object):
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         if scalars is None:
             field, scalars = mesh.active_scalar_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
@@ -503,20 +534,30 @@ class WidgetHelper(object):
         if title is None:
             title = scalars
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+
+        alg = vtk.vtkThreshold()
+        alg.SetInputDataObject(mesh)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetUseContinuousCellRange(continuous)
+        self.threshold_mesh = pyvista.wrap(alg.GetOutput())
+
 
         def callback(value):
-            self.threshold_mesh = pyvista.DataSetFilters.threshold(mesh, value,
-                        scalars=scalars, preference=preference, invert=invert)
-            if self.threshold_mesh.n_points < 1:
-                self.remove_actor(name)
+            if invert:
+                alg.ThresholdByLower(value)
             else:
-                self.add_mesh(self.threshold_mesh, name=name, scalars=scalars,
-                              reset_camera=False, **kwargs)
+                alg.ThresholdByUpper(value)
+            alg.Update()
+            self.threshold_mesh.ShallowCopy(alg.GetOutput())
+
 
         self.enable_slider_widget(callback=callback, rng=rng, title=title,
                                   color=widget_color, pointa=pointa,
                                   pointb=pointb)
+
+        kwargs.setdefault("reset_camera", False)
+        actor = self.add_mesh(self.threshold_mesh, scalars=scalars, **kwargs)
 
         return actor
 
