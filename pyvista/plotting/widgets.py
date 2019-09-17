@@ -119,11 +119,8 @@ class WidgetHelper(object):
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
-        if port == 1:
-            self.box_clipped_mesh = alg.GetOutput(port)
-        else:
-            self.box_clipped_mesh = pyvista.UnstructuredGrid()
-            alg.SetOutput(self.box_clipped_mesh)
+        self.box_clipped_mesh = pyvista.UnstructuredGrid()
+        self.box_clipped_mesh.ShallowCopy(alg.GetOutput(port))
 
         def callback(planes):
             bounds = []
@@ -134,10 +131,7 @@ class WidgetHelper(object):
 
             alg.SetBoxClip(*bounds)
             alg.Update()
-            self.box_clipped_mesh.Modified()
-            if port == 1:
-                _ = self.add_mesh(self.box_clipped_mesh, name=name, reset_camera=False,
-                              **kwargs)
+            self.box_clipped_mesh.ShallowCopy(alg.GetOutput(port))
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
                 factor=1.25, rotation_enabled=rotation_enabled,
