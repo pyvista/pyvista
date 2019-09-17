@@ -2,7 +2,7 @@ import logging
 import vtk
 
 import pyvista
-from pyvista.utilities import NORMALS, get_array, try_callback
+from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
 
 from .theme import *
 
@@ -230,7 +230,7 @@ class WidgetHelper(object):
 
 
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
-                            widget_color=None, **kwargs):
+                            widget_color=None, value=0.0, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
@@ -257,14 +257,31 @@ class WidgetHelper(object):
 
         actor = self.add_mesh(mesh, name=name, **kwargs)
 
+        if isinstance(mesh, vtk.vtkPolyData):
+            alg = vtk.vtkClipPolyData()
+        # elif isinstance(mesh, vtk.vtkImageData):
+        #     alg = vtk.vtkClipVolume()
+        #     alg.SetMixed3DCellGeneration(True)
+        else:
+            alg = vtk.vtkTableBasedClipDataSet()
+        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        alg.SetValue(value)
+        alg.SetInsideOut(invert) # invert the clip if needed
+
+        self.plane_clipped_mesh = pyvista.PolyData()
+        self.plane_clipped_mesh.ShallowCopy(alg.GetOutput())
+
         def callback(normal, origin):
-            self.plane_clipped_mesh = mesh.clip(normal=normal, origin=origin,
-                                                invert=invert)
-            self.add_mesh(self.plane_clipped_mesh, name=name,
-                          reset_camera=False, **kwargs)
+            function = generate_plane(normal, origin)
+            alg.SetClipFunction(function) # the implicit function
+            alg.Update() # Perfrom the Cut
+            self.plane_clipped_mesh.ShallowCopy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
+
+        self.add_mesh(self.plane_clipped_mesh, name=name,
+                      reset_camera=False, **kwargs)
 
         return actor
 
