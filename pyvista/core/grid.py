@@ -89,7 +89,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkRectilinearGrid):
-                self.DeepCopy(args[0])
+                self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
 
@@ -206,7 +206,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         reader.SetFileName(filename)
         reader.Update()
         grid = reader.GetOutput()
-        self.ShallowCopy(grid)
+        self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
         """
@@ -348,7 +348,7 @@ class UniformGrid(vtkImageData, Grid):
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkImageData):
-                self.DeepCopy(args[0])
+                self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
             else:
@@ -478,7 +478,7 @@ class UniformGrid(vtkImageData, Grid):
         reader.SetFileName(filename)
         reader.Update()
         grid = reader.GetOutput()
-        self.ShallowCopy(grid)
+        self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
         """

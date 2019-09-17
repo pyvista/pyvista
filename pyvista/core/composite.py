@@ -40,9 +40,9 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkMultiBlockDataSet):
                 if deep:
-                    self.DeepCopy(args[0])
+                    self.deep_copy(args[0])
                 else:
-                    self.ShallowCopy(args[0])
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
@@ -93,7 +93,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # Load file
         reader.SetFileName(filename)
         reader.Update()
-        self.ShallowCopy(reader.GetOutput())
+        self.shallow_copy(reader.GetOutput())
 
 
     def save(self, filename, binary=True):
@@ -478,8 +478,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         thistype = type(self)
         newobject = thistype()
         if deep:
-            newobject.DeepCopy(self)
+            newobject.deep_copy(self)
         else:
-            newobject.ShallowCopy(self)
+            newobject.shallow_copy(self)
         newobject.copy_meta_from(self)
         return newobject
