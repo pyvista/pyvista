@@ -2599,10 +2599,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
 
-    @property
-    def image_depth(self):
-        raise AttributeError("Use Plotter.get_image_depth() please.")
-
 
     def get_image_depth(self,
                         fill_value=np.nan,
@@ -2612,7 +2608,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         fill_value : float
-            Fill value for points in image that don't include objects in scene
+            Fill value for points in image that don't include objects in scene.
+            To not use a fill value, pass ``None``.
 
         reset_camera_clipping_range : bool
             Reset the camera clipping range to include data in view?
@@ -2647,10 +2644,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
         # Consider image values outside clipping range as nans
-        zval[zval <= -far] = fill_value
+        if fill_value is not None:
+            args = np.logical_or(zval < -far, np.isclose(zval, -far) )
+            zval[args] = fill_value
 
         return zval
 
+
+    @property
+    def image_depth(self):
+        """Helper attribute for ``get_image_depth``"""
+        return self.get_image_depth()
 
 
     @property
