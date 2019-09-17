@@ -119,8 +119,7 @@ class WidgetHelper(object):
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
-        self.box_clipped_mesh = pyvista.UnstructuredGrid()
-        self.box_clipped_mesh.ShallowCopy(alg.GetOutput(port))
+        self.box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
 
         def callback(planes):
             bounds = []
@@ -255,7 +254,7 @@ class WidgetHelper(object):
         name = kwargs.pop('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh, name=name, **kwargs)
 
         if isinstance(mesh, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -268,8 +267,7 @@ class WidgetHelper(object):
         alg.SetValue(value)
         alg.SetInsideOut(invert) # invert the clip if needed
 
-        self.plane_clipped_mesh = pyvista.PolyData()
-        self.plane_clipped_mesh.ShallowCopy(alg.GetOutput())
+        self.plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
 
         def callback(normal, origin):
             function = generate_plane(normal, origin)
@@ -280,15 +278,14 @@ class WidgetHelper(object):
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
 
-        self.add_mesh(self.plane_clipped_mesh, name=name,
-                      reset_camera=False, **kwargs)
+        actor = self.add_mesh(self.plane_clipped_mesh, name=name, **kwargs)
 
         return actor
 
 
 
-    def add_mesh_slice(self, mesh, normal='x', contour=False,
-                       generate_triangles=False, widget_color=None, **kwargs):
+    def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
+                       widget_color=None, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
@@ -303,9 +300,6 @@ class WidgetHelper(object):
         noraml : str or tuple(flaot)
             The starting normal vector of the plane
 
-        contour : bool, optional
-            If True, apply a ``contour`` filter after slicing
-
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
             triangles otherwise, the output will be the intersection polygons.
@@ -317,17 +311,26 @@ class WidgetHelper(object):
         name = kwargs.pop('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        actor = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh, name=name, **kwargs)
 
+        alg = vtk.vtkCutter() # Construct the cutter object
+        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+
+        self.plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
 
         def callback(normal, origin):
-            self.plane_sliced_mesh = mesh.slice(normal=normal, origin=origin,
-                        contour=contour, generate_triangles=generate_triangles)
-            self.add_mesh(self.plane_sliced_mesh, name=name, reset_camera=False,
-                          **kwargs)
+            # create the plane for clipping
+            plane = generate_plane(normal, origin)
+            alg.SetCutFunction(plane) # the the cutter to use the plane we made
+            alg.Update() # Perfrom the Cut
+            self.plane_sliced_mesh.ShallowCopy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
+
+        actor = self.add_mesh(self.plane_sliced_mesh, name=name, **kwargs)
 
         return actor
 
