@@ -111,8 +111,10 @@ class WidgetHelper(object):
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
         """
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -136,7 +138,7 @@ class WidgetHelper(object):
                 factor=1.25, rotation_enabled=rotation_enabled,
                 use_planes=True, color=widget_color)
 
-        actor = self.add_mesh(self.box_clipped_mesh, name=name, reset_camera=False,
+        actor = self.add_mesh(self.box_clipped_mesh, reset_camera=False,
                       **kwargs)
 
         return actor
@@ -251,10 +253,10 @@ class WidgetHelper(object):
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
         """
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        _ = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         if isinstance(mesh, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -278,7 +280,7 @@ class WidgetHelper(object):
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
 
-        actor = self.add_mesh(self.plane_clipped_mesh, name=name, **kwargs)
+        actor = self.add_mesh(self.plane_clipped_mesh, **kwargs)
 
         return actor
 
@@ -308,10 +310,10 @@ class WidgetHelper(object):
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
         """
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        _ = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         alg = vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
@@ -330,7 +332,7 @@ class WidgetHelper(object):
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
 
-        actor = self.add_mesh(self.plane_sliced_mesh, name=name, **kwargs)
+        actor = self.add_mesh(self.plane_sliced_mesh, **kwargs)
 
         return actor
 
@@ -521,7 +523,7 @@ class WidgetHelper(object):
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
-        name = kwargs.pop('name', str(hex(id(mesh))))
+        name = kwargs.get('name', str(hex(id(mesh))))
         if scalars is None:
             field, scalars = mesh.active_scalar_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
@@ -532,7 +534,7 @@ class WidgetHelper(object):
         if title is None:
             title = scalars
 
-        _ = self.add_mesh(mesh, name=name, **kwargs)
+        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         alg = vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
@@ -555,8 +557,7 @@ class WidgetHelper(object):
                                   pointb=pointb)
 
         kwargs.setdefault("reset_camera", False)
-        actor = self.add_mesh(self.threshold_mesh, name=name, scalars=scalars,
-                              **kwargs)
+        actor = self.add_mesh(self.threshold_mesh, scalars=scalars, **kwargs)
 
         return actor
 
