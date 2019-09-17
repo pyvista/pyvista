@@ -636,8 +636,10 @@ def test_hanlde_array_with_null_name():
 
 
 def test_shallow_copy_back_propagation():
-    """Test that th original data object's points get modieifed after wrapping.
-    Reference:
+    """Test that the original data object's points get modieifed after a
+    shallow copy.
+
+    Reference: https://github.com/pyvista/pyvista/issues/375#issuecomment-531691483
     """
     # Case 1
     points = vtk.vtkPoints()
@@ -650,7 +652,6 @@ def test_shallow_copy_back_propagation():
     wrapped.points[:] = 2.8
     orig_points = vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
-
     # Case 2
     original = vtk.vtkPolyData()
     wrapped = pyvista.PolyData(original, deep=False)
