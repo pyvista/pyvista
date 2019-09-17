@@ -132,7 +132,7 @@ class WidgetHelper(object):
 
             alg.SetBoxClip(*bounds)
             alg.Update()
-            self.box_clipped_mesh.ShallowCopy(alg.GetOutput(port))
+            self.box_clipped_mesh.shallow_copy(alg.GetOutput(port))
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
                 factor=1.25, rotation_enabled=rotation_enabled,
@@ -275,7 +275,7 @@ class WidgetHelper(object):
             function = generate_plane(normal, origin)
             alg.SetClipFunction(function) # the implicit function
             alg.Update() # Perfrom the Cut
-            self.plane_clipped_mesh.ShallowCopy(alg.GetOutput())
+            self.plane_clipped_mesh.shallow_copy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
@@ -327,7 +327,7 @@ class WidgetHelper(object):
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane) # the the cutter to use the plane we made
             alg.Update() # Perfrom the Cut
-            self.plane_sliced_mesh.ShallowCopy(alg.GetOutput())
+            self.plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
@@ -549,7 +549,7 @@ class WidgetHelper(object):
             else:
                 alg.ThresholdByUpper(value)
             alg.Update()
-            self.threshold_mesh.ShallowCopy(alg.GetOutput())
+            self.threshold_mesh.shallow_copy(alg.GetOutput())
 
 
         self.enable_slider_widget(callback=callback, rng=rng, title=title,
