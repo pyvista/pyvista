@@ -2627,7 +2627,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image_depth'):
-            return self.last_image_depth
+            zval = self.last_image_depth.copy()
+            if fill_value is not None:
+                zval[self._image_depth_null] = fill_value
+            return zval
 
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
@@ -2648,8 +2651,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
         # Consider image values outside clipping range as nans
+        args = np.logical_or(zval < -far, np.isclose(zval, -far) )
+        self._image_depth_null = args
         if fill_value is not None:
-            args = np.logical_or(zval < -far, np.isclose(zval, -far) )
             zval[args] = fill_value
 
         return zval
