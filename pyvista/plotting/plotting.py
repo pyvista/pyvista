@@ -168,6 +168,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.q_pressed = True
             # Grab screenshot right before renderer closes
             self.last_image = self.screenshot(True, return_img=True)
+            self.last_image_depth = self.get_image_depth()
 
         self.add_key_event('q', _close_callback)
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
@@ -2625,6 +2626,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         right-handed coordinate system.
 
         """
+        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image_depth'):
+            return self.last_image_depth
+
         # Ensure points in view are within clipping range of renderer?
         if reset_camera_clipping_range:
             self.renderer.ResetCameraClippingRange()
@@ -3606,6 +3610,7 @@ class Plotter(BasePlotter):
 
         # Keep track of image for sphinx-gallery
         self.last_image = self.screenshot(screenshot, return_img=True)
+        self.last_image_depth = self.get_image_depth()
         disp = None
 
         if interactive and (not self.off_screen):

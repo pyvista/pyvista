@@ -634,6 +634,14 @@ def test_image_properties():
     # Get the depth image
     img = p.get_image_depth()
     p.close()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.show() # close plotter
+    # Get RGB image
+    img = p.image
+    # Get the depth image
+    img = p.get_image_depth()
+    p.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
