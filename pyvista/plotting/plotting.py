@@ -94,7 +94,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add render windows
         self._active_renderer_index = 0
         self.renderers = []
-        
+
         if isinstance(shape, str):
 
             if '|' in shape:
@@ -112,29 +112,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 xsplit = m/(n+m)
             else:
                 xsplit = 1-n/(n+m)
-            
+
             if rcParams['multi_rendering_splitting_position']:
                 xsplit = rcParams['multi_rendering_splitting_position']
 
             for i in rangen:
                 arenderer = pyvista.Renderer(self, border, border_color, border_width)
-                if '|' in shape: 
+                if '|' in shape:
                     arenderer.SetViewport(0,  i/n, xsplit, (i+1)/n)
                 else:
                     arenderer.SetViewport(i/n, 0,  (i+1)/n, xsplit )
                 self.renderers.append(arenderer)
             for i in rangem:
                 arenderer = pyvista.Renderer(self, border, border_color, border_width)
-                if '|' in shape: 
+                if '|' in shape:
                     arenderer.SetViewport(xsplit, i/m, 1, (i+1)/m)
-                else: 
+                else:
                     arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
                 self.renderers.append(arenderer)
-                
+
                 self.shape = (n+m,)
-       
+
         else:
-            
+
             assert_str = '"shape" should be a list or tuple'
             assert isinstance(shape, collections.Iterable), assert_str
             assert shape[0] > 0, '"shape" must be positive'
