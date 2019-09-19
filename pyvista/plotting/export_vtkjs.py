@@ -401,7 +401,7 @@ def write_data_set(file_path, dataset, output_dir, color_array_info, new_name=No
     if writer:
         writer(dataset_dir, data_dir, dataset, color_array_info, root, compress)
     else:
-        print(dataObject.GetClassName(), 'is not supported')
+        print(dataset.GetClassName(), 'is not supported')
 
     with open(os.path.join(dataset_dir, "index.json"), 'w') as f:
         f.write(json.dumps(root, indent=2))
@@ -538,7 +538,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     opacity = renProp.GetProperty().GetOpacity() if hasattr(
                         renProp, 'GetProperty') else 1.0
                     edgeVisibility = renProp.GetProperty().GetEdgeVisibility(
-                    ) if hasattr(renProp, 'GetProperty') else false
+                    ) if hasattr(renProp, 'GetProperty') else False
 
                     p3dPosition = renProp.GetPosition() if renProp.IsA(
                         'vtkProp3D') else [0, 0, 0]

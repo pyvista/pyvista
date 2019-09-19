@@ -158,7 +158,7 @@ class DoubleSlider(QSlider):
         self.setValue(self.value())
 
 
-class RangeGroup(QHBoxLayout):
+class RangeGroup(QHBoxLayout): # this is redefined from above ... why?
 
     def __init__(self, parent, callback, minimum=0.0, maximum=20.0,
                  value=1.0):

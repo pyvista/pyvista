@@ -28,13 +28,11 @@ import logging
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
-                                    vtk_to_numpy)
+from vtk.util.numpy_support import (numpy_to_vtkIdTypeArray, vtk_to_numpy)
 
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
-                               generate_plane, get_array, is_inside_bounds,
-                               wrap)
+                               generate_plane, get_array, wrap)
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
@@ -3068,9 +3066,9 @@ class PolyDataFilters(DataSetFilters):
         """
         points = vtk.vtkPoints()
         cell_ids = vtk.vtkIdList()
-        code = poly_data.obbTree.IntersectWithLine(np.array(origin),
-                                              np.array(end_point),
-                                              points, cell_ids)
+        poly_data.obbTree.IntersectWithLine(np.array(origin),
+                                            np.array(end_point),
+                                            points, cell_ids)
 
         intersection_points = vtk_to_numpy(points.GetData())
         if first_point and intersection_points.shape[0] >= 1:
@@ -3205,8 +3203,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_arrays[key] = poly_data.cell_arrays[key][fmask]
                 except:
-                    log.warning('Unable to pass cell key %s onto reduced mesh' %
-                                key)
+                    logging.warning('Unable to pass cell key %s onto reduced mesh' % key)
 
         # Return vtk surface and reverse indexing array
         if inplace:

@@ -3,9 +3,10 @@ import numpy as np
 
 import pyvista
 
-from .theme import *
-from .tools import *
-from .plotting import *
+from .theme import rcParams
+from pyvista.utilities import is_pyvista_dataset
+from .plotting import Plotter
+import scooby
 
 
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
