@@ -22,8 +22,10 @@ from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .theme import *
-from .tools import *
+from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
+from .tools import normalize, opacity_transfer_function
+from .theme import rcParams, parse_color, parse_font_family
+from .theme import FONT_KEYS, MAX_N_COLOR_BARS, PV_BACKGROUND
 from .widgets import WidgetHelper
 
 _ALL_PLOTTERS = {}
@@ -90,22 +92,63 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 border = False
 
         # add render windows
-        self.renderers = []
         self._active_renderer_index = 0
-        assert_str = '"shape" should be a list or tuple'
-        assert isinstance(shape, collections.Iterable), assert_str
-        assert shape[0] > 0, '"shape" must be positive'
-        assert shape[1] > 0, '"shape" must be positive'
-        self.shape = shape
-        for i in reversed(range(shape[0])):
-            for j in range(shape[1]):
-                renderer = pyvista.Renderer(self, border, border_color, border_width)
-                x0 = i/shape[0]
-                y0 = j/shape[1]
-                x1 = (i+1)/shape[0]
-                y1 = (j+1)/shape[1]
-                renderer.SetViewport(y0, x0, y1, x1)
-                self.renderers.append(renderer)
+        self.renderers = []
+        
+        if isinstance(shape, str):
+
+            if '|' in shape:
+                n = int(shape.split('|')[0])
+                m = int(shape.split('|')[1])
+                rangen = reversed(range(n))
+                rangem = reversed(range(m))
+            else:
+                m = int(shape.split('/')[0])
+                n = int(shape.split('/')[1])
+                rangen = range(n)
+                rangem = range(m)
+
+            if n>=m:
+                xsplit = m/(n+m)
+            else:
+                xsplit = 1-n/(n+m)
+            
+            if rcParams['multi_rendering_splitting_position']:
+                xsplit = rcParams['multi_rendering_splitting_position']
+
+            for i in rangen:
+                arenderer = pyvista.Renderer(self, border, border_color, border_width)
+                if '|' in shape: 
+                    arenderer.SetViewport(0,  i/n, xsplit, (i+1)/n)
+                else:
+                    arenderer.SetViewport(i/n, 0,  (i+1)/n, xsplit )
+                self.renderers.append(arenderer)
+            for i in rangem:
+                arenderer = pyvista.Renderer(self, border, border_color, border_width)
+                if '|' in shape: 
+                    arenderer.SetViewport(xsplit, i/m, 1, (i+1)/m)
+                else: 
+                    arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
+                self.renderers.append(arenderer)
+                
+                self.shape = (n+m,)
+       
+        else:
+            
+            assert_str = '"shape" should be a list or tuple'
+            assert isinstance(shape, collections.Iterable), assert_str
+            assert shape[0] > 0, '"shape" must be positive'
+            assert shape[1] > 0, '"shape" must be positive'
+            self.shape = shape
+            for i in reversed(range(shape[0])):
+                for j in range(shape[1]):
+                    renderer = pyvista.Renderer(self, border, border_color, border_width)
+                    x0 = i/shape[0]
+                    y0 = j/shape[1]
+                    x1 = (i+1)/shape[0]
+                    y1 = (j+1)/shape[1]
+                    renderer.SetViewport(y0, x0, y1, x1)
+                    self.renderers.append(renderer)
 
 
         # This keeps track of scalar names already plotted and their ranges
@@ -1582,6 +1625,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add actor to the correct render window
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
+        #print('marco', self._active_renderer_index, [renderer])
         return renderer.add_actor(uinput=uinput, reset_camera=reset_camera,
                     name=name, culling=culling, pickable=pickable)
 
@@ -1621,6 +1665,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid
         """
+        if len(self.shape) == 1:
+            return index
         sz = int(self.shape[0] * self.shape[1])
         idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
         args = np.argwhere(idxs == index)
@@ -1885,7 +1931,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer = self.renderers[self._active_renderer_index]
         renderer.remove_bounds_axes()
 
-    def subplot(self, index_row, index_column):
+    def subplot(self, index_row, index_column=None):
         """
         Sets the active subplot.
 
@@ -1898,6 +1944,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Index of the subplot to activate along the columns.
 
         """
+        if len(self.shape)==1:
+            self._active_renderer_index = index_row
+            return
+
         if index_row < 0 or index_row >= self.shape[0]:
             raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
         if index_column < 0 or index_column >= self.shape[1]:
@@ -2277,7 +2327,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if interactive is None:
             interactive = rcParams['interactive']
-            if shape != (1, 1):
+            if self.shape != (1, 1):
                 interactive = False
         elif interactive and self.shape != (1, 1):
             err_str = 'Interactive scalar bars disabled for multi-renderer plots'
@@ -2646,7 +2696,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert z-buffer values to depth from camera
         near, far = self.camera.GetClippingRange()
         if self.camera.GetParallelProjection():
-            z_val = (zbuff - near) / (far - near)
+            zval = (zbuff - near) / (far - near)
         else:
             zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
