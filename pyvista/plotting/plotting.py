@@ -54,6 +54,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one renderer.
+        Can also accept a shape as string descriptor. E.g.:
+            shape="3|1" means 3 plots on the left and 1 on the right,
+            shape="4/2" means 4 plots on top of 2 at bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.
@@ -3472,8 +3475,10 @@ class Plotter(BasePlotter):
     shape : list or tuple, optional
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one render
-        window.
+        with ``shape=(2, 2)``.  By default there is only one render window.
+        Can also accept a shape as string descriptor. E.g.:
+            shape="3|1" means 3 plots on the left and 1 on the right,
+            shape="4/2" means 4 plots on top of 2 at bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.
