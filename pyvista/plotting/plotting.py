@@ -85,7 +85,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return object.__new__(cls)
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
-                 border_width=2.0, title=None):
+                 border_width=2.0, title=None, splitting_position=None):
         """ Initialize base plotter """
         self.image_transparent_background = rcParams['transparent_background']
 
@@ -122,7 +122,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 xsplit = 1-n/(n+m)
 
-            if rcParams['multi_rendering_splitting_position']:
+            if splitting_position:
                 xsplit = rcParams['multi_rendering_splitting_position']
 
             for i in rangen:
@@ -144,7 +144,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         else:
 
-            assert_str = '"shape" should be a list or tuple'
+            assert_str = '"shape" should be a list, tuple or string descriptor'
             assert isinstance(shape, collections.Iterable), assert_str
             assert shape[0] > 0, '"shape" must be positive'
             assert shape[1] > 0, '"shape" must be positive'
@@ -1625,7 +1625,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add actor to the correct render window
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
-        #print('marco', self._active_renderer_index, [renderer])
         return renderer.add_actor(uinput=uinput, reset_camera=reset_camera,
                     name=name, culling=culling, pickable=pickable)
 
