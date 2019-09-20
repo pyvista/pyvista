@@ -57,9 +57,9 @@ def test_init_bad_input():
 
     with pytest.raises(Exception):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1),
-                                              np.array(1),
-                                              np.array(1),
-                                              'woa')
+                                                 np.array(1),
+                                                 np.array(1),
+                                                 'woa')
 
 
 def test_init_from_arrays():

@@ -121,7 +121,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 splitting_position = rcParams['multi_rendering_splitting_position']
 
             if splitting_position is None:
-                if n>=m:
+                if n >= m:
                     xsplit = m/(n+m)
                 else:
                     xsplit = 1-n/(n+m)
@@ -131,9 +131,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for i in rangen:
                 arenderer = pyvista.Renderer(self, border, border_color, border_width)
                 if '|' in shape:
-                    arenderer.SetViewport(0,  i/n, xsplit, (i+1)/n)
+                    arenderer.SetViewport(0, i/n, xsplit, (i+1)/n)
                 else:
-                    arenderer.SetViewport(i/n, 0,  (i+1)/n, xsplit )
+                    arenderer.SetViewport(i/n, 0, (i+1)/n, xsplit)
                 self.renderers.append(arenderer)
             for i in rangem:
                 arenderer = pyvista.Renderer(self, border, border_color, border_width)
@@ -710,7 +710,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if color is True:
             color = rcParams['color']
 
-        if texture == False:
+        if texture is False:
             texture = None
 
         ##### Handle composite datasets #####
@@ -840,12 +840,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetArrayName(scalars)
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars,
-                    preference=kwargs.get('preference', 'cell'), err=True)
+                                preference=kwargs.get('preference', 'cell'), err=True)
             if stitle is None:
                 stitle = original_scalar_name
 
 
-        if texture == True or isinstance(texture, (str, int)):
+        if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
 
         if texture:
@@ -870,7 +870,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try:
                 # Get array from mesh
                 opacity = get_array(mesh, opacity,
-                        preference=kwargs.get('preference', 'cell'), err=True)
+                                    preference=kwargs.get('preference', 'cell'), err=True)
                 opacity = normalize(opacity)
                 _custom_opac = True
             except:
@@ -887,7 +887,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 opacity = opacity_transfer_function(opacity, n_colors)
 
-        if use_transparency and np.max(opacity) <=1.0:
+        if use_transparency and np.max(opacity) <= 1.0:
             opacity = 1 - opacity
         elif use_transparency and isinstance(opacity, np.ndarray):
             opacity = 255 - opacity
@@ -1041,9 +1041,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif style == 'surface':
             prop.SetRepresentationToSurface()
         else:
-            raise Exception('Invalid style.  Must be one of the following:\n' +
-                            '\t"surface"\n' +
-                            '\t"wireframe"\n' +
+            raise Exception('Invalid style.  Must be one of the following:\n'
+                            '\t"surface"\n'
+                            '\t"wireframe"\n'
                             '\t"points"\n')
 
         prop.SetPointSize(point_size)
@@ -1270,7 +1270,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if resolution is None:
                     try:
                         block_resolution = block.GetSpacing()
-                    except:
+                    except AttributeError:
                         block_resolution = resolution
                 else:
                     block_resolution = resolution
@@ -1312,7 +1312,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(scalars, str):
             title = scalars
             scalars = get_array(volume, scalars,
-                    preference=kwargs.get('preference', 'point'), err=True)
+                                preference=kwargs.get('preference', 'point'), err=True)
             if stitle is None:
                 stitle = title
         else:
@@ -1333,10 +1333,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Define mapper, volume, and add the correct properties
         mappers = {
-            'fixed_point' : vtk.vtkFixedPointVolumeRayCastMapper,
-            'gpu' : vtk.vtkGPUVolumeRayCastMapper,
-            'open_gl' : vtk.vtkOpenGLGPUVolumeRayCastMapper,
-            'smart' : vtk.vtkSmartVolumeMapper,
+            'fixed_point': vtk.vtkFixedPointVolumeRayCastMapper,
+            'gpu': vtk.vtkGPUVolumeRayCastMapper,
+            'open_gl': vtk.vtkOpenGLGPUVolumeRayCastMapper,
+            'smart': vtk.vtkSmartVolumeMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers.keys():
             raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
@@ -1443,7 +1443,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetBlendModeToMinimumIntensity()
         else:
             raise ValueError('Blending mode \'{}\' invalid. '.format(blending) +
-                             'Please choose one ' + 'of \'additive\', ' +
+                             'Please choose one ' + 'of \'additive\', '
                              '\'composite\', \'minimum\' or ' + '\'maximum\'.')
         self.mapper.Update()
 
@@ -1629,7 +1629,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
         return renderer.add_actor(uinput=uinput, reset_camera=reset_camera,
-                    name=name, culling=culling, pickable=pickable)
+                                  name=name, culling=culling, pickable=pickable)
 
     def loc_to_index(self, loc):
         """
@@ -1701,8 +1701,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.disable_parallel_projection()
 
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
-                    xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
-                    labels_off=False, loc=None):
+                           xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
+                           labels_off=False, loc=None):
         """
         Add axes actor at the origin of a render window.
 
@@ -1725,14 +1725,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderers[self._active_renderer_index].add_axes_at_origin(**kwargs)
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
-                        show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                        show_ylabels=True, show_zlabels=True, italic=False,
-                        bold=True, shadow=False, font_size=None,
-                        font_family=None, color=None,
-                        xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                        use_2d=False, grid=None, location='closest', ticks=None,
-                        all_edges=False, corner_factor=0.5, fmt=None,
-                        minor_ticks=False, loc=None, padding=0.0):
+                    show_yaxis=True, show_zaxis=True, show_xlabels=True,
+                    show_ylabels=True, show_zlabels=True, italic=False,
+                    bold=True, shadow=False, font_size=None,
+                    font_family=None, color=None,
+                    xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
+                    use_2d=False, grid=None, location='closest', ticks=None,
+                    all_edges=False, corner_factor=0.5, fmt=None,
+                    minor_ticks=False, loc=None, padding=0.0):
         """
         Adds bounds axes.  Shows the bounds of the most recent input
         mesh unless mesh is specified.
@@ -1946,7 +1946,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Index of the subplot to activate along the columns.
 
         """
-        if len(self.shape)==1:
+        if len(self.shape) == 1:
             self._active_renderer_index = index_row
             return
 
@@ -2171,7 +2171,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # check if maper exists
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
-                raise Exception('Mapper does not exist.  ' +
+                raise Exception('Mapper does not exist.  '
                                 'Add a mesh with scalars first.')
             mapper = self.mapper
 
@@ -2545,14 +2545,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             position = [x, y]
 
         corner_mappings = {
-            'lower_left' : vtk.vtkCornerAnnotation.LowerLeft,
-            'lower_right' : vtk.vtkCornerAnnotation.LowerRight,
-            'upper_left' : vtk.vtkCornerAnnotation.UpperLeft,
-            'upper_right' : vtk.vtkCornerAnnotation.UpperRight,
-            'lower_edge' : vtk.vtkCornerAnnotation.LowerEdge,
-            'upper_edge' : vtk.vtkCornerAnnotation.UpperEdge,
-            'left_edge' : vtk.vtkCornerAnnotation.LeftEdge,
-            'right_edge' : vtk.vtkCornerAnnotation.RightEdge,
+            'lower_left': vtk.vtkCornerAnnotation.LowerLeft,
+            'lower_right': vtk.vtkCornerAnnotation.LowerRight,
+            'upper_left': vtk.vtkCornerAnnotation.UpperLeft,
+            'upper_right': vtk.vtkCornerAnnotation.UpperRight,
+            'lower_edge': vtk.vtkCornerAnnotation.LowerEdge,
+            'upper_edge': vtk.vtkCornerAnnotation.UpperEdge,
+            'left_edge': vtk.vtkCornerAnnotation.LeftEdge,
+            'right_edge': vtk.vtkCornerAnnotation.RightEdge,
 
         }
         corner_mappings['ll'] = corner_mappings['lower_left']
@@ -2569,7 +2569,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(position, (int, str, bool)):
             if isinstance(position, str):
                 position = corner_mappings[position]
-            elif position == True:
+            elif position is True:
                 position = corner_mappings['upper_left']
             self.textActor = vtk.vtkCornerAnnotation()
             # This is how you set the font size with this actor
@@ -2703,7 +2703,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
         # Consider image values outside clipping range as nans
-        args = np.logical_or(zval < -far, np.isclose(zval, -far) )
+        args = np.logical_or(zval < -far, np.isclose(zval, -far))
         self._image_depth_null = args
         if fill_value is not None:
             zval[args] = fill_value
@@ -3197,9 +3197,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if labels is None:
             # use existing labels
             if not self._labels:
-                raise Exception('No labels input.\n\n' +
-                                'Add labels to individual items when adding them to' +
-                                'the plotting object with the "label=" parameter.  ' +
+                raise Exception('No labels input.\n\n'
+                                'Add labels to individual items when adding them to'
+                                'the plotting object with the "label=" parameter.  '
                                 'or enter them as the "labels" parameter.')
 
             self.legend.SetNumberOfEntries(len(self._labels))
@@ -3310,7 +3310,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 color = pyvista.string_to_rgb(color)
 
-        if loc =='all':
+        if loc == 'all':
             for renderer in self.renderers:
                 renderer.SetBackground(color)
         else:
@@ -3724,7 +3724,7 @@ class Plotter(BasePlotter):
 
         # If user asked for screenshot, return as numpy array after camera
         # position
-        if return_img or screenshot == True:
+        if return_img or screenshot is True:
             return cpos, self.last_image
 
         # default to returning last used camera position

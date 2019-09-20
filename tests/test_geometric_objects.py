@@ -76,5 +76,3 @@ def test_disc():
 # def test_ellipsoid():
 #     geom = pyvista.Ellipsoid()
 #     assert np.any(geom.points)
-
-

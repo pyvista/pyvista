@@ -989,7 +989,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             else:
                 writer.SetDataModeToAscii()
         else:
-            raise Exception('Extension should be either ".vts" (xml) or' +
+            raise Exception('Extension should be either ".vts" (xml) or'
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)

@@ -110,7 +110,7 @@ class DataSetFilters(object):
         function = generate_plane(normal, origin)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
-                        invert=invert, value=value)
+                                                    invert=invert, value=value)
         if inplace:
             dataset.overwrite(result)
         else:
@@ -163,7 +163,7 @@ class DataSetFilters(object):
 
 
     def clip_surface(dataset, surface, invert=True, value=0.0,
-                          compute_distance=False):
+                     compute_distance=False):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
         This will return a :class:`pyvista.UnstructuredGrid` of the clipped
         mesh. Geometry of the input dataset will be preserved where possible -
@@ -199,7 +199,7 @@ class DataSetFilters(object):
             dataset['implicit_distance'] = pyvista.convert_array(dists)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
-                        invert=invert, value=value)
+                                                    invert=invert, value=value)
         return result
 
 
@@ -346,13 +346,14 @@ class DataSetFilters(object):
         for i in range(n):
             center[ax] = rng[i]
             slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
-                    generate_triangles=generate_triangles, contour=contour)
-            output[i, 'slice%.2d'%i] = slc
+                                       generate_triangles=generate_triangles,
+                                       contour=contour)
+            output[i, 'slice%.2d' % i] = slc
         return output
 
 
     def slice_along_line(dataset, line, generate_triangles=False,
-              contour=False):
+                         contour=False):
         """Slices a dataset using a polyline/spline as the path. This also works
         for lines generated with :func:`pyvista.Line`
 
@@ -532,7 +533,8 @@ class DataSetFilters(object):
             value = _get_val(percent, dmin, dmax)
         # Use the normal thresholding function on these values
         return DataSetFilters.threshold(dataset, value=value, scalars=scalars,
-                    invert=invert, continuous=continuous, preference=preference)
+                                        invert=invert, continuous=continuous,
+                                        preference=preference)
 
 
     def outline(dataset, generate_faces=False):
@@ -660,7 +662,7 @@ class DataSetFilters(object):
 
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
-                compute_gradients=False, compute_scalars=True,  rng=None,
+                compute_gradients=False, compute_scalars=True, rng=None,
                 preference='point'):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
         specifying the number of isosurfaces in the data range or an iterable set of
@@ -764,7 +766,7 @@ class DataSetFilters(object):
             b = dataset.GetBounds()
             origin = [b[0], b[2], b[4]]   # BOTTOM LEFT CORNER
             point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
-            point_v = [ b[0], b[3], b[4]] # TOP LEFT CORNER
+            point_v = [b[0], b[3], b[4]] # TOP LEFT CORNER
         alg = vtk.vtkTextureMapToPlane()
         if origin is None or point_u is None or point_v is None:
             alg.SetAutomaticPlaneGeneration(True)
@@ -1197,7 +1199,7 @@ class DataSetFilters(object):
 
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
-                    pass_point_arrays=True):
+               pass_point_arrays=True):
         """Resample scalar data from a passed mesh onto this mesh using
         :class:`vtk.vtkResampleWithDataSet`.
 
@@ -1233,8 +1235,8 @@ class DataSetFilters(object):
 
 
     def interpolate(dataset, points, sharpness=2, radius=1.0,
-            dimensions=(101, 101, 101), pass_cell_arrays=True,
-            pass_point_arrays=True, null_value=0.0):
+                    dimensions=(101, 101, 101), pass_cell_arrays=True,
+                    pass_point_arrays=True, null_value=0.0):
         """Interpolate values onto this mesh from the point data of a given
         :class:`pyvista.PolyData` object (typically a point cloud).
 
@@ -1288,8 +1290,8 @@ class DataSetFilters(object):
         interpolator.Update()
 
         return dataset.sample(interpolator.GetOutput(),
-                    pass_cell_arrays=pass_cell_arrays,
-                    pass_point_arrays=pass_point_arrays)
+                              pass_cell_arrays=pass_cell_arrays,
+                              pass_point_arrays=pass_point_arrays)
 
     def streamlines(dataset, vectors=None, source_center=None,
                     source_radius=None, n_points=100,
@@ -1435,7 +1437,7 @@ class DataSetFilters(object):
             source = vtk.vtkPointSource()
             source.SetCenter(source_center)
             source.SetRadius(source_radius)
-            source.SetNumberOfPoints(n_points);
+            source.SetNumberOfPoints(n_points)
         # Build the algorithm
         alg = vtk.vtkStreamTracer()
         # Inputs
@@ -1578,7 +1580,7 @@ class DataSetFilters(object):
         else:
             plt.title(title)
         if show:
-         return plt.show()
+            return plt.show()
 
 
     def extract_cells(dataset, ind):
@@ -1736,8 +1738,8 @@ class DataSetFilters(object):
 
 
     def extract_edges(dataset, feature_angle=30, boundary_edges=True,
-                     non_manifold_edges=True, feature_edges=True,
-                     manifold_edges=True, inplace=False):
+                      non_manifold_edges=True, feature_edges=True,
+                      manifold_edges=True, inplace=False):
         """
         Extracts edges from the surface of the mesh. If the given mesh is not
         PolyData, the external surface of the given mesh is extracted and used.
@@ -1920,35 +1922,35 @@ class DataSetFilters(object):
         """
         alg = vtk.vtkCellQuality()
         measure_setters = {
-            'area' : alg.SetQualityMeasureToArea,
-            'aspect_beta' : alg.SetQualityMeasureToAspectBeta,
-            'aspect_frobenius' : alg.SetQualityMeasureToAspectFrobenius,
-            'aspect_gamma' : alg.SetQualityMeasureToAspectGamma,
-            'aspect_ratio' : alg.SetQualityMeasureToAspectRatio,
-            'collapse_ratio' : alg.SetQualityMeasureToCollapseRatio,
-            'condition' : alg.SetQualityMeasureToCondition,
-            'diagonal' : alg.SetQualityMeasureToDiagonal,
-            'dimension' : alg.SetQualityMeasureToDimension,
-            'distortion' : alg.SetQualityMeasureToDistortion,
-            'jacobian' : alg.SetQualityMeasureToJacobian,
-            'max_angle' : alg.SetQualityMeasureToMaxAngle,
-            'max_aspect_frobenius' : alg.SetQualityMeasureToMaxAspectFrobenius,
-            'max_edge_ratio' : alg.SetQualityMeasureToMaxEdgeRatio,
-            'med_aspect_frobenius' : alg.SetQualityMeasureToMedAspectFrobenius,
-            'min_angle' : alg.SetQualityMeasureToMinAngle,
-            'oddy' : alg.SetQualityMeasureToOddy,
-            'radius_ratio' : alg.SetQualityMeasureToRadiusRatio,
-            'relative_size_squared' : alg.SetQualityMeasureToRelativeSizeSquared,
-            'scaled_jacobian' : alg.SetQualityMeasureToScaledJacobian,
-            'shape' : alg.SetQualityMeasureToShape,
-            'shape_and_size' : alg.SetQualityMeasureToShapeAndSize,
-            'shear' : alg.SetQualityMeasureToShear,
-            'shear_and_size' : alg.SetQualityMeasureToShearAndSize,
-            'skew' : alg.SetQualityMeasureToSkew,
-            'stretch' : alg.SetQualityMeasureToStretch,
-            'taper' : alg.SetQualityMeasureToTaper,
-            'volume' : alg.SetQualityMeasureToVolume,
-            'warpage' : alg.SetQualityMeasureToWarpage
+            'area': alg.SetQualityMeasureToArea,
+            'aspect_beta': alg.SetQualityMeasureToAspectBeta,
+            'aspect_frobenius': alg.SetQualityMeasureToAspectFrobenius,
+            'aspect_gamma': alg.SetQualityMeasureToAspectGamma,
+            'aspect_ratio': alg.SetQualityMeasureToAspectRatio,
+            'collapse_ratio': alg.SetQualityMeasureToCollapseRatio,
+            'condition': alg.SetQualityMeasureToCondition,
+            'diagonal': alg.SetQualityMeasureToDiagonal,
+            'dimension': alg.SetQualityMeasureToDimension,
+            'distortion': alg.SetQualityMeasureToDistortion,
+            'jacobian': alg.SetQualityMeasureToJacobian,
+            'max_angle': alg.SetQualityMeasureToMaxAngle,
+            'max_aspect_frobenius': alg.SetQualityMeasureToMaxAspectFrobenius,
+            'max_edge_ratio': alg.SetQualityMeasureToMaxEdgeRatio,
+            'med_aspect_frobenius': alg.SetQualityMeasureToMedAspectFrobenius,
+            'min_angle': alg.SetQualityMeasureToMinAngle,
+            'oddy': alg.SetQualityMeasureToOddy,
+            'radius_ratio': alg.SetQualityMeasureToRadiusRatio,
+            'relative_size_squared': alg.SetQualityMeasureToRelativeSizeSquared,
+            'scaled_jacobian': alg.SetQualityMeasureToScaledJacobian,
+            'shape': alg.SetQualityMeasureToShape,
+            'shape_and_size': alg.SetQualityMeasureToShapeAndSize,
+            'shear': alg.SetQualityMeasureToShear,
+            'shear_and_size': alg.SetQualityMeasureToShearAndSize,
+            'skew': alg.SetQualityMeasureToSkew,
+            'stretch': alg.SetQualityMeasureToStretch,
+            'taper': alg.SetQualityMeasureToTaper,
+            'volume': alg.SetQualityMeasureToVolume,
+            'warpage': alg.SetQualityMeasureToWarpage
         }
         try:
             # Set user specified quality measure
@@ -2315,7 +2317,7 @@ class PolyDataFilters(DataSetFilters):
         elif curv_type == 'minimum':
             curvefilter.SetCurvatureTypeToMinimum()
         else:
-            raise Exception('Curv_Type must be either "Mean", ' +
+            raise Exception('Curv_Type must be either "Mean", '
                             '"Gaussian", "Maximum", or "Minimum"')
         curvefilter.Update()
 
@@ -2347,7 +2349,7 @@ class PolyDataFilters(DataSetFilters):
             List of camera position, focal point, and view up
         """
         return poly_data.plot(scalars=poly_data.curvature(curv_type),
-                         stitle='%s\nCurvature' % curv_type, **kwargs)
+                              stitle='%s\nCurvature' % curv_type, **kwargs)
 
 
     def triangulate(poly_data, inplace=False):
@@ -2629,7 +2631,7 @@ class PolyDataFilters(DataSetFilters):
         elif subfilter == 'loop':
             sfilter = vtk.vtkLoopSubdivisionFilter()
         else:
-            raise Exception("Subdivision filter must be one of the following: " +
+            raise Exception("Subdivision filter must be one of the following: "
                             "'butterfly', 'loop', or 'linear'")
 
         # Subdivide
@@ -2883,7 +2885,7 @@ class PolyDataFilters(DataSetFilters):
             Mesh with holes filled.  None when inplace=True
 
         """
-        logging.warning('pyvista.PolyData.fill_holes is known to segfault. ' +
+        logging.warning('pyvista.PolyData.fill_holes is known to segfault. '
                         'Use at your own risk')
         fill = vtk.vtkFillHolesFilter()
         fill.SetHoleSize(hole_size)
@@ -3103,7 +3105,7 @@ class PolyDataFilters(DataSetFilters):
         edges = DataSetFilters.extract_edges(poly_data)
 
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
-                               notebook=kwargs.pop('notebook', None))
+                                  notebook=kwargs.pop('notebook', None))
         plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
         plotter.add_mesh(poly_data, legend='Mesh', **kwargs)
         return plotter.show()
@@ -3115,7 +3117,7 @@ class PolyDataFilters(DataSetFilters):
         Plot the point normals of a mesh.
         """
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
-                               notebook=kwargs.pop('notebook', None))
+                                  notebook=kwargs.pop('notebook', None))
         if show_mesh:
             plotter.add_mesh(poly_data, **kwargs)
 
@@ -3244,7 +3246,7 @@ class PolyDataFilters(DataSetFilters):
 
     def delauney_2d(poly_data):
         """DEPRECATED. Please see :func:`pyvista.PolyData.delaunay_2d`"""
-        raise AttributeError('`delauney_2d` is deprecated because we made a '\
+        raise AttributeError('`delauney_2d` is deprecated because we made a '
                              'spelling mistake. Please use `delaunay_2d`.')
 
 
@@ -3360,4 +3362,5 @@ class UnstructuredGridFilters(DataSetFilters):
         extracts the grid's points and perfoms the triangulation on those alone.
         """
         return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
-                                                 offset=offset, bound=bound)
+                                                          offset=offset,
+                                                          bound=bound)

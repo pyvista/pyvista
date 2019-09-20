@@ -20,7 +20,7 @@ def test_point_arrays():
 
     orig_value = grid.point_arrays[key][0]/1.0
     grid.point_arrays[key][0] += 1
-    assert orig_value == grid._point_array(key)[0] -1
+    assert orig_value == grid._point_array(key)[0] - 1
 
     del grid.point_arrays[key]
     assert key not in grid.point_arrays
@@ -55,7 +55,7 @@ def test_cell_arrays():
 
     orig_value = grid.cell_arrays[key][0]/1.0
     grid.cell_arrays[key][0] += 1
-    assert orig_value == grid.cell_arrays[key][0] -1
+    assert orig_value == grid.cell_arrays[key][0] - 1
 
     del grid.cell_arrays[key]
     assert key not in grid.cell_arrays
@@ -91,7 +91,7 @@ def test_field_arrays():
 
     orig_value = grid.field_arrays[key][0]/1.0
     grid.field_arrays[key][0] += 1
-    assert orig_value == grid.field_arrays[key][0] -1
+    assert orig_value == grid.field_arrays[key][0] - 1
 
     assert key in grid.array_names
 
@@ -292,7 +292,7 @@ def test_bitarray_points():
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
-        value = i%2
+        value = i % 2
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
@@ -308,7 +308,7 @@ def test_bitarray_cells():
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
-        value = i%2
+        value = i % 2
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
@@ -324,7 +324,7 @@ def test_bitarray_field():
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
-        value = i%2
+        value = i % 2
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
@@ -591,8 +591,8 @@ def test_scalars_dict_update():
     mesh = examples.load_uniform()
     n = len(mesh.point_arrays)
     arrays = {
-        'foo' : np.arange(mesh.n_points),
-        'rand' : np.random.random(mesh.n_points)
+        'foo': np.arange(mesh.n_points),
+        'rand': np.random.random(mesh.n_points)
     }
     mesh.point_arrays.update(arrays)
     assert 'foo' in mesh.array_names

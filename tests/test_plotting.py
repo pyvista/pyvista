@@ -42,18 +42,19 @@ def test_plot(tmpdir):
     filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.png')
     scalars = np.arange(sphere.n_points)
     cpos, img = pyvista.plot(sphere,
-                          off_screen=OFF_SCREEN,
-                          full_screen=True,
-                          text='this is a sphere',
-                          show_bounds=True,
-                          color='r',
-                          style='wireframe',
-                          line_width=10,
-                          scalars=scalars,
-                          flip_scalars=True,
-                          cmap='bwr',
-                          interpolate_before_map=True,
-                          screenshot=filename, return_img=True)
+                             off_screen=OFF_SCREEN,
+                             full_screen=True,
+                             text='this is a sphere',
+                             show_bounds=True,
+                             color='r',
+                             style='wireframe',
+                             line_width=10,
+                             scalars=scalars,
+                             flip_scalars=True,
+                             cmap='bwr',
+                             interpolate_before_map=True,
+                             screenshot=filename,
+                             return_img=True)
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
@@ -170,7 +171,7 @@ def test_plot_add_scalar_bar():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
-                interactive=True, vertical=True)
+                           interactive=True, vertical=True)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -183,12 +184,12 @@ def test_plot_invalid_add_scalar_bar():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_list():
     pyvista.plot([sphere, sphere_b],
-              off_screen=OFF_SCREEN,
-              style='points')
+                 off_screen=OFF_SCREEN,
+                 style='points')
 
     pyvista.plot([sphere, sphere_b, sphere_c],
-              off_screen=OFF_SCREEN,
-              style='wireframe')
+                 off_screen=OFF_SCREEN,
+                 style='wireframe')
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_lines_invalid():
@@ -457,16 +458,16 @@ def test_plot_rgb():
     """"Test adding a texture to a plot"""
     cube = pyvista.Cube()
     cube.clear_arrays()
-    x_face_color=(255, 0, 0)
-    y_face_color=(0, 255, 0)
-    z_face_color=(0, 0, 255)
+    x_face_color = (255, 0, 0)
+    y_face_color = (0, 255, 0)
+    z_face_color = (0, 0, 255)
     face_colors = np.array([x_face_color,
                             x_face_color,
                             y_face_color,
                             y_face_color,
                             z_face_color,
                             z_face_color,
-                           ], dtype=np.uint8)
+                            ], dtype=np.uint8)
     cube.cell_arrays['face_colors'] = face_colors
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(cube, scalars='face_colors', rgb=True)
@@ -685,9 +686,9 @@ def test_volume_rendering():
 
     # Now test MultiBlock rendering
     data = pyvista.MultiBlock(dict(a=examples.load_uniform(),
-            b=examples.load_uniform(),
-            c=examples.load_uniform(),
-            d=examples.load_uniform(),))
+                                   b=examples.load_uniform(),
+                                   c=examples.load_uniform(),
+                                   d=examples.load_uniform(),))
     data['a'].rename_scalar('Spatial Point Data', 'a')
     data['b'].rename_scalar('Spatial Point Data', 'b')
     data['c'].rename_scalar('Spatial Point Data', 'c')
@@ -704,8 +705,9 @@ def test_plot_compar_four():
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
     data_d = mesh.glyph()
-    pyvista.plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs={'color':'w'},
-                      plotter_kwargs={'off_screen':OFF_SCREEN},)
+    pyvista.plot_compare_four(data_a, data_b, data_c, data_d,
+                              disply_kwargs={'color':'w'},
+                              plotter_kwargs={'off_screen':OFF_SCREEN},)
     return
 
 
@@ -790,7 +792,7 @@ def test_closing_and_mem_cleanup():
 def test_above_below_scalar_range_annotations():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
-           below_color='blue', above_color='red')
+               below_color='blue', above_color='red')
     p.show()
 
 

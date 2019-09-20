@@ -55,7 +55,7 @@ class Renderer(vtkRenderer):
         coordinate.SetCoordinateSystemToNormalizedViewport()
 
         mapper = vtk.vtkPolyDataMapper2D()
-        mapper.SetInputData(poly);
+        mapper.SetInputData(poly)
         mapper.SetTransformCoordinate(coordinate)
 
         actor = vtk.vtkActor2D()
@@ -139,8 +139,8 @@ class Renderer(vtkRenderer):
 
 
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
-                    xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
-                    labels_off=False):
+                           xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
+                           labels_off=False):
         """
         Add axes actor at origin
 
@@ -683,7 +683,7 @@ class Renderer(vtkRenderer):
         for actor in self._actors.values():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
-            if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
+            if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
                  and id(actor) != id(self.bounding_box_actor)):
                 _update_bounds(actor.GetBounds())
 

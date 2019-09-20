@@ -134,11 +134,11 @@ class WidgetHelper(object):
             self.box_clipped_mesh.ShallowCopy(alg.GetOutput(port))
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
-                factor=1.25, rotation_enabled=rotation_enabled,
-                use_planes=True, color=widget_color)
+                               factor=1.25, rotation_enabled=rotation_enabled,
+                               use_planes=True, color=widget_color)
 
         actor = self.add_mesh(self.box_clipped_mesh, reset_camera=False,
-                      **kwargs)
+                              **kwargs)
 
         return actor
 
@@ -412,7 +412,7 @@ class WidgetHelper(object):
 
 
     def enable_slider_widget(self, callback, rng, value=None, title=None,
-                             pointa=(.4 ,.9), pointb=(.9, .9),
+                             pointa=(.4, .9), pointb=(.9, .9),
                              color=None):
         """Add a slider bar widget. This is useless without a callback
         function. You can pass a callable function that takes a single
@@ -465,7 +465,7 @@ class WidgetHelper(object):
         slider_rep.GetLabelProperty().SetColor(parse_color(color))
         slider_rep.GetTubeProperty().SetColor(parse_color(color))
         slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedViewport()
-        slider_rep.GetPoint1Coordinate().SetValue(.4 ,.9)
+        slider_rep.GetPoint1Coordinate().SetValue(.4, .9)
         slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedViewport()
         slider_rep.GetPoint2Coordinate().SetValue(.9, .9)
         slider_rep.SetSliderLength(0.05)
@@ -497,7 +497,7 @@ class WidgetHelper(object):
 
     def add_mesh_threshold(self, mesh, scalars=None, invert=False,
                            widget_color=None, preference='cell',
-                           title=None, pointa=(.4 ,.9), pointb=(.9, .9),
+                           title=None, pointa=(.4, .9), pointb=(.9, .9),
                            continuous=False, **kwargs):
         """Add a mesh to the scene with a slider widget that is used to
         threshold the mesh interactively.

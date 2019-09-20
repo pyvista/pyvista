@@ -353,8 +353,8 @@ class Table(vtk.vtkTable, DataObject):
 
 
     def save(self, *args, **kwargs):
-        raise NotImplementedError("Please use the `to_pandas` method and"
-                " harness Pandas' wonderful file IO methods.")
+        raise NotImplementedError("Please use the `to_pandas` method and "
+                                  "harness Pandas' wonderful file IO methods.")
 
 
     def get_data_range(self, arr=None, preference='row'):

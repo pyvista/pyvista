@@ -239,7 +239,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             writer = vtk.vtkXMLRectilinearGridWriter()
             legacy = False
         else:
-            raise Exception('Extension should be either ".vtr" (xml) or' +
+            raise Exception('Extension should be either ".vtr" (xml) or'
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
@@ -511,7 +511,7 @@ class UniformGrid(vtkImageData, Grid):
             writer = vtk.vtkXMLImageDataWriter()
             legacy = False
         else:
-            raise Exception('Extension should be either ".vti" (xml) or' +
+            raise Exception('Extension should be either ".vti" (xml) or'
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)

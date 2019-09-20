@@ -356,16 +356,16 @@ def wrap(vtkdataset):
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     """
     wrappers = {
-        'vtkUnstructuredGrid' : pyvista.UnstructuredGrid,
-        'vtkRectilinearGrid' : pyvista.RectilinearGrid,
-        'vtkStructuredGrid' : pyvista.StructuredGrid,
-        'vtkPolyData' : pyvista.PolyData,
-        'vtkImageData' : pyvista.UniformGrid,
-        'vtkStructuredPoints' : pyvista.UniformGrid,
-        'vtkMultiBlockDataSet' : pyvista.MultiBlock,
-        'vtkTable' : pyvista.Table,
-        # 'vtkParametricSpline' : pyvista.Spline,
-        }
+        'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
+        'vtkRectilinearGrid': pyvista.RectilinearGrid,
+        'vtkStructuredGrid': pyvista.StructuredGrid,
+        'vtkPolyData': pyvista.PolyData,
+        'vtkImageData': pyvista.UniformGrid,
+        'vtkStructuredPoints': pyvista.UniformGrid,
+        'vtkMultiBlockDataSet': pyvista.MultiBlock,
+        'vtkTable': pyvista.Table,
+        # 'vtkParametricSpline': pyvista.Spline,
+    }
     # Otherwise, we assume a VTK data object was passed
     if hasattr(vtkdataset, 'GetClassName'):
         key = vtkdataset.GetClassName()

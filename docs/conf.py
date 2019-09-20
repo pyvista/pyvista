@@ -35,7 +35,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_copybutton',
               'sphinx_gallery.gen_gallery',
               'sphinx.ext.extlinks',
-             ]
+              ]
 
 
 linkcheck_retries = 3
@@ -141,7 +141,7 @@ html_context = {
 # documentation.
 #
 html_theme_options = {
-    'logo_only' : True,
+    'logo_only': True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

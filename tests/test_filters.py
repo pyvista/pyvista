@@ -49,7 +49,7 @@ def test_clip_box():
 
 def test_clip_surface():
     surface = pyvista.Cone(direction=(0,0,-1),
-                  height=3.0, radius=1, resolution=50, )
+                           height=3.0, radius=1, resolution=50, )
     xx = yy = zz = 1 - np.linspace(0, 51, 51) * 2 / 50
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False)
@@ -94,7 +94,7 @@ def test_slice_orthogonal_filter():
 def test_slice_along_axis():
     """Test the many slices along axis filter """
     axii = ['x', 'y', 'z', 'y', 0]
-    ns =  [2, 3, 4, 10, 20, 13]
+    ns = [2, 3, 4, 10, 20, 13]
     for i, dataset in enumerate(DATASETS):
         slices = dataset.slice_along_axis(n=ns[i], axis=axii[i])
         assert slices is not None
@@ -300,8 +300,8 @@ def test_glyph():
     sphere = pyvista.Sphere(radius=3.14)
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
-    np.cos(sphere.points[:, 1]),
-    np.cos(sphere.points[:, 2]))).T
+                        np.cos(sphere.points[:, 1]),
+                        np.cos(sphere.points[:, 2]))).T
     # add and scale
     sphere.vectors = vectors*0.3
     sphere.point_arrays['foo'] = np.random.rand(sphere.n_points)
@@ -400,9 +400,9 @@ def test_resample():
 def test_streamlines():
     mesh = examples.download_carotid()
     stream, src = mesh.streamlines(return_source=True, max_time=100.0,
-                            initial_step_length=2., terminal_speed=0.1,
-                           n_points=25, source_radius=2.0,
-                           source_center=(133.1, 116.3, 5.0) )
+                                   initial_step_length=2., terminal_speed=0.1,
+                                   n_points=25, source_radius=2.0,
+                                   source_center=(133.1, 116.3, 5.0))
     assert stream.n_points > 0
     assert src.n_points == 25
 
@@ -417,7 +417,7 @@ def test_plot_over_line():
     # Test multicomponent
     mesh['foo'] = np.random.rand(mesh.n_cells, 3)
     mesh.plot_over_line(a, b, resolution=None, scalars='foo',
-        title='My Stuff', ylabel='3 Values', show=False)
+                        title='My Stuff', ylabel='3 Values', show=False)
 
 
 def test_slice_along_line():
