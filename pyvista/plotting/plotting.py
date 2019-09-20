@@ -28,6 +28,12 @@ from .theme import rcParams, parse_color, parse_font_family
 from .theme import FONT_KEYS, MAX_N_COLOR_BARS, PV_BACKGROUND
 from .widgets import WidgetHelper
 
+try:
+    import matplotlib
+    has_matplotlib = True
+except ImportError:
+    has_matplotlib = False
+
 _ALL_PLOTTERS = {}
 
 def close_all():
@@ -729,14 +735,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             if multi_colors:
                 # Compute unique colors for each index of the block
-                try:
-                    import matplotlib as mpl
+                if has_matplotlib:
                     from itertools import cycle
-                    cycler = mpl.rcParams['axes.prop_cycle']
+                    cycler = matplotlib.rcParams['axes.prop_cycle']
                     colors = cycle(cycler)
-                except ImportError:
+                else:
                     multi_colors = False
                     logging.warning('Please install matplotlib for color cycles')
+
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(mesh.GetNumberOfBlocks()):
@@ -887,11 +893,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
         if cmap is None: # Set default map if matplotlib is avaialble
-            try:
-                import matplotlib
+            if has_matplotlib:
                 cmap = rcParams['cmap']
-            except ImportError:
-                pass
         # Set the array title for when it is added back to the mesh
         if _custom_opac:
             title = '__custom_rgba'
@@ -985,12 +988,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
-                try:
-                    from matplotlib.cm import get_cmap
-                except ImportError:
+                if not has_matplotlib:
                     cmap = None
                     logging.warning('Please install matplotlib for color maps.')
-            if cmap is not None:
+
                 cmap = get_cmap_safe(cmap)
                 if categories:
                     if categories is True:
@@ -1379,18 +1380,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
             if cmap is None: # Set default map if matplotlib is avaialble
-                try:
-                    import matplotlib
+                if has_matplotlib:
                     cmap = rcParams['cmap']
-                except ImportError:
-                    pass
+
         if cmap is not None:
-            try:
-                from matplotlib.cm import get_cmap
-            except ImportError:
+            if not has_matplotlib:
                 cmap = None
                 raise RuntimeError('Please install matplotlib for volume rendering.')
-        if cmap is not None:
+
             cmap = get_cmap_safe(cmap)
             if categories:
                 if categories is True:
