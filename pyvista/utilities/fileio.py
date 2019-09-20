@@ -7,6 +7,8 @@ import vtk
 
 import pyvista
 
+import imageio
+
 READERS = {
     # Standard dataset readers:
     '.vtk': vtk.vtkDataSetReader,

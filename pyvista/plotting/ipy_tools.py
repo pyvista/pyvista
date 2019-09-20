@@ -4,7 +4,7 @@ Jupyter notebook.
 """
 IPY_AVAILABLE = False
 try:
-    from ipywidgets import interact, interactive
+    from ipywidgets import interact
     import ipywidgets as widgets
     IPY_AVAILABLE = True
 except ImportError:
@@ -172,7 +172,7 @@ class InteractiveTool(object):
                     loc=self.loc)
         # add the axis labels
         if show_bounds:
-            self.plotter.show_bounds(reset_camera=False, loc=loc)
+            self.plotter.show_bounds(reset_camera=False, loc=self.loc)
         if reset_camera:
             cpos = self.plotter.get_default_cam_pos()
             self.plotter.camera_position = cpos

@@ -1,7 +1,6 @@
 """
 Sub-classes for vtk.vtkPolyData
 """
-import collections
 import logging
 import os
 
@@ -17,10 +16,9 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities import generate_plane, get_array
 
 from .common import Common
-from .filters import _get_output, PolyDataFilters, UnstructuredGridFilters
+from .filters import PolyDataFilters, UnstructuredGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

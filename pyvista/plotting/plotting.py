@@ -22,9 +22,17 @@ from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .theme import *
-from .tools import *
+from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
+from .tools import normalize, opacity_transfer_function
+from .theme import rcParams, parse_color, parse_font_family
+from .theme import FONT_KEYS, MAX_N_COLOR_BARS, PV_BACKGROUND
 from .widgets import WidgetHelper
+
+try:
+    import matplotlib
+    has_matplotlib = True
+except ImportError:
+    has_matplotlib = False
 
 _ALL_PLOTTERS = {}
 
@@ -52,6 +60,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one renderer.
+        Can also accept a shape as string descriptor. E.g.:
+            shape="3|1" means 3 plots on the left and 1 on the right,
+            shape="4/2" means 4 plots on top of 2 at bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.
@@ -74,7 +85,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return object.__new__(cls)
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
-                 border_width=2.0, title=None):
+                 border_width=2.0, title=None, splitting_position=None):
         """ Initialize base plotter """
         self.image_transparent_background = rcParams['transparent_background']
 
@@ -90,22 +101,63 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 border = False
 
         # add render windows
-        self.renderers = []
         self._active_renderer_index = 0
-        assert_str = '"shape" should be a list or tuple'
-        assert isinstance(shape, collections.Iterable), assert_str
-        assert shape[0] > 0, '"shape" must be positive'
-        assert shape[1] > 0, '"shape" must be positive'
-        self.shape = shape
-        for i in reversed(range(shape[0])):
-            for j in range(shape[1]):
-                renderer = pyvista.Renderer(self, border, border_color, border_width)
-                x0 = i/shape[0]
-                y0 = j/shape[1]
-                x1 = (i+1)/shape[0]
-                y1 = (j+1)/shape[1]
-                renderer.SetViewport(y0, x0, y1, x1)
-                self.renderers.append(renderer)
+        self.renderers = []
+
+        if isinstance(shape, str):
+
+            if '|' in shape:
+                n = int(shape.split('|')[0])
+                m = int(shape.split('|')[1])
+                rangen = reversed(range(n))
+                rangem = reversed(range(m))
+            else:
+                m = int(shape.split('/')[0])
+                n = int(shape.split('/')[1])
+                rangen = range(n)
+                rangem = range(m)
+
+            if n>=m:
+                xsplit = m/(n+m)
+            else:
+                xsplit = 1-n/(n+m)
+
+            if splitting_position:
+                xsplit = rcParams['multi_rendering_splitting_position']
+
+            for i in rangen:
+                arenderer = pyvista.Renderer(self, border, border_color, border_width)
+                if '|' in shape:
+                    arenderer.SetViewport(0,  i/n, xsplit, (i+1)/n)
+                else:
+                    arenderer.SetViewport(i/n, 0,  (i+1)/n, xsplit )
+                self.renderers.append(arenderer)
+            for i in rangem:
+                arenderer = pyvista.Renderer(self, border, border_color, border_width)
+                if '|' in shape:
+                    arenderer.SetViewport(xsplit, i/m, 1, (i+1)/m)
+                else:
+                    arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
+                self.renderers.append(arenderer)
+
+                self.shape = (n+m,)
+
+        else:
+
+            assert_str = '"shape" should be a list, tuple or string descriptor'
+            assert isinstance(shape, collections.Iterable), assert_str
+            assert shape[0] > 0, '"shape" must be positive'
+            assert shape[1] > 0, '"shape" must be positive'
+            self.shape = shape
+            for i in reversed(range(shape[0])):
+                for j in range(shape[1]):
+                    renderer = pyvista.Renderer(self, border, border_color, border_width)
+                    x0 = i/shape[0]
+                    y0 = j/shape[1]
+                    x1 = (i+1)/shape[0]
+                    y1 = (j+1)/shape[1]
+                    renderer.SetViewport(y0, x0, y1, x1)
+                    self.renderers.append(renderer)
 
 
         # This keeps track of scalar names already plotted and their ranges
@@ -683,14 +735,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             if multi_colors:
                 # Compute unique colors for each index of the block
-                try:
-                    import matplotlib as mpl
+                if has_matplotlib:
                     from itertools import cycle
-                    cycler = mpl.rcParams['axes.prop_cycle']
+                    cycler = matplotlib.rcParams['axes.prop_cycle']
                     colors = cycle(cycler)
-                except ImportError:
+                else:
                     multi_colors = False
                     logging.warning('Please install matplotlib for color cycles')
+
             # Now iteratively plot each element of the multiblock dataset
             actors = []
             for idx in range(mesh.GetNumberOfBlocks()):
@@ -841,11 +893,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
         if cmap is None: # Set default map if matplotlib is avaialble
-            try:
-                import matplotlib
+            if has_matplotlib:
                 cmap = rcParams['cmap']
-            except ImportError:
-                pass
         # Set the array title for when it is added back to the mesh
         if _custom_opac:
             title = '__custom_rgba'
@@ -939,12 +988,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('below_label', 'Below')
 
             if cmap is not None:
-                try:
-                    from matplotlib.cm import get_cmap
-                except ImportError:
+                if not has_matplotlib:
                     cmap = None
                     logging.warning('Please install matplotlib for color maps.')
-            if cmap is not None:
+
                 cmap = get_cmap_safe(cmap)
                 if categories:
                     if categories is True:
@@ -1333,18 +1380,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if cmap is None: # grab alias for cmaps: colormap
             cmap = kwargs.get('colormap', None)
             if cmap is None: # Set default map if matplotlib is avaialble
-                try:
-                    import matplotlib
+                if has_matplotlib:
                     cmap = rcParams['cmap']
-                except ImportError:
-                    pass
+
         if cmap is not None:
-            try:
-                from matplotlib.cm import get_cmap
-            except ImportError:
+            if not has_matplotlib:
                 cmap = None
                 raise RuntimeError('Please install matplotlib for volume rendering.')
-        if cmap is not None:
+
             cmap = get_cmap_safe(cmap)
             if categories:
                 if categories is True:
@@ -1621,6 +1664,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid
         """
+        if len(self.shape) == 1:
+            return index
         sz = int(self.shape[0] * self.shape[1])
         idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
         args = np.argwhere(idxs == index)
@@ -1885,7 +1930,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer = self.renderers[self._active_renderer_index]
         renderer.remove_bounds_axes()
 
-    def subplot(self, index_row, index_column):
+    def subplot(self, index_row, index_column=None):
         """
         Sets the active subplot.
 
@@ -1898,6 +1943,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Index of the subplot to activate along the columns.
 
         """
+        if len(self.shape)==1:
+            self._active_renderer_index = index_row
+            return
+
         if index_row < 0 or index_row >= self.shape[0]:
             raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
         if index_column < 0 or index_column >= self.shape[1]:
@@ -2277,7 +2326,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if interactive is None:
             interactive = rcParams['interactive']
-            if shape != (1, 1):
+            if self.shape != (1, 1):
                 interactive = False
         elif interactive and self.shape != (1, 1):
             err_str = 'Interactive scalar bars disabled for multi-renderer plots'
@@ -2646,7 +2695,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert z-buffer values to depth from camera
         near, far = self.camera.GetClippingRange()
         if self.camera.GetParallelProjection():
-            z_val = (zbuff - near) / (far - near)
+            zval = (zbuff - near) / (far - near)
         else:
             zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
@@ -3422,8 +3471,10 @@ class Plotter(BasePlotter):
     shape : list or tuple, optional
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
-        with ``shape=(2, 2)``.  By default there is only one render
-        window.
+        with ``shape=(2, 2)``.  By default there is only one render window.
+        Can also accept a shape as string descriptor. E.g.:
+            shape="3|1" means 3 plots on the left and 1 on the right,
+            shape="4/2" means 4 plots on top of 2 at bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.

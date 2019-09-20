@@ -5,17 +5,13 @@ Supporting functions for polydata and grid objects
 import collections
 import ctypes
 import logging
-import os
 
-import imageio
 import numpy as np
 import scooby
 import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
-
-from .fileio import get_ext, get_reader, standard_reader_routine
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1

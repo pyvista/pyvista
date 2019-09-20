@@ -60,6 +60,7 @@ rcParams = {
         'box': False,
     },
     'multi_samples' : 4,
+    'multi_rendering_splitting_position': None,
 }
 
 DEFAULT_THEME = dict(rcParams)

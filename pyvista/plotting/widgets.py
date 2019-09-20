@@ -1,10 +1,9 @@
-import logging
 import vtk
 
 import pyvista
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
 
-from .theme import *
+from .theme import rcParams, parse_color
 
 
 class WidgetHelper(object):
@@ -114,7 +113,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         port = 1 if invert else 0
 
@@ -256,7 +255,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         if isinstance(mesh, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -313,7 +312,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', str(hex(id(mesh))))
         kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
 
-        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         alg = vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
@@ -534,7 +533,7 @@ class WidgetHelper(object):
         if title is None:
             title = scalars
 
-        _ = self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
         alg = vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
