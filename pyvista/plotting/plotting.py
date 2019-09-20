@@ -117,13 +117,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 rangen = range(n)
                 rangem = range(m)
 
-            if n>=m:
-                xsplit = m/(n+m)
-            else:
-                xsplit = 1-n/(n+m)
+            if splitting_position is None:
+                splitting_position = rcParams['multi_rendering_splitting_position']
 
-            if splitting_position:
-                xsplit = rcParams['multi_rendering_splitting_position']
+            if splitting_position is None:
+                if n>=m:
+                    xsplit = m/(n+m)
+                else:
+                    xsplit = 1-n/(n+m)
+            else:
+                xsplit = splitting_position
 
             for i in rangen:
                 arenderer = pyvista.Renderer(self, border, border_color, border_width)
@@ -3511,13 +3514,15 @@ class Plotter(BasePlotter):
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
-                 point_smoothing=False, polygon_smoothing=False):
+                 point_smoothing=False, polygon_smoothing=False,
+                 splitting_position=None):
         """
         Initialize a vtk plotting object
         """
         super(Plotter, self).__init__(shape=shape, border=border,
                                       border_color=border_color,
-                                      border_width=border_width)
+                                      border_width=border_width,
+                                      splitting_position=splitting_position)
         log.debug('Initializing')
 
         def on_timer(iren, event_id):

@@ -557,6 +557,35 @@ def test_multi_renderers():
         plotter.add_mesh(pyvista.Cube())
         plotter.show()
 
+
+    # Test subplot 3 on left, 1 on right
+    plotter = pyvista.Plotter(shape='3|1', off_screen=OFF_SCREEN)
+    # First column
+    plotter.subplot(0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(2)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(3)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show()
+
+    # Test subplot 3 on bottom, 1 on top
+    plotter = pyvista.Plotter(shape='1|3', off_screen=OFF_SCREEN)
+    # First column
+    plotter.subplot(0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(2)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(3)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show()
+
+
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_link_views():
     plotter = pyvista.Plotter(shape=(1, 4), off_screen=OFF_SCREEN)

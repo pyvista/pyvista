@@ -299,12 +299,14 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
                  multi_samples=None, line_smoothing=False,
-                 point_smoothing=False, polygon_smoothing=False, **kwargs):
+                 point_smoothing=False, polygon_smoothing=False,
+                 splitting_position=None, **kwargs):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape, title=title)
+        BasePlotter.__init__(self, shape=shape, title=title,
+                             splitting_position=splitting_position)
         self.parent = parent
 
         if multi_samples is None:
