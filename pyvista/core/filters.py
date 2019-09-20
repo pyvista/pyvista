@@ -1854,7 +1854,7 @@ class DataSetFilters(object):
         merged = _get_output(append_filter)
         if inplace:
             if type(dataset) == type(merged):
-                dataset.DeepCopy(merged)
+                dataset.deep_copy(merged)
             else:
                 raise TypeError("Mesh tpye {} not able to be overridden by output.".format(type(dataset)))
         else:

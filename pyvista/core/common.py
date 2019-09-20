@@ -38,6 +38,16 @@ class DataObject(object):
         return object.__new__(cls, *args, **kwargs)
 
 
+    def shallow_copy(self, to_copy):
+        """Shallow copy the given mesh to this mesh"""
+        return self.ShallowCopy(to_copy)
+
+
+    def deep_copy(self, to_copy):
+        """Overwrite this mesh with the given mesh as a deep copy"""
+        return self.DeepCopy(to_copy)
+
+
     def save(self, filename, binary=True):
         """
         Writes this mesh to a file.
@@ -151,9 +161,9 @@ class DataObject(object):
         thistype = type(self)
         newobject = thistype()
         if deep:
-            newobject.DeepCopy(self)
+            newobject.deep_copy(self)
         else:
-            newobject.ShallowCopy(self)
+            newobject.shallow_copy(self)
         newobject.copy_meta_from(self)
         return newobject
 
@@ -418,7 +428,11 @@ class Common(DataSetFilters, DataObject):
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         vtk_points = pyvista.vtk_points(points, False)
-        self.SetPoints(vtk_points)
+        pdata = self.GetPoints()
+        if not pdata:
+            self.SetPoints(vtk_points)
+        else:
+            pdata.SetData(vtk_points.GetData())
         self.GetPoints().Modified()
         self.Modified()
 
@@ -1251,7 +1265,7 @@ class Common(DataSetFilters, DataObject):
             The overwriting mesh.
 
         """
-        self.DeepCopy(mesh)
+        self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
 

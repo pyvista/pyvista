@@ -39,9 +39,9 @@ class Table(vtk.vtkTable, DataObject):
             if isinstance(args[0], vtk.vtkTable):
                 deep = kwargs.get('deep', True)
                 if deep:
-                    self.DeepCopy(args[0])
+                    self.deep_copy(args[0])
                 else:
-                    self.ShallowCopy(args[0])
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
@@ -409,9 +409,9 @@ class Texture(vtk.vtkTexture):
             if isinstance(args[0], vtk.vtkTexture):
                 deep = kwargs.get('deep', True)
                 if deep:
-                    self.DeepCopy(args[0])
+                    self.deep_copy(args[0])
                 else:
-                    self.ShallowCopy(args[0])
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_array(args[0])
             elif isinstance(args[0], vtk.vtkImageData):

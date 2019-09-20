@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import pytest
 import vtk
+from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import examples
@@ -631,3 +632,29 @@ def test_hanlde_array_with_null_name():
     fdata = poly.field_arrays
     assert fdata is not None
     assert len(fdata) == 1
+
+
+
+def test_shallow_copy_back_propagation():
+    """Test that the original data object's points get modified after a
+    shallow copy.
+
+    Reference: https://github.com/pyvista/pyvista/issues/375#issuecomment-531691483
+    """
+    # Case 1
+    points = vtk.vtkPoints()
+    points.InsertNextPoint(0.0, 0.0, 0.0)
+    points.InsertNextPoint(1.0, 0.0, 0.0)
+    points.InsertNextPoint(2.0, 0.0, 0.0)
+    original = vtk.vtkPolyData()
+    original.SetPoints(points)
+    wrapped = pyvista.PolyData(original, deep=False)
+    wrapped.points[:] = 2.8
+    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    assert np.allclose(orig_points, wrapped.points)
+    # Case 2
+    original = vtk.vtkPolyData()
+    wrapped = pyvista.PolyData(original, deep=False)
+    wrapped.points = np.random.rand(5, 3)
+    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    assert np.allclose(orig_points, wrapped.points)
