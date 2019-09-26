@@ -17,6 +17,7 @@ import pyvista
 
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
+import re
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -24,7 +25,7 @@ log.setLevel('CRITICAL')
 
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
-    
+
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
@@ -759,7 +760,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
-        
+
         Converts the following cell types to their linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
@@ -873,14 +874,8 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
-
-        elif len(args) == 3:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            arg2_is_arr = isinstance(args[2], np.ndarray)
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2])
+        elif len(args) == 3 and all(isinstance(arg, np.ndarray) for arg in args):
+            self._from_arrays(*args)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -910,14 +905,10 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
-        points[:, 0] = x.ravel('F')
-        points[:, 1] = y.ravel('F')
-        points[:, 2] = z.ravel('F')
+        points[:, 0], points[:, 1], points[:, 2] = x.ravel('F'),  y.ravel('F'), z.ravel('F')
 
         # ensure that the inputs are 3D
-        dim = list(x.shape)
-        while len(dim) < 3:
-            dim.append(1)
+        dim = list(x.shape) + [1] * (3 - len(x.shape))
 
         # Create structured grid
         self.SetDimensions(dim)
@@ -941,20 +932,16 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extension
-        if '.vts' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
+        # Check file extention
+        try:
+            extension_match = re.search('\.vtk|\.vts', filename).group(0)
+            legacy_writer = True if extension_match == '.vtk' else False
+        except AttributeError:
             raise Exception(
                 'Extension should be either ".vts" (xml) or ".vtk" (legacy)')
 
         # Create reader
-        if legacy_writer:
-            reader = vtk.vtkStructuredGridReader()
-        else:
-            reader = vtk.vtkXMLStructuredGridReader()
+        reader = vtk.vtkStructuredGridReader() if legacy_writer else vtk.vtkXMLStructuredGridReader()
 
         # load file to self
         reader.SetFileName(filename)
@@ -998,8 +985,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             else:
                 writer.SetDataModeToAscii()
         else:
-            raise Exception('Extension should be either ".vts" (xml) or'
-                            '".vtk" (legacy)')
+            raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
