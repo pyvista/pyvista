@@ -25,6 +25,20 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
+def set_vtkwriter_mode(vtkWriter, use_binary=True):
+    if isinstance(vtkWriter, vtk.vtkDataWriter):
+        if use_binary:
+            vtkWriter.SetFileTypeToBinary()
+        else:
+            vtkWriter.SetFileTypeToASCII()
+    elif isinstance(vtkWriter, vtk.vtkXMLWriter):
+        if use_binary:
+            vtkWriter.SetDataModeToBinary()
+        else:
+            vtkWriter.SetDataModeToAscii()
+    return vtkWriter
+
+
 class PointSet(Common):
     """PyVista's equivalant of vtk.vtkPointSet. This holds methods common to
     PolyData and UnstructuredGrid.
@@ -351,18 +365,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         except KeyError:
             raise Exception('Filetype must be either "ply", "stl", or "vtk"')
 
-        try:
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        except AttributeError:
-            # File extension is vtp
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-
+        set_vtkwriter_mode(writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
         writer.Write()
@@ -703,18 +706,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         except KeyError:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
-        try:
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        # extension is vtu
-        except AttributeError:
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-
+        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
         return writer.Write()
@@ -939,18 +931,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         except KeyError:
             raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
 
-        try:
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        # File extension is .vts
-        except AttributeError:
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-
+        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
