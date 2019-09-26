@@ -571,17 +571,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 self.shallow_copy(vtkappend.GetOutput())
 
             else:
-                itype = type(args[0])
-                raise Exception('Cannot work with input type %s' % itype)
+                raise Exception('Cannot work with input type %s' % type(args[0]))
 
         elif len(args) == 4:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            arg2_is_arr = isinstance(args[2], np.ndarray)
-            arg3_is_arr = isinstance(args[3], np.ndarray)
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], args[3], deep)
+            if all(isinstance(arg, np.ndarray) for arg in args):
+                self._from_arrays(*args, deep=deep)
             else:
                 raise Exception('All input types must be np.ndarray')
 
