@@ -120,10 +120,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                 raise TypeError('Invalid input type')
 
         elif len(args) == 2:
-            arg0_is_array = isinstance(args[0], np.ndarray)
-            arg1_is_array = isinstance(args[1], np.ndarray)
-            if arg0_is_array and arg1_is_array:
-                self._from_arrays(args[0], args[1], deep)
+            if all(isinstance(arg, np.ndarray) for arg in args):
+                self._from_arrays(vertices=args[0], faces=args[1], deep=deep)
             else:
                 raise TypeError('Invalid input type')
         else:
@@ -371,10 +369,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and file_mode:
-            writer.SetFileTypeToBinary()
-        elif file_mode:
-            writer.SetFileTypeToASCII()
+        if file_mode:
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
         writer.Write()
 
     @property
@@ -880,7 +879,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
-        points[:, 0], points[:, 1], points[:, 2] = x.ravel('F'),  y.ravel('F'), z.ravel('F')
+        points[:, 0], points[:, 1], points[:, 2] = x.ravel('F'), y.ravel('F'), z.ravel('F')
 
         # ensure that the inputs are 3D
         dim = list(x.shape) + [1] * (3 - len(x.shape))
