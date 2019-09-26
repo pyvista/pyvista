@@ -94,9 +94,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     """
 
     _vtk_readers = {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader, '.vtk': vtk.vtkPolyDataReader,
-                   '.vtp': vtk.vtkXMLPolyDataReader, '.obj': vtk.vtkOBJReader, }
+                    '.vtp': vtk.vtkXMLPolyDataReader, '.obj': vtk.vtkOBJReader}
     _vtk_writers = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter, '.stl': vtk.vtkSTLWriter,
-                   '.vtk': vtk.vtkPolyDataWriter}
+                    '.vtk': vtk.vtkPolyDataWriter}
 
     def __init__(self, *args, **kwargs):
         """Initialize the polydata."""
@@ -143,6 +143,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
+
+    def __sub__(self, cutting_mesh):
+        """ subtract two meshes """
+        return self.boolean_cut(cutting_mesh)
 
     @staticmethod
     def _make_vertice_cells(npoints):
@@ -855,6 +859,9 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     """
 
+    _vtk_writers = {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
+    _vtk_readers = {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}
+
     def __init__(self, *args, **kwargs):
         """Initialize the structured grid."""
         super(StructuredGrid, self).__init__()
@@ -922,16 +929,12 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extention
+        # Check file extension
         try:
-            extension_match = re.search('\.vtk|\.vts', filename).group(0)
-            legacy_writer = True if extension_match == '.vtk' else False
-        except AttributeError:
+            reader = StructuredGrid._vtk_readers[pyvista.get_ext(filename)]()
+        except KeyError:
             raise Exception(
                 'Extension should be either ".vts" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        reader = vtk.vtkStructuredGridReader() if legacy_writer else vtk.vtkXMLStructuredGridReader()
 
         # load file to self
         reader.SetFileName(filename)
@@ -961,21 +964,23 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkStructuredGridWriter()
+        try:
+            writer = StructuredGrid._vtk_writers[pyvista.get_ext(filename)]()
+        except KeyError:
+            raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
+
+        try:
             if binary:
                 writer.SetFileTypeToBinary()
             else:
                 writer.SetFileTypeToASCII()
-        elif '.vts' in filename:
-            writer = vtk.vtkXMLStructuredGridWriter()
+        # File extension is .vts
+        except AttributeError:
             if binary:
                 writer.SetDataModeToBinary()
             else:
                 writer.SetDataModeToAscii()
-        else:
-            raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
+
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
