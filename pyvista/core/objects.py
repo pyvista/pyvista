@@ -20,10 +20,6 @@ except ImportError:
     pd = None
 
 
-
-
-
-
 class Table(vtk.vtkTable, DataObject):
     """Wrapper for the ``vtkTable`` class.
 
@@ -56,7 +52,6 @@ class Table(vtk.vtkTable, DataObject):
                 self._from_pandas(args[0])
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
-
 
         self._row_bool_array_names = []
 
@@ -237,7 +232,6 @@ class Table(vtk.vtkTable, DataObject):
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.AddColumn(vtkarr)
-
 
 
     def __getitem__(self, index):
