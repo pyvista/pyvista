@@ -824,7 +824,6 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
     >>> grid = pyvista.StructuredGrid(x, y, z)
 
-
     """
 
     _vtk_writers = {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
@@ -870,9 +869,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
-        points[:, 0] = x.ravel('F')
-        points[:, 1] = y.ravel('F')
-        points[:, 2] = z.ravel('F')
+        points[:, 0], points[:, 1], points[:, 2] = x.ravel('F'), y.ravel('F'), z.ravel('F')
 
         # ensure that the inputs are 3D
         dim = list(x.shape) + [1] * (3 - len(x.shape))
@@ -899,20 +896,12 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extention
-        if '.vts' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
+        # Check file extension
+        try:
+            reader = StructuredGrid._vtk_readers[pyvista.get_ext(filename)]()
+        except KeyError:
             raise Exception(
                 'Extension should be either ".vts" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        if legacy_writer:
-            reader = vtk.vtkStructuredGridReader()
-        else:
-            reader = vtk.vtkXMLStructuredGridReader()
 
         # load file to self
         reader.SetFileName(filename)
@@ -942,22 +931,22 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkStructuredGridWriter()
+        try:
+            writer = StructuredGrid._vtk_writers[pyvista.get_ext(filename)]()
+        except KeyError:
+            raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
+
+        try:
             if binary:
                 writer.SetFileTypeToBinary()
             else:
                 writer.SetFileTypeToASCII()
-        elif '.vts' in filename:
-            writer = vtk.vtkXMLStructuredGridWriter()
+        # File extension is .vts
+        except AttributeError:
             if binary:
                 writer.SetDataModeToBinary()
             else:
                 writer.SetDataModeToAscii()
-        else:
-            raise Exception('Extension should be either ".vts" (xml) or'
-                            '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
