@@ -93,6 +93,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     """
 
+    _vtk_readers = {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader, '.vtk': vtk.vtkPolyDataReader,
+                   '.vtp': vtk.vtkXMLPolyDataReader, '.obj': vtk.vtkOBJReader, }
+    _vtk_writers = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter, '.stl': vtk.vtkSTLWriter,
+                   '.vtk': vtk.vtkPolyDataWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the polydata."""
         super(PolyData, self).__init__()
@@ -172,17 +177,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         ext = pyvista.get_ext(filename)
 
         # Select reader
-        if ext == '.ply':
-            reader = vtk.vtkPLYReader()
-        elif ext == '.stl':
-            reader = vtk.vtkSTLReader()
-        elif ext == '.vtk':
-            reader = vtk.vtkPolyDataReader()
-        elif ext == '.vtp':
-            reader = vtk.vtkXMLPolyDataReader()
-        elif ext == '.obj':
-            reader = vtk.vtkOBJReader()
-        else:
+        try:
+            reader = PolyData._vtk_readers[ext]()
+        except KeyError:
             raise TypeError('Filetype must be either "ply", "stl", "vtk", "vtp", or "obj".')
 
         # Load file
@@ -361,24 +358,23 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        file_mode = True
         # Check filetype
-        ftype = filename[-3:]
-        if ftype == 'ply':
-            writer = vtk.vtkPLYWriter()
-        elif ftype == 'vtp':
-            writer = vtk.vtkXMLPolyDataWriter()
-            file_mode = False
+        try:
+            writer = PolyData._vtk_writers[pyvista.get_ext(filename)]()
+        except KeyError:
+            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
+
+        try:
+            if binary:
+                writer.SetFileTypeToBinary()
+            else:
+                writer.SetFileTypeToASCII()
+        except AttributeError:
+            # File extension is vtp
             if binary:
                 writer.SetDataModeToBinary()
             else:
                 writer.SetDataModeToAscii()
-        elif ftype == 'stl':
-            writer = vtk.vtkSTLWriter()
-        elif ftype == 'vtk':
-            writer = vtk.vtkPolyDataWriter()
-        else:
-            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
 
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
@@ -387,11 +383,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if file_mode:
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
         writer.Write()
 
     @property
