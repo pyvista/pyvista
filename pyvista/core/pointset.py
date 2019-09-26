@@ -29,7 +29,6 @@ class PointSet(Common):
     PolyData and UnstructuredGrid.
     """
 
-
     def center_of_mass(self, scalars_weight=False):
         """
         Returns the coordinates for the center of mass of the mesh.
@@ -51,13 +50,11 @@ class PointSet(Common):
         alg.Update()
         return np.array(alg.GetCenter())
 
-
     def shallow_copy(self, to_copy):
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(vtk.vtkPoints())
         return super().shallow_copy(to_copy)
-
 
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
@@ -147,7 +144,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         cells = np.hstack((np.ones((npoints, 1)),
                            np.arange(npoints).reshape(-1, 1)))
         cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-        cells = np.reshape(cells, (2*npoints))
+        cells = np.reshape(cells, (2 * npoints))
         return cells
 
     def _load_file(self, filename):
@@ -315,7 +312,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.points = vertices
             self.faces = faces
 
-
     def __sub__(self, cutting_mesh):
         """ subtract two meshes """
         return self.boolean_cut(cutting_mesh)
@@ -329,7 +325,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     def number_of_faces(self):
         """ returns the number of cells """
         return self.n_cells
-
 
     def save(self, filename, binary=True):
         """
@@ -381,7 +376,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             writer.SetFileTypeToASCII()
         writer.Write()
 
-
     @property
     def area(self):
         """
@@ -412,13 +406,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mprop.SetInputData(self.tri_filter())
         return mprop.GetVolume()
 
-
     @property
     def point_normals(self):
         """ Point normals """
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
-
 
     @property
     def cell_normals(self):
@@ -426,12 +418,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
-
     @property
     def face_normals(self):
         """ Cell normals  """
         return self.cell_normals
-
 
     @property
     def obbTree(self):
@@ -447,7 +437,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self._obbTree.BuildLocator()
 
         return self._obbTree
-
 
     @property
     def n_open_edges(self):
@@ -507,7 +496,6 @@ class PointGrid(PointSet):
         """
         surf = self.extract_surface().tri_filter()
         return surf.volume
-
 
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
@@ -577,14 +565,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             else:
                 raise Exception('All input types must be np.ndarray')
 
-
     def __repr__(self):
         return Common.__repr__(self)
 
-
     def __str__(self):
         return Common.__str__(self)
-
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """
@@ -650,7 +635,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             cells = np.ascontiguousarray(cells)
 
         # if cells.ndim != 1:
-            # cells = cells.ravel()
+        # cells = cells.ravel()
 
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
@@ -824,7 +809,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return vtk_to_numpy(self.GetCellLocationsArray())
 
 
-
 class StructuredGrid(vtkStructuredGrid, PointGrid):
     """
     Extends the functionality of a vtk.vtkStructuredGrid object
@@ -877,14 +861,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
 
-
     def __repr__(self):
         return Common.__repr__(self)
 
-
     def __str__(self):
         return Common.__str__(self)
-
 
     def _from_arrays(self, x, y, z):
         """
@@ -901,7 +882,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         z : np.ndarray
             Position of the points in z direction.
         """
-        if not(x.shape == y.shape == z.shape):
+        if not (x.shape == y.shape == z.shape):
             raise Exception('Input point array shapes must match exactly')
 
         # make the output points the same precision as the input arrays

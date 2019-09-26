@@ -16,10 +16,6 @@ except ImportError:
     pd = None
 
 
-
-
-
-
 class Table(vtk.vtkTable, DataObject):
     """Wrapper for the ``vtkTable`` class. Create by passing a 2D NumPy array
     of shape (``n_rows`` by ``n_columns``) or from a dictionary containing
@@ -33,6 +29,7 @@ class Table(vtk.vtkTable, DataObject):
     >>> table = pv.Table(arrays)
 
     """
+
     def __init__(self, *args, **kwargs):
 
         if len(args) == 1:
@@ -51,9 +48,7 @@ class Table(vtk.vtkTable, DataObject):
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
-
         self._row_bool_array_names = []
-
 
     def _from_arrays(self, arrays):
         if not arrays.ndim == 2:
@@ -63,7 +58,6 @@ class Table(vtk.vtkTable, DataObject):
             self.row_arrays['Array {}'.format(i)] = array
         return
 
-
     def _from_dict(self, array_dict):
         for array in array_dict.values():
             if not isinstance(array, (np.ndarray)) and array.ndim < 3:
@@ -72,32 +66,26 @@ class Table(vtk.vtkTable, DataObject):
             self.row_arrays[name] = array
         return
 
-
     def _from_pandas(self, data_frame):
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name]
         return
 
-
     @property
     def n_rows(self):
         return self.GetNumberOfRows()
-
 
     @n_rows.setter
     def n_rows(self, n):
         self.SetNumberOfRows(n)
 
-
     @property
     def n_columns(self):
         return self.GetNumberOfColumns()
 
-
     @property
     def n_arrays(self):
         return self.n_columns
-
 
     def _row_array(self, name=None):
         """
@@ -134,7 +122,6 @@ class Table(vtk.vtkTable, DataObject):
             array = array.view(np.bool)
         return array
 
-
     @property
     def row_arrays(self):
         """ Returns the all row arrays """
@@ -161,27 +148,21 @@ class Table(vtk.vtkTable, DataObject):
         self._row_arrays.enable_callback()
         return self._row_arrays
 
-
     def keys(self):
         return list(self.row_arrays.keys())
-
 
     def items(self):
         return self.row_arrays.items()
 
-
     def values(self):
         return self.row_arrays.values()
-
 
     def update(self, data):
         self.row_arrays.update(data)
 
-
     def pop(self, name):
         """Pops off an array by the specified name"""
         return self.row_arrays.pop(name)
-
 
     def _add_row_array(self, scalars, name, deep=True):
         """
@@ -222,8 +203,6 @@ class Table(vtk.vtkTable, DataObject):
         vtkarr.SetName(name)
         self.AddColumn(vtkarr)
 
-
-
     def __getitem__(self, index):
         """ Searches row data for an array """
         if isinstance(index, str):
@@ -231,14 +210,14 @@ class Table(vtk.vtkTable, DataObject):
         elif isinstance(index, int):
             name = self.GetRowData().GetArrayName(index)
         else:
-            raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
+            raise KeyError(
+                'Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(
+                    index))
         return row_array(self, name)
-
 
     def get(self, index):
         """Get an array by its name"""
         return self[index]
-
 
     def __setitem__(self, name, scalars):
         """Add/set an array in the row_arrays"""
@@ -247,7 +226,6 @@ class Table(vtk.vtkTable, DataObject):
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
         self.row_arrays[name] = scalars
-
 
     def _remove_array(self, field, key):
         """internal helper to remove a single array by name from each field"""
@@ -258,17 +236,14 @@ class Table(vtk.vtkTable, DataObject):
             raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
         return
 
-
     def __delitem__(self, name):
         """Removes an array by the specified name"""
         del self.row_arrays[name]
-
 
     def __iter__(self):
         """The iterator across all arrays"""
         self._iter_n = 0
         return self
-
 
     def next(self):
         """Get the next block from the iterator"""
@@ -279,16 +254,13 @@ class Table(vtk.vtkTable, DataObject):
         else:
             raise StopIteration
 
-
     __next__ = next
-
 
     def _get_attrs(self):
         """An internal helper for the representation methods"""
         attrs = []
         attrs.append(("N Rows", self.n_rows, "{}"))
         return attrs
-
 
     def _repr_html_(self):
         """A pretty representation for Jupyter notebooks that includes header
@@ -331,16 +303,13 @@ class Table(vtk.vtkTable, DataObject):
             fmt += "</td></tr> </table>"
         return fmt
 
-
     def __repr__(self):
         """Object representation"""
         return self.head(display=False, html=False)
 
-
     def __str__(self):
         """Object string representation"""
         return self.head(display=False, html=False)
-
 
     def to_pandas(self):
         """Create a Pandas DataFrame from this Table"""
@@ -351,11 +320,9 @@ class Table(vtk.vtkTable, DataObject):
             data_frame[name] = array
         return data_frame
 
-
     def save(self, *args, **kwargs):
         raise NotImplementedError("Please use the `to_pandas` method and "
                                   "harness Pandas' wonderful file IO methods.")
-
 
     def get_data_range(self, arr=None, preference='row'):
         """Get the non-NaN min and max of a named scalar array
@@ -384,7 +351,6 @@ class Table(vtk.vtkTable, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
 
-
 class RowScalarsDict(_ScalarsDict):
     """
     Updates internal row data when an array is added or removed from
@@ -396,14 +362,13 @@ class RowScalarsDict(_ScalarsDict):
         self.remover = lambda key: self.data._remove_array(ROW_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetRowData().Modified()
 
-
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_row_array(scalars, name, deep=deep)
 
 
-
 class Texture(vtk.vtkTexture):
     """A helper class for vtkTextures"""
+
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkTexture):
@@ -419,23 +384,19 @@ class Texture(vtk.vtkTexture):
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
-
-
     def _from_image_data(self, image):
         if not isinstance(image, pyvista.UniformGrid):
             image = pyvista.UniformGrid(image)
         self.SetInputDataObject(image)
         return self.Update()
 
-
     def _from_array(self, image):
         if image.ndim != 3 or image.shape[2] != 3:
             raise AssertionError('Input image must be nn by nm by RGB')
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-        grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
+        grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, 3), order='F')
         grid.set_active_scalar('Image')
         return self._from_image_data(grid)
-
 
     def flip(self, axis):
         """Flip this texture inplace along the specifed axis. 0 for X and
@@ -445,16 +406,13 @@ class Texture(vtk.vtkTexture):
         array = np.flip(array, axis=ax[axis])
         return self._from_array(array)
 
-
     def to_image(self):
         return self.GetInput()
-
 
     def to_array(self):
         image = self.to_image()
         shape = (image.dimensions[0], image.dimensions[1], 3)
-        return np.flip(image.active_scalar.reshape(shape, order='F'), axis=1).swapaxes(1,0)
-
+        return np.flip(image.active_scalar.reshape(shape, order='F'), axis=1).swapaxes(1, 0)
 
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself"""

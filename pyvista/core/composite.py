@@ -60,7 +60,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
 
-
     def wrap_nested(self):
         """A helper to ensure all nested data structures are wrapped as PyVista
         datasets. This is perfrom inplace"""
@@ -69,7 +68,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             if not is_pyvista_dataset(block):
                 self.SetBlock(i, pyvista.wrap(block))
         return
-
 
     def _load_file(self, filename):
         """Load a vtkMultiBlockDataSet from a file (extension ``.vtm`` or
@@ -94,7 +92,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         reader.SetFileName(filename)
         reader.Update()
         self.shallow_copy(reader.GetOutput())
-
 
     def save(self, filename, binary=True):
         """
@@ -141,14 +138,14 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             tuple(float):
                 length 6 tuple of floats containing min/max along each axis
         """
-        bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
+        bounds = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf]
 
         def update_bounds(ax, nb, bounds):
             """internal helper to update bounds while keeping track"""
-            if nb[2*ax] < bounds[2*ax]:
-                bounds[2*ax] = nb[2*ax]
-            if nb[2*ax+1] > bounds[2*ax+1]:
-                bounds[2*ax+1] = nb[2*ax+1]
+            if nb[2 * ax] < bounds[2 * ax]:
+                bounds[2 * ax] = nb[2 * ax]
+            if nb[2 * ax + 1] > bounds[2 * ax + 1]:
+                bounds[2 * ax + 1] = nb[2 * ax + 1]
             return bounds
 
         # get bounds for each block and update
@@ -161,31 +158,26 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         return bounds
 
-
     @property
     def center(self):
         """ Center of the bounding box """
-        return np.array(self.bounds).reshape(3,2).mean(axis=1)
-
+        return np.array(self.bounds).reshape(3, 2).mean(axis=1)
 
     @property
     def length(self):
         """the length of the diagonal of the bounding box"""
         return pyvista.Box(self.bounds).length
 
-
     @property
     def n_blocks(self):
         """The total number of blocks set"""
         return self.GetNumberOfBlocks()
-
 
     @n_blocks.setter
     def n_blocks(self, n):
         """The total number of blocks set"""
         self.SetNumberOfBlocks(n)
         self.Modified()
-
 
     @property
     def volume(self):
@@ -205,7 +197,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             volume += block.volume
         return volume
 
-
     def get_data_range(self, name):
         """Gets the min/max of a scalar given its name across all blocks"""
         mini, maxi = np.inf, -np.inf
@@ -224,14 +215,12 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 maxi = tma
         return mini, maxi
 
-
     def get_index_by_name(self, name):
         """Find the index number by block name"""
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
         raise KeyError('Block name ({}) not found'.format(name))
-
 
     def __getitem__(self, index):
         """Get a block by its index or name (if the name is non-unique then
@@ -251,19 +240,16 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             self.refs.append(data)
         return data
 
-
     def append(self, data):
         """Add a data set to the next block index"""
-        index = self.n_blocks # note off by one so use as index
+        index = self.n_blocks  # note off by one so use as index
         self[index] = data
         self.refs.append(data)
-
 
     def get(self, index):
         """Get a block by its index or name (if the name is non-unique then
         returns the first occurence)"""
         return self[index]
-
 
     def set_block_name(self, index, name):
         """Set a block's string name at the specified index"""
@@ -272,7 +258,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self.GetMetaData(index).Set(vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-
     def get_block_name(self, index):
         """Returns the string name of the block at the given index"""
         meta = self.GetMetaData(index)
@@ -280,14 +265,12 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             return meta.Get(vtk.vtkCompositeDataSet.NAME())
         return None
 
-
     def keys(self):
         """Get all the block names in the dataset"""
         names = []
         for i in range(self.n_blocks):
             names.append(self.get_block_name(i))
         return names
-
 
     def __setitem__(self, index, data):
         """Sets a block with a VTK data object. To set the name simultaneously,
@@ -322,17 +305,15 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             self.SetBlock(i, data)
         if name is None:
             name = 'Block-{0:02}'.format(i)
-        self.set_block_name(i, name) # Note that this calls self.Modified()
+        self.set_block_name(i, name)  # Note that this calls self.Modified()
         if data not in self.refs:
             self.refs.append(data)
-
 
     def __delitem__(self, index):
         """Removes a block at the specified index"""
         if isinstance(index, str):
             index = self.get_index_by_name(index)
         self.RemoveBlock(index)
-
 
     def __iter__(self):
         """The iterator across all blocks"""
@@ -350,13 +331,11 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     __next__ = next
 
-
     def pop(self, index):
         """Pops off a block at the specified index"""
         data = self[index]
         del self[index]
         return data
-
 
     def clean(self, empty=True):
         """This will remove any null blocks in place
@@ -384,7 +363,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             null_blocks -= 1
         return
 
-
     def _get_attrs(self):
         """An internal helper for the representation methods"""
         attrs = []
@@ -394,7 +372,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         attrs.append(("Y Bounds", (bds[2], bds[3]), "{:.3f}, {:.3f}"))
         attrs.append(("Z Bounds", (bds[4], bds[5]), "{:.3f}, {:.3f}"))
         return attrs
-
 
     def _repr_html_(self):
         """A pretty representation for Jupyter notebooks"""
@@ -431,7 +408,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         fmt += "</td></tr> </table>"
         return fmt
 
-
     def __repr__(self):
         # return a string that is Python console friendly
         fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
@@ -444,14 +420,11 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 fmt += row.format(attr[0], attr[2].format(attr[1]))
         return fmt
 
-
     def __str__(self):
         return MultiBlock.__repr__(self)
 
-
     def __len__(self):
         return self.n_blocks
-
 
     def copy_meta_from(self, ido):
         """Copies pyvista meta data onto this object from another object"""
@@ -459,7 +432,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # This method is here for consistency witht the rest of the API and
         # incase we add meta data to this pbject down the road.
         pass
-
 
     def copy(self, deep=True):
         """

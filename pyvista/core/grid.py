@@ -101,20 +101,16 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             else:
                 arg2_is_arr = False
 
-
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
             elif all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(args[0], args[1], np.array([0.]))
 
-
     def __repr__(self):
         return Common.__repr__(self)
 
-
     def __str__(self):
         return Common.__str__(self)
-
 
     def _from_arrays(self, x, y, z):
         """
@@ -143,14 +139,13 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         self.SetYCoordinates(numpy_to_vtk(y))
         self.SetZCoordinates(numpy_to_vtk(z))
 
-
     @property
     def points(self):
         """ returns a pointer to the points as a numpy object """
         x = vtk_to_numpy(self.GetXCoordinates())
         y = vtk_to_numpy(self.GetYCoordinates())
         z = vtk_to_numpy(self.GetZCoordinates())
-        xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
+        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
@@ -159,14 +154,13 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         # get the unique coordinates along each axial direction
-        x = np.unique(points[:,0])
-        y = np.unique(points[:,1])
-        z = np.unique(points[:,2])
+        x = np.unique(points[:, 0])
+        y = np.unique(points[:, 1])
+        z = np.unique(points[:, 2])
         # Set the vtk coordinates
         self._from_arrays(x, y, z)
-        #self._point_ref = points
+        # self._point_ref = points
         self.Modified()
-
 
     def _load_file(self, filename):
         """
@@ -275,13 +269,11 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         """Get the coordinates along the Z-direction"""
         return vtk_to_numpy(self.GetZCoordinates())
 
-
     @z.setter
     def z(self, coords):
         """Set the coordinates along the Z-direction"""
         self.SetZCoordinates(numpy_to_vtk(coords))
         self.Modified()
-
 
     # @property
     # def quality(self):
@@ -300,8 +292,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     #
     #     """
     #     return UnstructuredGrid(self).quality
-
-
 
 
 class UniformGrid(vtkImageData, Grid):
@@ -372,12 +362,10 @@ class UniformGrid(vtkImageData, Grid):
     def __repr__(self):
         return Common.__repr__(self)
 
-
     def __str__(self):
         return Common.__str__(self)
 
-
-    def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
+    def _from_specs(self, dims, spacing=(1.0, 1.0, 1.0), origin=(0.0, 0.0, 0.0)):
         """
         Create VTK image data directly from numpy arrays. A uniform grid is
         defined by the node spacings for each axis (uniform along each
@@ -402,7 +390,6 @@ class UniformGrid(vtkImageData, Grid):
         self.SetOrigin(xo, yo, zo)
         self.SetSpacing(xs, ys, zs)
 
-
     @property
     def points(self):
         """ returns a pointer to the points as a numpy object """
@@ -418,7 +405,7 @@ class UniformGrid(vtkImageData, Grid):
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
-        xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
+        xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
@@ -427,18 +414,17 @@ class UniformGrid(vtkImageData, Grid):
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         # get the unique coordinates along each axial direction
-        x = np.unique(points[:,0])
-        y = np.unique(points[:,1])
-        z = np.unique(points[:,2])
+        x = np.unique(points[:, 0])
+        y = np.unique(points[:, 1])
+        z = np.unique(points[:, 2])
         nx, ny, nz = len(x), len(y), len(z)
         # TODO: this needs to be tested (unique might return a tuple)
         dx, dy, dz = np.unique(np.diff(x)), np.unique(np.diff(y)), np.unique(np.diff(z))
         ox, oy, oz = np.min(x), np.min(y), np.min(z)
         # Build the vtk object
-        self._from_specs((nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
-        #self._point_ref = points
+        self._from_specs((nx, ny, nz), (dx, dy, dz), (ox, oy, oz))
+        # self._point_ref = points
         self.Modified()
-
 
     def _load_file(self, filename):
         """
@@ -560,14 +546,12 @@ class UniformGrid(vtkImageData, Grid):
         self.SetSpacing(dx, dy, dz)
         self.Modified()
 
-
     def _get_attrs(self):
         """An internal helper for the representation methods"""
         attrs = Grid._get_attrs(self)
-        fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT]*3)
+        fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT] * 3)
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs
-
 
     def cast_to_structured_grid(self):
         """Cast this unifrom grid to a :class:`pyvista.StructuredGrid`"""
@@ -576,14 +560,15 @@ class UniformGrid(vtkImageData, Grid):
         alg.Update()
         return _get_output(alg)
 
-
     def cast_to_rectilinear_grid(self):
         """Cast this unifrom grid to a :class:`pyvista.RectilinearGrid`"""
+
         def gen_coords(i):
             coords = np.cumsum(np.insert(np.full(self.dimensions[i] - 1,
                                                  self.spacing[i]), 0, 0)
                                ) + self.origin[i]
             return coords
+
         xcoords = gen_coords(0)
         ycoords = gen_coords(1)
         zcoords = gen_coords(2)
