@@ -48,14 +48,12 @@ class PointSet(Common):
         alg.Update()
         return np.array(alg.GetCenter())
 
-
     def shallow_copy(self, to_copy):
         """Do a shallow copy the pointset."""
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(vtk.vtkPoints())
         return Common.shallow_copy(self, to_copy)
-
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     """Extend the functionality of a vtk.vtkPolyData object.
@@ -147,7 +145,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         cells = np.hstack((np.ones((npoints, 1)),
                            np.arange(npoints).reshape(-1, 1)))
         cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-        cells = np.reshape(cells, (2*npoints))
+        cells = np.reshape(cells, (2 * npoints))
         return cells
 
     def _load_file(self, filename):
@@ -339,7 +337,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Return the number of cells."""
         return self.n_cells
 
-
     def save(self, filename, binary=True):
         """Write a surface mesh to disk.
 
@@ -397,7 +394,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             writer.SetFileTypeToASCII()
         writer.Write()
 
-
     @property
     def area(self):
         """Return the mesh surface area.
@@ -428,13 +424,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
-
     @property
     def point_normals(self):
         """Return the point normals."""
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
-
 
     @property
     def cell_normals(self):
@@ -442,12 +436,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
-
     @property
     def face_normals(self):
         """Return the cell normals."""
         return self.cell_normals
-
 
     @property
     def obbTree(self):
@@ -465,7 +457,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self._obbTree.BuildLocator()
 
         return self._obbTree
-
 
     @property
     def n_open_edges(self):
@@ -526,7 +517,6 @@ class PointGrid(PointSet):
         """
         surf = self.extract_surface().triangulate()
         return surf.volume
-
 
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
@@ -597,16 +587,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             else:
                 raise Exception('All input types must be np.ndarray')
 
-
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
 
-
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -670,7 +657,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             cells = np.ascontiguousarray(cells)
 
         # if cells.ndim != 1:
-            # cells = cells.ravel()
+        # cells = cells.ravel()
 
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
@@ -843,7 +830,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return vtk_to_numpy(self.GetCellLocationsArray())
 
 
-
 class StructuredGrid(vtkStructuredGrid, PointGrid):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
@@ -896,16 +882,13 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
 
-
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
 
-
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.
@@ -922,7 +905,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             Position of the points in z direction.
 
         """
-        if not(x.shape == y.shape == z.shape):
+        if not (x.shape == y.shape == z.shape):
             raise Exception('Input point array shapes must match exactly')
 
         # make the output points the same precision as the input arrays
