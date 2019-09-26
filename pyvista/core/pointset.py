@@ -546,6 +546,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     """
 
+    _vtk_readers = {'.vtu': vtk.vtkXMLUnstructuredGridReader, '.vtk': vtk.vtkUnstructuredGridReader}
+    _vtk_writers = {'.vtu': vtk.vtkXMLUnstructuredGridWriter, '.vtk': vtk.vtkUnstructuredGridWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the unstructured grid."""
         super(UnstructuredGrid, self).__init__()
@@ -693,11 +696,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             raise Exception('%s does not exist' % filename)
 
         # Check file extension
-        if '.vtu' in filename:
-            reader = vtk.vtkXMLUnstructuredGridReader()
-        elif '.vtk' in filename:
-            reader = vtk.vtkUnstructuredGridReader()
-        else:
+        try:
+            reader = UnstructuredGrid._vtk_readers[pyvista.get_ext(filename)]()
+        except KeyError:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
         # load file to self
@@ -728,20 +729,22 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkUnstructuredGridWriter()
+        try:
+            writer = UnstructuredGrid._vtk_writers[pyvista.get_ext(filename)]()
+        except KeyError:
+            raise Exception('Extension should be either ".vtu" or ".vtk"')
+
+        try:
             if binary:
                 writer.SetFileTypeToBinary()
             else:
                 writer.SetFileTypeToASCII()
-        elif '.vtu' in filename:
-            writer = vtk.vtkXMLUnstructuredGridWriter()
+        # extension is vtu
+        except AttributeError:
             if binary:
                 writer.SetDataModeToBinary()
             else:
                 writer.SetDataModeToAscii()
-        else:
-            raise Exception('Extension should be either ".vtu" or ".vtk"')
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
