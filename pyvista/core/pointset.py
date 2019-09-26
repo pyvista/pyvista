@@ -17,6 +17,7 @@ import pyvista
 
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
+from ..utility.fileio import get_ext
 import re
 
 log = logging.getLogger(__name__)
@@ -341,7 +342,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file. If ply or stl format is chosen, the face normals are 
+        file. If ply or stl format is chosen, the face normals are
         computed in place to ensure the mesh is properly saved.
 
         Parameters
@@ -362,32 +363,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        # Check filetype
-        try:
-            writer = PolyData._vtk_writers[pyvista.get_ext(filename)]()
-        except KeyError:
-            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
-
-        try:
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        except AttributeError:
-            # File extension is vtp
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-
+        ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['stl', 'ply']:
             self.compute_normals(inplace=True)
-
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        writer.Write()
+        super().save(filename, binary)
 
     @property
     def area(self):
@@ -728,18 +709,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         except KeyError:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
-        try:
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        # extension is vtu
-        except AttributeError:
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-
+        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
         return writer.Write()
@@ -966,18 +936,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         except KeyError:
             raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
 
-        try:
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        # File extension is .vts
-        except AttributeError:
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-
+        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
