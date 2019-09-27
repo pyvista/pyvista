@@ -25,18 +25,18 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-def set_vtkwriter_mode(vtkWriter, use_binary=True):
-    if isinstance(vtkWriter, vtk.vtkDataWriter):
+def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    if isinstance(vtk_writer, vtk.vtkDataWriter):
         if use_binary:
-            vtkWriter.SetFileTypeToBinary()
+            vtk_writer.SetFileTypeToBinary()
         else:
-            vtkWriter.SetFileTypeToASCII()
-    elif isinstance(vtkWriter, vtk.vtkXMLWriter):
+            vtk_writer.SetFileTypeToASCII()
+    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
         if use_binary:
-            vtkWriter.SetDataModeToBinary()
+            vtk_writer.SetDataModeToBinary()
         else:
-            vtkWriter.SetDataModeToAscii()
-    return vtkWriter
+            vtk_writer.SetDataModeToAscii()
+    return vtk_writer
 
 
 class PointSet(Common):
@@ -706,7 +706,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         except KeyError:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
-        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
         return writer.Write()
@@ -931,7 +931,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         except KeyError:
             raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
 
-        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
