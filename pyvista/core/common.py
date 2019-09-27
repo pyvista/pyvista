@@ -313,8 +313,8 @@ class Common(DataSetFilters, DataObject):
         """Initialize the common object."""
         super(Common, self).__init__()
         self.references = []
-        self._point_bool_array_names = []
-        self._cell_bool_array_names = []
+        self._point_bool_array_names = set()
+        self._cell_bool_array_names = set()
 
 
     @property
@@ -726,7 +726,7 @@ class Common(DataSetFilters, DataObject):
         if isinstance(vtkarr, vtk.vtkBitArray):
             vtkarr = vtk_bit_array_to_char(vtkarr)
             if name not in self._point_bool_array_names:
-                self._point_bool_array_names.append(name)
+                self._point_bool_array_names.add(name)
 
         array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._point_bool_array_names:
@@ -767,7 +767,7 @@ class Common(DataSetFilters, DataObject):
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             if name not in self._point_bool_array_names:
-                self._point_bool_array_names.append(name)
+                self._point_bool_array_names.add(name)
 
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
@@ -932,7 +932,7 @@ class Common(DataSetFilters, DataObject):
         if isinstance(vtkarr, vtk.vtkBitArray):
             vtkarr = vtk_bit_array_to_char(vtkarr)
             if name not in self._cell_bool_array_names:
-                self._cell_bool_array_names.append(name)
+                self._cell_bool_array_names.add(name)
 
         array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._cell_bool_array_names:
@@ -973,7 +973,7 @@ class Common(DataSetFilters, DataObject):
             raise AssertionError('Array must be contigious')
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
-            self._cell_bool_array_names.append(name)
+            self._cell_bool_array_names.add(name)
 
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
