@@ -155,7 +155,9 @@ class WidgetHelper(object):
 
     def enable_plane_widget(self, callback, normal='x', origin=None,
                             bounds=None, factor=1.25, color=None,
-                            assign_to_axis=None, tubing=False, **kwargs):
+                            assign_to_axis=None, tubing=False,
+                            outline_translation=True,
+                            origin_translation=True, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes two
         arguments, the normal and origin of the plane in that order output
@@ -221,6 +223,8 @@ class WidgetHelper(object):
         plane_widget.SetPlaceFactor(factor)
         plane_widget.PlaceWidget(bounds)
         plane_widget.SetOrigin(origin)
+        plane_widget.SetOutlineTranslation(outline_translation)
+        plane_widget.SetOriginTranslation(origin_translation)
         if assign_to_axis:
             if assign_to_axis in [0, "x", "X"]:
                 plane_widget.NormalToXAxisOn()
@@ -262,7 +266,8 @@ class WidgetHelper(object):
 
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, value=0.0, assign_to_axis=None,
-                            tubing=False, **kwargs):
+                            tubing=False, origin_translation=True,
+                            outline_translation=True, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
@@ -314,7 +319,9 @@ class WidgetHelper(object):
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal,
                                  color=widget_color, tubing=tubing,
-                                 assign_to_axis=assign_to_axis)
+                                 assign_to_axis=assign_to_axis,
+                                 origin_translation=origin_translation,
+                                 outline_translation=outline_translation)
 
         actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
@@ -324,7 +331,8 @@ class WidgetHelper(object):
 
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
                        widget_color=None, assign_to_axis=None,
-                       tubing=False, **kwargs):
+                       tubing=False, origin_translation=True,
+                       outline_translation=True, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
@@ -372,7 +380,9 @@ class WidgetHelper(object):
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal,
                                  color=widget_color, tubing=tubing,
-                                 assign_to_axis=assign_to_axis)
+                                 assign_to_axis=assign_to_axis,
+                                 origin_translation=origin_translation,
+                                 outline_translation=outline_translation)
 
         actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
