@@ -19,7 +19,6 @@ import pyvista
 
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
-import re
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
