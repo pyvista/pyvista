@@ -29,7 +29,7 @@ class DataObject(object):
     """ Methods common to all wrapped data objects """
 
     def __init__(self, *args, **kwargs):
-        self._field_bool_array_names = []
+        self._field_bool_array_names = set()
 
     def __new__(cls, *args, **kwargs):
         if cls is DataObject:
@@ -182,7 +182,7 @@ class DataObject(object):
         if isinstance(vtkarr, vtk.vtkBitArray):
             vtkarr = vtk_bit_array_to_char(vtkarr)
             if name not in self._point_bool_array_names:
-                self._field_bool_array_names.append(name)
+                self._field_bool_array_names.add(name)
 
         array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._field_bool_array_names:
@@ -218,7 +218,7 @@ class DataObject(object):
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             if name not in self._field_bool_array_names:
-                self._field_bool_array_names.append(name)
+                self._field_bool_array_names.add(name)
 
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
