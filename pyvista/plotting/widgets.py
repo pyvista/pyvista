@@ -126,7 +126,11 @@ class WidgetHelper(object):
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
-        self.box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
+
+        if not hasattr(self, "box_clipped_meshes"):
+            self.box_clipped_meshes = []
+        box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
+        self.box_clipped_meshes.append(box_clipped_mesh)
 
         def callback(planes):
             bounds = []
@@ -137,13 +141,13 @@ class WidgetHelper(object):
 
             alg.SetBoxClip(*bounds)
             alg.Update()
-            self.box_clipped_mesh.shallow_copy(alg.GetOutput(port))
+            box_clipped_mesh.shallow_copy(alg.GetOutput(port))
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
                                factor=1.25, rotation_enabled=rotation_enabled,
                                use_planes=True, color=widget_color)
 
-        actor = self.add_mesh(self.box_clipped_mesh, reset_camera=False,
+        actor = self.add_mesh(box_clipped_mesh, reset_camera=False,
                               **kwargs)
 
         return actor
@@ -280,18 +284,21 @@ class WidgetHelper(object):
         alg.SetValue(value)
         alg.SetInsideOut(invert) # invert the clip if needed
 
-        self.plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
+        if not hasattr(self, "plane_clipped_meshes"):
+            self.plane_clipped_meshes = []
+        plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
+        self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, origin):
             function = generate_plane(normal, origin)
             alg.SetClipFunction(function) # the implicit function
             alg.Update() # Perfrom the Cut
-            self.plane_clipped_mesh.shallow_copy(alg.GetOutput())
+            plane_clipped_mesh.shallow_copy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
 
-        actor = self.add_mesh(self.plane_clipped_mesh, **kwargs)
+        actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
         return actor
 
@@ -331,19 +338,23 @@ class WidgetHelper(object):
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        self.plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        if not hasattr(self, "plane_sliced_meshes"):
+            self.plane_sliced_meshes = []
+        plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        self.plane_sliced_meshes.append(plane_sliced_mesh)
 
         def callback(normal, origin):
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane) # the the cutter to use the plane we made
             alg.Update() # Perfrom the Cut
-            self.plane_sliced_mesh.shallow_copy(alg.GetOutput())
+            plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
 
         actor = self.add_mesh(self.plane_sliced_mesh, **kwargs)
+        actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
         return actor
 
@@ -568,7 +579,11 @@ class WidgetHelper(object):
         alg.SetInputDataObject(mesh)
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
-        self.threshold_mesh = pyvista.wrap(alg.GetOutput())
+
+        if not hasattr(self, "threshold_meshes"):
+            self.threshold_meshes = []
+        threshold_mesh = pyvista.wrap(alg.GetOutput())
+        self.threshold_meshes.append(threshold_mesh)
 
 
         def callback(value):
@@ -577,7 +592,7 @@ class WidgetHelper(object):
             else:
                 alg.ThresholdByUpper(value)
             alg.Update()
-            self.threshold_mesh.shallow_copy(alg.GetOutput())
+            threshold_mesh.shallow_copy(alg.GetOutput())
 
 
         self.enable_slider_widget(callback=callback, rng=rng, title=title,
@@ -585,7 +600,7 @@ class WidgetHelper(object):
                                   pointb=pointb)
 
         kwargs.setdefault("reset_camera", False)
-        actor = self.add_mesh(self.threshold_mesh, scalars=scalars, **kwargs)
+        actor = self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
 
         return actor
 
