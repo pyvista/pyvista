@@ -369,7 +369,7 @@ class WidgetHelper(object):
             alg.Update() # Perfrom the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
-        self.enable_plane_widget(callback=slice_callback, bounds=mesh.bounds,
+        self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal,
                                  color=widget_color, tubing=tubing,
                                  assign_to_axis=assign_to_axis)
