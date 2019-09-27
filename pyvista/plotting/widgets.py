@@ -353,7 +353,6 @@ class WidgetHelper(object):
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
                                  factor=1.25, normal=normal, color=widget_color)
 
-        actor = self.add_mesh(self.plane_sliced_mesh, **kwargs)
         actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
         return actor
