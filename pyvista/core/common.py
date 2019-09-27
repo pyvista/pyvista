@@ -319,7 +319,6 @@ class Common(DataSetFilters, DataObject):
         self._point_bool_array_names = set()
         self._cell_bool_array_names = set()
 
-
     @property
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
