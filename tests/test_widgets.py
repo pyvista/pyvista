@@ -20,7 +20,7 @@ def test_widget_box():
     func = lambda box: box # Does nothing
     p.add_mesh(mesh)
     p.enable_box_widget(callback=func)
-    p.disable_box_widget()
+    p.disable_box_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -34,7 +34,7 @@ def test_widget_plane():
     func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.enable_plane_widget(callback=func)
-    p.disable_plane_widget()
+    p.disable_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -52,14 +52,14 @@ def test_widget_line():
     func = lambda line: line # Does nothing
     p.add_mesh(mesh)
     p.enable_line_widget(callback=func)
-    p.disable_line_widget()
+    p.disable_line_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda a, b: (a, b) # Does nothing
     p.add_mesh(mesh)
     p.enable_line_widget(callback=func, use_vertices=True)
-    p.disable_line_widget()
+    p.disable_line_widgets()
     p.close()
 
 
@@ -69,7 +69,7 @@ def test_widget_slider():
     func = lambda value: value # Does nothing
     p.add_mesh(mesh)
     p.enable_slider_widget(callback=func, rng=[0,10])
-    p.disable_slider_widget()
+    p.disable_slider_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
