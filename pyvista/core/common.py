@@ -335,8 +335,7 @@ class Common(DataSetFilters, DataObject):
                 else:
                     name = None
 
-        exclude = ['__custom_rgba', 'Normals', 'vtkOriginalPointIds',
-                   'TCoords']
+        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
 
         def search_for_array(data):
             arr = None
