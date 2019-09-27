@@ -622,6 +622,23 @@ class WidgetHelper(object):
 
         radius : float
             The radius of the sphere
+
+        theta_resolution: int , optional
+            Set the number of points in the longitude direction (ranging from
+            start_theta to end theta).
+
+        phi_resolution : int, optional
+            Set the number of points in the latitude direction (ranging from
+            start_phi to end_phi).
+
+        color : str
+            The color of the sphere's surface
+
+        style : str
+            Reprsentation style: surface or wireframe
+
+        selected_color : str
+            Color of the widget when selected during interaction
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Sphere widget not available in notebook plotting')
