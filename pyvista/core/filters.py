@@ -3190,10 +3190,7 @@ class PolyDataFilters(DataSetFilters):
         if origin is None:
             origin = np.array(poly_data.center) - np.array(normal) * poly_data.length / 2.
         # choose what mesh to use
-        if not inplace:
-            mesh = poly_data.copy()
-        else:
-            mesh = poly_data
+        mesh = poly_data if inplace else poly_data.copy()
         # Make plane
         plane = generate_plane(normal, origin)
         # Perform projection in place on the copied mesh
