@@ -48,6 +48,9 @@ class WidgetHelper(object):
             raise AssertionError('Box widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if not hasattr(self, "box_widgets"):
+            self.box_widgets = []
+
         if bounds is None:
             bounds = self.bounds
 
@@ -66,23 +69,26 @@ class WidgetHelper(object):
                     try_callback(callback, the_box)
             return
 
-        self.box_widget = vtk.vtkBoxWidget()
-        self.box_widget.GetOutlineProperty().SetColor(parse_color(color))
-        self.box_widget.SetInteractor(self.iren)
-        self.box_widget.SetPlaceFactor(factor)
-        self.box_widget.SetRotationEnabled(rotation_enabled)
-        self.box_widget.PlaceWidget(bounds)
-        self.box_widget.On()
-        self.box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.box_widget, None)
+        box_widget = vtk.vtkBoxWidget()
+        box_widget.GetOutlineProperty().SetColor(parse_color(color))
+        box_widget.SetInteractor(self.iren)
+        box_widget.SetCurrentRenderer(self.renderer)
+        box_widget.SetPlaceFactor(factor)
+        box_widget.SetRotationEnabled(rotation_enabled)
+        box_widget.PlaceWidget(bounds)
+        box_widget.On()
+        box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(box_widget, None)
 
-        return self.box_widget
+        self.box_widgets.append(box_widget)
+        return box_widget
 
 
-    def disable_box_widget(self):
-        """ Disables the last active box widget """
-        if hasattr(self, 'box_widget'):
-            self.box_widget.Off()
+    def disable_box_widgets(self):
+        """ Disables all of the box widgets """
+        if hasattr(self, 'box_widgets'):
+            for widget in self.box_widgets:
+                widget.Off()
         return
 
 
@@ -176,6 +182,9 @@ class WidgetHelper(object):
             raise AssertionError('Plane widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if not hasattr(self, "plane_widgets"):
+            self.plane_widgets = []
+
         if origin is None:
             origin = self.center
         if bounds is None:
@@ -196,36 +205,39 @@ class WidgetHelper(object):
                 try_callback(callback, normal, origin)
             return
 
-        self.plane_widget = vtk.vtkImplicitPlaneWidget()
-        self.plane_widget.GetNormalProperty().SetColor(parse_color(color))
-        self.plane_widget.GetOutlineProperty().SetColor(parse_color(color))
-        self.plane_widget.GetOutlineProperty().SetColor(parse_color(color))
-        self.plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        self.plane_widget.SetInteractor(self.iren)
-        self.plane_widget.SetPlaceFactor(factor)
-        self.plane_widget.PlaceWidget(bounds)
-        self.plane_widget.SetOrigin(origin)
-        self.plane_widget.SetNormal(normal)
-        self.plane_widget.Modified()
-        self.plane_widget.UpdatePlacement()
-        self.plane_widget.On()
-        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.plane_widget, None) # Trigger immediate update
+        plane_widget = vtk.vtkImplicitPlaneWidget()
+        plane_widget.GetNormalProperty().SetColor(parse_color(color))
+        plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+        plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+        plane_widget.GetPlaneProperty().SetOpacity(0.5)
+        plane_widget.SetInteractor(self.iren)
+        plane_widget.SetCurrentRenderer(self.renderer)
+        plane_widget.SetPlaceFactor(factor)
+        plane_widget.PlaceWidget(bounds)
+        plane_widget.SetOrigin(origin)
+        plane_widget.SetNormal(normal)
+        plane_widget.Modified()
+        plane_widget.UpdatePlacement()
+        plane_widget.On()
+        plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(plane_widget, None) # Trigger immediate update
 
         _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)
         _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
 
-        self.plane_widget.SetDrawPlane(False)
-        self.plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
-        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+        plane_widget.SetDrawPlane(False)
+        plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
+        plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
 
-        return self.plane_widget
+        self.plane_widgets.append(plane_widget)
+        return plane_widget
 
 
-    def disable_plane_widget(self):
-        """ Disables the last active plane widget """
-        if hasattr(self, 'plane_widget'):
-            self.plane_widget.Off()
+    def disable_plane_widgets(self):
+        """ Disables all of the plane widgets """
+        if hasattr(self, 'plane_widgets'):
+            for widget in self.plane_widgets:
+                widget.Off()
         return
 
 
@@ -370,9 +382,12 @@ class WidgetHelper(object):
             points of the line instead of a PolyData object.
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Box widget not available in notebook plotting')
+            raise AssertionError('Line widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if not hasattr(self, "line_widgets"):
+            self.line_widgets = []
+
         if bounds is None:
             bounds = self.bounds
 
@@ -380,8 +395,8 @@ class WidgetHelper(object):
             color = rcParams['font']['color']
 
         def _the_callback(widget, event_id):
-            pointa = self.line_widget.GetPoint1()
-            pointb = self.line_widget.GetPoint2()
+            pointa = widget.GetPoint1()
+            pointb = widget.GetPoint2()
             if hasattr(callback, '__call__'):
                 if use_vertices:
                     try_callback(callback, pointa, pointb)
@@ -390,24 +405,27 @@ class WidgetHelper(object):
                     try_callback(callback, the_line)
             return
 
-        self.line_widget = vtk.vtkLineWidget()
-        self.line_widget.GetLineProperty().SetColor(parse_color(color))
-        self.line_widget.SetInteractor(self.iren)
-        self.line_widget.SetPlaceFactor(factor)
-        self.line_widget.PlaceWidget(bounds)
-        self.line_widget.SetResolution(resolution)
-        self.line_widget.Modified()
-        self.line_widget.On()
-        self.line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.line_widget, None)
+        line_widget = vtk.vtkLineWidget()
+        line_widget.GetLineProperty().SetColor(parse_color(color))
+        line_widget.SetInteractor(self.iren)
+        line_widget.SetCurrentRenderer(self.renderer)
+        line_widget.SetPlaceFactor(factor)
+        line_widget.PlaceWidget(bounds)
+        line_widget.SetResolution(resolution)
+        line_widget.Modified()
+        line_widget.On()
+        line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(line_widget, None)
 
-        return self.line_widget
+        self.line_widgets.append(line_widget)
+        return line_widget
 
 
-    def disable_line_widget(self):
-        """ Disables the last active line widget """
-        if hasattr(self, 'line_widget'):
-            self.line_widget.Off()
+    def disable_line_widgets(self):
+        """ Disables all of the line widgets """
+        if hasattr(self, 'line_widgets'):
+            for widget in self.line_widgets:
+                widget.Off()
         return
 
 
@@ -445,6 +463,14 @@ class WidgetHelper(object):
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.
         """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Slider widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+
+        if not hasattr(self, "slider_widgets"):
+            self.slider_widgets = []
+
         min, max = rng
 
         if value is None:
@@ -478,20 +504,23 @@ class WidgetHelper(object):
                 try_callback(callback, value)
             return
 
-        self.slider_widget = vtk.vtkSliderWidget()
-        self.slider_widget.SetInteractor(self.iren)
-        self.slider_widget.SetRepresentation(slider_rep)
-        self.slider_widget.On()
-        self.slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.slider_widget, None)
+        slider_widget = vtk.vtkSliderWidget()
+        slider_widget.SetInteractor(self.iren)
+        slider_widget.SetCurrentRenderer(self.renderer)
+        slider_widget.SetRepresentation(slider_rep)
+        slider_widget.On()
+        slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(slider_widget, None)
 
-        return self.slider_widget
+        self.slider_widgets.append(slider_widget)
+        return slider_widget
 
 
-    def disable_slider_widget(self):
-        """ Disables the last active slider widget """
-        if hasattr(self, 'slider_widget'):
-            self.slider_widget.Off()
+    def disable_slider_widgets(self):
+        """ Disables all of the slider widgets """
+        if hasattr(self, 'slider_widgets'):
+            for widget in self.slider_widgets:
+                widget.Off()
         return
 
 
@@ -561,16 +590,84 @@ class WidgetHelper(object):
         return actor
 
 
+    def enable_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
+                             theta_resolution=30, phi_resolution=30,
+                             color=None, style="surface",
+                             selected_color="pink"):
+        """
+        Parameters
+        ----------
+        callback : callable
+            The function to call back when the widget is modified. It takes a
+            single argument: the center of the sphere as a XYZ coordinate.
+
+        center : tuple(float)
+            Length 3 array for the XYZ coordinate of the sphere's center
+            when placing it in the scene
+
+        radius : float
+            The radius of the sphere
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Sphere widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+
+        if not hasattr(self, "sphere_widgets"):
+            self.sphere_widgets = []
+
+        if color is None:
+            color = rcParams['color']
+
+        def _the_callback(widget, event_id):
+            point = widget.GetCenter()
+            if hasattr(callback, '__call__'):
+                try_callback(callback, point)
+            return
+
+        sphere_widget = vtk.vtkSphereWidget()
+        if style in "wireframe":
+            sphere_widget.SetRepresentationToWireframe()
+        else:
+            sphere_widget.SetRepresentationToSurface()
+        sphere_widget.GetSphereProperty().SetColor(parse_color(color))
+        sphere_widget.GetSelectedSphereProperty().SetColor(parse_color(selected_color))
+        sphere_widget.SetInteractor(self.iren)
+        sphere_widget.SetCurrentRenderer(self.renderer)
+        sphere_widget.SetRadius(radius)
+        sphere_widget.SetCenter(center)
+        sphere_widget.SetThetaResolution(theta_resolution)
+        sphere_widget.SetPhiResolution(phi_resolution)
+        sphere_widget.Modified()
+        sphere_widget.On()
+        sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(sphere_widget, None)
+
+        self.sphere_widgets.append(sphere_widget)
+        return sphere_widget
+
+
+    def disable_sphere_widgets(self):
+        """ Disable all of the sphere widgets """
+        if hasattr(self, 'sphere_widgets'):
+            for widget in self.sphere_widgets:
+                widget.Off()
+        return
+
+
     def close(self):
         """ closes widgets """
-        if hasattr(self, 'box_widget'):
-            del self.box_widget
+        if hasattr(self, 'box_widgets'):
+            del self.box_widgets
 
-        if hasattr(self, 'plane_widget'):
-            del self.plane_widget
+        if hasattr(self, 'plane_widgets'):
+            del self.plane_widgets
 
-        if hasattr(self, 'line_widget'):
-            del self.line_widget
+        if hasattr(self, 'line_widgets'):
+            del self.line_widgets
 
-        if hasattr(self, 'slider_widget'):
-            del self.slider_widget
+        if hasattr(self, 'slider_widgets'):
+            del self.slider_widgets
+
+        if hasattr(self, 'sphere_widgets'):
+            del self.sphere_widgets
