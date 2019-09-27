@@ -35,7 +35,6 @@ class DataObject(vtkDataObject):
         super().__init__()
         self._field_bool_array_names = set()
 
-
     def __new__(cls, *args, **kwargs):
         """Allocate memory for the data object."""
         if cls is DataObject:
