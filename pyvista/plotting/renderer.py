@@ -704,6 +704,8 @@ class Renderer(vtkRenderer):
         make a useful view.
         """
         focal_pt = self.center
+        if any(np.isnan(focal_pt)):
+            focal_pt = (0.0, 0.0, 0.0)
         return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
                 focal_pt, rcParams['camera']['viewup']]
 
