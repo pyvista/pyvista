@@ -1478,7 +1478,6 @@ class CellScalarsDict(_ScalarsDict):
         self.remover = partial(self.data._remove_array, CELL_DATA_FIELD)
         self.modifier = self.data.GetCellData().Modified
 
-
     def adder(self, scalars, name, set_active=False, deep=True):
         """Add a cell array."""
         self.data._add_cell_array(scalars, name, set_active=False, deep=deep)
@@ -1493,7 +1492,6 @@ class PointScalarsDict(_ScalarsDict):
         self.remover = partial(self.data._remove_array, POINT_DATA_FIELD)
         self.modifier = self.data.GetPointData().Modified
 
-
     def adder(self, scalars, name, set_active=False, deep=True):
         """Add a point array."""
         self.data._add_point_array(scalars, name, set_active=False, deep=deep)
@@ -1507,7 +1505,6 @@ class FieldScalarsDict(_ScalarsDict):
         _ScalarsDict.__init__(self, data)
         self.remover = partial(self.data._remove_array, FIELD_DATA_FIELD)
         self.modifier = self.data.GetFieldData().Modified
-
 
     def adder(self, scalars, name, set_active=False, deep=True):
         """Add a field array."""
