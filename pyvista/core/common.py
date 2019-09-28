@@ -1396,10 +1396,7 @@ class Common(DataSetFilters, DataObject):
             import pyansys
         except ImportError:
             raise Exception('Install pyansys for this function')
-        if not isinstance(self, pyvista.UnstructuredGrid):
-            dataset = self.cast_to_unstructured_grid()
-        else:
-            dataset = self
+        dataset = self if isinstance(self, pyvista.UnstructuredGrid) else self.cast_to_unstructured_grid()
         return pyansys.CellQuality(dataset)
 
 
