@@ -917,7 +917,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FIELD_DATA_FIELD:
             self.GetFieldData().RemoveArray(key)
         else:
-            raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
+            raise NotImplementedError('Not able to remove arrays from the ({}) data field'.format(field))
         return
 
     def clear_point_arrays(self):
