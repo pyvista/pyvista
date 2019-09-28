@@ -255,7 +255,7 @@ class DataObject(vtkDataObject):
 
         """
         warnings.warn('Deprecation Warning: `_add_field_scalar` is now `_add_field_array`', RuntimeWarning)
-        return self._add_field_array(scalars, name, set_active=set_active, deep=deep)
+        return self._add_field_array(scalars, name, deep=deep)
 
 
     def add_field_array(self, scalars, name, deep=True):
