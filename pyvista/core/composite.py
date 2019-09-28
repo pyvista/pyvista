@@ -432,26 +432,3 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # This method is here for consistency witht the rest of the API and
         # incase we add meta data to this pbject down the road.
         pass
-
-    def copy(self, deep=True):
-        """
-        Returns a copy of the object
-
-        Parameters
-        ----------
-        deep : bool, optional
-            When True makes a full copy of the object.
-
-        Returns
-        -------
-        newobject : same as input
-           Deep or shallow copy of the input.
-        """
-        thistype = type(self)
-        newobject = thistype()
-        if deep:
-            newobject.deep_copy(self)
-        else:
-            newobject.shallow_copy(self)
-        newobject.copy_meta_from(self)
-        return newobject
