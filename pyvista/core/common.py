@@ -9,6 +9,7 @@ from weakref import proxy
 import numpy as np
 import vtk
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from vtk.vtkCommonKitPython import vtkDataObject
 
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
@@ -25,10 +26,11 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class DataObject(object):
+class DataObject(vtkDataObject):
     """ Methods common to all wrapped data objects """
 
     def __init__(self, *args, **kwargs):
+        super().__init__()
         self._field_bool_array_names = set()
 
     def __new__(cls, *args, **kwargs):
@@ -279,7 +281,7 @@ class Common(DataSetFilters, DataObject):
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
-        super(Common, self).__init__()
+        super(Common, self).__init__(*args, **kwargs)
         self.references = []
         self._point_bool_array_names = set()
         self._cell_bool_array_names = set()
