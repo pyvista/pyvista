@@ -1272,7 +1272,7 @@ class _ScalarsDict(dict):
         return
 
     def __setitem__(self, key, val):
-        """ overridden to assure data is contigious """
+        """ overridden to assure data is contiguous """
         if isinstance(val, (list, tuple)):
             val = np.array(val)
         if self.callback_enabled:
