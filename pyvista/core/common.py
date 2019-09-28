@@ -2,6 +2,7 @@
 Attributes common to PolyData and Grid Objects
 """
 import collections
+from functools import partial
 import logging
 import warnings
 from weakref import proxy
@@ -1293,8 +1294,8 @@ class CellScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(CELL_DATA_FIELD, key)
-        self.modifier = lambda *args: self.data.GetCellData().Modified()
+        self.remover = partial(self.data._remove_array, CELL_DATA_FIELD)
+        self.modifier = self.data.GetCellData().Modified
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_cell_array(scalars, name, set_active=False, deep=deep)
@@ -1308,8 +1309,8 @@ class PointScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(POINT_DATA_FIELD, key)
-        self.modifier = lambda *args: self.data.GetPointData().Modified()
+        self.remover = partial(self.data._remove_array, POINT_DATA_FIELD)
+        self.modifier = self.data.GetPointData().Modified
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_point_array(scalars, name, set_active=False, deep=deep)
@@ -1323,8 +1324,8 @@ class FieldScalarsDict(_ScalarsDict):
 
     def __init__(self, data):
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(FIELD_DATA_FIELD, key)
-        self.modifier = lambda *args: self.data.GetFieldData().Modified()
+        self.remover = partial(self.data._remove_array, FIELD_DATA_FIELD)
+        self.modifier = self.data.GetFieldData().Modified
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_field_array(scalars, name, deep=deep)
