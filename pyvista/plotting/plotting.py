@@ -716,7 +716,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
-            self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
             if clim is None and scalars is not None:
                 # Get the data range across the array for all blocks
