@@ -326,6 +326,16 @@ def test_cast_uniform_to_structured():
     grid = examples.load_uniform()
     structured = grid.cast_to_structured_grid()
     assert structured.n_points == grid.n_points
+    assert structured.n_arrays == grid.n_arrays
+    assert structured.bounds == grid.bounds
+
+
+def test_cast_uniform_to_rectilinear():
+    grid = examples.load_uniform()
+    rectilinear = grid.cast_to_rectilinear_grid()
+    assert rectilinear.n_points == grid.n_points
+    assert rectilinear.n_arrays == grid.n_arrays
+    assert rectilinear.bounds == grid.bounds
 
 
 @pytest.mark.parametrize('binary', [True, False])
