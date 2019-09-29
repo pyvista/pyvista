@@ -939,7 +939,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     scalars = scalars.ravel()
 
-            if scalars.dtype == np.bool or (scalars.dtype == np.uint8 and not rgb):
+            if scalars.dtype == np.bool:
                 scalars = scalars.astype(np.float)
 
             def prepare_mapper(scalars):
@@ -958,6 +958,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.mapper.InterpolateScalarsBeforeMappingOn()
                 if rgb or _custom_opac:
                     self.mapper.SetColorModeToDirectScalars()
+                else:
+                    self.mapper.SetColorModeToMapScalars()
                 return
 
 
