@@ -312,15 +312,13 @@ class DataSet(DataSetFilters, DataObject):
         self.references = []
         self._point_bool_array_names = set()
         self._cell_bool_array_names = set()
+        self._active_scalar_info = 0, None  # Scalar field and name
+        self._last_active_scalar_name = None
 
     @property
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
-        if not hasattr(self, '_active_scalars_info'):
-            self._active_scalars_info = [POINT_DATA_FIELD, None] # field and name
-        if not hasattr(self, '_last_active_scalars_name'):
-            self._last_active_scalars_name = None
-        field, name = self._active_scalars_info
+        field, name = self._active_scalar_info
 
         # rare error where scalars name isn't a valid scalar
         if name not in self.point_arrays:
@@ -349,10 +347,10 @@ class DataSet(DataSetFilters, DataObject):
             parr = search_for_array(self.GetPointData())
             carr = search_for_array(self.GetCellData())
             if parr is not None:
-                self._active_scalars_info = [POINT_DATA_FIELD, parr]
+                self._active_scalar_info = (POINT_DATA_FIELD, parr)
                 self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
-                self._active_scalars_info = [CELL_DATA_FIELD, carr]
+                self._active_scalar_info = (CELL_DATA_FIELD, carr)
                 self.GetCellData().SetActiveScalars(carr)
 
         return self._active_scalars_info
@@ -612,7 +610,7 @@ class DataSet(DataSetFilters, DataObject):
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
-        self._active_scalars_info = [field, name]
+        self._active_scalar_info = (field, name)
 
 
     def set_active_scalar(self, name, preference='cell'):
@@ -769,7 +767,7 @@ class DataSet(DataSetFilters, DataObject):
         self.GetPointData().AddArray(vtkarr)
         if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
-            self._active_scalars_info = [POINT_DATA_FIELD, name]
+            self._active_scalars_info = (POINT_DATA_FIELD, name)
 
 
     def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
@@ -972,7 +970,7 @@ class DataSet(DataSetFilters, DataObject):
         self.GetCellData().AddArray(vtkarr)
         if set_active or self.active_scalars_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
-            self._active_scalars_info = [CELL_DATA_FIELD, name]
+            self._active_scalars_info = (CELL_DATA_FIELD, name)
 
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
