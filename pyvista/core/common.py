@@ -334,13 +334,10 @@ class DataSet(DataSetFilters, DataObject):
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
 
         def search_for_array(data):
-            arr = None
             for i in range(data.GetNumberOfArrays()):
                 name = data.GetArrayName(i)
                 if name not in exclude:
-                    arr = name
-                    break
-            return arr
+                    return name
 
         if name in exclude:
             name = self._last_active_scalars_name
