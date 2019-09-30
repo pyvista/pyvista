@@ -445,11 +445,10 @@ class DataSet(DataSetFilters, DataObject):
     def points(self):
         """Return a pointer to the points as a numpy object."""
         pts = self.GetPoints()
-        if pts is None:
-            return None
-        vtk_data = pts.GetData()
-        arr = vtk_to_numpy(vtk_data)
-        return pyvista_ndarray(arr, vtk_data)
+        if pts:
+            vtk_data = pts.GetData()
+            arr = vtk_to_numpy(vtk_data)
+            return pyvista_ndarray(arr, vtk_data)
 
 
     @points.setter
