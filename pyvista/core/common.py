@@ -341,7 +341,7 @@ class DataSet(DataSetFilters, DataObject):
             name = self._last_active_scalars_name
 
         if name is None:
-            if self.n_arrays < 1:
+            if not self.n_arrays:
                 return field, name
             # find some array in the set field
             parr = search_for_array(self.GetPointData())
