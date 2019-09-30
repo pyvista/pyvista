@@ -1298,7 +1298,7 @@ class DataSetFilters(object):
         dataset: pyvista.Common
             The source vtk data object as the mesh to sample values on to
 
-        target: pyvista.Common
+        target: pyvista.DataSet
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh
 
@@ -1945,7 +1945,7 @@ class DataSetFilters(object):
         if not main_has_priority:
             append_filter.AddInputData(dataset)
 
-        if isinstance(grid, pyvista.Common):
+        if isinstance(grid, pyvista.DataSet):
             append_filter.AddInputData(grid)
         elif isinstance(grid, (list, tuple, pyvista.MultiBlock)):
             grids = grid

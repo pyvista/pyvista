@@ -1,5 +1,5 @@
 """
-Using Common Filters
+Using DataSet Filters
 ~~~~~~~~~~~~~~~~~~~~
 
 Using common filters like thresholding and clipping

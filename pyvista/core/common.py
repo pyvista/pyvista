@@ -26,7 +26,6 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-
 class DataObject(vtkDataObject):
     """Methods common to all wrapped data objects."""
 
@@ -295,24 +294,21 @@ class DataObject(vtkDataObject):
             self._remove_array(FIELD_DATA_FIELD, key)
 
 
-
-class Common(DataSetFilters, DataObject):
-    """Methods in common to spatially referenced objects."""
+class DataSet(DataSetFilters, DataObject):
+    """ Methods in common to spatially referenced objects"""
 
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
 
 
     def __new__(cls, *args, **kwargs):
-        """Allocate memory for the common object."""
-        if cls is Common:
-            raise TypeError("pyvista.Common is an abstract class and may not be instantiated.")
+        if cls is DataSet:
+            raise TypeError("pyvista.DataSet is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
 
     def __init__(self, *args, **kwargs):
-        """Initialize the common object."""
-        super(Common, self).__init__(*args, **kwargs)
+        super(DataSet, self).__init__(*args, **kwargs)
         self.references = []
         self._point_bool_array_names = set()
         self._cell_bool_array_names = set()

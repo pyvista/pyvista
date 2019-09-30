@@ -42,7 +42,7 @@ class PickingHelper(object):
 
         Parameters
         ----------
-        mesh : pyvista.Common, optional
+        mesh : pyvista.DataSet, optional
             UnstructuredGrid grid to select cells from.  Uses last
             input grid by default.
 

@@ -15,7 +15,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
 
 import pyvista
 
-from .common import Common
+from .common import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters
 from ..utility.fileio import get_ext
 import re
@@ -138,12 +138,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.faces = self._make_vertice_cells(self.n_points)
 
     def __repr__(self):
-        """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
-        """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     def __sub__(self, cutting_mesh):
         """ subtract two meshes """
@@ -562,11 +560,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -843,11 +841,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.

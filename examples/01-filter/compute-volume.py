@@ -14,7 +14,7 @@ from pyvista import examples
 ###############################################################################
 # Computing mass properties such as the volume or area of datasets in PyVista
 # is quite easy using the :func:`pyvista.DataSetFilters.compute_cell_sizes`
-# filter and the :attr:`pyvista.Common.volume` property on all PyVista meshes.
+# filter and the :attr:`pyvista.DataSet.volume` property on all PyVista meshes.
 #
 # Let's get started with a simple gridded mesh:
 

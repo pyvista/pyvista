@@ -16,29 +16,29 @@ provides direct access:
 
 All of the following data types are listed subclasses of a dataset and share a
 set of common functionality which we wrap into the base class
-:class:`pyvista.Common`.
+:class:`pyvista.DataSet`.
 
 
-The Common Model
+The DataSet Model
 ----------------
 
-The :class:`pyvista.Common` class holds attributes that are *common* to all
+The :class:`pyvista.DataSet` class holds attributes that are *common* to all
 spatially referenced datasets in PyVista.
 This base class is analogous to VTK's ``vtk.vtkDataSet`` class.
 
 
 .. rubric:: Attributes
 
-.. autoautosummary:: pyvista.Common
+.. autoautosummary:: pyvista.DataSet
    :attributes:
 
 .. rubric:: Methods
 
-.. autoautosummary:: pyvista.Common
+.. autoautosummary:: pyvista.DataSet
    :methods:
 
 
-.. autoclass:: pyvista.Common
+.. autoclass:: pyvista.DataSet
    :show-inheritance:
    :members:
    :undoc-members:

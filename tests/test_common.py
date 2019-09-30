@@ -336,7 +336,7 @@ def test_bitarray_field():
 def test_html_repr():
     """
     This just tests to make sure no errors are thrown on the HTML
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     grid = GRID.copy()
     repr_html = grid._repr_html_()
@@ -345,7 +345,7 @@ def test_html_repr():
 def test_print_repr():
     """
     This just tests to make sure no errors are thrown on the text friendly
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     grid = GRID.copy()
     repr = grid.head()
@@ -548,7 +548,7 @@ def test_axis_rotation_not_inplace():
 
 def test_bad_instantiation():
     with pytest.raises(TypeError):
-        pyvista.Common()
+        pyvista.DataSet()
     with pytest.raises(TypeError):
         pyvista.Grid()
     with pytest.raises(TypeError):
