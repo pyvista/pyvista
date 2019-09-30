@@ -341,7 +341,7 @@ class DataSet(DataSetFilters, DataObject):
             name = self._last_active_scalars_name
 
         if name is None:
-            if not self.n_arrays:
+            if self.n_arrays == 0:
                 return field, name
             # find some array in the set field
             parr = search_for_array(self.GetPointData())
@@ -1004,15 +1004,14 @@ class DataSet(DataSetFilters, DataObject):
                 if keys:
                     if self._point_arrays[keys[0]].shape[0] == self.n_points:
                         return self._point_arrays
-                else:
-                    return self._point_arrays
+                return self._point_arrays
 
         # dictionary with callbacks
         self._point_arrays = PointScalarsDict(self)
 
         for i in range(narr):
             name = pdata.GetArrayName(i)
-            if name is None or len(name) < 1:
+            if not name:
                 name = 'Point Array {}'.format(i)
                 pdata.GetAbstractArray(i).SetName(name)
             self._point_arrays[name] = self._point_array(name)
