@@ -709,7 +709,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         except KeyError:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
-        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        self._set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
         return writer.Write()
@@ -936,7 +936,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         except KeyError:
             raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
 
-        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        self._set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)

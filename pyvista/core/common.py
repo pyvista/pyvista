@@ -1399,7 +1399,8 @@ class Common(DataSetFilters, DataObject):
         dataset = self if isinstance(self, pyvista.UnstructuredGrid) else self.cast_to_unstructured_grid()
         return pyansys.CellQuality(dataset)
 
-    def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    @staticmethod
+    def _set_vtkwriter_mode(vtk_writer, use_binary=True):
         if isinstance(vtk_writer, vtk.vtkDataWriter):
             if use_binary:
                 vtk_writer.SetFileTypeToBinary()
