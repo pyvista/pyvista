@@ -372,7 +372,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def active_vectors_info(self):
-        """Return the active scalar's field and name: [field, name]."""
+        """Return the active vector's field and name: [field, name]."""
         if not hasattr(self, '_active_vectors_info'):
             # Sometimes, precomputed normals aren't set as active
             if 'Normals' in self.array_names:
