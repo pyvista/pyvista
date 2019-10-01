@@ -308,7 +308,6 @@ class DataSet(DataSetFilters, DataObject):
 
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
-        self.references = []
         self._point_bool_array_names = set()
         self._cell_bool_array_names = set()
         self._active_scalar_info = 0, None  # Scalar field and name
