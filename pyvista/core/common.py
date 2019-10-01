@@ -58,8 +58,7 @@ class DataObject(vtkDataObject):
         ----------
         filename : str
          Filename of mesh to be written.  File type is inferred from
-         the extension of the filename unless overridden with
-         ftype.
+         the extension of the filename.
 
         binary : bool, optional
          Writes the file as binary when True and ASCII when False.
