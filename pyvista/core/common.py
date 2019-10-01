@@ -996,7 +996,6 @@ class DataSet(DataSetFilters, DataObject):
         pdata = self.GetPointData()
         narr = pdata.GetNumberOfArrays()
 
-        # Update data if necessary
         if self._point_arrays:
             keys = list(self._point_arrays.keys())
             if narr == len(keys):
@@ -1004,7 +1003,6 @@ class DataSet(DataSetFilters, DataObject):
                     return self._point_arrays
                 return self._point_arrays
 
-        # dictionary with callbacks
         self._point_arrays = PointScalarsDict(self)
 
         for i in range(narr):
