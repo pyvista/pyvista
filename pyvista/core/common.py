@@ -312,6 +312,7 @@ class DataSet(DataSetFilters, DataObject):
         self._cell_bool_array_names = set()
         self._active_scalar_info = 0, None  # Scalar field and name
         self._last_active_scalar_name = None
+        self._point_arrays = PointScalarsDict(self)
 
     @property
     def active_scalars_info(self):
@@ -996,12 +997,11 @@ class DataSet(DataSetFilters, DataObject):
         narr = pdata.GetNumberOfArrays()
 
         # Update data if necessary
-        if hasattr(self, '_point_arrays'):
+        if self._point_arrays:
             keys = list(self._point_arrays.keys())
             if narr == len(keys):
-                if keys:
-                    if self._point_arrays[keys[0]].shape[0] == self.n_points:
-                        return self._point_arrays
+                if keys and self._point_arrays[keys[0]].shape[0] == self.n_points:
+                    return self._point_arrays
                 return self._point_arrays
 
         # dictionary with callbacks
