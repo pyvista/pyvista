@@ -82,7 +82,7 @@ class DataObject(vtkDataObject):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
+            When scalars is specified, this is the perferred array type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
             or ``'field'``.
 
@@ -608,7 +608,7 @@ class DataSet(DataSetFilters, DataObject):
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveScalars(name)
         else:
-            raise RuntimeError('Data field ({}) not useable'.format(field))
+            raise RuntimeError('Data field ({}) not usable'.format(field))
         self._active_scalar_info = (field, name)
 
 
@@ -637,7 +637,7 @@ class DataSet(DataSetFilters, DataObject):
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveVectors(name)
         else:
-            raise RuntimeError('Data field ({}) not useable'.format(field))
+            raise RuntimeError('Data field ({}) not usable'.format(field))
         self._active_vectors_info = [field, name]
 
 
@@ -789,7 +789,7 @@ class DataSet(DataSetFilters, DataObject):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
+            When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
             or ``'field'``.
 
@@ -959,7 +959,7 @@ class DataSet(DataSetFilters, DataObject):
                             % self.n_cells)
 
         if not scalars.flags.c_contiguous:
-            raise AssertionError('Array must be contigious')
+            raise AssertionError('Array must be contiguous')
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._cell_bool_array_names.add(name)
