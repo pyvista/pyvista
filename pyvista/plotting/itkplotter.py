@@ -3,7 +3,6 @@ This is super experimental: use with caution
 """
 
 import pyvista as pv
-from pyvista import examples
 import numpy as np
 
 HAS_ITK = False
