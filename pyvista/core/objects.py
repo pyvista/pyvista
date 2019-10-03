@@ -459,3 +459,12 @@ class Texture(vtk.vtkTexture):
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself"""
         return self.to_image().plot(*args, **kwargs)
+
+
+    @property
+    def repeat(self):
+        return self.GetRepeat()
+
+    @repeat.setter
+    def repeat(self, flag):
+        self.SetRepeat(flag)
