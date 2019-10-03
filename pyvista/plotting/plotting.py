@@ -2926,6 +2926,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if len(vtkpoints.points) != len(labels):
             raise Exception('There must be one label for each point')
 
+        if name is None:
+            name = '{}({})'.format(type(vtkpoints).__name__, str(hex(id(vtkpoints))))
+
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')
         for item in labels:
