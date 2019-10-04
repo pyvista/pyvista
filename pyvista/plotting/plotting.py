@@ -2495,7 +2495,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
-                 font=None, shadow=False, name=None, loc=None):
+                 font=None, shadow=False, name=None, loc=None, viewport=False):
         """
         Adds text to plot object in the top left corner by default
 
@@ -2505,11 +2505,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The text to add the the rendering
 
         position : str, tuple(float)
-            String name of the position or length 2 tuple of the pixelwise
-            position to place the bottom left corner of the text box.
-            If string name is used, returns a `vtkCornerAnnotation` object
-            normally used for fixed labels (like title or xlabel).
-            If tuple is used, returns a more general `vtkOpenGLTextActor`.
+            Position to place the bottom left corner of the text box.
+            If tuple is used, the position of the text uses the pixel
+            coordinate system (default) and if viewport is True, it uses
+            the normalized viewport coordinate system instead. In this case,
+            it returns a more general `vtkOpenGLTextActor`.
+            If string name is used, it returns a `vtkCornerAnnotation`
+            object normally used for fixed labels (like title or xlabel).
             Default is to find the top left corner of the renderering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
@@ -2585,6 +2587,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.textActor = vtk.vtkTextActor()
             self.textActor.SetInput(text)
             self.textActor.SetPosition(position)
+            if viewport:
+                self.textActor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
         self.textActor.GetTextProperty().SetColor(parse_color(color))
