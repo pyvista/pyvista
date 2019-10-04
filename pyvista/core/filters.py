@@ -1499,7 +1499,7 @@ class DataSetFilters(object):
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
         """
-        return dataset.extract_geometry().tri_filter().decimate(target_reduction)
+        return dataset.extract_geometry().triangulate().decimate(target_reduction)
 
 
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
