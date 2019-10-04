@@ -520,7 +520,8 @@ def test_multi_renderers():
     plotter.add_mesh(pyvista.Arrow(), color='y', loc=loc, show_edges=True)
 
     plotter.subplot(1, 1)
-    plotter.add_text('Render Window 3', loc=loc, font_size=30)
+    plotter.add_text('Render Window 3', position=(0., 0.),
+                     loc=loc, font_size=30, viewport=True)
     plotter.add_mesh(pyvista.Cone(), color='g', loc=loc, show_edges=True,
                      backface_culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
