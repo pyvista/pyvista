@@ -2507,8 +2507,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         position : str, tuple(float)
             Position to place the bottom left corner of the text box.
             If tuple is used, the position of the text uses the pixel
-            coordinate system (default) and if viewport is True, it uses
-            the normalized viewport coordinate system instead. In this case,
+            coordinate system (default). In this case,
             it returns a more general `vtkOpenGLTextActor`.
             If string name is used, it returns a `vtkCornerAnnotation`
             object normally used for fixed labels (like title or xlabel).
@@ -2532,6 +2531,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
+
+        viewport: bool
+            If True and position is a tuple of float, uses
+            the normalized viewport coordinate system (values between 0.0
+            and 1.0 and support for HiDPI).
 
         Returns
         -------
