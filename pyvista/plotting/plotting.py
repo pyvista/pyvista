@@ -12,6 +12,7 @@ import numpy as np
 import scooby
 import vtk
 from vtk.util import numpy_support as VN
+import warnings
 
 import pyvista
 from pyvista.utilities import (convert_array, convert_string_array,
@@ -2711,11 +2712,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         zbuff = self._run_image_filter(ifilter)[:, :, 0]
 
         # Convert z-buffer values to depth from camera
-        near, far = self.camera.GetClippingRange()
-        if self.camera.GetParallelProjection():
-            zval = (zbuff - near) / (far - near)
-        else:
-            zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            near, far = self.camera.GetClippingRange()
+            if self.camera.GetParallelProjection():
+                zval = (zbuff - near) / (far - near)
+            else:
+                zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
         # Consider image values outside clipping range as nans
         args = np.logical_or(zval < -far, np.isclose(zval, -far))
