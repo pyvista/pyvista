@@ -3457,7 +3457,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise RuntimeError('Export must be called before showing/closing the scene.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        else:
+            filename = os.path.abspath(os.path.expanduser(filename))
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+
+
+
+    def export_obj(self, filename):
+        """Export scene to OBJ format"""
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter must still have a render window open.")
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        else:
+            filename = os.path.abspath(os.path.expanduser(filename))
+        exporter = vtk.vtkOBJExporter()
+        exporter.SetFilePrefix(filename)
+        exporter.SetRenderWindow(self.ren_win)
+        return exporter.Write()
 
 
     def __del__(self):
