@@ -17,11 +17,25 @@ class PlotterITK():
     def __init__(self, **kwargs):
         if not HAS_ITK:
             raise ImportError("Please install `itkwidgets`.")
+        self._actors = []
+        self._point_sets = []
         self._geometries = []
         self._geometry_colors = []
         self._geometry_opacities = []
         self._cmap = 'Viridis (matplotlib)'
+        self._point_set_colors = []
 
+    def add_actor(self, actor):
+        self._actors.append(actor)
+
+    def add_points(self, points, color=None):
+        if pv.is_pyvista_dataset(points):
+            point_array = points.points
+        else:
+            point_array = points
+
+        self._point_set_colors.append(pv.parse_color(color))
+        self._point_sets.append(points)
 
     def add_mesh(self, mesh, color=None, scalars=None, clim=None,
                  opacity=1.0, n_colors=256, cmap='Viridis (matplotlib)',
@@ -56,6 +70,9 @@ class PlotterITK():
         plotter = Viewer(geometries=self._geometries,
                          geometry_colors=self._geometry_colors,
                          geometry_opacities=self._geometry_opacities,
+                         point_set_colors=self._point_set_colors,
+                         point_sets=self._point_sets,
                          ui_collapsed=ui_collapsed,
+                         actors=self._actors,
                          cmap=self._cmap)
         return plotter
