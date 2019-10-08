@@ -37,6 +37,11 @@ before_script:
 
 matrix:
   include:
+    # Test the core API on Python 2.7 - allowed failure
+    - name: Core API 2.7
+      python: 2.7
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov pyvista
     # Test the core API on Python 3.5, 3.6, and 3.7
     - name: Core API 3.5
       python: 3.5
@@ -129,6 +134,11 @@ matrix:
         make html;
         cd ..;
   allow_failures:
+    # Test the core API on Python 2.7 - allowed failure
+    - name: Core API 2.7
+      python: 2.7
+      # Run the test suite and generate coverage report
+      script: pytest -v --cov pyvista
     - name: Notebooks 3.6 with panel
       python: 3.6
       # Now make sure notebooks are running
