@@ -122,5 +122,6 @@ class Report(scooby.Report):
         optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
                     'cmocean', 'panel']
 
-        super().__init__(additional=additional, core=core, optional=optional,
-                         ncol=ncol, text_width=text_width, sort=sort)
+        scooby.Report.__init__(self, additional=additional, core=core,
+                               optional=optional, ncol=ncol,
+                               text_width=text_width, sort=sort)

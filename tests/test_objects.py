@@ -97,7 +97,7 @@ def test_table_row_arrays():
     assert table.n_columns == nc
     assert table.n_rows == nr
     for i in range(nc):
-        assert np.allclose(table['foo{}'.format(i)],  arrays[:, i])
+        assert np.allclose(table['foo{}'.format(i)], arrays[:, i])
     # Multi component
     table = pyvista.Table()
     table['multi'] = arrays

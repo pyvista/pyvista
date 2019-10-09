@@ -75,7 +75,7 @@ def test_get_array():
     assert np.allclose(carr, utilities.get_array(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, utilities.get_array(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, utilities.get_array(grid, 'other'))
-    assert None == utilities.get_array(grid, 'foo')
+    assert utilities.get_array(grid, 'foo') is None
     assert utilities.get_array(grid, 'test_data', preference='field') is None
     assert np.allclose(farr, utilities.get_array(grid, 'field_data', preference='field'))
 

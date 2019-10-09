@@ -5,17 +5,13 @@ Supporting functions for polydata and grid objects
 import collections
 import ctypes
 import logging
-import os
 
-import imageio
 import numpy as np
 import scooby
 import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
-
-from .fileio import get_ext, get_reader, standard_reader_routine
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -360,16 +356,16 @@ def wrap(vtkdataset):
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     """
     wrappers = {
-        'vtkUnstructuredGrid' : pyvista.UnstructuredGrid,
-        'vtkRectilinearGrid' : pyvista.RectilinearGrid,
-        'vtkStructuredGrid' : pyvista.StructuredGrid,
-        'vtkPolyData' : pyvista.PolyData,
-        'vtkImageData' : pyvista.UniformGrid,
-        'vtkStructuredPoints' : pyvista.UniformGrid,
-        'vtkMultiBlockDataSet' : pyvista.MultiBlock,
-        'vtkTable' : pyvista.Table,
-        # 'vtkParametricSpline' : pyvista.Spline,
-        }
+        'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
+        'vtkRectilinearGrid': pyvista.RectilinearGrid,
+        'vtkStructuredGrid': pyvista.StructuredGrid,
+        'vtkPolyData': pyvista.PolyData,
+        'vtkImageData': pyvista.UniformGrid,
+        'vtkStructuredPoints': pyvista.UniformGrid,
+        'vtkMultiBlockDataSet': pyvista.MultiBlock,
+        'vtkTable': pyvista.Table,
+        # 'vtkParametricSpline': pyvista.Spline,
+    }
     # Otherwise, we assume a VTK data object was passed
     if hasattr(vtkdataset, 'GetClassName'):
         key = vtkdataset.GetClassName()
@@ -401,22 +397,14 @@ def wrap(vtkdataset):
 def image_to_texture(image):
     """Converts ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``
     """
-    vtex = vtk.vtkTexture()
-    vtex.SetInputDataObject(image)
-    vtex.Update()
-    return vtex
+    return pyvista.Texture(image)
 
 
 def numpy_to_texture(image):
     """Convert a NumPy image array to a vtk.vtkTexture"""
     if not isinstance(image, np.ndarray):
         raise TypeError('Unknown input type ({})'.format(type(image)))
-    if image.ndim != 3 or image.shape[2] != 3:
-        raise AssertionError('Input image must be nn by nm by RGB')
-    grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-    grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
-    grid.set_active_scalar('Image')
-    return image_to_texture(grid)
+    return pyvista.Texture(image)
 
 
 def is_inside_bounds(point, bounds):

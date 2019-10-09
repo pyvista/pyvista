@@ -158,7 +158,7 @@ class DoubleSlider(QSlider):
         self.setValue(self.value())
 
 
-class RangeGroup(QHBoxLayout):
+class RangeGroup(QHBoxLayout): # this is redefined from above ... why?
 
     def __init__(self, parent, callback, minimum=0.0, maximum=20.0,
                  value=1.0):
@@ -279,25 +279,54 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     title : string, optional
         Title of plotting window.
 
+    multi_samples : int
+        The number of multi-samples used to mitigate aliasing. 4 is a good
+        default but 8 will have better results with a potential impact on
+        perfromance.
+
+    line_smoothing : bool
+        If True, enable line smothing
+
+    point_smoothing : bool
+        If True, enable point smothing
+
+    polygon_smoothing : bool
+        If True, enable polygon smothing
+
     """
     render_trigger = pyqtSignal()
     signal_set_view_vector = pyqtSignal(tuple, tuple)
     signal_reset_camera = pyqtSignal()
     allow_quit_keypress = True
 
-    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None, **kwargs):
+    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
+                 multi_samples=None, line_smoothing=False,
+                 point_smoothing=False, polygon_smoothing=False,
+                 splitting_position=None, **kwargs):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape, title=title)
+        BasePlotter.__init__(self, shape=shape, title=title,
+                             splitting_position=splitting_position)
         self.parent = parent
+
+        if multi_samples is None:
+            multi_samples = rcParams['multi_samples']
 
         self.signal_set_view_vector.connect(self.view_vector)
         self.signal_reset_camera.connect(self.reset_camera)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
+        self.ren_win.SetMultiSamples(multi_samples)
+        if line_smoothing:
+            self.ren_win.LineSmoothingOn()
+        if point_smoothing:
+            self.ren_win.PointSmoothingOn()
+        if polygon_smoothing:
+            self.ren_win.PolygonSmoothingOn()
+
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
 
@@ -450,6 +479,7 @@ class BackgroundPlotter(QtInteractor):
 
         # build main menu
         self.main_menu = QMenuBar(parent=self.app_window)
+        self.app_window.setMenuBar(self.main_menu)
         self.app_window.signal_close.connect(self.main_menu.clear)
 
         file_menu = self.main_menu.addMenu('File')
@@ -528,6 +558,15 @@ class BackgroundPlotter(QtInteractor):
         self.render_timer.timeout.connect(self._render)
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
+
+    def key_quit(self, obj=None, event=None):  # pragma: no cover
+        try:
+            key = self.iren.GetKeySym().lower()
+
+            if key == 'q' and self.allow_quit_keypress:
+                self.app_window.close()
+        except:
+            pass
 
     def quit(self):
         QtInteractor.quit(self)

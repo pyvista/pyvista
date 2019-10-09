@@ -322,7 +322,7 @@ color_char_to_word = {
 def hex_to_rgb(h):
     """ Returns 0 to 1 rgb from a hex list or tuple """
     h = h.lstrip('#')
-    return tuple(int(h[i:i+2], 16)/255. for i in (0, 2 ,4))
+    return tuple(int(h[i:i+2], 16)/255. for i in (0, 2, 4))
 
 
 def string_to_rgb(string):

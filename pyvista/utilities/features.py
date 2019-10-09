@@ -39,7 +39,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     image = pyvista.UniformGrid()
     image.dimensions = dimensions
     dims = (dimensions - 1)
-    dims[dims==0] = 1
+    dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]
     return image
