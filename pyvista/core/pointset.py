@@ -56,7 +56,7 @@ class PointSet(Common):
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(vtk.vtkPoints())
-        return super().shallow_copy(to_copy)
+        return Common.shallow_copy(self, to_copy)
 
 
 

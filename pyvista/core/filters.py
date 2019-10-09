@@ -1547,9 +1547,9 @@ class DataSetFilters(object):
             raise ImportError('matplotlib must be available to use this filter.')
 
         if resolution is None:
-            resolution = dataset.n_cells
+            resolution = int(dataset.n_cells)
         if not isinstance(resolution, int) or resolution < 0:
-            raise RuntimeError('`resolution` must be a positive integer.')
+            raise RuntimeError('`resolution` must be a positive integer, not {}'.format(type(resolution)))
         # Make a line and probe the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
         sampled = line.sample(dataset)
