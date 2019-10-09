@@ -58,6 +58,11 @@ def test_plot(tmpdir):
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
+    os.remove(filename)
+    filename = os.path.join(pyvista.USER_DATA_PATH, 'foo')
+    cpos = pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
+    filename = filename + ".png" # Ensure it added a PNG extension by default
+    assert os.path.isfile(filename)
     # remove file
     os.remove(filename)
 
