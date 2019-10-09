@@ -18,6 +18,10 @@ log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
 
 
+SAVE_CAM_BUTTON_TEXT = 'Save Camera'
+CLEAR_CAMS_BUTTON_TEXT = 'Clear Cameras'
+
+
 # dummy reference for when PyQt5 is not installed (i.e. readthedocs)
 has_pyqt = False
 class QVTKRenderWindowInteractor(object):
@@ -375,7 +379,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             'Back (+Y)': lambda: _view_vector((0,-1,0), (0,0,1)),
             'Left (-X)': lambda: _view_vector((1,0,0), (0,0,1)),
             'Right (+X)': lambda: _view_vector((-1,0,0), (0,0,1)),
-            'Isometric' : lambda: _view_vector((1,1,1), (0,0,1))
+            'Isometric': lambda: _view_vector((1,1,1), (0,0,1))
         }
         for key, method in cvec_setters.items():
             _add_action(self.default_camera_tool_bar, key, method)
@@ -384,33 +388,35 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         # Saved camera locations toolbar
         self.saved_camera_positions = []
         self.saved_cameras_tool_bar = main_window.addToolBar('Saved Camera Positions')
-        save_cam_button_text = 'Save Camera'
-        clear_cams_button_text = 'Clear Cameras'
 
-        def _clear_camera_positions():
-            """ clears all camera positions """
-            for action in self.saved_cameras_tool_bar.actions():
-                if action.text() not in [save_cam_button_text, clear_cams_button_text]:
-                    self.saved_cameras_tool_bar.removeAction(action)
-            self.saved_camera_positions = []
-            return
+        _add_action(self.saved_cameras_tool_bar, SAVE_CAM_BUTTON_TEXT, self.save_camera_position)
+        _add_action(self.saved_cameras_tool_bar, CLEAR_CAMS_BUTTON_TEXT, self.clear_camera_positions)
 
-        def _save_camera_position():
-            """ Saves camera position to saved camera menu for recall """
-            self.saved_camera_positions.append(self.camera_position)
-            ncam = len(self.saved_camera_positions)
-            camera_position = self.camera_position[:]  # py2.7 copy compatibility
+        return
 
+
+    def save_camera_position(self):
+        """ Saves camera position to saved camera menu for recall """
+        self.saved_camera_positions.append(self.camera_position)
+        ncam = len(self.saved_camera_positions)
+        camera_position = self.camera_position[:]  # py2.7 copy compatibility
+
+        if hasattr(self, "saved_cameras_tool_bar"):
             def load_camera_position():
                 self.camera_position = camera_position
 
             self.saved_cameras_tool_bar.addAction('Cam %2d' % ncam,
-                                             load_camera_position)
-            return
+                                                  load_camera_position)
+        return
 
-        _add_action(self.saved_cameras_tool_bar, save_cam_button_text, _save_camera_position)
-        _add_action(self.saved_cameras_tool_bar, clear_cams_button_text, _clear_camera_positions)
 
+    def clear_camera_positions(self):
+        """ clears all camera positions """
+        if hasattr(self, "saved_cameras_tool_bar"):
+            for action in self.saved_cameras_tool_bar.actions():
+                if action.text() not in [SAVE_CAM_BUTTON_TEXT, CLEAR_CAMS_BUTTON_TEXT]:
+                    self.saved_cameras_tool_bar.removeAction(action)
+        self.saved_camera_positions = []
         return
 
 
