@@ -12,7 +12,7 @@ class WidgetHelper(object):
 
     def enable_box_widget(self, callback, bounds=None, factor=1.25,
                           rotation_enabled=True, color=None, use_planes=False,
-                          **kwargs):
+                          outline_translation=False, **kwargs):
         """Add a box widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData box output from this widget, and performs a
@@ -42,6 +42,10 @@ class WidgetHelper(object):
         use_planes : bool, optional
             Changes the arguments passed to the callback to the planes that
             make up the box.
+
+        outline_translation : bool
+            If ``False``, the box widget cannot be translated and is strictly
+            placed at the given bounds.
 
         """
         if hasattr(self, 'notebook') and self.notebook:
@@ -75,6 +79,7 @@ class WidgetHelper(object):
         box_widget.SetCurrentRenderer(self.renderer)
         box_widget.SetPlaceFactor(factor)
         box_widget.SetRotationEnabled(rotation_enabled)
+        box_widget.SetTranslationEnabled(outline_translation)
         box_widget.PlaceWidget(bounds)
         box_widget.On()
         box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
@@ -93,7 +98,8 @@ class WidgetHelper(object):
 
 
     def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
-                          widget_color=None, **kwargs):
+                          widget_color=None, outline_translation=False,
+                          **kwargs):
         """Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
 
@@ -145,7 +151,8 @@ class WidgetHelper(object):
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
                                factor=1.25, rotation_enabled=rotation_enabled,
-                               use_planes=True, color=widget_color)
+                               use_planes=True, color=widget_color,
+                               outline_translation=outline_translation)
 
         actor = self.add_mesh(box_clipped_mesh, reset_camera=False,
                               **kwargs)
@@ -156,7 +163,7 @@ class WidgetHelper(object):
     def enable_plane_widget(self, callback, normal='x', origin=None,
                             bounds=None, factor=1.25, color=None,
                             assign_to_axis=None, tubing=False,
-                            outline_translation=True,
+                            outline_translation=False,
                             origin_translation=True, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes two
@@ -183,6 +190,10 @@ class WidgetHelper(object):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.
+
+        translation_enabled : bool
+            If ``False``, the box widget cannot be translated and is strictly
+            placed at the given bounds.
 
         """
         if hasattr(self, 'notebook') and self.notebook:
@@ -226,6 +237,7 @@ class WidgetHelper(object):
         plane_widget.SetOutlineTranslation(outline_translation)
         plane_widget.SetOriginTranslation(origin_translation)
         if assign_to_axis:
+            # TODO: how do we now disable/hide the arrow?
             if assign_to_axis in [0, "x", "X"]:
                 plane_widget.NormalToXAxisOn()
                 plane_widget.SetNormal(NORMALS["x"])
@@ -267,7 +279,7 @@ class WidgetHelper(object):
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, value=0.0, assign_to_axis=None,
                             tubing=False, origin_translation=True,
-                            outline_translation=True, **kwargs):
+                            outline_translation=False, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
@@ -332,7 +344,7 @@ class WidgetHelper(object):
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
                        widget_color=None, assign_to_axis=None,
                        tubing=False, origin_translation=True,
-                       outline_translation=True, **kwargs):
+                       outline_translation=False, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
