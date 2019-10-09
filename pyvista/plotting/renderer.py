@@ -17,7 +17,7 @@ from .tools import create_axes_marker
 
 
 class Renderer(vtkRenderer):
-    def __init__(self, parent, border=True, border_color=[1, 1, 1],
+    def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         super(Renderer, self).__init__()
         self._actors = {}
@@ -668,7 +668,7 @@ class Renderer(vtkRenderer):
     @property
     def bounds(self):
         """ Bounds of all actors present in the rendering window """
-        the_bounds = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf]
+        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
         def _update_bounds(bounds):
             def update_axis(ax):
@@ -687,7 +687,11 @@ class Renderer(vtkRenderer):
                  and id(actor) != id(self.bounding_box_actor)):
                 _update_bounds(actor.GetBounds())
 
-        return the_bounds
+        if np.any(np.abs(the_bounds)):
+            the_bounds[the_bounds == np.inf] = -1.0
+            the_bounds[the_bounds == -np.inf] = 1.0
+
+        return the_bounds.tolist()
 
     @property
     def center(self):
