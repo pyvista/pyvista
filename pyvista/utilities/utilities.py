@@ -241,15 +241,18 @@ def vtk_points(points, deep=True):
     return vtkpts
 
 
-def lines_from_points(points):
+def line_segments_from_points(points):
     """
-    Generates line from points.  Assumes points are ordered as line segments.
+    Generates non-connected line segments from points.
+    Assumes points are ordered as line segments and an even number of points
+    are
 
     Parameters
     ----------
     points : np.ndarray
-        Points representing line segments.  For example, two line segments
-        would be represented as:
+        Points representing line segments. An even number must be given as
+        every two vertices represent a single line segment. For example, two
+        line segments would be represented as:
 
         np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
 
@@ -269,6 +272,8 @@ def lines_from_points(points):
     >>> lines.plot() # doctest:+SKIP
 
     """
+    if len(points) % 2:
+        raise RuntimeError("An even number of points must be given to define each segment.")
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -278,6 +283,32 @@ def lines_from_points(points):
     poly = pyvista.PolyData()
     poly.points = points
     poly.lines = lines
+    return poly
+
+
+def lines_from_points(points):
+    """Given an array of points, make a connected line set
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Points representing the vertices of the connected segments. For
+        example, two line segments would be represented as:
+
+        np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+    Returns
+    -------
+    lines : pyvista.PolyData
+        PolyData with lines and cells.
+
+    """
+    poly = pyvista.PolyData()
+    poly.points = points
+    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
+    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
+    cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    poly.lines = cells
     return poly
 
 
