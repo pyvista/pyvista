@@ -1,3 +1,4 @@
+import numpy as np
 import vtk
 
 import pyvista
@@ -12,7 +13,7 @@ class WidgetHelper(object):
 
     def enable_box_widget(self, callback, bounds=None, factor=1.25,
                           rotation_enabled=True, color=None, use_planes=False,
-                          outline_translation=False, **kwargs):
+                          outline_translation=True, **kwargs):
         """Add a box widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData box output from this widget, and performs a
@@ -98,7 +99,7 @@ class WidgetHelper(object):
 
 
     def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
-                          widget_color=None, outline_translation=False,
+                          widget_color=None, outline_translation=True,
                           **kwargs):
         """Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
@@ -668,7 +669,7 @@ class WidgetHelper(object):
     def enable_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
                              theta_resolution=30, phi_resolution=30,
                              color=None, style="surface",
-                             selected_color="pink"):
+                             selected_color="pink", indices=None):
         """
         Parameters
         ----------
@@ -678,7 +679,9 @@ class WidgetHelper(object):
 
         center : tuple(float)
             Length 3 array for the XYZ coordinate of the sphere's center
-            when placing it in the scene
+            when placing it in the scene. If more than one location is passed,
+            then that many widgets will be added and the callback will also
+            be passed the integer index of that widget.
 
         radius : float
             The radius of the sphere
@@ -711,31 +714,58 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['color']
 
+        center = np.array(center)
+        num = 1
+        if center.ndim > 1:
+            num = len(center)
+
+        if isinstance(color, (list, tuple, np.ndarray)):
+            colors = color
+        else:
+            colors = [color] * num
+
         def _the_callback(widget, event_id):
             point = widget.GetCenter()
+            index = widget.WIDGET_INDEX
             if hasattr(callback, '__call__'):
-                try_callback(callback, point)
+                if num > 1:
+                    try_callback(callback, point, index)
+                else:
+                    try_callback(callback, point)
             return
 
-        sphere_widget = vtk.vtkSphereWidget()
-        if style in "wireframe":
-            sphere_widget.SetRepresentationToWireframe()
-        else:
-            sphere_widget.SetRepresentationToSurface()
-        sphere_widget.GetSphereProperty().SetColor(parse_color(color))
-        sphere_widget.GetSelectedSphereProperty().SetColor(parse_color(selected_color))
-        sphere_widget.SetInteractor(self.iren)
-        sphere_widget.SetCurrentRenderer(self.renderer)
-        sphere_widget.SetRadius(radius)
-        sphere_widget.SetCenter(center)
-        sphere_widget.SetThetaResolution(theta_resolution)
-        sphere_widget.SetPhiResolution(phi_resolution)
-        sphere_widget.Modified()
-        sphere_widget.On()
-        sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(sphere_widget, None)
+        if indices is None:
+            indices = [x for x in range(num)]
 
-        self.sphere_widgets.append(sphere_widget)
+        for i in range(num):
+            if center.ndim > 1:
+                loc = center[i]
+            else:
+                loc = center
+            sphere_widget = vtk.vtkSphereWidget()
+            sphere_widget.WIDGET_INDEX = indices[i] # Monkey patch the index
+            if style in "wireframe":
+                sphere_widget.SetRepresentationToWireframe()
+            else:
+                sphere_widget.SetRepresentationToSurface()
+            sphere_widget.GetSphereProperty().SetColor(parse_color(colors[i]))
+            sphere_widget.GetSelectedSphereProperty().SetColor(parse_color(selected_color))
+            sphere_widget.SetInteractor(self.iren)
+            sphere_widget.SetCurrentRenderer(self.renderer)
+            sphere_widget.SetRadius(radius)
+            sphere_widget.SetCenter(loc)
+            sphere_widget.SetThetaResolution(theta_resolution)
+            sphere_widget.SetPhiResolution(phi_resolution)
+            sphere_widget.Modified()
+            sphere_widget.On()
+            sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            _the_callback(sphere_widget, None)
+
+            self.sphere_widgets.append(sphere_widget)
+
+        if num > 1:
+            return self.sphere_widgets
+
         return sphere_widget
 
 
