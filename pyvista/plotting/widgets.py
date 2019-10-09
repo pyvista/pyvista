@@ -1,3 +1,4 @@
+import numpy as np
 import vtk
 
 import pyvista
@@ -12,7 +13,7 @@ class WidgetHelper(object):
 
     def enable_box_widget(self, callback, bounds=None, factor=1.25,
                           rotation_enabled=True, color=None, use_planes=False,
-                          **kwargs):
+                          outline_translation=True, **kwargs):
         """Add a box widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData box output from this widget, and performs a
@@ -43,11 +44,18 @@ class WidgetHelper(object):
             Changes the arguments passed to the callback to the planes that
             make up the box.
 
+        outline_translation : bool
+            If ``False``, the box widget cannot be translated and is strictly
+            placed at the given bounds.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Box widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if not hasattr(self, "box_widgets"):
+            self.box_widgets = []
+
         if bounds is None:
             bounds = self.bounds
 
@@ -66,28 +74,33 @@ class WidgetHelper(object):
                     try_callback(callback, the_box)
             return
 
-        self.box_widget = vtk.vtkBoxWidget()
-        self.box_widget.GetOutlineProperty().SetColor(parse_color(color))
-        self.box_widget.SetInteractor(self.iren)
-        self.box_widget.SetPlaceFactor(factor)
-        self.box_widget.SetRotationEnabled(rotation_enabled)
-        self.box_widget.PlaceWidget(bounds)
-        self.box_widget.On()
-        self.box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.box_widget, None)
+        box_widget = vtk.vtkBoxWidget()
+        box_widget.GetOutlineProperty().SetColor(parse_color(color))
+        box_widget.SetInteractor(self.iren)
+        box_widget.SetCurrentRenderer(self.renderer)
+        box_widget.SetPlaceFactor(factor)
+        box_widget.SetRotationEnabled(rotation_enabled)
+        box_widget.SetTranslationEnabled(outline_translation)
+        box_widget.PlaceWidget(bounds)
+        box_widget.On()
+        box_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(box_widget, None)
 
-        return self.box_widget
+        self.box_widgets.append(box_widget)
+        return box_widget
 
 
-    def disable_box_widget(self):
-        """ Disables the last active box widget """
-        if hasattr(self, 'box_widget'):
-            self.box_widget.Off()
+    def disable_box_widgets(self):
+        """ Disables all of the box widgets """
+        if hasattr(self, 'box_widgets'):
+            for widget in self.box_widgets:
+                widget.Off()
         return
 
 
     def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
-                          widget_color=None, **kwargs):
+                          widget_color=None, outline_translation=True,
+                          **kwargs):
         """Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
 
@@ -120,7 +133,11 @@ class WidgetHelper(object):
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(mesh)
         alg.GenerateClippedOutputOn()
-        self.box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
+
+        if not hasattr(self, "box_clipped_meshes"):
+            self.box_clipped_meshes = []
+        box_clipped_mesh = pyvista.wrap(alg.GetOutput(port))
+        self.box_clipped_meshes.append(box_clipped_mesh)
 
         def callback(planes):
             bounds = []
@@ -131,20 +148,24 @@ class WidgetHelper(object):
 
             alg.SetBoxClip(*bounds)
             alg.Update()
-            self.box_clipped_mesh.shallow_copy(alg.GetOutput(port))
+            box_clipped_mesh.shallow_copy(alg.GetOutput(port))
 
         self.enable_box_widget(callback=callback, bounds=mesh.bounds,
                                factor=1.25, rotation_enabled=rotation_enabled,
-                               use_planes=True, color=widget_color)
+                               use_planes=True, color=widget_color,
+                               outline_translation=outline_translation)
 
-        actor = self.add_mesh(self.box_clipped_mesh, reset_camera=False,
+        actor = self.add_mesh(box_clipped_mesh, reset_camera=False,
                               **kwargs)
 
         return actor
 
 
     def enable_plane_widget(self, callback, normal='x', origin=None,
-                            bounds=None, factor=1.25, color=None, **kwargs):
+                            bounds=None, factor=1.25, color=None,
+                            assign_to_axis=None, tubing=False,
+                            outline_translation=False,
+                            origin_translation=True, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes two
         arguments, the normal and origin of the plane in that order output
@@ -171,11 +192,18 @@ class WidgetHelper(object):
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.
 
+        translation_enabled : bool
+            If ``False``, the box widget cannot be translated and is strictly
+            placed at the given bounds.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Plane widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if not hasattr(self, "plane_widgets"):
+            self.plane_widgets = []
+
         if origin is None:
             origin = self.center
         if bounds is None:
@@ -196,41 +224,63 @@ class WidgetHelper(object):
                 try_callback(callback, normal, origin)
             return
 
-        self.plane_widget = vtk.vtkImplicitPlaneWidget()
-        self.plane_widget.GetNormalProperty().SetColor(parse_color(color))
-        self.plane_widget.GetOutlineProperty().SetColor(parse_color(color))
-        self.plane_widget.GetOutlineProperty().SetColor(parse_color(color))
-        self.plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        self.plane_widget.SetInteractor(self.iren)
-        self.plane_widget.SetPlaceFactor(factor)
-        self.plane_widget.PlaceWidget(bounds)
-        self.plane_widget.SetOrigin(origin)
-        self.plane_widget.SetNormal(normal)
-        self.plane_widget.Modified()
-        self.plane_widget.UpdatePlacement()
-        self.plane_widget.On()
-        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.plane_widget, None) # Trigger immediate update
+        plane_widget = vtk.vtkImplicitPlaneWidget()
+        plane_widget.GetNormalProperty().SetColor(parse_color(color))
+        plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+        plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+        plane_widget.GetPlaneProperty().SetOpacity(0.5)
+        plane_widget.SetTubing(tubing)
+        plane_widget.SetInteractor(self.iren)
+        plane_widget.SetCurrentRenderer(self.renderer)
+        plane_widget.SetPlaceFactor(factor)
+        plane_widget.PlaceWidget(bounds)
+        plane_widget.SetOrigin(origin)
+        plane_widget.SetOutlineTranslation(outline_translation)
+        plane_widget.SetOriginTranslation(origin_translation)
+        if assign_to_axis:
+            # TODO: how do we now disable/hide the arrow?
+            if assign_to_axis in [0, "x", "X"]:
+                plane_widget.NormalToXAxisOn()
+                plane_widget.SetNormal(NORMALS["x"])
+            elif assign_to_axis in [1, "y", "Y"]:
+                plane_widget.NormalToYAxisOn()
+                plane_widget.SetNormal(NORMALS["y"])
+            elif assign_to_axis in [2, "z", "Z"]:
+                plane_widget.NormalToZAxisOn()
+                plane_widget.SetNormal(NORMALS["z"])
+            else:
+                raise RuntimeError("assign_to_axis not understood")
+        else:
+            plane_widget.SetNormal(normal)
+        plane_widget.Modified()
+        plane_widget.UpdatePlacement()
+        plane_widget.On()
+        plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(plane_widget, None) # Trigger immediate update
 
         _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)
         _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
 
-        self.plane_widget.SetDrawPlane(False)
-        self.plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
-        self.plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+        plane_widget.SetDrawPlane(False)
+        plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
+        plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
 
-        return self.plane_widget
+        self.plane_widgets.append(plane_widget)
+        return plane_widget
 
 
-    def disable_plane_widget(self):
-        """ Disables the last active plane widget """
-        if hasattr(self, 'plane_widget'):
-            self.plane_widget.Off()
+    def disable_plane_widgets(self):
+        """ Disables all of the plane widgets """
+        if hasattr(self, 'plane_widgets'):
+            for widget in self.plane_widgets:
+                widget.Off()
         return
 
 
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
-                            widget_color=None, value=0.0, **kwargs):
+                            widget_color=None, value=0.0, assign_to_axis=None,
+                            tubing=False, origin_translation=True,
+                            outline_translation=False, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
@@ -268,25 +318,34 @@ class WidgetHelper(object):
         alg.SetValue(value)
         alg.SetInsideOut(invert) # invert the clip if needed
 
-        self.plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
+        if not hasattr(self, "plane_clipped_meshes"):
+            self.plane_clipped_meshes = []
+        plane_clipped_mesh = pyvista.wrap(alg.GetOutput())
+        self.plane_clipped_meshes.append(plane_clipped_mesh)
 
         def callback(normal, origin):
             function = generate_plane(normal, origin)
             alg.SetClipFunction(function) # the implicit function
             alg.Update() # Perfrom the Cut
-            self.plane_clipped_mesh.shallow_copy(alg.GetOutput())
+            plane_clipped_mesh.shallow_copy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
-                                 factor=1.25, normal=normal, color=widget_color)
+                                 factor=1.25, normal=normal,
+                                 color=widget_color, tubing=tubing,
+                                 assign_to_axis=assign_to_axis,
+                                 origin_translation=origin_translation,
+                                 outline_translation=outline_translation)
 
-        actor = self.add_mesh(self.plane_clipped_mesh, **kwargs)
+        actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
         return actor
 
 
 
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
-                       widget_color=None, **kwargs):
+                       widget_color=None, assign_to_axis=None,
+                       tubing=False, origin_translation=True,
+                       outline_translation=False, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
@@ -319,21 +378,46 @@ class WidgetHelper(object):
         if not generate_triangles:
             alg.GenerateTrianglesOff()
 
-        self.plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        if not hasattr(self, "plane_sliced_meshes"):
+            self.plane_sliced_meshes = []
+        plane_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        self.plane_sliced_meshes.append(plane_sliced_mesh)
 
         def callback(normal, origin):
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane) # the the cutter to use the plane we made
             alg.Update() # Perfrom the Cut
-            self.plane_sliced_mesh.shallow_copy(alg.GetOutput())
+            plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
-                                 factor=1.25, normal=normal, color=widget_color)
+                                 factor=1.25, normal=normal,
+                                 color=widget_color, tubing=tubing,
+                                 assign_to_axis=assign_to_axis,
+                                 origin_translation=origin_translation,
+                                 outline_translation=outline_translation)
 
-        actor = self.add_mesh(self.plane_sliced_mesh, **kwargs)
+        actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
         return actor
+
+
+    def add_mesh_slice_orthogonal(self, mesh, generate_triangles=False,
+                                  widget_color=None, tubing=False,**kwargs):
+        """Adds three interactive plane slicing widgets for orthogonal slicing
+        along each cartesian axis.
+        """
+        actors = []
+        for ax in ["x", "y", "z"]:
+            a = self.add_mesh_slice(mesh, assign_to_axis=ax,
+                                    origin_translation=False,
+                                    outline_translation=False,
+                                    generate_triangles=generate_triangles,
+                                    widget_color=widget_color,
+                                    tubing=tubing)
+            actors.append(a)
+
+        return actors
 
 
 
@@ -370,9 +454,12 @@ class WidgetHelper(object):
             points of the line instead of a PolyData object.
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Box widget not available in notebook plotting')
+            raise AssertionError('Line widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if not hasattr(self, "line_widgets"):
+            self.line_widgets = []
+
         if bounds is None:
             bounds = self.bounds
 
@@ -380,8 +467,8 @@ class WidgetHelper(object):
             color = rcParams['font']['color']
 
         def _the_callback(widget, event_id):
-            pointa = self.line_widget.GetPoint1()
-            pointb = self.line_widget.GetPoint2()
+            pointa = widget.GetPoint1()
+            pointb = widget.GetPoint2()
             if hasattr(callback, '__call__'):
                 if use_vertices:
                     try_callback(callback, pointa, pointb)
@@ -390,24 +477,27 @@ class WidgetHelper(object):
                     try_callback(callback, the_line)
             return
 
-        self.line_widget = vtk.vtkLineWidget()
-        self.line_widget.GetLineProperty().SetColor(parse_color(color))
-        self.line_widget.SetInteractor(self.iren)
-        self.line_widget.SetPlaceFactor(factor)
-        self.line_widget.PlaceWidget(bounds)
-        self.line_widget.SetResolution(resolution)
-        self.line_widget.Modified()
-        self.line_widget.On()
-        self.line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.line_widget, None)
+        line_widget = vtk.vtkLineWidget()
+        line_widget.GetLineProperty().SetColor(parse_color(color))
+        line_widget.SetInteractor(self.iren)
+        line_widget.SetCurrentRenderer(self.renderer)
+        line_widget.SetPlaceFactor(factor)
+        line_widget.PlaceWidget(bounds)
+        line_widget.SetResolution(resolution)
+        line_widget.Modified()
+        line_widget.On()
+        line_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(line_widget, None)
 
-        return self.line_widget
+        self.line_widgets.append(line_widget)
+        return line_widget
 
 
-    def disable_line_widget(self):
-        """ Disables the last active line widget """
-        if hasattr(self, 'line_widget'):
-            self.line_widget.Off()
+    def disable_line_widgets(self):
+        """ Disables all of the line widgets """
+        if hasattr(self, 'line_widgets'):
+            for widget in self.line_widgets:
+                widget.Off()
         return
 
 
@@ -445,6 +535,14 @@ class WidgetHelper(object):
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.
         """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Slider widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+
+        if not hasattr(self, "slider_widgets"):
+            self.slider_widgets = []
+
         min, max = rng
 
         if value is None:
@@ -478,20 +576,23 @@ class WidgetHelper(object):
                 try_callback(callback, value)
             return
 
-        self.slider_widget = vtk.vtkSliderWidget()
-        self.slider_widget.SetInteractor(self.iren)
-        self.slider_widget.SetRepresentation(slider_rep)
-        self.slider_widget.On()
-        self.slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(self.slider_widget, None)
+        slider_widget = vtk.vtkSliderWidget()
+        slider_widget.SetInteractor(self.iren)
+        slider_widget.SetCurrentRenderer(self.renderer)
+        slider_widget.SetRepresentation(slider_rep)
+        slider_widget.On()
+        slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(slider_widget, None)
 
-        return self.slider_widget
+        self.slider_widgets.append(slider_widget)
+        return slider_widget
 
 
-    def disable_slider_widget(self):
-        """ Disables the last active slider widget """
-        if hasattr(self, 'slider_widget'):
-            self.slider_widget.Off()
+    def disable_slider_widgets(self):
+        """ Disables all of the slider widgets """
+        if hasattr(self, 'slider_widgets'):
+            for widget in self.slider_widgets:
+                widget.Off()
         return
 
 
@@ -539,7 +640,11 @@ class WidgetHelper(object):
         alg.SetInputDataObject(mesh)
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
-        self.threshold_mesh = pyvista.wrap(alg.GetOutput())
+
+        if not hasattr(self, "threshold_meshes"):
+            self.threshold_meshes = []
+        threshold_mesh = pyvista.wrap(alg.GetOutput())
+        self.threshold_meshes.append(threshold_mesh)
 
 
         def callback(value):
@@ -548,7 +653,7 @@ class WidgetHelper(object):
             else:
                 alg.ThresholdByUpper(value)
             alg.Update()
-            self.threshold_mesh.shallow_copy(alg.GetOutput())
+            threshold_mesh.shallow_copy(alg.GetOutput())
 
 
         self.enable_slider_widget(callback=callback, rng=rng, title=title,
@@ -556,21 +661,135 @@ class WidgetHelper(object):
                                   pointb=pointb)
 
         kwargs.setdefault("reset_camera", False)
-        actor = self.add_mesh(self.threshold_mesh, scalars=scalars, **kwargs)
+        actor = self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
 
         return actor
 
 
+    def enable_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
+                             theta_resolution=30, phi_resolution=30,
+                             color=None, style="surface",
+                             selected_color="pink", indices=None):
+        """
+        Parameters
+        ----------
+        callback : callable
+            The function to call back when the widget is modified. It takes a
+            single argument: the center of the sphere as a XYZ coordinate.
+
+        center : tuple(float)
+            Length 3 array for the XYZ coordinate of the sphere's center
+            when placing it in the scene. If more than one location is passed,
+            then that many widgets will be added and the callback will also
+            be passed the integer index of that widget.
+
+        radius : float
+            The radius of the sphere
+
+        theta_resolution: int , optional
+            Set the number of points in the longitude direction (ranging from
+            start_theta to end theta).
+
+        phi_resolution : int, optional
+            Set the number of points in the latitude direction (ranging from
+            start_phi to end_phi).
+
+        color : str
+            The color of the sphere's surface
+
+        style : str
+            Reprsentation style: surface or wireframe
+
+        selected_color : str
+            Color of the widget when selected during interaction
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Sphere widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+
+        if not hasattr(self, "sphere_widgets"):
+            self.sphere_widgets = []
+
+        if color is None:
+            color = rcParams['color']
+
+        center = np.array(center)
+        num = 1
+        if center.ndim > 1:
+            num = len(center)
+
+        if isinstance(color, (list, tuple, np.ndarray)):
+            colors = color
+        else:
+            colors = [color] * num
+
+        def _the_callback(widget, event_id):
+            point = widget.GetCenter()
+            index = widget.WIDGET_INDEX
+            if hasattr(callback, '__call__'):
+                if num > 1:
+                    try_callback(callback, point, index)
+                else:
+                    try_callback(callback, point)
+            return
+
+        if indices is None:
+            indices = [x for x in range(num)]
+
+        for i in range(num):
+            if center.ndim > 1:
+                loc = center[i]
+            else:
+                loc = center
+            sphere_widget = vtk.vtkSphereWidget()
+            sphere_widget.WIDGET_INDEX = indices[i] # Monkey patch the index
+            if style in "wireframe":
+                sphere_widget.SetRepresentationToWireframe()
+            else:
+                sphere_widget.SetRepresentationToSurface()
+            sphere_widget.GetSphereProperty().SetColor(parse_color(colors[i]))
+            sphere_widget.GetSelectedSphereProperty().SetColor(parse_color(selected_color))
+            sphere_widget.SetInteractor(self.iren)
+            sphere_widget.SetCurrentRenderer(self.renderer)
+            sphere_widget.SetRadius(radius)
+            sphere_widget.SetCenter(loc)
+            sphere_widget.SetThetaResolution(theta_resolution)
+            sphere_widget.SetPhiResolution(phi_resolution)
+            sphere_widget.Modified()
+            sphere_widget.On()
+            sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+            _the_callback(sphere_widget, None)
+
+            self.sphere_widgets.append(sphere_widget)
+
+        if num > 1:
+            return self.sphere_widgets
+
+        return sphere_widget
+
+
+    def disable_sphere_widgets(self):
+        """ Disable all of the sphere widgets """
+        if hasattr(self, 'sphere_widgets'):
+            for widget in self.sphere_widgets:
+                widget.Off()
+        return
+
+
     def close(self):
         """ closes widgets """
-        if hasattr(self, 'box_widget'):
-            del self.box_widget
+        if hasattr(self, 'box_widgets'):
+            del self.box_widgets
 
-        if hasattr(self, 'plane_widget'):
-            del self.plane_widget
+        if hasattr(self, 'plane_widgets'):
+            del self.plane_widgets
 
-        if hasattr(self, 'line_widget'):
-            del self.line_widget
+        if hasattr(self, 'line_widgets'):
+            del self.line_widgets
 
-        if hasattr(self, 'slider_widget'):
-            del self.slider_widget
+        if hasattr(self, 'slider_widgets'):
+            del self.slider_widgets
+
+        if hasattr(self, 'sphere_widgets'):
+            del self.sphere_widgets
