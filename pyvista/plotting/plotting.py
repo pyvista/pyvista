@@ -3069,10 +3069,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise Exception('Empty image.  Have you run plot() first?')
 
         # write screenshot to file
+        supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
         if isinstance(filename, str):
             if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
                 filename = os.path.join(pyvista.FIGURE_PATH, filename)
-            if not any([filename.endswith(ext) for ext in [".png", ".jpeg"]]):
+            if not any([filename.lower().endswith(ext) for ext in supported_formats]):
                 filename += ".png"
             if not return_img:
                 return imageio.imwrite(filename, image)
