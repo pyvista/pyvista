@@ -300,7 +300,7 @@ a surface and interpolate between them with some boundary conditions
     import pyvista as pv
 
     def get_colors(n):
-    """A haleper function to get n colors"""
+        """A helper function to get n colors"""
         from itertools import cycle
         import matplotlib
         cycler = matplotlib.rcParams['axes.prop_cycle']
