@@ -12,6 +12,7 @@ import numpy as np
 import scooby
 import vtk
 from vtk.util import numpy_support as VN
+import warnings
 
 import pyvista
 from pyvista.utilities import (convert_array, convert_string_array,
@@ -939,7 +940,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     scalars = scalars.ravel()
 
-            if scalars.dtype == np.bool or (scalars.dtype == np.uint8 and not rgb):
+            if scalars.dtype == np.bool:
                 scalars = scalars.astype(np.float)
 
             def prepare_mapper(scalars):
@@ -958,6 +959,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.mapper.InterpolateScalarsBeforeMappingOn()
                 if rgb or _custom_opac:
                     self.mapper.SetColorModeToDirectScalars()
+                else:
+                    self.mapper.SetColorModeToMapScalars()
                 return
 
 
@@ -2450,6 +2453,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # must close out widgets first
         super(BasePlotter, self).close()
 
+        # Grab screenshots of last render
+        self.last_image = self.screenshot(None, return_img=True)
+        self.last_image_depth = self.get_image_depth()
+
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
 
@@ -2489,7 +2496,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
-                 font=None, shadow=False, name=None, loc=None):
+                 font=None, shadow=False, name=None, loc=None, viewport=False):
         """
         Adds text to plot object in the top left corner by default
 
@@ -2499,11 +2506,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The text to add the the rendering
 
         position : str, tuple(float)
-            String name of the position or length 2 tuple of the pixelwise
-            position to place the bottom left corner of the text box.
-            If string name is used, returns a `vtkCornerAnnotation` object
-            normally used for fixed labels (like title or xlabel).
-            If tuple is used, returns a more general `vtkOpenGLTextActor`.
+            Position to place the bottom left corner of the text box.
+            If tuple is used, the position of the text uses the pixel
+            coordinate system (default). In this case,
+            it returns a more general `vtkOpenGLTextActor`.
+            If string name is used, it returns a `vtkCornerAnnotation`
+            object normally used for fixed labels (like title or xlabel).
             Default is to find the top left corner of the renderering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
@@ -2524,6 +2532,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
+
+        viewport: bool
+            If True and position is a tuple of float, uses
+            the normalized viewport coordinate system (values between 0.0
+            and 1.0 and support for HiDPI).
 
         Returns
         -------
@@ -2579,6 +2592,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.textActor = vtk.vtkTextActor()
             self.textActor.SetInput(text)
             self.textActor.SetPosition(position)
+            if viewport:
+                self.textActor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
         self.textActor.GetTextProperty().SetColor(parse_color(color))
@@ -2696,11 +2712,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         zbuff = self._run_image_filter(ifilter)[:, :, 0]
 
         # Convert z-buffer values to depth from camera
-        near, far = self.camera.GetClippingRange()
-        if self.camera.GetParallelProjection():
-            zval = (zbuff - near) / (far - near)
-        else:
-            zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            near, far = self.camera.GetClippingRange()
+            if self.camera.GetParallelProjection():
+                zval = (zbuff - near) / (far - near)
+            else:
+                zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
         # Consider image values outside clipping range as nans
         args = np.logical_or(zval < -far, np.isclose(zval, -far))
@@ -2919,6 +2937,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if len(vtkpoints.points) != len(labels):
             raise Exception('There must be one label for each point')
+
+        if name is None:
+            name = '{}({})'.format(type(vtkpoints).__name__, str(hex(id(vtkpoints))))
 
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')

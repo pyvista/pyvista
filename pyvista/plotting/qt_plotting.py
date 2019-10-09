@@ -519,6 +519,15 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
+    def key_quit(self, obj=None, event=None):  # pragma: no cover
+        try:
+            key = self.iren.GetKeySym().lower()
+
+            if key == 'q' and self.allow_quit_keypress:
+                self.app_window.close()
+        except:
+            pass
+
     def quit(self):
         QtInteractor.quit(self)
 

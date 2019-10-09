@@ -575,3 +575,21 @@ class UniformGrid(vtkImageData, Grid):
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)
+
+
+    def cast_to_rectilinear_grid(self):
+        """Cast this unifrom grid to a :class:`pyvista.RectilinearGrid`"""
+        def gen_coords(i):
+            coords = np.cumsum(np.insert(np.full(self.dimensions[i] - 1,
+                                                 self.spacing[i]), 0, 0)
+                               ) + self.origin[i]
+            return coords
+        xcoords = gen_coords(0)
+        ycoords = gen_coords(1)
+        zcoords = gen_coords(2)
+        grid = pyvista.RectilinearGrid(xcoords, ycoords, zcoords)
+        grid.point_arrays.update(self.point_arrays)
+        grid.cell_arrays.update(self.cell_arrays)
+        grid.field_arrays.update(self.field_arrays)
+        grid.copy_meta_from(self)
+        return grid

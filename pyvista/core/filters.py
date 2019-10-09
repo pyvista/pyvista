@@ -1499,7 +1499,7 @@ class DataSetFilters(object):
             the data set to 10% of its original size and will remove 90%
             of the input triangles.
         """
-        return dataset.extract_geometry().tri_filter().decimate(target_reduction)
+        return dataset.extract_geometry().triangulate().decimate(target_reduction)
 
 
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
@@ -1547,9 +1547,9 @@ class DataSetFilters(object):
             raise ImportError('matplotlib must be available to use this filter.')
 
         if resolution is None:
-            resolution = dataset.n_cells
+            resolution = int(dataset.n_cells)
         if not isinstance(resolution, int) or resolution < 0:
-            raise RuntimeError('`resolution` must be a positive integer.')
+            raise RuntimeError('`resolution` must be a positive integer, not {}'.format(type(resolution)))
         # Make a line and probe the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
         sampled = line.sample(dataset)
