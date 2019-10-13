@@ -672,7 +672,8 @@ class WidgetHelper(object):
 
     def add_spline_widget(self, callback, bounds=None, factor=1.25,
                           n_hanldes=5, resolution=25, color="yellow",
-                          **kwargs):
+                          show_ribbon=False, ribbon_color="pink",
+                          ribbon_opacity=0.5, **kwargs):
         """Create and add a spline widget to the scene. Use the bounds
         argument to place this widget. Several "handles" are used to control a
         parametric function for building this spline. Click directly on the
@@ -706,6 +707,9 @@ class WidgetHelper(object):
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.
 
+        show_ribbon : bool
+            If ``True``, the poly plane used for slicing will also be shown.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Spline widget not available in notebook plotting')
@@ -721,9 +725,12 @@ class WidgetHelper(object):
         if bounds is None:
             bounds = self.bounds
 
+        ribbon = pyvista.PolyData()
+
         def _the_callback(widget, event_id):
             polyline = pyvista.PolyData()
             widget.GetPolyData(polyline)
+            ribbon.shallow_copy(polyline.ribbon(normal=(0,0,1), angle=90.0))
             if hasattr(callback, '__call__'):
                 try_callback(callback, polyline)
             return
@@ -741,6 +748,9 @@ class WidgetHelper(object):
         spline_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(spline_widget, None)
 
+        if show_ribbon:
+            self.add_mesh(ribbon, color=ribbon_color, opacity=ribbon_opacity)
+
         self.spline_widgets.append(spline_widget)
         return spline_widget
 
@@ -754,7 +764,9 @@ class WidgetHelper(object):
 
     def add_mesh_slice_spline(self, mesh, generate_triangles=False,
                               n_hanldes=5, resolution=25,
-                              widget_color=None, **kwargs):
+                              widget_color=None, show_ribbon=False,
+                              ribbon_color="pink", ribbon_opacity=0.5,
+                              **kwargs):
         """Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
@@ -800,7 +812,10 @@ class WidgetHelper(object):
 
         self.add_spline_widget(callback=callback, bounds=mesh.bounds,
                                factor=1.25, color=widget_color,
-                               n_hanldes=n_hanldes, resolution=resolution)
+                               n_hanldes=n_hanldes, resolution=resolution,
+                               show_ribbon=show_ribbon,
+                               ribbon_color=ribbon_color,
+                               ribbon_opacity=ribbon_opacity)
 
         actor = self.add_mesh(spline_sliced_mesh, **kwargs)
 
