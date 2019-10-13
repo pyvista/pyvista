@@ -11,9 +11,9 @@ class WidgetHelper(object):
     """An internal class to manage widgets and other helper methods involving
     widgets"""
 
-    def enable_box_widget(self, callback, bounds=None, factor=1.25,
-                          rotation_enabled=True, color=None, use_planes=False,
-                          outline_translation=True, **kwargs):
+    def add_box_widget(self, callback, bounds=None, factor=1.25,
+                       rotation_enabled=True, color=None, use_planes=False,
+                       outline_translation=True, **kwargs):
         """Add a box widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData box output from this widget, and performs a
@@ -90,11 +90,12 @@ class WidgetHelper(object):
         return box_widget
 
 
-    def disable_box_widgets(self):
+    def clear_box_widgets(self):
         """ Disables all of the box widgets """
         if hasattr(self, 'box_widgets'):
             for widget in self.box_widgets:
                 widget.Off()
+            del self.box_widgets
         return
 
 
@@ -150,10 +151,10 @@ class WidgetHelper(object):
             alg.Update()
             box_clipped_mesh.shallow_copy(alg.GetOutput(port))
 
-        self.enable_box_widget(callback=callback, bounds=mesh.bounds,
-                               factor=1.25, rotation_enabled=rotation_enabled,
-                               use_planes=True, color=widget_color,
-                               outline_translation=outline_translation)
+        self.add_box_widget(callback=callback, bounds=mesh.bounds,
+                            factor=1.25, rotation_enabled=rotation_enabled,
+                            use_planes=True, color=widget_color,
+                            outline_translation=outline_translation)
 
         actor = self.add_mesh(box_clipped_mesh, reset_camera=False,
                               **kwargs)
@@ -161,11 +162,11 @@ class WidgetHelper(object):
         return actor
 
 
-    def enable_plane_widget(self, callback, normal='x', origin=None,
-                            bounds=None, factor=1.25, color=None,
-                            assign_to_axis=None, tubing=False,
-                            outline_translation=False,
-                            origin_translation=True, **kwargs):
+    def add_plane_widget(self, callback, normal='x', origin=None,
+                         bounds=None, factor=1.25, color=None,
+                         assign_to_axis=None, tubing=False,
+                         outline_translation=False,
+                         origin_translation=True, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes two
         arguments, the normal and origin of the plane in that order output
@@ -269,11 +270,12 @@ class WidgetHelper(object):
         return plane_widget
 
 
-    def disable_plane_widgets(self):
+    def clear_plane_widgets(self):
         """ Disables all of the plane widgets """
         if hasattr(self, 'plane_widgets'):
             for widget in self.plane_widgets:
                 widget.Off()
+            del self.plane_widgets
         return
 
 
@@ -329,12 +331,12 @@ class WidgetHelper(object):
             alg.Update() # Perfrom the Cut
             plane_clipped_mesh.shallow_copy(alg.GetOutput())
 
-        self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
-                                 factor=1.25, normal=normal,
-                                 color=widget_color, tubing=tubing,
-                                 assign_to_axis=assign_to_axis,
-                                 origin_translation=origin_translation,
-                                 outline_translation=outline_translation)
+        self.add_plane_widget(callback=callback, bounds=mesh.bounds,
+                              factor=1.25, normal=normal,
+                              color=widget_color, tubing=tubing,
+                              assign_to_axis=assign_to_axis,
+                              origin_translation=origin_translation,
+                              outline_translation=outline_translation)
 
         actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
@@ -390,12 +392,12 @@ class WidgetHelper(object):
             alg.Update() # Perfrom the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
-        self.enable_plane_widget(callback=callback, bounds=mesh.bounds,
-                                 factor=1.25, normal=normal,
-                                 color=widget_color, tubing=tubing,
-                                 assign_to_axis=assign_to_axis,
-                                 origin_translation=origin_translation,
-                                 outline_translation=outline_translation)
+        self.add_plane_widget(callback=callback, bounds=mesh.bounds,
+                              factor=1.25, normal=normal,
+                              color=widget_color, tubing=tubing,
+                              assign_to_axis=assign_to_axis,
+                              origin_translation=origin_translation,
+                              outline_translation=outline_translation)
 
         actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 
@@ -421,9 +423,9 @@ class WidgetHelper(object):
 
 
 
-    def enable_line_widget(self, callback, bounds=None, factor=1.25,
-                           resolution=100, color=None, use_vertices=False,
-                           **kwargs):
+    def add_line_widget(self, callback, bounds=None, factor=1.25,
+                        resolution=100, color=None, use_vertices=False,
+                        **kwargs):
         """Add a line widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData line output from this widget, and performs a
@@ -493,17 +495,18 @@ class WidgetHelper(object):
         return line_widget
 
 
-    def disable_line_widgets(self):
+    def clear_line_widgets(self):
         """ Disables all of the line widgets """
         if hasattr(self, 'line_widgets'):
             for widget in self.line_widgets:
                 widget.Off()
+            del self.line_widgets
         return
 
 
-    def enable_slider_widget(self, callback, rng, value=None, title=None,
-                             pointa=(.4, .9), pointb=(.9, .9),
-                             color=None):
+    def add_slider_widget(self, callback, rng, value=None, title=None,
+                          pointa=(.4, .9), pointb=(.9, .9),
+                          color=None):
         """Add a slider bar widget. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the value of this slider widget, and performs a
@@ -588,11 +591,12 @@ class WidgetHelper(object):
         return slider_widget
 
 
-    def disable_slider_widgets(self):
+    def clear_slider_widgets(self):
         """ Disables all of the slider widgets """
         if hasattr(self, 'slider_widgets'):
             for widget in self.slider_widgets:
                 widget.Off()
+            del self.slider_widgets
         return
 
 
@@ -656,9 +660,9 @@ class WidgetHelper(object):
             threshold_mesh.shallow_copy(alg.GetOutput())
 
 
-        self.enable_slider_widget(callback=callback, rng=rng, title=title,
-                                  color=widget_color, pointa=pointa,
-                                  pointb=pointb)
+        self.add_slider_widget(callback=callback, rng=rng, title=title,
+                               color=widget_color, pointa=pointa,
+                               pointb=pointb)
 
         kwargs.setdefault("reset_camera", False)
         actor = self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
@@ -666,11 +670,166 @@ class WidgetHelper(object):
         return actor
 
 
-    def enable_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
-                             theta_resolution=30, phi_resolution=30,
-                             color=None, style="surface",
-                             selected_color="pink", indices=None):
+    def add_spline_widget(self, callback, bounds=None, factor=1.25,
+                          n_hanldes=5, resolution=25, color="yellow",
+                          show_ribbon=False, ribbon_color="pink",
+                          ribbon_opacity=0.5, **kwargs):
+        """Create and add a spline widget to the scene. Use the bounds
+        argument to place this widget. Several "handles" are used to control a
+        parametric function for building this spline. Click directly on the
+        line to translate the widget.
+
+        Note
+        ----
+        This widget has trouble displaying certain colors. Use only simple
+        colors (white, black, yellow).
+
+        Parameters
+        ----------
+        callback : callable
+            The method called everytime the spline is updated. This passes a
+            :class:`pyvista.PolyData` object to the callback function of the
+            generated spline.
+
+        bounds : tuple(float)
+            Length 6 tuple of the bounding box where the widget is placed.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing
+
+        n_handles : int
+            The number of interactive spheres to control the spline's
+            parametric function.
+
+        resolution : int
+            The number of points in the spline created between all the handles
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        show_ribbon : bool
+            If ``True``, the poly plane used for slicing will also be shown.
+
         """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Spline widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+
+        if not hasattr(self, "spline_widgets"):
+            self.spline_widgets = []
+
+        if color is None:
+            color = rcParams['color']
+
+        if bounds is None:
+            bounds = self.bounds
+
+        ribbon = pyvista.PolyData()
+
+        def _the_callback(widget, event_id):
+            polyline = pyvista.PolyData()
+            widget.GetPolyData(polyline)
+            ribbon.shallow_copy(polyline.ribbon(normal=(0,0,1), angle=90.0))
+            if hasattr(callback, '__call__'):
+                try_callback(callback, polyline)
+            return
+
+        spline_widget = vtk.vtkSplineWidget()
+        spline_widget.GetLineProperty().SetColor(parse_color(color))
+        spline_widget.SetNumberOfHandles(n_hanldes)
+        spline_widget.SetInteractor(self.iren)
+        spline_widget.SetCurrentRenderer(self.renderer)
+        spline_widget.SetPlaceFactor(factor)
+        spline_widget.PlaceWidget(bounds)
+        spline_widget.SetResolution(resolution)
+        spline_widget.Modified()
+        spline_widget.On()
+        spline_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(spline_widget, None)
+
+        if show_ribbon:
+            self.add_mesh(ribbon, color=ribbon_color, opacity=ribbon_opacity)
+
+        self.spline_widgets.append(spline_widget)
+        return spline_widget
+
+
+    def clear_spline_widgets(self):
+        """disables all of the spline widgets"""
+        if hasattr(self, 'spline_widgets'):
+            for widget in self.spline_widgets:
+                widget.Off()
+            del self.spline_widgets
+
+
+    def add_mesh_slice_spline(self, mesh, generate_triangles=False,
+                              n_hanldes=5, resolution=25,
+                              widget_color=None, show_ribbon=False,
+                              ribbon_color="pink", ribbon_opacity=0.5,
+                              **kwargs):
+        """Add a mesh to the scene with a plane widget that is used to slice
+        the mesh interactively.
+
+        The sliced mesh is saved to the ``.plane_sliced_mesh`` attribute on
+        the plotter.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common
+            The input dataset to add to the scene and clip
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        kwargs : dict
+            All additional keyword arguments are passed to ``add_mesh`` to
+            control how the mesh is displayed.
+        """
+        name = kwargs.get('name', str(hex(id(mesh))))
+        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+
+        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+
+        alg = vtk.vtkCutter() # Construct the cutter object
+        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+
+        if not hasattr(self, "spline_sliced_meshes"):
+            self.spline_sliced_meshes = []
+        spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        self.spline_sliced_meshes.append(spline_sliced_mesh)
+
+        def callback(spline):
+            polyline = spline.GetCell(0)
+            # create the plane for clipping
+            polyplane = vtk.vtkPolyPlane()
+            polyplane.SetPolyLine(polyline)
+            alg.SetCutFunction(polyplane) # the the cutter to use the poly planes
+            alg.Update() # Perfrom the Cut
+            spline_sliced_mesh.shallow_copy(alg.GetOutput())
+
+        self.add_spline_widget(callback=callback, bounds=mesh.bounds,
+                               factor=1.25, color=widget_color,
+                               n_hanldes=n_hanldes, resolution=resolution,
+                               show_ribbon=show_ribbon,
+                               ribbon_color=ribbon_color,
+                               ribbon_opacity=ribbon_opacity)
+
+        actor = self.add_mesh(spline_sliced_mesh, **kwargs)
+
+        return actor
+
+
+    def add_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
+                          theta_resolution=30, phi_resolution=30,
+                          color=None, style="surface",
+                          selected_color="pink", indices=None):
+        """Add one or many sphere widgets to a scene. Use a sphere widget
+        to control a vertex location.
+
         Parameters
         ----------
         callback : callable
@@ -769,27 +928,20 @@ class WidgetHelper(object):
         return sphere_widget
 
 
-    def disable_sphere_widgets(self):
+    def clear_sphere_widgets(self):
         """ Disable all of the sphere widgets """
         if hasattr(self, 'sphere_widgets'):
             for widget in self.sphere_widgets:
                 widget.Off()
+            del self.sphere_widgets
         return
 
 
     def close(self):
         """ closes widgets """
-        if hasattr(self, 'box_widgets'):
-            del self.box_widgets
-
-        if hasattr(self, 'plane_widgets'):
-            del self.plane_widgets
-
-        if hasattr(self, 'line_widgets'):
-            del self.line_widgets
-
-        if hasattr(self, 'slider_widgets'):
-            del self.slider_widgets
-
-        if hasattr(self, 'sphere_widgets'):
-            del self.sphere_widgets
+        self.clear_box_widgets()
+        self.clear_plane_widgets()
+        self.clear_line_widgets()
+        self.clear_slider_widgets()
+        self.clear_sphere_widgets()
+        self.clear_spline_widgets()
