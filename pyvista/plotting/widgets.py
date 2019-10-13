@@ -826,7 +826,9 @@ class WidgetHelper(object):
                           theta_resolution=30, phi_resolution=30,
                           color=None, style="surface",
                           selected_color="pink", indices=None):
-        """
+        """Add one or many sphere widgets to a scene. Use a sphere widget
+        to control a vertex location.
+
         Parameters
         ----------
         callback : callable
