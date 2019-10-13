@@ -756,6 +756,7 @@ class WidgetHelper(object):
 
 
     def clear_spline_widgets(self):
+        """disables all of the spline widgets"""
         if hasattr(self, 'spline_widgets'):
             for widget in self.spline_widgets:
                 widget.Off()
