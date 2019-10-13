@@ -666,6 +666,86 @@ class WidgetHelper(object):
         return actor
 
 
+    def add_spline_widget(self, callback, bounds=None, factor=1.25,
+                          n_hanldes=5, resolution=100, color="black",
+                          **kwargs):
+        """Create and add a spline widget to the scene. Use the bounds
+        argument to place this widget. Several "handles" are used to control a
+        parametric function for building this spline. Click directly on the
+        line to translate the widget.
+
+        Note
+        ----
+        This widget has trouble displaying certain colors. Use only simple
+        colors (white, black, yellow).
+
+        Parameters
+        ----------
+        callback : callable
+            The method called everytime the spline is updated. This passes a
+            :class:`pyvista.PolyData` object to the callback function of the
+            generated spline.
+
+        bounds : tuple(float)
+            Length 6 tuple of the bounding box where the widget is placed.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing
+
+        n_handles : int
+            The number of interactive spheres to control the spline's
+            parametric function.
+
+        resolution : int
+            The number of points in the spline created between all the handles
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Spline widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+
+        if not hasattr(self, "spline_widgets"):
+            self.spline_widgets = []
+
+        if color is None:
+            color = rcParams['color']
+
+        if bounds is None:
+            bounds = self.bounds
+
+        def _the_callback(widget, event_id):
+            polyline = pv.PolyData()
+            widget.GetPolyData(polyline)
+            if hasattr(callback, '__call__'):
+                try_callback(callback, polyline)
+            return
+
+        spline_widget = vtk.vtkSplineWidget()
+        spline_widget.GetLineProperty().SetColor(parse_color(color))
+        spline_widget.SetNumberOfHandles(n_hanldes)
+        spline_widget.SetInteractor(self.iren)
+        spline_widget.SetCurrentRenderer(self.renderer)
+        spline_widget.SetPlaceFactor(factor)
+        spline_widget.PlaceWidget(bounds)
+        spline_widget.SetResolution(resolution)
+        spline_widget.Modified()
+        spline_widget.On()
+        spline_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        _the_callback(spline_widget, None)
+
+        self.spline_widgets.append(spline_widget)
+        return spline_widget
+
+
+    def clear_spline_widgets(self):
+        if hasattr(self, 'spline_widgets'):
+            del self.spline_widgets
+
+
     def enable_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
                              theta_resolution=30, phi_resolution=30,
                              color=None, style="surface",
@@ -793,3 +873,5 @@ class WidgetHelper(object):
 
         if hasattr(self, 'sphere_widgets'):
             del self.sphere_widgets
+
+        self.clear_spline_widgets()
