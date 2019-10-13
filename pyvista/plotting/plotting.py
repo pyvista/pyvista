@@ -3556,14 +3556,15 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None):
+                 splitting_position=None, title=None):
         """
         Initialize a vtk plotting object
         """
         super(Plotter, self).__init__(shape=shape, border=border,
                                       border_color=border_color,
                                       border_width=border_width,
-                                      splitting_position=splitting_position)
+                                      splitting_position=splitting_position,
+                                      title=title)
         log.debug('Initializing')
 
         def on_timer(iren, event_id):
