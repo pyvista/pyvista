@@ -671,7 +671,7 @@ class WidgetHelper(object):
 
 
     def add_spline_widget(self, callback, bounds=None, factor=1.25,
-                          n_hanldes=5, resolution=100, color="yellow",
+                          n_hanldes=5, resolution=25, color="yellow",
                           **kwargs):
         """Create and add a spline widget to the scene. Use the bounds
         argument to place this widget. Several "handles" are used to control a
@@ -750,6 +750,61 @@ class WidgetHelper(object):
             for widget in self.spline_widgets:
                 widget.Off()
             del self.spline_widgets
+
+
+    def add_mesh_slice_spline(self, mesh, generate_triangles=False,
+                              n_hanldes=5, resolution=25,
+                              widget_color=None, **kwargs):
+        """Add a mesh to the scene with a plane widget that is used to slice
+        the mesh interactively.
+
+        The sliced mesh is saved to the ``.plane_sliced_mesh`` attribute on
+        the plotter.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common
+            The input dataset to add to the scene and clip
+
+        generate_triangles: bool, optional
+            If this is enabled (``False`` by default), the output will be
+            triangles otherwise, the output will be the intersection polygons.
+
+        kwargs : dict
+            All additional keyword arguments are passed to ``add_mesh`` to
+            control how the mesh is displayed.
+        """
+        name = kwargs.get('name', str(hex(id(mesh))))
+        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+
+        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+
+        alg = vtk.vtkCutter() # Construct the cutter object
+        alg.SetInputDataObject(mesh) # Use the grid as the data we desire to cut
+        if not generate_triangles:
+            alg.GenerateTrianglesOff()
+
+        if not hasattr(self, "spline_sliced_meshes"):
+            self.spline_sliced_meshes = []
+        spline_sliced_mesh = pyvista.wrap(alg.GetOutput())
+        self.spline_sliced_meshes.append(spline_sliced_mesh)
+
+        def callback(spline):
+            polyline = spline.GetCell(0)
+            # create the plane for clipping
+            polyplane = vtk.vtkPolyPlane()
+            polyplane.SetPolyLine(polyline)
+            alg.SetCutFunction(polyplane) # the the cutter to use the poly planes
+            alg.Update() # Perfrom the Cut
+            spline_sliced_mesh.shallow_copy(alg.GetOutput())
+
+        self.add_spline_widget(callback=callback, bounds=mesh.bounds,
+                               factor=1.25, color=widget_color,
+                               n_hanldes=n_hanldes, resolution=resolution)
+
+        actor = self.add_mesh(spline_sliced_mesh, **kwargs)
+
+        return actor
 
 
     def add_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,

@@ -11,13 +11,34 @@ Here we'll take a look a the various widgets, some helper methods that leverage
 those widgets to do common tasks, and demonstrate how to leverage the widgets
 for user defined tasks and processing routines.
 
+The :class:`pyvista.BasePlotter` class inherits all of the widget methods in
+:class:`pyvista.WidgetHelper` so, all of the following methods
+are available from any PyVista plotter.
+
+.. rubric:: Attributes
+
+.. autoautosummary:: pyvista.WidgetHelper
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.WidgetHelper
+   :methods:
+
+
+.. autoclass:: pyvista.WidgetHelper
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :undoc-members:
+
 
 Box Widget
 ~~~~~~~~~~
 
 The box widget can be enabled and disabled by the
-:func:`pyvista.BasePlotter.add_box_widget` and
-:func:`pyvista.BasePlotter.clear_box_widgets` methods respectively.
+:func:`pyvista.WidgetHelper.add_box_widget` and
+:func:`pyvista.WidgetHelper.clear_box_widgets` methods respectively.
 When enabling the box widget, you must provide a custom callback function
 otherwise the box would appear and do nothing - the callback functions are
 what allow us to leverage the widget to perfrom a task like clipping/cropping.
@@ -25,7 +46,7 @@ what allow us to leverage the widget to perfrom a task like clipping/cropping.
 Considering that using a box to clip/crop a mesh is one of the most common use
 cases, we have included a helper method that will allow you to add a mesh to a
 scene with a box widget that controls its extent, the
-:func:`pyvista.BasePlotter.add_mesh_clip_box` method.
+:func:`pyvista.WidgetHelper.add_mesh_clip_box` method.
 
 .. code-block:: python
 
@@ -47,8 +68,8 @@ Plane Widget
 ~~~~~~~~~~~~
 
 The plane widget can be enabled and disabled by the
-:func:`pyvista.BasePlotter.add_plane_widget` and
-:func:`pyvista.BasePlotter.clear_plane_widgets` methods respectively.
+:func:`pyvista.WidgetHelper.add_plane_widget` and
+:func:`pyvista.WidgetHelper.clear_plane_widgets` methods respectively.
 As with all widgets, you must provide a custom callback method to utilize that
 plane. Considering that planes are most commonly used for clipping and slicing
 meshes, we have included two helper methods for doing those tasks!
@@ -112,8 +133,8 @@ Line Widget
 ~~~~~~~~~~~
 
 The line widget can be enabled and disabled by the
-:func:`pyvista.BasePlotter.add_line_widget` and
-:func:`pyvista.BasePlotter.clear_line_widgets` methods respectively.
+:func:`pyvista.WidgetHelper.add_line_widget` and
+:func:`pyvista.WidgetHelper.clear_line_widgets` methods respectively.
 Unfortunately, PyVista does not have any helper methods to utilize this
 widget, so it is necessary to pas a custom callback method.
 
@@ -158,13 +179,13 @@ Slider Bar Widget
 ~~~~~~~~~~~~~~~~~
 
 The slider widget can be enabled and disabled by the
-:func:`pyvista.BasePlotter.add_slider_widget` and
-:func:`pyvista.BasePlotter.clear_slider_widgets` methods respectively.
+:func:`pyvista.WidgetHelper.add_slider_widget` and
+:func:`pyvista.WidgetHelper.clear_slider_widgets` methods respectively.
 This is one of the most versatile widgets as it can control a value that can
 be used for just about anything.
 
 One helper method we've add is the
-:func:`pyvista.BasePlotter.add_mesh_threshold` method which leverages the
+:func:`pyvista.WidgetHelper.add_mesh_threshold` method which leverages the
 slider widget to control a thresholding value.
 
 
@@ -208,8 +229,8 @@ Sphere Widget
 ~~~~~~~~~~~~~
 
 The slider widget can be enabled and disabled by the
-:func:`pyvista.BasePlotter.add_sphere_widget` and
-:func:`pyvista.BasePlotter.clear_sphere_widgets` methods respectively.
+:func:`pyvista.WidgetHelper.add_sphere_widget` and
+:func:`pyvista.WidgetHelper.clear_sphere_widgets` methods respectively.
 This is a very versatile widgets as it can control vertex location that can
 be used to control or update the location of just about anything.
 
@@ -358,3 +379,19 @@ a surface and interpolate between them with some boundary conditions
 
 
 .. image:: ../images/gifs/sphere-widget-c.gif
+
+
+Spline Widget
+~~~~~~~~~~~~~
+
+
+A spline widget can be added to the scenee by the
+:func:`pyvista.WidgetHelper.add_spline_widget` and
+:func:`pyvista.WidgetHelper.clear_spline_widgets` methods respectively.
+This widget allows users to interactively create a poly line (spline) through
+a scene and use that spline.
+
+A common task with splines is to slice a volumetric dataset using an irregular
+path. To do this, we have added a convenient helper method which leverages the
+:func:`pyvista.DataSetFilters.slice_along_line` filter named
+:func:`pyvosta.WidgetHelper.add_mesh_slice_spline`.
