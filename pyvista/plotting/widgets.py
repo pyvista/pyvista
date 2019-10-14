@@ -405,7 +405,7 @@ class WidgetHelper(object):
 
 
     def add_mesh_slice_orthogonal(self, mesh, generate_triangles=False,
-                                  widget_color=None, tubing=False,**kwargs):
+                                  widget_color=None, tubing=False, **kwargs):
         """Adds three interactive plane slicing widgets for orthogonal slicing
         along each cartesian axis.
         """
@@ -416,7 +416,7 @@ class WidgetHelper(object):
                                     outline_translation=False,
                                     generate_triangles=generate_triangles,
                                     widget_color=widget_color,
-                                    tubing=tubing)
+                                    tubing=tubing, **kwargs)
             actors.append(a)
 
         return actors
