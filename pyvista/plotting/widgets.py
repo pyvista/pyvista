@@ -125,7 +125,8 @@ class WidgetHelper(object):
             control how the mesh is displayed.
         """
         name = kwargs.get('name', str(hex(id(mesh))))
-        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -305,7 +306,8 @@ class WidgetHelper(object):
             control how the mesh is displayed.
         """
         name = kwargs.get('name', str(hex(id(mesh))))
-        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -371,7 +373,8 @@ class WidgetHelper(object):
             control how the mesh is displayed.
         """
         name = kwargs.get('name', str(hex(id(mesh))))
-        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -788,7 +791,8 @@ class WidgetHelper(object):
             control how the mesh is displayed.
         """
         name = kwargs.get('name', str(hex(id(mesh))))
-        kwargs.setdefault('clim', mesh.get_data_range(kwargs.get('scalars', None)))
+        rng = mesh.get_data_range(kwargs.get('scalars', None))
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
