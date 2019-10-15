@@ -75,7 +75,7 @@ def test_get_array():
     assert np.allclose(carr, utilities.get_array(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, utilities.get_array(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, utilities.get_array(grid, 'other'))
-    assert None == utilities.get_array(grid, 'foo')
+    assert utilities.get_array(grid, 'foo') is None
     assert utilities.get_array(grid, 'test_data', preference='field') is None
     assert np.allclose(farr, utilities.get_array(grid, 'field_data', preference='field'))
 
@@ -108,11 +108,21 @@ def test_report():
     assert report is not None
 
 
-def test_lines_from_points():
+def test_line_segments_from_points():
     points = np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
-    poly = pyvista.lines_from_points(points)
+    poly = pyvista.line_segments_from_points(points)
     assert poly.n_cells == 2
     assert poly.n_points == 4
     cells = poly.lines
     assert np.allclose(cells[0], [2, 0,1])
     assert np.allclose(cells[1], [2, 2,3])
+
+
+def test_lines_from_points():
+    points = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+    poly = pyvista.lines_from_points(points)
+    assert poly.n_cells == 2
+    assert poly.n_points == 3
+    cells = poly.lines
+    assert np.allclose(cells[0], [2, 0,1])
+    assert np.allclose(cells[1], [2, 1,2])

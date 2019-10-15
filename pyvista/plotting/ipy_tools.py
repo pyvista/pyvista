@@ -4,7 +4,7 @@ Jupyter notebook.
 """
 IPY_AVAILABLE = False
 try:
-    from ipywidgets import interact, interactive
+    from ipywidgets import interact
     import ipywidgets as widgets
     IPY_AVAILABLE = True
 except ImportError:
@@ -61,7 +61,7 @@ class ScaledPlotter(BackgroundPlotter):
 
         # Create/display the widgets
         interact(update, xscale=self.xslider, yscale=self.yslider,
-                        zscale=self.zslider, **kwargs)
+                 zscale=self.zslider, **kwargs)
 
 
 class InteractiveTool(object):
@@ -164,15 +164,17 @@ class InteractiveTool(object):
         self.plotter.subplot(*self.loc)
         if outline is None:
             self.plotter.add_mesh(self.input_dataset.outline_corners(),
-                    reset_camera=False, color=pyvista.rcParams['outline_color'],
-                    loc=self.loc)
+                                  reset_camera=False,
+                                  color=pyvista.rcParams['outline_color'],
+                                  loc=self.loc)
         elif outline:
             self.plotter.add_mesh(self.input_dataset.outline(),
-                    reset_camera=False, color=pyvista.rcParams['outline_color'],
-                    loc=self.loc)
+                                  reset_camera=False,
+                                  color=pyvista.rcParams['outline_color'],
+                                  loc=self.loc)
         # add the axis labels
         if show_bounds:
-            self.plotter.show_bounds(reset_camera=False, loc=loc)
+            self.plotter.show_bounds(reset_camera=False, loc=self.loc)
         if reset_camera:
             cpos = self.plotter.get_default_cam_pos()
             self.plotter.camera_position = cpos
@@ -314,20 +316,20 @@ class OrthogonalSlicer(InteractiveTool):
 
         # Now set up the widgets
         xsl = widgets.FloatSlider(min=self.input_dataset.bounds[0]+stepx,
-                            max=self.input_dataset.bounds[1]-stepx,
-                            step=stepx,
-                            value=x,
-                            continuous_update=self.continuous_update)
+                                  max=self.input_dataset.bounds[1]-stepx,
+                                  step=stepx,
+                                  value=x,
+                                  continuous_update=self.continuous_update)
         ysl = widgets.FloatSlider(min=self.input_dataset.bounds[2]+stepy,
-                            max=self.input_dataset.bounds[3]-stepy,
-                            step=stepy,
-                            value=y,
-                            continuous_update=self.continuous_update)
+                                  max=self.input_dataset.bounds[3]-stepy,
+                                  step=stepy,
+                                  value=y,
+                                  continuous_update=self.continuous_update)
         zsl = widgets.FloatSlider(min=self.input_dataset.bounds[4]+stepz,
-                            max=self.input_dataset.bounds[5]-stepz,
-                            step=stepz,
-                            value=z,
-                            continuous_update=self.continuous_update)
+                                  max=self.input_dataset.bounds[5]-stepz,
+                                  step=stepz,
+                                  value=z,
+                                  continuous_update=self.continuous_update)
 
         # Create/display the widgets
         return interact(update, x=xsl, y=ysl, z=zsl,
@@ -448,13 +450,13 @@ class Threshold(InteractiveTool):
         lowstart = default_params.get("dmin", lowstart)
         highstart = default_params.get("dmax", highstart)
         minsl = widgets.FloatSlider(min=self.valid_range[0],
-                            max=self.valid_range[1],
-                            value=lowstart,
-                            continuous_update=self.continuous_update)
+                                    max=self.valid_range[1],
+                                    value=lowstart,
+                                    continuous_update=self.continuous_update)
         maxsl = widgets.FloatSlider(min=self.valid_range[0],
-                            max=self.valid_range[1],
-                            value=highstart,
-                            continuous_update=self.continuous_update)
+                                    max=self.valid_range[1],
+                                    value=highstart,
+                                    continuous_update=self.continuous_update)
 
         def _update_slider_ranges(new_rng):
             """Updates the slider ranges when switching scalars"""
@@ -563,9 +565,9 @@ class Clip(InteractiveTool):
         axchoices = ['x', 'y', 'z']
 
         locsl = widgets.FloatSlider(min=bnds[0],
-                            max=bnds[1],
-                            value=locataion,
-                            continuous_update=self.continuous_update)
+                                    max=bnds[1],
+                                    value=locataion,
+                                    continuous_update=self.continuous_update)
 
         def _update_slider_ranges(normal):
             """Update the sliders ranges"""
@@ -647,9 +649,9 @@ class Isocontour(InteractiveTool):
         start = _calc_start_value(self.valid_range)
         start = default_params.get("value", start)
         valsl = widgets.FloatSlider(min=self.valid_range[0],
-                            max=self.valid_range[1],
-                            value=start,
-                            continuous_update=self.continuous_update)
+                                    max=self.valid_range[1],
+                                    value=start,
+                                    continuous_update=self.continuous_update)
 
         def _update_slider_range(new_rng):
             """Updates the slider ranges when switching scalars"""

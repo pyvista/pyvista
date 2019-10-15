@@ -17,7 +17,7 @@ from .tools import create_axes_marker
 
 
 class Renderer(vtkRenderer):
-    def __init__(self, parent, border=True, border_color=[1, 1, 1],
+    def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         super(Renderer, self).__init__()
         self._actors = {}
@@ -55,7 +55,7 @@ class Renderer(vtkRenderer):
         coordinate.SetCoordinateSystemToNormalizedViewport()
 
         mapper = vtk.vtkPolyDataMapper2D()
-        mapper.SetInputData(poly);
+        mapper.SetInputData(poly)
         mapper.SetTransformCoordinate(coordinate)
 
         actor = vtk.vtkActor2D()
@@ -133,11 +133,14 @@ class Renderer(vtkRenderer):
 
         actor.SetPickable(pickable)
 
+        self.ResetCameraClippingRange()
+
         return actor, actor.GetProperty()
 
+
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
-                    xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
-                    labels_off=False):
+                           xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
+                           labels_off=False):
         """
         Add axes actor at origin
 
@@ -665,7 +668,7 @@ class Renderer(vtkRenderer):
     @property
     def bounds(self):
         """ Bounds of all actors present in the rendering window """
-        the_bounds = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf]
+        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
         def _update_bounds(bounds):
             def update_axis(ax):
@@ -680,11 +683,15 @@ class Renderer(vtkRenderer):
         for actor in self._actors.values():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
-            if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
+            if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
                  and id(actor) != id(self.bounding_box_actor)):
                 _update_bounds(actor.GetBounds())
 
-        return the_bounds
+        if np.any(np.abs(the_bounds)):
+            the_bounds[the_bounds == np.inf] = -1.0
+            the_bounds[the_bounds == -np.inf] = 1.0
+
+        return the_bounds.tolist()
 
     @property
     def center(self):
@@ -701,6 +708,8 @@ class Renderer(vtkRenderer):
         make a useful view.
         """
         focal_pt = self.center
+        if any(np.isnan(focal_pt)):
+            focal_pt = (0.0, 0.0, 0.0)
         return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
                 focal_pt, rcParams['camera']['viewup']]
 
