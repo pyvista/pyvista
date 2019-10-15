@@ -78,6 +78,10 @@ def test_widget_slider():
     p.add_mesh(mesh.outline())
     p.close()
 
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh_isovalue(mesh)
+    p.close()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_spline():

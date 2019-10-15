@@ -560,8 +560,6 @@ def test_bad_instantiation():
     with pytest.raises(TypeError):
         pyvista.PointGrid()
     with pytest.raises(TypeError):
-        pyvista.ipy_tools.InteractiveTool()
-    with pytest.raises(TypeError):
         pyvista.BasePlotter()
 
 
