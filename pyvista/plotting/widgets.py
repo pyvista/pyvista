@@ -105,7 +105,7 @@ class WidgetHelper(object):
         """Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
 
-        The clipped mesh is saved to the ``.box_clipped_mesh`` attribute on
+        The clipped mesh is saved to the ``.box_clipped_meshes`` attribute on
         the plotter.
 
         Parameters
@@ -287,7 +287,7 @@ class WidgetHelper(object):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
-        The clipped mesh is saved to the ``.plane_clipped_mesh`` attribute on
+        The clipped mesh is saved to the ``.plane_clipped_meshes`` attribute on
         the plotter.
 
         Parameters
@@ -353,13 +353,13 @@ class WidgetHelper(object):
         """Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
-        The sliced mesh is saved to the ``.plane_sliced_mesh`` attribute on
+        The sliced mesh is saved to the ``.plane_sliced_meshes`` attribute on
         the plotter.
 
         Parameters
         ----------
         mesh : pyvista.Common
-            The input dataset to add to the scene and clip
+            The input dataset to add to the scene and slice
 
         noraml : str or tuple(flaot)
             The starting normal vector of the plane
@@ -610,13 +610,13 @@ class WidgetHelper(object):
         """Add a mesh to the scene with a slider widget that is used to
         threshold the mesh interactively.
 
-        The threshold mesh is saved to the ``.threshold_mesh`` attribute on
+        The threshold mesh is saved to the ``.threshold_meshes`` attribute on
         the plotter.
 
         Parameters
         ----------
         mesh : pyvista.Common
-            The input dataset to add to the scene and clip
+            The input dataset to add to the scene and threshold
 
         scalars : str
             The string name of the scalars on the mesh to threshold and display
@@ -669,6 +669,77 @@ class WidgetHelper(object):
 
         kwargs.setdefault("reset_camera", False)
         actor = self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
+
+        return actor
+
+
+    def add_mesh_isovalue(self, mesh, scalars=None, compute_normals=False,
+                          compute_gradients=False, compute_scalars=True,
+                          preference='point', title=None, pointa=(.4, .9),
+                          pointb=(.9, .9), widget_color=None, **kwargs):
+        """Add a mesh to the scene with a slider widget that is used to
+        contour at an isovalue of the *point* data on the mesh interactively.
+
+        The isovalue mesh is saved to the ``.isovalue_meshes`` attribute on
+        the plotter.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common
+            The input dataset to add to the scene and contour
+
+        scalars : str
+            The string name of the scalars on the mesh to threshold and display
+
+        kwargs : dict
+            All additional keyword arguments are passed to ``add_mesh`` to
+            control how the mesh is displayed.
+        """
+        if isinstance(mesh, pyvista.MultiBlock):
+            raise TypeError('MultiBlock datasets are not supported for this widget.')
+        name = kwargs.get('name', str(hex(id(mesh))))
+        # set the array to contour on
+        if mesh.n_arrays < 1:
+            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+        if scalars is None:
+            field, scalars = mesh.active_scalar_info
+        else:
+            _, field = get_array(mesh, scalars, preference=preference, info=True)
+        # NOTE: only point data is allowed? well cells works but seems buggy?
+        if field != pyvista.POINT_DATA_FIELD:
+            raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
+
+        rng = mesh.get_data_range(scalars)
+        kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        if title is None:
+            title = scalars
+
+        alg = vtk.vtkContourFilter()
+        alg.SetInputDataObject(mesh)
+        alg.SetComputeNormals(compute_normals)
+        alg.SetComputeGradients(compute_gradients)
+        alg.SetComputeScalars(compute_scalars)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
+        alg.SetNumberOfContours(1) # Only one contour level
+
+        self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
+
+        if not hasattr(self, "isovalue_meshes"):
+            self.isovalue_meshes = []
+        isovalue_mesh = pyvista.wrap(alg.GetOutput())
+        self.isovalue_meshes.append(isovalue_mesh)
+
+        def callback(value):
+            alg.SetValue(0, value)
+            alg.Update()
+            isovalue_mesh.shallow_copy(alg.GetOutput())
+
+        self.add_slider_widget(callback=callback, rng=rng, title=title,
+                               color=widget_color, pointa=pointa,
+                               pointb=pointb)
+
+        kwargs.setdefault("reset_camera", False)
+        actor = self.add_mesh(isovalue_mesh, scalars=scalars, **kwargs)
 
         return actor
 
@@ -771,16 +842,16 @@ class WidgetHelper(object):
                               widget_color=None, show_ribbon=False,
                               ribbon_color="pink", ribbon_opacity=0.5,
                               **kwargs):
-        """Add a mesh to the scene with a plane widget that is used to slice
+        """Add a mesh to the scene with a spline widget that is used to slice
         the mesh interactively.
 
-        The sliced mesh is saved to the ``.plane_sliced_mesh`` attribute on
+        The sliced mesh is saved to the ``.spline_sliced_meshes`` attribute on
         the plotter.
 
         Parameters
         ----------
         mesh : pyvista.Common
-            The input dataset to add to the scene and clip
+            The input dataset to add to the scene and slice along the spline
 
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
