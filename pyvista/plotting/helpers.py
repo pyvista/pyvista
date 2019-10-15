@@ -204,3 +204,165 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
         p.link_views()
 
     return p.show(screenshot=screenshot, **show_kwargs)
+
+
+
+
+class OrthographicSlicer(Plotter):
+    """Creates an interactive plotting window to orthographically slice through
+    a volumetric dataset
+    """
+    def __init__(self, dataset, outline=None, clean=True, border=None,
+                 border_color='k', window_size=None, generate_triangles=False,
+                 contour=False, radius=None,
+                 title="PyVista Orthographic Slicer", **kwargs):
+        super(OrthographicSlicer, self).__init__(shape=(2, 2), border=border,
+                               notebook=False, border_color=border_color,
+                               window_size=window_size, title=title)
+        if not pyvista.is_pyvista_dataset(dataset):
+            dataset = pyvista.wrap(dataset)
+
+        # Keep track of the input
+        self.input_dataset = dataset
+
+        # Keep track of output
+        self.slices = [None, None, None]
+
+        # Start the intersection point at the center
+        self._location = self.input_dataset.center
+
+        scalars = kwargs.get('scalars', self.input_dataset.active_scalar_name)
+        preference = kwargs.get('preference', 'cell')
+        if scalars is not None:
+            self.input_dataset.set_active_scalar(scalars, preference)
+
+        if clean and self.input_dataset.active_scalar is not None:
+            # This will clean out the nan values
+            self.input_dataset = self.input_dataset.threshold()
+
+        # Hold all other kwargs for plotting
+        self._show_scalar_bar = kwargs.pop('show_scalar_bar', True)
+        _ = kwargs.pop('name', None)
+        self._kwargs = kwargs
+        self._generate_triangles = generate_triangles
+        self._contour = contour
+        if radius is None:
+            radius = self.input_dataset.length*0.01
+
+        # Run the first slice
+        self.slices = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
+        self._update_slices()
+
+        self.subplot(1,1)
+        self.add_sphere_widget(self.update, center=self.location,
+                               radius=radius)
+
+        self._start()
+
+        self.subplot(1,1)
+        self.isometric_view()
+        self.hide_axes()
+
+
+
+    @property
+    def location(self):
+        return self._location
+
+    @location.setter
+    def location(self, location):
+        if not pyvista.is_inside_bounds(location, self.input_dataset.bounds):
+            raise ValueError('Point outside of data bounds.')
+        self._location = location
+        self.update()
+
+    def _update_slices(self, *args):
+        """Re runs the slicing filter"""
+        if len(args) == 1:
+            location = args[0]
+        else:
+            location = self.location
+        axes = ['z', 'y', 'x']
+        for ax in [0, 1, 2]:
+            normal = axes[ax]
+            slc = self.input_dataset.slice(normal=normal, origin=location,
+                        generate_triangles=self._generate_triangles,
+                        contour=self._contour)
+            self.slices[ax].shallow_copy(slc)
+        return
+
+
+
+    def update_3d_view(self):
+        self.subplot(1,1)
+
+        return
+
+    def _start_3d_view(self):
+        self.subplot(1,1)
+        self.add_mesh(self.slices[0], show_scalar_bar=self._show_scalar_bar, name='top', **self._kwargs)
+        self.add_mesh(self.slices[1], show_scalar_bar=self._show_scalar_bar, name='right', **self._kwargs)
+        self.add_mesh(self.slices[2], show_scalar_bar=self._show_scalar_bar, name='front', **self._kwargs)
+        self.update_bounds_axes()
+        return self.update_3d_view()
+
+
+    def update_top_view(self):
+        self.subplot(0,0)
+        self.enable()
+        self.update_bounds_axes()
+        self.view_xy()
+        self.disable()
+        return
+
+    def _start_top_view(self):
+        self.subplot(0,0)
+        self.enable()
+        self.add_mesh(self.slices[0], show_scalar_bar=False, name='top', **self._kwargs)
+        return self.update_top_view()
+
+
+
+    def update_right_view(self):
+        self.subplot(0,1)
+        self.enable()
+        self.update_bounds_axes()
+        self.view_xz()
+        self.disable()
+        return
+
+    def _start_right_view(self):
+        self.subplot(0,1)
+        self.enable()
+        self.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self._kwargs)
+        return self.update_right_view()
+
+
+    def update_front_view(self):
+        self.subplot(1,0)
+        self.enable()
+        self.update_bounds_axes()
+        self.view_yz()
+        self.disable()
+        return
+
+    def _start_front_view(self):
+        self.subplot(1,0)
+        self.enable()
+        self.add_mesh(self.slices[2], show_scalar_bar=False, name='front', **self._kwargs)
+        return self.update_front_view()
+
+
+    def update(self, *args):
+        self._update_slices(*args)
+        self.update_top_view()
+        self.update_right_view()
+        self.update_front_view()
+        # Update 3D view last so its renderer is set as active
+        self.update_3d_view()
+
+    def _start(self):
+        self._start_top_view()
+        self._start_right_view()
+        self._start_front_view()
+        self._start_3d_view()
