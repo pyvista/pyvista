@@ -247,10 +247,10 @@ class OrthographicSlicer(object):
     a volumetric dataset
     """
     def __init__(self, dataset, outline=None, clean=True, border=None,
-                 notebook=False, border_color='k', window_size=None,
-                 generate_triangles=False, contour=False, show_bounds=False,
-                 background=False, **kwargs):
-        if not pyvista.is_pyvista_obj(dataset):
+                 border_color='k', window_size=None, generate_triangles=False,
+                 contour=False, show_bounds=False, background=False,
+                 title="PyVista Orthographic Slicer", **kwargs):
+        if not pyvista.is_pyvista_dataset(dataset):
             dataset = pyvista.wrap(dataset)
 
         # Keep track of the input
@@ -279,15 +279,24 @@ class OrthographicSlicer(object):
         self.contour = contour
         self.show_bounds = show_bounds
 
+        # Run the first slice
+        self.slices = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
+        self._update_slices()
+
+        # Begin plotting
         plotter = pyvista.Plotter
         if background:
             plotter = pyvista.BackgroundPlotter
 
         self.plotter = plotter(shape=(2, 2), border=border,
-                        notebook=notebook, border_color=border_color,
-                        window_size=window_size)
+                               notebook=False, border_color=border_color,
+                               window_size=window_size, title=title)
 
-        self.update()
+        self.plotter.subplot(1,1)
+        self.plotter.add_sphere_widget(self.update, center=self.location,
+                                       radius=self.input_dataset.length*0.01)
+
+        self._start()
 
         self.plotter.subplot(1,1)
         self.plotter.isometric_view()
@@ -307,16 +316,21 @@ class OrthographicSlicer(object):
         self._location = location
         self.update()
 
-    def update_slices(self):
+    def _update_slices(self, *args):
         """Re runs the slicing filter"""
+        if len(args) == 1:
+            location = args[0]
+        else:
+            location = self.location
         axes = ['z', 'y', 'x']
         for ax in [0, 1, 2]:
             normal = axes[ax]
-            slc = self.input_dataset.slice(normal=normal, origin=self.location,
+            slc = self.input_dataset.slice(normal=normal, origin=location,
                         generate_triangles=self.generate_triangles,
                         contour=self.contour)
-            self.slices[ax] = slc
+            self.slices[ax].shallow_copy(slc)
         return
+
 
     def _update_bounds(self):
         if self.show_bounds:
@@ -328,43 +342,74 @@ class OrthographicSlicer(object):
 
     def update_3d_view(self):
         self.plotter.subplot(1,1)
+
+        return
+
+    def _start_3d_view(self):
+        self.plotter.subplot(1,1)
         self.plotter.add_mesh(self.slices[0], show_scalar_bar=self.show_scalar_bar, name='top', **self.kwargs)
         self.plotter.add_mesh(self.slices[1], show_scalar_bar=self.show_scalar_bar, name='right', **self.kwargs)
         self.plotter.add_mesh(self.slices[2], show_scalar_bar=self.show_scalar_bar, name='front', **self.kwargs)
         self._update_bounds()
-        self.plotter.enable()
+        return self.update_3d_view()
+
 
     def update_top_view(self):
         self.plotter.subplot(0,0)
         self.plotter.enable()
-        self.plotter.add_mesh(self.slices[0], show_scalar_bar=False, name='top', **self.kwargs)
         self._update_bounds()
         self.plotter.view_xy()
         self.plotter.disable()
         return
 
+    def _start_top_view(self):
+        self.plotter.subplot(0,0)
+        self.plotter.enable()
+        self.plotter.add_mesh(self.slices[0], show_scalar_bar=False, name='top', **self.kwargs)
+        return self.update_top_view()
+
+
+
     def update_right_view(self):
         self.plotter.subplot(0,1)
         self.plotter.enable()
-        self.plotter.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self.kwargs)
         self._update_bounds()
         self.plotter.view_xz()
         self.plotter.disable()
         return
 
+    def _start_right_view(self):
+        self.plotter.subplot(0,1)
+        self.plotter.enable()
+        self.plotter.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self.kwargs)
+        return self.update_right_view()
+
+
     def update_front_view(self):
         self.plotter.subplot(1,0)
         self.plotter.enable()
-        self.plotter.add_mesh(self.slices[2], show_scalar_bar=False, name='front', **self.kwargs)
         self._update_bounds()
         self.plotter.view_yz()
         self.plotter.disable()
         return
 
-    def update(self):
-        self.update_slices()
+    def _start_front_view(self):
+        self.plotter.subplot(1,0)
+        self.plotter.enable()
+        self.plotter.add_mesh(self.slices[2], show_scalar_bar=False, name='front', **self.kwargs)
+        return self.update_front_view()
+
+
+    def update(self, *args):
+        self._update_slices(*args)
         self.update_top_view()
         self.update_right_view()
         self.update_front_view()
         # Update 3D view last so its renderer is set as active
         self.update_3d_view()
+
+    def _start(self):
+        self._start_top_view()
+        self._start_right_view()
+        self._start_front_view()
+        self._start_3d_view()
