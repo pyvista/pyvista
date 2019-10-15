@@ -29,7 +29,7 @@ def get_vtk_type(typ):
     """
     typ = nps.get_vtk_array_type(typ)
     # This handles a silly string type bug
-    if typ is 3:
+    if typ == 3:
         return 13
     return typ
 
@@ -99,7 +99,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         except ValueError:
             # This handles strings
             typ = get_vtk_type(arr.dtype)
-            if typ is 13:
+            if typ == 13:
                 vtk_data = convert_string_array(arr)
         if isinstance(name, str):
             vtk_data.SetName(name)
