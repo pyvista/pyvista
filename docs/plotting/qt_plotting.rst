@@ -3,7 +3,12 @@
 PyVista PyQt Interface
 ----------------------
 
-PyVista has an interface for placing plots in ``PyQt5`` that extends the functionality of the ``QVTKRenderWindowInteractor`` class.  The ``pyvista.QtInteractor`` class allows you to have the same functionality of the ``Plotter`` class within a ``PyQt5`` application.  This simplifies adding meshes, updating, and controlling them when using ``PyQt5``.
+PyVista has an interface for placing plots in ``PyQt5`` that extends the
+functionality of the ``QVTKRenderWindowInteractor`` class.
+The ``pyvista.QtInteractor`` class allows you to have the same functionality
+of the ``Plotter`` class within a ``PyQt5`` application.
+This simplifies adding meshes, updating, and controlling them when using
+``PyQt5``.
 
 
 Example PyQt5 PyVista QtInteractor
@@ -110,10 +115,3 @@ and functions like a normal PyVista ``Plotter`` instance.  For example:
    :members:
    :undoc-members:
    :show-inheritance:
-
-
-
-.. autoclass:: pyvista.ScaledPlotter
-  :members:
-  :undoc-members:
-  :show-inheritance:

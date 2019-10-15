@@ -509,7 +509,7 @@ def generate_report(additional=None, ncol=3, text_width=54, sort=False):
     """DEPRECATED: Please use :class:`pyvista.Report` instead."""
     logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
     core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
-    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
                 'cmocean']
     report = scooby.Report(core=core, optional=optional,
                            additional=additional, ncol=ncol,

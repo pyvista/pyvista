@@ -166,4 +166,3 @@ Be sure to check out all the available plotters for your use case:
 
 * :class:`pyvista.Plotter`: The standard plotter that pauses the code until closed
 * :class:`pyvista.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution
-* :class:`pyvista.ScaledPlotter`: An IPython extension of the :class:`pyvista.BackgroundPlotter` that has interactive widgets for scaling the axes in the rendering scene.

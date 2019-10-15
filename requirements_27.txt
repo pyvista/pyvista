@@ -7,7 +7,6 @@ pytest-cov
 pytest-memprof
 codecov
 nbval
-ipywidgets
 imageio>=2.5.0
 colorcet
 cmocean

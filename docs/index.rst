@@ -174,7 +174,7 @@ types and how you can leverage powerful 3D plotting and mesh analysis tools.
 Highlights of the API include:
 
 * Pythonic interface to VTK's Python-C++ bindings
-* Filtering/plotting tools built for interactivity in Jupyter notebooks (see :ref:`ipy_tools_ref`)
+* Filtering/plotting tools built for interactivity (see :ref:`widgets`)
 * Direct access to common VTK filters (see :ref:`filters_ref`)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see :ref:`plotting_ref`)
 
