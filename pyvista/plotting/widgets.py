@@ -162,7 +162,6 @@ class WidgetHelper(object):
 
         return actor
 
-
     def add_plane_widget(self, callback, normal='x', origin=None,
                          bounds=None, factor=1.25, color=None,
                          assign_to_axis=None, tubing=False,
@@ -179,7 +178,7 @@ class WidgetHelper(object):
             The method called everytime the plane is updated. Takes two
             arguments, the normal and origin of the plane in that order.
 
-        noraml : str or tuple(flaot)
+        normal : str or tuple(float)
             The starting normal vector of the plane
 
         origin : tuple(float)
