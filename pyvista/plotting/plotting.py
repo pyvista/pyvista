@@ -2832,7 +2832,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          show_points=True, point_color=None, point_size=5,
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
-                         pickable=True, **kwargs):
+                         pickable=True, render_points_as_spheres=False, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2990,12 +2990,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size, name='{}-points'.format(name),
-                      pickable=pickable)
+                      pickable=pickable,
+                      render_points_as_spheres=render_points_as_spheres)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False,
-                       name='{}-lables'.format(name), pickable=False)
+                       name='{}-labels'.format(name), pickable=False)
 
         return labelMapper
 

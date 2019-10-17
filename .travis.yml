@@ -81,48 +81,6 @@ matrix:
         - REPORT_COVERAGE: true
       # Run all code examples in the docstrings
       script: pytest -v --cov --doctest-modules pyvista
-
-    # Test notebooks on Python 3.6 and 3.7
-    - name: Notebooks 3.6
-      python: 3.6
-      # Now make sure notebooks are running
-      # TODO: add below: pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-      script: |
-        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-    - name: Notebooks 3.6 with panel
-      python: 3.6
-      # Now make sure notebooks are running
-      # Install panel from master branch to keep up with bug fixes
-      script: |
-        git clone https://github.com/pyviz/panel.git;
-        mv panel .panel
-        cd .panel
-        python setup.py install
-        cd ..
-        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-    - name: Notebooks 3.7 with panel
-      python: 3.7
-      # Now make sure notebooks are running
-      # Install panel from master branch to keep up with bug fixes
-      script: |
-        git clone https://github.com/pyviz/panel.git;
-        mv panel .panel
-        cd .panel
-        python setup.py install
-        cd ..
-        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-    - name: Notebooks 3.7
-      python: 3.7
-      env:
-        - REPORT_COVERAGE: false
-      # Now make sure notebooks are running
-      script: |
-        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-
     # Build/test/deploy documentation on 3.7 only
     - name: Documentation Build/Deploy 3.7
       python: 3.7
@@ -151,30 +109,6 @@ matrix:
         - pip list
       # Run the test suite and generate coverage report
       script: pytest -v --cov pyvista
-    - name: Notebooks 3.6 with panel
-      python: 3.6
-      # Now make sure notebooks are running
-      # Install panel from master branch to keep up with bug fixes
-      script: |
-        git clone https://github.com/pyviz/panel.git;
-        mv panel .panel
-        cd .panel
-        python setup.py install
-        cd ..
-        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
-    - name: Notebooks 3.7 with panel
-      python: 3.7
-      # Now make sure notebooks are running
-      # Install panel from master branch to keep up with bug fixes
-      script: |
-        git clone https://github.com/pyviz/panel.git;
-        mv panel .panel
-        cd .panel
-        python setup.py install
-        cd ..
-        pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb;
-        pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb;
 
 
 after_success:

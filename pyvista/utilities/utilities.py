@@ -29,7 +29,7 @@ def get_vtk_type(typ):
     """
     typ = nps.get_vtk_array_type(typ)
     # This handles a silly string type bug
-    if typ is 3:
+    if typ == 3:
         return 13
     return typ
 
@@ -99,7 +99,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         except ValueError:
             # This handles strings
             typ = get_vtk_type(arr.dtype)
-            if typ is 13:
+            if typ == 13:
                 vtk_data = convert_string_array(arr)
         if isinstance(name, str):
             vtk_data.SetName(name)
@@ -509,7 +509,7 @@ def generate_report(additional=None, ncol=3, text_width=54, sort=False):
     """DEPRECATED: Please use :class:`pyvista.Report` instead."""
     logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
     core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
-    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
                 'cmocean']
     report = scooby.Report(core=core, optional=optional,
                            additional=additional, ncol=ncol,

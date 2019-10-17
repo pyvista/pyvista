@@ -76,14 +76,14 @@ Overview of Features
 --------------------
 
 * Embeddable rendering in Jupyter Notebooks
-* Filtering/plotting tools built for interactivity in Jupyter notebooks (see `IPython Tools`_)
+* Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 * Import meshes from many common formats (use ``pyvista.read()``)
 * Export meshes as VTK, STL, OBJ, or PLY file types
 
 
-.. _IPython Tools: https://docs.pyvista.org/plotting/ipy_tools.html
+.. _Widgets: https://docs.pyvista.org/plotting/widgets.html
 .. _Filters: https://docs.pyvista.org/core/filters.html
 .. _Plotting: https://docs.pyvista.org/plotting/index.html
 

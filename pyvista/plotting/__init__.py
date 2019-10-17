@@ -2,8 +2,6 @@ from .colors import (color_char_to_word, get_cmap_safe, hex_to_rgb, hexcolors,
                      string_to_rgb)
 from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
 from .helpers import OrthographicSlicer, plot, plot_arrows, plot_compare_four
-from .ipy_tools import (Clip, InteractiveTool, Isocontour, ManySlicesAlongAxis,
-                        OrthogonalSlicer, ScaledPlotter, Threshold)
 from .plotting import BasePlotter, Plotter, close_all
 from .qt_plotting import BackgroundPlotter, QtInteractor
 from .renderer import Renderer
