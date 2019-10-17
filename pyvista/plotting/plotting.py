@@ -2996,7 +2996,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False,
-                       name='{}-lables'.format(name), pickable=False)
+                       name='{}-labels'.format(name), pickable=False)
 
         return labelMapper
 
