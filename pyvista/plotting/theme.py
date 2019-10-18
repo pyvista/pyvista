@@ -5,7 +5,6 @@ from .colors import string_to_rgb, PARAVIEW_BACKGROUND
 
 
 MAX_N_COLOR_BARS = 10
-PV_BACKGROUND = PARAVIEW_BACKGROUND
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
              'times': vtk.VTK_TIMES}
