@@ -534,11 +534,11 @@ class Renderer(vtkRenderer):
             elif camera_location == 'yz':
                 self.view_yz()
             elif camera_location == 'yx':
-                self.view_xy(True)
+                self.view_yx()
             elif camera_location == 'zx':
-                self.view_xz(True)
+                self.view_zx()
             elif camera_location == 'zy':
-                self.view_yz(True)
+                self.view_zy()
             return
 
         if isinstance(camera_location[0], (int, float)):
