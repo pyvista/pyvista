@@ -269,6 +269,113 @@ class WidgetHelper(object):
         self.plane_widgets.append(plane_widget)
         return plane_widget
 
+    def add_plane_widget_simple(self, callback, normal='x', origin=None,
+                               bounds=None, factor=1.25, color=None,
+                               assign_to_axis=None, **kwargs):
+        """Add a plane widget to the scene. This is useless without a callback
+        function. You can pass a callable function that takes two
+        arguments, the normal and origin of the plane in that order output
+        from this widget, and performs a task with that plane.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called everytime the plane is updated. Takes two
+            arguments, the normal and origin of the plane in that order.
+
+        normal : str or tuple(float)
+            The starting normal vector of the plane
+
+        origin : tuple(float)
+            The starting coordinate of the center of the place
+
+        bounds : tuple(float)
+            Length 6 tuple of the bounding box where the widget is placed.
+
+        factor : float, optional
+            An inflation factor to expand on the bounds when placing
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        translation_enabled : bool
+            If ``False``, the box widget cannot be translated and is strictly
+            placed at the given bounds.
+
+        """
+        if hasattr(self, 'notebook') and self.notebook:
+            raise AssertionError('Plane widget not available in notebook plotting')
+        if not hasattr(self, 'iren'):
+            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if not hasattr(self, "plane_widgets_simple"):
+            self.plane_widgets_simple = []
+
+        if origin is None:
+            origin = self.center
+        if bounds is None:
+            bounds = self.bounds
+
+        if isinstance(normal, str):
+            normal = NORMALS[normal.lower()]
+
+        if color is None:
+            color = rcParams['font']['color']
+
+        plane_widget = vtk.vtkPlaneWidget()
+        # Colors
+        plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
+        plane_widget.GetHandleProperty().SetColor(parse_color(color))
+        plane_widget.GetPlaneProperty().SetOpacity(0.5)
+
+        # Interactor and render
+        plane_widget.SetInteractor(self.iren)
+        plane_widget.SetCurrentRenderer(self.renderer)
+
+        # Scale
+        plane_widget.SetPlaceFactor(factor)
+        plane_widget.SetHandleSize(.05)
+        # Location
+        # Position of the small plane
+        source = vtk.vtkPlaneSource()
+        source.SetNormal(normal)
+        source.SetCenter(origin)
+        source.SetPoint1(origin[0] + (bounds[1] - bounds[0]) * 0.01,
+                         origin[1] - (bounds[3] - bounds[2]) * 0.01,
+                         origin[2])
+        source.SetPoint2(origin[0] - (bounds[1] - bounds[0]) * 0.01,
+                         origin[1] + (bounds[3] - bounds[2]) * 0.01,
+                         origin[2])
+        source.Update()
+
+        # Position of the widget
+        plane_widget.SetInputData(source.GetOutput())
+        plane_widget.SetRepresentationToSurface()
+        plane_widget.PlaceWidget(bounds)
+        plane_widget.SetNormal(normal)
+        plane_widget.SetCenter(origin)
+
+        if assign_to_axis:
+            # TODO: how do we now disable/hide the arrow?
+            if assign_to_axis in [0, "x", "X"]:
+                plane_widget.NormalToXAxisOn()
+                plane_widget.SetNormal(NORMALS["x"])
+            elif assign_to_axis in [1, "y", "Y"]:
+                plane_widget.NormalToYAxisOn()
+                plane_widget.SetNormal(NORMALS["y"])
+            elif assign_to_axis in [2, "z", "Z"]:
+                plane_widget.NormalToZAxisOn()
+                plane_widget.SetNormal(NORMALS["z"])
+            else:
+                raise RuntimeError("assign_to_axis not understood")
+        else:
+            plane_widget.SetNormal(*normal)
+
+        plane_widget.Modified()
+        plane_widget.UpdatePlacement()
+        plane_widget.On()
+
+        self.plane_widgets_simple.append(plane_widget)
+        return plane_widget
 
     def clear_plane_widgets(self):
         """ Disables all of the plane widgets """
@@ -891,9 +998,9 @@ class WidgetHelper(object):
             index = widget.WIDGET_INDEX
             if hasattr(callback, '__call__'):
                 if num > 1:
-                    try_callback(callback, point, index)
+                    try_callback(callback, point, index, widget)
                 else:
-                    try_callback(callback, point)
+                    try_callback(callback, point, widget)
             return
 
         if indices is None:
