@@ -1511,9 +1511,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """ Returns if the camera of the active renderer has been set """
         return self.renderer.camera_set
 
-    def get_default_cam_pos(self):
+    def get_default_cam_pos(self, negative=False):
         """ Return the default camera position of the active renderer """
-        return self.renderer.get_default_cam_pos()
+        return self.renderer.get_default_cam_pos(negative=negative)
 
     @camera_set.setter
     def camera_set(self, is_set):
@@ -3277,12 +3277,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """DEPRECATED: Please use ``view_isometric``"""
         return self.view_isometric()
 
-    def view_isometric(self):
+    def view_isometric(self, negative=False):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        return self.renderer.view_isometric()
+        return self.renderer.view_isometric(negative=negative)
 
     def view_vector(self, vector, viewup=None):
         return self.renderer.view_vector(vector, viewup=viewup)
@@ -3291,13 +3291,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """View the XY plane"""
         return self.renderer.view_xy(negative=negative)
 
+    def view_yx(self, negative=False):
+        """View the YX plane"""
+        return self.renderer.view_yx(negative=negative)
+
     def view_xz(self, negative=False):
         """View the XZ plane"""
         return self.renderer.view_xz(negative=negative)
 
+    def view_zx(self, negative=False):
+        """View the ZX plane"""
+        return self.renderer.view_zx(negative=negative)
+
     def view_yz(self, negative=False):
         """View the YZ plane"""
         return self.renderer.view_yz(negative=negative)
+
+    def view_zy(self, negative=False):
+        """View the ZY plane"""
+        return self.renderer.view_zy(negative=negative)
 
     def disable(self):
         """Disable this renderer's camera from being interactive"""
