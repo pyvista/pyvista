@@ -702,7 +702,7 @@ class Renderer(vtkRenderer):
         z = (bounds[5] + bounds[4])/2
         return [x, y, z]
 
-    def get_default_cam_pos(self):
+    def get_default_cam_pos(self, negative=False):
         """
         Returns the default focal points and viewup. Uses ResetCamera to
         make a useful view.
@@ -710,8 +710,12 @@ class Renderer(vtkRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
+        position = np.array(rcParams['camera']['position'])
+        if negative:
+            position *= -1
+        cpos = [position + np.array(focal_pt),
                 focal_pt, rcParams['camera']['viewup']]
+        return cpos
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window """
@@ -740,12 +744,12 @@ class Renderer(vtkRenderer):
         """DEPRECATED: Please use ``view_isometric``"""
         return self.view_isometric()
 
-    def view_isometric(self):
+    def view_isometric(self, negative=False):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        self.camera_position = self.get_default_cam_pos()
+        self.camera_position = self.get_default_cam_pos(negative=negative)
         self.camera_set = False
         return self.reset_camera()
 
@@ -764,7 +768,15 @@ class Renderer(vtkRenderer):
         vec = np.array([0,0,1])
         viewup = np.array([0,1,0])
         if negative:
-            vec = np.array([0,0,-1])
+            vec *= -1
+        return self.view_vector(vec, viewup)
+
+    def view_yx(self, negative=False):
+        """View the YX plane"""
+        vec = np.array([0,0,-1])
+        viewup = np.array([1,0,0])
+        if negative:
+            vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_xz(self, negative=False):
@@ -772,7 +784,15 @@ class Renderer(vtkRenderer):
         vec = np.array([0,-1,0])
         viewup = np.array([0,0,1])
         if negative:
-            vec = np.array([0,1,0])
+            vec *= -1
+        return self.view_vector(vec, viewup)
+
+    def view_zx(self, negative=False):
+        """View the ZX plane"""
+        vec = np.array([0,1,0])
+        viewup = np.array([1,0,0])
+        if negative:
+            vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_yz(self, negative=False):
@@ -780,7 +800,16 @@ class Renderer(vtkRenderer):
         vec = np.array([1,0,0])
         viewup = np.array([0,0,1])
         if negative:
-            vec = np.array([-1,0,0])
+            vec *= -1
+        return self.view_vector(vec, viewup)
+
+
+    def view_zy(self, negative=False):
+        """View the ZY plane"""
+        vec = np.array([-1,0,0])
+        viewup = np.array([0,1,0])
+        if negative:
+            vec *= -1
         return self.view_vector(vec, viewup)
 
     def disable(self):
