@@ -318,7 +318,7 @@ class OrthographicSlicer(Plotter):
     def _start_top_view(self):
         self.subplot(0,0)
         self.enable()
-        self.show_axes()
+        self.enable_parallel_projection()
         self.add_mesh(self.slices[0], show_scalar_bar=False, name='top', **self._kwargs)
         return self.update_top_view()
 
@@ -335,7 +335,7 @@ class OrthographicSlicer(Plotter):
     def _start_right_view(self):
         self.subplot(0,1)
         self.enable()
-        self.show_axes()
+        self.enable_parallel_projection()
         self.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self._kwargs)
         return self.update_right_view()
 
@@ -351,6 +351,7 @@ class OrthographicSlicer(Plotter):
     def _start_front_view(self):
         self.subplot(1,0)
         self.enable()
+        self.enable_parallel_projection()
         self.add_mesh(self.slices[2], show_scalar_bar=False, name='front', **self._kwargs)
         return self.update_front_view()
 
