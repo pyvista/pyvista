@@ -215,7 +215,7 @@ class OrthographicSlicer(Plotter):
     def __init__(self, dataset, outline=None, clean=True, border=None,
                  border_color='k', window_size=None, generate_triangles=False,
                  contour=False, radius=None, show_bounds=True, disable=True,
-                 title="PyVista Orthographic Slicer", **kwargs):
+                 line_width=3, title="PyVista Orthographic Slicer", **kwargs):
         super(OrthographicSlicer, self).__init__(shape=(2, 2), border=border,
                                notebook=False, border_color=border_color,
                                window_size=window_size, title=title)
@@ -244,6 +244,7 @@ class OrthographicSlicer(Plotter):
         self._show_scalar_bar = kwargs.pop('show_scalar_bar', True)
         self._show_bounds = show_bounds
         self._disable = disable
+        self._line_width = line_width
         _ = kwargs.pop('name', None)
         self._kwargs = kwargs
         self._generate_triangles = generate_triangles
@@ -253,10 +254,16 @@ class OrthographicSlicer(Plotter):
 
         # Run the first slice
         self.slices = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
+        self._lines = [pyvista.PolyData(), pyvista.PolyData(), pyvista.PolyData()]
         self._update_slices()
+        self._update_lines()
 
         self.subplot(1,1)
-        self.add_sphere_widget(self.update, center=self.location,
+
+        def callback(location):
+            self.location = location
+
+        self.add_sphere_widget(callback, center=self.location,
                                radius=radius)
 
         self._start()
@@ -278,26 +285,37 @@ class OrthographicSlicer(Plotter):
         self._location = location
         self.update()
 
-    def _update_slices(self, *args):
+
+    def _update_lines(self):
+        ltp = pyvista.lines_from_points
+        bounds = self.input_dataset.bounds
+        xline = ltp(np.array([[self.location[0], bounds[2], self.location[2]],
+                              [self.location[0], bounds[3], self.location[2]]]))
+        yline = ltp(np.array([[bounds[0], self.location[1], self.location[2]],
+                              [bounds[1], self.location[1], self.location[2]]]))
+        zline = ltp(np.array([[self.location[0], self.location[1], bounds[4]],
+                              [self.location[0], self.location[1], bounds[5]]]))
+        self._lines[0].deep_copy(xline)
+        self._lines[1].deep_copy(yline)
+        self._lines[2].deep_copy(zline)
+
+
+    def _update_slices(self):
         """Re runs the slicing filter"""
-        if len(args) == 1:
-            location = args[0]
-        else:
-            location = self.location
         axes = ['z', 'x', 'y']
         for ax in [0, 1, 2]:
             normal = axes[ax]
-            slc = self.input_dataset.slice(normal=normal, origin=location,
+            slc = self.input_dataset.slice(normal=normal, origin=self.location,
                         generate_triangles=self._generate_triangles,
                         contour=self._contour)
             self.slices[ax].shallow_copy(slc)
         return
 
 
-
     def update_3d_view(self):
         self.subplot(1,1)
         return
+
 
     def _start_3d_view(self):
         self.subplot(1,1)
@@ -325,7 +343,9 @@ class OrthographicSlicer(Plotter):
         self.subplot(0,0)
         self.enable()
         self.enable_parallel_projection()
-        self.add_mesh(self.slices[0], show_scalar_bar=False, name='top', **self._kwargs)
+        self.add_mesh(self.slices[0], show_scalar_bar=False, name='top-slice', **self._kwargs)
+        # self.add_mesh(self._lines[0], name='x-line', color=rcParams["axes"]["x_color"], line_width=self._line_width)
+        # self.add_mesh(self._lines[1], name='y-line', color=rcParams["axes"]["y_color"], line_width=self._line_width)
         if self._show_bounds:
             self.show_bounds()
         return self.update_top_view()
@@ -345,7 +365,9 @@ class OrthographicSlicer(Plotter):
         self.subplot(0,1)
         self.enable()
         self.enable_parallel_projection()
-        self.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self._kwargs)
+        self.add_mesh(self.slices[1], show_scalar_bar=False, name='right-slice', **self._kwargs)
+        # self.add_mesh(self._lines[0], name='x-line', color=rcParams["axes"]["x_color"], line_width=self._line_width)
+        # self.add_mesh(self._lines[2], name='z-line', color=rcParams["axes"]["z_color"], line_width=self._line_width)
         if self._show_bounds:
             self.show_bounds()
         return self.update_right_view()
@@ -364,19 +386,23 @@ class OrthographicSlicer(Plotter):
         self.subplot(1,0)
         self.enable()
         self.enable_parallel_projection()
-        self.add_mesh(self.slices[2], show_scalar_bar=False, name='front', **self._kwargs)
+        self.add_mesh(self.slices[2], show_scalar_bar=False, name='front-slice', **self._kwargs)
+        # self.add_mesh(self._lines[2], name='z-line', color=rcParams["axes"]["z_color"], line_width=self._line_width)
+        # self.add_mesh(self._lines[1], name='y-line', color=rcParams["axes"]["y_color"], line_width=self._line_width)
         if self._show_bounds:
             self.show_bounds()
         return self.update_front_view()
 
 
-    def update(self, *args):
-        self._update_slices(*args)
+    def update(self):
+        # self._update_lines()  # TODO: why in the ... is this not working?
+        self._update_slices()
         self.update_top_view()
         self.update_right_view()
         self.update_front_view()
         # Update 3D view last so its renderer is set as active
         self.update_3d_view()
+
 
     def _start(self):
         self._start_top_view()
