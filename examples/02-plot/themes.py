@@ -71,5 +71,5 @@ plotter = pv.Plotter()
 plotter.add_mesh(mesh)
 plotter.show_grid()
 # Here we set the gradient
-plotter.set_background("cyan", top="orange")
+plotter.set_background("royalblue", top="aliceblue")
 plotter.show()
