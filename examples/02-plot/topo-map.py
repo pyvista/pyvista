@@ -1,6 +1,6 @@
 """
-Aerial Imagery
-~~~~~~~~~~~~~~
+Topographic Map
+~~~~~~~~~~~~~~~
 
 This is very similar to the :ref:`ref_texture_example` example except it is
 focused on plotting aerial imagery from a GeoTIFF on top of some topagraphy
