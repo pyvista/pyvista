@@ -214,7 +214,7 @@ class OrthographicSlicer(Plotter):
     """
     def __init__(self, dataset, outline=None, clean=True, border=None,
                  border_color='k', window_size=None, generate_triangles=False,
-                 contour=False, radius=None,
+                 contour=False, radius=None, show_bounds=True, disable=True,
                  title="PyVista Orthographic Slicer", **kwargs):
         super(OrthographicSlicer, self).__init__(shape=(2, 2), border=border,
                                notebook=False, border_color=border_color,
@@ -242,6 +242,8 @@ class OrthographicSlicer(Plotter):
 
         # Hold all other kwargs for plotting
         self._show_scalar_bar = kwargs.pop('show_scalar_bar', True)
+        self._show_bounds = show_bounds
+        self._disable = disable
         _ = kwargs.pop('name', None)
         self._kwargs = kwargs
         self._generate_triangles = generate_triangles
@@ -302,8 +304,11 @@ class OrthographicSlicer(Plotter):
         self.add_mesh(self.slices[0], show_scalar_bar=self._show_scalar_bar, name='top', **self._kwargs)
         self.add_mesh(self.slices[1], show_scalar_bar=self._show_scalar_bar, name='right', **self._kwargs)
         self.add_mesh(self.slices[2], show_scalar_bar=self._show_scalar_bar, name='front', **self._kwargs)
+        if self._show_bounds:
+            self.show_grid()
         self.update_bounds_axes()
         self.view_isometric(negative=True)
+        self.camera_set = True
         return self.update_3d_view()
 
 
@@ -312,7 +317,8 @@ class OrthographicSlicer(Plotter):
         self.enable()
         self.update_bounds_axes()
         self.view_xy()
-        self.disable()
+        if self._disable:
+            self.disable()
         return
 
     def _start_top_view(self):
@@ -320,6 +326,8 @@ class OrthographicSlicer(Plotter):
         self.enable()
         self.enable_parallel_projection()
         self.add_mesh(self.slices[0], show_scalar_bar=False, name='top', **self._kwargs)
+        if self._show_bounds:
+            self.show_bounds()
         return self.update_top_view()
 
 
@@ -329,7 +337,8 @@ class OrthographicSlicer(Plotter):
         self.enable()
         self.update_bounds_axes()
         self.view_zy(negative=True)
-        self.disable()
+        if self._disable:
+            self.disable()
         return
 
     def _start_right_view(self):
@@ -337,6 +346,8 @@ class OrthographicSlicer(Plotter):
         self.enable()
         self.enable_parallel_projection()
         self.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self._kwargs)
+        if self._show_bounds:
+            self.show_bounds()
         return self.update_right_view()
 
 
@@ -345,7 +356,8 @@ class OrthographicSlicer(Plotter):
         self.enable()
         self.update_bounds_axes()
         self.view_xz()
-        self.disable()
+        if self._disable:
+            self.disable()
         return
 
     def _start_front_view(self):
@@ -353,6 +365,8 @@ class OrthographicSlicer(Plotter):
         self.enable()
         self.enable_parallel_projection()
         self.add_mesh(self.slices[2], show_scalar_bar=False, name='front', **self._kwargs)
+        if self._show_bounds:
+            self.show_bounds()
         return self.update_front_view()
 
 
