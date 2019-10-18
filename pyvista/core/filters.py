@@ -763,7 +763,10 @@ class DataSetFilters(object):
             of the bounding box).
         """
         if use_bounds:
-            b = dataset.GetBounds()
+            if isinstance(use_bounds, (int, bool)):
+                b = dataset.GetBounds()
+            else:
+                b = use_bounds
             origin = [b[0], b[2], b[4]]   # BOTTOM LEFT CORNER
             point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
             point_v = [b[0], b[3], b[4]] # TOP LEFT CORNER
