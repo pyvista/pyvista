@@ -261,7 +261,7 @@ class OrthographicSlicer(Plotter):
 
         self.subplot(1,1)
         self.isometric_view()
-        self.hide_axes()
+        self.show_axes()
 
 
 
@@ -282,7 +282,7 @@ class OrthographicSlicer(Plotter):
             location = args[0]
         else:
             location = self.location
-        axes = ['z', 'y', 'x']
+        axes = ['z', 'x', 'y']
         for ax in [0, 1, 2]:
             normal = axes[ax]
             slc = self.input_dataset.slice(normal=normal, origin=location,
@@ -295,7 +295,6 @@ class OrthographicSlicer(Plotter):
 
     def update_3d_view(self):
         self.subplot(1,1)
-
         return
 
     def _start_3d_view(self):
@@ -304,6 +303,7 @@ class OrthographicSlicer(Plotter):
         self.add_mesh(self.slices[1], show_scalar_bar=self._show_scalar_bar, name='right', **self._kwargs)
         self.add_mesh(self.slices[2], show_scalar_bar=self._show_scalar_bar, name='front', **self._kwargs)
         self.update_bounds_axes()
+        self.view_isometric(negative=True)
         return self.update_3d_view()
 
 
@@ -318,6 +318,7 @@ class OrthographicSlicer(Plotter):
     def _start_top_view(self):
         self.subplot(0,0)
         self.enable()
+        self.show_axes()
         self.add_mesh(self.slices[0], show_scalar_bar=False, name='top', **self._kwargs)
         return self.update_top_view()
 
@@ -327,13 +328,14 @@ class OrthographicSlicer(Plotter):
         self.subplot(0,1)
         self.enable()
         self.update_bounds_axes()
-        self.view_xz()
+        self.view_zy(negative=True)
         self.disable()
         return
 
     def _start_right_view(self):
         self.subplot(0,1)
         self.enable()
+        self.show_axes()
         self.add_mesh(self.slices[1], show_scalar_bar=False, name='right', **self._kwargs)
         return self.update_right_view()
 
@@ -342,7 +344,7 @@ class OrthographicSlicer(Plotter):
         self.subplot(1,0)
         self.enable()
         self.update_bounds_axes()
-        self.view_yz()
+        self.view_xz()
         self.disable()
         return
 
