@@ -19,14 +19,14 @@ from pyvista.utilities import (convert_array, convert_string_array,
                                get_array, is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
-from .colors import get_cmap_safe
+from .colors import get_cmap_safe, PARAVIEW_BACKGROUND
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
 from .tools import normalize, opacity_transfer_function
 from .theme import rcParams, parse_color, parse_font_family
-from .theme import FONT_KEYS, MAX_N_COLOR_BARS, PV_BACKGROUND
+from .theme import FONT_KEYS, MAX_N_COLOR_BARS
 from .widgets import WidgetHelper
 
 try:
@@ -3319,7 +3319,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enable this renderer's camera to be interactive"""
         return self.renderer.enable()
 
-    def set_background(self, color, loc='all'):
+    def set_background(self, color, loc='all', top=None):
         """
         Sets background color
 
@@ -3337,22 +3337,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``loc=2`` or ``loc=(1, 1)``.  If ``loc='all'`` then all
             render windows will have their background set.
 
+        top : string or 3 item list, optional, defaults to None
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the bottom and the color given in ``top``
+            will be the color at the top of the renderer.
+
         """
         if color is None:
             color = rcParams['background']
-        if isinstance(color, str):
-            if color.lower() in 'paraview' or color.lower() in 'pv':
-                # Use the default ParaView background color
-                color = PV_BACKGROUND
-            else:
-                color = pyvista.string_to_rgb(color)
+
+        use_gradient = False
+        if top is not None:
+            use_gradient = True
 
         if loc == 'all':
             for renderer in self.renderers:
-                renderer.SetBackground(color)
+                renderer.SetBackground(parse_color(color))
+                if use_gradient:
+                    renderer.GradientBackgroundOn()
+                    renderer.SetBackground2(parse_color(top))
+                else:
+                    renderer.GradientBackgroundOff()
         else:
             renderer = self.renderers[self.loc_to_index(loc)]
-            renderer.SetBackground(color)
+            renderer.SetBackground(parse_color(color))
+            if use_gradient:
+                renderer.GradientBackgroundOn()
+                renderer.SetBackground2(parse_color(top))
+            else:
+                renderer.GradientBackgroundOff()
 
     @property
     def background_color(self):
