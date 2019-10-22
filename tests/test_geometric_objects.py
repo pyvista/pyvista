@@ -8,6 +8,11 @@ def test_cylinder():
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
+def test_cylinder_structured():
+    cyl = pyvista.CylinderStructured()
+    assert np.any(cyl.points)
+    assert np.any(cyl.n_cells)
+
 
 def test_arrow():
     surf = pyvista.Arrow([0, 0, 0], [1, 1, 1])
@@ -76,3 +81,14 @@ def test_disc():
 # def test_ellipsoid():
 #     geom = pyvista.Ellipsoid()
 #     assert np.any(geom.points)
+
+
+def test_text_3d():
+    mesh = pyvista.Text3D("foo")
+    assert mesh.n_points
+    assert mesh.n_cells
+
+def test_wavelet():
+    mesh = pyvista.Wavelet()
+    assert mesh.n_points
+    assert mesh.n_cells

@@ -99,8 +99,9 @@ def test_get_sg_image_scraper():
 
 
 def test_voxelize():
-    # mesh = examples.load_airplane()
-    pass
+    mesh = pyvista.PolyData(ex.load_uniform().points)
+    vox = pyvista.voxelize(mesh, 0.5)
+    assert vox.n_cells
 
 
 def test_report():
