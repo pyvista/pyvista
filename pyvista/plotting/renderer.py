@@ -299,7 +299,7 @@ class Renderer(vtkRenderer):
         color = parse_color(color)
 
         # Use the bounds of all data in the rendering window
-        if not mesh and not bounds:
+        if mesh is None and bounds is None:
             bounds = self.bounds
 
         # create actor
@@ -352,7 +352,7 @@ class Renderer(vtkRenderer):
                 raise ValueError('Value of location ({}) not understood.'.format(location))
 
         # set bounds
-        if not bounds:
+        if bounds is None:
             bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
