@@ -13,7 +13,7 @@ class WidgetHelper(object):
 
     def add_box_widget(self, callback, bounds=None, factor=1.25,
                        rotation_enabled=True, color=None, use_planes=False,
-                       outline_translation=True, **kwargs):
+                       outline_translation=True, pass_widget=False, **kwargs):
         """Add a box widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData box output from this widget, and performs a
@@ -48,6 +48,10 @@ class WidgetHelper(object):
             If ``False``, the box widget cannot be translated and is strictly
             placed at the given bounds.
 
+        pass_widget : bool
+            If true, the widget will be passed as the last argument of the
+            callback
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Box widget not available in notebook plotting')
@@ -69,9 +73,12 @@ class WidgetHelper(object):
             box_widget.GetPlanes(planes)
             if hasattr(callback, '__call__'):
                 if use_planes:
-                    try_callback(callback, planes)
+                    args = [planes]
                 else:
-                    try_callback(callback, the_box)
+                    args = [the_box]
+                if pass_widget:
+                    args.append(box_widget)
+                try_callback(callback, *args)
             return
 
         box_widget = vtk.vtkBoxWidget()
@@ -166,7 +173,8 @@ class WidgetHelper(object):
                          bounds=None, factor=1.25, color=None,
                          assign_to_axis=None, tubing=False,
                          outline_translation=False,
-                         origin_translation=True, **kwargs):
+                         origin_translation=True, implicit=True,
+                         pass_widget=False, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes two
         arguments, the normal and origin of the plane in that order output
@@ -193,9 +201,31 @@ class WidgetHelper(object):
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.
 
-        translation_enabled : bool
-            If ``False``, the box widget cannot be translated and is strictly
-            placed at the given bounds.
+        assign_to_axis : str or int
+            Assign the normal of the plane to be parrallel with a given axis:
+            options are (0, 'x'), (1, 'y'), or (2, 'z').
+
+        tubing : bool
+            When using an implicit plane wiget, this controls whether or not
+            tubing is shown around the plane's boundaries.
+
+        outline_translation : bool
+            If ``False``, the plane widget cannot be translated and is strictly
+            placed at the given bounds. Only valid when using an implicit
+            plane.
+
+        origin_translation : bool
+            If ``False``, the plane widget cannot be translated by its origin
+            and is strictly placed at the given origin. Only valid when using
+            an implicit plane.
+
+        implicit : bool
+            When ``True``, a ``vtkImplicitPlaneWidget`` is ued and when
+            ``False``, a ``vtkPlaneWidget`` is used.
+
+        pass_widget : bool
+            If true, the widget will be passed as the last argument of the
+            callback
 
         """
         if hasattr(self, 'notebook') and self.notebook:
@@ -216,28 +246,60 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['font']['color']
 
-        def _the_callback(plane_widget, event_id):
+        def _the_callback(widget, event_id):
             the_plane = vtk.vtkPlane()
-            plane_widget.GetPlane(the_plane)
+            widget.GetPlane(the_plane)
             normal = the_plane.GetNormal()
             origin = the_plane.GetOrigin()
             if hasattr(callback, '__call__'):
-                try_callback(callback, normal, origin)
+                if pass_widget:
+                    try_callback(callback, normal, origin, widget)
+                else:
+                    try_callback(callback, normal, origin)
             return
 
-        plane_widget = vtk.vtkImplicitPlaneWidget()
-        plane_widget.GetNormalProperty().SetColor(parse_color(color))
-        plane_widget.GetOutlineProperty().SetColor(parse_color(color))
-        plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+        if implicit:
+            plane_widget = vtk.vtkImplicitPlaneWidget()
+            plane_widget.GetNormalProperty().SetColor(parse_color(color))
+            plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+            plane_widget.GetOutlineProperty().SetColor(parse_color(color))
+            plane_widget.SetTubing(tubing)
+            plane_widget.SetOrigin(origin)
+            plane_widget.SetOutlineTranslation(outline_translation)
+            plane_widget.SetOriginTranslation(origin_translation)
+
+            _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)
+            _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
+
+            plane_widget.SetDrawPlane(False)
+            plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
+            plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+        else:
+            # Position of the small plane
+            source = vtk.vtkPlaneSource()
+            source.SetNormal(normal)
+            source.SetCenter(origin)
+            source.SetPoint1(origin[0] + (bounds[1] - bounds[0]) * 0.01,
+                             origin[1] - (bounds[3] - bounds[2]) * 0.01,
+                             origin[2])
+            source.SetPoint2(origin[0] - (bounds[1] - bounds[0]) * 0.01,
+                             origin[1] + (bounds[3] - bounds[2]) * 0.01,
+                             origin[2])
+            source.Update()
+            plane_widget = vtk.vtkPlaneWidget()
+            plane_widget.SetHandleSize(.01)
+            # Position of the widget
+            plane_widget.SetInputData(source.GetOutput())
+            plane_widget.SetRepresentationToSurface()
+            plane_widget.SetCenter(origin) # Necessary
+            plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
+            plane_widget.GetHandleProperty().SetColor(parse_color(color))
+
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
-        plane_widget.SetTubing(tubing)
         plane_widget.SetInteractor(self.iren)
         plane_widget.SetCurrentRenderer(self.renderer)
         plane_widget.SetPlaceFactor(factor)
         plane_widget.PlaceWidget(bounds)
-        plane_widget.SetOrigin(origin)
-        plane_widget.SetOutlineTranslation(outline_translation)
-        plane_widget.SetOriginTranslation(origin_translation)
         if assign_to_axis:
             # TODO: how do we now disable/hide the arrow?
             if assign_to_axis in [0, "x", "X"]:
@@ -259,125 +321,9 @@ class WidgetHelper(object):
         plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
         _the_callback(plane_widget, None) # Trigger immediate update
 
-        _start_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(True)
-        _stop_interact = lambda plane_widget, event: plane_widget.SetDrawPlane(False)
-
-        plane_widget.SetDrawPlane(False)
-        plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
-        plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
-
         self.plane_widgets.append(plane_widget)
         return plane_widget
 
-    def add_plane_widget_simple(self, callback, normal='x', origin=None,
-                               bounds=None, factor=1.25, color=None,
-                               assign_to_axis=None, **kwargs):
-        """Add a plane widget to the scene. This is useless without a callback
-        function. You can pass a callable function that takes two
-        arguments, the normal and origin of the plane in that order output
-        from this widget, and performs a task with that plane.
-
-        Parameters
-        ----------
-        callback : callable
-            The method called everytime the plane is updated. Takes two
-            arguments, the normal and origin of the plane in that order.
-
-        normal : str or tuple(float)
-            The starting normal vector of the plane
-
-        origin : tuple(float)
-            The starting coordinate of the center of the place
-
-        bounds : tuple(float)
-            Length 6 tuple of the bounding box where the widget is placed.
-
-        factor : float, optional
-            An inflation factor to expand on the bounds when placing
-
-        color : string or 3 item list, optional, defaults to white
-            Either a string, rgb list, or hex color string.
-
-        translation_enabled : bool
-            If ``False``, the box widget cannot be translated and is strictly
-            placed at the given bounds.
-
-        """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Plane widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
-        if not hasattr(self, "plane_widgets_simple"):
-            self.plane_widgets_simple = []
-
-        if origin is None:
-            origin = self.center
-        if bounds is None:
-            bounds = self.bounds
-
-        if isinstance(normal, str):
-            normal = NORMALS[normal.lower()]
-
-        if color is None:
-            color = rcParams['font']['color']
-
-        plane_widget = vtk.vtkPlaneWidget()
-        # Colors
-        plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
-        plane_widget.GetHandleProperty().SetColor(parse_color(color))
-        plane_widget.GetPlaneProperty().SetOpacity(0.5)
-
-        # Interactor and render
-        plane_widget.SetInteractor(self.iren)
-        plane_widget.SetCurrentRenderer(self.renderer)
-
-        # Scale
-        plane_widget.SetPlaceFactor(factor)
-        plane_widget.SetHandleSize(.05)
-        # Location
-        # Position of the small plane
-        source = vtk.vtkPlaneSource()
-        source.SetNormal(normal)
-        source.SetCenter(origin)
-        source.SetPoint1(origin[0] + (bounds[1] - bounds[0]) * 0.01,
-                         origin[1] - (bounds[3] - bounds[2]) * 0.01,
-                         origin[2])
-        source.SetPoint2(origin[0] - (bounds[1] - bounds[0]) * 0.01,
-                         origin[1] + (bounds[3] - bounds[2]) * 0.01,
-                         origin[2])
-        source.Update()
-
-        # Position of the widget
-        plane_widget.SetInputData(source.GetOutput())
-        plane_widget.SetRepresentationToSurface()
-        plane_widget.PlaceWidget(bounds)
-        plane_widget.SetNormal(normal)
-        plane_widget.SetCenter(origin)
-
-        if assign_to_axis:
-            # TODO: how do we now disable/hide the arrow?
-            if assign_to_axis in [0, "x", "X"]:
-                plane_widget.NormalToXAxisOn()
-                plane_widget.SetNormal(NORMALS["x"])
-            elif assign_to_axis in [1, "y", "Y"]:
-                plane_widget.NormalToYAxisOn()
-                plane_widget.SetNormal(NORMALS["y"])
-            elif assign_to_axis in [2, "z", "Z"]:
-                plane_widget.NormalToZAxisOn()
-                plane_widget.SetNormal(NORMALS["z"])
-            else:
-                raise RuntimeError("assign_to_axis not understood")
-        else:
-            plane_widget.SetNormal(*normal)
-
-        plane_widget.Modified()
-        plane_widget.UpdatePlacement()
-        plane_widget.On()
-
-        plane_widget.AddObserver("EndInteractionEvent", callback)
-
-        self.plane_widgets_simple.append(plane_widget)
-        return plane_widget
 
     def clear_plane_widgets(self):
         """ Disables all of the plane widgets """
@@ -391,7 +337,7 @@ class WidgetHelper(object):
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, value=0.0, assign_to_axis=None,
                             tubing=False, origin_translation=True,
-                            outline_translation=False, **kwargs):
+                            outline_translation=False, implicit=True, **kwargs):
         """Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
@@ -446,7 +392,8 @@ class WidgetHelper(object):
                               color=widget_color, tubing=tubing,
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
-                              outline_translation=outline_translation)
+                              outline_translation=outline_translation,
+                              implicit=implicit)
 
         actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
@@ -536,7 +483,7 @@ class WidgetHelper(object):
 
     def add_line_widget(self, callback, bounds=None, factor=1.25,
                         resolution=100, color=None, use_vertices=False,
-                        **kwargs):
+                        pass_widget=False, **kwargs):
         """Add a line widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData line output from this widget, and performs a
@@ -565,6 +512,10 @@ class WidgetHelper(object):
         use_vertices : bool, optional
             Changess the arguments of the callback method to take the end
             points of the line instead of a PolyData object.
+
+        pass_widget : bool
+            If true, the widget will be passed as the last argument of the
+            callback
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Line widget not available in notebook plotting')
@@ -584,10 +535,13 @@ class WidgetHelper(object):
             pointb = widget.GetPoint2()
             if hasattr(callback, '__call__'):
                 if use_vertices:
-                    try_callback(callback, pointa, pointb)
+                    args = [pointa, pointb]
                 else:
                     the_line = pyvista.Line(pointa, pointb, resolution=resolution)
-                    try_callback(callback, the_line)
+                    args = [the_line]
+                if pass_widget:
+                    args.append(widget)
+                try_callback(callback, *args)
             return
 
         line_widget = vtk.vtkLineWidget()
@@ -617,7 +571,7 @@ class WidgetHelper(object):
 
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
-                          color=None):
+                          color=None, pass_widget=False):
         """Add a slider bar widget. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the value of this slider widget, and performs a
@@ -648,6 +602,10 @@ class WidgetHelper(object):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.
+
+        pass_widget : bool
+            If true, the widget will be passed as the last argument of the
+            callback
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Slider widget not available in notebook plotting')
@@ -684,10 +642,13 @@ class WidgetHelper(object):
         slider_rep.SetSliderWidth(0.05)
         slider_rep.SetEndCapLength(0.01)
 
-        def _the_callback(slider, event):
-            value = slider.GetRepresentation().GetValue()
+        def _the_callback(widget, event):
+            value = widget.GetRepresentation().GetValue()
             if hasattr(callback, '__call__'):
-                try_callback(callback, value)
+                if pass_widget:
+                    try_callback(callback, value, widget)
+                else:
+                    try_callback(callback, value)
             return
 
         slider_widget = vtk.vtkSliderWidget()
@@ -855,7 +816,7 @@ class WidgetHelper(object):
     def add_spline_widget(self, callback, bounds=None, factor=1.25,
                           n_hanldes=5, resolution=25, color="yellow",
                           show_ribbon=False, ribbon_color="pink",
-                          ribbon_opacity=0.5, **kwargs):
+                          ribbon_opacity=0.5, pass_widget=False, **kwargs):
         """Create and add a spline widget to the scene. Use the bounds
         argument to place this widget. Several "handles" are used to control a
         parametric function for building this spline. Click directly on the
@@ -892,6 +853,9 @@ class WidgetHelper(object):
         show_ribbon : bool
             If ``True``, the poly plane used for slicing will also be shown.
 
+        pass_widget : bool
+            If true, the widget will be passed as the last argument of the
+            callback
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Spline widget not available in notebook plotting')
@@ -914,7 +878,10 @@ class WidgetHelper(object):
             widget.GetPolyData(polyline)
             ribbon.shallow_copy(polyline.ribbon(normal=(0,0,1), angle=90.0))
             if hasattr(callback, '__call__'):
-                try_callback(callback, polyline)
+                if pass_widget:
+                    try_callback(callback, polyline, widget)
+                else:
+                    try_callback(callback, polyline)
             return
 
         spline_widget = vtk.vtkSplineWidget()
@@ -1009,7 +976,8 @@ class WidgetHelper(object):
     def add_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
                           theta_resolution=30, phi_resolution=30,
                           color=None, style="surface",
-                          selected_color="pink", indices=None):
+                          selected_color="pink", indices=None,
+                          pass_widget=False):
         """Add one or many sphere widgets to a scene. Use a sphere widget
         to control a vertex location.
 
@@ -1044,6 +1012,10 @@ class WidgetHelper(object):
 
         selected_color : str
             Color of the widget when selected during interaction
+
+        pass_widget : bool
+            If true, the widget will be passed as the last argument of the
+            callback
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Sphere widget not available in notebook plotting')
@@ -1071,9 +1043,12 @@ class WidgetHelper(object):
             index = widget.WIDGET_INDEX
             if hasattr(callback, '__call__'):
                 if num > 1:
-                    try_callback(callback, point, index, widget)
+                    args = [point, index]
                 else:
-                    try_callback(callback, point, widget)
+                    args = [point]
+                if pass_widget:
+                    args.append(widget)
+                try_callback(callback, *args)
             return
 
         if indices is None:
