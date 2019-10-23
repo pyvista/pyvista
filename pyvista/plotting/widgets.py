@@ -174,7 +174,7 @@ class WidgetHelper(object):
                          assign_to_axis=None, tubing=False,
                          outline_translation=False,
                          origin_translation=True, implicit=True,
-                         pass_widget=False, **kwargs):
+                         pass_widget=False, test_callback=True, **kwargs):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes two
         arguments, the normal and origin of the plane in that order output
@@ -274,6 +274,9 @@ class WidgetHelper(object):
             plane_widget.SetDrawPlane(False)
             plane_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _start_interact)
             plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
+            plane_widget.SetPlaceFactor(factor)
+            plane_widget.PlaceWidget(bounds)
+
         else:
             # Position of the small plane
             source = vtk.vtkPlaneSource()
@@ -291,6 +294,8 @@ class WidgetHelper(object):
             # Position of the widget
             plane_widget.SetInputData(source.GetOutput())
             plane_widget.SetRepresentationToSurface()
+            plane_widget.SetPlaceFactor(factor)
+            plane_widget.PlaceWidget(bounds)
             plane_widget.SetCenter(origin) # Necessary
             plane_widget.GetPlaneProperty().SetColor(parse_color(color))  # self.C_LOT[fn])
             plane_widget.GetHandleProperty().SetColor(parse_color(color))
@@ -298,8 +303,7 @@ class WidgetHelper(object):
         plane_widget.GetPlaneProperty().SetOpacity(0.5)
         plane_widget.SetInteractor(self.iren)
         plane_widget.SetCurrentRenderer(self.renderer)
-        plane_widget.SetPlaceFactor(factor)
-        plane_widget.PlaceWidget(bounds)
+
         if assign_to_axis:
             # TODO: how do we now disable/hide the arrow?
             if assign_to_axis in [0, "x", "X"]:
@@ -315,11 +319,13 @@ class WidgetHelper(object):
                 raise RuntimeError("assign_to_axis not understood")
         else:
             plane_widget.SetNormal(normal)
+
         plane_widget.Modified()
         plane_widget.UpdatePlacement()
         plane_widget.On()
         plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-        _the_callback(plane_widget, None) # Trigger immediate update
+        if test_callback:
+            _the_callback(plane_widget, None) # Trigger immediate update
 
         self.plane_widgets.append(plane_widget)
         return plane_widget
