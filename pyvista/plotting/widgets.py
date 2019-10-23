@@ -374,6 +374,8 @@ class WidgetHelper(object):
         plane_widget.UpdatePlacement()
         plane_widget.On()
 
+        plane_widget.AddObserver("EndInteractionEvent", callback)
+
         self.plane_widgets_simple.append(plane_widget)
         return plane_widget
 
@@ -1028,10 +1030,12 @@ class WidgetHelper(object):
             sphere_widget.Modified()
             sphere_widget.On()
             sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-            _the_callback(sphere_widget, None)
+
 
             self.sphere_widgets.append(sphere_widget)
 
+        # Test call back in the last
+        _the_callback(sphere_widget, None)
         if num > 1:
             return self.sphere_widgets
 
