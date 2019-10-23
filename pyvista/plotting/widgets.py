@@ -227,6 +227,9 @@ class WidgetHelper(object):
             If true, the widget will be passed as the last argument of the
             callback
 
+        test_callback: bool
+            if true, run the callback function after the widget is created.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Plane widget not available in notebook plotting')
@@ -983,7 +986,7 @@ class WidgetHelper(object):
                           theta_resolution=30, phi_resolution=30,
                           color=None, style="surface",
                           selected_color="pink", indices=None,
-                          pass_widget=False):
+                          pass_widget=False, test_callback=True):
         """Add one or many sphere widgets to a scene. Use a sphere widget
         to control a vertex location.
 
@@ -1022,6 +1025,10 @@ class WidgetHelper(object):
         pass_widget : bool
             If true, the widget will be passed as the last argument of the
             callback
+
+        test_callback: bool
+            if true, run the callback function after the widget is created.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Sphere widget not available in notebook plotting')
@@ -1082,12 +1089,11 @@ class WidgetHelper(object):
             sphere_widget.Modified()
             sphere_widget.On()
             sphere_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
-
-
             self.sphere_widgets.append(sphere_widget)
 
-        # Test call back in the last
-        _the_callback(sphere_widget, None)
+        if test_callback is True:
+            # Test call back in the last
+            _the_callback(sphere_widget, None)
         if num > 1:
             return self.sphere_widgets
 
