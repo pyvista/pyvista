@@ -19,14 +19,14 @@ from pyvista.utilities import (convert_array, convert_string_array,
                                get_array, is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
-from .colors import get_cmap_safe
+from .colors import get_cmap_safe, PARAVIEW_BACKGROUND
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
 from .tools import normalize, opacity_transfer_function
 from .theme import rcParams, parse_color, parse_font_family
-from .theme import FONT_KEYS, MAX_N_COLOR_BARS, PV_BACKGROUND
+from .theme import FONT_KEYS, MAX_N_COLOR_BARS
 from .widgets import WidgetHelper
 
 try:
@@ -1511,9 +1511,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """ Returns if the camera of the active renderer has been set """
         return self.renderer.camera_set
 
-    def get_default_cam_pos(self):
+    def get_default_cam_pos(self, negative=False):
         """ Return the default camera position of the active renderer """
-        return self.renderer.get_default_cam_pos()
+        return self.renderer.get_default_cam_pos(negative=negative)
 
     @camera_set.setter
     def camera_set(self, is_set):
@@ -2832,7 +2832,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          show_points=True, point_color=None, point_size=5,
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
-                         pickable=True, **kwargs):
+                         pickable=True, render_points_as_spheres=False, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2990,12 +2990,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size, name='{}-points'.format(name),
-                      pickable=pickable)
+                      pickable=pickable,
+                      render_points_as_spheres=render_points_as_spheres)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False,
-                       name='{}-lables'.format(name), pickable=False)
+                       name='{}-labels'.format(name), pickable=False)
 
         return labelMapper
 
@@ -3276,12 +3277,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """DEPRECATED: Please use ``view_isometric``"""
         return self.view_isometric()
 
-    def view_isometric(self):
+    def view_isometric(self, negative=False):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        return self.renderer.view_isometric()
+        return self.renderer.view_isometric(negative=negative)
 
     def view_vector(self, vector, viewup=None):
         return self.renderer.view_vector(vector, viewup=viewup)
@@ -3290,13 +3291,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """View the XY plane"""
         return self.renderer.view_xy(negative=negative)
 
+    def view_yx(self, negative=False):
+        """View the YX plane"""
+        return self.renderer.view_yx(negative=negative)
+
     def view_xz(self, negative=False):
         """View the XZ plane"""
         return self.renderer.view_xz(negative=negative)
 
+    def view_zx(self, negative=False):
+        """View the ZX plane"""
+        return self.renderer.view_zx(negative=negative)
+
     def view_yz(self, negative=False):
         """View the YZ plane"""
         return self.renderer.view_yz(negative=negative)
+
+    def view_zy(self, negative=False):
+        """View the ZY plane"""
+        return self.renderer.view_zy(negative=negative)
 
     def disable(self):
         """Disable this renderer's camera from being interactive"""
@@ -3306,7 +3319,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enable this renderer's camera to be interactive"""
         return self.renderer.enable()
 
-    def set_background(self, color, loc='all'):
+    def set_background(self, color, loc='all', top=None):
         """
         Sets background color
 
@@ -3324,22 +3337,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``loc=2`` or ``loc=(1, 1)``.  If ``loc='all'`` then all
             render windows will have their background set.
 
+        top : string or 3 item list, optional, defaults to None
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the bottom and the color given in ``top``
+            will be the color at the top of the renderer.
+
         """
         if color is None:
             color = rcParams['background']
-        if isinstance(color, str):
-            if color.lower() in 'paraview' or color.lower() in 'pv':
-                # Use the default ParaView background color
-                color = PV_BACKGROUND
-            else:
-                color = pyvista.string_to_rgb(color)
+
+        use_gradient = False
+        if top is not None:
+            use_gradient = True
 
         if loc == 'all':
             for renderer in self.renderers:
-                renderer.SetBackground(color)
+                renderer.SetBackground(parse_color(color))
+                if use_gradient:
+                    renderer.GradientBackgroundOn()
+                    renderer.SetBackground2(parse_color(top))
+                else:
+                    renderer.GradientBackgroundOff()
         else:
             renderer = self.renderers[self.loc_to_index(loc)]
-            renderer.SetBackground(color)
+            renderer.SetBackground(parse_color(color))
+            if use_gradient:
+                renderer.GradientBackgroundOn()
+                renderer.SetBackground2(parse_color(top))
+            else:
+                renderer.GradientBackgroundOff()
 
     @property
     def background_color(self):

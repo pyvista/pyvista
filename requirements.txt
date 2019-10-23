@@ -9,7 +9,6 @@ codecov
 PyQt5==5.11.3
 pytest-qt
 nbval
-ipywidgets
 imageio>=2.5.0
 imageio-ffmpeg
 colorcet

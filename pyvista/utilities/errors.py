@@ -119,7 +119,7 @@ class Report(scooby.Report):
         core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
 
         # Optional packages.
-        optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+        optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
                     'cmocean', 'panel']
 
         scooby.Report.__init__(self, additional=additional, core=core,

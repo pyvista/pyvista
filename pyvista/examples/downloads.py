@@ -466,3 +466,11 @@ def download_turbine_blade():
 
 def download_pine_roots():
     return _download_and_read('pine_root.tri')
+
+
+def download_crater_topo():
+    return _download_and_read('Ruapehu_mag_dem_15m_NZTM.vtk')
+
+
+def download_crater_imagery():
+    return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True)

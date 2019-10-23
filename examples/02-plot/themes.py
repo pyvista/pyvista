@@ -63,3 +63,13 @@ plot_example()
 pv.set_plot_theme("document")
 
 plot_example()
+
+###############################################################################
+# Note that you can also use color gradients for the background of the plotting
+# window!
+plotter = pv.Plotter()
+plotter.add_mesh(mesh)
+plotter.show_grid()
+# Here we set the gradient
+plotter.set_background("royalblue", top="aliceblue")
+plotter.show()

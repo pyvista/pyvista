@@ -70,6 +70,11 @@ and visual integration of spatially referenced datasets.
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
+.. |tweet| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
+   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
+
+Share this project on Twitter: |tweet|
+
 
 .. |binder| image:: https://mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
@@ -174,7 +179,7 @@ types and how you can leverage powerful 3D plotting and mesh analysis tools.
 Highlights of the API include:
 
 * Pythonic interface to VTK's Python-C++ bindings
-* Filtering/plotting tools built for interactivity in Jupyter notebooks (see :ref:`ipy_tools_ref`)
+* Filtering/plotting tools built for interactivity (see :ref:`widgets`)
 * Direct access to common VTK filters (see :ref:`filters_ref`)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see :ref:`plotting_ref`)
 
