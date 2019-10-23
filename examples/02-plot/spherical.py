@@ -158,7 +158,7 @@ wind_level = [RADIUS * 1.2]
 # Sequence of axis indices for transpose()
 # (1, 0) for 2D arrays
 # (2, 1, 0) for 3D arrays
-inv_axes = [*range(u_vec.ndim - 1)[::-1]]
+inv_axes = [*range(u_vec.ndim)[::-1]]
 
 # Transform vectors to cartesian coordinates
 vectors = np.stack(
@@ -200,8 +200,7 @@ nlev = 10
 
 # Dummy 3D scalar data
 scalar_3d = (
-    scalar.repeat(nlev).reshape((*scalar.shape, nlev))
-    * np.arange(nlev)[np.newaxis, np.newaxis, :]
+    scalar.repeat(nlev).reshape((*scalar.shape, nlev)) * np.arange(nlev)[np.newaxis, np.newaxis, :]
 ).transpose(2, 0, 1)
 
 
