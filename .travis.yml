@@ -71,22 +71,22 @@ matrix:
       python: 3.5
       # Run all code examples in the docstrings
       script:
-        - pytest -v --doctest-modules pyvista
         - flake8 --count pyvista examples
+        - pytest -v --doctest-modules pyvista
     - name: Package Docstrings 3.6
       python: 3.6
       # Run all code examples in the docstrings
       script:
-        - pytest -v --cov --doctest-modules pyvista
         - flake8 --count pyvista examples
+        - pytest -v --cov --doctest-modules pyvista
     - name: Package Docstrings 3.7
       python: 3.7
       env:
         - REPORT_COVERAGE: true
       # Run all code examples in the docstrings
       script:
-        - pytest -v --cov --doctest-modules pyvista
         - flake8 --count pyvista examples
+        - pytest -v --cov --doctest-modules pyvista
     # Build/test/deploy documentation on 3.7 only
     - name: Documentation Build/Deploy 3.7
       python: 3.7
