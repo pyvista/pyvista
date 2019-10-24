@@ -21,7 +21,7 @@ install:
   - pip install -r requirements.txt
   - pip install -r requirements_docs.txt
   - pip install -U doctr
-  - pip install cookiecutter
+  - pip install cookiecutter flake8
   - pip install -e .
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
@@ -70,17 +70,23 @@ matrix:
     - name: Package Docstrings 3.5
       python: 3.5
       # Run all code examples in the docstrings
-      script: pytest -v --doctest-modules pyvista
+      script:
+        - pytest -v --doctest-modules pyvista
+        - flake8 --count pyvista examples
     - name: Package Docstrings 3.6
       python: 3.6
       # Run all code examples in the docstrings
-      script: pytest -v --cov --doctest-modules pyvista
+      script:
+        - pytest -v --cov --doctest-modules pyvista
+        - flake8 --count pyvista examples
     - name: Package Docstrings 3.7
       python: 3.7
       env:
         - REPORT_COVERAGE: true
       # Run all code examples in the docstrings
-      script: pytest -v --cov --doctest-modules pyvista
+      script:
+        - pytest -v --cov --doctest-modules pyvista
+        - flake8 --count pyvista examples
     # Build/test/deploy documentation on 3.7 only
     - name: Documentation Build/Deploy 3.7
       python: 3.7
