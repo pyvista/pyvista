@@ -12,7 +12,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 
 from .common import Common
-from .filters import _get_output
+from .filters import _get_output, UniformGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -304,7 +304,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
 
-class UniformGrid(vtkImageData, Grid):
+class UniformGrid(vtkImageData, Grid, UniformGridFilters):
     """
     Extends the functionality of a vtk.vtkImageData object
     Can be initialized in several ways:
