@@ -234,10 +234,11 @@ def test_wireframe_composite():
 
 def test_contour():
     dataset = examples.load_uniform()
-    iso = dataset.contour()
-    assert iso is not None
-    iso = dataset.contour(isosurfaces=[100, 300, 500])
-    assert iso is not None
+    for method in [None, 'contour', 'marching_cubes', 'flying_edges']:
+        iso = dataset.contour(method=method)
+        assert iso is not None
+        iso = dataset.contour(isosurfaces=[100, 300, 500], method=method)
+        assert iso is not None
     with pytest.raises(AssertionError):
         result = dataset.contour(scalars='Spatial Cell Data')
     with pytest.raises(RuntimeError):

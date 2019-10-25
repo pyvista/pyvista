@@ -663,7 +663,7 @@ class DataSetFilters(object):
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, rng=None,
-                preference='point'):
+                preference='point', method=None):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
         specifying the number of isosurfaces in the data range or an iterable set of
         values for explicitly setting the isosurfaces.
@@ -694,11 +694,23 @@ class DataSetFilters(object):
             When scalars is specified, this is the perfered scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
+        method : str, optional
+            Specify to choose which vtk filter is used to create the contour.
+            Must be one of ``'contour'``, ``'marching_cubes'`` and
+            ``'flying_edges'``. Defaults to ``'contour'``.
+
         """
+        if method is None or method == 'contour':
+            alg = vtk.vtkContourFilter()
+        elif method == 'marching_cubes':
+            alg = vtk.vtkMarchingCubes()
+        elif method == 'flying_edges':
+            alg = vtk.vtkFlyingEdges3D()
+        else:
+            raise RuntimeError("Method '{}' is not supported".format(method))
         # Make sure the input has scalars to contour on
         if dataset.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have scalar data.')
-        alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
