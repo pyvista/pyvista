@@ -421,7 +421,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -499,7 +499,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -616,7 +616,7 @@ class DataSetFilters(object):
 
         preference : str, optional
             When a scalar name is specified for ``scalar_range``, this is the
-            perfered scalar type to search for in the dataset.
+            preferred scalar type to search for in the dataset.
             Must be either 'point' or 'cell'.
 
         set_active : bool, optional
@@ -691,7 +691,7 @@ class DataSetFilters(object):
             data range.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -3392,7 +3392,7 @@ class UniformGridFilters(DataSetFilters):
             Name of scalars to process. Defaults to currently active scalars.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
         """
         alg = vtk.vtkImageGaussianSmooth()
