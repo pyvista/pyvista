@@ -125,7 +125,7 @@ class PickingHelper(object):
             message = "Surface picking non-triangulated meshes is known to "\
                       "not work properly with non-NVIDIA GPUs. Please "\
                       "consider triangulating your mesh:\n"\
-                      "\t`.extract_geometry().tri_filter()`"
+                      "\t`.extract_geometry().triangulate()`"
             if (not isinstance(mesh, pyvista.PolyData) or
                     mesh.faces.size % 4 or
                     not np.all(mesh.faces.reshape(-1, 4)[:,0] == 3)):
