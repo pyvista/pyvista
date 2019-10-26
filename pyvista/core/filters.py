@@ -663,7 +663,7 @@ class DataSetFilters(object):
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, rng=None,
-                preference='point', method=None):
+                preference='point', method='contour'):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
         specifying the number of isosurfaces in the data range or an iterable set of
         values for explicitly setting the isosurfaces.
@@ -700,7 +700,7 @@ class DataSetFilters(object):
             ``'flying_edges'``. Defaults to ``'contour'``.
 
         """
-        if method is None or method == 'contour':
+        if method == 'contour':
             alg = vtk.vtkContourFilter()
         elif method == 'marching_cubes':
             alg = vtk.vtkMarchingCubes()
