@@ -421,7 +421,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -499,7 +499,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -616,7 +616,7 @@ class DataSetFilters(object):
 
         preference : str, optional
             When a scalar name is specified for ``scalar_range``, this is the
-            perfered scalar type to search for in the dataset.
+            preferred scalar type to search for in the dataset.
             Must be either 'point' or 'cell'.
 
         set_active : bool, optional
@@ -691,7 +691,7 @@ class DataSetFilters(object):
             data range.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -3367,3 +3367,48 @@ class UnstructuredGridFilters(DataSetFilters):
         return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
                                                           offset=offset,
                                                           bound=bound)
+
+
+class UniformGridFilters(DataSetFilters):
+
+    def __new__(cls, *args, **kwargs):
+        if cls is UniformGridFilters:
+            raise TypeError("pyvista.UniformGridFilters is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
+
+    def gaussian_smooth(dataset, radius_factor=1.5, std_dev=2.,
+                        scalars=None, preference='points'):
+        """Smooths the data with a Gaussian kernel
+
+        Parameters
+        ----------
+        radius_factor : float or iterable, optional
+            Unitless factor to limit the extent of the kernel.
+
+        std_dev : float or iterable, optional
+            Standard deviation of the kernel in pixel units.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+        """
+        alg = vtk.vtkImageGaussianSmooth()
+        alg.SetInputDataObject(dataset)
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        else:
+            _, field = dataset.get_array(scalars, preference=preference, info=True)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        if isinstance(radius_factor, collections.Iterable):
+            alg.SetRadiusFactors(radius_factor)
+        else:
+            alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
+        if isinstance(std_dev, collections.Iterable):
+            alg.SetStandardDeviations(std_dev)
+        else:
+            alg.SetStandardDeviations(std_dev, std_dev, std_dev)
+        alg.Update()
+        return _get_output(alg)
