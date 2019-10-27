@@ -30,7 +30,7 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     """
     bounds = np.array(dataset.bounds)
     if dimensions is None:
-        # TODO: we should implement an algorithm to automaitcally deterime an
+        # TODO: we should implement an algorithm to automatically determine an
         # "optimal" grid size by looking at the sparsity of the points in the
         # input dataset - I actaully think VTK might have this implemented
         # somewhere

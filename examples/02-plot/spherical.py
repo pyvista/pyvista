@@ -101,7 +101,7 @@ vectors = np.stack(
         i.transpose(inv_axes).swapaxes(-2, -1).ravel("C")
         for i in transform_vectors_sph_to_cart(
             x,
-            y,
+            y_polar,
             wind_level,
             u_vec.transpose(inv_axes),
             -v_vec.transpose(inv_axes),  # Minus sign because y-vector in polar coords is required
