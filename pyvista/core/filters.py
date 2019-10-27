@@ -700,7 +700,7 @@ class DataSetFilters(object):
             ``'flying_edges'``. Defaults to ``'contour'``.
 
         """
-        if method == 'contour':
+        if method is None or method == 'contour':
             alg = vtk.vtkContourFilter()
         elif method == 'marching_cubes':
             alg = vtk.vtkMarchingCubes()
