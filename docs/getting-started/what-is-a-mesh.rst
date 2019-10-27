@@ -3,7 +3,7 @@
 What is a Mesh?
 ===============
 
-In PyVista, a mesh is any spatially referenced information and usually consist
+In PyVista, a mesh is any spatially referenced information and usually consists
 of geometrical representations of a surface or volume in 3D space.
 We commonly refer to any spatially referenced dataset as a mesh, so often the
 distinction between a mesh, a grid, and a volume can get fuzzy - but that does
@@ -140,7 +140,7 @@ or on all cells of a mesh. These attributes can be accessed by dictionaries
 attached to any PyVista mesh called ``.point_arrays`` or ``.cell_arrays``.
 
 
-Point data refers to arrays of values (scalars, vectors, or whatever) that
+Point data refers to arrays of values (scalars, vectors, etc.) that
 live on each node of the mesh. The order of this array is crucial! Each element
 in an attribute array must correspond to a node or cell in the mesh.
 Let's create some point data for the beam mesh.
@@ -156,7 +156,7 @@ When plotting the values between nodes are interpolated across the cells.
 
 .. image:: ../images/auto-generated/beam_point_data.png
 
-Cell data refers to arrays of values (scalars, vectors, or whatever) that
+Cell data refers to arrays of values (scalars, vectors, etc.) that
 live on each cell of the mesh. That is the entire cell (2D face or 3D volume)
 has is assigned the value of that attribute.
 
