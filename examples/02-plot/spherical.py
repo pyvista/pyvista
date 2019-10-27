@@ -6,6 +6,7 @@ Generate and visualize meshes from data in longitude-latitude coordinates.
 """
 
 import pyvista as pv
+from pyvista.utilities import grid_from_sph_coords, transform_vectors_sph_to_cart
 import numpy as np
 
 
@@ -41,73 +42,6 @@ def _cell_bounds(points, bound_position=0.5):
     return bounds
 
 
-def grid_from_sph_coords(lons, lats, levels):
-    """
-    Create a structured grid from arrays of spherical coordinates.
-
-    Parameters
-    ----------
-    lon: array-like
-        Array of longitudes of shape (M,) [degrees]
-    lat: array-like
-        Array of latitudes of shape (N,) [degrees]
-    levels: array-like
-        Array of vertical levels of shape (P,)
-
-    Returns
-    -------
-    pyvista.StructuredGrid
-    """
-    x, y, z = np.meshgrid(np.radians(lons), np.radians(lats), levels)
-    # Transform grid to cartesian coordinates
-    x_cart = levels * np.cos(y) * np.cos(x)
-    y_cart = levels * np.cos(y) * np.sin(x)
-    z_cart = levels * np.sin(y)
-    # Make a grid object
-    return pv.StructuredGrid(x_cart, y_cart, z_cart)
-
-
-def transform_vectors_sph_to_cart(lon, lat, levels, u, v, w):
-    """
-    Transform vectors from spherical coordinates (r, lat, lon) to cartesian coordinates (z, y, x).
-
-    Parameters
-    ----------
-    lon: array-like
-        Array of longitudes of shape (M,) [degrees]
-    lat: array-like
-        Array of latitudes of shape (N,) [degrees]
-    levels: array-like
-        Array of vertical levels of shape (P,)
-    u: array-like
-        Array of x-wind component (zonal wind) of shape (P, N, M)
-    v: array-like
-        Array of y-wind component (meridional wind) of shape (P, N, M)
-    w: array-like
-        Array of z-wind component (vertical wind) of shape (P, N, M)
-
-    Returns
-    -------
-    u_t, v_t, w_t: array-like
-        Arrays of transformed x-, y-, z-wind components, respectively.
-    """
-    xx, yy, _ = np.meshgrid(np.radians(lon), np.radians(lat), levels, indexing="ij")
-    x, y = xx.squeeze(), yy.squeeze()
-
-    # Transform wind components from spherical to cartesian coordinates
-    # https://en.wikipedia.org/wiki/Vector_fields_in_cylindrical_and_spherical_coordinates
-    #
-    # Note spherical coordinates are usually defined using a polar angle,
-    # while here `y` is latitude and `v` is reversed
-    u_t = np.cos(y) * np.cos(x) * w - np.sin(y) * np.cos(x) * v - np.sin(x) * u
-
-    v_t = np.cos(y) * np.sin(x) * w - np.sin(y) * np.sin(x) * v + np.cos(x) * u
-
-    w_t = np.sin(y) * w + np.cos(y) * v
-
-    return u_t, v_t, w_t
-
-
 # First, create some dummy data
 
 # Approximate radius of the Earth
@@ -116,6 +50,7 @@ RADIUS = 6371.0
 # Longitudes and latitudes
 x = np.arange(0, 360, 5)
 y = np.arange(-90, 91, 10)
+y_polar = 90.0 - y  # grid_from_sph_coords() expects polar angle
 
 xx, yy = np.meshgrid(x, y)
 
@@ -129,7 +64,7 @@ scalar = u_vec ** 2 + v_vec ** 2
 
 # Create arrays of grid cell boundaries, which have shape of (x.shape[0] + 1)
 xx_bounds = _cell_bounds(x)
-yy_bounds = _cell_bounds(y)
+yy_bounds = _cell_bounds(y_polar)
 # Vertical levels
 # in this case a single level slighly above the surface of a sphere
 levels = [RADIUS * 1.01]
@@ -169,7 +104,7 @@ vectors = np.stack(
             y,
             wind_level,
             u_vec.transpose(inv_axes),
-            v_vec.transpose(inv_axes),
+            -v_vec.transpose(inv_axes),  # Minus sign because y-vector in polar coords is required
             w_vec.transpose(inv_axes),
         )
     ],
@@ -180,7 +115,7 @@ vectors = np.stack(
 vectors *= RADIUS * 0.1
 
 # Create a grid for the vectors
-grid_winds = grid_from_sph_coords(x, y, wind_level)
+grid_winds = grid_from_sph_coords(x, y_polar, wind_level)
 
 # Add vectors to the grid
 grid_winds.point_arrays["example"] = vectors
