@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import pytest
 import vtk
+from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista import examples
@@ -20,7 +21,7 @@ def test_point_arrays():
 
     orig_value = grid.point_arrays[key][0]/1.0
     grid.point_arrays[key][0] += 1
-    assert orig_value == grid._point_array(key)[0] -1
+    assert orig_value == grid._point_array(key)[0] - 1
 
     del grid.point_arrays[key]
     assert key not in grid.point_arrays
@@ -55,7 +56,7 @@ def test_cell_arrays():
 
     orig_value = grid.cell_arrays[key][0]/1.0
     grid.cell_arrays[key][0] += 1
-    assert orig_value == grid.cell_arrays[key][0] -1
+    assert orig_value == grid.cell_arrays[key][0] - 1
 
     del grid.cell_arrays[key]
     assert key not in grid.cell_arrays
@@ -91,7 +92,7 @@ def test_field_arrays():
 
     orig_value = grid.field_arrays[key][0]/1.0
     grid.field_arrays[key][0] += 1
-    assert orig_value == grid.field_arrays[key][0] -1
+    assert orig_value == grid.field_arrays[key][0] - 1
 
     assert key in grid.array_names
 
@@ -292,7 +293,7 @@ def test_bitarray_points():
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
-        value = i%2
+        value = i % 2
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
@@ -308,7 +309,7 @@ def test_bitarray_cells():
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
-        value = i%2
+        value = i % 2
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
@@ -324,7 +325,7 @@ def test_bitarray_field():
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
-        value = i%2
+        value = i % 2
         vtk_array.SetValue(i, value)
         np_array[i] = value
 
@@ -559,8 +560,6 @@ def test_bad_instantiation():
     with pytest.raises(TypeError):
         pyvista.PointGrid()
     with pytest.raises(TypeError):
-        pyvista.ipy_tools.InteractiveTool()
-    with pytest.raises(TypeError):
         pyvista.BasePlotter()
 
 
@@ -591,8 +590,8 @@ def test_scalars_dict_update():
     mesh = examples.load_uniform()
     n = len(mesh.point_arrays)
     arrays = {
-        'foo' : np.arange(mesh.n_points),
-        'rand' : np.random.random(mesh.n_points)
+        'foo': np.arange(mesh.n_points),
+        'rand': np.random.random(mesh.n_points)
     }
     mesh.point_arrays.update(arrays)
     assert 'foo' in mesh.array_names
@@ -631,3 +630,29 @@ def test_hanlde_array_with_null_name():
     fdata = poly.field_arrays
     assert fdata is not None
     assert len(fdata) == 1
+
+
+
+def test_shallow_copy_back_propagation():
+    """Test that the original data object's points get modified after a
+    shallow copy.
+
+    Reference: https://github.com/pyvista/pyvista/issues/375#issuecomment-531691483
+    """
+    # Case 1
+    points = vtk.vtkPoints()
+    points.InsertNextPoint(0.0, 0.0, 0.0)
+    points.InsertNextPoint(1.0, 0.0, 0.0)
+    points.InsertNextPoint(2.0, 0.0, 0.0)
+    original = vtk.vtkPolyData()
+    original.SetPoints(points)
+    wrapped = pyvista.PolyData(original, deep=False)
+    wrapped.points[:] = 2.8
+    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    assert np.allclose(orig_points, wrapped.points)
+    # Case 2
+    original = vtk.vtkPolyData()
+    wrapped = pyvista.PolyData(original, deep=False)
+    wrapped.points = np.random.rand(5, 3)
+    orig_points = vtk_to_numpy(original.GetPoints().GetData())
+    assert np.allclose(orig_points, wrapped.points)

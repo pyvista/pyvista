@@ -1,15 +1,12 @@
 """This module provides wrappers for vtkDataObjects: data onjects without any
 sort of spatial reference.
 """
-import collections
-
 import numpy as np
 import vtk
 
 import pyvista
 from pyvista.utilities import (ROW_DATA_FIELD, convert_array, get_array,
-                               parse_field_choice, raise_not_matching,
-                               row_array)
+                               parse_field_choice, row_array, vtk_bit_array_to_char)
 
 from .common import DataObject, _ScalarsDict
 
@@ -42,9 +39,9 @@ class Table(vtk.vtkTable, DataObject):
             if isinstance(args[0], vtk.vtkTable):
                 deep = kwargs.get('deep', True)
                 if deep:
-                    self.DeepCopy(args[0])
+                    self.deep_copy(args[0])
                 else:
-                    self.ShallowCopy(args[0])
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
@@ -356,8 +353,8 @@ class Table(vtk.vtkTable, DataObject):
 
 
     def save(self, *args, **kwargs):
-        raise NotImplementedError("Please use the `to_pandas` method and"
-                " harness Pandas' wonderful file IO methods.")
+        raise NotImplementedError("Please use the `to_pandas` method and "
+                                  "harness Pandas' wonderful file IO methods.")
 
 
     def get_data_range(self, arr=None, preference='row'):
@@ -402,3 +399,74 @@ class RowScalarsDict(_ScalarsDict):
 
     def adder(self, scalars, name, set_active=False, deep=True):
         self.data._add_row_array(scalars, name, deep=deep)
+
+
+
+class Texture(vtk.vtkTexture):
+    """A helper class for vtkTextures"""
+    def __init__(self, *args, **kwargs):
+        if len(args) == 1:
+            if isinstance(args[0], vtk.vtkTexture):
+                self._from_texture(args[0])
+            elif isinstance(args[0], np.ndarray):
+                self._from_array(args[0])
+            elif isinstance(args[0], vtk.vtkImageData):
+                self._from_image_data(args[0])
+            elif isinstance(args[0], str):
+                self._from_texture(pyvista.read_texture(args[0]))
+            else:
+                raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
+
+    def _from_texture(self, texture):
+        image = texture.GetInput()
+        self._from_image_data(image)
+
+    def _from_image_data(self, image):
+        if not isinstance(image, pyvista.UniformGrid):
+            image = pyvista.UniformGrid(image)
+        self.SetInputDataObject(image)
+        return self.Update()
+
+
+    def _from_array(self, image):
+        if image.ndim != 3 or image.shape[2] != 3:
+            raise AssertionError('Input image must be nn by nm by RGB')
+        grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
+        grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
+        grid.set_active_scalar('Image')
+        return self._from_image_data(grid)
+
+
+    def flip(self, axis):
+        """Flip this texture inplace along the specifed axis. 0 for X and
+        1 for Y."""
+        if axis < 0 or axis > 1:
+            raise RuntimeError("Axis {} out of bounds".format(axis))
+        ax = [1, 0]
+        array = self.to_array()
+        array = np.flip(array, axis=ax[axis])
+        return self._from_array(array)
+
+
+    def to_image(self):
+        return self.GetInput()
+
+
+    def to_array(self):
+        image = self.to_image()
+        shape = (image.dimensions[0], image.dimensions[1], 3)
+        return np.flip(image.active_scalar.reshape(shape, order='F'), axis=1).swapaxes(1,0)
+
+
+    def plot(self, *args, **kwargs):
+        """Plot the texture as image data by itself"""
+        return self.to_image().plot(*args, **kwargs)
+
+
+    @property
+    def repeat(self):
+        return self.GetRepeat()
+
+    @repeat.setter
+    def repeat(self, flag):
+        self.SetRepeat(flag)

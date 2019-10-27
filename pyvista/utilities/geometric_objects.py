@@ -434,7 +434,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     src.SetHeight(height)
     # Contributed by @kjelljorner in #249:
     if angle and radius:
-        raise Exception ("Both radius and angle specified. They are mutually exclusive.")
+        raise Exception("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
         src.SetAngle(angle)
     elif not angle and radius:
@@ -518,8 +518,8 @@ def Text3D(string, depth=0.5):
 
     extrude = vtk.vtkLinearExtrusionFilter()
     extrude.SetInputConnection(vec_text.GetOutputPort())
-    extrude.SetExtrusionTypeToNormalExtrusion();
-    extrude.SetVector(0, 0, 1 )
+    extrude.SetExtrusionTypeToNormalExtrusion()
+    extrude.SetVector(0, 0, 1)
     extrude.SetScaleFactor(depth)
 
     tri_filter = vtk.vtkTriangleFilter()

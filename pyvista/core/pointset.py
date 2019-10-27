@@ -1,7 +1,6 @@
 """
 Sub-classes for vtk.vtkPolyData
 """
-import collections
 import logging
 import os
 
@@ -17,10 +16,9 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities import generate_plane, get_array
 
 from .common import Common
-from .filters import _get_output, PolyDataFilters, UnstructuredGridFilters
+from .filters import PolyDataFilters, UnstructuredGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -52,6 +50,13 @@ class PointSet(Common):
         alg.SetUseScalarsAsWeights(scalars_weight)
         alg.Update()
         return np.array(alg.GetCenter())
+
+
+    def shallow_copy(self, to_copy):
+        # Set default points if needed
+        if not to_copy.GetPoints():
+            to_copy.SetPoints(vtk.vtkPoints())
+        return Common.shallow_copy(self, to_copy)
 
 
 
@@ -102,9 +107,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         elif len(args) == 1:
             if isinstance(args[0], vtk.vtkPolyData):
                 if deep:
-                    self.DeepCopy(args[0])
+                    self.deep_copy(args[0])
                 else:
-                    self.ShallowCopy(args[0])
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
             elif isinstance(args[0], np.ndarray):
@@ -186,7 +191,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         # Load file
         reader.SetFileName(filename)
         reader.Update()
-        self.ShallowCopy(reader.GetOutput())
+        self.shallow_copy(reader.GetOutput())
 
         # sanity check
         if not np.any(self.points):
@@ -404,7 +409,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         """
         mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self.tri_filter())
+        mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
 
@@ -491,7 +496,7 @@ class PointGrid(PointSet):
             setting camera view.
 
         """
-        trisurf = self.extract_surface().tri_filter()
+        trisurf = self.extract_surface().triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
 
     @property
@@ -500,7 +505,7 @@ class PointGrid(PointSet):
         Computes volume by extracting the external surface and
         computing interior volume
         """
-        surf = self.extract_surface().tri_filter()
+        surf = self.extract_surface().triangulate()
         return surf.volume
 
 
@@ -544,9 +549,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkUnstructuredGrid):
                 if deep:
-                    self.DeepCopy(args[0])
+                    self.deep_copy(args[0])
                 else:
-                    self.ShallowCopy(args[0])
+                    self.shallow_copy(args[0])
 
             elif isinstance(args[0], str):
                 self._load_file(args[0])
@@ -555,7 +560,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 vtkappend = vtk.vtkAppendFilter()
                 vtkappend.AddInputData(args[0])
                 vtkappend.Update()
-                self.ShallowCopy(vtkappend.GetOutput())
+                self.shallow_copy(vtkappend.GetOutput())
 
             else:
                 itype = type(args[0])
@@ -697,7 +702,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         reader.SetFileName(filename)
         reader.Update()
         grid = reader.GetOutput()
-        self.ShallowCopy(grid)
+        self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
         """
@@ -860,7 +865,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkStructuredGrid):
-                self.DeepCopy(args[0])
+                self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
 
@@ -952,7 +957,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         reader.SetFileName(filename)
         reader.Update()
         grid = reader.GetOutput()
-        self.ShallowCopy(grid)
+        self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
         """
@@ -991,7 +996,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             else:
                 writer.SetDataModeToAscii()
         else:
-            raise Exception('Extension should be either ".vts" (xml) or' +
+            raise Exception('Extension should be either ".vts" (xml) or'
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)

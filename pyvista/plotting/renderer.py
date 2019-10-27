@@ -17,7 +17,7 @@ from .tools import create_axes_marker
 
 
 class Renderer(vtkRenderer):
-    def __init__(self, parent, border=True, border_color=[1, 1, 1],
+    def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         super(Renderer, self).__init__()
         self._actors = {}
@@ -55,7 +55,7 @@ class Renderer(vtkRenderer):
         coordinate.SetCoordinateSystemToNormalizedViewport()
 
         mapper = vtk.vtkPolyDataMapper2D()
-        mapper.SetInputData(poly);
+        mapper.SetInputData(poly)
         mapper.SetTransformCoordinate(coordinate)
 
         actor = vtk.vtkActor2D()
@@ -144,11 +144,14 @@ class Renderer(vtkRenderer):
 
         actor.SetPickable(pickable)
 
+        self.ResetCameraClippingRange()
+
         return actor, actor.GetProperty()
 
+
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
-                    xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
-                    labels_off=False):
+                           xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
+                           labels_off=False):
         """
         Add axes actor at origin
 
@@ -571,11 +574,11 @@ class Renderer(vtkRenderer):
             elif camera_location == 'yz':
                 self.view_yz()
             elif camera_location == 'yx':
-                self.view_xy(True)
+                self.view_yx()
             elif camera_location == 'zx':
-                self.view_xz(True)
+                self.view_zx()
             elif camera_location == 'zy':
-                self.view_yz(True)
+                self.view_zy()
             return
 
         if isinstance(camera_location[0], (int, float)):
@@ -705,7 +708,7 @@ class Renderer(vtkRenderer):
     @property
     def bounds(self):
         """ Bounds of all actors present in the rendering window """
-        the_bounds = [np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf]
+        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
 
         def _update_bounds(bounds):
             def update_axis(ax):
@@ -720,11 +723,15 @@ class Renderer(vtkRenderer):
         for actor in self._actors.values():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
-            if ( hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
+            if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
                  and id(actor) != id(self.bounding_box_actor)):
                 _update_bounds(actor.GetBounds())
 
-        return the_bounds
+        if np.any(np.abs(the_bounds)):
+            the_bounds[the_bounds == np.inf] = -1.0
+            the_bounds[the_bounds == -np.inf] = 1.0
+
+        return the_bounds.tolist()
 
     @property
     def center(self):
@@ -735,14 +742,20 @@ class Renderer(vtkRenderer):
         z = (bounds[5] + bounds[4])/2
         return [x, y, z]
 
-    def get_default_cam_pos(self):
+    def get_default_cam_pos(self, negative=False):
         """
         Returns the default focal points and viewup. Uses ResetCamera to
         make a useful view.
         """
         focal_pt = self.center
-        return [np.array(rcParams['camera']['position']) + np.array(focal_pt),
+        if any(np.isnan(focal_pt)):
+            focal_pt = (0.0, 0.0, 0.0)
+        position = np.array(rcParams['camera']['position'])
+        if negative:
+            position *= -1
+        cpos = [position + np.array(focal_pt),
                 focal_pt, rcParams['camera']['viewup']]
+        return cpos
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window """
@@ -771,12 +784,12 @@ class Renderer(vtkRenderer):
         """DEPRECATED: Please use ``view_isometric``"""
         return self.view_isometric()
 
-    def view_isometric(self):
+    def view_isometric(self, negative=False):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        self.camera_position = self.get_default_cam_pos()
+        self.camera_position = self.get_default_cam_pos(negative=negative)
         self.camera_set = False
         return self.reset_camera()
 
@@ -795,7 +808,15 @@ class Renderer(vtkRenderer):
         vec = np.array([0,0,1])
         viewup = np.array([0,1,0])
         if negative:
-            vec = np.array([0,0,-1])
+            vec *= -1
+        return self.view_vector(vec, viewup)
+
+    def view_yx(self, negative=False):
+        """View the YX plane"""
+        vec = np.array([0,0,-1])
+        viewup = np.array([1,0,0])
+        if negative:
+            vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_xz(self, negative=False):
@@ -803,7 +824,15 @@ class Renderer(vtkRenderer):
         vec = np.array([0,-1,0])
         viewup = np.array([0,0,1])
         if negative:
-            vec = np.array([0,1,0])
+            vec *= -1
+        return self.view_vector(vec, viewup)
+
+    def view_zx(self, negative=False):
+        """View the ZX plane"""
+        vec = np.array([0,1,0])
+        viewup = np.array([1,0,0])
+        if negative:
+            vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_yz(self, negative=False):
@@ -811,7 +840,16 @@ class Renderer(vtkRenderer):
         vec = np.array([1,0,0])
         viewup = np.array([0,0,1])
         if negative:
-            vec = np.array([-1,0,0])
+            vec *= -1
+        return self.view_vector(vec, viewup)
+
+
+    def view_zy(self, negative=False):
+        """View the ZY plane"""
+        vec = np.array([-1,0,0])
+        viewup = np.array([0,1,0])
+        if negative:
+            vec *= -1
         return self.view_vector(vec, viewup)
 
     def disable(self):

@@ -148,12 +148,6 @@ Run all code examples in the docstrings:
 python -m pytest -v --doctest-modules pyvista
 ```
 
-Now make sure notebooks are running
-
-```bash
-python -m pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb
-python -m pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb
-```
 
 And finally, test the documentation examples:
 

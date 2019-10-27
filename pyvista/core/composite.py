@@ -12,7 +12,6 @@ import vtk
 from vtk import vtkMultiBlockDataSet
 
 import pyvista
-from pyvista import plot
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 
 from .common import DataObject
@@ -27,10 +26,41 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     A composite class to hold many data sets which can be iterated over.
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
     easily plot these data sets and use the composite in a Pythonic manner.
+
+    You can think of ``MultiBlock`` like lists or dictionaries as we can
+    iterate over this data structure by index and we can also access blocks
+    by their string name.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+
+    >>> # Create empty composite dataset
+    >>> blocks = pv.MultiBlock()
+    >>> # Add a dataset to the collection
+    >>> sphere = pv.Sphere()
+    >>> blocks.append(sphere)
+    >>> # Or add a named block
+    >>> blocks["cube"] = pv.Cube()
+
+    >>> # instantiate from a list of objects
+    >>> data = [pv.Sphere(), pv.Cube(), pv.Cone()]
+    >>> blocks = pv.MultiBlock(data)
+
+    >>> # instantiate from a disctionary
+    >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere()}
+    >>> blocks = pv.MultiBlock(data)
+
+    >>> # now iterate over the collection
+    >>> for name in blocks.keys():
+    ...     block = blocks[name] # do something!
+
+    >>> for block in blocks:
+    ...     surf = block.extract_surface() # Do something with each dataset
     """
 
     # Bind pyvista.plotting.plot to the object
-    plot = plot
+    plot = pyvista.plot
 
     def __init__(self, *args, **kwargs):
         super(MultiBlock, self).__init__()
@@ -40,9 +70,9 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkMultiBlockDataSet):
                 if deep:
-                    self.DeepCopy(args[0])
+                    self.deep_copy(args[0])
                 else:
-                    self.ShallowCopy(args[0])
+                    self.shallow_copy(args[0])
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
@@ -93,7 +123,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # Load file
         reader.SetFileName(filename)
         reader.Update()
-        self.ShallowCopy(reader.GetOutput())
+        self.shallow_copy(reader.GetOutput())
 
 
     def save(self, filename, binary=True):
@@ -478,8 +508,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         thistype = type(self)
         newobject = thistype()
         if deep:
-            newobject.DeepCopy(self)
+            newobject.deep_copy(self)
         else:
-            newobject.ShallowCopy(self)
+            newobject.shallow_copy(self)
         newobject.copy_meta_from(self)
         return newobject
