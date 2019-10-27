@@ -466,7 +466,7 @@ class Renderer(vtkRenderer):
             del self._box_object
             self.remove_actor(actor, reset_camera=False)
 
-    def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
+    def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
                          opacity=1.0, render_lines_as_tubes=False,
                          lighting=None, reset_camera=None, outline=True,
                          culling='front', loc=None):
