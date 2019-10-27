@@ -5,17 +5,13 @@ Supporting functions for polydata and grid objects
 import collections
 import ctypes
 import logging
-import os
 
-import imageio
 import numpy as np
 import scooby
 import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
-
-from .fileio import get_ext, get_reader, standard_reader_routine
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -33,7 +29,7 @@ def get_vtk_type(typ):
     """
     typ = nps.get_vtk_array_type(typ)
     # This handles a silly string type bug
-    if typ is 3:
+    if typ == 3:
         return 13
     return typ
 
@@ -103,7 +99,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         except ValueError:
             # This handles strings
             typ = get_vtk_type(arr.dtype)
-            if typ is 13:
+            if typ == 13:
                 vtk_data = convert_string_array(arr)
         if isinstance(name, str):
             vtk_data.SetName(name)
@@ -245,15 +241,18 @@ def vtk_points(points, deep=True):
     return vtkpts
 
 
-def lines_from_points(points):
+def line_segments_from_points(points):
     """
-    Generates line from points.  Assumes points are ordered as line segments.
+    Generates non-connected line segments from points.
+    Assumes points are ordered as line segments and an even number of points
+    are
 
     Parameters
     ----------
     points : np.ndarray
-        Points representing line segments.  For example, two line segments
-        would be represented as:
+        Points representing line segments. An even number must be given as
+        every two vertices represent a single line segment. For example, two
+        line segments would be represented as:
 
         np.array([[0, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 0]])
 
@@ -273,6 +272,8 @@ def lines_from_points(points):
     >>> lines.plot() # doctest:+SKIP
 
     """
+    if len(points) % 2:
+        raise RuntimeError("An even number of points must be given to define each segment.")
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -282,6 +283,32 @@ def lines_from_points(points):
     poly = pyvista.PolyData()
     poly.points = points
     poly.lines = lines
+    return poly
+
+
+def lines_from_points(points):
+    """Given an array of points, make a connected line set
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Points representing the vertices of the connected segments. For
+        example, two line segments would be represented as:
+
+        np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+    Returns
+    -------
+    lines : pyvista.PolyData
+        PolyData with lines and cells.
+
+    """
+    poly = pyvista.PolyData()
+    poly.points = points
+    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
+    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
+    cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    poly.lines = cells
     return poly
 
 
@@ -360,16 +387,16 @@ def wrap(vtkdataset):
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
     """
     wrappers = {
-        'vtkUnstructuredGrid' : pyvista.UnstructuredGrid,
-        'vtkRectilinearGrid' : pyvista.RectilinearGrid,
-        'vtkStructuredGrid' : pyvista.StructuredGrid,
-        'vtkPolyData' : pyvista.PolyData,
-        'vtkImageData' : pyvista.UniformGrid,
-        'vtkStructuredPoints' : pyvista.UniformGrid,
-        'vtkMultiBlockDataSet' : pyvista.MultiBlock,
-        'vtkTable' : pyvista.Table,
-        # 'vtkParametricSpline' : pyvista.Spline,
-        }
+        'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
+        'vtkRectilinearGrid': pyvista.RectilinearGrid,
+        'vtkStructuredGrid': pyvista.StructuredGrid,
+        'vtkPolyData': pyvista.PolyData,
+        'vtkImageData': pyvista.UniformGrid,
+        'vtkStructuredPoints': pyvista.UniformGrid,
+        'vtkMultiBlockDataSet': pyvista.MultiBlock,
+        'vtkTable': pyvista.Table,
+        # 'vtkParametricSpline': pyvista.Spline,
+    }
     # Otherwise, we assume a VTK data object was passed
     if hasattr(vtkdataset, 'GetClassName'):
         key = vtkdataset.GetClassName()
@@ -401,22 +428,14 @@ def wrap(vtkdataset):
 def image_to_texture(image):
     """Converts ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``
     """
-    vtex = vtk.vtkTexture()
-    vtex.SetInputDataObject(image)
-    vtex.Update()
-    return vtex
+    return pyvista.Texture(image)
 
 
 def numpy_to_texture(image):
     """Convert a NumPy image array to a vtk.vtkTexture"""
     if not isinstance(image, np.ndarray):
         raise TypeError('Unknown input type ({})'.format(type(image)))
-    if image.ndim != 3 or image.shape[2] != 3:
-        raise AssertionError('Input image must be nn by nm by RGB')
-    grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-    grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
-    grid.set_active_scalar('Image')
-    return image_to_texture(grid)
+    return pyvista.Texture(image)
 
 
 def is_inside_bounds(point, bounds):
@@ -490,7 +509,7 @@ def generate_report(additional=None, ncol=3, text_width=54, sort=False):
     """DEPRECATED: Please use :class:`pyvista.Report` instead."""
     logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
     core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
-    optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+    optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
                 'cmocean']
     report = scooby.Report(core=core, optional=optional,
                            additional=additional, ncol=ncol,
