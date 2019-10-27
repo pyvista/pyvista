@@ -2832,7 +2832,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          show_points=True, point_color=None, point_size=5,
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
-                         pickable=False, render_points_as_spheres=False, **kwargs):
+                         pickable=False, render_points_as_spheres=False,
+                         tolerance=0.001, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2905,6 +2906,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         shape_opacity : flaot
             The opacity of the shape between zero and one.
 
+        tolerance : float
+            a tolerance to use to determine whether a point label is visible.
+            A tolerance is usually required because the conversion from world
+            space to display space during rendering introduces numerical
+            round-off.
+
         Returns
         -------
         labelMapper : vtk.vtkvtkLabeledDataMapper
@@ -2951,6 +2958,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vis_points = vtk.vtkSelectVisiblePoints()
         vis_points.SetInputData(vtkpoints)
         vis_points.SetRenderer(self.renderer)
+        vis_points.SetTolerance(tolerance)
 
         # Create heirarchy
         hier = vtk.vtkPointSetToLabelHierarchy()
