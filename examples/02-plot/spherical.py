@@ -6,7 +6,6 @@ Generate and visualize meshes from data in longitude-latitude coordinates.
 """
 
 import pyvista as pv
-from pyvista.utilities import grid_from_sph_coords, transform_vectors_sph_to_cart
 import numpy as np
 
 
@@ -71,7 +70,7 @@ levels = [RADIUS * 1.01]
 
 ###############################################################################
 # Create a structured grid
-grid_scalar = grid_from_sph_coords(xx_bounds, yy_bounds, levels)
+grid_scalar = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
 # And fill its cell arrays with the scalar data
 grid_scalar.cell_arrays["example"] = np.array(scalar).swapaxes(-2, -1).ravel("C")
@@ -99,7 +98,7 @@ inv_axes = [*range(u_vec.ndim)[::-1]]
 vectors = np.stack(
     [
         i.transpose(inv_axes).swapaxes(-2, -1).ravel("C")
-        for i in transform_vectors_sph_to_cart(
+        for i in pv.transform_vectors_sph_to_cart(
             x,
             y_polar,
             wind_level,
@@ -115,7 +114,7 @@ vectors = np.stack(
 vectors *= RADIUS * 0.1
 
 # Create a grid for the vectors
-grid_winds = grid_from_sph_coords(x, y_polar, wind_level)
+grid_winds = pv.grid_from_sph_coords(x, y_polar, wind_level)
 
 # Add vectors to the grid
 grid_winds.point_arrays["example"] = vectors
@@ -146,7 +145,7 @@ z_offset = RADIUS * 1.1
 levels = z_scale * (np.arange(scalar_3d.shape[0] + 1)) ** 2 + z_offset
 
 # Create a structured grid by transforming coordinates
-grid_scalar_3d = grid_from_sph_coords(xx_bounds, yy_bounds, levels)
+grid_scalar_3d = pv.grid_from_sph_coords(xx_bounds, yy_bounds, levels)
 
 # Add data to the grid
 grid_scalar_3d.cell_arrays["example"] = np.array(scalar_3d).swapaxes(-2, -1).ravel("C")
