@@ -3090,7 +3090,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         filename = os.path.abspath(os.path.expanduser(filename))
-        extension = pyvista.utilities.get_ext(filename)
+        extension = pyvista.fileio.get_ext(filename)
         valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
         if extension not in valid:
             raise RuntimeError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
