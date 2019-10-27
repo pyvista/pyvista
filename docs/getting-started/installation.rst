@@ -34,7 +34,7 @@ using ``pip``::
 Anaconda
 ~~~~~~~~
 
-.. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg
+.. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
 To install this package with conda run::
@@ -53,8 +53,6 @@ The following are a list of optional dependencies and their purpose:
 | ``matplotlib``                    | Using Colormaps                         |
 +-----------------------------------+-----------------------------------------+
 | ``PyQt5==5.11.3``                 | Background plotting                     |
-+-----------------------------------+-----------------------------------------+
-| ``ipywidgets``                    | IPython interactive tools               |
 +-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+

@@ -19,6 +19,16 @@ import vtk
 import pyvista
 
 
+NORMALS = {
+    'x': [1, 0, 0],
+    'y': [0, 1, 0],
+    'z': [0, 0, 1],
+    '-x': [-1, 0, 0],
+    '-y': [0, -1, 0],
+    '-z': [0, 0, -1],
+}
+
+
 def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
     """
     Translates and orientates a mesh centered at the origin and
@@ -424,7 +434,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     src.SetHeight(height)
     # Contributed by @kjelljorner in #249:
     if angle and radius:
-        raise Exception ("Both radius and angle specified. They are mutually exclusive.")
+        raise Exception("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
         src.SetAngle(angle)
     elif not angle and radius:
@@ -508,8 +518,8 @@ def Text3D(string, depth=0.5):
 
     extrude = vtk.vtkLinearExtrusionFilter()
     extrude.SetInputConnection(vec_text.GetOutputPort())
-    extrude.SetExtrusionTypeToNormalExtrusion();
-    extrude.SetVector(0, 0, 1 )
+    extrude.SetExtrusionTypeToNormalExtrusion()
+    extrude.SetVector(0, 0, 1)
     extrude.SetScaleFactor(depth)
 
     tri_filter = vtk.vtkTriangleFilter()
@@ -526,3 +536,22 @@ def SuperToroid(**kwargs):
 def Ellipsoid(**kwargs):
     """DEPRECATED: use :func:`pyvista.ParametricEllipsoid`"""
     raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
+
+
+def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
+            x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
+            std=0.5, subsample_rate=1):
+    wavelet_source = vtk.vtkRTAnalyticSource()
+    wavelet_source.SetWholeExtent(*extent)
+    wavelet_source.SetCenter(center)
+    wavelet_source.SetMaximum(maximum)
+    wavelet_source.SetXFreq(x_freq)
+    wavelet_source.SetYFreq(y_freq)
+    wavelet_source.SetZFreq(z_freq)
+    wavelet_source.SetXMag(x_mag)
+    wavelet_source.SetYMag(y_mag)
+    wavelet_source.SetZMag(z_mag)
+    wavelet_source.SetStandardDeviation(std)
+    wavelet_source.SetSubsampleRate(subsample_rate)
+    wavelet_source.Update()
+    return pyvista.wrap(wavelet_source.GetOutput())

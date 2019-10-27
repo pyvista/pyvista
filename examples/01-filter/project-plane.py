@@ -12,14 +12,7 @@ import pyvista as pv
 from pyvista import examples
 
 
-def make_example_data():
-    surface = examples.download_saddle_surface()
-    points = examples.download_sparse_points()
-    poly = surface.interpolate(points, radius=12.0)
-    return poly
-
-
-poly = make_example_data()
+poly = examples.load_random_hills()
 poly.plot()
 
 ###############################################################################
