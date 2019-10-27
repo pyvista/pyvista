@@ -12,7 +12,7 @@ radius = 0.5
 SPHERE = pyvista.Sphere(radius, theta_resolution=10, phi_resolution=10)
 
 SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
-                             theta_resolution=10, phi_resolution=10)
+                                theta_resolution=10, phi_resolution=10)
 
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
@@ -266,10 +266,10 @@ def test_invalid_save():
         sphere.save('file.abc')
 
 
-def test_tri_filter():
+def test_triangulate_filter():
     arrow = pyvista.Arrow([0, 0, 0], [1, 1, 1])
     assert arrow.faces.size % 4
-    arrow.tri_filter(inplace=True)
+    arrow.triangulate(inplace=True)
     assert not(arrow.faces.size % 4)
 
 
@@ -359,11 +359,11 @@ def test_face_normals():
 def test_clip_plane():
     sphere = SPHERE.copy()
     clipped_sphere = sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], invert=False)
-    faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
+    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
     sphere.clip(origin=[0, 0, 0], normal=[0, 0, -1], inplace=True, invert=False)
-    faces = clipped_sphere.faces.reshape(-1 , 4)[:, 1:]
+    faces = clipped_sphere.faces.reshape(-1, 4)[:, 1:]
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
 

@@ -2,7 +2,7 @@ Basic API Usage
 ===============
 
 PyVista provides tools to get started with just about any VTK dataset
-and wrap that object into an easily accesible data object.
+and wrap that object into an easily accessible data object.
 Whether you are new to the VTK library or a power user, the best place to
 get started is with PyVista's :func:`pyvista.wrap` and :func:`vtk.read`
 functions to either wrap a VTK data object in memory or read a VTK or
@@ -166,4 +166,3 @@ Be sure to check out all the available plotters for your use case:
 
 * :class:`pyvista.Plotter`: The standard plotter that pauses the code until closed
 * :class:`pyvista.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution
-* :class:`pyvista.ScaledPlotter`: An IPython extension of the :class:`pyvista.BackgroundPlotter` that has interactive widgets for scaling the axes in the rendering scene.
