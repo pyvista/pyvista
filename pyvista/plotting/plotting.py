@@ -3813,7 +3813,7 @@ class Plotter(BasePlotter):
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
         if use_panel:
-            warnings.warning("`use_panel` is deprecated. Use `nb_backend` insted!!")
+            warnings.warning("`use_panel` is deprecated. Use `nb_backend` instead!!")
             nb_backend = 'panel'
         if nb_backend is None:
             nb_backend = rcParams['nb_backend']
