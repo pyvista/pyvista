@@ -14,3 +14,4 @@ plotting routines to perform tasks like:
 * Creating side-by-side comparisons
 * Making a dataset transparent or using a scalar value to map opacity
 * Adding textures/images draped over a mesh (texture mapping)
+* Rendering a depth image   

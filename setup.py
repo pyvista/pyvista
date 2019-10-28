@@ -27,9 +27,9 @@ install_requires = ['numpy',
 # add vtk if not windows and 2.7
 py_ver = int(sys.version[0])
 if os.name == 'nt' and (py_ver < 3 or '64' not in platform.architecture()[0]):
-    warnings.warn('\nYou will need to install VTK manually.' +
+    warnings.warn('\nYou will need to install VTK manually.'
                   '  Try using Anaconda.  See:\n'
-                  + 'https://anaconda.org/anaconda/vtk')
+                  'https://anaconda.org/anaconda/vtk')
 else:
     install_requires.append(['vtk'])
 
@@ -63,13 +63,12 @@ setup(
     url='https://github.com/pyvista/pyvista',
     keywords='vtk numpy plotting mesh',
     package_data={'pyvista.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
-                                    'hexbeam.vtk', 'sphere.ply',
-                                    'uniform.vtk', 'rectilinear.vtk',
-                                    'globe.vtk', '2k_earth_daymap.jpg']},
+                                       'hexbeam.vtk', 'sphere.ply',
+                                       'uniform.vtk', 'rectilinear.vtk',
+                                       'globe.vtk', '2k_earth_daymap.jpg']},
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
     install_requires=install_requires,
     extras_require={
-        'ipy_tools': ['ipython', 'ipywidgets'],
         'colormaps': ['matplotlib', 'colorcet', 'cmocean']
     },
 )

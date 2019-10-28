@@ -38,26 +38,36 @@ class DataObject(object):
         return object.__new__(cls, *args, **kwargs)
 
 
+    def shallow_copy(self, to_copy):
+        """Shallow copy the given mesh to this mesh"""
+        return self.ShallowCopy(to_copy)
+
+
+    def deep_copy(self, to_copy):
+        """Overwrite this mesh with the given mesh as a deep copy"""
+        return self.DeepCopy(to_copy)
+
+
     def save(self, filename, binary=True):
-         """
-         Writes this mesh to a file.
+        """
+        Writes this mesh to a file.
 
-         Parameters
-         ----------
-         filename : str
-             Filename of mesh to be written.  File type is inferred from
-             the extension of the filename unless overridden with
-             ftype.
+        Parameters
+        ----------
+        filename : str
+         Filename of mesh to be written.  File type is inferred from
+         the extension of the filename unless overridden with
+         ftype.
 
-         binary : bool, optional
-             Writes the file as binary when True and ASCII when False.
+        binary : bool, optional
+         Writes the file as binary when True and ASCII when False.
 
-         Notes
-         -----
-         Binary files write much faster than ASCII and have a smaller
-         file size.
-         """
-         raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
+        Notes
+        -----
+        Binary files write much faster than ASCII and have a smaller
+        file size.
+        """
+        raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
 
 
     def get_data_range(self, arr=None, preference='field'):
@@ -151,9 +161,9 @@ class DataObject(object):
         thistype = type(self)
         newobject = thistype()
         if deep:
-            newobject.DeepCopy(self)
+            newobject.deep_copy(self)
         else:
-            newobject.ShallowCopy(self)
+            newobject.shallow_copy(self)
         newobject.copy_meta_from(self)
         return newobject
 
@@ -307,7 +317,7 @@ class Common(DataSetFilters, DataObject):
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
                 if name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. ' +
+                    raise RuntimeError('Field arrays cannot be made active. '
                                        'Convert to point/cell arrays if possible.')
                 else:
                     name = None
@@ -358,7 +368,7 @@ class Common(DataSetFilters, DataObject):
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
                 if name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. ' +
+                    raise RuntimeError('Field arrays cannot be made active. '
                                        'Convert to point/cell array if possible.')
                 else:
                     name = None
@@ -418,7 +428,11 @@ class Common(DataSetFilters, DataObject):
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         vtk_points = pyvista.vtk_points(points, False)
-        self.SetPoints(vtk_points)
+        pdata = self.GetPoints()
+        if not pdata:
+            self.SetPoints(vtk_points)
+        else:
+            pdata.SetData(vtk_points.GetData())
         self.GetPoints().Modified()
         self.Modified()
 
@@ -521,10 +535,10 @@ class Common(DataSetFilters, DataObject):
         ------
         vtk.vtkTexture : The active texture
         """
-        if name == True or isinstance(name, int):
+        if name is True or isinstance(name, int):
             keys = list(mesh.textures.keys())
             # Grab the first name availabe if True
-            idx = 0 if not isinstance(name, int) or name == True else name
+            idx = 0 if not isinstance(name, int) or name is True else name
             if idx > len(keys):
                 idx = 0
             try:
@@ -676,8 +690,7 @@ class Common(DataSetFilters, DataObject):
             scalars = np.array(scalars)
 
         if scalars.shape[0] != self.n_points:
-            raise Exception('Number of scalars must match the number of ' +
-                            'points')
+            raise Exception('Number of scalars must match the number of points')
 
         # need to track which arrays are boolean as all boolean arrays
         # must be stored as uint8
@@ -808,9 +821,9 @@ class Common(DataSetFilters, DataObject):
             t = trans
         else:
             raise TypeError('Input transform must be either:\n'
-                            + '\tvtk.vtkMatrix4x4\n'
-                            + '\tvtk.vtkTransform\n'
-                            + '\t4x4 np.ndarray\n')
+                            '\tvtk.vtkMatrix4x4\n'
+                            '\tvtk.vtkTransform\n'
+                            '\t4x4 np.ndarray\n')
 
         x = (self.points*t[0, :3]).sum(1) + t[0, -1]
         y = (self.points*t[1, :3]).sum(1) + t[1, -1]
@@ -1132,9 +1145,10 @@ class Common(DataSetFilters, DataObject):
     @property
     def n_arrays(self):
         """The number of scalar arrays present in the dataset"""
-        return self.GetPointData().GetNumberOfArrays() + \
-               self.GetCellData().GetNumberOfArrays() + \
-               self.GetFieldData().GetNumberOfArrays()
+        n = self.GetPointData().GetNumberOfArrays()
+        n += self.GetCellData().GetNumberOfArrays()
+        n += self.GetFieldData().GetNumberOfArrays()
+        return n
 
 
     @property
@@ -1251,7 +1265,7 @@ class Common(DataSetFilters, DataObject):
             The overwriting mesh.
 
         """
-        self.DeepCopy(mesh)
+        self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
 
@@ -1289,7 +1303,7 @@ class Common(DataSetFilters, DataObject):
         """
         try:
             import pyansys
-        except:
+        except ImportError:
             raise Exception('Install pyansys for this function')
         if not isinstance(self, pyvista.UnstructuredGrid):
             dataset = self.cast_to_unstructured_grid()
@@ -1452,7 +1466,8 @@ class pyvista_ndarray(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None: return
+        if obj is None:
+            return
 
     def __setitem__(self, coords, value):
         """ Update the array and update the vtk object """

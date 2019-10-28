@@ -2,12 +2,12 @@ Plotting
 ========
 
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see :ref:`plotting_ref`)
-* Plotting tools built for interactivity in Jupyter notebooks (see :ref:`ipy_tools_ref`)
+* PyQt plotting windows and embeddable renderers (see :ref:`qt_ref`)
+* Plotting tools built for interactivity (see :ref:`widgets`)
 
 .. toctree::
    :maxdepth: 2
 
    plotting
-   ipy_tools
    qt_plotting
    widgets

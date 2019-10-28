@@ -116,7 +116,7 @@ def test_multi_block_set_get_ers():
     # Check content
     assert isinstance(multi[1], pyvista.RectilinearGrid)
     for i in [0,2,3,4,5]:
-        assert multi[i] == None
+        assert multi[i] is None
     # Check the bounds
     assert multi.bounds == list(data.bounds)
     multi[5] = ex.load_uniform()

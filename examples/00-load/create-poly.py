@@ -22,7 +22,7 @@ vertices = np.array([[0, 0, 0],
                      [1, 0, 0],
                      [1, 1, 0],
                      [0, 1, 0],
-		 [0.5, 0.5, -1]])
+                     [0.5, 0.5, -1]])
 
 # mesh faces
 faces = np.hstack([[4, 0, 1, 2, 3],  # square
