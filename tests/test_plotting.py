@@ -42,20 +42,26 @@ def test_plot(tmpdir):
     filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.png')
     scalars = np.arange(sphere.n_points)
     cpos, img = pyvista.plot(sphere,
-                          off_screen=OFF_SCREEN,
-                          full_screen=True,
-                          text='this is a sphere',
-                          show_bounds=True,
-                          color='r',
-                          style='wireframe',
-                          line_width=10,
-                          scalars=scalars,
-                          flip_scalars=True,
-                          cmap='bwr',
-                          interpolate_before_map=True,
-                          screenshot=filename, return_img=True)
+                             off_screen=OFF_SCREEN,
+                             full_screen=True,
+                             text='this is a sphere',
+                             show_bounds=True,
+                             color='r',
+                             style='wireframe',
+                             line_width=10,
+                             scalars=scalars,
+                             flip_scalars=True,
+                             cmap='bwr',
+                             interpolate_before_map=True,
+                             screenshot=filename,
+                             return_img=True)
     assert isinstance(cpos, list)
     assert isinstance(img, np.ndarray)
+    assert os.path.isfile(filename)
+    os.remove(filename)
+    filename = os.path.join(pyvista.USER_DATA_PATH, 'foo')
+    cpos = pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
+    filename = filename + ".png" # Ensure it added a PNG extension by default
     assert os.path.isfile(filename)
     # remove file
     os.remove(filename)
@@ -170,7 +176,7 @@ def test_plot_add_scalar_bar():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
-                interactive=True, vertical=True)
+                           interactive=True, vertical=True)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -183,12 +189,12 @@ def test_plot_invalid_add_scalar_bar():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_list():
     pyvista.plot([sphere, sphere_b],
-              off_screen=OFF_SCREEN,
-              style='points')
+                 off_screen=OFF_SCREEN,
+                 style='points')
 
     pyvista.plot([sphere, sphere_b, sphere_c],
-              off_screen=OFF_SCREEN,
-              style='wireframe')
+                 off_screen=OFF_SCREEN,
+                 style='wireframe')
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_lines_invalid():
@@ -269,6 +275,7 @@ def test_add_point_labels():
         plotter.add_point_labels(points, range(n - 1))
 
     plotter.set_background('k')
+    plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
     plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
     plotter.show()
@@ -361,13 +368,15 @@ def test_box_axes():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_screenshot():
+def test_screenshot(tmpdir):
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_mesh(pyvista.Sphere())
     img = plotter.screenshot(transparent_background=True)
     assert np.any(img)
     img_again = plotter.screenshot()
     assert np.any(img_again)
+    filename = str(tmpdir.mkdir("tmpdir").join('export-graphic.svg'))
+    plotter.save_graphic(filename)
 
     # checking if plotter closes
     ref = proxy(plotter)
@@ -457,16 +466,16 @@ def test_plot_rgb():
     """"Test adding a texture to a plot"""
     cube = pyvista.Cube()
     cube.clear_arrays()
-    x_face_color=(255, 0, 0)
-    y_face_color=(0, 255, 0)
-    z_face_color=(0, 0, 255)
+    x_face_color = (255, 0, 0)
+    y_face_color = (0, 255, 0)
+    z_face_color = (0, 0, 255)
     face_colors = np.array([x_face_color,
                             x_face_color,
                             y_face_color,
                             y_face_color,
                             z_face_color,
                             z_face_color,
-                           ], dtype=np.uint8)
+                            ], dtype=np.uint8)
     cube.cell_arrays['face_colors'] = face_colors
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(cube, scalars='face_colors', rgb=True)
@@ -492,7 +501,7 @@ def test_camera():
     plotter.view_xy()
     plotter.view_xz()
     plotter.view_yz()
-    plotter.add_mesh(examples.load_uniform(), reset_camera=True, backface_culling=True)
+    plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
     plotter.view_xy(True)
     plotter.view_xz(True)
     plotter.view_yz(True)
@@ -519,9 +528,10 @@ def test_multi_renderers():
     plotter.add_mesh(pyvista.Arrow(), color='y', loc=loc, show_edges=True)
 
     plotter.subplot(1, 1)
-    plotter.add_text('Render Window 3', loc=loc, font_size=30)
+    plotter.add_text('Render Window 3', position=(0., 0.),
+                     loc=loc, font_size=30, viewport=True)
     plotter.add_mesh(pyvista.Cone(), color='g', loc=loc, show_edges=True,
-                     backface_culling=True)
+                     culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
     plotter.show_bounds(all_edges=True)
 
@@ -556,6 +566,35 @@ def test_multi_renderers():
         plotter.subplot(1,0)
         plotter.add_mesh(pyvista.Cube())
         plotter.show()
+
+
+    # Test subplot 3 on left, 1 on right
+    plotter = pyvista.Plotter(shape='3|1', off_screen=OFF_SCREEN)
+    # First column
+    plotter.subplot(0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(2)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(3)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show()
+
+    # Test subplot 3 on bottom, 1 on top
+    plotter = pyvista.Plotter(shape='1|3', off_screen=OFF_SCREEN)
+    # First column
+    plotter.subplot(0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(2)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(3)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.show()
+
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_link_views():
@@ -632,7 +671,15 @@ def test_image_properties():
     # Get RGB image
     img = p.image
     # Get the depth image
-    img = np.sum(p.image_depth, axis=2)
+    img = p.get_image_depth()
+    p.close()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.show() # close plotter
+    # Get RGB image
+    img = p.image
+    # Get the depth image
+    img = p.get_image_depth()
     p.close()
 
 
@@ -648,9 +695,9 @@ def test_volume_rendering():
 
     # Now test MultiBlock rendering
     data = pyvista.MultiBlock(dict(a=examples.load_uniform(),
-            b=examples.load_uniform(),
-            c=examples.load_uniform(),
-            d=examples.load_uniform(),))
+                                   b=examples.load_uniform(),
+                                   c=examples.load_uniform(),
+                                   d=examples.load_uniform(),))
     data['a'].rename_scalar('Spatial Point Data', 'a')
     data['b'].rename_scalar('Spatial Point Data', 'b')
     data['c'].rename_scalar('Spatial Point Data', 'c')
@@ -667,8 +714,9 @@ def test_plot_compar_four():
     data_b = mesh.threshold_percent(0.5)
     data_c = mesh.decimate_boundary(0.5)
     data_d = mesh.glyph()
-    pyvista.plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs={'color':'w'},
-                      plotter_kwargs={'off_screen':OFF_SCREEN},)
+    pyvista.plot_compare_four(data_a, data_b, data_c, data_d,
+                              disply_kwargs={'color':'w'},
+                              plotter_kwargs={'off_screen':OFF_SCREEN},)
     return
 
 
@@ -753,7 +801,7 @@ def test_closing_and_mem_cleanup():
 def test_above_below_scalar_range_annotations():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
-           below_color='blue', above_color='red')
+               below_color='blue', above_color='red')
     p.show()
 
 
