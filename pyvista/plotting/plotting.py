@@ -215,6 +215,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks.pop(key)
 
 
+    def enable_anti_aliasing(self, state=True):
+        """Enables or disables anti-aliasing"""
+        self.renderer.enable_anti_aliasing(state=state)
+
+
+    def store_mouse_position(self, *args):
+        """Store mouse position"""
+        if not hasattr(self, "iren"):
+            raise AttributeError("This plotting window is not interacive.")
+        self.mouse_position = self.iren.GetEventPosition()
+
+
+    def fly_to_mouse_position(self):
+        """ Focuses on last stored mouse position """
+        if not hasattr(self, "mouse_position") or self.mouse_position is None:
+            self.store_mouse_position()
+        # Get corresponding click location in the 3D plot
+        picker = vtk.vtkWorldPointPicker()
+        picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
+        click_point = picker.GetPickPosition()
+        self.fly_to(click_point)
+
+
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
@@ -230,6 +253,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
+        self.add_key_event('f', self.fly_to_mouse_position)
 
 
     def key_press_event(self, obj, event):
@@ -263,8 +287,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return self.iren.SetInteractorStyle(self._style)
 
     def enable_trackball_style(self):
-        """ sets the interactive style to trackball - the default syle """
+        """ sets the interactive style to trackball camera - the default syle
+        """
         self._style = vtk.vtkInteractorStyleTrackballCamera()
+        return self.update_style()
+
+    def enable_trackball_actor_style(self):
+        """ sets the interactive style to trackball actor. This makes it
+        possiblee to rotate actors around the scene."""
+        self._style = vtk.vtkInteractorStyleTrackballActor()
         return self.update_style()
 
     def enable_image_style(self):

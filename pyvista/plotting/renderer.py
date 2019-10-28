@@ -36,6 +36,12 @@ class Renderer(vtkRenderer):
             self.add_border(border_color, border_width)
 
 
+
+    def enable_anti_aliasing(self, state=True):
+        """Enables or disables anti-aliasing"""
+        self.SetUseFXAA(state)
+
+
     def add_border(self, color=[1, 1, 1], width=2.0):
         points = np.array([[1., 1., 0.],
                            [0., 1., 0.],

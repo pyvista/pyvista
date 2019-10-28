@@ -302,6 +302,10 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     signal_set_view_vector = pyqtSignal(tuple, tuple)
     signal_reset_camera = pyqtSignal()
     allow_quit_keypress = True
+    signal_enable_trackball_style = pyqtSignal()
+    signal_remove_legend = pyqtSignal()
+    signal_set_background = pyqtSignal(tuple)
+    signal_remove_actor = pyqtSignal(object)
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
                  border=None, border_color='k', border_width=2.0,
@@ -323,6 +327,11 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         self.signal_set_view_vector.connect(self.view_vector)
         self.signal_reset_camera.connect(self.reset_camera)
+        # self.render_trigger.connect(self._render)
+        self.signal_enable_trackball_style.connect(self.enable_trackball_style)
+        self.signal_remove_legend.connect(self.remove_legend)
+        self.signal_set_background.connect(self.set_background)
+        self.signal_remove_actor.connect(super(QtInteractor, self).remove_actor)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -436,6 +445,16 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         """Quit application"""
         BasePlotter.close(self)
         QVTKRenderWindowInteractor.close(self)
+
+
+    def _reset_camera(self):
+        super(QtInteractor, self).reset_camera()
+
+    def reset_camera(self):
+        self.signal_reset_camera.emit()
+
+    def remove_actor(self, actor, reset_camera=None):
+        self.signal_remove_actor.emit(actor)
 
 
 class BackgroundPlotter(QtInteractor):
