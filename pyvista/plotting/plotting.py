@@ -27,7 +27,7 @@ from .mapper import make_mapper
 from .picking import PickingHelper
 from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
 from .tools import normalize, opacity_transfer_function
-from .theme import rcParams, parse_color, parse_font_family
+from .theme import rcParams, parse_font_family
 from .theme import FONT_KEYS, MAX_N_COLOR_BARS
 from .widgets import WidgetHelper
 
