@@ -211,10 +211,10 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
         plotter.update_scalars(Z.ravel(), render=False)
 
         # Render and get time to render
-        rstart = time.time()
+        #rstart = time.time()
         plotter.update()
         # plotter.render()
-        rstop = time.time()
+        #rstop = time.time()
 
         # time delay
         tpast = time.time() - tlast

@@ -1,0 +1,13 @@
+numpy
+vtk
+matplotlib
+appdirs
+pytest
+pytest-cov
+pytest-memprof
+codecov
+nbval
+imageio>=2.5.0
+colorcet
+cmocean
+scooby>=0.2.2

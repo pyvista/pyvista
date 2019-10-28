@@ -1,63 +1,65 @@
 
 import vtk
 
-from .colors import string_to_rgb
+from .colors import string_to_rgb, PARAVIEW_BACKGROUND
 
 
 MAX_N_COLOR_BARS = 10
-PV_BACKGROUND = [82/255., 87/255., 110/255.]
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
              'times': vtk.VTK_TIMES}
 
 
 rcParams = {
-    'background' : [0.3, 0.3, 0.3],
-    'camera' : {
-        'position' : [1, 1, 1],
-        'viewup' : [0, 0, 1],
+    'auto_close': True, # DANGER: set to False with extreme caution
+    'background': [0.3, 0.3, 0.3],
+    'camera': {
+        'position': [1, 1, 1],
+        'viewup': [0, 0, 1],
     },
-    'window_size' : [1024, 768],
-    'font' : {
-        'family' : 'courier',
-        'size' : 12,
+    'window_size': [1024, 768],
+    'font': {
+        'family': 'courier',
+        'size': 12,
         'title_size': None,
-        'label_size' : None,
-        'color' : [1, 1, 1],
-        'fmt' : None,
+        'label_size': None,
+        'color': [1, 1, 1],
+        'fmt': None,
     },
-    'cmap' : 'viridis',
-    'color' : 'white',
-    'nan_color' : 'darkgray',
-    'edge_color' : 'black',
-    'outline_color' : 'white',
-    'colorbar_orientation' : 'horizontal',
-    'colorbar_horizontal' : {
-        'width' : 0.6,
-        'height' : 0.08,
-        'position_x' : 0.35,
-        'position_y' : 0.05,
+    'cmap': 'viridis',
+    'color': 'white',
+    'nan_color': 'darkgray',
+    'edge_color': 'black',
+    'outline_color': 'white',
+    'colorbar_orientation': 'horizontal',
+    'colorbar_horizontal': {
+        'width': 0.6,
+        'height': 0.08,
+        'position_x': 0.35,
+        'position_y': 0.05,
     },
-    'colorbar_vertical' : {
-        'width' : 0.08,
-        'height' : 0.45,
-        'position_x' : 0.9,
-        'position_y' : 0.02,
+    'colorbar_vertical': {
+        'width': 0.08,
+        'height': 0.45,
+        'position_x': 0.9,
+        'position_y': 0.02,
     },
-    'show_scalar_bar' : True,
-    'show_edges' : False,
-    'lighting' : True,
-    'interactive' : False,
-    'render_points_as_spheres' : False,
-    'use_panel' : False,
-    'transparent_background' : False,
-    'title' : 'PyVista',
+    'show_scalar_bar': True,
+    'show_edges': False,
+    'lighting': True,
+    'interactive': False,
+    'render_points_as_spheres': False,
+    'use_panel': False,
+    'transparent_background': False,
+    'title': 'PyVista',
     'axes': {
         'x_color': 'tomato',
         'y_color': 'seagreen',
         'z_color': 'mediumblue',
         'box': False,
-    }
+    },
+    'multi_samples': 4,
+    'multi_rendering_splitting_position': None,
 }
 
 DEFAULT_THEME = dict(rcParams)
@@ -65,7 +67,7 @@ DEFAULT_THEME = dict(rcParams)
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
     if theme.lower() in ['paraview', 'pv']:
-        rcParams['background'] = PV_BACKGROUND
+        rcParams['background'] = PARAVIEW_BACKGROUND
         rcParams['cmap'] = 'coolwarm'
         rcParams['font']['family'] = 'arial'
         rcParams['font']['label_size'] = 16
@@ -137,7 +139,7 @@ def parse_font_family(font_family):
     # check font name
     font_family = font_family.lower()
     if font_family not in ['courier', 'times', 'arial']:
-        raise Exception('Font must be either "courier", "times" ' +
+        raise Exception('Font must be either "courier", "times" '
                         'or "arial"')
 
     return FONT_KEYS[font_family]

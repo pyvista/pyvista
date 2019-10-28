@@ -28,7 +28,7 @@ def _get_vtk_file_url(filename):
 
 def _retrieve_file(url, filename):
     # First check if file has already been downloaded
-    local_path = os.path.join(pyvista.EXAMPLES_PATH,  os.path.basename(filename))
+    local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
     local_path_no_zip = local_path.replace('.zip', '')
     if os.path.isfile(local_path_no_zip) or os.path.isdir(local_path_no_zip):
         return local_path_no_zip, None
@@ -106,7 +106,7 @@ def download_head():
 
 def download_bolt_nut():
     blocks = pyvista.MultiBlock()
-    blocks['bolt'] =  _download_and_read('bolt.slc')
+    blocks['bolt'] = _download_and_read('bolt.slc')
     blocks['nut'] = _download_and_read('nut.slc')
     return blocks
 
@@ -331,27 +331,27 @@ def download_kitchen(split=False):
     """Download structured grid of kitchen with velocity field. Use the
     ``split`` argument to extract all of the furniture in the kitchen.
     """
-    mesh =  _download_and_read('kitchen.vtk')
+    mesh = _download_and_read('kitchen.vtk')
     if not split:
         return mesh
     extents = {
-        'door' : (27, 27, 14, 18, 0, 11),
-        'window1' : (0, 0, 9, 18, 6, 12),
-        'window2' : (5, 12, 23, 23, 6, 12),
-        'klower1' : (17, 17, 0, 11, 0, 6),
-        'klower2' : (19, 19, 0, 11, 0, 6),
-        'klower3' : (17, 19, 0, 0, 0, 6),
-        'klower4' : (17, 19, 11, 11, 0, 6),
-        'klower5' : (17, 19, 0, 11, 0, 0),
-        'klower6' : (17, 19, 0, 7, 6, 6),
-        'klower7' : (17, 19, 9, 11, 6, 6),
-        'hood1' : (17, 17, 0, 11, 11, 16),
-        'hood2' : (19, 19, 0, 11, 11, 16),
-        'hood3' : (17, 19, 0, 0, 11, 16),
-        'hood4' : (17, 19, 11, 11, 11, 16),
-        'hood5' : (17, 19, 0, 11, 16, 16),
-        'cookingPlate' : (17, 19, 7, 9, 6, 6),
-        'furniture' : (17, 19, 7, 9, 11, 11),
+        'door': (27, 27, 14, 18, 0, 11),
+        'window1': (0, 0, 9, 18, 6, 12),
+        'window2': (5, 12, 23, 23, 6, 12),
+        'klower1': (17, 17, 0, 11, 0, 6),
+        'klower2': (19, 19, 0, 11, 0, 6),
+        'klower3': (17, 19, 0, 0, 0, 6),
+        'klower4': (17, 19, 11, 11, 0, 6),
+        'klower5': (17, 19, 0, 11, 0, 0),
+        'klower6': (17, 19, 0, 7, 6, 6),
+        'klower7': (17, 19, 9, 11, 6, 6),
+        'hood1': (17, 17, 0, 11, 11, 16),
+        'hood2': (19, 19, 0, 11, 11, 16),
+        'hood3': (17, 19, 0, 0, 11, 16),
+        'hood4': (17, 19, 11, 11, 11, 16),
+        'hood5': (17, 19, 0, 11, 16, 16),
+        'cookingPlate': (17, 19, 7, 9, 6, 6),
+        'furniture': (17, 19, 7, 9, 11, 11),
     }
     kitchen = pyvista.MultiBlock()
     for key, extent in extents.items():
@@ -466,3 +466,11 @@ def download_turbine_blade():
 
 def download_pine_roots():
     return _download_and_read('pine_root.tri')
+
+
+def download_crater_topo():
+    return _download_and_read('Ruapehu_mag_dem_15m_NZTM.vtk')
+
+
+def download_crater_imagery():
+    return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True)
