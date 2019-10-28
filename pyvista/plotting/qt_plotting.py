@@ -331,7 +331,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.signal_enable_trackball_style.connect(self.enable_trackball_style)
         self.signal_remove_legend.connect(self.remove_legend)
         self.signal_set_background.connect(self.set_background)
-        self.signal_remove_actor.connect(super(QtInteractor, self).remove_actor)
+        self.signal_remove_actor.connect(self.remove_actor)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -446,15 +446,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         BasePlotter.close(self)
         QVTKRenderWindowInteractor.close(self)
 
-
-    def _reset_camera(self):
-        super(QtInteractor, self).reset_camera()
-
-    def reset_camera(self):
-        self.signal_reset_camera.emit()
-
-    def remove_actor(self, actor, reset_camera=None):
-        self.signal_remove_actor.emit(actor)
 
 
 class BackgroundPlotter(QtInteractor):
