@@ -368,13 +368,15 @@ def test_box_axes():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_screenshot():
+def test_screenshot(tmpdir):
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_mesh(pyvista.Sphere())
     img = plotter.screenshot(transparent_background=True)
     assert np.any(img)
     img_again = plotter.screenshot()
     assert np.any(img_again)
+    filename = str(tmpdir.mkdir("tmpdir").join('export-graphic.svg'))
+    plotter.save_graphic(filename)
 
     # checking if plotter closes
     ref = proxy(plotter)
