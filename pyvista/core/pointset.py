@@ -59,7 +59,6 @@ class PointSet(Common):
         return Common.shallow_copy(self, to_copy)
 
 
-
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     """
     Extends the functionality of a vtk.vtkPolyData object
@@ -314,7 +313,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         else:
             self.points = vertices
             self.faces = faces
-
 
     def __sub__(self, cutting_mesh):
         """ subtract two meshes """
