@@ -126,8 +126,7 @@ def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
         new_array = vtk.vtkTypeUInt32Array()
         new_array.SetNumberOfTuples(array_size)
         for i in range(array_size):
-            new_array.SetValue(i, -1 if array.GetValue(i) <
-                              0 else array.GetValue(i))
+            new_array.SetValue(i, -1 if array.GetValue(i) < 0 else array.GetValue(i))
         pbuffer = memoryview(new_array)
     else:
         pbuffer = memoryview(array)
@@ -314,7 +313,7 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
 
     # Points
     points = dump_data_array(dataset_dir, data_dir,
-                           dataset.GetPoints().GetData(), {}, compress)
+                             dataset.GetPoints().GetData(), {}, compress)
     points['vtkClass'] = 'vtkPoints'
     container['points'] = points
 
@@ -324,28 +323,28 @@ def dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, 
     # Verts
     if dataset.GetVerts() and dataset.GetVerts().GetData().GetNumberOfTuples() > 0:
         _verts = dump_data_array(dataset_dir, data_dir,
-                               dataset.GetVerts().GetData(), {}, compress)
+                                 dataset.GetVerts().GetData(), {}, compress)
         _cells['verts'] = _verts
         _cells['verts']['vtkClass'] = 'vtkCellArray'
 
     # Lines
     if dataset.GetLines() and dataset.GetLines().GetData().GetNumberOfTuples() > 0:
         _lines = dump_data_array(dataset_dir, data_dir,
-                               dataset.GetLines().GetData(), {}, compress)
+                                 dataset.GetLines().GetData(), {}, compress)
         _cells['lines'] = _lines
         _cells['lines']['vtkClass'] = 'vtkCellArray'
 
     # Polys
     if dataset.GetPolys() and dataset.GetPolys().GetData().GetNumberOfTuples() > 0:
         _polys = dump_data_array(dataset_dir, data_dir,
-                               dataset.GetPolys().GetData(), {}, compress)
+                                 dataset.GetPolys().GetData(), {}, compress)
         _cells['polys'] = _polys
         _cells['polys']['vtkClass'] = 'vtkCellArray'
 
     # Strips
     if dataset.GetStrips() and dataset.GetStrips().GetData().GetNumberOfTuples() > 0:
         _strips = dump_data_array(dataset_dir, data_dir,
-                                dataset.GetStrips().GetData(), {}, compress)
+                                  dataset.GetStrips().GetData(), {}, compress)
         _cells['strips'] = _strips
         _cells['strips']['vtkClass'] = 'vtkCellArray'
 
@@ -401,7 +400,7 @@ def write_data_set(file_path, dataset, output_dir, color_array_info, new_name=No
     if writer:
         writer(dataset_dir, data_dir, dataset, color_array_info, root, compress)
     else:
-        print(dataObject.GetClassName(), 'is not supported')
+        print(dataset.GetClassName(), 'is not supported')
 
     with open(os.path.join(dataset_dir, "index.json"), 'w') as f:
         f.write(json.dumps(root, indent=2))
@@ -516,8 +515,10 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                         'location': arrayLocation
                     }
 
-                    scDirs.append(write_data_set('', dataset, output_dir, color_array_info,
-                                               new_name=componentName, compress=doCompressArrays))
+                    scDirs.append(write_data_set('', dataset, output_dir,
+                                                 color_array_info,
+                                                 new_name=componentName,
+                                                 compress=doCompressArrays))
 
                     # Handle texture if any
                     textureName = None
@@ -538,7 +539,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     opacity = renProp.GetProperty().GetOpacity() if hasattr(
                         renProp, 'GetProperty') else 1.0
                     edgeVisibility = renProp.GetProperty().GetEdgeVisibility(
-                    ) if hasattr(renProp, 'GetProperty') else false
+                    ) if hasattr(renProp, 'GetProperty') else False
 
                     p3dPosition = renProp.GetPosition() if renProp.IsA(
                         'vtkProp3D') else [0, 0, 0]
@@ -585,26 +586,26 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     # Save texture data if any
     for key, val in textureToSave.items():
         write_data_set('', val, output_dir, None, new_name=key,
-                     compress=doCompressArrays)
+                       compress=doCompressArrays)
 
     cameraClippingRange = plotter.camera.GetClippingRange()
 
     sceneDescription = {
-      "fetchGzip": doCompressArrays,
-      "background": plotter.background_color,
-      "camera": {
-        "focalPoint": plotter.camera.GetFocalPoint(),
-        "position": plotter.camera.GetPosition(),
-        "viewUp": plotter.camera.GetViewUp(),
-        "clippingRange": [ elt for elt in cameraClippingRange ]
-      },
-      "centerOfRotation": plotter.camera.GetFocalPoint(),
-      "scene": sceneComponents
+        "fetchGzip": doCompressArrays,
+        "background": plotter.background_color,
+        "camera": {
+            "focalPoint": plotter.camera.GetFocalPoint(),
+            "position": plotter.camera.GetPosition(),
+            "viewUp": plotter.camera.GetViewUp(),
+            "clippingRange": [elt for elt in cameraClippingRange],
+        },
+        "centerOfRotation": plotter.camera.GetFocalPoint(),
+        "scene": sceneComponents
     }
 
     indexFilePath = os.path.join(output_dir, 'index.json')
     with open(indexFilePath, 'w') as outfile:
-      json.dump(sceneDescription, outfile, indent=4)
+        json.dump(sceneDescription, outfile, indent=4)
 
 # -----------------------------------------------------------------------------
 

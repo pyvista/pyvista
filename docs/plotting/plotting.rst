@@ -185,34 +185,6 @@ the :class:`pyvista.BackgroundPlotter`:
     p.show_bounds(grid=True, location='back')
 
 
-IPython Interactive Plotting Tools
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-PyVista comes packed with several interactive plotting tools to make using the
-filters a bit more intuitive (see :ref:`ipy_tools_ref`).
-If in an IPython environment, call one of the tools on an input dataset to yield
-widgets that will control a filter or task in an interactive rendering scene.
-These tools create an :class:`pyvista.BackgroundPlotter` instance which can be
-accessed under the ``.plotter`` attribute for further scene manipulation:
-
-.. code:: python
-
-   import pyvista as pv
-   from pyvista import examples
-
-   dataset = examples.load_hexbeam()
-
-   # Use the slicer tool
-   tool = pv.OrthogonalSlicer(dataset)
-
-   # Get the plotter for adding more datasets:
-   p = tool.plotter
-   p.show_grid()
-
-
-.. figure:: ../images/gifs/slicer-tool.gif
-   :width: 500pt
-
 
 Plot Time Series Data
 ~~~~~~~~~~~~~~~~~~~~~

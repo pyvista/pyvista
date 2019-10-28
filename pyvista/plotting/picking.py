@@ -62,7 +62,7 @@ class PickingHelper(object):
         if mesh is None:
             if not hasattr(self, 'mesh'):
                 raise Exception('Input a mesh into the Plotter class first or '
-                                + 'or set it in this function')
+                                'or set it in this function')
             mesh = self.mesh
 
 
@@ -71,8 +71,9 @@ class PickingHelper(object):
                 # Use try incase selection is empty
                 try:
                     self.add_mesh(self.picked_cells, name='_cell_picking_selection',
-                        style=style, color=color, line_width=line_width,
-                        pickable=False, reset_camera=False, **kwargs)
+                                  style=style, color=color,
+                                  line_width=line_width, pickable=False,
+                                  reset_camera=False, **kwargs)
                 except RuntimeError:
                     pass
 
@@ -124,7 +125,7 @@ class PickingHelper(object):
             message = "Surface picking non-triangulated meshes is known to "\
                       "not work properly with non-NVIDIA GPUs. Please "\
                       "consider triangulating your mesh:\n"\
-                      "\t`.extract_geometry().tri_filter()`"
+                      "\t`.extract_geometry().triangulate()`"
             if (not isinstance(mesh, pyvista.PolyData) or
                     mesh.faces.size % 4 or
                     not np.all(mesh.faces.reshape(-1, 4)[:,0] == 3)):
@@ -136,7 +137,7 @@ class PickingHelper(object):
 
         # Now add text about cell-selection
         if show_message:
-            if show_message == True:
+            if show_message is True:
                 show_message = "Press R to toggle selection tool"
                 if not through:
                     show_message += "\nPress P to pick a single cell under the mouse"
@@ -145,8 +146,8 @@ class PickingHelper(object):
 
 
     def enable_point_picking(self, callback=None, show_message=True,
-                            font_size=18, color='pink', point_size=10,
-                            use_mesh=False, show_point=True, **kwargs):
+                             font_size=18, color='pink', point_size=10,
+                             use_mesh=False, show_point=True, **kwargs):
         """Enable picking a point at the mouse location in the render view
         using the ``P`` key. This point is saved to the ``.picked_point``
         attrbute on the plotter. Pass a callback function that takes that
@@ -181,7 +182,7 @@ class PickingHelper(object):
 
         # Now add text about cell-selection
         if show_message:
-            if show_message == True:
+            if show_message is True:
                 show_message = "Press P to pick under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
         return
@@ -231,7 +232,7 @@ class PickingHelper(object):
             return
 
         self.add_key_event('c', _clear_path_event_watcher)
-        if show_message == True:
+        if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
         return self.enable_point_picking(callback=_the_callback, use_mesh=True,
@@ -239,8 +240,8 @@ class PickingHelper(object):
 
 
     def enable_geodesic_picking(self, callback=None, show_message=True,
-                            font_size=18, color='pink', point_size=10,
-                            line_width=5, **kwargs):
+                                font_size=18, color='pink', point_size=10,
+                                line_width=5, **kwargs):
         """This is a conveinance method for ``enable_point_picking`` to keep
         track of the picked points and create a geodesic path using those
         points.
@@ -283,7 +284,7 @@ class PickingHelper(object):
             return
 
         self.add_key_event('c', _clear_g_path_event_watcher)
-        if show_message == True:
+        if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
         return self.enable_point_picking(callback=_the_callback, use_mesh=True,
@@ -310,7 +311,8 @@ class PickingHelper(object):
 
             if show_horizon:
                 self.add_mesh(self.picked_horizon, name=name, color=color,
-                       opacity=opacity, pickable=False, reset_camera=False)
+                              opacity=opacity, pickable=False,
+                              reset_camera=False)
 
             if hasattr(callback, '__call__'):
                 callback(path)

@@ -3,9 +3,10 @@ import numpy as np
 
 import pyvista
 
-from .theme import *
-from .tools import *
-from .plotting import *
+from .theme import rcParams
+from pyvista.utilities import is_pyvista_dataset
+from .plotting import Plotter
+import scooby
 
 
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
@@ -121,6 +122,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     else:
         plotter.camera_position = cpos
 
+    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()
 
@@ -137,7 +139,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           height=kwargs.get('height', 400))
 
     # close and return camera position and maybe image
-    plotter.close()
+    if kwargs.get('auto_close', rcParams['auto_close']):
+        plotter.close()
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
     return result

@@ -7,6 +7,8 @@ import vtk
 
 import pyvista
 
+import imageio
+
 READERS = {
     # Standard dataset readers:
     '.vtk': vtk.vtkDataSetReader,
@@ -59,9 +61,10 @@ READERS = {
     '.tri': vtk.vtkMCubesReader,
 }
 
+VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
+VTK_MINOR = vtk.vtkVersion().GetVTKMinorVersion()
 
-if (vtk.vtkVersion().GetVTKMajorVersion() >= 8 and
-    vtk.vtkVersion().GetVTKMinorVersion() >= 2):
+if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
     try:
         READERS['.sgy'] = vtk.vtkSegYReader
         READERS['.segy'] = vtk.vtkSegYReader

@@ -12,7 +12,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 
 from .common import Common
-from .filters import _get_output
+from .filters import _get_output, UniformGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -89,7 +89,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkRectilinearGrid):
-                self.DeepCopy(args[0])
+                self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
 
@@ -206,7 +206,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         reader.SetFileName(filename)
         reader.Update()
         grid = reader.GetOutput()
-        self.ShallowCopy(grid)
+        self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
         """
@@ -239,7 +239,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             writer = vtk.vtkXMLRectilinearGridWriter()
             legacy = False
         else:
-            raise Exception('Extension should be either ".vtr" (xml) or' +
+            raise Exception('Extension should be either ".vtr" (xml) or'
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
@@ -304,7 +304,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
 
-class UniformGrid(vtkImageData, Grid):
+class UniformGrid(vtkImageData, Grid, UniformGridFilters):
     """
     Extends the functionality of a vtk.vtkImageData object
     Can be initialized in several ways:
@@ -348,7 +348,7 @@ class UniformGrid(vtkImageData, Grid):
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkImageData):
-                self.DeepCopy(args[0])
+                self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
             else:
@@ -478,7 +478,7 @@ class UniformGrid(vtkImageData, Grid):
         reader.SetFileName(filename)
         reader.Update()
         grid = reader.GetOutput()
-        self.ShallowCopy(grid)
+        self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
         """
@@ -511,7 +511,7 @@ class UniformGrid(vtkImageData, Grid):
             writer = vtk.vtkXMLImageDataWriter()
             legacy = False
         else:
-            raise Exception('Extension should be either ".vti" (xml) or' +
+            raise Exception('Extension should be either ".vti" (xml) or'
                             '".vtk" (legacy)')
         # Write
         writer.SetFileName(filename)
@@ -575,3 +575,21 @@ class UniformGrid(vtkImageData, Grid):
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)
+
+
+    def cast_to_rectilinear_grid(self):
+        """Cast this unifrom grid to a :class:`pyvista.RectilinearGrid`"""
+        def gen_coords(i):
+            coords = np.cumsum(np.insert(np.full(self.dimensions[i] - 1,
+                                                 self.spacing[i]), 0, 0)
+                               ) + self.origin[i]
+            return coords
+        xcoords = gen_coords(0)
+        ycoords = gen_coords(1)
+        zcoords = gen_coords(2)
+        grid = pyvista.RectilinearGrid(xcoords, ycoords, zcoords)
+        grid.point_arrays.update(self.point_arrays)
+        grid.cell_arrays.update(self.cell_arrays)
+        grid.field_arrays.update(self.field_arrays)
+        grid.copy_meta_from(self)
+        return grid

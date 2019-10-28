@@ -24,9 +24,10 @@ intersection = pv.PolyData(points)
 # Render the result
 p = pv.Plotter()
 p.add_mesh(sphere,
-    show_edges=True, opacity=0.5, color="w", lighting=False, label="Test Mesh"
-)
+           show_edges=True, opacity=0.5, color="w",
+           lighting=False, label="Test Mesh")
 p.add_mesh(ray, color="blue", line_width=5, label="Ray Segment")
-p.add_mesh(intersection, color="maroon", point_size=10, label="Intersection Points")
+p.add_mesh(intersection, color="maroon",
+           point_size=10, label="Intersection Points")
 p.add_legend()
 p.show()
