@@ -12,20 +12,21 @@ import numpy as np
 import scooby
 import vtk
 from vtk.util import numpy_support as VN
+import warnings
 
 import pyvista
 from pyvista.utilities import (convert_array, convert_string_array,
                                get_array, is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
-from .colors import get_cmap_safe
+from .colors import get_cmap_safe, PARAVIEW_BACKGROUND
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
 from .tools import normalize, opacity_transfer_function
 from .theme import rcParams, parse_color, parse_font_family
-from .theme import FONT_KEYS, MAX_N_COLOR_BARS, PV_BACKGROUND
+from .theme import FONT_KEYS, MAX_N_COLOR_BARS
 from .widgets import WidgetHelper
 
 try:
@@ -468,7 +469,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=False, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 loc=None, backface_culling=False, rgb=False, categories=False,
+                 loc=None, culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, **kwargs):
         """
@@ -631,9 +632,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
-        backface_culling : bool optional
-            Does not render faces that should not be visible to the
-            plotter.  This can be helpful for dense surface meshes,
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Defaults ``False``.
 
@@ -713,10 +714,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if texture is False:
             texture = None
 
+        if culling is None:
+            culling = kwargs.get("backface_culling", False)
+            if culling is True:
+                culling = 'backface'
+
         ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
-            self.remove_actor(name, reset_camera=reset_camera)
             # frist check the scalars
             if clim is None and scalars is not None:
                 # Get the data range across the array for all blocks
@@ -805,6 +810,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh.n_points < 1:
             raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
+        # set main values
+        self.mesh = mesh
+        self.mapper = make_mapper(vtk.vtkDataSetMapper)
+        self.mapper.SetInputData(self.mesh)
+        if isinstance(scalars, str):
+            self.mapper.SetArrayName(scalars)
+
+        actor, prop = self.add_actor(self.mapper,
+                                     reset_camera=reset_camera,
+                                     name=name, loc=loc, culling=culling)
+
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Prefer texture first
@@ -831,7 +847,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         actor, prop = self.add_actor(self.mapper,
                                      reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling,
+                                     name=name, loc=loc, culling=culling,
                                      pickable=pickable)
 
         # Make sure scalars is a numpy array after this point
@@ -1101,7 +1117,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_volume(self, volume, scalars=None, clim=None, resolution=None,
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
-                   loc=None, backface_culling=False, multi_colors=False,
+                   loc=None, culling=False, multi_colors=False,
                    blending='composite', mapper='fixed_point',
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
                    annotations=None, pickable=True, **kwargs):
@@ -1176,11 +1192,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
-        backface_culling : bool optional
-            Does not render faces that should not be visible to the
-            plotter.  This can be helpful for dense surface meshes,
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
-            meshes to be partially displayed.  Default False.
+            meshes to be partially displayed.  Defaults ``False``.
 
         categories : bool, optional
             If set to ``True``, then the number of unique values in the scalar
@@ -1239,6 +1255,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_scalar_bar is None:
             show_scalar_bar = rcParams['show_scalar_bar']
 
+        if culling is None:
+            culling = kwargs.get("backface_culling", False)
+            if culling is True:
+                culling = 'backface'
+
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
@@ -1285,7 +1306,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                     n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
-                                    backface_culling=backface_culling, clim=clim,
+                                    culling=culling, clim=clim,
                                     mapper=mapper, pickable=pickable, **kwargs)
 
                 actors.append(a)
@@ -1459,7 +1480,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=backface_culling,
+                                     name=name, loc=loc, culling=culling,
                                      pickable=pickable)
 
 
@@ -1510,9 +1531,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """ Returns if the camera of the active renderer has been set """
         return self.renderer.camera_set
 
-    def get_default_cam_pos(self):
+    def get_default_cam_pos(self, negative=False):
         """ Return the default camera position of the active renderer """
-        return self.renderer.get_default_cam_pos()
+        return self.renderer.get_default_cam_pos(negative=negative)
 
     @camera_set.setter
     def camera_set(self, is_set):
@@ -1612,9 +1633,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
             active Renderer.
 
-        culling : bool optional
-            Does not render faces that should not be visible to the
-            plotter.  This can be helpful for dense surface meshes,
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
@@ -1868,8 +1889,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.show_bounds(*args, **kwargs)
 
     def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
-                         opacity=1.0, render_lines_as_tubes=False, lighting=None,
-                         reset_camera=None, loc=None):
+                         opacity=1.0, render_lines_as_tubes=False,
+                         lighting=None, reset_camera=None, outline=True,
+                         culling='front', loc=None):
         """
         Adds an unlabeled and unticked box at the boundaries of
         plot.  Useful for when wanting to plot outer grids while
@@ -1891,6 +1913,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         opacity : float, optional
             Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+
+        outline : bool
+            Default is ``True``. when False, a box with faces is shown with
+            the specified culling
+
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. Default is ``'front'`` for bounding box.
 
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
@@ -2452,6 +2482,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # must close out widgets first
         super(BasePlotter, self).close()
 
+        # Grab screenshots of last render
+        self.last_image = self.screenshot(None, return_img=True)
+        self.last_image_depth = self.get_image_depth()
+
         if hasattr(self, 'axes_widget'):
             del self.axes_widget
 
@@ -2491,7 +2525,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
-                 font=None, shadow=False, name=None, loc=None):
+                 font=None, shadow=False, name=None, loc=None, viewport=False):
         """
         Adds text to plot object in the top left corner by default
 
@@ -2501,11 +2535,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The text to add the the rendering
 
         position : str, tuple(float)
-            String name of the position or length 2 tuple of the pixelwise
-            position to place the bottom left corner of the text box.
-            If string name is used, returns a `vtkCornerAnnotation` object
-            normally used for fixed labels (like title or xlabel).
-            If tuple is used, returns a more general `vtkOpenGLTextActor`.
+            Position to place the bottom left corner of the text box.
+            If tuple is used, the position of the text uses the pixel
+            coordinate system (default). In this case,
+            it returns a more general `vtkOpenGLTextActor`.
+            If string name is used, it returns a `vtkCornerAnnotation`
+            object normally used for fixed labels (like title or xlabel).
             Default is to find the top left corner of the renderering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
@@ -2526,6 +2561,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         loc : int, tuple, or list
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
+
+        viewport: bool
+            If True and position is a tuple of float, uses
+            the normalized viewport coordinate system (values between 0.0
+            and 1.0 and support for HiDPI).
 
         Returns
         -------
@@ -2581,6 +2621,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.textActor = vtk.vtkTextActor()
             self.textActor.SetInput(text)
             self.textActor.SetPosition(position)
+            if viewport:
+                self.textActor.GetActualPositionCoordinate().SetCoordinateSystemToNormalizedViewport()
+                self.textActor.GetActualPosition2Coordinate().SetCoordinateSystemToNormalizedViewport()
             self.textActor.GetTextProperty().SetFontSize(int(font_size * 2))
 
         self.textActor.GetTextProperty().SetColor(parse_color(color))
@@ -2698,14 +2741,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
         zbuff = self._run_image_filter(ifilter)[:, :, 0]
 
         # Convert z-buffer values to depth from camera
-        near, far = self.camera.GetClippingRange()
-        if self.camera.GetParallelProjection():
-            zval = (zbuff - near) / (far - near)
-        else:
-            zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore')
+            near, far = self.camera.GetClippingRange()
+            if self.camera.GetParallelProjection():
+                zval = (zbuff - near) / (far - near)
+            else:
+                zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
 
-        # Consider image values outside clipping range as nans
-        args = np.logical_or(zval < -far, np.isclose(zval, -far))
+            # Consider image values outside clipping range as nans
+            args = np.logical_or(zval < -far, np.isclose(zval, -far))
         self._image_depth_null = args
         if fill_value is not None:
             zval[args] = fill_value
@@ -2816,7 +2861,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          show_points=True, point_color=None, point_size=5,
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
-                         pickable=True, **kwargs):
+                         pickable=False, render_points_as_spheres=False,
+                         tolerance=0.001, **kwargs):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2889,6 +2935,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         shape_opacity : flaot
             The opacity of the shape between zero and one.
 
+        tolerance : float
+            a tolerance to use to determine whether a point label is visible.
+            A tolerance is usually required because the conversion from world
+            space to display space during rendering introduces numerical
+            round-off.
+
         Returns
         -------
         labelMapper : vtk.vtkvtkLabeledDataMapper
@@ -2922,16 +2974,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if len(vtkpoints.points) != len(labels):
             raise Exception('There must be one label for each point')
 
+        if name is None:
+            name = '{}({})'.format(type(vtkpoints).__name__, str(hex(id(vtkpoints))))
+
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')
         for item in labels:
             vtklabels.InsertNextValue(str(item))
         vtkpoints.GetPointData().AddArray(vtklabels)
 
+        # Only show visible points
+        vis_points = vtk.vtkSelectVisiblePoints()
+        vis_points.SetInputData(vtkpoints)
+        vis_points.SetRenderer(self.renderer)
+        vis_points.SetTolerance(tolerance)
+
         # Create heirarchy
         hier = vtk.vtkPointSetToLabelHierarchy()
-        hier.SetInputData(vtkpoints)
-        # hier.SetOrientationArrayName('orientation')
+        hier.SetInputConnection(vis_points.GetOutputPort())
         hier.SetLabelArrayName('labels')
 
         # create label mapper
@@ -2971,12 +3031,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size, name='{}-points'.format(name),
-                      pickable=pickable)
+                      pickable=pickable,
+                      render_points_as_spheres=render_points_as_spheres)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False,
-                       name='{}-lables'.format(name), pickable=False)
+                       name='{}-labels'.format(name), pickable=False)
 
         return labelMapper
 
@@ -3048,16 +3109,52 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Internal helper for saving a NumPy image array"""
         if not image.size:
             raise Exception('Empty image.  Have you run plot() first?')
-
         # write screenshot to file
+        supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
         if isinstance(filename, str):
             if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
                 filename = os.path.join(pyvista.FIGURE_PATH, filename)
+            if not any([filename.lower().endswith(ext) for ext in supported_formats]):
+                filename += ".png"
+            filename = os.path.abspath(os.path.expanduser(filename))
+            w = imageio.imwrite(filename, image)
             if not return_img:
-                return imageio.imwrite(filename, image)
-            imageio.imwrite(filename, image)
-
+                return w
         return image
+
+
+    def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
+        """Save a screenshot of the rendering window as a graphic file:
+        '.svg', '.eps', '.ps', '.pdf', '.tex'
+        """
+        if not hasattr(self, 'ren_win'):
+            raise AttributeError('This plotter is closed and unable to save a screenshot.')
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        filename = os.path.abspath(os.path.expanduser(filename))
+        extension = pyvista.fileio.get_ext(filename)
+        valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
+        if extension not in valid:
+            raise RuntimeError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
+        writer = vtk.vtkGL2PSExporter()
+        modes = {
+            '.svg': writer.SetFileFormatToSVG,
+            '.eps': writer.SetFileFormatToEPS,
+            '.ps': writer.SetFileFormatToPS,
+            '.pdf': writer.SetFileFormatToPDF,
+            '.tex': writer.SetFileFormatToTeX,
+        }
+        writer.CompressOff()
+        writer.SetFilePrefix(filename.replace(extension, ''))
+        writer.SetInput(self.ren_win)
+        modes[extension]()
+        writer.SetTitle(title)
+        writer.SetWrite3DPropsAsRasterImage(raster)
+        if painter:
+            writer.UsePainterSettings()
+        writer.Update()
+        return
+
 
     def screenshot(self, filename=None, transparent_background=None,
                    return_img=None, window_size=None):
@@ -3108,7 +3205,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Save last image
                 return self._save_image(self.last_image, filename, return_img)
             # Plotter hasn't been rendered or was improperly closed
-            raise AttributeError('This plotter is unable to save a screenshot.')
+            raise AttributeError('This plotter is closed and unable to save a screenshot.')
 
         if isinstance(self, Plotter):
             # TODO: we need a consistent rendering function
@@ -3254,12 +3351,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """DEPRECATED: Please use ``view_isometric``"""
         return self.view_isometric()
 
-    def view_isometric(self):
+    def view_isometric(self, negative=False):
         """
         Resets the camera to a default isometric view showing all the
         actors in the scene.
         """
-        return self.renderer.view_isometric()
+        return self.renderer.view_isometric(negative=negative)
 
     def view_vector(self, vector, viewup=None):
         return self.renderer.view_vector(vector, viewup=viewup)
@@ -3268,13 +3365,25 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """View the XY plane"""
         return self.renderer.view_xy(negative=negative)
 
+    def view_yx(self, negative=False):
+        """View the YX plane"""
+        return self.renderer.view_yx(negative=negative)
+
     def view_xz(self, negative=False):
         """View the XZ plane"""
         return self.renderer.view_xz(negative=negative)
 
+    def view_zx(self, negative=False):
+        """View the ZX plane"""
+        return self.renderer.view_zx(negative=negative)
+
     def view_yz(self, negative=False):
         """View the YZ plane"""
         return self.renderer.view_yz(negative=negative)
+
+    def view_zy(self, negative=False):
+        """View the ZY plane"""
+        return self.renderer.view_zy(negative=negative)
 
     def disable(self):
         """Disable this renderer's camera from being interactive"""
@@ -3284,7 +3393,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enable this renderer's camera to be interactive"""
         return self.renderer.enable()
 
-    def set_background(self, color, loc='all'):
+    def set_background(self, color, loc='all', top=None):
         """
         Sets background color
 
@@ -3302,22 +3411,35 @@ class BasePlotter(PickingHelper, WidgetHelper):
             ``loc=2`` or ``loc=(1, 1)``.  If ``loc='all'`` then all
             render windows will have their background set.
 
+        top : string or 3 item list, optional, defaults to None
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the bottom and the color given in ``top``
+            will be the color at the top of the renderer.
+
         """
         if color is None:
             color = rcParams['background']
-        if isinstance(color, str):
-            if color.lower() in 'paraview' or color.lower() in 'pv':
-                # Use the default ParaView background color
-                color = PV_BACKGROUND
-            else:
-                color = pyvista.string_to_rgb(color)
+
+        use_gradient = False
+        if top is not None:
+            use_gradient = True
 
         if loc == 'all':
             for renderer in self.renderers:
-                renderer.SetBackground(color)
+                renderer.SetBackground(parse_color(color))
+                if use_gradient:
+                    renderer.GradientBackgroundOn()
+                    renderer.SetBackground2(parse_color(top))
+                else:
+                    renderer.GradientBackgroundOff()
         else:
             renderer = self.renderers[self.loc_to_index(loc)]
-            renderer.SetBackground(color)
+            renderer.SetBackground(parse_color(color))
+            if use_gradient:
+                renderer.GradientBackgroundOn()
+                renderer.SetBackground2(parse_color(top))
+            else:
+                renderer.GradientBackgroundOff()
 
     @property
     def background_color(self):
@@ -3441,7 +3563,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise RuntimeError('Export must be called before showing/closing the scene.')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        else:
+            filename = os.path.abspath(os.path.expanduser(filename))
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+
+
+
+    def export_obj(self, filename):
+        """Export scene to OBJ format"""
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter must still have a render window open.")
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        else:
+            filename = os.path.abspath(os.path.expanduser(filename))
+        exporter = vtk.vtkOBJExporter()
+        exporter.SetFilePrefix(filename)
+        exporter.SetRenderWindow(self.ren_win)
+        return exporter.Write()
 
 
     def __del__(self):
@@ -3517,14 +3656,15 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None):
+                 splitting_position=None, title=None):
         """
         Initialize a vtk plotting object
         """
         super(Plotter, self).__init__(shape=shape, border=border,
                                       border_color=border_color,
                                       border_width=border_width,
-                                      splitting_position=splitting_position)
+                                      splitting_position=splitting_position,
+                                      title=title)
         log.debug('Initializing')
 
         def on_timer(iren, event_id):

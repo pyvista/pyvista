@@ -18,6 +18,10 @@ log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
 
 
+SAVE_CAM_BUTTON_TEXT = 'Save Camera'
+CLEAR_CAMS_BUTTON_TEXT = 'Clear Cameras'
+
+
 # dummy reference for when PyQt5 is not installed (i.e. readthedocs)
 has_pyqt = False
 class QVTKRenderWindowInteractor(object):
@@ -66,7 +70,7 @@ try:
     from PyQt5 import QtGui
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
-                                 QFrame, QMainWindow, QSlider,
+                                 QFrame, QMainWindow, QSlider, QAction,
                                  QSpinBox, QHBoxLayout, QDialog,
                                  QFormLayout, QGroupBox, QFileDialog)
     has_pyqt = True
@@ -295,9 +299,12 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     """
     render_trigger = pyqtSignal()
+    signal_set_view_vector = pyqtSignal(tuple, tuple)
+    signal_reset_camera = pyqtSignal()
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
+                 border=None, border_color='k', border_width=2.0,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
                  splitting_position=None, **kwargs):
@@ -306,11 +313,16 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
         BasePlotter.__init__(self, shape=shape, title=title,
+                             border=border, border_color=border_color,
+                             border_width=border_width,
                              splitting_position=splitting_position)
         self.parent = parent
 
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
+
+        self.signal_set_view_vector.connect(self.view_vector)
+        self.signal_reset_camera.connect(self.reset_camera)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -350,6 +362,67 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
 
+
+    def add_toolbars(self, main_window):
+
+        def _add_action(tool_bar, key, method):
+            action = QAction(key, main_window)
+            action.triggered.connect(method)
+            tool_bar.addAction(action)
+            return
+
+        # Camera toolbar
+        self.default_camera_tool_bar = main_window.addToolBar('Camera Position')
+        _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
+        cvec_setters = {
+            # Viewing vector then view up vector
+            'Top (-Z)': lambda: _view_vector((0,0,1), (0,1,0)),
+            'Bottom (+Z)': lambda: _view_vector((0,0,-1), (0,1,0)),
+            'Front (-Y)': lambda: _view_vector((0,1,0), (0,0,1)),
+            'Back (+Y)': lambda: _view_vector((0,-1,0), (0,0,1)),
+            'Left (-X)': lambda: _view_vector((1,0,0), (0,0,1)),
+            'Right (+X)': lambda: _view_vector((-1,0,0), (0,0,1)),
+            'Isometric': lambda: _view_vector((1,1,1), (0,0,1))
+        }
+        for key, method in cvec_setters.items():
+            _add_action(self.default_camera_tool_bar, key, method)
+        _add_action(self.default_camera_tool_bar, 'Reset', self.signal_reset_camera.emit)
+
+        # Saved camera locations toolbar
+        self.saved_camera_positions = []
+        self.saved_cameras_tool_bar = main_window.addToolBar('Saved Camera Positions')
+
+        _add_action(self.saved_cameras_tool_bar, SAVE_CAM_BUTTON_TEXT, self.save_camera_position)
+        _add_action(self.saved_cameras_tool_bar, CLEAR_CAMS_BUTTON_TEXT, self.clear_camera_positions)
+
+        return
+
+
+    def save_camera_position(self):
+        """ Saves camera position to saved camera menu for recall """
+        self.saved_camera_positions.append(self.camera_position)
+        ncam = len(self.saved_camera_positions)
+        camera_position = self.camera_position[:]  # py2.7 copy compatibility
+
+        if hasattr(self, "saved_cameras_tool_bar"):
+            def load_camera_position():
+                self.camera_position = camera_position
+
+            self.saved_cameras_tool_bar.addAction('Cam %2d' % ncam,
+                                                  load_camera_position)
+        return
+
+
+    def clear_camera_positions(self):
+        """ clears all camera positions """
+        if hasattr(self, "saved_cameras_tool_bar"):
+            for action in self.saved_cameras_tool_bar.actions():
+                if action.text() not in [SAVE_CAM_BUTTON_TEXT, CLEAR_CAMS_BUTTON_TEXT]:
+                    self.saved_cameras_tool_bar.removeAction(action)
+        self.saved_camera_positions = []
+        return
+
+
     def key_quit(self, obj=None, event=None):  # pragma: no cover
         try:
             key = self.iren.GetKeySym().lower()
@@ -374,7 +447,6 @@ class BackgroundPlotter(QtInteractor):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
-        self.saved_camera_positions = []
         self.counters = []
 
         if window_size is None:
@@ -412,6 +484,7 @@ class BackgroundPlotter(QtInteractor):
         QtInteractor.__init__(self, parent=self.frame, shape=shape,
                               off_screen=off_screen, **kwargs)
         self.app_window.signal_close.connect(self.quit)
+        self.add_toolbars(self.app_window)
 
         # build main menu
         self.main_menu = QMenuBar(parent=self.app_window)
@@ -435,14 +508,6 @@ class BackgroundPlotter(QtInteractor):
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
-        cam_menu.addAction('Reset Camera', self.reset_camera)
-        cam_menu.addAction('Isometric View', self.view_isometric)
-        cam_menu.addAction('View XY Plane', self.view_xy)
-        cam_menu.addAction('View XZ Plane', self.view_xz)
-        cam_menu.addAction('View YZ Plane', self.view_yz)
-        cam_menu.addSeparator()
-        cam_menu.addAction('Save Current Camera Position', self.save_camera_position)
-        cam_menu.addAction('Clear Saved Positions', self.clear_camera_positions)
 
         view_menu.addSeparator()
         # Orientation marker
@@ -460,8 +525,6 @@ class BackgroundPlotter(QtInteractor):
 
         # A final separator to seperate OS options
         view_menu.addSeparator()
-
-        self.saved_camera_menu = self.main_menu.addMenu('Camera Positions')
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self)
@@ -483,26 +546,12 @@ class BackgroundPlotter(QtInteractor):
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
 
+
+
     def scale_axes_dialog(self, show=True):
         """ Open scale axes dialog """
         return ScaleAxesDialog(self.app_window, self, show=show)
 
-    def clear_camera_positions(self):
-        """ clears all camera positions """
-        for action in self.saved_camera_menu.actions():
-            self.saved_camera_menu.removeAction(action)
-
-    def save_camera_position(self):
-        """ Saves camera position to saved camera menu for recall """
-        self.saved_camera_positions.append(self.camera_position)
-        ncam = len(self.saved_camera_positions)
-        camera_position = self.camera_position[:]  # py2.7 copy compatibility
-
-        def load_camera_position():
-            self.camera_position = camera_position
-
-        self.saved_camera_menu.addAction('Camera Position %2d' % ncam,
-                                         load_camera_position)
 
     def _spawn_background_rendering(self, rate=5.0):
         """

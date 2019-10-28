@@ -33,7 +33,7 @@ PolyData Filters
 
 The :class:`pyvista.PolyDataFilters` is inherited by :class:`pyvista.PolyData`
 making all the the following filters available as callable methods directly
-from any PolyData mesh.
+from any ``PolyData`` mesh.
 
 
 .. rubric:: Methods
@@ -53,7 +53,7 @@ UnstructuredGrid Filters
 
 The :class:`pyvista.UnstructuredGridFilters` is inherited by
 :class:`pyvista.UnstructuredGrid` making all the the following filters
-available as callable methods directly from any UnstructuredGrid mesh.
+available as callable methods directly from any ``UnstructuredGrid`` mesh.
 
 .. rubric:: Methods
 
@@ -61,6 +61,26 @@ available as callable methods directly from any UnstructuredGrid mesh.
    :methods:
 
 .. autoclass:: pyvista.UnstructuredGridFilters
+   :show-inheritance:
+   :members:
+   :undoc-members:
+
+
+
+
+UniformGrid Filters
+~~~~~~~~~~~~~~~~~~~
+
+The :class:`pyvista.UniformGridFilters` is inherited by
+:class:`pyvista.UniformGrid` making all the the following filters
+available as callable methods directly from any ``UniformGrid`` mesh.
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.UniformGridFilters
+   :methods:
+
+.. autoclass:: pyvista.UniformGridFilters
    :show-inheritance:
    :members:
    :undoc-members:

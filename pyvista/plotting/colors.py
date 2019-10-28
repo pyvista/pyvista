@@ -319,6 +319,9 @@ color_char_to_word = {
         'w': 'white'}
 
 
+PARAVIEW_BACKGROUND = [82/255., 87/255., 110/255.]
+
+
 def hex_to_rgb(h):
     """ Returns 0 to 1 rgb from a hex list or tuple """
     h = h.lstrip('#')
@@ -354,6 +357,10 @@ def string_to_rgb(string):
     # if a color name
     elif string.lower() in hexcolors:
         colorhex = hexcolors[string.lower()]
+
+    elif string.lower() in 'paraview' or string.lower() in 'pv':
+        # Use the default ParaView background color
+        return PARAVIEW_BACKGROUND
 
     # try to convert to hex
     else:

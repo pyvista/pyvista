@@ -1,11 +1,10 @@
 
 import vtk
 
-from .colors import string_to_rgb
+from .colors import string_to_rgb, PARAVIEW_BACKGROUND
 
 
 MAX_N_COLOR_BARS = 10
-PV_BACKGROUND = [82/255., 87/255., 110/255.]
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
              'times': vtk.VTK_TIMES}
@@ -68,7 +67,7 @@ DEFAULT_THEME = dict(rcParams)
 def set_plot_theme(theme):
     """Set the plotting parameters to a predefined theme"""
     if theme.lower() in ['paraview', 'pv']:
-        rcParams['background'] = PV_BACKGROUND
+        rcParams['background'] = PARAVIEW_BACKGROUND
         rcParams['cmap'] = 'coolwarm'
         rcParams['font']['family'] = 'arial'
         rcParams['font']['label_size'] = 16

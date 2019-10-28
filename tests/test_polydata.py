@@ -266,10 +266,10 @@ def test_invalid_save():
         sphere.save('file.abc')
 
 
-def test_tri_filter():
+def test_triangulate_filter():
     arrow = pyvista.Arrow([0, 0, 0], [1, 1, 1])
     assert arrow.faces.size % 4
-    arrow.tri_filter(inplace=True)
+    arrow.triangulate(inplace=True)
     assert not(arrow.faces.size % 4)
 
 
