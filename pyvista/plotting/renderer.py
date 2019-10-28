@@ -551,7 +551,7 @@ class Renderer(vtkRenderer):
     def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
                   color=None, line_width=None, opacity=1.0, show_edges=False,
                   lighting=False, edge_color=None, reset_camera=None, pad=0.0,
-                  offset=0.0, loc=None):
+                  offset=0.0, loc=None, pickable=False):
         """Show a floor mesh. This generates planes at the boundaries of the
         scene to behave like floors or walls.
 
@@ -655,7 +655,7 @@ class Renderer(vtkRenderer):
         mapper.SetInputData(self._floor)
         self.floor_actor, prop = self.add_actor(mapper,
                                                 reset_camera=reset_camera,
-                                                name=name)
+                                                name=name, pickable=pickable)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
