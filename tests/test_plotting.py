@@ -275,6 +275,7 @@ def test_add_point_labels():
         plotter.add_point_labels(points, range(n - 1))
 
     plotter.set_background('k')
+    plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
     plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
     plotter.show()
@@ -367,13 +368,15 @@ def test_box_axes():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_screenshot():
+def test_screenshot(tmpdir):
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_mesh(pyvista.Sphere())
     img = plotter.screenshot(transparent_background=True)
     assert np.any(img)
     img_again = plotter.screenshot()
     assert np.any(img_again)
+    filename = str(tmpdir.mkdir("tmpdir").join('export-graphic.svg'))
+    plotter.save_graphic(filename)
 
     # checking if plotter closes
     ref = proxy(plotter)
@@ -498,7 +501,7 @@ def test_camera():
     plotter.view_xy()
     plotter.view_xz()
     plotter.view_yz()
-    plotter.add_mesh(examples.load_uniform(), reset_camera=True, backface_culling=True)
+    plotter.add_mesh(examples.load_uniform(), reset_camera=True, culling=True)
     plotter.view_xy(True)
     plotter.view_xz(True)
     plotter.view_yz(True)
@@ -528,7 +531,7 @@ def test_multi_renderers():
     plotter.add_text('Render Window 3', position=(0., 0.),
                      loc=loc, font_size=30, viewport=True)
     plotter.add_mesh(pyvista.Cone(), color='g', loc=loc, show_edges=True,
-                     backface_culling=True)
+                     culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
     plotter.show_bounds(all_edges=True)
 

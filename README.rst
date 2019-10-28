@@ -18,7 +18,7 @@ software and we apologize for any confusion this may be causing**
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
 
-.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
 .. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
@@ -55,6 +55,12 @@ This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh 3D rendering dependent
 Python modules; see Connections for a list of projects that leverage
 PyVista.
+
+
+.. |tweet| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
+   :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
+
+Share this project on Twitter: |tweet|
 
 
 Highlights

@@ -407,19 +407,19 @@ class Texture(vtk.vtkTexture):
     def __init__(self, *args, **kwargs):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkTexture):
-                deep = kwargs.get('deep', True)
-                if deep:
-                    self.deep_copy(args[0])
-                else:
-                    self.shallow_copy(args[0])
+                self._from_texture(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_array(args[0])
             elif isinstance(args[0], vtk.vtkImageData):
                 self._from_image_data(args[0])
+            elif isinstance(args[0], str):
+                self._from_texture(pyvista.read_texture(args[0]))
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
-
+    def _from_texture(self, texture):
+        image = texture.GetInput()
+        self._from_image_data(image)
 
     def _from_image_data(self, image):
         if not isinstance(image, pyvista.UniformGrid):
@@ -440,6 +440,8 @@ class Texture(vtk.vtkTexture):
     def flip(self, axis):
         """Flip this texture inplace along the specifed axis. 0 for X and
         1 for Y."""
+        if axis < 0 or axis > 1:
+            raise RuntimeError("Axis {} out of bounds".format(axis))
         ax = [1, 0]
         array = self.to_array()
         array = np.flip(array, axis=ax[axis])

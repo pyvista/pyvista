@@ -304,6 +304,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
+                 border=None, border_color='k', border_width=2.0,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
                  splitting_position=None, **kwargs):
@@ -312,6 +313,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
         BasePlotter.__init__(self, shape=shape, title=title,
+                             border=border, border_color=border_color,
+                             border_width=border_width,
                              splitting_position=splitting_position)
         self.parent = parent
 

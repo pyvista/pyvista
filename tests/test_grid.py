@@ -410,3 +410,20 @@ def test_grid_extract_selection_points():
 
     sub_grid = grid.extract_selection_points(range(100))
     assert sub_grid.n_cells > 1
+
+
+def test_gaussian_smooth():
+    uniform = examples.load_uniform()
+    active = uniform.active_scalar_name
+    values = uniform.active_scalar
+
+    uniform = uniform.gaussian_smooth(scalars=active)
+    assert uniform.active_scalar_name == active
+    assert uniform.active_scalar.shape == values.shape
+    assert not np.all(uniform.active_scalar == values)
+    values = uniform.active_scalar
+
+    uniform = uniform.gaussian_smooth(radius_factor=5, std_dev=1.3)
+    assert uniform.active_scalar_name == active
+    assert uniform.active_scalar.shape == values.shape
+    assert not np.all(uniform.active_scalar == values)

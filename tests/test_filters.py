@@ -231,12 +231,13 @@ def test_wireframe_composite():
     output = COMPOSITE.wireframe()
     assert output.n_blocks == COMPOSITE.n_blocks
 
-
-def test_contour():
+@pytest.mark.parametrize('method', ['contour', 'marching_cubes',
+                                    'flying_edges'])
+def test_contour(method):
     dataset = examples.load_uniform()
-    iso = dataset.contour()
+    iso = dataset.contour(method=method)
     assert iso is not None
-    iso = dataset.contour(isosurfaces=[100, 300, 500])
+    iso = dataset.contour(isosurfaces=[100, 300, 500], method=method)
     assert iso is not None
     with pytest.raises(AssertionError):
         result = dataset.contour(scalars='Spatial Cell Data')

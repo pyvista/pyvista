@@ -409,7 +409,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         """
         mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self.tri_filter())
+        mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
 
@@ -496,7 +496,7 @@ class PointGrid(PointSet):
             setting camera view.
 
         """
-        trisurf = self.extract_surface().tri_filter()
+        trisurf = self.extract_surface().triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
 
     @property
@@ -505,7 +505,7 @@ class PointGrid(PointSet):
         Computes volume by extracting the external surface and
         computing interior volume
         """
-        surf = self.extract_surface().tri_filter()
+        surf = self.extract_surface().triangulate()
         return surf.volume
 
 

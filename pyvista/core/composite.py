@@ -26,6 +26,37 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     A composite class to hold many data sets which can be iterated over.
     This wraps/extends the ``vtkMultiBlockDataSet`` class in VTK so that we can
     easily plot these data sets and use the composite in a Pythonic manner.
+
+    You can think of ``MultiBlock`` like lists or dictionaries as we can
+    iterate over this data structure by index and we can also access blocks
+    by their string name.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+
+    >>> # Create empty composite dataset
+    >>> blocks = pv.MultiBlock()
+    >>> # Add a dataset to the collection
+    >>> sphere = pv.Sphere()
+    >>> blocks.append(sphere)
+    >>> # Or add a named block
+    >>> blocks["cube"] = pv.Cube()
+
+    >>> # instantiate from a list of objects
+    >>> data = [pv.Sphere(), pv.Cube(), pv.Cone()]
+    >>> blocks = pv.MultiBlock(data)
+
+    >>> # instantiate from a disctionary
+    >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere()}
+    >>> blocks = pv.MultiBlock(data)
+
+    >>> # now iterate over the collection
+    >>> for name in blocks.keys():
+    ...     block = blocks[name] # do something!
+
+    >>> for block in blocks:
+    ...     surf = block.extract_surface() # Do something with each dataset
     """
 
     # Bind pyvista.plotting.plot to the object

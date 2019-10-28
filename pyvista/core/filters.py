@@ -421,7 +421,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -499,7 +499,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -616,7 +616,7 @@ class DataSetFilters(object):
 
         preference : str, optional
             When a scalar name is specified for ``scalar_range``, this is the
-            perfered scalar type to search for in the dataset.
+            preferred scalar type to search for in the dataset.
             Must be either 'point' or 'cell'.
 
         set_active : bool, optional
@@ -663,7 +663,7 @@ class DataSetFilters(object):
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
                 compute_gradients=False, compute_scalars=True, rng=None,
-                preference='point'):
+                preference='point', method='contour'):
         """Contours an input dataset by an array. ``isosurfaces`` can be an integer
         specifying the number of isosurfaces in the data range or an iterable set of
         values for explicitly setting the isosurfaces.
@@ -691,14 +691,26 @@ class DataSetFilters(object):
             data range.
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the preferred scalar type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
+        method : str, optional
+            Specify to choose which vtk filter is used to create the contour.
+            Must be one of ``'contour'``, ``'marching_cubes'`` and
+            ``'flying_edges'``. Defaults to ``'contour'``.
+
         """
+        if method is None or method == 'contour':
+            alg = vtk.vtkContourFilter()
+        elif method == 'marching_cubes':
+            alg = vtk.vtkMarchingCubes()
+        elif method == 'flying_edges':
+            alg = vtk.vtkFlyingEdges3D()
+        else:
+            raise RuntimeError("Method '{}' is not supported".format(method))
         # Make sure the input has scalars to contour on
         if dataset.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have scalar data.')
-        alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
@@ -763,7 +775,10 @@ class DataSetFilters(object):
             of the bounding box).
         """
         if use_bounds:
-            b = dataset.GetBounds()
+            if isinstance(use_bounds, (int, bool)):
+                b = dataset.GetBounds()
+            else:
+                b = use_bounds
             origin = [b[0], b[2], b[4]]   # BOTTOM LEFT CORNER
             point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
             point_v = [b[0], b[3], b[4]] # TOP LEFT CORNER
@@ -3364,3 +3379,48 @@ class UnstructuredGridFilters(DataSetFilters):
         return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
                                                           offset=offset,
                                                           bound=bound)
+
+
+class UniformGridFilters(DataSetFilters):
+
+    def __new__(cls, *args, **kwargs):
+        if cls is UniformGridFilters:
+            raise TypeError("pyvista.UniformGridFilters is an abstract class and may not be instantiated.")
+        return object.__new__(cls)
+
+    def gaussian_smooth(dataset, radius_factor=1.5, std_dev=2.,
+                        scalars=None, preference='points'):
+        """Smooths the data with a Gaussian kernel
+
+        Parameters
+        ----------
+        radius_factor : float or iterable, optional
+            Unitless factor to limit the extent of the kernel.
+
+        std_dev : float or iterable, optional
+            Standard deviation of the kernel in pixel units.
+
+        scalars : str, optional
+            Name of scalars to process. Defaults to currently active scalars.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred scalar type to
+            search for in the dataset.  Must be either ``'point'`` or ``'cell'``
+        """
+        alg = vtk.vtkImageGaussianSmooth()
+        alg.SetInputDataObject(dataset)
+        if scalars is None:
+            field, scalars = dataset.active_scalar_info
+        else:
+            _, field = dataset.get_array(scalars, preference=preference, info=True)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        if isinstance(radius_factor, collections.Iterable):
+            alg.SetRadiusFactors(radius_factor)
+        else:
+            alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
+        if isinstance(std_dev, collections.Iterable):
+            alg.SetStandardDeviations(std_dev)
+        else:
+            alg.SetStandardDeviations(std_dev, std_dev, std_dev)
+        alg.Update()
+        return _get_output(alg)
