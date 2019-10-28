@@ -3759,7 +3759,7 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, nb_backend=None, cpos=None,
-             height=400):
+             height=400, use_panel=None):
         """
         Creates plotting window
 
@@ -3797,6 +3797,9 @@ class Plotter(BasePlotter):
         height : int, optional
             height for panel pane. Only used with panel.
 
+        use_panel : bool
+            DEPRECATED: use ``nb_backend`` instead.
+
         Returns
         -------
         cpos : list
@@ -3809,6 +3812,9 @@ class Plotter(BasePlotter):
                 from IPython.display import HTML
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
+        if use_panel:
+            warnings.warning("`use_panel` is deprecated. Use `nb_backend` insted!!")
+            nb_backend = 'panel'
         if nb_backend is None:
             nb_backend = rcParams['nb_backend']
         if auto_close is None:

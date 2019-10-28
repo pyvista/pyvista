@@ -136,7 +136,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           screenshot=screenshot,
                           return_img=return_img,
                           nb_backend=nb_backend,
-                          height=kwargs.get('height', 400))
+                          height=kwargs.get('height', 400),
+                          use_panel=kwargs.get('use_panel', None))
 
     # close and return camera position and maybe image
     if kwargs.get('auto_close', rcParams['auto_close']):
