@@ -84,9 +84,9 @@ class Renderer(vtkRenderer):
             Index of the renderer to add the actor to.  For example,
             ``loc=2`` or ``loc=(1, 1)``.
 
-        culling : bool optional
-            Does not render faces that should not be visible to the
-            plotter.  This can be helpful for dense surface meshes,
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. This can be helpful for dense surface meshes,
             especially when edges are visible, but can cause flat
             meshes to be partially displayed.  Default False.
 
@@ -125,11 +125,22 @@ class Renderer(vtkRenderer):
 
         self.update_bounds_axes()
 
+        if isinstance(culling, str):
+            culling = culling.lower()
+
         if culling:
-            try:
-                actor.GetProperty().BackfaceCullingOn()
-            except AttributeError:  # pragma: no cover
-                pass
+            if culling in [True, 'back', 'backface', 'b']:
+                try:
+                    actor.GetProperty().BackfaceCullingOn()
+                except AttributeError:  # pragma: no cover
+                    pass
+            elif culling in ['front', 'frontface', 'f']:
+                try:
+                    actor.GetProperty().FrontfaceCullingOn()
+                except AttributeError:  # pragma: no cover
+                    pass
+            else:
+                raise RuntimeError('Culling option ({}) not understood.'.format(culling))
 
         actor.SetPickable(pickable)
 
@@ -299,7 +310,7 @@ class Renderer(vtkRenderer):
         color = parse_color(color)
 
         # Use the bounds of all data in the rendering window
-        if not mesh and not bounds:
+        if mesh is None and bounds is None:
             bounds = self.bounds
 
         # create actor
@@ -352,7 +363,7 @@ class Renderer(vtkRenderer):
                 raise ValueError('Value of location ({}) not understood.'.format(location))
 
         # set bounds
-        if not bounds:
+        if bounds is None:
             bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
@@ -455,9 +466,10 @@ class Renderer(vtkRenderer):
             del self._box_object
             self.remove_actor(actor, reset_camera=False)
 
-    def add_bounding_box(self, color=None, corner_factor=0.5, line_width=None,
-                         opacity=1.0, render_lines_as_tubes=False, lighting=None,
-                         reset_camera=None):
+    def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
+                         opacity=1.0, render_lines_as_tubes=False,
+                         lighting=None, reset_camera=None, outline=True,
+                         culling='front', loc=None):
         """
         Adds an unlabeled and unticked box at the boundaries of
         plot.  Useful for when wanting to plot outer grids while
@@ -469,17 +481,44 @@ class Renderer(vtkRenderer):
             If ``all_edges``, this is the factor along each axis to
             draw the default box. Dafuault is 0.5 to show the full
             box.
+
+        corner_factor : float, optional
+            This is the factor along each axis to draw the default
+            box. Dafuault is 0.5 to show the full box.
+
+        line_width : float, optional
+            Thickness of lines.
+
+        opacity : float, optional
+            Opacity of mesh.  Should be between 0 and 1.  Default 1.0
+
+        outline : bool
+            Default is ``True``. when False, a box with faces is shown with
+            the specified culling
+
+        culling : str, optional
+            Does not render faces that are culled. Options are ``'front'`` or
+            ``'back'``. Default is ``'front'`` for bounding box.
+
+        loc : int, tuple, or list
+            Index of the renderer to add the actor to.  For example,
+            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
+            active Renderer.
+
         """
         if lighting is None:
             lighting = rcParams['lighting']
 
         self.remove_bounding_box()
         if color is None:
-            color = rcParams['font']['color']
+            color = rcParams['outline_color']
         rgb_color = parse_color(color)
-        self._bounding_box = vtk.vtkOutlineCornerSource()
+        if outline:
+            self._bounding_box = vtk.vtkOutlineCornerSource()
+            self._bounding_box.SetCornerFactor(corner_factor)
+        else:
+            self._bounding_box = vtk.vtkCubeSource()
         self._bounding_box.SetBounds(self.bounds)
-        self._bounding_box.SetCornerFactor(corner_factor)
         self._bounding_box.Update()
         self._box_object = wrap(self._bounding_box.GetOutput())
         name = 'BoundingBox({})'.format(hex(id(self._box_object)))
@@ -488,7 +527,8 @@ class Renderer(vtkRenderer):
         mapper.SetInputData(self._box_object)
         self.bounding_box_actor, prop = self.add_actor(mapper,
                                                        reset_camera=reset_camera,
-                                                       name=name, pickable=False)
+                                                       name=name, culling=culling,
+                                                       pickable=False)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)

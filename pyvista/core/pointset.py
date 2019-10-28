@@ -59,7 +59,6 @@ class PointSet(Common):
         return Common.shallow_copy(self, to_copy)
 
 
-
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     """
     Extends the functionality of a vtk.vtkPolyData object
@@ -315,7 +314,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.points = vertices
             self.faces = faces
 
-
     def __sub__(self, cutting_mesh):
         """ subtract two meshes """
         return self.boolean_cut(cutting_mesh)
@@ -409,7 +407,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         """
         mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self.tri_filter())
+        mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
 
@@ -496,7 +494,7 @@ class PointGrid(PointSet):
             setting camera view.
 
         """
-        trisurf = self.extract_surface().tri_filter()
+        trisurf = self.extract_surface().triangulate()
         return trisurf.plot_curvature(curv_type, **kwargs)
 
     @property
@@ -505,7 +503,7 @@ class PointGrid(PointSet):
         Computes volume by extracting the external surface and
         computing interior volume
         """
-        surf = self.extract_surface().tri_filter()
+        surf = self.extract_surface().triangulate()
         return surf.volume
 
 

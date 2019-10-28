@@ -16,7 +16,7 @@
 .. |pypi| image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
 
-.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg
+.. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
 .. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
@@ -166,6 +166,7 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    :hidden:
 
    getting-started/installation
+   getting-started/what-is-a-mesh
    getting-started/simple
    examples/index
    external_examples
