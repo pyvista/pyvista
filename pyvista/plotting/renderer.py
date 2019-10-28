@@ -639,7 +639,7 @@ class Renderer(vtkRenderer):
                                     i_size=i_size, j_size=j_size,
                                     i_resolution=i_resolution,
                                     j_resolution=j_resolution)
-        name = 'Floor({})'.format(hex(id(self._floor)))
+        name = 'Floor({})'.format(face)
         # use floor
         if lighting is None:
             lighting = rcParams['lighting']
