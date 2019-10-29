@@ -235,6 +235,10 @@ class Table(vtk.vtkTable, DataObject):
         return row_array(self, name)
 
 
+    def _ipython_key_completions_(self):
+        return self.keys()
+
+
     def get(self, index):
         """Get an array by its name"""
         return self[index]
