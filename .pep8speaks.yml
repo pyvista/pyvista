@@ -1,0 +1,22 @@
+# File : .pep8speaks.yml
+
+scanner:
+    diff_only: True  # If False, the entire file touched by the Pull Request is scanned for errors. If True, only the diff is scanned.
+    linter: pycodestyle  # Other option is flake8
+
+pycodestyle:  # Same as scanner.linter value. Other option is flake8
+    max-line-length: 88  # Default is 79 in PEP 8
+    ignore:  # Errors and warnings to ignore
+        - E241  # Multiple spaces after ','
+        - E305  # Expected 2 blank lines after end of function or class
+        - W504  # Line break occured after a binary operator
+
+no_blank_comment: True  # If True, no comment is made on PR without any errors.
+
+message:  # Customize the comment made by the bot
+    opened:  # Messages when a new PR is submitted
+        header: "Hello @{name}! Thanks for opening this PR. "
+                # The keyword {name} is converted into the author's username
+    updated:  # Messages when new commits are added to the PR
+        header: "Hello @{name}! Thanks for updating this PR. "
+    no_errors: "There are currently no PEP 8 issues detected in this Pull Request."
