@@ -58,6 +58,10 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+
+| ``colorcet``                      | Perceptually uniform colormaps          |
++-----------------------------------+-----------------------------------------+
+| ``cmocean``                       | Oceanographic colormaps                 |
++-----------------------------------+-----------------------------------------+
 
 
 Source / Developers
