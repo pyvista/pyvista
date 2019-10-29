@@ -225,6 +225,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise AttributeError("This plotting window is not interacive.")
         self.mouse_position = self.iren.GetEventPosition()
 
+    def store_click_position(self, *args):
+        """Store click position"""
+        if not hasattr(self, "iren"):
+            raise AttributeError("This plotting window is not interacive.")
+        self.click_position = self.iren.GetEventPosition()
+
     def track_mouse_position(self):
         """ Keep track of the mouse position. This will potentially slow down
         the the interactor.
@@ -239,6 +245,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, "_mouse_observer"):
             self.iren.RemoveObserver(self._mouse_observer)
             del self._mouse_observer
+
+
+    def track_click_position(self):
+        """ Keep track of the click position """
+        if hasattr(self, "iren"):
+            obs = self.iren.AddObserver(vtk.vtkCommand.LeftButtonPressEvent,
+                                        self.store_click_position)
+            self._click_observer = obs
+
+    def untrack_click_position(self):
+        """Stop tracking the click position """
+        if hasattr(self, "_click_observer"):
+            self.iren.RemoveObserver(self._click_observer)
+            del self._click_observer
 
     def fly_to_mouse_position(self):
         """ Focuses on last stored mouse position """
