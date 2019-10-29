@@ -219,13 +219,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Enables or disables anti-aliasing"""
         self.renderer.enable_anti_aliasing(state=state)
 
-
     def store_mouse_position(self, *args):
         """Store mouse position"""
         if not hasattr(self, "iren"):
             raise AttributeError("This plotting window is not interacive.")
         self.mouse_position = self.iren.GetEventPosition()
 
+    def track_mouse_position(self):
+        """ Keep track of the mouse position. This will potentially slow down
+        the the interactor.
+        """
+        if hasattr(self, "iren"):
+            obs = self.iren.AddObserver(vtk.vtkCommand.MouseMoveEvent,
+                                        self.store_mouse_position)
+            self._mouse_observer = obs
+
+    def untrack_mouse_position(self):
+        """Stop tracking the mouse position"""
+        if hasattr(self, "_mouse_observer"):
+            self.iren.RemoveObserver(self._mouse_observer)
+            del self._mouse_observer
 
     def fly_to_mouse_position(self):
         """ Focuses on last stored mouse position """
