@@ -3,6 +3,7 @@ import numpy as np
 import vtk
 
 import pyvista
+from pyvista.utilities import try_callback
 
 class PickingHelper(object):
     """An internal class to hold picking related features
@@ -78,7 +79,7 @@ class PickingHelper(object):
                     pass
 
             if callback is not None and self.picked_cells.n_cells > 0:
-                callback(self.picked_cells)
+                try_callback(callback, self.picked_cells)
 
             # TODO: Deactivate selection tool
             return
@@ -170,9 +171,9 @@ class PickingHelper(object):
                               pickable=False, reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
                 if use_mesh:
-                    callback(self.picked_mesh, self.picked_point_id)
+                    try_callback(callback, self.picked_mesh, self.picked_point_id)
                 else:
-                    callback(self.picked_point)
+                    try_callback(callback, self.picked_point)
 
         point_picker = vtk.vtkPointPicker()
         point_picker.AddObserver(vtk.vtkCommand.EndPickEvent, _end_pick_event)
@@ -222,7 +223,7 @@ class PickingHelper(object):
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
-                callback(self.picked_path)
+                try_callback(callback, self.picked_path)
             return
 
         def _clear_path_event_watcher():
@@ -274,7 +275,7 @@ class PickingHelper(object):
                           line_width=line_width, point_size=point_size,
                           reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
-                callback(self.picked_geodesic)
+                try_callback(callback, self.picked_geodesic)
             return
 
         def _clear_g_path_event_watcher():
@@ -315,7 +316,7 @@ class PickingHelper(object):
                               reset_camera=False)
 
             if hasattr(callback, '__call__'):
-                callback(path)
+                try_callback(callback, path)
 
         self.enable_path_picking(callback=_the_callback,
             show_message=show_message, font_size=font_size, color=color,
@@ -350,3 +351,17 @@ class PickingHelper(object):
             self.set_focus(click_point)
         else:
             self.fly_to(click_point)
+
+
+    def enable_fly_to_right_click(self, callback=None):
+        """A conveinance method to track right click positions and fly to the
+        picked point in the scene. The callback will be passed the point in
+        3D space."""
+        def _the_callback(*args):
+            click_point = self.pick_mouse_position()
+            self.fly_to(click_point)
+            if hasattr(callback, '__call__'):
+                try_callback(callback, click_point)
+
+        self.track_click_position("right", _the_callback)
+        return
