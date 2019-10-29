@@ -22,7 +22,7 @@ import numpy as np
 # `Colorcet's complete list`_, and `cmocean's complete list`_.
 #
 # .. _Matplotlib's complete list of available colormaps: https://matplotlib.org/tutorials/colors/colormaps.html
-# .. _Colorcet's complete list: http://colorcet.pyviz.org/user_guide/index.html
+# .. _Colorcet's complete list: https://colorcet.pyviz.org/user_guide/index.html
 # .. _cmocean's complete list: https://matplotlib.org/cmocean/
 
 ###############################################################################
@@ -75,7 +75,7 @@ mesh.plot(scalars='values', cmap=boring_cmap)
 # Let's compare Colorcet's perceptually uniform "fire" colormap to Matplotlib's
 # "hot" colormap much like the example on the `first page of Colorcet's docs`_.
 #
-# .. _first page of Colorcet's docs: http://colorcet.pyviz.org/index.html
+# .. _first page of Colorcet's docs: https://colorcet.pyviz.org/index.html
 #
 # The "hot" version washes out detail at the high end, as if the image is
 # overexposed, while "fire" makes detail visible throughout the data range.

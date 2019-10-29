@@ -41,8 +41,8 @@
 .. |zenodo| image:: https://zenodo.org/badge/92974124.svg
    :target: https://zenodo.org/badge/latestdoi/92974124
 
-.. |joss| image:: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
-   :target: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978
+.. |joss| image:: https://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
+   :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
 
 +----------------------+------------------------+
@@ -70,13 +70,13 @@ and visual integration of spatially referenced datasets.
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
-.. |tweet| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
+.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
 Share this project on Twitter: |tweet|
 
 
-.. |binder| image:: https://mybinder.org/badge_logo.svg
+.. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder
 
@@ -124,7 +124,7 @@ Here are a few open-source projects that leverage PyVista:
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: http://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
+.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtkModule.html
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/pyvista/tetgen
@@ -147,7 +147,7 @@ If you have a working copy of VTK, installation is simply::
 
     $ pip install pyvista
 
-You can also visit `PyPi <http://pypi.python.org/pypi/pyvista>`_ or
+You can also visit `PyPi <https://pypi.org/project/pyvista/>`_ or
 `GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
 
 See :ref:`install_ref` for more details.
