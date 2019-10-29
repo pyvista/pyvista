@@ -4,7 +4,7 @@ Basic API Usage
 PyVista provides tools to get started with just about any VTK dataset
 and wrap that object into an easily accessible data object.
 Whether you are new to the VTK library or a power user, the best place to
-get started is with PyVista's :func:`pyvista.wrap` and :func:`vtk.read`
+get started is with PyVista's :func:`pyvista.wrap` and :func:`pyvista.read`
 functions to either wrap a VTK data object in memory or read a VTK or
 VTK-friendly file format.
 
