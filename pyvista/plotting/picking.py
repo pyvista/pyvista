@@ -321,3 +321,32 @@ class PickingHelper(object):
             show_message=show_message, font_size=font_size, color=color,
             point_size=point_size, line_width=line_width, show_path=show_path,
             **kwargs)
+
+
+    def pick_click_position(self):
+        """Get corresponding click location in the 3D plot"""
+        if not hasattr(self, "click_position") or self.click_position is None:
+            self.store_click_position()
+        picker = vtk.vtkWorldPointPicker()
+        picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
+        return picker.GetPickPosition()
+
+
+    def pick_mouse_position(self):
+        """Get corresponding mouse location in the 3D plot"""
+        if not hasattr(self, "mouse_position") or self.mouse_position is None:
+            self.store_mouse_position()
+        picker = vtk.vtkWorldPointPicker()
+        picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
+        return picker.GetPickPosition()
+
+
+    def fly_to_mouse_position(self, focus=False):
+        """ Focuses on last stored mouse position """
+        if not hasattr(self, "mouse_position") or self.mouse_position is None:
+            self.store_mouse_position()
+        click_point = self.pick_mouse_position()
+        if focus:
+            self.set_focus(click_point)
+        else:
+            self.fly_to(click_point)

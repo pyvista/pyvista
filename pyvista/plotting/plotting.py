@@ -17,9 +17,9 @@ import warnings
 import pyvista
 from pyvista.utilities import (convert_array, convert_string_array,
                                get_array, is_pyvista_dataset, numpy_to_texture,
-                               raise_not_matching, wrap)
+                               raise_not_matching, try_callback, wrap)
 
-from .colors import get_cmap_safe, PARAVIEW_BACKGROUND
+from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
@@ -230,10 +230,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, "iren"):
             raise AttributeError("This plotting window is not interacive.")
         self.click_position = self.iren.GetEventPosition()
+        self.mouse_position = self.click_position
 
     def track_mouse_position(self):
         """ Keep track of the mouse position. This will potentially slow down
-        the the interactor.
+        the the interactor. No callbacks supported here - use
+        :func:`pyvista.BasePlotter.track_click_position` instead.
         """
         if hasattr(self, "iren"):
             obs = self.iren.AddObserver(vtk.vtkCommand.MouseMoveEvent,
@@ -247,28 +249,43 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._mouse_observer
 
 
-    def track_click_position(self):
-        """ Keep track of the click position """
-        if hasattr(self, "iren"):
-            obs = self.iren.AddObserver(vtk.vtkCommand.LeftButtonPressEvent,
-                                        self.store_click_position)
-            self._click_observer = obs
+    def track_click_position(self, side="right", callback=None):
+        """ Keep track of the click position - defaults to only track right
+        clicks
+
+        Parameters
+        ----------
+        side : str
+            The side of the mouse for the button to track (left or right).
+            Default is left. Also accepts ``'r'``.
+
+        callback : callable
+            A callable method that will use the click position. Passes the
+            click position as a length two tuple.
+
+        """
+        if not hasattr(self, "iren"):
+            return
+
+        if side in ["right", "r", "R"]:
+            event = vtk.vtkCommand.RightButtonPressEvent
+        else:
+            event = vtk.vtkCommand.LeftButtonPressEvent
+
+        def _click_callback(obj, event):
+            self.store_click_position()
+            if hasattr(callback, '__call__'):
+                try_callback(callback, self.click_position)
+
+        obs = self.iren.AddObserver(event, _click_callback)
+        self._click_observer = obs
+
 
     def untrack_click_position(self):
         """Stop tracking the click position """
         if hasattr(self, "_click_observer"):
             self.iren.RemoveObserver(self._click_observer)
             del self._click_observer
-
-    def fly_to_mouse_position(self):
-        """ Focuses on last stored mouse position """
-        if not hasattr(self, "mouse_position") or self.mouse_position is None:
-            self.store_mouse_position()
-        # Get corresponding click location in the 3D plot
-        picker = vtk.vtkWorldPointPicker()
-        picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
-        click_point = picker.GetPickPosition()
-        self.fly_to(click_point)
 
 
     def reset_key_events(self):
