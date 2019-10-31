@@ -189,25 +189,25 @@ ensure no results are cached.
 examples gallery for any obvious issues. If issues are present, abort the
 release.
 
-5. Create a list of all changes for the release. It is often helpful to
-leverage GitHub's *compare* feature to see the differences from the last tag
-and the `master` branch. For example, check out
-https://github.com/pyvista/pyvista/compare/0.22.4...master (update the tag in
-that link appropriately). Be acknowledge new contributors by their GitHub
-username and place mentions where appropriate if a specific contributor is
-thank for a new feature.
 
-6. Update the version numbers in `pyvista/_version.py`, commit those
+5. Update the version numbers in `pyvista/_version.py`, commit those
 changes, and then tag with the same version. Push the changes *and* the tags:
     ```bash
     git push origin master
     git push origin --tags
     ```
 
-7. Place your release notes from step 5 in the description for
+6. Create a list of all changes for the release. It is often helpful to
+leverage [GitHub's *compare* feature](https://github.com/pyvista/pyvista/compare)
+to see the differences from the last tag and the `master` branch.
+Be sure to acknowledge new contributors by their GitHub username and place
+mentions where appropriate if a specific contributor is to thank for a new
+feature.
+
+7. Place your release notes from step 6 in the description for
 [the new release on GitHub](https://github.com/pyvista/pyvista/releases)
 
-8. Go grab a beer and wait for
+8. Go grab a 🍺/☕ and wait for
 [@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot) to open a
 pull reequest on the conda-forge
 [PyVista feedstock](https://github.com/conda-forge/pyvista-feedstock).
