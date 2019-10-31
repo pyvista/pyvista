@@ -2,9 +2,6 @@
 PyVista
 #######
 
-**🚨🚨 PyVista was formerly vtki 🚨🚨 We recently changed the name of this
-software and we apologize for any confusion this may be causing**
-
 .. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
     :alt: pyvista
 
@@ -45,9 +42,10 @@ software and we apologize for any confusion this may be causing**
 +----------------------+------------------------+
 
 
-PyVista is a helper module for the Visualization Toolkit (VTK) that takes a
-different approach on interfacing with VTK through NumPy and direct array
-access. This package provides a Pythonic, well-documented interface exposing
+PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
+(VTK) that takes a different approach on interfacing with VTK through NumPy and
+direct array access. 
+This package provides a Pythonic, well-documented interface exposing
 VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
 and visual integration of spatially referenced datasets.
 
