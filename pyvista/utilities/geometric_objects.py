@@ -17,6 +17,7 @@ import numpy as np
 import vtk
 
 import pyvista
+from pyvista.utilities import assert_empty_kwargs
 
 
 NORMALS = {
@@ -51,7 +52,7 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
 
 
 def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
-             resolution=100, **kwargs):
+             resolution=100, capping=True, **kwargs):
 
     """
     Create the surface of a cylinder.
@@ -91,7 +92,8 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     >>> cylinder.plot() # doctest:+SKIP
 
     """
-    capping = kwargs.get('capping', kwargs.get('cap_ends', True))
+    capping = kwargs.pop('cap_ends', capping)
+    assert_empty_kwargs(**kwargs)
     cylinderSource = vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
     cylinderSource.SetHeight(height)
@@ -528,12 +530,12 @@ def Text3D(string, depth=0.5):
     return pyvista.wrap(tri_filter.GetOutput())
 
 
-def SuperToroid(**kwargs):
+def SuperToroid(*args, **kwargs):
     """DEPRECATED: use :func:`pyvista.ParametricSuperToroid`"""
     raise RuntimeError('use `pyvista.ParametricSuperToroid` instead')
 
 
-def Ellipsoid(**kwargs):
+def Ellipsoid(*args, **kwargs):
     """DEPRECATED: use :func:`pyvista.ParametricEllipsoid`"""
     raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
 

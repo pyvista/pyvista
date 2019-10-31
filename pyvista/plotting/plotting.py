@@ -15,8 +15,9 @@ from vtk.util import numpy_support as VN
 import warnings
 
 import pyvista
-from pyvista.utilities import (convert_array, convert_string_array,
-                               get_array, is_pyvista_dataset, numpy_to_texture,
+from pyvista.utilities import (assert_empty_kwargs, convert_array,
+                               convert_string_array, get_array,
+                               is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, wrap)
 
 from .colors import get_cmap_safe, PARAVIEW_BACKGROUND
@@ -471,7 +472,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  loc=None, culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
-                 annotations=None, pickable=True, **kwargs):
+                 annotations=None, pickable=True, preference="point", **kwargs):
         """
         Adds any PyVista/VTK mesh or dataset that PyVista can wrap to the
         scene. This method using a mesh representation to view the surfaces
@@ -695,8 +696,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if lighting is None:
             lighting = rcParams['lighting']
 
-        if clim is None:
-            clim = kwargs.get('rng', None)
+        # supported aliases
+        clim = kwargs.pop('rng', clim)
+        cmap = kwargs.pop('colormap', cmap)
+        culling = kwargs.pop("backface_culling", culling)
 
         if render_points_as_spheres is None:
             render_points_as_spheres = rcParams['render_points_as_spheres']
@@ -706,18 +709,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if nan_color is None:
             nan_color = rcParams['nan_color']
-        nanr, nanb, nang = parse_color(nan_color)
-        nan_color = nanr, nanb, nang, nan_opacity
+        nan_color = list(parse_color(nan_color))
+        nan_color.append(nan_opacity)
         if color is True:
             color = rcParams['color']
 
         if texture is False:
             texture = None
 
-        if culling is None:
-            culling = kwargs.get("backface_culling", False)
-            if culling is True:
-                culling = 'backface'
+        if culling is True:
+            culling = 'backface'
+
+        rgb = kwargs.pop('rgba', rgb)
+
+        assert_empty_kwargs(**kwargs)
 
         ##### Handle composite datasets #####
 
@@ -737,9 +742,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
 
             the_arguments = locals()
-            the_arguments.update(kwargs)
             the_arguments.pop('self')
             the_arguments.pop('mesh')
+            the_arguments.pop('kwargs')
 
             if multi_colors:
                 # Compute unique colors for each index of the block
@@ -856,7 +861,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.SetArrayName(scalars)
             original_scalar_name = scalars
             scalars = get_array(mesh, scalars,
-                                preference=kwargs.get('preference', 'cell'), err=True)
+                                preference=preference, err=True)
             if stitle is None:
                 stitle = original_scalar_name
 
@@ -886,7 +891,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             try:
                 # Get array from mesh
                 opacity = get_array(mesh, opacity,
-                                    preference=kwargs.get('preference', 'cell'), err=True)
+                                    preference=preference, err=True)
                 opacity = normalize(opacity)
                 _custom_opac = True
             except:
@@ -909,8 +914,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             opacity = 255 - opacity
 
         # Scalar formatting ===================================================
-        if cmap is None: # grab alias for cmaps: colormap
-            cmap = kwargs.get('colormap', None)
         if cmap is None: # Set default map if matplotlib is avaialble
             if has_matplotlib:
                 cmap = rcParams['cmap']
@@ -940,8 +943,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
 
-            if rgb is False or rgb is None:
-                rgb = kwargs.get('rgba', False)
             if rgb:
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
                     raise ValueError('RGB array must be n_points/n_cells by 3/4 in shape.')
@@ -1120,7 +1121,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                    loc=None, culling=False, multi_colors=False,
                    blending='composite', mapper='fixed_point',
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
-                   annotations=None, pickable=True, **kwargs):
+                   annotations=None, pickable=True, preference="point", **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -1246,8 +1247,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if name is None:
             name = '{}({})'.format(type(volume).__name__, str(hex(id(volume))))
 
-        if clim is None:
-            clim = kwargs.get('rng', None)
+        # Supported aliases
+        clim = kwargs.pop('rng', clim)
+        cmap = kwargs.pop('colormap', cmap)
+        culling = kwargs.pop("backface_culling", culling)
+
+        assert_empty_kwargs(**kwargs)
 
         if scalar_bar_args is None:
             scalar_bar_args = {}
@@ -1255,10 +1260,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if show_scalar_bar is None:
             show_scalar_bar = rcParams['show_scalar_bar']
 
-        if culling is None:
-            culling = kwargs.get("backface_culling", False)
-            if culling is True:
-                culling = 'backface'
+        if culling is True:
+            culling = 'backface'
 
         # Convert the VTK data object to a pyvista wrapped object if neccessary
         if not is_pyvista_dataset(volume):
@@ -1307,7 +1310,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
                                     culling=culling, clim=clim,
-                                    mapper=mapper, pickable=pickable, **kwargs)
+                                    mapper=mapper, pickable=pickable)
 
                 actors.append(a)
             return actors
@@ -1335,7 +1338,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(scalars, str):
             title = scalars
             scalars = get_array(volume, scalars,
-                                preference=kwargs.get('preference', 'point'), err=True)
+                                preference=preference, err=True)
             if stitle is None:
                 stitle = title
         else:
@@ -1403,11 +1406,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for val, anno in annotations.items():
                 table.SetAnnotation(float(val), str(anno))
 
-        if cmap is None: # grab alias for cmaps: colormap
-            cmap = kwargs.get('colormap', None)
-            if cmap is None: # Set default map if matplotlib is avaialble
-                if has_matplotlib:
-                    cmap = rcParams['cmap']
+        if cmap is None: # Set default map if matplotlib is avaialble
+            if has_matplotlib:
+                cmap = rcParams['cmap']
 
         if cmap is not None:
             if not has_matplotlib:
@@ -2862,7 +2863,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
                          pickable=False, render_points_as_spheres=False,
-                         tolerance=0.001, **kwargs):
+                         tolerance=0.001):
         """
         Creates a point actor with one label from list labels assigned to
         each point.
@@ -2951,9 +2952,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             font_family = rcParams['font']['family']
         if font_size is None:
             font_size = rcParams['font']['size']
-        if point_color is None and text_color is None and kwargs.get('color', None) is not None:
-            point_color = kwargs.get('color', None)
-            text_color = kwargs.get('color', None)
         if point_color is None:
             point_color = rcParams['color']
         if text_color is None:

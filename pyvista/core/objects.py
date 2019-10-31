@@ -5,8 +5,9 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (ROW_DATA_FIELD, convert_array, get_array,
-                               parse_field_choice, row_array, vtk_bit_array_to_char)
+from pyvista.utilities import (ROW_DATA_FIELD, assert_empty_kwargs,
+                               convert_array, get_array, parse_field_choice,
+                               row_array, vtk_bit_array_to_char)
 
 from .common import DataObject, _ScalarsDict
 
@@ -409,6 +410,8 @@ class RowScalarsDict(_ScalarsDict):
 class Texture(vtk.vtkTexture):
     """A helper class for vtkTextures"""
     def __init__(self, *args, **kwargs):
+        assert_empty_kwargs(**kwargs)
+
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkTexture):
                 self._from_texture(args[0])

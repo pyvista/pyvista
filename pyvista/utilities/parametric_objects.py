@@ -3,6 +3,7 @@ from math import pi
 import vtk
 
 import pyvista
+from pyvista.utilities import assert_empty_kwargs
 
 from .geometric_objects import translate
 
@@ -1013,7 +1014,7 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
 
 
 def surface_from_para(parametric_function, u_res=100, v_res=100,
-                      w_res=100, **kwargs):
+                      w_res=100):
     """Construct a mesh from a parametric function.
 
     Parameters

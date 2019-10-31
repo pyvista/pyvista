@@ -307,7 +307,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, **kwargs):
+                 splitting_position=None):
         """ Initialize Qt interactor """
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')

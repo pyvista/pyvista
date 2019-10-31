@@ -13,7 +13,7 @@ class WidgetHelper(object):
 
     def add_box_widget(self, callback, bounds=None, factor=1.25,
                        rotation_enabled=True, color=None, use_planes=False,
-                       outline_translation=True, pass_widget=False, **kwargs):
+                       outline_translation=True, pass_widget=False):
         """Add a box widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData box output from this widget, and performs a
@@ -174,7 +174,7 @@ class WidgetHelper(object):
                          assign_to_axis=None, tubing=False,
                          outline_translation=False,
                          origin_translation=True, implicit=True,
-                         pass_widget=False, test_callback=True, **kwargs):
+                         pass_widget=False, test_callback=True):
         """Add a plane widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes two
         arguments, the normal and origin of the plane in that order output
@@ -492,7 +492,7 @@ class WidgetHelper(object):
 
     def add_line_widget(self, callback, bounds=None, factor=1.25,
                         resolution=100, color=None, use_vertices=False,
-                        pass_widget=False, **kwargs):
+                        pass_widget=False):
         """Add a line widget to the scene. This is useless without a callback
         function. You can pass a callable function that takes a single
         argument, the PolyData line output from this widget, and performs a
@@ -825,7 +825,7 @@ class WidgetHelper(object):
     def add_spline_widget(self, callback, bounds=None, factor=1.25,
                           n_hanldes=5, resolution=25, color="yellow",
                           show_ribbon=False, ribbon_color="pink",
-                          ribbon_opacity=0.5, pass_widget=False, **kwargs):
+                          ribbon_opacity=0.5, pass_widget=False):
         """Create and add a spline widget to the scene. Use the bounds
         argument to place this widget. Several "handles" are used to control a
         parametric function for building this spline. Click directly on the

@@ -32,7 +32,8 @@ from vtk.util.numpy_support import (numpy_to_vtkIdTypeArray, vtk_to_numpy)
 
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
-                               generate_plane, get_array, wrap)
+                               assert_empty_kwargs, generate_plane, get_array,
+                               wrap)
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
@@ -1013,14 +1014,13 @@ class DataSetFilters(object):
         inplace : bool
             If True, the points of the give dataset will be updated.
         """
+        factor = kwargs.pop('scale_factor', factor)
+        assert_empty_kwargs(**kwargs)
         if scalars is None:
             field, scalars = dataset.active_scalar_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != pyvista.POINT_DATA_FIELD:
             raise AssertionError('Dataset can only by warped by a point data array.')
-        scale_factor = kwargs.get('scale_factor', None)
-        if scale_factor is not None:
-            factor = scale_factor
         # Run the algorithm
         alg = vtk.vtkWarpScalar()
         alg.SetInputDataObject(dataset)
@@ -2955,6 +2955,7 @@ class PolyDataFilters(DataSetFilters):
         """
         if tolerance is None:
             tolerance = kwargs.pop('merge_tol', None)
+        assert_empty_kwargs(**kwargs)
         clean = vtk.vtkCleanPolyData()
         clean.SetPointMerging(point_merging)
         clean.SetConvertLinesToPoints(lines_to_points)
@@ -3115,14 +3116,15 @@ class PolyDataFilters(DataSetFilters):
         return intersection_points, intersection_cells
 
 
-    def plot_boundaries(poly_data, **kwargs):
+    def plot_boundaries(poly_data, edge_color="red", **kwargs):
         """ Plots boundaries of a mesh """
         edges = DataSetFilters.extract_edges(poly_data)
 
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
                                   notebook=kwargs.pop('notebook', None))
-        plotter.add_mesh(edges, 'r', style='wireframe', legend='Edges')
-        plotter.add_mesh(poly_data, legend='Mesh', **kwargs)
+        plotter.add_mesh(edges, color=edge_color, style='wireframe', label='Edges')
+        plotter.add_mesh(poly_data, label='Mesh', **kwargs)
+        plotter.add_legend()
         return plotter.show()
 
 
