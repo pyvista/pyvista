@@ -6,8 +6,8 @@ import pytest
 
 import pyvista
 from pyvista import examples as ex
-from pyvista import utilities
-from pyvista import fileio
+from pyvista.utilities import helpers
+from pyvista.utilities import fileio
 from pyvista.utilities import errors
 
 # Only set this here just the once.
@@ -18,13 +18,13 @@ def test_createvectorpolydata_error():
     orig = np.random.random((3, 1))
     vec = np.random.random((3, 1))
     with pytest.raises(Exception):
-        utilities.vector_poly_data(orig, vec)
+        helpers.vector_poly_data(orig, vec)
 
 
 def test_createvectorpolydata_1D():
     orig = np.random.random(3)
     vec = np.random.random(3)
-    vdata = utilities.vector_poly_data(orig, vec)
+    vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_arrays['vectors'])
 
@@ -32,7 +32,7 @@ def test_createvectorpolydata_1D():
 def test_createvectorpolydata():
     orig = np.random.random((100, 3))
     vec = np.random.random((100, 3))
-    vdata = utilities.vector_poly_data(orig, vec)
+    vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_arrays['vectors'])
 
@@ -73,12 +73,12 @@ def test_get_array():
     grid._add_point_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
     grid._add_field_array(farr, 'field_data')
-    assert np.allclose(carr, utilities.get_array(grid, 'test_data', preference='cell'))
-    assert np.allclose(parr, utilities.get_array(grid, 'test_data', preference='point'))
-    assert np.allclose(oarr, utilities.get_array(grid, 'other'))
-    assert utilities.get_array(grid, 'foo') is None
-    assert utilities.get_array(grid, 'test_data', preference='field') is None
-    assert np.allclose(farr, utilities.get_array(grid, 'field_data', preference='field'))
+    assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
+    assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
+    assert np.allclose(oarr, helpers.get_array(grid, 'other'))
+    assert helpers.get_array(grid, 'foo') is None
+    assert helpers.get_array(grid, 'test_data', preference='field') is None
+    assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
 
 
 
@@ -86,11 +86,11 @@ def test_get_array():
 def test_is_inside_bounds():
     data = ex.load_uniform()
     bnds = data.bounds
-    assert utilities.is_inside_bounds((0.5, 0.5, 0.5), bnds)
-    assert not utilities.is_inside_bounds((12, 5, 5), bnds)
-    assert not utilities.is_inside_bounds((5, 12, 5), bnds)
-    assert not utilities.is_inside_bounds((5, 5, 12), bnds)
-    assert not utilities.is_inside_bounds((12, 12, 12), bnds)
+    assert helpers.is_inside_bounds((0.5, 0.5, 0.5), bnds)
+    assert not helpers.is_inside_bounds((12, 5, 5), bnds)
+    assert not helpers.is_inside_bounds((5, 12, 5), bnds)
+    assert not helpers.is_inside_bounds((5, 5, 12), bnds)
+    assert not helpers.is_inside_bounds((12, 12, 12), bnds)
 
 
 def test_get_sg_image_scraper():
