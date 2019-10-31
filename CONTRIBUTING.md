@@ -207,7 +207,7 @@ feature.
 7. Place your release notes from step 6 in the description for
 [the new release on GitHub](https://github.com/pyvista/pyvista/releases)
 
-8. Go grab a 🍺/☕ and wait for
+8. Go grab a beer/coffee and wait for
 [@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot) to open a
 pull reequest on the conda-forge
 [PyVista feedstock](https://github.com/conda-forge/pyvista-feedstock).
