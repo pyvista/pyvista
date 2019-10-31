@@ -8,6 +8,7 @@ import pyvista
 from pyvista import examples as ex
 from pyvista import utilities
 from pyvista import fileio
+from pyvista.utilities import errors
 
 # Only set this here just the once.
 pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
@@ -166,3 +167,13 @@ def test_transform_vectors_sph_to_cart():
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
     )
+
+def test_assert_empty_kwargs():
+    kwargs = {}
+    assert errors.assert_empty_kwargs(**kwargs)
+    with pytest.raises(TypeError):
+        kwargs = {"foo":6}
+        errors.assert_empty_kwargs(**kwargs)
+    with pytest.raises(TypeError):
+        kwargs = {"foo":6, "goo":"bad"}
+        errors.assert_empty_kwargs(**kwargs)
