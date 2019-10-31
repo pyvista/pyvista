@@ -722,6 +722,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         rgb = kwargs.pop('rgba', rgb)
 
+        if "scalar" in kwargs:
+            raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
         assert_empty_kwargs(**kwargs)
 
         ##### Handle composite datasets #####
