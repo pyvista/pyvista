@@ -205,7 +205,7 @@ mentions where appropriate if a specific contributor is to thank for a new
 feature.
 
 7. Place your release notes from step 6 in the description for
-[the new release on GitHub](https://github.com/pyvista/pyvista/releases)
+[the new release on GitHub](https://github.com/pyvista/pyvista/releases/new)
 
 8. Go grab a beer/coffee and wait for
 [@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot) to open a
