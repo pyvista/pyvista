@@ -95,7 +95,7 @@ matrix:
         set -e;
         make html;
         make doctest;
-        make html -b linkcheck;
+        make html;
         cd ..;
   allow_failures:
     # Test the core API on Python 2.7 - allowed failure
