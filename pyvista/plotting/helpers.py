@@ -74,6 +74,11 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if notebook is None:
         notebook = scooby.in_ipykernel()
 
+    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
+    show_grid = kwargs.pop('show_grid', False)
+    height = kwargs.get('height', 400)
+    auto_close = kwargs.get('auto_close', rcParams['auto_close'])
+
     if notebook:
         off_screen = notebook
     plotter = Plotter(off_screen=off_screen, notebook=notebook)
@@ -109,11 +114,10 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if text:
         plotter.add_text(text)
 
-    if show_bounds or kwargs.get('show_grid', False):
-        if kwargs.get('show_grid', False):
-            plotter.show_grid()
-        else:
-            plotter.show_bounds()
+    if show_grid:
+        plotter.show_grid()
+    elif show_bounds:
+        plotter.show_bounds()
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()
@@ -122,7 +126,6 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     else:
         plotter.camera_position = cpos
 
-    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()
 
@@ -136,10 +139,10 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           screenshot=screenshot,
                           return_img=return_img,
                           use_panel=use_panel,
-                          height=kwargs.get('height', 400))
+                          height=height)
 
     # close and return camera position and maybe image
-    if kwargs.get('auto_close', rcParams['auto_close']):
+    if auto_close:
         plotter.close()
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
