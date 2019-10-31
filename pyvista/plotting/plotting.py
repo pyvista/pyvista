@@ -1254,6 +1254,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         cmap = kwargs.pop('colormap', cmap)
         culling = kwargs.pop("backface_culling", culling)
 
+        if "scalar" in kwargs:
+            raise TypeError("`scalar` is an invalid keyword argument for `add_mesh`. Perhaps you mean `scalars` with an s?")
         assert_empty_kwargs(**kwargs)
 
         if scalar_bar_args is None:
