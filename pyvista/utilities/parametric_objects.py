@@ -362,7 +362,15 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
     """
     parametric_function = vtk.vtkParametricEllipsoid()
-    parametric_keywords(parametric_function, **kwargs)
+    parametric_keywords(parametric_function, min_u=kwargs.pop("min_u", 0),
+                        max_u=kwargs.pop("max_u", 2*pi),
+                        min_v=kwargs.pop("min_v", 0.0),
+                        max_v=kwargs.pop("max_v", 2*pi),
+                        join_u=kwargs.pop("join_u", False),
+                        join_v=kwargs.pop("join_v", False),
+                        twist_u=kwargs.pop("twist_u", False),
+                        twist_v=kwargs.pop("twist_v", False),
+                        clockwise=kwargs.pop("clockwise", True),)
 
     if xradius is not None:
         parametric_function.SetXRadius(xradius)
@@ -965,7 +973,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 
 def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
                         min_v=0.0, max_v=2*pi, join_u=False, join_v=False,
-                        twist_u=False, twist_v=False, clockwise=True, **kwargs):
+                        twist_u=False, twist_v=False, clockwise=True):
     """Applys keyword arguments to a parametric function.
 
     Parameters
