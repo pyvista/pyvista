@@ -25,7 +25,7 @@ PyPI
 .. image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
 
-PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
 using ``pip``::
 
     pip install pyvista
@@ -126,7 +126,7 @@ Please see `this project`_ for a convenient Cookiecutter_ to get started using
 PyVista on the notebook hosting service MyBinder_.
 
 .. _this project: https://github.com/pyvista/cookiecutter-pyvista-binder
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _MyBinder: https://mybinder.org
 
 To get started, the Docker container will need to have ``libgl1-mesa-dev`` and

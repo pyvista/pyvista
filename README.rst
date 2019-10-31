@@ -55,7 +55,7 @@ Python modules; see Connections for a list of projects that leverage
 PyVista.
 
 
-.. |tweet| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
+.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
 Share this project on Twitter: |tweet|
@@ -64,7 +64,7 @@ Share this project on Twitter: |tweet|
 Highlights
 ==========
 
-.. |binder| image:: https://mybinder.org/badge_logo.svg
+.. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder
 
@@ -112,12 +112,12 @@ The project support team can be reached at `info@pyvista.org`_.
 Installation
 ============
 
-PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
 using ``pip`` on Python >= 3.5::
 
     pip install pyvista
 
-You can also visit `PyPi <http://pypi.python.org/pypi/pyvista>`_,
+You can also visit `PyPi <https://pypi.org/project/pyvista/>`_,
 `Anaconda <https://anaconda.org/conda-forge/pyvista>`_, or
 `GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
 
@@ -143,7 +143,7 @@ Here are a few open-source projects that leverage PyVista:
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: http://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
+.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtkModule.html
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/pyvista/tetgen
