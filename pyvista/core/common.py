@@ -1118,6 +1118,9 @@ class Common(DataSetFilters, DataObject):
             raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
         return self.get_array(name, preference=preference, info=False)
 
+    def _ipython_key_completions_(self):
+        return self.array_names
+
 
     def __setitem__(self, name, scalars):
         """Add/set an array in the point_arrays, or cell_arrays depending on the

@@ -319,6 +319,10 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         return names
 
 
+    def _ipython_key_completions_(self):
+        return self.keys()
+
+
     def __setitem__(self, index, data):
         """Sets a block with a VTK data object. To set the name simultaneously,
         pass a string name as the 2nd index.

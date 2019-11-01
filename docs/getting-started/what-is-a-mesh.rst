@@ -22,9 +22,9 @@ What is a Node?
 ---------------
 
 Nodes are the vertices of the mesh - the XYZ coordinates of the underlying
-structure. This aspect of a mesh is what is often worked with in Finite Element
-modeling. All PyVista datasets (meshes!) have nodes and sometimes, you can
-have a mesh that only has nodes - like a point cloud.
+structure. This aspect of a mesh is what is often worked with in Finite
+Difference modeling. All PyVista datasets (meshes!) have nodes and sometimes,
+you can have a mesh that only has nodes - like a point cloud.
 
 For example, you can create a point cloud mesh using the
 :class:`pyvista.PolyData` class which is built for meshes that have 1D and 2D
@@ -141,8 +141,9 @@ attached to any PyVista mesh called ``.point_arrays`` or ``.cell_arrays``.
 
 
 Point data refers to arrays of values (scalars, vectors, etc.) that
-live on each node of the mesh. The order of this array is crucial! Each element
-in an attribute array must correspond to a node or cell in the mesh.
+live on each node of the mesh (think Finite Difference).
+The order of this array is crucial! Each element in an attribute array must
+correspond to a node or cell in the mesh.
 Let's create some point data for the beam mesh.
 When plotting the values between nodes are interpolated across the cells.
 
@@ -157,8 +158,9 @@ When plotting the values between nodes are interpolated across the cells.
 .. image:: ../images/auto-generated/beam_point_data.png
 
 Cell data refers to arrays of values (scalars, vectors, etc.) that
-live on each cell of the mesh. That is the entire cell (2D face or 3D volume)
-has is assigned the value of that attribute.
+live throughout each cell of the mesh (think Finite Volume).
+That is the entire cell (2D face or 3D volume) has is assigned the value of
+that attribute.
 
 .. testcode:: python
 
@@ -172,7 +174,8 @@ has is assigned the value of that attribute.
 
 
 Here's a comparison of point data vs. cell data and how point data is
-interpolated across cells when mapping colors:
+interpolated across cells when mapping colors unlike cell data which has a
+single value across the cell's domain:
 
 .. testcode:: python
 
