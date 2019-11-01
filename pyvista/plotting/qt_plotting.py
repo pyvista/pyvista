@@ -300,6 +300,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     """
     signal_set_view_vector = pyqtSignal(tuple, tuple)
     signal_reset_camera = pyqtSignal()
+    signal_render = pyqtSignal()
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
@@ -322,6 +323,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         self.signal_set_view_vector.connect(super(QtInteractor, self).view_vector)
         self.signal_reset_camera.connect(super(QtInteractor, self).reset_camera)
+        self.signal_render.connect(super(QtInteractor, self)._render)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -431,6 +433,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         except:
             pass
 
+
     def quit(self):
         """Quit application"""
         BasePlotter.close(self)
@@ -440,9 +443,15 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     def reset_camera(self):
         self.signal_reset_camera.emit()
 
+
     def view_vector(self, vector, viewup=None):
         args = [vector, viewup]
         self.signal_view_vector.emit(*args)
+
+
+    def _render(self):
+        """ updates the render window """
+        self.signal_render.emit()
 
 
 
