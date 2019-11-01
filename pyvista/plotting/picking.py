@@ -8,6 +8,11 @@ from pyvista.utilities import try_callback
 class PickingHelper(object):
     """An internal class to hold picking related features
     """
+    picked_cells = None
+    picked_point = None
+    picked_path = None
+    picked_geodesic = None
+    picked_horizon = None
 
     def get_pick_position(self):
         """Get the pick position/area as x0, y0, x1, y1"""
@@ -299,7 +304,8 @@ class PickingHelper(object):
                                line_width=5, show_path=True, opacity=0.75,
                                show_horizon=True, **kwargs):
         """Helper for the ``enable_path_picking`` method to also show a ribbon
-        surface along the picked path.
+        surface along the picked path. Ribbon is saved under
+        ``.picked_horizon``.
         """
         name = '_horizon'
         self.add_key_event('c', lambda: self.remove_actor(name))
@@ -326,7 +332,7 @@ class PickingHelper(object):
 
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot"""
-        if not hasattr(self, "click_position") or self.click_position is None:
+        if self.click_position is None:
             self.store_click_position()
         picker = vtk.vtkWorldPointPicker()
         picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
@@ -335,7 +341,7 @@ class PickingHelper(object):
 
     def pick_mouse_position(self):
         """Get corresponding mouse location in the 3D plot"""
-        if not hasattr(self, "mouse_position") or self.mouse_position is None:
+        if self.mouse_position is None:
             self.store_mouse_position()
         picker = vtk.vtkWorldPointPicker()
         picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
@@ -344,7 +350,7 @@ class PickingHelper(object):
 
     def fly_to_mouse_position(self, focus=False):
         """ Focuses on last stored mouse position """
-        if not hasattr(self, "mouse_position") or self.mouse_position is None:
+        if self.mouse_position is None:
             self.store_mouse_position()
         click_point = self.pick_mouse_position()
         if focus:

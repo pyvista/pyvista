@@ -79,6 +79,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Width of the border in pixels when enabled.
 
     """
+    mouse_position = None
+    click_position = None
 
     def __new__(cls, *args, **kwargs):
         if cls is BasePlotter:
