@@ -298,14 +298,9 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         If True, enable polygon smothing
 
     """
-    render_trigger = pyqtSignal()
     signal_set_view_vector = pyqtSignal(tuple, tuple)
     signal_reset_camera = pyqtSignal()
     allow_quit_keypress = True
-    signal_enable_trackball_style = pyqtSignal()
-    signal_remove_legend = pyqtSignal()
-    signal_set_background = pyqtSignal(tuple)
-    signal_remove_actor = pyqtSignal(object)
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
                  border=None, border_color='k', border_width=2.0,
@@ -325,13 +320,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
 
-        self.signal_set_view_vector.connect(self.view_vector)
-        self.signal_reset_camera.connect(self.reset_camera)
-        # self.render_trigger.connect(self._render)
-        self.signal_enable_trackball_style.connect(self.enable_trackball_style)
-        self.signal_remove_legend.connect(self.remove_legend)
-        self.signal_set_background.connect(self.set_background)
-        self.signal_remove_actor.connect(self.remove_actor)
+        self.signal_set_view_vector.connect(super(QtInteractor, self).view_vector)
+        self.signal_reset_camera.connect(super(QtInteractor, self).reset_camera)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -395,7 +385,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         }
         for key, method in cvec_setters.items():
             _add_action(self.default_camera_tool_bar, key, method)
-        _add_action(self.default_camera_tool_bar, 'Reset', self.signal_reset_camera.emit)
+        _add_action(self.default_camera_tool_bar, 'Reset', self.reset_camera)
 
         # Saved camera locations toolbar
         self.saved_camera_positions = []
@@ -445,6 +435,14 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         """Quit application"""
         BasePlotter.close(self)
         QVTKRenderWindowInteractor.close(self)
+
+
+    def reset_camera(self):
+        self.signal_reset_camera.emit()
+
+    def view_vector(self, vector, viewup=None):
+        args = [vector, viewup]
+        self.signal_view_vector.emit(*args)
 
 
 
