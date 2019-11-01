@@ -215,26 +215,30 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks.pop(key)
 
 
-    def enable_anti_aliasing(self, state=True):
-        """Enables or disables anti-aliasing"""
-        self.renderer.enable_anti_aliasing(state=state)
+    def enable_anti_aliasing(self):
+        """Enables anti-aliasing FXAA"""
+        self.renderer.enable_anti_aliasing()
+
+    def disable_anti_aliasing(self):
+        """Disables anti-aliasing FXAA"""
+        self.renderer.disable_anti_aliasing()
 
     def store_mouse_position(self, *args):
         """Store mouse position"""
         if not hasattr(self, "iren"):
-            raise AttributeError("This plotting window is not interacive.")
+            raise AttributeError("This plotting window is not interactive.")
         self.mouse_position = self.iren.GetEventPosition()
 
     def store_click_position(self, *args):
         """Store click position"""
         if not hasattr(self, "iren"):
-            raise AttributeError("This plotting window is not interacive.")
+            raise AttributeError("This plotting window is not interactive.")
         self.click_position = self.iren.GetEventPosition()
         self.mouse_position = self.click_position
 
     def track_mouse_position(self):
         """ Keep track of the mouse position. This will potentially slow down
-        the the interactor. No callbacks supported here - use
+        the interactor. No callbacks supported here - use
         :func:`pyvista.BasePlotter.track_click_position` instead.
         """
         if hasattr(self, "iren"):
@@ -344,7 +348,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def enable_trackball_actor_style(self):
         """ sets the interactive style to trackball actor. This makes it
-        possiblee to rotate actors around the scene."""
+        possible to rotate actors around the scene."""
         self._style = vtk.vtkInteractorStyleTrackballActor()
         return self.update_style()
 
@@ -615,7 +619,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the scalar range to a predefined opacity transfer function
             (options include: 'linear', 'linear_r', 'geom', 'geom_r').
             A string could also be used to map a scalar array from the mesh to
-            the the opacity (must have same number of elements as the
+            the opacity (must have same number of elements as the
             ``scalars`` argument). Or you can pass a custum made trasfer
             function that is an aray either ``n_colors`` in length or shorter.
 
@@ -2613,7 +2617,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         text : str
-            The text to add the the rendering
+            The text to add the rendering
 
         position : str, tuple(float)
             Position to place the bottom left corner of the text box.

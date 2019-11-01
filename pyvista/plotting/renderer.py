@@ -37,9 +37,13 @@ class Renderer(vtkRenderer):
 
 
 
-    def enable_anti_aliasing(self, state=True):
-        """Enables or disables anti-aliasing"""
-        self.SetUseFXAA(state)
+    def enable_anti_aliasing(self):
+        """Enables anti-aliasing FXAA"""
+        self.SetUseFXAA(True)
+
+    def disable_anti_aliasing(self):
+        """Disables anti-aliasing FXAA"""
+        self.SetUseFXAA(False)
 
 
     def add_border(self, color=[1, 1, 1], width=2.0):

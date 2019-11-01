@@ -192,7 +192,7 @@ class PickingHelper(object):
     def enable_path_picking(self, callback=None, show_message=True,
                             font_size=18, color='pink', point_size=10,
                             line_width=5, show_path=True, **kwargs):
-        """This is a conveinance method for ``enable_point_picking`` to keep
+        """This is a convenience method for ``enable_point_picking`` to keep
         track of the picked points and create a line using those points.
 
         The line is saved to the ``.picked_path`` attribute of this plotter
@@ -243,7 +243,7 @@ class PickingHelper(object):
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
                                 line_width=5, **kwargs):
-        """This is a conveinance method for ``enable_point_picking`` to keep
+        """This is a convenience method for ``enable_point_picking`` to keep
         track of the picked points and create a geodesic path using those
         points.
 
@@ -354,7 +354,7 @@ class PickingHelper(object):
 
 
     def enable_fly_to_right_click(self, callback=None):
-        """A conveinance method to track right click positions and fly to the
+        """A convenience method to track right click positions and fly to the
         picked point in the scene. The callback will be passed the point in
         3D space."""
         def _the_callback(*args):
