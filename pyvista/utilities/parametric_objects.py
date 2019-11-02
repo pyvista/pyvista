@@ -122,8 +122,8 @@ def ParametricBoy(zscale=None, **kwargs):
     It was found by Werner Boy on assignment from David Hilbert.
 
     For further information about this surface, please consult the
-    technical description "Parametric surfaces" in http:www.vtk.orgpublications
-    in the "VTK Technical Documents" section in the VTk.org web pages.
+    technical description "Parametric surfaces" in the
+    "VTK Technical Documents" section in the VTK.org web pages.
 
     Parameters
     ----------

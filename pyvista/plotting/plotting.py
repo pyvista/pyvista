@@ -216,27 +216,49 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks.pop(key)
 
 
+    def _close_callback(self):
+        """ Make sure a screenhsot is acquired before closing"""
+        self.q_pressed = True
+        # Grab screenshot right before renderer closes
+        self.last_image = self.screenshot(True, return_img=True)
+        self.last_image_depth = self.get_image_depth()
+
+
+    def increment_point_size_and_line_width(self, increment):
+        """For every actor in the scene, increment both its point size and
+        line width by the given value.
+        """
+        for renderer in self.renderers:
+            for actor in renderer._actors.values():
+                if hasattr(actor, "GetProperty"):
+                    prop = actor.GetProperty()
+                    if hasattr(prop, "SetPointSize"):
+                        prop.SetPointSize(prop.GetPointSize() + increment)
+                    if hasattr(prop, "SetLineWidth"):
+                        prop.SetLineWidth(prop.GetLineWidth() + increment)
+        return
+
+
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
 
-        def _close_callback():
-            """ Make sure a screenhsot is acquired before closing"""
-            self.q_pressed = True
-            # Grab screenshot right before renderer closes
-            self.last_image = self.screenshot(True, return_img=True)
-            self.last_image_depth = self.get_image_depth()
-
-        self.add_key_event('q', _close_callback)
+        self.add_key_event('q', self._close_callback)
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
+        self.add_key_event('c', lambda: self.enable_cell_picking())
+        self.add_key_event('Up', lambda: self.camera.Zoom(1.05))
+        self.add_key_event('Down', lambda: self.camera.Zoom(0.95))
+        self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
+        self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 
 
     def key_press_event(self, obj, event):
         """ Listens for key press event """
         key = self.iren.GetKeySym()
         log.debug('Key %s pressed' % key)
+        self._last_key = key
         if key in self._key_press_event_callbacks.keys():
             # Note that defaultdict's will never throw a key error
             callbacks = self._key_press_event_callbacks[key]
