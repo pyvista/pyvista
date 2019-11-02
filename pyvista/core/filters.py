@@ -124,7 +124,14 @@ class DataSetFilters(object):
         Parameters
         ----------
         bounds : tuple(float)
-            Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax)
+            Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax).
+            Length 3 iterable of floats: distances from the min coordinate of
+            of the input mesh. Single float value: uniform distance from the
+            min coordinate. Length 12 iterable of length 3 iterable of floats:
+            a plane collection (normal, center, ...).
+            :class:`pyvista.PolyData`: if a poly mesh is passed that represents
+            a box with 6 faces that all form a standard box, then planes will
+            be extracted from the box to define the clipping region.
 
         invert : bool
             Flag on whether to flip/invert the clip
@@ -145,6 +152,17 @@ class DataSetFilters(object):
             bounds = [xmin, xmax, ymin, ymax, zmin, zmax]
         if isinstance(bounds, (float, int)):
             bounds = [bounds, bounds, bounds]
+        elif isinstance(bounds, pyvista.PolyData):
+            poly = bounds
+            if poly.n_cells != 6:
+                raise RuntimeError("The bounds mesh must have only 6 faces.")
+            bounds = []
+            poly.compute_normals()
+            for cid in range(6):
+                cell = poly.extract_cells(cid)
+                normal = cell["Normals"][0]
+                bounds.append(normal)
+                bounds.append(cell.center)
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])

@@ -366,8 +366,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
             self.iren.Initialize()
 
-            # QVTKRenderWindowInteractor doesn't have a "q" quit event
-            self.iren.AddObserver("KeyPressEvent", self.key_quit)
+            self.iren.AddObserver("KeyPressEvent", self.key_press_event)
 
 
 
@@ -419,6 +418,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
             self.saved_cameras_tool_bar.addAction('Cam %2d' % ncam,
                                                   load_camera_position)
+            if ncam < 10:
+                self.add_key_event(str(ncam), load_camera_position)
         return
 
 
@@ -432,14 +433,12 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         return
 
 
-    def key_quit(self, obj=None, event=None):  # pragma: no cover
-        try:
-            key = self.iren.GetKeySym().lower()
+    def _close_callback(self):
+        """ Make sure a screenhsot is acquired before closing"""
+        if self.allow_quit_keypress:
+            BasePlotter._close_callback(self)
+            self.quit()
 
-            if key == 'q' and self.allow_quit_keypress:
-                self.quit()
-        except:
-            pass
 
 
     def quit(self):
@@ -584,6 +583,9 @@ class BackgroundPlotter(QtInteractor):
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
 
+        # Keypress events
+        self.add_key_event("S", self._qt_screenshot) # shift + s
+
 
 
     def scale_axes_dialog(self, show=True):
@@ -606,14 +608,13 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
-    def key_quit(self, obj=None, event=None):  # pragma: no cover
-        try:
-            key = self.iren.GetKeySym().lower()
 
-            if key == 'q' and self.allow_quit_keypress:
-                self.app_window.close()
-        except:
-            pass
+    def _close_callback(self):
+        """ Make sure a screenhsot is acquired before closing"""
+        if self.allow_quit_keypress:
+            BasePlotter._close_callback(self)
+            self.app_window.close()
+
 
     def quit(self):
         QtInteractor.quit(self)
