@@ -2374,7 +2374,7 @@ class PolyDataFilters(DataSetFilters):
             - Minimum
 
         **kwargs : optional
-            See help(pyvista.plot)
+            See :func:`pyvista.plot`
 
         Returns
         -------
@@ -3135,7 +3135,18 @@ class PolyDataFilters(DataSetFilters):
 
 
     def plot_boundaries(poly_data, edge_color="red", **kwargs):
-        """ Plots boundaries of a mesh """
+        """ Plots boundaries of a mesh
+
+        Parameters
+        ----------
+        edge_color : str, etc.
+            The color of the edges when they are added to the plotter.
+
+        kwargs : optional
+            All additional keyword arguments will be passed to
+            :func:`pyvista.BasePlotter.add_mesh`
+
+        """
         edges = DataSetFilters.extract_edges(poly_data)
 
         plotter = pyvista.Plotter(off_screen=kwargs.pop('off_screen', False),
