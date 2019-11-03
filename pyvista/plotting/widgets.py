@@ -455,7 +455,7 @@ class WidgetHelper(object):
         def callback(normal, origin):
             # create the plane for clipping
             plane = generate_plane(normal, origin)
-            alg.SetCutFunction(plane) # the the cutter to use the plane we made
+            alg.SetCutFunction(plane) # the cutter to use the plane we made
             alg.Update() # Perfrom the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
@@ -966,7 +966,7 @@ class WidgetHelper(object):
             # create the plane for clipping
             polyplane = vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
-            alg.SetCutFunction(polyplane) # the the cutter to use the poly planes
+            alg.SetCutFunction(polyplane) # the cutter to use the poly planes
             alg.Update() # Perfrom the Cut
             spline_sliced_mesh.shallow_copy(alg.GetOutput())
 

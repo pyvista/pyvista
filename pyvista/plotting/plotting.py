@@ -18,9 +18,9 @@ import pyvista
 from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                convert_string_array, get_array,
                                is_pyvista_dataset, numpy_to_texture,
-                               raise_not_matching, wrap)
+                               raise_not_matching, try_callback, wrap)
 
-from .colors import get_cmap_safe, PARAVIEW_BACKGROUND
+from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
@@ -80,6 +80,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Width of the border in pixels when enabled.
 
     """
+    mouse_position = None
+    click_position = None
 
     def __new__(cls, *args, **kwargs):
         if cls is BasePlotter:
@@ -216,6 +218,83 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks.pop(key)
 
 
+    def enable_anti_aliasing(self):
+        """Enables anti-aliasing FXAA"""
+        self.renderer.enable_anti_aliasing()
+
+    def disable_anti_aliasing(self):
+        """Disables anti-aliasing FXAA"""
+        self.renderer.disable_anti_aliasing()
+
+    def store_mouse_position(self, *args):
+        """Store mouse position"""
+        if not hasattr(self, "iren"):
+            raise AttributeError("This plotting window is not interactive.")
+        self.mouse_position = self.iren.GetEventPosition()
+
+    def store_click_position(self, *args):
+        """Store click position"""
+        if not hasattr(self, "iren"):
+            raise AttributeError("This plotting window is not interactive.")
+        self.click_position = self.iren.GetEventPosition()
+        self.mouse_position = self.click_position
+
+    def track_mouse_position(self):
+        """ Keep track of the mouse position. This will potentially slow down
+        the interactor. No callbacks supported here - use
+        :func:`pyvista.BasePlotter.track_click_position` instead.
+        """
+        if hasattr(self, "iren"):
+            obs = self.iren.AddObserver(vtk.vtkCommand.MouseMoveEvent,
+                                        self.store_mouse_position)
+            self._mouse_observer = obs
+
+    def untrack_mouse_position(self):
+        """Stop tracking the mouse position"""
+        if hasattr(self, "_mouse_observer"):
+            self.iren.RemoveObserver(self._mouse_observer)
+            del self._mouse_observer
+
+
+    def track_click_position(self, side="right", callback=None):
+        """ Keep track of the click position - defaults to only track right
+        clicks
+
+        Parameters
+        ----------
+        side : str
+            The side of the mouse for the button to track (left or right).
+            Default is left. Also accepts ``'r'``.
+
+        callback : callable
+            A callable method that will use the click position. Passes the
+            click position as a length two tuple.
+
+        """
+        if not hasattr(self, "iren"):
+            return
+
+        if side in ["right", "r", "R"]:
+            event = vtk.vtkCommand.RightButtonPressEvent
+        else:
+            event = vtk.vtkCommand.LeftButtonPressEvent
+
+        def _click_callback(obj, event):
+            self.store_click_position()
+            if hasattr(callback, '__call__'):
+                try_callback(callback, self.click_position)
+
+        obs = self.iren.AddObserver(event, _click_callback)
+        self._click_observer = obs
+
+
+    def untrack_click_position(self):
+        """Stop tracking the click position """
+        if hasattr(self, "_click_observer"):
+            self.iren.RemoveObserver(self._click_observer)
+            del self._click_observer
+
+
     def _close_callback(self):
         """ Make sure a screenhsot is acquired before closing"""
         self.q_pressed = True
@@ -247,6 +326,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
+        self.add_key_event('f', self.fly_to_mouse_position)
         self.add_key_event('c', lambda: self.enable_cell_picking())
         self.add_key_event('Up', lambda: self.camera.Zoom(1.05))
         self.add_key_event('Down', lambda: self.camera.Zoom(0.95))
@@ -286,8 +366,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return self.iren.SetInteractorStyle(self._style)
 
     def enable_trackball_style(self):
-        """ sets the interactive style to trackball - the default syle """
+        """ sets the interactive style to trackball camera - the default syle
+        """
         self._style = vtk.vtkInteractorStyleTrackballCamera()
+        return self.update_style()
+
+    def enable_trackball_actor_style(self):
+        """ sets the interactive style to trackball actor. This makes it
+        possible to rotate actors around the scene."""
+        self._style = vtk.vtkInteractorStyleTrackballActor()
         return self.update_style()
 
     def enable_image_style(self):
@@ -557,7 +644,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             the scalar range to a predefined opacity transfer function
             (options include: 'linear', 'linear_r', 'geom', 'geom_r').
             A string could also be used to map a scalar array from the mesh to
-            the the opacity (must have same number of elements as the
+            the opacity (must have same number of elements as the
             ``scalars`` argument). Or you can pass a custum made trasfer
             function that is an aray either ``n_colors`` in length or shorter.
 
@@ -2559,7 +2646,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Parameters
         ----------
         text : str
-            The text to add the the rendering
+            The text to add the rendering
 
         position : str, tuple(float)
             Position to place the bottom left corner of the text box.
