@@ -298,9 +298,13 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         If True, enable polygon smothing
 
     """
-    render_trigger = pyqtSignal()
     signal_set_view_vector = pyqtSignal(tuple, tuple)
     signal_reset_camera = pyqtSignal()
+    signal_render = pyqtSignal()
+    signal_enable_trackball_style = pyqtSignal()
+    signal_remove_legend = pyqtSignal()
+    signal_set_background = pyqtSignal(object)
+    signal_remove_actor = pyqtSignal(object)
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
@@ -321,8 +325,13 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
 
-        self.signal_set_view_vector.connect(self.view_vector)
-        self.signal_reset_camera.connect(self.reset_camera)
+        self.signal_set_view_vector.connect(super(QtInteractor, self).view_vector)
+        self.signal_reset_camera.connect(super(QtInteractor, self).reset_camera)
+        self.signal_render.connect(super(QtInteractor, self)._render)
+        self.signal_enable_trackball_style.connect(super(QtInteractor, self).enable_trackball_style)
+        self.signal_remove_legend.connect(super(QtInteractor, self).remove_legend)
+        self.signal_set_background.connect(super(QtInteractor, self).set_background)
+        self.signal_remove_actor.connect(super(QtInteractor, self).remove_actor)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -385,7 +394,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         }
         for key, method in cvec_setters.items():
             _add_action(self.default_camera_tool_bar, key, method)
-        _add_action(self.default_camera_tool_bar, 'Reset', self.signal_reset_camera.emit)
+        _add_action(self.default_camera_tool_bar, 'Reset', self.reset_camera)
 
         # Saved camera locations toolbar
         self.saved_camera_positions = []
@@ -431,10 +440,39 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             self.quit()
 
 
+
     def quit(self):
         """Quit application"""
         BasePlotter.close(self)
         QVTKRenderWindowInteractor.close(self)
+
+
+    def reset_camera(self):
+        self.signal_reset_camera.emit()
+
+
+    def view_vector(self, vector, viewup=None):
+        args = [vector, viewup]
+        self.signal_view_vector.emit(*args)
+
+
+    def _render(self):
+        """ updates the render window """
+        self.signal_render.emit()
+
+
+    def enable_trackball_style(self):
+        self.signal_enable_trackball_style.emit()
+
+    def remove_legend(self):
+        self.signal_remove_legend.emit()
+
+    def set_background(self, color):
+        self.signal_set_background.emit(color)
+
+    def remove_actor(self, actor, reset_camera=None):
+        self.signal_remove_actor.emit(actor)
+
 
 
 class BackgroundPlotter(QtInteractor):

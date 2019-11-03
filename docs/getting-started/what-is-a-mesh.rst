@@ -21,7 +21,7 @@ do not have to get get bogged down in the nuances.
 What is a Node?
 ---------------
 
-Nodes are the vertices of the mesh - the XYZ coordinates of the the underlying
+Nodes are the vertices of the mesh - the XYZ coordinates of the underlying
 structure. This aspect of a mesh is what is often worked with in Finite
 Difference modeling. All PyVista datasets (meshes!) have nodes and sometimes,
 you can have a mesh that only has nodes - like a point cloud.

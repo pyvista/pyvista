@@ -255,7 +255,7 @@ class DataSetFilters(object):
         # create slice
         alg = vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
-        alg.SetCutFunction(plane) # the the cutter to use the plane we made
+        alg.SetCutFunction(plane) # the cutter to use the plane we made
         if not generate_triangles:
             alg.GenerateTrianglesOff()
         alg.Update() # Perfrom the Cut
@@ -399,7 +399,7 @@ class DataSetFilters(object):
         # Create slice
         alg = vtk.vtkCutter() # Construct the cutter object
         alg.SetInputDataObject(dataset) # Use the grid as the data we desire to cut
-        alg.SetCutFunction(polyplane) # the the cutter to use the poly planes
+        alg.SetCutFunction(polyplane) # the cutter to use the poly planes
         if not generate_triangles:
             alg.GenerateTrianglesOff()
         alg.Update() # Perfrom the Cut
@@ -874,7 +874,7 @@ class DataSetFilters(object):
         Parameters
         ----------
         orient : bool
-            Use the active vectors array to orient the the glyphs
+            Use the active vectors array to orient the glyphs
 
         scale : bool
             Use the active scalars to scale the glyphs
