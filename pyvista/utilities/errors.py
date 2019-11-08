@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import scooby
+import sys
 
 import vtk
 
@@ -125,3 +126,21 @@ class Report(scooby.Report):
         scooby.Report.__init__(self, additional=additional, core=core,
                                optional=optional, ncol=ncol,
                                text_width=text_width, sort=sort)
+
+
+def assert_empty_kwargs(**kwargs):
+    """An internal helper to assert that all keyword arguments have been used.
+    If any keyword arguments are passed, a ``TypeError`` is raised.
+    """
+    n = len(kwargs)
+    if n == 0:
+        return True
+    caller = sys._getframe(1).f_code.co_name
+    keys = list(kwargs.keys())
+    bad_arguments = "[" + ("{}, " * (n - 1) + "{}").format(*keys) + "]"
+    if n == 1:
+        grammar = "is an invalid keyword argument"
+    else:
+        grammar = "are invalid keyword arguments"
+    message = "{} {} for `{}`".format(bad_arguments, grammar, caller)
+    raise TypeError(message)

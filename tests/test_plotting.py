@@ -837,3 +837,21 @@ def test_fail_plot_table():
     with pytest.raises(TypeError):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(table)
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_bad_keyword_arguments():
+    """Make sure bad keyword arguments raise an error"""
+    mesh = examples.load_uniform()
+    with pytest.raises(TypeError):
+        pyvista.plot(mesh, foo=5, off_screen=OFF_SCREEN)
+    with pytest.raises(TypeError):
+        pyvista.plot(mesh, scalar=mesh.active_scalar_name, off_screen=OFF_SCREEN)
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(mesh, scalar=mesh.active_scalar_name)
+        plotter.show()
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(mesh, foo="bad")
+        plotter.show()
