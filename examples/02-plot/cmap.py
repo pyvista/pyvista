@@ -73,7 +73,8 @@ mesh.plot(scalars='values', cmap=boring_cmap)
 # approach divides up the colormap into 5 equal parts.
 mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
-# if you still wish to have control of the seperation of values, you
+###############################################################################
+# If you still wish to have control of the seperation of values, you
 # can do this by creating a scalar array and passing that to the
 # plotter along with the the colormap
 scalars = np.empty(mesh.n_points)
