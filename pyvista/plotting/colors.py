@@ -397,4 +397,11 @@ def get_cmap_safe(cmap):
             return cmap
         # Else use Matplotlib
         cmap = get_cmap(cmap)
+    elif isinstance(cmap, list):
+        for item in cmap:
+            if not isinstance(item, str):
+                raise TypeError('When inputting a list as a cmap, each item should be a string.')
+        from matplotlib.colors import ListedColormap
+        cmap = ListedColormap(cmap)
+
     return cmap

@@ -788,8 +788,8 @@ def test_opacity_transfer_functions():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_closing_and_mem_cleanup():
     n = 5
-    for i in range(n):
-        for j in range(n):
+    for _ in range(n):
+        for _ in range(n):
             p = pyvista.Plotter(off_screen=OFF_SCREEN)
             for k in range(n):
                 p.add_mesh(pyvista.Sphere(radius=k))
@@ -855,3 +855,21 @@ def test_bad_keyword_arguments():
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(mesh, foo="bad")
         plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_cmap_list():
+    mesh = sphere.copy()
+
+    n = mesh.n_points
+    scalars = np.empty(n)
+    scalars[:n//3] = 0
+    scalars[n//3:2*n//3] = 1
+    scalars[2*n//3:] = 2
+
+    with pytest.raises(TypeError):
+        mesh.plot(off_screen=OFF_SCREEN,
+                  scalars=scalars, cmap=['red', None, 'blue'])
+    
+    mesh.plot(off_screen=OFF_SCREEN,
+              scalars=scalars, cmap=['red', 'green', 'blue'])
