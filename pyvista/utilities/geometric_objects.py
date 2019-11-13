@@ -163,7 +163,7 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Orient properly in user direction
     vx = np.array([0., 0., 1.])
     if not np.allclose(vx, direction):
-        direction = direction / np.linalg.norm(direction)
+        direction /= np.linalg.norm(direction)
         vx -= vx.dot(direction) * direction
         vx /= np.linalg.norm(vx)
         vy = np.cross(direction, vx)
