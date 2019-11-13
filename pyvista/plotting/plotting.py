@@ -664,12 +664,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             When False, OpenGL will interpolate the mapped colors which can
             result is showing colors that are not present in the color map.
 
-        cmap : str, optional
+        cmap : str, list, optional
            Name of the Matplotlib colormap to us when mapping the ``scalars``.
            See available Matplotlib colormaps.  Only applicable for when
            displaying ``scalars``. Requires Matplotlib to be installed.
            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
            ``cmocean`` are installed, their colormaps can be specified by name.
+
+            You can also specify a list of colors to override an
+            existing colormap with a custom one.  For example, to
+            create a three color colormap you might specify
+            ``['green', 'red', 'blue']``
 
         label : str, optional
             String label to use when adding a legend to the scene with

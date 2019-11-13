@@ -69,6 +69,24 @@ boring_cmap = plt.cm.get_cmap("viridis", 5)
 mesh.plot(scalars='values', cmap=boring_cmap)
 
 ###############################################################################
+# You can also pass a list of color strings to the color map.  This
+# approach divides up the colormap into 5 equal parts.
+mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
+
+###############################################################################
+# If you still wish to have control of the seperation of values, you
+# can do this by creating a scalar array and passing that to the
+# plotter along with the the colormap
+scalars = np.empty(mesh.n_points)
+scalars[mesh['values'] >= 80] = 4  # red
+scalars[mesh['values'] < 80] = 3  # grey
+scalars[mesh['values'] < 55] = 2  # yellow
+scalars[mesh['values'] < 30] = 1  # blue
+scalars[mesh['values'] < 1] = 0  # black
+
+mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
+
+###############################################################################
 # Matplotlib vs. Colorcet
 # +++++++++++++++++++++++
 #
