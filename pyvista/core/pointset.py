@@ -257,6 +257,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
     #     return np.ascontiguousarray(lines[:, 1:])
 
+
+    def is_all_triangles(self):
+        return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
+
     def _from_arrays(self, vertices, faces, deep=True, verts=False):
         """
         Set polygons and points from numpy arrays
