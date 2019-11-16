@@ -88,7 +88,24 @@ def test_text_3d():
     assert mesh.n_points
     assert mesh.n_cells
 
+
 def test_wavelet():
     mesh = pyvista.Wavelet()
+    assert mesh.n_points
+    assert mesh.n_cells
+
+
+def test_circular_arc():
+    pointa = [-1, 0, 0]
+    pointb = [0, 1, 0]
+    center = [0, 0, 0]
+    resolution = 100
+
+    mesh = pyvista.CircularArc(pointa, pointb, center, resolution)
+    assert mesh.n_points
+    assert mesh.n_cells
+
+    mesh = pyvista.CircularArc([-1, 0, 0], [0, 0, 1], [0, 0, 0], normal=[0, 0, 1],
+                               polar=[1, 0, 1], negative=True, angle=180)
     assert mesh.n_points
     assert mesh.n_cells

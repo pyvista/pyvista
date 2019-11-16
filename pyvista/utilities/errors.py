@@ -5,7 +5,7 @@ import scooby
 import sys
 
 import vtk
-
+import numpy as np
 
 def set_error_output_file(filename):
     """Sets a file to write out the VTK errors"""
@@ -144,3 +144,8 @@ def assert_empty_kwargs(**kwargs):
         grammar = "are invalid keyword arguments"
     message = "{} {} for `{}`".format(bad_arguments, grammar, caller)
     raise TypeError(message)
+
+
+def check_valid_vector(point, name=''):
+    if np.array(point).size != 3:
+        raise TypeError('%s must be a length three tuple of floats.' % name)

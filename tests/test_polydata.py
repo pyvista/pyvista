@@ -532,3 +532,14 @@ def test_ribbon_filter():
     ribbon = line.ribbon(width=0.5)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     ribbon = line.ribbon(width=0.5, tcoords=True)
+
+
+def test_extrude():
+    arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    poly = arc.extrude([0, 0, 1])
+    assert poly.n_points
+    assert poly.n_cells
+
+    n_points_old = arc.n_points
+    arc.extrude([0, 0, 1], inplace=True)
+    assert arc.n_points != n_points_old
