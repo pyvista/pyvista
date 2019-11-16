@@ -638,6 +638,7 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     arc.SetNegative(negative)
 
     if normal is not None:
+        arc.UseNormalAndAngleOn()
         check_valid_vector(normal, 'normal')
         arc.SetNormal(*normal)
 

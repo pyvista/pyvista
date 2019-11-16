@@ -160,7 +160,7 @@ def extrude(mesh, vector):
 
     >>> import pyvista
     >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-    >>> mesh = pyvista.extrude(arc, extrude([0, 0, 1])
+    >>> mesh = pyvista.extrude(arc, [0, 0, 1])
     >>> mesh.plot()  # doctest:+SKIP
     """
     extrude_filter = vtk.vtkLinearExtrusionFilter()
