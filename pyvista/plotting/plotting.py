@@ -18,7 +18,8 @@ import pyvista
 from pyvista.utilities import (assert_empty_kwargs, convert_array,
                                convert_string_array, get_array,
                                is_pyvista_dataset, numpy_to_texture,
-                               raise_not_matching, try_callback, wrap)
+                               raise_not_matching, try_callback, wrap,
+                               check_depth_peeling)
 
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
@@ -217,6 +218,42 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def clear_events_for_key(self, key):
         self._key_press_event_callbacks.pop(key)
 
+
+    def enable_depth_peeling(self, number_of_peels=5, occlusion_ratio=0.1):
+        """Enables depth peeling if supported.
+
+        Parameters
+        ----------
+        number_of_peels: int
+            The maximum number of peeling layers. A value of 0 means no limit.
+
+        occlusion_ratio : float
+            The threshold under which the algorithm stops to iterate over peel
+            layers. A value of 0.0 means that the rendering have to be exact.
+            Greater values may speed-up the rendering with small impact on the
+            quality.
+
+        Returns
+        -------
+        depth_peeling_supported: bool
+            If True, depth peeling is supported.
+        """
+        depth_peeling_supported = check_depth_peeling(number_of_peels,
+                                                      occlusion_ratio)
+        if hasattr(self, 'ren_win') and depth_peeling_supported:
+            self.multi_samples = self.ren_win.GetMultiSamples()
+            self.ren_win.AlphaBitPlanesOn()
+            self.ren_win.SetMultiSamples(0)
+            self.renderer.enable_depth_peeling()
+
+        return depth_peeling_supported
+
+    def disable_depth_peeling(self):
+        """Disables depth peeling."""
+        if hasattr(self, 'multi_samples') and hasattr(self, 'ren_win'):
+            self.ren_win.AlphaBitPlanesOff()
+            self.ren_win.SetMultiSamples(self.multi_samples)
+            self.renderer.disable_depth_peeling()
 
     def enable_anti_aliasing(self):
         """Enables anti-aliasing FXAA"""
