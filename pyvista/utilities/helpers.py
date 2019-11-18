@@ -527,6 +527,10 @@ def try_callback(func, *args):
 
 
 def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
+    """Attempts to use depth peeling to see if it is available for the current
+    environment. Returns ``True`` if depth peeling is available and has been
+    successfully leveraged, otherwise ``False``.
+    """
     # Try Depth Peeling with a basic scene
     source = vtk.vtkSphereSource()
     mapper = vtk.vtkPolyDataMapper()
