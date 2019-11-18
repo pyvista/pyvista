@@ -244,7 +244,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.multi_samples = self.ren_win.GetMultiSamples()
             self.ren_win.AlphaBitPlanesOn()
             self.ren_win.SetMultiSamples(0)
-            self.renderer.enable_depth_peeling()
+            self.renderer.enable_depth_peeling(number_of_peels,
+                                               occlusion_ratio)
 
         return depth_peeling_supported
 
