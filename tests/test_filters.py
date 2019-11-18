@@ -370,6 +370,8 @@ def test_glyph():
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
+                          clamping=False, rng=[1, 1])
 
 
 def test_split_and_connectivity():
