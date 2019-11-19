@@ -16,7 +16,7 @@ elevation = examples.download_crater_topo().warp_by_scalar()
 # Load the topographic map from a GeoTiff
 topo_map = examples.download_crater_imagery()
 
-print(elevation)
+elevation
 
 ###############################################################################
 # Let's inspect the imagery that we just loaded

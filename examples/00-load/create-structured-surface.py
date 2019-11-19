@@ -41,7 +41,7 @@ grid.plot_curvature(clim=[-1, 1])
 # Generating a structured grid is a one liner in this module, and the points
 # from the resulting surface can be accessed as a NumPy array:
 
-print(grid.points)
+grid.points
 
 
 ###############################################################################
@@ -80,7 +80,7 @@ def make_point_set():
 
 # Get the points as a 2D NumPy array (N by 3)
 points = make_point_set()
-print(points[0:5, :])
+points[0:5, :]
 
 ###############################################################################
 # Now pretend that the (n by 3) NumPy array above are coordinates that you

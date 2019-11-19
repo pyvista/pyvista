@@ -127,7 +127,7 @@ p.show()
 
 model = examples.download_model_with_variance()
 contours = model.contour(10, scalars='Temperature')
-print(contours.array_names)
+contours.array_names
 
 ###############################################################################
 # Make sure to flag ``use_transparency=True`` since we want areas of high
