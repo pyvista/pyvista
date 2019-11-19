@@ -28,4 +28,4 @@ p.show()
 ###############################################################################
 # How long is that path?
 distance = sphere.geodesic_distance(0, sphere.n_points - 1)
-print(distance)
+distance
