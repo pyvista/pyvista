@@ -241,7 +241,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         depth_peeling_supported = check_depth_peeling(number_of_peels,
                                                       occlusion_ratio)
         if hasattr(self, 'ren_win') and depth_peeling_supported:
-            self.multi_samples = self.ren_win.GetMultiSamples()
             self.ren_win.AlphaBitPlanesOn()
             self.ren_win.SetMultiSamples(0)
             self.renderer.enable_depth_peeling(number_of_peels,
@@ -251,9 +250,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def disable_depth_peeling(self):
         """Disables depth peeling."""
-        if hasattr(self, 'multi_samples') and hasattr(self, 'ren_win'):
+        if hasattr(self, 'ren_win'):
             self.ren_win.AlphaBitPlanesOff()
-            self.ren_win.SetMultiSamples(self.multi_samples)
             self.renderer.disable_depth_peeling()
 
     def enable_anti_aliasing(self):
