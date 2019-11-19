@@ -279,11 +279,15 @@ def test_multi_block_copy():
     assert multi.n_blocks == 5 == newobj.n_blocks
     assert id(multi[0]) != id(newobj[0])
     assert id(multi[-1]) != id(newobj[-1])
+    for i in range(newobj.n_blocks):
+        assert pyvista.is_pyvista_dataset(newobj.GetBlock(i))
     # Now check shallow
     newobj = multi.copy(deep=False)
     assert multi.n_blocks == 5 == newobj.n_blocks
     assert id(multi[0]) == id(newobj[0])
     assert id(multi[-1]) == id(newobj[-1])
+    for i in range(newobj.n_blocks):
+        assert pyvista.is_pyvista_dataset(newobj.GetBlock(i))
     return
 
 
