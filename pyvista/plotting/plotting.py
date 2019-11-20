@@ -800,7 +800,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
-            transperency.
+            transparency.
 
         below_color : string or 3 item list, optional
             Solid color for values below the scalar range (``clim``). This will
