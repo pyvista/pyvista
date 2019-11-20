@@ -516,4 +516,5 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         else:
             newobject.shallow_copy(self)
         newobject.copy_meta_from(self)
+        newobject.wrap_nested()
         return newobject
