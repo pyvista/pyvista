@@ -22,7 +22,7 @@ zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
 
 # Get the points as a 2D NumPy array (N by 3)
 points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
-print(points[0:5, :])
+points[0:5, :]
 
 ###############################################################################
 # Now use those points to create a point cloud PyVista data object. This will
