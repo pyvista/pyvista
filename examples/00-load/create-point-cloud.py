@@ -33,17 +33,17 @@ def generate_points(subset=0.02):
 points = generate_points()
 # Print firts 5 rows to prove its a numpy array (n_points by 3)
 # Columns are (X Y Z)
-print(points[0:5, :])
+points[0:5, :]
 
 ###############################################################################
 # Now that you have a NumPy array of points/vertices either from our sample
 # data or your own project, creating a PyVista mesh of those points is simply:
 point_cloud = pv.PolyData(points)
-print(point_cloud)
+point_cloud
 
 ###############################################################################
 # And we can even do a sanity check
-print(np.allclose(points, point_cloud.points))
+np.allclose(points, point_cloud.points)
 
 ###############################################################################
 # And now that we have a PyVista mesh, we can plot it. Note that we add an
@@ -94,7 +94,7 @@ def compute_vectors(mesh):
     return vectors
 
 vectors = compute_vectors(point_cloud)
-print(vectors[0:5, :])
+vectors[0:5, :]
 
 ###############################################################################
 

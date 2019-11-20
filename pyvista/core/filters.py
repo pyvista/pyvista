@@ -2204,6 +2204,9 @@ class PolyDataFilters(DataSetFilters):
             The cut mesh when inplace=False
 
         """
+        if not poly_data.is_all_triangles() or not cut.is_all_triangles():
+            raise RuntimeError("Make sure both the input and output are triangulated.")
+
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToIntersection()
         # bfilter.SetOperationToDifference()
