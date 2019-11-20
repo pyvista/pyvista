@@ -721,6 +721,16 @@ def test_plot_compar_four():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_plot_depth_peeling():
+    mesh = examples.load_airplane()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.enable_depth_peeling()
+    p.disable_depth_peeling()
+    p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
 def test_plot_eye_dome_lighting():
     mesh = examples.load_airplane()

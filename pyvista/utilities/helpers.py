@@ -524,3 +524,30 @@ def try_callback(func, *args):
     except Exception as e:
         logging.warning('Encountered issue in callback: {}'.format(e))
     return
+
+
+def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
+    """Attempts to use depth peeling to see if it is available for the current
+    environment. Returns ``True`` if depth peeling is available and has been
+    successfully leveraged, otherwise ``False``.
+    """
+    # Try Depth Peeling with a basic scene
+    source = vtk.vtkSphereSource()
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(source.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    # requires opacity < 1
+    actor.GetProperty().SetOpacity(0.5)
+    renderer = vtk.vtkRenderer()
+    renderWindow = vtk.vtkRenderWindow()
+    renderWindow.AddRenderer(renderer)
+    renderWindow.SetOffScreenRendering(True)
+    renderWindow.SetAlphaBitPlanes(True)
+    renderWindow.SetMultiSamples(0)
+    renderer.AddActor(actor)
+    renderer.SetUseDepthPeeling(True)
+    renderer.SetMaximumNumberOfPeels(number_of_peels)
+    renderer.SetOcclusionRatio(occlusion_ratio)
+    renderWindow.Render()
+    return renderer.GetLastRenderingUsedDepthPeeling() == 1

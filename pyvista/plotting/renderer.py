@@ -35,7 +35,15 @@ class Renderer(vtkRenderer):
         if border:
             self.add_border(border_color, border_width)
 
+    def enable_depth_peeling(self, number_of_peels=5, occlusion_ratio=0.1):
+        """Enables depth peeling."""
+        self.SetUseDepthPeeling(True)
+        self.SetMaximumNumberOfPeels(number_of_peels)
+        self.SetOcclusionRatio(occlusion_ratio)
 
+    def disable_depth_peeling(self):
+        """Disables depth peeling."""
+        self.SetUseDepthPeeling(False)
 
     def enable_anti_aliasing(self):
         """Enables anti-aliasing FXAA"""
