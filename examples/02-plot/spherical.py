@@ -65,7 +65,7 @@ scalar = u_vec ** 2 + v_vec ** 2
 xx_bounds = _cell_bounds(x)
 yy_bounds = _cell_bounds(y_polar)
 # Vertical levels
-# in this case a single level slighly above the surface of a sphere
+# in this case a single level slightly above the surface of a sphere
 levels = [RADIUS * 1.01]
 
 ###############################################################################

@@ -187,7 +187,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extention
+        # Check file extension
         if '.vtr' in filename:
             legacy_writer = False
         elif '.vtk' in filename:
@@ -459,7 +459,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extention
+        # Check file extension
         if '.vti' in filename:
             legacy_writer = False
         elif '.vtk' in filename:

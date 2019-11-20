@@ -315,7 +315,7 @@ def lines_from_points(points):
 def vector_poly_data(orig, vec):
     """ Creates a vtkPolyData object composed of vectors """
 
-    # shape, dimention checking
+    # shape, dimension checking
     if not isinstance(orig, np.ndarray):
         orig = np.asarray(orig)
 

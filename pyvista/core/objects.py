@@ -316,7 +316,7 @@ class Table(vtk.vtkTable, DataObject):
             row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
 
             def format_array(key):
-                """internal helper to foramt array information for printing"""
+                """internal helper to format array information for printing"""
                 arr = row_array(self, key)
                 dl, dh = self.get_data_range(key)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
@@ -445,7 +445,7 @@ class Texture(vtk.vtkTexture):
 
 
     def flip(self, axis):
-        """Flip this texture inplace along the specifed axis. 0 for X and
+        """Flip this texture inplace along the specified axis. 0 for X and
         1 for Y."""
         if axis < 0 or axis > 1:
             raise RuntimeError("Axis {} out of bounds".format(axis))
