@@ -352,6 +352,12 @@ class Common(DataSetFilters, DataObject):
 
         return self._active_scalars_info
 
+    @property
+    def active_scalar_info(self):
+        """DEPRECATED: Return the active scalar's field and name: [field, name]"""
+        warnings.warn("DEPRECATED: use `.active_scalars_info` instead")
+        return self.active_scalars_info
+
 
     @property
     def active_vectors_info(self):
@@ -409,6 +415,19 @@ class Common(DataSetFilters, DataObject):
     def active_scalars_name(self, name):
         """Set the name of the active scalar"""
         return self.set_active_scalars(name)
+
+    @property
+    def active_scalar_name(self):
+        """Returns the active scalar's name"""
+        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
+        return self.active_scalars_name
+
+
+    @active_scalar_name.setter
+    def active_scalar_name(self, name):
+        """Set the name of the active scalar"""
+        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
+        self.active_scalars_name = name
 
 
     @property

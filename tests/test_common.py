@@ -433,11 +433,6 @@ def test_set_active_vectors_name():
     grid.active_vectors_name = None
 
 
-def test_set_active_scalars_name():
-    grid = GRID.copy()
-    grid.active_scalars_name = None
-
-
 def test_set_t_coords():
     grid = GRID.copy()
     with pytest.raises(TypeError):
@@ -480,7 +475,8 @@ def test_set_active_scalars():
 def test_set_active_scalars_name():
     grid = GRID.copy()
     point_keys = list(grid.point_arrays.keys())
-    grid.set_active_scalars_name = point_keys[0]
+    grid.active_scalars_name = point_keys[0]
+    grid.active_scalars_name = None
 
 
 def test_rename_array_point():
