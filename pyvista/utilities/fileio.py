@@ -192,7 +192,7 @@ def read_texture(filename, attrs=None):
     """Loads a ``vtkTexture`` from an image file."""
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
-        # inititialize the reader using the extension to find it
+        # initialize the reader using the extension to find it
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         return pyvista.image_to_texture(image)
