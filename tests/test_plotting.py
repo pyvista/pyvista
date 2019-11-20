@@ -623,7 +623,7 @@ def test_link_views():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_orthographic_slicer():
     data = examples.load_uniform()
-    data.set_active_scalar('Spatial Cell Data')
+    data.set_active_scalars('Spatial Cell Data')
 
     slices = data.slice_orthogonal()
 
@@ -698,10 +698,10 @@ def test_volume_rendering():
                                    b=examples.load_uniform(),
                                    c=examples.load_uniform(),
                                    d=examples.load_uniform(),))
-    data['a'].rename_scalar('Spatial Point Data', 'a')
-    data['b'].rename_scalar('Spatial Point Data', 'b')
-    data['c'].rename_scalar('Spatial Point Data', 'c')
-    data['d'].rename_scalar('Spatial Point Data', 'd')
+    data['a'].rename_array('Spatial Point Data', 'a')
+    data['b'].rename_array('Spatial Point Data', 'b')
+    data['c'].rename_array('Spatial Point Data', 'c')
+    data['d'].rename_array('Spatial Point Data', 'd')
     data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
 
 
@@ -846,10 +846,10 @@ def test_bad_keyword_arguments():
     with pytest.raises(TypeError):
         pyvista.plot(mesh, foo=5, off_screen=OFF_SCREEN)
     with pytest.raises(TypeError):
-        pyvista.plot(mesh, scalar=mesh.active_scalar_name, off_screen=OFF_SCREEN)
+        pyvista.plot(mesh, scalar=mesh.active_scalars_name, off_screen=OFF_SCREEN)
     with pytest.raises(TypeError):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
-        plotter.add_mesh(mesh, scalar=mesh.active_scalar_name)
+        plotter.add_mesh(mesh, scalar=mesh.active_scalars_name)
         plotter.show()
     with pytest.raises(TypeError):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)

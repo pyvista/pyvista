@@ -950,9 +950,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # If no texture, plot any active scalar
             else:
                 # Make sure scalar components are not vectors/tuples
-                scalars = mesh.active_scalar_name
+                scalars = mesh.active_scalars_name
                 # Don't allow plotting of string arrays by default
-                if scalars is not None:# and np.issubdtype(mesh.active_scalar.dtype, np.number):
+                if scalars is not None:# and np.issubdtype(mesh.active_scalars.dtype, np.number):
                     if stitle is None:
                         stitle = scalars
                 else:
@@ -1439,11 +1439,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             # Make sure scalar components are not vectors/tuples
-            scalars = volume.active_scalar
+            scalars = volume.active_scalars
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
                 if stitle is None:
-                    stitle = volume.active_scalar_info[1]
+                    stitle = volume.active_scalars_info[1]
             else:
                 raise RuntimeError('No scalars to use for volume rendering.')
         elif isinstance(scalars, str):
@@ -2810,7 +2810,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ifilter.Update()
         image = pyvista.wrap(ifilter.GetOutput())
         img_size = image.dimensions
-        img_array = pyvista.utilities.point_scalar(image, 'ImageScalars')
+        img_array = pyvista.utilities.point_array(image, 'ImageScalars')
 
         # Reshape and write
         tgt_size = (img_size[1], img_size[0], -1)

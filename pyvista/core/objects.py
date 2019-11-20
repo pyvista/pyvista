@@ -440,7 +440,7 @@ class Texture(vtk.vtkTexture):
             raise AssertionError('Input image must be nn by nm by RGB')
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
         grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
-        grid.set_active_scalar('Image')
+        grid.set_active_scalars('Image')
         return self._from_image_data(grid)
 
 
@@ -462,7 +462,7 @@ class Texture(vtk.vtkTexture):
     def to_array(self):
         image = self.to_image()
         shape = (image.dimensions[0], image.dimensions[1], 3)
-        return np.flip(image.active_scalar.reshape(shape, order='F'), axis=1).swapaxes(1,0)
+        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1,0)
 
 
     def plot(self, *args, **kwargs):

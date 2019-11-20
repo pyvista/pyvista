@@ -470,47 +470,47 @@ def test_set_active_scalars():
     grid_copy = grid.copy()
     arr = np.arange(grid_copy.n_cells)
     grid_copy.cell_arrays['tmp'] = arr
-    grid_copy.set_active_scalar('tmp')
-    assert np.allclose(grid_copy.active_scalar, arr)
+    grid_copy.set_active_scalars('tmp')
+    assert np.allclose(grid_copy.active_scalars, arr)
     # Make sure we can set no active scalars
-    grid_copy.set_active_scalar(None)
+    grid_copy.set_active_scalars(None)
     assert grid_copy.GetPointData().GetScalars() is None
     assert grid_copy.GetCellData().GetScalars() is None
 
-def test_set_active_scalar_name():
+def test_set_active_scalars_name():
     grid = GRID.copy()
     point_keys = list(grid.point_arrays.keys())
-    grid.set_active_scalar_name = point_keys[0]
+    grid.set_active_scalars_name = point_keys[0]
 
 
-def test_rename_scalar_point():
+def test_rename_array_point():
     grid = GRID.copy()
     point_keys = list(grid.point_arrays.keys())
     old_name = point_keys[0]
     new_name = 'point changed'
-    grid.set_active_scalar(old_name, preference='point')
-    grid.rename_scalar(old_name, new_name, preference='point')
+    grid.set_active_scalars(old_name, preference='point')
+    grid.rename_array(old_name, new_name, preference='point')
     assert new_name in grid.point_arrays
     assert old_name not in grid.point_arrays
 
 
-def test_rename_scalar_cell():
+def test_rename_array_cell():
     grid = GRID.copy()
     cell_keys = list(grid.cell_arrays.keys())
     old_name = cell_keys[0]
     new_name = 'cell changed'
-    grid.rename_scalar(old_name, new_name)
+    grid.rename_array(old_name, new_name)
     assert new_name in grid.cell_arrays
     assert old_name not in grid.cell_arrays
 
 
-def test_rename_scalar_field():
+def test_rename_array_field():
     grid = GRID.copy()
     grid.field_arrays['fieldfoo'] = np.array([8, 6, 7])
     field_keys = list(grid.field_arrays.keys())
     old_name = field_keys[0]
     new_name = 'cell changed'
-    grid.rename_scalar(old_name, new_name)
+    grid.rename_array(old_name, new_name)
     assert new_name in grid.field_arrays
     assert old_name not in grid.field_arrays
 
@@ -518,7 +518,7 @@ def test_rename_scalar_field():
 def test_change_name_fail():
     grid = GRID.copy()
     with pytest.raises(RuntimeError):
-        grid.rename_scalar('not a key', '')
+        grid.rename_array('not a key', '')
 
 
 def test_get_cell_array_fail():

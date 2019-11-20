@@ -305,13 +305,13 @@ class Common(DataSetFilters, DataObject):
 
 
     @property
-    def active_scalar_info(self):
+    def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]"""
-        if not hasattr(self, '_active_scalar_info'):
-            self._active_scalar_info = [POINT_DATA_FIELD, None] # field and name
-        if not hasattr(self, '_last_active_scalar_name'):
-            self._last_active_scalar_name = None
-        field, name = self._active_scalar_info
+        if not hasattr(self, '_active_scalars_info'):
+            self._active_scalars_info = [POINT_DATA_FIELD, None] # field and name
+        if not hasattr(self, '_last_active_scalars_name'):
+            self._last_active_scalars_name = None
+        field, name = self._active_scalars_info
 
         # rare error where scalar name isn't a valid scalar
         if name not in self.point_arrays:
@@ -335,7 +335,7 @@ class Common(DataSetFilters, DataObject):
             return arr
 
         if name in exclude:
-            name = self._last_active_scalar_name
+            name = self._last_active_scalars_name
 
         if name is None:
             if self.n_arrays < 1:
@@ -344,13 +344,13 @@ class Common(DataSetFilters, DataObject):
             parr = search_for_array(self.GetPointData())
             carr = search_for_array(self.GetCellData())
             if parr is not None:
-                self._active_scalar_info = [POINT_DATA_FIELD, parr]
+                self._active_scalars_info = [POINT_DATA_FIELD, parr]
                 self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
-                self._active_scalar_info = [CELL_DATA_FIELD, carr]
+                self._active_scalars_info = [CELL_DATA_FIELD, carr]
                 self.GetCellData().SetActiveScalars(carr)
 
-        return self._active_scalar_info
+        return self._active_scalars_info
 
 
     @property
@@ -400,15 +400,15 @@ class Common(DataSetFilters, DataObject):
 
 
     @property
-    def active_scalar_name(self):
+    def active_scalars_name(self):
         """Returns the active scalar's name"""
-        return self.active_scalar_info[1]
+        return self.active_scalars_info[1]
 
 
-    @active_scalar_name.setter
-    def active_scalar_name(self, name):
+    @active_scalars_name.setter
+    def active_scalars_name(self, name):
         """Set the name of the active scalar"""
-        return self.set_active_scalar(name)
+        return self.set_active_scalars(name)
 
 
     @property
@@ -563,7 +563,7 @@ class Common(DataSetFilters, DataObject):
         return texture
 
 
-    def set_active_scalar(self, name, preference='cell'):
+    def set_active_scalars(self, name, preference='cell'):
         """Finds the scalar by name and appropriately sets it as active.
         To deactivate any active scalars, pass ``None`` as the ``name``.
         """
@@ -572,14 +572,22 @@ class Common(DataSetFilters, DataObject):
             self.GetPointData().SetActiveScalars(None)
             return
         _, field = get_array(self, name, preference=preference, info=True)
-        self._last_active_scalar_name = self.active_scalar_info[1]
+        self._last_active_scalars_name = self.active_scalars_info[1]
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveScalars(name)
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
-        self._active_scalar_info = [field, name]
+        self._active_scalars_info = [field, name]
+
+
+    def set_active_scalar(self, name, preference='cell'):
+        """Finds the scalar by name and appropriately sets it as active.
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+        """
+        warnings.warn("DEPRECATED: please use `.set_active_scalars` instead.")
+        return self.set_active_scalars(name, preference=preference)
 
 
     def set_active_vectors(self, name, preference='point'):
@@ -600,7 +608,7 @@ class Common(DataSetFilters, DataObject):
         self._active_vectors_info = [field, name]
 
 
-    def rename_scalar(self, old_name, new_name, preference='cell'):
+    def rename_array(self, old_name, new_name, preference='cell'):
         """Changes array name by searching for the array then renaming it"""
         _, field = get_array(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
@@ -611,14 +619,33 @@ class Common(DataSetFilters, DataObject):
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
-        if self.active_scalar_info[1] == old_name:
-            self.set_active_scalar(new_name, preference=field)
+        if self.active_scalars_info[1] == old_name:
+            self.set_active_scalars(new_name, preference=field)
+
+
+    def rename_scalar(self, old_name, new_name, preference='cell'):
+        """DEPRECATED: Changes array name by searching for the array then
+        renaming it"""
+        warnings.warn("DEPRECATED: please use `.rename_array` instead.")
+        return self.rename_array(old_name, new_name, preference=preference)
 
 
     @property
-    def active_scalar(self):
+    def active_scalars(self):
         """Returns the active scalar as an array"""
-        field, name = self.active_scalar_info
+        field, name = self.active_scalars_info
+        if name is None:
+            return None
+        if field == POINT_DATA_FIELD:
+            return self._point_array(name)
+        elif field == CELL_DATA_FIELD:
+            return self._cell_array(name)
+
+    @property
+    def active_scalar(self):
+        """DEPRECATED: Returns the active scalar as an array"""
+        warnings.warn("DEPRECATED: please use `.rename_array` instead.")
+        field, name = self.active_scalars_info
         if name is None:
             return None
         if field == POINT_DATA_FIELD:
@@ -644,7 +671,7 @@ class Common(DataSetFilters, DataObject):
         """
         if name is None:
             # use active scalar array
-            field, name = self.active_scalar_info
+            field, name = self.active_scalars_info
             if field != POINT_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetAbstractArray(name)
@@ -705,9 +732,9 @@ class Common(DataSetFilters, DataObject):
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
-        if set_active or self.active_scalar_info[1] is None:
+        if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
-            self._active_scalar_info = [POINT_DATA_FIELD, name]
+            self._active_scalars_info = [POINT_DATA_FIELD, name]
 
 
     def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
@@ -733,7 +760,7 @@ class Common(DataSetFilters, DataObject):
         """
         if arr is None:
             # use active scalar array
-            _, arr = self.active_scalar_info
+            _, arr = self.active_scalars_info
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
@@ -852,7 +879,7 @@ class Common(DataSetFilters, DataObject):
         """
         if name is None:
             # use active scalar array
-            field, name = self.active_scalar_info
+            field, name = self.active_scalars_info
             if field != CELL_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
 
@@ -911,9 +938,9 @@ class Common(DataSetFilters, DataObject):
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetCellData().AddArray(vtkarr)
-        if set_active or self.active_scalar_info[1] is None:
+        if set_active or self.active_scalars_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
-            self._active_scalar_info = [CELL_DATA_FIELD, name]
+            self._active_scalars_info = [CELL_DATA_FIELD, name]
 
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
@@ -924,7 +951,7 @@ class Common(DataSetFilters, DataObject):
 
     def copy_meta_from(self, ido):
         """Copies pyvista meta data onto this object from another object"""
-        self._active_scalar_info = ido.active_scalar_info
+        self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         if hasattr(ido, '_textures'):
             self._textures = ido._textures
@@ -1173,8 +1200,8 @@ class Common(DataSetFilters, DataObject):
         for i in range(self.GetFieldData().GetNumberOfArrays()):
             names.append(self.GetFieldData().GetArrayName(i))
         try:
-            names.remove(self.active_scalar_name)
-            names.insert(0, self.active_scalar_name)
+            names.remove(self.active_scalars_name)
+            names.insert(0, self.active_scalars_name)
         except ValueError:
             pass
         return names
@@ -1227,7 +1254,7 @@ class Common(DataSetFilters, DataObject):
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
-                if name == self.active_scalar_info[1]:
+                if name == self.active_scalars_info[1]:
                     name = '<b>{}</b>'.format(name)
                 if arr.ndim > 1:
                     ncomp = arr.shape[1]

@@ -5,6 +5,7 @@ Supporting functions for polydata and grid objects
 import collections
 import ctypes
 import logging
+import warnings
 
 import numpy as np
 import scooby
@@ -123,20 +124,35 @@ def is_pyvista_dataset(obj):
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
 
 
-def point_scalar(mesh, name):
+def point_array(mesh, name):
     """ Returns point scalars of a vtk object """
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
-def field_scalar(mesh, name):
+def point_scalar(mesh, name):
+    """DEPRECATED: Returns point scalars of a vtk object """
+    warnings.warn("DEPRECATED: please use `point_array` instead.")
+    return point_array(mesh, name)
+
+def field_array(mesh, name):
     """ Returns field scalars of a vtk object """
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
-def cell_scalar(mesh, name):
+def field_scalar(mesh, name):
+    """DEPRECATED Returns field scalars of a vtk object """
+    warnings.warn("DEPRECATED: please use `field_array` instead.")
+    return field_array(mesh, name)
+
+def cell_array(mesh, name):
     """ Returns cell scalars of a vtk object """
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
+def cell_scalar(mesh, name):
+    """DEPRECATED: Returns cell scalars of a vtk object """
+    warnings.warn("DEPRECATED: please use `cell_array` instead.")
+    return cell_array(mesh, name)
 
 def row_array(data_object, name):
     """ Returns cell scalars of a vtk object """
@@ -192,9 +208,9 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
             return arr, field
         return arr
 
-    parr = point_scalar(mesh, name)
-    carr = cell_scalar(mesh, name)
-    farr = field_scalar(mesh, name)
+    parr = point_array(mesh, name)
+    carr = cell_array(mesh, name)
+    farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
     if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
         if preference == CELL_DATA_FIELD:
@@ -410,7 +426,7 @@ def wrap(vtkdataset):
         elif vtkdataset.ndim == 3:
             mesh = pyvista.UniformGrid(vtkdataset.shape)
             mesh['values'] = vtkdataset.ravel(order='F')
-            mesh.active_scalar_name = 'values'
+            mesh.active_scalars_name = 'values'
             return mesh
         else:
             print(vtkdataset.shape, vtkdataset)

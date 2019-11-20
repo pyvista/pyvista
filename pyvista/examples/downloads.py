@@ -305,7 +305,7 @@ def download_spider():
 
 def download_carotid():
     mesh = _download_and_read('carotid.vtk')
-    mesh.set_active_scalar('scalars')
+    mesh.set_active_scalars('scalars')
     mesh.set_active_vectors('vectors')
     return mesh
 
@@ -371,10 +371,10 @@ def download_tetra_dc_mesh():
     local_path, _ = _download_file('dc-inversion.zip')
     filename = os.path.join(local_path, 'mesh-forward.vtu')
     fwd = pyvista.read(filename)
-    fwd.set_active_scalar('Resistivity(log10)-fwd')
+    fwd.set_active_scalars('Resistivity(log10)-fwd')
     filename = os.path.join(local_path, 'mesh-inverse.vtu')
     inv = pyvista.read(filename)
-    inv.set_active_scalar('Resistivity(log10)')
+    inv.set_active_scalars('Resistivity(log10)')
     return pyvista.MultiBlock({'forward':fwd, 'inverse':inv})
 
 

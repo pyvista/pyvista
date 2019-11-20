@@ -710,7 +710,7 @@ class WidgetHelper(object):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', str(hex(id(mesh))))
         if scalars is None:
-            field, scalars = mesh.active_scalar_info
+            field, scalars = mesh.active_scalars_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
         if arr is None:
             raise AssertionError('No arrays present to threshold.')
@@ -780,7 +780,7 @@ class WidgetHelper(object):
         if mesh.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have scalar data.')
         if scalars is None:
-            field, scalars = mesh.active_scalar_info
+            field, scalars = mesh.active_scalars_info
         else:
             _, field = get_array(mesh, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?

@@ -36,15 +36,15 @@ from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
                                wrap)
 
 
-def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalar=None,
-                active_scalar_field='point'):
+def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
+                active_scalars_field='point'):
     """A helper to get the algorithm's output and copy input's pyvista meta info"""
     ido = algorithm.GetInputDataObject(iport, iconnection)
     data = wrap(algorithm.GetOutputDataObject(oport))
     if not isinstance(data, pyvista.MultiBlock):
         data.copy_meta_from(ido)
-        if active_scalar is not None:
-            data.set_active_scalar(active_scalar, preference=active_scalar_field)
+        if active_scalars is not None:
+            data.set_active_scalars(active_scalars, preference=active_scalars_field)
     return data
 
 
@@ -416,7 +416,7 @@ class DataSetFilters(object):
         This filter will apply a ``vtkThreshold`` filter to the input dataset and
         return the resulting object. This extracts cells where scalar value in each
         cell satisfies threshold criterion.  If scalars is None, the inputs
-        active_scalar is used.
+        active_scalars is used.
 
         Parameters
         ----------
@@ -446,7 +446,7 @@ class DataSetFilters(object):
         """
         # set the scalaras to threshold on
         if scalars is None:
-            field, scalars = dataset.active_scalar_info
+            field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
@@ -523,7 +523,7 @@ class DataSetFilters(object):
 
         """
         if scalars is None:
-            _, tscalars = dataset.active_scalar_info
+            _, tscalars = dataset.active_scalars_info
         else:
             tscalars = scalars
         dmin, dmax = dataset.get_data_range(arr=tscalars, preference=preference)
@@ -677,7 +677,7 @@ class DataSetFilters(object):
         name = 'Elevation' # Note that this is added to the PointData
         if not set_active:
             name = None
-        return _get_output(alg, active_scalar=name, active_scalar_field='point')
+        return _get_output(alg, active_scalars=name, active_scalars_field='point')
 
 
     def contour(dataset, isosurfaces=10, scalars=None, compute_normals=False,
@@ -736,7 +736,7 @@ class DataSetFilters(object):
         alg.SetComputeScalars(compute_scalars)
         # set the array to contour on
         if scalars is None:
-            field, scalars = dataset.active_scalar_info
+            field, scalars = dataset.active_scalars_info
         else:
             _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
@@ -910,11 +910,11 @@ class DataSetFilters(object):
         alg = vtk.vtkGlyph3D()
         alg.SetSourceData(geom)
         if isinstance(scale, str):
-            dataset.active_scalar_name = scale
+            dataset.active_scalars_name = scale
             scale = True
         if scale:
-            if dataset.active_scalar is not None:
-                if dataset.active_scalar.ndim > 1:
+            if dataset.active_scalars is not None:
+                if dataset.active_scalars.ndim > 1:
                     alg.SetScaleModeToScaleByVector()
                 else:
                     alg.SetScaleModeToScaleByScalar()
@@ -1035,7 +1035,7 @@ class DataSetFilters(object):
         factor = kwargs.pop('scale_factor', factor)
         assert_empty_kwargs(**kwargs)
         if scalars is None:
-            field, scalars = dataset.active_scalar_info
+            field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != pyvista.POINT_DATA_FIELD:
             raise AssertionError('Dataset can only by warped by a point data array.')
@@ -1075,10 +1075,10 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.SetPassCellData(pass_cell_data)
         alg.Update()
-        active_scalar = None
+        active_scalars = None
         if not isinstance(dataset, pyvista.MultiBlock):
-            active_scalar = dataset.active_scalar_name
-        return _get_output(alg, active_scalar=active_scalar)
+            active_scalars = dataset.active_scalars_name
+        return _get_output(alg, active_scalars=active_scalars)
 
 
     def ctp(dataset, pass_cell_data=False):
@@ -1102,10 +1102,10 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.SetPassPointData(pass_point_data)
         alg.Update()
-        active_scalar = None
+        active_scalars = None
         if not isinstance(dataset, pyvista.MultiBlock):
-            active_scalar = dataset.active_scalar_name
-        return _get_output(alg, active_scalar=active_scalar)
+            active_scalars = dataset.active_scalars_name
+        return _get_output(alg, active_scalars=active_scalars)
 
 
     def ptc(dataset, pass_point_data=False):
@@ -1451,7 +1451,7 @@ class DataSetFilters(object):
         step_unit = {'cl':vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
                      'l':vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
         if isinstance(vectors, str):
-            dataset.set_active_scalar(vectors)
+            dataset.set_active_scalars(vectors)
             dataset.set_active_vectors(vectors)
         if max_time is None:
             max_velocity = dataset.get_data_range()[-1]
@@ -1589,7 +1589,7 @@ class DataSetFilters(object):
 
         # Get variable of interest
         if scalars is None:
-            field, scalars = dataset.active_scalar_info
+            field, scalars = dataset.active_scalars_info
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
 
@@ -2013,7 +2013,7 @@ class DataSetFilters(object):
         alg = vtk.vtkGradientFilter()
         # Check if scalar array given
         if scalars is None:
-            field, scalars = dataset.active_scalar_info
+            field, scalars = dataset.active_scalars_info
         if not isinstance(scalars, str):
             raise TypeError('Scalar array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
@@ -2170,7 +2170,7 @@ class PolyDataFilters(DataSetFilters):
         featureEdges.SetFeatureAngle(angle)
         featureEdges.Update()
         edges = _get_output(featureEdges)
-        orig_id = pyvista.point_scalar(edges, 'point_ind')
+        orig_id = pyvista.point_array(edges, 'point_ind')
 
         return np.in1d(poly_data.point_arrays['point_ind'], orig_id,
                        assume_unique=True)
@@ -3444,7 +3444,7 @@ class UniformGridFilters(DataSetFilters):
         alg = vtk.vtkImageGaussianSmooth()
         alg.SetInputDataObject(dataset)
         if scalars is None:
-            field, scalars = dataset.active_scalar_info
+            field, scalars = dataset.active_scalars_info
         else:
             _, field = dataset.get_array(scalars, preference=preference, info=True)
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
