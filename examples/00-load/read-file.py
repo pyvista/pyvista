@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 # Get a sample file
 filename = examples.planefile
-print(filename)
+filename
 
 ###############################################################################
 # Note the above filename, it's a ``.ply`` file - one of the many supported
@@ -46,12 +46,12 @@ plotter.show(screenshot="myscreenshot.png")
 ###############################################################################
 # The points from the mesh are directly accessible as a NumPy array:
 
-print(mesh.points)
+mesh.points
 
 ###############################################################################
 # The faces from the mesh are also directly accessible as a NumPy array:
 
-print(mesh.faces.reshape(-1, 4)[:, 1:]) # triangular faces
+mesh.faces.reshape(-1, 4)[:, 1:] # triangular faces
 
 
 ###############################################################################

@@ -90,13 +90,13 @@ x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
 spline = pv.Spline(points, 15)
-print(spline)
+spline
 
 
 ###############################################################################
 # Then run the filter
 slc = model.slice_along_line(spline)
-print(slc)
+slc
 
 ###############################################################################
 

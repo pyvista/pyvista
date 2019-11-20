@@ -27,8 +27,7 @@ poly = pv.PolyData(np.random.rand(10, 3))
 # node:
 
 poly["My Labels"] = ["Label {}".format(i) for i in range(poly.n_points)]
-
-print(poly)
+poly
 
 ###############################################################################
 # Now plot the points with labels:

@@ -15,7 +15,7 @@ pv.rcParams["use_panel"] = False
 
 # Download a volumetric dataset
 vol = examples.download_knee_full()
-print(vol)
+vol
 
 ###############################################################################
 # Simple Volume Render
