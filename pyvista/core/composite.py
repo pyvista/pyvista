@@ -266,6 +266,13 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def __getitem__(self, index):
         """Get a block by its index or name (if the name is non-unique then
         returns the first occurence)"""
+        if isinstance(index, slice):
+            stop = index.stop if index.stop >= 0 else self.n_blocks + index.stop + 1
+            step = index.step if isinstance(index.step, int) else 1
+            multi = MultiBlock()
+            for i in range(index.start, stop, step):
+                multi[-1, self.get_block_name(i)] = self[i]
+            return multi
         if isinstance(index, str):
             index = self.get_index_by_name(index)
         if index < 0:
