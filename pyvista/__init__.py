@@ -1,3 +1,5 @@
+"""PyVista package for 3D plotting and mesh analysis."""
+
 import warnings
 from pyvista._version import __version__
 from pyvista.plotting import *
