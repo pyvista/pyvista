@@ -2,7 +2,7 @@
 Geodesic Paths
 ~~~~~~~~~~~~~~
 
-Calculates the geodesic path betweeen two vertices using Dijkstra's algorithm
+Calculates the geodesic path between two vertices using Dijkstra's algorithm
 """
 # sphinx_gallery_thumbnail_number = 1
 import pyvista as pv
@@ -11,7 +11,7 @@ from pyvista import examples
 sphere = examples.load_globe()
 
 ###############################################################################
-# Get teh geodesic path as a new :class:`pyvista.PolyData` object:
+# Get the geodesic path as a new :class:`pyvista.PolyData` object:
 
 geodesic = sphere.geodesic(0, sphere.n_points - 1)
 
