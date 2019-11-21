@@ -93,5 +93,5 @@ grid = pv.create_grid(surface)
 # Clip the grid using the surface
 model = grid.clip_surface(surface)
 
-# Compute height nd display it
+# Compute height and display it
 model.elevation().plot()

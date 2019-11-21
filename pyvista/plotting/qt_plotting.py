@@ -325,7 +325,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     multi_samples : int
         The number of multi-samples used to mitigate aliasing. 4 is a good
         default but 8 will have better results with a potential impact on
-        perfromance.
+        performance.
 
     line_smoothing : bool
         If True, enable line smothing
@@ -608,7 +608,7 @@ class BackgroundPlotter(QtInteractor):
         axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
         axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
 
-        # A final separator to seperate OS options
+        # A final separator to separate OS options
         view_menu.addSeparator()
 
         vlayout = QVBoxLayout()
@@ -696,7 +696,7 @@ class BackgroundPlotter(QtInteractor):
         elif ((cur_time - self._last_update_time > BackgroundPlotter.ICON_TIME_STEP)
                 and self._last_camera_pos != self.camera_position):
             # its been a while since last update OR
-            #   the camera position has changed and its been at leat one second
+            # the camera position has changed and its been at least one second
 
             # Update app icon as preview of the window
             img = pad_image(self.image)

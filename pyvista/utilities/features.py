@@ -32,9 +32,9 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
     if dimensions is None:
         # TODO: we should implement an algorithm to automatically determine an
         # "optimal" grid size by looking at the sparsity of the points in the
-        # input dataset - I actaully think VTK might have this implemented
+        # input dataset - I actually think VTK might have this implemented
         # somewhere
-        raise NotImplementedError('Please specifiy dimensions.')
+        raise NotImplementedError('Please specify dimensions.')
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.UniformGrid()
     image.dimensions = dimensions

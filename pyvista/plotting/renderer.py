@@ -264,7 +264,7 @@ class Renderer(vtkRenderer):
         use_2d : bool, optional
             A bug with vtk 6.3 in Windows seems to cause this function
             to crash this can be enabled for smoother plotting for
-            other enviornments.
+            other environments.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or

@@ -701,8 +701,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             (options include: 'linear', 'linear_r', 'geom', 'geom_r').
             A string could also be used to map a scalar array from the mesh to
             the opacity (must have same number of elements as the
-            ``scalars`` argument). Or you can pass a custum made trasfer
-            function that is an aray either ``n_colors`` in length or shorter.
+            ``scalars`` argument). Or you can pass a custum made transfer
+            function that is an array either ``n_colors`` in length or shorter.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -765,7 +765,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         texture : vtk.vtkTexture or np.ndarray or boolean, optional
             A texture to apply if the input mesh has texture
             coordinates.  This will not work with MultiBlock
-            datasets. If set to ``True``, the first avaialble texture
+            datasets. If set to ``True``, the first available texture
             on the object will be used. If a string name is given, it
             will pull a texture with that name associated to the input
             mesh.
@@ -788,7 +788,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The specular lighting coefficient. Default 0.0
 
         specular_power : float, optional
-            The specular power. Bewteen 0.0 and 128.0
+            The specular power. Between 0.0 and 128.0
 
         nan_color : string or 3 item list, optional, defaults to gray
             The color to use for all ``NaN`` values in the plotted scalar
@@ -820,7 +820,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         use_transparency : bool, optional
             Invert the opacity mappings and make the values correspond to
-            transperency.
+            transparency.
 
         below_color : string or 3 item list, optional
             Solid color for values below the scalar range (``clim``). This will
@@ -844,7 +844,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             VTK actor of the mesh.
 
         """
-        # Convert the VTK data object to a pyvista wrapped object if neccessary
+        # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
             if not is_pyvista_dataset(mesh):
@@ -900,7 +900,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ##### Handle composite datasets #####
 
         if isinstance(mesh, pyvista.MultiBlock):
-            # frist check the scalars
+            # first check the scalars
             if clim is None and scalars is not None:
                 # Get the data range across the array for all blocks
                 # if scalar specified
@@ -1068,7 +1068,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity = normalize(opacity)
                 _custom_opac = True
             except:
-                # Or get opacity trasfer function
+                # Or get opacity transfer function
                 opacity = opacity_transfer_function(opacity, n_colors)
             else:
                 if scalars.shape[0] != opacity.shape[0]:
@@ -1087,7 +1087,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             opacity = 255 - opacity
 
         # Scalar formatting ===================================================
-        if cmap is None: # Set default map if matplotlib is avaialble
+        if cmap is None: # Set default map if matplotlib is available
             if has_matplotlib:
                 cmap = rcParams['cmap']
         # Set the array title for when it is added back to the mesh
@@ -1322,7 +1322,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             A string can also be specified to map the scalar range to a
             predefined opacity transfer function (options include: 'linear',
             'linear_r', 'geom', 'geom_r'). Or you can pass a custum made
-            trasfer function that is an aray either ``n_colors`` in length or
+            transfer function that is an array either ``n_colors`` in length or
             shorter.
 
         n_colors : int, optional
@@ -1437,7 +1437,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if culling is True:
             culling = 'backface'
 
-        # Convert the VTK data object to a pyvista wrapped object if neccessary
+        # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
             if isinstance(volume, np.ndarray):
                 volume = wrap(volume)
@@ -1580,7 +1580,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for val, anno in annotations.items():
                 table.SetAnnotation(float(val), str(anno))
 
-        if cmap is None: # Set default map if matplotlib is avaialble
+        if cmap is None: # Set default map if matplotlib is available
             if has_matplotlib:
                 cmap = rcParams['cmap']
 
@@ -2002,7 +2002,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         use_2d : bool, optional
             A bug with vtk 6.3 in Windows seems to cause this function
             to crash this can be enabled for smoother plotting for
-            other enviornments.
+            other environments.
 
         grid : bool or str, optional
             Add grid lines to the backface (``True``, ``'back'``, or
@@ -2327,7 +2327,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Use a widget to control the size and location of the scalar bar.
 
         use_opacity : bool, optional
-            Optionally disply the opacity mapping on the scalar bar
+            Optionally display the opacity mapping on the scalar bar
 
         outline : bool, optional
             Optionally outline the scalar bar to make opacity mappings more
@@ -2718,7 +2718,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             it returns a more general `vtkOpenGLTextActor`.
             If string name is used, it returns a `vtkCornerAnnotation`
             object normally used for fixed labels (like title or xlabel).
-            Default is to find the top left corner of the renderering window
+            Default is to find the top left corner of the rendering window
             and place text box up there. Available position: ``'lower_left'``,
             ``'lower_right'``, ``'upper_left'``, ``'upper_right'``,
             ``'lower_edge'``, ``'upper_edge'``, ``'right_edge'``, and
@@ -3108,7 +3108,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         margin : int, optional
             The size of the margin on the label background shape. Default is 3.
 
-        shape_opacity : flaot
+        shape_opacity : float
             The opacity of the shape between zero and one.
 
         tolerance : float
@@ -3142,7 +3142,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(labels, str):
                 labels = points.point_arrays[labels].astype(str)
         else:
-            raise TypeError('Points type not useable: {}'.format(type(points)))
+            raise TypeError('Points type not usable: {}'.format(type(points)))
 
         if len(vtkpoints.points) != len(labels):
             raise Exception('There must be one label for each point')
@@ -3162,7 +3162,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         vis_points.SetRenderer(self.renderer)
         vis_points.SetTolerance(tolerance)
 
-        # Create heirarchy
+        # Create hierarchy
         hier = vtk.vtkPointSetToLabelHierarchy()
         hier.SetInputConnection(vis_points.GetOutputPort())
         hier.SetLabelArrayName('labels')
@@ -3416,7 +3416,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             - add_lines
             - add_points
 
-            List contianing one entry for each item to be added to the
+            List containing one entry for each item to be added to the
             legend.  Each entry must contain two strings, [label,
             color], where label is the name of the item to add, and
             color is the color of the label to add.
@@ -3701,7 +3701,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             travel
 
         focus : list(float) of length 3, optional
-            The point ot focus the camera.
+            The point of focus the camera.
 
         step : float, optional
             The timestep between flying to each camera position
@@ -3832,7 +3832,7 @@ class Plotter(BasePlotter):
     multi_samples : int
         The number of multi-samples used to mitigate aliasing. 4 is a good
         default but 8 will have better results with a potential impact on
-        perfromance.
+        performance.
 
     line_smoothing : bool
         If True, enable line smothing

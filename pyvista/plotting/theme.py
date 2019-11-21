@@ -126,7 +126,7 @@ def parse_color(color, opacity=None):
     else:
         raise Exception("""
     Invalid color input: ({})
-    Must ba string, rgb list, or hex color string.  For example:
+    Must be string, rgb list, or hex color string.  For example:
         color='white'
         color='w'
         color=[1, 1, 1]

@@ -33,7 +33,7 @@ import numpy as np
 # plot.
 
 mesh = examples.download_st_helens().warp_by_scalar()
-# Add scalar array with range (0, 100) taht correlates with elevation
+# Add scalar array with range (0, 100) that correlates with elevation
 mesh['values'] = pv.plotting.normalize(mesh['Elevation']) * 100
 
 ###############################################################################
@@ -74,7 +74,7 @@ mesh.plot(scalars='values', cmap=boring_cmap)
 mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 ###############################################################################
-# If you still wish to have control of the seperation of values, you
+# If you still wish to have control of the separation of values, you
 # can do this by creating a scalar array and passing that to the
 # plotter along with the the colormap
 scalars = np.empty(mesh.n_points)

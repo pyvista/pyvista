@@ -48,7 +48,7 @@ class Observer:
         return
 
     def __call__(self, obj, event, message):
-        """On an event occurence, this function executes"""
+        """On an event occurrence, this function executes"""
         self.__event_occurred = True
         self.__message_etc = message
         kind, path, address, alert = self.parse_message(message)
@@ -57,7 +57,7 @@ class Observer:
             self.log_message(kind, alert)
 
     def has_event_occurred(self):
-        """Ask self if an error has occured since last querried.
+        """Ask self if an error has occurred since last querried.
         This resets the observer's status.
         """
         occ = self.__event_occurred

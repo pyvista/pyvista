@@ -25,7 +25,7 @@ log.setLevel('CRITICAL')
 
 
 class PointSet(Common):
-    """PyVista's equivalant of vtk.vtkPointSet. This holds methods common to
+    """PyVista's equivalent of vtk.vtkPointSet. This holds methods common to
     PolyData and UnstructuredGrid.
     """
 
@@ -529,7 +529,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> from pyvista import examples
     >>> import vtk
 
-    >>> # Create an empy grid
+    >>> # Create an empty grid
     >>> grid = pyvista.UnstructuredGrid()
 
     >>> # Copy a vtkUnstructuredGrid
@@ -692,7 +692,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         if not os.path.isfile(filename):
             raise Exception('%s does not exist' % filename)
 
-        # Check file extention
+        # Check file extension
         if '.vtu' in filename:
             reader = vtk.vtkXMLUnstructuredGridReader()
         elif '.vtk' in filename:
@@ -940,7 +940,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extention
+        # Check file extension
         if '.vts' in filename:
             legacy_writer = False
         elif '.vtk' in filename:
