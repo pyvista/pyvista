@@ -82,6 +82,15 @@ matrix:
       # Run all code examples in the docstrings
       script: pytest -v --cov --doctest-modules pyvista
     # Build/test/deploy documentation on 3.7 only
+    - name: Documentation Testing 3.7
+      python: 3.7
+      env:
+        - CODESPELL_DIRS="docs pyvista examples"
+        - CODESPELL_SKIP="*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti"
+        - CODESPELL_IGNORE="flem,LOD,byteorder"
+      script: |
+        pip install codespell;
+        codespell $CODESPELL_DIRS -S $CODESPELL_SKIP -L $CODESPELL_IGNORE;
     - name: Documentation Build/Deploy 3.7
       python: 3.7
       env:
