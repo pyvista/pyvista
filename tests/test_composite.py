@@ -332,6 +332,21 @@ def test_multi_slice_index():
         assert id(sub[i]) == id(multi[j])
         assert sub.get_block_name(i) == multi.get_block_name(j)
 
+def test_multi_block_list_index():
+    multi = pyvista.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(ex.load_globe())
+    # Now check everything
+    indices = [0, 3, 4]
+    sub = multi[indices]
+    assert len(sub) == len(indices)
+    for i, j in enumerate(indices):
+        assert id(sub[i]) == id(multi[j])
+        assert sub.get_block_name(i) == multi.get_block_name(j)
 
 def test_multi_block_volume():
     multi = pyvista.MultiBlock()

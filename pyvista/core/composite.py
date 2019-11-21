@@ -273,8 +273,14 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             for i in range(index.start, stop, step):
                 multi[-1, self.get_block_name(i)] = self[i]
             return multi
-        if isinstance(index, str):
+        elif isinstance(index, (list, tuple, np.ndarray)):
+            multi = MultiBlock()
+            for i in index:
+                multi[-1, self.get_block_name(i)] = self[i]
+            return multi
+        elif isinstance(index, str):
             index = self.get_index_by_name(index)
+        ############################
         if index < 0:
             index = self.n_blocks + index
         if index < 0 or index >= self.n_blocks:
