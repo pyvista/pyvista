@@ -114,7 +114,7 @@ def get_object_id(obj):
 # -----------------------------------------------------------------------------
 
 def dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
-    """Dump vtkjs data arry"""
+    """Dump vtkjs data array"""
     if root is None:
         root = {}
     if not array:

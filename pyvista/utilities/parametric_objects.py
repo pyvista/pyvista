@@ -974,7 +974,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
                         min_v=0.0, max_v=2*pi, join_u=False, join_v=False,
                         twist_u=False, twist_v=False, clockwise=True):
-    """Applys keyword arguments to a parametric function.
+    """Applies keyword arguments to a parametric function.
 
     Parameters
     ----------

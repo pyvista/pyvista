@@ -22,8 +22,8 @@ class WidgetHelper(object):
         Parameters
         ----------
         callback : callable
-            The method called everytime the box is updated. This has two
-            options: Take a single argument, the ``PolyData`` box (defualt) or
+            The method called every time the box is updated. This has two
+            options: Take a single argument, the ``PolyData`` box (default) or
             if ``use_planes=True``, then it takes a single argument of the
             plane collection as a ``vtkPlanes`` object.
 
@@ -183,7 +183,7 @@ class WidgetHelper(object):
         Parameters
         ----------
         callback : callable
-            The method called everytime the plane is updated. Takes two
+            The method called every time the plane is updated. Takes two
             arguments, the normal and origin of the plane in that order.
 
         normal : str or tuple(float)
@@ -202,7 +202,7 @@ class WidgetHelper(object):
             Either a string, rgb list, or hex color string.
 
         assign_to_axis : str or int
-            Assign the normal of the plane to be parrallel with a given axis:
+            Assign the normal of the plane to be parallel with a given axis:
             options are (0, 'x'), (1, 'y'), or (2, 'z').
 
         tubing : bool
@@ -358,7 +358,7 @@ class WidgetHelper(object):
         mesh : pyvista.Common
             The input dataset to add to the scene and clip
 
-        noraml : str or tuple(flaot)
+        normal : str or tuple(float)
             The starting normal vector of the plane
 
         invert : bool
@@ -393,7 +393,7 @@ class WidgetHelper(object):
         def callback(normal, origin):
             function = generate_plane(normal, origin)
             alg.SetClipFunction(function) # the implicit function
-            alg.Update() # Perfrom the Cut
+            alg.Update() # Perform the Cut
             plane_clipped_mesh.shallow_copy(alg.GetOutput())
 
         self.add_plane_widget(callback=callback, bounds=mesh.bounds,
@@ -425,7 +425,7 @@ class WidgetHelper(object):
         mesh : pyvista.Common
             The input dataset to add to the scene and slice
 
-        noraml : str or tuple(flaot)
+        normal : str or tuple(float)
             The starting normal vector of the plane
 
         generate_triangles: bool, optional
@@ -456,7 +456,7 @@ class WidgetHelper(object):
             # create the plane for clipping
             plane = generate_plane(normal, origin)
             alg.SetCutFunction(plane) # the cutter to use the plane we made
-            alg.Update() # Perfrom the Cut
+            alg.Update() # Perform the Cut
             plane_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_plane_widget(callback=callback, bounds=mesh.bounds,
@@ -501,8 +501,8 @@ class WidgetHelper(object):
         Parameters
         ----------
         callback : callable
-            The method called everytime the line is updated. This has two
-            options: Take a single argument, the ``PolyData`` line (defualt) or
+            The method called every time the line is updated. This has two
+            options: Take a single argument, the ``PolyData`` line (default) or
             if ``use_vertices=True``, then it can take two arguments of the
             coordinates of the line's end points.
 
@@ -589,7 +589,7 @@ class WidgetHelper(object):
         Parameters
         ----------
         callback : callable
-            The method called everytime the slider is updated. This should take
+            The method called every time the slider is updated. This should take
             a single parameter: the float value of the slider
 
         rng : tuple(float)
@@ -839,7 +839,7 @@ class WidgetHelper(object):
         Parameters
         ----------
         callback : callable
-            The method called everytime the spline is updated. This passes a
+            The method called every time the spline is updated. This passes a
             :class:`pyvista.PolyData` object to the callback function of the
             generated spline.
 
@@ -967,7 +967,7 @@ class WidgetHelper(object):
             polyplane = vtk.vtkPolyPlane()
             polyplane.SetPolyLine(polyline)
             alg.SetCutFunction(polyplane) # the cutter to use the poly planes
-            alg.Update() # Perfrom the Cut
+            alg.Update() # Perform the Cut
             spline_sliced_mesh.shallow_copy(alg.GetOutput())
 
         self.add_spline_widget(callback=callback, bounds=mesh.bounds,
@@ -1017,7 +1017,7 @@ class WidgetHelper(object):
             The color of the sphere's surface
 
         style : str
-            Reprsentation style: surface or wireframe
+            Representation style: surface or wireframe
 
         selected_color : str
             Color of the widget when selected during interaction

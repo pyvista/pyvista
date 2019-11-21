@@ -187,7 +187,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extention
+        # Check file extension
         if '.vtr' in filename:
             legacy_writer = False
         elif '.vtk' in filename:
@@ -459,7 +459,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extention
+        # Check file extension
         if '.vti' in filename:
             legacy_writer = False
         elif '.vtk' in filename:
@@ -570,7 +570,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
 
     def cast_to_structured_grid(self):
-        """Cast this unifrom grid to a :class:`pyvista.StructuredGrid`"""
+        """Cast this uniform grid to a :class:`pyvista.StructuredGrid`"""
         alg = vtk.vtkImageToStructuredGrid()
         alg.SetInputData(self)
         alg.Update()
@@ -578,7 +578,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
 
     def cast_to_rectilinear_grid(self):
-        """Cast this unifrom grid to a :class:`pyvista.RectilinearGrid`"""
+        """Cast this uniform grid to a :class:`pyvista.RectilinearGrid`"""
         def gen_coords(i):
             coords = np.cumsum(np.insert(np.full(self.dimensions[i] - 1,
                                                  self.spacing[i]), 0, 0)

@@ -39,7 +39,7 @@ def _retrieve_file(url, filename):
     else:
         import urllib.request
         urlretrieve = urllib.request.urlretrieve
-    # Perfrom download
+    # Perform download
     saved_file, resp = urlretrieve(url)
     # new_name = saved_file.replace(os.path.basename(saved_file), os.path.basename(filename))
     # Make sure folder exists!
