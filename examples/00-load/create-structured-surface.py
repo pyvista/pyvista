@@ -51,7 +51,7 @@ grid.points
 # Quite often, you might be given a set of coordinates (XYZ points) in a simple
 # tabular format where there exists some structure such that grid could be
 # built between the nodes you have. A great example is found in
-# `pyvista-support#16`_ where a strucutred grid that is rotated from the
+# `pyvista-support#16`_ where a structured grid that is rotated from the
 # cartesian reference frame is given as just XYZ points. In these cases, all
 # that is needed to recover the grid is the dimensions of the grid
 # (`nx` by `ny` by `nz`) and that the coordinates are ordered appropriately.
@@ -101,7 +101,7 @@ plt.show()
 
 ###############################################################################
 # In the figure above, we can see some inherit structure to the points and thus
-# we could connect the points as a structured gird. All we need to know are the
+# we could connect the points as a structured grid. All we need to know are the
 # dimensions of the grid present. In this case, we know (because we made this
 # dataset) the dimensions are ``[29, 32, 1]``, but you might not know the
 # dimensions of your pointset. There are a few ways to figure out the
