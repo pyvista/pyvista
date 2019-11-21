@@ -87,10 +87,10 @@ matrix:
       env:
         - CODESPELL_DIRS="docs pyvista examples"
         - CODESPELL_SKIP="*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti"
-        - CODESPELL_IGNORE="ignore_words.txt"
+        - CODESPELL_IGNORE="lod,byteorder,flem"
       script: |
         pip install codespell;
-        codespell $CODESPELL_DIRS -S $CODESPELL_SKIP -I $CODESPELL_IGNORE;
+        codespell $CODESPELL_DIRS -S $CODESPELL_SKIP -L $CODESPELL_IGNORE;
     - name: Documentation Build/Deploy 3.7
       python: 3.7
       env:
