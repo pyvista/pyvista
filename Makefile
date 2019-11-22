@@ -1,4 +1,4 @@
-# Simple makefile to simplify repetetive build env management tasks under posix
+# Simple makefile to simplify repetitive build env management tasks under posix
 
 CODESPELL_DIRS ?= "docs pyvista examples"
 CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti"
