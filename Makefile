@@ -7,4 +7,4 @@ CODESPELL_IGNORE ?= "ignore_words.txt"
 all: codespell
 
 codespell:
-	codespell $CODESPELL_DIRS -S $CODESPELL_SKIP -I $CODESPELL_IGNORE
+	codespell $(CODESPELL_DIRS) -S $(CODESPELL_SKIP) -I $(CODESPELL_IGNORE)
