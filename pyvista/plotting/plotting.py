@@ -1078,7 +1078,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             title = stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
-            set_active = True
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -1114,10 +1113,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             def prepare_mapper(scalars):
                 # Scalar interpolation approach
                 if scalars.shape[0] == mesh.n_points:
-                    self.mesh._add_point_array(scalars, title, set_active)
+                    self.mesh._add_point_array(scalars, title, True)
                     self.mapper.SetScalarModeToUsePointData()
                 elif scalars.shape[0] == mesh.n_cells:
-                    self.mesh._add_cell_array(scalars, title, set_active)
+                    self.mesh._add_cell_array(scalars, title, True)
                     self.mapper.SetScalarModeToUseCellData()
                 else:
                     raise_not_matching(scalars, mesh)
@@ -1488,15 +1487,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ##############
 
         title = 'Data' if stitle is None else stitle
-        set_active = False
         if isinstance(scalars, str):
             title = scalars
             scalars = get_array(volume, scalars,
                                 preference=preference, err=True)
             if stitle is None:
                 stitle = title
-        else:
-            set_active = True
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
@@ -1524,10 +1520,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalar interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume._add_point_array(scalars, title, set_active)
+            volume._add_point_array(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume._add_cell_array(scalars, title, set_active)
+            volume._add_cell_array(scalars, title, True)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
