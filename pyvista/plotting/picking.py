@@ -443,7 +443,7 @@ class PickingHelper(object):
             The normal to the horizon surface's projection plane
 
         width : float
-            The width of teh horizon surface. Default behaviour will
+            The width of the horizon surface. Default behaviour will
             dynamically change the surface width depending on it's length.
 
         show_horizon : bool
@@ -469,7 +469,7 @@ class PickingHelper(object):
             Thickness of path representation if ``show_horizon`` is ``True``.
             Default 5.
 
-        opacity : flaot
+        opacity : float
             The opacity of the horizon surface if shown.
 
         tolerance : float
