@@ -147,7 +147,7 @@ execution of the code after calling ``show``.
 
 
 Note that the ``show`` method will return the last used camera position of the
-rendering window incase you want to chose a camera position and use it agian
+rendering window in case you want to chose a camera position and use it again
 later.
 
 You can then use this cached camera for additional plotting without having to

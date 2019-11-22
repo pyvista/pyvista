@@ -450,7 +450,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
 
 def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
     """
-    Createa a polygonal disk with a hole in the center. The disk has zero
+    Create a polygonal disk with a hole in the center. The disk has zero
     height. The user can specify the inner and outer radius of the disk, and
     the radial and circumferential resolution of the polygonal representation.
 
@@ -480,7 +480,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
 def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
          c_res=6):
     """
-    Createa a polygonal disk with a hole in the center. The disk has zero
+    Create a polygonal disk with a hole in the center. The disk has zero
     height. The user can specify the inner and outer radius of the disk, and
     the radial and circumferential resolution of the polygonal representation.
 
@@ -489,7 +489,7 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     center : np.ndarray or list
         Center in [x, y, z]. middle of the axis of the disc.
 
-    inner : flaot
+    inner : float
         The inner radius
 
     outer : float

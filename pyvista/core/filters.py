@@ -71,7 +71,7 @@ class DataSetFilters(object):
         alg.SetValue(value)
         alg.SetClipFunction(function) # the implicit function
         alg.SetInsideOut(invert) # invert the clip if needed
-        alg.Update() # Perfrom the Cut
+        alg.Update() # Perform the Cut
         return _get_output(alg)
 
 
@@ -186,7 +186,7 @@ class DataSetFilters(object):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
         This will return a :class:`pyvista.UnstructuredGrid` of the clipped
         mesh. Geometry of the input dataset will be preserved where possible -
-        geometries near the clip intersection will be triangulated/tesselated.
+        geometries near the clip intersection will be triangulated/tessellated.
 
         Parameters
         ----------
@@ -259,7 +259,7 @@ class DataSetFilters(object):
         alg.SetCutFunction(plane) # the cutter to use the plane we made
         if not generate_triangles:
             alg.GenerateTrianglesOff()
-        alg.Update() # Perfrom the Cut
+        alg.Update() # Perform the Cut
         output = _get_output(alg)
         if contour:
             return output.contour()
@@ -403,7 +403,7 @@ class DataSetFilters(object):
         alg.SetCutFunction(polyplane) # the cutter to use the poly planes
         if not generate_triangles:
             alg.GenerateTrianglesOff()
-        alg.Update() # Perfrom the Cut
+        alg.Update() # Perform the Cut
         output = _get_output(alg)
         if contour:
             return output.contour()
@@ -452,7 +452,7 @@ class DataSetFilters(object):
         if arr is None:
             raise AssertionError('No arrays present to threshold.')
 
-        # If using an inverted range, merge the result of two fitlers:
+        # If using an inverted range, merge the result of two filters:
         if isinstance(value, collections.Iterable) and invert:
             valid_range = [np.nanmin(arr), np.nanmax(arr)]
             # Create two thresholds
@@ -639,7 +639,7 @@ class DataSetFilters(object):
             Must be either 'point' or 'cell'.
 
         set_active : bool, optional
-            A boolean flag on whethter or not to set the new `Elevation` scalar
+            A boolean flag on whether or not to set the new `Elevation` scalar
             as the active scalar array on the output dataset.
 
         Warning
@@ -943,7 +943,7 @@ class DataSetFilters(object):
 
     def connectivity(dataset, largest=False):
         """Find and label connected bodies/volumes. This adds an ID array to
-        the point and cell data to distinguish seperate connected bodies.
+        the point and cell data to distinguish separate connected bodies.
         This applies a ``vtkConnectivityFilter`` filter which extracts cells
         that share common points and/or meet other connectivity criterion.
         (Cells that share vertices and meet other connectivity criterion such
@@ -1074,7 +1074,7 @@ class DataSetFilters(object):
         all cells using a particular point. Optionally, the input cell data can
         be passed through to the output as well.
 
-        See aslo: :func:`pyvista.DataSetFilters.point_data_to_cell_data`
+        See also: :func:`pyvista.DataSetFilters.point_data_to_cell_data`
 
         Parameters
         ----------
@@ -1101,7 +1101,7 @@ class DataSetFilters(object):
         (i.e., data specified within cells).
         Optionally, the input point data can be passed through to the output.
 
-        See aslo: :func:`pyvista.DataSetFilters.cell_data_to_point_data`
+        See also: :func:`pyvista.DataSetFilters.cell_data_to_point_data`
 
         Parameters
         ----------
@@ -1255,7 +1255,7 @@ class DataSetFilters(object):
             The vtk data object to sample from - point and cell arrays from
             this object are sampled onto the nodes of the ``dataset`` mesh
 
-        tolerance: flaot, optional
+        tolerance: float, optional
             tolerance used to compute whether a point in the source is in a
             cell of the input.  If not given, tolerance automatically generated.
 
@@ -1273,7 +1273,7 @@ class DataSetFilters(object):
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
-        alg.Update() # Perfrom the resampling
+        alg.Update() # Perform the resampling
         return _get_output(alg)
 
 
@@ -1283,7 +1283,7 @@ class DataSetFilters(object):
         """Interpolate values onto this mesh from the point data of a given
         :class:`pyvista.PolyData` object (typically a point cloud).
 
-        This uses a guassian interpolation kernel. Use the ``sharpness`` and
+        This uses a gaussian interpolation kernel. Use the ``sharpness`` and
         ``radius`` parameters to adjust this kernel.
 
         Please note that the source dataset is first interpolated onto a fine
@@ -1431,7 +1431,7 @@ class DataSetFilters(object):
             Set the type of the velocity field interpolator to locate cells
             during streamline integration either by points or cells.
             The cell locator is more robust then the point locator. Options
-            are ``'point'`` or ``'cell'`` (abreviations of ``'p'`` and ``'c'``
+            are ``'point'`` or ``'cell'`` (abbreviations of ``'p'`` and ``'c'``
             are also supported).
 
         rotation_scale : float
@@ -1445,7 +1445,7 @@ class DataSetFilters(object):
             Return the source particles as :class:`pyvista.PolyData` as well as the
             streamlines. This will be the second value returned if ``True``.
 
-        pointa, pointb : tuple(flaot)
+        pointa, pointb : tuple(float)
             The coordinates of a start and end point for a line source. This
             will override the sphere point source.
         """
@@ -1550,7 +1550,7 @@ class DataSetFilters(object):
                        show=True):
         """Sample a dataset along a high resolution line and plot the variables
         of interest in 2D where the X-axis is distance from Point A and the
-        Y-axis is the varaible of interest. Note that this filter returns None.
+        Y-axis is the variable of interest. Note that this filter returns None.
 
         Parameters
         ----------
@@ -2959,7 +2959,7 @@ class PolyDataFilters(DataSetFilters):
         tolerance : float, optional
             Set merging tolerance.  When enabled merging is set to
             absolute distance. If ``absolute`` is False, then the merging
-            tolerance is a fraction of the bounding box legnth. The alias
+            tolerance is a fraction of the bounding box length. The alias
             ``merge_tol`` is also excepted.
 
         lines_to_points : bool, optional
@@ -3015,7 +3015,7 @@ class PolyDataFilters(DataSetFilters):
 
     def geodesic(poly_data, start_vertex, end_vertex, inplace=False):
         """
-        Calculates the geodesic path betweeen two vertices using Dijkstra's
+        Calculates the geodesic path between two vertices using Dijkstra's
         algorithm.
 
         Parameters
@@ -3055,7 +3055,7 @@ class PolyDataFilters(DataSetFilters):
 
     def geodesic_distance(poly_data, start_vertex, end_vertex):
         """
-        Calculates the geodesic distance betweeen two vertices using Dijkstra's
+        Calculates the geodesic distance between two vertices using Dijkstra's
         algorithm.
 
         Parameters
@@ -3418,7 +3418,7 @@ class UnstructuredGridFilters(DataSetFilters):
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False):
         """Apply a delaunay 2D filter along the best fitting plane. This
-        extracts the grid's points and perfoms the triangulation on those alone.
+        extracts the grid's points and performs the triangulation on those alone.
         """
         return pyvista.PolyData(ugrid.points).delaunay_2d(tol=tol, alpha=alpha,
                                                           offset=offset,

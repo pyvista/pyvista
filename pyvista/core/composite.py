@@ -47,7 +47,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     >>> data = [pv.Sphere(), pv.Cube(), pv.Cone()]
     >>> blocks = pv.MultiBlock(data)
 
-    >>> # instantiate from a disctionary
+    >>> # instantiate from a dictionary
     >>> data = {"cube": pv.Cube(), "sphere": pv.Sphere()}
     >>> blocks = pv.MultiBlock(data)
 
@@ -93,7 +93,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def wrap_nested(self):
         """A helper to ensure all nested data structures are wrapped as PyVista
-        datasets. This is perfrom inplace"""
+        datasets. This is perform inplace"""
         for i in range(self.n_blocks):
             block = self.GetBlock(i)
             if not is_pyvista_dataset(block):
@@ -243,7 +243,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             data = self[i]
             if data is None:
                 continue
-            # get the scalar if availble
+            # get the scalar if available
             arr = get_array(data, name)
             if arr is None or not np.issubdtype(arr.dtype, np.number):
                 continue
@@ -265,7 +265,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def __getitem__(self, index):
         """Get a block by its index or name (if the name is non-unique then
-        returns the first occurence)"""
+        returns the first occurrence)"""
         if isinstance(index, slice):
             stop = index.stop if index.stop >= 0 else self.n_blocks + index.stop + 1
             step = index.step if isinstance(index.step, int) else 1
@@ -304,7 +304,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def get(self, index):
         """Get a block by its index or name (if the name is non-unique then
-        returns the first occurence)"""
+        returns the first occurrence)"""
         return self[index]
 
 
@@ -503,8 +503,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def copy_meta_from(self, ido):
         """Copies pyvista meta data onto this object from another object"""
         # Note that `pyvista.MultiBlock` datasets currently don't have any meta.
-        # This method is here for consistency witht the rest of the API and
-        # incase we add meta data to this pbject down the road.
+        # This method is here for consistency with the rest of the API and
+        # in case we add meta data to this pbject down the road.
         pass
 
 

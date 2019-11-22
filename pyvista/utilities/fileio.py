@@ -126,7 +126,7 @@ def read_legacy(filename):
     """Use VTK's legacy reader to read a file"""
     reader = vtk.vtkDataSetReader()
     reader.SetFileName(filename)
-    # Ensure all data is fetched with poorly formated legacy files
+    # Ensure all data is fetched with poorly formatted legacy files
     reader.ReadAllScalarsOn()
     reader.ReadAllColorScalarsOn()
     reader.ReadAllNormalsOn()
@@ -192,7 +192,7 @@ def read_texture(filename, attrs=None):
     """Loads a ``vtkTexture`` from an image file."""
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
-        # intitialize the reader using the extnesion to find it
+        # initialize the reader using the extension to find it
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         return pyvista.image_to_texture(image)
