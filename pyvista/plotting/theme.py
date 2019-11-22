@@ -61,11 +61,10 @@ rcParams = {
     },
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
-    "volume_mapper": "smart"
+    "volume_mapper": "fixed_point" if os.name == 'nt' else "smart",
 }
 
-if os.name == 'nt':
-    rcParams["volume_mapper"] = "fixed_point"
+
 
 DEFAULT_THEME = dict(rcParams)
 
