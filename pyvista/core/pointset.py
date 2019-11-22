@@ -1031,3 +1031,9 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
     def z(self):
         """The Z coordinates of all points"""
         return self.points[:, 2].reshape(self.dimensions, order='F')
+
+    def _get_attrs(self):
+        """An internal helper for the representation methods"""
+        attrs = PointGrid._get_attrs(self)
+        attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
+        return attrs
