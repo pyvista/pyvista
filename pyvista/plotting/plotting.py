@@ -1273,7 +1273,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                    blending='composite', mapper='smart',
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
                    annotations=None, pickable=True, preference="point",
-                   opacity_unit_distance=None, **kwargs):
+                   opacity_unit_distance=None, shade=False, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -1396,6 +1396,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             accumulated. This is adjusted for the actual sampling distance
             during rendering.
 
+        shade : bool
+            Default off. If shading is turned on, the mapper may perform
+            shading calculations - in some cases shading does not apply
+            (for example, in a maximum intensity projection) and therefore
+            shading will not be performed even if this flag is on.
+
         Returns
         -------
         actor: vtk.vtkVolume
@@ -1473,7 +1479,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                     ambient=ambient, categories=categories, loc=loc,
                                     culling=culling, clim=clim,
                                     mapper=mapper, pickable=pickable,
-                                    opacity_unit_distance=opacity_unit_distance)
+                                    opacity_unit_distance=opacity_unit_distance,
+                                    shade=shade)
 
                 actors.append(a)
             return actors
@@ -1641,6 +1648,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetScalarOpacity(opacity_tf)
         prop.SetAmbient(ambient)
         prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
+        prop.SetShade(shade)
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
