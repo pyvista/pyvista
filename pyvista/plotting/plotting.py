@@ -1273,7 +1273,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                    blending='composite', mapper=None,
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
                    annotations=None, pickable=True, preference="point",
-                   opacity_unit_distance=None, shade=False, **kwargs):
+                   opacity_unit_distance=None, shade=False,
+                   diffuse=0.7, specular=0.2, specular_power=10.0, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -1402,6 +1403,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
             (for example, in a maximum intensity projection) and therefore
             shading will not be performed even if this flag is on.
 
+        diffuse : float, optional
+            The diffuse lighting coefficient. Default 1.0
+
+        specular : float, optional
+            The specular lighting coefficient. Default 0.0
+
+        specular_power : float, optional
+            The specular power. Between 0.0 and 128.0
+
         Returns
         -------
         actor: vtk.vtkVolume
@@ -1483,7 +1493,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                     culling=culling, clim=clim,
                                     mapper=mapper, pickable=pickable,
                                     opacity_unit_distance=opacity_unit_distance,
-                                    shade=shade)
+                                    shade=shade, diffuse=diffuse, specular=specular,
+                                    specular_power=specular_power)
 
                 actors.append(a)
             return actors
@@ -1652,6 +1663,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetAmbient(ambient)
         prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
         prop.SetShade(shade)
+        prop.SetDiffuse(diffuse)
+        prop.SetSpecular(specular)
+        prop.SetSpecularPower(specular_power)
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
