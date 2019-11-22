@@ -1270,9 +1270,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    loc=None, culling=False, multi_colors=False,
-                   blending='composite', mapper='fixed_point',
+                   blending='composite', mapper='smart',
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
-                   annotations=None, pickable=True, preference="point", **kwargs):
+                   annotations=None, pickable=True, preference="point",
+                   opacity_unit_distance=None, **kwargs):
         """
         Adds a volume, rendered using a fixed point ray cast mapper by default.
 
@@ -1387,6 +1388,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalar range to annotate on the scalar bar and the values are the
             the string annotations.
 
+        opacity_unit_distance : float
+            Set/Get the unit distance on which the scalar opacity transfer
+            function is defined. By default this is one hundredth the length of
+            the diagonal of the bounding box of the volome. Meaning that over
+            that distance, a given opacity (from the transfer function) is
+            accumulated. This is adjusted for the actual sampling distance
+            during rendering.
+
         Returns
         -------
         actor: vtk.vtkVolume
@@ -1463,7 +1472,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
                                     culling=culling, clim=clim,
-                                    mapper=mapper, pickable=pickable)
+                                    mapper=mapper, pickable=pickable,
+                                    opacity_unit_distance=opacity_unit_distance)
 
                 actors.append(a)
             return actors
@@ -1471,6 +1481,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(volume, pyvista.UniformGrid):
             raise TypeError('Type ({}) not supported for volume rendering at this time. Use `pyvista.UniformGrid`.')
 
+        if opacity_unit_distance is None:
+            opacity_unit_distance = volume.length / 100.0
 
         if scalars is None:
             # Make sure scalar components are not vectors/tuples
@@ -1628,6 +1640,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetColor(color_tf)
         prop.SetScalarOpacity(opacity_tf)
         prop.SetAmbient(ambient)
+        prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
