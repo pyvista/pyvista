@@ -175,7 +175,7 @@ class DataObject(object):
         Parameters
         ----------
         name : str
-            Name of field scalars to retrive.
+            Name of field scalars to retrieve.
 
         Returns
         -------
@@ -537,7 +537,7 @@ class Common(DataSetFilters, DataObject):
         """
         if name is True or isinstance(name, int):
             keys = list(mesh.textures.keys())
-            # Grab the first name availabe if True
+            # Grab the first name available if True
             idx = 0 if not isinstance(name, int) or name is True else name
             if idx > len(keys):
                 idx = 0
@@ -634,7 +634,7 @@ class Common(DataSetFilters, DataObject):
         Parameters
         ----------
         name : str
-            Name of point scalars to retrive.
+            Name of point scalars to retrieve.
 
         Returns
         -------
@@ -842,7 +842,7 @@ class Common(DataSetFilters, DataObject):
         Parameters
         ----------
         name : str
-            Name of cell scalars to retrive.
+            Name of cell scalars to retrieve.
 
         Returns
         -------
@@ -1223,7 +1223,7 @@ class Common(DataSetFilters, DataObject):
             row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
 
             def format_array(name, arr, field):
-                """internal helper to foramt array information for printing"""
+                """internal helper to format array information for printing"""
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
@@ -1359,7 +1359,7 @@ class _ScalarsDict(dict):
 
 
     def __setitem__(self, key, val):
-        """ overridden to assure data is contigious """
+        """ overridden to assure data is contiguous """
         if isinstance(val, (list, tuple)):
             val = np.array(val)
         if self.callback_enabled:
@@ -1420,7 +1420,7 @@ class FieldScalarsDict(_ScalarsDict):
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """ Rotates points angle ang (in deg) about an axis """
+    """ Rotates points angle (in deg) about an axis """
     axis = axis.lower()
 
     # Copy original array to if not inplace

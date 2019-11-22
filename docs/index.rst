@@ -151,7 +151,7 @@ See :ref:`install_ref` for more details.
 
 Be sure to head over to the `examples gallery <./examples/index.html>`_
 to explore different use cases of PyVista and to start visualizing 3D data in
-Pyhton! Also, please explore the list of external projects leveraging PyVista
+Python! Also, please explore the list of external projects leveraging PyVista
 for 3D visualization in our `external examples list <./external_examples.html>`_
 
 

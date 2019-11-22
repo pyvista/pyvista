@@ -32,7 +32,7 @@ class PickingHelper(object):
 
         Warning
         -------
-        Visible cell picking (``through=False``) is known to not perfrom well
+        Visible cell picking (``through=False``) is known to not perform well
         and produce incorrect selections on non-triangulated meshes if using
         any grpahics card other than NVIDIA. A warning will be thrown if the
         mesh is not purely triangles when using visible cell selection.
@@ -88,7 +88,7 @@ class PickingHelper(object):
 
         def end_pick_helper(picker, event_id):
             if show:
-                # Use try incase selection is empty
+                # Use try in case selection is empty
                 try:
                     self.add_mesh(self.picked_cells, name='_cell_picking_selection',
                                   style=style, color=color,
@@ -181,11 +181,11 @@ class PickingHelper(object):
             When input, calls this function after a pick is made.
             The picked point is input as the first parameter to this function.
             If ``use_mesh`` is ``True``, the callback function will be passed
-            a pointer to the picked mesh and the point ID of the selcted mesh.
+            a pointer to the picked mesh and the point ID of the selected mesh.
 
         use_mesh : bool
             If ``True``, the callback function will be passed
-            a pointer to the picked mesh and the point ID of the selcted mesh.
+            a pointer to the picked mesh and the point ID of the selected mesh.
 
         show_message : bool, str
             Show the message about how to use the point picking tool. If this

@@ -31,7 +31,7 @@ def generate_points(subset=0.02):
 
 
 points = generate_points()
-# Print firts 5 rows to prove its a numpy array (n_points by 3)
+# Print first 5 rows to prove its a numpy array (n_points by 3)
 # Columns are (X Y Z)
 points[0:5, :]
 

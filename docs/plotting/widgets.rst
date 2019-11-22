@@ -43,7 +43,7 @@ The box widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.clear_box_widgets` methods respectively.
 When enabling the box widget, you must provide a custom callback function
 otherwise the box would appear and do nothing - the callback functions are
-what allow us to leverage the widget to perfrom a task like clipping/cropping.
+what allow us to leverage the widget to perform a task like clipping/cropping.
 
 Considering that using a box to clip/crop a mesh is one of the most common use
 cases, we have included a helper method that will allow you to add a mesh to a
@@ -346,7 +346,7 @@ a surface and interpolate between them with some boundary conditions
     # Create the PyVista mesh to hold this grid
     surf = pv.StructuredGrid(xx, yy, zz)
 
-    # Create some intial perturbations
+    # Create some initial perturbations
     # - this array will be updated inplace
     points = np.array([[33,25,45],
                    [70,80,13],

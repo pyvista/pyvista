@@ -14,7 +14,7 @@ sphere = pv.Sphere(radius=0.85)
 start = [0, 0, 0]
 stop = [0.25, 1, 0.5]
 
-# Perfrom ray trace
+# Perform ray trace
 points, ind = sphere.ray_trace(start, stop)
 
 # Create geometry to represent ray trace
