@@ -1,4 +1,5 @@
 
+import os
 import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
@@ -60,7 +61,11 @@ rcParams = {
     },
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
+    "volume_mapper": "smart"
 }
+
+if os.name == 'nt':
+    rcParams["volume_mapper"] = "fixed_point"
 
 DEFAULT_THEME = dict(rcParams)
 

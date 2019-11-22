@@ -1270,7 +1270,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    loc=None, culling=False, multi_colors=False,
-                   blending='composite', mapper='smart',
+                   blending='composite', mapper=None,
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
                    annotations=None, pickable=True, preference="point",
                    opacity_unit_distance=None, shade=False, **kwargs):
@@ -1430,6 +1430,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if culling is True:
             culling = 'backface'
+
+        if mapper is None:
+            mapper = rcParams["volume_mapper"]
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
