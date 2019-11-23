@@ -1,3 +1,5 @@
+"""Module managing parametric objects."""
+
 from math import pi
 
 import vtk
@@ -20,8 +22,8 @@ def Spline(points, n_points=None):
     n_points : int, optional
         Number of points to interpolate along the points array.
 
-    Returns
-    -------
+    Return
+    ------
     spline : pyvista.PolyData
         Line mesh of spline.
 
@@ -37,6 +39,7 @@ def Spline(points, n_points=None):
     >>> y = r * np.cos(theta)
     >>> points = np.column_stack((x, y, z))
     >>> spline = pv.Spline(points, 1000)
+
     """
     spline_function = vtk.vtkParametricSpline()
     spline_function.SetPoints(pyvista.vtk_points(points, False))
@@ -61,8 +64,8 @@ def ParametricBohemianDome(a=None, **kwargs):
 
     vtkGetMacro(A, double);
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricBohemianDome surface
 
@@ -72,6 +75,7 @@ def ParametricBohemianDome(a=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricBohemianDome()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricBohemianDome()
     if a is not None:
@@ -89,10 +93,8 @@ def ParametricBohemianDome(a=None, **kwargs):
 def ParametricBour(**kwargs):
     """Generate Bour's minimal surface.
 
-    Parameters
-    ----------
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricBour surface
 
@@ -102,6 +104,7 @@ def ParametricBour(**kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricBour()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricBour()
 
@@ -131,8 +134,8 @@ def ParametricBoy(zscale=None, **kwargs):
         The scale factor for the z-coordinate.
       Default is 18, giving a nice shape.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricBoy surface
 
@@ -142,6 +145,7 @@ def ParametricBoy(zscale=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricBoy()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricBoy()
     if zscale is not None:
@@ -163,19 +167,18 @@ def ParametricCatalanMinimal(**kwargs):
     parametrically. This minimal surface contains the cycloid as a
     geodesic.
 
-    Parameters
-    ----------
     Returns
     -------
     surf : pyvista.PolyData
         ParametricCatalanMinimal surface
 
-    Examples
-    --------
+    Example
+    -------
     Create a ParametricCatalanMinimal mesh
     >>> import pyvista
     >>> mesh = pyvista.ParametricCatalanMinimal()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricCatalanMinimal()
 
@@ -216,8 +219,8 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
         See the definition in Parametric surfaces referred to above.
         Default is 2.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricConicSpiral surface
 
@@ -227,6 +230,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricConicSpiral()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricConicSpiral()
     if a is not None:
@@ -257,10 +261,8 @@ def ParametricCrossCap(**kwargs):
     self-intersecting single-sided surface.  This is one possible
     image of a projective plane in three-space.
 
-    Parameters
-    ----------
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricCrossCap surface
 
@@ -270,6 +272,7 @@ def ParametricCrossCap(**kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricCrossCap()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricCrossCap()
 
@@ -300,8 +303,8 @@ def ParametricDini(a=None, b=None, **kwargs):
         See the definition in Parametric surfaces referred to above.
         Default is 0.2
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricDini surface
 
@@ -311,6 +314,7 @@ def ParametricDini(a=None, b=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricDini()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricDini()
     if a is not None:
@@ -349,8 +353,8 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     zradius : double, optional
         The scaling factor for the z-axis. Default is 1.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricEllipsoid surface
 
@@ -360,6 +364,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     >>> import pyvista
     >>> mesh = pyvista.ParametricEllipsoid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricEllipsoid()
     parametric_keywords(parametric_function, min_u=kwargs.pop("min_u", 0),
@@ -397,8 +402,8 @@ def ParametricEnneper(**kwargs):
     Enneper's surface is a a self-intersecting minimal surface
     possessing constant negative Gaussian curvature
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricEnneper surface
 
@@ -408,6 +413,7 @@ def ParametricEnneper(**kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricEnneper()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricEnneper()
 
@@ -432,8 +438,8 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     radius : double, optional
         The radius of the bottle. Default is 1.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricFigure8Klein surface
 
@@ -443,6 +449,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricFigure8Klein()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricFigure8Klein()
     if radius is not None:
@@ -460,8 +467,8 @@ def ParametricFigure8Klein(radius=None, **kwargs):
 def ParametricHenneberg(**kwargs):
     """Generate Henneberg's minimal surface.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricHenneberg surface
 
@@ -471,6 +478,7 @@ def ParametricHenneberg(**kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricHenneberg()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricHenneberg()
 
@@ -484,15 +492,15 @@ def ParametricHenneberg(**kwargs):
 
 
 def ParametricKlein(**kwargs):
-    """Generates a "classical" representation of a Klein bottle.
+    """Generate a "classical" representation of a Klein bottle.
 
     ParametricKlein generates a "classical" representation of a Klein
     bottle.  A Klein bottle is a closed surface with no interior and only one
     surface.  It is unrealisable in 3 dimensions without intersecting
     surfaces.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricKlein surface
 
@@ -502,6 +510,7 @@ def ParametricKlein(**kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricKlein()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricKlein()
 
@@ -529,8 +538,8 @@ def ParametricKuen(deltav0=None, **kwargs):
         towards a pole in the -z direction.
         Setting it to 0 retains the pole whose z-value is -inf.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricKuen surface
 
@@ -540,6 +549,7 @@ def ParametricKuen(deltav0=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricKuen()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricKuen()
     if deltav0 is not None:
@@ -562,8 +572,8 @@ def ParametricMobius(radius=None, **kwargs):
     radius : double, optional
         The radius of the Mobius strip. Default is 1.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricMobius surface
 
@@ -573,6 +583,7 @@ def ParametricMobius(radius=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricMobius()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricMobius()
     if radius is not None:
@@ -601,8 +612,8 @@ def ParametricPluckerConoid(n=None, **kwargs):
 
     vtkGetMacro(N, int);
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricPluckerConoid surface
 
@@ -612,6 +623,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricPluckerConoid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricPluckerConoid()
     if n is not None:
@@ -634,8 +646,8 @@ def ParametricPseudosphere(**kwargs):
     tractrix about it's asymptote, and is a surface of constant
     negative Gaussian curvature.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricPseudosphere surface
 
@@ -645,6 +657,7 @@ def ParametricPseudosphere(**kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricPseudosphere()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricPseudosphere()
 
@@ -707,8 +720,8 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
         The scaling factor for the amplitude.
         Default is 13.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricRandomHills surface
 
@@ -718,6 +731,7 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
     >>> import pyvista
     >>> mesh = pyvista.ParametricRandomHills()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricRandomHills()
     if numberofhills is not None:
@@ -761,8 +775,8 @@ def ParametricRoman(radius=None, **kwargs):
     radius : double, optional
         The radius. Default is 1.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricRoman surface
 
@@ -772,6 +786,7 @@ def ParametricRoman(radius=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricRoman()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricRoman()
     if radius is not None:
@@ -812,8 +827,8 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     n2 : double, optional
         The "squareness" parameter in the x-y plane. Default is 1.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricSuperEllipsoid surface
 
@@ -823,6 +838,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperEllipsoid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricSuperEllipsoid()
     if xradius is not None:
@@ -888,8 +904,8 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     n2 : double, optional
         The shape of the cross section of the ring. Default is 1.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricSuperToroid surface
 
@@ -899,6 +915,7 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperToroid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricSuperToroid()
     if ringradius is not None:
@@ -943,8 +960,8 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     crosssectionradius : double, optional
         The radius of the cross section of ring of the torus. Default is 0.5.
 
-    Returns
-    -------
+    Return
+    ------
     surf : pyvista.PolyData
         ParametricTorus surface
 
@@ -954,6 +971,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     >>> import pyvista
     >>> mesh = pyvista.ParametricTorus()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
+
     """
     parametric_function = vtk.vtkParametricTorus()
     if ringradius is not None:
@@ -974,7 +992,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
 def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
                         min_v=0.0, max_v=2*pi, join_u=False, join_v=False,
                         twist_u=False, twist_v=False, clockwise=True):
-    """Applys keyword arguments to a parametric function.
+    """Apply keyword arguments to a parametric function.
 
     Parameters
     ----------
@@ -1009,6 +1027,7 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
     clockwise : bool, optional
         Determines the ordering of the vertices forming the triangle
         strips.
+
     """
     parametric_function.SetMinimumU(min_u)
     parametric_function.SetMaximumU(max_u)
@@ -1038,6 +1057,7 @@ def surface_from_para(parametric_function, u_res=100, v_res=100,
 
     w_res : int, optional
         Resolution in the w direction.
+
     """
     # convert to a mesh
     para_source = vtk.vtkParametricFunctionSource()

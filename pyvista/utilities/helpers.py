@@ -1,7 +1,5 @@
-"""
-Supporting functions for polydata and grid objects
+"""Supporting functions for polydata and grid objects."""
 
-"""
 import collections
 import ctypes
 import logging
@@ -21,12 +19,14 @@ ROW_DATA_FIELD = 6
 
 
 def get_vtk_type(typ):
-    """This looks up the VTK type for a give python data type. Corrects for
-    string type mapping issues.
+    """Look up the VTK type for a give python data type.
+
+    Corrects for string type mapping issues.
 
     Return
     ------
-    int : the integer type id specified in vtkType.h
+        int : the integer type id specified in vtkType.h
+
     """
     typ = nps.get_vtk_array_type(typ)
     # This handles a silly string type bug
@@ -36,17 +36,19 @@ def get_vtk_type(typ):
 
 
 def vtk_bit_array_to_char(vtkarr_bint):
-    """ Cast vtk bit array to a char array """
+    """Cast vtk bit array to a char array."""
     vtkarr = vtk.vtkCharArray()
     vtkarr.DeepCopy(vtkarr_bint)
     return vtkarr
 
 
 def convert_string_array(arr, name=None):
-    """A helper to convert a numpy array of strings to a vtkStringArray
-    or vice versa. Note that this is terribly inefficient - inefficient support
+    """Convert a numpy array of strings to a vtkStringArray or vice versa.
+
+    Note that this is terribly inefficient - inefficient support
     is better than no support :). If you have ideas on how to make this faster,
     please consider opening a pull request.
+
     """
     if isinstance(arr, np.ndarray):
         vtkarr = vtk.vtkStringArray()
@@ -67,7 +69,7 @@ def convert_string_array(arr, name=None):
 
 
 def convert_array(arr, name=None, deep=0, array_type=None):
-    """A helper to convert a NumPy array to a vtkDataArray or vice versa
+    """Convert a NumPy array to a vtkDataArray or vice versa.
 
     Parameters
     -----------
@@ -120,12 +122,12 @@ def convert_array(arr, name=None, deep=0, array_type=None):
 
 
 def is_pyvista_dataset(obj):
-    """ Return True if the Object is a PyVista wrapped dataset """
+    """Return True if the Object is a PyVista wrapped dataset."""
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
 
 
 def point_array(mesh, name):
-    """ Returns point scalars of a vtk object """
+    """Return point scalars of a vtk object."""
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -135,7 +137,7 @@ def point_scalar(mesh, name):
     return point_array(mesh, name)
 
 def field_array(mesh, name):
-    """ Returns field scalars of a vtk object """
+    """Return field scalars of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -145,7 +147,7 @@ def field_scalar(mesh, name):
     return field_array(mesh, name)
 
 def cell_array(mesh, name):
-    """ Returns cell scalars of a vtk object """
+    """Return cell scalars of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -155,11 +157,12 @@ def cell_scalar(mesh, name):
     return cell_array(mesh, name)
 
 def row_array(data_object, name):
-    """ Returns cell scalars of a vtk object """
+    """Return cell scalars of a vtk object."""
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 def parse_field_choice(field):
+    """Return the id of the given field."""
     if isinstance(field, str):
         field = field.strip().lower()
         if field in ['cell', 'c', 'cells']:
@@ -180,7 +183,7 @@ def parse_field_choice(field):
 
 
 def get_array(mesh, name, preference='cell', info=False, err=False):
-    """ Searches point, cell and field data for an array
+    """Search point, cell and field data for an array.
 
     Parameters
     ----------
@@ -249,7 +252,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
 
 
 def vtk_points(points, deep=True):
-    """ Convert numpy points to a vtkPoints object """
+    """Convert numpy points to a vtkPoints object."""
     if not points.flags['C_CONTIGUOUS']:
         points = np.ascontiguousarray(points)
     vtkpts = vtk.vtkPoints()
@@ -258,8 +261,8 @@ def vtk_points(points, deep=True):
 
 
 def line_segments_from_points(points):
-    """
-    Generates non-connected line segments from points.
+    """Generate non-connected line segments from points.
+
     Assumes points are ordered as line segments and an even number of points
     are
 
@@ -303,7 +306,7 @@ def line_segments_from_points(points):
 
 
 def lines_from_points(points):
-    """Given an array of points, make a connected line set
+    """Make a connected line set given an array of points.
 
     Parameters
     ----------
@@ -313,8 +316,8 @@ def lines_from_points(points):
 
         np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
 
-    Returns
-    -------
+    Return
+    ------
     lines : pyvista.PolyData
         PolyData with lines and cells.
 
@@ -329,9 +332,8 @@ def lines_from_points(points):
 
 
 def vector_poly_data(orig, vec):
-    """ Creates a vtkPolyData object composed of vectors """
-
-    # shape, dimention checking
+    """Create a vtkPolyData object composed of vectors."""
+    # shape, dimension checking
     if not isinstance(orig, np.ndarray):
         orig = np.asarray(orig)
 
@@ -386,7 +388,7 @@ def vector_poly_data(orig, vec):
 
 
 def trans_from_matrix(matrix):
-    """ Convert a vtk matrix to a numpy.ndarray """
+    """Convert a vtk matrix to a numpy.ndarray."""
     t = np.zeros((4, 4))
     for i in range(4):
         for j in range(4):
@@ -395,12 +397,12 @@ def trans_from_matrix(matrix):
 
 
 def wrap(vtkdataset):
-    """This is a convenience method to safely wrap any given VTK data object
-    to its appropriate PyVista data object. Other formats that are supported
-    include:
+    """Wrap any given VTK data object to its appropriate PyVista data object.
 
+    Other formats that are supported include:
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
+
     """
     wrappers = {
         'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
@@ -442,21 +444,22 @@ def wrap(vtkdataset):
 
 
 def image_to_texture(image):
-    """Converts ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``
-    """
+    """Convert ``vtkImageData`` (:class:`pyvista.UniformGrid`) to a ``vtkTexture``."""
     return pyvista.Texture(image)
 
 
 def numpy_to_texture(image):
-    """Convert a NumPy image array to a vtk.vtkTexture"""
+    """Convert a NumPy image array to a vtk.vtkTexture."""
     if not isinstance(image, np.ndarray):
         raise TypeError('Unknown input type ({})'.format(type(image)))
     return pyvista.Texture(image)
 
 
 def is_inside_bounds(point, bounds):
-    """ Checks if a point is inside a set of bounds. This is implemented
-    through recursion so that this is N-dimensional.
+    """Check if a point is inside a set of bounds.
+
+    This is implemented through recursion so that this is N-dimensional.
+
     """
     if isinstance(point, (int, float)):
         point = [point]
@@ -478,8 +481,7 @@ def is_inside_bounds(point, bounds):
 
 
 def fit_plane_to_points(points, return_meta=False):
-    """
-    Fits a plane to a set of points
+    """Fit a plane to a set of points.
 
     Parameters
     ----------
@@ -488,6 +490,7 @@ def fit_plane_to_points(points, return_meta=False):
 
     return_meta : bool
         If true, also returns the center and normal used to generate the plane
+
     """
     data = np.array(points)
     center = data.mean(axis=0)
@@ -500,6 +503,7 @@ def fit_plane_to_points(points, return_meta=False):
 
 
 def raise_not_matching(scalars, mesh):
+    """Raise exception about inconsistencies."""
     if isinstance(mesh, vtk.vtkTable):
         raise Exception('Number of scalars ({})'.format(scalars.size) +
                         'must match number of rows ' +
@@ -512,7 +516,7 @@ def raise_not_matching(scalars, mesh):
 
 
 def generate_plane(normal, origin):
-    """ Returns a vtk.vtkPlane """
+    """Return a vtk.vtkPlane."""
     plane = vtk.vtkPlane()
     # NORMAL MUST HAVE MAGNITUDE OF 1
     normal = normal / np.linalg.norm(normal)
@@ -522,7 +526,11 @@ def generate_plane(normal, origin):
 
 
 def generate_report(additional=None, ncol=3, text_width=54, sort=False):
-    """DEPRECATED: Please use :class:`pyvista.Report` instead."""
+    """Generate a report.
+
+    DEPRECATED: Please use :class:`pyvista.Report` instead.
+
+    """
     logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
     core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
     optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
@@ -534,9 +542,39 @@ def generate_report(additional=None, ncol=3, text_width=54, sort=False):
 
 
 def try_callback(func, *args):
-
+    """Wrap a given callback in a try statement."""
     try:
         func(*args)
     except Exception as e:
         logging.warning('Encountered issue in callback: {}'.format(e))
     return
+
+
+def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
+    """Check if depth peeling is available.
+
+    Attempts to use depth peeling to see if it is available for the current
+    environment. Returns ``True`` if depth peeling is available and has been
+    successfully leveraged, otherwise ``False``.
+
+    """
+    # Try Depth Peeling with a basic scene
+    source = vtk.vtkSphereSource()
+    mapper = vtk.vtkPolyDataMapper()
+    mapper.SetInputConnection(source.GetOutputPort())
+    actor = vtk.vtkActor()
+    actor.SetMapper(mapper)
+    # requires opacity < 1
+    actor.GetProperty().SetOpacity(0.5)
+    renderer = vtk.vtkRenderer()
+    renderWindow = vtk.vtkRenderWindow()
+    renderWindow.AddRenderer(renderer)
+    renderWindow.SetOffScreenRendering(True)
+    renderWindow.SetAlphaBitPlanes(True)
+    renderWindow.SetMultiSamples(0)
+    renderer.AddActor(actor)
+    renderer.SetUseDepthPeeling(True)
+    renderer.SetMaximumNumberOfPeels(number_of_peels)
+    renderer.SetOcclusionRatio(occlusion_ratio)
+    renderWindow.Render()
+    return renderer.GetLastRenderingUsedDepthPeeling() == 1

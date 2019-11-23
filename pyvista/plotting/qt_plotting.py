@@ -1,3 +1,5 @@
+"""Qt interactive plotter."""
+
 import logging
 import os
 import time
@@ -25,42 +27,59 @@ CLEAR_CAMS_BUTTON_TEXT = 'Clear Cameras'
 # dummy reference for when PyQt5 is not installed (i.e. readthedocs)
 has_pyqt = False
 class QVTKRenderWindowInteractor(object):
+    """Dummy QVTKRenderWindowInteractor class."""
+
     pass
 
 class RangeGroup(object):
+    """Dummy RangeGroup class."""
+
     pass
 
 
 class QDialog(object):
+    """Dummy QFileDialog class."""
+
     pass
 
 
 class QSlider(object):
+    """Dummy QSlider class."""
+
     pass
 
 
 def pyqtSignal(*args, **kwargs):  # pragma: no cover
+    """Declare dummy pyqtSignal function."""
     pass
 
 
 class QHBoxLayout(object):
+    """Dummy QHBoxLayout class."""
+
     pass
 
 
 class QFileDialog(object):
+    """Dummy QFileDialog class."""
+
     pass
 
 
 def pyqtSlot(*args, **kwargs):
-    """dummy function for environments without pyqt5"""
+    """Declare dummy function for environments without pyqt5."""
     return lambda *x: None
 
 
 class QMainWindow(object):
+    """Dummy QMainWindow class."""
+
     pass
 
 
 class QObject(object):
+    """Dummy QObject class."""
+
     pass
 
 
@@ -79,14 +98,17 @@ except ImportError:  # pragma: no cover
 
 
 class FileDialog(QFileDialog):
-    """
-    Generic file query that emits a signal when a file is selected and
+    """Generic file query.
+
+    It emits a signal when a file is selected and
     the dialog was property closed.
     """
+
     dlg_accepted = pyqtSignal(str)
 
     def __init__(self, parent=None, filefilter=None, save_mode=True, show=True,
                  callback=None, directory=False):
+        """Initialize the file dialog."""
         super(FileDialog, self).__init__(parent)
 
         if filefilter is not None:
@@ -109,11 +131,11 @@ class FileDialog(QFileDialog):
             self.show()
 
     def emit_accepted(self):
-        """
-        Sends signal that the file dialog was closed properly.
+        """Send signal that the file dialog was closed properly.
 
         Sends:
         filename
+
         """
         if self.result():
             filename = self.selectedFiles()[0]
@@ -122,11 +144,15 @@ class FileDialog(QFileDialog):
 
 
 class DoubleSlider(QSlider):
-    """
-    Double precision slider from:
+    """Double precision slider.
+    
+    Reference:
     https://gist.github.com/dennis-tra/994a65d6165a328d4eabaadbaedac2cc
+
     """
+
     def __init__(self, *args, **kwargs):
+        """Initialize the double slider."""
         super().__init__(*args, **kwargs)
         self.decimals = 5
         self._max_int = 10 ** self.decimals
@@ -139,15 +165,19 @@ class DoubleSlider(QSlider):
 
     @property
     def _value_range(self):
+        """Return the value range of the slider."""
         return self._max_value - self._min_value
 
     def value(self):
+        """Return the value of the slider."""
         return float(super().value()) / self._max_int * self._value_range + self._min_value
 
     def setValue(self, value):
+        """Set the value of the slider."""
         super().setValue(int((value - self._min_value) / self._value_range * self._max_int))
 
     def setMinimum(self, value):
+        """Set the minimum value of the slider."""
         if value > self._max_value:  # pragma: no cover
             raise ValueError("Minimum limit cannot be higher than maximum")
 
@@ -155,6 +185,7 @@ class DoubleSlider(QSlider):
         self.setValue(self.value())
 
     def setMaximum(self, value):
+        """Set the maximum value of the slider."""
         if value < self._min_value:  # pragma: no cover
             raise ValueError("Minimum limit cannot be higher than maximum")
 
@@ -163,9 +194,11 @@ class DoubleSlider(QSlider):
 
 
 class RangeGroup(QHBoxLayout): # this is redefined from above ... why?
+    """Range group box widget."""
 
     def __init__(self, parent, callback, minimum=0.0, maximum=20.0,
                  value=1.0):
+        """Initialize the range widget."""
         super(RangeGroup, self).__init__(parent)
         self.slider = DoubleSlider(QtCore.Qt.Horizontal)
         self.slider.setTickInterval(0.1)
@@ -188,9 +221,11 @@ class RangeGroup(QHBoxLayout): # this is redefined from above ... why?
         self.spinbox.valueChanged.connect(callback)
 
     def update_spinbox(self, value):
+        """Set the value of the internal spinbox."""
         self.spinbox.setValue(self.slider.value())
 
     def update_value(self, value):
+        """Update the value of the internal slider."""
         # if self.spinbox.value() < self.minimum:
         #     self.spinbox.setValue(self.minimum)
         # elif self.spinbox.value() > self.maximum:
@@ -202,19 +237,23 @@ class RangeGroup(QHBoxLayout): # this is redefined from above ... why?
 
     @property
     def value(self):
+        """Return the value of the internal spinbox."""
         return self.spinbox.value()
 
     @value.setter
     def value(self, new_value):
+        """Set the value of the internal slider."""
         self.slider.setValue(new_value)
 
 
 class ScaleAxesDialog(QDialog):
-    """ Dialog to control axes scaling """
+    """Dialog to control axes scaling."""
+
     accepted = pyqtSignal(float)
     signal_close = pyqtSignal()
 
     def __init__(self, parent, plotter, show=True):
+        """Initialize the scaling dialog."""
         super(ScaleAxesDialog, self).__init__(parent)
         self.setGeometry(300, 300, 50, 50)
         self.setMinimumWidth(500)
@@ -239,14 +278,14 @@ class ScaleAxesDialog(QDialog):
             self.show()
 
     def update_scale(self, value):
-        """ updates the scale of all actors in the plotter """
+        """Update the scale of all actors in the plotter."""
         self.plotter.set_scale(self.x_slider_group.value,
                                self.y_slider_group.value,
                                self.z_slider_group.value)
 
 
 def resample_image(arr, max_size=400):
-    """Resamples a square image to an image of max_size"""
+    """Resample a square image to an image of max_size."""
     dim = np.max(arr.shape[0:2])
     if dim < max_size:
         max_size = dim
@@ -262,7 +301,7 @@ def resample_image(arr, max_size=400):
 
 
 def pad_image(arr, max_size=400):
-    """Pads an image to a square then resamples to max_size"""
+    """Pad an image to a square then resamples to max_size."""
     dim = np.max(arr.shape)
     img = np.zeros((dim, dim, 3), dtype=arr.dtype)
     xl = (dim - arr.shape[0]) // 2
@@ -272,9 +311,9 @@ def pad_image(arr, max_size=400):
 
 
 class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
-    """
-    Extends QVTKRenderWindowInteractor class by adding the methods
-    available to pyvista.Plotter.
+    """Extend QVTKRenderWindowInteractor class.
+
+    This adds the methods available to pyvista.Plotter.
 
     Parameters
     ----------
@@ -286,7 +325,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     multi_samples : int
         The number of multi-samples used to mitigate aliasing. 4 is a good
         default but 8 will have better results with a potential impact on
-        perfromance.
+        performance.
 
     line_smoothing : bool
         If True, enable line smothing
@@ -298,6 +337,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         If True, enable polygon smothing
 
     """
+
     signal_set_view_vector = pyqtSignal(tuple, tuple)
     signal_reset_camera = pyqtSignal()
     signal_render = pyqtSignal()
@@ -312,7 +352,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
                  splitting_position=None):
-        """ Initialize Qt interactor """
+        """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
@@ -372,7 +412,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
     def add_toolbars(self, main_window):
-
+        """Add the toolbars."""
         def _add_action(tool_bar, key, method):
             action = QAction(key, main_window)
             action.triggered.connect(method)
@@ -407,7 +447,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
     def save_camera_position(self):
-        """ Saves camera position to saved camera menu for recall """
+        """Save camera position to saved camera menu for recall."""
         self.saved_camera_positions.append(self.camera_position)
         ncam = len(self.saved_camera_positions)
         camera_position = self.camera_position[:]  # py2.7 copy compatibility
@@ -424,7 +464,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
     def clear_camera_positions(self):
-        """ clears all camera positions """
+        """Clear all camera positions."""
         if hasattr(self, "saved_cameras_tool_bar"):
             for action in self.saved_cameras_tool_bar.actions():
                 if action.text() not in [SAVE_CAM_BUTTON_TEXT, CLEAR_CAMS_BUTTON_TEXT]:
@@ -434,7 +474,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
     def _close_callback(self):
-        """ Make sure a screenhsot is acquired before closing"""
+        """Make sure a screenhsot is acquired before closing."""
         if self.allow_quit_keypress:
             BasePlotter._close_callback(self)
             self.quit()
@@ -442,45 +482,53 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
 
     def quit(self):
-        """Quit application"""
+        """Quit application."""
         BasePlotter.close(self)
         QVTKRenderWindowInteractor.close(self)
 
 
     def reset_camera(self):
+        """Reset the camera."""
         self.signal_reset_camera.emit()
 
 
     def view_vector(self, vector, viewup=None):
+        """Set the view vector."""
         args = [vector, viewup]
         self.signal_view_vector.emit(*args)
 
 
     def _render(self):
-        """ updates the render window """
+        """Update the render window."""
         self.signal_render.emit()
 
 
     def enable_trackball_style(self):
+        """Enable trackball interactor style."""
         self.signal_enable_trackball_style.emit()
 
     def remove_legend(self):
+        """Remove the legend."""
         self.signal_remove_legend.emit()
 
     def set_background(self, color):
+        """Set the background color."""
         self.signal_set_background.emit(color)
 
     def remove_actor(self, actor, reset_camera=None):
+        """Remove an actor."""
         self.signal_remove_actor.emit(actor)
 
 
 
 class BackgroundPlotter(QtInteractor):
+    """Qt interactive plotter."""
 
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, shape=(1, 1), window_size=None,
                  off_screen=None, **kwargs):
+        """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
@@ -560,7 +608,7 @@ class BackgroundPlotter(QtInteractor):
         axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
         axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
 
-        # A final separator to seperate OS options
+        # A final separator to separate OS options
         view_menu.addSeparator()
 
         vlayout = QVBoxLayout()
@@ -589,18 +637,18 @@ class BackgroundPlotter(QtInteractor):
 
 
     def scale_axes_dialog(self, show=True):
-        """ Open scale axes dialog """
+        """Open scale axes dialog."""
         return ScaleAxesDialog(self.app_window, self, show=show)
 
 
     def _spawn_background_rendering(self, rate=5.0):
-        """
-        Spawns a thread that updates the render window.
+        """Spawn a thread that updates the render window.
 
         Sometimes directly modifiying object data doesn't trigger
         Modified() and upstream objects won't be updated.  This
         ensures the render window stays updated without consuming too
         many resources.
+
         """
         twait = (rate**-1) * 1000.0
         self.render_timer = QTimer(parent=self.app_window)
@@ -610,19 +658,22 @@ class BackgroundPlotter(QtInteractor):
 
 
     def _close_callback(self):
-        """ Make sure a screenhsot is acquired before closing"""
+        """Make sure a screenhsot is acquired before closing."""
         if self.allow_quit_keypress:
             BasePlotter._close_callback(self)
             self.app_window.close()
 
 
     def quit(self):
+        """Quit the plotter."""
         QtInteractor.quit(self)
 
     def close(self):
+        """Close the plotter.""" 
         self.app_window.close()
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False, pickable=True):
+        """Add an actor."""
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
                                                                reset_camera=reset_camera,
                                                                name=name,
@@ -633,9 +684,7 @@ class BackgroundPlotter(QtInteractor):
         return actor, prop
 
     def update_app_icon(self):
-        """
-        Update the app icon if the user is not trying to resize the window.
-        """
+        """Update the app icon if the user is not trying to resize the window."""
         if os.name == 'nt' or not hasattr(self, '_last_window_size'):  # pragma: no cover
             # DO NOT EVEN ATTEMPT TO UPDATE ICON ON WINDOWS
             return
@@ -647,7 +696,7 @@ class BackgroundPlotter(QtInteractor):
         elif ((cur_time - self._last_update_time > BackgroundPlotter.ICON_TIME_STEP)
                 and self._last_camera_pos != self.camera_position):
             # its been a while since last update OR
-            #   the camera position has changed and its been at leat one second
+            # the camera position has changed and its been at least one second
 
             # Update app icon as preview of the window
             img = pad_image(self.image)
@@ -672,9 +721,7 @@ class BackgroundPlotter(QtInteractor):
                           callback=self.screenshot)
 
     def _qt_export_vtkjs(self, show=True):
-        """
-        Spawn an save file dialog to export a vtkjs file.
-        """
+        """Spawn an save file dialog to export a vtkjs file."""
         return FileDialog(self.app_window,
                           filefilter=['VTK JS File(*.vtkjs)'],
                           show=show,
@@ -700,23 +747,24 @@ class BackgroundPlotter(QtInteractor):
 
     @property
     def window_size(self):
-        """ returns render window size """
+        """Return render window size."""
         the_size = self.app_window.baseSize()
         return the_size.width(), the_size.height()
 
 
     @window_size.setter
     def window_size(self, window_size):
-        """ set the render window size """
+        """Set the render window size."""
         BasePlotter.window_size.fset(self, window_size)
         self.app_window.setBaseSize(*window_size)
         self.app_window.resize(*window_size)
 
     def __del__(self):  # pragma: no cover
+        """Delete the qt plotter."""
         self.app_window.close()
 
     def add_callback(self, func, interval=1000, count=None):
-        """Add a function that can update the scene in the background
+        """Add a function that can update the scene in the background.
 
         Parameters
         ----------
@@ -727,6 +775,7 @@ class BackgroundPlotter(QtInteractor):
         count : int, optional
             Number of times `func` will be called. If None,
             `func` will be called until the main window is closed.
+
         """
         timer = QTimer(parent=self.app_window)
         timer.timeout.connect(func)
@@ -740,20 +789,27 @@ class BackgroundPlotter(QtInteractor):
 
 
 class MainWindow(QMainWindow):
+    """Convenience MainWindow that manages the application."""
+
     signal_close = pyqtSignal()
 
     def __init__(self, parent=None):
+        """Initialize the main window."""
         super(MainWindow, self).__init__(parent)
 
     def closeEvent(self, event):
+        """Manage the close event."""
         self.signal_close.emit()
         event.accept()
 
 
 class Counter(QObject):
+    """Counter augmented with a Qt timer."""
+
     signal_finished = pyqtSignal()
 
     def __init__(self, count):
+        """Initialize the counter."""
         super(Counter, self).__init__()
         if isinstance(count, int) and count > 0:
             self.count = count
@@ -765,6 +821,7 @@ class Counter(QObject):
 
     @pyqtSlot()
     def decrease(self):
+        """Decrease the count."""
         self.count -= 1
         if self.count <= 0:
             self.signal_finished.emit()
