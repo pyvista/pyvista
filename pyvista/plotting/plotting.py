@@ -1389,6 +1389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper : str, optional
             Volume mapper to use given by name. Options include:
             ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and ``'smart'``.
+            If ``None`` the ``"volume_mapper"`` in the ``rcParams`` is used.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the scalar bar
