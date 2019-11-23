@@ -1,6 +1,5 @@
-"""
-Contains a dictionary that maps file extensions to VTK readers
-"""
+"""Contains a dictionary that maps file extensions to VTK readers."""
+
 import os
 
 import vtk
@@ -73,21 +72,21 @@ if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
 
 
 def get_ext(filename):
-    """Extract the extension of the filename"""
+    """Extract the extension of the filename."""
     ext = os.path.splitext(filename)[1].lower()
     return ext
 
 
 def get_reader(filename):
-    """Gets the corresponding reader based on file extension and instantiates it
-    """
+    """Get the corresponding reader based on file extension and instantiates it."""
     ext = get_ext(filename)
     return READERS[ext]() # Get and instantiate the reader
 
 
 def standard_reader_routine(reader, filename, attrs=None):
-    """Use a given reader from the ``READERS`` mapping in the common VTK reading
-    pipeline routine.
+    """Use a given reader in the common VTK reading pipeline routine.
+
+    The reader must come from the ``READERS`` mapping.
 
     Parameters
     ----------
@@ -102,6 +101,7 @@ def standard_reader_routine(reader, filename, attrs=None):
         the attribute/method names and values are the arguments passed to those
         calls. If you do not have any attributes to call, pass ``None`` as the
         value.
+
     """
     if attrs is None:
         attrs = {}
@@ -123,7 +123,7 @@ def standard_reader_routine(reader, filename, attrs=None):
 
 
 def read_legacy(filename):
-    """Use VTK's legacy reader to read a file"""
+    """Use VTK's legacy reader to read a file."""
     reader = vtk.vtkDataSetReader()
     reader.SetFileName(filename)
     # Ensure all data is fetched with poorly formatted legacy files
@@ -141,8 +141,10 @@ def read_legacy(filename):
 
 
 def read(filename, attrs=None):
-    """This will read any VTK file! It will figure out what reader to use
-    then wrap the VTK object for use in PyVista.
+    """Read any VTK file.
+
+    It will figure out what reader to use then wrap the VTK object for
+    use in PyVista.
 
     Parameters
     ----------
@@ -151,6 +153,7 @@ def read(filename, attrs=None):
         the attribute/method names and values are the arguments passed to those
         calls. If you do not have any attributes to call, pass ``None`` as the
         value.
+
     """
     filename = os.path.abspath(os.path.expanduser(filename))
     if not os.path.isfile(filename):
@@ -189,7 +192,7 @@ def read(filename, attrs=None):
 
 
 def read_texture(filename, attrs=None):
-    """Loads a ``vtkTexture`` from an image file."""
+    """Load a ``vtkTexture`` from an image file."""
     filename = os.path.abspath(os.path.expanduser(filename))
     try:
         # initialize the reader using the extension to find it
@@ -207,7 +210,7 @@ def read_exodus(filename,
                 apply_displacements=True,
                 displacement_magnitude=1.0,
                 enabled_sidesets=None):
-    """Read an ExodusII file (``'.e'`` or ``'.exo'``)"""
+    """Read an ExodusII file (``'.e'`` or ``'.exo'``)."""
     reader = vtk.vtkExodusIIReader()
     reader.SetFileName(filename)
     reader.UpdateInformation()

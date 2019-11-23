@@ -1,6 +1,4 @@
-"""
-Sub-classes for vtk.vtkPolyData
-"""
+"""Sub-classes for vtk.vtkPolyData."""
 import logging
 import os
 
@@ -25,14 +23,13 @@ log.setLevel('CRITICAL')
 
 
 class PointSet(Common):
-    """PyVista's equivalent of vtk.vtkPointSet. This holds methods common to
-    PolyData and UnstructuredGrid.
+    """PyVista's equivalent of vtk.vtkPointSet.
+    
+    This holds methods common to PolyData and UnstructuredGrid.
     """
 
-
     def center_of_mass(self, scalars_weight=False):
-        """
-        Returns the coordinates for the center of mass of the mesh.
+        """Return the coordinates for the center of mass of the mesh.
 
         Parameters
         ----------
@@ -53,6 +50,7 @@ class PointSet(Common):
 
 
     def shallow_copy(self, to_copy):
+        """Do a shallow copy the pointset."""
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(vtk.vtkPoints())
@@ -60,8 +58,7 @@ class PointSet(Common):
 
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
-    """
-    Extends the functionality of a vtk.vtkPolyData object
+    """Extend the functionality of a vtk.vtkPolyData object.
 
     Can be initialized in several ways:
 
@@ -94,9 +91,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     >>>  # initialize from a filename
     >>> surf = pyvista.PolyData(examples.antfile)
+
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the polydata."""
         super(PolyData, self).__init__()
 
         deep = kwargs.pop('deep', False)
@@ -136,9 +135,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.faces = self._make_vertice_cells(self.n_points)
 
     def __repr__(self):
+        """Return the standard representation."""
         return Common.__repr__(self)
 
     def __str__(self):
+        """Return the standard str representation."""
         return Common.__str__(self)
 
     @staticmethod
@@ -198,10 +199,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def lines(self):
+        """Return a pointer to the lines as a numpy object."""
         return vtk_to_numpy(self.GetLines().GetData())
 
     @lines.setter
     def lines(self, lines):
+        """Set the lines of the polydata."""
         if lines.dtype != pyvista.ID_TYPE:
             lines = lines.astype(pyvista.ID_TYPE)
 
@@ -222,12 +225,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def faces(self):
-        """ returns a pointer to the points as a numpy object """
+        """Return a pointer to the points as a numpy object."""
         return vtk_to_numpy(self.GetPolys().GetData())
 
     @faces.setter
     def faces(self, faces):
-        """ set faces without copying """
+        """Set faces without copying."""
         if faces.dtype != pyvista.ID_TYPE:
             faces = faces.astype(pyvista.ID_TYPE)
 
@@ -259,11 +262,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
 
     def is_all_triangles(self):
+        """Return True if all the faces of the polydata are triangles."""
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
 
     def _from_arrays(self, vertices, faces, deep=True, verts=False):
-        """
-        Set polygons and points from numpy arrays
+        """Set polygons and points from numpy arrays.
 
         Parameters
         ----------
@@ -319,23 +322,26 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.faces = faces
 
     def __sub__(self, cutting_mesh):
-        """ subtract two meshes """
+        """Subtract two meshes."""
         return self.boolean_cut(cutting_mesh)
 
     @property
     def n_faces(self):
-        """alias for ``n_cells``"""
+        """Return the number of cells.
+
+        Alias for ``n_cells``.
+
+        """
         return self.n_cells
 
     @property
     def number_of_faces(self):
-        """ returns the number of cells """
+        """Return the number of cells."""
         return self.n_cells
 
 
     def save(self, filename, binary=True):
-        """
-        Writes a surface mesh to disk.
+        """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh file.
 
@@ -354,6 +360,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         -----
         Binary files write much faster than ASCII and have a smaller
         file size.
+
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         file_mode = True
@@ -386,11 +393,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def area(self):
-        """
-        Mesh surface area
+        """Return the mesh surface area.
 
-        Returns
-        -------
+        Return
+        ------
         area : float
             Total area of the mesh.
 
@@ -401,11 +407,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def volume(self):
-        """
-        Mesh volume - will throw a VTK error/warning if not a closed surface
+        """Return the mesh volume.
 
-        Returns
-        -------
+        This will throw a VTK error/warning if not a closed surface
+
+        Return
+        ------
         volume : float
             Total volume of the mesh.
 
@@ -417,27 +424,29 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def point_normals(self):
-        """ Point normals """
+        """Return the point normals."""
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
 
 
     @property
     def cell_normals(self):
-        """ Cell normals  """
+        """Return the cell normals."""
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
 
     @property
     def face_normals(self):
-        """ Cell normals  """
+        """Return the cell normals."""
         return self.cell_normals
 
 
     @property
     def obbTree(self):
-        """obbTree is an object to generate oriented bounding box (OBB)
+        """Return the obbTree of the polydata.
+
+        An obbTree is an object to generate oriented bounding box (OBB)
         trees. An oriented bounding box is a bounding box that does not
         necessarily line up along coordinate axes. The OBB tree is a
         hierarchical tree structure of such boxes, where deeper levels of OBB
@@ -453,7 +462,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def n_open_edges(self):
-        """ The number of open edges on this mesh """
+        """Return the number of open edges on this mesh."""
         alg = vtk.vtkFeatureEdges()
         alg.FeatureEdgesOff()
         alg.BoundaryEdgesOn()
@@ -464,19 +473,20 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
 
 class PointGrid(PointSet):
-    """ Class in common with structured and unstructured grids """
+    """Class in common with structured and unstructured grids."""
 
     def __new__(cls, *args, **kwargs):
+        """Allocate memory for the point grid."""
         if cls is PointGrid:
             raise TypeError("pyvista.PointGrid is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
+        """Initialize the point grid."""
         super(PointGrid, self).__init__()
 
     def plot_curvature(self, curv_type='mean', **kwargs):
-        """
-        Plots the curvature of the external surface of the grid
+        """Plot the curvature of the external surface of the grid.
 
         Parameters
         ----------
@@ -491,8 +501,8 @@ class PointGrid(PointSet):
         **kwargs : optional
             Optional keyword arguments.  See help(pyvista.plot)
 
-        Returns
-        -------
+        Return
+        ------
         cpos : list
             Camera position, focal point, and view up.  Used for storing and
             setting camera view.
@@ -503,9 +513,9 @@ class PointGrid(PointSet):
 
     @property
     def volume(self):
-        """
-        Computes volume by extracting the external surface and
-        computing interior volume
+        """Compute the volume of the point grid.
+
+        This extracts the external surface and computes the interior volume
         """
         surf = self.extract_surface().triangulate()
         return surf.volume
@@ -545,6 +555,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the unstructured grid."""
         super(UnstructuredGrid, self).__init__()
         deep = kwargs.pop('deep', False)
 
@@ -581,16 +592,17 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
 
     def __repr__(self):
+        """Return the standard representation."""
         return Common.__repr__(self)
 
 
     def __str__(self):
+        """Return the standard str representation."""
         return Common.__str__(self)
 
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
-        """
-        Create VTK unstructured grid from numpy arrays
+        """Create VTK unstructured grid from numpy arrays.
 
         Parameters
         ----------
@@ -641,7 +653,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         >>> grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
 
         """
-
         if offset.dtype != pyvista.ID_TYPE:
             offset = offset.astype(pyvista.ID_TYPE)
 
@@ -675,8 +686,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         self.SetCells(cell_type, offset, vtkcells)
 
     def _load_file(self, filename):
-        """
-        Load an unstructured grid from a file.
+        """Load an unstructured grid from a file.
 
         The file extension will select the type of reader to use.  A .vtk
         extension will use the legacy reader, while .vtu will select the VTK
@@ -686,6 +696,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         ----------
         filename : str
             Filename of grid to be loaded.
+
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
@@ -707,8 +718,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
-        """
-        Writes an unstructured grid to disk.
+        """Write an unstructured grid to disk.
 
         Parameters
         ----------
@@ -720,12 +730,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         binary : bool, optional
             Writes as a binary file by default.  Set to False to write ASCII.
 
-
         Notes
         -----
         Binary files write much faster than ASCII, but binary files written on
         one system may not be readable on other systems.  Binary can be used
         only ".vtk" files
+
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
@@ -750,14 +760,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     @property
     def cells(self):
-        """ returns a pointer to the cells as a numpy object """
+        """Return a pointer to the cells as a numpy object."""
         return vtk_to_numpy(self.GetCells().GetData())
 
     def linear_copy(self, deep=False):
-        """
-        Returns a copy of the input unstructured grid containing only
-        linear cells.  Converts the following cell types to their
-        linear equivalents.
+        """Return a copy of the unstructured grid containing only linear cells.
+        
+        Converts the following cell types to their linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
         - VTK_QUADRATIC_PYRAMID    --> VTK_PYRAMID
@@ -770,10 +779,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             When True, makes a copy of the points array.  Default
             False.  Cells and cell types are always copied.
 
-        Returns
-        -------
+        Return
+        ------
         grid : pyvista.UnstructuredGrid
             UnstructuredGrid containing only linear cells.
+
         """
         lgrid = self.copy(deep)
 
@@ -817,19 +827,19 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     @property
     def celltypes(self):
-        """Get the cell types array"""
+        """Get the cell types array."""
         return vtk_to_numpy(self.GetCellTypesArray())
 
     @property
     def offset(self):
-        """Get Cell Locations Array"""
+        """Get Cell Locations Array."""
         return vtk_to_numpy(self.GetCellLocationsArray())
 
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
-    """
-    Extends the functionality of a vtk.vtkStructuredGrid object
+    """Extend the functionality of a vtk.vtkStructuredGrid object.
+
     Can be initialized in several ways:
 
     - Create empty grid
@@ -859,10 +869,10 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
     >>> x, y, z = np.meshgrid(xrng, yrng, zrng)
     >>> grid = pyvista.StructuredGrid(x, y, z)
 
-
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the structured grid."""
         super(StructuredGrid, self).__init__()
 
         if len(args) == 1:
@@ -881,16 +891,17 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
 
     def __repr__(self):
+        """Return the standard representation."""
         return Common.__repr__(self)
 
 
     def __str__(self):
+        """Return the standard str representation."""
         return Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):
-        """
-        Create VTK structured grid directly from numpy arrays.
+        """Create VTK structured grid directly from numpy arrays.
 
         Parameters
         ----------
@@ -902,6 +913,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         z : np.ndarray
             Position of the points in z direction.
+
         """
         if not(x.shape == y.shape == z.shape):
             raise Exception('Input point array shapes must match exactly')
@@ -922,8 +934,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         self.SetPoints(pyvista.vtk_points(points))
 
     def _load_file(self, filename):
-        """
-        Load a structured grid from a file.
+        """Load a structured grid from a file.
 
         The file extension will select the type of reader to use.  A .vtk
         extension will use the legacy reader, while .vts will select the VTK
@@ -962,8 +973,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
-        """
-        Writes a structured grid to disk.
+        """Write a structured grid to disk.
 
         Parameters
         ----------
@@ -1007,29 +1017,29 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     @property
     def dimensions(self):
-        """Returns a length 3 tuple of the grid's dimensions"""
+        """Return a length 3 tuple of the grid's dimensions."""
         return list(self.GetDimensions())
 
     @dimensions.setter
     def dimensions(self, dims):
-        """Sets the dataset dimensions. Pass a length three tuple of integers"""
+        """Set the dataset dimensions. Pass a length three tuple of integers."""
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()
 
     @property
     def x(self):
-        """The X coordinates of all points"""
+        """Return the X coordinates of all points."""
         return self.points[:, 0].reshape(self.dimensions, order='F')
 
     @property
     def y(self):
-        """The Y coordinates of all points"""
+        """Return the Y coordinates of all points."""
         return self.points[:, 1].reshape(self.dimensions, order='F')
 
     @property
     def z(self):
-        """The Z coordinates of all points"""
+        """Return the Z coordinates of all points."""
         return self.points[:, 2].reshape(self.dimensions, order='F')
 
     def _get_attrs(self):
