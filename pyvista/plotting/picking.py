@@ -1,3 +1,5 @@
+"""Module managing picking events."""
+
 import logging
 import numpy as np
 import vtk
@@ -6,8 +8,8 @@ import pyvista
 from pyvista.utilities import try_callback
 
 class PickingHelper(object):
-    """An internal class to hold picking related features
-    """
+    """An internal class to hold picking related features."""
+
     picked_cells = None
     picked_point = None
     picked_path = None
@@ -15,18 +17,18 @@ class PickingHelper(object):
     picked_horizon = None
 
     def get_pick_position(self):
-        """Get the pick position/area as x0, y0, x1, y1"""
+        """Get the pick position/area as x0, y0, x1, y1."""
         return self.renderer.get_pick_position()
 
 
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
                             show=True, show_message=True, style='wireframe',
                             line_width=5, color='pink', font_size=18, **kwargs):
-        """
-        Enables picking of cells.  Press "r" to enable retangle based
-        selection.  Press "r" again to turn it off.  Selection will be
-        saved to ``self.picked_cells``. Also press "p" to pick a single cell
-        under the mouse location.
+        """Enable picking at cells.
+
+        Press "r" to enable retangle based selection.  Press "r" again to
+        turn it off. Selection will be saved to ``self.picked_cells``. Also
+        press "p" to pick a single cell under the mouse location.
 
         Uses last input mesh for input by default.
 
@@ -75,7 +77,8 @@ class PickingHelper(object):
 
         kwargs : optional
             All remaining keyword arguments are used to control how the
-            selection is intereactively displayed
+            selection is intereactively displayed.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
@@ -169,7 +172,9 @@ class PickingHelper(object):
                              font_size=18, color='pink', point_size=10,
                              use_mesh=False, show_point=True, tolerance=0.025,
                              **kwargs):
-        """Enable picking a point at the mouse location in the render view
+        """Enable picking at points.
+
+        Enable picking a point at the mouse location in the render view
         using the ``P`` key. This point is saved to the ``.picked_point``
         attrbute on the plotter. Pass a callback function that takes that
         point as an argument. The picked point can either be a point on the
@@ -246,7 +251,9 @@ class PickingHelper(object):
                             font_size=18, color='pink', point_size=10,
                             line_width=5, show_path=True, tolerance=0.025,
                             **kwargs):
-        """This is a convenience method for ``enable_point_picking`` to keep
+        """Enable picking at paths.
+
+        This is a convenience method for ``enable_point_picking`` to keep
         track of the picked points and create a line using those points.
 
         The line is saved to the ``.picked_path`` attribute of this plotter
@@ -335,7 +342,9 @@ class PickingHelper(object):
                                 font_size=18, color='pink', point_size=10,
                                 line_width=5, tolerance=0.025, show_path=True,
                                 **kwargs):
-        """This is a convenience method for ``enable_point_picking`` to keep
+        """Enable picking at geodesic paths.
+
+        This is a convenience method for ``enable_point_picking`` to keep
         track of the picked points and create a geodesic path using those
         points.
 
@@ -428,7 +437,9 @@ class PickingHelper(object):
                                font_size=18, color='pink', point_size=10,
                                line_width=5, show_path=True, opacity=0.75,
                                show_horizon=True, **kwargs):
-        """Helper for the ``enable_path_picking`` method to also show a ribbon
+        """Enable horizon picking.
+
+        Helper for the ``enable_path_picking`` method to also show a ribbon
         surface along the picked path. Ribbon is saved under
         ``.picked_horizon``.
 
@@ -505,7 +516,7 @@ class PickingHelper(object):
 
 
     def pick_click_position(self):
-        """Get corresponding click location in the 3D plot"""
+        """Get corresponding click location in the 3D plot."""
         if self.click_position is None:
             self.store_click_position()
         picker = vtk.vtkWorldPointPicker()
@@ -514,7 +525,7 @@ class PickingHelper(object):
 
 
     def pick_mouse_position(self):
-        """Get corresponding mouse location in the 3D plot"""
+        """Get corresponding mouse location in the 3D plot."""
         if self.mouse_position is None:
             self.store_mouse_position()
         picker = vtk.vtkWorldPointPicker()
@@ -523,7 +534,7 @@ class PickingHelper(object):
 
 
     def fly_to_mouse_position(self, focus=False):
-        """ Focuses on last stored mouse position """
+        """Focus on last stored mouse position."""
         if self.mouse_position is None:
             self.store_mouse_position()
         click_point = self.pick_mouse_position()
@@ -534,9 +545,13 @@ class PickingHelper(object):
 
 
     def enable_fly_to_right_click(self, callback=None):
-        """A convenience method to track right click positions and fly to the
+        """Set the camera to track right click positions.
+
+        A convenience method to track right click positions and fly to the
         picked point in the scene. The callback will be passed the point in
-        3D space."""
+        3D space.
+
+        """
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)

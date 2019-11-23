@@ -1,15 +1,15 @@
-"""An internal module for wrapping the use of mappers
-"""
+"""An internal module for wrapping the use of mappers."""
 
 
 def make_mapper(mapper_class):
-    """This makes a mapper wrapped woth a few convenient tools for managing
+    """Wrap a mapper.
+
+    This makes a mapper wrapped with a few convenient tools for managing
     mappers with scalar bars in a consistent way since not all mapper classes
     have scalar ranges and lookup tables.
     """
-
     class MapperHelper(mapper_class):
-        """A helper that dynamically inherits the mapper's class"""
+        """A helper that dynamically inherits the mapper's class."""
 
         def __init__(self, *args, **kwargs):
             self._scalar_range = None

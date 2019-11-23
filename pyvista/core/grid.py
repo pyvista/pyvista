@@ -1,6 +1,5 @@
-"""
-Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData
-"""
+"""Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
+
 import logging
 import os
 
@@ -19,40 +18,44 @@ log.setLevel('CRITICAL')
 
 
 class Grid(Common):
-    """A class full of common methods for non-pointset grids """
+    """A class full of common methods for non-pointset grids."""
 
     def __new__(cls, *args, **kwargs):
+        """Allocate a grid."""
         if cls is Grid:
             raise TypeError("pyvista.Grid is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
+        """Initialize the grid."""
         super(Grid, self).__init__()
 
     @property
     def dimensions(self):
-        """Returns a length 3 tuple of the grid's dimensions - these are
-        effectively the number of nodes along each of the three dataset axes
+        """Return a length 3 tuple of the grid's dimensions.
+
+        These are effectively the number of nodes along each of the three dataset axes.
+
         """
         return list(self.GetDimensions())
 
     @dimensions.setter
     def dimensions(self, dims):
-        """Sets the dataset dimensions. Pass a length three tuple of integers"""
+        """Set the dataset dimensions. Pass a length three tuple of integers."""
         nx, ny, nz = dims[0], dims[1], dims[2]
         self.SetDimensions(nx, ny, nz)
         self.Modified()
 
     def _get_attrs(self):
-        """An internal helper for the representation methods"""
+        """Return the representation methods (internal helper)."""
         attrs = Common._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
 
 
 class RectilinearGrid(vtkRectilinearGrid, Grid):
-    """
-    Extends the functionality of a vtk.vtkRectilinearGrid object
+    """Extend the functionality of a vtk.vtkRectilinearGrid object.
+
     Can be initialized in several ways:
 
     - Create empty grid
@@ -85,6 +88,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the rectilinear grid."""
         super(RectilinearGrid, self).__init__()
 
         if len(args) == 1:
@@ -109,19 +113,21 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
     def __repr__(self):
+        """Return the default representation."""
         return Common.__repr__(self)
 
 
     def __str__(self):
+        """Return the str representation."""
         return Common.__str__(self)
 
 
     def _from_arrays(self, x, y, z):
-        """
-        Create VTK rectilinear grid directly from numpy arrays. Each array
-        gives the uniques coordinates of the mesh along each axial direction.
-        To help ensure you are using this correctly, we take the unique values
-        of each argument.
+        """Create VTK rectilinear grid directly from numpy arrays.
+
+        Each array gives the uniques coordinates of the mesh along each axial
+        direction. To help ensure you are using this correctly, we take the unique
+        values of each argument.
 
         Parameters
         ----------
@@ -133,6 +139,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
         z : np.ndarray
             Coordinates of the nodes in z direction.
+
         """
         x = np.unique(x.ravel())
         y = np.unique(y.ravel())
@@ -146,7 +153,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @property
     def points(self):
-        """ returns a pointer to the points as a numpy object """
+        """Return a pointer to the points as a numpy object."""
         x = vtk_to_numpy(self.GetXCoordinates())
         y = vtk_to_numpy(self.GetYCoordinates())
         z = vtk_to_numpy(self.GetZCoordinates())
@@ -155,7 +162,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @points.setter
     def points(self, points):
-        """ set points without copying """
+        """Set points without copying."""
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         # get the unique coordinates along each axial direction
@@ -209,8 +216,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
-        """
-        Writes a rectilinear grid to disk.
+        """Write a rectilinear grid to disk.
 
         Parameters
         ----------
@@ -250,35 +256,35 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @property
     def x(self):
-        """Get the coordinates along the X-direction"""
+        """Get the coordinates along the X-direction."""
         return vtk_to_numpy(self.GetXCoordinates())
 
     @x.setter
     def x(self, coords):
-        """Set the coordinates along the X-direction"""
+        """Set the coordinates along the X-direction."""
         self.SetXCoordinates(numpy_to_vtk(coords))
         self.Modified()
 
     @property
     def y(self):
-        """Get the coordinates along the Y-direction"""
+        """Get the coordinates along the Y-direction."""
         return vtk_to_numpy(self.GetYCoordinates())
 
     @y.setter
     def y(self, coords):
-        """Set the coordinates along the Y-direction"""
+        """Set the coordinates along the Y-direction."""
         self.SetYCoordinates(numpy_to_vtk(coords))
         self.Modified()
 
     @property
     def z(self):
-        """Get the coordinates along the Z-direction"""
+        """Get the coordinates along the Z-direction."""
         return vtk_to_numpy(self.GetZCoordinates())
 
 
     @z.setter
     def z(self, coords):
-        """Set the coordinates along the Z-direction"""
+        """Set the coordinates along the Z-direction."""
         self.SetZCoordinates(numpy_to_vtk(coords))
         self.Modified()
 
@@ -305,8 +311,8 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
 class UniformGrid(vtkImageData, Grid, UniformGridFilters):
-    """
-    Extends the functionality of a vtk.vtkImageData object
+    """Extend the functionality of a vtk.vtkImageData object.
+
     Can be initialized in several ways:
 
     - Create empty grid
@@ -344,6 +350,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize the uniform grid."""
         super(UniformGrid, self).__init__()
 
         if len(args) == 1:
@@ -370,19 +377,21 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
                 self._from_specs(args[0], args[1])
 
     def __repr__(self):
+        """Return the default representation."""
         return Common.__repr__(self)
 
 
     def __str__(self):
+        """Return the default str representation."""
         return Common.__str__(self)
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
-        """
-        Create VTK image data directly from numpy arrays. A uniform grid is
-        defined by the node spacings for each axis (uniform along each
-        individual axis) and the number of nodes on each axis. These are
-        relative to a specified origin (default is ``(0.0, 0.0, 0.0)``).
+        """Create VTK image data directly from numpy arrays.
+
+        A uniform grid is defined by the node spacings for each axis
+        (uniform along each individual axis) and the number of nodes on each axis.
+        These are relative to a specified origin (default is ``(0.0, 0.0, 0.0)``).
 
         Parameters
         ----------
@@ -394,6 +403,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
         origin : tuple(float)
             Length 3 tuple of floats/ints specifying minimum value for each axis
+
         """
         xn, yn, zn = dims[0], dims[1], dims[2]
         xs, ys, zs = spacing[0], spacing[1], spacing[2]
@@ -405,7 +415,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @property
     def points(self):
-        """ returns a pointer to the points as a numpy object """
+        """Return a pointer to the points as a numpy object."""
         # Get grid dimensions
         nx, ny, nz = self.dimensions
         nx -= 1
@@ -423,7 +433,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @points.setter
     def points(self, points):
-        """ set points without copying """
+        """Set points without copying."""
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         # get the unique coordinates along each axial direction
@@ -481,8 +491,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         self.shallow_copy(grid)
 
     def save(self, filename, binary=True):
-        """
-        Writes image data grid to disk.
+        """Write image data grid to disk.
 
         Parameters
         ----------
@@ -522,27 +531,27 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @property
     def x(self):
-        """ all the X points """
+        """Return all the X points."""
         return self.points[:, 0]
 
     @property
     def y(self):
-        """ all the Y points """
+        """Return all the Y points."""
         return self.points[:, 1]
 
     @property
     def z(self):
-        """ all the Z points """
+        """Return all the Z points."""
         return self.points[:, 2]
 
     @property
     def origin(self):
-        """Origin of the grid (bottom southwest corner)"""
+        """Return the origin of the grid (bottom southwest corner)."""
         return list(self.GetOrigin())
 
     @origin.setter
     def origin(self, origin):
-        """Set the origin. Pass a length three tuple of floats"""
+        """Set the origin. Pass a length three tuple of floats."""
         ox, oy, oz = origin[0], origin[1], origin[2]
         self.SetOrigin(ox, oy, oz)
         self.Modified()
@@ -554,15 +563,18 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @spacing.setter
     def spacing(self, spacing):
-        """Set the spacing in each axial direction. Pass a length three tuple of
-        floats"""
+        """Set the spacing in each axial direction.
+
+        Pass a length three tuple of floats.
+
+        """
         dx, dy, dz = spacing[0], spacing[1], spacing[2]
         self.SetSpacing(dx, dy, dz)
         self.Modified()
 
 
     def _get_attrs(self):
-        """An internal helper for the representation methods"""
+        """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
         fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT]*3)
         attrs.append(("Spacing", self.spacing, fmt))
@@ -570,7 +582,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
 
     def cast_to_structured_grid(self):
-        """Cast this uniform grid to a :class:`pyvista.StructuredGrid`"""
+        """Cast this uniform grid to a :class:`pyvista.StructuredGrid`."""
         alg = vtk.vtkImageToStructuredGrid()
         alg.SetInputData(self)
         alg.Update()
@@ -578,7 +590,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
 
     def cast_to_rectilinear_grid(self):
-        """Cast this uniform grid to a :class:`pyvista.RectilinearGrid`"""
+        """Cast this uniform grid to a :class:`pyvista.RectilinearGrid`."""
         def gen_coords(i):
             coords = np.cumsum(np.insert(np.full(self.dimensions[i] - 1,
                                                  self.spacing[i]), 0, 0)

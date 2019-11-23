@@ -82,6 +82,11 @@ matrix:
       # Run all code examples in the docstrings
       script: pytest -v --cov --doctest-modules pyvista
     # Build/test/deploy documentation on 3.7 only
+    - name: Documentation Testing 3.7
+      python: 3.7
+      script: |
+        pip install codespell;
+        make codespell;
     - name: Documentation Build/Deploy 3.7
       python: 3.7
       env:
