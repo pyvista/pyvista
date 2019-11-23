@@ -1,3 +1,5 @@
+"""Module dedicated to widgets."""
+
 import numpy as np
 import vtk
 
@@ -8,16 +10,20 @@ from .theme import rcParams, parse_color
 
 
 class WidgetHelper(object):
-    """An internal class to manage widgets and other helper methods involving
-    widgets"""
+    """An internal class to manage widgets.
+
+    It also manages and other helper methods involving widgets.
+
+    """
 
     def add_box_widget(self, callback, bounds=None, factor=1.25,
                        rotation_enabled=True, color=None, use_planes=False,
                        outline_translation=True, pass_widget=False):
-        """Add a box widget to the scene. This is useless without a callback
-        function. You can pass a callable function that takes a single
-        argument, the PolyData box output from this widget, and performs a
-        task with that box.
+        """Add a box widget to the scene.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes a single argument, the PolyData box output from
+        this widget, and performs a task with that box.
 
         Parameters
         ----------
@@ -98,7 +104,7 @@ class WidgetHelper(object):
 
 
     def clear_box_widgets(self):
-        """ Disables all of the box widgets """
+        """Disable all of the box widgets."""
         if hasattr(self, 'box_widgets'):
             for widget in self.box_widgets:
                 widget.Off()
@@ -109,7 +115,9 @@ class WidgetHelper(object):
     def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
                           widget_color=None, outline_translation=True,
                           **kwargs):
-        """Add a mesh to the scene with a box widget that is used to clip
+        """Clip a mesh using a box widget.
+
+        Add a mesh to the scene with a box widget that is used to clip
         the mesh interactively.
 
         The clipped mesh is saved to the ``.box_clipped_meshes`` attribute on
@@ -130,6 +138,7 @@ class WidgetHelper(object):
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
+
         """
         name = kwargs.get('name', str(hex(id(mesh))))
         rng = mesh.get_data_range(kwargs.get('scalars', None))
@@ -175,10 +184,12 @@ class WidgetHelper(object):
                          outline_translation=False,
                          origin_translation=True, implicit=True,
                          pass_widget=False, test_callback=True):
-        """Add a plane widget to the scene. This is useless without a callback
-        function. You can pass a callable function that takes two
-        arguments, the normal and origin of the plane in that order output
-        from this widget, and performs a task with that plane.
+        """Add a plane widget to the scene.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes two arguments, the normal and origin of the plane
+        in that order output from this widget, and performs a task with that
+        plane.
 
         Parameters
         ----------
@@ -335,7 +346,7 @@ class WidgetHelper(object):
 
 
     def clear_plane_widgets(self):
-        """ Disables all of the plane widgets """
+        """Disable all of the plane widgets."""
         if hasattr(self, 'plane_widgets'):
             for widget in self.plane_widgets:
                 widget.Off()
@@ -347,7 +358,9 @@ class WidgetHelper(object):
                             widget_color=None, value=0.0, assign_to_axis=None,
                             tubing=False, origin_translation=True,
                             outline_translation=False, implicit=True, **kwargs):
-        """Add a mesh to the scene with a plane widget that is used to clip
+        """Clip a mesh using a plane widget.
+
+        Add a mesh to the scene with a plane widget that is used to clip
         the mesh interactively.
 
         The clipped mesh is saved to the ``.plane_clipped_meshes`` attribute on
@@ -367,6 +380,7 @@ class WidgetHelper(object):
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
+
         """
         name = kwargs.get('name', str(hex(id(mesh))))
         rng = mesh.get_data_range(kwargs.get('scalars', None))
@@ -414,7 +428,9 @@ class WidgetHelper(object):
                        widget_color=None, assign_to_axis=None,
                        tubing=False, origin_translation=True,
                        outline_translation=False, **kwargs):
-        """Add a mesh to the scene with a plane widget that is used to slice
+        """Slice a mesh using a plane widget.
+
+        Add a mesh to the scene with a plane widget that is used to slice
         the mesh interactively.
 
         The sliced mesh is saved to the ``.plane_sliced_meshes`` attribute on
@@ -435,6 +451,7 @@ class WidgetHelper(object):
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
+
         """
         name = kwargs.get('name', str(hex(id(mesh))))
         rng = mesh.get_data_range(kwargs.get('scalars', None))
@@ -473,8 +490,11 @@ class WidgetHelper(object):
 
     def add_mesh_slice_orthogonal(self, mesh, generate_triangles=False,
                                   widget_color=None, tubing=False, **kwargs):
-        """Adds three interactive plane slicing widgets for orthogonal slicing
+        """Slice a mesh with three interactive planes.
+
+        Adds three interactive plane slicing widgets for orthogonal slicing
         along each cartesian axis.
+
         """
         actors = []
         for ax in ["x", "y", "z"]:
@@ -493,10 +513,11 @@ class WidgetHelper(object):
     def add_line_widget(self, callback, bounds=None, factor=1.25,
                         resolution=100, color=None, use_vertices=False,
                         pass_widget=False):
-        """Add a line widget to the scene. This is useless without a callback
-        function. You can pass a callable function that takes a single
-        argument, the PolyData line output from this widget, and performs a
-        task with that line.
+        """Add a line widget to the scene.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes a single argument, the PolyData line output from this
+        widget, and performs a task with that line.
 
         Parameters
         ----------
@@ -525,6 +546,7 @@ class WidgetHelper(object):
         pass_widget : bool
             If true, the widget will be passed as the last argument of the
             callback
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Line widget not available in notebook plotting')
@@ -570,7 +592,7 @@ class WidgetHelper(object):
 
 
     def clear_line_widgets(self):
-        """ Disables all of the line widgets """
+        """Disable all of the line widgets."""
         if hasattr(self, 'line_widgets'):
             for widget in self.line_widgets:
                 widget.Off()
@@ -581,10 +603,11 @@ class WidgetHelper(object):
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False):
-        """Add a slider bar widget. This is useless without a callback
-        function. You can pass a callable function that takes a single
-        argument, the value of this slider widget, and performs a
-        task with that value.
+        """Add a slider bar widget.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes a single argument, the value of this slider widget,
+        and performs a task with that value.
 
         Parameters
         ----------
@@ -615,6 +638,7 @@ class WidgetHelper(object):
         pass_widget : bool
             If true, the widget will be passed as the last argument of the
             callback
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Slider widget not available in notebook plotting')
@@ -673,7 +697,7 @@ class WidgetHelper(object):
 
 
     def clear_slider_widgets(self):
-        """ Disables all of the slider widgets """
+        """Disable all of the slider widgets."""
         if hasattr(self, 'slider_widgets'):
             for widget in self.slider_widgets:
                 widget.Off()
@@ -685,7 +709,9 @@ class WidgetHelper(object):
                            widget_color=None, preference='cell',
                            title=None, pointa=(.4, .9), pointb=(.9, .9),
                            continuous=False, **kwargs):
-        """Add a mesh to the scene with a slider widget that is used to
+        """Apply a threshold on a mesh with a slider.
+
+        Add a mesh to the scene with a slider widget that is used to
         threshold the mesh interactively.
 
         The threshold mesh is saved to the ``.threshold_meshes`` attribute on
@@ -705,6 +731,7 @@ class WidgetHelper(object):
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
+
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
@@ -755,7 +782,9 @@ class WidgetHelper(object):
                           compute_gradients=False, compute_scalars=True,
                           preference='point', title=None, pointa=(.4, .9),
                           pointb=(.9, .9), widget_color=None, **kwargs):
-        """Add a mesh to the scene with a slider widget that is used to
+        """Create a contour of a mesh with a slider.
+
+        Add a mesh to the scene with a slider widget that is used to
         contour at an isovalue of the *point* data on the mesh interactively.
 
         The isovalue mesh is saved to the ``.isovalue_meshes`` attribute on
@@ -772,6 +801,7 @@ class WidgetHelper(object):
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
+
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
@@ -826,10 +856,11 @@ class WidgetHelper(object):
                           n_hanldes=5, resolution=25, color="yellow",
                           show_ribbon=False, ribbon_color="pink",
                           ribbon_opacity=0.5, pass_widget=False):
-        """Create and add a spline widget to the scene. Use the bounds
-        argument to place this widget. Several "handles" are used to control a
-        parametric function for building this spline. Click directly on the
-        line to translate the widget.
+        """Create and add a spline widget to the scene.
+
+        Use the bounds argument to place this widget. Several "handles" are
+        used to control a parametric function for building this spline. Click
+        directly on the line to translate the widget.
 
         Note
         ----
@@ -865,6 +896,7 @@ class WidgetHelper(object):
         pass_widget : bool
             If true, the widget will be passed as the last argument of the
             callback
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Spline widget not available in notebook plotting')
@@ -914,7 +946,7 @@ class WidgetHelper(object):
 
 
     def clear_spline_widgets(self):
-        """disables all of the spline widgets"""
+        """Disable all of the spline widgets."""
         if hasattr(self, 'spline_widgets'):
             for widget in self.spline_widgets:
                 widget.Off()
@@ -926,7 +958,9 @@ class WidgetHelper(object):
                               widget_color=None, show_ribbon=False,
                               ribbon_color="pink", ribbon_opacity=0.5,
                               **kwargs):
-        """Add a mesh to the scene with a spline widget that is used to slice
+        """Slice a mesh with a spline widget.
+
+        Add a mesh to the scene with a spline widget that is used to slice
         the mesh interactively.
 
         The sliced mesh is saved to the ``.spline_sliced_meshes`` attribute on
@@ -944,6 +978,7 @@ class WidgetHelper(object):
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
             control how the mesh is displayed.
+
         """
         name = kwargs.get('name', str(hex(id(mesh))))
         rng = mesh.get_data_range(kwargs.get('scalars', None))
@@ -987,8 +1022,9 @@ class WidgetHelper(object):
                           color=None, style="surface",
                           selected_color="pink", indices=None,
                           pass_widget=False, test_callback=True):
-        """Add one or many sphere widgets to a scene. Use a sphere widget
-        to control a vertex location.
+        """Add one or many sphere widgets to a scene.
+        
+        Use a sphere widget to control a vertex location.
 
         Parameters
         ----------
@@ -1101,7 +1137,7 @@ class WidgetHelper(object):
 
 
     def clear_sphere_widgets(self):
-        """ Disable all of the sphere widgets """
+        """Disable all of the sphere widgets."""
         if hasattr(self, 'sphere_widgets'):
             for widget in self.sphere_widgets:
                 widget.Off()
@@ -1110,7 +1146,7 @@ class WidgetHelper(object):
 
 
     def close(self):
-        """ closes widgets """
+        """Close the widgets."""
         self.clear_box_widgets()
         self.clear_plane_widgets()
         self.clear_line_widgets()

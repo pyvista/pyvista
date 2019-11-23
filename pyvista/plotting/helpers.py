@@ -1,3 +1,5 @@
+"""This module contains some convenience helper functions."""
+
 import numpy as np
 
 
@@ -14,8 +16,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, use_panel=None,
          volume=False, parallel_projection=False, **kwargs):
-    """
-    Convenience plotting function for a vtk or numpy object.
+    """Plot a vtk or numpy object.
 
     Parameters
     ----------
@@ -150,8 +151,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
 
 def plot_arrows(cent, direction, **kwargs):
-    """
-    Plots arrows as vectors
+    """Plot arrows as vectors.
 
     Parameters
     ----------
@@ -176,8 +176,10 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                       plotter_kwargs=None, show_kwargs=None, screenshot=None,
                       camera_position=None, outline=None, outline_color='k',
                       labels=('A', 'B', 'C', 'D'), link=True, notebook=None):
-    """Plot a 2 by 2 comparison of data objects. Plotting parameters and camera
-    positions will all be the same.
+    """Plot a 2 by 2 comparison of data objects.
+
+    Plotting parameters and camera positions will all be the same.
+
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]
