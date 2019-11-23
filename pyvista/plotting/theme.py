@@ -1,3 +1,4 @@
+"""Module managing different plotting theme parameters."""
 
 import os
 import vtk
@@ -69,7 +70,7 @@ rcParams = {
 DEFAULT_THEME = dict(rcParams)
 
 def set_plot_theme(theme):
-    """Set the plotting parameters to a predefined theme"""
+    """Set the plotting parameters to a predefined theme."""
     if theme.lower() in ['paraview', 'pv']:
         rcParams['background'] = PARAVIEW_BACKGROUND
         rcParams['cmap'] = 'coolwarm'
@@ -113,8 +114,10 @@ def set_plot_theme(theme):
 
 
 def parse_color(color, opacity=None):
-    """Parses color into a vtk friendly rgb list.
+    """Parse color into a vtk friendly rgb list.
+
     Values returned will be between 0 and 1.
+
     """
     if color is None:
         color = rcParams['color']
@@ -139,7 +142,7 @@ def parse_color(color, opacity=None):
 
 
 def parse_font_family(font_family):
-    """ checks font name """
+    """Check font name."""
     # check font name
     font_family = font_family.lower()
     if font_family not in ['courier', 'times', 'arial']:
