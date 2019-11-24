@@ -47,7 +47,9 @@ import gzip
 import hashlib
 import json
 import os
+import random
 import shutil
+import string
 import sys
 import time
 import zipfile
