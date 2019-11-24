@@ -106,11 +106,13 @@ def test_background_plotting_camera(qtbot):
     plotter.camera_position = [(0.0, 0.0, 3.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
     # load existing position
-    plotter.saved_camera_menu.actions()[0].trigger()
+    # NOTE: 2 because first two (0 and 1) bottons save and clear positions
+    plotter.saved_cameras_tool_bar.actions()[2].trigger()
     assert plotter.camera_position == cpos
 
     plotter.clear_camera_positions()
-    assert not len(plotter.saved_camera_menu.actions())
+    # 2 because the first two buttons are save and clear
+    assert len(plotter.saved_cameras_tool_bar.actions()) == 2
     plotter.close()
 
 

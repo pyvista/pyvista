@@ -1,3 +1,5 @@
+"""Module containing useful plotting tools."""
+
 import os
 from subprocess import PIPE, Popen
 
@@ -9,11 +11,10 @@ import pyvista
 from .theme import parse_color, rcParams
 
 def system_supports_plotting():
-    """
-    Check if x server is running
+    """Check if x server is running.
 
-    Returns
-    -------
+    Return
+    ------
     system_supports_plotting : bool
         True when on Linux and running an xserver.  Returns None when
         on a non-linux platform.
@@ -33,7 +34,7 @@ def system_supports_plotting():
 
 
 def update_axes_label_color(axes_actor, color=None):
-    """Internal helper to set the axes label color"""
+    """Set the axes label color (internale helper)."""
     if color is None:
         color = rcParams['font']['color']
     color = parse_color(color)
@@ -53,6 +54,7 @@ def update_axes_label_color(axes_actor, color=None):
 def create_axes_marker(label_color=None, x_color=None, y_color=None,
                        z_color=None, xlabel='X', ylabel='Y', zlabel='Z',
                        labels_off=False, line_width=2):
+    """Return an axis actor to add in the scene."""
     if x_color is None:
         x_color = rcParams['axes']['x_color']
     if y_color is None:
@@ -91,8 +93,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 z_face_color='blue',
                                 color_box=False, label_color=None,
                                 labels_off=False, opacity=0.5,):
-    """Create a Box axes orientation widget with labels.
-    """
+    """Create a Box axes orientation widget with labels."""
     if x_color is None:
         x_color = rcParams['axes']['x_color']
     if y_color is None:
@@ -144,7 +145,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 parse_color(y_face_color),
                                 parse_color(z_face_color),
                                 parse_color(z_face_color),
-                               ])
+                                ])
         face_colors = (face_colors * 255).astype(np.uint8)
         cube.cell_arrays['face_colors'] = face_colors
 
@@ -171,6 +172,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
 
 
 def normalize(x, minimum=None, maximum=None):
+    """Normalize the given value between [minimum, maximum]."""
     if minimum is None:
         minimum = np.nanmin(x)
     if maximum is None:
@@ -179,8 +181,7 @@ def normalize(x, minimum=None, maximum=None):
 
 
 def opacity_transfer_function(mapping, n_colors, interpolate=True):
-    """Get the opacity transfer function results: range from 0 to 255.
-    """
+    """Get the opacity transfer function results: range from 0 to 255."""
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
     transfer_func = {
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
@@ -228,8 +229,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True):
                 # quadratic has best/smoothest results
                 f = interp1d(xo, mapping, kind='quadratic')
                 vals = f(xx)
-                vals[vals<0] = 0.0
-                vals[vals>1.0] = 1.0
+                vals[vals < 0] = 0.0
+                vals[vals > 1.0] = 1.0
                 mapping = (vals * 255.).astype(np.uint8)
             except (ImportError, AssertionError):
                 # Otherwise use simple linear interp

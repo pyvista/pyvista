@@ -19,7 +19,7 @@ dataset = examples.download_bunny_coarse()
 clipped = dataset.clip('y', invert=False)
 
 p = pv.Plotter()
-p.add_mesh(dataset, style='wireframe' ,color='blue', label='Input')
+p.add_mesh(dataset, style='wireframe', color='blue', label='Input')
 p.add_mesh(clipped, label='Clipped')
 p.add_legend()
 p.camera_position = [(0.24, 0.32, 0.7),
@@ -40,7 +40,7 @@ bounds = [2,4.5, 2,4.5, 1,3]
 clipped = dataset.clip_box(bounds)
 
 p = pv.Plotter()
-p.add_mesh(dataset, style='wireframe' ,color='blue', label='Input')
+p.add_mesh(dataset, style='wireframe', color='blue', label='Input')
 p.add_mesh(clipped, label='Clipped')
 p.add_legend()
 p.show()
@@ -93,5 +93,5 @@ grid = pv.create_grid(surface)
 # Clip the grid using the surface
 model = grid.clip_surface(surface)
 
-# Compute height nd display it
+# Compute height and display it
 model.elevation().plot()

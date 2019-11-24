@@ -43,7 +43,6 @@ plotter.show()
 
 
 ###############################################################################
-
 plotter = pv.Plotter(shape=(1, 2))
 
 # Note that the (0, 0) location is active by default
@@ -55,6 +54,39 @@ plotter.add_mesh(examples.load_airplane(), show_edges=False)
 plotter.subplot(0, 1)
 plotter.add_text("Uniform Data Example\n", font_size=30)
 plotter.add_mesh(examples.load_uniform(), show_edges=True)
+
+# Display the window
+plotter.show()
+
+
+###############################################################################
+# Split the rendering window in half and subdivide it in a nr. of vertical or
+# horizontal subplots.
+
+# This defines the position of the vertical/horizontal splitting, in this
+# case 40% of the vertical/horizontal dimension of the window
+pv.rcParams['multi_rendering_splitting_position'] = 0.40
+
+# shape="3|1" means 3 plots on the left and 1 on the right,
+# shape="4/2" means 4 plots on top of 2 at bottom.
+plotter = pv.Plotter(shape='3|1', window_size=(1000,1200))
+
+plotter.subplot(0)
+plotter.add_text("Airplane Example")
+plotter.add_mesh(examples.load_airplane(), show_edges=False)
+
+# load and plot the uniform data example on the right-hand side
+plotter.subplot(1)
+plotter.add_text("Uniform Data Example")
+plotter.add_mesh(examples.load_uniform(), show_edges=True)
+
+plotter.subplot(2)
+plotter.add_text("A Sphere")
+plotter.add_mesh(pv.Sphere(), show_edges=True)
+
+plotter.subplot(3)
+plotter.add_text("A Cone")
+plotter.add_mesh(pv.Cone(), show_edges=True)
 
 # Display the window
 plotter.show()

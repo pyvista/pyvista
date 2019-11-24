@@ -1,5 +1,4 @@
-"""
-Color module supporting plotting module
+"""Color module supporting plotting module.
 
 Used code from matplotlib.colors.  Thanks for your work!
 
@@ -319,16 +318,19 @@ color_char_to_word = {
         'w': 'white'}
 
 
+PARAVIEW_BACKGROUND = [82/255., 87/255., 110/255.]
+
+
 def hex_to_rgb(h):
-    """ Returns 0 to 1 rgb from a hex list or tuple """
+    """Return 0 to 1 rgb from a hex list or tuple."""
     h = h.lstrip('#')
-    return tuple(int(h[i:i+2], 16)/255. for i in (0, 2 ,4))
+    return tuple(int(h[i:i+2], 16)/255. for i in (0, 2, 4))
 
 
 def string_to_rgb(string):
-    """
-    Converts a literal color string (i.e. white) to a color rgb.  Also accepts
-    hex strings or single characters from the following list.
+    """Convert a literal color string (i.e. white) to a color rgb.
+
+    Also accepts hex strings or single characters from the following list.
 
         b: blue
         g: green
@@ -340,7 +342,6 @@ def string_to_rgb(string):
         w: white
 
     """
-
     # if a single character
     if len(string) == 1:
 
@@ -355,6 +356,10 @@ def string_to_rgb(string):
     elif string.lower() in hexcolors:
         colorhex = hexcolors[string.lower()]
 
+    elif string.lower() in 'paraview' or string.lower() in 'pv':
+        # Use the default ParaView background color
+        return PARAVIEW_BACKGROUND
+
     # try to convert to hex
     else:
         try:
@@ -366,7 +371,7 @@ def string_to_rgb(string):
 
 
 def get_cmap_safe(cmap):
-    """Fetches a colormap by name from matplotlib, colorcet, or cmocean"""
+    """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
     try:
         from matplotlib.cm import get_cmap
     except ImportError:
@@ -390,4 +395,11 @@ def get_cmap_safe(cmap):
             return cmap
         # Else use Matplotlib
         cmap = get_cmap(cmap)
+    elif isinstance(cmap, list):
+        for item in cmap:
+            if not isinstance(item, str):
+                raise TypeError('When inputting a list as a cmap, each item should be a string.')
+        from matplotlib.colors import ListedColormap
+        cmap = ListedColormap(cmap)
+
     return cmap

@@ -1,13 +1,16 @@
+"""Module managing errors."""
+
 import logging
 import os
 import re
 import scooby
+import sys
 
 import vtk
 
 
 def set_error_output_file(filename):
-    """Sets a file to write out the VTK errors"""
+    """Set a file to write out the VTK errors."""
     filename = os.path.abspath(os.path.expanduser(filename))
     fileOutputWindow = vtk.vtkFileOutputWindow()
     fileOutputWindow.SetFileName(filename)
@@ -17,9 +20,10 @@ def set_error_output_file(filename):
 
 
 class Observer:
-    """A standerd class for observing VTK objects.
-    """
+    """A standerd class for observing VTK objects."""
+
     def __init__(self, event_type='ErrorEvent', log=True):
+        """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
         self.__message_etc = None
@@ -30,8 +34,9 @@ class Observer:
 
     @staticmethod
     def parse_message(message):
+        """Parse the given message."""
         # Message format
-        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s(.+):\s(.+)')
+        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
@@ -39,7 +44,7 @@ class Observer:
             return '', '', '', message
 
     def log_message(self, kind, alert):
-        """Parses different event types and passes them to logging"""
+        """Parse different event types and passes them to logging."""
         if kind == 'ERROR':
             logging.error(alert)
         else:
@@ -47,7 +52,11 @@ class Observer:
         return
 
     def __call__(self, obj, event, message):
-        """On an event occurence, this function executes"""
+        """Declare standard call function for the observer.
+
+        On an event occurrence, this function executes.
+
+        """
         self.__event_occurred = True
         self.__message_etc = message
         kind, path, address, alert = self.parse_message(message)
@@ -56,26 +65,29 @@ class Observer:
             self.log_message(kind, alert)
 
     def has_event_occurred(self):
-        """Ask self if an error has occured since last querried.
+        """Ask self if an error has occurred since last querried.
+
         This resets the observer's status.
+
         """
         occ = self.__event_occurred
         self.__event_occurred = False
         return occ
 
     def get_message(self, etc=False):
-        """Get the last set error message
+        """Get the last set error message.
 
-        Return:
+        Return
+        ------
             str: the last set error message
+
         """
         if etc:
             return self.__message_etc
         return self.__message
 
     def observe(self, algorithm):
-        """Make this an observer of an algorithm
-        """
+        """Make this an observer of an algorithm."""
         if self.__observing:
             raise RuntimeError('This error observer is already observing an algorithm.')
         if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
@@ -86,7 +98,7 @@ class Observer:
 
 
 def send_errors_to_logging():
-    """Send all VTK error/warning messages to Python's logging module"""
+    """Send all VTK error/warning messages to Python's logging module."""
     error_output = vtk.vtkStringOutputWindow()
     error_win = vtk.vtkOutputWindow()
     error_win.SetInstance(error_output)
@@ -95,6 +107,8 @@ def send_errors_to_logging():
 
 
 class Report(scooby.Report):
+    """A class for custom scooby.Report."""
+
     def __init__(self, additional=None, ncol=3, text_width=80, sort=False):
         """Generate a :class:`scooby.Report` instance.
 
@@ -114,13 +128,33 @@ class Report(scooby.Report):
             Alphabetically sort the packages
 
         """
-
         # Mandatory packages.
         core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
 
         # Optional packages.
-        optional = ['matplotlib', 'PyQt5', 'IPython', 'ipywidgets', 'colorcet',
+        optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
                     'cmocean', 'panel']
 
-        super().__init__(additional=additional, core=core, optional=optional,
-                         ncol=ncol, text_width=text_width, sort=sort)
+        scooby.Report.__init__(self, additional=additional, core=core,
+                               optional=optional, ncol=ncol,
+                               text_width=text_width, sort=sort)
+
+
+def assert_empty_kwargs(**kwargs):
+    """Assert that all keyword arguments have been used (internal helper).
+
+    If any keyword arguments are passed, a ``TypeError`` is raised.
+
+    """
+    n = len(kwargs)
+    if n == 0:
+        return True
+    caller = sys._getframe(1).f_code.co_name
+    keys = list(kwargs.keys())
+    bad_arguments = "[" + ("{}, " * (n - 1) + "{}").format(*keys) + "]"
+    if n == 1:
+        grammar = "is an invalid keyword argument"
+    else:
+        grammar = "are invalid keyword arguments"
+    message = "{} {} for `{}`".format(bad_arguments, grammar, caller)
+    raise TypeError(message)

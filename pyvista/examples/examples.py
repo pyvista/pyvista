@@ -1,3 +1,5 @@
+"""Module managing examples and toy datasets."""
+
 import os
 import time
 
@@ -22,36 +24,36 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def load_ant():
-    """ Load ply ant mesh """
+    """Load ply ant mesh."""
     return pyvista.PolyData(antfile)
 
 
 def load_airplane():
-    """ Load ply airplane mesh """
+    """Load ply airplane mesh."""
     return pyvista.PolyData(planefile)
 
 
 def load_sphere():
-    """ Loads sphere ply mesh """
+    """Load sphere ply mesh."""
     return pyvista.PolyData(spherefile)
 
 
 def load_uniform():
-    """ Loads a sample uniform grid """
+    """Load a sample uniform grid."""
     return pyvista.UniformGrid(uniformfile)
 
 
 def load_rectilinear():
-    """ Loads a sample uniform grid """
+    """Load a sample uniform grid."""
     return pyvista.RectilinearGrid(rectfile)
 
 def load_hexbeam():
-    """ Loads a sample UnstructuredGrid """
+    """Load a sample UnstructuredGrid."""
     return pyvista.UnstructuredGrid(hexbeamfile)
 
 
 def load_structured():
-    """ Loads a simple StructuredGrid """
+    """Load a simple StructuredGrid."""
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
@@ -60,28 +62,27 @@ def load_structured():
     return pyvista.StructuredGrid(x, y, z)
 
 def load_globe():
-    """ Loads a globe source """
+    """Load a globe source."""
     globe = pyvista.PolyData(globefile)
     globe.textures['2k_earth_daymap'] = load_globe_texture()
     return globe
 
 def load_globe_texture():
-    """ Loads a vtk.vtkTexture that can be applied to the globe source """
+    """Load a vtk.vtkTexture that can be applied to the globe source."""
     return pyvista.read_texture(mapfile)
 
 
 def load_channels():
-    """ Loads a uniform grid of fluvial channels in the subsurface """
+    """Load a uniform grid of fluvial channels in the subsurface."""
     return pyvista.read(channelsfile)
 
 def plot_ants_plane(off_screen=None, notebook=None):
-    """
+    """Plot two ants and airplane.
+
     Demonstrate how to create a plot class to plot multiple meshes while
     adding scalars and text.
 
-    Plot two ants and airplane
     """
-
     # load and shrink airplane
     airplane = pyvista.PolyData(planefile)
     airplane.points /= 10
@@ -110,6 +111,7 @@ def plot_ants_plane(off_screen=None, notebook=None):
 
 
 def beam_example(off_screen=None, notebook=None):
+    """Create the beam example."""
     # Load module and example file
     hexfile = hexbeamfile
 
@@ -142,8 +144,7 @@ def beam_example(off_screen=None, notebook=None):
 
 def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
               off_screen=None, notebook=None):
-    """
-    Plot a 3D moving wave in a render window.
+    """Plot a 3D moving wave in a render window.
 
     Parameters
     ----------
@@ -164,8 +165,8 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
         Enables off screen rendering when True.  Used for automated testing.
         Disabled by default.
 
-    Returns
-    -------
+    Return
+    ------
     points : np.ndarray
         Position of points at last frame.
 
@@ -211,10 +212,10 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
         plotter.update_scalars(Z.ravel(), render=False)
 
         # Render and get time to render
-        rstart = time.time()
+        #rstart = time.time()
         plotter.update()
         # plotter.render()
-        rstop = time.time()
+        #rstop = time.time()
 
         # time delay
         tpast = time.time() - tlast
@@ -233,7 +234,7 @@ def plot_wave(fps=30, frequency=1, wavetime=3, interactive=False,
 
 
 def load_spline():
-    """Load an example spline mesh"""
+    """Load an example spline mesh."""
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
     r = z**2 + 1
@@ -244,8 +245,12 @@ def load_spline():
 
 
 def load_random_hills():
-    """Uses the parametric random hill function to create hills oriented like
-    topography and add's an elevation array"""
+    """Create random hills toy example.
+    
+    Uses the parametric random hill function to create hills oriented like
+    topography and add's an elevation array.
+
+    """
     mesh = pyvista.ParametricRandomHills()
     mesh.rotate_y(90)
     return mesh.elevation()

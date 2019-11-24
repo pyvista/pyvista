@@ -1,11 +1,14 @@
+"""This module contains some convenience helper functions."""
+
 import numpy as np
 
 
 import pyvista
 
-from .theme import *
-from .tools import *
-from .plotting import *
+from .theme import rcParams
+from pyvista.utilities import is_pyvista_dataset
+from .plotting import Plotter
+import scooby
 
 
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
@@ -13,8 +16,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, use_panel=None,
          volume=False, parallel_projection=False, **kwargs):
-    """
-    Convenience plotting function for a vtk or numpy object.
+    """Plot a vtk or numpy object.
 
     Parameters
     ----------
@@ -73,6 +75,11 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if notebook is None:
         notebook = scooby.in_ipykernel()
 
+    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
+    show_grid = kwargs.pop('show_grid', False)
+    height = kwargs.get('height', 400)
+    auto_close = kwargs.get('auto_close', rcParams['auto_close'])
+
     if notebook:
         off_screen = notebook
     plotter = Plotter(off_screen=off_screen, notebook=notebook)
@@ -108,11 +115,10 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if text:
         plotter.add_text(text)
 
-    if show_bounds or kwargs.get('show_grid', False):
-        if kwargs.get('show_grid', False):
-            plotter.show_grid()
-        else:
-            plotter.show_bounds()
+    if show_grid:
+        plotter.show_grid()
+    elif show_bounds:
+        plotter.show_bounds()
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()
@@ -134,18 +140,18 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           screenshot=screenshot,
                           return_img=return_img,
                           use_panel=use_panel,
-                          height=kwargs.get('height', 400))
+                          height=height)
 
     # close and return camera position and maybe image
-    plotter.close()
+    if auto_close:
+        plotter.close()
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
     return result
 
 
 def plot_arrows(cent, direction, **kwargs):
-    """
-    Plots arrows as vectors
+    """Plot arrows as vectors.
 
     Parameters
     ----------
@@ -170,8 +176,10 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                       plotter_kwargs=None, show_kwargs=None, screenshot=None,
                       camera_position=None, outline=None, outline_color='k',
                       labels=('A', 'B', 'C', 'D'), link=True, notebook=None):
-    """Plot a 2 by 2 comparison of data objects. Plotting parameters and camera
-    positions will all be the same.
+    """Plot a 2 by 2 comparison of data objects.
+
+    Plotting parameters and camera positions will all be the same.
+
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]

@@ -57,9 +57,9 @@ def test_init_bad_input():
 
     with pytest.raises(Exception):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1),
-                                              np.array(1),
-                                              np.array(1),
-                                              'woa')
+                                                 np.array(1),
+                                                 np.array(1),
+                                                 'woa')
 
 
 def test_init_from_arrays():
@@ -326,6 +326,16 @@ def test_cast_uniform_to_structured():
     grid = examples.load_uniform()
     structured = grid.cast_to_structured_grid()
     assert structured.n_points == grid.n_points
+    assert structured.n_arrays == grid.n_arrays
+    assert structured.bounds == grid.bounds
+
+
+def test_cast_uniform_to_rectilinear():
+    grid = examples.load_uniform()
+    rectilinear = grid.cast_to_rectilinear_grid()
+    assert rectilinear.n_points == grid.n_points
+    assert rectilinear.n_arrays == grid.n_arrays
+    assert rectilinear.bounds == grid.bounds
 
 
 @pytest.mark.parametrize('binary', [True, False])
@@ -400,3 +410,20 @@ def test_grid_extract_selection_points():
 
     sub_grid = grid.extract_selection_points(range(100))
     assert sub_grid.n_cells > 1
+
+
+def test_gaussian_smooth():
+    uniform = examples.load_uniform()
+    active = uniform.active_scalar_name
+    values = uniform.active_scalar
+
+    uniform = uniform.gaussian_smooth(scalars=active)
+    assert uniform.active_scalar_name == active
+    assert uniform.active_scalar.shape == values.shape
+    assert not np.all(uniform.active_scalar == values)
+    values = uniform.active_scalar
+
+    uniform = uniform.gaussian_smooth(radius_factor=5, std_dev=1.3)
+    assert uniform.active_scalar_name == active
+    assert uniform.active_scalar.shape == values.shape
+    assert not np.all(uniform.active_scalar == values)

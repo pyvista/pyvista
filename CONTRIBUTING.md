@@ -148,19 +148,69 @@ Run all code examples in the docstrings:
 python -m pytest -v --doctest-modules pyvista
 ```
 
-Now make sure notebooks are running
-
-```bash
-python -m pytest -v --nbval-lax --current-env --disable-warnings notebooks/*.ipynb
-python -m pytest -v --nbval-lax --current-env --disable-warnings tests/*.ipynb
-```
 
 And finally, test the documentation examples:
 
 ```bash
 cd ./docs/
+make clean
 make doctest
-make html
+make html -b linkcheck
 ```
 
 The finished documentation can be found in the `docs/_build/html` directory.
+
+
+## Release Checklist
+
+The following is a checklist to complete before taging a release.
+This helps us ensure everything goes smoothely before our army of robots send
+PyVista out to PyPI and Conda-Forge for deployment. Please checkout the
+latest state of the `master` branch locally and:
+
+1. Run all tests as outlined in the [Testing Section](#testing) and ensure
+all are passing.
+
+2. Ensure all builds and tests on Travis and Azure are passing for the
+latest commits on the `master` branch
+
+3. Locally test and build the documentation with link checking to make sure
+no links are outdated. Be sure to run `make clean` and `rm -r docs/examples` to
+ensure no results are cached.
+    ```bash
+    cd docs
+    rm -r examples # deletes the sphinx-gallery cache
+    make clean
+    make doctest
+    make html -b linkcheck
+    ```
+
+4. After building the documentation, open the local build and examine the
+examples gallery for any obvious issues. If issues are present, abort the
+release.
+
+
+5. Update the version numbers in `pyvista/_version.py`, commit those
+changes, and then tag with the same version. Push the changes *and* the tags:
+    ```bash
+    git push origin master
+    git push origin --tags
+    ```
+
+6. Create a list of all changes for the release. It is often helpful to
+leverage [GitHub's *compare* feature](https://github.com/pyvista/pyvista/compare)
+to see the differences from the last tag and the `master` branch.
+Be sure to acknowledge new contributors by their GitHub username and place
+mentions where appropriate if a specific contributor is to thank for a new
+feature.
+
+7. Place your release notes from step 6 in the description for
+[the new release on GitHub](https://github.com/pyvista/pyvista/releases/new)
+
+8. Go grab a beer/coffee and wait for
+[@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot) to open a
+pull reequest on the conda-forge
+[PyVista feedstock](https://github.com/conda-forge/pyvista-feedstock).
+Merge that pull request.
+
+9. Announce the new release in the PyVista Slack workspace and celebrate!

@@ -1,4 +1,5 @@
-"""
+"""Export a rendering window to a VTKjs file.
+
 This module holds a set of tools for exporting a VTK rendering window
 to a VTKjs file that can be viewed in a web browser.
 
@@ -79,7 +80,7 @@ def _random_name():
 
 
 def _get_range_info(array, component):
-    """Get the data range of the array's component"""
+    """Get the data range of the array's component."""
     r = array.GetRange(component)
     comp_range = {}
     comp_range['min'] = r[0]
@@ -91,7 +92,7 @@ def _get_range_info(array, component):
 
 
 def _get_ref(dest_dir, md5):
-    """Get reference"""
+    """Get reference."""
     ref = {}
     ref['id'] = md5
     ref['encode'] = 'BigEndian' if sys.byteorder == 'big' else 'LittleEndian'
@@ -105,7 +106,7 @@ objIds = []
 
 
 def _get_object_id(obj):
-    """Get object identifier"""
+    """Get object identifier."""
     try:
         idx = objIds.index(obj)
         return idx + 1
@@ -117,7 +118,7 @@ def _get_object_id(obj):
 # -----------------------------------------------------------------------------
 
 def _dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
-    """Dump vtkjs data array"""
+    """Dump vtkjs data array."""
     if root is None:
         root = {}
     if not array:
@@ -129,8 +130,7 @@ def _dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
         new_array = vtk.vtkTypeUInt32Array()
         new_array.SetNumberOfTuples(array_size)
         for i in range(array_size):
-            new_array.SetValue(i, -1 if array.GetValue(i) <
-                              0 else array.GetValue(i))
+            new_array.SetValue(i, -1 if array.GetValue(i) < 0 else array.GetValue(i))
         pbuffer = memoryview(new_array)
     else:
         pbuffer = memoryview(array)
@@ -166,7 +166,7 @@ def _dump_data_array(dataset_dir, data_dir, array, root=None, compress=True):
 
 
 def _dump_color_array(dataset_dir, data_dir, color_array_info, root=None, compress=True):
-    """Dump vtkjs color array"""
+    """Dump vtkjs color array."""
     if root is None:
         root = {}
     root['pointData'] = {
@@ -218,7 +218,7 @@ def _dump_color_array(dataset_dir, data_dir, color_array_info, root=None, compre
 
 
 def _dump_t_coords(dataset_dir, data_dir, dataset, root=None, compress=True):
-    """dump vtkjs texture coordinates"""
+    """Dump vtkjs texture coordinates."""
     if root is None:
         root = {}
     tcoords = dataset.GetPointData().GetTCoords()
@@ -231,7 +231,7 @@ def _dump_t_coords(dataset_dir, data_dir, dataset, root=None, compress=True):
 
 
 def _dump_normals(dataset_dir, data_dir, dataset, root=None, compress=True):
-    """dump vtkjs normal vectors"""
+    """Dump vtkjs normal vectors."""
     if root is None:
         root = {}
     normals = dataset.GetPointData().GetNormals()
@@ -244,7 +244,7 @@ def _dump_normals(dataset_dir, data_dir, dataset, root=None, compress=True):
 
 
 def _dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
-    """Dump all data arrays to vtkjs"""
+    """Dump all data arrays to vtkjs."""
     if root is None:
         root = {}
     root['pointData'] = {
@@ -309,7 +309,7 @@ def _dump_all_arrays(dataset_dir, data_dir, dataset, root=None, compress=True):
 
 
 def _dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None, compress=True):
-    """Dump poly data object to vtkjs"""
+    """Dump poly data object to vtkjs."""
     if root is None:
         root = {}
     root['vtkClass'] = 'vtkPolyData'
@@ -317,7 +317,7 @@ def _dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None,
 
     # Points
     points = _dump_data_array(dataset_dir, data_dir,
-                           dataset.GetPoints().GetData(), {}, compress)
+                              dataset.GetPoints().GetData(), {}, compress)
     points['vtkClass'] = 'vtkPoints'
     container['points'] = points
 
@@ -327,28 +327,28 @@ def _dump_poly_data(dataset_dir, data_dir, dataset, color_array_info, root=None,
     # Verts
     if dataset.GetVerts() and dataset.GetVerts().GetData().GetNumberOfTuples() > 0:
         _verts = _dump_data_array(dataset_dir, data_dir,
-                               dataset.GetVerts().GetData(), {}, compress)
+                                  dataset.GetVerts().GetData(), {}, compress)
         _cells['verts'] = _verts
         _cells['verts']['vtkClass'] = 'vtkCellArray'
 
     # Lines
     if dataset.GetLines() and dataset.GetLines().GetData().GetNumberOfTuples() > 0:
         _lines = _dump_data_array(dataset_dir, data_dir,
-                               dataset.GetLines().GetData(), {}, compress)
+                                  dataset.GetLines().GetData(), {}, compress)
         _cells['lines'] = _lines
         _cells['lines']['vtkClass'] = 'vtkCellArray'
 
     # Polys
     if dataset.GetPolys() and dataset.GetPolys().GetData().GetNumberOfTuples() > 0:
         _polys = _dump_data_array(dataset_dir, data_dir,
-                               dataset.GetPolys().GetData(), {}, compress)
+                                  dataset.GetPolys().GetData(), {}, compress)
         _cells['polys'] = _polys
         _cells['polys']['vtkClass'] = 'vtkCellArray'
 
     # Strips
     if dataset.GetStrips() and dataset.GetStrips().GetData().GetNumberOfTuples() > 0:
         _strips = _dump_data_array(dataset_dir, data_dir,
-                                dataset.GetStrips().GetData(), {}, compress)
+                                   dataset.GetStrips().GetData(), {}, compress)
         _cells['strips'] = _strips
         _cells['strips']['vtkClass'] = 'vtkCellArray'
 
@@ -367,7 +367,7 @@ _writer_mapping['vtkPolyData'] = _dump_poly_data
 
 
 def _dump_image_data(dataset_dir, data_dir, dataset, color_array_info, root=None, compress=True):
-    """Dump image data object to vtkjs"""
+    """Dump image data object to vtkjs."""
     if root is None:
         root = {}
     root['vtkClass'] = 'vtkImageData'
@@ -388,7 +388,7 @@ _writer_mapping['vtkImageData'] = _dump_image_data
 
 
 def _write_data_set(file_path, dataset, output_dir, color_array_info, new_name=None, compress=True):
-    """write dataset to vtkjs"""
+    """Write dataset to vtkjs."""
     fileName = new_name if new_name else os.path.basename(file_path)
     dataset_dir = os.path.join(output_dir, fileName)
     data_dir = os.path.join(dataset_dir, 'data')
@@ -404,7 +404,7 @@ def _write_data_set(file_path, dataset, output_dir, color_array_info, new_name=N
     if writer:
         writer(dataset_dir, data_dir, dataset, color_array_info, root, compress)
     else:
-        print(dataObject.GetClassName(), 'is not supported')
+        print(dataset.GetClassName(), 'is not supported')
 
     with open(os.path.join(dataset_dir, "index.json"), 'w') as f:
         f.write(json.dumps(root, indent=2))
@@ -416,7 +416,7 @@ def _write_data_set(file_path, dataset, output_dir, color_array_info, new_name=N
 ### ----------------------------------------------------------------------- ###
 
 def mkdir_p(path):
-    """Make directory at path"""
+    """Make directory at path."""
     try:
         os.makedirs(path)
     except OSError as exc:  # Python >2.5
@@ -428,7 +428,7 @@ def mkdir_p(path):
 
 
 def _serialize_renderer(renderer, compress_arrays=False):
-    """This serializes a sigle renderer and returns the serialized data"""
+    """Serialize a single renderer and return the serialized data."""
     renProps = renderer.GetViewProps()
     for rpIdx in range(renProps.GetNumberOfItems()):
         renProp = renProps.GetItemAsObject(rpIdx)
@@ -576,6 +576,7 @@ def _serialize_renderer(renderer, compress_arrays=False):
 
 def export_plotter_vtkjs(plotter, filename=None, compress_arrays=False):
     """Export a plotter's rendering window to the VTKjs format.
+
     If filename is None, this will return the serialized content.
     """
     sceneName = os.path.split(filename)[1]
@@ -621,7 +622,7 @@ def export_plotter_vtkjs(plotter, filename=None, compress_arrays=False):
 
     indexFilePath = os.path.join(output_dir, 'index.json')
     with open(indexFilePath, 'w') as outfile:
-      json.dump(sceneDescription, outfile, indent=4)
+        json.dump(sceneDescription, outfile, indent=4)
 
 # -----------------------------------------------------------------------------
 
@@ -654,16 +655,18 @@ def export_plotter_vtkjs(plotter, filename=None, compress_arrays=False):
 
 
 def convert_dropbox_url(url):
-    """Convert dropbox url to direct download link"""
+    """Convert dropbox url to direct download link."""
     return url.replace("https://www.dropbox.com", "https://dl.dropbox.com")
 
 def generate_viewer_url(dataURL):
-    """Generate viewer url with data link"""
+    """Generate viewer url with data link."""
     viewerURL = "http://viewer.pyvista.org/"
     return viewerURL + '%s%s' % ("?fileURL=", dataURL)
 
 def get_vtkjs_url(*args):
-    """After using ``export_vtkjs()`` to create a ``.vtkjs`` file from a
+    """Provide shareable link from the vtkjs script.
+
+    After using ``export_vtkjs()`` to create a ``.vtkjs`` file from a
     data scene which is uploaded to an online file hosting service like Dropbox,
     use this method to get a shareable link to that scene on the
     `PVGeo VTKjs viewer`_.

@@ -25,7 +25,7 @@ PyPI
 .. image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
 
-PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
 using ``pip``::
 
     pip install pyvista
@@ -34,7 +34,7 @@ using ``pip``::
 Anaconda
 ~~~~~~~~
 
-.. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg
+.. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
 To install this package with conda run::
@@ -54,11 +54,13 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``PyQt5==5.11.3``                 | Background plotting                     |
 +-----------------------------------+-----------------------------------------+
-| ``ipywidgets``                    | IPython interactive tools               |
-+-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
++-----------------------------------+-----------------------------------------+
+| ``colorcet``                      | Perceptually uniform colormaps          |
++-----------------------------------+-----------------------------------------+
+| ``cmocean``                       | Oceanographic colormaps                 |
 +-----------------------------------+-----------------------------------------+
 
 
@@ -124,7 +126,7 @@ Please see `this project`_ for a convenient Cookiecutter_ to get started using
 PyVista on the notebook hosting service MyBinder_.
 
 .. _this project: https://github.com/pyvista/cookiecutter-pyvista-binder
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _MyBinder: https://mybinder.org
 
 To get started, the Docker container will need to have ``libgl1-mesa-dev`` and

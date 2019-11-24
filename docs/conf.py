@@ -35,7 +35,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_copybutton',
               'sphinx_gallery.gen_gallery',
               'sphinx.ext.extlinks',
-             ]
+              ]
 
 
 linkcheck_retries = 3
@@ -101,7 +101,7 @@ sphinx_gallery_conf = {
     # Sort gallery example by file name instead of number of lines (default)
     "within_subsection_order": FileNameSortKey,
     # directory where function granular galleries are stored
-    "backreferences_dir": False,
+    "backreferences_dir": None,
     # Modules for which function level galleries are created.  In
     "doc_module": "pyvista",
     "image_scrapers": ('pyvista', 'matplotlib'),
@@ -141,7 +141,7 @@ html_context = {
 # documentation.
 #
 html_theme_options = {
-    'logo_only' : True,
+    'logo_only': True,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,

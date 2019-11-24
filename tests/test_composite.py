@@ -116,7 +116,7 @@ def test_multi_block_set_get_ers():
     # Check content
     assert isinstance(multi[1], pyvista.RectilinearGrid)
     for i in [0,2,3,4,5]:
-        assert multi[i] == None
+        assert multi[i] is None
     # Check the bounds
     assert multi.bounds == list(data.bounds)
     multi[5] = ex.load_uniform()
@@ -279,11 +279,15 @@ def test_multi_block_copy():
     assert multi.n_blocks == 5 == newobj.n_blocks
     assert id(multi[0]) != id(newobj[0])
     assert id(multi[-1]) != id(newobj[-1])
+    for i in range(newobj.n_blocks):
+        assert pyvista.is_pyvista_dataset(newobj.GetBlock(i))
     # Now check shallow
     newobj = multi.copy(deep=False)
     assert multi.n_blocks == 5 == newobj.n_blocks
     assert id(multi[0]) == id(newobj[0])
     assert id(multi[-1]) == id(newobj[-1])
+    for i in range(newobj.n_blocks):
+        assert pyvista.is_pyvista_dataset(newobj.GetBlock(i))
     return
 
 

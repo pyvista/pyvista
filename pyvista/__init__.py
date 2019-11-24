@@ -1,9 +1,11 @@
+"""PyVista package for 3D plotting and mesh analysis."""
+
 import warnings
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
-# Per contract with Sphinx-Gallery, this method must be availabe at top level
+# Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 import numpy as np
@@ -31,6 +33,19 @@ OFF_SCREEN = False
 try:
     if os.environ['PYVISTA_OFF_SCREEN'].lower() == 'true':
         OFF_SCREEN = True
+except KeyError:
+    pass
+
+# Grab system flag for anti-aliasing
+try:
+    rcParams['multi_samples'] = int(os.environ['PYVISTA_MULTI_SAMPLES'])
+except KeyError:
+    pass
+
+# Grab system flag for auto-closing because of Panel issues
+try:
+    # This only sets to false if PYVISTA_AUTO_CLOSE is false
+    rcParams['auto_close'] = not os.environ['PYVISTA_AUTO_CLOSE'].lower() == 'false'
 except KeyError:
     pass
 
@@ -69,7 +84,7 @@ if scooby.in_ipykernel():
     try:
         import panel
         panel.extension('vtk')
-    except (ImportError, RuntimeError):
+    except:
         rcParams['use_panel'] = False
 
 # Set preferred plot theme
