@@ -13,10 +13,10 @@ mesh = examples.download_face()
 
 # Define a camera potion the shows this mesh properly
 cpos = [(0.4, -0.07, -0.31), (0.05, -0.13, -0.06), (-0.1, 1, 0.08)]
-dargs = dict(cpos=cpos, show_edges=True, color=True)
+dargs = dict(show_edges=True, color=True)
 
 # Preview the mesh
-mesh.plot(**dargs)
+mesh.plot(cpos=cpos, **dargs)
 
 ###############################################################################
 #  Now let's define a target reduction and compare the
@@ -28,13 +28,13 @@ print("Reducing {} percent out of the original mesh".format(target_reduction * 1
 ###############################################################################
 decimated = mesh.decimate(target_reduction)
 
-decimated.plot(**dargs)
+decimated.plot(cpos=cpos, **dargs)
 
 
 ###############################################################################
 pro_decimated = mesh.decimate_pro(target_reduction, preserve_topology=True)
 
-pro_decimated.plot(**dargs)
+pro_decimated.plot(cpos=cpos, **dargs)
 
 
 ###############################################################################

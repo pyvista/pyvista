@@ -1,32 +1,40 @@
+"""Module managing picking events."""
+
 import logging
 import numpy as np
 import vtk
 
 import pyvista
+from pyvista.utilities import try_callback
 
 class PickingHelper(object):
-    """An internal class to hold picking related features
-    """
+    """An internal class to hold picking related features."""
+
+    picked_cells = None
+    picked_point = None
+    picked_path = None
+    picked_geodesic = None
+    picked_horizon = None
 
     def get_pick_position(self):
-        """Get the pick position/area as x0, y0, x1, y1"""
+        """Get the pick position/area as x0, y0, x1, y1."""
         return self.renderer.get_pick_position()
 
 
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
                             show=True, show_message=True, style='wireframe',
                             line_width=5, color='pink', font_size=18, **kwargs):
-        """
-        Enables picking of cells.  Press "r" to enable retangle based
-        selection.  Press "r" again to turn it off.  Selection will be
-        saved to ``self.picked_cells``. Also press "p" to pick a single cell
-        under the mouse location.
+        """Enable picking at cells.
+
+        Press "r" to enable retangle based selection.  Press "r" again to
+        turn it off. Selection will be saved to ``self.picked_cells``. Also
+        press "p" to pick a single cell under the mouse location.
 
         Uses last input mesh for input by default.
 
         Warning
         -------
-        Visible cell picking (``through=False``) is known to not perfrom well
+        Visible cell picking (``through=False``) is known to not perform well
         and produce incorrect selections on non-triangulated meshes if using
         any grpahics card other than NVIDIA. A warning will be thrown if the
         mesh is not purely triangles when using visible cell selection.
@@ -55,7 +63,8 @@ class PickingHelper(object):
 
         kwargs : optional
             All remaining keyword arguments are used to control how the
-            selection is intereactively displayed
+            selection is intereactively displayed.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
@@ -68,7 +77,7 @@ class PickingHelper(object):
 
         def end_pick_helper(picker, event_id):
             if show:
-                # Use try incase selection is empty
+                # Use try in case selection is empty
                 try:
                     self.add_mesh(self.picked_cells, name='_cell_picking_selection',
                                   style=style, color=color,
@@ -78,7 +87,7 @@ class PickingHelper(object):
                     pass
 
             if callback is not None and self.picked_cells.n_cells > 0:
-                callback(self.picked_cells)
+                try_callback(callback, self.picked_cells)
 
             # TODO: Deactivate selection tool
             return
@@ -148,14 +157,17 @@ class PickingHelper(object):
     def enable_point_picking(self, callback=None, show_message=True,
                              font_size=18, color='pink', point_size=10,
                              use_mesh=False, show_point=True, **kwargs):
-        """Enable picking a point at the mouse location in the render view
+        """Enable picking at points.
+
+        Enable picking a point at the mouse location in the render view
         using the ``P`` key. This point is saved to the ``.picked_point``
         attrbute on the plotter. Pass a callback function that takes that
         point as an argument. The picked point can either be a point on the
         first intersecting mesh, or a point in the 3D window.
 
         If ``use_mesh`` is True, the callback function will be passed a pointer
-        to the picked mesh and the point ID of the selcted mesh.
+        to the picked mesh and the point ID of the selected mesh.
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Point picking not available in notebook plotting')
@@ -170,9 +182,9 @@ class PickingHelper(object):
                               pickable=False, reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
                 if use_mesh:
-                    callback(self.picked_mesh, self.picked_point_id)
+                    try_callback(callback, self.picked_mesh, self.picked_point_id)
                 else:
-                    callback(self.picked_point)
+                    try_callback(callback, self.picked_point)
 
         point_picker = vtk.vtkPointPicker()
         point_picker.AddObserver(vtk.vtkCommand.EndPickEvent, _end_pick_event)
@@ -191,7 +203,9 @@ class PickingHelper(object):
     def enable_path_picking(self, callback=None, show_message=True,
                             font_size=18, color='pink', point_size=10,
                             line_width=5, show_path=True, **kwargs):
-        """This is a conveinance method for ``enable_point_picking`` to keep
+        """Enable picking at paths.
+
+        This is a convenience method for ``enable_point_picking`` to keep
         track of the picked points and create a line using those points.
 
         The line is saved to the ``.picked_path`` attribute of this plotter
@@ -222,7 +236,7 @@ class PickingHelper(object):
                               line_width=line_width, point_size=point_size,
                               reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
-                callback(self.picked_path)
+                try_callback(callback, self.picked_path)
             return
 
         def _clear_path_event_watcher():
@@ -242,7 +256,9 @@ class PickingHelper(object):
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
                                 line_width=5, **kwargs):
-        """This is a conveinance method for ``enable_point_picking`` to keep
+        """Enable picking at geodesic paths.
+
+        This is a convenience method for ``enable_point_picking`` to keep
         track of the picked points and create a geodesic path using those
         points.
 
@@ -274,7 +290,7 @@ class PickingHelper(object):
                           line_width=line_width, point_size=point_size,
                           reset_camera=False, **kwargs)
             if hasattr(callback, '__call__'):
-                callback(self.picked_geodesic)
+                try_callback(callback, self.picked_geodesic)
             return
 
         def _clear_g_path_event_watcher():
@@ -297,8 +313,11 @@ class PickingHelper(object):
                                font_size=18, color='pink', point_size=10,
                                line_width=5, show_path=True, opacity=0.75,
                                show_horizon=True, **kwargs):
-        """Helper for the ``enable_path_picking`` method to also show a ribbon
-        surface along the picked path.
+        """Enable horizon picking.
+
+        Helper for the ``enable_path_picking`` method to also show a ribbon
+        surface along the picked path. Ribbon is saved under
+        ``.picked_horizon``.
         """
         name = '_horizon'
         self.add_key_event('c', lambda: self.remove_actor(name))
@@ -315,9 +334,56 @@ class PickingHelper(object):
                               reset_camera=False)
 
             if hasattr(callback, '__call__'):
-                callback(path)
+                try_callback(callback, path)
 
         self.enable_path_picking(callback=_the_callback,
             show_message=show_message, font_size=font_size, color=color,
             point_size=point_size, line_width=line_width, show_path=show_path,
             **kwargs)
+
+
+    def pick_click_position(self):
+        """Get corresponding click location in the 3D plot."""
+        if self.click_position is None:
+            self.store_click_position()
+        picker = vtk.vtkWorldPointPicker()
+        picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
+        return picker.GetPickPosition()
+
+
+    def pick_mouse_position(self):
+        """Get corresponding mouse location in the 3D plot."""
+        if self.mouse_position is None:
+            self.store_mouse_position()
+        picker = vtk.vtkWorldPointPicker()
+        picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
+        return picker.GetPickPosition()
+
+
+    def fly_to_mouse_position(self, focus=False):
+        """Focus on last stored mouse position."""
+        if self.mouse_position is None:
+            self.store_mouse_position()
+        click_point = self.pick_mouse_position()
+        if focus:
+            self.set_focus(click_point)
+        else:
+            self.fly_to(click_point)
+
+
+    def enable_fly_to_right_click(self, callback=None):
+        """Set the camera to track right click positions.
+
+        A convenience method to track right click positions and fly to the
+        picked point in the scene. The callback will be passed the point in
+        3D space.
+
+        """
+        def _the_callback(*args):
+            click_point = self.pick_mouse_position()
+            self.fly_to(click_point)
+            if hasattr(callback, '__call__'):
+                try_callback(callback, click_point)
+
+        self.track_click_position("right", _the_callback)
+        return

@@ -47,8 +47,18 @@ def test_clip_box():
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False)
     dataset = examples.load_uniform()
     result = dataset.clip_box(bounds=0.5)
+    assert result.n_cells
     with pytest.raises(AssertionError):
         dataset.clip_box(bounds=(5, 6,))
+    # Test with a poly data box
+    mesh = examples.load_airplane()
+    box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
+                       x_length=500, y_length=500, z_length=500)
+    box.rotate_z(33)
+    result = mesh.clip_box(box, invert=False)
+    assert result.n_cells
+    result = mesh.clip_box(box, invert=True)
+    assert result.n_cells
 
 
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
@@ -360,6 +370,8 @@ def test_glyph():
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
+                          clamping=False, rng=[1, 1])
 
 
 def test_split_and_connectivity():

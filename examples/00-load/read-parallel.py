@@ -25,10 +25,10 @@ examples.download_blood_vessels()
 #
 # Let's inspect where this downloaded our dataset:
 path = os.path.join(pv.EXAMPLES_PATH, "blood_vessels")
-print(os.listdir(path))
+os.listdir(path)
 
 ###############################################################################
-print(os.listdir(os.path.join(path, "T0000000500")))
+os.listdir(os.path.join(path, "T0000000500"))
 
 ###############################################################################
 # Note that a ``.pvtu`` file is available along side a directory. This
@@ -37,7 +37,7 @@ print(os.listdir(os.path.join(path, "T0000000500")))
 # together.
 filename = os.path.join(path, "T0000000500.pvtu")
 mesh = pv.read(filename)
-print(mesh)
+mesh
 
 ###############################################################################
 # Plot the pieced together mesh

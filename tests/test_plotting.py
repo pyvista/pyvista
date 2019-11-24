@@ -721,6 +721,16 @@ def test_plot_compar_four():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_plot_depth_peeling():
+    mesh = examples.load_airplane()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.enable_depth_peeling()
+    p.disable_depth_peeling()
+    p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
 def test_plot_eye_dome_lighting():
     mesh = examples.load_airplane()
@@ -788,8 +798,8 @@ def test_opacity_transfer_functions():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_closing_and_mem_cleanup():
     n = 5
-    for i in range(n):
-        for j in range(n):
+    for _ in range(n):
+        for _ in range(n):
             p = pyvista.Plotter(off_screen=OFF_SCREEN)
             for k in range(n):
                 p.add_mesh(pyvista.Sphere(radius=k))
@@ -837,3 +847,39 @@ def test_fail_plot_table():
     with pytest.raises(TypeError):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(table)
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_bad_keyword_arguments():
+    """Make sure bad keyword arguments raise an error"""
+    mesh = examples.load_uniform()
+    with pytest.raises(TypeError):
+        pyvista.plot(mesh, foo=5, off_screen=OFF_SCREEN)
+    with pytest.raises(TypeError):
+        pyvista.plot(mesh, scalar=mesh.active_scalar_name, off_screen=OFF_SCREEN)
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(mesh, scalar=mesh.active_scalar_name)
+        plotter.show()
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(mesh, foo="bad")
+        plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_cmap_list():
+    mesh = sphere.copy()
+
+    n = mesh.n_points
+    scalars = np.empty(n)
+    scalars[:n//3] = 0
+    scalars[n//3:2*n//3] = 1
+    scalars[2*n//3:] = 2
+
+    with pytest.raises(TypeError):
+        mesh.plot(off_screen=OFF_SCREEN,
+                  scalars=scalars, cmap=['red', None, 'blue'])
+    
+    mesh.plot(off_screen=OFF_SCREEN,
+              scalars=scalars, cmap=['red', 'green', 'blue'])

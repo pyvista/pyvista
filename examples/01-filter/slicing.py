@@ -12,7 +12,7 @@ import numpy as np
 
 ###############################################################################
 # PyVista meshes have several slicing filters bound directly to all datasets.
-# Thes filters allow you to slice through a volumetric dataset to extract and
+# These filters allow you to slice through a volumetric dataset to extract and
 # view sections through the volume of data.
 #
 # One of the most common slicing filters used in PyVista is the
@@ -31,7 +31,7 @@ mesh.plot(cmap=cmap)
 ###############################################################################
 # Note that this dataset is a 3D volume and there might be regions within this
 # volume that we would like to inspect. We can create slices through the mesh
-# to gain furthur insight about the internals of the volume.
+# to gain further insight about the internals of the volume.
 
 slices = mesh.slice_orthogonal()
 
@@ -90,13 +90,13 @@ x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
 spline = pv.Spline(points, 15)
-print(spline)
+spline
 
 
 ###############################################################################
 # Then run the filter
 slc = model.slice_along_line(spline)
-print(slc)
+slc
 
 ###############################################################################
 
