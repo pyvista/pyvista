@@ -86,8 +86,7 @@ matrix:
       python: 3.7
       script: |
         pip install codespell pydocstyle;
-        make codespell;
-        pydocstyle pyvista;
+        make doctest;
     - name: Documentation Build/Deploy 3.7
       python: 3.7
       env:
