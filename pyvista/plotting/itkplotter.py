@@ -1,13 +1,13 @@
-"""
-This is super experimental: use with caution
+"""PyVista-like ITKwidgets plotter.
+
+This is super experimental: use with caution.
 """
 
 import pyvista as pv
-import numpy as np
 
 HAS_ITK = False
 try:
-    from itkwidgets import view, Viewer
+    from itkwidgets import Viewer
     from itkwidgets._transform_types import to_geometry
     HAS_ITK = True
 except ImportError:
@@ -35,12 +35,12 @@ class PlotterITK():
             point_array = points
 
         self._point_set_colors.append(pv.parse_color(color))
-        self._point_sets.append(points)
+        self._point_sets.append(point_array)
 
     def add_mesh(self, mesh, color=None, scalars=None, clim=None,
                  opacity=1.0, n_colors=256, cmap='Viridis (matplotlib)',
                  **kwargs):
-        """Adds mesh to the scene"""
+        """Add mesh to the scene."""
         if not pv.is_pyvista_dataset(mesh):
             mesh = pv.wrap(mesh)
         mesh = mesh.copy()
@@ -66,7 +66,7 @@ class PlotterITK():
 
 
     def show(self, ui_collapsed=False):
-        """Show in cell output"""
+        """Show in cell output."""
         plotter = Viewer(geometries=self._geometries,
                          geometry_colors=self._geometry_colors,
                          geometry_opacities=self._geometry_opacities,
