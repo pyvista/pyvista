@@ -11,14 +11,14 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 
 from .common import DataSet
-from .filters import _get_output
+from .filters import _get_output, UniformGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
 class Grid(DataSet):
-    """A class full of common methods for non-pointset grids """
+    """A class full of common methods for non-pointset grids."""
 
     def __new__(cls, *args, **kwargs):
         """Allocate a grid."""
@@ -47,7 +47,7 @@ class Grid(DataSet):
         self.Modified()
 
     def _get_attrs(self):
-        """"Return the representation methods (internal helper)."""
+        """Return the representation methods (internal helper)."""
         attrs = DataSet._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs

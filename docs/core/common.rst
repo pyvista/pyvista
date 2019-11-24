@@ -19,7 +19,7 @@ set of common functionality which we wrap into the base class
 :class:`pyvista.DataSet`.
 
 
-The DataSet Model
+The Common Model
 ----------------
 
 The :class:`pyvista.DataSet` class holds attributes that are *common* to all

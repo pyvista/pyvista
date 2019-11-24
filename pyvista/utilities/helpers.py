@@ -122,7 +122,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
 
 
 def is_pyvista_dataset(obj):
-    """ Return True if the Object is a PyVista wrapped dataset """
+    """Return True if the Object is a PyVista wrapped dataset."""
     return isinstance(obj, (pyvista.DataSet, pyvista.MultiBlock))
 
 

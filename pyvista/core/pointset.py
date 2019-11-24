@@ -50,12 +50,14 @@ class PointSet(Common):
         alg.Update()
         return np.array(alg.GetCenter())
 
+
     def shallow_copy(self, to_copy):
         """Do a shallow copy the pointset."""
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(vtk.vtkPoints())
-        return Common.shallow_copy(self, to_copy)
+        return DataSet.shallow_copy(self, to_copy)
+
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     """Extend the functionality of a vtk.vtkPolyData object.
@@ -138,21 +140,19 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.faces = self._make_vertice_cells(self.n_points)
 
     def __repr__(self):
+        """Return the standard representation."""
         return DataSet.__repr__(self)
 
     def __str__(self):
+        """Return the standard str representation."""
         return DataSet.__str__(self)
-
-    def __sub__(self, cutting_mesh):
-        """ subtract two meshes """
-        return self.boolean_cut(cutting_mesh)
 
     @staticmethod
     def _make_vertice_cells(npoints):
         cells = np.hstack((np.ones((npoints, 1)),
                            np.arange(npoints).reshape(-1, 1)))
         cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-        cells = np.reshape(cells, (2 * npoints))
+        cells = np.reshape(cells, (2*npoints))
         return cells
 
     def _load_file(self, filename):
@@ -336,6 +336,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Return the number of cells."""
         return self.n_cells
 
+
     def save(self, filename, binary=True):
         """Write a surface mesh to disk.
 
@@ -368,6 +369,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.compute_normals(inplace=True)
         super().save(filename, binary)
 
+
     @property
     def area(self):
         """Return the mesh surface area.
@@ -398,11 +400,13 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
+
     @property
     def point_normals(self):
         """Return the point normals."""
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
+
 
     @property
     def cell_normals(self):
@@ -410,10 +414,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
+
     @property
     def face_normals(self):
         """Return the cell normals."""
         return self.cell_normals
+
 
     @property
     def obbTree(self):
@@ -431,6 +437,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self._obbTree.BuildLocator()
 
         return self._obbTree
+
 
     @property
     def n_open_edges(self):
@@ -491,6 +498,7 @@ class PointGrid(PointSet):
         """
         surf = self.extract_surface().triangulate()
         return surf.volume
+
 
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
@@ -558,13 +566,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             else:
                 raise Exception('All input types must be np.ndarray')
 
+
     def __repr__(self):
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
+
     def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
+
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -790,6 +801,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return vtk_to_numpy(self.GetCellLocationsArray())
 
 
+
 class StructuredGrid(vtkStructuredGrid, PointGrid):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
@@ -843,9 +855,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         """Return the standard representation."""
         return DataSet.__repr__(self)
 
+
     def __str__(self):
         """Return the standard str representation."""
         return DataSet.__str__(self)
+
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.
