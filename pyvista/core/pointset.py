@@ -1043,7 +1043,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         return self.points[:, 2].reshape(self.dimensions, order='F')
 
     def _get_attrs(self):
-        """An internal helper for the representation methods"""
+        """Return the representation methods (internal helper)."""
         attrs = PointGrid._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
