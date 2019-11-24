@@ -297,7 +297,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._mouse_observer
 
 
-    def track_click_position(self, side="right", callback=None):
+    def track_click_position(self, side="right", callback=None, use_world=True):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
@@ -312,6 +312,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             A callable method that will use the click position. Passes the
             click position as a length two tuple.
 
+        use_world : bool
+            If ``True``, pass the picked world coordinates to the callback.
+            If ``False``, pass the picked viewport coordinates to the callback.
+
         """
         if not hasattr(self, "iren"):
             return
@@ -324,7 +328,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         def _click_callback(obj, event):
             self.store_click_position()
             if hasattr(callback, '__call__'):
-                try_callback(callback, self.click_position)
+                if use_world:
+                    try_callback(callback, self.pick_click_position())
+                else:
+                    try_callback(callback, self.click_position)
 
         obs = self.iren.AddObserver(event, _click_callback)
         self._click_observer = obs
@@ -1796,7 +1803,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
                   culling=False, pickable=True):
         """Add an actor to render window.
-        
+
         Creates an actor if input is a mapper.
 
         Parameters
