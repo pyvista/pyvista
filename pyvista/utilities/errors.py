@@ -36,7 +36,7 @@ class Observer:
     def parse_message(message):
         """Parse the given message."""
         # Message format
-        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s(.+):\s(.+)')
+        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
