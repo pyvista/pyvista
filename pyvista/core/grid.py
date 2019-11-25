@@ -87,6 +87,9 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     """
 
+    _vtk_writers = {'.vtk': vtk.vtkRectilinearGridWriter, '.vtr': vtk.vtkXMLRectilinearGridWriter}
+    _vtk_readers = {'.vtk': vtk.vtkRectilinearGridReader, '.vtr': vtk.vtkXMLRectilinearGridReader}
+
     def __init__(self, *args, **kwargs):
         """Initialize the rectilinear grid."""
         super(RectilinearGrid, self).__init__()
@@ -185,26 +188,30 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         if not os.path.isfile(filename):
             raise Exception('{} does not exist'.format(filename))
 
-        # Check file extension
-        if '.vtr' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
+        try:
+            reader = RectilinearGrid._vtk_readers[pyvista.get_ext(filename)]()
+        except KeyError:
             raise Exception(
                 'Extension should be either ".vtr" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        if legacy_writer:
-            reader = vtk.vtkRectilinearGridReader()
-        else:
-            reader = vtk.vtkXMLRectilinearGridReader()
 
         # load file to self
         reader.SetFileName(filename)
         reader.Update()
         grid = reader.GetOutput()
         self.shallow_copy(grid)
+
+    def set_vtkwriter_mode(self, vtkWriter, use_binary=True):
+        if isinstance(vtkWriter, vtk.vtkDataWriter):
+            if use_binary:
+                vtkWriter.SetFileTypeToBinary()
+            else:
+                vtkWriter.SetFileTypeToASCII()
+        elif isinstance(vtkWriter, vtk.vtkXMLWriter):
+            if use_binary:
+                vtkWriter.SetDataModeToBinary()
+            else:
+                vtkWriter.SetDataModeToAscii()
+        return vtkWriter
 
     def save(self, filename, binary=True):
         """Write a rectilinear grid to disk.
@@ -229,20 +236,15 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkRectilinearGridWriter()
-            legacy = True
-        elif '.vtr' in filename:
-            writer = vtk.vtkXMLRectilinearGridWriter()
-            legacy = False
-        else:
+        try:
+            writer = RectilinearGrid._vtk_writers[pyvista.get_ext(filename)]()
+        except KeyError:
             raise Exception('Extension should be either ".vtr" (xml) or'
                             '".vtk" (legacy)')
-        # Write
+
+        self.set_vtkwriter_mode(writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
         writer.Write()
 
     @property
