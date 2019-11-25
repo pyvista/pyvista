@@ -1256,13 +1256,13 @@ class DataSet(DataSetFilters, DataObject):
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
-        bds = self.bounds
+        bounds = self.bounds
         fmt = "{}, {}".format(pyvista.FLOAT_FORMAT, pyvista.FLOAT_FORMAT)
         return [("N Cells", self.GetNumberOfCells(), "{}"),
                 ("N Points", self.GetNumberOfPoints(), "{}"),
-                ("X Bounds", (bds[0], bds[1]), fmt),
-                ("Y Bounds", (bds[2], bds[3]), fmt),
-                ("Z Bounds", (bds[4], bds[5]), fmt)]
+                ("X Bounds", (bounds[0], bounds[1]), fmt),
+                ("Y Bounds", (bounds[2], bounds[3]), fmt),
+                ("Z Bounds", (bounds[4], bounds[5]), fmt)]
 
 
     def _repr_html_(self):
