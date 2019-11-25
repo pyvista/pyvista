@@ -98,18 +98,9 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
                 self._load_file(args[0])
 
         elif len(args) == 3 or len(args) == 2:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], np.ndarray)
-            else:
-                arg2_is_arr = False
-
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2])
-            elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(args[0], args[1], np.array([0.]))
+            if all(isinstance(arg, np.ndarray) for arg in args):
+                args += (np.array([0.]),) * (3 - len(args))
+                self._from_arrays(*args)
 
 
     def __repr__(self):
