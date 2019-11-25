@@ -1203,11 +1203,10 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def n_arrays(self):
-        """Return the number of arrays present in the dataset."""
-        n = self.GetPointData().GetNumberOfArrays()
-        n += self.GetCellData().GetNumberOfArrays()
-        n += self.GetFieldData().GetNumberOfArrays()
-        return n
+        """Return the number of scalar arrays present in the dataset."""
+        return sum([self.GetPointData().GetNumberOfArrays(),
+                    self.GetCellData().GetNumberOfArrays(),
+                    self.GetFieldData().GetNumberOfArrays()])
 
 
     @property
