@@ -147,7 +147,7 @@ def field_scalar(mesh, name):
     return field_array(mesh, name)
 
 def cell_array(mesh, name):
-    """Return cell scalars of a vtk object."""
+    """Return cell array of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
