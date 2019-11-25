@@ -25,6 +25,7 @@ def copy_function_doc(source, alias=False, deprecated=False):
     def wrapper(func):
         if source.__doc__ is None or len(source.__doc__) == 0:
             raise ValueError('Cannot copy docstring: docstring was empty.')
+        # issue is here:
         doc = source.__doc__
         if func.__doc__ is not None:
             if not doc.rstrip(' ').endswith('\n'):
