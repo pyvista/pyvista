@@ -11,6 +11,10 @@ def copy_function_doc(source, alias=False, deprecated=False):
     ----------
     source : function
         Function to copy the docstring from.
+    alias : bool
+        Specify if the decorated function is an alias version of source.
+    deprecated : bool
+        Specify if the decorated function is deprecated.
 
     Return
     ------
