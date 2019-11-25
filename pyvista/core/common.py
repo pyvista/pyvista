@@ -1256,17 +1256,15 @@ class DataSet(DataSetFilters, DataObject):
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
-        attrs = []
-        attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
-        attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
         fmt = "{}, {}".format(pyvista.FLOAT_FORMAT, pyvista.FLOAT_FORMAT)
-        attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
-        attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
-        attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
         # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
         #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
-        return attrs
+        return [("N Cells", self.GetNumberOfCells(), "{}"),
+                ("N Points", self.GetNumberOfPoints(), "{}"),
+                ("X Bounds", (bds[0], bds[1]), fmt),
+                ("Y Bounds", (bds[2], bds[3]), fmt),
+                ("Z Bounds", (bds[4], bds[5]), fmt)]
 
 
     def _repr_html_(self):
