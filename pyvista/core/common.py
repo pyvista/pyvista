@@ -289,6 +289,18 @@ class DataObject(vtkDataObject):
         for key in keys:
             self._remove_array(FIELD_DATA_FIELD, key)
 
+    def arrays_from_field_data(self, field_data):
+        """Generator which yields abstract arrays from a vtkFieldData object.
+
+         Parameters
+        ----------
+        field_data : vtkFieldData
+            An object of the type vtkFieldData, vtkCellData, or vtkPointData
+        """
+        for i in range(field_data.GetNumberOfArrays()):
+            yield field_data.GetAbstractArray(i)
+
+
 
 class DataSet(DataSetFilters, DataObject):
     """ Methods in common to spatially referenced objects"""
