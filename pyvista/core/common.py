@@ -1230,12 +1230,12 @@ class DataSet(DataSetFilters, DataObject):
 
         """
         names = []
-        for i in range(self.GetPointData().GetNumberOfArrays()):
-            names.append(self.GetPointData().GetArrayName(i))
-        for i in range(self.GetCellData().GetNumberOfArrays()):
-            names.append(self.GetCellData().GetArrayName(i))
-        for i in range(self.GetFieldData().GetNumberOfArrays()):
-            names.append(self.GetFieldData().GetArrayName(i))
+        for array in self.arrays_from_field_data(self.GetPointData()):
+            names.append(array.GetName())
+        for array in self.arrays_from_field_data(self.GetCellData()):
+            names.append(array.GetName())
+        for array in self.arrays_from_field_data(self.GetFieldData()):
+            names.append(array.GetName())
         try:
             names.remove(self.active_scalars_name)
             names.insert(0, self.active_scalars_name)
