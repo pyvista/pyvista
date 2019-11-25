@@ -992,7 +992,7 @@ class DataSet(DataSetFilters, DataObject):
 
     @property
     def point_arrays(self):
-        """Return the all point arrays."""
+        """Return all the point arrays."""
         pdata = self.GetPointData()
         narr = pdata.GetNumberOfArrays()
 
