@@ -1258,8 +1258,6 @@ class DataSet(DataSetFilters, DataObject):
         """Return the representation methods (internal helper)."""
         bds = self.bounds
         fmt = "{}, {}".format(pyvista.FLOAT_FORMAT, pyvista.FLOAT_FORMAT)
-        # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
-        #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
         return [("N Cells", self.GetNumberOfCells(), "{}"),
                 ("N Points", self.GetNumberOfPoints(), "{}"),
                 ("X Bounds", (bds[0], bds[1]), fmt),
