@@ -999,8 +999,6 @@ class DataSet(DataSetFilters, DataObject):
         if self._point_arrays:
             keys = list(self._point_arrays.keys())
             if narr == len(keys):
-                if keys and self._point_arrays[keys[0]].shape[0] == self.n_points:
-                    return self._point_arrays
                 return self._point_arrays
 
         self._point_arrays = PointScalarsDict(self)
