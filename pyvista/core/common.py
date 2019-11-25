@@ -325,7 +325,7 @@ class DataSet(DataSetFilters, DataObject):
         self._point_bool_array_names = set()
         self._cell_bool_array_names = set()
         self._active_scalar_info = 0, None  # Scalar field and name
-        self._last_active_scalar_name = None
+        self._last_active_scalars_name = None
         self._point_arrays = PointScalarsDict(self)
         self._cell_arrays = CellScalarsDict(self)
         self._field_arrays = FieldScalarsDict(self)
@@ -334,36 +334,32 @@ class DataSet(DataSetFilters, DataObject):
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalar_info
+        self.raise_invalid_scalar_name(scalar_name=name)
+        excluded_names = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
 
-        # rare error where scalar name isn't a valid scalar
-        if not self.raise_invalid_scalar_name(scalar_name=name):
-            name = None
-
-        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
-
-        def search_for_array(data):
-            for i in range(data.GetNumberOfArrays()):
-                name = data.GetArrayName(i)
-                if name not in exclude:
+        def first_valid_array_name(field_data):
+            for i in range(field_data.GetNumberOfArrays()):
+                name = field_data.GetArrayName(i)
+                if name not in excluded_names:
                     return name
 
-        if name in exclude:
+        if name in excluded_names:
             name = self._last_active_scalars_name
 
         if name is None:
             if self.n_arrays == 0:
                 return field, name
             # find some array in the set field
-            parr = search_for_array(self.GetPointData())
-            carr = search_for_array(self.GetCellData())
-            if parr is not None:
-                self._active_scalar_info = (POINT_DATA_FIELD, parr)
-                self.GetPointData().SetActiveScalars(parr)
-            elif carr is not None:
-                self._active_scalar_info = (CELL_DATA_FIELD, carr)
-                self.GetCellData().SetActiveScalars(carr)
-
+            active_point_array = first_valid_array_name(field_data=self.GetPointData())
+            active_cell_array = first_valid_array_name(field_data=self.GetCellData())
+            if active_point_array:
+                self._active_scalar_info = (POINT_DATA_FIELD, active_point_array)
+                self.GetPointData().SetActiveScalars(active_point_array)
+            elif active_cell_array:
+                self._active_scalar_info = (CELL_DATA_FIELD, active_cell_array)
+                self.GetCellData().SetActiveScalars(active_cell_array)
         return self._active_scalars_info
+
 
     @property
     def active_scalar_info(self):
