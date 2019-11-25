@@ -298,7 +298,7 @@ class DataObject(vtkDataObject):
         for i in range(field_data.GetNumberOfArrays()):
             yield field_data.GetAbstractArray(i)
 
-    def raise_invalid_scalar_name(self, scalar_name):
+    def raise_invalid_active_scalar_name(self, scalar_name):
         if scalar_name not in self.point_arrays:
             if scalar_name not in self.cell_arrays:
                 if scalar_name in self.field_arrays:
@@ -334,7 +334,7 @@ class DataSet(DataSetFilters, DataObject):
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalar_info
-        self.raise_invalid_scalar_name(scalar_name=name)
+        self.raise_invalid_active_scalar_name(scalar_name=name)
         excluded_names = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
 
         def first_valid_array_name(field_data):
@@ -382,7 +382,7 @@ class DataSet(DataSetFilters, DataObject):
                 self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
         _, name = self._active_vectors_info
 
-        self.raise_invalid_scalar_name(scalar_name=name)
+        self.raise_invalid_active_scalar_name(scalar_name=name)
         return self._active_vectors_info
 
 
