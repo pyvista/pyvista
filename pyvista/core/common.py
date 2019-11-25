@@ -197,7 +197,7 @@ class DataObject(vtkDataObject):
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
             vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._point_bool_array_names:
+            if name not in self._field_bool_array_names:
                 self._field_bool_array_names.add(name)
 
         array = convert_array(vtkarr)
