@@ -197,8 +197,7 @@ class DataObject(vtkDataObject):
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
             vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._field_bool_array_names:
-                self._field_bool_array_names.add(name)
+            self._field_bool_array_names.add(name)
 
         array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._field_bool_array_names:
@@ -233,8 +232,7 @@ class DataObject(vtkDataObject):
         # must be stored as uint8
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
-            if name not in self._field_bool_array_names:
-                self._field_bool_array_names.add(name)
+            self._field_bool_array_names.add(name)
 
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
@@ -725,8 +723,7 @@ class DataSet(DataSetFilters, DataObject):
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
             vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._point_bool_array_names:
-                self._point_bool_array_names.add(name)
+            self._point_bool_array_names.add(name)
 
         array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._point_bool_array_names:
@@ -766,8 +763,7 @@ class DataSet(DataSetFilters, DataObject):
         # must be stored as uint8
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
-            if name not in self._point_bool_array_names:
-                self._point_bool_array_names.add(name)
+            self._point_bool_array_names.add(name)
 
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
@@ -931,8 +927,7 @@ class DataSet(DataSetFilters, DataObject):
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
             vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._cell_bool_array_names:
-                self._cell_bool_array_names.add(name)
+            self._cell_bool_array_names.add(name)
 
         array = convert_array(vtkarr)
         if array.dtype == np.uint8 and name in self._cell_bool_array_names:
