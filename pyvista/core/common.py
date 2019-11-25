@@ -1442,6 +1442,14 @@ class _ScalarsDict(dict):
         return dict.__delitem__(self, key)
 
 
+    def __bool__(self):
+        return self.__len__() > 0
+
+
+    def __len__(self):
+        return super().__len__()
+
+
 class CellScalarsDict(_ScalarsDict):
     """Update internal cell data when an array is added or removed from the dictionary."""
 
