@@ -176,7 +176,7 @@ class DataObject(vtkDataObject):
         return newobject
 
 
-    def _field_array(self, name=None):
+    def _field_array(self, name):
         """Return field scalars of a vtk object.
 
         Parameters
@@ -190,8 +190,6 @@ class DataObject(vtkDataObject):
             Numpy array of scalars
 
         """
-        if name is None:
-            raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetFieldData().GetAbstractArray(name)
         if vtkarr is None:
             raise AssertionError('({}) is not a valid field array.'.format(name))
