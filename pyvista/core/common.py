@@ -267,9 +267,8 @@ class DataObject(vtkDataObject):
         narr = fdata.GetNumberOfArrays()
 
         # just return if unmodified
-        if hasattr(self, '_field_arrays'):
-            keys = list(self._field_arrays.keys())
-            if narr == len(keys):
+        if self._field_arrays:
+            if narr == len(list(self._field_arrays.keys())):
                 return self._field_arrays
 
         # dictionary with callbacks
@@ -313,6 +312,8 @@ class DataSet(DataSetFilters, DataObject):
         self._active_scalar_info = 0, None  # Scalar field and name
         self._last_active_scalar_name = None
         self._point_arrays = PointScalarsDict(self)
+        self._cell_arrays = CellScalarsDict(self)
+        self._field_arrays = FieldScalarsDict(self)
 
     @property
     def active_scalars_info(self):
@@ -1056,13 +1057,10 @@ class DataSet(DataSetFilters, DataObject):
         narr = cdata.GetNumberOfArrays()
 
         # Update data if necessary
-        if hasattr(self, '_cell_arrays'):
+        if self._cell_arrays:
             keys = list(self._cell_arrays.keys())
             if narr == len(keys):
                 if keys:
-                    if self._cell_arrays[keys[0]].shape[0] == self.n_cells:
-                        return self._cell_arrays
-                else:
                     return self._cell_arrays
 
         # dictionary with callbacks
