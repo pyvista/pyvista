@@ -1425,9 +1425,8 @@ class _ScalarsDict(dict):
         if not isinstance(data, (dict, pyvista.Table)):
             raise TypeError('Data to update must be in a dictionary or PyVista Table.')
         for k, v in data.items():
-            arr = np.array(v)
             try:
-                self[k] = arr
+                self[k] = np.array(v)
             except TypeError:
                 logging.warning("Values under key ({}) not supported by VTK".format(k))
         return
