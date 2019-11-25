@@ -9,7 +9,7 @@ from weakref import proxy
 import numpy as np
 import vtk
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
-from vtk.vtkCommonKitPython import vtkDataObject
+from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
@@ -307,7 +307,7 @@ class DataObject(vtkDataObject):
 
 
 
-class DataSet(DataSetFilters, DataObject):
+class DataSet(DataSetFilters, DataObject, vtkDataSet):
     """ Methods in common to spatially referenced objects"""
 
     # Simply bind pyvista.plotting.plot to the object
