@@ -997,8 +997,7 @@ class DataSet(DataSetFilters, DataObject):
         narr = pdata.GetNumberOfArrays()
 
         if self._point_arrays:
-            keys = list(self._point_arrays.keys())
-            if narr == len(keys):
+            if narr == len(self._point_arrays.keys()):
                 return self._point_arrays
 
         self._point_arrays = PointScalarsDict(self)
