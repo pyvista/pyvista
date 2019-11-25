@@ -1,5 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
+from abc import ABCMeta, abstractmethod
 import collections
 import logging
 import os
@@ -26,7 +27,7 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class DataObject(vtkDataObject):
+class DataObject(vtkDataObject, metaclass=ABCMeta):
     """Methods common to all wrapped data objects."""
 
     def __init__(self, *args, **kwargs):
@@ -1157,7 +1158,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         return pyansys.CellQuality(dataset)
 
 
-class _ScalarsDict(dict):
+class _ScalarsDict(dict, metaclass=ABCMeta):
     """Internal helper for scalars dictionaries."""
 
     def __init__(self, data):
@@ -1173,7 +1174,7 @@ class _ScalarsDict(dict):
         """Enable callbacks to be set True."""
         self.callback_enabled = True
 
-
+    @abstractmethod
     def adder(self, scalars, name, set_active=False, deep=True):
         raise NotImplementedError()
 
