@@ -157,7 +157,7 @@ def cell_scalar(mesh, name):
     return cell_array(mesh, name)
 
 def row_array(data_object, name):
-    """Return cell scalars of a vtk object."""
+    """Return row array of a vtk object."""
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
