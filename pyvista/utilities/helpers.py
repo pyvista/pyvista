@@ -127,22 +127,28 @@ def is_pyvista_dataset(obj):
 
 
 def point_array(mesh, name):
-    """Return point scalars of a vtk object."""
+    """Return point array of a vtk object."""
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 def point_scalar(mesh, name):
-    """DEPRECATED: Returns point scalars of a vtk object """
+    """Return point array of a vtk object.
+
+    DEPRECATED: please use `point_array` instead.
+    """
     warnings.warn("DEPRECATED: please use `point_array` instead.")
     return point_array(mesh, name)
 
 def field_array(mesh, name):
-    """Return field scalars of a vtk object."""
+    """Return field array of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 def field_scalar(mesh, name):
-    """DEPRECATED Returns field scalars of a vtk object """
+    """Return field array of a vtk object.
+
+    DEPRECATED: please use `field_array` instead.
+    """
     warnings.warn("DEPRECATED: please use `field_array` instead.")
     return field_array(mesh, name)
 
@@ -152,7 +158,10 @@ def cell_array(mesh, name):
     return convert_array(vtkarr)
 
 def cell_scalar(mesh, name):
-    """DEPRECATED: Returns cell scalars of a vtk object """
+    """Return cell array of a vtk object.
+
+    DEPRECATED: please use `cell_array` instead.
+    """
     warnings.warn("DEPRECATED: please use `cell_array` instead.")
     return cell_array(mesh, name)
 
@@ -508,7 +517,7 @@ def raise_not_matching(scalars, mesh):
         raise Exception('Number of scalars ({})'.format(scalars.size) +
                         'must match number of rows ' +
                         '({}).'.format(mesh.n_rows) )
-    raise Exception('Number of scalars ({})'.format(scalars.size) +
+    raise Exception('Number of scalars ({}) '.format(scalars.size) +
                     'must match either the number of points ' +
                     '({}) '.format(mesh.n_points) +
                     'or the number of cells ' +

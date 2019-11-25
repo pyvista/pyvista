@@ -367,7 +367,10 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def active_scalar_info(self):
-        """DEPRECATED: Return the active scalar's field and name: [field, name]"""
+        """Return the active scalar's field and name.
+
+        DEPRECATED: use `.active_scalars_info` instead
+        """
         warnings.warn("DEPRECATED: use `.active_scalars_info` instead")
         return self.active_scalars_info
 
@@ -420,13 +423,13 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def active_scalars_name(self):
-        """Returns the active scalar's name"""
+        """Return the active scalar's name."""
         return self.active_scalars_info[1]
 
 
     @active_scalars_name.setter
     def active_scalars_name(self, name):
-        """Set the name of the active scalar"""
+        """Set the name of the active scalar."""
         return self.set_active_scalars(name)
 
     @property
@@ -622,7 +625,8 @@ class Common(DataSetFilters, DataObject):
 
 
     def set_active_scalar(self, name, preference='cell'):
-        """Finds the scalars by name and appropriately sets it as active.
+        """Find the scalars by name and appropriately sets it as active.
+
         To deactivate any active scalars, pass ``None`` as the ``name``.
         """
         warnings.warn("DEPRECATED: please use `.set_active_scalars` instead.")
@@ -665,8 +669,11 @@ class Common(DataSetFilters, DataObject):
 
 
     def rename_scalar(self, old_name, new_name, preference='cell'):
-        """DEPRECATED: Changes array name by searching for the array then
-        renaming it"""
+        """Change an array name by searching for the array then renaming it.
+
+        DEPRECATED: please use `.rename_array` instead.
+
+        """
         warnings.warn("DEPRECATED: please use `.rename_array` instead.")
         return self.rename_array(old_name, new_name, preference=preference)
 
