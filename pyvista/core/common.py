@@ -1020,15 +1020,15 @@ class DataSet(DataSetFilters, DataObject):
 
 
 
-    def _remove_array(self, field, key):
+    def _remove_array(self, field, name):
         """Remove a single array by name from each field (internal helper)."""
         field = parse_field_choice(field)
         if field == POINT_DATA_FIELD:
-            self.GetPointData().RemoveArray(key)
+            self.GetPointData().RemoveArray(name)
         elif field == CELL_DATA_FIELD:
-            self.GetCellData().RemoveArray(key)
+            self.GetCellData().RemoveArray(name)
         elif field == FIELD_DATA_FIELD:
-            self.GetFieldData().RemoveArray(key)
+            self.GetFieldData().RemoveArray(name)
         else:
             raise NotImplementedError('Not able to remove arrays from the ({}) data field'.format(field))
         return
