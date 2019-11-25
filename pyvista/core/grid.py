@@ -352,7 +352,6 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
             elif isinstance(args[0], str):
                 self._load_file(args[0])
             else:
-                arg0_is_valid = len(args[0]) == 3
                 self._from_specs(args[0])
 
         elif len(args) > 1 and len(args) < 4:
