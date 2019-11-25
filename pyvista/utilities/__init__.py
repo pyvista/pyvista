@@ -1,5 +1,6 @@
 """Utilities routines."""
 
+from .docs import copy_function_doc
 from .errors import (Observer, Report, assert_empty_kwargs,
                      send_errors_to_logging, set_error_output_file)
 from .features import *
