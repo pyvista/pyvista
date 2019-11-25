@@ -298,6 +298,13 @@ class DataObject(vtkDataObject):
         for i in range(field_data.GetNumberOfArrays()):
             yield field_data.GetAbstractArray(i)
 
+    def raise_invalid_scalar_name(self, scalar_name):
+        if scalar_name not in self.point_arrays:
+            if scalar_name not in self.cell_arrays:
+                if scalar_name in self.field_arrays:
+                    raise RuntimeError('Field arrays cannot be made active. '
+                                       'Convert to point/cell array if possible.')
+
 
 
 class DataSet(DataSetFilters, DataObject):
@@ -328,14 +335,9 @@ class DataSet(DataSetFilters, DataObject):
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalar_info
 
-        # rare error where scalars name isn't a valid scalar
-        if name not in self.point_arrays:
-            if name not in self.cell_arrays:
-                if name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. '
-                                       'Convert to point/cell arrays if possible.')
-                else:
-                    name = None
+        # rare error where scalar name isn't a valid scalar
+        if not self.raise_invalid_scalar_name(scalar_name=name):
+            name = None
 
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
 
@@ -384,15 +386,7 @@ class DataSet(DataSetFilters, DataObject):
                 self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
         _, name = self._active_vectors_info
 
-        # rare error where name isn't a valid array
-        if name not in self.point_arrays:
-            if name not in self.cell_arrays:
-                if name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. '
-                                       'Convert to point/cell array if possible.')
-                else:
-                    name = None
-
+        self.raise_invalid_scalar_name(scalar_name=name)
         return self._active_vectors_info
 
 
