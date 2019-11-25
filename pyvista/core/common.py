@@ -686,13 +686,7 @@ class Common(DataSetFilters, DataObject):
     def active_scalar(self):
         """DEPRECATED: Returns the active scalar as an array."""
         warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
-        field, name = self.active_scalars_info
-        if name is None:
-            return None
-        if field == POINT_DATA_FIELD:
-            return self._point_array(name)
-        elif field == CELL_DATA_FIELD:
-            return self._cell_array(name)
+        return self.active_scalars
 
 
     def _point_array(self, name=None):
