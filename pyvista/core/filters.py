@@ -422,10 +422,10 @@ class DataSetFilters(object):
                   preference='cell'):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
-        This filter will apply a ``vtkThreshold`` filter to the input dataset and
-        return the resulting object. This extracts cells where scalar value in each
-        cell satisfies threshold criterion.  If scalars is None, the inputs
-        active_scalars is used.
+        This filter will apply a ``vtkThreshold`` filter to the input dataset
+        and return the resulting object. This extracts cells where the scalar
+        value in each cell satisfies threshold criterion.  If scalars is None,
+        the inputs active scalars is used.
 
         Parameters
         ----------
@@ -449,7 +449,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the preferred scalar type to
+            When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -503,7 +503,7 @@ class DataSetFilters(object):
 
     def threshold_percent(dataset, percent=0.50, scalars=None, invert=False,
                           continuous=False, preference='cell'):
-        """Threshold the dataset by a percentage of its range on the active scalar array or as specified.
+        """Threshold the dataset by a percentage of its range on the active scalars array or as specified.
 
         Parameters
         ----------
@@ -526,7 +526,7 @@ class DataSetFilters(object):
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
-            When scalars is specified, this is the preferred scalar type to
+            When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """
@@ -647,17 +647,17 @@ class DataSetFilters(object):
             dataset given, the valid range of that array will be used.
 
         preference : str, optional
-            When a scalar name is specified for ``scalar_range``, this is the
-            preferred scalar type to search for in the dataset.
+            When an array name is specified for ``scalar_range``, this is the
+            preferred array type to search for in the dataset.
             Must be either 'point' or 'cell'.
 
         set_active : bool, optional
             A boolean flag on whether or not to set the new `Elevation` scalar
-            as the active scalar array on the output dataset.
+            as the active scalars array on the output dataset.
 
         Warning
         -------
-        This will create a scalar array named `Elevation` on the point data of
+        This will create a scalars array named `Elevation` on the point data of
         the input dataset and overasdf write an array named `Elevation` if present.
 
         """
@@ -686,7 +686,7 @@ class DataSetFilters(object):
         alg.SetLowPoint(low_point)
         alg.SetHighPoint(high_point)
         alg.Update()
-        # Decide on updating active scalar array
+        # Decide on updating active scalars array
         name = 'Elevation' # Note that this is added to the PointData
         if not set_active:
             name = None
@@ -720,11 +720,11 @@ class DataSetFilters(object):
 
         rng : tuple(float), optional
             If an integer number of isosurfaces is specified, this is the range
-            over which to generate contours. Default is the scalar arrays's full
+            over which to generate contours. Default is the scalars arrays' full
             data range.
 
         preference : str, optional
-            When scalars is specified, this is the preferred scalar type to
+            When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         method : str, optional
@@ -1043,7 +1043,7 @@ class DataSetFilters(object):
 
     def warp_by_scalar(dataset, scalars=None, factor=1.0, normal=None,
                        inplace=False, **kwargs):
-        """Warp the dataset's points by a point data scalar array's values.
+        """Warp the dataset's points by a point data scalars array's values.
 
         This modifies point coordinates by moving points along point normals by
         the scalar amount times the scale factor.
@@ -1290,7 +1290,7 @@ class DataSetFilters(object):
 
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
                pass_point_arrays=True):
-        """Resample scalar data from a passed mesh onto this mesh.
+        """Resample array data from a passed mesh onto this mesh.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
 
@@ -1797,11 +1797,11 @@ class DataSetFilters(object):
         Parameters
         ----------
         pass_pointid : bool, optional
-            Adds a point scalar "vtkOriginalPointIds" that idenfities which
+            Adds a point array "vtkOriginalPointIds" that idenfities which
             original points these surface points correspond to
 
         pass_cellid : bool, optional
-            Adds a cell scalar "vtkOriginalPointIds" that idenfities which
+            Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
         inplace : bool, optional
@@ -1925,7 +1925,7 @@ class DataSetFilters(object):
 
         main_has_priority : bool, optional
             When this parameter is true and merge_points is true,
-            the scalar arrays of the merging grids will be overwritten
+            the arrays of the merging grids will be overwritten
             by the original main mesh.
 
         Return
@@ -1936,7 +1936,7 @@ class DataSetFilters(object):
         Notes
         -----
         When two or more grids are joined, the type and name of each
-        scalar array must match or the arrays will be ignored and not
+        array must match or the arrays will be ignored and not
         included in the final merged mesh.
 
         """
@@ -2084,11 +2084,11 @@ class DataSetFilters(object):
 
         """
         alg = vtk.vtkGradientFilter()
-        # Check if scalar array given
+        # Check if scalars array given
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         if not isinstance(scalars, str):
-            raise TypeError('Scalar array must be given as a string name')
+            raise TypeError('scalars array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
@@ -2634,7 +2634,7 @@ class PolyDataFilters(DataSetFilters):
             Minimum tube radius (minimum because the tube radius may vary).
 
         scalars : str, optional
-            Scalar array by which the radius varies
+            scalars array by which the radius varies
 
         capping : bool
             Turn on/off whether to cap the ends with polygons. Default True.
@@ -2646,7 +2646,7 @@ class PolyDataFilters(DataSetFilters):
             Maximum tube radius in terms of a multiple of the minimum radius.
 
         preference : str
-            The field preference when searching for the scalar array by name
+            The field preference when searching for the scalars array by name
 
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
@@ -2669,10 +2669,10 @@ class PolyDataFilters(DataSetFilters):
             tube.SetRadius(radius)
         tube.SetNumberOfSides(n_sides)
         tube.SetRadiusFactor(radius_factor)
-        # Check if scalar array given
+        # Check if scalars array given
         if scalars is not None:
             if not isinstance(scalars, str):
-                raise TypeError('Scalar array must be given as a string name')
+                raise TypeError('scalars array must be given as a string name')
             _, field = poly_data.get_array(scalars, preference=preference, info=True)
             # args: (idx, port, connection, field, name)
             tube.SetInputArrayToProcess(0, 0, 0, field, scalars)
@@ -3518,7 +3518,7 @@ class UniformGridFilters(DataSetFilters):
             Name of scalars to process. Defaults to currently active scalars.
 
         preference : str, optional
-            When scalars is specified, this is the preferred scalar type to
+            When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
         """

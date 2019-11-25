@@ -73,7 +73,7 @@ class DataObject(object):
 
 
     def get_data_range(self, arr=None, preference='field'):
-        """Get the non-NaN min and max of a named scalar array.
+        """Get the non-NaN min and max of a named array.
 
         Parameters
         ----------
@@ -82,7 +82,7 @@ class DataObject(object):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the perfered array type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
             or ``'field'``.
 
@@ -141,7 +141,7 @@ class DataObject(object):
     def _repr_html_(self):
         """Return a pretty representation for Jupyter notebooks.
 
-        This includes header details and information about all scalar arrays.
+        This includes header details and information about all arrays.
 
         """
         raise NotImplemented
@@ -194,7 +194,7 @@ class DataObject(object):
             raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetFieldData().GetAbstractArray(name)
         if vtkarr is None:
-            raise AssertionError('({}) is not a valid field scalar array'.format(name))
+            raise AssertionError('({}) is not a valid field array.'.format(name))
 
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
@@ -209,7 +209,7 @@ class DataObject(object):
 
 
     def _add_field_array(self, scalars, name, deep=True):
-        """Add field scalars to the mesh.
+        """Add a field array to the mesh.
 
         Parameters
         ----------
@@ -247,7 +247,7 @@ class DataObject(object):
 
 
     def _add_field_scalar(self, scalars, name, set_active=False, deep=True):
-        """Add a scalar field.
+        """Add a field array.
 
         DEPRECATED: Please use `_add_field_array` instead.
 
@@ -257,7 +257,7 @@ class DataObject(object):
 
 
     def add_field_array(self, scalars, name, deep=True):
-        """Add a scalar field."""
+        """Add a field array."""
         self._add_field_array(scalars, name, deep=deep)
 
 
@@ -326,7 +326,7 @@ class Common(DataSetFilters, DataObject):
             self._last_active_scalars_name = None
         field, name = self._active_scalars_info
 
-        # rare error where scalar name isn't a valid scalar
+        # rare error where scalars name isn't a valid scalar
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
                 if name in self.field_arrays:
@@ -383,7 +383,7 @@ class Common(DataSetFilters, DataObject):
                 self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
         _, name = self._active_vectors_info
 
-        # rare error where scalar name isn't a valid scalar
+        # rare error where name isn't a valid array
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
                 if name in self.field_arrays:
@@ -601,7 +601,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def set_active_scalars(self, name, preference='cell'):
-        """Find the scalar by name and appropriately sets it as active.
+        """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
 
@@ -622,7 +622,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def set_active_scalar(self, name, preference='cell'):
-        """Finds the scalar by name and appropriately sets it as active.
+        """Finds the scalars by name and appropriately sets it as active.
         To deactivate any active scalars, pass ``None`` as the ``name``.
         """
         warnings.warn("DEPRECATED: please use `.set_active_scalars` instead.")
@@ -673,7 +673,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def active_scalars(self):
-        """Return the active scalar as an array."""
+        """Return the active scalars as an array."""
         field, name = self.active_scalars_info
         if name is None:
             return None
@@ -684,7 +684,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def active_scalar(self):
-        """DEPRECATED: Returns the active scalar as an array."""
+        """DEPRECATED: Returns the active scalars as an array."""
         warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
         return self.active_scalars
 
@@ -704,7 +704,7 @@ class Common(DataSetFilters, DataObject):
 
         """
         if name is None:
-            # use active scalar array
+            # use active scalars array
             field, name = self.active_scalars_info
             if field != POINT_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
@@ -781,22 +781,22 @@ class Common(DataSetFilters, DataObject):
 
 
     def get_data_range(self, arr=None, preference='cell'):
-        """Get the non-NaN min and max of a named scalar array.
+        """Get the non-NaN min and max of a named array.
 
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
+            The name of the array to get the range. If None, the active scalars
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the perfered array type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
             or ``'field'``.
 
         """
         if arr is None:
-            # use active scalar array
+            # use active scalars array
             _, arr = self.active_scalars_info
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)
@@ -909,7 +909,7 @@ class Common(DataSetFilters, DataObject):
 
         """
         if name is None:
-            # use active scalar array
+            # use active scalars array
             field, name = self.active_scalars_info
             if field != CELL_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
@@ -1210,7 +1210,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def n_arrays(self):
-        """Return the number of scalar arrays present in the dataset."""
+        """Return the number of arrays present in the dataset."""
         n = self.GetPointData().GetNumberOfArrays()
         n += self.GetCellData().GetNumberOfArrays()
         n += self.GetFieldData().GetNumberOfArrays()
@@ -1230,9 +1230,9 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def array_names(self):
-        """Return a list of scalar names for the dataset.
+        """Return a list of array names for the dataset.
 
-        This makes sure to put the active scalar's name first in the list.
+        This makes sure to put the active scalars' name first in the list.
 
         """
         names = []
@@ -1252,7 +1252,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def scalar_names(self):
-        """Return the scalar names.
+        """Return the array names.
 
         DEPRECATED: Please use `array_names` instead.
 
@@ -1279,7 +1279,7 @@ class Common(DataSetFilters, DataObject):
     def _repr_html_(self):
         """Return a pretty representation for Jupyter notebooks.
 
-        It includes header details and information about all scalar arrays.
+        It includes header details and information about all arrays.
 
         """
         fmt = ""
@@ -1289,7 +1289,7 @@ class Common(DataSetFilters, DataObject):
             fmt += "<tr><td>"
         # Get the header info
         fmt += self.head(display=False, html=True)
-        # Fill out scalar arrays
+        # Fill out arrays
         if self.n_arrays > 0:
             fmt += "</td><td>"
             fmt += "\n"
@@ -1452,7 +1452,7 @@ class CellScalarsDict(_ScalarsDict):
     """Update internal cell data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize the cell scalar dict."""
+        """Initialize the cell array dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(CELL_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetCellData().Modified()
@@ -1467,7 +1467,7 @@ class PointScalarsDict(_ScalarsDict):
     """Update internal point data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize the point scalar dict."""
+        """Initialize the point array dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(POINT_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetPointData().Modified()
@@ -1482,7 +1482,7 @@ class FieldScalarsDict(_ScalarsDict):
     """Update internal field data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize the field scalars dict."""
+        """Initialize the field array dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(FIELD_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetFieldData().Modified()

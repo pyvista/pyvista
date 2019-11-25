@@ -808,7 +808,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', str(hex(id(mesh))))
         # set the array to contour on
         if mesh.n_arrays < 1:
-            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+            raise AssertionError('Input dataset for the contour filter must have data arrays.')
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         else:
@@ -1023,7 +1023,7 @@ class WidgetHelper(object):
                           selected_color="pink", indices=None,
                           pass_widget=False, test_callback=True):
         """Add one or many sphere widgets to a scene.
-        
+
         Use a sphere widget to control a vertex location.
 
         Parameters

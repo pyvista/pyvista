@@ -245,13 +245,13 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
 
     def get_data_range(self, name):
-        """Get the min/max of a scalar given its name across all blocks."""
+        """Get the min/max of an array given its name across all blocks."""
         mini, maxi = np.inf, -np.inf
         for i in range(self.n_blocks):
             data = self[i]
             if data is None:
                 continue
-            # get the scalar if available
+            # get the scalars if available
             arr = get_array(data, name)
             if arr is None or not np.issubdtype(arr.dtype, np.number):
                 continue

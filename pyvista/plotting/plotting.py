@@ -168,7 +168,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.renderers.append(renderer)
 
 
-        # This keeps track of scalar names already plotted and their ranges
+        # This keeps track of scalars names already plotted and their ranges
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
@@ -697,9 +697,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Opacity of the mesh. If a siblge float value is given, it will be
             the global opacity of the mesh and uniformly applied everywhere -
             should be between 0 and 1. A string can also be specified to map
-            the scalar range to a predefined opacity transfer function
+            the scalars range to a predefined opacity transfer function
             (options include: 'linear', 'linear_r', 'geom', 'geom_r').
-            A string could also be used to map a scalar array from the mesh to
+            A string could also be used to map a scalars array from the mesh to
             the opacity (must have same number of elements as the
             ``scalars`` argument). Or you can pass a custum made transfer
             function that is an array either ``n_colors`` in length or shorter.
@@ -716,7 +716,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The scalar bar will also have this many colors.
 
         interpolate_before_map : bool, optional
-            Enabling makes for a smoother scalar display.  Default is True.
+            Enabling makes for a smoother scalars display.  Default is True.
             When False, OpenGL will interpolate the mapped colors which can
             result is showing colors that are not present in the color map.
 
@@ -750,7 +750,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         stitle : string, optional
             Scalar bar title. By default the scalar bar is given a title of the
-            the scalar array used to color the mesh.
+            the scalars array used to color the mesh.
             To create a bar with no title, use an empty string (i.e. '').
 
         multi_colors : bool, optional
@@ -823,16 +823,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             transparency.
 
         below_color : string or 3 item list, optional
-            Solid color for values below the scalar range (``clim``). This will
-            automatically set the scalar bar ``below_label`` to ``'Below'``
+            Solid color for values below the scalars range (``clim``). This
+            will automatically set the scalar bar ``below_label`` to
+            ``'Below'``
 
         above_color : string or 3 item list, optional
-            Solid color for values below the scalar range (``clim``). This will
-            automatically set the scalar bar ``above_label`` to ``'Above'``
+            Solid color for values below the scalars range (``clim``). This
+            will automatically set the scalar bar ``above_label`` to
+            ``'Above'``
 
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float values in the
-            scalar range to annotate on the scalar bar and the values are the
+            scalars range to annotate on the scalar bar and the values are the
             the string annotations.
 
         pickable : bool
@@ -903,7 +905,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # first check the scalars
             if clim is None and scalars is not None:
                 # Get the data range across the array for all blocks
-                # if scalar specified
+                # if scalars specified
                 if isinstance(scalars, str):
                     clim = mesh.get_data_range(scalars)
                 else:
@@ -912,7 +914,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     #       arrays where first index corresponds to
                     #       the block? This could get complicated real
                     #       quick.
-                    raise RuntimeError('Scalar array must be given as a string name for multiblock datasets.')
+                    raise RuntimeError('scalars array must be given as a string name for multiblock datasets.')
 
             the_arguments = locals()
             the_arguments.pop('self')
@@ -1006,7 +1008,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 texture = True
             # If no texture, plot any active scalar
             else:
-                # Make sure scalar components are not vectors/tuples
+                # Make sure scalars components are not vectors/tuples
                 scalars = mesh.active_scalars_name
                 # Don't allow plotting of string arrays by default
                 if scalars is not None:# and np.issubdtype(mesh.active_scalars.dtype, np.number):
@@ -1086,7 +1088,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif use_transparency and isinstance(opacity, np.ndarray):
             opacity = 255 - opacity
 
-        # Scalar formatting ===================================================
+        # Scalars formatting ==================================================
         if cmap is None: # Set default map if matplotlib is available
             if has_matplotlib:
                 cmap = rcParams['cmap']
@@ -1133,7 +1135,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 scalars = scalars.astype(np.float)
 
             def prepare_mapper(scalars):
-                # Scalar interpolation approach
+                # Scalars interpolation approach
                 if scalars.shape[0] == mesh.n_points:
                     self.mesh._add_point_array(scalars, title, set_active)
                     self.mapper.SetScalarModeToUsePointData()
@@ -1163,7 +1165,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 for val, anno in annotations.items():
                     table.SetAnnotation(float(val), str(anno))
 
-            # Set scalar range
+            # Set scalars range
             if clim is None:
                 clim = [np.nanmin(scalars), np.nanmax(scalars)]
             elif isinstance(clim, float) or isinstance(clim, int):
@@ -1319,7 +1321,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         opacity : string or numpy.ndarray, optional
             Opacity mapping for the scalars array.
-            A string can also be specified to map the scalar range to a
+            A string can also be specified to map the scalars range to a
             predefined opacity transfer function (options include: 'linear',
             'linear_r', 'geom', 'geom_r'). Or you can pass a custum made
             transfer function that is an array either ``n_colors`` in length or
@@ -1400,12 +1402,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         stitle : string, optional
             Scalar bar title. By default the scalar bar is given a title of the
-            the scalar array used to color the mesh.
+            the scalars array used to color the mesh.
             To create a bar with no title, use an empty string (i.e. '').
 
         annotations : dict, optional
             Pass a dictionary of annotations. Keys are the float values in the
-            scalar range to annotate on the scalar bar and the values are the
+            scalars range to annotate on the scalar bar and the values are the
             the string annotations.
 
         Return
@@ -1494,7 +1496,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 
         if scalars is None:
-            # Make sure scalar components are not vectors/tuples
+            # Make sure scalars components are not vectors/tuples
             scalars = volume.active_scalars
             # Don't allow plotting of string arrays by default
             if scalars is not None and np.issubdtype(scalars.dtype, np.number):
@@ -1542,7 +1544,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
         self.mapper = make_mapper(mappers[mapper])
 
-        # Scalar interpolation approach
+        # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
             volume._add_point_array(scalars, title, set_active)
             self.mapper.SetScalarModeToUsePointData()
@@ -1552,7 +1554,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             raise_not_matching(scalars, volume)
 
-        # Set scalar range
+        # Set scalars range
         if clim is None:
             clim = [np.nanmin(scalars), np.nanmax(scalars)]
         elif isinstance(clim, float) or isinstance(clim, int):
@@ -1796,7 +1798,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
                   culling=False, pickable=True):
         """Add an actor to render window.
-        
+
         Creates an actor if input is a mapper.
 
         Parameters
@@ -2337,10 +2339,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Annotate the NaN color
 
         below_label : str, optional
-            String annotation for values below the scalar range
+            String annotation for values below the scalars range
 
         above_label : str, optional
-            String annotation for values above the scalar range
+            String annotation for values above the scalars range
 
         background_color: array, optional
             The color used for the background in RGB format.
@@ -2599,7 +2601,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
 
         if isinstance(scalars, str):
-            # Grab scalar array if name given
+            # Grab scalars array if name given
             scalars = get_array(mesh, scalars)
 
         if scalars is None:
@@ -2622,7 +2624,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         data.Modified()
         try:
             # Why are the points updated here? Not all datasets have points
-            # and only the scalar array is modified by this function...
+            # and only the scalars array is modified by this function...
             mesh.GetPoints().Modified()
         except:
             pass
@@ -3216,7 +3218,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
-        """Label the points from a dataset with their scalar values.
+        """Label the points from a dataset with the values of their scalars.
 
         Wrapper for :func:`pyvista.BasePlotter.add_point_labels`.
 
@@ -3235,7 +3237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not is_pyvista_dataset(points):
             raise TypeError('input points must be a pyvista dataset, not: {}'.format(type(points)))
         if not isinstance(labels, str):
-            raise TypeError('labels must be a string name of the scalar array to use')
+            raise TypeError('labels must be a string name of the scalars array to use')
         if fmt is None:
             fmt = rcParams['font']['fmt']
         if fmt is None:

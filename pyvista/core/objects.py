@@ -27,7 +27,7 @@ except ImportError:
 class Table(vtk.vtkTable, DataObject):
     """Wrapper for the ``vtkTable`` class.
 
-    Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``) 
+    Create by passing a 2D NumPy array of shape (``n_rows`` by ``n_columns``)
     or from a dictionary containing NumPy arrays.
 
     Example
@@ -313,7 +313,7 @@ class Table(vtk.vtkTable, DataObject):
     def _repr_html_(self):
         """Return a pretty representation for Jupyter notebooks.
 
-        It includes header details and information about all scalar arrays.
+        It includes header details and information about all arrays.
 
         """
         fmt = ""
@@ -323,7 +323,7 @@ class Table(vtk.vtkTable, DataObject):
             fmt += "<tr><td>"
         # Get the header info
         fmt += self.head(display=False, html=True)
-        # Fill out scalar arrays
+        # Fill out scalars arrays
         if self.n_arrays > 0:
             fmt += "</td><td>"
             fmt += "\n"
@@ -382,7 +382,7 @@ class Table(vtk.vtkTable, DataObject):
 
 
     def get_data_range(self, arr=None, preference='row'):
-        """Get the non-NaN min and max of a named scalar array.
+        """Get the non-NaN min and max of a named array.
 
         Parameters
         ----------
@@ -391,7 +391,7 @@ class Table(vtk.vtkTable, DataObject):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the perfered array type to
             search for in the dataset.  Must be either ``'row'`` or
             ``'field'``.
 

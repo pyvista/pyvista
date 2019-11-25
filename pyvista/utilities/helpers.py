@@ -191,12 +191,12 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         The name of the array to get the range.
 
     preference : str, optional
-        When scalars is specified, this is the perfered scalar type to
+        When scalars is specified, this is the perfered array type to
         search for in the dataset.  Must be either ``'point'``, ``'cell'``, or
         ``'field'``
 
     info : bool
-        Return info about the scalar rather than the array itself.
+        Return info about the array rather than the array itself.
 
     err : bool
         Boolean to control whether to throw an error if array is not present.
@@ -205,7 +205,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     if isinstance(mesh, vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
+            raise KeyError('Data array ({}) not present in this dataset.'.format(name))
         field = ROW_DATA_FIELD
         if info:
             return arr, field
@@ -245,7 +245,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = farr
         field = FIELD_DATA_FIELD
     elif err:
-        raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
+        raise KeyError('Data array ({}) not present in this dataset.'.format(name))
     if info:
         return arr, field
     return arr
