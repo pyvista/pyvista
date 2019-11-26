@@ -1412,11 +1412,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         opacity_unit_distance : float
             Set/Get the unit distance on which the scalar opacity transfer
-            function is defined. By default this is one hundredth the length of
-            the diagonal of the bounding box of the volome. Meaning that over
-            that distance, a given opacity (from the transfer function) is
-            accumulated. This is adjusted for the actual sampling distance
-            during rendering.
+            function is defined. Meaning that over that distance, a given
+            opacity (from the transfer function) is accumulated. This is
+            adjusted for the actual sampling distance during rendering. By
+            default, this is the length of the diagonal of the bounding box of
+            the volume divided by the dimensions.
 
         shade : bool
             Default off. If shading is turned on, the mapper may perform
@@ -1524,7 +1524,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Type ({}) not supported for volume rendering at this time. Use `pyvista.UniformGrid`.')
 
         if opacity_unit_distance is None:
-            opacity_unit_distance = volume.length / 100.0
+            opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
         if scalars is None:
             # Make sure scalar components are not vectors/tuples
