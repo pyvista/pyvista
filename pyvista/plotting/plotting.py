@@ -307,7 +307,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         side : str
             The side of the mouse for the button to track (left or right).
-            Default is left. Also accepts ``'r'``.
+            Default is left. Also accepts ``'r'`` or ``'l'``.
 
         callback : callable
             A callable method that will use the click position. Passes the
@@ -322,10 +322,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, "iren"):
             return
 
-        if side in ["right", "r", "R"]:
+        side = str(side).lower()
+        if side in ["right", "r"]:
             event = vtk.vtkCommand.RightButtonPressEvent
-        else:
+        elif side in ["left", "l"]:
             event = vtk.vtkCommand.LeftButtonPressEvent
+        else:
+            raise TypeError("Side ({}) not supported. Try `left` or `right`".format(side))
 
         def _click_callback(obj, event):
             self.store_click_position()
