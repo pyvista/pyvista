@@ -240,11 +240,16 @@ def read_exodus(filename,
 def read_meshio(filename, **kwargs):
     """Read any mesh file using meshio."""
     # Import meshio
-    import meshio
-    from meshio._vtk import (
-        meshio_to_vtk_type,
-        vtk_type_to_numnodes,
-    )
+    try:
+        import meshio
+        from meshio._vtk import (
+            meshio_to_vtk_type,
+            vtk_type_to_numnodes,
+        )
+    except ImportError:
+        raise ImportError(
+            "module meshio not found."
+        )
     
     # Read mesh file
     mesh = meshio.read(filename, **kwargs)
