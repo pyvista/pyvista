@@ -8,6 +8,8 @@ import pyvista
 
 import imageio
 
+import numpy
+
 READERS = {
     # Standard dataset readers:
     '.vtk': vtk.vtkDataSetReader,
@@ -233,3 +235,58 @@ def read_exodus(filename,
 
     reader.Update()
     return pyvista.wrap(reader.GetOutput())
+
+
+def read_meshio(filename, **kwargs):
+    """Read any mesh file using meshio."""
+    # Import meshio
+    import meshio
+    from meshio._vtk import (
+        meshio_to_vtk_type,
+        vtk_type_to_numnodes,
+    )
+    
+    # Read mesh file
+    mesh = meshio.read(filename, **kwargs)
+
+    # Extract cells from meshio.Mesh object
+    offset = []
+    cells = []
+    cell_type = []
+    cell_data = {}
+    for k, v in mesh.cells.items():
+        vtk_type = meshio_to_vtk_type[k]
+        numnodes = vtk_type_to_numnodes[vtk_type]
+        offset += [len(offset)+i*(numnodes+1) for i in range(len(v))]
+        cells += numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel().tolist()
+        cell_type += [vtk_type] * len(v)
+
+        # Extract cell data
+        if k in mesh.cell_data.keys():
+            for kk, vv in mesh.cell_data[k].items():
+                if kk in cell_data:
+                    cell_data[kk] += vv.tolist()
+                else:
+                    cell_data[kk] = vv.tolist()
+
+    # Create pyvista.UnstructuredGrid object
+    grid = pyvista.UnstructuredGrid(
+        numpy.array(offset),
+        numpy.array(cells),
+        numpy.array(cell_type),
+        mesh.points,
+    )
+
+    # Set point data
+    for k, v in mesh.point_data.items():
+        data = vtk.util.numpy_support.numpy_to_vtk(v)
+        data.SetName(k)
+        grid.GetPointData().AddArray(data)
+
+    # Set cell data
+    for k, v in cell_data.items():
+        data = vtk.util.numpy_support.numpy_to_vtk(v)
+        data.SetName(k)
+        grid.GetCellData().AddArray(data)
+
+    return grid
