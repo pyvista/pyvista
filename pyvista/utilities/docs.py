@@ -33,6 +33,7 @@ def copy_function_doc(source):
 
 
 def deprecated_function_doc(source):
+    """Specify that the decorated function is a deprecated version of source."""
     def wrapper(func):
         doc = func.__doc__
         if func.__doc__ is not None:
@@ -47,6 +48,7 @@ def deprecated_function_doc(source):
 
 
 def aliased_function_doc(source):
+    """Specify that the decorated function is an alias version of source."""
     def wrapper(func):
         doc = func.__doc__
         if func.__doc__ is not None:
