@@ -587,6 +587,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Set the current interactive render window to isometric view."""
         interactor = self.iren.GetInteractorStyle()
         renderer = interactor.GetCurrentRenderer()
+        if renderer is None:
+            renderer = self.renderer
         renderer.view_isometric()
 
     def update(self, stime=1, force_redraw=True):
@@ -1796,7 +1798,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
                   culling=False, pickable=True):
         """Add an actor to render window.
-        
+
         Creates an actor if input is a mapper.
 
         Parameters
