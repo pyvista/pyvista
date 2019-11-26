@@ -1099,7 +1099,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             title = stitle
         if scalars is not None:
             # if scalars is a string, then get the first array found with that name
-            set_active = True
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -1135,10 +1134,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             def prepare_mapper(scalars):
                 # Scalar interpolation approach
                 if scalars.shape[0] == mesh.n_points:
-                    self.mesh._add_point_array(scalars, title, set_active)
+                    self.mesh._add_point_array(scalars, title, True)
                     self.mapper.SetScalarModeToUsePointData()
                 elif scalars.shape[0] == mesh.n_cells:
-                    self.mesh._add_cell_array(scalars, title, set_active)
+                    self.mesh._add_cell_array(scalars, title, True)
                     self.mapper.SetScalarModeToUseCellData()
                 else:
                     raise_not_matching(scalars, mesh)
@@ -1292,10 +1291,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
                    loc=None, culling=False, multi_colors=False,
-                   blending='composite', mapper='fixed_point',
+                   blending='composite', mapper=None,
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
-                   annotations=None, pickable=True, preference="point", **kwargs):
-        """Add a volume, rendered using a fixed point ray cast mapper by default.
+                   annotations=None, pickable=True, preference="point",
+                   opacity_unit_distance=None, shade=False,
+                   diffuse=0.7, specular=0.2, specular_power=10.0, **kwargs):
+        """Add a volume, rendered using a smart mapper by default.
 
         Requires a 3D :class:`numpy.ndarray` or :class:`pyvista.UniformGrid`.
 
@@ -1388,6 +1389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mapper : str, optional
             Volume mapper to use given by name. Options include:
             ``'fixed_point'``, ``'gpu'``, ``'open_gl'``, and ``'smart'``.
+            If ``None`` the ``"volume_mapper"`` in the ``rcParams`` is used.
 
         scalar_bar_args : dict, optional
             Dictionary of keyword arguments to pass when adding the scalar bar
@@ -1407,6 +1409,29 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Pass a dictionary of annotations. Keys are the float values in the
             scalar range to annotate on the scalar bar and the values are the
             the string annotations.
+
+        opacity_unit_distance : float
+            Set/Get the unit distance on which the scalar opacity transfer
+            function is defined. Meaning that over that distance, a given
+            opacity (from the transfer function) is accumulated. This is
+            adjusted for the actual sampling distance during rendering. By
+            default, this is the length of the diagonal of the bounding box of
+            the volume divided by the dimensions.
+
+        shade : bool
+            Default off. If shading is turned on, the mapper may perform
+            shading calculations - in some cases shading does not apply
+            (for example, in a maximum intensity projection) and therefore
+            shading will not be performed even if this flag is on.
+
+        diffuse : float, optional
+            The diffuse lighting coefficient. Default 1.0
+
+        specular : float, optional
+            The specular lighting coefficient. Default 0.0
+
+        specular_power : float, optional
+            The specular power. Between 0.0 and 128.0
 
         Return
         ------
@@ -1436,6 +1461,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if culling is True:
             culling = 'backface'
+
+        if mapper is None:
+            mapper = rcParams["volume_mapper"]
 
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(volume):
@@ -1484,7 +1512,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                     reset_camera=reset_camera, name=next_name,
                                     ambient=ambient, categories=categories, loc=loc,
                                     culling=culling, clim=clim,
-                                    mapper=mapper, pickable=pickable)
+                                    mapper=mapper, pickable=pickable,
+                                    opacity_unit_distance=opacity_unit_distance,
+                                    shade=shade, diffuse=diffuse, specular=specular,
+                                    specular_power=specular_power)
 
                 actors.append(a)
             return actors
@@ -1492,6 +1523,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not isinstance(volume, pyvista.UniformGrid):
             raise TypeError('Type ({}) not supported for volume rendering at this time. Use `pyvista.UniformGrid`.')
 
+        if opacity_unit_distance is None:
+            opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
 
         if scalars is None:
             # Make sure scalar components are not vectors/tuples
@@ -1508,15 +1541,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ##############
 
         title = 'Data' if stitle is None else stitle
-        set_active = False
         if isinstance(scalars, str):
             title = scalars
             scalars = get_array(volume, scalars,
                                 preference=preference, err=True)
             if stitle is None:
                 stitle = title
-        else:
-            set_active = True
 
         if not isinstance(scalars, np.ndarray):
             scalars = np.asarray(scalars)
@@ -1544,10 +1574,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalar interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume._add_point_array(scalars, title, set_active)
+            volume._add_point_array(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume._add_cell_array(scalars, title, set_active)
+            volume._add_cell_array(scalars, title, True)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
@@ -1652,6 +1682,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetColor(color_tf)
         prop.SetScalarOpacity(opacity_tf)
         prop.SetAmbient(ambient)
+        prop.SetScalarOpacityUnitDistance(opacity_unit_distance)
+        prop.SetShade(shade)
+        prop.SetDiffuse(diffuse)
+        prop.SetSpecular(specular)
+        prop.SetSpecularPower(specular_power)
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
@@ -1796,7 +1831,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
                   culling=False, pickable=True):
         """Add an actor to render window.
-        
+
         Creates an actor if input is a mapper.
 
         Parameters
