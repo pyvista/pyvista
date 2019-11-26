@@ -263,14 +263,14 @@ def read_meshio(filename, **kwargs):
         vtk_type = meshio_to_vtk_type[k]
         numnodes = vtk_type_to_numnodes[vtk_type]
         offset += [len(offset)+i*(numnodes+1) for i in range(len(v))]
-        cells += numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel()
+        cells.append(numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel())
         cell_type += [vtk_type] * len(v)
 
         # Extract cell data
         if k in mesh.cell_data.keys():
             for kk, vv in mesh.cell_data[k].items():
                 if kk in cell_data:
-                    cell_data[kk] += vv
+                    cell_data[kk] = numpy.concatenate((cell_data[kk], vv))
                 else:
                     cell_data[kk] = vv
 
@@ -292,5 +292,5 @@ def read_meshio(filename, **kwargs):
     for k, v in cell_data.items():
         data = vtk.util.numpy_support.numpy_to_vtk(v)
         data.SetName(k)
-        grid.GetCellData().AddArray(numpy.concatenate(vv))
+        grid.GetCellData().AddArray(data)
     return grid
