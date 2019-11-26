@@ -1,7 +1,7 @@
 """Module containing helper function for the documentation."""
 
 
-def copy_function_doc(source, alias=False, deprecated=False):
+def copy_function_doc(source):
     """Copy the docstring from another function (decorator).
 
     The docstring of the source function is prepepended to the docstring of the
@@ -11,10 +11,6 @@ def copy_function_doc(source, alias=False, deprecated=False):
     ----------
     source : function
         Function to copy the docstring from.
-    alias : bool
-        Specify if the decorated function is an alias version of source.
-    deprecated : bool
-        Specify if the decorated function is deprecated.
 
     Return
     ------
@@ -31,13 +27,33 @@ def copy_function_doc(source, alias=False, deprecated=False):
             if not doc.rstrip(' ').endswith('\n'):
                 doc += '\n'
             doc += func.__doc__
-        elif alias or deprecated:
-            doc += '\n'
-        if alias:
-            doc += 'Alias for: ``' + source.__name__ + '``.\n'
-        elif deprecated:
-            doc += 'DEPRECATED: Please use ``' + source.__name__ \
-                + '`` instead.\n'
         func.__doc__ = doc
+        return func
+    return wrapper
+
+
+def deprecated_function_doc(source):
+    def wrapper(func):
+        doc = func.__doc__
+        if func.__doc__ is not None:
+            if not doc.rstrip(' ').endswith('\n'):
+                doc += '\n'
+        else:
+            func.__doc__ = ''
+        func.__doc__ += 'DEPRECATED: Please use ``' + source.__name__ + \
+            '`` instead.\n'
+        return func
+    return wrapper
+
+
+def aliased_function_doc(source):
+    def wrapper(func):
+        doc = func.__doc__
+        if func.__doc__ is not None:
+            if not doc.rstrip(' ').endswith('\n'):
+                doc += '\n'
+        else:
+            func.__doc__ = ''
+        func.__doc__ += 'Alias for: ``' + source.__name__ + '``.\n'
         return func
     return wrapper

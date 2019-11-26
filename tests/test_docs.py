@@ -1,6 +1,6 @@
 import pytest
-from pyvista.utilities import copy_function_doc
-
+from pyvista.utilities import (copy_function_doc, deprecated_function_doc,
+                               aliased_function_doc)
 
 
 class Foo:
@@ -15,11 +15,13 @@ class Foo:
         """
         pass
 
-    @copy_function_doc(goo, alias=True)
+    @copy_function_doc(goo)
+    @aliased_function_doc(goo)
     def goo_alias(self, *args):
         pass
 
-    @copy_function_doc(goo, deprecated=True)
+    @copy_function_doc(goo)
+    @deprecated_function_doc(goo)
     def goo_depr(self, *args):
         pass
 
@@ -63,11 +65,13 @@ def test_copy_function_doc():
         """
         pass
 
-    @copy_function_doc(foo, deprecated=True)
+    @copy_function_doc(foo)
+    @deprecated_function_doc(foo)
     def dep_fun():
         pass
 
-    @copy_function_doc(foo2, alias=True)
+    @copy_function_doc(foo2)
+    @aliased_function_doc(foo2)
     def alias_fun():
         """Multiple.
 
@@ -88,6 +92,6 @@ def test_copy_function_doc():
         ' ``foo`` instead.\n'
     assert alias_fun.__doc__ == bar4.__doc__ + 'Alias for: ``foo2``.\n'
     # Test a class
-    assert Foo.goo_alias.__doc__ == Foo.goo.__doc__ + '\nAlias for: ``goo``.\n'
-    assert Foo.goo_depr.__doc__ == Foo.goo.__doc__ + '\nDEPRECATED: Please use' + \
+    assert Foo.goo_alias.__doc__ == Foo.goo.__doc__ + 'Alias for: ``goo``.\n'
+    assert Foo.goo_depr.__doc__ == Foo.goo.__doc__ + 'DEPRECATED: Please use' + \
         ' ``goo`` instead.\n'
