@@ -14,5 +14,5 @@ class PointData(vtkDataSetAttributes, FieldData):
 
 
 class CellData(vtkDataSetAttributes, FieldData):
-    def __init__(self, vtk_point_data):
-        super().__init__(vtk_point_data)
+    def __init__(self, vtk_cell_data):
+        super().__init__(vtk_cell_data)
