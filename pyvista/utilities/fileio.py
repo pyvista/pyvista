@@ -258,21 +258,21 @@ def read_meshio(filename, **kwargs):
         vtk_type = meshio_to_vtk_type[k]
         numnodes = vtk_type_to_numnodes[vtk_type]
         offset += [len(offset)+i*(numnodes+1) for i in range(len(v))]
-        cells += numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel().tolist()
+        cells += numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel()
         cell_type += [vtk_type] * len(v)
 
         # Extract cell data
         if k in mesh.cell_data.keys():
             for kk, vv in mesh.cell_data[k].items():
                 if kk in cell_data:
-                    cell_data[kk] += vv.tolist()
+                    cell_data[kk] += vv
                 else:
-                    cell_data[kk] = vv.tolist()
+                    cell_data[kk] = vv
 
     # Create pyvista.UnstructuredGrid object
     grid = pyvista.UnstructuredGrid(
         numpy.array(offset),
-        numpy.array(cells),
+        numpy.concatenate(cells),
         numpy.array(cell_type),
         mesh.points,
     )
@@ -287,6 +287,5 @@ def read_meshio(filename, **kwargs):
     for k, v in cell_data.items():
         data = vtk.util.numpy_support.numpy_to_vtk(v)
         data.SetName(k)
-        grid.GetCellData().AddArray(data)
-
+        grid.GetCellData().AddArray(numpy.concatenate(vv))
     return grid
