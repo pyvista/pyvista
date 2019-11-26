@@ -52,7 +52,7 @@ p.show()
 # Here is another example of blood flow:
 
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
-mesh.set_active_scalar("velocity")
+mesh.set_active_scalars("velocity")
 streamlines, src = mesh.streamlines(
     return_source=True, source_radius=10, source_center=(92.46, 74.37, 135.5)
 )

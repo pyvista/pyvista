@@ -53,9 +53,11 @@ Array Access
 
 .. autofunction:: pyvista.convert_array
 
-.. autofunction:: pyvista.point_scalar
+.. autofunction:: pyvista.point_array
 
-.. autofunction:: pyvista.cell_scalar
+.. autofunction:: pyvista.cell_array
+
+.. autofunction:: pyvista.field_array
 
 .. autofunction:: pyvista.get_vtk_type
 

@@ -737,7 +737,7 @@ class WidgetHelper(object):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
         name = kwargs.get('name', str(hex(id(mesh))))
         if scalars is None:
-            field, scalars = mesh.active_scalar_info
+            field, scalars = mesh.active_scalars_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
         if arr is None:
             raise AssertionError('No arrays present to threshold.')
@@ -808,9 +808,9 @@ class WidgetHelper(object):
         name = kwargs.get('name', str(hex(id(mesh))))
         # set the array to contour on
         if mesh.n_arrays < 1:
-            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+            raise AssertionError('Input dataset for the contour filter must have data arrays.')
         if scalars is None:
-            field, scalars = mesh.active_scalar_info
+            field, scalars = mesh.active_scalars_info
         else:
             _, field = get_array(mesh, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
@@ -1023,7 +1023,7 @@ class WidgetHelper(object):
                           selected_color="pink", indices=None,
                           pass_widget=False, test_callback=True):
         """Add one or many sphere widgets to a scene.
-        
+
         Use a sphere widget to control a vertex location.
 
         Parameters

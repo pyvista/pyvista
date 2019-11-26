@@ -212,7 +212,7 @@ values change through time:
 
     globe = examples.load_globe()
     globe.point_arrays['scalars'] = np.random.rand(globe.n_points)
-    globe.set_active_scalar('scalars')
+    globe.set_active_scalars('scalars')
 
 
     plotter = pv.BackgroundPlotter()
