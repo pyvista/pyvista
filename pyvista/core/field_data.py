@@ -5,7 +5,7 @@ class FieldData(vtkFieldData):
     def __init__(self, vtk_field_data=None):
         super().__init__()
         if vtk_field_data is not None:
-            self.DeepCopy(vtk_field_data)
+            self.ShallowCopy(vtk_field_data)
 
 
 class PointData(vtkDataSetAttributes, FieldData):
