@@ -385,5 +385,5 @@ class PickingHelper(object):
             if hasattr(callback, '__call__'):
                 try_callback(callback, click_point)
 
-        self.track_click_position("right", _the_callback)
+        self.track_click_position(callback=_the_callback, side="right")
         return

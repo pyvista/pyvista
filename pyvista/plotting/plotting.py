@@ -297,7 +297,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._mouse_observer
 
 
-    def track_click_position(self, side="right", callback=None,
+    def track_click_position(self, callback=None, side="right",
                              viewport=False):
         """Keep track of the click position.
 
@@ -305,13 +305,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        side : str
-            The side of the mouse for the button to track (left or right).
-            Default is left. Also accepts ``'r'`` or ``'l'``.
-
         callback : callable
             A callable method that will use the click position. Passes the
             click position as a length two tuple.
+
+        side : str
+            The side of the mouse for the button to track (left or right).
+            Default is left. Also accepts ``'r'`` or ``'l'``.
 
         viewport: bool
             If ``True``, uses the normalized viewport coordinate system
