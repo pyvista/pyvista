@@ -32,6 +32,7 @@ class DataObject(vtkDataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
         super().__init__()
+        self._field_data = pyvista.FieldData(vtk_field_data=super().GetFieldData())
         self._field_bool_array_names = set()
 
     def __new__(cls, *args, **kwargs):
@@ -39,6 +40,10 @@ class DataObject(vtkDataObject):
         if cls is DataObject:
             raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
+
+
+    def GetFieldData(self):
+        return self._field_data
 
 
     def shallow_copy(self, to_copy):
@@ -326,9 +331,17 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         self._cell_bool_array_names = set()
         self._active_scalar_info = 0, None  # Scalar field and name
         self._last_active_scalars_name = None
+        self._cell_data = pyvista.CellData(vtk_cell_data=super().GetCellData())
+        self._point_data = pyvista.PointData(vtk_point_data=super().GetPointData())
         self._point_arrays = PointScalarsDict(self)
         self._cell_arrays = CellScalarsDict(self)
         self._field_arrays = FieldScalarsDict(self)
+
+    def GetPointData(self):
+        return self._point_data
+
+    def GetCellData(self):
+        return self._cell_data
 
     @property
     def active_scalars_info(self):
