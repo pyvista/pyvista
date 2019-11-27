@@ -15,6 +15,12 @@ class FieldData(VTKObjectWrapper):
         self._field_bool_array_names = set()
         self._arrays = {}
 
+    def __setitem__(self, key, value):
+        pass
+
+    def __getitem__(self, item):
+        pass
+
     def arrays(self):
         """Return all arrays."""
         pdata = self.VTKObject
