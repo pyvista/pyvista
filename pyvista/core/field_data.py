@@ -6,7 +6,7 @@ class FieldData(VTKObjectWrapper):
         super().__init__(vtkobject=vtk_field_data)
         self._arrays = {}
 
-    def point_arrays(self):
+    def arrays(self):
         """Return all the point arrays."""
         pdata = self.GetPointData()
         narr = pdata.GetNumberOfArrays()
