@@ -37,13 +37,6 @@ class FieldData(VTKObjectWrapper):
         for i in range(self.VTKObject.GetNumberOfArrays()):
             yield self.VTKObject.GetAbstractArray(i)
 
-    def raise_invalid_active_scalar_name(self, scalar_name):
-        if scalar_name not in self.point_arrays:
-            if scalar_name not in self.cell_arrays:
-                if scalar_name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. '
-                                       'Convert to point/cell array if possible.')
-
 
 class PointData(FieldData):
     def __init__(self, vtk_point_data):
