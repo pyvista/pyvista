@@ -8,11 +8,11 @@ class FieldData(VTKObjectWrapper):
 
     def arrays(self):
         """Return all the point arrays."""
-        pdata = self.GetPointData()
+        pdata = self.VTKObject
         narr = pdata.GetNumberOfArrays()
 
         if self._arrays:
-            if narr == len(self._point_arrays.keys()):
+            if narr == len(self._arrays):
                 return self._point_arrays
 
         self._arrays = {}
@@ -24,7 +24,6 @@ class FieldData(VTKObjectWrapper):
                 pdata.GetAbstractArray(i).SetName(name)
             self._point_arrays[name] = self._point_array(name)
 
-        self._point_arrays.enable_callback()
         return self._point_arrays
 
     def arrays_from_field_data(self, field_data):
