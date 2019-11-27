@@ -16,7 +16,7 @@ from .tools import create_axes_marker
 
 
 
-def _scale_point(camera, point, invert=False):
+def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
 
     Parameters
@@ -609,8 +609,8 @@ class Renderer(vtkRenderer):
     @property
     def camera_position(self):
         """Return camera position of active render window."""
-        return [_scale_point(self.camera, self.camera.GetPosition(), invert=True),
-                _scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
+        return [scale_point(self.camera, self.camera.GetPosition(), invert=True),
+                scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
                 self.camera.GetViewUp()]
 
     @camera_position.setter
@@ -639,8 +639,8 @@ class Renderer(vtkRenderer):
             return self.view_vector(camera_location)
 
         # everything is set explicitly
-        self.camera.SetPosition(_scale_point(self.camera, camera_location[0], invert=False))
-        self.camera.SetFocalPoint(_scale_point(self.camera, camera_location[1], invert=False))
+        self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))
+        self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1], invert=False))
         self.camera.SetViewUp(camera_location[2])
 
         # reset clipping range
@@ -657,8 +657,8 @@ class Renderer(vtkRenderer):
         """Set the active camera for the rendering scene."""
         self.SetActiveCamera(camera)
         self.camera_position = [
-            _scale_point(camera, camera.GetPosition(), invert=True),
-            _scale_point(camera, camera.GetFocalPoint(), invert=True),
+            scale_point(camera, camera.GetPosition(), invert=True),
+            scale_point(camera, camera.GetFocalPoint(), invert=True),
             camera.GetViewUp()
         ]
 
@@ -668,14 +668,14 @@ class Renderer(vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.SetFocalPoint(_scale_point(self.camera, point, invert=False))
+        self.camera.SetFocalPoint(scale_point(self.camera, point, invert=False))
 
     def set_position(self, point, reset=False):
         """Set camera position to a point."""
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.SetPosition(_scale_point(self.camera, point, invert=False))
+        self.camera.SetPosition(scale_point(self.camera, point, invert=False))
         if reset:
             self.reset_camera()
         self.camera_set = True
