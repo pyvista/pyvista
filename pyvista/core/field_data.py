@@ -13,8 +13,10 @@ class FieldData(VTKObjectWrapper):
         self._field_bool_array_names = set()
         self._arrays = {}
 
+    #TODO, vtkArray/numpyarray conversion, or make a custom pyvista array which allows conversion
     def __setitem__(self, key, value):
-        """Ensure that data is contiguous."""
+        if value is None:
+            raise ValueError('Cannot add None to arrays.')
         if isinstance(value, (list, tuple)):
             value = np.array(value)
         self._arrays[key] = value
