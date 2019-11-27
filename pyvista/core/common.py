@@ -292,25 +292,6 @@ class DataObject(vtkDataObject):
         for key in keys:
             self._remove_array(FIELD_DATA_FIELD, key)
 
-    def arrays_from_field_data(self, field_data):
-        """Generator which yields abstract arrays from a vtkFieldData object.
-
-         Parameters
-        ----------
-        field_data : vtkFieldData
-            An object of the type vtkFieldData, vtkCellData, or vtkPointData
-        """
-        for i in range(field_data.GetNumberOfArrays()):
-            yield field_data.GetAbstractArray(i)
-
-    def raise_invalid_active_scalar_name(self, scalar_name):
-        if scalar_name not in self.point_arrays:
-            if scalar_name not in self.cell_arrays:
-                if scalar_name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. '
-                                       'Convert to point/cell array if possible.')
-
-
 
 class DataSet(DataSetFilters, DataObject, vtkDataSet):
     """ Methods in common to spatially referenced objects"""
