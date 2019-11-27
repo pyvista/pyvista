@@ -11,7 +11,7 @@ class FieldData(VTKObjectWrapper):
     def __init__(self, vtk_field_data):
         super().__init__(vtkobject=vtk_field_data)
         self._field_bool_array_names = set()
-        self._arrays = {}
+        self._np_arrays = {}
 
     #TODO, vtkArray/numpyarray conversion, or make a custom pyvista array which allows conversion
     def __setitem__(self, key, value):
@@ -19,11 +19,11 @@ class FieldData(VTKObjectWrapper):
             raise ValueError('Cannot add None to arrays.')
         if isinstance(value, (list, tuple)):
             value = np.array(value)
-        self._arrays[key] = value
+        self._np_arrays[key] = value
         self.Modified()
 
     def __getitem__(self, item):
-        return self._arrays[item]
+        return self._np_arrays[item]
 
     def __iter__(self):
         for i in range(self.VTKObject.GetNumberOfArrays()):
@@ -34,20 +34,20 @@ class FieldData(VTKObjectWrapper):
         pdata = self.VTKObject
         narr = pdata.GetNumberOfArrays()
 
-        if self._arrays:
-            if narr == len(self._arrays):
-                return self._arrays
+        if self._np_arrays:
+            if narr == len(self._np_arrays):
+                return self._np_arrays
 
-        self._arrays = {}
+        self._np_arrays = {}
 
         for i in range(narr):
             name = pdata.GetArrayName(i)
             if not name:
                 name = 'Point Array {}'.format(i)
                 pdata.GetAbstractArray(i).SetName(name)
-            self._arrays[name] = self._point_array(name)
+            self._np_arrays[name] = self._point_array(name)
 
-        return self._arrays
+        return self._np_arrays
 
     def arrays_from_field_data(self):
         """Generator which yields abstract arrays from a vtkFieldData object.
