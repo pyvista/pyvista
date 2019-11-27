@@ -1,5 +1,3 @@
-from typing import Mapping, _KT, _VT, overload, Iterable, Tuple, Union, _T, Iterator, _T_co, _VT_co
-
 import numpy as np
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
                                POINT_DATA_FIELD, convert_array, get_array,
@@ -16,10 +14,18 @@ class FieldData(VTKObjectWrapper):
         self._arrays = {}
 
     def __setitem__(self, key, value):
-        pass
+        """Ensure that data is contiguous."""
+        if isinstance(value, (list, tuple)):
+            value = np.array(value)
+        self._arrays[key] = value
+        self.Modified()
 
     def __getitem__(self, item):
-        pass
+        return self._arrays[item]
+
+    def __iter__(self):
+        for i in range(self.VTKObject.GetNumberOfArrays()):
+            yield self.VTKObject.GetAbstractArray(i)
 
     def arrays(self):
         """Return all arrays."""
