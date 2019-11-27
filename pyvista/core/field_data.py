@@ -26,7 +26,7 @@ class FieldData(VTKObjectWrapper):
 
         return self._point_arrays
 
-    def arrays_from_field_data(self, field_data):
+    def arrays_from_field_data(self):
         """Generator which yields abstract arrays from a vtkFieldData object.
 
          Parameters
@@ -34,8 +34,8 @@ class FieldData(VTKObjectWrapper):
         field_data : vtkFieldData
             An object of the type vtkFieldData, vtkCellData, or vtkPointData
         """
-        for i in range(field_data.GetNumberOfArrays()):
-            yield field_data.GetAbstractArray(i)
+        for i in range(self.VTKObject.GetNumberOfArrays()):
+            yield self.VTKObject.GetAbstractArray(i)
 
     def raise_invalid_active_scalar_name(self, scalar_name):
         if scalar_name not in self.point_arrays:
