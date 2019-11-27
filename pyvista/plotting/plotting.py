@@ -504,29 +504,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def set_focus(self, point):
         """Set focus to a point."""
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
-        self.camera.SetFocalPoint(point)
+        self.renderer.set_focus(point)
         self._render()
 
     def set_position(self, point, reset=False):
         """Set camera position to a point."""
-        if isinstance(point, np.ndarray):
-            if point.ndim != 1:
-                point = point.ravel()
-        self.camera.SetPosition(point)
-        if reset:
-            self.reset_camera()
-        self.camera_set = True
+        self.renderer.set_position(point, reset=reset)
         self._render()
 
     def set_viewup(self, vector):
         """Set camera viewup vector."""
-        if isinstance(vector, np.ndarray):
-            if vector.ndim != 1:
-                vector = vector.ravel()
-        self.camera.SetViewUp(vector)
+        self.renderer.set_viewup(vector)
         self._render()
 
     def _render(self):
@@ -3770,6 +3758,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.set_position(point)
                 self.set_focus(focus)
                 self.set_viewup(viewup)
+                self.renderer.ResetCameraClippingRange()
+                self._render()
                 if bkg:
                     time.sleep(step)
                 if write_frames:

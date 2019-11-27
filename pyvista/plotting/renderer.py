@@ -581,8 +581,8 @@ class Renderer(vtkRenderer):
     @property
     def camera_position(self):
         """Return camera position of active render window."""
-        return [self.camera.GetPosition(),
-                self.camera.GetFocalPoint(),
+        return [self._scale_point(self.camera, self.camera.GetPosition(), invert=True),
+                self._scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
                 self.camera.GetViewUp()]
 
     @camera_position.setter
@@ -611,8 +611,8 @@ class Renderer(vtkRenderer):
             return self.view_vector(camera_location)
 
         # everything is set explicitly
-        self.camera.SetPosition(camera_location[0])
-        self.camera.SetFocalPoint(camera_location[1])
+        self.camera.SetPosition(self._scale_point(self.camera, camera_location[0], invert=False))
+        self.camera.SetFocalPoint(self._scale_point(self.camera, camera_location[1], invert=False))
         self.camera.SetViewUp(camera_location[2])
 
         # reset clipping range
@@ -629,10 +629,35 @@ class Renderer(vtkRenderer):
         """Set the active camera for the rendering scene."""
         self.SetActiveCamera(camera)
         self.camera_position = [
-            camera.GetPosition(),
-            camera.GetFocalPoint(),
+            self._scale_point(camera, camera.GetPosition(), invert=True),
+            self._scale_point(camera, camera.GetFocalPoint(), invert=True),
             camera.GetViewUp()
         ]
+
+
+    def set_focus(self, point):
+        """Set focus to a point."""
+        if isinstance(point, np.ndarray):
+            if point.ndim != 1:
+                point = point.ravel()
+        self.camera.SetFocalPoint(self._scale_point(self.camera, point, invert=False))
+
+    def set_position(self, point, reset=False):
+        """Set camera position to a point."""
+        if isinstance(point, np.ndarray):
+            if point.ndim != 1:
+                point = point.ravel()
+        self.camera.SetPosition(self._scale_point(self.camera, point, invert=False))
+        if reset:
+            self.reset_camera()
+        self.camera_set = True
+
+    def set_viewup(self, vector):
+        """Set camera viewup vector."""
+        if isinstance(vector, np.ndarray):
+            if vector.ndim != 1:
+                vector = vector.ravel()
+        self.camera.SetViewUp(vector)
 
 
     def enable_parallel_projection(self):
@@ -648,6 +673,7 @@ class Renderer(vtkRenderer):
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
         self.camera.SetParallelProjection(False)
+
 
     def remove_actor(self, actor, reset_camera=False):
         """Remove an actor from the Renderer.
@@ -709,6 +735,35 @@ class Renderer(vtkRenderer):
         else:
             self.parent._render()
         return True
+
+
+    @staticmethod
+    def _scale_point(camera, point, invert=False):
+        """Scale a point using the camera's transform matrix.
+
+        Parameters
+        ----------
+        camera : vtk.vtkCamera
+            The camera who's matrix to use.
+
+        point : tuple(float)
+            Length 3 tuple of the point coordinates.
+
+        invert : bool
+            If True, invert the matrix to transform the point out of the
+            camera's transformed space. Default is False to transform a
+            point from world coordinates to the camera's transformed space.
+
+        """
+        if invert:
+            mtx = vtk.vtkMatrix4x4()
+            mtx.DeepCopy(camera.GetModelTransformMatrix())
+            mtx.Invert()
+        else:
+            mtx = camera.GetModelTransformMatrix()
+        scaled = mtx.MultiplyPoint((point[0], point[1], point[2], 0.0))
+        return [scaled[0], scaled[1], scaled[2]]
+
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """Scale all the datasets in the scene.
@@ -780,9 +835,10 @@ class Renderer(vtkRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        position = np.array(rcParams['camera']['position'])
+        position = np.array(rcParams['camera']['position']).astype(float)
         if negative:
             position *= -1
+        position = position / np.array(self.scale).astype(float)
         cpos = [position + np.array(focal_pt),
                 focal_pt, rcParams['camera']['viewup']]
         return cpos
