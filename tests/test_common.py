@@ -41,7 +41,7 @@ def test_point_arrays():
 
 def test_point_arrays_bad_value():
     grid = GRID.copy()
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         grid.point_arrays['new_array'] = None
 
     with pytest.raises(Exception):
