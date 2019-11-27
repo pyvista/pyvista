@@ -55,10 +55,10 @@ def test_read(tmpdir):
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
-        data = pyvista.read(filename)
+        _ = pyvista.read(filename)
     # read non existing file
     with pytest.raises(IOError):
-        data = pyvista.read('this_file_totally_does_not_exist.vtk')
+        _ = pyvista.read('this_file_totally_does_not_exist.vtk')
 
 
 def test_get_array():
