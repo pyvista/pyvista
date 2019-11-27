@@ -761,8 +761,8 @@ class Renderer(vtkRenderer):
             mtx.Invert()
         else:
             mtx = camera.GetModelTransformMatrix()
-        scaled = mtx.MultiplyPoint((point[0], point[1], point[2], 0.0))
-        return [scaled[0], scaled[1], scaled[2]]
+        scaled = mtx.MultiplyDoublePoint((point[0], point[1], point[2], 0.0))
+        return (scaled[0], scaled[1], scaled[2])
 
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
