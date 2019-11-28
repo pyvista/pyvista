@@ -1,5 +1,6 @@
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 import numpy
+from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
+import vtk.util.numpy_support as numpy_support
 
 
 class DataSetAttributes(VTKObjectWrapper):
