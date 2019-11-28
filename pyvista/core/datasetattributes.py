@@ -36,3 +36,9 @@ class DataSetAttributes(VTKObjectWrapper):
             self.RemoveArray(key)
             self[key] = value
 
+
+class pyvista_ndarray:
+    pass
+
+
+
