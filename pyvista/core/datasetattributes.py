@@ -42,5 +42,20 @@ class pyvista_ndarray(numpy.ndarray):
     vtkDataArray point to the same memory location."""
     pass
 
+    #TODO implement
+    @classmethod
+    def from_vtk_data_array(cls, vtk_data_array, dataset=None):
+        """Create pyvista_ndarray from vtkDataArray"""
+        narray = numpy_support.vtk_to_numpy(vtk_data_array)
+
+        # Make arrays of 9 components into matrices. Also transpose
+        # as VTK store matrices in Fortran order
+        shape = narray.shape
+        if len(shape) == 2 and shape[1] == 9:
+            narray = narray.reshape((shape[0], 3, 3)).transpose(0, 2, 1)
+
+        return cls(narray, array=array, dataset=dataset)
+
+
 
 
