@@ -113,7 +113,7 @@ class DataSetAttributes(FieldData):
 
 class PointData(DataSetAttributes):
     def __init__(self, vtk_point_data):
-        super().__init__(vtk_field_data=vtk_point_data)
+        super().__init__(data_set_attributes=vtk_point_data)
         self._point_bool_array_names = set()
 
     def _add_point_array(self, scalars, name, deep=True):
@@ -155,7 +155,7 @@ class PointData(DataSetAttributes):
 
 class CellData(DataSetAttributes):
     def __init__(self, vtk_cell_data):
-        super().__init__(vtk_field_data=vtk_cell_data)
+        super().__init__(data_set_attributes=vtk_cell_data)
         self._cell_bool_array_names = set()
 
     def _add_cell_array(self, scalars, name, set_active=False, deep=True):
