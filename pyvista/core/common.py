@@ -264,26 +264,7 @@ class DataObject(vtkDataObject):
     @property
     def field_arrays(self):
         """Return all field arrays."""
-        fdata = self.GetFieldData()
-        narr = fdata.GetNumberOfArrays()
-
-        # just return if unmodified
-        if self._field_arrays:
-            if narr == len(list(self._field_arrays.keys())):
-                return self._field_arrays
-
-        # dictionary with callbacks
-        self._field_arrays = FieldScalarsDict(self)
-
-        for i in range(narr):
-            name = fdata.GetArrayName(i)
-            if name is None or len(name) < 1:
-                name = 'Field Array {}'.format(i)
-                fdata.GetAbstractArray(i).SetName(name)
-            self._field_arrays[name] = self._field_array(name)
-
-        self._field_arrays.enable_callback()
-        return self._field_arrays
+        return self.GetFieldData().keys()
 
 
     def clear_field_arrays(self):
@@ -981,25 +962,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def point_arrays(self):
         """Return all the point arrays."""
-        pdata = self.GetPointData()
-        narr = pdata.GetNumberOfArrays()
-
-        if self._point_arrays:
-            if narr == len(self._point_arrays.keys()):
-                return self._point_arrays
-
-        self._point_arrays = PointScalarsDict(self)
-
-        for i in range(narr):
-            name = pdata.GetArrayName(i)
-            if not name:
-                name = 'Point Array {}'.format(i)
-                pdata.GetAbstractArray(i).SetName(name)
-            self._point_arrays[name] = self._point_array(name)
-
-        self._point_arrays.enable_callback()
-        return self._point_arrays
-
+        return self.GetPointData().keys()
 
 
     def _remove_array(self, field, name):
@@ -1040,28 +1003,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def cell_arrays(self):
         """Return the all cell arrays."""
-        cdata = self.GetCellData()
-        narr = cdata.GetNumberOfArrays()
-
-        # Update data if necessary
-        if self._cell_arrays:
-            keys = list(self._cell_arrays.keys())
-            if narr == len(keys):
-                if keys:
-                    return self._cell_arrays
-
-        # dictionary with callbacks
-        self._cell_arrays = CellScalarsDict(self)
-
-        for i in range(narr):
-            name = cdata.GetArrayName(i)
-            if name is None or len(name) < 1:
-                name = 'Cell Array {}'.format(i)
-                cdata.GetAbstractArray(i).SetName(name)
-            self._cell_arrays[name] = self._cell_array(name)
-
-        self._cell_arrays.enable_callback()
-        return self._cell_arrays
+        return self.GetCellData().keys()
 
 
     @property
@@ -1212,12 +1154,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
         """
         names = []
-        for array in self.arrays_from_field_data(self.GetPointData()):
-            names.append(array.GetName())
-        for array in self.arrays_from_field_data(self.GetCellData()):
-            names.append(array.GetName())
-        for array in self.arrays_from_field_data(self.GetFieldData()):
-            names.append(array.GetName())
+        names.extend(self.GetFieldData().keys())
+        names.extend(self.GetPointData().keys())
+        names.extend(self.GetCellData().keys())
         try:
             names.remove(self.active_scalars_name)
             names.insert(0, self.active_scalars_name)
