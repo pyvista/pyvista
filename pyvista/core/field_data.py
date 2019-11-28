@@ -49,17 +49,6 @@ class FieldData(VTKObjectWrapper):
 
         return self._np_arrays
 
-    def arrays_from_field_data(self):
-        """Generator which yields abstract arrays from a vtkFieldData object.
-
-         Parameters
-        ----------
-        field_data : vtkFieldData
-            An object of the type vtkFieldData, vtkCellData, or vtkPointData
-        """
-        for i in range(self.VTKObject.GetNumberOfArrays()):
-            yield self.VTKObject.GetAbstractArray(i)
-
     def add_array(self, scalars, name, deep=True):
         """Add field scalars to the mesh.
 
@@ -92,7 +81,14 @@ class FieldData(VTKObjectWrapper):
         self.Modified()
 
 
-class PointData(FieldData):
+
+
+class DataSetAttributes(FieldData):
+    def __init__(self, data_set_attributes):
+        super().__init__(data_set_attributes)
+
+
+class PointData(DataSetAttributes):
     def __init__(self, vtk_point_data):
         super().__init__(vtk_field_data=vtk_point_data)
         self._point_bool_array_names = set()
@@ -134,7 +130,7 @@ class PointData(FieldData):
         self.Modified()
 
 
-class CellData(FieldData):
+class CellData(DataSetAttributes):
     def __init__(self, vtk_cell_data):
         super().__init__(vtk_field_data=vtk_cell_data)
         self._cell_bool_array_names = set()
