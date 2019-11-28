@@ -1,11 +1,10 @@
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
+import numpy
 
 
 class DataSetAttributes(VTKObjectWrapper):
-    """
-    Python friendly wrapper of DataSetAttributes.
-    Loosely based on dataset_adapter.DataSetAttributes.
-    """
+    """Python friendly wrapper of DataSetAttributes.
+    Loosely based on dataset_adapter.DataSetAttributes."""
     def __init__(self, vtkobject, dataset, association):
         super().__init__(vtkobject=vtkobject)
         self._dataset = dataset
@@ -37,7 +36,9 @@ class DataSetAttributes(VTKObjectWrapper):
             self[key] = value
 
 
-class pyvista_ndarray:
+class pyvista_ndarray(numpy.ndarray):
+    """Wraps vtkDataArray as an numpy.ndarray. Both this array and
+    vtkDataArray point to the same memory location."""
     pass
 
 
