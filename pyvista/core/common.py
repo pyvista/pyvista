@@ -314,9 +314,6 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         self._last_active_scalars_name = None
         self._cell_data = pyvista.CellData(vtk_cell_data=super().GetCellData())
         self._point_data = pyvista.PointData(vtk_point_data=super().GetPointData())
-        self._point_arrays = PointScalarsDict(self)
-        self._cell_arrays = CellScalarsDict(self)
-        self._field_arrays = FieldScalarsDict(self)
 
     def GetPointData(self):
         return self._point_data
