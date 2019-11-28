@@ -8,7 +8,7 @@ from weakref import proxy
 
 import numpy as np
 import vtk
-from vtk.numpy_interface.dataset_adapter import DataSetAttributes, ArrayAssociation
+from vtk.numpy_interface.dataset_adapter import ArrayAssociation
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
@@ -43,7 +43,7 @@ class DataObject(vtkDataObject):
 
 
     def GetFieldData(self):
-        return DataSetAttributes(super().GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
+        return pyvista.DataSetAttributes(super().GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
 
 
     def shallow_copy(self, to_copy):
@@ -264,7 +264,7 @@ class DataObject(vtkDataObject):
     @property
     def field_arrays(self):
         """Return all field arrays."""
-        return self.GetFieldData().keys()
+        return self.GetFieldData()
 
 
     def clear_field_arrays(self):
@@ -296,11 +296,11 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
 
     def GetPointData(self):
-        return DataSetAttributes(super().GetPointData(), dataset=self, association=ArrayAssociation.POINT)
+        return pyvista.DataSetAttributes(super().GetPointData(), dataset=self, association=ArrayAssociation.POINT)
 
 
     def GetCellData(self):
-        return DataSetAttributes(super().GetCellData(), dataset=self, association=ArrayAssociation.CELL)
+        return pyvista.DataSetAttributes(super().GetCellData(), dataset=self, association=ArrayAssociation.CELL)
 
 
     @property
