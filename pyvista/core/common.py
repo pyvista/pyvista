@@ -8,6 +8,7 @@ from weakref import proxy
 
 import numpy as np
 import vtk
+from vtk.numpy_interface.dataset_adapter import DataSetAttributes, ArrayAssociation
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
@@ -32,7 +33,6 @@ class DataObject(vtkDataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
         super().__init__()
-        self._field_data = pyvista.FieldData(vtk_field_data=super().GetFieldData())
         self._field_bool_array_names = set()
 
     def __new__(cls, *args, **kwargs):
@@ -43,7 +43,7 @@ class DataObject(vtkDataObject):
 
 
     def GetFieldData(self):
-        return self._field_data
+        return DataSetAttributes(super().GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
 
 
     def shallow_copy(self, to_copy):
@@ -312,14 +312,15 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         self._cell_bool_array_names = set()
         self._active_scalar_info = 0, None  # Scalar field and name
         self._last_active_scalars_name = None
-        self._cell_data = pyvista.CellData(vtk_cell_data=super().GetCellData())
-        self._point_data = pyvista.PointData(vtk_point_data=super().GetPointData())
+
 
     def GetPointData(self):
-        return self._point_data
+        return DataSetAttributes(super().GetPointData(), dataset=self, association=ArrayAssociation.POINT)
+
 
     def GetCellData(self):
-        return self._cell_data
+        return DataSetAttributes(super().GetCellData(), dataset=self, association=ArrayAssociation.CELL)
+
 
     @property
     def active_scalars_info(self):
