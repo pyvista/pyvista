@@ -10,7 +10,7 @@ from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 class FieldData(VTKObjectWrapper):
     def __init__(self, vtk_field_data):
         super().__init__(vtkobject=vtk_field_data)
-        self._field_bool_array_names = set()
+        self._bool_array_names = set()
         self._np_arrays = {}
 
     #TODO, vtkArray/numpyarray conversion, or make a custom pyvista array which allows conversion
@@ -80,7 +80,30 @@ class FieldData(VTKObjectWrapper):
         self.AddArray(vtkarr)
         self.Modified()
 
+    def array(self, name):
+        """Return field scalars of a vtk object.
 
+        Parameters
+        ----------
+        name : str
+            Name of field scalars to retrieve.
+
+        Return
+        ------
+        scalars : np.ndarray
+            Numpy array of scalars
+
+        """
+        vtkarr = self.GetAbstractArray(name)
+        # numpy does not support bit array data types
+        if isinstance(vtkarr, vtk.vtkBitArray):
+            vtkarr = vtk_bit_array_to_char(vtkarr)
+            self._bool_array_names.add(name)
+
+        array = convert_array(vtkarr)
+        if array.dtype == np.uint8 and name in self._bool_array_names:
+            array = array.view(np.bool)
+        return array
 
 
 class DataSetAttributes(FieldData):
