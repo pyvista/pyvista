@@ -2,7 +2,6 @@
 
 from .common import DataSet, DataObject
 from .composite import MultiBlock
-from .field_data import FieldData, CellData, PointData
 from .filters import (CompositeFilters, DataSetFilters, PolyDataFilters,
                       UnstructuredGridFilters, UniformGridFilters)
 from .grid import Grid, RectilinearGrid, UniformGrid
