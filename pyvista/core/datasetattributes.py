@@ -12,13 +12,13 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def __getitem__(self, key):
         """Implements the [] operator. Accepts an array name or index."""
-        return self.GetArray(key)
+        return self.get_array(key)
 
-    def GetArray(self, idx):
+    def get_array(self, idx):
         "Given an index or name, returns a VTKArray."
         if isinstance(idx, int) and idx >= self.VTKObject.GetNumberOfArrays():
             raise IndexError("array index out of range")
-        vtkarray = self.VTKObject.GetArray(idx)
+        vtkarray = self.VTKObject.get_array(idx)
         if not vtkarray:
             vtkarray = self.VTKObject.GetAbstractArray(idx)
             if vtkarray:
