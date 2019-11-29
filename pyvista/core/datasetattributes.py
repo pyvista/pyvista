@@ -78,6 +78,12 @@ class pyvista_ndarray(numpy.ndarray):
         self._association = getattr(obj, 'Association', None)
         self._dataset = getattr(obj, 'DataSet', None)
 
+    def __array_wrap__(self, out_arr, context=None):
+        if out_arr.shape == ():
+            # Convert to scalar value
+            return out_arr[()]
+        return numpy.ndarray.__array_wrap__(self, out_arr, context)
+
     #TODO implement
     @classmethod
     def from_vtk_data_array(cls, vtk_data_array, dataset=None):
