@@ -1,6 +1,8 @@
 import numpy
 from vtk import buffer_shared
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, _make_tensor_array_contiguous, numpyTovtkDataArray, ArrayAssociation
+from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, _make_tensor_array_contiguous,
+                                                 numpyTovtkDataArray, ArrayAssociation,
+                                                 VTKArray)
 import vtk.util.numpy_support as numpy_support
 from vtk.vtkCommonCore import vtkWeakReference
 
@@ -117,7 +119,7 @@ class DataSetAttributes(VTKObjectWrapper):
 
 
 
-class pyvista_ndarray(numpy.ndarray):
+class pyvista_ndarray(VTKArray):
     """Wraps vtkDataArray as an numpy.ndarray. Both this array and
     vtkDataArray point to the same memory location."""
 
@@ -136,37 +138,6 @@ class pyvista_ndarray(numpy.ndarray):
             else:
                 obj._dataset.Set(dataset)
         return obj
-
-    def __getattr__(self, name):
-        """Forwards unknown attribute requests to VTK array."""
-        o = self.__dict__.get('VTKObject', None)
-        if o is None:
-            raise AttributeError("'%s' object has no attribute '%s'" %
-                                 (self.__class__.__name__, name))
-        return getattr(o, name)
-
-    def __array_finalize__(self, obj):
-        # Copy the VTK array only if the two share data
-        slf = _make_tensor_array_contiguous(self)
-        obj2 = _make_tensor_array_contiguous(obj)
-
-        self.VTKObject = None
-        try:
-            # This line tells us that they are referring to the same buffer.
-            # Much like two pointers referring to same memory location in C/C++.
-            if buffer_shared(slf, obj2):
-                self.VTKObject = getattr(obj, 'VTKObject', None)
-        except TypeError:
-            pass
-
-        self._association = getattr(obj, '_association', None)
-        self._dataset = getattr(obj, '_dataSet', None)
-
-    def __array_wrap__(self, out_arr, context=None):
-        if out_arr.shape == ():
-            # Convert to scalar value
-            return out_arr[()]
-        return numpy.ndarray.__array_wrap__(self, out_arr, context)
 
     #TODO implement
     @classmethod
