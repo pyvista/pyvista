@@ -141,7 +141,6 @@ class pyvista_ndarray(VTKArray):
                 obj._dataset.Set(dataset)
         return obj
 
-    #TODO implement
     @classmethod
     def from_vtk_data_array(cls, vtk_data_array, dataset=None):
         """Create pyvista_ndarray from vtkDataArray"""
