@@ -1809,6 +1809,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+        self.mesh = None
 
     def remove_actor(self, actor, reset_camera=False):
         """Remove an actor from the Plotter.
