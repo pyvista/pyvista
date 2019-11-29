@@ -168,10 +168,20 @@ class pyvista_ndarray(VTKArray):
         return cls(narray, vtk_data_array, dataset=dataset)
 
     @classmethod
-    def from_iter(cls, iterable, dtype, count=-1):
+    def from_iter(cls, a, dtype=None, order=None):
         """Create a ``pyvista_ndarray`` instance from an iterable.
-        Analogous to numpy.fromiter(). docs.scipy.org/doc/numpy/reference/generated/numpy.fromiter.html
+
+        Parameters
+        ----------
+        a : array_like
+            Input data, in any form that can be converted to an array. 
+            This includes lists, lists of tuples, tuples, tuples of tuples, tuples of lists and ndarrays.
+            
+        dtype : data-type, optional
+            By default, the data-type is inferred from the input data.
+            
+        order : {‘C’, ‘F’}, optional
+            Whether to use row-major (C-style) or column-major (Fortran-style) memory representation. Defaults to ‘C’.
 
         """
-        narray = numpy.fromiter(iterable, dtype=dtype, count=count)
-        return cls(narray)
+        return cls(numpy.asarray(a, dtype, order))
