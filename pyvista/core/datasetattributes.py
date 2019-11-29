@@ -26,7 +26,7 @@ class DataSetAttributes(VTKObjectWrapper):
             vtkarray = self.VTKObject.GetAbstractArray(key)
             return vtkarray if vtkarray else None
         array = pyvista_ndarray.from_vtk_data_array(vtkarray, dataset=self._dataset)
-        array.Association = self.Association
+        array._association = self._association
         return array
 
     def __setitem__(self, key, value):
@@ -44,7 +44,7 @@ class pyvista_ndarray(numpy.ndarray):
     def __new__(cls, ndarray, vtk_array=None, dataset=None):
         # Input array is an already formed ndarray instance
         obj = numpy.asarray(ndarray).view(cls)
-        obj.Association = ArrayAssociation.FIELD
+        obj._association = ArrayAssociation.FIELD
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
         if dataset:
