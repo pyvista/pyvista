@@ -17,6 +17,13 @@ class DataSetAttributes(VTKObjectWrapper):
         """Implements the [] operator. Accepts an array name or index."""
         return self.get_array(key)
 
+    def __setitem__(self, key, value):
+        if self[key] is None:
+            self.append(narray=value, name=key)
+        else:
+            self.RemoveArray(key)
+            self[key] = value
+
     def get_array(self, key):
         """Given an index or name, returns a VTKArray."""
         max_index = self.VTKObject.GetNumberOfArrays()
@@ -29,13 +36,6 @@ class DataSetAttributes(VTKObjectWrapper):
         array = pyvista_ndarray.from_vtk_data_array(vtkarray, dataset=self._dataset)
         array._association = self._association
         return array
-
-    def __setitem__(self, key, value):
-        if self[key] is None:
-            self.append(narray=value, name=key)
-        else:
-            self.RemoveArray(key)
-            self[key] = value
 
     def append(self, narray, name):
         """Appends a new array to the dataset attributes."""
