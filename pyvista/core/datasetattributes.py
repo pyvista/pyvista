@@ -129,7 +129,12 @@ class pyvista_ndarray(numpy.ndarray):
         obj.VTKObject = vtk_array
         if dataset:
             obj._dataset = vtkWeakReference()
-            obj._dataset.Set(dataset.VTKObject)
+            # Unless ALL pyvista objects ARE vtk objects, OR, ALL pyvista objects ARE
+            # VTKObjectWrappers, which object gets set matters.
+            if isinstance(dataset, VTKObjectWrapper):
+                obj._dataset.Set(dataset.VTKObject)
+            else:
+                obj._dataset.Set(dataset)
         return obj
 
     def __getattr__(self, name):
@@ -154,8 +159,8 @@ class pyvista_ndarray(numpy.ndarray):
         except TypeError:
             pass
 
-        self._association = getattr(obj, 'Association', None)
-        self._dataset = getattr(obj, 'DataSet', None)
+        self._association = getattr(obj, '_association', None)
+        self._dataset = getattr(obj, '_dataSet', None)
 
     def __array_wrap__(self, out_arr, context=None):
         if out_arr.shape == ():
