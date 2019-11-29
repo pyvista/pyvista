@@ -73,7 +73,7 @@ def test_cell_arrays():
 
 def test_cell_arrays_bad_value():
     grid = GRID.copy()
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         grid.cell_arrays['new_array'] = None
 
     with pytest.raises(Exception):
