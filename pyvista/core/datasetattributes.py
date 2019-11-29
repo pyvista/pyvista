@@ -29,7 +29,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return array
 
     def __setitem__(self, key, value):
-        if self[key] is dsa.NoneArray:
+        if self[key] is None:
             self.append(narray=value, name=key)
         else:
             self.RemoveArray(key)
