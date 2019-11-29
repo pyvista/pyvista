@@ -143,7 +143,18 @@ class pyvista_ndarray(VTKArray):
 
     @classmethod
     def from_vtk_data_array(cls, vtk_data_array, dataset=None):
-        """Create pyvista_ndarray from vtkDataArray"""
+        """Create a ``pyvista_ndarray`` instance from a vtk array.
+
+        Parameters
+        ----------
+        vtk_data_array : vtkDataArray
+            Array to copy.
+
+        dataset : vtkDataSet, optional
+            The vtkDataSet which vtk_data_array belongs to. Required to
+            update or access a dataset when this pyvista_ndarray is updated.
+
+        """
         narray = numpy_support.vtk_to_numpy(vtk_data_array)
 
         # Make arrays of 9 components into matrices. Also transpose
@@ -151,10 +162,13 @@ class pyvista_ndarray(VTKArray):
         shape = narray.shape
         if len(shape) == 2 and shape[1] == 9:
             narray = narray.reshape((shape[0], 3, 3)).transpose(0, 2, 1)
-
         return cls(narray, vtk_data_array, dataset=dataset)
 
     @classmethod
     def from_iter(cls, iterable, dtype, count=-1):
+        """Create a ``pyvista_ndarray`` instance from an iterable.
+        Analogous to numpy.fromiter(). docs.scipy.org/doc/numpy/reference/generated/numpy.fromiter.html
+
+        """
         narray = numpy.fromiter(iterable, dtype=dtype, count=count)
         return cls(narray)
