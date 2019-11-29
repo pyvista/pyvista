@@ -1,6 +1,5 @@
 import os
 import sys
-from subprocess import PIPE, Popen
 from weakref import proxy
 
 import imageio
@@ -19,7 +18,6 @@ try:
         import imageio_ffmpeg
         imageio_ffmpeg.get_ffmpeg_exe()
     except ImportError:
-        import imageio
         imageio.plugins.ffmpeg.download()
 except:
     ffmpeg_failed = True
@@ -388,15 +386,6 @@ def test_screenshot(tmpdir):
         raise Exception('Plotter did not close')
 
 
-def test_invalid_color():
-    with pytest.raises(Exception):
-        femorph.plotting.parse_color('not a color')
-
-
-def test_invalid_font():
-    with pytest.raises(Exception):
-        femorph.parse_font_family('not a font')
-
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_scalars_by_name():
@@ -669,17 +658,17 @@ def test_image_properties():
     p.add_mesh(mesh)
     p.show(auto_close=False) # DO NOT close plotter
     # Get RGB image
-    img = p.image
+    _ = p.image
     # Get the depth image
-    img = p.get_image_depth()
+    _ = p.get_image_depth()
     p.close()
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh)
     p.show() # close plotter
     # Get RGB image
-    img = p.image
+    _ = p.image
     # Get the depth image
-    img = p.get_image_depth()
+    _ = p.get_image_depth()
     p.close()
 
 
@@ -880,6 +869,6 @@ def test_cmap_list():
     with pytest.raises(TypeError):
         mesh.plot(off_screen=OFF_SCREEN,
                   scalars=scalars, cmap=['red', None, 'blue'])
-    
+
     mesh.plot(off_screen=OFF_SCREEN,
               scalars=scalars, cmap=['red', 'green', 'blue'])
