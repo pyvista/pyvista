@@ -39,7 +39,17 @@ class DataSetAttributes(VTKObjectWrapper):
 class pyvista_ndarray(numpy.ndarray):
     """Wraps vtkDataArray as an numpy.ndarray. Both this array and
     vtkDataArray point to the same memory location."""
-    pass
+
+    def __new__(cls, ndarray, vtk_array=None, dataset=None):
+        # Input array is an already formed ndarray instance
+        obj = numpy.asarray(ndarray).view(cls)
+        obj.Association = ArrayAssociation.FIELD
+        # add the new attributes to the created instance
+        obj.VTKObject = vtk_array
+        if dataset:
+            obj._dataset = vtkWeakReference()
+            obj._dataset.Set(dataset.VTKObject)
+        return obj
 
     #TODO implement
     @classmethod
