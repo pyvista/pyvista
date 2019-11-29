@@ -1,5 +1,6 @@
 import numpy
 from vtk import buffer_shared
+from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
 from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, _make_tensor_array_contiguous,
                                                  numpyTovtkDataArray, ArrayAssociation,
                                                  VTKArray)
@@ -20,11 +21,16 @@ class DataSetAttributes(VTKObjectWrapper):
         return self.get_array(key)
 
     def __setitem__(self, key, value):
+        if isinstance(value, (list, tuple, str)):
+            value = pyvista_ndarray.from_iter(iterable=)
         if self[key] is None:
             self.append(narray=value, name=key)
         else:
             self.RemoveArray(key)
             self[key] = value
+
+    def __delitem__(self, key):
+        self.RemoveArray(key)
 
     def __contains__(self, item):
         return item in self.keys()
@@ -46,7 +52,6 @@ class DataSetAttributes(VTKObjectWrapper):
         """Appends a new array to the dataset attributes."""
         if narray is None:
             return
-
         if self._association == ArrayAssociation.POINT:
             array_len = self._dataset.GetNumberOfPoints()
         elif self._association == ArrayAssociation.CELL:
@@ -143,6 +148,33 @@ class pyvista_ndarray(VTKArray):
             else:
                 obj._dataset.Set(dataset)
         return obj
+
+    @classmethod
+    def from_any(cls, obj, dtype=None, order=None, dataset=None):
+        """Factory method to create a `pyvista_ndarray`` instance from an object.
+
+        Parameters
+        ----------
+        obj : any
+            Object to create numpy array from based on type.
+
+        dataset : vtkDataSet, optional
+            The vtkDataSet which vtk_data_array belongs to. Required to
+            update or access a dataset when this pyvista_ndarray is updated.
+
+        dtype : data-type, optional
+            By default, the data-type is inferred from the input data.
+
+        order : {‘C’, ‘F’}, optional
+            Whether to use row-major (C-style) or column-major (Fortran-style) memory representation. Defaults to ‘C’.
+
+        """
+        if isinstance(obj, (vtkDataArray, vtkAbstractArray)):
+            return cls.from_vtk_data_array(vtk_data_array=obj, dataset=dataset)
+        elif isinstance(obj, (list, tuple, numpy.ndarray)):
+            return cls.from_iter(a=obj, dtype=dtype, order=order)
+        else:
+            raise ValueError('Cannot create {} from type: {}'.format(type(cls), type(obj)))
 
     @classmethod
     def from_vtk_data_array(cls, vtk_data_array, dataset=None):
