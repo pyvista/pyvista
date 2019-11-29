@@ -53,6 +53,14 @@ class pyvista_ndarray(numpy.ndarray):
             obj._dataset.Set(dataset.VTKObject)
         return obj
 
+    def __getattr__(self, name):
+        """Forwards unknown attribute requests to VTK array."""
+        o = self.__dict__.get('VTKObject', None)
+        if o is None:
+            raise AttributeError("'%s' object has no attribute '%s'" %
+                                 (self.__class__.__name__, name))
+        return getattr(o, name)
+
     def __array_finalize__(self, obj):
         # Copy the VTK array only if the two share data
         slf = _make_tensor_array_contiguous(self)
