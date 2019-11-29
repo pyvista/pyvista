@@ -93,3 +93,24 @@ class DataSetAttributes(VTKObjectWrapper):
         arr = numpyTovtkDataArray(copy, name)
         self.VTKObject.AddArray(arr)
 
+    def keys(self):
+        """Returns the names of the arrays as a list."""
+        kys = []
+        narrays = self.VTKObject.GetNumberOfArrays()
+        for i in range(narrays):
+            name = self.VTKObject.GetAbstractArray(i).GetName()
+            if name:
+                kys.append(name)
+        return kys
+
+    def values(self):
+        """Returns the arrays as a list."""
+        vals = []
+        narrays = self.VTKObject.GetNumberOfArrays()
+        for i in range(narrays):
+            a = self.VTKObject.GetAbstractArray(i)
+            if a.GetName():
+                vals.append(a)
+        return vals
+
+
