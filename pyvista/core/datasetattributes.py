@@ -1,5 +1,6 @@
 import numpy
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
+from vtk import buffer_shared
+from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, _make_tensor_array_contiguous
 import vtk.util.numpy_support as numpy_support
 from vtk.vtkCommonCore import vtkWeakReference
 
@@ -51,6 +52,23 @@ class pyvista_ndarray(numpy.ndarray):
             obj._dataset = vtkWeakReference()
             obj._dataset.Set(dataset.VTKObject)
         return obj
+
+    def __array_finalize__(self, obj):
+        # Copy the VTK array only if the two share data
+        slf = _make_tensor_array_contiguous(self)
+        obj2 = _make_tensor_array_contiguous(obj)
+
+        self.VTKObject = None
+        try:
+            # This line tells us that they are referring to the same buffer.
+            # Much like two pointers referring to same memory location in C/C++.
+            if buffer_shared(slf, obj2):
+                self.VTKObject = getattr(obj, 'VTKObject', None)
+        except TypeError:
+            pass
+
+        self._association = getattr(obj, 'Association', None)
+        self._dataset = getattr(obj, 'DataSet', None)
 
     #TODO implement
     @classmethod
