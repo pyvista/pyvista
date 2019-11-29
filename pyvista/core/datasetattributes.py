@@ -174,7 +174,8 @@ class pyvista_ndarray(VTKArray):
         elif isinstance(obj, (list, tuple, numpy.ndarray)):
             return cls.from_iter(a=obj, dtype=dtype, order=order)
         else:
-            raise ValueError('Cannot create {} from type: {}'.format(type(cls), type(obj)))
+            raise ValueError('Cannot create {} from type: {}'.format(
+                type(cls).__name__, type(obj).__name__))
 
     @classmethod
     def from_vtk_data_array(cls, vtk_data_array, dataset=None):
