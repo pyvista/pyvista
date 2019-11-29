@@ -1,13 +1,9 @@
-import os
-from subprocess import PIPE, Popen
-
 import numpy as np
 import pytest
 import vtk
 
 import pyvista
 from pyvista import examples as ex
-from pyvista.plotting import system_supports_plotting
 
 
 def test_multi_block_init_vtk():
@@ -142,7 +138,7 @@ def test_multi_block_set_get_ers():
     assert multi.n_blocks == 3
     assert multi.get_block_name(10) is None
     with pytest.raises(KeyError):
-        idx = multi.get_index_by_name('foo')
+        _ = multi.get_index_by_name('foo')
 
 
 def test_mutli_block_clean():
@@ -228,10 +224,10 @@ def test_multi_io_erros(tmpdir):
     np.save(bad_ext_name, arr)
     # Load non existing file
     with pytest.raises(Exception):
-        data = pyvista.MultiBlock('foo.vtm')
+        _ = pyvista.MultiBlock('foo.vtm')
     # Load bad extension
     with pytest.raises(IOError):
-        data = pyvista.MultiBlock(bad_ext_name)
+        _ = pyvista.MultiBlock(bad_ext_name)
 
 
 
@@ -306,10 +302,51 @@ def test_multi_block_negative_index():
     assert id(multi[-4]) == id(multi[1])
     assert id(multi[-5]) == id(multi[0])
     with pytest.raises(IndexError):
-        foo = multi[-6]
+        _ = multi[-6]
     return
 
 
+def test_multi_slice_index():
+    multi = pyvista.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(ex.load_globe())
+    # Now check everything
+    sub = multi[0:3]
+    assert len(sub) == 3
+    for i in range(3):
+        assert id(sub[i]) == id(multi[i])
+        assert sub.get_block_name(i) == multi.get_block_name(i)
+    sub = multi[0:-1]
+    assert len(sub) == len(multi) == multi.n_blocks
+    for i in range(multi.n_blocks):
+        assert id(sub[i]) == id(multi[i])
+        assert sub.get_block_name(i) == multi.get_block_name(i)
+    sub = multi[0:-1:2]
+    assert len(sub) == 3
+    for i in range(3):
+        j = i*2
+        assert id(sub[i]) == id(multi[j])
+        assert sub.get_block_name(i) == multi.get_block_name(j)
+
+def test_multi_block_list_index():
+    multi = pyvista.MultiBlock()
+    # Add examples
+    multi.append(ex.load_ant())
+    multi.append(ex.load_sphere())
+    multi.append(ex.load_uniform())
+    multi.append(ex.load_airplane())
+    multi.append(ex.load_globe())
+    # Now check everything
+    indices = [0, 3, 4]
+    sub = multi[indices]
+    assert len(sub) == len(indices)
+    for i, j in enumerate(indices):
+        assert id(sub[i]) == id(multi[j])
+        assert sub.get_block_name(i) == multi.get_block_name(j)
 
 def test_multi_block_volume():
     multi = pyvista.MultiBlock()
