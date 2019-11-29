@@ -595,7 +595,6 @@ class Renderer(vtkRenderer):
                     pass
 
         self.RemoveAllViewProps()
-        # self._actors = {}
 
     @camera_position.setter
     def camera_position(self, camera_location):
