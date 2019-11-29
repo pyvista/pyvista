@@ -22,6 +22,9 @@ class DataSetAttributes(VTKObjectWrapper):
             self.RemoveArray(key)
             self[key] = value
 
+    def __contains__(self, item):
+        return item in self.keys()
+
     def get_array(self, key):
         """Given an index or name, returns a VTKArray."""
         max_index = self.VTKObject.GetNumberOfArrays()
