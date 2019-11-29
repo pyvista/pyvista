@@ -154,6 +154,7 @@ class pyvista_ndarray(VTKArray):
 
         return cls(narray, vtk_data_array, dataset=dataset)
 
-
-
-
+    @classmethod
+    def from_iter(cls, iterable, dtype, count=-1):
+        narray = numpy.fromiter(iterable, dtype=dtype, count=count)
+        return cls(narray)
