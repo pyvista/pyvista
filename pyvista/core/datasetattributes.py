@@ -16,16 +16,15 @@ class DataSetAttributes(VTKObjectWrapper):
         return self.get_array(key)
 
     def get_array(self, key):
-        "Given an index or name, returns a VTKArray."
+        """Given an index or name, returns a VTKArray."""
+        max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(key, int) and key >= self.VTKObject.GetNumberOfArrays():
-            raise IndexError("array index out of range")
-        vtkarray = self.VTKObject.get_array(key)
+            raise IndexError('Array index ({}) out of range [{}, {}]'.format(key, 0, max_index))
+        vtkarray = self.VTKObject.GetArray(key)
         if not vtkarray:
             vtkarray = self.VTKObject.GetAbstractArray(key)
-            if vtkarray:
-                return vtkarray
-            return NoneArray
-        array = vtkDataArrayToVTKArray(vtkarray, self.DataSet)
+            return vtkarray if vtkarray else None
+        array = pyvista_ndarray.from_vtk_data_array(vtkarray, dataset=self._dataset)
         array.Association = self.Association
         return array
 
