@@ -1802,7 +1802,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def clear(self):
         """Clear plot by removing all actors and properties."""
         for renderer in self.renderers:
-            renderer.RemoveAllViewProps()
+            renderer.clear()
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
