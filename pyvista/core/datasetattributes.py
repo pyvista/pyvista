@@ -1,6 +1,7 @@
 import numpy
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 import vtk.util.numpy_support as numpy_support
+from vtk.vtkCommonCore import vtkWeakReference
 
 
 class DataSetAttributes(VTKObjectWrapper):
@@ -58,12 +59,12 @@ class pyvista_ndarray(numpy.ndarray):
         narray = numpy_support.vtk_to_numpy(vtk_data_array)
 
         # Make arrays of 9 components into matrices. Also transpose
-        # as VTK store matrices in Fortran order
+        # as VTK stores matrices in Fortran order
         shape = narray.shape
         if len(shape) == 2 and shape[1] == 9:
             narray = narray.reshape((shape[0], 3, 3)).transpose(0, 2, 1)
 
-        return cls(narray, array=array, dataset=dataset)
+        return cls(narray, vtk_data_array, dataset=dataset)
 
 
 
