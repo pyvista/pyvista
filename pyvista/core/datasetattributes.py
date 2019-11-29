@@ -1,6 +1,6 @@
 import numpy
 from vtk import buffer_shared
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, _make_tensor_array_contiguous
+from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, _make_tensor_array_contiguous, numpyTovtkDataArray, ArrayAssociation
 import vtk.util.numpy_support as numpy_support
 from vtk.vtkCommonCore import vtkWeakReference
 
@@ -39,30 +39,26 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def append(self, narray, name):
         """Appends a new array to the dataset attributes."""
-        if narray is NoneArray:
-            # if NoneArray, nothing to do.
+        if narray is None:
             return
 
-        if self.Association == ArrayAssociation.POINT:
-            arrLength = self.DataSet.GetNumberOfPoints()
-        elif self.Association == ArrayAssociation.CELL:
-            arrLength = self.DataSet.GetNumberOfCells()
+        if self._association == ArrayAssociation.POINT:
+            array_len = self.DataSet.GetNumberOfPoints()
+        elif self._association == ArrayAssociation.CELL:
+            array_len = self.DataSet.GetNumberOfCells()
         else:
-            if not isinstance(narray, numpy.ndarray):
-                arrLength = 1
-            else:
-                arrLength = narray.shape[0]
+            array_len = narray.shape[0] if isinstance(narray, numpy.ndarray) else 1
 
         # Fixup input array length:
         if not isinstance(narray, numpy.ndarray) or numpy.ndim(narray) == 0: # Scalar input
-            tmparray = numpy.empty(arrLength)
+            tmparray = numpy.empty(array_len)
             tmparray.fill(narray)
             narray = tmparray
-        elif narray.shape[0] != arrLength: # Vector input
+        elif narray.shape[0] != array_len: # Vector input
             components = 1
             for l in narray.shape:
                 components *= l
-            tmparray = numpy.empty((arrLength, components))
+            tmparray = numpy.empty((array_len, components))
             tmparray[:] = narray.flatten()
             narray = tmparray
 
@@ -75,10 +71,10 @@ class DataSetAttributes(VTKObjectWrapper):
             # If row order but not contiguous, transpose so that the deep copy below
             # does not happen.
             size = narray.dtype.itemsize
-            if (narray.strides[1]/size == 3 and narray.strides[2]/size == 1) or \
-                (narray.strides[1]/size == 1 and narray.strides[2]/size == 3 and \
+            if (narray.strides[1] / size == 3 and narray.strides[2] / size == 1) or \
+                (narray.strides[1] / size == 1 and narray.strides[2] / size == 3 and \
                  not narray.flags.contiguous):
-                narray  = narray.transpose(0, 2, 1)
+                narray = narray.transpose(0, 2, 1)
 
         # If array is not contiguous, make a deep copy that is contiguous
         if not narray.flags.contiguous:
@@ -91,10 +87,11 @@ class DataSetAttributes(VTKObjectWrapper):
         # this handle the case when an input array is directly appended on the
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
-        copy = VTKArray(narray)
+        copy = pyvista_ndarray(narray)
         try:
             copy.VTKObject = narray.VTKObject
-        except AttributeError: pass
+        except AttributeError:
+            pass
         arr = numpyTovtkDataArray(copy, name)
         self.VTKObject.AddArray(arr)
 
