@@ -21,8 +21,8 @@ class DataSetAttributes(VTKObjectWrapper):
         return self.get_array(key)
 
     def __setitem__(self, key, value):
-        if isinstance(value, (list, tuple, str)):
-            value = pyvista_ndarray.from_iter(iterable=)
+        if not isinstance(value, numpy.ndarray):
+            value = pyvista_ndarray.from_any(value, dataset=self._dataset)
         if self[key] is None:
             self.append(narray=value, name=key)
         else:
