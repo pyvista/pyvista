@@ -587,6 +587,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Set the current interactive render window to isometric view."""
         interactor = self.iren.GetInteractorStyle()
         renderer = interactor.GetCurrentRenderer()
+        if renderer is None:
+            renderer = self.renderer
         renderer.view_isometric()
 
     def update(self, stime=1, force_redraw=True):
