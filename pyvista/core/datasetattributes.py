@@ -28,6 +28,9 @@ class DataSetAttributes(VTKObjectWrapper):
         for array in self.keys():
             yield array
 
+    def __len__(self):
+        return self.VTKObject.GetNumberOfArrays()
+
     def get_array(self, key):
         """Given an index or name, returns a VTKArray."""
         self._raise_index_out_of_bounds(index=key)
