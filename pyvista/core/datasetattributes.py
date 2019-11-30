@@ -30,9 +30,7 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def get_array(self, key):
         """Given an index or name, returns a VTKArray."""
-        max_index = self.VTKObject.GetNumberOfArrays()
-        if isinstance(key, int) and key >= self.VTKObject.GetNumberOfArrays():
-            raise IndexError('Array index ({}) out of range [0, {}]'.format(key, max_index))
+        self._raise_index_out_of_bounds(index=key)
         vtkarray = self.VTKObject.GetArray(key)
         if not vtkarray:
             vtkarray = self.VTKObject.GetAbstractArray(key)
@@ -106,6 +104,10 @@ class DataSetAttributes(VTKObjectWrapper):
         arr = numpyTovtkDataArray(copy, name)
         self.VTKObject.AddArray(arr)
 
+    def remove(self, key):
+        self._raise_index_out_of_bounds(index=key)
+        self.RemoveArray(key)
+
     def keys(self):
         """Returns the names of the arrays as a list."""
         kys = []
@@ -134,3 +136,13 @@ class DataSetAttributes(VTKObjectWrapper):
                 'vtkFieldData does not have active scalars, a name must be provided. name={}'.format(name))
         active_scalar = self.GetScalars()
         return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self._dataset)
+
+    def clear(self):
+        for i in range(self.GetNumberOfArrays()):
+            self.remove(i)
+
+    def _raise_index_out_of_bounds(self, index):
+        max_index = self.VTKObject.GetNumberOfArrays()
+        if isinstance(index, int) and index >= self.VTKObject.GetNumberOfArrays():
+            raise IndexError('Array index ({}) out of range [0, {}]'.format(index, max_index))
+
