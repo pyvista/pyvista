@@ -51,28 +51,24 @@ class DataSetAttributes(VTKObjectWrapper):
         """
         if narray is None:
             raise ValueError('narray cannot be None.')
+        if isinstance(narray, (list, tuple)):
+            narray = pyvista_ndarray.from_any(narray)
+
         if self.Association == ArrayAssociation.POINT:
             array_len = self.DataSet.GetNumberOfPoints()
         elif self.Association == ArrayAssociation.CELL:
             array_len = self.DataSet.GetNumberOfCells()
         else:
             array_len = narray.shape[0] if isinstance(narray, numpy.ndarray) else 1
+        if narray.shape[0] != array_len:
+            raise ValueError('narray length of ({}) != required length ({})'.format(
+                narray.shape[0], array_len))
 
-        if isinstance(narray, (list, tuple)):
-            narray = pyvista_ndarray.from_any(narray)
         # Fixup input array length:
         if not isinstance(narray, numpy.ndarray) or numpy.ndim(narray) == 0: # Scalar input
             tmparray = numpy.empty(array_len)
             tmparray.fill(narray)
             narray = tmparray
-        elif narray.shape[0] != array_len: # Vector input
-            components = 1
-            for l in narray.shape:
-                components *= l
-            tmparray = numpy.empty((array_len, components))
-            tmparray[:] = narray.flatten()
-            narray = tmparray
-
         shape = narray.shape
 
         if len(shape) == 3:
