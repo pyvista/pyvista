@@ -228,8 +228,6 @@ class DataObject(vtkDataObject):
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._field_bool_array_names.add(name)
-        if not scalars.flags.c_contiguous:
-            scalars = np.ascontiguousarray(scalars)
         self.field_arrays[name] = scalars
 
 
