@@ -144,6 +144,10 @@ class DataSetAttributes(VTKObjectWrapper):
         for array in self.values():
             self.remove(key=array.GetName())
 
+    def update(self, array_dict):
+        for name, array in array_dict.items():
+            self[name] = array
+
     def _raise_index_out_of_bounds(self, index):
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int) and index >= self.VTKObject.GetNumberOfArrays():
