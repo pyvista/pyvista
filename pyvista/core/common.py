@@ -285,6 +285,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         super(DataSet, self).__init__(*args, **kwargs)
         self._point_bool_array_names = set()
         self._cell_bool_array_names = set()
+        #TODO, remove because this information is already in DataSetAttributes.
         self._active_scalar_info = 0, None  # Scalar field and name
         self._last_active_scalars_name = None
 
