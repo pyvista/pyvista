@@ -223,24 +223,14 @@ class DataObject(vtkDataObject):
             must be kept to avoid a segfault.
 
         """
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
-
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-
         # need to track which arrays are boolean as all boolean arrays
         # must be stored as uint8
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._field_bool_array_names.add(name)
-
         if not scalars.flags.c_contiguous:
             scalars = np.ascontiguousarray(scalars)
-
-        vtkarr = convert_array(scalars, deep=deep)
-        vtkarr.SetName(name)
-        self.GetFieldData().AddArray(vtkarr)
+        self.field_arrays[name] = scalars
 
 
     def _add_field_scalar(self, scalars, name, set_active=False, deep=True):
@@ -697,28 +687,13 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             must be kept to avoid a segfault.
 
         """
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
-
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-
-        if scalars.shape[0] != self.n_points:
-            raise Exception('Number of scalars must match the number of points')
-
         # need to track which arrays are boolean as all boolean arrays
         # must be stored as uint8
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._point_bool_array_names.add(name)
-
-        if not scalars.flags.c_contiguous:
-            scalars = np.ascontiguousarray(scalars)
-
-        vtkarr = convert_array(scalars, deep=deep)
-        vtkarr.SetName(name)
-        self.GetPointData().AddArray(vtkarr)
-        if set_active or self.active_scalars_info[1] is None:
+        self.point_arrays[name] = scalars
+        if set_active or self.active_scalar_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalars_info = (POINT_DATA_FIELD, name)
 
@@ -901,26 +876,11 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             must be kept to avoid a segfault.
 
         """
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
-
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-
-        if scalars.shape[0] != self.n_cells:
-            raise Exception('Number of scalars must match the number of cells (%d)'
-                            % self.n_cells)
-
-        if not scalars.flags.c_contiguous:
-            raise AssertionError('Array must be contiguous')
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._cell_bool_array_names.add(name)
-
-        vtkarr = convert_array(scalars, deep=deep)
-        vtkarr.SetName(name)
-        self.GetCellData().AddArray(vtkarr)
-        if set_active or self.active_scalars_info[1] is None:
+        self.cell_arrays[name] = scalars
+        if set_active or self.active_scalar_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
             self._active_scalars_info = (CELL_DATA_FIELD, name)
 
