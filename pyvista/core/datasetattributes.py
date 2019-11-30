@@ -25,8 +25,8 @@ class DataSetAttributes(VTKObjectWrapper):
         return item in self.keys()
 
     def __iter__(self):
-        for i in range(self.VTKObject.GetNumberOfArrays()):
-            yield self.VTKObject.GetAbstractArray(i)
+        for array in self.keys():
+            yield array
 
     def get_array(self, key):
         """Given an index or name, returns a VTKArray."""
@@ -138,8 +138,8 @@ class DataSetAttributes(VTKObjectWrapper):
         return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self._dataset)
 
     def clear(self):
-        for i in range(self.GetNumberOfArrays()):
-            self.remove(i)
+        for array in self.values():
+            self.remove(key=array.GetName())
 
     def _raise_index_out_of_bounds(self, index):
         max_index = self.VTKObject.GetNumberOfArrays()
