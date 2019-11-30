@@ -586,7 +586,7 @@ class Renderer(vtkRenderer):
                 self.camera.GetViewUp()]
 
     def clear(self):
-        """removes all actors and properties"""
+        """Remove all actors and properties."""
         if self._actors:
             for actor in list(self._actors):
                 try:
