@@ -1161,12 +1161,12 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
                     ncomp = 1
                 return row.format(name, field, arr.dtype, ncomp, dl, dh)
 
-            for key, arr in self.point_arrays.items():
-                fmt += format_array(key, arr, 'Points')
-            for key, arr in self.cell_arrays.items():
-                fmt += format_array(key, arr, 'Cells')
-            for key, arr in self.field_arrays.items():
-                fmt += format_array(key, arr, 'Fields')
+            for array in self.point_arrays:
+                fmt += format_array(array.GetName(), array, 'Points')
+            for array in self.cell_arrays:
+                fmt += format_array(array.GetName(), array, 'Cells')
+            for array in self.field_arrays:
+                fmt += format_array(array.GetName(), array, 'Fields')
 
             fmt += "</table>\n"
             fmt += "\n"
