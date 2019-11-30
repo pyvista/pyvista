@@ -959,7 +959,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def point_arrays(self):
         """Return all the point arrays."""
-        return self.GetPointData().keys()
+        return self.GetPointData()
 
 
     def _remove_array(self, field, name):
@@ -1000,7 +1000,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def cell_arrays(self):
         """Return the all cell arrays."""
-        return self.GetCellData().keys()
+        return self.GetCellData()
 
 
     @property
