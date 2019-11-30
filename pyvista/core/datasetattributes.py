@@ -43,7 +43,17 @@ class DataSetAttributes(VTKObjectWrapper):
         return array
 
     def append(self, narray, name):
-        """Appends a new array to the dataset attributes."""
+        """Add/set an array to the data set attributes.
+
+        Parameters
+        ----------
+        narray : array_like, scalar value
+            A pyvista_ndarray, numpy.ndarray, list, tuple or scalar value.
+
+        name : str
+            Name of the array to add.
+
+        """
         if narray is None:
             raise ValueError('narray cannot be None.')
         if self._association == ArrayAssociation.POINT:
