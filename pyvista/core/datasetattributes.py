@@ -2,7 +2,7 @@ import numpy
 from .pyvista_ndarray import pyvista_ndarray
 from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, numpyTovtkDataArray, ArrayAssociation)
 
-
+#TODO tests
 class DataSetAttributes(VTKObjectWrapper):
     """Python friendly wrapper of DataSetAttributes.
     Loosely based on dataset_adapter.DataSetAttributes."""

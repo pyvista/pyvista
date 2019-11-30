@@ -5,7 +5,7 @@ from vtk.vtkCommonCore import vtkWeakReference
 from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
 
 
-# TODO, handle bool values
+# TODO, handle bool values, tests
 class pyvista_ndarray(VTKArray):
     """This is a sub-class of numpy ndarray that stores a
     reference to a vtk array as well as the owning dataset.
