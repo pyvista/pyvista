@@ -41,10 +41,10 @@ def test_point_arrays():
 
 def test_point_arrays_bad_value():
     grid = GRID.copy()
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         grid.point_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.point_arrays['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -73,10 +73,10 @@ def test_cell_arrays():
 
 def test_cell_arrays_bad_value():
     grid = GRID.copy()
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         grid.cell_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
 
 
