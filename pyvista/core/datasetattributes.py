@@ -140,7 +140,7 @@ class DataSetAttributes(VTKObjectWrapper):
         active_scalar = self.GetScalars()
         return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self._dataset)
 
-
+#TODO, handle bool values
 class pyvista_ndarray(VTKArray):
     """This is a sub-class of numpy ndarray that stores a
     reference to a vtk array as well as the owning dataset.
