@@ -288,9 +288,7 @@ class DataObject(object):
 
     def clear_field_arrays(self):
         """Remove all field arrays."""
-        keys = self.field_arrays.keys()
-        for key in keys:
-            self._remove_array(FieldAssociation.NONE, key)
+        self.field_arrays.clear()
 
 
     @property
@@ -1055,16 +1053,12 @@ class Common(DataSetFilters, DataObject):
 
     def clear_point_arrays(self):
         """Remove all point arrays."""
-        keys = self.point_arrays.keys()
-        for key in keys:
-            self._remove_array(FieldAssociation.POINT, key)
+        self.point_arrays.clear()
 
 
     def clear_cell_arrays(self):
         """Remove all cell arrays."""
-        keys = self.cell_arrays.keys()
-        for key in keys:
-            self._remove_array(FieldAssociation.CELL, key)
+        self.cell_arrays.clear()
 
 
     def clear_arrays(self):
