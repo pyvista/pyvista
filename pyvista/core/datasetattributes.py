@@ -2,10 +2,9 @@ from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 
 
 class DataSetAttributes(VTKObjectWrapper):
-    """
-    Python friendly wrapper of DataSetAttributes.
-    Loosely based on dataset_adapter.DataSetAttributes.
-    """
+    """Python friendly wrapper of vtk.DataSetAttributes.
+    Implements a dict like interface for interacting with vtkDataArrays.
+    Loosely based on dataset_adapter.DataSetAttributes."""
     def __init__(self, vtkobject, dataset, association):
         super().__init__(vtkobject=vtkobject)
         self._dataset = dataset
