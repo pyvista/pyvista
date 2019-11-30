@@ -55,7 +55,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """
         if narray is None:
             raise TypeError('narray cannot be None.')
-        if isinstance(narray, (list, tuple)):
+        if isinstance(narray, (list, tuple, vtkDataArray)):
             narray = pyvista_ndarray.from_any(narray)
 
         if self.Association == ArrayAssociation.POINT:
@@ -109,6 +109,16 @@ class DataSetAttributes(VTKObjectWrapper):
     def remove(self, key):
         self._raise_index_out_of_bounds(index=key)
         self.RemoveArray(key)
+
+    def pop(self, key):
+        self._raise_index_out_of_bounds(index=key)
+        vtkarray = self.GetArray(key)
+        if vtkarray:
+            copy = vtkarray.NewInstance()
+            copy.DeepCopy(vtkarray)
+            vtkarray = copy
+        self.VTKObject.RemoveArray(key)
+        return vtkarray
 
     def items(self):
         return zip(self.keys(), self.values())
