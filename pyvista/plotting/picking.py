@@ -213,6 +213,7 @@ class PickingHelper(object):
         kwargs : optional
             All remaining keyword arguments are used to control how the
             picked point is intereactively displayed
+
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Point picking not available in notebook plotting')
@@ -293,6 +294,7 @@ class PickingHelper(object):
         kwargs : optional
             All remaining keyword arguments are used to control how the
             picked path is intereactively displayed
+
         """
         kwargs.setdefault('pickable', False)
 
@@ -386,6 +388,7 @@ class PickingHelper(object):
         kwargs : optional
             All remaining keyword arguments are used to control how the
             picked path is intereactively displayed
+
         """
         kwargs.setdefault('pickable', False)
 
@@ -491,6 +494,7 @@ class PickingHelper(object):
         kwargs : optional
             All remaining keyword arguments are used to control how the
             picked path is intereactively displayed
+
         """
         name = '_horizon'
         self.add_key_event('c', lambda: self.remove_actor(name))
