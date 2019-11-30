@@ -126,3 +126,11 @@ class DataSetAttributes(VTKObjectWrapper):
                 vals.append(a)
         return vals
 
+    def get_scalars(self, name=None):
+        if name is not None:
+            return self.get_array(key=name)
+        if self._association == ArrayAssociation.FIELD:
+            raise TypeError(
+                'vtkFieldData does not have active scalars, a name must be provided. name={}'.format(name))
+        active_scalar = self.GetScalars()
+        return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self._dataset)
