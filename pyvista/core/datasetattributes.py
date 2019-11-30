@@ -111,6 +111,9 @@ class DataSetAttributes(VTKObjectWrapper):
         self._raise_index_out_of_bounds(index=key)
         self.RemoveArray(key)
 
+    def items(self):
+        return zip(self.keys(), self.values())
+
     def keys(self):
         """Returns the names of the arrays as a list."""
         kys = []
