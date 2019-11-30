@@ -83,7 +83,7 @@ class DataObject(vtkDataObject):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perferred array type to
+            When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
             or ``'field'``.
 
@@ -1366,7 +1366,7 @@ class CellScalarsDict(_ScalarsDict):
     """Update internal cell data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize the cell array dict."""
+        """Initialize the cell scalar dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = partial(self.data._remove_array, CELL_DATA_FIELD)
         self.modifier = self.data.GetCellData().Modified
@@ -1380,7 +1380,7 @@ class PointScalarsDict(_ScalarsDict):
     """Update internal point data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize the point array dict."""
+        """Initialize the point scalar dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = partial(self.data._remove_array, POINT_DATA_FIELD)
         self.modifier = self.data.GetPointData().Modified
@@ -1394,7 +1394,7 @@ class FieldScalarsDict(_ScalarsDict):
     """Update internal field data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize the field array dict."""
+        """Initialize the field scalars dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = partial(self.data._remove_array, FIELD_DATA_FIELD)
         self.modifier = self.data.GetFieldData().Modified
