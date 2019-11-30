@@ -45,7 +45,7 @@ class DataSetAttributes(VTKObjectWrapper):
     def append(self, narray, name):
         """Appends a new array to the dataset attributes."""
         if narray is None:
-            return
+            raise ValueError('narray cannot be None.')
         if self._association == ArrayAssociation.POINT:
             array_len = self._dataset.GetNumberOfPoints()
         elif self._association == ArrayAssociation.CELL:
