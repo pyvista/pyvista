@@ -1790,13 +1790,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def clear(self):
         """Clear plot by removing all actors and properties."""
         for renderer in self.renderers:
-            renderer.RemoveAllViewProps()
+            renderer.clear()
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
+        self.mesh = None
 
     def remove_actor(self, actor, reset_camera=False):
         """Remove an actor from the Plotter.

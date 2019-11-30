@@ -613,6 +613,17 @@ class Renderer(vtkRenderer):
                 scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
                 self.camera.GetViewUp()]
 
+    def clear(self):
+        """Remove all actors and properties."""
+        if self._actors:
+            for actor in list(self._actors):
+                try:
+                    self.remove_actor(actor, reset_camera=False)
+                except KeyError:
+                    pass
+
+        self.RemoveAllViewProps()
+
     @camera_position.setter
     def camera_position(self, camera_location):
         """Set camera position of all active render windows."""
