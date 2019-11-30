@@ -21,13 +21,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return self.get_array(key)
 
     def __setitem__(self, key, value):
-        if not isinstance(value, numpy.ndarray):
-            value = pyvista_ndarray.from_any(value, dataset=self._dataset)
-        if self[key] is None:
-            self.append(narray=value, name=key)
-        else:
-            self.RemoveArray(key)
-            self[key] = value
+        self.append(narray=value, name=key)
 
     def __delitem__(self, key):
         self.RemoveArray(key)
