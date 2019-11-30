@@ -265,9 +265,7 @@ class DataObject(vtkDataObject):
 
     def clear_field_arrays(self):
         """Remove all field arrays."""
-        keys = self.field_arrays.keys()
-        for key in keys:
-            self._remove_array(FIELD_DATA_FIELD, key)
+        self.field_arrays.clear()
 
 
 class DataSet(DataSetFilters, DataObject, vtkDataSet):
@@ -966,16 +964,12 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
     def clear_point_arrays(self):
         """Remove all point arrays."""
-        keys = self.point_arrays.keys()
-        for key in keys:
-            self._remove_array(POINT_DATA_FIELD, key)
+        self.point_arrays.clear()
 
 
     def clear_cell_arrays(self):
         """Remove all cell arrays."""
-        keys = self.cell_arrays.keys()
-        for key in keys:
-            self._remove_array(CELL_DATA_FIELD, key)
+        self.cell_arrays.clear()
 
 
     def clear_arrays(self):
