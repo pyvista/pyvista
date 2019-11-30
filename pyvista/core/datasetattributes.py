@@ -128,7 +128,7 @@ class DataSetAttributes(VTKObjectWrapper):
         for i in range(narrays):
             a = self.VTKObject.GetAbstractArray(i)
             if a.GetName():
-                vals.append(a)
+                vals.append(pyvista_ndarray.from_vtk_data_array(a))
         return vals
 
     def get_scalars(self, name=None):
