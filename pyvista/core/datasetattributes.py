@@ -55,7 +55,7 @@ class DataSetAttributes(VTKObjectWrapper):
 
         """
         if narray is None:
-            raise ValueError('narray cannot be None.')
+            raise TypeError('narray cannot be None.')
         if isinstance(narray, (list, tuple)):
             narray = pyvista_ndarray.from_any(narray)
 
