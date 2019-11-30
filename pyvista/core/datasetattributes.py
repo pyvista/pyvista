@@ -32,7 +32,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Given an index or name, returns a VTKArray."""
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(key, int) and key >= self.VTKObject.GetNumberOfArrays():
-            raise IndexError('Array index ({}) out of range [{}, {}]'.format(key, 0, max_index))
+            raise IndexError('Array index ({}) out of range [0, {}]'.format(key, max_index))
         vtkarray = self.VTKObject.GetArray(key)
         if not vtkarray:
             vtkarray = self.VTKObject.GetAbstractArray(key)
