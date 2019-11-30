@@ -4,7 +4,8 @@ from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, numpyTovtkDat
 
 #TODO tests
 class DataSetAttributes(VTKObjectWrapper):
-    """Python friendly wrapper of DataSetAttributes.
+    """Python friendly wrapper of vtk.DataSetAttributes.
+    Implements a dict like interface for interacting with vtkDataArrays.
     Loosely based on dataset_adapter.DataSetAttributes."""
     def __init__(self, vtkobject, dataset, association):
         super().__init__(vtkobject=vtkobject)
