@@ -121,7 +121,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return vtkarray
 
     def items(self):
-        return zip(self.keys(), self.values())
+        return list(zip(self.keys(), self.values()))
 
     def keys(self):
         """Returns the names of the arrays as a list."""
