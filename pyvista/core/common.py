@@ -42,10 +42,6 @@ class DataObject(vtkDataObject):
         return object.__new__(cls, *args, **kwargs)
 
 
-    def GetFieldData(self):
-        return pyvista.DataSetAttributes(super().GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
-
-
     def shallow_copy(self, to_copy):
         """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
@@ -263,8 +259,8 @@ class DataObject(vtkDataObject):
 
     @property
     def field_arrays(self):
-        """Return all field arrays."""
-        return self.GetFieldData()
+        """"Return vtkFieldData as a DataSetAttributes instance."""
+        return pyvista.DataSetAttributes(self.GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
 
 
     def clear_field_arrays(self):
@@ -293,14 +289,6 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         self._cell_bool_array_names = set()
         self._active_scalar_info = 0, None  # Scalar field and name
         self._last_active_scalars_name = None
-
-
-    def GetPointData(self):
-        return pyvista.DataSetAttributes(super().GetPointData(), dataset=self, association=ArrayAssociation.POINT)
-
-
-    def GetCellData(self):
-        return pyvista.DataSetAttributes(super().GetCellData(), dataset=self, association=ArrayAssociation.CELL)
 
 
     @property
@@ -958,8 +946,8 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
     @property
     def point_arrays(self):
-        """Return all the point arrays."""
-        return self.GetPointData()
+        """Return vtkPointData as a DataSetAttributes instance."""
+        return pyvista.DataSetAttributes(self.GetPointData(), dataset=self, association=ArrayAssociation.POINT)
 
 
     def _remove_array(self, field, name):
@@ -999,8 +987,8 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
     @property
     def cell_arrays(self):
-        """Return the all cell arrays."""
-        return self.GetCellData()
+        """Return vtkCellData as a DataSetAttributes instance."""
+        return pyvista.DataSetAttributes(self.GetCellData(), dataset=self, association=ArrayAssociation.CELL)
 
 
     @property
@@ -1151,9 +1139,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
         """
         names = []
-        names.extend(self.GetFieldData().keys())
-        names.extend(self.GetPointData().keys())
-        names.extend(self.GetCellData().keys())
+        names.extend(self.field_arrays.keys())
+        names.extend(self.point_arrays.keys())
+        names.extend(self.cell_arrays.keys())
         try:
             names.remove(self.active_scalars_name)
             names.insert(0, self.active_scalars_name)
