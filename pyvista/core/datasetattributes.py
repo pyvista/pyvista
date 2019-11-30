@@ -66,7 +66,7 @@ class DataSetAttributes(VTKObjectWrapper):
         if isinstance(narray, (list, tuple)):
             narray = pyvista_ndarray.from_any(narray)
         # Fixup input array length:
-        if numpy.ndim(narray) == 0: # Scalar input
+        if not isinstance(narray, numpy.ndarray) or numpy.ndim(narray) == 0: # Scalar input
             tmparray = numpy.empty(array_len)
             tmparray.fill(narray)
             narray = tmparray
