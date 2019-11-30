@@ -24,6 +24,10 @@ class DataSetAttributes(VTKObjectWrapper):
     def __contains__(self, item):
         return item in self.keys()
 
+    def __iter__(self):
+        for i in range(self.VTKObject.GetNumberOfArrays()):
+            yield self.VTKObject.GetAbstractArray(i)
+
     def get_array(self, key):
         """Given an index or name, returns a VTKArray."""
         max_index = self.VTKObject.GetNumberOfArrays()
