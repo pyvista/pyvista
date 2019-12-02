@@ -1,10 +1,16 @@
 """
-Gaussian smoothing
+Gaussian Smoothing
 ~~~~~~~~~~~~~~~~~~
 
-Perform a gaussian convolution.
+Perform a Gaussian convolution on a uniformly gridded data set.
+
+:class:`pyvista.UniformGrid` data sets (a.k.a. images) a can be smoothed by
+convolving the  image data set with a Gaussian for one- to three-dimensional
+inputs. This is commonly referred to as Gaussian blurring and typically used
+to reduce noise or decrease the detail of an image dataset
 
 """
+# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
 
