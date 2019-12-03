@@ -344,7 +344,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file.
+        file. If ply or stl format is chosen, the face normals are 
+        computed in place to ensure the mesh is properly saved.
 
         Parameters
         ----------
