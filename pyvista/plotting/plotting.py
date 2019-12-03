@@ -272,7 +272,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mouse_position = self.iren.GetEventPosition()
 
     def store_click_position(self, *args):
-        """Store click position."""
+        """Store click position in viewport coordinates."""
         if not hasattr(self, "iren"):
             raise AttributeError("This plotting window is not interactive.")
         self.click_position = self.iren.GetEventPosition()
@@ -297,34 +297,46 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._mouse_observer
 
 
-    def track_click_position(self, side="right", callback=None):
+    def track_click_position(self, callback=None, side="right",
+                             viewport=False):
         """Keep track of the click position.
 
         By default, it only tracks right clicks.
 
         Parameters
         ----------
-        side : str
-            The side of the mouse for the button to track (left or right).
-            Default is left. Also accepts ``'r'``.
-
         callback : callable
             A callable method that will use the click position. Passes the
             click position as a length two tuple.
+
+        side : str
+            The side of the mouse for the button to track (left or right).
+            Default is left. Also accepts ``'r'`` or ``'l'``.
+
+        viewport: bool
+            If ``True``, uses the normalized viewport coordinate system
+            (values between 0.0 and 1.0 and support for HiDPI) when passing the
+            click position to the callback
 
         """
         if not hasattr(self, "iren"):
             return
 
-        if side in ["right", "r", "R"]:
+        side = str(side).lower()
+        if side in ["right", "r"]:
             event = vtk.vtkCommand.RightButtonPressEvent
-        else:
+        elif side in ["left", "l"]:
             event = vtk.vtkCommand.LeftButtonPressEvent
+        else:
+            raise TypeError("Side ({}) not supported. Try `left` or `right`".format(side))
 
         def _click_callback(obj, event):
             self.store_click_position()
             if hasattr(callback, '__call__'):
-                try_callback(callback, self.click_position)
+                if viewport:
+                    try_callback(callback, self.click_position)
+                else:
+                    try_callback(callback, self.pick_click_position())
 
         obs = self.iren.AddObserver(event, _click_callback)
         self._click_observer = obs
