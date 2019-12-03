@@ -81,10 +81,10 @@ def ParametricBohemianDome(a=None, **kwargs):
     if a is not None:
         parametric_function.SetA(a)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -108,10 +108,10 @@ def ParametricBour(**kwargs):
     """
     parametric_function = vtk.vtkParametricBour()
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -151,10 +151,10 @@ def ParametricBoy(zscale=None, **kwargs):
     if zscale is not None:
         parametric_function.SetZScale(zscale)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -182,10 +182,10 @@ def ParametricCatalanMinimal(**kwargs):
     """
     parametric_function = vtk.vtkParametricCatalanMinimal()
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -245,10 +245,10 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     if n is not None:
         parametric_function.SetN(n)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -276,10 +276,10 @@ def ParametricCrossCap(**kwargs):
     """
     parametric_function = vtk.vtkParametricCrossCap()
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -323,10 +323,10 @@ def ParametricDini(a=None, b=None, **kwargs):
     if b is not None:
         parametric_function.SetB(b)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -386,10 +386,10 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     if zradius is not None:
         parametric_function.SetZRadius(zradius)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -417,10 +417,10 @@ def ParametricEnneper(**kwargs):
     """
     parametric_function = vtk.vtkParametricEnneper()
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -455,10 +455,10 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     if radius is not None:
         parametric_function.SetRadius(radius)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -482,10 +482,10 @@ def ParametricHenneberg(**kwargs):
     """
     parametric_function = vtk.vtkParametricHenneberg()
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -514,10 +514,10 @@ def ParametricKlein(**kwargs):
     """
     parametric_function = vtk.vtkParametricKlein()
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -555,10 +555,10 @@ def ParametricKuen(deltav0=None, **kwargs):
     if deltav0 is not None:
         parametric_function.SetDeltaV0(deltav0)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -589,10 +589,10 @@ def ParametricMobius(radius=None, **kwargs):
     if radius is not None:
         parametric_function.SetRadius(radius)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -629,10 +629,10 @@ def ParametricPluckerConoid(n=None, **kwargs):
     if n is not None:
         parametric_function.SetN(n)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -661,10 +661,10 @@ def ParametricPseudosphere(**kwargs):
     """
     parametric_function = vtk.vtkParametricPseudosphere()
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -758,10 +758,11 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
     if amplitudescalefactor is not None:
         parametric_function.SetAmplitudeScaleFactor(amplitudescalefactor)
 
-    surf = surface_from_para(parametric_function, **kwargs)
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -792,10 +793,10 @@ def ParametricRoman(radius=None, **kwargs):
     if radius is not None:
         parametric_function.SetRadius(radius)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -856,10 +857,10 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     if n2 is not None:
         parametric_function.SetN2(n2)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -939,10 +940,10 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     if n2 is not None:
         parametric_function.SetN2(n2)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
@@ -980,10 +981,10 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     if crosssectionradius is not None:
         parametric_function.SetCrossSectionRadius(crosssectionradius)
 
-    surf = surface_from_para(parametric_function, **kwargs)
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
+    surf = surface_from_para(parametric_function, **kwargs)
+
     translate(surf, center, direction)
 
     return surf
