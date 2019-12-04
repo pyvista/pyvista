@@ -12,10 +12,10 @@ class pyvista_ndarray(VTKArray):
     The numpy array and vtk array should point to the same
     memory location."""
 
-    def __new__(cls, ndarray, vtk_array=None, dataset=None):
+    def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
         # Input array is an already formed ndarray instance
         obj = numpy.asarray(ndarray).view(cls)
-        obj._association = ArrayAssociation.FIELD
+        obj._association = association or ArrayAssociation.FIELD
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
         if dataset:
