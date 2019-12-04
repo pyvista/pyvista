@@ -167,10 +167,7 @@ def read(filename, attrs=None, file_format=None):
 
     # Read file using meshio.read if file_format is present
     if file_format:
-        try:
-            return read_meshio(filename, file_format)
-        except:
-            pass
+        return read_meshio(filename, file_format)
 
     # From the extension, decide which reader to use
     if attrs is not None:
@@ -201,9 +198,8 @@ def read(filename, attrs=None, file_format=None):
         except KeyError:
             # Attempt read with meshio
             try:
-                from meshio._helpers import _extension_to_filetype
-                return read_meshio(filename, _extension_to_filetype[ext])
-            except:
+                return read_meshio(filename)
+            except AssertionError:
                 pass
 
     raise IOError("This file was not able to be automatically read by pyvista.")
