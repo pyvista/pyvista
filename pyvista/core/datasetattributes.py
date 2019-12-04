@@ -2,13 +2,12 @@ from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 import numpy
 import pyvista.utilities.helpers as helpers
 from .pyvista_ndarray import pyvista_ndarray
-from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, numpyTovtkDataArray, ArrayAssociation)
+from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, ArrayAssociation)
 
 
 class DataSetAttributes(VTKObjectWrapper):
     """Python friendly wrapper of vtk.DataSetAttributes.
-    Implements a dict like interface for interacting with vtkDataArrays.
-    Loosely based on dataset_adapter.DataSetAttributes."""
+    Implements a dict like interface for interacting with vtkDataArrays."""
     def __init__(self, vtkobject, dataset, association):
         super().__init__(vtkobject=vtkobject)
         self._dataset = dataset
@@ -22,7 +21,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.append(narray=value, name=key)
 
     def __delitem__(self, key):
-        self.RemoveArray(key)
+        self.remove(key)
 
     def __contains__(self, item):
         return item in self.keys()
@@ -35,20 +34,19 @@ class DataSetAttributes(VTKObjectWrapper):
         return self.VTKObject.GetNumberOfArrays()
 
     def get_array(self, key):
-        """Given an index or name, returns a VTKArray."""
+        """Given an index or name, returns a pyvista_ndarray."""
         self._raise_index_out_of_bounds(index=key)
-        vtkarray = self.VTKObject.GetArray(key)
-        if not vtkarray:
-            vtkarray = self.VTKObject.GetAbstractArray(key)
-            return vtkarray if vtkarray else None
-        array = pyvista_ndarray.from_vtk_data_array(vtkarray, dataset=self._dataset)
-        array._association = self._association
-        if vtkarray.GetName() in self._dataset.association_bitarray_names[self._association]:
-            array = array.view(numpy.bool)
-        return array
+        vtk_arr = self.VTKObject.GetArray(key)
+        if not vtk_arr:
+            return self.VTKObject.GetAbstractArray(key)
+        narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self._dataset)
+        narray._association = self._association
+        if vtk_arr.GetName() in self._dataset.association_bitarray_names[self._association]:
+            narray = narray.view(numpy.bool)
+        return narray
 
     def append(self, narray, name):
-        """Add/set an array to the data set attributes.
+        """Add an array to the data set attributes.
 
         Parameters
         ----------
@@ -107,27 +105,29 @@ class DataSetAttributes(VTKObjectWrapper):
         # this handle the case when an input array is directly appended on the
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
-        copy = pyvista_ndarray(narray)
         try:
-            copy.VTKObject = narray.VTKObject
+            copy = pyvista_ndarray(narray, vtk_array=narray.VTKObject)
         except AttributeError:
-            pass
-        arr = helpers.convert_array(narray, name)
-        self.VTKObject.AddArray(arr)
+            copy = pyvista_ndarray(narray)
+
+        vtk_arr = helpers.convert_array(copy, name)
+        self.VTKObject.AddArray(vtk_arr)
+        self.VTKObject.Modified()
 
     def remove(self, key):
         self._raise_index_out_of_bounds(index=key)
-        self.RemoveArray(key)
+        self.VTKObject.RemoveArray(key)
+        self.VTKObject.Modified()
 
     def pop(self, key):
         self._raise_index_out_of_bounds(index=key)
-        vtkarray = self.GetArray(key)
-        if vtkarray:
-            copy = vtkarray.NewInstance()
-            copy.DeepCopy(vtkarray)
-            vtkarray = copy
-        self.VTKObject.RemoveArray(key)
-        return pyvista_ndarray.from_vtk_data_array(vtkarray)
+        vtk_arr = self.GetArray(key)
+        if vtk_arr:
+            copy = vtk_arr.NewInstance()
+            copy.DeepCopy(vtk_arr)
+            vtk_arr = copy
+        self.remove(key)
+        return pyvista_ndarray.from_vtk_data_array(vtk_arr)
 
     def items(self):
         return list(zip(self.keys(), self.values()))
