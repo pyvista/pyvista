@@ -18,6 +18,7 @@ the following projects are required dependencies of PyVista:
 * `numpy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
 * `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+* `meshio <https://github.com/nschloe/meshio>`_ - Input/Output for many mesh formats.
 
 PyPI
 ~~~~
