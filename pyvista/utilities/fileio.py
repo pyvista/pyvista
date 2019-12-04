@@ -256,16 +256,11 @@ def read_exodus(filename,
 def _read_meshio(filename, file_format = None):
     """Read any mesh file using meshio."""
     # Import meshio
-    try:
-        import meshio
-        from meshio._vtk import (
-            meshio_to_vtk_type,
-            vtk_type_to_numnodes,
-        )
-    except ImportError:
-        raise ImportError(
-            "module meshio not found."
-        )
+    import meshio
+    from meshio._vtk import (
+        meshio_to_vtk_type,
+        vtk_type_to_numnodes,
+    )
     
     # Read mesh file
     mesh = meshio.read(filename, file_format)
