@@ -517,12 +517,6 @@ def test_change_name_fail():
         grid.rename_array('not a key', '')
 
 
-def test_get_cell_array_fail():
-    sphere = pyvista.Sphere()
-    with pytest.raises(RuntimeError):
-        sphere._cell_array(name=None)
-
-
 def test_extent():
     grid = GRID.copy()
     assert grid.extent is None
