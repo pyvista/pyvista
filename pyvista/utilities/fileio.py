@@ -168,7 +168,7 @@ def read(filename, attrs=None, file_format=None):
     # Read file using meshio.read if file_format is present
     if file_format:
         try:
-            return _read_meshio(filename, file_format)
+            return read_meshio(filename, file_format)
         except:
             pass
 
@@ -202,7 +202,7 @@ def read(filename, attrs=None, file_format=None):
             # Attempt read with meshio
             try:
                 from meshio._helpers import _extension_to_filetype
-                return _read_meshio(filename, _extension_to_filetype[ext])
+                return read_meshio(filename, _extension_to_filetype[ext])
             except:
                 pass
 
@@ -253,7 +253,7 @@ def read_exodus(filename,
     return pyvista.wrap(reader.GetOutput())
 
 
-def _read_meshio(filename, file_format = None):
+def read_meshio(filename, file_format = None):
     """Read any mesh file using meshio."""
     # Import meshio
     import meshio
