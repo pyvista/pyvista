@@ -29,7 +29,7 @@ class pyvista_ndarray(VTKArray):
         return obj
 
     @classmethod
-    def from_any(cls, obj, dtype=None, order=None, dataset=None):
+    def from_any(cls, obj, dtype=None, order=None, dataset=None, association=None):
         """Factory method to create a `pyvista_ndarray`` instance from an object.
 
         Parameters
@@ -57,7 +57,7 @@ class pyvista_ndarray(VTKArray):
                 type(cls).__name__, type(obj).__name__))
 
     @classmethod
-    def from_vtk_data_array(cls, vtk_data_array, dataset=None):
+    def from_vtk_data_array(cls, vtk_data_array, dataset=None, association=None):
         """Create a ``pyvista_ndarray`` instance from a vtk array.
 
         Parameters
