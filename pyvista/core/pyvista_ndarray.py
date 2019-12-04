@@ -1,8 +1,8 @@
 import numpy
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, ArrayAssociation, VTKArray
-import vtk.util.numpy_support as numpy_support
 from vtk.vtkCommonCore import vtkWeakReference
 from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
+import pyvista.utilities.helpers as helpers
 
 
 # TODO, handle bool values, tests
@@ -70,7 +70,7 @@ class pyvista_ndarray(VTKArray):
             update or access a dataset when this pyvista_ndarray is updated.
 
         """
-        narray = numpy_support.vtk_to_numpy(vtk_data_array)
+        narray = helpers.convert_array(vtk_data_array)
 
         # Make arrays of 9 components into matrices. Also transpose
         # as VTK stores matrices in Fortran order

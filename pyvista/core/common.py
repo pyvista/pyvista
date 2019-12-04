@@ -33,7 +33,9 @@ class DataObject(vtkDataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
         super().__init__()
-        self._field_bool_array_names = set()
+        # Remember which arrays come from numpy.bool arrays, because there is no direct
+        # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
+        self.association_bitarray_names = collections.defaultdict(set)
 
     def __new__(cls, *args, **kwargs):
         """Allocate memory for the data object."""
@@ -191,19 +193,7 @@ class DataObject(vtkDataObject):
             Numpy array of scalars
 
         """
-        vtkarr = self.GetFieldData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a valid field array.'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            self._field_bool_array_names.add(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._field_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.field_arrays[name]
 
 
     def _add_field_array(self, scalars, name, deep=True):
@@ -223,11 +213,6 @@ class DataObject(vtkDataObject):
             must be kept to avoid a segfault.
 
         """
-        # need to track which arrays are boolean as all boolean arrays
-        # must be stored as uint8
-        if scalars.dtype == np.bool:
-            scalars = scalars.view(np.uint8)
-            self._field_bool_array_names.add(name)
         self.field_arrays[name] = scalars
 
 
@@ -271,8 +256,6 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
-        self._point_bool_array_names = set()
-        self._cell_bool_array_names = set()
         #TODO, remove because this information is already in DataSetAttributes.
         self._active_scalar_info = 0, None  # Scalar field and name
         self._last_active_scalars_name = None
@@ -646,24 +629,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             Numpy array of scalars
 
         """
-        if name is None:
-            # use active scalars array
-            field, name = self.active_scalars_info
-            if field != POINT_DATA_FIELD:
-                raise RuntimeError('Must specify an array to fetch.')
-        vtkarr = self.GetPointData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a point scalar'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            self._point_bool_array_names.add(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._point_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.point_arrays[name]
 
 
     def _add_point_array(self, scalars, name, set_active=False, deep=True):
@@ -685,11 +651,6 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             must be kept to avoid a segfault.
 
         """
-        # need to track which arrays are boolean as all boolean arrays
-        # must be stored as uint8
-        if scalars.dtype == np.bool:
-            scalars = scalars.view(np.uint8)
-            self._point_bool_array_names.add(name)
         self.point_arrays[name] = scalars
         if set_active or self.active_scalar_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
@@ -834,25 +795,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             Numpy array of scalars
 
         """
-        if name is None:
-            # use active scalars array
-            field, name = self.active_scalars_info
-            if field != CELL_DATA_FIELD:
-                raise RuntimeError('Must specify an array to fetch.')
-
-        vtkarr = self.GetCellData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a cell scalar'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            self._cell_bool_array_names.add(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._cell_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.cell_arrays[name]
 
 
     def _add_cell_array(self, scalars, name, set_active=False, deep=True):
@@ -874,13 +817,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             must be kept to avoid a segfault.
 
         """
-        if scalars.dtype == np.bool:
-            scalars = scalars.view(np.uint8)
-            self._cell_bool_array_names.add(name)
         self.cell_arrays[name] = scalars
-        if set_active or self.active_scalar_info[1] is None:
-            self.GetCellData().SetActiveScalars(name)
-            self._active_scalars_info = (CELL_DATA_FIELD, name)
 
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):

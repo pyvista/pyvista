@@ -1,7 +1,7 @@
 import numpy
+import pyvista.utilities.helpers as helpers
 from .pyvista_ndarray import pyvista_ndarray
 from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, numpyTovtkDataArray, ArrayAssociation)
-from vtk.vtkCommonKitPython import vtkDataArray
 
 #TODO tests
 class DataSetAttributes(VTKObjectWrapper):
@@ -42,6 +42,8 @@ class DataSetAttributes(VTKObjectWrapper):
             return vtkarray if vtkarray else None
         array = pyvista_ndarray.from_vtk_data_array(vtkarray, dataset=self._dataset)
         array._association = self._association
+        if vtkarray.GetName() in self._dataset.association_bitarray_names[self._association]:
+            array = array.view(numpy.bool)
         return array
 
     def append(self, narray, name):
@@ -58,8 +60,11 @@ class DataSetAttributes(VTKObjectWrapper):
         """
         if narray is None:
             raise TypeError('narray cannot be None.')
-        if isinstance(narray, (list, tuple, vtkDataArray)):
-            narray = pyvista_ndarray.from_any(narray)
+        if isinstance(narray, (list, tuple)):
+            narray = pyvista_ndarray.from_iter(narray)
+        if narray.dtype == numpy.bool:
+            self._dataset.association_bitarray_names[self._association].add(name)
+            narray = narray.view(numpy.uint8)
 
         if self._association == ArrayAssociation.POINT:
             array_len = self._dataset.GetNumberOfPoints()
@@ -106,7 +111,7 @@ class DataSetAttributes(VTKObjectWrapper):
             copy.VTKObject = narray.VTKObject
         except AttributeError:
             pass
-        arr = numpyTovtkDataArray(copy, name)
+        arr = helpers.convert_array(narray, name)
         self.VTKObject.AddArray(arr)
 
     def remove(self, key):
