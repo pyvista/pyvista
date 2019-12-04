@@ -9,8 +9,8 @@ class DataSetAttributes(VTKObjectWrapper):
     Implements a dict like interface for interacting with vtkDataArrays."""
     def __init__(self, vtkobject, dataset, association):
         super().__init__(vtkobject=vtkobject)
-        self._dataset = dataset
-        self._association = association
+        self.dataset = dataset
+        self.association = association
 
     def __getitem__(self, key):
         """Implements the [] operator. Accepts an array name or index."""
@@ -38,9 +38,8 @@ class DataSetAttributes(VTKObjectWrapper):
         vtk_arr = self.VTKObject.GetArray(key)
         if not vtk_arr:
             return self.VTKObject.GetAbstractArray(key)
-        narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self._dataset)
-        narray._association = self._association
-        if vtk_arr.GetName() in self._dataset.association_bitarray_names[self._association]:
+        narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset, association=self.association)
+        if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
             narray = narray.view(numpy.bool)
         return narray
 
@@ -61,13 +60,13 @@ class DataSetAttributes(VTKObjectWrapper):
         if isinstance(narray, (list, tuple)):
             narray = pyvista_ndarray.from_iter(narray)
         if narray.dtype == numpy.bool:
-            self._dataset.association_bitarray_names[self._association].add(name)
+            self.dataset.association_bitarray_names[self.association].add(name)
             narray = narray.view(numpy.uint8)
 
-        if self._association == ArrayAssociation.POINT:
-            array_len = self._dataset.GetNumberOfPoints()
-        elif self._association == ArrayAssociation.CELL:
-            array_len = self._dataset.GetNumberOfCells()
+        if self.association == ArrayAssociation.POINT:
+            array_len = self.dataset.GetNumberOfPoints()
+        elif self.association == ArrayAssociation.CELL:
+            array_len = self.dataset.GetNumberOfCells()
         else:
             array_len = narray.shape[0] if isinstance(narray, numpy.ndarray) else 1
         if narray.shape[0] != array_len:
@@ -115,6 +114,7 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def remove(self, key):
         self._raise_index_out_of_bounds(index=key)
+
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
@@ -154,11 +154,11 @@ class DataSetAttributes(VTKObjectWrapper):
     def get_scalars(self, name=None):
         if name is not None:
             return self.get_array(key=name)
-        if self._association == ArrayAssociation.FIELD:
+        if self.association == ArrayAssociation.FIELD:
             raise TypeError(
                 'vtkFieldData does not have active scalars, a name must be provided. name={}'.format(name))
         active_scalar = self.GetScalars()
-        return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self._dataset)
+        return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self.dataset)
 
     def clear(self):
         for array in self.values():
