@@ -118,7 +118,7 @@ class DataSetAttributes(VTKObjectWrapper):
             copy.DeepCopy(vtkarray)
             vtkarray = copy
         self.VTKObject.RemoveArray(key)
-        return vtkarray
+        return pyvista_ndarray.from_vtk_data_array(vtkarray)
 
     def items(self):
         return list(zip(self.keys(), self.values()))
