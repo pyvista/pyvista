@@ -10,6 +10,8 @@ import imageio
 
 import numpy
 
+import meshio
+
 READERS = {
     # Standard dataset readers:
     '.vtk': vtk.vtkDataSetReader,
@@ -251,8 +253,6 @@ def read_exodus(filename,
 
 def read_meshio(filename, file_format = None):
     """Read any mesh file using meshio."""
-    # Import meshio
-    import meshio
     from meshio._vtk import (
         meshio_to_vtk_type,
         vtk_type_to_numnodes,
@@ -303,3 +303,63 @@ def read_meshio(filename, file_format = None):
         data.SetName(k)
         grid.GetCellData().AddArray(data)
     return grid
+
+
+def save_meshio(filename, mesh, file_format = None, **kwargs):
+    """Save mesh to file using meshio."""
+    from meshio._vtk import vtk_to_meshio_type
+
+    # Cast to pyvista.UnstructuredGrid
+    mesh = mesh.cast_to_unstructured_grid()
+
+    # Copy useful arrays to avoid repeated calls to properties
+    vtk_offset = mesh.offset
+    vtk_cells = mesh.cells
+    vtk_cell_type = mesh.celltypes
+
+    # Get cells
+    cells = {k: [] for k in numpy.unique(vtk_cell_type)}
+    if 11 in cells.keys():
+        cells[12] = cells.pop(11)               # Handle voxels
+    mapper = {k: [] for k in cells.keys()}      # For cell data
+    for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
+        numnodes = vtk_cells[offset]
+        cell = vtk_cells[offset+1:offset+1+numnodes]
+        cell = cell if cell_type != 11 else cell[[ 0, 1, 3, 2, 4, 5, 7, 6 ]]    # Handle voxels
+        cell_type = cell_type if cell_type != 11 else 12                        # Handle voxels
+        cells[cell_type].append(cell)
+        mapper[cell_type].append(i)
+    cells = {vtk_to_meshio_type[k]: numpy.vstack(v) for k, v in cells.items()}
+    mapper = {vtk_to_meshio_type[k]: v for k, v in mapper.items()}
+
+    # Get point data
+    vtk_point_data = mesh.GetPointData()
+    n_point_data = vtk_point_data.GetNumberOfArrays()
+    point_data = {
+        vtk_point_data.GetArrayName(i): vtk.util.numpy_support.vtk_to_numpy(vtk_point_data.GetArray(i))
+        for i in range(n_point_data)
+    } if n_point_data else {}
+
+    # Get cell data
+    vtk_cell_data = mesh.GetCellData()
+    n_cell_data = vtk_cell_data.GetNumberOfArrays()
+    if n_cell_data:
+        cell_data = {k: {} for k in cells.keys()}
+        for i in range(n_cell_data):
+            name = vtk_cell_data.GetArrayName(i)
+            data = vtk.util.numpy_support.vtk_to_numpy(vtk_cell_data.GetArray(i))
+            for k, v in mapper.items():
+                cell_data[k][name] = data[v]
+    else:
+        cell_data = {}
+
+    # Save using meshio
+    meshio.write_points_cells(
+        filename = filename,
+        points = numpy.array(mesh.points),
+        cells = cells,
+        point_data = point_data,
+        cell_data = cell_data,
+        file_format = file_format,
+        **kwargs
+    )
