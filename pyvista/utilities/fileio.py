@@ -60,6 +60,7 @@ READERS = {
     #TODO: '.vpc': vtk.vtkVPIC?????,
     # '.bin': vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
     '.tri': vtk.vtkMCubesReader,
+    '.inp': vtk.vtkAVSucdReader,
 }
 
 VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
