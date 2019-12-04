@@ -288,18 +288,18 @@ def read_meshio(filename, file_format = None):
         numpy.array(offset),
         numpy.concatenate(cells),
         numpy.array(cell_type),
-        mesh.points,
+        numpy.array(mesh.points, numpy.float64),
     )
 
     # Set point data
     for k, v in mesh.point_data.items():
-        data = vtk.util.numpy_support.numpy_to_vtk(v)
+        data = vtk.util.numpy_support.numpy_to_vtk(numpy.array(v, numpy.float64))
         data.SetName(k)
         grid.GetPointData().AddArray(data)
 
     # Set cell data
     for k, v in cell_data.items():
-        data = vtk.util.numpy_support.numpy_to_vtk(v)
+        data = vtk.util.numpy_support.numpy_to_vtk(numpy.array(v, numpy.float64))
         data.SetName(k)
         grid.GetCellData().AddArray(data)
     return grid
