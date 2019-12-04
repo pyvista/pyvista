@@ -1,7 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
 import collections
-from functools import partial
 import logging
 import warnings
 from weakref import proxy
@@ -13,10 +12,9 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
-                               POINT_DATA_FIELD, convert_array, get_array,
-                               is_pyvista_dataset, parse_field_choice,
-                               raise_not_matching, vtk_bit_array_to_char)
+from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD, POINT_DATA_FIELD,
+                               get_array, is_pyvista_dataset, parse_field_choice,
+                               raise_not_matching)
 
 from .filters import DataSetFilters
 
