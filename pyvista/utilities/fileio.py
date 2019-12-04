@@ -143,7 +143,7 @@ def read_legacy(filename):
     return pyvista.wrap(output)
 
 
-def read(filename, attrs=None):
+def read(filename, attrs=None, file_format=None):
     """Read any VTK file.
 
     It will figure out what reader to use then wrap the VTK object for
@@ -156,12 +156,21 @@ def read(filename, attrs=None):
         the attribute/method names and values are the arguments passed to those
         calls. If you do not have any attributes to call, pass ``None`` as the
         value.
+    file_format : str, optional
+        Format of file to read with meshio.
 
     """
     filename = os.path.abspath(os.path.expanduser(filename))
     if not os.path.isfile(filename):
         raise IOError('File ({}) not found'.format(filename))
     ext = get_ext(filename)
+
+    # Read file using meshio.read if file_format is present
+    if file_format:
+        try:
+            return _read_meshio(filename, file_format)
+        except:
+            pass
 
     # From the extension, decide which reader to use
     if attrs is not None:
@@ -190,7 +199,13 @@ def read(filename, attrs=None):
             reader = get_reader(filename)
             return standard_reader_routine(reader, filename)
         except KeyError:
-            pass
+            # Attempt read with meshio
+            try:
+                from meshio._helpers import _extension_to_filetype
+                return _read_meshio(filename, _extension_to_filetype[ext])
+            except:
+                pass
+
     raise IOError("This file was not able to be automatically read by pyvista.")
 
 
@@ -238,7 +253,7 @@ def read_exodus(filename,
     return pyvista.wrap(reader.GetOutput())
 
 
-def read_meshio(filename, **kwargs):
+def _read_meshio(filename, file_format = None):
     """Read any mesh file using meshio."""
     # Import meshio
     try:
@@ -253,7 +268,7 @@ def read_meshio(filename, **kwargs):
         )
     
     # Read mesh file
-    mesh = meshio.read(filename, **kwargs)
+    mesh = meshio.read(filename, file_format)
 
     # Extract cells from meshio.Mesh object
     offset = []
