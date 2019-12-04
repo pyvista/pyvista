@@ -266,12 +266,14 @@ def read_meshio(filename, file_format = None):
     cells = []
     cell_type = []
     cell_data = {}
+    next_offset = 0
     for k, v in mesh.cells.items():
         vtk_type = meshio_to_vtk_type[k]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        offset += [len(offset)+i*(numnodes+1) for i in range(len(v))]
+        offset += [next_offset+i*(numnodes+1) for i in range(len(v))]
         cells.append(numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel())
         cell_type += [vtk_type] * len(v)
+        next_offset = offset[-1] + numnodes + 1
 
         # Extract cell data
         if k in mesh.cell_data.keys():
