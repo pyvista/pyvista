@@ -321,7 +321,8 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
 
     filename = os.path.abspath(os.path.expanduser(filename))
     # Cast to pyvista.UnstructuredGrid
-    mesh = mesh.cast_to_unstructured_grid()
+    if not isinstance(mesh, pyvista.UnstructuredGrid):
+        mesh = mesh.cast_to_unstructured_grid()
 
     # Copy useful arrays to avoid repeated calls to properties
     vtk_offset = mesh.offset
