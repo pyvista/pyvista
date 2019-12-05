@@ -333,25 +333,14 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     mapper = {vtk_to_meshio_type[k]: v for k, v in mapper.items()}
 
     # Get point data
-    vtk_point_data = mesh.GetPointData()
-    n_point_data = vtk_point_data.GetNumberOfArrays()
-    point_data = {
-        vtk_point_data.GetArrayName(i): vtk.util.numpy_support.vtk_to_numpy(vtk_point_data.GetArray(i))
-        for i in range(n_point_data)
-    } if n_point_data else {}
+    point_data = mesh.point_arrays
 
     # Get cell data
-    vtk_cell_data = mesh.GetCellData()
-    n_cell_data = vtk_cell_data.GetNumberOfArrays()
-    if n_cell_data:
-        cell_data = {k: {} for k in cells.keys()}
-        for i in range(n_cell_data):
-            name = vtk_cell_data.GetArrayName(i)
-            data = vtk.util.numpy_support.vtk_to_numpy(vtk_cell_data.GetArray(i))
-            for k, v in mapper.items():
-                cell_data[k][name] = data[v]
-    else:
-        cell_data = {}
+    vtk_cell_data = mesh.cell_arrays
+    cell_data = {
+        k: {kk: vv[v] for kk, vv in vtk_cell_data.items()}
+        for k, v in mapper.items()
+    } if vtk_cell_data else {}
 
     # Save using meshio
     meshio.write_points_cells(
