@@ -114,7 +114,11 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def remove(self, key):
         self._raise_index_out_of_bounds(index=key)
-
+        try:
+            name = self.get_array(key).GetName()
+            self.dataset.association_bitarray_names[self.association].remove(name)
+        except KeyError:
+            pass
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
