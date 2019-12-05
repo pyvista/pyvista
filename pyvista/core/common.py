@@ -53,6 +53,30 @@ class DataObject(vtkDataObject):
         return self.DeepCopy(to_copy)
 
 
+    def _load_file(self, filename):
+        """Load a surface mesh from a mesh file.
+
+        Mesh file may be an ASCII or binary ply, stl, or vtk mesh file.
+
+        Parameters
+        ----------
+        filename : str
+            Filename of mesh to be loaded.  File type is inferred from the
+            extension of the filename
+
+        Notes
+        -----
+        Binary files load much faster than ASCII.
+
+        """
+        filename = os.path.abspath(os.path.expanduser(filename))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError('File %s does not exist' % filename)
+        reader = fileio.get_reader(filename)
+        reader.SetFileName(filename)
+        reader.Update()
+        self.shallow_copy(reader.GetOutput())
+
     def save(self, filename, binary=True):
         """Write this mesh to a file.
 
