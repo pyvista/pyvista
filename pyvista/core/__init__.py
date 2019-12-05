@@ -9,4 +9,3 @@ from .grid import Grid, RectilinearGrid, UniformGrid
 from .pyvista_ndarray import pyvista_ndarray
 from .objects import Table, Texture
 from .pointset import PointGrid, PolyData, StructuredGrid, UnstructuredGrid
-from .reader_writer import ReaderWriter
