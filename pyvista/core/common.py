@@ -77,6 +77,7 @@ class DataObject(vtkDataObject):
         reader.Update()
         self.shallow_copy(reader.GetOutput())
 
+
     def save(self, filename, binary=True):
         """Write this mesh to a file.
 
@@ -101,7 +102,6 @@ class DataObject(vtkDataObject):
         writer.SetFileName(filename)
         writer.SetInputData(self)
         writer.Write()
-
 
 
     def get_data_range(self, arr=None, preference='field'):
