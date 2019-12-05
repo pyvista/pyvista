@@ -307,7 +307,16 @@ def read_meshio(filename, file_format = None):
 
 
 def save_meshio(filename, mesh, file_format = None, **kwargs):
-    """Save mesh to file using meshio."""
+    """Save mesh to file using meshio.
+
+    Parameters
+    ----------
+    mesh : pyvista.Common
+        Any PyVista mesh/spatial data type.
+    file_format : str
+        File type for meshio to save.
+
+    """
     from meshio._vtk import vtk_to_meshio_type
 
     # Cast to pyvista.UnstructuredGrid
