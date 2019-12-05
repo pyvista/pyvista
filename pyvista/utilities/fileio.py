@@ -9,7 +9,7 @@ import pyvista
 import imageio
 
 import numpy
-
+import os
 import meshio
 
 READERS = {
