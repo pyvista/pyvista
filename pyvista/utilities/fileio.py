@@ -113,6 +113,20 @@ def get_writer(filename):
         raise ValueError('Extension "{}" is not a vtk writable format.'.format(ext))
 
 
+def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    if isinstance(vtk_writer, vtk.vtkDataWriter):
+        if use_binary:
+            vtk_writer.SetFileTypeToBinary()
+        else:
+            vtk_writer.SetFileTypeToASCII()
+    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+        if use_binary:
+            vtk_writer.SetDataModeToBinary()
+        else:
+            vtk_writer.SetDataModeToAscii()
+    return vtk_writer
+
+
 def standard_reader_routine(reader, filename, attrs=None):
     """Use a given reader in the common VTK reading pipeline routine.
 

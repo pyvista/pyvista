@@ -70,7 +70,13 @@ class DataObject(vtkDataObject):
         file size.
 
         """
-        raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
+        filename = os.path.abspath(os.path.expanduser(filename))
+        writer = fileio.get_writer(filename)
+        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        writer.SetFileName(filename)
+        writer.SetInputData(self)
+        writer.Write()
+
 
 
     def get_data_range(self, arr=None, preference='field'):
