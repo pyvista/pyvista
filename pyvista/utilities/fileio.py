@@ -257,7 +257,8 @@ def read_meshio(filename, file_format = None):
         meshio_to_vtk_type,
         vtk_type_to_numnodes,
     )
-    
+
+    filename = os.path.abspath(os.path.expanduser(filename))
     # Read mesh file
     mesh = meshio.read(filename, file_format)
 
