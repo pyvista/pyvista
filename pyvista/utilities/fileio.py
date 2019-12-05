@@ -101,6 +101,11 @@ def get_reader(filename):
     return READERS[ext]() # Get and instantiate the reader
 
 
+def get_writer(filename):
+    ext = get_ext(filename)
+    return WRITERS[ext]()
+
+
 def standard_reader_routine(reader, filename, attrs=None):
     """Use a given reader in the common VTK reading pipeline routine.
 
