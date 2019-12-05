@@ -2,6 +2,7 @@
 
 import collections
 import logging
+import os
 import warnings
 from weakref import proxy
 
@@ -12,10 +13,10 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
 import pyvista
+import pyvista.utilities.fileio as fileio
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD, POINT_DATA_FIELD,
                                get_array, is_pyvista_dataset, parse_field_choice,
                                raise_not_matching)
-
 from .filters import DataSetFilters
 
 log = logging.getLogger(__name__)
