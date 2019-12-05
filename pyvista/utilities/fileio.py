@@ -331,14 +331,18 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
 
     # Get cells
     cells = {k: [] for k in numpy.unique(vtk_cell_type)}
+    if 8 in cells.keys():
+        cells[9] = cells.pop(8)                 # Handle pixels
     if 11 in cells.keys():
         cells[12] = cells.pop(11)               # Handle voxels
     mapper = {k: [] for k in cells.keys()}      # For cell data
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         numnodes = vtk_cells[offset]
         cell = vtk_cells[offset+1:offset+1+numnodes]
-        cell = cell if cell_type != 11 else cell[[ 0, 1, 3, 2, 4, 5, 7, 6 ]]    # Handle voxels
-        cell_type = cell_type if cell_type != 11 else 12                        # Handle voxels
+        cell = cell if cell_type not in {8, 11} \
+            else cell[[ 0, 1, 3, 2 ]] if cell_type == 8 \
+            else cell[[ 0, 1, 3, 2, 4, 5, 7, 6 ]]
+        cell_type = cell_type if cell_type not in {8, 11} else cell_type+1
         cells[cell_type].append(cell)
         mapper[cell_type].append(i)
     cells = {vtk_to_meshio_type[k]: numpy.vstack(v) for k, v in cells.items()}
