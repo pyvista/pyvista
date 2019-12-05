@@ -319,6 +319,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     """
     from meshio._vtk import vtk_to_meshio_type
 
+    filename = os.path.abspath(os.path.expanduser(filename))
     # Cast to pyvista.UnstructuredGrid
     mesh = mesh.cast_to_unstructured_grid()
 
