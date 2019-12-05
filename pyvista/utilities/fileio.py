@@ -9,7 +9,7 @@ import pyvista
 import imageio
 
 import numpy
-import os
+
 import meshio
 
 READERS = {
@@ -258,7 +258,9 @@ def read_meshio(filename, file_format = None):
         vtk_type_to_numnodes,
     )
 
+    # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(filename))
+
     # Read mesh file
     mesh = meshio.read(filename, file_format)
 
@@ -319,7 +321,9 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     """
     from meshio._vtk import vtk_to_meshio_type
 
+    # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(filename))
+
     # Cast to pyvista.UnstructuredGrid
     if not isinstance(mesh, pyvista.UnstructuredGrid):
         mesh = mesh.cast_to_unstructured_grid()
