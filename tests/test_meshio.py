@@ -1,7 +1,5 @@
 import pytest
 
-import os
-
 import numpy
 
 import pyvista
@@ -9,19 +7,19 @@ import pyvista
 from pyvista import examples
 
 
-def test_beam():
-    # Load reference mesh
-    mesh_ref = pyvista.UnstructuredGrid(examples.hexbeamfile)
-
+beam = pyvista.UnstructuredGrid(examples.hexbeamfile)
+airplane = examples.load_airplane().cast_to_unstructured_grid()
+@pytest.mark.parametrize("mesh_in", [beam, airplane])
+def test_meshio(mesh_in, tmpdir):
     # Save and read reference mesh using meshio
-    pyvista.save_meshio("test_meshio.vtk", mesh_ref)
-    mesh = pyvista.read_meshio("test_meshio.vtk")
-    os.remove("test_meshio.vtk")
+    filename = tmpdir.mkdir("tmpdir").join("test_mesh.vtk")
+    pyvista.save_meshio(filename, mesh_in)
+    mesh = pyvista.read_meshio(filename)
 
     # Assert mesh is still the same
-    assert numpy.allclose(mesh_ref.points, mesh.points)
-    assert numpy.allclose(mesh_ref.cells, mesh.cells)
-    for k, v in mesh_ref.point_arrays.items():
-        assert numpy.allclose(v, mesh.point_arrays[k])
-    for k, v in mesh_ref.cell_arrays.items():
-        assert numpy.allclose(v, mesh.cell_arrays[k])
+    assert numpy.allclose(mesh_in.points, mesh.points)
+    assert numpy.allclose(mesh_in.cells, mesh.cells)
+    for k, v in mesh_in.point_arrays.items():
+        assert numpy.allclose(v, mesh.point_arrays[k.replace(" ", "_")])
+    for k, v in mesh_in.cell_arrays.items():
+        assert numpy.allclose(v, mesh.cell_arrays[k.replace(" ", "_")])
