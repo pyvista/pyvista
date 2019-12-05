@@ -6,9 +6,9 @@ import pyvista.utilities.fileio as fileio
 class ReaderWriter:
     __slots__ = ('valid_reader_extensions', 'valid_writer_extensions')
 
-    def __init__(self, read_extensions, write_extensions):
-        self.reader_extensions = tuple(read_extensions)
-        self.writer_extensions = tuple(write_extensions)
+    def __init__(self, valid_read_extensions, valid_write_extensions):
+        self.valid_reader_extensions = tuple(valid_read_extensions)
+        self.valid_writer_extensions = tuple(valid_write_extensions)
 
     def load(self, filename):
         """Load a surface mesh from a mesh file.
@@ -41,7 +41,7 @@ class ReaderWriter:
         reader.Update()
         return reader.GetOutput()
 
-    def save(self, filename, binary=True):
+    def save(self, vtk_object, filename, binary=True):
         """Write a structured grid to disk.
 
         Parameters
@@ -71,7 +71,7 @@ class ReaderWriter:
 
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
-        writer.SetInputData(self)
+        writer.SetInputData(vtk_object)
         writer.Write()
 
     def _comma_or(self, iterable):
