@@ -98,13 +98,19 @@ def get_ext(filename):
 def get_reader(filename):
     """Get the corresponding reader based on file extension and instantiates it."""
     ext = get_ext(filename)
-    return READERS[ext]() # Get and instantiate the reader
+    try:
+        return READERS[ext]() # Get and instantiate the reader
+    except KeyError:
+        raise ValueError('Extension "{}" is not a vtk readable format.'.format(ext))
 
 
 def get_writer(filename):
     """Get the corresponding writer based on file extension and instantiates it."""
     ext = get_ext(filename)
-    return WRITERS[ext]()
+    try:
+        return WRITERS[ext]()
+    except KeyError:
+        raise ValueError('Extension "{}" is not a vtk writable format.'.format(ext))
 
 
 def standard_reader_routine(reader, filename, attrs=None):
