@@ -9,7 +9,7 @@ from vtk import vtkImageData, vtkRectilinearGrid
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-
+from pyvista.utilities.fileio import set_vtkwriter_mode
 from .common import DataSet
 from .filters import _get_output, UniformGridFilters
 
@@ -200,19 +200,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         grid = reader.GetOutput()
         self.shallow_copy(grid)
 
-    def set_vtkwriter_mode(self, vtkWriter, use_binary=True):
-        if isinstance(vtkWriter, vtk.vtkDataWriter):
-            if use_binary:
-                vtkWriter.SetFileTypeToBinary()
-            else:
-                vtkWriter.SetFileTypeToASCII()
-        elif isinstance(vtkWriter, vtk.vtkXMLWriter):
-            if use_binary:
-                vtkWriter.SetDataModeToBinary()
-            else:
-                vtkWriter.SetDataModeToAscii()
-        return vtkWriter
-
     def save(self, filename, binary=True):
         """Write a rectilinear grid to disk.
 
@@ -242,7 +229,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             raise Exception('Extension should be either ".vtr" (xml) or'
                             '".vtk" (legacy)')
 
-        self.set_vtkwriter_mode(writer, use_binary=binary)
+        set_vtkwriter_mode(writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
         writer.Write()

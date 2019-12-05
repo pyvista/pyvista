@@ -14,17 +14,16 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-
+from pyvista.utilities.fileio import set_vtkwriter_mode
 from .common import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters
-from ..utility.fileio import get_ext
-import re
+from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PointSet(Common):
+class PointSet(DataSet):
     """PyVista's equivalent of vtk.vtkPointSet.
 
     This holds methods common to PolyData and UnstructuredGrid.
@@ -718,7 +717,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         except KeyError:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
 
-        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
         return writer.Write()
@@ -948,7 +947,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         except KeyError:
             raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
 
-        set_vtkwriter_mode(vtkWriter=writer, use_binary=binary)
+        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)

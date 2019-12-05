@@ -141,6 +141,20 @@ def read_legacy(filename):
     return pyvista.wrap(output)
 
 
+def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    if isinstance(vtk_writer, vtk.vtkDataWriter):
+        if use_binary:
+            vtk_writer.SetFileTypeToBinary()
+        else:
+            vtk_writer.SetFileTypeToASCII()
+    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+        if use_binary:
+            vtk_writer.SetDataModeToBinary()
+        else:
+            vtk_writer.SetDataModeToAscii()
+    return vtk_writer
+
+
 def read(filename, attrs=None, file_format=None):
     """Read any VTK file.
 

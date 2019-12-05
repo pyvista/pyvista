@@ -1170,21 +1170,6 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         dataset = self if isinstance(self, pyvista.UnstructuredGrid) else self.cast_to_unstructured_grid()
         return pyansys.CellQuality(dataset)
 
-    @staticmethod
-    def _set_vtkwriter_mode(vtk_writer, use_binary=True):
-        if isinstance(vtk_writer, vtk.vtkDataWriter):
-            if use_binary:
-                vtk_writer.SetFileTypeToBinary()
-            else:
-                vtk_writer.SetFileTypeToASCII()
-        elif isinstance(vtk_writer, vtk.vtkXMLWriter):
-            if use_binary:
-                vtk_writer.SetDataModeToBinary()
-            else:
-                vtk_writer.SetDataModeToAscii()
-        return vtk_writer
-
-
 
 class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries."""
