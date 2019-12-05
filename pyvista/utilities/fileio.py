@@ -353,12 +353,12 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     mapper = {vtk_to_meshio_type[k]: v for k, v in mapper.items()}
 
     # Get point data
-    point_data = mesh.point_arrays
+    point_data = {k.replace(" ", "_"): v for k, v in mesh.point_arrays.items()}
 
     # Get cell data
     vtk_cell_data = mesh.cell_arrays
     cell_data = {
-        k: {kk: vv[v] for kk, vv in vtk_cell_data.items()}
+        k: {kk.replace(" ", "_"): vv[v] for kk, vv in vtk_cell_data.items()}
         for k, v in mapper.items()
     } if vtk_cell_data else {}
 
