@@ -61,6 +61,23 @@ READERS = {
     '.inp': vtk.vtkAVSucdReader,
 }
 
+WRITERS = {
+    '.vtk': vtk.vtkDataSetWriter,
+    '.pvtk': vtk.vtkPDataSetWriter,
+    '.vti': vtk.vtkXMLImageDataWriter,
+    '.pvti': vtk.vtkXMLPImageDataWriter,
+    '.vtr': vtk.vtkXMLRectilinearGridWriter,
+    '.pvtr': vtk.vtkXMLPRectilinearGridWriter,
+    '.vtu': vtk.vtkXMLUnstructuredGridWriter,
+    '.pvtu': vtk.vtkXMLPUnstructuredGridWriter,
+    '.ply': vtk.vtkPLYWriter,
+    '.stl': vtk.vtkSTLWriter,
+    '.vtp': vtk.vtkXMLPolyDataWriter,
+    '.vts': vtk.vtkXMLStructuredGridWriter,
+    '.vtm': vtk.vtkXMLMultiBlockDataWriter,
+    '.vtmb': vtk.vtkXMLMultiBlockDataWriter
+}
+
 VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
 VTK_MINOR = vtk.vtkVersion().GetVTKMinorVersion()
 
