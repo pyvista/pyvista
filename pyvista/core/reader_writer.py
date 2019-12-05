@@ -1,6 +1,7 @@
 import os
 import pyvista
 import pyvista.utilities.fileio as fileio
+import vtk
 
 
 class ReaderWriter:
@@ -27,15 +28,14 @@ class ReaderWriter:
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        # test if file exists
         if not os.path.isfile(filename):
             raise Exception('File %s does not exist' % filename)
 
         try:
-            reader = fileio.READERS[pyvista.get_ext(filename)]()
+            reader = fileio.get_reader(filename)
         except KeyError:
             valid_extensions = self.valid_reader_extensions
-            raise ValueError('Filetype must be {}'.format(self._comma_or(valid_extensions)))
+            raise ValueError('Extension must be {}'.format(self._comma_or(valid_extensions)))
 
         reader.SetFileName(filename)
         reader.Update()
@@ -64,12 +64,12 @@ class ReaderWriter:
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         try:
-            writer = fileio.WRITERS[pyvista.get_ext(filename)]()
+            writer = fileio.get_writer(filename)
         except KeyError:
             valid_extensions = self.valid_writer_extensions
-            raise Exception('Extension should be {}'.format(self._comma_or(valid_extensions)))
+            raise Exception('Extension must be {}'.format(self._comma_or(valid_extensions)))
 
-        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        self._set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(vtk_object)
         writer.Write()
@@ -86,4 +86,17 @@ class ReaderWriter:
         else:
             nameslist = iterable[0]
         return nameslist
+
+    def _set_vtkwriter_mode(self, vtk_writer, use_binary=True):
+        if isinstance(vtk_writer, vtk.vtkDataWriter):
+            if use_binary:
+                vtk_writer.SetFileTypeToBinary()
+            else:
+                vtk_writer.SetFileTypeToASCII()
+        elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+            if use_binary:
+                vtk_writer.SetDataModeToBinary()
+            else:
+                vtk_writer.SetDataModeToAscii()
+        return vtk_writer
 
