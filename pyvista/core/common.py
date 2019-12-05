@@ -54,15 +54,13 @@ class DataObject(vtkDataObject):
 
 
     def _load_file(self, filename):
-        """Load a surface mesh from a mesh file.
-
-        Mesh file may be an ASCII or binary ply, stl, or vtk mesh file.
+        """Generically load a vtk object from file.
 
         Parameters
         ----------
         filename : str
-            Filename of mesh to be loaded.  File type is inferred from the
-            extension of the filename
+            Filename of object to be loaded.  File/reader type is inferred from the
+            extension of the filename.
 
         Notes
         -----
@@ -79,16 +77,16 @@ class DataObject(vtkDataObject):
 
 
     def save(self, filename, binary=True):
-        """Write this mesh to a file.
+        """Save this vtk object to file.
 
         Parameters
         ----------
         filename : str
-         Filename of mesh to be written.  File type is inferred from
+         Filename of output file. Writer type is inferred from
          the extension of the filename.
 
         binary : bool, optional
-         Writes the file as binary when True and ASCII when False.
+         If True, write as binary, else ASCII.
 
         Notes
         -----
