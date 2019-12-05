@@ -154,45 +154,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         cells = np.reshape(cells, (2*npoints))
         return cells
 
-    def _load_file(self, filename):
-        """Load a surface mesh from a mesh file.
-
-        Mesh file may be an ASCII or binary ply, stl, or vtk mesh file.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of mesh to be loaded.  File type is inferred from the
-            extension of the filename
-
-        Notes
-        -----
-        Binary files load much faster than ASCII.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # test if file exists
-        if not os.path.isfile(filename):
-            raise Exception('File %s does not exist' % filename)
-
-        # Get extension
-        ext = pyvista.get_ext(filename)
-
-        # Select reader
-        try:
-            reader = PolyData._vtk_readers[ext]()
-        except KeyError:
-            raise TypeError('Filetype must be either "ply", "stl", "vtk", "vtp", or "obj".')
-
-        # Load file
-        reader.SetFileName(filename)
-        reader.Update()
-        self.shallow_copy(reader.GetOutput())
-
-        # sanity check
-        if not np.any(self.points):
-            raise AssertionError('Empty or invalid file')
-
     @property
     def lines(self):
         """Return a pointer to the lines as a numpy object."""
@@ -660,68 +621,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         self.SetPoints(points)
         self.SetCells(cell_type, offset, vtkcells)
 
-    def _load_file(self, filename):
-        """Load an unstructured grid from a file.
-
-        The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vtu will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('%s does not exist' % filename)
-
-        # Check file extension
-        try:
-            reader = UnstructuredGrid._vtk_readers[pyvista.get_ext(filename)]()
-        except KeyError:
-            raise Exception('Extension should be either ".vtu" or ".vtk"')
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write an unstructured grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use. ".vtk" will use the legacy writer, while
-            ".vtu" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only ".vtk" files
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        try:
-            writer = UnstructuredGrid._vtk_writers[pyvista.get_ext(filename)]()
-        except KeyError:
-            raise Exception('Extension should be either ".vtu" or ".vtk"')
-
-        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        return writer.Write()
-
     @property
     def cells(self):
         """Return a pointer to the cells as a numpy object."""
@@ -888,70 +787,6 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         # Create structured grid
         self.SetDimensions(dim)
         self.SetPoints(pyvista.vtk_points(points))
-
-    def _load_file(self, filename):
-        """Load a structured grid from a file.
-
-        The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vts will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('{} does not exist'.format(filename))
-
-        # Check file extension
-        try:
-            reader = StructuredGrid._vtk_readers[pyvista.get_ext(filename)]()
-        except KeyError:
-            raise Exception(
-                'Extension should be either ".vts" (xml) or ".vtk" (legacy)')
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write a structured grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vts" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only with the legacy writer.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        try:
-            writer = StructuredGrid._vtk_writers[pyvista.get_ext(filename)]()
-        except KeyError:
-            raise Exception('Extension should be either ".vts" (xml) or ".vtk" (legacy)')
-
-        set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        # Write
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        writer.Write()
 
     @property
     def dimensions(self):
