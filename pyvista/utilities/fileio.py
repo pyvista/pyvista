@@ -102,6 +102,7 @@ def get_reader(filename):
 
 
 def get_writer(filename):
+    """Get the corresponding writer based on file extension and instantiates it."""
     ext = get_ext(filename)
     return WRITERS[ext]()
 
