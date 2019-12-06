@@ -28,3 +28,11 @@ def test_meshio(mesh_in, tmpdir):
         assert numpy.allclose(v, mesh.point_arrays[k.replace(" ", "_")])
     for k, v in mesh_in.cell_arrays.items():
         assert numpy.allclose(v, mesh.cell_arrays[k.replace(" ", "_")])
+
+
+def test_file_format():
+    with pytest.raises(AssertionError):
+        _ = pyvista.read_meshio(examples.hexbeamfile, file_format = "bar")
+
+    with pytest.raises(KeyError):
+        pyvista.save_meshio("foo.bar", beam, file_format = "bar")
