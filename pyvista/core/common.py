@@ -924,8 +924,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         """Return the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             return self.SetExtent(extent)
-        else:
-            raise AttributeError('This mesh type does not handle extents.')
+        raise AttributeError('This mesh type does not handle extents.')
 
 
     @property
