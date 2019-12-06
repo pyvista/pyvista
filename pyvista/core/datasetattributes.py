@@ -2,7 +2,8 @@ from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 import numpy
 import pyvista.utilities.helpers as helpers
 from .pyvista_ndarray import pyvista_ndarray
-from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, ArrayAssociation)
+from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, ArrayAssociation,
+                                                 numpyTovtkDataArray)
 
 
 class DataSetAttributes(VTKObjectWrapper):
@@ -32,6 +33,41 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def __len__(self):
         return self.VTKObject.GetNumberOfArrays()
+
+    @property
+    def valid_array_len(self):
+        """Return the length which a numpy array should be when adding to this dataset.
+        If there are no restrictions, returns None"""
+        if self.association == ArrayAssociation.POINT:
+            return self.dataset.GetNumberOfPoints()
+        elif self.association == ArrayAssociation.CELL:
+            return self.dataset.GetNumberOfCells()
+        return None
+
+    @property
+    def t_coords(self):
+        """Return the active texture coordinates on the points."""
+        t_coords = self.GetTCoords()
+        if t_coords is not None:
+            return pyvista_ndarray.from_vtk_data_array(t_coords)
+
+    @t_coords.setter
+    def t_coords(self, t_coords):
+        """Set the array to use as the texture coordinates."""
+        if not isinstance(t_coords, numpy.ndarray):
+            raise TypeError('Texture coordinates must be a numpy array')
+        if t_coords.ndim != 2:
+            raise AssertionError('Texture coordinates must be a 2-dimensional array')
+        valid_length = self.valid_array_len
+        if t_coords.shape[0] != valid_length:
+            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
+        if t_coords.shape[1] != 2:
+            raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
+        # if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
+        #     warnings.warn('Texture coordinates are typically within (0, 1) range. Textures will repeat on this mesh.', RuntimeWarning)
+        vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
+        self.SetTCoords(vtkarr)
+        self.Modified()
 
     def get_array(self, key):
         """Given an index or name, returns a pyvista_ndarray."""
@@ -177,4 +213,3 @@ class DataSetAttributes(VTKObjectWrapper):
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int) and index >= self.VTKObject.GetNumberOfArrays():
             raise IndexError('Array index ({}) out of range [0, {}]'.format(index, max_index))
-
