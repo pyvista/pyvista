@@ -518,30 +518,13 @@ class Common(DataSetFilters, DataObject):
     @property
     def t_coords(self):
         """Return the active texture coordinates on the points."""
-        if self.GetPointData().GetTCoords() is not None:
-            return vtk_to_numpy(self.GetPointData().GetTCoords())
-        return None
+        return self.point_arrays.t_coords
 
 
     @t_coords.setter
     def t_coords(self, t_coords):
         """Set the array to use as the texture coordinates."""
-        if not isinstance(t_coords, np.ndarray):
-            raise TypeError('Texture coordinates must be a numpy array')
-        if t_coords.ndim != 2:
-            raise AssertionError('Texture coordinates must be a 2-dimensional array')
-        if t_coords.shape[0] != self.n_points:
-            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
-        if t_coords.shape[1] != 2:
-            raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
-        # if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
-        #     warnings.warn('Texture coordinates are typically within (0, 1) range. Textures will repeat on this mesh.', RuntimeWarning)
-        # convert the array
-        vtkarr = numpy_to_vtk(t_coords)
-        vtkarr.SetName('Texture Coordinates')
-        self.GetPointData().SetTCoords(vtkarr)
-        self.GetPointData().Modified()
-        return
+        self.point_arrays.t_coords = t_coords
 
 
     @property
