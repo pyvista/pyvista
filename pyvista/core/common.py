@@ -437,7 +437,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
     @t_coords.setter
     def t_coords(self, t_coords):
-        """Set the array to use as the texture coordinates."""
+        """Set the array to use as the points texture coordinates."""
         self.point_arrays.t_coords = t_coords
 
 
