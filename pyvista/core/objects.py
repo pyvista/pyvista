@@ -39,6 +39,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def __init__(self, *args, **kwargs):
         """Initialize the table."""
+        super(Table, self).__init__(*args, **kwargs)
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkTable):
                 deep = kwargs.get('deep', True)
