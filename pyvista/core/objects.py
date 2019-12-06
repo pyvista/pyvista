@@ -6,6 +6,7 @@ The data objects does not have any sort of spatial reference.
 
 import numpy as np
 import vtk
+from vtk.numpy_interface.dataset_adapter import ArrayAssociation
 
 import pyvista
 from pyvista.utilities import (ROW_DATA_FIELD, assert_empty_kwargs,
@@ -13,6 +14,7 @@ from pyvista.utilities import (ROW_DATA_FIELD, assert_empty_kwargs,
                                row_array, vtk_bit_array_to_char)
 
 from .common import DataObject, _ScalarsDict
+from .datasetattributes import DataSetAttributes
 
 try:
     import pandas as pd
@@ -146,28 +148,7 @@ class Table(vtk.vtkTable, DataObject):
     @property
     def row_arrays(self):
         """Return the all row arrays."""
-        pdata = self.GetRowData()
-        narr = pdata.GetNumberOfArrays()
-
-        # Update data if necessary
-        if hasattr(self, '_row_arrays'):
-            keys = list(self._row_arrays.keys())
-            if narr == len(keys):
-                if keys:
-                    if self._row_arrays[keys[0]].shape[0] == self.n_rows:
-                        return self._row_arrays
-                else:
-                    return self._row_arrays
-
-        # dictionary with callbacks
-        self._row_arrays = RowScalarsDict(self)
-
-        for i in range(narr):
-            name = pdata.GetArrayName(i)
-            self._row_arrays[name] = self._row_array(name)
-
-        self._row_arrays.enable_callback()
-        return self._row_arrays
+        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=ArrayAssociation.ROW)
 
 
     def keys(self):
