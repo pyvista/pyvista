@@ -259,7 +259,7 @@ def read_meshio(filename, file_format = None):
     )
 
     # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
 
     # Read mesh file
     mesh = meshio.read(filename, file_format)
@@ -322,7 +322,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     from meshio._vtk import vtk_to_meshio_type
 
     # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
 
     # Cast to pyvista.UnstructuredGrid
     if not isinstance(mesh, pyvista.UnstructuredGrid):
