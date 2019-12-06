@@ -14,9 +14,9 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from pyvista.utilities.fileio import set_vtkwriter_mode
 from .common import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters
+from .pyvista_ndarray import pyvista_ndarray
 from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
@@ -48,6 +48,30 @@ class PointSet(DataSet):
         alg.SetUseScalarsAsWeights(scalars_weight)
         alg.Update()
         return np.array(alg.GetCenter())
+
+
+    @property
+    def points(self):
+        """Return a pointer to the points as a pyvista_ndarray."""
+        points = self.GetPoints()
+        if points:
+            vtk_arr = points.GetData()
+            return pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self)
+
+
+    @points.setter
+    def points(self, point_array):
+        """Set points without copying."""
+        if not isinstance(point_array, np.ndarray):
+            raise TypeError('Points must be a numpy array')
+        vtk_points = pyvista.vtk_points(point_array, deep=False)
+        pdata = self.GetPoints()
+        if not pdata:
+            self.SetPoints(vtk_points)
+        else:
+            pdata.SetData(vtk_points.GetData())
+        self.GetPoints().Modified()
+        self.Modified()
 
 
     def shallow_copy(self, to_copy):

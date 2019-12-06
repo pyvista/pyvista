@@ -390,31 +390,6 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
 
     @property
-    def points(self):
-        """Return a pointer to the points as a numpy object."""
-        pts = self.GetPoints()
-        if pts:
-            vtk_data = pts.GetData()
-            arr = vtk_to_numpy(vtk_data)
-            return pyvista_ndarray(arr, vtk_data)
-
-
-    @points.setter
-    def points(self, points):
-        """Set points without copying."""
-        if not isinstance(points, np.ndarray):
-            raise TypeError('Points must be a numpy array')
-        vtk_points = pyvista.vtk_points(points, deep=False)
-        pdata = self.GetPoints()
-        if not pdata:
-            self.SetPoints(vtk_points)
-        else:
-            pdata.SetData(vtk_points.GetData())
-        self.GetPoints().Modified()
-        self.Modified()
-
-
-    @property
     def arrows(self):
         """Return a glyph representation of the active vector data as arrows.
 
