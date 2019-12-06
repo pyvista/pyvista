@@ -9,7 +9,6 @@ from weakref import proxy
 import numpy as np
 import vtk
 from vtk.numpy_interface.dataset_adapter import ArrayAssociation
-from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
 import pyvista
@@ -17,6 +16,7 @@ import pyvista.utilities.fileio as fileio
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD, POINT_DATA_FIELD,
                                get_array, is_pyvista_dataset, parse_field_choice,
                                raise_not_matching)
+from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
 log = logging.getLogger(__name__)
@@ -260,7 +260,7 @@ class DataObject(vtkDataObject):
     @property
     def field_arrays(self):
         """"Return vtkFieldData as a DataSetAttributes instance."""
-        return pyvista.DataSetAttributes(self.GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
+        return DataSetAttributes(self.GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
 
 
     def clear_field_arrays(self):
@@ -826,7 +826,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def point_arrays(self):
         """Return vtkPointData as a DataSetAttributes instance."""
-        return pyvista.DataSetAttributes(self.GetPointData(), dataset=self, association=ArrayAssociation.POINT)
+        return DataSetAttributes(self.GetPointData(), dataset=self, association=ArrayAssociation.POINT)
 
 
     def _remove_array(self, field, name):
@@ -863,7 +863,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def cell_arrays(self):
         """Return vtkCellData as a DataSetAttributes instance."""
-        return pyvista.DataSetAttributes(self.GetCellData(), dataset=self, association=ArrayAssociation.CELL)
+        return DataSetAttributes(self.GetCellData(), dataset=self, association=ArrayAssociation.CELL)
 
 
     @property
