@@ -343,7 +343,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     def save(self, filename, binary=True):
         """Write a surface mesh to disk.
 
-        Written file may be an ASCII or binary ply, stl, or vtk mesh file.
+        Written file may be an ASCII or binary ply, stl, or vtk mesh
+        file. If ply or stl format is chosen, the face normals are 
+        computed in place to ensure the mesh is properly saved.
 
         Parameters
         ----------
@@ -359,7 +361,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
-        file size.
+         file size.
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
@@ -381,6 +383,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             writer = vtk.vtkPolyDataWriter()
         else:
             raise Exception('Filetype must be either "ply", "stl", or "vtk"')
+
+        # Recompute normals prior to save.  Corrects a bug were some
+        # triangular meshes are not saved correctly
+        if ftype in ['stl', 'ply']:
+            self.compute_normals(inplace=True)
 
         writer.SetFileName(filename)
         writer.SetInputData(self)
