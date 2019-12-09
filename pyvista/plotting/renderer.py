@@ -45,27 +45,35 @@ def scale_point(camera, point, invert=False):
 
 
 class CameraPosition(object):
+    """Container to hold camera location attributes."""
+
     def __init__(self, position, focal_point, viewup):
+        """Initialize a new camera position descriptor."""
         self._position = position
         self._focal_point = focal_point
         self._viewup = viewup
 
     def to_list(self):
+        """Convert to a list of the position, focal point, and viewup."""
         return [self._position, self._focal_point, self._viewup]
 
     def __repr__(self):
+        """List representation method."""
         return self.to_list().__repr__()
 
     def __getitem__(self, index):
+        """Fetch a component by index location like a list."""
         return self.to_list()[index]
 
     def __eq__(self, other):
+        """Comparison operator to act on list version of CameraPosition object."""
         if isinstance(other, CameraPosition):
             return self.to_list() == other.to_list()
         return self.to_list() == other
 
     @property
     def position(self):
+        """Location of the camera in world coordinates."""
         return self._position
 
     @position.setter
@@ -74,6 +82,7 @@ class CameraPosition(object):
 
     @property
     def focal_point(self):
+        """Location of the camera's focus in world coordinates."""
         return self._focal_point
 
     @focal_point.setter
@@ -82,6 +91,7 @@ class CameraPosition(object):
 
     @property
     def viewup(self):
+        """Viewup vector of the camera."""
         return self._viewup
 
     @viewup.setter
