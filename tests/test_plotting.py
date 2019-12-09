@@ -53,7 +53,7 @@ def test_plot(tmpdir):
                              interpolate_before_map=True,
                              screenshot=filename,
                              return_img=True)
-    assert isinstance(cpos, list)
+    assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
     os.remove(filename)

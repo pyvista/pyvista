@@ -6,7 +6,7 @@ from .export_vtkjs import export_plotter_vtkjs, get_vtkjs_url
 from .helpers import plot, plot_arrows, plot_compare_four
 from .plotting import BasePlotter, Plotter, close_all
 from .qt_plotting import BackgroundPlotter, QtInteractor
-from .renderer import Renderer, scale_point
+from .renderer import CameraPosition, Renderer, scale_point
 from .theme import (DEFAULT_THEME, FONT_KEYS, MAX_N_COLOR_BARS,
                     parse_color, parse_font_family, rcParams, set_plot_theme)
 from .tools import (create_axes_orientation_box, opacity_transfer_function,
