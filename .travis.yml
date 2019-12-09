@@ -85,7 +85,7 @@ matrix:
     - name: Documentation Testing 3.7
       python: 3.7
       script: |
-        pip install codespell pydocstyle;
+        pip install codespell pydocstyle==4.0.1;
         make doctest;
     - name: Documentation Build/Deploy 3.7
       python: 3.7
