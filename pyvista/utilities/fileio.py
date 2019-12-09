@@ -8,6 +8,10 @@ import pyvista
 
 import imageio
 
+import numpy
+
+import meshio
+
 READERS = {
     # Standard dataset readers:
     '.vtk': vtk.vtkDataSetReader,
@@ -58,6 +62,7 @@ READERS = {
     #TODO: '.vpc': vtk.vtkVPIC?????,
     # '.bin': vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
     '.tri': vtk.vtkMCubesReader,
+    '.inp': vtk.vtkAVSucdReader,
 }
 
 VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
@@ -140,7 +145,7 @@ def read_legacy(filename):
     return pyvista.wrap(output)
 
 
-def read(filename, attrs=None):
+def read(filename, attrs=None, file_format=None):
     """Read any VTK file.
 
     It will figure out what reader to use then wrap the VTK object for
@@ -153,12 +158,18 @@ def read(filename, attrs=None):
         the attribute/method names and values are the arguments passed to those
         calls. If you do not have any attributes to call, pass ``None`` as the
         value.
+    file_format : str, optional
+        Format of file to read with meshio.
 
     """
     filename = os.path.abspath(os.path.expanduser(filename))
     if not os.path.isfile(filename):
         raise IOError('File ({}) not found'.format(filename))
     ext = get_ext(filename)
+
+    # Read file using meshio.read if file_format is present
+    if file_format:
+        return read_meshio(filename, file_format)
 
     # From the extension, decide which reader to use
     if attrs is not None:
@@ -187,7 +198,12 @@ def read(filename, attrs=None):
             reader = get_reader(filename)
             return standard_reader_routine(reader, filename)
         except KeyError:
-            pass
+            # Attempt read with meshio
+            try:
+                return read_meshio(filename)
+            except AssertionError:
+                pass
+
     raise IOError("This file was not able to be automatically read by pyvista.")
 
 
@@ -233,3 +249,126 @@ def read_exodus(filename,
 
     reader.Update()
     return pyvista.wrap(reader.GetOutput())
+
+
+def read_meshio(filename, file_format = None):
+    """Read any mesh file using meshio."""
+    from meshio._vtk import (
+        meshio_to_vtk_type,
+        vtk_type_to_numnodes,
+    )
+
+    # Make sure relative paths will work
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
+
+    # Read mesh file
+    mesh = meshio.read(filename, file_format)
+
+    # Extract cells from meshio.Mesh object
+    offset = []
+    cells = []
+    cell_type = []
+    cell_data = {}
+    next_offset = 0
+    for k, v in mesh.cells.items():
+        vtk_type = meshio_to_vtk_type[k]
+        numnodes = vtk_type_to_numnodes[vtk_type]
+        offset += [next_offset+i*(numnodes+1) for i in range(len(v))]
+        cells.append(numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel())
+        cell_type += [vtk_type] * len(v)
+        next_offset = offset[-1] + numnodes + 1
+
+        # Extract cell data
+        if k in mesh.cell_data.keys():
+            for kk, vv in mesh.cell_data[k].items():
+                if kk in cell_data:
+                    cell_data[kk] = numpy.concatenate((cell_data[kk], vv))
+                else:
+                    cell_data[kk] = vv
+
+    # Create pyvista.UnstructuredGrid object
+    grid = pyvista.UnstructuredGrid(
+        numpy.array(offset),
+        numpy.concatenate(cells),
+        numpy.array(cell_type),
+        numpy.array(mesh.points, numpy.float64),
+    )
+
+    # Set point data
+    for k, v in mesh.point_data.items():
+        data = vtk.util.numpy_support.numpy_to_vtk(numpy.array(v, numpy.float64))
+        data.SetName(k)
+        grid.GetPointData().AddArray(data)
+
+    # Set cell data
+    for k, v in cell_data.items():
+        data = vtk.util.numpy_support.numpy_to_vtk(numpy.array(v, numpy.float64))
+        data.SetName(k)
+        grid.GetCellData().AddArray(data)
+    return grid
+
+
+def save_meshio(filename, mesh, file_format = None, **kwargs):
+    """Save mesh to file using meshio.
+
+    Parameters
+    ----------
+    mesh : pyvista.Common
+        Any PyVista mesh/spatial data type.
+    file_format : str
+        File type for meshio to save.
+
+    """
+    from meshio._vtk import vtk_to_meshio_type
+
+    # Make sure relative paths will work
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
+
+    # Cast to pyvista.UnstructuredGrid
+    if not isinstance(mesh, pyvista.UnstructuredGrid):
+        mesh = mesh.cast_to_unstructured_grid()
+
+    # Copy useful arrays to avoid repeated calls to properties
+    vtk_offset = mesh.offset
+    vtk_cells = mesh.cells
+    vtk_cell_type = mesh.celltypes
+
+    # Get cells
+    cells = {k: [] for k in numpy.unique(vtk_cell_type)}
+    if 8 in cells.keys():
+        cells[9] = cells.pop(8)                 # Handle pixels
+    if 11 in cells.keys():
+        cells[12] = cells.pop(11)               # Handle voxels
+    mapper = {k: [] for k in cells.keys()}      # For cell data
+    for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
+        numnodes = vtk_cells[offset]
+        cell = vtk_cells[offset+1:offset+1+numnodes]
+        cell = cell if cell_type not in {8, 11} \
+            else cell[[ 0, 1, 3, 2 ]] if cell_type == 8 \
+            else cell[[ 0, 1, 3, 2, 4, 5, 7, 6 ]]
+        cell_type = cell_type if cell_type not in {8, 11} else cell_type+1
+        cells[cell_type].append(cell)
+        mapper[cell_type].append(i)
+    cells = {vtk_to_meshio_type[k]: numpy.vstack(v) for k, v in cells.items()}
+    mapper = {vtk_to_meshio_type[k]: v for k, v in mapper.items()}
+
+    # Get point data
+    point_data = {k.replace(" ", "_"): v for k, v in mesh.point_arrays.items()}
+
+    # Get cell data
+    vtk_cell_data = mesh.cell_arrays
+    cell_data = {
+        k: {kk.replace(" ", "_"): vv[v] for kk, vv in vtk_cell_data.items()}
+        for k, v in mapper.items()
+    } if vtk_cell_data else {}
+
+    # Save using meshio
+    meshio.write_points_cells(
+        filename = filename,
+        points = numpy.array(mesh.points),
+        cells = cells,
+        point_data = point_data,
+        cell_data = cell_data,
+        file_format = file_format,
+        **kwargs
+    )
