@@ -56,16 +56,6 @@ class CameraPosition(object):
     def __repr__(self):
         return self.to_list().__repr__()
 
-    def _repr_html_(self):
-        num_fmt = "{}, {}, {}".format(*[pyvista.FLOAT_FORMAT]*3)
-        row = "<tr><th>{}</th><td>{}</td></tr>"
-        fmt = "<table>"
-        fmt += row.format("Position", num_fmt.format(*self._position))
-        fmt += row.format("Focal Point", num_fmt.format(*self._focal_point))
-        fmt += row.format("Viewup", num_fmt.format(*self._viewup))
-        fmt += "</table>"
-        return fmt
-
     def __getitem__(self, index):
         return self.to_list()[index]
 
