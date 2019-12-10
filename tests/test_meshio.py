@@ -31,7 +31,8 @@ def test_meshio(mesh_in, tmpdir):
 
 
 def test_file_format():
-    with pytest.raises(AssertionError):
+    from meshio._exceptions import ReadError
+    with pytest.raises(ReadError):
         _ = pyvista.read_meshio(examples.hexbeamfile, file_format = "bar")
 
     with pytest.raises(KeyError):
