@@ -297,7 +297,7 @@ def read_meshio(filename, file_format = None):
     )
 
     # Set point data
-    grid.point_arrays.update(mesh.point_data)
+    grid.point_arrays.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
     # Set cell data
     grid.cell_arrays.update(cell_data)
 
