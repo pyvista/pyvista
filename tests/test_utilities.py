@@ -63,6 +63,14 @@ def test_read(tmpdir):
     multi = pyvista.read(fnames)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == len(fnames)
+    nested = [ex.planefile,
+              [ex.hexbeamfile, ex.uniformfile]]
+
+    multi = pyvista.read(nested)
+    assert isinstance(multi, pyvista.MultiBlock)
+    assert multi.n_blocks == 2
+    assert isinstance(multi[1], pyvista.MultiBlock)
+    assert multi[1].n_blocks == 2
 
 
 def test_get_array():
