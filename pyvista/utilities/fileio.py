@@ -293,7 +293,7 @@ def read_meshio(filename, file_format = None):
         np.array(offset),
         np.concatenate(cells),
         np.array(cell_type),
-        np.array(mesh.points, np.float64),
+        np.array(points, np.float64),
     )
 
     # Set point data
