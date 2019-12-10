@@ -280,7 +280,7 @@ def read_meshio(filename, file_format = None):
         if k in mesh.cell_data.keys():
             for kk, vv in mesh.cell_data[k].items():
                 if kk in cell_data:
-                    cell_data[kk] = np.concatenate((cell_data[kk], vv))
+                    cell_data[kk] = np.concatenate((cell_data[kk], np.array(vv, np.float64)))
                 else:
                     cell_data[kk] = vv
 
