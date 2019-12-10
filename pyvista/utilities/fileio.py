@@ -282,7 +282,7 @@ def read_meshio(filename, file_format = None):
                 if kk in cell_data:
                     cell_data[kk] = np.concatenate((cell_data[kk], np.array(vv, np.float64)))
                 else:
-                     cell_data[kk] = np.array(vv, np.float64)
+                    cell_data[kk] = np.array(vv, np.float64)
 
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
