@@ -59,6 +59,10 @@ def test_read(tmpdir):
     # read non existing file
     with pytest.raises(IOError):
         _ = pyvista.read('this_file_totally_does_not_exist.vtk')
+    # Now test reading lists of files as multi blocks
+    multi = pyvista.read(fnames)
+    assert isinstance(multi, pyvista.MultiBlock)
+    assert multi.n_blocks == len(fnames)
 
 
 def test_get_array():
