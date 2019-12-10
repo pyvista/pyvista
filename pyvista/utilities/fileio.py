@@ -251,7 +251,7 @@ def read_exodus(filename,
 
 def read_meshio(filename, file_format = None):
     """Read any mesh file using meshio."""
-    from meshio._vtk import (
+    from meshio.vtk._vtk import (
         meshio_to_vtk_type,
         vtk_type_to_numnodes,
     )
@@ -315,7 +315,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         File type for meshio to save.
 
     """
-    from meshio._vtk import vtk_to_meshio_type
+    from meshio.vtk._vtk import vtk_to_meshio_type
 
     # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(str(filename)))
