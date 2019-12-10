@@ -14,4 +14,4 @@ imageio-ffmpeg
 colorcet
 cmocean
 scooby>=0.2.2
-meshio
+meshio>=3.3.0
