@@ -299,7 +299,7 @@ def read_meshio(filename, file_format = None):
     # Set point data
     grid.point_arrays.update(mesh.point_data)
     # Set cell data
-    grid.point_arrays.update(cell_data)
+    grid.cell_arrays.update(cell_data)
 
     return grid
 
