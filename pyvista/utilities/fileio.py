@@ -287,7 +287,7 @@ def read_meshio(filename, file_format = None):
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
     if points.shape[1] == 2:
-        points = np.c_[points, np.zeros(len(points))]
+        points = np.hstack((points, np.zeros((len(points),1))))
 
     grid = pyvista.UnstructuredGrid(
         np.array(offset),
