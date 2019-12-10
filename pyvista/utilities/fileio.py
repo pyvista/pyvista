@@ -216,7 +216,7 @@ def read_texture(filename, attrs=None):
     except KeyError:
         # Otherwise, use the imageio reader
         pass
-    return pyvista.np_to_texture(imageio.imread(filename))
+    return pyvista.numpy_to_texture(imageio.imread(filename))
 
 
 def read_exodus(filename,
