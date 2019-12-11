@@ -149,6 +149,10 @@ def read(filename, attrs=None, file_format=None):
 
     Parameters
     ----------
+    filename : str
+        The string path to the file to read. If a list of files is given,
+        a :class:`pyvista.MultiBlock` dataset is returned with each file being
+        a seperate block in the dataset.
     attrs : dict, optional
         A dictionary of attributes to call on the reader. Keys of dictionary are
         the attribute/method names and values are the arguments passed to those
@@ -158,6 +162,15 @@ def read(filename, attrs=None, file_format=None):
         Format of file to read with meshio.
 
     """
+    if isinstance(filename, (list, tuple)):
+        multi = pyvista.MultiBlock()
+        for each in filename:
+            if isinstance(each, str):
+                name = os.path.basename(each)
+            else:
+                name = None
+            multi[-1, name] = read(each)
+        return multi
     filename = os.path.abspath(os.path.expanduser(filename))
     if not os.path.isfile(filename):
         raise IOError('File ({}) not found'.format(filename))
