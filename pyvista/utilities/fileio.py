@@ -2,8 +2,6 @@
 
 import os
 
-import imageio
-import meshio
 import numpy as np
 import vtk
 
@@ -197,6 +195,7 @@ def read(filename, attrs=None, file_format=None):
             return standard_reader_routine(reader, filename)
         except KeyError:
             # Attempt read with meshio
+            import meshio
             from meshio._exceptions import ReadError
             try:
                 return read_meshio(filename)
@@ -217,6 +216,7 @@ def read_texture(filename, attrs=None):
     except KeyError:
         # Otherwise, use the imageio reader
         pass
+    import imageio
     return pyvista.numpy_to_texture(imageio.imread(filename))
 
 
@@ -252,6 +252,7 @@ def read_exodus(filename,
 
 def read_meshio(filename, file_format = None):
     """Read any mesh file using meshio."""
+    import meshio
     from meshio.vtk._vtk import (
         meshio_to_vtk_type,
         vtk_type_to_numnodes,
@@ -316,6 +317,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         File type for meshio to save.
 
     """
+    import meshio
     from meshio.vtk._vtk import vtk_to_meshio_type
 
     # Make sure relative paths will work
