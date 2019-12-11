@@ -2,15 +2,11 @@
 
 import os
 
+import numpy as np
 import vtk
 
 import pyvista
 
-import imageio
-
-import numpy
-
-import meshio
 
 READERS = {
     # Standard dataset readers:
@@ -213,8 +209,13 @@ def read(filename, attrs=None, file_format=None):
         except KeyError:
             # Attempt read with meshio
             try:
-                return read_meshio(filename)
-            except AssertionError:
+                from meshio._exceptions import ReadError
+                try:
+                    return read_meshio(filename)
+                except ReadError:
+                    pass
+            except SyntaxError:
+                # https://github.com/pyvista/pyvista/pull/495 
                 pass
 
     raise IOError("This file was not able to be automatically read by pyvista.")
@@ -231,6 +232,7 @@ def read_texture(filename, attrs=None):
     except KeyError:
         # Otherwise, use the imageio reader
         pass
+    import imageio
     return pyvista.numpy_to_texture(imageio.imread(filename))
 
 
@@ -266,7 +268,8 @@ def read_exodus(filename,
 
 def read_meshio(filename, file_format = None):
     """Read any mesh file using meshio."""
-    from meshio._vtk import (
+    import meshio
+    from meshio.vtk._vtk import (
         meshio_to_vtk_type,
         vtk_type_to_numnodes,
     )
@@ -287,7 +290,7 @@ def read_meshio(filename, file_format = None):
         vtk_type = meshio_to_vtk_type[k]
         numnodes = vtk_type_to_numnodes[vtk_type]
         offset += [next_offset+i*(numnodes+1) for i in range(len(v))]
-        cells.append(numpy.hstack((numpy.full((len(v), 1), numnodes), v)).ravel())
+        cells.append(np.hstack((np.full((len(v), 1), numnodes), v)).ravel())
         cell_type += [vtk_type] * len(v)
         next_offset = offset[-1] + numnodes + 1
 
@@ -295,29 +298,27 @@ def read_meshio(filename, file_format = None):
         if k in mesh.cell_data.keys():
             for kk, vv in mesh.cell_data[k].items():
                 if kk in cell_data:
-                    cell_data[kk] = numpy.concatenate((cell_data[kk], vv))
+                    cell_data[kk] = np.concatenate((cell_data[kk], np.array(vv, np.float64)))
                 else:
-                    cell_data[kk] = vv
+                    cell_data[kk] = np.array(vv, np.float64)
 
     # Create pyvista.UnstructuredGrid object
+    points = mesh.points
+    if points.shape[1] == 2:
+        points = np.hstack((points, np.zeros((len(points),1))))
+
     grid = pyvista.UnstructuredGrid(
-        numpy.array(offset),
-        numpy.concatenate(cells),
-        numpy.array(cell_type),
-        numpy.array(mesh.points, numpy.float64),
+        np.array(offset),
+        np.concatenate(cells),
+        np.array(cell_type),
+        np.array(points, np.float64),
     )
 
     # Set point data
-    for k, v in mesh.point_data.items():
-        data = vtk.util.numpy_support.numpy_to_vtk(numpy.array(v, numpy.float64))
-        data.SetName(k)
-        grid.GetPointData().AddArray(data)
-
+    grid.point_arrays.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
     # Set cell data
-    for k, v in cell_data.items():
-        data = vtk.util.numpy_support.numpy_to_vtk(numpy.array(v, numpy.float64))
-        data.SetName(k)
-        grid.GetCellData().AddArray(data)
+    grid.cell_arrays.update(cell_data)
+
     return grid
 
 
@@ -332,7 +333,8 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         File type for meshio to save.
 
     """
-    from meshio._vtk import vtk_to_meshio_type
+    import meshio
+    from meshio.vtk._vtk import vtk_to_meshio_type
 
     # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -347,7 +349,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     vtk_cell_type = mesh.celltypes
 
     # Get cells
-    cells = {k: [] for k in numpy.unique(vtk_cell_type)}
+    cells = {k: [] for k in np.unique(vtk_cell_type)}
     if 8 in cells.keys():
         cells[9] = cells.pop(8)                 # Handle pixels
     if 11 in cells.keys():
@@ -362,7 +364,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         cell_type = cell_type if cell_type not in {8, 11} else cell_type+1
         cells[cell_type].append(cell)
         mapper[cell_type].append(i)
-    cells = {vtk_to_meshio_type[k]: numpy.vstack(v) for k, v in cells.items()}
+    cells = {vtk_to_meshio_type[k]: np.vstack(v) for k, v in cells.items()}
     mapper = {vtk_to_meshio_type[k]: v for k, v in mapper.items()}
 
     # Get point data
@@ -378,7 +380,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     # Save using meshio
     meshio.write_points_cells(
         filename = filename,
-        points = numpy.array(mesh.points),
+        points = np.array(mesh.points),
         cells = cells,
         point_data = point_data,
         cell_data = cell_data,
