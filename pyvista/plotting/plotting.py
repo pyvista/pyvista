@@ -11,6 +11,7 @@ import numpy as np
 import scooby
 import vtk
 from vtk.util import numpy_support as VN
+from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import warnings
 
 import pyvista
@@ -2478,16 +2479,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Create scalar bar
         self.scalar_bar = vtk.vtkScalarBarActor()
         if background_color is not None:
-            from ..core.common import vtk_to_numpy, numpy_to_vtk
-            if not isinstance(background_color, collections.Iterable):
-                raise TypeError('Expected type for `background_color`'
-                                'is list, tuple or np.ndarray: '
-                                '{} is given'.format(type(background_color)))
-            if len(background_color) != 3:
-                raise ValueError('Expected length for `background_color` is 3: '
-                                 '{} is given'.format(len(background_color)))
-            background_color = np.asarray(background_color)
-            background_color = np.append(background_color, 1.0) * 255.
+            background_color = parse_color(background_color, opacity=1.0)
+            background_color = np.array(background_color) * 255
 
             lut = vtk.vtkLookupTable()
             lut.DeepCopy(mapper.lookup_table)
