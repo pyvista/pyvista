@@ -42,9 +42,19 @@ PyVista
 +----------------------+------------------------+
 
 
+    3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
+
+PyVista is...
+
+* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* mesh data structures and filtering methods for spatial datasets (finite element and volume)
+* 3D plotting made simple and built for large/complex data geometries
+
+.. _Visualization Toolkit: https://vtk.org
+
 PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
 (VTK) that takes a different approach on interfacing with VTK through NumPy and
-direct array access. 
+direct array access.
 This package provides a Pythonic, well-documented interface exposing
 VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
 and visual integration of spatially referenced datasets.
@@ -79,17 +89,19 @@ drive without installing anything locally: |binder|
 Overview of Features
 --------------------
 
-* Embeddable rendering in Jupyter Notebooks
+* Extensive gallery of examples (see `Quick Examples`_)
+* Embeddable rendering in Jupyter Notebooks (static and interactive with `Panel`_)
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
-* Import meshes from many common formats (use ``pyvista.read()``)
-* Export meshes as VTK, STL, OBJ, or PLY file types
+* Import meshes from many common formats (use ``pyvista.read()``). Support for all formats handled by `meshio`_ is built-in!
+* Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
-
+.. _Panel: https://panel.pyviz.org/
 .. _Widgets: https://docs.pyvista.org/plotting/widgets.html
 .. _Filters: https://docs.pyvista.org/core/filters.html
 .. _Plotting: https://docs.pyvista.org/plotting/index.html
+.. _meshio: https://github.com/nschloe/meshio
 
 
 Documentation
@@ -124,6 +136,7 @@ You can also visit `PyPi <https://pypi.org/project/pyvista/>`_,
 See the `Installation <http://docs.pyvista.org/getting-started/installation.html#install-ref.>`_
 for more details if the installation through pip doesn't work out.
 
+
 Connections
 ===========
 
@@ -131,6 +144,7 @@ PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
 Here are a few open-source projects that leverage PyVista:
 
+* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
@@ -139,6 +153,7 @@ Here are a few open-source projects that leverage PyVista:
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
+.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista

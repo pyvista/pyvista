@@ -56,6 +56,15 @@
 About
 *****
 
+PyVista is...
+
+* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* mesh data structures and filtering methods for spatial datasets (finite element and volume)
+* 3D plotting made simple and built for large/complex data geometries
+
+.. _Visualization Toolkit: https://vtk.org
+
+
 PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
 (VTK) that takes a different approach on interfacing with VTK through NumPy and
 direct array access.
@@ -108,6 +117,7 @@ PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
 Here are a few open-source projects that leverage PyVista:
 
+* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
@@ -116,6 +126,7 @@ Here are a few open-source projects that leverage PyVista:
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
+.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
