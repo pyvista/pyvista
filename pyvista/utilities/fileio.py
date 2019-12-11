@@ -208,10 +208,14 @@ def read(filename, attrs=None, file_format=None):
             return standard_reader_routine(reader, filename)
         except KeyError:
             # Attempt read with meshio
-            from meshio._exceptions import ReadError
             try:
-                return read_meshio(filename)
-            except ReadError:
+                from meshio._exceptions import ReadError
+                try:
+                    return read_meshio(filename)
+                except ReadError:
+                    pass
+            except SyntaxError:
+                # https://github.com/pyvista/pyvista/pull/495 
                 pass
 
     raise IOError("This file was not able to be automatically read by pyvista.")
