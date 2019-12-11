@@ -208,7 +208,6 @@ def read(filename, attrs=None, file_format=None):
             return standard_reader_routine(reader, filename)
         except KeyError:
             # Attempt read with meshio
-            import meshio
             from meshio._exceptions import ReadError
             try:
                 return read_meshio(filename)
