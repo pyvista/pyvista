@@ -7,14 +7,20 @@ import time
 import numpy as np
 import scooby
 import vtk
-import vtk.qt
 
 import pyvista
 from .plotting import BasePlotter
 from .theme import rcParams
 
 # for display bugs due to older intel integrated GPUs
-vtk.qt.QVTKRWIBase = 'QGLWidget'
+vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
+vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
+if vtk_major_version == 8 and vtk_minor_version < 2:
+    import vtk.qt
+    vtk.qt.QVTKRWIBase = 'QGLWidget'
+else:
+    import vtkmodules.qt
+    vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
