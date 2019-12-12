@@ -1,6 +1,5 @@
 import os
 import sys
-from subprocess import PIPE, Popen
 from weakref import proxy
 
 import imageio
@@ -19,7 +18,6 @@ try:
         import imageio_ffmpeg
         imageio_ffmpeg.get_ffmpeg_exe()
     except ImportError:
-        import imageio
         imageio.plugins.ffmpeg.download()
 except:
     ffmpeg_failed = True
@@ -177,6 +175,7 @@ def test_plot_add_scalar_bar():
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
                            interactive=True, vertical=True)
+    plotter.add_scalar_bar(background_color='white', n_colors=256)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -387,15 +386,6 @@ def test_screenshot(tmpdir):
     except:
         raise Exception('Plotter did not close')
 
-
-def test_invalid_color():
-    with pytest.raises(Exception):
-        femorph.plotting.parse_color('not a color')
-
-
-def test_invalid_font():
-    with pytest.raises(Exception):
-        femorph.parse_font_family('not a font')
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -623,7 +613,7 @@ def test_link_views():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_orthographic_slicer():
     data = examples.load_uniform()
-    data.set_active_scalar('Spatial Cell Data')
+    data.set_active_scalars('Spatial Cell Data')
 
     slices = data.slice_orthogonal()
 
@@ -669,17 +659,17 @@ def test_image_properties():
     p.add_mesh(mesh)
     p.show(auto_close=False) # DO NOT close plotter
     # Get RGB image
-    img = p.image
+    _ = p.image
     # Get the depth image
-    img = p.get_image_depth()
+    _ = p.get_image_depth()
     p.close()
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh)
     p.show() # close plotter
     # Get RGB image
-    img = p.image
+    _ = p.image
     # Get the depth image
-    img = p.get_image_depth()
+    _ = p.get_image_depth()
     p.close()
 
 
@@ -698,10 +688,10 @@ def test_volume_rendering():
                                    b=examples.load_uniform(),
                                    c=examples.load_uniform(),
                                    d=examples.load_uniform(),))
-    data['a'].rename_scalar('Spatial Point Data', 'a')
-    data['b'].rename_scalar('Spatial Point Data', 'b')
-    data['c'].rename_scalar('Spatial Point Data', 'c')
-    data['d'].rename_scalar('Spatial Point Data', 'd')
+    data['a'].rename_array('Spatial Point Data', 'a')
+    data['b'].rename_array('Spatial Point Data', 'b')
+    data['c'].rename_array('Spatial Point Data', 'c')
+    data['d'].rename_array('Spatial Point Data', 'd')
     data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
 
 
@@ -718,6 +708,16 @@ def test_plot_compar_four():
                               disply_kwargs={'color':'w'},
                               plotter_kwargs={'off_screen':OFF_SCREEN},)
     return
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_plot_depth_peeling():
+    mesh = examples.load_airplane()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.enable_depth_peeling()
+    p.disable_depth_peeling()
+    p.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -788,8 +788,8 @@ def test_opacity_transfer_functions():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_closing_and_mem_cleanup():
     n = 5
-    for i in range(n):
-        for j in range(n):
+    for _ in range(n):
+        for _ in range(n):
             p = pyvista.Plotter(off_screen=OFF_SCREEN)
             for k in range(n):
                 p.add_mesh(pyvista.Sphere(radius=k))
@@ -837,3 +837,39 @@ def test_fail_plot_table():
     with pytest.raises(TypeError):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(table)
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_bad_keyword_arguments():
+    """Make sure bad keyword arguments raise an error"""
+    mesh = examples.load_uniform()
+    with pytest.raises(TypeError):
+        pyvista.plot(mesh, foo=5, off_screen=OFF_SCREEN)
+    with pytest.raises(TypeError):
+        pyvista.plot(mesh, scalar=mesh.active_scalars_name, off_screen=OFF_SCREEN)
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(mesh, scalar=mesh.active_scalars_name)
+        plotter.show()
+    with pytest.raises(TypeError):
+        plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+        plotter.add_mesh(mesh, foo="bad")
+        plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_cmap_list():
+    mesh = sphere.copy()
+
+    n = mesh.n_points
+    scalars = np.empty(n)
+    scalars[:n//3] = 0
+    scalars[n//3:2*n//3] = 1
+    scalars[2*n//3:] = 2
+
+    with pytest.raises(TypeError):
+        mesh.plot(off_screen=OFF_SCREEN,
+                  scalars=scalars, cmap=['red', None, 'blue'])
+
+    mesh.plot(off_screen=OFF_SCREEN,
+              scalars=scalars, cmap=['red', 'green', 'blue'])

@@ -1,6 +1,5 @@
-"""
-Attributes common to PolyData and Grid Objects
-"""
+"""Attributes common to PolyData and Grid Objects."""
+
 import collections
 import logging
 import warnings
@@ -27,30 +26,32 @@ DEFAULT_VECTOR_KEY = '_vectors'
 
 
 class DataObject(object):
-    """ Methods common to all wrapped data objects """
+    """Methods common to all wrapped data objects."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize the data object."""
         self._field_bool_array_names = []
 
 
     def __new__(cls, *args, **kwargs):
+        """Allocate memory for the data object."""
         if cls is DataObject:
             raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
 
     def shallow_copy(self, to_copy):
-        """Shallow copy the given mesh to this mesh"""
+        """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
 
 
     def deep_copy(self, to_copy):
-        """Overwrite this mesh with the given mesh as a deep copy"""
+        """Overwrite this mesh with the given mesh as a deep copy."""
         return self.DeepCopy(to_copy)
 
 
     def save(self, filename, binary=True):
-        """
-        Writes this mesh to a file.
+        """Write this mesh to a file.
 
         Parameters
         ----------
@@ -66,12 +67,13 @@ class DataObject(object):
         -----
         Binary files write much faster than ASCII and have a smaller
         file size.
+
         """
         raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
 
 
     def get_data_range(self, arr=None, preference='field'):
-        """Get the non-NaN min and max of a named scalar array
+        """Get the non-NaN min and max of a named array.
 
         Parameters
         ----------
@@ -80,7 +82,7 @@ class DataObject(object):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the perfered array type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
             or ``'field'``.
 
@@ -89,13 +91,16 @@ class DataObject(object):
 
 
     def _get_attrs(self):
-        """An internal helper for the representation methods"""
+        """Return the representation methods (internal helper)."""
         raise NotImplementedError
 
 
     def head(self, display=True, html=None):
-        """Return the header stats of this dataset. If in IPython, this will
-        be formatted to HTML. Otherwise returns a console friendly string"""
+        """Return the header stats of this dataset.
+
+        If in IPython, this will be formatted to HTML. Otherwise returns a console friendly string.
+
+        """
         # Generate the output
         if html:
             fmt = ""
@@ -134,29 +139,32 @@ class DataObject(object):
 
 
     def _repr_html_(self):
-        """A pretty representation for Jupyter notebooks that includes header
-        details and information about all scalar arrays"""
+        """Return a pretty representation for Jupyter notebooks.
+
+        This includes header details and information about all arrays.
+
+        """
         raise NotImplemented
 
 
     def copy_meta_from(self, ido):
-        """Copies pyvista meta data onto this object from another object"""
+        """Copy pyvista meta data onto this object from another object."""
         pass
 
 
     def copy(self, deep=True):
-        """
-        Returns a copy of the object
+        """Return a copy of the object.
 
         Parameters
         ----------
         deep : bool, optional
             When True makes a full copy of the object.
 
-        Returns
-        -------
+        Return
+        ------
         newobject : same as input
            Deep or shallow copy of the input.
+
         """
         thistype = type(self)
         newobject = thistype()
@@ -169,16 +177,15 @@ class DataObject(object):
 
 
     def _field_array(self, name=None):
-        """
-        Returns field scalars of a vtk object
+        """Return field scalars of a vtk object.
 
         Parameters
         ----------
         name : str
-            Name of field scalars to retrive.
+            Name of field scalars to retrieve.
 
-        Returns
-        -------
+        Return
+        ------
         scalars : np.ndarray
             Numpy array of scalars
 
@@ -187,7 +194,7 @@ class DataObject(object):
             raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetFieldData().GetAbstractArray(name)
         if vtkarr is None:
-            raise AssertionError('({}) is not a valid field scalar array'.format(name))
+            raise AssertionError('({}) is not a valid field array.'.format(name))
 
         # numpy does not support bit array data types
         if isinstance(vtkarr, vtk.vtkBitArray):
@@ -202,8 +209,7 @@ class DataObject(object):
 
 
     def _add_field_array(self, scalars, name, deep=True):
-        """
-        Adds field scalars to the mesh
+        """Add a field array to the mesh.
 
         Parameters
         ----------
@@ -241,18 +247,23 @@ class DataObject(object):
 
 
     def _add_field_scalar(self, scalars, name, set_active=False, deep=True):
-        """DEPRECATED: Please use `_add_field_array`"""
+        """Add a field array.
+
+        DEPRECATED: Please use `_add_field_array` instead.
+
+        """
         warnings.warn('Deprecation Warning: `_add_field_scalar` is now `_add_field_array`', RuntimeWarning)
         return self._add_field_array(scalars, name, set_active=set_active, deep=deep)
 
 
     def add_field_array(self, scalars, name, deep=True):
+        """Add a field array."""
         self._add_field_array(scalars, name, deep=deep)
 
 
     @property
     def field_arrays(self):
-        """ Returns all field arrays """
+        """Return all field arrays."""
         fdata = self.GetFieldData()
         narr = fdata.GetNumberOfArrays()
 
@@ -277,7 +288,7 @@ class DataObject(object):
 
 
     def clear_field_arrays(self):
-        """ removes all field arrays """
+        """Remove all field arrays."""
         keys = self.field_arrays.keys()
         for key in keys:
             self._remove_array(FIELD_DATA_FIELD, key)
@@ -285,19 +296,21 @@ class DataObject(object):
 
 
 class Common(DataSetFilters, DataObject):
-    """ Methods in common to spatially referenced objects"""
+    """Methods in common to spatially referenced objects."""
 
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
 
 
     def __new__(cls, *args, **kwargs):
+        """Allocate memory for the common object."""
         if cls is Common:
             raise TypeError("pyvista.Common is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
 
     def __init__(self, *args, **kwargs):
+        """Initialize the common object."""
         super(Common, self).__init__()
         self.references = []
         self._point_bool_array_names = []
@@ -305,15 +318,15 @@ class Common(DataSetFilters, DataObject):
 
 
     @property
-    def active_scalar_info(self):
-        """Return the active scalar's field and name: [field, name]"""
-        if not hasattr(self, '_active_scalar_info'):
-            self._active_scalar_info = [POINT_DATA_FIELD, None] # field and name
-        if not hasattr(self, '_last_active_scalar_name'):
-            self._last_active_scalar_name = None
-        field, name = self._active_scalar_info
+    def active_scalars_info(self):
+        """Return the active scalar's field and name: [field, name]."""
+        if not hasattr(self, '_active_scalars_info'):
+            self._active_scalars_info = [POINT_DATA_FIELD, None] # field and name
+        if not hasattr(self, '_last_active_scalars_name'):
+            self._last_active_scalars_name = None
+        field, name = self._active_scalars_info
 
-        # rare error where scalar name isn't a valid scalar
+        # rare error where scalars name isn't a valid scalar
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
                 if name in self.field_arrays:
@@ -335,7 +348,7 @@ class Common(DataSetFilters, DataObject):
             return arr
 
         if name in exclude:
-            name = self._last_active_scalar_name
+            name = self._last_active_scalars_name
 
         if name is None:
             if self.n_arrays < 1:
@@ -344,18 +357,27 @@ class Common(DataSetFilters, DataObject):
             parr = search_for_array(self.GetPointData())
             carr = search_for_array(self.GetCellData())
             if parr is not None:
-                self._active_scalar_info = [POINT_DATA_FIELD, parr]
+                self._active_scalars_info = [POINT_DATA_FIELD, parr]
                 self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
-                self._active_scalar_info = [CELL_DATA_FIELD, carr]
+                self._active_scalars_info = [CELL_DATA_FIELD, carr]
                 self.GetCellData().SetActiveScalars(carr)
 
-        return self._active_scalar_info
+        return self._active_scalars_info
+
+    @property
+    def active_scalar_info(self):
+        """Return the active scalar's field and name.
+
+        DEPRECATED: use `.active_scalars_info` instead
+        """
+        warnings.warn("DEPRECATED: use `.active_scalars_info` instead")
+        return self.active_scalars_info
 
 
     @property
     def active_vectors_info(self):
-        """Return the active scalar's field and name: [field, name]"""
+        """Return the active scalar's field and name: [field, name]."""
         if not hasattr(self, '_active_vectors_info'):
             # Sometimes, precomputed normals aren't set as active
             if 'Normals' in self.array_names:
@@ -364,7 +386,7 @@ class Common(DataSetFilters, DataObject):
                 self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
         _, name = self._active_vectors_info
 
-        # rare error where scalar name isn't a valid scalar
+        # rare error where name isn't a valid array
         if name not in self.point_arrays:
             if name not in self.cell_arrays:
                 if name in self.field_arrays:
@@ -378,7 +400,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def active_vectors(self):
-        """The active vectors array"""
+        """Return the active vectors array."""
         field, name = self.active_vectors_info
         if name:
             if field is POINT_DATA_FIELD:
@@ -389,31 +411,44 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def active_vectors_name(self):
-        """The name of the active vectors array"""
+        """Return the name of the active vectors array."""
         return self.active_vectors_info[1]
 
 
     @active_vectors_name.setter
     def active_vectors_name(self, name):
-        """Set the name of the active vector"""
+        """Set the name of the active vector."""
         return self.set_active_vectors(name)
 
 
     @property
+    def active_scalars_name(self):
+        """Return the active scalar's name."""
+        return self.active_scalars_info[1]
+
+
+    @active_scalars_name.setter
+    def active_scalars_name(self, name):
+        """Set the name of the active scalar."""
+        return self.set_active_scalars(name)
+
+    @property
     def active_scalar_name(self):
-        """Returns the active scalar's name"""
-        return self.active_scalar_info[1]
+        """Return the active scalar's name."""
+        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
+        return self.active_scalars_name
 
 
     @active_scalar_name.setter
     def active_scalar_name(self, name):
-        """Set the name of the active scalar"""
-        return self.set_active_scalar(name)
+        """Set the name of the active scalar."""
+        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
+        self.active_scalars_name = name
 
 
     @property
     def points(self):
-        """ returns a pointer to the points as a numpy object """
+        """Return a pointer to the points as a numpy object."""
         pts = self.GetPoints()
         if pts is None:
             return None
@@ -424,7 +459,7 @@ class Common(DataSetFilters, DataObject):
 
     @points.setter
     def points(self, points):
-        """ set points without copying """
+        """Set points without copying."""
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
         vtk_points = pyvista.vtk_points(points, False)
@@ -439,16 +474,17 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def arrows(self):
-        """
-        Returns a glyph representation of the active vector data as
-        arrows.  Arrows will be located at the points of the mesh and
+        """Return a glyph representation of the active vector data as arrows.
+
+        Arrows will be located at the points of the mesh and
         their size will be dependent on the length of the vector.
         Their direction will be the "direction" of the vector
 
-        Returns
-        -------
+        Return
+        ------
         arrows : pyvista.PolyData
             Active scalars represented as arrows.
+
         """
         if self.active_vectors is None:
             return
@@ -458,13 +494,13 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def vectors(self):
-        """ Returns active vectors """
+        """Return active vectors."""
         return self.active_vectors
 
 
     @vectors.setter
     def vectors(self, array):
-        """ Sets the active vector  """
+        """Set the active vector."""
         if array.ndim != 2:
             raise AssertionError('vector array must be a 2-dimensional array')
         elif array.shape[1] != 3:
@@ -478,7 +514,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def t_coords(self):
-        """The active texture coordinates on the points"""
+        """Return the active texture coordinates on the points."""
         if self.GetPointData().GetTCoords() is not None:
             return vtk_to_numpy(self.GetPointData().GetTCoords())
         return None
@@ -486,7 +522,7 @@ class Common(DataSetFilters, DataObject):
 
     @t_coords.setter
     def t_coords(self, t_coords):
-        """Set the array to use as the texture coordinates"""
+        """Set the array to use as the texture coordinates."""
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
@@ -507,9 +543,11 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def textures(self):
-        """A dictionary to hold ``vtk.vtkTexture`` objects that can be
-        associated with this dataset. When casting back to a VTK dataset or
-        filtering this dataset, these textures will not be passed.
+        """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
+
+        When casting back to a VTK dataset or filtering this dataset, these textures
+        will not be passed.
+
         """
         if not hasattr(self, '_textures'):
             self._textures = {}
@@ -517,14 +555,15 @@ class Common(DataSetFilters, DataObject):
 
 
     def clear_textures(self):
-        """Clear the textures from this mesh"""
+        """Clear the textures from this mesh."""
         if hasattr(self, '_textures'):
             del self._textures
 
 
     def _activate_texture(mesh, name):
-        """Grab a texture and update the active texture coordinates. This makes
-        sure to not destroy old texture coordinates
+        """Grab a texture and update the active texture coordinates.
+
+        This makes sure to not destroy old texture coordinates.
 
         Parameters
         ----------
@@ -534,10 +573,11 @@ class Common(DataSetFilters, DataObject):
         Return
         ------
         vtk.vtkTexture : The active texture
+
         """
         if name is True or isinstance(name, int):
             keys = list(mesh.textures.keys())
-            # Grab the first name availabe if True
+            # Grab the first name available if True
             idx = 0 if not isinstance(name, int) or name is True else name
             if idx > len(keys):
                 idx = 0
@@ -563,28 +603,41 @@ class Common(DataSetFilters, DataObject):
         return texture
 
 
-    def set_active_scalar(self, name, preference='cell'):
-        """Finds the scalar by name and appropriately sets it as active.
+    def set_active_scalars(self, name, preference='cell'):
+        """Find the scalars by name and appropriately sets it as active.
+
         To deactivate any active scalars, pass ``None`` as the ``name``.
+
         """
         if name is None:
             self.GetCellData().SetActiveScalars(None)
             self.GetPointData().SetActiveScalars(None)
             return
         _, field = get_array(self, name, preference=preference, info=True)
-        self._last_active_scalar_name = self.active_scalar_info[1]
+        self._last_active_scalars_name = self.active_scalars_info[1]
         if field == POINT_DATA_FIELD:
             self.GetPointData().SetActiveScalars(name)
         elif field == CELL_DATA_FIELD:
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
-        self._active_scalar_info = [field, name]
+        self._active_scalars_info = [field, name]
+
+
+    def set_active_scalar(self, name, preference='cell'):
+        """Find the scalars by name and appropriately sets it as active.
+
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+        """
+        warnings.warn("DEPRECATED: please use `.set_active_scalars` instead.")
+        return self.set_active_scalars(name, preference=preference)
 
 
     def set_active_vectors(self, name, preference='point'):
-        """Finds the vectors by name and appropriately sets it as active
+        """Find the vectors by name and appropriately sets it as active.
+
         To deactivate any active scalars, pass ``None`` as the ``name``.
+
         """
         if name is None:
             self.GetCellData().SetActiveVectors(None)
@@ -600,8 +653,8 @@ class Common(DataSetFilters, DataObject):
         self._active_vectors_info = [field, name]
 
 
-    def rename_scalar(self, old_name, new_name, preference='cell'):
-        """Changes array name by searching for the array then renaming it"""
+    def rename_array(self, old_name, new_name, preference='cell'):
+        """Change array name by searching for the array then renaming it."""
         _, field = get_array(self, old_name, preference=preference, info=True)
         if field == POINT_DATA_FIELD:
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
@@ -611,14 +664,24 @@ class Common(DataSetFilters, DataObject):
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
-        if self.active_scalar_info[1] == old_name:
-            self.set_active_scalar(new_name, preference=field)
+        if self.active_scalars_info[1] == old_name:
+            self.set_active_scalars(new_name, preference=field)
+
+
+    def rename_scalar(self, old_name, new_name, preference='cell'):
+        """Change an array name by searching for the array then renaming it.
+
+        DEPRECATED: please use `.rename_array` instead.
+
+        """
+        warnings.warn("DEPRECATED: please use `.rename_array` instead.")
+        return self.rename_array(old_name, new_name, preference=preference)
 
 
     @property
-    def active_scalar(self):
-        """Returns the active scalar as an array"""
-        field, name = self.active_scalar_info
+    def active_scalars(self):
+        """Return the active scalars as an array."""
+        field, name = self.active_scalars_info
         if name is None:
             return None
         if field == POINT_DATA_FIELD:
@@ -626,25 +689,30 @@ class Common(DataSetFilters, DataObject):
         elif field == CELL_DATA_FIELD:
             return self._cell_array(name)
 
+    @property
+    def active_scalar(self):
+        """DEPRECATED: Returns the active scalars as an array."""
+        warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
+        return self.active_scalars
+
 
     def _point_array(self, name=None):
-        """
-        Returns point scalars of a vtk object
+        """Return point scalars of a vtk object.
 
         Parameters
         ----------
         name : str
-            Name of point scalars to retrive.
+            Name of point scalars to retrieve.
 
-        Returns
-        -------
+        Return
+        ------
         scalars : np.ndarray
             Numpy array of scalars
 
         """
         if name is None:
-            # use active scalar array
-            field, name = self.active_scalar_info
+            # use active scalars array
+            field, name = self.active_scalars_info
             if field != POINT_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetAbstractArray(name)
@@ -664,8 +732,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def _add_point_array(self, scalars, name, set_active=False, deep=True):
-        """
-        Adds point scalars to the mesh
+        """Add point scalars to the mesh.
 
         Parameters
         ----------
@@ -705,35 +772,39 @@ class Common(DataSetFilters, DataObject):
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetPointData().AddArray(vtkarr)
-        if set_active or self.active_scalar_info[1] is None:
+        if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
-            self._active_scalar_info = [POINT_DATA_FIELD, name]
+            self._active_scalars_info = [POINT_DATA_FIELD, name]
 
 
     def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
-        """DEPRECATED: Please use `_add_point_array`"""
+        """Add points array.
+
+        DEPRECATED: Please use `_add_point_array` instead.
+
+        """
         warnings.warn('Deprecation Warning: `_add_point_scalar` is now `_add_point_array`', RuntimeWarning)
         return self._add_point_array(scalars, name, set_active=set_active, deep=deep)
 
 
     def get_data_range(self, arr=None, preference='cell'):
-        """Get the non-NaN min and max of a named scalar array
+        """Get the non-NaN min and max of a named array.
 
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
+            The name of the array to get the range. If None, the active scalars
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered scalar type to
+            When scalars is specified, this is the perfered array type to
             search for in the dataset.  Must be either ``'point'``, ``'cell'``,
             or ``'field'``.
 
         """
         if arr is None:
-            # use active scalar array
-            _, arr = self.active_scalar_info
+            # use active scalars array
+            _, arr = self.active_scalars_info
         if isinstance(arr, str):
             arr = get_array(self, arr, preference=preference)
         # If array has no tuples return a NaN range
@@ -744,14 +815,13 @@ class Common(DataSetFilters, DataObject):
 
 
     def points_to_double(self):
-        """ Makes points double precision """
+        """Make points double precision."""
         if self.points.dtype != np.double:
             self.points = self.points.astype(np.double)
 
 
     def rotate_x(self, angle):
-        """
-        Rotates mesh about the x-axis.
+        """Rotate mesh about the x-axis.
 
         Parameters
         ----------
@@ -763,8 +833,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def rotate_y(self, angle):
-        """
-        Rotates mesh about the y-axis.
+        """Rotate mesh about the y-axis.
 
         Parameters
         ----------
@@ -776,8 +845,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def rotate_z(self, angle):
-        """
-        Rotates mesh about the z-axis.
+        """Rotate mesh about the z-axis.
 
         Parameters
         ----------
@@ -789,8 +857,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def translate(self, xyz):
-        """
-        Translates the mesh.
+        """Translate the mesh.
 
         Parameters
         ----------
@@ -802,8 +869,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def transform(self, trans):
-        """
-        Compute a transformation in place using a 4x4 transform.
+        """Compute a transformation in place using a 4x4 transform.
 
         Parameters
         ----------
@@ -836,23 +902,22 @@ class Common(DataSetFilters, DataObject):
 
 
     def _cell_array(self, name=None):
-        """
-        Returns the cell scalars of a vtk object
+        """Return the cell scalars of a vtk object.
 
         Parameters
         ----------
         name : str
-            Name of cell scalars to retrive.
+            Name of cell scalars to retrieve.
 
-        Returns
-        -------
+        Return
+        ------
         scalars : np.ndarray
             Numpy array of scalars
 
         """
         if name is None:
-            # use active scalar array
-            field, name = self.active_scalar_info
+            # use active scalars array
+            field, name = self.active_scalars_info
             if field != CELL_DATA_FIELD:
                 raise RuntimeError('Must specify an array to fetch.')
 
@@ -873,8 +938,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def _add_cell_array(self, scalars, name, set_active=False, deep=True):
-        """
-        Adds cell scalars to the vtk object.
+        """Add cell scalars to the vtk object.
 
         Parameters
         ----------
@@ -911,20 +975,24 @@ class Common(DataSetFilters, DataObject):
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.GetCellData().AddArray(vtkarr)
-        if set_active or self.active_scalar_info[1] is None:
+        if set_active or self.active_scalars_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
-            self._active_scalar_info = [CELL_DATA_FIELD, name]
+            self._active_scalars_info = [CELL_DATA_FIELD, name]
 
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
-        """DEPRECATED: Please use `_add_cell_array`"""
+        """Add a cell array.
+
+        DEPRECATED: Please use `_add_cell_array` instead.
+
+        """
         warnings.warn('Deprecation Warning: `_add_cell_scalar` is now `_add_cell_array`', RuntimeWarning)
         return self._add_cell_array(scalars, name, set_active=set_active, deep=deep)
 
 
     def copy_meta_from(self, ido):
-        """Copies pyvista meta data onto this object from another object"""
-        self._active_scalar_info = ido.active_scalar_info
+        """Copy pyvista meta data onto this object from another object."""
+        self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         if hasattr(ido, '_textures'):
             self._textures = ido._textures
@@ -932,7 +1000,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def point_arrays(self):
-        """ Returns the all point arrays """
+        """Return the all point arrays."""
         pdata = self.GetPointData()
         narr = pdata.GetNumberOfArrays()
 
@@ -962,7 +1030,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def _remove_array(self, field, key):
-        """internal helper to remove a single array by name from each field"""
+        """Remove a single array by name from each field (internal helper)."""
         field = parse_field_choice(field)
         if field == POINT_DATA_FIELD:
             self.GetPointData().RemoveArray(key)
@@ -976,21 +1044,21 @@ class Common(DataSetFilters, DataObject):
 
 
     def clear_point_arrays(self):
-        """ removes all point arrays """
+        """Remove all point arrays."""
         keys = self.point_arrays.keys()
         for key in keys:
             self._remove_array(POINT_DATA_FIELD, key)
 
 
     def clear_cell_arrays(self):
-        """ removes all cell arrays """
+        """Remove all cell arrays."""
         keys = self.cell_arrays.keys()
         for key in keys:
             self._remove_array(CELL_DATA_FIELD, key)
 
 
     def clear_arrays(self):
-        """ removes all arrays from point/cell/field data """
+        """Remove all arrays from point/cell/field data."""
         self.clear_point_arrays()
         self.clear_cell_arrays()
         self.clear_field_arrays()
@@ -998,7 +1066,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def cell_arrays(self):
-        """ Returns the all cell arrays """
+        """Return the all cell arrays."""
         cdata = self.GetCellData()
         narr = cdata.GetNumberOfArrays()
 
@@ -1028,59 +1096,60 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def n_points(self):
-        """The number of points in the entire dataset"""
+        """Return the number of points in the entire dataset."""
         return self.GetNumberOfPoints()
 
 
     @property
     def n_cells(self):
-        """The number of cells in the entire dataset"""
+        """Return the number of cells in the entire dataset."""
         return self.GetNumberOfCells()
 
 
     @property
     def number_of_points(self):  # pragma: no cover
-        """ returns the number of points """
+        """Return the number of points."""
         return self.GetNumberOfPoints()
 
 
     @property
     def number_of_cells(self):  # pragma: no cover
-        """ returns the number of cells """
+        """Return the number of cells."""
         return self.GetNumberOfCells()
 
 
     @property
     def bounds(self):
-        """
-        bounding box of this dataset in the form
-        (xmin,xmax, ymin,ymax, zmin,zmax)
+        """Return the bounding box of this dataset.
+
+        The form is: (xmin,xmax, ymin,ymax, zmin,zmax).
+
         """
         return list(self.GetBounds())
 
 
     @property
     def length(self):
-        """the length of the diagonal of the bounding box"""
+        """Return the length of the diagonal of the bounding box."""
         return self.GetLength()
 
 
     @property
     def center(self):
-        """ Center of the bounding box """
+        """Return the center of the bounding box."""
         return list(self.GetCenter())
 
 
     @property
     def extent(self):
-        """ The range of the bounding box """
+        """Return the range of the bounding box."""
         if hasattr(self, 'GetExtent'):
             return list(self.GetExtent())
 
 
     @extent.setter
     def extent(self, extent):
-        """ The range of the bounding box """
+        """Return the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             return self.SetExtent(extent)
         else:
@@ -1089,11 +1158,10 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def volume(self):
-        """
-        Mesh volume
+        """Return the mesh volume.
 
-        Returns
-        -------
+        Return
+        ------
         volume : float
             Total volume of the mesh.
 
@@ -1103,12 +1171,12 @@ class Common(DataSetFilters, DataObject):
 
 
     def get_array(self, name, preference='cell', info=False):
-        """ Searches both point, cell and field data for an array """
+        """Search both point, cell and field data for an array."""
         return get_array(self, name, preference=preference, info=info)
 
 
     def __getitem__(self, index):
-        """ Searches both point, cell, and field data for an array """
+        """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.Iterable) and not isinstance(index, str):
             name, preference = index[0], index[1]
         elif isinstance(index, str):
@@ -1118,10 +1186,15 @@ class Common(DataSetFilters, DataObject):
             raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
         return self.get_array(name, preference=preference, info=False)
 
+    def _ipython_key_completions_(self):
+        return self.array_names
+
 
     def __setitem__(self, name, scalars):
-        """Add/set an array in the point_arrays, or cell_arrays depending on the
-        array's length, or specified mode.
+        """Add/set an array in the point_arrays, or cell_arrays accordingly.
+
+        It depends on the array's length, or specified mode.
+
         """
         # First check points - think of case with vertex cells
         #   there would be the same number of cells as points but we'd want
@@ -1144,7 +1217,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def n_arrays(self):
-        """The number of scalar arrays present in the dataset"""
+        """Return the number of arrays present in the dataset."""
         n = self.GetPointData().GetNumberOfArrays()
         n += self.GetCellData().GetNumberOfArrays()
         n += self.GetFieldData().GetNumberOfArrays()
@@ -1153,15 +1226,22 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def n_scalars(self):
-        """DEPRECATED: Please use `n_arrays`"""
+        """Return the number of scalars.
+
+        DEPRECATED: Please use `n_arrays` instead.
+
+        """
         warnings.warn('Deprecation Warning: `n_scalars` is now `n_arrays`', RuntimeWarning)
         return self.n_arrays
 
 
     @property
     def array_names(self):
-        """A list of scalar names for the dataset. This makes
-        sure to put the active scalar's name first in the list."""
+        """Return a list of array names for the dataset.
+
+        This makes sure to put the active scalars' name first in the list.
+
+        """
         names = []
         for i in range(self.GetPointData().GetNumberOfArrays()):
             names.append(self.GetPointData().GetArrayName(i))
@@ -1170,8 +1250,8 @@ class Common(DataSetFilters, DataObject):
         for i in range(self.GetFieldData().GetNumberOfArrays()):
             names.append(self.GetFieldData().GetArrayName(i))
         try:
-            names.remove(self.active_scalar_name)
-            names.insert(0, self.active_scalar_name)
+            names.remove(self.active_scalars_name)
+            names.insert(0, self.active_scalars_name)
         except ValueError:
             pass
         return names
@@ -1179,13 +1259,17 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def scalar_names(self):
-        """DEPRECATED: Please use `array_names`"""
+        """Return the array names.
+
+        DEPRECATED: Please use `array_names` instead.
+
+        """
         warnings.warn('Deprecation Warning: `scalar_names` is now `array_names`', RuntimeWarning)
         return self.array_names
 
 
     def _get_attrs(self):
-        """An internal helper for the representation methods"""
+        """Return the representation methods (internal helper)."""
         attrs = []
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
@@ -1200,8 +1284,11 @@ class Common(DataSetFilters, DataObject):
 
 
     def _repr_html_(self):
-        """A pretty representation for Jupyter notebooks that includes header
-        details and information about all scalar arrays"""
+        """Return a pretty representation for Jupyter notebooks.
+
+        It includes header details and information about all arrays.
+
+        """
         fmt = ""
         if self.n_arrays > 0:
             fmt += "<table>"
@@ -1209,7 +1296,7 @@ class Common(DataSetFilters, DataObject):
             fmt += "<tr><td>"
         # Get the header info
         fmt += self.head(display=False, html=True)
-        # Fill out scalar arrays
+        # Fill out arrays
         if self.n_arrays > 0:
             fmt += "</td><td>"
             fmt += "\n"
@@ -1220,11 +1307,11 @@ class Common(DataSetFilters, DataObject):
             row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
 
             def format_array(name, arr, field):
-                """internal helper to foramt array information for printing"""
+                """Format array information for printing (internal helper)."""
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
-                if name == self.active_scalar_info[1]:
+                if name == self.active_scalars_info[1]:
                     name = '<b>{}</b>'.format(name)
                 if arr.ndim > 1:
                     ncomp = arr.shape[1]
@@ -1246,18 +1333,17 @@ class Common(DataSetFilters, DataObject):
 
 
     def __repr__(self):
-        """Object representation"""
+        """Return the object representation."""
         return self.head(display=False, html=False)
 
 
     def __str__(self):
-        """Object string representation"""
+        """Return the object string representation."""
         return self.head(display=False, html=False)
 
 
     def overwrite(self, mesh):
-        """
-        Overwrites this mesh inplace with the new mesh's geometries and data
+        """Overwrite this mesh inplace with the new mesh's geometries and data.
 
         Parameters
         ----------
@@ -1271,9 +1357,7 @@ class Common(DataSetFilters, DataObject):
 
 
     def cast_to_unstructured_grid(self):
-        """Get a new representation of this object as an
-        :class:`pyvista.UnstructuredGrid`
-        """
+        """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`."""
         alg = vtk.vtkAppendFilter()
         alg.AddInputData(self)
         alg.Update()
@@ -1282,17 +1366,18 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def quality(self):
-        """
-        Returns cell quality using PyANSYS. Computes the minimum scaled
-        jacobian of each cell.  Cells that have values below 0 are invalid for
+        """Return cell quality using PyANSYS.
+
+        Computes the minimum scaled jacobian of each cell.
+        Cells that have values below 0 are invalid for
         a finite element analysis.
 
         Note
         ----
         This casts the input to an unstructured grid
 
-        Returns
-        -------
+        Return
+        ------
         cellquality : np.ndarray
             Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
 
@@ -1314,8 +1399,10 @@ class Common(DataSetFilters, DataObject):
 
 
 class _ScalarsDict(dict):
-    """Internal helper for scalars dictionaries"""
+    """Internal helper for scalars dictionaries."""
+
     def __init__(self, data):
+        """Initialize the scalars dict."""
         self.data = proxy(data)
         dict.__init__(self)
         self.callback_enabled = False
@@ -1324,7 +1411,7 @@ class _ScalarsDict(dict):
 
 
     def enable_callback(self):
-        """Enable callbacks to be set True"""
+        """Enable callbacks to be set True."""
         self.callback_enabled = True
 
 
@@ -1333,17 +1420,14 @@ class _ScalarsDict(dict):
 
 
     def pop(self, key):
-        """Get and remove an element by key name"""
+        """Get and remove an element by key name."""
         arr = dict.pop(self, key).copy()
         self.remover(key)
         return arr
 
 
     def update(self, data):
-        """
-        Update this dictionary with th key-value pairs from a given
-        dictionary
-        """
+        """Update this dictionary with th key-value pairs from a given dictionary."""
         if not isinstance(data, (dict, pyvista.Table)):
             raise TypeError('Data to update must be in a dictionary or PyVista Table.')
         for k, v in data.items():
@@ -1356,7 +1440,7 @@ class _ScalarsDict(dict):
 
 
     def __setitem__(self, key, val):
-        """ overridden to assure data is contigious """
+        """Ensure that data is contiguous."""
         if isinstance(val, (list, tuple)):
             val = np.array(val)
         if self.callback_enabled:
@@ -1366,58 +1450,58 @@ class _ScalarsDict(dict):
 
 
     def __delitem__(self, key):
-        """Remove item by key name"""
+        """Remove item by key name."""
         self.remover(key)
         return dict.__delitem__(self, key)
 
 
 class CellScalarsDict(_ScalarsDict):
-    """
-    Updates internal cell data when an array is added or removed from
-    the dictionary.
-    """
+    """Update internal cell data when an array is added or removed from the dictionary."""
+
     def __init__(self, data):
+        """Initialize the cell array dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(CELL_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetCellData().Modified()
 
 
     def adder(self, scalars, name, set_active=False, deep=True):
+        """Add a cell array."""
         self.data._add_cell_array(scalars, name, set_active=False, deep=deep)
 
 
 class PointScalarsDict(_ScalarsDict):
-    """
-    Updates internal point data when an array is added or removed from
-    the dictionary.
-    """
+    """Update internal point data when an array is added or removed from the dictionary."""
+
     def __init__(self, data):
+        """Initialize the point array dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(POINT_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetPointData().Modified()
 
 
     def adder(self, scalars, name, set_active=False, deep=True):
+        """Add a point array."""
         self.data._add_point_array(scalars, name, set_active=False, deep=deep)
 
 
 class FieldScalarsDict(_ScalarsDict):
-    """
-    Updates internal field data when an array is added or removed from
-    the dictionary.
-    """
+    """Update internal field data when an array is added or removed from the dictionary."""
+
     def __init__(self, data):
+        """Initialize the field array dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(FIELD_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetFieldData().Modified()
 
 
     def adder(self, scalars, name, set_active=False, deep=True):
+        """Add a field array."""
         self.data._add_field_array(scalars, name, deep=deep)
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """ Rotates points angle ang (in deg) about an axis """
+    """Rotate points angle (in deg) about an axis."""
     axis = axis.lower()
 
     # Copy original array to if not inplace
@@ -1451,8 +1535,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
 
 class pyvista_ndarray(np.ndarray):
-    """
-    Links a numpy array with the vtk object the data is attached to.
+    """Link a numpy array with the vtk object the data is attached to.
 
     When the array is changed it triggers "Modified()" which updates
     all upstream objects, including any render windows holding the
@@ -1461,15 +1544,17 @@ class pyvista_ndarray(np.ndarray):
     """
 
     def __new__(cls, input_array, proxy):
+        """Allocate memory for the pyvista ndarray."""
         obj = np.asarray(input_array).view(cls)
         cls.proxy = proxy
         return obj
 
     def __array_finalize__(self, obj):
+        """Customize array at creation."""
         if obj is None:
             return
 
     def __setitem__(self, coords, value):
-        """ Update the array and update the vtk object """
+        """Update the array and update the vtk object."""
         super(pyvista_ndarray, self).__setitem__(coords, value)
         self.proxy.Modified()

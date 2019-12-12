@@ -47,8 +47,18 @@ def test_clip_box():
     result = dataset.clip_box(bounds=(900, 900, 200), invert=False)
     dataset = examples.load_uniform()
     result = dataset.clip_box(bounds=0.5)
+    assert result.n_cells
     with pytest.raises(AssertionError):
         dataset.clip_box(bounds=(5, 6,))
+    # Test with a poly data box
+    mesh = examples.load_airplane()
+    box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
+                       x_length=500, y_length=500, z_length=500)
+    box.rotate_z(33)
+    result = mesh.clip_box(box, invert=False)
+    assert result.n_cells
+    result = mesh.clip_box(box, invert=True)
+    assert result.n_cells
 
 
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
@@ -253,7 +263,7 @@ def test_elevation():
     # Test default params
     elev = dataset.elevation()
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
     # test vector args
     c = list(dataset.center)
@@ -261,21 +271,21 @@ def test_elevation():
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
     # Test not setting active
     elev = dataset.elevation(set_active=False)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' != elev.active_scalar_name
+    assert 'Elevation' != elev.active_scalars_name
     # Set use a range by scalar name
     elev = dataset.elevation(scalar_range='Spatial Point Data')
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
     # Set use a user defined range
     elev = dataset.elevation(scalar_range=[1.0, 100.0])
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
     with pytest.raises(RuntimeError):
@@ -360,12 +370,14 @@ def test_glyph():
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
+                          clamping=False, rng=[1, 1])
 
 
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
-    dataset.set_active_scalar('Spatial Cell Data')
+    dataset.set_active_scalars('Spatial Cell Data')
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
 
     bodies = threshed.split_bodies()

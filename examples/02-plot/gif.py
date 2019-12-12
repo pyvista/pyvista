@@ -17,7 +17,7 @@ z = np.sin(r)
 # Create and structured surface
 grid = pv.StructuredGrid(x, y, z)
 
-# Creat a plotter object and set the scalars to the Z height
+# Create a plotter object and set the scalars to the Z height
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars=z.ravel())
 

@@ -2,9 +2,9 @@
 Types of Shading
 ~~~~~~~~~~~~~~~~
 
-Use a custom built colormap when plotting scalar values.
+Comparison of default, flat shading vs. smooth shading.
 """
-
+# sphinx_gallery_thumbnail_number = 2
 import pyvista
 
 pyvista.set_plot_theme("document")

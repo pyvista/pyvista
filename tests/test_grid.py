@@ -414,16 +414,16 @@ def test_grid_extract_selection_points():
 
 def test_gaussian_smooth():
     uniform = examples.load_uniform()
-    active = uniform.active_scalar_name
-    values = uniform.active_scalar
+    active = uniform.active_scalars_name
+    values = uniform.active_scalars
 
     uniform = uniform.gaussian_smooth(scalars=active)
-    assert uniform.active_scalar_name == active
-    assert uniform.active_scalar.shape == values.shape
-    assert not np.all(uniform.active_scalar == values)
-    values = uniform.active_scalar
+    assert uniform.active_scalars_name == active
+    assert uniform.active_scalars.shape == values.shape
+    assert not np.all(uniform.active_scalars == values)
+    values = uniform.active_scalars
 
     uniform = uniform.gaussian_smooth(radius_factor=5, std_dev=1.3)
-    assert uniform.active_scalar_name == active
-    assert uniform.active_scalar.shape == values.shape
-    assert not np.all(uniform.active_scalar == values)
+    assert uniform.active_scalars_name == active
+    assert uniform.active_scalars.shape == values.shape
+    assert not np.all(uniform.active_scalars == values)

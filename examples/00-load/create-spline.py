@@ -25,7 +25,7 @@ def make_points():
     return np.column_stack((x, y, z))
 
 points = make_points()
-print(points[0:5, :])
+points[0:5, :]
 
 ###############################################################################
 # Now let's make a function that can create line cells on a
@@ -44,7 +44,7 @@ def lines_from_points(points):
 
 
 line = lines_from_points(points)
-print(line)
+line
 
 ###############################################################################
 line["scalars"] = np.arange(line.n_points)

@@ -532,3 +532,22 @@ def test_ribbon_filter():
     ribbon = line.ribbon(width=0.5)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     ribbon = line.ribbon(width=0.5, tcoords=True)
+
+
+def test_is_all_triangles():
+    # mesh points
+    vertices = np.array([[0, 0, 0],
+                         [1, 0, 0],
+                         [1, 1, 0],
+                         [0, 1, 0],
+                         [0.5, 0.5, -1]])
+
+    # mesh faces
+    faces = np.hstack([[4, 0, 1, 2, 3],  # square
+                       [3, 0, 1, 4],     # triangle
+                       [3, 1, 2, 4]])    # triangle
+
+    mesh = pyvista.PolyData(vertices, faces)
+    assert not mesh.is_all_triangles()
+    mesh = mesh.triangulate()
+    assert mesh.is_all_triangles()

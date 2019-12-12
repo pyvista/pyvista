@@ -1,4 +1,6 @@
+"""Module managing different plotting theme parameters."""
 
+import os
 import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
@@ -61,12 +63,15 @@ rcParams = {
     },
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
+    "volume_mapper": "fixed_point" if os.name == 'nt' else "smart",
 }
+
+
 
 DEFAULT_THEME = dict(rcParams)
 
 def set_plot_theme(theme):
-    """Set the plotting parameters to a predefined theme"""
+    """Set the plotting parameters to a predefined theme."""
     if theme.lower() in ['paraview', 'pv']:
         rcParams['background'] = PARAVIEW_BACKGROUND
         rcParams['cmap'] = 'coolwarm'
@@ -110,8 +115,10 @@ def set_plot_theme(theme):
 
 
 def parse_color(color, opacity=None):
-    """Parses color into a vtk friendly rgb list.
+    """Parse color into a vtk friendly rgb list.
+
     Values returned will be between 0 and 1.
+
     """
     if color is None:
         color = rcParams['color']
@@ -124,7 +131,7 @@ def parse_color(color, opacity=None):
     else:
         raise Exception("""
     Invalid color input: ({})
-    Must ba string, rgb list, or hex color string.  For example:
+    Must be string, rgb list, or hex color string.  For example:
         color='white'
         color='w'
         color=[1, 1, 1]
@@ -136,7 +143,7 @@ def parse_color(color, opacity=None):
 
 
 def parse_font_family(font_family):
-    """ checks font name """
+    """Check font name."""
     # check font name
     font_family = font_family.lower()
     if font_family not in ['courier', 'times', 'arial']:

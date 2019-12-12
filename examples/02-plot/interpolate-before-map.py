@@ -128,6 +128,6 @@ p.show()
 # interpolation by OpenGL. In both cases, the colors at the vertices are the
 # same, the difference is how color is assigned between the vertices.
 #
-# In our opinion, color interpolation is not a preffered default for scientific
+# In our opinion, color interpolation is not a preferred default for scientific
 # visualization and is why we have chosen to set the ``interpolate_before_map``
 # flag to ``True``.
