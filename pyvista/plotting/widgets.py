@@ -278,7 +278,6 @@ class WidgetHelper(object):
             plane_widget.GetOutlineProperty().SetColor(parse_color(color))
             plane_widget.GetOutlineProperty().SetColor(parse_color(color))
             plane_widget.SetTubing(tubing)
-            plane_widget.SetOrigin(origin)
             plane_widget.SetOutlineTranslation(outline_translation)
             plane_widget.SetOriginTranslation(origin_translation)
 
@@ -290,6 +289,7 @@ class WidgetHelper(object):
             plane_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _stop_interact)
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
+            plane_widget.SetOrigin(origin)
 
         else:
             # Position of the small plane
@@ -307,7 +307,7 @@ class WidgetHelper(object):
             plane_widget.SetHandleSize(.01)
             # Position of the widget
             plane_widget.SetInputData(source.GetOutput())
-            plane_widget.SetRepresentationToSurface()
+            plane_widget.SetRepresentationToOutline()
             plane_widget.SetPlaceFactor(factor)
             plane_widget.PlaceWidget(bounds)
             plane_widget.SetCenter(origin) # Necessary
@@ -416,7 +416,7 @@ class WidgetHelper(object):
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
                               outline_translation=outline_translation,
-                              implicit=implicit)
+                              implicit=implicit, origin=mesh.center)
 
         actor = self.add_mesh(plane_clipped_mesh, **kwargs)
 
@@ -427,7 +427,7 @@ class WidgetHelper(object):
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
                        widget_color=None, assign_to_axis=None,
                        tubing=False, origin_translation=True,
-                       outline_translation=False, **kwargs):
+                       outline_translation=False, implicit=True, **kwargs):
         """Slice a mesh using a plane widget.
 
         Add a mesh to the scene with a plane widget that is used to slice
@@ -481,7 +481,8 @@ class WidgetHelper(object):
                               color=widget_color, tubing=tubing,
                               assign_to_axis=assign_to_axis,
                               origin_translation=origin_translation,
-                              outline_translation=outline_translation)
+                              outline_translation=outline_translation,
+                              implicit=implicit, origin=mesh.center)
 
         actor = self.add_mesh(plane_sliced_mesh, **kwargs)
 

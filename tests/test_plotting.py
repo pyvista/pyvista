@@ -175,6 +175,7 @@ def test_plot_add_scalar_bar():
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
                            interactive=True, vertical=True)
+    plotter.add_scalar_bar(background_color='white', n_colors=256)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

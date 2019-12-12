@@ -33,6 +33,8 @@ File IO
 
 .. autofunction:: pyvista.read_legacy
 
+.. autofunction:: pyvista.save_meshio
+
 
 Mesh Creation
 ~~~~~~~~~~~~~
