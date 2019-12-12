@@ -8,7 +8,6 @@ pytest-memprof
 codecov
 PyQt5==5.11.3
 pytest-qt
-nbval
 imageio>=2.5.0
 imageio-ffmpeg
 colorcet
