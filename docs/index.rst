@@ -102,7 +102,7 @@ Support
 For general questions about the project, its applications, or about software
 usage, please create an issue in the `pyvista/pyvista-support`_ repository
 where the community can collectively address your questions. You are also
-welcome to join us on join us on Slack_ or send one of the developers an email.
+welcome to join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
 
 .. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
