@@ -21,7 +21,7 @@ rcParams = {
     },
     'window_size': [1024, 768],
     'font': {
-        'family': 'courier',
+        'family': 'arial',
         'size': 12,
         'title_size': None,
         'label_size': None,
