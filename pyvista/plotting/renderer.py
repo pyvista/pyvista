@@ -43,6 +43,63 @@ def scale_point(camera, point, invert=False):
     return (scaled[0], scaled[1], scaled[2])
 
 
+
+class CameraPosition(object):
+    """Container to hold camera location attributes."""
+
+    def __init__(self, position, focal_point, viewup):
+        """Initialize a new camera position descriptor."""
+        self._position = position
+        self._focal_point = focal_point
+        self._viewup = viewup
+
+    def to_list(self):
+        """Convert to a list of the position, focal point, and viewup."""
+        return [self._position, self._focal_point, self._viewup]
+
+    def __repr__(self):
+        """List representation method."""
+        return self.to_list().__repr__()
+
+    def __getitem__(self, index):
+        """Fetch a component by index location like a list."""
+        return self.to_list()[index]
+
+    def __eq__(self, other):
+        """Comparison operator to act on list version of CameraPosition object."""
+        if isinstance(other, CameraPosition):
+            return self.to_list() == other.to_list()
+        return self.to_list() == other
+
+    @property
+    def position(self):
+        """Location of the camera in world coordinates."""
+        return self._position
+
+    @position.setter
+    def position(self, value):
+        self._position = value
+
+    @property
+    def focal_point(self):
+        """Location of the camera's focus in world coordinates."""
+        return self._focal_point
+
+    @focal_point.setter
+    def focal_point(self, value):
+        self._focal_point = value
+
+    @property
+    def viewup(self):
+        """Viewup vector of the camera."""
+        return self._viewup
+
+    @viewup.setter
+    def viewup(self, value):
+        self._viewup = value
+
+
+
 class Renderer(vtkRenderer):
     """Renderer class."""
 
@@ -609,9 +666,10 @@ class Renderer(vtkRenderer):
     @property
     def camera_position(self):
         """Return camera position of active render window."""
-        return [scale_point(self.camera, self.camera.GetPosition(), invert=True),
-                scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
-                self.camera.GetViewUp()]
+        return CameraPosition(
+            scale_point(self.camera, self.camera.GetPosition(), invert=True),
+            scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
+            self.camera.GetViewUp())
 
     def clear(self):
         """Remove all actors and properties."""
@@ -667,11 +725,11 @@ class Renderer(vtkRenderer):
     def camera(self, camera):
         """Set the active camera for the rendering scene."""
         self.SetActiveCamera(camera)
-        self.camera_position = [
+        self.camera_position = CameraPosition(
             scale_point(camera, camera.GetPosition(), invert=True),
             scale_point(camera, camera.GetFocalPoint(), invert=True),
             camera.GetViewUp()
-        ]
+        )
 
 
     def set_focus(self, point):
@@ -893,7 +951,7 @@ class Renderer(vtkRenderer):
         The view will show all the actors in the scene.
 
         """
-        self.camera_position = self.get_default_cam_pos(negative=negative)
+        self.camera_position = CameraPosition(*self.get_default_cam_pos(negative=negative))
         self.camera_set = False
         return self.reset_camera()
 
@@ -902,8 +960,8 @@ class Renderer(vtkRenderer):
         focal_pt = self.center
         if viewup is None:
             viewup = rcParams['camera']['viewup']
-        cpos = [vector + np.array(focal_pt),
-                focal_pt, viewup]
+        cpos = CameraPosition(vector + np.array(focal_pt),
+                focal_pt, viewup)
         self.camera_position = cpos
         return self.reset_camera()
 

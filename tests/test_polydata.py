@@ -164,7 +164,7 @@ def test_ray_trace_plot():
 def test_plot_curvature():
     sphere = SPHERE.copy()
     cpos = sphere.plot_curvature(off_screen=True)
-    assert isinstance(cpos, list)
+    assert isinstance(cpos, pyvista.CameraPosition)
 
 
 def test_edge_mask():

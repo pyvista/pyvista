@@ -17,4 +17,4 @@ def test_camera_position():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(pyvista.Sphere())
     plotter.show()
-    assert isinstance(plotter.camera_position, list)
+    assert isinstance(plotter.camera_position, pyvista.CameraPosition)
