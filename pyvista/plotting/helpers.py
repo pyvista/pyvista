@@ -15,7 +15,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         volume=False, parallel_projection=False, **kwargs):
+         volume=False, parallel_projection=False, auto_close=False, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -78,7 +78,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
     height = kwargs.get('height', 400)
-    auto_close = kwargs.get('auto_close', rcParams['auto_close'])
+    if  auto_close is None:
+        auto_close = rcParams['auto_close']
 
     if notebook:
         off_screen = notebook
