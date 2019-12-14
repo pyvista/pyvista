@@ -2700,7 +2700,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 
     def _clear_ren_win(self):
-        """Clear the render window"""
+        """Clear the render window."""
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
             del self.ren_win
