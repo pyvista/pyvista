@@ -4055,6 +4055,8 @@ class Plotter(BasePlotter):
         self.last_image_depth = self.get_image_depth()
         disp = None
 
+        self.update() # For Windows issuses. Resolves #186
+        # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
