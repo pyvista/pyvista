@@ -2698,6 +2698,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self._render()
 
+
+    def _clear_ren_win(self):
+        """Clear the render window"""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Finalize()
+            del self.ren_win
+
+
     def close(self):
         """Close the render window."""
         # must close out widgets first
@@ -2716,9 +2724,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bar stuff
         self.clear()
 
-        if hasattr(self, 'ren_win'):
-            self.ren_win.Finalize()
-            del self.ren_win
+        self._clear_ren_win()
 
         if hasattr(self, '_style'):
             del self._style
@@ -4075,6 +4081,13 @@ class Plotter(BasePlotter):
                                      height=height)
             except:
                 pass
+        # In the event that the user hit the exit-button ont the windows GUI,
+        # then it must be finalized and deleted as accessing it will kill the
+        # kernel. Here we check for that and clean it up before moving on to
+        # any of the closing routines that might try to still access that
+        # render window.
+        if not self.ren_win.IsCurrent():
+            self._clear_ren_win()
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
