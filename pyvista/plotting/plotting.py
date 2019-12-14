@@ -4025,6 +4025,9 @@ class Plotter(BasePlotter):
         if auto_close is None:
             auto_close = rcParams['auto_close']
 
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter has been closed and cannot be shown.")
+
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
@@ -4088,6 +4091,9 @@ class Plotter(BasePlotter):
         # render window.
         if not self.ren_win.IsCurrent():
             self._clear_ren_win()
+            if not auto_close:
+                warnings.warn("`auto_close` ignored: by clicking the exit button, you have destroyed the render window and we have to close it out.")
+                auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
