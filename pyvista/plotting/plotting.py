@@ -353,9 +353,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def _close_callback(self):
         """Make sure a screenhsot is acquired before closing."""
         self.q_pressed = True
-        # Grab screenshot right before renderer closes
-        self.last_image = self.screenshot(True, return_img=True)
-        self.last_image_depth = self.get_image_depth()
+        self.close()
 
 
     def increment_point_size_and_line_width(self, increment):
