@@ -41,14 +41,16 @@ class DataObject(vtkDataObject, ABC):
     @abstractmethod
     def _vtk_writers(self):
         """Return a dictionary of str:vtkWriter/vtkXMLWriter. Which is used to
-         select a valid vtk writer for a given file extension."""
+         select a valid vtk writer for a given file extension. For example,
+         {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}"""
         raise NotImplementedError
 
     @property
     @abstractmethod
     def _vtk_readers(self):
         """Return a dictionary of str:vtkWriter/vtkXMLWriter. Which is used to
-         select a valid vtk reader for a given file extension."""
+         select a valid vtk reader for a given file extension. For example,
+         {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}"""
         raise NotImplementedError
 
 
