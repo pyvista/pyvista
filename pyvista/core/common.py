@@ -1,6 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 import collections
 import logging
 import os
@@ -27,7 +27,7 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class DataObject(vtkDataObject, metaclass=ABCMeta):
+class DataObject(vtkDataObject, ABC):
     """Methods common to all wrapped data objects."""
 
     def __init__(self, *args, **kwargs):
@@ -37,11 +37,19 @@ class DataObject(vtkDataObject, metaclass=ABCMeta):
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self.association_bitarray_names = collections.defaultdict(set)
 
-    def __new__(cls, *args, **kwargs):
-        """Allocate memory for the data object."""
-        if cls is DataObject:
-            raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
-        return object.__new__(cls, *args, **kwargs)
+    @property
+    @abstractmethod
+    def _vtk_writers(self):
+        """Return a dictionary of str:vtkWriter/vtkXMLWriter. Which is used to
+         select a valid vtk writer for a given file extension."""
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def _vtk_readers(self):
+        """Return a dictionary of str:vtkWriter/vtkXMLWriter. Which is used to
+         select a valid vtk reader for a given file extension."""
+        raise NotImplementedError
 
 
     def shallow_copy(self, to_copy):
@@ -71,7 +79,11 @@ class DataObject(vtkDataObject, metaclass=ABCMeta):
         filename = os.path.abspath(os.path.expanduser(filename))
         if not os.path.isfile(filename):
             raise FileNotFoundError('File %s does not exist' % filename)
-        reader = fileio.get_reader(filename)
+        file_ext = fileio.get_ext(filename)
+        if file_ext not in self._vtk_readers:
+            raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
+                self._vtk_readers.keys()))
+        reader = self._vtk_readers[file_ext]
         reader.SetFileName(filename)
         reader.Update()
         self.shallow_copy(reader.GetOutput())
@@ -96,7 +108,11 @@ class DataObject(vtkDataObject, metaclass=ABCMeta):
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        writer = fileio.get_writer(filename)
+        file_ext = fileio.get_ext(filename)
+        if file_ext not in self._vtk_writers:
+            raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
+                self._vtk_writers.keys()))
+        writer = self._vtk_writers[file_ext]
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
@@ -1296,29 +1312,3 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
     if not inplace:
         return points
-
-
-class pyvista_ndarray(np.ndarray):
-    """Link a numpy array with the vtk object the data is attached to.
-
-    When the array is changed it triggers "Modified()" which updates
-    all upstream objects, including any render windows holding the
-    object.
-
-    """
-
-    def __new__(cls, input_array, proxy):
-        """Allocate memory for the pyvista ndarray."""
-        obj = np.asarray(input_array).view(cls)
-        cls.proxy = proxy
-        return obj
-
-    def __array_finalize__(self, obj):
-        """Customize array at creation."""
-        if obj is None:
-            return
-
-    def __setitem__(self, coords, value):
-        """Update the array and update the vtk object."""
-        super(pyvista_ndarray, self).__setitem__(coords, value)
-        self.proxy.Modified()
