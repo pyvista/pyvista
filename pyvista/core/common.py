@@ -83,7 +83,7 @@ class DataObject(vtkDataObject, ABC):
         if file_ext not in self._vtk_readers:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
                 self._vtk_readers.keys()))
-        reader = self._vtk_readers[file_ext]
+        reader = self._vtk_readers[file_ext]()
         reader.SetFileName(filename)
         reader.Update()
         self.shallow_copy(reader.GetOutput())
@@ -112,7 +112,7 @@ class DataObject(vtkDataObject, ABC):
         if file_ext not in self._vtk_writers:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
                 self._vtk_writers.keys()))
-        writer = self._vtk_writers[file_ext]
+        writer = self._vtk_writers[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
