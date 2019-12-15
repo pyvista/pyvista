@@ -125,25 +125,7 @@ class Table(vtk.vtkTable, DataObject):
             Numpy array of scalars
 
         """
-        if name is None:
-            # use first array
-            name = self.GetRowData().GetArrayName(0)
-            if name is None:
-                raise RuntimeError('No arrays present to fetch.')
-        vtkarr = self.GetRowData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a row scalar'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._row_bool_array_names:
-                self._row_bool_array_names.append(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._row_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.row_arrays[name]
 
 
     @property
