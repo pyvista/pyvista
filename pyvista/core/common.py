@@ -1174,7 +1174,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         return pyansys.CellQuality(dataset)
 
 
-class _ScalarsDict(dict, metaclass=ABCMeta):
+class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries."""
 
     def __init__(self, data):
@@ -1190,7 +1190,7 @@ class _ScalarsDict(dict, metaclass=ABCMeta):
         """Enable callbacks to be set True."""
         self.callback_enabled = True
 
-    @abstractmethod
+
     def adder(self, scalars, name, set_active=False, deep=True):
         raise NotImplementedError()
 
