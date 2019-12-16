@@ -37,6 +37,7 @@ class DataObject(vtkDataObject, ABC):
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self.association_bitarray_names = collections.defaultdict(set)
 
+
     @property
     @abstractmethod
     def _vtk_writers(self):
@@ -44,6 +45,7 @@ class DataObject(vtkDataObject, ABC):
          select a valid vtk writer for a given file extension. For example,
          {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}"""
         raise NotImplementedError
+
 
     @property
     @abstractmethod
