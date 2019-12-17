@@ -2698,6 +2698,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self._render()
 
+
+    def _clear_ren_win(self):
+        """Clear the render window."""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Finalize()
+            del self.ren_win
+
+
     def close(self):
         """Close the render window."""
         # must close out widgets first
@@ -2716,9 +2724,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bar stuff
         self.clear()
 
-        if hasattr(self, 'ren_win'):
-            self.ren_win.Finalize()
-            del self.ren_win
+        self._clear_ren_win()
 
         if hasattr(self, '_style'):
             del self._style
@@ -3972,7 +3978,13 @@ class Plotter(BasePlotter):
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
              height=400):
-        """Create a plotting window.
+        """Display the plotting window.
+
+        Notes
+        -----
+        Please use the ``q``-key to close the plotter as some operating systems
+        (namely Windows) will experience issues saving a screenshot if the
+        exit button in the GUI is prressed.
 
         Parameters
         ----------
@@ -4019,6 +4031,9 @@ class Plotter(BasePlotter):
         if auto_close is None:
             auto_close = rcParams['auto_close']
 
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter has been closed and cannot be shown.")
+
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
@@ -4055,6 +4070,8 @@ class Plotter(BasePlotter):
         self.last_image_depth = self.get_image_depth()
         disp = None
 
+        self.update() # For Windows issues. Resolves #186
+        # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
@@ -4073,6 +4090,18 @@ class Plotter(BasePlotter):
                                      height=height)
             except:
                 pass
+        # In the event that the user hits the exit-button on the GUI  (on
+        # Windows OS) then it must be finalized and deleted as accessing it
+        # will kill the kernel.
+        # Here we check for that and clean it up before moving on to any of
+        # the closing routines that might try to still access that
+        # render window.
+        if not self.ren_win.IsCurrent():
+            self._clear_ren_win() # The ren_win is deleted
+            # proper screenshots cannot be saved if this happens
+            if not auto_close:
+                warnings.warn("`auto_close` ignored: by clicking the exit button, you have destroyed the render window and we have to close it out.")
+                auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python
