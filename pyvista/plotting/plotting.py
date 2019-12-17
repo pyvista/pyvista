@@ -380,7 +380,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
 
-        self.add_key_event('q', self._close_callback)
+        if not isinstance(self, pyvista.QtInteractor) or isinstance(self, pyvista.BackgroundPlotter):
+            self.add_key_event('q', self._close_callback)
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
