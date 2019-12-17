@@ -80,6 +80,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'white'
         rcParams['outline_color'] = 'white'
+        rcParams['edge_color'] = 'black'
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'gold'
         rcParams['axes']['z_color'] = 'green'
@@ -93,6 +94,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'black'
+        rcParams['edge_color'] = 'black'
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'seagreen'
         rcParams['axes']['z_color'] = 'blue'
