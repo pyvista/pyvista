@@ -640,7 +640,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  loc=None, culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
-                 annotations=None, pickable=True, preference="point", **kwargs):
+                 annotations=None, pickable=True, preference="point",
+                 log_scale=False, **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1159,6 +1160,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             prepare_mapper(scalars)
             table = self.mapper.GetLookupTable()
+            if log_scale:
+                table.SetScaleToLog10()
 
             if _using_labels:
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
@@ -2304,7 +2307,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
-                       bold=True, title_font_size=None,
+                       bold=False, title_font_size=None,
                        label_font_size=None, color=None,
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
@@ -2312,7 +2315,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        interactive=False, fmt=None, use_opacity=True,
                        outline=False, nan_annotation=False,
                        below_label=None, above_label=None,
-                       background_color=None, n_colors=None):
+                       background_color=None, n_colors=None, fill=False):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
@@ -2383,11 +2386,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         above_label : str, optional
             String annotation for values above the scalars range
 
-        background_color: array, optional
+        background_color : array, optional
             The color used for the background in RGB format.
 
-        n_colors: int, optional
+        n_colors : int, optional
             The maximum number of color displayed in the scalar bar.
+
+        fill : bool
+            Draw a filled box behind the scalar bar with the ``background_color``
 
         Notes
         -----
@@ -2481,6 +2487,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if background_color is not None:
             background_color = parse_color(background_color, opacity=1.0)
             background_color = np.array(background_color) * 255
+            self.scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
+
+            if fill:
+                self.scalar_bar.DrawBackgroundOn()
 
             lut = vtk.vtkLookupTable()
             lut.DeepCopy(mapper.lookup_table)
@@ -2499,6 +2509,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if n_labels < 1:
             self.scalar_bar.DrawTickLabelsOff()
         else:
+            self.scalar_bar.DrawTickLabelsOn()
             self.scalar_bar.SetNumberOfLabels(n_labels)
 
         if nan_annotation:
