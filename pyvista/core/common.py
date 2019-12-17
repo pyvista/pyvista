@@ -691,7 +691,11 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def active_scalar(self):
-        """DEPRECATED: Returns the active scalars as an array."""
+        """Return the active scalars as an array.
+
+        DEPRECATED: Please use `.active_scalars` instead.
+
+        """
         warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
         return self.active_scalars
 
