@@ -2962,7 +2962,11 @@ class PolyDataFilters(DataSetFilters):
 
 
     def clip_with_plane(poly_data, origin, normal, value=0, invert=False, inplace=False):
-        """DEPRECATED: Use ``.clip`` instead."""
+        """Clip a dataset by a plane by specifying the origin and normal.
+
+        DEPRECATED: Please use `.clip` instead.
+
+        """
         logging.warning('DEPRECATED: ``clip_with_plane`` is deprecated. Use ``.clip`` instead.')
         return DataSetFilters.clip(poly_data, normal=normal, origin=origin, value=value, invert=invert, inplace=inplace)
 
