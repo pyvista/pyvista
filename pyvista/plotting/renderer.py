@@ -252,6 +252,8 @@ class Renderer(vtkRenderer):
 
         self.ResetCameraClippingRange()
 
+        self.Modified()
+
         return actor, actor.GetProperty()
 
 
@@ -681,6 +683,7 @@ class Renderer(vtkRenderer):
                     pass
 
         self.RemoveAllViewProps()
+        self.Modified()
 
     @camera_position.setter
     def camera_position(self, camera_location):
@@ -831,6 +834,7 @@ class Renderer(vtkRenderer):
             self.reset_camera()
         else:
             self.parent._render()
+        self.Modified()
         return True
 
 
