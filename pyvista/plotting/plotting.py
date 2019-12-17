@@ -3978,7 +3978,13 @@ class Plotter(BasePlotter):
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
              height=400):
-        """Create a plotting window.
+        """Display the plotting window.
+
+        Notes
+        -----
+        Please use the ``q``-key to close the plotter as some operating systems
+        (namely Windows) will experience issues saving a screenshot if the
+        exit button in the GUI is prressed.
 
         Parameters
         ----------
@@ -4064,7 +4070,7 @@ class Plotter(BasePlotter):
         self.last_image_depth = self.get_image_depth()
         disp = None
 
-        self.update() # For Windows issuses. Resolves #186
+        self.update() # For Windows issues. Resolves #186
         # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
@@ -4084,13 +4090,15 @@ class Plotter(BasePlotter):
                                      height=height)
             except:
                 pass
-        # In the event that the user hit the exit-button ont the windows GUI,
-        # then it must be finalized and deleted as accessing it will kill the
-        # kernel. Here we check for that and clean it up before moving on to
-        # any of the closing routines that might try to still access that
+        # In the event that the user hits the exit-button on the GUI  (on
+        # Windows OS) then it must be finalized and deleted as accessing it
+        # will kill the kernel.
+        # Here we check for that and clean it up before moving on to any of
+        # the closing routines that might try to still access that
         # render window.
         if not self.ren_win.IsCurrent():
-            self._clear_ren_win()
+            self._clear_ren_win() # The ren_win is deleted
+            # proper screenshots cannot be saved if this happens
             if not auto_close:
                 warnings.warn("`auto_close` ignored: by clicking the exit button, you have destroyed the render window and we have to close it out.")
                 auto_close = True
