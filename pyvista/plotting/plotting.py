@@ -2199,8 +2199,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                   color=None, line_width=None, opacity=1.0, show_edges=False,
                   lighting=False, edge_color=None, reset_camera=None, pad=0.01,
                    offset=0.0, loc=None):
-        """Show a floor mesh. This generates planes at the boundaries of the
-        scene to behave like floors or walls.
+        """Show a floor mesh.
+
+        This generates planes at the boundaries of the scene to behave like
+        floors or walls.
 
         Parameters
         ----------
@@ -2253,6 +2255,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return renderer.add_floor(**kwargs)
 
     def remove_floor(self, loc=None):
+        """Remove the floor mesh."""
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
         renderer.remove_floor()

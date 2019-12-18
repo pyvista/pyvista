@@ -665,8 +665,10 @@ class Renderer(vtkRenderer):
                   color=None, line_width=None, opacity=1.0, show_edges=False,
                   lighting=False, edge_color=None, reset_camera=None, pad=0.0,
                   offset=0.0, loc=None, pickable=False):
-        """Show a floor mesh. This generates planes at the boundaries of the
-        scene to behave like floors or walls.
+        """Show a floor mesh.
+
+        This generates planes at the boundaries of the scene to behave like
+        floors or walls.
 
         Parameters
         ----------
@@ -791,7 +793,7 @@ class Renderer(vtkRenderer):
         return self.floor_actor
 
     def remove_floor(self):
-        """ Removes the floor """
+        """Remove the floor actor."""
         if hasattr(self, '_floor'):
             actor = self.floor_actor
             self.floor_actor = None
