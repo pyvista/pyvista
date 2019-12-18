@@ -380,7 +380,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
 
-        self.add_key_event('q', self._close_callback)
+        if not isinstance(self, pyvista.QtInteractor) or isinstance(self, pyvista.BackgroundPlotter):
+            self.add_key_event('q', self._close_callback)
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
@@ -640,7 +641,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  loc=None, culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
-                 annotations=None, pickable=True, preference="point", **kwargs):
+                 annotations=None, pickable=True, preference="point",
+                 log_scale=False, **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1159,6 +1161,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             prepare_mapper(scalars)
             table = self.mapper.GetLookupTable()
+            if log_scale:
+                table.SetScaleToLog10()
 
             if _using_labels:
                 table.SetAnnotations(convert_array(values), convert_string_array(cats))
@@ -2368,7 +2372,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
-                       bold=True, title_font_size=None,
+                       bold=False, title_font_size=None,
                        label_font_size=None, color=None,
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
@@ -2376,7 +2380,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        interactive=False, fmt=None, use_opacity=True,
                        outline=False, nan_annotation=False,
                        below_label=None, above_label=None,
-                       background_color=None, n_colors=None):
+                       background_color=None, n_colors=None, fill=False):
         """Create scalar bar using the ranges as set by the last input mesh.
 
         Parameters
@@ -2447,11 +2451,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         above_label : str, optional
             String annotation for values above the scalars range
 
-        background_color: array, optional
+        background_color : array, optional
             The color used for the background in RGB format.
 
-        n_colors: int, optional
+        n_colors : int, optional
             The maximum number of color displayed in the scalar bar.
+
+        fill : bool
+            Draw a filled box behind the scalar bar with the ``background_color``
 
         Notes
         -----
@@ -2545,6 +2552,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if background_color is not None:
             background_color = parse_color(background_color, opacity=1.0)
             background_color = np.array(background_color) * 255
+            self.scalar_bar.GetBackgroundProperty().SetColor(background_color[0:3])
+
+            if fill:
+                self.scalar_bar.DrawBackgroundOn()
 
             lut = vtk.vtkLookupTable()
             lut.DeepCopy(mapper.lookup_table)
@@ -2563,6 +2574,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if n_labels < 1:
             self.scalar_bar.DrawTickLabelsOff()
         else:
+            self.scalar_bar.DrawTickLabelsOn()
             self.scalar_bar.SetNumberOfLabels(n_labels)
 
         if nan_annotation:
@@ -2751,6 +2763,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self._render()
 
+
+    def _clear_ren_win(self):
+        """Clear the render window."""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Finalize()
+            del self.ren_win
+
+
     def close(self):
         """Close the render window."""
         # must close out widgets first
@@ -2769,9 +2789,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bar stuff
         self.clear()
 
-        if hasattr(self, 'ren_win'):
-            self.ren_win.Finalize()
-            del self.ren_win
+        self._clear_ren_win()
 
         if hasattr(self, '_style'):
             del self._style
@@ -4025,7 +4043,13 @@ class Plotter(BasePlotter):
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
              height=400):
-        """Create a plotting window.
+        """Display the plotting window.
+
+        Notes
+        -----
+        Please use the ``q``-key to close the plotter as some operating systems
+        (namely Windows) will experience issues saving a screenshot if the
+        exit button in the GUI is prressed.
 
         Parameters
         ----------
@@ -4072,6 +4096,9 @@ class Plotter(BasePlotter):
         if auto_close is None:
             auto_close = rcParams['auto_close']
 
+        if not hasattr(self, "ren_win"):
+            raise RuntimeError("This plotter has been closed and cannot be shown.")
+
         # reset unless camera for the first render unless camera is set
         if self._first_time:  # and not self.camera_set:
             for renderer in self.renderers:
@@ -4108,6 +4135,8 @@ class Plotter(BasePlotter):
         self.last_image_depth = self.get_image_depth()
         disp = None
 
+        self.update() # For Windows issues. Resolves #186
+        # See: https://github.com/pyvista/pyvista/issues/186#issuecomment-550993270
         if interactive and (not self.off_screen):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
@@ -4126,6 +4155,18 @@ class Plotter(BasePlotter):
                                      height=height)
             except:
                 pass
+        # In the event that the user hits the exit-button on the GUI  (on
+        # Windows OS) then it must be finalized and deleted as accessing it
+        # will kill the kernel.
+        # Here we check for that and clean it up before moving on to any of
+        # the closing routines that might try to still access that
+        # render window.
+        if not self.ren_win.IsCurrent():
+            self._clear_ren_win() # The ren_win is deleted
+            # proper screenshots cannot be saved if this happens
+            if not auto_close:
+                warnings.warn("`auto_close` ignored: by clicking the exit button, you have destroyed the render window and we have to close it out.")
+                auto_close = True
         # NOTE: after this point, nothing from the render window can be accessed
         #       as if a user presed the close button, then it destroys the
         #       the render view and a stream of errors will kill the Python

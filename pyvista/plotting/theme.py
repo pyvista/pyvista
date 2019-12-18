@@ -21,7 +21,7 @@ rcParams = {
     },
     'window_size': [1024, 768],
     'font': {
-        'family': 'courier',
+        'family': 'arial',
         'size': 12,
         'title_size': None,
         'label_size': None,
@@ -81,6 +81,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'white'
         rcParams['outline_color'] = 'white'
+        rcParams['edge_color'] = 'black'
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'gold'
         rcParams['axes']['z_color'] = 'green'
@@ -94,6 +95,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'black'
+        rcParams['edge_color'] = 'black'
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'seagreen'
         rcParams['axes']['z_color'] = 'blue'

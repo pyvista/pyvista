@@ -23,7 +23,8 @@ class PickingHelper(object):
 
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
                             show=True, show_message=True, style='wireframe',
-                            line_width=5, color='pink', font_size=18, **kwargs):
+                            line_width=5, color='pink', font_size=18,
+                            start=False, **kwargs):
         """Enable picking at cells.
 
         Press "r" to enable retangle based selection.  Press "r" again to
@@ -74,6 +75,9 @@ class PickingHelper(object):
 
         font_size : int
             Sets the size of the message.
+
+        start : bool
+            Automatically start the cell selection tool.
 
         kwargs : optional
             All remaining keyword arguments are used to control how the
@@ -165,6 +169,10 @@ class PickingHelper(object):
                 if not through:
                     show_message += "\nPress P to pick a single cell under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
+
+        if start:
+            self._style.StartSelect()
+
         return
 
 
@@ -245,6 +253,7 @@ class PickingHelper(object):
             if show_message is True:
                 show_message = "Press P to pick under the mouse"
             self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
+
         return
 
 

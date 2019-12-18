@@ -173,7 +173,7 @@ def read(filename, attrs=None, file_format=None):
         return multi
     filename = os.path.abspath(os.path.expanduser(filename))
     if not os.path.isfile(filename):
-        raise IOError('File ({}) not found'.format(filename))
+        raise FileNotFoundError('File ({}) not found'.format(filename))
     ext = get_ext(filename)
 
     # Read file using meshio.read if file_format is present
@@ -215,7 +215,7 @@ def read(filename, attrs=None, file_format=None):
                 except ReadError:
                     pass
             except SyntaxError:
-                # https://github.com/pyvista/pyvista/pull/495 
+                # https://github.com/pyvista/pyvista/pull/495
                 pass
 
     raise IOError("This file was not able to be automatically read by pyvista.")
@@ -228,8 +228,10 @@ def read_texture(filename, attrs=None):
         # initialize the reader using the extension to find it
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
+        if image.n_points < 2:
+            raise AssertionError("Problem reading the image with VTK.")
         return pyvista.image_to_texture(image)
-    except KeyError:
+    except (KeyError, AssertionError):
         # Otherwise, use the imageio reader
         pass
     import imageio
