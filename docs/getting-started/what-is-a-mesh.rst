@@ -16,7 +16,7 @@ In all spatially referenced datasets, there lies an underlying mesh structure
 - the connectivity or geometry between nodes to define cells. Whether those
 cells are 2D or 3D is not always of importance and we've worked hard to make
 PyVista work for datasets of either or mixed geometries so that you as a user
-do not have to get get bogged down in the nuances.
+do not have to get bogged down in the nuances.
 
 What is a Node?
 ---------------
@@ -98,7 +98,7 @@ A cell is the geometry between nodes that defines the connectivity or topology
 of a mesh. In the examples above, cells are defined by the lines
 (edges colored in black) connecting nodes (colored in red).
 For example, a cell in the beam example is a a voxel defined by region
-between four nodes in that mesh:
+between eight nodes in that mesh:
 
 
 
