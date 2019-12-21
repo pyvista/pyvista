@@ -113,6 +113,19 @@ def test_widget_slider():
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    for event_type in ['start', 'end', 'always']:
+        p.add_slider_widget(callback=func, rng=[0,10],
+                            event_type=event_type)
+    with pytest.raises(TypeError, match='type for `event_type`'):
+        p.add_slider_widget(callback=func, rng=[0,10],
+                            event_type=0)
+    with pytest.raises(ValueError, match='value for `event_type`'):
+        p.add_slider_widget(callback=func, rng=[0,10],
+                            event_type='foo')
+    p.clear_slider_widgets()
+    p.close()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda value, widget: value # Does nothing
     p.add_mesh(mesh)
     p.add_slider_widget(callback=func, rng=[0,10], pass_widget=True)
