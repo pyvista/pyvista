@@ -39,6 +39,9 @@
 .. |joss| image:: https://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
+.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -50,6 +53,8 @@
 | GitHub               | |contributors| |stars| |
 +----------------------+------------------------+
 | Citation             | |joss| |zenodo|        |
++----------------------+------------------------+
+| License              | |MIT|                  |
 +----------------------+------------------------+
 
 
