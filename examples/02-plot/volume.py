@@ -52,10 +52,10 @@ p.show()
 ###############################################################################
 # We can also use a shading technique when volume rendering with the ``shade``
 # option
-p = pv.Plotter(shape=(1,2))
+p = pv.Plotter(shape=(1, 2))
 p.add_volume(vol, cmap="viridis", opacity=opacity, shade=False)
 p.add_text("No shading")
-p.subplot(0,1)
+p.subplot(0, 1)
 p.add_volume(vol, cmap="viridis", opacity=opacity, shade=True)
 p.add_text("Shading")
 p.link_views()
@@ -90,7 +90,9 @@ frog = examples.download_frog()
 
 p = pv.Plotter()
 p.add_volume(frog, cmap="viridis", opacity="sigmoid_6")
-p.camera_position = [(929., 1067., -278.9),
-                     (249.5, 234.5, 101.25),
-                     (-0.2048, -0.2632, -0.9427)]
+p.camera_position = [
+    (929.0, 1067.0, -278.9),
+    (249.5, 234.5, 101.25),
+    (-0.2048, -0.2632, -0.9427),
+]
 p.show()

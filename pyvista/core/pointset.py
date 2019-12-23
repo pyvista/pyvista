@@ -4,14 +4,24 @@ import os
 
 import numpy as np
 import vtk
-from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
-                 VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_PYRAMID,
-                 VTK_QUADRATIC_QUAD, VTK_QUADRATIC_TETRA,
-                 VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
-                 VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
-                 vtkUnstructuredGrid)
-from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
-                                    vtk_to_numpy)
+from vtk import (
+    VTK_HEXAHEDRON,
+    VTK_PYRAMID,
+    VTK_QUAD,
+    VTK_QUADRATIC_HEXAHEDRON,
+    VTK_QUADRATIC_PYRAMID,
+    VTK_QUADRATIC_QUAD,
+    VTK_QUADRATIC_TETRA,
+    VTK_QUADRATIC_TRIANGLE,
+    VTK_QUADRATIC_WEDGE,
+    VTK_TETRA,
+    VTK_TRIANGLE,
+    VTK_WEDGE,
+    vtkPolyData,
+    vtkStructuredGrid,
+    vtkUnstructuredGrid,
+)
+from vtk.util.numpy_support import numpy_to_vtk, numpy_to_vtkIdTypeArray, vtk_to_numpy
 
 import pyvista
 
@@ -19,7 +29,7 @@ from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
 
 log = logging.getLogger(__name__)
-log.setLevel('CRITICAL')
+log.setLevel("CRITICAL")
 
 
 class PointSet(Common):
@@ -47,7 +57,6 @@ class PointSet(Common):
         alg.SetUseScalarsAsWeights(scalars_weight)
         alg.Update()
         return np.array(alg.GetCenter())
-
 
     def shallow_copy(self, to_copy):
         """Do a shallow copy the pointset."""
@@ -98,7 +107,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Initialize the polydata."""
         super(PolyData, self).__init__()
 
-        deep = kwargs.pop('deep', False)
+        deep = kwargs.pop("deep", False)
 
         if not args:
             return
@@ -117,7 +126,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                 cells = self._make_vertice_cells(points.shape[0])
                 self._from_arrays(points, cells, deep, verts=True)
             else:
-                raise TypeError('Invalid input type')
+                raise TypeError("Invalid input type")
 
         elif len(args) == 2:
             arg0_is_array = isinstance(args[0], np.ndarray)
@@ -125,9 +134,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             if arg0_is_array and arg1_is_array:
                 self._from_arrays(args[0], args[1], deep)
             else:
-                raise TypeError('Invalid input type')
+                raise TypeError("Invalid input type")
         else:
-            raise TypeError('Invalid input type')
+            raise TypeError("Invalid input type")
 
         # Check if need to make vertex cells
         if self.n_points > 0 and self.n_cells == 0:
@@ -144,10 +153,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @staticmethod
     def _make_vertice_cells(npoints):
-        cells = np.hstack((np.ones((npoints, 1)),
-                           np.arange(npoints).reshape(-1, 1)))
+        cells = np.hstack((np.ones((npoints, 1)), np.arange(npoints).reshape(-1, 1)))
         cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-        cells = np.reshape(cells, (2*npoints))
+        cells = np.reshape(cells, (2 * npoints))
         return cells
 
     def _load_file(self, filename):
@@ -169,24 +177,26 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         filename = os.path.abspath(os.path.expanduser(filename))
         # test if file exists
         if not os.path.isfile(filename):
-            raise Exception('File %s does not exist' % filename)
+            raise Exception("File %s does not exist" % filename)
 
         # Get extension
         ext = pyvista.get_ext(filename)
 
         # Select reader
-        if ext == '.ply':
+        if ext == ".ply":
             reader = vtk.vtkPLYReader()
-        elif ext == '.stl':
+        elif ext == ".stl":
             reader = vtk.vtkSTLReader()
-        elif ext == '.vtk':
+        elif ext == ".vtk":
             reader = vtk.vtkPolyDataReader()
-        elif ext == '.vtp':
+        elif ext == ".vtp":
             reader = vtk.vtkXMLPolyDataReader()
-        elif ext == '.obj':
+        elif ext == ".obj":
             reader = vtk.vtkOBJReader()
         else:
-            raise TypeError('Filetype must be either "ply", "stl", "vtk", "vtp", or "obj".')
+            raise TypeError(
+                'Filetype must be either "ply", "stl", "vtk", "vtp", or "obj".'
+            )
 
         # Load file
         reader.SetFileName(filename)
@@ -195,7 +205,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         # sanity check
         if not np.any(self.points):
-            raise AssertionError('Empty or invalid file')
+            raise AssertionError("Empty or invalid file")
 
     @property
     def lines(self):
@@ -210,7 +220,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         # get number of lines
         if lines.ndim == 1:
-            log.debug('efficiency warning')
+            log.debug("efficiency warning")
             c = 0
             nlines = 0
             while c < lines.size:
@@ -236,7 +246,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         # get number of faces
         if faces.ndim == 1:
-            log.debug('efficiency warning')
+            log.debug("efficiency warning")
             c = 0
             nfaces = 0
             while c < faces.size:
@@ -259,7 +269,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     #     """ returns a copy of the indices of the lines """
     #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
     #     return np.ascontiguousarray(lines[:, 1:])
-
 
     def is_all_triangles(self):
         """Return True if all the faces of the polydata are triangles."""
@@ -339,7 +348,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Return the number of cells."""
         return self.n_cells
 
-
     def save(self, filename, binary=True):
         """Write a surface mesh to disk.
 
@@ -368,25 +376,25 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         file_mode = True
         # Check filetype
         ftype = filename[-3:]
-        if ftype == 'ply':
+        if ftype == "ply":
             writer = vtk.vtkPLYWriter()
-        elif ftype == 'vtp':
+        elif ftype == "vtp":
             writer = vtk.vtkXMLPolyDataWriter()
             file_mode = False
             if binary:
                 writer.SetDataModeToBinary()
             else:
                 writer.SetDataModeToAscii()
-        elif ftype == 'stl':
+        elif ftype == "stl":
             writer = vtk.vtkSTLWriter()
-        elif ftype == 'vtk':
+        elif ftype == "vtk":
             writer = vtk.vtkPolyDataWriter()
         else:
             raise Exception('Filetype must be either "ply", "stl", or "vtk"')
 
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
-        if ftype in ['stl', 'ply']:
+        if ftype in ["stl", "ply"]:
             self.compute_normals(inplace=True)
 
         writer.SetFileName(filename)
@@ -396,7 +404,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         elif file_mode:
             writer.SetFileTypeToASCII()
         writer.Write()
-
 
     @property
     def area(self):
@@ -428,26 +435,22 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
-
     @property
     def point_normals(self):
         """Return the point normals."""
         mesh = self.compute_normals(cell_normals=False, inplace=False)
-        return mesh.point_arrays['Normals']
-
+        return mesh.point_arrays["Normals"]
 
     @property
     def cell_normals(self):
         """Return the cell normals."""
         mesh = self.compute_normals(point_normals=False, inplace=False)
-        return mesh.cell_arrays['Normals']
-
+        return mesh.cell_arrays["Normals"]
 
     @property
     def face_normals(self):
         """Return the cell normals."""
         return self.cell_normals
-
 
     @property
     def obbTree(self):
@@ -459,13 +462,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         hierarchical tree structure of such boxes, where deeper levels of OBB
         confine smaller regions of space.
         """
-        if not hasattr(self, '_obbTree'):
+        if not hasattr(self, "_obbTree"):
             self._obbTree = vtk.vtkOBBTree()
             self._obbTree.SetDataSet(self)
             self._obbTree.BuildLocator()
 
         return self._obbTree
-
 
     @property
     def n_open_edges(self):
@@ -485,14 +487,16 @@ class PointGrid(PointSet):
     def __new__(cls, *args, **kwargs):
         """Allocate memory for the point grid."""
         if cls is PointGrid:
-            raise TypeError("pyvista.PointGrid is an abstract class and may not be instantiated.")
+            raise TypeError(
+                "pyvista.PointGrid is an abstract class and may not be instantiated."
+            )
         return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         """Initialize the point grid."""
         super(PointGrid, self).__init__()
 
-    def plot_curvature(self, curv_type='mean', **kwargs):
+    def plot_curvature(self, curv_type="mean", **kwargs):
         """Plot the curvature of the external surface of the grid.
 
         Parameters
@@ -526,7 +530,6 @@ class PointGrid(PointSet):
         """
         surf = self.extract_surface().triangulate()
         return surf.volume
-
 
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
@@ -564,7 +567,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def __init__(self, *args, **kwargs):
         """Initialize the unstructured grid."""
         super(UnstructuredGrid, self).__init__()
-        deep = kwargs.pop('deep', False)
+        deep = kwargs.pop("deep", False)
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkUnstructuredGrid):
@@ -584,7 +587,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             else:
                 itype = type(args[0])
-                raise Exception('Cannot work with input type %s' % itype)
+                raise Exception("Cannot work with input type %s" % itype)
 
         elif len(args) == 4:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -595,18 +598,15 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
             else:
-                raise Exception('All input types must be np.ndarray')
-
+                raise Exception("All input types must be np.ndarray")
 
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
 
-
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -666,11 +666,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         if cells.dtype != pyvista.ID_TYPE:
             cells = cells.astype(pyvista.ID_TYPE)
 
-        if not cells.flags['C_CONTIGUOUS']:
+        if not cells.flags["C_CONTIGUOUS"]:
             cells = np.ascontiguousarray(cells)
 
         # if cells.ndim != 1:
-            # cells = cells.ravel()
+        # cells = cells.ravel()
 
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
@@ -708,12 +708,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
-            raise Exception('%s does not exist' % filename)
+            raise Exception("%s does not exist" % filename)
 
         # Check file extension
-        if '.vtu' in filename:
+        if ".vtu" in filename:
             reader = vtk.vtkXMLUnstructuredGridReader()
-        elif '.vtk' in filename:
+        elif ".vtk" in filename:
             reader = vtk.vtkUnstructuredGridReader()
         else:
             raise Exception('Extension should be either ".vtu" or ".vtk"')
@@ -746,13 +746,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
+        if ".vtk" in filename:
             writer = vtk.vtkUnstructuredGridWriter()
             if binary:
                 writer.SetFileTypeToBinary()
             else:
                 writer.SetFileTypeToASCII()
-        elif '.vtu' in filename:
+        elif ".vtu" in filename:
             writer = vtk.vtkXMLUnstructuredGridWriter()
             if binary:
                 writer.SetDataModeToBinary()
@@ -843,7 +843,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return vtk_to_numpy(self.GetCellLocationsArray())
 
 
-
 class StructuredGrid(vtkStructuredGrid, PointGrid):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
@@ -896,16 +895,13 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
 
-
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
 
-
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.
@@ -922,14 +918,14 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             Position of the points in z direction.
 
         """
-        if not(x.shape == y.shape == z.shape):
-            raise Exception('Input point array shapes must match exactly')
+        if not (x.shape == y.shape == z.shape):
+            raise Exception("Input point array shapes must match exactly")
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
-        points[:, 0] = x.ravel('F')
-        points[:, 1] = y.ravel('F')
-        points[:, 2] = z.ravel('F')
+        points[:, 0] = x.ravel("F")
+        points[:, 1] = y.ravel("F")
+        points[:, 2] = z.ravel("F")
 
         # ensure that the inputs are 3D
         dim = list(x.shape)
@@ -956,16 +952,17 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         filename = os.path.abspath(os.path.expanduser(filename))
         # check file exists
         if not os.path.isfile(filename):
-            raise Exception('{} does not exist'.format(filename))
+            raise Exception("{} does not exist".format(filename))
 
         # Check file extension
-        if '.vts' in filename:
+        if ".vts" in filename:
             legacy_writer = False
-        elif '.vtk' in filename:
+        elif ".vtk" in filename:
             legacy_writer = True
         else:
             raise Exception(
-                'Extension should be either ".vts" (xml) or ".vtk" (legacy)')
+                'Extension should be either ".vts" (xml) or ".vtk" (legacy)'
+            )
 
         # Create reader
         if legacy_writer:
@@ -1002,21 +999,22 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
+        if ".vtk" in filename:
             writer = vtk.vtkStructuredGridWriter()
             if binary:
                 writer.SetFileTypeToBinary()
             else:
                 writer.SetFileTypeToASCII()
-        elif '.vts' in filename:
+        elif ".vts" in filename:
             writer = vtk.vtkXMLStructuredGridWriter()
             if binary:
                 writer.SetDataModeToBinary()
             else:
                 writer.SetDataModeToAscii()
         else:
-            raise Exception('Extension should be either ".vts" (xml) or'
-                            '".vtk" (legacy)')
+            raise Exception(
+                'Extension should be either ".vts" (xml) or' '".vtk" (legacy)'
+            )
         # Write
         writer.SetFileName(filename)
         writer.SetInputData(self)
@@ -1037,17 +1035,17 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
     @property
     def x(self):
         """Return the X coordinates of all points."""
-        return self.points[:, 0].reshape(self.dimensions, order='F')
+        return self.points[:, 0].reshape(self.dimensions, order="F")
 
     @property
     def y(self):
         """Return the Y coordinates of all points."""
-        return self.points[:, 1].reshape(self.dimensions, order='F')
+        return self.points[:, 1].reshape(self.dimensions, order="F")
 
     @property
     def z(self):
         """Return the Z coordinates of all points."""
-        return self.points[:, 2].reshape(self.dimensions, order='F')
+        return self.points[:, 2].reshape(self.dimensions, order="F")
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""

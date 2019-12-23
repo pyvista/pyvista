@@ -34,20 +34,20 @@ import numpy as np
 
 mesh = examples.download_st_helens().warp_by_scalar()
 # Add scalar array with range (0, 100) that correlates with elevation
-mesh['values'] = pv.plotting.normalize(mesh['Elevation']) * 100
+mesh["values"] = pv.plotting.normalize(mesh["Elevation"]) * 100
 
 ###############################################################################
 # Build a custom colormap - here we make a colormap with 5 discrete colors
 # and we specify the ranges where those colors fall:
 
 # Define the colors we want to use
-blue = np.array([12/256, 238/256, 246/256, 1])
-black = np.array([11/256, 11/256, 11/256, 1])
-grey = np.array([189/256, 189/256, 189/256, 1])
-yellow = np.array([255/256, 247/256, 0/256, 1])
+blue = np.array([12 / 256, 238 / 256, 246 / 256, 1])
+black = np.array([11 / 256, 11 / 256, 11 / 256, 1])
+grey = np.array([189 / 256, 189 / 256, 189 / 256, 1])
+yellow = np.array([255 / 256, 247 / 256, 0 / 256, 1])
 red = np.array([1, 0, 0, 1])
 
-mapping = np.linspace(mesh['values'].min(), mesh['values'].max(), 256)
+mapping = np.linspace(mesh["values"].min(), mesh["values"].max(), 256)
 newcolors = np.empty((256, 4))
 newcolors[mapping >= 80] = red
 newcolors[mapping < 80] = grey
@@ -60,31 +60,31 @@ my_colormap = ListedColormap(newcolors)
 
 ###############################################################################
 # Simply pass the colormap to the plotting routine!
-mesh.plot(scalars='values', cmap=my_colormap)
+mesh.plot(scalars="values", cmap=my_colormap)
 
 ###############################################################################
 # Or you could make a simple colormap... any Matplotlib colormap can be passed
 # to PyVista!
 boring_cmap = plt.cm.get_cmap("viridis", 5)
-mesh.plot(scalars='values', cmap=boring_cmap)
+mesh.plot(scalars="values", cmap=boring_cmap)
 
 ###############################################################################
 # You can also pass a list of color strings to the color map.  This
 # approach divides up the colormap into 5 equal parts.
-mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
+mesh.plot(scalars=mesh["values"], cmap=["black", "blue", "yellow", "grey", "red"])
 
 ###############################################################################
 # If you still wish to have control of the separation of values, you
 # can do this by creating a scalar array and passing that to the
 # plotter along with the the colormap
 scalars = np.empty(mesh.n_points)
-scalars[mesh['values'] >= 80] = 4  # red
-scalars[mesh['values'] < 80] = 3  # grey
-scalars[mesh['values'] < 55] = 2  # yellow
-scalars[mesh['values'] < 30] = 1  # blue
-scalars[mesh['values'] < 1] = 0  # black
+scalars[mesh["values"] >= 80] = 4  # red
+scalars[mesh["values"] < 80] = 3  # grey
+scalars[mesh["values"] < 55] = 2  # yellow
+scalars[mesh["values"] < 30] = 1  # blue
+scalars[mesh["values"] < 1] = 0  # black
 
-mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
+mesh.plot(scalars=scalars, cmap=["black", "blue", "yellow", "grey", "red"])
 
 ###############################################################################
 # Matplotlib vs. Colorcet

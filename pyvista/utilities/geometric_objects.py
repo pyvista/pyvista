@@ -21,23 +21,23 @@ from pyvista.utilities import assert_empty_kwargs
 
 
 NORMALS = {
-    'x': [1, 0, 0],
-    'y': [0, 1, 0],
-    'z': [0, 0, 1],
-    '-x': [-1, 0, 0],
-    '-y': [0, -1, 0],
-    '-z': [0, 0, -1],
+    "x": [1, 0, 0],
+    "y": [0, 1, 0],
+    "z": [0, 0, 1],
+    "-x": [-1, 0, 0],
+    "-y": [0, -1, 0],
+    "-z": [0, 0, -1],
 }
 
 
-def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
+def translate(surf, center=[0.0, 0.0, 0.0], direction=[1.0, 0.0, 0.0]):
     """Translate and orientate a mesh to a new center and direction.
 
     By default, the input mesh is considered centered at the origin
     and facing in the x direction.
 
     """
-    normx = np.array(direction)/np.linalg.norm(direction)
+    normx = np.array(direction) / np.linalg.norm(direction)
     normz = np.cross(normx, [0, 1.0, 0.0000001])
     normz /= np.linalg.norm(normz)
     normy = np.cross(normz, normx)
@@ -49,12 +49,19 @@ def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
     trans[3, 3] = 1
 
     surf.transform(trans)
-    if not np.allclose(center, [0., 0., 0.]):
+    if not np.allclose(center, [0.0, 0.0, 0.0]):
         surf.points += np.array(center)
 
 
-def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
-             resolution=100, capping=True, **kwargs):
+def Cylinder(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    radius=0.5,
+    height=1.0,
+    resolution=100,
+    capping=True,
+    **kwargs
+):
     """Create the surface of a cylinder.
 
     See also :func:`pyvista.CylinderStructured`.
@@ -92,7 +99,7 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     >>> cylinder.plot() # doctest:+SKIP
 
     """
-    capping = kwargs.pop('cap_ends', capping)
+    capping = kwargs.pop("cap_ends", capping)
     assert_empty_kwargs(**kwargs)
     cylinderSource = vtk.vtkCylinderSource()
     cylinderSource.SetRadius(radius)
@@ -106,9 +113,14 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     return surf
 
 
-def CylinderStructured(radius=0.5, height=1.0,
-                       center=(0.,0.,0.), direction=(1.,0.,0.),
-                       theta_resolution=32, z_resolution=10):
+def CylinderStructured(
+    radius=0.5,
+    height=1.0,
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    theta_resolution=32,
+    z_resolution=10,
+):
     """Create a cylinder mesh as a :class:`pyvista.StructuredGrid`.
 
     The end caps are left open. This can create a surface mesh if a single
@@ -139,8 +151,8 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Define grid in polar coordinates
     r = np.array([radius]).ravel()
     nr = len(r)
-    theta = np.linspace(0, 2*np.pi, num=theta_resolution)
-    radius_matrix, theta_matrix = np.meshgrid(r,theta)
+    theta = np.linspace(0, 2 * np.pi, num=theta_resolution)
+    radius_matrix, theta_matrix = np.meshgrid(r, theta)
 
     # Transform to cartesian space
     X = radius_matrix * np.cos(theta_matrix)
@@ -157,15 +169,15 @@ def CylinderStructured(radius=0.5, height=1.0,
     zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
-    zz = zz.ravel(order='f')
+    zz = zz.ravel(order="f")
 
     # Create the grid
     grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
-    grid.dimensions = [nr, theta_resolution+1, z_resolution]
+    grid.dimensions = [nr, theta_resolution + 1, z_resolution]
 
     # Orient properly in user direction
-    vx = np.array([0., 0., 1.])
+    vx = np.array([0.0, 0.0, 1.0])
     if not np.allclose(vx, direction):
         direction /= np.linalg.norm(direction)
         vx -= vx.dot(direction) * direction
@@ -181,8 +193,14 @@ def CylinderStructured(radius=0.5, height=1.0,
     return grid
 
 
-def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
-          tip_radius=0.1, shaft_radius=0.05, shaft_resolution=20):
+def Arrow(
+    start=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    tip_length=0.25,
+    tip_radius=0.1,
+    shaft_radius=0.05,
+    shaft_resolution=20,
+):
     """Create a vtk Arrow.
 
     Parameters
@@ -223,8 +241,17 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     return surf
 
 
-def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=30,
-           phi_resolution=30, start_theta=0, end_theta=360, start_phi=0, end_phi=180):
+def Sphere(
+    radius=0.5,
+    center=(0, 0, 0),
+    direction=(0, 0, 1),
+    theta_resolution=30,
+    phi_resolution=30,
+    start_theta=0,
+    end_theta=360,
+    start_phi=0,
+    end_phi=180,
+):
     """Create a vtk Sphere.
 
     Parameters
@@ -279,8 +306,14 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     return surf
 
 
-def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
-          i_resolution=10, j_resolution=10):
+def Plane(
+    center=(0, 0, 0),
+    direction=(0, 0, 1),
+    i_size=1,
+    j_size=1,
+    i_resolution=10,
+    j_resolution=10,
+):
     """Create a plane.
 
     Parameters
@@ -323,7 +356,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     return surf
 
 
-def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
+def Line(pointa=(-0.5, 0.0, 0.0), pointb=(0.5, 0.0, 0.0), resolution=1):
     """Create a line.
 
     Parameters
@@ -339,9 +372,9 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
     """
     if np.array(pointa).size != 3:
-        raise TypeError('Point A must be a length three tuple of floats.')
+        raise TypeError("Point A must be a length three tuple of floats.")
     if np.array(pointb).size != 3:
-        raise TypeError('Point B must be a length three tuple of floats.')
+        raise TypeError("Point B must be a length three tuple of floats.")
     src = vtk.vtkLineSource()
     src.SetPoint1(*pointa)
     src.SetPoint2(*pointb)
@@ -349,13 +382,13 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
     src.Update()
     line = pyvista.wrap(src.GetOutput())
     # Compute distance of every point along line
-    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0)**2, axis=1))
+    compute = lambda p0, p1: np.sqrt(np.sum((p1 - p0) ** 2, axis=1))
     distance = compute(np.array(pointa), line.points)
-    line['Distance'] = distance
+    line["Distance"] = distance
     return line
 
 
-def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
+def Cube(center=(0.0, 0.0, 0.0), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
     """Create a cube.
 
     It's possible to specify either the center and side lengths or just
@@ -384,7 +417,9 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
     src = vtk.vtkCubeSource()
     if bounds is not None:
         if np.array(bounds).size != 6:
-            raise TypeError('Bounds must be given as length 6 tuple: (xMin,xMax, yMin,yMax, zMin,zMax)')
+            raise TypeError(
+                "Bounds must be given as length 6 tuple: (xMin,xMax, yMin,yMax, zMin,zMax)"
+            )
         src.SetBounds(bounds)
     else:
         src.SetCenter(center)
@@ -395,7 +430,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
     return pyvista.wrap(src.GetOutput())
 
 
-def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
+def Box(bounds=(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0)):
     """Create a box with solid faces for the given bounds.
 
     Parameters
@@ -408,8 +443,15 @@ def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
     return Cube(bounds=bounds)
 
 
-def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
-         capping=True, angle=None, resolution=6):
+def Cone(
+    center=(0.0, 0.0, 0.0),
+    direction=(1.0, 0.0, 0.0),
+    height=1.0,
+    radius=None,
+    capping=True,
+    angle=None,
+    resolution=6,
+):
     """Create a cone.
 
     Parameters
@@ -455,7 +497,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     return pyvista.wrap(src.GetOutput())
 
 
-def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
+def Polygon(center=(0.0, 0.0, 0.0), radius=1, normal=(0, 0, 1), n_sides=6):
     """Create a polygonal disk with a hole in the center.
 
     The disk has zero height. The user can specify the inner and outer radius
@@ -486,8 +528,9 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
     return pyvista.wrap(src.GetOutput())
 
 
-def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
-         c_res=6):
+def Disc(
+    center=(0.0, 0.0, 0.0), inner=0.25, outer=0.5, normal=(0, 0, 1), r_res=1, c_res=6
+):
     """Create a polygonal disk with a hole in the center.
 
     The disk has zero height. The user can specify the inner and outer radius
@@ -547,7 +590,7 @@ def SuperToroid(*args, **kwargs):
     DEPRECATED: Please use `pyvista.ParametricSuperToroid` instead.
 
     """
-    raise RuntimeError('use `pyvista.ParametricSuperToroid` instead')
+    raise RuntimeError("use `pyvista.ParametricSuperToroid` instead")
 
 
 def Ellipsoid(*args, **kwargs):
@@ -556,12 +599,22 @@ def Ellipsoid(*args, **kwargs):
     DEPRECATED: Please use :func:`pyvista.ParametricEllipsoid` instead.
 
     """
-    raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
+    raise RuntimeError("use `pyvista.ParametricEllipsoid` instead")
 
 
-def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
-            x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
-            std=0.5, subsample_rate=1):
+def Wavelet(
+    extent=(-10, 10, -10, 10, -10, 10),
+    center=(0, 0, 0),
+    maximum=255,
+    x_freq=60,
+    y_freq=30,
+    z_freq=40,
+    x_mag=10,
+    y_mag=18,
+    z_mag=5,
+    std=0.5,
+    subsample_rate=1,
+):
     """Create a wavelet."""
     wavelet_source = vtk.vtkRTAnalyticSource()
     wavelet_source.SetWholeExtent(*extent)

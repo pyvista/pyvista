@@ -42,26 +42,26 @@ def test_multi_block_init_vtk():
 
 def test_multi_block_init_dict():
     data = dict()
-    data['grid'] = ex.load_rectilinear()
-    data['poly'] = ex.load_airplane()
+    data["grid"] = ex.load_rectilinear()
+    data["poly"] = ex.load_airplane()
     multi = pyvista.MultiBlock(data)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
     # Note that disctionaries do not maintain order
     assert isinstance(multi.GetBlock(0), (pyvista.RectilinearGrid, pyvista.PolyData))
-    assert multi.get_block_name(0) in ['grid','poly']
+    assert multi.get_block_name(0) in ["grid", "poly"]
     assert isinstance(multi.GetBlock(1), (pyvista.RectilinearGrid, pyvista.PolyData))
-    assert multi.get_block_name(1) in ['grid','poly']
+    assert multi.get_block_name(1) in ["grid", "poly"]
 
 
 def test_multi_block_keys():
     data = dict()
-    data['grid'] = ex.load_rectilinear()
-    data['poly'] = ex.load_airplane()
+    data["grid"] = ex.load_rectilinear()
+    data["poly"] = ex.load_airplane()
     multi = pyvista.MultiBlock(data)
     assert len(multi.keys()) == 2
-    assert 'grid' in multi.keys()
-    assert 'poly' in multi.keys()
+    assert "grid" in multi.keys()
+    assert "poly" in multi.keys()
 
 
 def test_multi_block_init_list():
@@ -102,35 +102,35 @@ def test_multi_block_set_get_ers():
     multi = pyvista.MultiBlock()
     # Set the number of blocks
     multi.n_blocks = 6
-    assert multi.GetNumberOfBlocks() == 6 # Check that VTK side registered it
-    assert multi.n_blocks == 6 # Check pyvista side registered it
+    assert multi.GetNumberOfBlocks() == 6  # Check that VTK side registered it
+    assert multi.n_blocks == 6  # Check pyvista side registered it
     # Add data to the MultiBlock
     data = ex.load_rectilinear()
-    multi[1, 'rect'] = data
+    multi[1, "rect"] = data
     # Make sure number of blocks is constant
     assert multi.n_blocks == 6
     # Check content
     assert isinstance(multi[1], pyvista.RectilinearGrid)
-    for i in [0,2,3,4,5]:
+    for i in [0, 2, 3, 4, 5]:
         assert multi[i] is None
     # Check the bounds
     assert multi.bounds == list(data.bounds)
     multi[5] = ex.load_uniform()
-    multi.set_block_name(5, 'uni')
-    multi.set_block_name(5, None) # Make sure it doesn't get overwritten
+    multi.set_block_name(5, "uni")
+    multi.set_block_name(5, None)  # Make sure it doesn't get overwritten
     assert isinstance(multi.get(5), pyvista.UniformGrid)
     # Test get by name
-    assert isinstance(multi['uni'], pyvista.UniformGrid)
-    assert isinstance(multi['rect'], pyvista.RectilinearGrid)
+    assert isinstance(multi["uni"], pyvista.UniformGrid)
+    assert isinstance(multi["rect"], pyvista.RectilinearGrid)
     # Test the del operator
     del multi[0]
     assert multi.n_blocks == 5
     # Make sure the rect grid was moved up
     assert isinstance(multi[0], pyvista.RectilinearGrid)
-    assert multi.get_block_name(0) == 'rect'
+    assert multi.get_block_name(0) == "rect"
     assert multi.get_block_name(2) == None
     # test del by name
-    del multi['uni']
+    del multi["uni"]
     assert multi.n_blocks == 4
     # test the pop operator
     pop = multi.pop(0)
@@ -138,31 +138,31 @@ def test_multi_block_set_get_ers():
     assert multi.n_blocks == 3
     assert multi.get_block_name(10) is None
     with pytest.raises(KeyError):
-        _ = multi.get_index_by_name('foo')
+        _ = multi.get_index_by_name("foo")
 
 
 def test_mutli_block_clean():
     # now test a clean of the null values
     multi = pyvista.MultiBlock()
-    multi[1, 'rect'] = ex.load_rectilinear()
-    multi[2, 'empty'] = pyvista.PolyData()
-    multi[3, 'mempty'] = pyvista.MultiBlock()
-    multi[5, 'uni'] = ex.load_uniform()
+    multi[1, "rect"] = ex.load_rectilinear()
+    multi[2, "empty"] = pyvista.PolyData()
+    multi[3, "mempty"] = pyvista.MultiBlock()
+    multi[5, "uni"] = ex.load_uniform()
     # perfromt he clean to remove all Null elements
     multi.clean()
     assert multi.n_blocks == 2
     assert multi.GetNumberOfBlocks() == 2
     assert isinstance(multi[0], pyvista.RectilinearGrid)
     assert isinstance(multi[1], pyvista.UniformGrid)
-    assert multi.get_block_name(0) == 'rect'
-    assert multi.get_block_name(1) == 'uni'
+    assert multi.get_block_name(0) == "rect"
+    assert multi.get_block_name(1) == "uni"
     # Test a nested data struct
     foo = pyvista.MultiBlock()
     foo[3] = ex.load_ant()
     assert foo.n_blocks == 4
     multi = pyvista.MultiBlock()
-    multi[1, 'rect'] = ex.load_rectilinear()
-    multi[5, 'multi'] = foo
+    multi[1, "rect"] = ex.load_rectilinear()
+    multi[5, "multi"] = foo
     # perfromt he clean to remove all Null elements
     assert multi.n_blocks == 6
     multi.clean()
@@ -170,11 +170,9 @@ def test_mutli_block_clean():
     assert multi.GetNumberOfBlocks() == 2
     assert isinstance(multi[0], pyvista.RectilinearGrid)
     assert isinstance(multi[1], pyvista.MultiBlock)
-    assert multi.get_block_name(0) == 'rect'
-    assert multi.get_block_name(1) == 'multi'
+    assert multi.get_block_name(0) == "rect"
+    assert multi.get_block_name(1) == "multi"
     assert foo.n_blocks == 1
-
-
 
 
 def test_multi_block_repr():
@@ -192,10 +190,10 @@ def test_multi_block_repr():
     assert str(multi) is not None
 
 
-@pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize("extension", ["vtm", "vtmb"])
 def test_multi_block_io(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.%s" % extension))
     multi = pyvista.MultiBlock()
     # Add examples
     multi.append(ex.load_ant())
@@ -217,18 +215,17 @@ def test_multi_io_erros(tmpdir):
     fdir = tmpdir.mkdir("tmpdir")
     multi = pyvista.MultiBlock()
     # Check saving with bad extension
-    bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
+    bad_ext_name = str(fdir.join("tmp.%s" % "npy"))
     with pytest.raises(Exception):
         multi.save(bad_ext_name)
     arr = np.random.rand(10, 10)
     np.save(bad_ext_name, arr)
     # Load non existing file
     with pytest.raises(Exception):
-        _ = pyvista.MultiBlock('foo.vtm')
+        _ = pyvista.MultiBlock("foo.vtm")
     # Load bad extension
     with pytest.raises(IOError):
         _ = pyvista.MultiBlock(bad_ext_name)
-
 
 
 def test_extract_geometry():
@@ -259,7 +256,6 @@ def test_combine_filter():
     # Now apply the geometry filter to combine a plethora of data blocks
     geom = multi.combine()
     assert isinstance(geom, pyvista.UnstructuredGrid)
-
 
 
 def test_multi_block_copy():
@@ -328,9 +324,10 @@ def test_multi_slice_index():
     sub = multi[0:-1:2]
     assert len(sub) == 3
     for i in range(3):
-        j = i*2
+        j = i * 2
         assert id(sub[i]) == id(multi[j])
         assert sub.get_block_name(i) == multi.get_block_name(j)
+
 
 def test_multi_block_list_index():
     multi = pyvista.MultiBlock()
@@ -347,6 +344,7 @@ def test_multi_block_list_index():
     for i, j in enumerate(indices):
         assert id(sub[i]) == id(multi[j])
         assert sub.get_block_name(i) == multi.get_block_name(j)
+
 
 def test_multi_block_volume():
     multi = pyvista.MultiBlock()

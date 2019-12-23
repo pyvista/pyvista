@@ -15,14 +15,16 @@ import numpy as np
 ###############################################################################
 # Create a dataset to plot
 
+
 def make_points():
     """Helper to make XYZ points"""
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
-    r = z**2 + 1
+    r = z ** 2 + 1
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     return np.column_stack((x, y, z))
+
 
 points = make_points()
 points[0:5, :]
@@ -32,12 +34,13 @@ points[0:5, :]
 # :class:`pyvista.PolyData` mesh given that the points are in order for the
 # segments they make.
 
+
 def lines_from_points(points):
     """Given an array of points, make a line set"""
     poly = pv.PolyData()
     poly.points = points
-    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
-    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
+    cells = np.full((len(points) - 1, 3), 2, dtype=np.int)
+    cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int)
     poly.lines = cells
     return poly
@@ -56,6 +59,7 @@ tube.plot(smooth_shading=True)
 # That tube has sharp edges at each line segment. This can be mitigated by
 # creating a single PolyLine cell for all of the points
 
+
 def polyline_from_points(points):
     poly = pv.PolyData()
     poly.points = points
@@ -63,6 +67,7 @@ def polyline_from_points(points):
     the_cell = np.insert(the_cell, 0, len(points))
     poly.lines = the_cell
     return poly
+
 
 polyline = polyline_from_points(points)
 polyline["scalars"] = np.arange(polyline.n_points)
@@ -101,5 +106,5 @@ spline.plot(line_width=4, color="k")
 # Ayy of the lines from the examples above can be used to create ribbons.
 # Take a look at the :func:`pyvista.PolyDataFilters.ribbon` filter.
 
-ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars='arc_length')
+ribbon = spline.compute_arc_length().ribbon(width=0.75, scalars="arc_length")
 ribbon.plot(color=True)

@@ -3,4 +3,4 @@
 version_info = 0, 23, 0
 
 # Nice string for the version
-__version__ = '.'.join(map(str, version_info))
+__version__ = ".".join(map(str, version_info))

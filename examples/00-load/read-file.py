@@ -51,7 +51,7 @@ mesh.points
 ###############################################################################
 # The faces from the mesh are also directly accessible as a NumPy array:
 
-mesh.faces.reshape(-1, 4)[:, 1:] # triangular faces
+mesh.faces.reshape(-1, 4)[:, 1:]  # triangular faces
 
 
 ###############################################################################

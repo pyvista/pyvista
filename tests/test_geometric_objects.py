@@ -8,6 +8,7 @@ def test_cylinder():
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
+
 def test_cylinder_structured():
     cyl = pyvista.CylinderStructured()
     assert np.any(cyl.points)
@@ -33,10 +34,10 @@ def test_plane():
 
 
 def test_line():
-    line = pyvista.Line((0,0,0), (10, 1., 3))
+    line = pyvista.Line((0, 0, 0), (10, 1.0, 3))
     assert line.n_points == 2
     assert line.n_cells == 1
-    line = pyvista.Line((0,0,0), (10, 1., 3), 10)
+    line = pyvista.Line((0, 0, 0), (10, 1.0, 3), 10)
     assert line.n_points == 11
     assert line.n_cells == 1
 
@@ -45,7 +46,7 @@ def test_cube():
     cube = pyvista.Cube()
     assert np.any(cube.points)
     assert np.any(cube.faces)
-    bounds = (1.,3., 5.,6., 7.,8.)
+    bounds = (1.0, 3.0, 5.0, 6.0, 7.0, 8.0)
     cube = pyvista.Cube(bounds=bounds)
     assert np.any(cube.points)
     assert np.any(cube.faces)
@@ -87,6 +88,7 @@ def test_text_3d():
     mesh = pyvista.Text3D("foo")
     assert mesh.n_points
     assert mesh.n_cells
+
 
 def test_wavelet():
     mesh = pyvista.Wavelet()

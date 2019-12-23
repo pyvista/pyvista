@@ -10,6 +10,7 @@ import pyvista
 
 from .theme import parse_color, rcParams
 
+
 def system_supports_plotting():
     """Check if x server is running.
 
@@ -21,7 +22,7 @@ def system_supports_plotting():
 
     """
     try:
-        if os.environ['ALLOW_PLOTTING'].lower() == 'true':
+        if os.environ["ALLOW_PLOTTING"].lower() == "true":
             return True
     except KeyError:
         pass
@@ -36,7 +37,7 @@ def system_supports_plotting():
 def update_axes_label_color(axes_actor, color=None):
     """Set the axes label color (internale helper)."""
     if color is None:
-        color = rcParams['font']['color']
+        color = rcParams["font"]["color"]
     color = parse_color(color)
     if isinstance(axes_actor, vtk.vtkAxesActor):
         prop_x = axes_actor.GetXAxisCaptionActor2D().GetCaptionTextProperty()
@@ -51,16 +52,24 @@ def update_axes_label_color(axes_actor, color=None):
     return
 
 
-def create_axes_marker(label_color=None, x_color=None, y_color=None,
-                       z_color=None, xlabel='X', ylabel='Y', zlabel='Z',
-                       labels_off=False, line_width=2):
+def create_axes_marker(
+    label_color=None,
+    x_color=None,
+    y_color=None,
+    z_color=None,
+    xlabel="X",
+    ylabel="Y",
+    zlabel="Z",
+    labels_off=False,
+    line_width=2,
+):
     """Return an axis actor to add in the scene."""
     if x_color is None:
-        x_color = rcParams['axes']['x_color']
+        x_color = rcParams["axes"]["x_color"]
     if y_color is None:
-        y_color = rcParams['axes']['y_color']
+        y_color = rcParams["axes"]["y_color"]
     if z_color is None:
-        z_color = rcParams['axes']['z_color']
+        z_color = rcParams["axes"]["z_color"]
     axes_actor = vtk.vtkAxesActor()
     axes_actor.GetXAxisShaftProperty().SetColor(parse_color(x_color))
     axes_actor.GetXAxisTipProperty().SetColor(parse_color(x_color))
@@ -84,24 +93,33 @@ def create_axes_marker(label_color=None, x_color=None, y_color=None,
     return axes_actor
 
 
-def create_axes_orientation_box(line_width=1, text_scale=0.366667,
-                                edge_color='black', x_color=None,
-                                y_color=None, z_color=None,
-                                xlabel='X', ylabel='Y', zlabel='Z',
-                                x_face_color='red',
-                                y_face_color='green',
-                                z_face_color='blue',
-                                color_box=False, label_color=None,
-                                labels_off=False, opacity=0.5,):
+def create_axes_orientation_box(
+    line_width=1,
+    text_scale=0.366667,
+    edge_color="black",
+    x_color=None,
+    y_color=None,
+    z_color=None,
+    xlabel="X",
+    ylabel="Y",
+    zlabel="Z",
+    x_face_color="red",
+    y_face_color="green",
+    z_face_color="blue",
+    color_box=False,
+    label_color=None,
+    labels_off=False,
+    opacity=0.5,
+):
     """Create a Box axes orientation widget with labels."""
     if x_color is None:
-        x_color = rcParams['axes']['x_color']
+        x_color = rcParams["axes"]["x_color"]
     if y_color is None:
-        y_color = rcParams['axes']['y_color']
+        y_color = rcParams["axes"]["y_color"]
     if z_color is None:
-        z_color = rcParams['axes']['z_color']
+        z_color = rcParams["axes"]["z_color"]
     if edge_color is None:
-        edge_color = rcParams['edge_color']
+        edge_color = rcParams["edge_color"]
     axes_actor = vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
@@ -138,16 +156,19 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
         axes_actor.GetCubeProperty().SetEdgeVisibility(False)
 
         cube = pyvista.Cube()
-        cube.clear_arrays() # remove normals
-        face_colors = np.array([parse_color(x_face_color),
-                                parse_color(x_face_color),
-                                parse_color(y_face_color),
-                                parse_color(y_face_color),
-                                parse_color(z_face_color),
-                                parse_color(z_face_color),
-                                ])
+        cube.clear_arrays()  # remove normals
+        face_colors = np.array(
+            [
+                parse_color(x_face_color),
+                parse_color(x_face_color),
+                parse_color(y_face_color),
+                parse_color(y_face_color),
+                parse_color(z_face_color),
+                parse_color(z_face_color),
+            ]
+        )
         face_colors = (face_colors * 255).astype(np.uint8)
-        cube.cell_arrays['face_colors'] = face_colors
+        cube.cell_arrays["face_colors"] = face_colors
 
         cube_mapper = vtk.vtkPolyDataMapper()
         cube_mapper.SetInputData(cube)
@@ -184,31 +205,30 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True):
     """Get the opacity transfer function results: range from 0 to 255."""
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
     transfer_func = {
-        'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
-        'geom': np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
-        'geom_r': np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
-        'sigmoid': sigmoid(np.linspace(-10.,10., n_colors)),
-        'sigmoid_3': sigmoid(np.linspace(-3.,3., n_colors)),
-        'sigmoid_4': sigmoid(np.linspace(-4.,4., n_colors)),
-        'sigmoid_5': sigmoid(np.linspace(-5.,5., n_colors)),
-        'sigmoid_6': sigmoid(np.linspace(-6.,6., n_colors)),
-        'sigmoid_7': sigmoid(np.linspace(-7.,7., n_colors)),
-        'sigmoid_8': sigmoid(np.linspace(-8.,8., n_colors)),
-        'sigmoid_9': sigmoid(np.linspace(-9.,9., n_colors)),
-        'sigmoid_10': sigmoid(np.linspace(-10.,10., n_colors)),
-
+        "linear": np.linspace(0, 255, n_colors, dtype=np.uint8),
+        "geom": np.geomspace(1e-6, 255, n_colors, dtype=np.uint8),
+        "geom_r": np.geomspace(255, 1e-6, n_colors, dtype=np.uint8),
+        "sigmoid": sigmoid(np.linspace(-10.0, 10.0, n_colors)),
+        "sigmoid_3": sigmoid(np.linspace(-3.0, 3.0, n_colors)),
+        "sigmoid_4": sigmoid(np.linspace(-4.0, 4.0, n_colors)),
+        "sigmoid_5": sigmoid(np.linspace(-5.0, 5.0, n_colors)),
+        "sigmoid_6": sigmoid(np.linspace(-6.0, 6.0, n_colors)),
+        "sigmoid_7": sigmoid(np.linspace(-7.0, 7.0, n_colors)),
+        "sigmoid_8": sigmoid(np.linspace(-8.0, 8.0, n_colors)),
+        "sigmoid_9": sigmoid(np.linspace(-9.0, 9.0, n_colors)),
+        "sigmoid_10": sigmoid(np.linspace(-10.0, 10.0, n_colors)),
     }
-    transfer_func['linear_r'] = transfer_func['linear'][::-1]
-    transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
+    transfer_func["linear_r"] = transfer_func["linear"][::-1]
+    transfer_func["sigmoid_r"] = transfer_func["sigmoid"][::-1]
     for i in range(3, 11):
-        k = 'sigmoid_{}'.format(i)
-        rk = '{}_r'.format(k)
+        k = "sigmoid_{}".format(i)
+        rk = "{}_r".format(k)
         transfer_func[rk] = transfer_func[k][::-1]
     if isinstance(mapping, str):
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise KeyError('opactiy transfer function ({}) unknown.'.format(mapping))
+            raise KeyError("opactiy transfer function ({}) unknown.".format(mapping))
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -223,19 +243,24 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True):
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int)
             try:
                 if not interpolate:
-                    raise AssertionError('No interpolation.')
+                    raise AssertionError("No interpolation.")
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
+
                 # quadratic has best/smoothest results
-                f = interp1d(xo, mapping, kind='quadratic')
+                f = interp1d(xo, mapping, kind="quadratic")
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
-                mapping = (vals * 255.).astype(np.uint8)
+                mapping = (vals * 255.0).astype(np.uint8)
             except (ImportError, AssertionError):
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError('Transfer function cannot have more values than `n_colors`. This has {} elements'.format(mapping.size))
+            raise RuntimeError(
+                "Transfer function cannot have more values than `n_colors`. This has {} elements".format(
+                    mapping.size
+                )
+            )
         return mapping
-    raise TypeError('Transfer function type ({}) not understood'.format(type(mapping)))
+    raise TypeError("Transfer function type ({}) not understood".format(type(mapping)))

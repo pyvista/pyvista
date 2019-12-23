@@ -7,6 +7,7 @@ import vtk
 import pyvista
 from pyvista.utilities import try_callback
 
+
 class PickingHelper(object):
     """An internal class to hold picking related features."""
 
@@ -20,11 +21,20 @@ class PickingHelper(object):
         """Get the pick position/area as x0, y0, x1, y1."""
         return self.renderer.get_pick_position()
 
-
-    def enable_cell_picking(self, mesh=None, callback=None, through=True,
-                            show=True, show_message=True, style='wireframe',
-                            line_width=5, color='pink', font_size=18,
-                            start=False, **kwargs):
+    def enable_cell_picking(
+        self,
+        mesh=None,
+        callback=None,
+        through=True,
+        show=True,
+        show_message=True,
+        style="wireframe",
+        line_width=5,
+        color="pink",
+        font_size=18,
+        start=False,
+        **kwargs
+    ):
         """Enable picking at cells.
 
         Press "r" to enable retangle based selection.  Press "r" again to
@@ -84,23 +94,30 @@ class PickingHelper(object):
             selection is intereactively displayed.
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Cell picking not available in notebook plotting')
+        if hasattr(self, "notebook") and self.notebook:
+            raise AssertionError("Cell picking not available in notebook plotting")
         if mesh is None:
-            if not hasattr(self, 'mesh'):
-                raise Exception('Input a mesh into the Plotter class first or '
-                                'or set it in this function')
+            if not hasattr(self, "mesh"):
+                raise Exception(
+                    "Input a mesh into the Plotter class first or "
+                    "or set it in this function"
+                )
             mesh = self.mesh
-
 
         def end_pick_helper(picker, event_id):
             if show:
                 # Use try in case selection is empty
                 try:
-                    self.add_mesh(self.picked_cells, name='_cell_picking_selection',
-                                  style=style, color=color,
-                                  line_width=line_width, pickable=False,
-                                  reset_camera=False, **kwargs)
+                    self.add_mesh(
+                        self.picked_cells,
+                        name="_cell_picking_selection",
+                        style=style,
+                        color=color,
+                        line_width=line_width,
+                        pickable=False,
+                        reset_camera=False,
+                        **kwargs
+                    )
                 except RuntimeError:
                     pass
 
@@ -110,23 +127,21 @@ class PickingHelper(object):
             # TODO: Deactivate selection tool
             return
 
-
         def through_pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
-            mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
+            mesh.cell_arrays["orig_extract_id"] = np.arange(mesh.n_cells)
             extract.SetInputData(mesh)
             extract.SetImplicitFunction(picker.GetFrustum())
             extract.Update()
             self.picked_cells = pyvista.wrap(extract.GetOutput())
             return end_pick_helper(picker, event_id)
 
-
         def visible_pick_call_back(picker, event_id):
-            x0,y0,x1,y1 = self.get_pick_position()
+            x0, y0, x1, y1 = self.get_pick_position()
             selector = vtk.vtkOpenGLHardwareSelector()
             selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
             selector.SetRenderer(self.renderer)
-            selector.SetArea(x0,y0,x1,y1)
+            selector.SetArea(x0, y0, x1, y1)
             cellids = selector.Select().GetNode(0)
             if cellids is None:
                 # No selection
@@ -140,7 +155,6 @@ class PickingHelper(object):
             self.picked_cells = pyvista.wrap(extract.GetOutput())
             return end_pick_helper(picker, event_id)
 
-
         area_picker = vtk.vtkRenderedAreaPicker()
         if through:
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
@@ -149,13 +163,17 @@ class PickingHelper(object):
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
-            message = "Surface picking non-triangulated meshes is known to "\
-                      "not work properly with non-NVIDIA GPUs. Please "\
-                      "consider triangulating your mesh:\n"\
-                      "\t`.extract_geometry().triangulate()`"
-            if (not isinstance(mesh, pyvista.PolyData) or
-                    mesh.faces.size % 4 or
-                    not np.all(mesh.faces.reshape(-1, 4)[:,0] == 3)):
+            message = (
+                "Surface picking non-triangulated meshes is known to "
+                "not work properly with non-NVIDIA GPUs. Please "
+                "consider triangulating your mesh:\n"
+                "\t`.extract_geometry().triangulate()`"
+            )
+            if (
+                not isinstance(mesh, pyvista.PolyData)
+                or mesh.faces.size % 4
+                or not np.all(mesh.faces.reshape(-1, 4)[:, 0] == 3)
+            ):
                 logging.warning(message)
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
@@ -168,18 +186,27 @@ class PickingHelper(object):
                 show_message = "Press R to toggle selection tool"
                 if not through:
                     show_message += "\nPress P to pick a single cell under the mouse"
-            self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
+            self.add_text(
+                str(show_message), font_size=font_size, name="_cell_picking_message"
+            )
 
         if start:
             self._style.StartSelect()
 
         return
 
-
-    def enable_point_picking(self, callback=None, show_message=True,
-                             font_size=18, color='pink', point_size=10,
-                             use_mesh=False, show_point=True, tolerance=0.025,
-                             **kwargs):
+    def enable_point_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color="pink",
+        point_size=10,
+        use_mesh=False,
+        show_point=True,
+        tolerance=0.025,
+        **kwargs
+    ):
         """Enable picking at points.
 
         Enable picking a point at the mouse location in the render view
@@ -223,18 +250,24 @@ class PickingHelper(object):
             picked point is intereactively displayed
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Point picking not available in notebook plotting')
+        if hasattr(self, "notebook") and self.notebook:
+            raise AssertionError("Point picking not available in notebook plotting")
 
         def _end_pick_event(picker, event):
             self.picked_point = np.array(picker.GetPickPosition())
             self.picked_mesh = picker.GetDataSet()
             self.picked_point_id = picker.GetPointId()
             if show_point:
-                self.add_mesh(self.picked_point, color=color,
-                              point_size=point_size, name='_picked_point',
-                              pickable=False, reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+                self.add_mesh(
+                    self.picked_point,
+                    color=color,
+                    point_size=point_size,
+                    name="_picked_point",
+                    pickable=False,
+                    reset_camera=False,
+                    **kwargs
+                )
+            if hasattr(callback, "__call__"):
                 if use_mesh:
                     try_callback(callback, self.picked_mesh, self.picked_point_id)
                 else:
@@ -242,7 +275,7 @@ class PickingHelper(object):
 
         point_picker = vtk.vtkPointPicker()
         point_picker.SetTolerance(tolerance)
-        self.picker=point_picker
+        self.picker = point_picker
         point_picker.AddObserver(vtk.vtkCommand.EndPickEvent, _end_pick_event)
 
         self.enable_trackball_style()
@@ -252,15 +285,24 @@ class PickingHelper(object):
         if show_message:
             if show_message is True:
                 show_message = "Press P to pick under the mouse"
-            self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
+            self.add_text(
+                str(show_message), font_size=font_size, name="_point_picking_message"
+            )
 
         return
 
-
-    def enable_path_picking(self, callback=None, show_message=True,
-                            font_size=18, color='pink', point_size=10,
-                            line_width=5, show_path=True, tolerance=0.025,
-                            **kwargs):
+    def enable_path_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color="pink",
+        point_size=10,
+        line_width=5,
+        show_path=True,
+        tolerance=0.025,
+        **kwargs
+    ):
         """Enable picking at paths.
 
         This is a convenience method for ``enable_point_picking`` to keep
@@ -305,7 +347,7 @@ class PickingHelper(object):
             picked path is intereactively displayed
 
         """
-        kwargs.setdefault('pickable', False)
+        kwargs.setdefault("pickable", False)
 
         def make_line_cells(n_points):
             # cells = np.full((n_points-1, 3), 2, dtype=np.int)
@@ -318,7 +360,6 @@ class PickingHelper(object):
         the_points = []
         the_ids = []
 
-
         def _the_callback(mesh, idx):
             if mesh is None:
                 return
@@ -327,32 +368,50 @@ class PickingHelper(object):
             self.picked_path = pyvista.PolyData(np.array(the_points))
             self.picked_path.lines = make_line_cells(len(the_points))
             if show_path:
-                self.add_mesh(self.picked_path, color=color, name='_picked_path',
-                              line_width=line_width, point_size=point_size,
-                              reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+                self.add_mesh(
+                    self.picked_path,
+                    color=color,
+                    name="_picked_path",
+                    line_width=line_width,
+                    point_size=point_size,
+                    reset_camera=False,
+                    **kwargs
+                )
+            if hasattr(callback, "__call__"):
                 try_callback(callback, self.picked_path)
             return
 
         def _clear_path_event_watcher():
             del the_points[:]
             del the_ids[:]
-            self.remove_actor('_picked_path')
+            self.remove_actor("_picked_path")
             return
 
-        self.add_key_event('c', _clear_path_event_watcher)
+        self.add_key_event("c", _clear_path_event_watcher)
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
-                font_size=font_size, show_message=show_message,
-                show_point=False, tolerance=tolerance)
+        return self.enable_point_picking(
+            callback=_the_callback,
+            use_mesh=True,
+            font_size=font_size,
+            show_message=show_message,
+            show_point=False,
+            tolerance=tolerance,
+        )
 
-
-    def enable_geodesic_picking(self, callback=None, show_message=True,
-                                font_size=18, color='pink', point_size=10,
-                                line_width=5, tolerance=0.025, show_path=True,
-                                **kwargs):
+    def enable_geodesic_picking(
+        self,
+        callback=None,
+        show_message=True,
+        font_size=18,
+        color="pink",
+        point_size=10,
+        line_width=5,
+        tolerance=0.025,
+        show_path=True,
+        **kwargs
+    ):
         """Enable picking at geodesic paths.
 
         This is a convenience method for ``enable_point_picking`` to keep
@@ -399,7 +458,7 @@ class PickingHelper(object):
             picked path is intereactively displayed
 
         """
-        kwargs.setdefault('pickable', False)
+        kwargs.setdefault("pickable", False)
 
         self.picked_geodesic = pyvista.PolyData()
         self._last_picked_idx = None
@@ -417,38 +476,59 @@ class PickingHelper(object):
                 locator.BuildLocator()
                 start_idx = locator.FindClosestPoint(mesh.points[self._last_picked_idx])
                 end_idx = locator.FindClosestPoint(point)
-                self.picked_geodesic = self.picked_geodesic + surface.geodesic(start_idx, end_idx)
+                self.picked_geodesic = self.picked_geodesic + surface.geodesic(
+                    start_idx, end_idx
+                )
             self._last_picked_idx = idx
 
             if show_path:
-                self.add_mesh(self.picked_geodesic, color=color, name='_picked_path',
-                              line_width=line_width, point_size=point_size,
-                              reset_camera=False, **kwargs)
-            if hasattr(callback, '__call__'):
+                self.add_mesh(
+                    self.picked_geodesic,
+                    color=color,
+                    name="_picked_path",
+                    line_width=line_width,
+                    point_size=point_size,
+                    reset_camera=False,
+                    **kwargs
+                )
+            if hasattr(callback, "__call__"):
                 try_callback(callback, self.picked_geodesic)
             return
 
         def _clear_g_path_event_watcher():
             self.picked_geodesic = pyvista.PolyData()
-            self.remove_actor('_picked_path')
+            self.remove_actor("_picked_path")
             self._last_picked_idx = None
             return
 
-        self.add_key_event('c', _clear_g_path_event_watcher)
+        self.add_key_event("c", _clear_g_path_event_watcher)
         if show_message is True:
             show_message = "Press P to pick under the mouse\nPress C to clear"
 
-        return self.enable_point_picking(callback=_the_callback, use_mesh=True,
-                font_size=font_size, show_message=show_message,
-                tolerance=tolerance, show_point=False)
+        return self.enable_point_picking(
+            callback=_the_callback,
+            use_mesh=True,
+            font_size=font_size,
+            show_message=show_message,
+            tolerance=tolerance,
+            show_point=False,
+        )
 
-
-
-    def enable_horizon_picking(self, callback=None, normal=(0,0,1),
-                               width=None, show_message=True,
-                               font_size=18, color='pink', point_size=10,
-                               line_width=5, show_path=True, opacity=0.75,
-                               show_horizon=True, **kwargs):
+    def enable_horizon_picking(
+        self,
+        callback=None,
+        normal=(0, 0, 1),
+        width=None,
+        show_message=True,
+        font_size=18,
+        color="pink",
+        point_size=10,
+        line_width=5,
+        show_path=True,
+        opacity=0.75,
+        show_horizon=True,
+        **kwargs
+    ):
         """Enable horizon picking.
 
         Helper for the ``enable_path_picking`` method to also show a ribbon
@@ -505,8 +585,8 @@ class PickingHelper(object):
             picked path is intereactively displayed
 
         """
-        name = '_horizon'
-        self.add_key_event('c', lambda: self.remove_actor(name))
+        name = "_horizon"
+        self.add_key_event("c", lambda: self.remove_actor(name))
 
         def _the_callback(path):
             if path.n_points < 2:
@@ -515,18 +595,28 @@ class PickingHelper(object):
             self.picked_horizon = path.ribbon(normal=normal, width=width)
 
             if show_horizon:
-                self.add_mesh(self.picked_horizon, name=name, color=color,
-                              opacity=opacity, pickable=False,
-                              reset_camera=False)
+                self.add_mesh(
+                    self.picked_horizon,
+                    name=name,
+                    color=color,
+                    opacity=opacity,
+                    pickable=False,
+                    reset_camera=False,
+                )
 
-            if hasattr(callback, '__call__'):
+            if hasattr(callback, "__call__"):
                 try_callback(callback, path)
 
-        self.enable_path_picking(callback=_the_callback,
-            show_message=show_message, font_size=font_size, color=color,
-            point_size=point_size, line_width=line_width, show_path=show_path,
-            **kwargs)
-
+        self.enable_path_picking(
+            callback=_the_callback,
+            show_message=show_message,
+            font_size=font_size,
+            color=color,
+            point_size=point_size,
+            line_width=line_width,
+            show_path=show_path,
+            **kwargs
+        )
 
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot."""
@@ -536,7 +626,6 @@ class PickingHelper(object):
         picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
         return picker.GetPickPosition()
 
-
     def pick_mouse_position(self):
         """Get corresponding mouse location in the 3D plot."""
         if self.mouse_position is None:
@@ -544,7 +633,6 @@ class PickingHelper(object):
         picker = vtk.vtkWorldPointPicker()
         picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
         return picker.GetPickPosition()
-
 
     def fly_to_mouse_position(self, focus=False):
         """Focus on last stored mouse position."""
@@ -556,7 +644,6 @@ class PickingHelper(object):
         else:
             self.fly_to(click_point)
 
-
     def enable_fly_to_right_click(self, callback=None):
         """Set the camera to track right click positions.
 
@@ -565,10 +652,11 @@ class PickingHelper(object):
         3D space.
 
         """
+
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)
-            if hasattr(callback, '__call__'):
+            if hasattr(callback, "__call__"):
                 try_callback(callback, click_point)
 
         self.track_click_position(callback=_the_callback, side="right")

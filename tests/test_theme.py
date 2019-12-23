@@ -7,7 +7,7 @@ from pyvista import colors
 
 def test_invalid_color_str_single_char():
     with pytest.raises(ValueError):
-        colors.string_to_rgb('x')
+        colors.string_to_rgb("x")
 
 
 def test_color_str():
@@ -18,11 +18,11 @@ def test_color_str():
     clr = colors.string_to_rgb("white")
     assert (1.0, 1.0, 1.0) == clr
     with pytest.raises(ValueError):
-        colors.string_to_rgb('not a color')
+        colors.string_to_rgb("not a color")
 
 
 def test_font():
-    font = pyvista.parse_font_family('times')
+    font = pyvista.parse_font_family("times")
     assert font == vtk.VTK_TIMES
     with pytest.raises(Exception):
-        pyvista.parse_font_family('not a font')
+        pyvista.parse_font_family("not a font")

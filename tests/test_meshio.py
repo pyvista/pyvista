@@ -1,4 +1,3 @@
-
 import numpy as np
 import sys
 import pytest
@@ -7,7 +6,9 @@ import pyvista
 from pyvista import examples
 
 TO_TEST = sys.version_info.major == 3 and sys.version_info.minor == 5
-REASON = "See https://github.com/pyvista/pyvista/pull/495 for meshio issues on Python 3.5"
+REASON = (
+    "See https://github.com/pyvista/pyvista/pull/495 for meshio issues on Python 3.5"
+)
 
 beam = pyvista.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()
@@ -25,7 +26,9 @@ def test_meshio(mesh_in, tmpdir):
     # Assert mesh is still the same
     assert np.allclose(mesh_in.points, mesh.points)
     if (mesh_in.celltypes == 11).all():
-        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[:,[0,1,2,4,3,5,6,8,7]].ravel()
+        cells = mesh_in.cells.reshape((mesh_in.n_cells, 9))[
+            :, [0, 1, 2, 4, 3, 5, 6, 8, 7]
+        ].ravel()
         assert np.allclose(cells, mesh.cells)
     else:
         assert np.allclose(mesh_in.cells, mesh.cells)
@@ -38,6 +41,7 @@ def test_meshio(mesh_in, tmpdir):
 @pytest.mark.skipif(TO_TEST, reason=REASON)
 def test_file_format():
     from meshio._exceptions import ReadError
+
     with pytest.raises(ReadError):
         _ = pyvista.read_meshio(examples.hexbeamfile, file_format="bar")
 

@@ -13,60 +13,66 @@ ffmpeg_failed = False
 try:
     try:
         import imageio_ffmpeg
+
         imageio_ffmpeg.get_ffmpeg_exe()
     except ImportError:
         import imageio
+
         imageio.plugins.ffmpeg.download()
 except:
     ffmpeg_failed = True
 
 TEST_DOWNLOADS = False
 try:
-    if os.environ['TEST_DOWNLOADS'].lower() == 'true':
+    if os.environ["TEST_DOWNLOADS"].lower() == "true":
         TEST_DOWNLOADS = True
 except KeyError:
     pass
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 def test_docexample_advancedplottingwithnumpy():
     import pyvista
     import numpy as np
 
     # Make a grid
-    x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 5))
+    x, y, z = np.meshgrid(
+        np.linspace(-5, 5, 20), np.linspace(-5, 5, 20), np.linspace(-5, 5, 5)
+    )
 
     points = np.empty((x.size, 3))
-    points[:, 0] = x.ravel('F')
-    points[:, 1] = y.ravel('F')
-    points[:, 2] = z.ravel('F')
+    points[:, 0] = x.ravel("F")
+    points[:, 1] = y.ravel("F")
+    points[:, 2] = z.ravel("F")
 
     # Compute a direction for the vector field
-    direction = np.sin(points)**3
+    direction = np.sin(points) ** 3
 
     # plot using the plotting class
     plotter = pyvista.Plotter(off_screen=True)
     plotter.add_arrows(points, direction, 0.5)
-    plotter.set_background([0, 0, 0]) # RGB set to black
+    plotter.set_background([0, 0, 0])  # RGB set to black
     plotter.show(auto_close=False)
     np.any(plotter.screenshot())
     plotter.close()
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 def test_creatingagifmovie(tmpdir, off_screen=True):
     if tmpdir:
-        filename = str(tmpdir.mkdir("tmpdir").join('wave.gif'))
+        filename = str(tmpdir.mkdir("tmpdir").join("wave.gif"))
     else:
-        filename = '/tmp/wave.gif'
+        filename = "/tmp/wave.gif"
 
     x = np.arange(-10, 10, 0.25)
     y = np.arange(-10, 10, 0.25)
     x, y = np.meshgrid(x, y)
-    r = np.sqrt(x**2 + y**2)
+    r = np.sqrt(x ** 2 + y ** 2)
     z = np.sin(r)
 
     # Create and structured surface
@@ -85,7 +91,7 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
 
     # Update Z and write a frame for each updated position
     nframe = 5
-    for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
+    for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
         z = np.sin(r + phase)
         pts[:, -1] = z.ravel()
         plotter.update_coordinates(pts)
@@ -96,18 +102,24 @@ def test_creatingagifmovie(tmpdir, off_screen=True):
     plotter.close()
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 def test_plot_wave():
     points = examples.plot_wave(wavetime=0.1, off_screen=True)
     assert isinstance(points, np.ndarray)
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 def test_beam_example():
     examples.beam_example(off_screen=True)
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 def test_plot_ants_plane():
     examples.plot_ants_plane(off_screen=True)
 
@@ -140,10 +152,10 @@ def test_load_spline():
     mesh = examples.load_spline()
     assert mesh.n_points
 
+
 def test_load_random_hills():
     mesh = examples.load_random_hills()
     assert mesh.n_cells
-
 
 
 if TEST_DOWNLOADS:
@@ -257,7 +269,6 @@ if TEST_DOWNLOADS:
         data = examples.download_office()
         assert data.n_cells
 
-
     def test_download_horse_points():
         data = examples.download_horse_points()
         assert data.n_points
@@ -293,7 +304,6 @@ if TEST_DOWNLOADS:
     def test_download_unstructured_grid():
         data = examples.download_unstructured_grid()
         assert data.n_cells
-
 
     def test_download_letter_k():
         data = examples.download_letter_k()
@@ -459,11 +469,9 @@ if TEST_DOWNLOADS:
         data = examples.download_lidar()
         assert data.n_cells
 
-
     def test_pine_roots():
         data = examples.download_pine_roots()
         assert data.n_points
-
 
 
 # End of download tests

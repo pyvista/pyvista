@@ -19,16 +19,18 @@ sgrid = pyvista.StructuredGrid(x, y, z)
 
 try:
     test_path = os.path.dirname(os.path.abspath(__file__))
-    test_data_path = os.path.join(test_path, 'test_data')
+    test_data_path = os.path.join(test_path, "test_data")
 except:
-    test_path = '/home/alex/afrl/python/source/pyvista/tests'
+    test_path = "/home/alex/afrl/python/source/pyvista/tests"
 
 
 def test_volume():
     assert beam.volume > 0.0
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+@pytest.mark.skipif(
+    not system_supports_plotting(), reason="Requires system to support plotting"
+)
 def test_struct_example():
     # create and plot structured grid
     grid = examples.load_structured()
@@ -51,15 +53,15 @@ def test_init_from_unstructured():
     grid.points += 1
     assert not np.any(grid.points == beam.points)
 
+
 def test_init_bad_input():
     with pytest.raises(Exception):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1))
 
     with pytest.raises(Exception):
-        unstruct_grid = pyvista.UnstructuredGrid(np.array(1),
-                                                 np.array(1),
-                                                 np.array(1),
-                                                 'woa')
+        unstruct_grid = pyvista.UnstructuredGrid(
+            np.array(1), np.array(1), np.array(1), "woa"
+        )
 
 
 def test_init_from_arrays():
@@ -67,23 +69,31 @@ def test_init_from_arrays():
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
     cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int32)
 
-    cell1 = np.array([[0, 0, 0],
-                      [1, 0, 0],
-                      [1, 1, 0],
-                      [0, 1, 0],
-                      [0, 0, 1],
-                      [1, 0, 1],
-                      [1, 1, 1],
-                      [0, 1, 1]])
+    cell1 = np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [0, 1, 1],
+        ]
+    )
 
-    cell2 = np.array([[0, 0, 2],
-                      [1, 0, 2],
-                      [1, 1, 2],
-                      [0, 1, 2],
-                      [0, 0, 3],
-                      [1, 0, 3],
-                      [1, 1, 3],
-                      [0, 1, 3]])
+    cell2 = np.array(
+        [
+            [0, 0, 2],
+            [1, 0, 2],
+            [1, 1, 2],
+            [0, 1, 2],
+            [0, 0, 3],
+            [1, 0, 3],
+            [1, 1, 3],
+            [0, 1, 3],
+        ]
+    )
 
     points = np.vstack((cell1, cell2)).astype(np.int32)
     grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
@@ -91,9 +101,10 @@ def test_init_from_arrays():
     assert grid.n_cells == 2
     assert np.allclose(grid.offset, offset)
 
+
 def test_surface_indices():
     surf = beam.extract_surface()
-    surf_ind = surf.point_arrays['vtkOriginalPointIds']
+    surf_ind = surf.point_arrays["vtkOriginalPointIds"]
     assert np.allclose(surf_ind, beam.surface_indices())
 
 
@@ -105,10 +116,10 @@ def test_extract_edges():
     assert not edges.n_points
 
 
-@pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtu', 'vtk'])
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize("extension", ["vtu", "vtk"])
 def test_save(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.%s" % extension))
     beam.save(filename, binary)
 
     grid = pyvista.UnstructuredGrid(filename)
@@ -122,17 +133,17 @@ def test_save(extension, binary, tmpdir):
 
 
 def test_init_bad_filename():
-    filename = os.path.join(test_path, 'test_grid.py')
+    filename = os.path.join(test_path, "test_grid.py")
     with pytest.raises(Exception):
         grid = pyvista.UnstructuredGrid(filename)
 
     with pytest.raises(Exception):
-        grid = pyvista.UnstructuredGrid('not a file')
+        grid = pyvista.UnstructuredGrid("not a file")
 
 
 def test_save_bad_extension():
     with pytest.raises(Exception):
-        grid = pyvista.UnstructuredGrid('file.abc')
+        grid = pyvista.UnstructuredGrid("file.abc")
 
 
 def test_linear_copy():
@@ -167,8 +178,9 @@ def test_merge():
 def test_merge_not_main():
     grid = beam.copy()
     grid.points[:, 0] += 1
-    unmerged = grid.merge(beam, inplace=False, merge_points=False,
-                          main_has_priority=False)
+    unmerged = grid.merge(
+        beam, inplace=False, merge_points=False, main_has_priority=False
+    )
 
     grid.merge(beam, inplace=True, merge_points=True)
     assert grid.n_points > beam.n_points
@@ -210,10 +222,10 @@ def test_invalid_init_structured():
         grid = pyvista.StructuredGrid(x, y, z)
 
 
-@pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vts', 'vtk'])
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize("extension", ["vts", "vtk"])
 def test_save_structured(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.%s" % extension))
     sgrid.save(filename, binary)
 
     grid = pyvista.StructuredGrid(filename)
@@ -230,9 +242,9 @@ def test_save_structured(extension, binary, tmpdir):
 
 def test_load_structured_bad_filename():
     with pytest.raises(Exception):
-        pyvista.StructuredGrid('not a file')
+        pyvista.StructuredGrid("not a file")
 
-    filename = os.path.join(test_path, 'test_grid.py')
+    filename = os.path.join(test_path, "test_grid.py")
     with pytest.raises(Exception):
         grid = pyvista.StructuredGrid(filename)
 
@@ -243,49 +255,50 @@ def test_create_rectilinear_grid_from_specs():
     yrng = np.arange(-10, 10, 5)
     zrng = np.arange(-10, 10, 1)
     grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
-    assert grid.n_cells == 9*3*19
-    assert grid.n_points == 10*4*20
-    assert grid.bounds == [-10.0,8.0, -10.0,5.0, -10.0,9.0]
+    assert grid.n_cells == 9 * 3 * 19
+    assert grid.n_points == 10 * 4 * 20
+    assert grid.bounds == [-10.0, 8.0, -10.0, 5.0, -10.0, 9.0]
     # 2D example
-    cell_spacings = np.array([1., 1., 2., 2., 5., 10.])
+    cell_spacings = np.array([1.0, 1.0, 2.0, 2.0, 5.0, 10.0])
     x_coordinates = np.cumsum(cell_spacings)
     y_coordinates = np.cumsum(cell_spacings)
     grid = pyvista.RectilinearGrid(x_coordinates, y_coordinates)
-    assert grid.n_cells == 5*5
-    assert grid.n_points == 6*6
-    assert grid.bounds == [1.,21., 1.,21., 0.,0.]
+    assert grid.n_cells == 5 * 5
+    assert grid.n_points == 6 * 6
+    assert grid.bounds == [1.0, 21.0, 1.0, 21.0, 0.0, 0.0]
 
 
 def test_create_rectilinear_grid_from_file():
     grid = examples.load_rectilinear()
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
-    assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
+    assert grid.bounds == [-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0]
     assert grid.n_arrays == 1
+
 
 def test_read_rectilinear_grid_from_file():
     grid = pyvista.read(examples.rectfile)
     assert grid.n_cells == 16146
     assert grid.n_points == 18144
-    assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
+    assert grid.bounds == [-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0]
     assert grid.n_arrays == 1
 
 
 def test_create_uniform_grid_from_specs():
     # create UniformGrid
     dims = [10, 10, 10]
-    grid = pyvista.UniformGrid(dims) # Using default spacing and origin
+    grid = pyvista.UniformGrid(dims)  # Using default spacing and origin
     assert grid.dimensions == [10, 10, 10]
     assert grid.extent == [0, 9, 0, 9, 0, 9]
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [1.0, 1.0, 1.0]
     spacing = [2, 1, 5]
-    grid = pyvista.UniformGrid(dims, spacing) # Usign default origin
+    grid = pyvista.UniformGrid(dims, spacing)  # Usign default origin
     assert grid.dimensions == [10, 10, 10]
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [2.0, 1.0, 5.0]
     origin = [10, 35, 50]
-    grid = pyvista.UniformGrid(dims, spacing, origin) # Everything is specified
+    grid = pyvista.UniformGrid(dims, spacing, origin)  # Everything is specified
     assert grid.dimensions == [10, 10, 10]
     assert grid.origin == [10.0, 35.0, 50.0]
     assert grid.spacing == [2.0, 1.0, 5.0]
@@ -309,15 +322,16 @@ def test_create_uniform_grid_from_file():
     grid = examples.load_uniform()
     assert grid.n_cells == 729
     assert grid.n_points == 1000
-    assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
+    assert grid.bounds == [0.0, 9.0, 0.0, 9.0, 0.0, 9.0]
     assert grid.n_arrays == 2
     assert grid.dimensions == [10, 10, 10]
+
 
 def test_read_uniform_grid_from_file():
     grid = pyvista.read(examples.uniformfile)
     assert grid.n_cells == 729
     assert grid.n_points == 1000
-    assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
+    assert grid.bounds == [0.0, 9.0, 0.0, 9.0, 0.0, 9.0]
     assert grid.n_arrays == 2
     assert grid.dimensions == [10, 10, 10]
 
@@ -338,10 +352,10 @@ def test_cast_uniform_to_rectilinear():
     assert rectilinear.bounds == grid.bounds
 
 
-@pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtr', 'vtk'])
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize("extension", ["vtr", "vtk"])
 def test_save_rectilinear(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.%s" % extension))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
     grid = pyvista.RectilinearGrid(filename)
@@ -358,10 +372,11 @@ def test_save_rectilinear(extension, binary, tmpdir):
     assert np.allclose(grid.z, ogrid.z)
     assert grid.dimensions == ogrid.dimensions
 
-@pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vti', 'vtk'])
+
+@pytest.mark.parametrize("binary", [True, False])
+@pytest.mark.parametrize("extension", ["vti", "vtk"])
 def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.%s" % extension))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
     grid = pyvista.UniformGrid(filename)
@@ -379,19 +394,23 @@ def test_save_uniform(extension, binary, tmpdir):
 
 def test_grid_points():
     """Test the points mehtods on UniformGrid and inearGrid"""
-    points = np.array([[0, 0, 0],
-                       [1, 0, 0],
-                       [1, 1, 0],
-                       [0, 1, 0],
-                       [0, 0, 1],
-                       [1, 0, 1],
-                       [1, 1, 1],
-                       [0, 1, 1]])
+    points = np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [0, 1, 1],
+        ]
+    )
     grid = pyvista.UniformGrid()
     grid.points = points
     assert grid.dimensions == [2, 2, 2]
     assert grid.spacing == [1, 1, 1]
-    assert grid.origin == [0., 0., 0.]
+    assert grid.origin == [0.0, 0.0, 0.0]
     assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
     opts = np.c_[grid.x, grid.y, grid.z]
     assert np.allclose(np.unique(opts, axis=0), np.unique(points, axis=0))

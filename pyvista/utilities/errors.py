@@ -22,12 +22,12 @@ def set_error_output_file(filename):
 class Observer:
     """A standerd class for observing VTK objects."""
 
-    def __init__(self, event_type='ErrorEvent', log=True):
+    def __init__(self, event_type="ErrorEvent", log=True):
         """Initialize observer."""
         self.__event_occurred = False
         self.__message = None
         self.__message_etc = None
-        self.CallDataType = 'string0'
+        self.CallDataType = "string0"
         self.__observing = False
         self.event_type = event_type
         self.__log = log
@@ -36,16 +36,16 @@ class Observer:
     def parse_message(message):
         """Parse the given message."""
         # Message format
-        regex = re.compile(r'([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)')
+        regex = re.compile(r"([A-Z]+):\sIn\s(.+),\sline\s.+\n\w+\s\((.+)\):\s(.+)")
         try:
             kind, path, address, alert = regex.findall(message)[0]
             return kind, path, address, alert
         except:
-            return '', '', '', message
+            return "", "", "", message
 
     def log_message(self, kind, alert):
         """Parse different event types and passes them to logging."""
-        if kind == 'ERROR':
+        if kind == "ERROR":
             logging.error(alert)
         else:
             logging.warning(alert)
@@ -89,8 +89,8 @@ class Observer:
     def observe(self, algorithm):
         """Make this an observer of an algorithm."""
         if self.__observing:
-            raise RuntimeError('This error observer is already observing an algorithm.')
-        if hasattr(algorithm, 'GetExecutive') and algorithm.GetExecutive() is not None:
+            raise RuntimeError("This error observer is already observing an algorithm.")
+        if hasattr(algorithm, "GetExecutive") and algorithm.GetExecutive() is not None:
             algorithm.GetExecutive().AddObserver(self.event_type, self)
         algorithm.AddObserver(self.event_type, self)
         self.__observing = True
@@ -129,15 +129,20 @@ class Report(scooby.Report):
 
         """
         # Mandatory packages.
-        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+        core = ["pyvista", "vtk", "numpy", "imageio", "appdirs", "scooby"]
 
         # Optional packages.
-        optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'panel']
+        optional = ["matplotlib", "PyQt5", "IPython", "colorcet", "cmocean", "panel"]
 
-        scooby.Report.__init__(self, additional=additional, core=core,
-                               optional=optional, ncol=ncol,
-                               text_width=text_width, sort=sort)
+        scooby.Report.__init__(
+            self,
+            additional=additional,
+            core=core,
+            optional=optional,
+            ncol=ncol,
+            text_width=text_width,
+            sort=sort,
+        )
 
 
 def assert_empty_kwargs(**kwargs):

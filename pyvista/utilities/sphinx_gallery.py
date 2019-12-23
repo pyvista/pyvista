@@ -36,17 +36,17 @@ class Scraper(object):
         try:
             from sphinx_gallery.scrapers import figure_rst
         except ImportError:
-            raise ImportError('You must install `sphinx_gallery`')
+            raise ImportError("You must install `sphinx_gallery`")
         image_names = list()
         image_path_iterator = block_vars["image_path_iterator"]
         figures = pyvista.plotting._ALL_PLOTTERS
         for address, plotter in figures.items():
             fname = next(image_path_iterator)
-            if hasattr(plotter, '_gif_filename'):
+            if hasattr(plotter, "_gif_filename"):
                 # move gif to fname
                 shutil.move(plotter._gif_filename, fname)
             else:
                 plotter.screenshot(fname)
             image_names.append(fname)
-        pyvista.close_all() # close and clear all plotters
+        pyvista.close_all()  # close and clear all plotters
         return figure_rst(image_names, gallery_conf["src_dir"])

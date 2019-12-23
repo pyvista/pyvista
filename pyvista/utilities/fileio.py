@@ -10,64 +10,64 @@ import pyvista
 
 READERS = {
     # Standard dataset readers:
-    '.vtk': vtk.vtkDataSetReader,
-    '.pvtk': vtk.vtkPDataSetReader,
-    '.vti': vtk.vtkXMLImageDataReader,
-    '.pvti': vtk.vtkXMLPImageDataReader,
-    '.vtr': vtk.vtkXMLRectilinearGridReader,
-    '.pvtr': vtk.vtkXMLPRectilinearGridReader,
-    '.vtu': vtk.vtkXMLUnstructuredGridReader,
-    '.pvtu': vtk.vtkXMLPUnstructuredGridReader,
-    '.ply': vtk.vtkPLYReader,
-    '.obj': vtk.vtkOBJReader,
-    '.stl': vtk.vtkSTLReader,
-    '.vtp': vtk.vtkXMLPolyDataReader,
-    '.vts': vtk.vtkXMLStructuredGridReader,
-    '.vtm': vtk.vtkXMLMultiBlockDataReader,
-    '.vtmb': vtk.vtkXMLMultiBlockDataReader,
+    ".vtk": vtk.vtkDataSetReader,
+    ".pvtk": vtk.vtkPDataSetReader,
+    ".vti": vtk.vtkXMLImageDataReader,
+    ".pvti": vtk.vtkXMLPImageDataReader,
+    ".vtr": vtk.vtkXMLRectilinearGridReader,
+    ".pvtr": vtk.vtkXMLPRectilinearGridReader,
+    ".vtu": vtk.vtkXMLUnstructuredGridReader,
+    ".pvtu": vtk.vtkXMLPUnstructuredGridReader,
+    ".ply": vtk.vtkPLYReader,
+    ".obj": vtk.vtkOBJReader,
+    ".stl": vtk.vtkSTLReader,
+    ".vtp": vtk.vtkXMLPolyDataReader,
+    ".vts": vtk.vtkXMLStructuredGridReader,
+    ".vtm": vtk.vtkXMLMultiBlockDataReader,
+    ".vtmb": vtk.vtkXMLMultiBlockDataReader,
     # Image formats:
-    '.bmp': vtk.vtkBMPReader,
-    '.dem': vtk.vtkDEMReader,
-    '.dcm': vtk.vtkDICOMImageReader,
-    '.img': vtk.vtkDICOMImageReader,
-    '.jpeg': vtk.vtkJPEGReader,
-    '.jpg': vtk.vtkJPEGReader,
-    '.mhd': vtk.vtkMetaImageReader,
-    '.png': vtk.vtkPNGReader,
-    '.pnm': vtk.vtkPNMReader, # TODO: not tested
-    '.slc': vtk.vtkSLCReader,
-    '.tiff': vtk.vtkTIFFReader,
-    '.tif': vtk.vtkTIFFReader,
+    ".bmp": vtk.vtkBMPReader,
+    ".dem": vtk.vtkDEMReader,
+    ".dcm": vtk.vtkDICOMImageReader,
+    ".img": vtk.vtkDICOMImageReader,
+    ".jpeg": vtk.vtkJPEGReader,
+    ".jpg": vtk.vtkJPEGReader,
+    ".mhd": vtk.vtkMetaImageReader,
+    ".png": vtk.vtkPNGReader,
+    ".pnm": vtk.vtkPNMReader,  # TODO: not tested
+    ".slc": vtk.vtkSLCReader,
+    ".tiff": vtk.vtkTIFFReader,
+    ".tif": vtk.vtkTIFFReader,
     # Other formats:
-    '.byu': vtk.vtkBYUReader, # TODO: not tested with this extension
-    '.g': vtk.vtkBYUReader,
+    ".byu": vtk.vtkBYUReader,  # TODO: not tested with this extension
+    ".g": vtk.vtkBYUReader,
     # '.chemml': vtk.vtkCMLMoleculeReader, # TODO: not tested
     # '.cml': vtk.vtkCMLMoleculeReader, # vtkMolecule is not supported by pyvista
     # TODO: '.csv': vtk.vtkCSVReader, # vtkTables are currently not supported
-    '.facet': vtk.vtkFacetReader,
-    '.cas': vtk.vtkFLUENTReader, # TODO: not tested
+    ".facet": vtk.vtkFacetReader,
+    ".cas": vtk.vtkFLUENTReader,  # TODO: not tested
     # '.dat': vtk.vtkFLUENTReader, # TODO: not working
     # '.cube': vtk.vtkGaussianCubeReader, # Contains `atom_types` which are note supported?
-    '.res': vtk.vtkMFIXReader, # TODO: not tested
-    '.foam': vtk.vtkOpenFOAMReader,
+    ".res": vtk.vtkMFIXReader,  # TODO: not tested
+    ".foam": vtk.vtkOpenFOAMReader,
     # '.pdb': vtk.vtkPDBReader, # Contains `atom_types` which are note supported?
-    '.p3d': vtk.vtkPlot3DMetaReader,
-    '.pts': vtk.vtkPTSReader,
+    ".p3d": vtk.vtkPlot3DMetaReader,
+    ".pts": vtk.vtkPTSReader,
     # '.particles': vtk.vtkParticleReader, # TODO: not tested
-    #TODO: '.pht': vtk.vtkPhasta??????,
-    #TODO: '.vpc': vtk.vtkVPIC?????,
+    # TODO: '.pht': vtk.vtkPhasta??????,
+    # TODO: '.vpc': vtk.vtkVPIC?????,
     # '.bin': vtk.vtkMultiBlockPLOT3DReader,# TODO: non-default routine
-    '.tri': vtk.vtkMCubesReader,
-    '.inp': vtk.vtkAVSucdReader,
+    ".tri": vtk.vtkMCubesReader,
+    ".inp": vtk.vtkAVSucdReader,
 }
 
 VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
 VTK_MINOR = vtk.vtkVersion().GetVTKMinorVersion()
 
-if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
+if VTK_MAJOR >= 8 and VTK_MINOR >= 2:
     try:
-        READERS['.sgy'] = vtk.vtkSegYReader
-        READERS['.segy'] = vtk.vtkSegYReader
+        READERS[".sgy"] = vtk.vtkSegYReader
+        READERS[".segy"] = vtk.vtkSegYReader
     except AttributeError:
         pass
 
@@ -81,7 +81,7 @@ def get_ext(filename):
 def get_reader(filename):
     """Get the corresponding reader based on file extension and instantiates it."""
     ext = get_ext(filename)
-    return READERS[ext]() # Get and instantiate the reader
+    return READERS[ext]()  # Get and instantiate the reader
 
 
 def standard_reader_routine(reader, filename, attrs=None):
@@ -107,7 +107,7 @@ def standard_reader_routine(reader, filename, attrs=None):
     if attrs is None:
         attrs = {}
     if not isinstance(attrs, dict):
-        raise TypeError('Attributes must be a dictionary of name and arguments.')
+        raise TypeError("Attributes must be a dictionary of name and arguments.")
     reader.SetFileName(filename)
     # Apply any attributes listed
     for name, args in attrs.items():
@@ -137,7 +137,7 @@ def read_legacy(filename):
     reader.Update()
     output = reader.GetOutputDataObject(0)
     if output is None:
-        raise AssertionError('No output when using VTKs legacy reader')
+        raise AssertionError("No output when using VTKs legacy reader")
     return pyvista.wrap(output)
 
 
@@ -173,7 +173,7 @@ def read(filename, attrs=None, file_format=None):
         return multi
     filename = os.path.abspath(os.path.expanduser(filename))
     if not os.path.isfile(filename):
-        raise FileNotFoundError('File ({}) not found'.format(filename))
+        raise FileNotFoundError("File ({}) not found".format(filename))
     ext = get_ext(filename)
 
     # Read file using meshio.read if file_format is present
@@ -184,21 +184,21 @@ def read(filename, attrs=None, file_format=None):
     if attrs is not None:
         reader = get_reader(filename)
         return standard_reader_routine(reader, filename, attrs=attrs)
-    elif ext in '.vti': # ImageData
+    elif ext in ".vti":  # ImageData
         return pyvista.UniformGrid(filename)
-    elif ext in '.vtr': # RectilinearGrid
+    elif ext in ".vtr":  # RectilinearGrid
         return pyvista.RectilinearGrid(filename)
-    elif ext in '.vtu': # UnstructuredGrid
+    elif ext in ".vtu":  # UnstructuredGrid
         return pyvista.UnstructuredGrid(filename)
-    elif ext in ['.ply', '.obj', '.stl']: # PolyData
+    elif ext in [".ply", ".obj", ".stl"]:  # PolyData
         return pyvista.PolyData(filename)
-    elif ext in '.vts': # StructuredGrid
+    elif ext in ".vts":  # StructuredGrid
         return pyvista.StructuredGrid(filename)
-    elif ext in ['.vtm', '.vtmb']:
+    elif ext in [".vtm", ".vtmb"]:
         return pyvista.MultiBlock(filename)
-    elif ext in ['.e', '.exo']:
+    elif ext in [".e", ".exo"]:
         return read_exodus(filename)
-    elif ext in ['.vtk']:
+    elif ext in [".vtk"]:
         # Attempt to use the legacy reader...
         return read_legacy(filename)
     else:
@@ -210,6 +210,7 @@ def read(filename, attrs=None, file_format=None):
             # Attempt read with meshio
             try:
                 from meshio._exceptions import ReadError
+
                 try:
                     return read_meshio(filename)
                 except ReadError:
@@ -235,14 +236,17 @@ def read_texture(filename, attrs=None):
         # Otherwise, use the imageio reader
         pass
     import imageio
+
     return pyvista.numpy_to_texture(imageio.imread(filename))
 
 
-def read_exodus(filename,
-                animate_mode_shapes=True,
-                apply_displacements=True,
-                displacement_magnitude=1.0,
-                enabled_sidesets=None):
+def read_exodus(
+    filename,
+    animate_mode_shapes=True,
+    apply_displacements=True,
+    displacement_magnitude=1.0,
+    enabled_sidesets=None,
+):
     """Read an ExodusII file (``'.e'`` or ``'.exo'``)."""
     reader = vtk.vtkExodusIIReader()
     reader.SetFileName(filename)
@@ -260,7 +264,7 @@ def read_exodus(filename,
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError('Could not parse sideset ID/name: {}'.format(sideset))
+            raise ValueError("Could not parse sideset ID/name: {}".format(sideset))
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -268,7 +272,7 @@ def read_exodus(filename,
     return pyvista.wrap(reader.GetOutput())
 
 
-def read_meshio(filename, file_format = None):
+def read_meshio(filename, file_format=None):
     """Read any mesh file using meshio."""
     import meshio
     from meshio.vtk._vtk import (
@@ -291,7 +295,7 @@ def read_meshio(filename, file_format = None):
     for k, v in mesh.cells.items():
         vtk_type = meshio_to_vtk_type[k]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        offset += [next_offset+i*(numnodes+1) for i in range(len(v))]
+        offset += [next_offset + i * (numnodes + 1) for i in range(len(v))]
         cells.append(np.hstack((np.full((len(v), 1), numnodes), v)).ravel())
         cell_type += [vtk_type] * len(v)
         next_offset = offset[-1] + numnodes + 1
@@ -300,14 +304,16 @@ def read_meshio(filename, file_format = None):
         if k in mesh.cell_data.keys():
             for kk, vv in mesh.cell_data[k].items():
                 if kk in cell_data:
-                    cell_data[kk] = np.concatenate((cell_data[kk], np.array(vv, np.float64)))
+                    cell_data[kk] = np.concatenate(
+                        (cell_data[kk], np.array(vv, np.float64))
+                    )
                 else:
                     cell_data[kk] = np.array(vv, np.float64)
 
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
     if points.shape[1] == 2:
-        points = np.hstack((points, np.zeros((len(points),1))))
+        points = np.hstack((points, np.zeros((len(points), 1))))
 
     grid = pyvista.UnstructuredGrid(
         np.array(offset),
@@ -317,14 +323,16 @@ def read_meshio(filename, file_format = None):
     )
 
     # Set point data
-    grid.point_arrays.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
+    grid.point_arrays.update(
+        {k: np.array(v, np.float64) for k, v in mesh.point_data.items()}
+    )
     # Set cell data
     grid.cell_arrays.update(cell_data)
 
     return grid
 
 
-def save_meshio(filename, mesh, file_format = None, **kwargs):
+def save_meshio(filename, mesh, file_format=None, **kwargs):
     """Save mesh to file using meshio.
 
     Parameters
@@ -353,17 +361,21 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     # Get cells
     cells = {k: [] for k in np.unique(vtk_cell_type)}
     if 8 in cells.keys():
-        cells[9] = cells.pop(8)                 # Handle pixels
+        cells[9] = cells.pop(8)  # Handle pixels
     if 11 in cells.keys():
-        cells[12] = cells.pop(11)               # Handle voxels
-    mapper = {k: [] for k in cells.keys()}      # For cell data
+        cells[12] = cells.pop(11)  # Handle voxels
+    mapper = {k: [] for k in cells.keys()}  # For cell data
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         numnodes = vtk_cells[offset]
-        cell = vtk_cells[offset+1:offset+1+numnodes]
-        cell = cell if cell_type not in {8, 11} \
-            else cell[[ 0, 1, 3, 2 ]] if cell_type == 8 \
-            else cell[[ 0, 1, 3, 2, 4, 5, 7, 6 ]]
-        cell_type = cell_type if cell_type not in {8, 11} else cell_type+1
+        cell = vtk_cells[offset + 1 : offset + 1 + numnodes]
+        cell = (
+            cell
+            if cell_type not in {8, 11}
+            else cell[[0, 1, 3, 2]]
+            if cell_type == 8
+            else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+        )
+        cell_type = cell_type if cell_type not in {8, 11} else cell_type + 1
         cells[cell_type].append(cell)
         mapper[cell_type].append(i)
     cells = {vtk_to_meshio_type[k]: np.vstack(v) for k, v in cells.items()}
@@ -374,18 +386,22 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
 
     # Get cell data
     vtk_cell_data = mesh.cell_arrays
-    cell_data = {
-        k: {kk.replace(" ", "_"): vv[v] for kk, vv in vtk_cell_data.items()}
-        for k, v in mapper.items()
-    } if vtk_cell_data else {}
+    cell_data = (
+        {
+            k: {kk.replace(" ", "_"): vv[v] for kk, vv in vtk_cell_data.items()}
+            for k, v in mapper.items()
+        }
+        if vtk_cell_data
+        else {}
+    )
 
     # Save using meshio
     meshio.write_points_cells(
-        filename = filename,
-        points = np.array(mesh.points),
-        cells = cells,
-        point_data = point_data,
-        cell_data = cell_data,
-        file_format = file_format,
+        filename=filename,
+        points=np.array(mesh.points),
+        cells=cells,
+        point_data=point_data,
+        cell_data=cell_data,
+        file_format=file_format,
         **kwargs
     )

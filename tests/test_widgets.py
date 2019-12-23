@@ -18,14 +18,14 @@ mesh = examples.load_uniform()
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_box():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda box: box # Does nothing
+    func = lambda box: box  # Does nothing
     p.add_mesh(mesh)
     p.add_box_widget(callback=func)
     p.clear_box_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda box, widget: box # Does nothing
+    func = lambda box, widget: box  # Does nothing
     p.add_mesh(mesh)
     p.add_box_widget(callback=func, pass_widget=True)
     p.clear_box_widgets()
@@ -39,28 +39,28 @@ def test_widget_box():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_plane():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda normal, origin: normal # Does nothing
+    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, implicit=True)
     p.clear_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda normal, origin, widget: normal # Does nothing
+    func = lambda normal, origin, widget: normal  # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=True)
     p.clear_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda normal, origin: normal # Does nothing
+    func = lambda normal, origin: normal  # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, implicit=False)
     p.clear_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda normal, origin, widget: normal # Does nothing
+    func = lambda normal, origin, widget: normal  # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=False)
     p.clear_plane_widgets()
@@ -82,21 +82,21 @@ def test_widget_plane():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_line():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda line: line # Does nothing
+    func = lambda line: line  # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func)
     p.clear_line_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda line, widget: line # Does nothing
+    func = lambda line, widget: line  # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func, pass_widget=True)
     p.clear_line_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda a, b: (a, b) # Does nothing
+    func = lambda a, b: (a, b)  # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func, use_vertices=True)
     p.clear_line_widgets()
@@ -106,29 +106,26 @@ def test_widget_line():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_slider():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda value: value # Does nothing
+    func = lambda value: value  # Does nothing
     p.add_mesh(mesh)
-    p.add_slider_widget(callback=func, rng=[0,10])
+    p.add_slider_widget(callback=func, rng=[0, 10])
     p.clear_slider_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    for event_type in ['start', 'end', 'always']:
-        p.add_slider_widget(callback=func, rng=[0,10],
-                            event_type=event_type)
-    with pytest.raises(TypeError, match='type for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0,10],
-                            event_type=0)
-    with pytest.raises(ValueError, match='value for `event_type`'):
-        p.add_slider_widget(callback=func, rng=[0,10],
-                            event_type='foo')
+    for event_type in ["start", "end", "always"]:
+        p.add_slider_widget(callback=func, rng=[0, 10], event_type=event_type)
+    with pytest.raises(TypeError, match="type for `event_type`"):
+        p.add_slider_widget(callback=func, rng=[0, 10], event_type=0)
+    with pytest.raises(ValueError, match="value for `event_type`"):
+        p.add_slider_widget(callback=func, rng=[0, 10], event_type="foo")
     p.clear_slider_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda value, widget: value # Does nothing
+    func = lambda value, widget: value  # Does nothing
     p.add_mesh(mesh)
-    p.add_slider_widget(callback=func, rng=[0,10], pass_widget=True)
+    p.add_slider_widget(callback=func, rng=[0, 10], pass_widget=True)
     p.clear_slider_widgets()
     p.close()
 
@@ -150,14 +147,14 @@ def test_widget_slider():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_spline():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda spline: spline # Does nothing
+    func = lambda spline: spline  # Does nothing
     p.add_mesh(mesh)
     p.add_spline_widget(callback=func)
     p.clear_spline_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda spline, widget: spline # Does nothing
+    func = lambda spline, widget: spline  # Does nothing
     p.add_mesh(mesh)
     p.add_spline_widget(callback=func, pass_widget=True, color=None, show_ribbon=True)
     p.clear_spline_widgets()
@@ -172,14 +169,14 @@ def test_widget_spline():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_sphere():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda center: center # Does nothing
+    func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
     p.clear_sphere_widgets()
     p.close()
 
-    nodes = np.array([[-1,-1,-1], [1,1,1]])
+    nodes = np.array([[-1, -1, -1], [1, 1, 1]])
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    func = lambda center: center # Does nothing
+    func = lambda center: center  # Does nothing
     p.add_sphere_widget(callback=func, center=nodes)
     p.clear_sphere_widgets()
     p.close()

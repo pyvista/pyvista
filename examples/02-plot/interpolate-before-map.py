@@ -32,21 +32,19 @@ import pyvista as pv
 # So lets take a look at the difference:
 
 # Load a cylider which has cells with a wide spread
-cyl = pv.Cylinder(direction=(0,0,1), height=2).elevation()
+cyl = pv.Cylinder(direction=(0, 0, 1), height=2).elevation()
 
 # Common display argument to make sure all else is constant
-dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
+dargs = dict(scalars="Elevation", cmap="rainbow", show_edges=True)
 
-p = pv.Plotter(shape=(1,2))
-p.add_mesh(cyl, interpolate_before_map=False,
-           stitle='Elevation - not interpolated', **dargs)
-p.subplot(0,1)
-p.add_mesh(cyl, interpolate_before_map=True,
-           stitle='Elevation - interpolated', **dargs)
+p = pv.Plotter(shape=(1, 2))
+p.add_mesh(
+    cyl, interpolate_before_map=False, stitle="Elevation - not interpolated", **dargs
+)
+p.subplot(0, 1)
+p.add_mesh(cyl, interpolate_before_map=True, stitle="Elevation - interpolated", **dargs)
 p.link_views()
-p.camera_position = [(-1.67, -5.10, 2.06),
-                     (0.0, 0.0, 0.0),
-                     (0.00, 0.37, 0.93)]
+p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
 p.show()
 
 ###############################################################################
@@ -58,19 +56,16 @@ p.show()
 # The same interpolation effect occurs for wireframe visualization too:
 
 # Common display argument to make sure all else is constant
-dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True,
-             style='wireframe')
+dargs = dict(scalars="Elevation", cmap="rainbow", show_edges=True, style="wireframe")
 
-p = pv.Plotter(shape=(1,2))
-p.add_mesh(cyl, interpolate_before_map=False,
-           stitle='Elevation - not interpolated', **dargs)
-p.subplot(0,1)
-p.add_mesh(cyl, interpolate_before_map=True,
-           stitle='Elevation - interpolated', **dargs)
+p = pv.Plotter(shape=(1, 2))
+p.add_mesh(
+    cyl, interpolate_before_map=False, stitle="Elevation - not interpolated", **dargs
+)
+p.subplot(0, 1)
+p.add_mesh(cyl, interpolate_before_map=True, stitle="Elevation - interpolated", **dargs)
 p.link_views()
-p.camera_position = [(-1.67, -5.10, 2.06),
-                     (0.0, 0.0, 0.0),
-                     (0.00, 0.37, 0.93)]
+p.camera_position = [(-1.67, -5.10, 2.06), (0.0, 0.0, 0.0), (0.00, 0.37, 0.93)]
 p.show()
 
 ###############################################################################
@@ -82,21 +77,21 @@ p.show()
 # color interpolating are harder to notice. Let's take a look at a wavelet
 # example and try to figure out how the ``interpolate_before_map`` option
 # affects its rendering.
-wavelet = pv.Wavelet().clip('x')
+wavelet = pv.Wavelet().clip("x")
 
 # Common display argument to make sure all else is constant
-dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True)
+dargs = dict(scalars="RTData", cmap="rainbow", show_edges=True)
 
-p = pv.Plotter(shape=(1,2))
-p.add_mesh(wavelet, interpolate_before_map=False,
-           stitle='RTData - not interpolated', **dargs)
-p.subplot(0,1)
-p.add_mesh(wavelet, interpolate_before_map=True,
-           stitle='RTData - interpolated', **dargs)
+p = pv.Plotter(shape=(1, 2))
+p.add_mesh(
+    wavelet, interpolate_before_map=False, stitle="RTData - not interpolated", **dargs
+)
+p.subplot(0, 1)
+p.add_mesh(
+    wavelet, interpolate_before_map=True, stitle="RTData - interpolated", **dargs
+)
 p.link_views()
-p.camera_position = [(55., 16, 31),
-                     (-5.0, 0.0, 0.0),
-                     (-0.22, 0.97, -0.09)]
+p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
 p.show()
 
 ###############################################################################
@@ -106,18 +101,18 @@ p.show()
 # Let's take a look at the differences when using eight discrete colors via
 # the ``n_colors`` argument:
 
-dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True, n_colors=8)
+dargs = dict(scalars="RTData", cmap="rainbow", show_edges=True, n_colors=8)
 
-p = pv.Plotter(shape=(1,2))
-p.add_mesh(wavelet, interpolate_before_map=False,
-           stitle='RTData - not interpolated', **dargs)
-p.subplot(0,1)
-p.add_mesh(wavelet, interpolate_before_map=True,
-           stitle='RTData - interpolated', **dargs)
+p = pv.Plotter(shape=(1, 2))
+p.add_mesh(
+    wavelet, interpolate_before_map=False, stitle="RTData - not interpolated", **dargs
+)
+p.subplot(0, 1)
+p.add_mesh(
+    wavelet, interpolate_before_map=True, stitle="RTData - interpolated", **dargs
+)
 p.link_views()
-p.camera_position = [(55., 16, 31),
-                     (-5.0, 0.0, 0.0),
-                     (-0.22, 0.97, -0.09)]
+p.camera_position = [(55.0, 16, 31), (-5.0, 0.0, 0.0), (-0.22, 0.97, -0.09)]
 p.show()
 
 ###############################################################################

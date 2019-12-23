@@ -6,7 +6,7 @@ import pyvista
 def test_spline():
     theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
     z = np.linspace(-2, 2, 100)
-    r = z**2 + 1
+    r = z ** 2 + 1
     x = r * np.sin(theta)
     y = r * np.cos(theta)
 
@@ -16,7 +16,7 @@ def test_spline():
 
 
 def test_ParametricBohemianDome():
-    geom = pyvista.ParametricBohemianDome(direction=[0,0,1])
+    geom = pyvista.ParametricBohemianDome(direction=[0, 0, 1])
     assert geom.n_points
 
 

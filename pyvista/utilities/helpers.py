@@ -60,12 +60,12 @@ def convert_string_array(arr, name=None):
             vtkarr.SetName(name)
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
-    carr = np.empty(arr.GetNumberOfValues(), dtype='O')
+    carr = np.empty(arr.GetNumberOfValues(), dtype="O")
     ############### OPTIMIZE ###############
     for i in range(arr.GetNumberOfValues()):
         carr[i] = arr.GetValue(i)
     ########################################
-    return carr.astype('|S')
+    return carr.astype("|S")
 
 
 def convert_array(arr, name=None, deep=0, array_type=None):
@@ -92,8 +92,8 @@ def convert_array(arr, name=None, deep=0, array_type=None):
     if arr is None:
         return
     if isinstance(arr, np.ndarray):
-        if arr.dtype is np.dtype('O'):
-            arr = arr.astype('|S')
+        if arr.dtype is np.dtype("O"):
+            arr = arr.astype("|S")
         arr = np.ascontiguousarray(arr)
         try:
             # This will handle numerical data
@@ -109,7 +109,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         return vtk_data
     # Otherwise input must be a vtkDataArray
     if not isinstance(arr, (vtk.vtkDataArray, vtk.vtkBitArray, vtk.vtkStringArray)):
-        raise TypeError('Invalid input array type ({}).'.format(type(arr)))
+        raise TypeError("Invalid input array type ({}).".format(type(arr)))
     # Handle booleans
     if isinstance(arr, vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
@@ -118,7 +118,6 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         return convert_string_array(arr)
     # Convert from vtkDataArry to NumPy
     return nps.vtk_to_numpy(arr)
-
 
 
 def is_pyvista_dataset(obj):
@@ -131,6 +130,7 @@ def point_array(mesh, name):
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+
 def point_scalar(mesh, name):
     """Return point array of a vtk object.
 
@@ -139,10 +139,12 @@ def point_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `point_array` instead.")
     return point_array(mesh, name)
 
+
 def field_array(mesh, name):
     """Return field array of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def field_scalar(mesh, name):
     """Return field array of a vtk object.
@@ -152,10 +154,12 @@ def field_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `field_array` instead.")
     return field_array(mesh, name)
 
+
 def cell_array(mesh, name):
     """Return cell array of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def cell_scalar(mesh, name):
     """Return cell array of a vtk object.
@@ -165,33 +169,38 @@ def cell_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `cell_array` instead.")
     return cell_array(mesh, name)
 
+
 def row_array(data_object, name):
     """Return row array of a vtk object."""
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+
 def parse_field_choice(field):
     """Return the id of the given field."""
     if isinstance(field, str):
         field = field.strip().lower()
-        if field in ['cell', 'c', 'cells']:
+        if field in ["cell", "c", "cells"]:
             field = CELL_DATA_FIELD
-        elif field in ['point', 'p', 'points']:
+        elif field in ["point", "p", "points"]:
             field = POINT_DATA_FIELD
-        elif field in ['field', 'f', 'fields']:
+        elif field in ["field", "f", "fields"]:
             field = FIELD_DATA_FIELD
-        elif field in ['row', 'r',]:
+        elif field in [
+            "row",
+            "r",
+        ]:
             field = ROW_DATA_FIELD
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(field))
+            raise RuntimeError("Data field ({}) not supported.".format(field))
     elif isinstance(field, int):
         pass
     else:
-        raise RuntimeError('Data field ({}) not supported.'.format(field))
+        raise RuntimeError("Data field ({}) not supported.".format(field))
     return field
 
 
-def get_array(mesh, name, preference='cell', info=False, err=False):
+def get_array(mesh, name, preference="cell", info=False, err=False):
     """Search point, cell and field data for an array.
 
     Parameters
@@ -214,7 +223,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     if isinstance(mesh, vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError('Data array ({}) not present in this dataset.'.format(name))
+            raise KeyError("Data array ({}) not present in this dataset.".format(name))
         field = ROW_DATA_FIELD
         if info:
             return arr, field
@@ -241,7 +250,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
             else:
                 return farr
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(preference))
+            raise RuntimeError("Data field ({}) not supported.".format(preference))
     arr = None
     field = None
     if parr is not None:
@@ -254,7 +263,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = farr
         field = FIELD_DATA_FIELD
     elif err:
-        raise KeyError('Data array ({}) not present in this dataset.'.format(name))
+        raise KeyError("Data array ({}) not present in this dataset.".format(name))
     if info:
         return arr, field
     return arr
@@ -262,7 +271,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
 
 def vtk_points(points, deep=True):
     """Convert numpy points to a vtkPoints object."""
-    if not points.flags['C_CONTIGUOUS']:
+    if not points.flags["C_CONTIGUOUS"]:
         points = np.ascontiguousarray(points)
     vtkpts = vtk.vtkPoints()
     vtkpts.SetData(nps.numpy_to_vtk(points, deep=deep))
@@ -301,13 +310,19 @@ def line_segments_from_points(points):
 
     """
     if len(points) % 2:
-        raise RuntimeError("An even number of points must be given to define each segment.")
+        raise RuntimeError(
+            "An even number of points must be given to define each segment."
+        )
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
-    lines = np.c_[(2 * np.ones(n_lines, np.int),
-                   np.arange(0, n_points-1, step=2),
-                   np.arange(1, n_points+1, step=2))]
+    lines = np.c_[
+        (
+            2 * np.ones(n_lines, np.int),
+            np.arange(0, n_points - 1, step=2),
+            np.arange(1, n_points + 1, step=2),
+        )
+    ]
     poly = pyvista.PolyData()
     poly.points = points
     poly.lines = lines
@@ -333,8 +348,8 @@ def lines_from_points(points):
     """
     poly = pyvista.PolyData()
     poly.points = points
-    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
-    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
+    cells = np.full((len(points) - 1, 3), 2, dtype=np.int)
+    cells[:, 1] = np.arange(0, len(points) - 1, dtype=np.int)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int)
     poly.lines = cells
     return poly
@@ -352,24 +367,23 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise Exception('orig array must be 3D')
+        raise Exception("orig array must be 3D")
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise Exception('vec array must be 3D')
+        raise Exception("vec array must be 3D")
 
     # Create vtk points and cells objects
     vpts = vtk.vtkPoints()
     vpts.SetData(nps.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
-    cells = np.hstack((np.ones((npts, 1), 'int'),
-                       np.arange(npts).reshape((-1, 1))))
+    cells = np.hstack((np.ones((npts, 1), "int"), np.arange(npts).reshape((-1, 1))))
 
     if cells.dtype != ctypes.c_int64 or cells.flags.c_contiguous:
         cells = np.ascontiguousarray(cells, ctypes.c_int64)
-    cells = np.reshape(cells, (2*npts))
+    cells = np.reshape(cells, (2 * npts))
     vcells = vtk.vtkCellArray()
     vcells.SetCells(npts, nps.numpy_to_vtkIdTypeArray(cells, deep=True))
 
@@ -379,15 +393,15 @@ def vector_poly_data(orig, vec):
     pdata.SetVerts(vcells)
 
     # Add vectors to polydata
-    name = 'vectors'
+    name = "vectors"
     vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(vec), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
     pdata.GetPointData().SetActiveVectors(name)
 
     # Add magnitude of vectors to polydata
-    name = 'mag'
-    scalars = (vec * vec).sum(1)**0.5
+    name = "mag"
+    scalars = (vec * vec).sum(1) ** 0.5
     vtkfloat = nps.numpy_to_vtk(np.ascontiguousarray(scalars), deep=True)
     vtkfloat.SetName(name)
     pdata.GetPointData().AddArray(vtkfloat)
@@ -414,18 +428,18 @@ def wrap(vtkdataset):
 
     """
     wrappers = {
-        'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
-        'vtkRectilinearGrid': pyvista.RectilinearGrid,
-        'vtkStructuredGrid': pyvista.StructuredGrid,
-        'vtkPolyData': pyvista.PolyData,
-        'vtkImageData': pyvista.UniformGrid,
-        'vtkStructuredPoints': pyvista.UniformGrid,
-        'vtkMultiBlockDataSet': pyvista.MultiBlock,
-        'vtkTable': pyvista.Table,
+        "vtkUnstructuredGrid": pyvista.UnstructuredGrid,
+        "vtkRectilinearGrid": pyvista.RectilinearGrid,
+        "vtkStructuredGrid": pyvista.StructuredGrid,
+        "vtkPolyData": pyvista.PolyData,
+        "vtkImageData": pyvista.UniformGrid,
+        "vtkStructuredPoints": pyvista.UniformGrid,
+        "vtkMultiBlockDataSet": pyvista.MultiBlock,
+        "vtkTable": pyvista.Table,
         # 'vtkParametricSpline': pyvista.Spline,
     }
     # Otherwise, we assume a VTK data object was passed
-    if hasattr(vtkdataset, 'GetClassName'):
+    if hasattr(vtkdataset, "GetClassName"):
         key = vtkdataset.GetClassName()
     elif vtkdataset is None:
         return None
@@ -436,19 +450,25 @@ def wrap(vtkdataset):
             return pyvista.PolyData(vtkdataset)
         elif vtkdataset.ndim == 3:
             mesh = pyvista.UniformGrid(vtkdataset.shape)
-            mesh['values'] = vtkdataset.ravel(order='F')
-            mesh.active_scalars_name = 'values'
+            mesh["values"] = vtkdataset.ravel(order="F")
+            mesh.active_scalars_name = "values"
             return mesh
         else:
             print(vtkdataset.shape, vtkdataset)
-            raise NotImplementedError('NumPy array could not be converted to PyVista.')
+            raise NotImplementedError("NumPy array could not be converted to PyVista.")
     else:
-        raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
+        raise NotImplementedError(
+            "Type ({}) not able to be wrapped into a PyVista mesh.".format(
+                type(vtkdataset)
+            )
+        )
     try:
         wrapped = wrappers[key](vtkdataset)
     except KeyError:
-        logging.warning('VTK data type ({}) is not currently supported by pyvista.'.format(key))
-        return vtkdataset # if not supported just passes the VTK data object
+        logging.warning(
+            "VTK data type ({}) is not currently supported by pyvista.".format(key)
+        )
+        return vtkdataset  # if not supported just passes the VTK data object
     return wrapped
 
 
@@ -460,7 +480,7 @@ def image_to_texture(image):
 def numpy_to_texture(image):
     """Convert a NumPy image array to a vtk.vtkTexture."""
     if not isinstance(image, np.ndarray):
-        raise TypeError('Unknown input type ({})'.format(type(image)))
+        raise TypeError("Unknown input type ({})".format(type(image)))
     return pyvista.Texture(image)
 
 
@@ -472,14 +492,16 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, collections.Iterable) and not isinstance(point, collections.deque):
+    if isinstance(point, collections.Iterable) and not isinstance(
+        point, collections.deque
+    ):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise AssertionError('Bounds mismatch point dimensionality')
+            raise AssertionError("Bounds mismatch point dimensionality")
         point = collections.deque(point)
         bounds = collections.deque(bounds)
         return is_inside_bounds(point, bounds)
     if not isinstance(point, collections.deque):
-        raise TypeError('Unknown input data type ({}).'.format(type(point)))
+        raise TypeError("Unknown input data type ({}).".format(type(point)))
     if len(point) < 1:
         return True
     p = point.popleft()
@@ -514,14 +536,18 @@ def fit_plane_to_points(points, return_meta=False):
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
     if isinstance(mesh, vtk.vtkTable):
-        raise Exception('Number of scalars ({})'.format(scalars.size) +
-                        'must match number of rows ' +
-                        '({}).'.format(mesh.n_rows) )
-    raise Exception('Number of scalars ({}) '.format(scalars.size) +
-                    'must match either the number of points ' +
-                    '({}) '.format(mesh.n_points) +
-                    'or the number of cells ' +
-                    '({}). '.format(mesh.n_cells) )
+        raise Exception(
+            "Number of scalars ({})".format(scalars.size)
+            + "must match number of rows "
+            + "({}).".format(mesh.n_rows)
+        )
+    raise Exception(
+        "Number of scalars ({}) ".format(scalars.size)
+        + "must match either the number of points "
+        + "({}) ".format(mesh.n_points)
+        + "or the number of cells "
+        + "({}). ".format(mesh.n_cells)
+    )
 
 
 def generate_plane(normal, origin):
@@ -540,13 +566,17 @@ def generate_report(additional=None, ncol=3, text_width=54, sort=False):
     DEPRECATED: Please use :class:`pyvista.Report` instead.
 
     """
-    logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
-    core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
-    optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
-                'cmocean']
-    report = scooby.Report(core=core, optional=optional,
-                           additional=additional, ncol=ncol,
-                           text_width=text_width, sort=sort)
+    logging.warning("DEPRECATED: Please use `pyvista.Report` instead.")
+    core = ["pyvista", "vtk", "numpy", "imageio", "appdirs", "scooby"]
+    optional = ["matplotlib", "PyQt5", "IPython", "colorcet", "cmocean"]
+    report = scooby.Report(
+        core=core,
+        optional=optional,
+        additional=additional,
+        ncol=ncol,
+        text_width=text_width,
+        sort=sort,
+    )
     return report
 
 
@@ -555,7 +585,7 @@ def try_callback(func, *args):
     try:
         func(*args)
     except Exception as e:
-        logging.warning('Encountered issue in callback: {}'.format(e))
+        logging.warning("Encountered issue in callback: {}".format(e))
     return
 
 

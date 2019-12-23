@@ -8,13 +8,13 @@ from pyvista import examples
 PYTHON_2 = int(sys.version[0]) < 3
 
 DATASETS = [
-    examples.load_uniform(), # UniformGrid
-    examples.load_rectilinear(), # RectilinearGrid
-    examples.load_hexbeam(), # UnstructuredGrid
-    examples.load_airplane(), # PolyData
-    examples.load_structured(), # StructuredGrid
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
 ]
-normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
+normals = ["x", "y", "-z", (1, 1, 1), (3.3, 5.4, 0.8)]
 
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
@@ -52,8 +52,9 @@ def test_clip_box():
         dataset.clip_box(bounds=(5, 6,))
     # Test with a poly data box
     mesh = examples.load_airplane()
-    box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
-                       x_length=500, y_length=500, z_length=500)
+    box = pyvista.Cube(
+        center=(0.9e3, 0.2e3, mesh.center[2]), x_length=500, y_length=500, z_length=500
+    )
     box.rotate_z(33)
     result = mesh.clip_box(box, invert=False)
     assert result.n_cells
@@ -69,15 +70,14 @@ def test_clip_box_composite():
 
 
 def test_clip_surface():
-    surface = pyvista.Cone(direction=(0,0,-1),
-                           height=3.0, radius=1, resolution=50, )
+    surface = pyvista.Cone(direction=(0, 0, -1), height=3.0, radius=1, resolution=50,)
     xx = yy = zz = 1 - np.linspace(0, 51, 51) * 2 / 50
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False)
     assert clipped.n_points < dataset.n_points
     clipped = dataset.clip_surface(surface, invert=False, compute_distance=True)
     assert clipped.n_points < dataset.n_points
-    assert 'implicit_distance' in clipped.array_names
+    assert "implicit_distance" in clipped.array_names
 
 
 def test_slice_filter():
@@ -122,7 +122,7 @@ def test_slice_orthogonal_filter_composite():
 
 def test_slice_along_axis():
     """Test the many slices along axis filter """
-    axii = ['x', 'y', 'z', 'y', 0]
+    axii = ["x", "y", "z", "y", 0]
     ns = [2, 3, 4, 10, 20, 13]
     for i, dataset in enumerate(DATASETS):
         slices = dataset.slice_along_axis(n=ns[i], axis=axii[i])
@@ -133,7 +133,7 @@ def test_slice_along_axis():
             assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
     with pytest.raises(RuntimeError):
-        dataset.slice_along_axis(axis='u')
+        dataset.slice_along_axis(axis="u")
 
 
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
@@ -149,7 +149,7 @@ def test_threshold():
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
     # Test value ranges
-    dataset = examples.load_uniform() # UniformGrid
+    dataset = examples.load_uniform()  # UniformGrid
     thresh = dataset.threshold(100, invert=False)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
@@ -179,7 +179,7 @@ def test_threshold_percent():
         assert thresh is not None
         assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
-    result = dataset.threshold_percent(0.75, scalars='Spatial Cell Data')
+    result = dataset.threshold_percent(0.75, scalars="Spatial Cell Data")
     with pytest.raises(RuntimeError):
         result = dataset.threshold_percent(20000)
     with pytest.raises(RuntimeError):
@@ -241,8 +241,8 @@ def test_wireframe_composite():
     output = COMPOSITE.wireframe()
     assert output.n_blocks == COMPOSITE.n_blocks
 
-@pytest.mark.parametrize('method', ['contour', 'marching_cubes',
-                                    'flying_edges'])
+
+@pytest.mark.parametrize("method", ["contour", "marching_cubes", "flying_edges"])
 def test_contour(method):
     dataset = examples.load_uniform()
     iso = dataset.contour(method=method)
@@ -250,7 +250,7 @@ def test_contour(method):
     iso = dataset.contour(isosurfaces=[100, 300, 500], method=method)
     assert iso is not None
     with pytest.raises(AssertionError):
-        result = dataset.contour(scalars='Spatial Cell Data')
+        result = dataset.contour(scalars="Spatial Cell Data")
     with pytest.raises(RuntimeError):
         result = dataset.contour(isosurfaces=pyvista.PolyData())
     dataset = examples.load_airplane()
@@ -262,31 +262,33 @@ def test_elevation():
     dataset = examples.load_uniform()
     # Test default params
     elev = dataset.elevation()
-    assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert "Elevation" in elev.array_names
+    assert "Elevation" == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
     # test vector args
     c = list(dataset.center)
-    t = list(c) # cast so it doesnt point to `c`
+    t = list(c)  # cast so it doesnt point to `c`
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t)
-    assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
+    assert "Elevation" in elev.array_names
+    assert "Elevation" == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
     # Test not setting active
     elev = dataset.elevation(set_active=False)
-    assert 'Elevation' in elev.array_names
-    assert 'Elevation' != elev.active_scalars_name
+    assert "Elevation" in elev.array_names
+    assert "Elevation" != elev.active_scalars_name
     # Set use a range by scalar name
-    elev = dataset.elevation(scalar_range='Spatial Point Data')
-    assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
-    assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
+    elev = dataset.elevation(scalar_range="Spatial Point Data")
+    assert "Elevation" in elev.array_names
+    assert "Elevation" == elev.active_scalars_name
+    assert dataset.get_data_range("Spatial Point Data") == (
+        elev.get_data_range("Elevation")
+    )
     # Set use a user defined range
     elev = dataset.elevation(scalar_range=[1.0, 100.0])
-    assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalars_name
-    assert elev.get_data_range('Elevation') == (1.0, 100.0)
+    assert "Elevation" in elev.array_names
+    assert "Elevation" == elev.active_scalars_name
+    assert elev.get_data_range("Elevation") == (1.0, 100.0)
     # test errors
     with pytest.raises(RuntimeError):
         elev = dataset.elevation(scalar_range=0.5)
@@ -311,11 +313,10 @@ def test_texture_map_to_plane():
     point_v = (bnds[0], bnds[3], bnds[4])
     out = dataset.texture_map_to_plane(origin=origin, point_u=point_u, point_v=point_v)
     assert isinstance(out, type(dataset))
-    assert 'Texture Coordinates' in out.array_names
+    assert "Texture Coordinates" in out.array_names
     # FINAL: Test in place modifiacation
     dataset.texture_map_to_plane(inplace=True)
-    assert 'Texture Coordinates' in dataset.array_names
-
+    assert "Texture Coordinates" in dataset.array_names
 
 
 def test_compute_cell_sizes():
@@ -323,10 +324,10 @@ def test_compute_cell_sizes():
         result = dataset.compute_cell_sizes()
         assert result is not None
         assert isinstance(result, type(dataset))
-        assert 'Area' in result.array_names
-        assert 'Volume' in result.array_names
+        assert "Area" in result.array_names
+        assert "Volume" in result.array_names
     # Test the volume property
-    grid = pyvista.UniformGrid((10,10,10))
+    grid = pyvista.UniformGrid((10, 10, 10))
     volume = float(np.prod(np.array(grid.dimensions) - 1))
     assert np.allclose(grid.volume, volume)
 
@@ -360,24 +361,34 @@ def test_glyph():
     # Test different options for glyph filter
     sphere = pyvista.Sphere(radius=3.14)
     # make cool swirly pattern
-    vectors = np.vstack((np.sin(sphere.points[:, 0]),
-                        np.cos(sphere.points[:, 1]),
-                        np.cos(sphere.points[:, 2]))).T
+    vectors = np.vstack(
+        (
+            np.sin(sphere.points[:, 0]),
+            np.cos(sphere.points[:, 1]),
+            np.cos(sphere.points[:, 2]),
+        )
+    ).T
     # add and scale
-    sphere.vectors = vectors*0.3
-    sphere.point_arrays['foo'] = np.random.rand(sphere.n_points)
-    sphere.point_arrays['arr'] = np.ones(sphere.n_points)
-    result = sphere.glyph(scale='arr')
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
-    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
-                          clamping=False, rng=[1, 1])
+    sphere.vectors = vectors * 0.3
+    sphere.point_arrays["foo"] = np.random.rand(sphere.n_points)
+    sphere.point_arrays["arr"] = np.ones(sphere.n_points)
+    result = sphere.glyph(scale="arr")
+    result = sphere.glyph(scale="arr", orient="Normals", factor=0.1)
+    result = sphere.glyph(scale="arr", orient="Normals", factor=0.1, tolerance=0.1)
+    result = sphere.glyph(
+        scale="arr",
+        orient="Normals",
+        factor=0.1,
+        tolerance=0.1,
+        clamping=False,
+        rng=[1, 1],
+    )
 
 
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
-    dataset.set_active_scalars('Spatial Cell Data')
+    dataset.set_active_scalars("Spatial Cell Data")
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
 
     bodies = threshed.split_bodies()
@@ -394,14 +405,13 @@ def test_warp_by_scalar():
     assert data.n_points == warped.n_points
     warped = data.warp_by_scalar(scale_factor=3)
     assert data.n_points == warped.n_points
-    warped = data.warp_by_scalar(normal=[1,1,3])
+    warped = data.warp_by_scalar(normal=[1, 1, 3])
     assert data.n_points == warped.n_points
     # Test in place!
     foo = examples.load_hexbeam()
     warped = foo.warp_by_scalar()
     foo.warp_by_scalar(inplace=True)
     assert np.allclose(foo.points, warped.points)
-
 
 
 def test_cell_data_to_point_data():
@@ -416,7 +426,6 @@ def test_cell_data_to_point_data_composite():
     # Now test composite data structures
     output = COMPOSITE.cell_data_to_point_data()
     assert output.n_blocks == COMPOSITE.n_blocks
-
 
 
 def test_point_data_to_cell_data():
@@ -462,24 +471,29 @@ def test_smooth():
 
 
 def test_resample():
-    mesh = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
     data_to_probe = examples.load_uniform()
     result = mesh.sample(data_to_probe)
-    name = 'Spatial Point Data'
+    name = "Spatial Point Data"
     assert name in result.array_names
     assert isinstance(result, type(mesh))
     result = mesh.sample(data_to_probe, tolerance=1.0)
-    name = 'Spatial Point Data'
+    name = "Spatial Point Data"
     assert name in result.array_names
     assert isinstance(result, type(mesh))
 
 
 def test_streamlines():
     mesh = examples.download_carotid()
-    stream, src = mesh.streamlines(return_source=True, max_time=100.0,
-                                   initial_step_length=2., terminal_speed=0.1,
-                                   n_points=25, source_radius=2.0,
-                                   source_center=(133.1, 116.3, 5.0))
+    stream, src = mesh.streamlines(
+        return_source=True,
+        max_time=100.0,
+        initial_step_length=2.0,
+        terminal_speed=0.1,
+        n_points=25,
+        source_radius=2.0,
+        source_center=(133.1, 116.3, 5.0),
+    )
     assert stream.n_points > 0
     assert src.n_points == 25
 
@@ -492,16 +506,23 @@ def test_plot_over_line():
     b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
     mesh.plot_over_line(a, b, resolution=1000, show=False)
     # Test multicomponent
-    mesh['foo'] = np.random.rand(mesh.n_cells, 3)
-    mesh.plot_over_line(a, b, resolution=None, scalars='foo',
-                        title='My Stuff', ylabel='3 Values', show=False)
+    mesh["foo"] = np.random.rand(mesh.n_cells, 3)
+    mesh.plot_over_line(
+        a,
+        b,
+        resolution=None,
+        scalars="foo",
+        title="My Stuff",
+        ylabel="3 Values",
+        show=False,
+    )
 
 
 def test_slice_along_line():
     model = examples.load_uniform()
     n = 5
     x = y = z = np.linspace(model.bounds[0], model.bounds[1], num=n)
-    points = np.c_[x,y,z]
+    points = np.c_[x, y, z]
     spline = pyvista.Spline(points, n)
     slc = model.slice_along_line(spline)
     assert slc.n_points > 0
@@ -543,18 +564,18 @@ def test_interpolate():
 
 def test_select_enclosed_points():
     mesh = examples.load_uniform()
-    surf = pyvista.Sphere(center=mesh.center, radius=mesh.length/2.)
+    surf = pyvista.Sphere(center=mesh.center, radius=mesh.length / 2.0)
     result = mesh.select_enclosed_points(surf)
     assert isinstance(result, type(mesh))
-    assert 'SelectedPoints' in result.array_names
+    assert "SelectedPoints" in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     # Now check non-closed surface
-    mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
+    mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7,)
     surf = mesh.copy()
     surf.rotate_x(90)
     result = mesh.select_enclosed_points(surf, check_surface=False)
     assert isinstance(result, type(mesh))
-    assert 'SelectedPoints' in result.array_names
+    assert "SelectedPoints" in result.array_names
     assert result.n_arrays == mesh.n_arrays + 1
     with pytest.raises(RuntimeError):
         result = mesh.select_enclosed_points(surf, check_surface=True)
@@ -568,8 +589,8 @@ def test_decimate_boundary():
 
 def test_merge_general():
     mesh = examples.load_uniform()
-    thresh = mesh.threshold_percent([0.2, 0.5]) # unstructured grid
-    con = mesh.contour() # poly data
+    thresh = mesh.threshold_percent([0.2, 0.5])  # unstructured grid
+    con = mesh.contour()  # poly data
     merged = thresh + con
     assert isinstance(merged, pyvista.UnstructuredGrid)
     merged = con + thresh
@@ -582,14 +603,14 @@ def test_merge_general():
 def test_compute_cell_quality():
     mesh = pyvista.ParametricEllipsoid().decimate(0.8)
     qual = mesh.compute_cell_quality()
-    assert 'CellQuality' in qual.array_names
+    assert "CellQuality" in qual.array_names
     with pytest.raises(KeyError):
-        qual = mesh.compute_cell_quality(quality_measure='foo')
+        qual = mesh.compute_cell_quality(quality_measure="foo")
 
 
 def test_compute_gradients():
     mesh = examples.load_random_hills()
     grad = mesh.compute_gradient()
-    assert 'gradient' in grad.array_names
-    assert np.shape(grad['gradient'])[0] == mesh.n_points
-    assert np.shape(grad['gradient'])[1] == 3
+    assert "gradient" in grad.array_names
+    assert np.shape(grad["gradient"])[0] == mesh.n_points
+    assert np.shape(grad["gradient"])[1] == 3

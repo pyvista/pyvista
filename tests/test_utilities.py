@@ -11,7 +11,9 @@ from pyvista.utilities import fileio
 from pyvista.utilities import errors
 
 # Only set this here just the once.
-pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
+pyvista.set_error_output_file(
+    os.path.join(os.path.dirname(__file__), "ERROR_OUTPUT.txt")
+)
 
 
 def test_createvectorpolydata_error():
@@ -26,7 +28,7 @@ def test_createvectorpolydata_1D():
     vec = np.random.random(3)
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_arrays['vectors'])
+    assert np.any(vdata.point_arrays["vectors"])
 
 
 def test_createvectorpolydata():
@@ -34,37 +36,48 @@ def test_createvectorpolydata():
     vec = np.random.random((100, 3))
     vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
-    assert np.any(vdata.point_arrays['vectors'])
+    assert np.any(vdata.point_arrays["vectors"])
 
 
 def test_read(tmpdir):
-    fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
-              ex.uniformfile, ex.rectfile)
-    types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
-             pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
+    fnames = (
+        ex.antfile,
+        ex.planefile,
+        ex.hexbeamfile,
+        ex.spherefile,
+        ex.uniformfile,
+        ex.rectfile,
+    )
+    types = (
+        pyvista.PolyData,
+        pyvista.PolyData,
+        pyvista.UnstructuredGrid,
+        pyvista.PolyData,
+        pyvista.UniformGrid,
+        pyvista.RectilinearGrid,
+    )
     for i, filename in enumerate(fnames):
         obj = fileio.read(filename)
         assert isinstance(obj, types[i])
     # Now test the standard_reader_routine
     for i, filename in enumerate(fnames):
         # Pass attrs to for the standard_reader_routine to be used
-        obj = fileio.read(filename, attrs={'DebugOn': None})
+        obj = fileio.read(filename, attrs={"DebugOn": None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'npy'))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.%s" % "npy"))
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
         _ = pyvista.read(filename)
     # read non existing file
     with pytest.raises(IOError):
-        _ = pyvista.read('this_file_totally_does_not_exist.vtk')
+        _ = pyvista.read("this_file_totally_does_not_exist.vtk")
     # Now test reading lists of files as multi blocks
     multi = pyvista.read(fnames)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == len(fnames)
-    nested = [ex.planefile,
-              [ex.hexbeamfile, ex.uniformfile]]
+    nested = [ex.planefile, [ex.hexbeamfile, ex.uniformfile]]
 
     multi = pyvista.read(nested)
     assert isinstance(multi, pyvista.MultiBlock)
@@ -77,22 +90,20 @@ def test_get_array():
     grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
-    grid._add_cell_array(carr, 'test_data')
+    grid._add_cell_array(carr, "test_data")
     parr = np.random.rand(grid.n_points)
-    grid._add_point_array(parr, 'test_data')
+    grid._add_point_array(parr, "test_data")
     # add other data
     oarr = np.random.rand(grid.n_points)
-    grid._add_point_array(oarr, 'other')
+    grid._add_point_array(oarr, "other")
     farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid._add_field_array(farr, 'field_data')
-    assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
-    assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
-    assert np.allclose(oarr, helpers.get_array(grid, 'other'))
-    assert helpers.get_array(grid, 'foo') is None
-    assert helpers.get_array(grid, 'test_data', preference='field') is None
-    assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
-
-
+    grid._add_field_array(farr, "field_data")
+    assert np.allclose(carr, helpers.get_array(grid, "test_data", preference="cell"))
+    assert np.allclose(parr, helpers.get_array(grid, "test_data", preference="point"))
+    assert np.allclose(oarr, helpers.get_array(grid, "other"))
+    assert helpers.get_array(grid, "foo") is None
+    assert helpers.get_array(grid, "test_data", preference="field") is None
+    assert np.allclose(farr, helpers.get_array(grid, "field_data", preference="field"))
 
 
 def test_is_inside_bounds():
@@ -128,8 +139,8 @@ def test_line_segments_from_points():
     assert poly.n_cells == 2
     assert poly.n_points == 4
     cells = poly.lines
-    assert np.allclose(cells[0], [2, 0,1])
-    assert np.allclose(cells[1], [2, 2,3])
+    assert np.allclose(cells[0], [2, 0, 1])
+    assert np.allclose(cells[1], [2, 2, 3])
 
 
 def test_lines_from_points():
@@ -138,8 +149,8 @@ def test_lines_from_points():
     assert poly.n_cells == 2
     assert poly.n_points == 3
     cells = poly.lines
-    assert np.allclose(cells[0], [2, 0,1])
-    assert np.allclose(cells[1], [2, 1,2])
+    assert np.allclose(cells[0], [2, 0, 1])
+    assert np.allclose(cells[1], [2, 1, 2])
 
 
 def test_grid_from_sph_coords():
@@ -180,12 +191,13 @@ def test_transform_vectors_sph_to_cart():
         [67.80403533828323, 360.8359915416445, -70000.0],
     )
 
+
 def test_assert_empty_kwargs():
     kwargs = {}
     assert errors.assert_empty_kwargs(**kwargs)
     with pytest.raises(TypeError):
-        kwargs = {"foo":6}
+        kwargs = {"foo": 6}
         errors.assert_empty_kwargs(**kwargs)
     with pytest.raises(TypeError):
-        kwargs = {"foo":6, "goo":"bad"}
+        kwargs = {"foo": 6, "goo": "bad"}
         errors.assert_empty_kwargs(**kwargs)

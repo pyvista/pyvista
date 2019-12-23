@@ -15,16 +15,17 @@ NO_PLOTTING = not system_supports_plotting()
 
 try:
     import PyQt5
-    from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QAction)
+    from PyQt5.Qt import QMainWindow, QFrame, QVBoxLayout, QAction
+
     has_pyqt5 = True
 except:
     has_pyqt5 = False
+
     class QMainWindow(object):
         pass
 
 
 class MainWindow(QMainWindow):
-
     def __init__(self, parent=None, show=True):
         QMainWindow.__init__(self, parent)
 
@@ -37,16 +38,16 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.frame)
 
         mainMenu = self.menuBar()
-        fileMenu = mainMenu.addMenu('File')
+        fileMenu = mainMenu.addMenu("File")
 
-        exitButton = QAction('Exit', self)
-        exitButton.setShortcut('Ctrl+Q')
+        exitButton = QAction("Exit", self)
+        exitButton.setShortcut("Ctrl+Q")
         exitButton.triggered.connect(self.close)
 
         fileMenu.addAction(exitButton)
 
-        meshMenu = mainMenu.addMenu('Mesh')
-        self.add_sphere_action = QAction('Add Sphere', self)
+        meshMenu = mainMenu.addMenu("Mesh")
+        self.add_sphere_action = QAction("Add Sphere", self)
 
         self.add_sphere_action.triggered.connect(self.add_sphere)
         meshMenu.addAction(self.add_sphere_action)
@@ -73,7 +74,7 @@ def test_qt_interactor(qtbot):
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_axes_scale(qtbot):
     sphere = pyvista.Sphere()
-    plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
+    plotter = pyvista.BackgroundPlotter(show=False, title="Testing Window")
     plotter.add_mesh(sphere)
     assert np.any(plotter.mesh.points)
 
@@ -97,7 +98,7 @@ def test_background_plotting_axes_scale(qtbot):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_camera(qtbot):
-    plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
+    plotter = pyvista.BackgroundPlotter(show=False, title="Testing Window")
     plotter.add_mesh(pyvista.Sphere())
 
     cpos = [(0.0, 0.0, 1.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
@@ -119,10 +120,10 @@ def test_background_plotting_camera(qtbot):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotter_export_files(qtbot, tmpdir):
-    plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
+    plotter = pyvista.BackgroundPlotter(show=False, title="Testing Window")
     plotter.add_mesh(pyvista.Sphere())
 
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.png"))
     dlg = plotter._qt_screenshot(show=False)
     dlg.selectFile(filename)
     dlg.accept()
@@ -134,22 +135,22 @@ def test_background_plotter_export_files(qtbot, tmpdir):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotter_export_vtkjs(qtbot, tmpdir):
-    plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
+    plotter = pyvista.BackgroundPlotter(show=False, title="Testing Window")
     plotter.add_mesh(pyvista.Sphere())
 
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp'))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp"))
     dlg = plotter._qt_export_vtkjs(show=False)
     dlg.selectFile(filename)
     dlg.accept()
     plotter.close()
 
-    assert os.path.isfile(filename + '.vtkjs')
+    assert os.path.isfile(filename + ".vtkjs")
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_orbit(qtbot):
-    plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
+    plotter = pyvista.BackgroundPlotter(show=False, title="Testing Window")
     plotter.add_mesh(pyvista.Sphere())
     # perfrom the orbit:
     plotter.orbit_on_path(bkg=False, step=0.0)
@@ -159,11 +160,12 @@ def test_background_plotting_orbit(qtbot):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_add_callback(qtbot):
-    plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
+    plotter = pyvista.BackgroundPlotter(show=False, title="Testing Window")
     sphere = pyvista.Sphere()
     plotter.add_mesh(sphere)
 
     def mycallback():
         sphere.points *= 0.5
+
     plotter.add_callback(mycallback, interval=1000, count=3)
     plotter.close()

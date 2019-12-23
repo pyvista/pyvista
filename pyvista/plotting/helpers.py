@@ -11,11 +11,26 @@ from .plotting import Plotter
 import scooby
 
 
-def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
-         interactive=True, cpos=None, window_size=None,
-         show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         volume=False, parallel_projection=False, **kwargs):
+def plot(
+    var_item,
+    off_screen=None,
+    full_screen=False,
+    screenshot=None,
+    interactive=True,
+    cpos=None,
+    window_size=None,
+    show_bounds=False,
+    show_axes=True,
+    notebook=None,
+    background=None,
+    text="",
+    return_img=False,
+    eye_dome_lighting=False,
+    use_panel=None,
+    volume=False,
+    parallel_projection=False,
+    **kwargs
+):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -76,9 +91,9 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         notebook = scooby.in_ipykernel()
 
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
-    show_grid = kwargs.pop('show_grid', False)
-    height = kwargs.get('height', 400)
-    auto_close = kwargs.get('auto_close', rcParams['auto_close'])
+    show_grid = kwargs.pop("show_grid", False)
+    height = kwargs.get("height", 400)
+    auto_close = kwargs.get("auto_close", rcParams["auto_close"])
 
     if notebook:
         off_screen = notebook
@@ -133,14 +148,16 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if parallel_projection:
         plotter.enable_parallel_projection()
 
-    result = plotter.show(window_size=window_size,
-                          auto_close=False,
-                          interactive=interactive,
-                          full_screen=full_screen,
-                          screenshot=screenshot,
-                          return_img=return_img,
-                          use_panel=use_panel,
-                          height=height)
+    result = plotter.show(
+        window_size=window_size,
+        auto_close=False,
+        interactive=interactive,
+        full_screen=full_screen,
+        screenshot=screenshot,
+        return_img=return_img,
+        use_panel=use_panel,
+        height=height,
+    )
 
     # close and return camera position and maybe image
     if auto_close:
@@ -172,10 +189,23 @@ def plot_arrows(cent, direction, **kwargs):
     """
     return plot([cent, direction], **kwargs)
 
-def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
-                      plotter_kwargs=None, show_kwargs=None, screenshot=None,
-                      camera_position=None, outline=None, outline_color='k',
-                      labels=('A', 'B', 'C', 'D'), link=True, notebook=None):
+
+def plot_compare_four(
+    data_a,
+    data_b,
+    data_c,
+    data_d,
+    disply_kwargs=None,
+    plotter_kwargs=None,
+    show_kwargs=None,
+    screenshot=None,
+    camera_position=None,
+    outline=None,
+    outline_color="k",
+    labels=("A", "B", "C", "D"),
+    link=True,
+    notebook=None,
+):
     """Plot a 2 by 2 comparison of data objects.
 
     Plotting parameters and camera positions will all be the same.
@@ -191,9 +221,9 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
     if show_kwargs is None:
         show_kwargs = {}
 
-    plotter_kwargs['notebook'] = notebook
+    plotter_kwargs["notebook"] = notebook
 
-    p = pyvista.Plotter(shape=(2,2), **plotter_kwargs)
+    p = pyvista.Plotter(shape=(2, 2), **plotter_kwargs)
 
     for i in range(2):
         for j in range(2):

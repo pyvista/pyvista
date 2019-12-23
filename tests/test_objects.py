@@ -16,10 +16,9 @@ except ImportError:
     pd = None
 
 
-
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'csv'))
+    filename = str(tmpdir.mkdir("tmpdir").join("tmp.%s" % "csv"))
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
 
@@ -31,20 +30,19 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[i])
-
+        assert np.allclose(arrays[:, i], table[i])
 
     # create from dictionary
     array_dict = {}
     for i in range(nc):
-        array_dict['foo{}'.format(i)] = arrays[:, i].copy()
+        array_dict["foo{}".format(i)] = arrays[:, i].copy()
     table = pyvista.Table(array_dict)
     assert table.n_rows == nr
     assert table.n_columns == nc
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table['foo{}'.format(i)])
+        assert np.allclose(arrays[:, i], table["foo{}".format(i)])
 
     dataset = examples.load_hexbeam()
     array_dict = dataset.point_arrays
@@ -57,13 +55,13 @@ def test_table_init(tmpdir):
         assert np.allclose(dataset[name], table[name])
 
     # Create from vtkTable object
-    h = '\t'.join(['a{}'.format(i) for i in range(nc)])
-    np.savetxt(filename, arrays, delimiter='\t', header=h, comments='')
+    h = "\t".join(["a{}".format(i) for i in range(nc)])
+    np.savetxt(filename, arrays, delimiter="\t", header=h, comments="")
 
     reader = vtk.vtkDelimitedTextReader()
     reader.SetFileName(filename)
     reader.DetectNumericColumnsOn()
-    reader.SetFieldDelimiterCharacters('\t')
+    reader.SetFieldDelimiterCharacters("\t")
     reader.SetHaveHeaders(True)
     reader.Update()
 
@@ -82,10 +80,9 @@ def test_table_init(tmpdir):
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table[i])
+        assert np.allclose(arrays[:, i], table[i])
 
     return
-
 
 
 def test_table_row_arrays():
@@ -93,19 +90,19 @@ def test_table_row_arrays():
     arrays = np.random.rand(nr, nc)
     table = pyvista.Table()
     for i in range(nc):
-        table['foo{}'.format(i)] = arrays[:, i]
+        table["foo{}".format(i)] = arrays[:, i]
     assert table.n_columns == nc
     assert table.n_rows == nr
     for i in range(nc):
-        assert np.allclose(table['foo{}'.format(i)], arrays[:, i])
+        assert np.allclose(table["foo{}".format(i)], arrays[:, i])
     # Multi component
     table = pyvista.Table()
-    table['multi'] = arrays
+    table["multi"] = arrays
     assert table.n_columns == 1
     assert table.n_rows == nr
     assert np.allclose(table[0], arrays)
-    assert np.allclose(table['multi'], arrays)
-    del table['multi']
+    assert np.allclose(table["multi"], arrays)
+    del table["multi"]
     assert table.n_columns == 0
 
     dataset = examples.load_hexbeam()
@@ -130,13 +127,13 @@ def test_table_row_arrays():
     n = table.n_arrays
     array = table.pop(table.keys()[0])
     assert isinstance(array, np.ndarray)
-    assert table.n_arrays == n-1
+    assert table.n_arrays == n - 1
     array = table.get(table.keys()[0])
     assert isinstance(array, np.ndarray)
-    assert table.n_arrays == n-1
+    assert table.n_arrays == n - 1
 
     del table[table.keys()[0]]
-    assert table.n_arrays == n-2
+    assert table.n_arrays == n - 2
 
     return
 
@@ -145,20 +142,20 @@ def test_table_row_np_bool():
     n = 50
     table = pyvista.Table()
     bool_arr = np.zeros(n, np.bool)
-    table.row_arrays['bool_arr'] = bool_arr
+    table.row_arrays["bool_arr"] = bool_arr
     bool_arr[:] = True
-    assert table.row_arrays['bool_arr'].all()
-    assert table._row_array('bool_arr').all()
-    assert table._row_array('bool_arr').dtype == np.bool
+    assert table.row_arrays["bool_arr"].all()
+    assert table._row_array("bool_arr").all()
+    assert table._row_array("bool_arr").dtype == np.bool
 
 
 def test_table_row_uint8():
     n = 50
     table = pyvista.Table()
     arr = np.zeros(n, np.uint8)
-    table.row_arrays['arr'] = arr
+    table.row_arrays["arr"] = arr
     arr[:] = np.arange(n)
-    assert np.allclose(table.row_arrays['arr'], np.arange(n))
+    assert np.allclose(table.row_arrays["arr"], np.arange(n))
 
 
 def test_table_repr():
@@ -179,12 +176,12 @@ def test_table_pandas():
     arrays = np.random.rand(nr, nc)
     df = pd.DataFrame()
     for i in range(nc):
-        df['foo{}'.format(i)] = arrays[:, i].copy()
+        df["foo{}".format(i)] = arrays[:, i].copy()
     table = pyvista.Table(df)
     assert table.n_rows == nr
     assert table.n_columns == nc
     for i in range(nc):
-        assert np.allclose(table.row_arrays['foo{}'.format(i)], arrays[:, i])
+        assert np.allclose(table.row_arrays["foo{}".format(i)], arrays[:, i])
     assert df.equals(table.to_pandas())
 
 

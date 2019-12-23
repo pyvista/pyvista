@@ -15,7 +15,6 @@ from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import create_axes_marker
 
 
-
 def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
 
@@ -41,7 +40,6 @@ def scale_point(camera, point, invert=False):
         mtx = camera.GetModelTransformMatrix()
     scaled = mtx.MultiplyDoublePoint((point[0], point[1], point[2], 0.0))
     return (scaled[0], scaled[1], scaled[2])
-
 
 
 class CameraPosition(object):
@@ -99,12 +97,10 @@ class CameraPosition(object):
         self._viewup = value
 
 
-
 class Renderer(vtkRenderer):
     """Renderer class."""
 
-    def __init__(self, parent, border=True, border_color=(1, 1, 1),
-                 border_width=2.0):
+    def __init__(self, parent, border=True, border_color=(1, 1, 1), border_width=2.0):
         """Initialize the renderer."""
         super(Renderer, self).__init__()
         self._actors = {}
@@ -140,18 +136,13 @@ class Renderer(vtkRenderer):
         """Disable anti-aliasing FXAA."""
         self.SetUseFXAA(False)
 
-
     def add_border(self, color=[1, 1, 1], width=2.0):
         """Add borders around the frame."""
-        points = np.array([[1., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 0., 0.],
-                           [1., 0., 0.]])
+        points = np.array(
+            [[1.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]
+        )
 
-        lines = np.array([[2, 0, 1],
-                          [2, 1, 2],
-                          [2, 2, 3],
-                          [2, 3, 0]]).ravel()
+        lines = np.array([[2, 0, 1], [2, 1, 2], [2, 2, 3], [2, 3, 0]]).ravel()
 
         poly = pyvista.PolyData()
         poly.points = points
@@ -171,9 +162,15 @@ class Renderer(vtkRenderer):
 
         self.AddViewProp(actor)
 
-
-    def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
-                  culling=False, pickable=True):
+    def add_actor(
+        self,
+        uinput,
+        reset_camera=False,
+        name=None,
+        loc=None,
+        culling=False,
+        pickable=True,
+    ):
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -235,18 +232,20 @@ class Renderer(vtkRenderer):
             culling = culling.lower()
 
         if culling:
-            if culling in [True, 'back', 'backface', 'b']:
+            if culling in [True, "back", "backface", "b"]:
                 try:
                     actor.GetProperty().BackfaceCullingOn()
                 except AttributeError:  # pragma: no cover
                     pass
-            elif culling in ['front', 'frontface', 'f']:
+            elif culling in ["front", "frontface", "f"]:
                 try:
                     actor.GetProperty().FrontfaceCullingOn()
                 except AttributeError:  # pragma: no cover
                     pass
             else:
-                raise RuntimeError('Culling option ({}) not understood.'.format(culling))
+                raise RuntimeError(
+                    "Culling option ({}) not understood.".format(culling)
+                )
 
         actor.SetPickable(pickable)
 
@@ -256,10 +255,17 @@ class Renderer(vtkRenderer):
 
         return actor, actor.GetProperty()
 
-
-    def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
-                           xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
-                           labels_off=False):
+    def add_axes_at_origin(
+        self,
+        x_color=None,
+        y_color=None,
+        z_color=None,
+        xlabel="X",
+        ylabel="Y",
+        zlabel="Z",
+        line_width=2,
+        labels_off=False,
+    ):
         """Add axes actor at origin.
 
         Return
@@ -268,22 +274,50 @@ class Renderer(vtkRenderer):
             vtkAxesActor actor
 
         """
-        self.marker_actor = create_axes_marker(line_width=line_width,
-            x_color=x_color, y_color=y_color, z_color=z_color,
-            xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
+        self.marker_actor = create_axes_marker(
+            line_width=line_width,
+            x_color=x_color,
+            y_color=y_color,
+            z_color=z_color,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            zlabel=zlabel,
+            labels_off=labels_off,
+        )
         self.AddActor(self.marker_actor)
         self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
         return self.marker_actor
 
-    def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
-                    show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                    show_ylabels=True, show_zlabels=True, italic=False,
-                    bold=True, shadow=False, font_size=None,
-                    font_family=None, color=None,
-                    xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
-                    use_2d=False, grid=None, location='closest', ticks=None,
-                    all_edges=False, corner_factor=0.5, loc=None, fmt=None,
-                    minor_ticks=False, padding=0.0):
+    def show_bounds(
+        self,
+        mesh=None,
+        bounds=None,
+        show_xaxis=True,
+        show_yaxis=True,
+        show_zaxis=True,
+        show_xlabels=True,
+        show_ylabels=True,
+        show_zlabels=True,
+        italic=False,
+        bold=True,
+        shadow=False,
+        font_size=None,
+        font_family=None,
+        color=None,
+        xlabel="X Axis",
+        ylabel="Y Axis",
+        zlabel="Z Axis",
+        use_2d=False,
+        grid=None,
+        location="closest",
+        ticks=None,
+        all_edges=False,
+        corner_factor=0.5,
+        loc=None,
+        fmt=None,
+        minor_ticks=False,
+        padding=0.0,
+    ):
         """Add bounds axes.
 
         Shows the bounds of the most recent input mesh unless mesh is specified.
@@ -408,13 +442,13 @@ class Renderer(vtkRenderer):
         self.remove_bounds_axes()
 
         if font_family is None:
-            font_family = rcParams['font']['family']
+            font_family = rcParams["font"]["family"]
         if font_size is None:
-            font_size = rcParams['font']['size']
+            font_size = rcParams["font"]["size"]
         if color is None:
-            color = rcParams['font']['color']
+            color = rcParams["font"]["color"]
         if fmt is None:
-            fmt = rcParams['font']['fmt']
+            fmt = rcParams["font"]["fmt"]
 
         color = parse_color(color)
 
@@ -430,12 +464,16 @@ class Renderer(vtkRenderer):
             cube_axes_actor.SetUse2DMode(False)
 
         if grid:
-            if isinstance(grid, str) and grid.lower() in ('front', 'frontface'):
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_CLOSEST)
-            if isinstance(grid, str) and grid.lower() in ('both', 'all'):
+            if isinstance(grid, str) and grid.lower() in ("front", "frontface"):
+                cube_axes_actor.SetGridLineLocation(
+                    cube_axes_actor.VTK_GRID_LINES_CLOSEST
+                )
+            if isinstance(grid, str) and grid.lower() in ("both", "all"):
                 cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_ALL)
             else:
-                cube_axes_actor.SetGridLineLocation(cube_axes_actor.VTK_GRID_LINES_FURTHEST)
+                cube_axes_actor.SetGridLineLocation(
+                    cube_axes_actor.VTK_GRID_LINES_FURTHEST
+                )
             # Only show user desired grid lines
             cube_axes_actor.SetDrawXGridlines(show_xaxis)
             cube_axes_actor.SetDrawYGridlines(show_yaxis)
@@ -447,42 +485,55 @@ class Renderer(vtkRenderer):
 
         if isinstance(ticks, str):
             ticks = ticks.lower()
-            if ticks in ('inside'):
+            if ticks in ("inside"):
                 cube_axes_actor.SetTickLocationToInside()
-            elif ticks in ('outside'):
+            elif ticks in ("outside"):
                 cube_axes_actor.SetTickLocationToOutside()
-            elif ticks in ('both'):
+            elif ticks in ("both"):
                 cube_axes_actor.SetTickLocationToBoth()
             else:
-                raise ValueError('Value of ticks ({}) not understood.'.format(ticks))
+                raise ValueError("Value of ticks ({}) not understood.".format(ticks))
 
         if isinstance(location, str):
             location = location.lower()
-            if location in ('all'):
+            if location in ("all"):
                 cube_axes_actor.SetFlyModeToStaticEdges()
-            elif location in ('origin'):
+            elif location in ("origin"):
                 cube_axes_actor.SetFlyModeToStaticTriad()
-            elif location in ('outer'):
+            elif location in ("outer"):
                 cube_axes_actor.SetFlyModeToOuterEdges()
-            elif location in ('default', 'closest', 'front'):
+            elif location in ("default", "closest", "front"):
                 cube_axes_actor.SetFlyModeToClosestTriad()
-            elif location in ('furthest', 'back'):
+            elif location in ("furthest", "back"):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
-                raise ValueError('Value of location ({}) not understood.'.format(location))
+                raise ValueError(
+                    "Value of location ({}) not understood.".format(location)
+                )
 
         # set bounds
         if bounds is None:
             bounds = np.array(mesh.GetBounds())
         if isinstance(padding, (int, float)) and 0.0 <= padding < 1.0:
             if not np.any(np.abs(bounds) == np.inf):
-                cushion = np.array([np.abs(bounds[1] - bounds[0]),
-                                    np.abs(bounds[3] - bounds[2]),
-                                    np.abs(bounds[5] - bounds[4])]) * padding
+                cushion = (
+                    np.array(
+                        [
+                            np.abs(bounds[1] - bounds[0]),
+                            np.abs(bounds[3] - bounds[2]),
+                            np.abs(bounds[5] - bounds[4]),
+                        ]
+                    )
+                    * padding
+                )
                 bounds[::2] -= cushion
                 bounds[1::2] += cushion
         else:
-            raise ValueError('padding ({}) not understood. Must be float between 0 and 1'.format(padding))
+            raise ValueError(
+                "padding ({}) not understood. Must be float between 0 and 1".format(
+                    padding
+                )
+            )
         cube_axes_actor.SetBounds(bounds)
 
         # show or hide axes
@@ -505,25 +556,25 @@ class Renderer(vtkRenderer):
 
         # empty arr
         empty_str = vtk.vtkStringArray()
-        empty_str.InsertNextValue('')
+        empty_str.InsertNextValue("")
 
         # show lines
         if show_xaxis:
             cube_axes_actor.SetXTitle(xlabel)
         else:
-            cube_axes_actor.SetXTitle('')
+            cube_axes_actor.SetXTitle("")
             cube_axes_actor.SetAxisLabels(0, empty_str)
 
         if show_yaxis:
             cube_axes_actor.SetYTitle(ylabel)
         else:
-            cube_axes_actor.SetYTitle('')
+            cube_axes_actor.SetYTitle("")
             cube_axes_actor.SetAxisLabels(1, empty_str)
 
         if show_zaxis:
             cube_axes_actor.SetZTitle(zlabel)
         else:
-            cube_axes_actor.SetZTitle('')
+            cube_axes_actor.SetZTitle("")
             cube_axes_actor.SetAxisLabels(2, empty_str)
 
         # show labels
@@ -568,21 +619,32 @@ class Renderer(vtkRenderer):
         DEPRECATED: Please use ``show_bounds`` or ``show_grid``.
 
         """
-        logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
+        logging.warning(
+            "`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`."
+        )
         return self.show_bounds(*args, **kwargs)
 
     def remove_bounding_box(self):
         """Remove bounding box."""
-        if hasattr(self, '_box_object'):
+        if hasattr(self, "_box_object"):
             actor = self.bounding_box_actor
             self.bounding_box_actor = None
             del self._box_object
             self.remove_actor(actor, reset_camera=False)
 
-    def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
-                         opacity=1.0, render_lines_as_tubes=False,
-                         lighting=None, reset_camera=None, outline=True,
-                         culling='front', loc=None):
+    def add_bounding_box(
+        self,
+        color="grey",
+        corner_factor=0.5,
+        line_width=None,
+        opacity=1.0,
+        render_lines_as_tubes=False,
+        lighting=None,
+        reset_camera=None,
+        outline=True,
+        culling="front",
+        loc=None,
+    ):
         """Add an unlabeled and unticked box at the boundaries of plot.
 
         Useful for when wanting to plot outer grids while still retaining all
@@ -620,11 +682,11 @@ class Renderer(vtkRenderer):
 
         """
         if lighting is None:
-            lighting = rcParams['lighting']
+            lighting = rcParams["lighting"]
 
         self.remove_bounding_box()
         if color is None:
-            color = rcParams['outline_color']
+            color = rcParams["outline_color"]
         rgb_color = parse_color(color)
         if outline:
             self._bounding_box = vtk.vtkOutlineCornerSource()
@@ -634,14 +696,17 @@ class Renderer(vtkRenderer):
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.Update()
         self._box_object = wrap(self._bounding_box.GetOutput())
-        name = 'BoundingBox({})'.format(hex(id(self._box_object)))
+        name = "BoundingBox({})".format(hex(id(self._box_object)))
 
         mapper = vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
-        self.bounding_box_actor, prop = self.add_actor(mapper,
-                                                       reset_camera=reset_camera,
-                                                       name=name, culling=culling,
-                                                       pickable=False)
+        self.bounding_box_actor, prop = self.add_actor(
+            mapper,
+            reset_camera=reset_camera,
+            name=name,
+            culling=culling,
+            pickable=False,
+        )
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
@@ -662,7 +727,7 @@ class Renderer(vtkRenderer):
 
     def remove_bounds_axes(self):
         """Remove bounds axes."""
-        if hasattr(self, 'cube_axes_actor'):
+        if hasattr(self, "cube_axes_actor"):
             self.remove_actor(self.cube_axes_actor)
 
     @property
@@ -671,7 +736,8 @@ class Renderer(vtkRenderer):
         return CameraPosition(
             scale_point(self.camera, self.camera.GetPosition(), invert=True),
             scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
-            self.camera.GetViewUp())
+            self.camera.GetViewUp(),
+        )
 
     def clear(self):
         """Remove all actors and properties."""
@@ -693,17 +759,17 @@ class Renderer(vtkRenderer):
 
         if isinstance(camera_location, str):
             camera_location = camera_location.lower()
-            if camera_location == 'xy':
+            if camera_location == "xy":
                 self.view_xy()
-            elif camera_location == 'xz':
+            elif camera_location == "xz":
                 self.view_xz()
-            elif camera_location == 'yz':
+            elif camera_location == "yz":
                 self.view_yz()
-            elif camera_location == 'yx':
+            elif camera_location == "yx":
                 self.view_yx()
-            elif camera_location == 'zx':
+            elif camera_location == "zx":
                 self.view_zx()
-            elif camera_location == 'zy':
+            elif camera_location == "zy":
                 self.view_zy()
             return
 
@@ -711,8 +777,12 @@ class Renderer(vtkRenderer):
             return self.view_vector(camera_location)
 
         # everything is set explicitly
-        self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))
-        self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1], invert=False))
+        self.camera.SetPosition(
+            scale_point(self.camera, camera_location[0], invert=False)
+        )
+        self.camera.SetFocalPoint(
+            scale_point(self.camera, camera_location[1], invert=False)
+        )
         self.camera.SetViewUp(camera_location[2])
 
         # reset clipping range
@@ -731,9 +801,8 @@ class Renderer(vtkRenderer):
         self.camera_position = CameraPosition(
             scale_point(camera, camera.GetPosition(), invert=True),
             scale_point(camera, camera.GetFocalPoint(), invert=True),
-            camera.GetViewUp()
+            camera.GetViewUp(),
         )
-
 
     def set_focus(self, point):
         """Set focus to a point."""
@@ -759,7 +828,6 @@ class Renderer(vtkRenderer):
                 vector = vector.ravel()
         self.camera.SetViewUp(vector)
 
-
     def enable_parallel_projection(self):
         """Enable parallel projection.
 
@@ -769,11 +837,9 @@ class Renderer(vtkRenderer):
         """
         self.camera.SetParallelProjection(True)
 
-
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
         self.camera.SetParallelProjection(False)
-
 
     def remove_actor(self, actor, reset_camera=False):
         """Remove an actor from the Renderer.
@@ -799,7 +865,7 @@ class Renderer(vtkRenderer):
             keys = list(self._actors.keys())
             names = []
             for k in keys:
-                if k.startswith('{}-'.format(name)):
+                if k.startswith("{}-".format(name)):
                     names.append(k)
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera)
@@ -837,7 +903,6 @@ class Renderer(vtkRenderer):
         self.Modified()
         return True
 
-
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """Scale all the datasets in the scene.
 
@@ -869,10 +934,11 @@ class Renderer(vtkRenderer):
 
         def _update_bounds(bounds):
             def update_axis(ax):
-                if bounds[ax*2] < the_bounds[ax*2]:
-                    the_bounds[ax*2] = bounds[ax*2]
-                if bounds[ax*2+1] > the_bounds[ax*2+1]:
-                    the_bounds[ax*2+1] = bounds[ax*2+1]
+                if bounds[ax * 2] < the_bounds[ax * 2]:
+                    the_bounds[ax * 2] = bounds[ax * 2]
+                if bounds[ax * 2 + 1] > the_bounds[ax * 2 + 1]:
+                    the_bounds[ax * 2 + 1] = bounds[ax * 2 + 1]
+
             for ax in range(3):
                 update_axis(ax)
             return
@@ -880,8 +946,11 @@ class Renderer(vtkRenderer):
         for actor in self._actors.values():
             if isinstance(actor, vtk.vtkCubeAxesActor):
                 continue
-            if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
-                 and id(actor) != id(self.bounding_box_actor)):
+            if (
+                hasattr(actor, "GetBounds")
+                and actor.GetBounds() is not None
+                and id(actor) != id(self.bounding_box_actor)
+            ):
                 _update_bounds(actor.GetBounds())
 
         if np.any(np.abs(the_bounds)):
@@ -894,9 +963,9 @@ class Renderer(vtkRenderer):
     def center(self):
         """Return the center of the bounding box around all data present in the scene."""
         bounds = self.bounds
-        x = (bounds[1] + bounds[0])/2
-        y = (bounds[3] + bounds[2])/2
-        z = (bounds[5] + bounds[4])/2
+        x = (bounds[1] + bounds[0]) / 2
+        y = (bounds[3] + bounds[2]) / 2
+        z = (bounds[5] + bounds[4]) / 2
         return [x, y, z]
 
     def get_default_cam_pos(self, negative=False):
@@ -908,23 +977,25 @@ class Renderer(vtkRenderer):
         focal_pt = self.center
         if any(np.isnan(focal_pt)):
             focal_pt = (0.0, 0.0, 0.0)
-        position = np.array(rcParams['camera']['position']).astype(float)
+        position = np.array(rcParams["camera"]["position"]).astype(float)
         if negative:
             position *= -1
         position = position / np.array(self.scale).astype(float)
-        cpos = [position + np.array(focal_pt),
-                focal_pt, rcParams['camera']['viewup']]
+        cpos = [position + np.array(focal_pt), focal_pt, rcParams["camera"]["viewup"]]
         return cpos
 
     def update_bounds_axes(self):
         """Update the bounds axes of the render window."""
-        if (hasattr(self, '_box_object') and self._box_object is not None
-                and self.bounding_box_actor is not None):
+        if (
+            hasattr(self, "_box_object")
+            and self._box_object is not None
+            and self.bounding_box_actor is not None
+        ):
             if not np.allclose(self._box_object.bounds, self.bounds):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
-        if hasattr(self, 'cube_axes_actor'):
+        if hasattr(self, "cube_axes_actor"):
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
                 self.cube_axes_actor.SetUse2DMode(True)
@@ -955,7 +1026,9 @@ class Renderer(vtkRenderer):
         The view will show all the actors in the scene.
 
         """
-        self.camera_position = CameraPosition(*self.get_default_cam_pos(negative=negative))
+        self.camera_position = CameraPosition(
+            *self.get_default_cam_pos(negative=negative)
+        )
         self.camera_set = False
         return self.reset_camera()
 
@@ -963,57 +1036,55 @@ class Renderer(vtkRenderer):
         """Point the camera in the direction of the given vector."""
         focal_pt = self.center
         if viewup is None:
-            viewup = rcParams['camera']['viewup']
-        cpos = CameraPosition(vector + np.array(focal_pt),
-                focal_pt, viewup)
+            viewup = rcParams["camera"]["viewup"]
+        cpos = CameraPosition(vector + np.array(focal_pt), focal_pt, viewup)
         self.camera_position = cpos
         return self.reset_camera()
 
     def view_xy(self, negative=False):
         """View the XY plane."""
-        vec = np.array([0,0,1])
-        viewup = np.array([0,1,0])
+        vec = np.array([0, 0, 1])
+        viewup = np.array([0, 1, 0])
         if negative:
             vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_yx(self, negative=False):
         """View the YX plane."""
-        vec = np.array([0,0,-1])
-        viewup = np.array([1,0,0])
+        vec = np.array([0, 0, -1])
+        viewup = np.array([1, 0, 0])
         if negative:
             vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_xz(self, negative=False):
         """View the XZ plane."""
-        vec = np.array([0,-1,0])
-        viewup = np.array([0,0,1])
+        vec = np.array([0, -1, 0])
+        viewup = np.array([0, 0, 1])
         if negative:
             vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_zx(self, negative=False):
         """View the ZX plane."""
-        vec = np.array([0,1,0])
-        viewup = np.array([1,0,0])
+        vec = np.array([0, 1, 0])
+        viewup = np.array([1, 0, 0])
         if negative:
             vec *= -1
         return self.view_vector(vec, viewup)
 
     def view_yz(self, negative=False):
         """View the YZ plane."""
-        vec = np.array([1,0,0])
-        viewup = np.array([0,0,1])
+        vec = np.array([1, 0, 0])
+        viewup = np.array([0, 0, 1])
         if negative:
             vec *= -1
         return self.view_vector(vec, viewup)
 
-
     def view_zy(self, negative=False):
         """View the ZY plane."""
-        vec = np.array([-1,0,0])
-        viewup = np.array([0,1,0])
+        vec = np.array([-1, 0, 0])
+        viewup = np.array([0, 1, 0])
         if negative:
             vec *= -1
         return self.view_vector(vec, viewup)
@@ -1028,7 +1099,7 @@ class Renderer(vtkRenderer):
 
     def enable_eye_dome_lighting(self):
         """Enable eye dome lighting (EDL)."""
-        if hasattr(self, 'edl_pass'):
+        if hasattr(self, "edl_pass"):
             return self
         # create the basic VTK render steps
         basic_passes = vtk.vtkRenderStepsPass()
@@ -1044,12 +1115,11 @@ class Renderer(vtkRenderer):
 
     def disable_eye_dome_lighting(self):
         """Disable eye dome lighting (EDL)."""
-        if not hasattr(self, 'edl_pass'):
+        if not hasattr(self, "edl_pass"):
             return
         self.SetPass(None)
         del self.edl_pass
         return
-
 
     def get_pick_position(self):
         """Get the pick position/area as x0, y0, x1, y1."""
@@ -1059,14 +1129,13 @@ class Renderer(vtkRenderer):
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
 
-
     def deep_clean(self):
         """Clean the renderer of the memory."""
-        if hasattr(self, 'cube_axes_actor'):
+        if hasattr(self, "cube_axes_actor"):
             del self.cube_axes_actor
-        if hasattr(self, 'edl_pass'):
+        if hasattr(self, "edl_pass"):
             del self.edl_pass
-        if hasattr(self, '_box_object'):
+        if hasattr(self, "_box_object"):
             self.remove_bounding_box()
 
         self.RemoveAllViewProps()
@@ -1074,7 +1143,6 @@ class Renderer(vtkRenderer):
         # remove reference to parent last
         self.parent = None
         return
-
 
     def __del__(self):
         """Delete the renderer."""
@@ -1096,6 +1164,8 @@ def _remove_mapper_from_plotter(plotter, actor, reset_camera):
             slot = plotter._scalar_bar_slot_lookup.pop(name)
             plotter._scalar_bar_mappers.pop(name)
             plotter._scalar_bar_ranges.pop(name)
-            plotter.remove_actor(plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera)
+            plotter.remove_actor(
+                plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera
+            )
             plotter._scalar_bar_slots.add(slot)
     return

@@ -33,6 +33,9 @@ PyVista
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
 
+.. |black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
+      :alt: Code style
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -44,6 +47,8 @@ PyVista
 | Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
 | License              | |MIT|                  |
++----------------------+------------------------+
+| Code style           | |black|                |
 +----------------------+------------------------+
 
 

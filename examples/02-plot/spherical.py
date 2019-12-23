@@ -103,7 +103,9 @@ vectors = np.stack(
             y_polar,
             wind_level,
             u_vec.transpose(inv_axes),
-            -v_vec.transpose(inv_axes),  # Minus sign because y-vector in polar coords is required
+            -v_vec.transpose(
+                inv_axes
+            ),  # Minus sign because y-vector in polar coords is required
             w_vec.transpose(inv_axes),
         )
     ],
@@ -134,7 +136,8 @@ nlev = 10
 
 # Dummy 3D scalar data
 scalar_3d = (
-    scalar.repeat(nlev).reshape((*scalar.shape, nlev)) * np.arange(nlev)[np.newaxis, np.newaxis, :]
+    scalar.repeat(nlev).reshape((*scalar.shape, nlev))
+    * np.arange(nlev)[np.newaxis, np.newaxis, :]
 ).transpose(2, 0, 1)
 
 

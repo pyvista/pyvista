@@ -20,7 +20,7 @@ def voxelize(mesh, density):
 
     # get part of the mesh within the mesh
     selection = ugrid.select_enclosed_points(mesh, tolerance=0.0)
-    mask = selection.point_arrays['SelectedPoints'].view(np.bool)
+    mask = selection.point_arrays["SelectedPoints"].view(np.bool)
 
     # extract cells from point indices
     return ugrid.extract_points(mask)
@@ -39,11 +39,11 @@ def create_grid(dataset, dimensions=(101, 101, 101)):
         # "optimal" grid size by looking at the sparsity of the points in the
         # input dataset - I actually think VTK might have this implemented
         # somewhere
-        raise NotImplementedError('Please specify dimensions.')
+        raise NotImplementedError("Please specify dimensions.")
     dimensions = np.array(dimensions, dtype=int)
     image = pyvista.UniformGrid()
     image.dimensions = dimensions
-    dims = (dimensions - 1)
+    dims = dimensions - 1
     dims[dims == 0] = 1
     image.spacing = (bounds[1::2] - bounds[:-1:2]) / dims
     image.origin = bounds[::2]

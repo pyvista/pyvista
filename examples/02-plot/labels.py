@@ -59,10 +59,7 @@ plotter.add_point_labels(
     points[mask], points[mask].tolist(), point_size=20, font_size=36
 )
 
-plotter.camera_position = [
-    (-1.5, 1.5, 3.0),
-    (0.05, 0.6, 1.2),
-    (0.2, 0.9, -0.25)]
+plotter.camera_position = [(-1.5, 1.5, 3.0), (0.05, 0.6, 1.2), (0.2, 0.9, -0.25)]
 
 plotter.show()
 
