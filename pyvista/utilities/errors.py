@@ -178,6 +178,15 @@ class GPUInfo():
         return fmt
 
 
+    def __repr__(self):
+        """Representation method."""
+        content = "\n"
+        for k, v in self.get_info():
+            content += "{:>18}".format(k)+' : {}\n'.format(v)
+        content += "\n"
+        return content
+
+
 
 class Report(scooby.Report):
     """A class for custom scooby.Report."""
