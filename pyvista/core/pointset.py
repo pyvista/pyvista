@@ -14,7 +14,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-from .common import DataSet
+from .dataset import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters
 from .pyvista_ndarray import pyvista_ndarray
 from ..utilities.fileio import get_ext

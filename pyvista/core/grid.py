@@ -10,7 +10,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
 from pyvista.utilities.fileio import set_vtkwriter_mode
-from .common import DataSet
+from .dataset import DataSet
 from .filters import _get_output, UniformGridFilters
 
 log = logging.getLogger(__name__)
