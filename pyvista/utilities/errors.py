@@ -121,6 +121,7 @@ def get_gpu_info():
 
 class GPUInfo():
     """A class to hold GPU details."""
+
     def __init__(self):
         """Instantiate a container for the GPU information."""
         self._gpu_info = get_gpu_info()
@@ -181,7 +182,8 @@ class GPUInfo():
 class Report(scooby.Report):
     """A class for custom scooby.Report."""
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False):
+    def __init__(self, additional=None, ncol=3, text_width=80, sort=False,
+                 gpu=True):
         """Generate a :class:`scooby.Report` instance.
 
         Parameters
@@ -199,6 +201,11 @@ class Report(scooby.Report):
         sort : bool, optional
             Alphabetically sort the packages
 
+        gpu : bool
+            Gather information about the GPU. Defaults to ``True`` but if
+            experiencing renderinng issues, pass ``False`` to safely generate
+            a report.
+
         """
         # Mandatory packages.
         core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
@@ -209,10 +216,11 @@ class Report(scooby.Report):
 
         # Information about the GPU - bare except incase there is a rendering
         # bug that the user is trying to report.
-        try:
-            extra_meta = GPUInfo().get_info()
-        except:
-            extra_meta = ("GPU Details", "error")
+        if gpu:
+            try:
+                extra_meta = GPUInfo().get_info()
+            except:
+                extra_meta = ("GPU Details", "error")
 
         scooby.Report.__init__(self, additional=additional, core=core,
                                optional=optional, ncol=ncol,
