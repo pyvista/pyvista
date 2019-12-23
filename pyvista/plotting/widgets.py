@@ -1162,6 +1162,68 @@ class WidgetHelper(object):
         return
 
 
+    def add_button_widget(self, callback, position=(10., 10.), size=48,
+                          color_on='blue', color_off='grey'):
+        if not hasattr(self, "button_widgets"):
+            self.button_widgets = []
+
+        def create_button(color1, color2, color3, dims=[size, size, 1]):
+            color1 = np.array(parse_color(color1)) * 255
+            color2 = np.array(parse_color(color2)) * 255
+            color3 = np.array(parse_color(color3)) * 255
+            border_size = size // 5
+
+            n_points = dims[0] * dims[1]
+            button = pyvista.UniformGrid(dims)
+            arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
+            arr[1:dims[0]-1, 1:dims[1]-1] = color2 # apply color2
+            arr[
+                border_size:dims[0]-border_size,
+                border_size:dims[1]-border_size
+            ] = color3 # apply color3
+            button.point_arrays['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
+            return button
+
+        button_off = create_button(color_on, 'white', color_on)
+        button_on = create_button(color_on, 'white', color_off)
+
+        bounds = [
+            position[0], position[0] + size,
+            position[1], position[1] + size,
+            0., 0.
+        ]
+
+        button_rep = vtk.vtkTexturedButtonRepresentation2D()
+        button_rep.SetNumberOfStates(2)
+        button_rep.SetButtonTexture(0, button_off)
+        button_rep.SetButtonTexture(1, button_on)
+        button_rep.SetPlaceFactor(1)
+        button_rep.PlaceWidget(bounds)
+
+        button_widget = vtk.vtkButtonWidget()
+        button_widget.SetInteractor(self.iren)
+        button_widget.SetRepresentation(button_rep)
+        button_widget.SetCurrentRenderer(self.renderer)
+        button_widget.On()
+
+        def _the_callback(widget, event):
+            state = widget.GetRepresentation().GetState()
+            if hasattr(callback, '__call__'):
+                try_callback(callback, state)
+
+        button_widget.AddObserver(vtk.vtkCommand.StateChangedEvent, _the_callback)
+        self.button_widgets.append(button_widget)
+        return button_widget
+
+    def clear_button_widgets(self):
+        """Disable all of the button widgets."""
+        if hasattr(self, 'button_widgets'):
+            for widget in self.button_widgets:
+                widget.Off()
+            del self.button_widgets
+        return
+
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -1170,3 +1232,4 @@ class WidgetHelper(object):
         self.clear_slider_widgets()
         self.clear_sphere_widgets()
         self.clear_spline_widgets()
+        self.clear_button_widgets()
