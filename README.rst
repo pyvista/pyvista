@@ -30,6 +30,9 @@ PyVista
 .. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/pyvista?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/pyvista&amp;utm_campaign=Badge_Grade
 
+.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -39,6 +42,8 @@ PyVista
 | Metrics              | |codacy| |codecov|     |
 +----------------------+------------------------+
 | Citation             | |joss| |zenodo|        |
++----------------------+------------------------+
+| License              | |MIT|                  |
 +----------------------+------------------------+
 
 
