@@ -1,14 +1,13 @@
 """This module contains some convenience helper functions."""
 
 import numpy as np
-
+import scooby
 
 import pyvista
-
-from .theme import rcParams
 from pyvista.utilities import is_pyvista_dataset
+
 from .plotting import Plotter
-import scooby
+from .theme import rcParams
 
 
 def plot(

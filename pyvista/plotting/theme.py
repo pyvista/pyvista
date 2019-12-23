@@ -1,10 +1,10 @@
 """Module managing different plotting theme parameters."""
 
 import os
+
 import vtk
 
-from .colors import string_to_rgb, PARAVIEW_BACKGROUND
-
+from .colors import PARAVIEW_BACKGROUND, string_to_rgb
 
 MAX_N_COLOR_BARS = 10
 FONT_KEYS = {"arial": vtk.VTK_ARIAL, "courier": vtk.VTK_COURIER, "times": vtk.VTK_TIMES}

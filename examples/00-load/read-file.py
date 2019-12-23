@@ -13,11 +13,12 @@ Read a dataset from a known file type.
 # The following code block uses a built-in example file and displays an
 # airplane mesh.
 
+import matplotlib.pyplot as plt
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 5
 import pyvista as pv
 from pyvista import examples
-import numpy as np
-import matplotlib.pyplot as plt
 
 ###############################################################################
 # The following code block uses a built-in example

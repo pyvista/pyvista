@@ -1,17 +1,20 @@
 """PyVista package for 3D plotting and mesh analysis."""
 
+import os
 import warnings
-from pyvista._version import __version__
-from pyvista.plotting import *
-from pyvista.utilities import *
-from pyvista.core import *
 
-# Per contract with Sphinx-Gallery, this method must be available at top level
-from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
-
+# Set up data directory
+import appdirs
 import numpy as np
 import scooby
 import vtk
+
+from pyvista._version import __version__
+from pyvista.core import *
+from pyvista.plotting import *
+from pyvista.utilities import *
+# Per contract with Sphinx-Gallery, this method must be available at top level
+from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
 
 # get the int type from vtk
 VTK_ID_TYPE_SIZE = vtk.vtkIdTypeArray().GetDataTypeSize()
@@ -56,9 +59,6 @@ REPR_VOLUME_MAX_CELLS = 1e6
 # Set where figures are saved
 FIGURE_PATH = None
 
-# Set up data directory
-import appdirs
-import os
 
 USER_DATA_PATH = appdirs.user_data_dir("pyvista")
 if not os.path.exists(USER_DATA_PATH):

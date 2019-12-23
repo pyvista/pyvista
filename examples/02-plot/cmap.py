@@ -6,11 +6,12 @@ Use a Matplotlib, Colorcet, cmocean, or custom colormap when plotting scalar
 values.
 """
 
-from pyvista import examples
-import pyvista as pv
 import matplotlib.pyplot as plt
-from matplotlib.colors import ListedColormap
 import numpy as np
+from matplotlib.colors import ListedColormap
+
+import pyvista as pv
+from pyvista import examples
 
 ###############################################################################
 # Any colormap built for ``matplotlib``, ``colorcet``, or ``cmocean`` is fully

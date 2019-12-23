@@ -8,10 +8,11 @@ Resample one mesh's point/cell arrays onto another meshes nodes.
 # This example will resample a volumetric mesh's  scalar data onto the surface
 # of a sphere contained in that volume.
 
+import numpy as np
+
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
-import numpy as np
 
 ###############################################################################
 # Query a grids points onto a sphere

@@ -11,7 +11,7 @@ from vtk import vtkRenderer
 import pyvista
 from pyvista.utilities import wrap
 
-from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
+from .theme import MAX_N_COLOR_BARS, parse_color, parse_font_family, rcParams
 from .tools import create_axes_marker
 
 

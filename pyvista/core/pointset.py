@@ -4,24 +4,14 @@ import os
 
 import numpy as np
 import vtk
-from vtk import (
-    VTK_HEXAHEDRON,
-    VTK_PYRAMID,
-    VTK_QUAD,
-    VTK_QUADRATIC_HEXAHEDRON,
-    VTK_QUADRATIC_PYRAMID,
-    VTK_QUADRATIC_QUAD,
-    VTK_QUADRATIC_TETRA,
-    VTK_QUADRATIC_TRIANGLE,
-    VTK_QUADRATIC_WEDGE,
-    VTK_TETRA,
-    VTK_TRIANGLE,
-    VTK_WEDGE,
-    vtkPolyData,
-    vtkStructuredGrid,
-    vtkUnstructuredGrid,
-)
-from vtk.util.numpy_support import numpy_to_vtk, numpy_to_vtkIdTypeArray, vtk_to_numpy
+from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
+                 VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_PYRAMID,
+                 VTK_QUADRATIC_QUAD, VTK_QUADRATIC_TETRA,
+                 VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
+                 VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
+                 vtkUnstructuredGrid)
+from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
+                                    vtk_to_numpy)
 
 import pyvista
 

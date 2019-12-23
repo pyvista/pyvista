@@ -9,7 +9,6 @@ import pyvista
 from pyvista import QtInteractor
 from pyvista.plotting import system_supports_plotting
 
-
 NO_PLOTTING = not system_supports_plotting()
 
 
