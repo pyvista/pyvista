@@ -603,7 +603,8 @@ class WidgetHelper(object):
 
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
-                          color=None, pass_widget=False):
+                          color=None, pass_widget=False,
+                          event_type='end'):
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -639,6 +640,10 @@ class WidgetHelper(object):
         pass_widget : bool
             If true, the widget will be passed as the last argument of the
             callback
+
+        event_type: str
+            Either 'start', 'end' or 'always', this defines how often the
+            slider interacts with the callback.
 
         """
         if hasattr(self, 'notebook') and self.notebook:
@@ -690,7 +695,18 @@ class WidgetHelper(object):
         slider_widget.SetCurrentRenderer(self.renderer)
         slider_widget.SetRepresentation(slider_rep)
         slider_widget.On()
-        slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        if not isinstance(event_type, str):
+            raise TypeError("Expected type for `event_type` is str: "
+                            "{} was given.".format(type(event_type)))
+        if event_type == 'start':
+            slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _the_callback)
+        elif event_type == 'end':
+            slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
+        elif event_type == 'always':
+            slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, _the_callback)
+        else:
+            raise ValueError("Expected value for `event_type` is 'start',"
+                             " 'end' or 'always': {} was given.".format(event_type))
         _the_callback(slider_widget, None)
 
         self.slider_widgets.append(slider_widget)
