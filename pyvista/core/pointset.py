@@ -14,17 +14,18 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-
-from .common import Common
+from .dataset import DataSet
 from .filters import PolyDataFilters, UnstructuredGridFilters
+from .pyvista_ndarray import pyvista_ndarray
+from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class PointSet(Common):
+class PointSet(DataSet):
     """PyVista's equivalent of vtk.vtkPointSet.
-    
+
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
@@ -49,12 +50,36 @@ class PointSet(Common):
         return np.array(alg.GetCenter())
 
 
+    @property
+    def points(self):
+        """Return a pointer to the points as a pyvista_ndarray."""
+        points = self.GetPoints()
+        if points:
+            vtk_arr = points.GetData()
+            return pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self)
+
+
+    @points.setter
+    def points(self, point_array):
+        """Set points without copying."""
+        if not isinstance(point_array, np.ndarray):
+            raise TypeError('Points must be a numpy array')
+        vtk_points = pyvista.vtk_points(point_array, deep=False)
+        pdata = self.GetPoints()
+        if not pdata:
+            self.SetPoints(vtk_points)
+        else:
+            pdata.SetData(vtk_points.GetData())
+        self.GetPoints().Modified()
+        self.Modified()
+
+
     def shallow_copy(self, to_copy):
         """Do a shallow copy the pointset."""
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(vtk.vtkPoints())
-        return Common.shallow_copy(self, to_copy)
+        return DataSet.shallow_copy(self, to_copy)
 
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
@@ -120,10 +145,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                 raise TypeError('Invalid input type')
 
         elif len(args) == 2:
-            arg0_is_array = isinstance(args[0], np.ndarray)
-            arg1_is_array = isinstance(args[1], np.ndarray)
-            if arg0_is_array and arg1_is_array:
-                self._from_arrays(args[0], args[1], deep)
+            if all(isinstance(arg, np.ndarray) for arg in args):
+                self._from_arrays(vertices=args[0], faces=args[1], deep=deep)
             else:
                 raise TypeError('Invalid input type')
         else:
@@ -136,11 +159,21 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
+
+    @property
+    def _vtk_readers(self):
+        return {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader, '.vtk': vtk.vtkPolyDataReader,
+                '.vtp': vtk.vtkXMLPolyDataReader, '.obj': vtk.vtkOBJReader}
+
+    @property
+    def _vtk_writers(self):
+        return {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter, '.stl': vtk.vtkSTLWriter,
+                '.vtk': vtk.vtkPolyDataWriter}
 
     @staticmethod
     def _make_vertice_cells(npoints):
@@ -149,53 +182,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
         cells = np.reshape(cells, (2*npoints))
         return cells
-
-    def _load_file(self, filename):
-        """Load a surface mesh from a mesh file.
-
-        Mesh file may be an ASCII or binary ply, stl, or vtk mesh file.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of mesh to be loaded.  File type is inferred from the
-            extension of the filename
-
-        Notes
-        -----
-        Binary files load much faster than ASCII.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # test if file exists
-        if not os.path.isfile(filename):
-            raise Exception('File %s does not exist' % filename)
-
-        # Get extension
-        ext = pyvista.get_ext(filename)
-
-        # Select reader
-        if ext == '.ply':
-            reader = vtk.vtkPLYReader()
-        elif ext == '.stl':
-            reader = vtk.vtkSTLReader()
-        elif ext == '.vtk':
-            reader = vtk.vtkPolyDataReader()
-        elif ext == '.vtp':
-            reader = vtk.vtkXMLPolyDataReader()
-        elif ext == '.obj':
-            reader = vtk.vtkOBJReader()
-        else:
-            raise TypeError('Filetype must be either "ply", "stl", "vtk", "vtp", or "obj".')
-
-        # Load file
-        reader.SetFileName(filename)
-        reader.Update()
-        self.shallow_copy(reader.GetOutput())
-
-        # sanity check
-        if not np.any(self.points):
-            raise AssertionError('Empty or invalid file')
 
     @property
     def lines(self):
@@ -344,7 +330,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file. If ply or stl format is chosen, the face normals are 
+        file. If ply or stl format is chosen, the face normals are
         computed in place to ensure the mesh is properly saved.
 
         Parameters
@@ -365,37 +351,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         """
         filename = os.path.abspath(os.path.expanduser(filename))
-        file_mode = True
-        # Check filetype
-        ftype = filename[-3:]
-        if ftype == 'ply':
-            writer = vtk.vtkPLYWriter()
-        elif ftype == 'vtp':
-            writer = vtk.vtkXMLPolyDataWriter()
-            file_mode = False
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-        elif ftype == 'stl':
-            writer = vtk.vtkSTLWriter()
-        elif ftype == 'vtk':
-            writer = vtk.vtkPolyDataWriter()
-        else:
-            raise Exception('Filetype must be either "ply", "stl", or "vtk"')
-
+        ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
         if ftype in ['stl', 'ply']:
             self.compute_normals(inplace=True)
-
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        if binary and file_mode:
-            writer.SetFileTypeToBinary()
-        elif file_mode:
-            writer.SetFileTypeToASCII()
-        writer.Write()
+        super().save(filename, binary)
 
 
     @property
@@ -583,30 +544,31 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 self.shallow_copy(vtkappend.GetOutput())
 
             else:
-                itype = type(args[0])
-                raise Exception('Cannot work with input type %s' % itype)
+                raise Exception('Cannot work with input type %s' % type(args[0]))
 
         elif len(args) == 4:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            arg2_is_arr = isinstance(args[2], np.ndarray)
-            arg3_is_arr = isinstance(args[3], np.ndarray)
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
-                self._from_arrays(args[0], args[1], args[2], args[3], deep)
+            if all(isinstance(arg, np.ndarray) for arg in args):
+                self._from_arrays(*args, deep=deep)
             else:
                 raise Exception('All input types must be np.ndarray')
 
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
+    @property
+    def _vtk_readers(self):
+        return {'.vtu': vtk.vtkXMLUnstructuredGridReader, '.vtk': vtk.vtkUnstructuredGridReader}
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtu': vtk.vtkXMLUnstructuredGridWriter, '.vtk': vtk.vtkUnstructuredGridWriter}
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -670,7 +632,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             cells = np.ascontiguousarray(cells)
 
         # if cells.ndim != 1:
-            # cells = cells.ravel()
+        # cells = cells.ravel()
 
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
@@ -692,79 +654,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         self.SetPoints(points)
         self.SetCells(cell_type, offset, vtkcells)
 
-    def _load_file(self, filename):
-        """Load an unstructured grid from a file.
-
-        The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vtu will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('%s does not exist' % filename)
-
-        # Check file extension
-        if '.vtu' in filename:
-            reader = vtk.vtkXMLUnstructuredGridReader()
-        elif '.vtk' in filename:
-            reader = vtk.vtkUnstructuredGridReader()
-        else:
-            raise Exception('Extension should be either ".vtu" or ".vtk"')
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write an unstructured grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use. ".vtk" will use the legacy writer, while
-            ".vtu" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only ".vtk" files
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkUnstructuredGridWriter()
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        elif '.vtu' in filename:
-            writer = vtk.vtkXMLUnstructuredGridWriter()
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-        else:
-            raise Exception('Extension should be either ".vtu" or ".vtk"')
-
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        return writer.Write()
-
     @property
     def cells(self):
         """Return a pointer to the cells as a numpy object."""
@@ -772,7 +661,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
-        
+
         Converts the following cell types to their linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
@@ -887,25 +776,25 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
-
-        elif len(args) == 3:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            arg2_is_arr = isinstance(args[2], np.ndarray)
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2])
-
+        elif len(args) == 3 and all(isinstance(arg, np.ndarray) for arg in args):
+            self._from_arrays(*args)
 
     def __repr__(self):
         """Return the standard representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
 
     def __str__(self):
         """Return the standard str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
 
+    @property
+    def _vtk_readers(self):
+        return {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.
@@ -922,105 +811,19 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             Position of the points in z direction.
 
         """
-        if not(x.shape == y.shape == z.shape):
+        if not (x.shape == y.shape == z.shape):
             raise Exception('Input point array shapes must match exactly')
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
-        points[:, 0] = x.ravel('F')
-        points[:, 1] = y.ravel('F')
-        points[:, 2] = z.ravel('F')
+        points[:, 0], points[:, 1], points[:, 2] = x.ravel('F'), y.ravel('F'), z.ravel('F')
 
         # ensure that the inputs are 3D
-        dim = list(x.shape)
-        while len(dim) < 3:
-            dim.append(1)
+        dim = list(x.shape) + [1] * (3 - len(x.shape))
 
         # Create structured grid
         self.SetDimensions(dim)
         self.SetPoints(pyvista.vtk_points(points))
-
-    def _load_file(self, filename):
-        """Load a structured grid from a file.
-
-        The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vts will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('{} does not exist'.format(filename))
-
-        # Check file extension
-        if '.vts' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
-            raise Exception(
-                'Extension should be either ".vts" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        if legacy_writer:
-            reader = vtk.vtkStructuredGridReader()
-        else:
-            reader = vtk.vtkXMLStructuredGridReader()
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write a structured grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vts" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only with the legacy writer.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkStructuredGridWriter()
-            if binary:
-                writer.SetFileTypeToBinary()
-            else:
-                writer.SetFileTypeToASCII()
-        elif '.vts' in filename:
-            writer = vtk.vtkXMLStructuredGridWriter()
-            if binary:
-                writer.SetDataModeToBinary()
-            else:
-                writer.SetDataModeToAscii()
-        else:
-            raise Exception('Extension should be either ".vts" (xml) or'
-                            '".vtk" (legacy)')
-        # Write
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        writer.Write()
 
     @property
     def dimensions(self):
@@ -1030,8 +833,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
     @dimensions.setter
     def dimensions(self, dims):
         """Set the dataset dimensions. Pass a length three tuple of integers."""
-        nx, ny, nz = dims[0], dims[1], dims[2]
-        self.SetDimensions(nx, ny, nz)
+        self.SetDimensions(*dims)
         self.Modified()
 
     @property

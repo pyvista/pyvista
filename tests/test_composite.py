@@ -226,8 +226,8 @@ def test_multi_io_erros(tmpdir):
     with pytest.raises(Exception):
         _ = pyvista.MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(IOError):
-        _ = pyvista.MultiBlock(bad_ext_name)
+    with pytest.raises(ValueError):
+        data = pyvista.MultiBlock(bad_ext_name)
 
 
 

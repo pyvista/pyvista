@@ -9,15 +9,15 @@ from vtk import vtkImageData, vtkRectilinearGrid
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-
-from .common import Common
+from pyvista.utilities.fileio import set_vtkwriter_mode
+from .dataset import DataSet
 from .filters import _get_output, UniformGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-class Grid(Common):
+class Grid(DataSet):
     """A class full of common methods for non-pointset grids."""
 
     def __new__(cls, *args, **kwargs):
@@ -48,7 +48,7 @@ class Grid(Common):
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
-        attrs = Common._get_attrs(self)
+        attrs = DataSet._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
 
@@ -98,28 +98,29 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
                 self._load_file(args[0])
 
         elif len(args) == 3 or len(args) == 2:
-            arg0_is_arr = isinstance(args[0], np.ndarray)
-            arg1_is_arr = isinstance(args[1], np.ndarray)
-            if len(args) == 3:
-                arg2_is_arr = isinstance(args[2], np.ndarray)
-            else:
-                arg2_is_arr = False
-
-
-            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
-                self._from_arrays(args[0], args[1], args[2])
-            elif all([arg0_is_arr, arg1_is_arr]):
-                self._from_arrays(args[0], args[1], np.array([0.]))
+            if all(isinstance(arg, np.ndarray) for arg in args):
+                args += (np.array([0.]),) * (3 - len(args))
+                self._from_arrays(*args)
 
 
     def __repr__(self):
         """Return the default representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
 
     def __str__(self):
         """Return the str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
+
+
+    @property
+    def _vtk_readers(self):
+        return {'.vtk': vtk.vtkRectilinearGridReader, '.vtr': vtk.vtkXMLRectilinearGridReader}
+
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtk': vtk.vtkRectilinearGridWriter, '.vtr': vtk.vtkXMLRectilinearGridWriter}
 
 
     def _from_arrays(self, x, y, z):
@@ -174,85 +175,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         #self._point_ref = points
         self.Modified()
 
-
-    def _load_file(self, filename):
-        """
-        Load a rectilinear grid from a file.
-
-        The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vtr will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('{} does not exist'.format(filename))
-
-        # Check file extension
-        if '.vtr' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
-            raise Exception(
-                'Extension should be either ".vtr" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        if legacy_writer:
-            reader = vtk.vtkRectilinearGridReader()
-        else:
-            reader = vtk.vtkXMLRectilinearGridReader()
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write a rectilinear grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vtr" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only with the legacy writer.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkRectilinearGridWriter()
-            legacy = True
-        elif '.vtr' in filename:
-            writer = vtk.vtkXMLRectilinearGridWriter()
-            legacy = False
-        else:
-            raise Exception('Extension should be either ".vtr" (xml) or'
-                            '".vtk" (legacy)')
-        # Write
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
-        writer.Write()
 
     @property
     def x(self):
@@ -359,7 +281,6 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
             elif isinstance(args[0], str):
                 self._load_file(args[0])
             else:
-                arg0_is_valid = len(args[0]) == 3
                 self._from_specs(args[0])
 
         elif len(args) > 1 and len(args) < 4:
@@ -378,12 +299,22 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     def __repr__(self):
         """Return the default representation."""
-        return Common.__repr__(self)
+        return DataSet.__repr__(self)
 
 
     def __str__(self):
         """Return the default str representation."""
-        return Common.__str__(self)
+        return DataSet.__str__(self)
+
+
+    @property
+    def _vtk_readers(self):
+        return {'.vtk': vtk.vtkDataSetReader, '.vti': vtk.vtkXMLImageDataReader}
+
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtk': vtk.vtkDataSetWriter, '.vti': vtk.vtkXMLImageDataWriter}
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
@@ -448,86 +379,6 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         self._from_specs((nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
         #self._point_ref = points
         self.Modified()
-
-
-    def _load_file(self, filename):
-        """
-        Load image data from a file.
-
-        The file extension will select the type of reader to use.  A ``.vtk``
-        extension will use the legacy reader, while ``.vti`` will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('{} does not exist'.format(filename))
-
-        # Check file extension
-        if '.vti' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
-            raise Exception(
-                'Extension should be either ".vti" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        if legacy_writer:
-            reader = vtk.vtkDataSetReader()
-        else:
-            reader = vtk.vtkXMLImageDataReader()
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write image data grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vti" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only with the legacy writer.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkDataSetWriter()
-            legacy = True
-        elif '.vti' in filename:
-            writer = vtk.vtkXMLImageDataWriter()
-            legacy = False
-        else:
-            raise Exception('Extension should be either ".vti" (xml) or'
-                            '".vtk" (legacy)')
-        # Write
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
-        writer.Write()
 
     @property
     def x(self):

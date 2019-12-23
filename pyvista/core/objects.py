@@ -6,22 +6,20 @@ The data objects does not have any sort of spatial reference.
 
 import numpy as np
 import vtk
+from vtk.numpy_interface.dataset_adapter import ArrayAssociation
 
 import pyvista
 from pyvista.utilities import (ROW_DATA_FIELD, assert_empty_kwargs,
                                convert_array, get_array, parse_field_choice,
                                row_array, vtk_bit_array_to_char)
 
-from .common import DataObject, _ScalarsDict
+from .dataset import DataObject, _ScalarsDict
+from .datasetattributes import DataSetAttributes
 
 try:
     import pandas as pd
 except ImportError:
     pd = None
-
-
-
-
 
 
 class Table(vtk.vtkTable, DataObject):
@@ -41,6 +39,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def __init__(self, *args, **kwargs):
         """Initialize the table."""
+        super(Table, self).__init__(*args, **kwargs)
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkTable):
                 deep = kwargs.get('deep', True)
@@ -56,7 +55,6 @@ class Table(vtk.vtkTable, DataObject):
                 self._from_pandas(args[0])
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
-
 
         self._row_bool_array_names = []
 
@@ -127,52 +125,13 @@ class Table(vtk.vtkTable, DataObject):
             Numpy array of scalars
 
         """
-        if name is None:
-            # use first array
-            name = self.GetRowData().GetArrayName(0)
-            if name is None:
-                raise RuntimeError('No arrays present to fetch.')
-        vtkarr = self.GetRowData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a row scalar'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._row_bool_array_names:
-                self._row_bool_array_names.append(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._row_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.row_arrays[name]
 
 
     @property
     def row_arrays(self):
         """Return the all row arrays."""
-        pdata = self.GetRowData()
-        narr = pdata.GetNumberOfArrays()
-
-        # Update data if necessary
-        if hasattr(self, '_row_arrays'):
-            keys = list(self._row_arrays.keys())
-            if narr == len(keys):
-                if keys:
-                    if self._row_arrays[keys[0]].shape[0] == self.n_rows:
-                        return self._row_arrays
-                else:
-                    return self._row_arrays
-
-        # dictionary with callbacks
-        self._row_arrays = RowScalarsDict(self)
-
-        for i in range(narr):
-            name = pdata.GetArrayName(i)
-            self._row_arrays[name] = self._row_array(name)
-
-        self._row_arrays.enable_callback()
-        return self._row_arrays
+        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=ArrayAssociation.ROW)
 
 
     def keys(self):
@@ -237,7 +196,6 @@ class Table(vtk.vtkTable, DataObject):
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
         self.AddColumn(vtkarr)
-
 
 
     def __getitem__(self, index):

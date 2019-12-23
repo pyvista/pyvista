@@ -119,7 +119,7 @@ puppy_coords = np.c_[yyc.ravel(), xxc.ravel()]
 # produce 4 repetitions of the same texture on this mesh.
 #
 # Then we must associate those texture coordinates with the mesh through the
-# :attr:`pyvista.Common.t_coords` property.
+# :attr:`pyvista.DataSet.t_coords` property.
 
 curvsurf.t_coords = puppy_coords
 

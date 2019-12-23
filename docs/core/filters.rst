@@ -11,7 +11,7 @@ Filters
 Dataset Filters
 ~~~~~~~~~~~~~~~
 
-The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.Common` making
+The :class:`pyvista.DataSetFilters` is inherited by :class:`pyvista.DataSet` making
 all the following filters available as callable methods directly from any
 PyVista dataset.
 

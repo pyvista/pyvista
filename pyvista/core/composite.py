@@ -14,7 +14,7 @@ from vtk import vtkMultiBlockDataSet
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
 
-from .common import DataObject
+from .dataset import DataObject
 from .filters import CompositeFilters
 
 log = logging.getLogger(__name__)
@@ -93,6 +93,16 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self.wrap_nested()
 
 
+    @property
+    def _vtk_readers(self):
+        return dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataReader)
+
+
+    @property
+    def _vtk_writers(self):
+        return dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
+
+
     def wrap_nested(self):
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
@@ -105,70 +115,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 self.SetBlock(i, pyvista.wrap(block))
         return
 
-
-    def _load_file(self, filename):
-        """Load a vtkMultiBlockDataSet from a file.
-
-        The supported extensions are:  ``.vtm`` or ``.vtmb``.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # test if file exists
-        if not os.path.isfile(filename):
-            raise Exception('File %s does not exist' % filename)
-
-        # Get extension
-        ext = pyvista.get_ext(filename)
-        # Extensions: .vtm and .vtmb
-
-        # Select reader
-        if ext in ['.vtm', '.vtmb']:
-            reader = vtk.vtkXMLMultiBlockDataReader()
-        else:
-            raise IOError('File extension must be either "vtm" or "vtmb"')
-
-        # Load file
-        reader.SetFileName(filename)
-        reader.Update()
-        self.shallow_copy(reader.GetOutput())
-
-
-    def save(self, filename, binary=True):
-        """Write a ``MultiBlock`` dataset to disk.
-
-        Written file may be an ASCII or binary vtm file.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of mesh to be written.  File type is inferred from
-            the extension of the filename unless overridden with
-            ftype.  Can be one of the following types (.vtm or .vtmb)
-
-        binary : bool, optional
-            Writes the file as binary when True and ASCII when False.
-
-        Notes
-        -----
-        Binary files write much faster than ASCII and have a smaller
-        file size.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        ext = pyvista.get_ext(filename)
-        if ext in ['.vtm', '.vtmb']:
-            writer = vtk.vtkXMLMultiBlockDataWriter()
-        else:
-            raise Exception('File extension must be either "vtm" or "vtmb"')
-
-        writer.SetFileName(filename)
-        writer.SetInputDataObject(self)
-        if binary:
-            writer.SetDataModeToBinary()
-        else:
-            writer.SetDataModeToAscii()
-        writer.Write()
-        return
 
     @property
     def bounds(self):

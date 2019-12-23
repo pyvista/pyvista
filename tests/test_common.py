@@ -44,7 +44,7 @@ def test_point_arrays_bad_value():
     with pytest.raises(TypeError):
         grid.point_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.point_arrays['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -76,7 +76,7 @@ def test_cell_arrays_bad_value():
     with pytest.raises(TypeError):
         grid.cell_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
 
 
@@ -336,7 +336,7 @@ def test_bitarray_field():
 def test_html_repr():
     """
     This just tests to make sure no errors are thrown on the HTML
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     grid = GRID.copy()
     repr_html = grid._repr_html_()
@@ -345,7 +345,7 @@ def test_html_repr():
 def test_print_repr():
     """
     This just tests to make sure no errors are thrown on the text friendly
-    representation method for Common datasets.
+    representation method for DataSet.
     """
     grid = GRID.copy()
     repr = grid.head()
@@ -517,12 +517,6 @@ def test_change_name_fail():
         grid.rename_array('not a key', '')
 
 
-def test_get_cell_array_fail():
-    sphere = pyvista.Sphere()
-    with pytest.raises(RuntimeError):
-        sphere._cell_array(name=None)
-
-
 def test_extent():
     grid = GRID.copy()
     assert grid.extent is None
@@ -537,18 +531,18 @@ def set_cell_vectors():
 
 def test_axis_rotation_invalid():
     with pytest.raises(Exception):
-        pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
+        pyvista.core.dataset.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
 def test_axis_rotation_not_inplace():
     p = np.eye(3)
-    p_out = pyvista.core.common.axis_rotation(p, 1, False, axis='x')
+    p_out = pyvista.core.dataset.axis_rotation(p, 1, False, axis='x')
     assert not np.allclose(p, p_out)
 
 
 def test_bad_instantiation():
     with pytest.raises(TypeError):
-        pyvista.Common()
+        pyvista.DataSet()
     with pytest.raises(TypeError):
         pyvista.Grid()
     with pytest.raises(TypeError):

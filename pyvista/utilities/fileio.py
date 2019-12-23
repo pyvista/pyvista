@@ -61,6 +61,23 @@ READERS = {
     '.inp': vtk.vtkAVSucdReader,
 }
 
+WRITERS = {
+    '.vtk': vtk.vtkDataSetWriter,
+    '.pvtk': vtk.vtkPDataSetWriter,
+    '.vti': vtk.vtkXMLImageDataWriter,
+    '.pvti': vtk.vtkXMLPImageDataWriter,
+    '.vtr': vtk.vtkXMLRectilinearGridWriter,
+    '.pvtr': vtk.vtkXMLPRectilinearGridWriter,
+    '.vtu': vtk.vtkXMLUnstructuredGridWriter,
+    '.pvtu': vtk.vtkXMLPUnstructuredGridWriter,
+    '.ply': vtk.vtkPLYWriter,
+    '.stl': vtk.vtkSTLWriter,
+    '.vtp': vtk.vtkXMLPolyDataWriter,
+    '.vts': vtk.vtkXMLStructuredGridWriter,
+    '.vtm': vtk.vtkXMLMultiBlockDataWriter,
+    '.vtmb': vtk.vtkXMLMultiBlockDataWriter
+}
+
 VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
 VTK_MINOR = vtk.vtkVersion().GetVTKMinorVersion()
 
@@ -81,7 +98,33 @@ def get_ext(filename):
 def get_reader(filename):
     """Get the corresponding reader based on file extension and instantiates it."""
     ext = get_ext(filename)
-    return READERS[ext]() # Get and instantiate the reader
+    try:
+        return READERS[ext]() # Get and instantiate the reader
+    except KeyError:
+        raise ValueError('Extension "{}" is not a vtk readable format.'.format(ext))
+
+
+def get_writer(filename):
+    """Get the corresponding writer based on file extension and instantiates it."""
+    ext = get_ext(filename)
+    try:
+        return WRITERS[ext]()
+    except KeyError:
+        raise ValueError('Extension "{}" is not a vtk writable format.'.format(ext))
+
+
+def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    if isinstance(vtk_writer, vtk.vtkDataWriter):
+        if use_binary:
+            vtk_writer.SetFileTypeToBinary()
+        else:
+            vtk_writer.SetFileTypeToASCII()
+    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+        if use_binary:
+            vtk_writer.SetDataModeToBinary()
+        else:
+            vtk_writer.SetDataModeToAscii()
+    return vtk_writer
 
 
 def standard_reader_routine(reader, filename, attrs=None):
@@ -206,7 +249,7 @@ def read(filename, attrs=None, file_format=None):
         try:
             reader = get_reader(filename)
             return standard_reader_routine(reader, filename)
-        except KeyError:
+        except ValueError:
             # Attempt read with meshio
             try:
                 from meshio._exceptions import ReadError
@@ -217,7 +260,6 @@ def read(filename, attrs=None, file_format=None):
             except SyntaxError:
                 # https://github.com/pyvista/pyvista/pull/495
                 pass
-
     raise IOError("This file was not able to be automatically read by pyvista.")
 
 

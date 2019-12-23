@@ -12,7 +12,7 @@ how all PyVista types have direct access to common VTK filters
 .. _Kitware: https://www.kitware.com
 
 
-All PyVista meshes inherit from the Common dataset type (see :ref:`ref_common`).
+All PyVista meshes inherit from the DataSet type (see :ref:`ref_common`).
 PyVista has the following mesh types:
 
 - :class:`pyvista.PolyData` consists of any 1D or 2D geometries to construct vertices, lines, polygons, and triangles. We generally use ``PolyData`` to construct scattered points and closed/open surfaces (non-volumetric datasets). The :class:`pyvista.PolyData` class is an extension of ``vtk.vtkPolyData``.
