@@ -305,14 +305,14 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
         #TODO, remove because this information is already in DataSetAttributes.
-        self._active_scalar_info = 0, None  # Scalar field and name
+        self._active_scalars_info = 0, None  # Scalar field and name
         self._last_active_scalars_name = None
 
 
     @property
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
-        field, name = self._active_scalar_info
+        field, name = self._active_scalars_info
         excluded_names = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
 
         def first_valid_array_name(field_data):
@@ -331,10 +331,10 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             active_point_array = first_valid_array_name(field_data=self.GetPointData())
             active_cell_array = first_valid_array_name(field_data=self.GetCellData())
             if active_point_array:
-                self._active_scalar_info = (POINT_DATA_FIELD, active_point_array)
+                self._active_scalars_info = (POINT_DATA_FIELD, active_point_array)
                 self.GetPointData().SetActiveScalars(active_point_array)
             elif active_cell_array:
-                self._active_scalar_info = (CELL_DATA_FIELD, active_cell_array)
+                self._active_scalars_info = (CELL_DATA_FIELD, active_cell_array)
                 self.GetCellData().SetActiveScalars(active_cell_array)
         return self._active_scalars_info
 
@@ -542,7 +542,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not usable'.format(field))
-        self._active_scalar_info = (field, name)
+        self._active_scalars_info = (field, name)
 
 
     def set_active_scalar(self, name, preference='cell'):
