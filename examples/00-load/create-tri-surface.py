@@ -5,10 +5,9 @@ Create Triangulated Surface
 Create a surface from a set of points through a Delaunay triangulation.
 """
 
-import numpy as np
-
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
+import numpy as np
 
 ###############################################################################
 #  First, create some points for the surface.

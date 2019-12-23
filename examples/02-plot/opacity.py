@@ -5,8 +5,6 @@ Plot with Opacity
 Plot a mesh's scalar array with an opacity transfer function or opacity mapping
 based on a scalar array.
 """
-import matplotlib.pyplot as plt
-
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
@@ -77,6 +75,7 @@ opacity = [0, 0.2, 0.9, 0.6, 0.3]
 # Have PyVista interpolate the transfer function
 tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.0
 
+import matplotlib.pyplot as plt
 
 plt.plot(tf)
 plt.title("My Interpolated Opacity Transfer Function")

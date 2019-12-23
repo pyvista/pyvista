@@ -7,11 +7,10 @@ Plotting Glyphs (Vectors)
 Use vectors in a dataset to plot and orient glyphs/geometric objects.
 """
 
-import numpy as np
-
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
+import numpy as np
 
 ###############################################################################
 # Glyphying can be done via the :func:`pyvista.DataSetFilters.glyph` filter

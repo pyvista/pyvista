@@ -7,11 +7,10 @@ Applying Textures
 Plot a mesh with an image projected onto it as a texture.
 """
 
-import numpy as np
-from matplotlib.cm import get_cmap
-
 import pyvista as pv
 from pyvista import examples
+import numpy as np
+from matplotlib.cm import get_cmap
 
 ###############################################################################
 # Texture mapping is easily implemented using PyVista. Many of the geometric

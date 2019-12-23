@@ -4,7 +4,6 @@ import collections
 import logging
 import os
 import time
-import warnings
 from threading import Thread
 
 import imageio
@@ -13,21 +12,34 @@ import scooby
 import vtk
 from vtk.util import numpy_support as VN
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+import warnings
 
 import pyvista
-from pyvista.utilities import (assert_empty_kwargs, check_depth_peeling,
-                               convert_array, convert_string_array, get_array,
-                               is_pyvista_dataset, numpy_to_texture,
-                               raise_not_matching, try_callback, wrap)
+from pyvista.utilities import (
+    assert_empty_kwargs,
+    convert_array,
+    convert_string_array,
+    get_array,
+    is_pyvista_dataset,
+    numpy_to_texture,
+    raise_not_matching,
+    try_callback,
+    wrap,
+    check_depth_peeling,
+)
 
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
-                    parse_font_family, rcParams)
-from .tools import (create_axes_marker, create_axes_orientation_box, normalize,
-                    opacity_transfer_function, update_axes_label_color)
+from .tools import (
+    update_axes_label_color,
+    create_axes_orientation_box,
+    create_axes_marker,
+)
+from .tools import normalize, opacity_transfer_function
+from .theme import rcParams, parse_color, parse_font_family
+from .theme import FONT_KEYS, MAX_N_COLOR_BARS
 from .widgets import WidgetHelper
 
 try:

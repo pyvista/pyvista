@@ -9,7 +9,6 @@ import scooby
 import vtk
 
 import pyvista
-
 from .plotting import BasePlotter
 from .theme import rcParams
 

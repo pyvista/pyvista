@@ -7,19 +7,10 @@ Creating a Structured Surface
 Create a StructuredGrid surface from NumPy arrays
 """
 
-###############################################################################
-# Now pretend that the (n by 3) NumPy array above are coordinates that you
-# have, possibly from a file with three columns of XYZ points.
-#
-# We simply need to recover the dimensions of the grid that these points make
-# and then we can generate a :class:`pyvista.StructuredGrid` mesh.
-#
-# Let's preview the points to see what we are dealing with:
-import matplotlib.pyplot as plt
-import numpy as np
-
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
+import numpy as np
+
 
 ###############################################################################
 # From NumPy Meshgrid
@@ -91,6 +82,15 @@ def make_point_set():
 points = make_point_set()
 points[0:5, :]
 
+###############################################################################
+# Now pretend that the (n by 3) NumPy array above are coordinates that you
+# have, possibly from a file with three columns of XYZ points.
+#
+# We simply need to recover the dimensions of the grid that these points make
+# and then we can generate a :class:`pyvista.StructuredGrid` mesh.
+#
+# Let's preview the points to see what we are dealing with:
+import matplotlib.pyplot as plt
 
 plt.figure(figsize=(10, 10))
 plt.scatter(points[:, 0], points[:, 1], c=points[:, 2])

@@ -7,10 +7,9 @@ Creating an Unstructured Surface
 Create an irregular, unstructured grid from NumPy arrays.
 """
 
-import numpy as np
-import vtk
-
 import pyvista as pv
+import vtk
+import numpy as np
 
 ###############################################################################
 # An unstructured grid can be created directly from NumPy arrays.

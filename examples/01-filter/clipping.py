@@ -4,11 +4,10 @@ Clipping Meshes
 
 Clip/cut any dataset using using planes, boxes, or surface meshes.
 """
-import numpy as np
-
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
+import numpy as np
 
 ###############################################################################
 # Clip with Plane

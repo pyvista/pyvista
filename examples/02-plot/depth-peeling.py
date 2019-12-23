@@ -9,6 +9,7 @@ Depth peeling is a technique to correctly render translucent geometry.
 import pyvista as pv
 from pyvista import examples
 
+
 ###############################################################################
 centers = [(0, 0, 0), (1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0)]
 radii = [1, 0.5, 0.5, 0.5, 0.5]

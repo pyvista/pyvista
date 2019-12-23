@@ -6,9 +6,8 @@ Create an animated MP4 movie of a rendering scene
 """
 
 
-import numpy as np
-
 import pyvista as pv
+import numpy as np
 
 filename = "sphere-shrinking.mp4"
 

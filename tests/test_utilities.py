@@ -6,7 +6,9 @@ import pytest
 
 import pyvista
 from pyvista import examples as ex
-from pyvista.utilities import errors, fileio, helpers
+from pyvista.utilities import helpers
+from pyvista.utilities import fileio
+from pyvista.utilities import errors
 
 # Only set this here just the once.
 pyvista.set_error_output_file(

@@ -8,11 +8,6 @@ mesh.
 """
 # sphinx_gallery_thumbnail_number = 4
 
-import matplotlib as mpl
-###############################################################################
-# Let's inspect the imagery that we just loaded
-import matplotlib.pyplot as plt
-
 import pyvista as pv
 from pyvista import examples
 
@@ -23,6 +18,10 @@ topo_map = examples.download_crater_imagery()
 
 elevation
 
+###############################################################################
+# Let's inspect the imagery that we just loaded
+import matplotlib.pyplot as plt
+import matplotlib as mpl
 
 mpl.rcParams["figure.dpi"] = 500
 

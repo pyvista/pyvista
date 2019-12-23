@@ -3,9 +3,9 @@
 import logging
 import os
 import re
+import scooby
 import sys
 
-import scooby
 import vtk
 
 

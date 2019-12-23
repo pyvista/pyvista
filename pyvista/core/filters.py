@@ -30,9 +30,15 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, NORMALS, POINT_DATA_FIELD,
-                               assert_empty_kwargs, generate_plane, get_array,
-                               wrap)
+from pyvista.utilities import (
+    CELL_DATA_FIELD,
+    POINT_DATA_FIELD,
+    NORMALS,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array,
+    wrap,
+)
 
 
 def _get_output(

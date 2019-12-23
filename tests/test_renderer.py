@@ -2,6 +2,7 @@ import sys
 
 import pytest
 
+
 import pyvista
 from pyvista.plotting import system_supports_plotting
 
