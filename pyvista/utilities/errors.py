@@ -218,7 +218,7 @@ class Report(scooby.Report):
         # bug that the user is trying to report.
         if gpu:
             try:
-                extra_meta = GPUInfo().get_info()
+                extra_meta = [(t[1], t[0]) for t in GPUInfo().get_info()]
             except:
                 extra_meta = ("GPU Details", "error")
 
