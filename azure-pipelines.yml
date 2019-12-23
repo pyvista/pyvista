@@ -41,6 +41,7 @@ jobs:
   - script: |
       python setup.py sdist
       python setup.py install
+      python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install PyVista'
   - script: |
       del /Q tests\\test_qt_plotting.py
