@@ -601,6 +601,44 @@ class WidgetHelper(object):
         return
 
 
+    def add_text_slider_widget(self, callback, data, value=None,
+                              pointa=(.4, .9), pointb=(.9, .9),
+                              color=None, event_type='end'):
+        """Add a text slider bar widget."""
+        n_states = len(data)
+        delta = (n_states - 1) / float(n_states)
+
+        def _the_callback(value):
+            if isinstance(value, float):
+                idx = int(value / delta)
+                if hasattr(callback, '__call__'):
+                    try_callback(callback, data[idx])
+            return
+
+        slider_widget = self.add_slider_widget(callback=_the_callback, rng=[0, n_states - 1],
+                                               value=value,
+                                               pointa=pointa, pointb=pointb,
+                                               color=color, event_type=event_type)
+        slider_rep = slider_widget.GetRepresentation()
+        slider_rep.ShowSliderLabelOff()
+
+        def title_callback(widget, event):
+            value = widget.GetRepresentation().GetValue()
+            idx = int(value / delta)
+            slider_rep.SetTitleText(data[idx])
+
+        if event_type == 'start':
+            slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, title_callback)
+        elif event_type == 'end':
+            slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, title_callback)
+        elif event_type == 'always':
+            slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, title_callback)
+        else:
+            raise ValueError("Expected value for `event_type` is 'start',"
+                             " 'end' or 'always': {} was given.".format(event_type))
+        title_callback(slider_widget, None)
+
+
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
