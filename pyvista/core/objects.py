@@ -366,23 +366,6 @@ class Table(vtk.vtkTable, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
 
-
-class RowScalarsDict(_ScalarsDict):
-    """Update internal row data when an array is added or removed from the dictionary."""
-
-    def __init__(self, data):
-        """Initialize te row scalars dict."""
-        _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(ROW_DATA_FIELD, key)
-        self.modifier = lambda *args: self.data.GetRowData().Modified()
-
-
-    def adder(self, scalars, name, set_active=False, deep=True):
-        """Add a row array."""
-        self.data._add_row_array(scalars, name, deep=deep)
-
-
-
 class Texture(vtk.vtkTexture):
     """A helper class for vtkTextures."""
 
