@@ -1,7 +1,6 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
 
 import logging
-import os
 
 import numpy as np
 import vtk
@@ -9,7 +8,6 @@ from vtk import vtkImageData, vtkRectilinearGrid
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-from pyvista.utilities.fileio import set_vtkwriter_mode
 from .dataset import DataSet
 from .filters import _get_output, UniformGridFilters
 

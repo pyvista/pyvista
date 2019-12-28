@@ -5,7 +5,6 @@ to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections
 import logging
-import os
 
 import numpy as np
 import vtk

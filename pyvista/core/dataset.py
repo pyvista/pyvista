@@ -5,7 +5,6 @@ import collections
 import logging
 import os
 import warnings
-from weakref import proxy
 
 import numpy as np
 import vtk
