@@ -13,7 +13,7 @@ from pyvista.utilities import (ROW_DATA_FIELD, assert_empty_kwargs,
                                convert_array, get_array, parse_field_choice,
                                row_array, vtk_bit_array_to_char)
 
-from .dataset import DataObject, _ScalarsDict
+from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
 
 try:
