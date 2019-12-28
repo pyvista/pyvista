@@ -1242,48 +1242,6 @@ class _ScalarsDict(dict):
         return super().__len__()
 
 
-class CellScalarsDict(_ScalarsDict):
-    """Update internal cell data when an array is added or removed from the dictionary."""
-
-    def __init__(self, data):
-        """Initialize the cell scalar dict."""
-        _ScalarsDict.__init__(self, data)
-        self.remover = partial(self.data._remove_array, CELL_DATA_FIELD)
-        self.modifier = self.data.GetCellData().Modified
-
-    def adder(self, scalars, name, set_active=False, deep=True):
-        """Add a cell array."""
-        self.data._add_cell_array(scalars, name, set_active=False, deep=deep)
-
-
-class PointScalarsDict(_ScalarsDict):
-    """Update internal point data when an array is added or removed from the dictionary."""
-
-    def __init__(self, data):
-        """Initialize the point scalar dict."""
-        _ScalarsDict.__init__(self, data)
-        self.remover = partial(self.data._remove_array, POINT_DATA_FIELD)
-        self.modifier = self.data.GetPointData().Modified
-
-    def adder(self, scalars, name, set_active=False, deep=True):
-        """Add a point array."""
-        self.data._add_point_array(scalars, name, set_active=False, deep=deep)
-
-
-class FieldScalarsDict(_ScalarsDict):
-    """Update internal field data when an array is added or removed from the dictionary."""
-
-    def __init__(self, data):
-        """Initialize the field scalars dict."""
-        _ScalarsDict.__init__(self, data)
-        self.remover = partial(self.data._remove_array, FIELD_DATA_FIELD)
-        self.modifier = self.data.GetFieldData().Modified
-
-    def adder(self, scalars, name, set_active=False, deep=True):
-        """Add a field array."""
-        self.data._add_field_array(scalars, name, deep=deep)
-
-
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     """Rotate points angle (in deg) about an axis."""
     axis = axis.lower()
