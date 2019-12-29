@@ -130,7 +130,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def keys(self):
         """Return the table keys."""
-        return list(self.row_arrays.keys())
+        return self.row_arrays.keys()
 
 
     def items(self):
