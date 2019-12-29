@@ -210,7 +210,7 @@ class Table(vtk.vtkTable, DataObject):
         return self
 
 
-    def next(self):
+    def __next__(self):
         """Get the next block from the iterator."""
         if self._iter_n < self.n_arrays:
             result = self[self._iter_n]
@@ -218,9 +218,6 @@ class Table(vtk.vtkTable, DataObject):
             return result
         else:
             raise StopIteration
-
-
-    __next__ = next
 
 
     def _get_attrs(self):
