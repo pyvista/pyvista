@@ -177,13 +177,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def __getitem__(self, index):
         """Search row data for an array."""
-        if isinstance(index, str):
-            name = index
-        elif isinstance(index, int):
-            name = self.GetRowData().GetArrayName(index)
-        else:
-            raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
-        return self._row_array(name)
+        return self._row_array(name=index)
 
 
     def _ipython_key_completions_(self):
