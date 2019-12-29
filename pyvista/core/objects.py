@@ -55,8 +55,6 @@ class Table(vtk.vtkTable, DataObject):
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
-        self._row_bool_array_names = []
-
 
     def _from_arrays(self, arrays):
         if not arrays.ndim == 2:
