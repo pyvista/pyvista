@@ -104,6 +104,8 @@ class DataSetAttributes(VTKObjectWrapper):
             array_len = self.dataset.GetNumberOfPoints()
         elif self.association == ArrayAssociation.CELL:
             array_len = self.dataset.GetNumberOfCells()
+        elif self.association == ArrayAssociation.ROW:
+            array_len = narray.shape[0]
         else:
             array_len = narray.shape[0] if isinstance(narray, numpy.ndarray) else 1
         if narray.shape[0] != array_len:

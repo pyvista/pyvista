@@ -216,27 +216,7 @@ class Table(vtk.vtkTable, DataObject):
             must be kept to avoid a segfault.
 
         """
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
-
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-
-        if self.n_rows == 0 or self.n_columns == 0:
-            self.n_rows = scalars.shape[0]
-        elif scalars.shape[0] != self.n_rows:
-            raise Exception('Number of scalars must match the number of rows (%d)'
-                            % self.n_rows)
-
-        if not scalars.flags.c_contiguous:
-            scalars = np.ascontiguousarray(scalars)
-        if scalars.dtype == np.bool:
-            scalars = scalars.view(np.uint8)
-            self._row_bool_array_names.append(name)
-
-        vtkarr = convert_array(scalars, deep=deep)
-        vtkarr.SetName(name)
-        self.AddColumn(vtkarr)
+        self.row_arrays[name] = scalars
 
 
 
