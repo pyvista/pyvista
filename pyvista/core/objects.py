@@ -10,8 +10,7 @@ from vtk.numpy_interface.dataset_adapter import ArrayAssociation
 
 import pyvista
 from pyvista.utilities import (ROW_DATA_FIELD, assert_empty_kwargs,
-                               convert_array, get_array, parse_field_choice,
-                               row_array)
+                               get_array, parse_field_choice, row_array)
 
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
