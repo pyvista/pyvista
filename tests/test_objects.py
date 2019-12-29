@@ -161,6 +161,18 @@ def test_table_row_uint8():
     assert np.allclose(table.row_arrays['arr'], np.arange(n))
 
 
+def test_table_row_remove():
+    nr, nc = 50, 3
+    arrays = np.random.rand(nr, nc)
+    table = pyvista.Table()
+    for i in range(nc):
+        table['foo{}'.format(i)] = arrays[:, i]
+    assert len(table.row_arrays) == nc
+    for i in range(nc):
+        table._remove_array(field='row', key='foo{}'.format(i))
+    assert len(table.row_arrays) == 0
+
+
 def test_table_repr():
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
