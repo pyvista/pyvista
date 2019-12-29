@@ -236,9 +236,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def _get_attrs(self):
         """Return the representation methods."""
-        attrs = []
-        attrs.append(("N Rows", self.n_rows, "{}"))
-        return attrs
+        return [("N Rows", self.n_rows, "{}")]
 
 
     def _repr_html_(self):
