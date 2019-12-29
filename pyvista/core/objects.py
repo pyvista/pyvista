@@ -202,12 +202,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def _remove_array(self, field, key):
         """Remove a single array by name from each field (internal helper)."""
-        field = parse_field_choice(field)
-        if field == ROW_DATA_FIELD:
-            self.GetRowData().RemoveArray(key)
-        else:
-            raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
-        return
+        self.row_arrays.remove(key)
 
 
     def __delitem__(self, name):
