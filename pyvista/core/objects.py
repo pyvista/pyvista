@@ -197,10 +197,6 @@ class Table(vtk.vtkTable, DataObject):
 
     def __setitem__(self, name, scalars):
         """Add/set an array in the row_arrays."""
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
         self.row_arrays[name] = scalars
 
 
