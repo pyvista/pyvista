@@ -183,7 +183,7 @@ class Table(vtk.vtkTable, DataObject):
             name = self.GetRowData().GetArrayName(index)
         else:
             raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
-        return row_array(self, name)
+        return self._row_array(name)
 
 
     def _ipython_key_completions_(self):
