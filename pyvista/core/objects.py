@@ -62,7 +62,6 @@ class Table(vtk.vtkTable, DataObject):
         np_table = arrays.T
         for i, array in enumerate(np_table):
             self.row_arrays['Array {}'.format(i)] = array
-        return
 
 
     def _from_dict(self, array_dict):
@@ -71,13 +70,11 @@ class Table(vtk.vtkTable, DataObject):
                 raise RuntimeError('Dictionaty must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
-        return
 
 
     def _from_pandas(self, data_frame):
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name]
-        return
 
 
     @property
