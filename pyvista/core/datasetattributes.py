@@ -80,7 +80,7 @@ class DataSetAttributes(VTKObjectWrapper):
             narray = narray.view(numpy.bool)
         return narray
 
-    def append(self, narray, name):
+    def append(self, narray, name, deep_copy=False):
         """Add an array to the data set attributes.
 
         Parameters
@@ -90,6 +90,9 @@ class DataSetAttributes(VTKObjectWrapper):
 
         name : str
             Name of the array to add.
+
+        deep_copy : bool
+            When True makes a full copy of the array.
 
         """
         if narray is None:
@@ -147,7 +150,7 @@ class DataSetAttributes(VTKObjectWrapper):
         except AttributeError:
             copy = pyvista_ndarray(narray)
 
-        vtk_arr = helpers.convert_array(copy, name)
+        vtk_arr = helpers.convert_array(copy, name, deep=deep_copy)
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
