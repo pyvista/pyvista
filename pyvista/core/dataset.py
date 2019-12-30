@@ -216,8 +216,7 @@ class DataObject(vtkDataObject, ABC):
            Deep or shallow copy of the input.
 
         """
-        thistype = type(self)
-        newobject = thistype()
+        newobject = type(self)()
         if deep:
             newobject.deep_copy(self)
         else:
