@@ -344,19 +344,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def __iter__(self):
         """Return the iterator across all blocks."""
-        self._iter_n = 0
-        return self
-
-    def next(self):
-        """Get the next block from the iterator."""
-        if self._iter_n < self.n_blocks:
-            result = self[self._iter_n]
-            self._iter_n += 1
-            return result
-        else:
-            raise StopIteration
-
-    __next__ = next
+        for i in range(self.n_blocks):
+            yield self[i]
 
 
     def pop(self, index):
