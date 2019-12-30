@@ -259,7 +259,7 @@ class DataObject(vtkDataObject, ABC):
             must be kept to avoid a segfault.
 
         """
-        self.field_arrays[name] = scalars
+        self.field_arrays.append(scalars, name, deep_copy=deep)
 
 
     def _add_field_scalar(self, scalars, name, set_active=False, deep=True):
@@ -655,7 +655,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             must be kept to avoid a segfault.
 
         """
-        self.point_arrays[name] = scalars
+        self.point_arrays.append(scalars, name, deep_copy=deep)
         if set_active or self.active_scalar_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalars_info = (POINT_DATA_FIELD, name)
@@ -821,7 +821,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             must be kept to avoid a segfault.
 
         """
-        self.cell_arrays[name] = scalars
+        self.cell_arrays.append(scalars, name, deep_copy=deep)
 
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
