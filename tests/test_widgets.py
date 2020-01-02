@@ -108,7 +108,7 @@ def test_widget_text_slider():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda value: value # Does nothing
     p.add_mesh(mesh)
-    with pytest.raises(TypeError, match='must be iterable'):
+    with pytest.raises(TypeError, match='must be a list'):
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
         p.add_text_slider_widget(callback=func, data=[])

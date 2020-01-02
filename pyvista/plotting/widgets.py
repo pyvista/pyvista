@@ -639,7 +639,7 @@ class WidgetHelper(object):
 
         """
         if not isinstance(data, list):
-            raise TypeError("The `data` parameter must be iterable "
+            raise TypeError("The `data` parameter must be a list "
                             "but {} was given : ", type(data))
         n_states = len(data)
         if n_states == 0:
