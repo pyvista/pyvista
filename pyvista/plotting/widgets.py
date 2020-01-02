@@ -637,6 +637,7 @@ class WidgetHelper(object):
             raise ValueError("Expected value for `event_type` is 'start',"
                              " 'end' or 'always': {} was given.".format(event_type))
         title_callback(slider_widget, None)
+        return slider_widget
 
 
     def add_slider_widget(self, callback, rng, value=None, title=None,
