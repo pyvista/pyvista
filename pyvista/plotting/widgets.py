@@ -638,16 +638,24 @@ class WidgetHelper(object):
             slider interacts with the callback.
 
         """
+        if not isinstance(data, list):
+            raise TypeError("The `data` parameter must be iterable "
+                            "but {} was given : ", type(data))
         n_states = len(data)
+        if n_states == 0:
+            raise ValueError("The input list of values is empty")
         delta = (n_states - 1) / float(n_states)
+        # avoid division by zero in case there is only one element
+        delta = 1 if delta == 0 else delta
 
         def _the_callback(value):
             if isinstance(value, float):
                 idx = int(value / delta)
-            else:
-                idx = 0
-            if hasattr(callback, '__call__'):
-                try_callback(callback, data[idx])
+                # handle limit index
+                if idx == n_states:
+                    idx = n_states - 1
+                if hasattr(callback, '__call__'):
+                    try_callback(callback, data[idx])
             return
 
         slider_widget = self.add_slider_widget(callback=_the_callback, rng=[0, n_states - 1],
@@ -660,6 +668,9 @@ class WidgetHelper(object):
         def title_callback(widget, event):
             value = widget.GetRepresentation().GetValue()
             idx = int(value / delta)
+            # handle limit index
+            if idx == n_states:
+                idx = n_states - 1
             slider_rep.SetTitleText(data[idx])
 
         if event_type == 'start':

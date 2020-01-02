@@ -104,6 +104,20 @@ def test_widget_line():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_widget_text_slider():
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    func = lambda value: value # Does nothing
+    p.add_mesh(mesh)
+    with pytest.raises(TypeError, match='must be iterable'):
+        p.add_text_slider_widget(callback=func, data='foo')
+    with pytest.raises(ValueError, match='list of values is empty'):
+        p.add_text_slider_widget(callback=func, data=[])
+    p.add_text_slider_widget(callback=func, data=['foo', 'bar'])
+    p.clear_slider_widgets()
+    p.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_widget_slider():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda value: value # Does nothing
