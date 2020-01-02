@@ -604,15 +604,50 @@ class WidgetHelper(object):
     def add_text_slider_widget(self, callback, data, value=None,
                               pointa=(.4, .9), pointb=(.9, .9),
                               color=None, event_type='end'):
-        """Add a text slider bar widget."""
+        """Add a text slider bar widget.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes a single argument, the value of this slider widget,
+        and performs a task with that value.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called every time the slider is updated. This should take
+            a single parameter: the float value of the slider
+
+        data: list
+            The list of possible values displayed on the slider bar
+
+        value : float, optional
+            The starting value of the slider
+
+        pointa : tuple(float)
+            The relative coordinates of the left point of the slider on the
+            display port
+
+        pointb : tuple(float)
+            The relative coordinates of the right point of the slider on the
+            display port
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        event_type: str
+            Either 'start', 'end' or 'always', this defines how often the
+            slider interacts with the callback.
+
+        """
         n_states = len(data)
         delta = (n_states - 1) / float(n_states)
 
         def _the_callback(value):
             if isinstance(value, float):
                 idx = int(value / delta)
-                if hasattr(callback, '__call__'):
-                    try_callback(callback, data[idx])
+            else:
+                idx = 0
+            if hasattr(callback, '__call__'):
+                try_callback(callback, data[idx])
             return
 
         slider_widget = self.add_slider_widget(callback=_the_callback, rng=[0, n_states - 1],
