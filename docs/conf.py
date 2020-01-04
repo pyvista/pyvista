@@ -54,7 +54,7 @@ master_doc = 'index'
 # General information about the project.
 project = u'PyVista'
 year = datetime.date.today().year
-copyright = '2017-{}, The PyVista Developers'.format(year)
+copyright = u'2017-{}, The PyVista Developers'.format(year)
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
