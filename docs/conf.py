@@ -1,5 +1,6 @@
 import os
 import sys
+import datetime
 if sys.version_info >= (3, 0):
     import faulthandler
     faulthandler.enable()
@@ -52,7 +53,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyVista'
-copyright = u'2017-2019, The PyVista Developers'
+year = datetime.date.today().year
+copyright = '2017-{}, The PyVista Developers'.format(year)
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
