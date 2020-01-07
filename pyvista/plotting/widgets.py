@@ -637,6 +637,11 @@ class WidgetHelper(object):
             Either 'start', 'end' or 'always', this defines how often the
             slider interacts with the callback.
 
+        Returns
+        -------
+        slider_widget: vtk.vtkSliderWidget
+            The VTK slider widget configured to display text.
+
         """
         if not isinstance(data, list):
             raise TypeError("The `data` parameter must be a list "
