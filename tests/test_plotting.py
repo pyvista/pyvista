@@ -873,3 +873,19 @@ def test_cmap_list():
 
     mesh.plot(off_screen=OFF_SCREEN,
               scalars=scalars, cmap=['red', 'green', 'blue'])
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_default_name_tracking():
+    N = 10
+    color = "tan"
+
+    p = pyvista.Plotter()
+    for i in range(N):
+        for j in range(N):
+            center = (i, j, 0)
+            mesh = pyvista.Sphere(center=center)
+            p.add_mesh(mesh, color=color)
+    n_made_it = len(p.renderer._actors)
+    p.show()
+    assert n_made_it == N**2

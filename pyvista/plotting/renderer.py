@@ -218,7 +218,7 @@ class Renderer(vtkRenderer):
         actor.renderer = proxy(self)
 
         if name is None:
-            name = str(hex(id(actor)))
+            name = actor.GetInformation().GetAddressAsString("")
 
         self._actors[name] = actor
 
@@ -272,7 +272,8 @@ class Renderer(vtkRenderer):
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
         self.AddActor(self.marker_actor)
-        self._actors[str(hex(id(self.marker_actor)))] = self.marker_actor
+        memory_address = self.marker_actor.GetInformation().GetAddressAsString("")
+        self._actors[memory_address] = self.marker_actor
         return self.marker_actor
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,

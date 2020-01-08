@@ -140,7 +140,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
@@ -382,7 +382,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
@@ -453,7 +453,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
@@ -752,7 +752,7 @@ class WidgetHelper(object):
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
@@ -822,7 +822,7 @@ class WidgetHelper(object):
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
         if mesh.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have data arrays.')
@@ -997,7 +997,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
