@@ -218,7 +218,7 @@ class Renderer(vtkRenderer):
         actor.renderer = proxy(self)
 
         if name is None:
-            name = actor.GetInformation().GetAddressAsString("")
+            name = actor.GetAddressAsString("")
 
         self._actors[name] = actor
 
@@ -272,7 +272,7 @@ class Renderer(vtkRenderer):
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
         self.AddActor(self.marker_actor)
-        memory_address = self.marker_actor.GetInformation().GetAddressAsString("")
+        memory_address = self.marker_actor.GetAddressAsString("")
         self._actors[memory_address] = self.marker_actor
         return self.marker_actor
 
