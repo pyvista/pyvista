@@ -880,7 +880,7 @@ def test_default_name_tracking():
     N = 10
     color = "tan"
 
-    p = pyvista.Plotter()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
     for i in range(N):
         for j in range(N):
             center = (i, j, 0)
