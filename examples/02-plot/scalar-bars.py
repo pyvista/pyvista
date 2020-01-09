@@ -42,7 +42,7 @@ p = pv.Plotter(notebook=False)  # If in IPython, be sure to show the scene
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 # Remove from plotters so output is not produced in docs
-pv.plotting._ALL_PLOTTERS.pop(str(hex(id(p))))
+pv.plotting._ALL_PLOTTERS.clear()
 
 
 ###############################################################################

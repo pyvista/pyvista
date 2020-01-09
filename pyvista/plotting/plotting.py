@@ -183,7 +183,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._style = vtk.vtkInteractorStyleRubberBandPick()
 
         # Add self to open plotters
-        _ALL_PLOTTERS[str(hex(id(self)))] = self
+        self._id_name = "{}-{}".format(str(hex(id(self))), len(_ALL_PLOTTERS))
+        _ALL_PLOTTERS[self._id_name] = self
 
         # lighting style
         self.lighting = vtk.vtkLightKit()
@@ -883,7 +884,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             render_points_as_spheres = rcParams['render_points_as_spheres']
 
         if name is None:
-            name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+            name = '{}({})'.format(type(mesh).__name__, mesh.memory_address)
 
         if nan_color is None:
             nan_color = rcParams['nan_color']
@@ -1451,7 +1452,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Handle default arguments
 
         if name is None:
-            name = '{}({})'.format(type(volume).__name__, str(hex(id(volume))))
+            name = '{}({})'.format(type(volume).__name__, volume.memory_address)
 
         # Supported aliases
         clim = kwargs.pop('rng', clim)
@@ -3199,7 +3200,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise Exception('There must be one label for each point')
 
         if name is None:
-            name = '{}({})'.format(type(vtkpoints).__name__, str(hex(id(vtkpoints))))
+            name = '{}({})'.format(type(vtkpoints).__name__, vtkpoints.memory_address)
 
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')
