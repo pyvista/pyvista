@@ -1628,7 +1628,6 @@ class DataSetFilters(object):
         return sampled_line
 
 
-
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
                        title=None, ylabel=None, figsize=None, figure=True,
                        show=True):
