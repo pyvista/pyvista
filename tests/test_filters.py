@@ -504,6 +504,7 @@ def test_sample_over_line():
     # is sampled result a polydata object
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
+
 def test_plot_over_line():
     """this requires matplotlib"""
     mesh = examples.load_uniform()
