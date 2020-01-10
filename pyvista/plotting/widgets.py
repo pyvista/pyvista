@@ -1252,11 +1252,49 @@ class WidgetHelper(object):
         return
 
 
-    def add_radio_button_widget(self, callback, position=(10., 10.),
-                                value=False, size=50, border_size=5,
+    def add_radio_button_widget(self, callback, value=False,
+                                position=(10., 10.), size=50, border_size=5,
                                 color_on='blue', color_off='grey',
                                 background_color='white'):
-        """Add a button widget."""
+        """Add a button widget to the scene.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes a single argument, the state of this button widget
+        and performs a task with that value.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called every time the button is clicked. This should take
+            a single parameter: the bool value of the button
+
+        value : bool
+            The default state of the button
+
+        position: tuple(float)
+            The absolute coordinates of the bottom left point of the button
+
+        size : int
+            The size of the button in number of pixels
+
+        border_size : int
+            The size of the borders of the button in pixels
+
+        color_on : string or 3 item list, optional
+            The color used when the button is on. Default is 'blue'
+
+        color_off : string or 3 item list, optional
+            The color used when the button is off. Default is 'grey'
+
+        background_color : string or 3 item list, optional
+            The background color of the button. Default is 'white'
+
+        Returns
+        -------
+        button_widget: vtk.vtkButtonWidget
+            The VTK button widget configured as a radio button.
+
+        """
         if not hasattr(self, "button_widgets"):
             self.button_widgets = []
 
@@ -1302,7 +1340,7 @@ class WidgetHelper(object):
         def _the_callback(widget, event):
             state = widget.GetRepresentation().GetState()
             if hasattr(callback, '__call__'):
-                try_callback(callback, state)
+                try_callback(callback, bool(state))
 
         button_widget.AddObserver(vtk.vtkCommand.StateChangedEvent, _the_callback)
         self.button_widgets.append(button_widget)
