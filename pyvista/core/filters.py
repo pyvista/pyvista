@@ -1621,8 +1621,6 @@ class DataSetFilters(object):
         """
         if resolution is None:
             resolution = int(dataset.n_cells)
-        if not isinstance(resolution, int) or resolution < 0:
-            raise RuntimeError('`resolution` must be a positive integer, not {}'.format(type(resolution)))
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
         
