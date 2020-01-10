@@ -1252,11 +1252,11 @@ class WidgetHelper(object):
         return
 
 
-    def add_radio_button_widget(self, callback, value=False,
-                                position=(10., 10.), size=50, border_size=5,
-                                color_on='blue', color_off='grey',
-                                background_color='white'):
-        """Add a button widget to the scene.
+    def add_checkbox_button_widget(self, callback, value=False,
+                                   position=(10., 10.), size=50, border_size=5,
+                                   color_on='blue', color_off='grey',
+                                   background_color='white'):
+        """Add a checkbox button widget to the scene.
 
         This is useless without a callback function. You can pass a callable
         function that takes a single argument, the state of this button widget
@@ -1281,10 +1281,10 @@ class WidgetHelper(object):
             The size of the borders of the button in pixels
 
         color_on : string or 3 item list, optional
-            The color used when the button is on. Default is 'blue'
+            The color used when the button is checked. Default is 'blue'
 
         color_off : string or 3 item list, optional
-            The color used when the button is off. Default is 'grey'
+            The color used when the button is not checked. Default is 'grey'
 
         background_color : string or 3 item list, optional
             The background color of the button. Default is 'white'
@@ -1292,7 +1292,7 @@ class WidgetHelper(object):
         Returns
         -------
         button_widget: vtk.vtkButtonWidget
-            The VTK button widget configured as a radio button.
+            The VTK button widget configured as a checkbox button.
 
         """
         if not hasattr(self, "button_widgets"):
