@@ -1252,8 +1252,11 @@ class WidgetHelper(object):
         return
 
 
-    def add_button_widget(self, callback, position=(10., 10.), size=48,
-                          color_on='blue', color_off='grey'):
+    def add_radio_button_widget(self, callback, position=(10., 10.),
+                                value=False, size=50, border_size=5,
+                                color_on='blue', color_off='grey',
+                                background_color='white'):
+        """Add a button widget."""
         if not hasattr(self, "button_widgets"):
             self.button_widgets = []
 
@@ -1261,21 +1264,20 @@ class WidgetHelper(object):
             color1 = np.array(parse_color(color1)) * 255
             color2 = np.array(parse_color(color2)) * 255
             color3 = np.array(parse_color(color3)) * 255
-            border_size = size // 5
 
             n_points = dims[0] * dims[1]
             button = pyvista.UniformGrid(dims)
             arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
-            arr[1:dims[0]-1, 1:dims[1]-1] = color2 # apply color2
+            arr[1:dims[0]-1, 1:dims[1]-1] = color2  # apply color2
             arr[
                 border_size:dims[0]-border_size,
                 border_size:dims[1]-border_size
-            ] = color3 # apply color3
+            ] = color3  # apply color3
             button.point_arrays['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
             return button
 
-        button_off = create_button(color_on, 'white', color_on)
-        button_on = create_button(color_on, 'white', color_off)
+        button_on = create_button(color_on, background_color, color_on)
+        button_off = create_button(color_on, background_color, color_off)
 
         bounds = [
             position[0], position[0] + size,
@@ -1285,6 +1287,7 @@ class WidgetHelper(object):
 
         button_rep = vtk.vtkTexturedButtonRepresentation2D()
         button_rep.SetNumberOfStates(2)
+        button_rep.SetState(value)
         button_rep.SetButtonTexture(0, button_off)
         button_rep.SetButtonTexture(1, button_on)
         button_rep.SetPlaceFactor(1)
