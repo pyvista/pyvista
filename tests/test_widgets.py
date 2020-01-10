@@ -197,3 +197,13 @@ def test_widget_sphere():
     p.add_sphere_widget(callback=func, center=nodes)
     p.clear_sphere_widgets()
     p.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_widget_checkbox_button():
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    func = lambda value: value # Does nothing
+    p.add_mesh(mesh)
+    p.add_checkbox_button_widget(callback=func)
+    p.clear_button_widgets()
+    p.close()
