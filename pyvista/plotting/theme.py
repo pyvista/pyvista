@@ -62,7 +62,11 @@ rcParams = {
     },
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
-    "volume_mapper": "fixed_point" if os.name == 'nt' else "smart",
+    'volume_mapper': 'fixed_point' if os.name == 'nt' else 'smart',
+    'depth_peeling': {
+        'number_of_peels': 5,
+        'enabled': True,
+    },
 }
 
 
