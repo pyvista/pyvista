@@ -167,13 +167,22 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
     @property
+    def meshgrid(self):
+        """Return the a meshgrid of numpy arrays for this mesh.
+
+        This simply returns a ``numpy.meshgrid`` of the coordinates for this
+        mesh in ``ij`` indexing.
+
+        """
+        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
+
+
+    @property
     def points(self):
-        """Return a pointer to the points as a numpy object."""
-        x = vtk_to_numpy(self.GetXCoordinates())
-        y = vtk_to_numpy(self.GetYCoordinates())
-        z = vtk_to_numpy(self.GetZCoordinates())
-        xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
+        """Return all of the points as an n by 3 numpy array."""
+        xx, yy, zz = self.meshgrid
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+
 
     @points.setter
     def points(self, points):
