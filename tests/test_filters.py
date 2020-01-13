@@ -484,6 +484,27 @@ def test_streamlines():
     assert src.n_points == 25
 
 
+def test_sample_over_line():
+    """Test that we get a sampled line."""
+    name = 'values'
+
+    line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
+    line[name] = np.linspace(0, 10, 10)
+
+    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2)
+
+    expected_result = np.array([0.5, 1, 1.5])
+    assert np.allclose(sampled_line[name], expected_result)
+    assert name in line.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_line([3, 1, 1], [-3, -1, -1])
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
 def test_plot_over_line():
     """this requires matplotlib"""
     mesh = examples.load_uniform()
