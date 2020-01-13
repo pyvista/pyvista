@@ -205,5 +205,4 @@ def test_widget_checkbox_button():
     func = lambda value: value # Does nothing
     p.add_mesh(mesh)
     p.add_checkbox_button_widget(callback=func)
-    p.clear_button_widgets()
     p.close()
