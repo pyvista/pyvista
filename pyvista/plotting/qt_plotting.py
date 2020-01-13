@@ -420,6 +420,10 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
                 renderer.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
                 renderer.camera.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
 
+        if rcParams["depth_peeling"]["enabled"]:
+            for renderer in self.renderers:
+                self.enable_depth_peeling()
+
 
 
     def add_toolbars(self, main_window):

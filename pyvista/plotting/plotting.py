@@ -223,13 +223,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks.pop(key)
 
 
-    def enable_depth_peeling(self, number_of_peels=5, occlusion_ratio=0.1):
+    def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=0.1):
         """Enable depth peeling if supported.
 
         Parameters
         ----------
         number_of_peels: int
             The maximum number of peeling layers. A value of 0 means no limit.
+            Default is in ``rcParams``.
 
         occlusion_ratio : float
             The threshold under which the algorithm stops to iterate over peel
@@ -243,11 +244,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If True, depth peeling is supported.
 
         """
+        if number_of_peels is None:
+            number_of_peels = rcParams["depth_peeling"]["number_of_peels"]
         depth_peeling_supported = check_depth_peeling(number_of_peels,
                                                       occlusion_ratio)
         if hasattr(self, 'ren_win') and depth_peeling_supported:
             self.ren_win.AlphaBitPlanesOn()
-            self.ren_win.SetMultiSamples(0)
             self.renderer.enable_depth_peeling(number_of_peels,
                                                occlusion_ratio)
 
@@ -3975,6 +3977,10 @@ class Plotter(BasePlotter):
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
+
+        if rcParams["depth_peeling"]["enabled"]:
+            for renderer in self.renderers:
+                self.enable_depth_peeling()
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
