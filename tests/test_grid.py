@@ -296,6 +296,7 @@ def test_read_rectilinear_grid_from_file():
 def test_cast_rectilinear_grid():
     grid = pyvista.read(examples.rectfile)
     structured = grid.cast_to_structured_grid()
+    assert isinstance(structured, pyvista.StructuredGrid)
     assert structured.n_points == grid.n_points
     assert structured.n_cells == grid.n_cells
     assert np.allclose(structured.points, grid.points)
