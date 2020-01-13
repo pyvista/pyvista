@@ -129,7 +129,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
 
     def _update_dimensions(self):
-        """Update the dimensions if coordinates have changed"""
+        """Update the dimensions if coordinates have changed."""
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
 
 
