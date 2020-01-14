@@ -143,7 +143,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', None))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -386,7 +386,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', None))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -458,7 +458,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', None))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -1095,7 +1095,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
-        mesh.set_active_scalars(kwargs.get('scalars', None))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
