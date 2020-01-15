@@ -549,6 +549,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Add an interactive axes widget in the bottom left corner.
 
         Adds to the currently active renderer.
+
+        Parameters
+        ----------
+        interacitve : bool
+            Enable this orientation widget to be moved by the user.
+
+        line_width : int
+            The width of the marker lines
+
+        box : bool
+            Show a box orientation marker. Use ``box_args`` to adjust.
+            See :any:`pyvista.create_axes_orientation_box` for details.
         """
         self._active_renderer_index = self.loc_to_index(loc)
         renderer = self.renderers[self._active_renderer_index]
