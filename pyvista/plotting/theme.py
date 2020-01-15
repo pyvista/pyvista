@@ -59,6 +59,7 @@ rcParams = {
         'y_color': 'seagreen',
         'z_color': 'mediumblue',
         'box': False,
+        'show': True,
     },
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
