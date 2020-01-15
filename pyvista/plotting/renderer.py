@@ -59,7 +59,8 @@ class CameraPosition(object):
 
     def __repr__(self):
         """List representation method."""
-        return self.to_list().__repr__()
+        layout = "[{}\n {}\n {}]"
+        return layout.format(*self.to_list())
 
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
