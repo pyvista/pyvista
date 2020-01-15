@@ -59,7 +59,7 @@ class CameraPosition(object):
 
     def __repr__(self):
         """List representation method."""
-        layout = "[{}\n {}\n {}]"
+        layout = "[{},\n {},\n {}]"
         return layout.format(*self.to_list())
 
     def __getitem__(self, index):
