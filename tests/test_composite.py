@@ -252,10 +252,12 @@ def test_combine_filter():
     multi.append(ex.load_ant())
     multi.append(ex.load_sphere())
     multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(ex.load_globe())
+    nested = pyvista.MultiBlock()
+    nested.append(ex.load_airplane())
+    nested.append(ex.load_globe())
+    multi.append(nested)
     # Now check everything
-    assert multi.n_blocks == 5
+    assert multi.n_blocks == 4
     # Now apply the geometry filter to combine a plethora of data blocks
     geom = multi.combine()
     assert isinstance(geom, pyvista.UnstructuredGrid)
