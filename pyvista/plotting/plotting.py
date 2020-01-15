@@ -1282,6 +1282,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars is not None:
                 geom = pyvista.Box()
                 rgb_color = parse_color('black')
+            geom.points -= geom.center
             self._labels.append([geom, label, rgb_color])
 
         # lighting display style
