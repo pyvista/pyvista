@@ -42,6 +42,11 @@ def vtk_bit_array_to_char(vtkarr_bint):
     return vtkarr
 
 
+def vtk_id_list_to_array(vtk_id_list):
+    """Convert a vtkIdList to a NumPy array."""
+    return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
+
+
 def convert_string_array(arr, name=None):
     """Convert a numpy array of strings to a vtkStringArray or vice versa.
 
