@@ -12,7 +12,7 @@ import pyvista
 from pyvista.utilities import wrap
 
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
-from .tools import create_axes_marker
+from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
 
 
 
@@ -276,6 +276,71 @@ class Renderer(vtkRenderer):
         memory_address = self.marker_actor.GetAddressAsString("")
         self._actors[memory_address] = self.marker_actor
         return self.marker_actor
+
+
+    def add_axes(self, interactive=None, line_width=2,
+                 color=None, x_color=None, y_color=None, z_color=None,
+                 xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
+                 box=None, box_args=None):
+        """Add an interactive axes widget in the bottom left corner.
+
+        Parameters
+        ----------
+        interacitve : bool
+            Enable this orientation widget to be moved by the user.
+
+        line_width : int
+            The width of the marker lines
+
+        box : bool
+            Show a box orientation marker. Use ``box_args`` to adjust.
+            See :any:`pyvista.create_axes_orientation_box` for details.
+        """
+        if interactive is None:
+            interactive = rcParams['interactive']
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.SetInteractive(interactive)
+            update_axes_label_color(color)
+            return
+        if box is None:
+            box = rcParams['axes']['box']
+        if box:
+            if box_args is None:
+                box_args = {}
+            self.axes_actor = create_axes_orientation_box(
+                label_color=color, line_width=line_width,
+                x_color=x_color, y_color=y_color, z_color=z_color,
+                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel,
+                labels_off=labels_off, **box_args)
+        else:
+            self.axes_actor = create_axes_marker(
+                label_color=color, line_width=line_width,
+                x_color=x_color, y_color=y_color, z_color=z_color,
+                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
+        self.axes_widget = vtk.vtkOrientationMarkerWidget()
+        self.axes_widget.SetOrientationMarker(self.axes_actor)
+        if hasattr(self.parent, 'iren'):
+            self.axes_widget.SetInteractor(self.parent.iren)
+            self.axes_widget.SetEnabled(1)
+            self.axes_widget.SetInteractive(interactive)
+        self.axes_widget.SetCurrentRenderer(self)
+        return
+
+
+    def hide_axes(self):
+        """Hide the axes orientation widget."""
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOff()
+
+
+    def show_axes(self):
+        """Show the axes orientation widget."""
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.EnabledOn()
+            self.axes_widget.SetCurrentRenderer(self)
+        else:
+            self.add_axes()
+
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                     show_yaxis=True, show_zaxis=True, show_xlabels=True,
@@ -1070,6 +1135,8 @@ class Renderer(vtkRenderer):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box()
+        if hasattr(self, 'axes_widget'):
+            del self.axes_widget
 
         self.RemoveAllViewProps()
         self._actors = None

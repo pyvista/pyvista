@@ -545,48 +545,53 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_axes(self, interactive=None, line_width=2,
                  color=None, x_color=None, y_color=None, z_color=None,
                  xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
-                 box=None, box_args=None):
-        """Add an interactive axes widget."""
-        if interactive is None:
-            interactive = rcParams['interactive']
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.SetInteractive(interactive)
-            update_axes_label_color(color)
-            return
-        if box is None:
-            box = rcParams['axes']['box']
-        if box:
-            if box_args is None:
-                box_args = {}
-            self.axes_actor = create_axes_orientation_box(
-                label_color=color, line_width=line_width,
-                x_color=x_color, y_color=y_color, z_color=z_color,
-                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel,
-                labels_off=labels_off, **box_args)
-        else:
-            self.axes_actor = create_axes_marker(
-                label_color=color, line_width=line_width,
-                x_color=x_color, y_color=y_color, z_color=z_color,
-                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.axes_widget = vtk.vtkOrientationMarkerWidget()
-        self.axes_widget.SetOrientationMarker(self.axes_actor)
-        if hasattr(self, 'iren'):
-            self.axes_widget.SetInteractor(self.iren)
-            self.axes_widget.SetEnabled(1)
-            self.axes_widget.SetInteractive(interactive)
+                 box=None, box_args=None, loc=None):
+        """Add an interactive axes widget in the bottom left corner.
+
+        Adds to the currently active renderer.
+
+        Parameters
+        ----------
+        interacitve : bool
+            Enable this orientation widget to be moved by the user.
+
+        line_width : int
+            The width of the marker lines
+
+        box : bool
+            Show a box orientation marker. Use ``box_args`` to adjust.
+            See :any:`pyvista.create_axes_orientation_box` for details.
+        """
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.add_axes(interactive=interactive, line_width=line_width,
+                     color=color, x_color=x_color, y_color=y_color, z_color=z_color,
+                     xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off,
+                     box=box, box_args=box_args)
+
+    def hide_axes(self, loc=None):
+        """Hide the axes orientation widget."""
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.hide_axes()
+
+    def hide_axes_all(self):
+        """Hide the axes orientation widget in all renderers."""
+        for renderer in self.renderers:
+            renderer.hide_axes()
         return
 
-    def hide_axes(self):
-        """Hide the axes orientation widget."""
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-
-    def show_axes(self):
+    def show_axes(self, loc=None):
         """Show the axes orientation widget."""
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOn()
-        else:
-            self.add_axes()
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.show_axes()
+
+    def show_axes_all(self):
+        """Show the axes orientation widget in all renderers."""
+        for renderer in self.renderers:
+            renderer.show_axes()
+        return
 
     def isometric_view_interactive(self):
         """Set the current interactive render window to isometric view."""
@@ -2317,7 +2322,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
-                       interactive=False, fmt=None, use_opacity=True,
+                       interactive=None, fmt=None, use_opacity=True,
                        outline=False, nan_annotation=False,
                        below_label=None, above_label=None,
                        background_color=None, n_colors=None, fill=False):
@@ -2406,6 +2411,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         sizing for both the title and label.
 
         """
+        if interactive is None:
+            interactive = rcParams['interactive']
         if font_family is None:
             font_family = rcParams['font']['family']
         if label_font_size is None:
@@ -2719,9 +2726,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Grab screenshots of last render
         self.last_image = self.screenshot(None, return_img=True)
         self.last_image_depth = self.get_image_depth()
-
-        if hasattr(self, 'axes_widget'):
-            del self.axes_widget
 
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget

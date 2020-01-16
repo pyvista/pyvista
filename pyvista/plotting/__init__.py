@@ -9,6 +9,6 @@ from .qt_plotting import BackgroundPlotter, QtInteractor
 from .renderer import CameraPosition, Renderer, scale_point
 from .theme import (DEFAULT_THEME, FONT_KEYS, MAX_N_COLOR_BARS,
                     parse_color, parse_font_family, rcParams, set_plot_theme)
-from .tools import (create_axes_orientation_box, opacity_transfer_function,
-                    system_supports_plotting)
+from .tools import (create_axes_marker, create_axes_orientation_box,
+                    opacity_transfer_function, system_supports_plotting)
 from .widgets import WidgetHelper
