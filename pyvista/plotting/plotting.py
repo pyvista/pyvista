@@ -1309,8 +1309,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if line_width:
             prop.SetLineWidth(line_width)
 
+        print(rgb_color)
+
         # Add scalar bar if available
-        if title is not None and show_scalar_bar and (not rgb_color or _custom_opac):
+        if title is not None and show_scalar_bar and (not color or _custom_opac):
             self.add_scalar_bar(title, **scalar_bar_args)
 
         return actor
