@@ -889,3 +889,55 @@ def test_default_name_tracking():
     n_made_it = len(p.renderer._actors)
     p.show()
     assert n_made_it == N**2
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_vector_array():
+    data = examples.load_uniform()
+
+    vector_values_points = np.empty((data.n_points, 3))
+    vector_values_points[:, :] = [3., 4., 0.]  # Vector has this value at all points
+
+    vector_values_cells = np.empty((data.n_cells, 3))
+    vector_values_cells[:, :] = [3., 4., 0.]  # Vector has this value at all cells
+
+    data['vector_values_points'] = vector_values_points
+    data['vector_values_cells'] = vector_values_cells
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+
+    # test no component argument
+    p.add_mesh(data, scalars='vector_values_points')
+    p.add_mesh(data, scalars='vector_values_cells')
+
+    # test component argument
+    p.add_mesh(data, scalars='vector_values_points', component=0)
+    p.add_mesh(data, scalars='vector_values_cells', component=2)
+
+    p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_vector_array_fail_with_incorrect_component():
+    data = examples.load_uniform()
+
+    vector_values_points = np.empty((data.n_points, 3))
+    vector_values_points[:, :] = [3., 4., 0.]  # Vector has this value at all points
+
+    data['vector_values_points'] = vector_values_points
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+
+    with pytest.raises(TypeError):
+        p.add_mesh(data, scalars='vector_values_points', component=1.5)
+        p.show()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    with pytest.raises(ValueError):
+        p.add_mesh(data, scalars='vector_values_points', component=3)
+        p.show()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    with pytest.raises(ValueError):
+        p.add_mesh(data, scalars='vector_values_points', component=-1)
+        p.show()
