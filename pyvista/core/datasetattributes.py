@@ -77,8 +77,6 @@ class DataSetAttributes(VTKObjectWrapper):
             raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
         if t_coords.shape[1] != 2:
             raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
-        # if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
-        #     warnings.warn('Texture coordinates are typically within (0, 1) range. Textures will repeat on this mesh.', RuntimeWarning)
         vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
