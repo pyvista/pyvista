@@ -22,6 +22,14 @@ def insert_arange_narray(example_grid_point_attributes):
     return example_grid_point_attributes, sample_array
 
 
+@fixture()
+def insert_bool_array(example_grid_point_attributes):
+    n_points = example_grid_point_attributes.dataset.GetNumberOfPoints()
+    sample_array = np.ones(n_points, np.bool)
+    example_grid_point_attributes.append(sample_array, 'sample_array')
+    return example_grid_point_attributes, sample_array
+
+
 def test_init(example_grid):
     attributes = pyvista.DataSetAttributes(
         example_grid.GetPointData(), dataset=example_grid, association=ArrayAssociation.POINT)
@@ -35,6 +43,11 @@ class TestGetArray:
     def test_should_fail_if_does_not_exist(self, array_key, example_grid_point_attributes):
         with raises(KeyError):
             example_grid_point_attributes.get_array(array_key)
+
+    def test_should_return_bool_array(self, insert_bool_array):
+        dsa, _ = insert_bool_array
+        output_array = dsa.get_array('sample_array')
+        assert output_array.dtype == np.bool
 
 
 class TestAdd:
