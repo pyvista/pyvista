@@ -7,7 +7,20 @@ from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, ArrayAssociat
 #TODO tests
 class DataSetAttributes(VTKObjectWrapper):
     """Python friendly wrapper of vtk.DataSetAttributes.
-    Implements a dict like interface for interacting with vtkDataArrays."""
+    Implements a dict like interface for interacting with vtkDataArrays.
+
+    Parameters
+        ----------
+        vtkobject : vtkFieldData
+            The vtk object to wrap as a DataSetAttribute,
+             usually an instance of vtkCellData, vtkPointData, vtkFieldData.
+
+        dataset : vtkDataSet
+            The vtkDataSet containing the vtkobject.
+
+        association : ArrayAssociation
+            The array association type of the vtkobject.
+    """
     def __init__(self, vtkobject, dataset, association):
         super().__init__(vtkobject=vtkobject)
         self.dataset = dataset
