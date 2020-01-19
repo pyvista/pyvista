@@ -38,6 +38,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.remove(key)
 
     def __contains__(self, item):
+        """Implements 'in' operator. Accepts a string array name."""
         return item in self.keys()
 
     def __iter__(self):
