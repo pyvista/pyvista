@@ -30,6 +30,14 @@ def test_init(example_grid):
     assert attributes.association == ArrayAssociation.POINT
 
 
+class TestGetArray:
+    def test_should_fail_if_does_not_exist(self, example_grid_point_attributes):
+        with raises(KeyError):
+            example_grid_point_attributes.get_array('invalid_array_name')
+        with raises(KeyError):
+            example_grid_point_attributes.get_array(-1)
+
+
 class TestAdd:
     def test_append_should_not_add_none_array(self, example_grid_point_attributes):
         with raises(TypeError):
