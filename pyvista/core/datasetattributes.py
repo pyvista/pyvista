@@ -87,7 +87,10 @@ class DataSetAttributes(VTKObjectWrapper):
         self._raise_index_out_of_bounds(index=key)
         vtk_arr = self.VTKObject.GetArray(key)
         if not vtk_arr:
-            return self.VTKObject.GetAbstractArray(key)
+            vtk_arr = self.VTKObject.GetAbstractArray(key)
+            if vtk_arr is None:
+                raise KeyError('"{}"'.format(key))
+            return vtk_arr
         narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
             narray = narray.view(numpy.bool)
