@@ -219,6 +219,14 @@ class DataSetAttributes(VTKObjectWrapper):
                 'vtkFieldData does not have active scalars, a name must be provided. name={}'.format(name))
         return pyvista_ndarray.from_vtk_data_array(self.GetScalars(), dataset=self.dataset)
 
+    def get_vectors(self, name=None):
+        if name is not None:
+            return self.get_array(key=name)
+        if self.association == ArrayAssociation.FIELD:
+            raise TypeError(
+                'vtkFieldData does not have active vectors, a name must be provided. name={}'.format(name))
+        return pyvista_ndarray.from_vtk_data_array(self.GetVectors(), dataset=self.dataset)
+
     def clear(self):
         for array_name in self.keys():
             self.remove(key=array_name)
