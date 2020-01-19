@@ -217,8 +217,7 @@ class DataSetAttributes(VTKObjectWrapper):
         if self.association == ArrayAssociation.FIELD:
             raise TypeError(
                 'vtkFieldData does not have active scalars, a name must be provided. name={}'.format(name))
-        active_scalar = self.GetScalars()
-        return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self.dataset)
+        return pyvista_ndarray.from_vtk_data_array(self.GetScalars(), dataset=self.dataset)
 
     def clear(self):
         for array_name in self.keys():
