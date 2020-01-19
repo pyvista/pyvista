@@ -192,23 +192,23 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def keys(self):
         """Returns the names of the arrays as a list."""
-        kys = []
+        keys = []
         narrays = self.VTKObject.GetNumberOfArrays()
         for i in range(narrays):
             name = self.VTKObject.GetAbstractArray(i).GetName()
             if name:
-                kys.append(name)
-        return kys
+                keys.append(name)
+        return keys
 
     def values(self):
         """Returns the arrays as a list."""
-        vals = []
+        values = []
         narrays = self.VTKObject.GetNumberOfArrays()
         for i in range(narrays):
-            a = self.VTKObject.GetAbstractArray(i)
-            if a.GetName():
-                vals.append(pyvista_ndarray.from_vtk_data_array(a))
-        return vals
+            array = self.VTKObject.GetAbstractArray(i)
+            if array.GetName():
+                values.append(pyvista_ndarray.from_vtk_data_array(array))
+        return values
 
     def get_scalars(self, name=None):
         if name is not None:
