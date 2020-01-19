@@ -69,7 +69,7 @@ class TestRemove:
         del dsa['sample_array']
         assert 'sample_array' not in dsa
 
-    @mark.parametrize('removed_key', [None, 'nonexistant_array_name', ''])
+    @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
     def test_should_fail_on_bad_argument(self, removed_key, example_grid_point_attributes):
         with raises(KeyError):
             example_grid_point_attributes.remove(removed_key)
