@@ -69,10 +69,25 @@ class TestRemove:
         del dsa['sample_array']
         assert 'sample_array' not in dsa
 
+    def test_should_pop_array(self, insert_arange_narray):
+        dsa, sample_array = insert_arange_narray
+        dsa.pop('sample_array')
+        assert 'sample_array' not in dsa
+
     @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
-    def test_should_fail_on_bad_argument(self, removed_key, example_grid_point_attributes):
+    def test_remove_should_fail_on_bad_argument(self, removed_key, example_grid_point_attributes):
         with raises(KeyError):
             example_grid_point_attributes.remove(removed_key)
+
+    @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
+    def test_del_should_fail_bad_argument(self, removed_key, example_grid_point_attributes):
+        with raises(KeyError):
+            del example_grid_point_attributes[removed_key]
+
+    @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
+    def test_pop_should_fail_bad_argument(self, removed_key, example_grid_point_attributes):
+        with raises(KeyError):
+            example_grid_point_attributes.pop(removed_key)
 
 
 class TestLength:
