@@ -74,6 +74,11 @@ class TestRemove:
         dsa.pop('sample_array')
         assert 'sample_array' not in dsa
 
+    def test_pop_should_return_array(self, insert_arange_narray):
+        dsa, sample_array = insert_arange_narray
+        other_array = dsa.pop('sample_array')
+        assert np.array_equal(other_array, sample_array)
+
     @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
     def test_remove_should_fail_on_bad_argument(self, removed_key, example_grid_point_attributes):
         with raises(KeyError):
