@@ -48,6 +48,26 @@ class DataSetAttributes(VTKObjectWrapper):
         return self.VTKObject.GetNumberOfArrays()
 
     @property
+    def active_scalars(self):
+        self._raise_field_data_no_scalars_vectors()
+        return pyvista_ndarray.from_vtk_data_array(self.GetScalars(), dataset=self.dataset)
+
+    @active_scalars.setter
+    def active_scalars(self, name: str):
+        self._raise_field_data_no_scalars_vectors()
+        self.SetActiveScalars(name)
+
+    @property
+    def active_vectors(self):
+        self._raise_field_data_no_scalars_vectors()
+        return pyvista_ndarray.from_vtk_data_array(self.GetVectors(), dataset=self.dataset)
+
+    @active_vectors.setter
+    def active_vectors(self, name: str):
+        self._raise_field_data_no_scalars_vectors()
+        self.SetActiveVectors(name)
+
+    @property
     def valid_array_len(self):
         """Return the length which a numpy array should be when adding to this dataset.
         If there are no restrictions, returns None"""
@@ -210,22 +230,6 @@ class DataSetAttributes(VTKObjectWrapper):
                 values.append(pyvista_ndarray.from_vtk_data_array(array))
         return values
 
-    def get_scalars(self, name=None):
-        if name is not None:
-            return self.get_array(key=name)
-        if self.association == ArrayAssociation.FIELD:
-            raise TypeError(
-                'vtkFieldData does not have active scalars, a name must be provided. name={}'.format(name))
-        return pyvista_ndarray.from_vtk_data_array(self.GetScalars(), dataset=self.dataset)
-
-    def get_vectors(self, name=None):
-        if name is not None:
-            return self.get_array(key=name)
-        if self.association == ArrayAssociation.FIELD:
-            raise TypeError(
-                'vtkFieldData does not have active vectors, a name must be provided. name={}'.format(name))
-        return pyvista_ndarray.from_vtk_data_array(self.GetVectors(), dataset=self.dataset)
-
     def clear(self):
         for array_name in self.keys():
             self.remove(key=array_name)
@@ -238,3 +242,7 @@ class DataSetAttributes(VTKObjectWrapper):
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int) and index >= self.VTKObject.GetNumberOfArrays():
             raise IndexError('Array index ({}) out of range [0, {}]'.format(index, max_index))
+
+    def _raise_field_data_no_scalars_vectors(self):
+        if self.association == ArrayAssociation.FIELD:
+            raise TypeError('vtkFieldData does not have active scalars or vectors.')
