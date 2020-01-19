@@ -71,7 +71,7 @@ class TestRemove:
 
     @mark.parametrize('removed_key', [None, 'nonexistant_array_name', ''])
     def test_should_fail_on_bad_argument(self, removed_key, example_grid_point_attributes):
-        with raises(AttributeError):
+        with raises(KeyError):
             example_grid_point_attributes.remove(removed_key)
 
 
