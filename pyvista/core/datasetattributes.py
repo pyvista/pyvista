@@ -83,7 +83,8 @@ class DataSetAttributes(VTKObjectWrapper):
         self.Modified()
 
     def get_array(self, key):
-        """Given an index or name, returns a pyvista_ndarray."""
+        """Given an index or name, returns a pyvista_ndarray, vtkAbstractArray if the former
+         does not exist, or raises KeyError if neither exist."""
         self._raise_index_out_of_bounds(index=key)
         vtk_arr = self.VTKObject.GetArray(key)
         if not vtk_arr:
