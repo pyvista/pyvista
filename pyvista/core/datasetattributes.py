@@ -221,8 +221,8 @@ class DataSetAttributes(VTKObjectWrapper):
         return pyvista_ndarray.from_vtk_data_array(active_scalar, dataset=self.dataset)
 
     def clear(self):
-        for array in self.values():
-            self.remove(key=array.GetName())
+        for array_name in self.keys():
+            self.remove(key=array_name)
 
     def update(self, array_dict):
         for name, array in array_dict.items():
