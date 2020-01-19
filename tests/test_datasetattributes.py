@@ -31,11 +31,10 @@ def test_init(example_grid):
 
 
 class TestGetArray:
-    def test_should_fail_if_does_not_exist(self, example_grid_point_attributes):
+    @mark.parametrize('array_key', ['invalid_array_name', -1])
+    def test_should_fail_if_does_not_exist(self, array_key, example_grid_point_attributes):
         with raises(KeyError):
-            example_grid_point_attributes.get_array('invalid_array_name')
-        with raises(KeyError):
-            example_grid_point_attributes.get_array(-1)
+            example_grid_point_attributes.get_array(array_key)
 
 
 class TestAdd:
