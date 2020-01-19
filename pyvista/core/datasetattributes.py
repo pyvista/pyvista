@@ -197,8 +197,7 @@ class DataSetAttributes(VTKObjectWrapper):
     def keys(self):
         """Returns the names of the arrays as a list."""
         keys = []
-        narrays = self.VTKObject.GetNumberOfArrays()
-        for i in range(narrays):
+        for i in range(self.GetNumberOfArrays()):
             name = self.VTKObject.GetAbstractArray(i).GetName()
             if name:
                 keys.append(name)
@@ -207,8 +206,7 @@ class DataSetAttributes(VTKObjectWrapper):
     def values(self):
         """Returns the arrays as a list."""
         values = []
-        narrays = self.VTKObject.GetNumberOfArrays()
-        for i in range(narrays):
+        for i in range(self.GetNumberOfArrays()):
             array = self.VTKObject.GetAbstractArray(i)
             if array.GetName():
                 values.append(pyvista_ndarray.from_vtk_data_array(array))
