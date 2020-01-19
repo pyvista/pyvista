@@ -3638,12 +3638,12 @@ class StructuredGridFilters:
         zz = subset_points[:, :, :, 2]
         subset = pyvista.StructuredGrid(xx, yy, zz)
         # Now copy data arrays
-        for k, v in dataset.point_arrays.items():
-            subset.point_arrays[k] = sampler(reshaper(v)).ravel()
-        for k, v in dataset.cell_arrays.items():
-            subset.cell_arrays[k] = sampler(reshaper(v)).ravel()
-        for k, v in dataset.field_arrays.items():
-            subset.field_arrays[k] = v.copy()
+        for name, v in dataset.point_arrays.items():
+            subset.point_arrays[name] = sampler(reshaper(v)).ravel()
+        for name, v in dataset.cell_arrays.items():
+            subset.cell_arrays[name] = sampler(reshaper(v)).ravel()
+        for name, v in dataset.field_arrays.items():
+            subset.field_arrays[name] = v.copy()
         # And copy meta info
         subset.copy_meta_from(dataset)
         # Add original point IDs
