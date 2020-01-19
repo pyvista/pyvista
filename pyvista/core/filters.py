@@ -1623,7 +1623,7 @@ class DataSetFilters(object):
             resolution = int(dataset.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        
+
         sampled_line = line.sample(dataset)
         return sampled_line
 
@@ -3566,3 +3566,87 @@ class UniformGridFilters(DataSetFilters):
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
         alg.Update()
         return _get_output(alg)
+
+
+
+class StructuredGridFilters:
+    """Filters for the :class:`StructuredGrid` class."""
+
+    def subsample(dataset, i=(None, None, None), j=(None, None, None),
+                  k=(None, None, None)):
+        """Subsample this ``StructuredGrid``'s internal coordinates.
+
+        Each parameter must be a length three iterable of integers that
+        will be used to iterate over the internal grid coordinate axes.
+        The :class:`StructuredGrid` class uses an internal grid coordinate
+        axes to define the connectivity between nodes. The grid's shape is
+        defined by the ``dimensions`` property of the mesh. This filter will
+        iterate over that internal grid axes to extract nodes in the typical
+        ``i``, ``j``, ``k`` indexing fashion. Where ``i`` is the starting
+        index, ``j`` is the stopping index, and ``k`` is the step (``k`` cannot
+        be zero).
+
+        Parameters
+        ----------
+        i : tuple(int)
+            The starting indices.
+
+        j : tuple(int)
+            The stopping indices.
+
+        k : tuple(int)
+            The steps.
+        """
+        msg = "`{}` must be a length three iterable."
+        if not isinstance(i, collections.Iterable):
+            raise TypeError(msg.format("i"))
+        if not isinstance(j, collections.Iterable):
+            raise TypeError(msg.format("j"))
+        if not isinstance(k, collections.Iterable):
+            raise TypeError(msg.format("k"))
+        # Ensure all are ints or None:
+        check = lambda arg: all(isinstance(n, (int, type(None))) for n in arg)
+        msg = "All elements of `{}` must be integers or `NoneType`."
+        if not check(i):
+            raise TypeError(msg.format("i"))
+        if not check(j):
+            raise TypeError(msg.format("j"))
+        if not check(k):
+            raise TypeError(msg.format("k"))
+        if np.any(np.array(k) == 0):
+            raise AssertionError("No elements of ``k`` can be zero.")
+        # Now check that nothing is out of bounds
+        for ax in range(3):
+            d = dataset.dimensions[ax]
+            if isinstance(i[ax], int) and i[ax] > d:
+                raise AssertionError("`i` index is too large for dimension: {}. ({}) is not less than ({})".format(ax, i[ax], d))
+            if isinstance(j[ax], int) and j[ax] <= -d:
+                raise AssertionError("`j` index is out of bounds for dimension: {}.".format(ax))
+            if isinstance(k[ax], int) and abs(k[ax]) >= d:
+                raise AssertionError("`k` step is too large for dimension: {}.".format(ax))
+        #####################
+        # Perform subsampling
+        reshaper = lambda arr: np.reshape(arr, (*dataset.dimensions, -1))
+        def sampler(arr):
+            return arr[i[0]:j[0]:k[0],
+                       i[1]:j[1]:k[1],
+                       i[2]:j[2]:k[2], :]
+        points = reshaper(dataset.points)
+        subset_points = sampler(points)
+        xx = subset_points[:, :, :, 0]
+        yy = subset_points[:, :, :, 1]
+        zz = subset_points[:, :, :, 2]
+        subset = pyvista.StructuredGrid(xx, yy, zz)
+        # Now copy data arrays
+        for k, v in dataset.point_arrays.items():
+            subset.point_arrays[k] = sampler(reshaper(v)).ravel()
+        for k, v in dataset.cell_arrays.items():
+            subset.cell_arrays[k] = sampler(reshaper(v)).ravel()
+        for k, v in dataset.field_arrays.items():
+            subset.field_arrays[k] = v.copy()
+        # And copy meta info
+        subset.copy_meta_from(dataset)
+        # Add original point IDs
+        ids = np.arange(dataset.n_points, dtype=int)
+        subset.point_arrays["vtkOriginalPointIds"] = sampler(reshaper(ids)).ravel()
+        return subset

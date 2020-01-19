@@ -16,7 +16,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
 import pyvista
 
 from .common import Common
-from .filters import PolyDataFilters, UnstructuredGridFilters
+from .filters import PolyDataFilters, StructuredGridFilters, UnstructuredGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
@@ -24,7 +24,7 @@ log.setLevel('CRITICAL')
 
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
-    
+
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
@@ -344,7 +344,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file. If ply or stl format is chosen, the face normals are 
+        file. If ply or stl format is chosen, the face normals are
         computed in place to ensure the mesh is properly saved.
 
         Parameters
@@ -772,7 +772,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
-        
+
         Converts the following cell types to their linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
@@ -844,7 +844,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
 
 
-class StructuredGrid(vtkStructuredGrid, PointGrid):
+class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
     Can be initialized in several ways:
