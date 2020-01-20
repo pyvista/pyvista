@@ -860,7 +860,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             self.GetPointData().RemoveArray(name)
         elif field == FieldAssociation.CELL:
             self.GetCellData().RemoveArray(name)
-        elif field == FIELD_DATA_FIELD:
+        elif field == FieldAssociation.FIELD:
             self.GetFieldData().RemoveArray(name)
         else:
             raise NotImplementedError('Not able to remove arrays from the ({}) data field'.format(field))
