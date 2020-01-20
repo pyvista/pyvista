@@ -134,6 +134,40 @@ class Renderer(vtkRenderer):
             scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
             self.camera.GetViewUp())
 
+    @camera_position.setter
+    def camera_position(self, camera_location):
+        """Set camera position of all active render windows."""
+        if camera_location is None:
+            return
+
+        if isinstance(camera_location, str):
+            camera_location = camera_location.lower()
+            if camera_location == 'xy':
+                self.view_xy()
+            elif camera_location == 'xz':
+                self.view_xz()
+            elif camera_location == 'yz':
+                self.view_yz()
+            elif camera_location == 'yx':
+                self.view_yx()
+            elif camera_location == 'zx':
+                self.view_zx()
+            elif camera_location == 'zy':
+                self.view_zy()
+            return
+
+        if isinstance(camera_location[0], (int, float)):
+            return self.view_vector(camera_location)
+
+        # everything is set explicitly
+        self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))
+        self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1], invert=False))
+        self.camera.SetViewUp(camera_location[2])
+
+        # reset clipping range
+        self.ResetCameraClippingRange()
+        self.camera_set = True
+
     @property
     def camera(self):
         """Return the active camera for the rendering scene."""
@@ -835,40 +869,6 @@ class Renderer(vtkRenderer):
 
         self.RemoveAllViewProps()
         self.Modified()
-
-    @camera_position.setter
-    def camera_position(self, camera_location):
-        """Set camera position of all active render windows."""
-        if camera_location is None:
-            return
-
-        if isinstance(camera_location, str):
-            camera_location = camera_location.lower()
-            if camera_location == 'xy':
-                self.view_xy()
-            elif camera_location == 'xz':
-                self.view_xz()
-            elif camera_location == 'yz':
-                self.view_yz()
-            elif camera_location == 'yx':
-                self.view_yx()
-            elif camera_location == 'zx':
-                self.view_zx()
-            elif camera_location == 'zy':
-                self.view_zy()
-            return
-
-        if isinstance(camera_location[0], (int, float)):
-            return self.view_vector(camera_location)
-
-        # everything is set explicitly
-        self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))
-        self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1], invert=False))
-        self.camera.SetViewUp(camera_location[2])
-
-        # reset clipping range
-        self.ResetCameraClippingRange()
-        self.camera_set = True
 
 
     def set_focus(self, point):

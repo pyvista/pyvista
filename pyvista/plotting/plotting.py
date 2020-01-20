@@ -424,12 +424,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wraps ``Renderer.view_xz``."""
         return self.renderer.view_xz(*args, **kwarg)
 
-    @wraps(Renderer.view_xz)
+    @wraps(Renderer.view_zx)
     def view_zx(self, *args, **kwarg):
-        """Wraps ``Renderer.view_xz``."""
+        """Wraps ``Renderer.view_zx``."""
         return self.renderer.view_zx(*args, **kwarg)
 
-    @wraps(Renderer.view_xz)
+    @wraps(Renderer.view_yz)
     def view_yz(self, *args, **kwarg):
         """Wraps ``Renderer.view_xz``."""
         return self.renderer.view_yz(*args, **kwarg)
