@@ -2,8 +2,8 @@ from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 import numpy
 import pyvista.utilities.helpers as helpers
 from .pyvista_ndarray import pyvista_ndarray
-from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper, ArrayAssociation,
-                                                 numpyTovtkDataArray)
+from pyvista.utilities.helpers import FieldAssociation
+from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkDataArray
 
 
 class DataSetAttributes(VTKObjectWrapper):
@@ -19,7 +19,7 @@ class DataSetAttributes(VTKObjectWrapper):
         dataset : vtkDataSet
             The vtkDataSet containing the vtkobject.
 
-        association : ArrayAssociation
+        association : FieldAssociation
             The array association type of the vtkobject.
     """
     def __init__(self, vtkobject, dataset, association):
@@ -72,9 +72,9 @@ class DataSetAttributes(VTKObjectWrapper):
     def valid_array_len(self):
         """Return the length which a numpy array should be when adding to this dataset.
         If there are no restrictions, returns None"""
-        if self.association == ArrayAssociation.POINT:
+        if self.association == FieldAssociation.POINT:
             return self.dataset.GetNumberOfPoints()
-        elif self.association == ArrayAssociation.CELL:
+        elif self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
         return None
 
@@ -139,11 +139,11 @@ class DataSetAttributes(VTKObjectWrapper):
             self.dataset.association_bitarray_names[self.association].add(name)
             narray = narray.view(numpy.uint8)
 
-        if self.association == ArrayAssociation.POINT:
+        if self.association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()
-        elif self.association == ArrayAssociation.CELL:
+        elif self.association == FieldAssociation.CELL:
             array_len = self.dataset.GetNumberOfCells()
-        elif self.association == ArrayAssociation.ROW:
+        elif self.association == FieldAssociation.ROW:
             array_len = narray.shape[0]
         else:
             array_len = narray.shape[0] if isinstance(narray, numpy.ndarray) else 1
@@ -245,5 +245,5 @@ class DataSetAttributes(VTKObjectWrapper):
             raise IndexError('Array index ({}) out of range [0, {}]'.format(index, max_index))
 
     def _raise_field_data_no_scalars_vectors(self):
-        if self.association == ArrayAssociation.FIELD:
+        if self.association == FieldAssociation.FIELD:
             raise TypeError('vtkFieldData does not have active scalars or vectors.')

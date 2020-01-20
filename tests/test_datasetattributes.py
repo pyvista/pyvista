@@ -1,7 +1,7 @@
 import numpy as np
 from pytest import fixture, mark, raises
 import pyvista
-from vtk.numpy_interface.dataset_adapter import ArrayAssociation
+from pyvista.utilities import FieldAssociation
 
 
 @fixture()
@@ -32,10 +32,10 @@ def insert_bool_array(example_grid_point_attributes):
 
 def test_init(example_grid):
     attributes = pyvista.DataSetAttributes(
-        example_grid.GetPointData(), dataset=example_grid, association=ArrayAssociation.POINT)
+        example_grid.GetPointData(), dataset=example_grid, association=FieldAssociation.POINT)
     assert attributes.VTKObject == example_grid.GetPointData()
     assert attributes.dataset == example_grid
-    assert attributes.association == ArrayAssociation.POINT
+    assert attributes.association == FieldAssociation.POINT
 
 
 class TestGetArray:
