@@ -162,10 +162,13 @@ def test_plotter_scale():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.set_scale(10, 10, 10)
+    assert plotter.scale == [10, 10, 10]
     plotter.set_scale(5.0)
     plotter.set_scale(yscale=6.0)
     plotter.set_scale(zscale=9.0)
     assert plotter.scale == [5.0, 6.0, 9.0]
+    plotter.scale = [1.0, 4.0, 2.0]
+    assert plotter.scale == [1.0, 4.0, 2.0]
     plotter.show()
 
 

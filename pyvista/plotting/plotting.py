@@ -467,7 +467,141 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return self.renderer.disable_depth_peeling()
 
 
-    ################
+    @wraps(Renderer.get_default_cam_pos)
+    def get_default_cam_pos(self, *args, **kwargs):
+        """Wraps ``Renderer.get_default_cam_pos``."""
+        return self.renderer.get_default_cam_pos(*args, **kwargs)
+
+
+    #### Properties from Renderer ####
+
+    @property
+    def camera(self):
+        """Return the active camera of the active renderer."""
+        return self.renderer.camera
+
+    @camera.setter
+    def camera(self, camera):
+        """Set the active camera for the rendering scene."""
+        self.renderer.camera = camera
+
+    @property
+    def camera_set(self):
+        """Return if the camera of the active renderer has been set."""
+        return self.renderer.camera_set
+
+    @camera_set.setter
+    def camera_set(self, is_set):
+        """Set if the camera has been set on the active renderer."""
+        self.renderer.camera_set = is_set
+
+    @property
+    def bounds(self):
+        """Return the bounds of the active renderer."""
+        return self.renderer.bounds
+
+    @property
+    def length(self):
+        """Return the length of the diagonal of the bounding box of the scene."""
+        return self.renderer.length
+
+    @property
+    def center(self):
+        """Return the center of the active renderer."""
+        return self.renderer.center
+
+    @property
+    def _scalar_bar_slots(self):
+        """Return the scalar bar slots of the active renderer."""
+        return self.renderer._scalar_bar_slots
+
+    @property
+    def _scalar_bar_slot_lookup(self):
+        """Return the scalar bar slot lookup of the active renderer."""
+        return self.renderer._scalar_bar_slot_lookup
+
+    @_scalar_bar_slots.setter
+    def _scalar_bar_slots(self, value):
+        """Set the scalar bar slots of the active renderer."""
+        self.renderer._scalar_bar_slots = value
+
+    @_scalar_bar_slot_lookup.setter
+    def _scalar_bar_slot_lookup(self, value):
+        """Set the scalar bar slot lookup of the active renderer."""
+        self.renderer._scalar_bar_slot_lookup = value
+
+    @property
+    def scale(self):
+        """Return the scaling of the active renderer."""
+        return self.renderer.scale
+
+    @scale.setter
+    def scale(self, scale):
+        """Set the scaling of the active renderer."""
+        return self.renderer.set_scale(*scale)
+
+    @property
+    def camera_position(self):
+        """Return camera position of the active render window."""
+        return self.renderer.camera_position
+
+    @camera_position.setter
+    def camera_position(self, camera_location):
+        """Set camera position of the active render window."""
+        self.renderer.camera_position = camera_location
+
+
+    @property
+    def background_color(self):
+        """Return the background color of the first render window."""
+        return self.renderers[0].GetBackground()
+
+    @background_color.setter
+    def background_color(self, color):
+        """Set the background color of all the render windows."""
+        self.set_background(color)
+
+
+
+    #### Properties of the BasePlotter ####
+
+    @property
+    def window_size(self):
+        """Return the render window size."""
+        return list(self.ren_win.GetSize())
+
+
+    @window_size.setter
+    def window_size(self, window_size):
+        """Set the render window size."""
+        self.ren_win.SetSize(window_size[0], window_size[1])
+
+
+    @property
+    def image_depth(self):
+        """Return a depth image representing current render window.
+
+        Helper attribute for ``get_image_depth``.
+
+        """
+        return self.get_image_depth()
+
+
+    @property
+    def image(self):
+        """Return an image array of current render window."""
+        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
+            return self.last_image
+        ifilter = vtk.vtkWindowToImageFilter()
+        ifilter.SetInput(self.ren_win)
+        ifilter.ReadFrontBufferOff()
+        if self.image_transparent_background:
+            ifilter.SetInputBufferTypeToRGBA()
+        else:
+            ifilter.SetInputBufferTypeToRGB()
+        return self._run_image_filter(ifilter)
+
+    #### Everything else ####
 
 
     def add_key_event(self, key, callback):
@@ -1921,55 +2055,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return
 
 
-    @property
-    def camera_set(self):
-        """Return if the camera of the active renderer has been set."""
-        return self.renderer.camera_set
-
-    def get_default_cam_pos(self, negative=False):
-        """Return the default camera position of the active renderer."""
-        return self.renderer.get_default_cam_pos(negative=negative)
-
-    @camera_set.setter
-    def camera_set(self, is_set):
-        """Set if the camera has been set on the active renderer."""
-        self.renderer.camera_set = is_set
-
-    @property
-    def bounds(self):
-        """Return the bounds of the active renderer."""
-        return self.renderer.bounds
-
-    @property
-    def length(self):
-        """Return the length of the diagonal of the bounding box of the scene."""
-        return pyvista.Box(self.bounds).length
-
-    @property
-    def center(self):
-        """Return the center of the active renderer."""
-        return self.renderer.center
-
-    @property
-    def _scalar_bar_slots(self):
-        """Return the scalar bar slots of the active renderer."""
-        return self.renderer._scalar_bar_slots
-
-    @property
-    def _scalar_bar_slot_lookup(self):
-        """Return the scalar bar slot lookup of the active renderer."""
-        return self.renderer._scalar_bar_slot_lookup
-
-    @_scalar_bar_slots.setter
-    def _scalar_bar_slots(self, value):
-        """Set the scalar bar slots of the active renderer."""
-        self.renderer._scalar_bar_slots = value
-
-    @_scalar_bar_slot_lookup.setter
-    def _scalar_bar_slot_lookup(self, value):
-        """Set the scalar bar slot lookup of the active renderer."""
-        self.renderer._scalar_bar_slot_lookup = value
-
     def clear(self):
         """Clear plot by removing all actors and properties."""
         for renderer in self.renderers:
@@ -2003,17 +2088,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for renderer in self.renderers:
             renderer.remove_actor(actor, reset_camera)
         return True
-
-
-    @property
-    def camera(self):
-        """Return the active camera of the active renderer."""
-        return self.renderer.camera
-
-    @camera.setter
-    def camera(self, camera):
-        """Set the active camera for the rendering scene."""
-        self.renderer.camera = camera
 
 
     def link_views(self, views=0):
@@ -2063,11 +2137,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             raise TypeError('Expected type is None, int, list or tuple:'
                             '{} is given'.format(type(views)))
-
-    @property
-    def scale(self):
-        """Return the scaling of the active renderer."""
-        return self.renderer.scale
 
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
@@ -2658,16 +2727,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise AssertionError('This plotter has not opened a movie or GIF file.')
         self.mwriter.append_data(self.image)
 
-    @property
-    def window_size(self):
-        """Return the render window size."""
-        return list(self.ren_win.GetSize())
-
-
-    @window_size.setter
-    def window_size(self, window_size):
-        """Set the render window size."""
-        self.ren_win.SetSize(window_size[0], window_size[1])
 
     def _run_image_filter(self, ifilter):
         # Update filter and grab pixels
@@ -2741,30 +2800,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return zval
 
-
-    @property
-    def image_depth(self):
-        """Return a depth image representing current render window.
-
-        Helper attribute for ``get_image_depth``.
-
-        """
-        return self.get_image_depth()
-
-
-    @property
-    def image(self):
-        """Return an image array of current render window."""
-        if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
-            return self.last_image
-        ifilter = vtk.vtkWindowToImageFilter()
-        ifilter.SetInput(self.ren_win)
-        ifilter.ReadFrontBufferOff()
-        if self.image_transparent_background:
-            ifilter.SetInputBufferTypeToRGBA()
-        else:
-            ifilter.SetInputBufferTypeToRGB()
-        return self._run_image_filter(ifilter)
 
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
@@ -3314,15 +3349,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
         return self.legend
 
-    @property
-    def camera_position(self):
-        """Return camera position of the active render window."""
-        return self.renderer.camera_position
-
-    @camera_position.setter
-    def camera_position(self, camera_location):
-        """Set camera position of the active render window."""
-        self.renderer.camera_position = camera_location
 
     def set_background(self, color, top=None, all_renderers=True):
         """Set the background color.
@@ -3353,15 +3379,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.renderer.set_background(color, top=top)
 
-    @property
-    def background_color(self):
-        """Return the background color of the first render window."""
-        return self.renderers[0].GetBackground()
-
-    @background_color.setter
-    def background_color(self, color):
-        """Set the background color of all the render windows."""
-        self.set_background(color)
 
     def remove_legend(self):
         """Remove the legend actor."""

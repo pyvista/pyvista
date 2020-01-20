@@ -123,6 +123,90 @@ class Renderer(vtkRenderer):
         if border:
             self.add_border(border_color, border_width)
 
+
+    #### Properties ####
+
+    @property
+    def camera_position(self):
+        """Return camera position of active render window."""
+        return CameraPosition(
+            scale_point(self.camera, self.camera.GetPosition(), invert=True),
+            scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
+            self.camera.GetViewUp())
+
+    @property
+    def camera(self):
+        """Return the active camera for the rendering scene."""
+        return self.GetActiveCamera()
+
+    @camera.setter
+    def camera(self, camera):
+        """Set the active camera for the rendering scene."""
+        self.SetActiveCamera(camera)
+        self.camera_position = CameraPosition(
+            scale_point(camera, camera.GetPosition(), invert=True),
+            scale_point(camera, camera.GetFocalPoint(), invert=True),
+            camera.GetViewUp()
+        )
+
+    @property
+    def bounds(self):
+        """Return the bounds of all actors present in the rendering window."""
+        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
+
+        def _update_bounds(bounds):
+            def update_axis(ax):
+                if bounds[ax*2] < the_bounds[ax*2]:
+                    the_bounds[ax*2] = bounds[ax*2]
+                if bounds[ax*2+1] > the_bounds[ax*2+1]:
+                    the_bounds[ax*2+1] = bounds[ax*2+1]
+            for ax in range(3):
+                update_axis(ax)
+            return
+
+        for actor in self._actors.values():
+            if isinstance(actor, vtk.vtkCubeAxesActor):
+                continue
+            if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
+                 and id(actor) != id(self.bounding_box_actor)):
+                _update_bounds(actor.GetBounds())
+
+        if np.any(np.abs(the_bounds)):
+            the_bounds[the_bounds == np.inf] = -1.0
+            the_bounds[the_bounds == -np.inf] = 1.0
+
+        return the_bounds.tolist()
+
+
+    @property
+    def length(self):
+        """Return the length of the diagonal of the bounding box of the scene."""
+        return pyvista.Box(self.bounds).length
+
+
+    @property
+    def center(self):
+        """Return the center of the bounding box around all data present in the scene."""
+        bounds = self.bounds
+        x = (bounds[1] + bounds[0])/2
+        y = (bounds[3] + bounds[2])/2
+        z = (bounds[5] + bounds[4])/2
+        return [x, y, z]
+
+
+    @property
+    def background_color(self):
+        """Return the background color of this renderer."""
+        return self.GetBackground()
+
+    @background_color.setter
+    def background_color(self, color):
+        """Set the background color of this renderer."""
+        self.set_background(color)
+
+
+    #### Everything else ####
+
     def enable_depth_peeling(self, number_of_peels=5, occlusion_ratio=0.1):
         """Enable depth peeling."""
         if number_of_peels is None:
@@ -739,13 +823,6 @@ class Renderer(vtkRenderer):
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
 
-    @property
-    def camera_position(self):
-        """Return camera position of active render window."""
-        return CameraPosition(
-            scale_point(self.camera, self.camera.GetPosition(), invert=True),
-            scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
-            self.camera.GetViewUp())
 
     def clear(self):
         """Remove all actors and properties."""
@@ -792,21 +869,6 @@ class Renderer(vtkRenderer):
         # reset clipping range
         self.ResetCameraClippingRange()
         self.camera_set = True
-
-    @property
-    def camera(self):
-        """Return the active camera for the rendering scene."""
-        return self.GetActiveCamera()
-
-    @camera.setter
-    def camera(self, camera):
-        """Set the active camera for the rendering scene."""
-        self.SetActiveCamera(camera)
-        self.camera_position = CameraPosition(
-            scale_point(camera, camera.GetPosition(), invert=True),
-            scale_point(camera, camera.GetFocalPoint(), invert=True),
-            camera.GetViewUp()
-        )
 
 
     def set_focus(self, point):
@@ -936,42 +998,6 @@ class Renderer(vtkRenderer):
             self.update_bounds_axes()
             self.reset_camera()
 
-    @property
-    def bounds(self):
-        """Return the bounds of all actors present in the rendering window."""
-        the_bounds = np.array([np.inf, -np.inf, np.inf, -np.inf, np.inf, -np.inf])
-
-        def _update_bounds(bounds):
-            def update_axis(ax):
-                if bounds[ax*2] < the_bounds[ax*2]:
-                    the_bounds[ax*2] = bounds[ax*2]
-                if bounds[ax*2+1] > the_bounds[ax*2+1]:
-                    the_bounds[ax*2+1] = bounds[ax*2+1]
-            for ax in range(3):
-                update_axis(ax)
-            return
-
-        for actor in self._actors.values():
-            if isinstance(actor, vtk.vtkCubeAxesActor):
-                continue
-            if (hasattr(actor, 'GetBounds') and actor.GetBounds() is not None
-                 and id(actor) != id(self.bounding_box_actor)):
-                _update_bounds(actor.GetBounds())
-
-        if np.any(np.abs(the_bounds)):
-            the_bounds[the_bounds == np.inf] = -1.0
-            the_bounds[the_bounds == -np.inf] = 1.0
-
-        return the_bounds.tolist()
-
-    @property
-    def center(self):
-        """Return the center of the bounding box around all data present in the scene."""
-        bounds = self.bounds
-        x = (bounds[1] + bounds[0])/2
-        y = (bounds[3] + bounds[2])/2
-        z = (bounds[5] + bounds[4])/2
-        return [x, y, z]
 
     def get_default_cam_pos(self, negative=False):
         """Return the default focal points and viewup.
