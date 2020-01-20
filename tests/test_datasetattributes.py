@@ -49,6 +49,11 @@ class TestGetArray:
         output_array = dsa.get_array('sample_array')
         assert output_array.dtype == np.bool
 
+    def test_bool_array_should_be_identical(self, insert_bool_array):
+        dsa, sample_array = insert_bool_array
+        output_array = dsa.get_array('sample_array')
+        assert np.array_equal(output_array, sample_array)
+
 
 class TestAdd:
     def test_append_should_not_add_none_array(self, example_grid_point_attributes):
