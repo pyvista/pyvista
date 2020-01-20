@@ -26,6 +26,7 @@ install:
   - which python
   - python -c "import vtk; print(vtk.VTK_VERSION)"
   - pip list
+  - python -c "import pyvista; print(pyvista.Report())"
 
 before_script:
   - echo $TRAVIS_COMMIT

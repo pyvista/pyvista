@@ -408,7 +408,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             # Enter trackball camera mode
             istyle = vtk.vtkInteractorStyleTrackballCamera()
             self.SetInteractorStyle(istyle)
-            self.add_axes()
 
             self.iren.Initialize()
 
@@ -419,6 +418,10 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             for renderer in self.renderers:
                 renderer.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
                 renderer.camera.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
+
+        if rcParams["depth_peeling"]["enabled"]:
+            for renderer in self.renderers:
+                self.enable_depth_peeling()
 
 
 
@@ -609,8 +612,8 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addSeparator()
         # Orientation marker
         orien_menu = view_menu.addMenu('Orientation Marker')
-        orien_menu.addAction('Show', self.show_axes)
-        orien_menu.addAction('Hide', self.hide_axes)
+        orien_menu.addAction('Show All', self.show_axes_all)
+        orien_menu.addAction('Hide All', self.hide_axes_all)
         # Bounds axes
         axes_menu = view_menu.addMenu('Bounds Axes')
         axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)

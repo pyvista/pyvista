@@ -8,6 +8,8 @@ import sys
 
 import vtk
 
+import pyvista
+
 
 def set_error_output_file(filename):
     """Set a file to write out the VTK errors."""
@@ -106,10 +108,91 @@ def send_errors_to_logging():
     return obs.observe(error_output)
 
 
+def get_gpu_info():
+    """Get all information about the GPU."""
+    # an OpenGL context MUST be opened before trying to do this.
+    plotter = pyvista.Plotter(notebook=False, off_screen=True)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.show(auto_close=False)
+    gpu_info = plotter.ren_win.ReportCapabilities()
+    plotter.close()
+    return gpu_info
+
+
+class GPUInfo():
+    """A class to hold GPU details."""
+
+    def __init__(self):
+        """Instantiate a container for the GPU information."""
+        self._gpu_info = get_gpu_info()
+
+
+    @property
+    def renderer(self):
+        """GPU renderer name."""
+        regex = re.compile("OpenGL renderer string:(.+)\n")
+        try:
+            renderer = regex.findall(self._gpu_info)[0]
+        except IndexError:
+            raise RuntimeError("Unable to parse GPU information for the renderer.")
+        return renderer.strip()
+
+
+    @property
+    def version(self):
+        """GPU renderer version."""
+        regex = re.compile("OpenGL version string:(.+)\n")
+        try:
+            version = regex.findall(self._gpu_info)[0]
+        except IndexError:
+            raise RuntimeError("Unable to parse GPU information for the version.")
+        return version.strip()
+
+
+    @property
+    def vendor(self):
+        """GPU renderer vendor."""
+        regex = re.compile("OpenGL vendor string:(.+)\n")
+        try:
+            vendor = regex.findall(self._gpu_info)[0]
+        except IndexError:
+            raise RuntimeError("Unable to parse GPU information for the vendor.")
+        return vendor.strip()
+
+
+    def get_info(self):
+        """All GPU information as tuple pairs."""
+        return (("GPU Vendor", self.vendor),
+                ("GPU Renderer", self.renderer),
+                ("GPU Version", self.version),
+               )
+
+
+    def _repr_html_(self):
+        """HTML table representation."""
+        fmt = "<table>"
+        row = "<tr><th>{}</th><td>{}</td></tr>\n"
+        for meta in self.get_info():
+            fmt += row.format(*meta)
+        fmt += "</table>"
+        return fmt
+
+
+    def __repr__(self):
+        """Representation method."""
+        content = "\n"
+        for k, v in self.get_info():
+            content += "{:>18}".format(k)+' : {}\n'.format(v)
+        content += "\n"
+        return content
+
+
+
 class Report(scooby.Report):
     """A class for custom scooby.Report."""
 
-    def __init__(self, additional=None, ncol=3, text_width=80, sort=False):
+    def __init__(self, additional=None, ncol=3, text_width=80, sort=False,
+                 gpu=True):
         """Generate a :class:`scooby.Report` instance.
 
         Parameters
@@ -127,6 +210,11 @@ class Report(scooby.Report):
         sort : bool, optional
             Alphabetically sort the packages
 
+        gpu : bool
+            Gather information about the GPU. Defaults to ``True`` but if
+            experiencing renderinng issues, pass ``False`` to safely generate
+            a report.
+
         """
         # Mandatory packages.
         core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
@@ -135,9 +223,18 @@ class Report(scooby.Report):
         optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
                     'cmocean', 'panel']
 
+        # Information about the GPU - bare except incase there is a rendering
+        # bug that the user is trying to report.
+        if gpu:
+            try:
+                extra_meta = [(t[1], t[0]) for t in GPUInfo().get_info()]
+            except:
+                extra_meta = ("GPU Details", "error")
+
         scooby.Report.__init__(self, additional=additional, core=core,
                                optional=optional, ncol=ncol,
-                               text_width=text_width, sort=sort)
+                               text_width=text_width, sort=sort,
+                               extra_meta=extra_meta)
 
 
 def assert_empty_kwargs(**kwargs):

@@ -168,7 +168,7 @@ hexcolors = {
     'blanchedalmond':       '#FFEBCD',
     'blue':                 '#0000FF',
     'blueviolet':           '#8A2BE2',
-    'brown':                '#A52A2A',
+    'brown':                '#654321',
     'burlywood':            '#DEB887',
     'cadetblue':            '#5F9EA0',
     'chartreuse':           '#7FFF00',

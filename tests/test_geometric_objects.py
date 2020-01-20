@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 import pyvista
 
@@ -33,12 +34,21 @@ def test_plane():
 
 
 def test_line():
-    line = pyvista.Line((0,0,0), (10, 1., 3))
+    pointa = (0, 0, 0)
+    pointb = (10, 1., 3)
+
+    line = pyvista.Line(pointa, pointb)
     assert line.n_points == 2
     assert line.n_cells == 1
-    line = pyvista.Line((0,0,0), (10, 1., 3), 10)
+    line = pyvista.Line(pointa, pointb, 10)
     assert line.n_points == 11
     assert line.n_cells == 1
+
+    with pytest.raises(ValueError):
+        pyvista.Line(pointa, pointb, -1)
+
+    with pytest.raises(TypeError):
+        pyvista.Line(pointa, pointb, 0.1) # from vtk
 
 
 def test_cube():

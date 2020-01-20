@@ -183,7 +183,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._style = vtk.vtkInteractorStyleRubberBandPick()
 
         # Add self to open plotters
-        _ALL_PLOTTERS[str(hex(id(self)))] = self
+        self._id_name = "{}-{}".format(str(hex(id(self))), len(_ALL_PLOTTERS))
+        _ALL_PLOTTERS[self._id_name] = self
 
         # lighting style
         self.lighting = vtk.vtkLightKit()
@@ -222,13 +223,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks.pop(key)
 
 
-    def enable_depth_peeling(self, number_of_peels=5, occlusion_ratio=0.1):
+    def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=0.1):
         """Enable depth peeling if supported.
 
         Parameters
         ----------
         number_of_peels: int
             The maximum number of peeling layers. A value of 0 means no limit.
+            Default is in ``rcParams``.
 
         occlusion_ratio : float
             The threshold under which the algorithm stops to iterate over peel
@@ -242,11 +244,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             If True, depth peeling is supported.
 
         """
+        if number_of_peels is None:
+            number_of_peels = rcParams["depth_peeling"]["number_of_peels"]
         depth_peeling_supported = check_depth_peeling(number_of_peels,
                                                       occlusion_ratio)
         if hasattr(self, 'ren_win') and depth_peeling_supported:
             self.ren_win.AlphaBitPlanesOn()
-            self.ren_win.SetMultiSamples(0)
             self.renderer.enable_depth_peeling(number_of_peels,
                                                occlusion_ratio)
 
@@ -542,48 +545,53 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_axes(self, interactive=None, line_width=2,
                  color=None, x_color=None, y_color=None, z_color=None,
                  xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
-                 box=None, box_args=None):
-        """Add an interactive axes widget."""
-        if interactive is None:
-            interactive = rcParams['interactive']
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.SetInteractive(interactive)
-            update_axes_label_color(color)
-            return
-        if box is None:
-            box = rcParams['axes']['box']
-        if box:
-            if box_args is None:
-                box_args = {}
-            self.axes_actor = create_axes_orientation_box(
-                label_color=color, line_width=line_width,
-                x_color=x_color, y_color=y_color, z_color=z_color,
-                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel,
-                labels_off=labels_off, **box_args)
-        else:
-            self.axes_actor = create_axes_marker(
-                label_color=color, line_width=line_width,
-                x_color=x_color, y_color=y_color, z_color=z_color,
-                xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.axes_widget = vtk.vtkOrientationMarkerWidget()
-        self.axes_widget.SetOrientationMarker(self.axes_actor)
-        if hasattr(self, 'iren'):
-            self.axes_widget.SetInteractor(self.iren)
-            self.axes_widget.SetEnabled(1)
-            self.axes_widget.SetInteractive(interactive)
+                 box=None, box_args=None, loc=None):
+        """Add an interactive axes widget in the bottom left corner.
+
+        Adds to the currently active renderer.
+
+        Parameters
+        ----------
+        interacitve : bool
+            Enable this orientation widget to be moved by the user.
+
+        line_width : int
+            The width of the marker lines
+
+        box : bool
+            Show a box orientation marker. Use ``box_args`` to adjust.
+            See :any:`pyvista.create_axes_orientation_box` for details.
+        """
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.add_axes(interactive=interactive, line_width=line_width,
+                     color=color, x_color=x_color, y_color=y_color, z_color=z_color,
+                     xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off,
+                     box=box, box_args=box_args)
+
+    def hide_axes(self, loc=None):
+        """Hide the axes orientation widget."""
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.hide_axes()
+
+    def hide_axes_all(self):
+        """Hide the axes orientation widget in all renderers."""
+        for renderer in self.renderers:
+            renderer.hide_axes()
         return
 
-    def hide_axes(self):
-        """Hide the axes orientation widget."""
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOff()
-
-    def show_axes(self):
+    def show_axes(self, loc=None):
         """Show the axes orientation widget."""
-        if hasattr(self, 'axes_widget'):
-            self.axes_widget.EnabledOn()
-        else:
-            self.add_axes()
+        self._active_renderer_index = self.loc_to_index(loc)
+        renderer = self.renderers[self._active_renderer_index]
+        return renderer.show_axes()
+
+    def show_axes_all(self):
+        """Show the axes orientation widget in all renderers."""
+        for renderer in self.renderers:
+            renderer.show_axes()
+        return
 
     def isometric_view_interactive(self):
         """Set the current interactive render window to isometric view."""
@@ -883,7 +891,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             render_points_as_spheres = rcParams['render_points_as_spheres']
 
         if name is None:
-            name = '{}({})'.format(type(mesh).__name__, str(hex(id(mesh))))
+            name = '{}({})'.format(type(mesh).__name__, mesh.memory_address)
 
         if nan_color is None:
             nan_color = rcParams['nan_color']
@@ -1279,6 +1287,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars is not None:
                 geom = pyvista.Box()
                 rgb_color = parse_color('black')
+            geom.points -= geom.center
             self._labels.append([geom, label, rgb_color])
 
         # lighting display style
@@ -1451,7 +1460,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Handle default arguments
 
         if name is None:
-            name = '{}({})'.format(type(volume).__name__, str(hex(id(volume))))
+            name = '{}({})'.format(type(volume).__name__, volume.memory_address)
 
         # Supported aliases
         clim = kwargs.pop('rng', clim)
@@ -2380,7 +2389,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                        font_family=None, shadow=False, mapper=None,
                        width=None, height=None, position_x=None,
                        position_y=None, vertical=None,
-                       interactive=False, fmt=None, use_opacity=True,
+                       interactive=None, fmt=None, use_opacity=True,
                        outline=False, nan_annotation=False,
                        below_label=None, above_label=None,
                        background_color=None, n_colors=None, fill=False):
@@ -2469,6 +2478,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         sizing for both the title and label.
 
         """
+        if interactive is None:
+            interactive = rcParams['interactive']
         if font_family is None:
             font_family = rcParams['font']['family']
         if label_font_size is None:
@@ -2782,9 +2793,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Grab screenshots of last render
         self.last_image = self.screenshot(None, return_img=True)
         self.last_image_depth = self.get_image_depth()
-
-        if hasattr(self, 'axes_widget'):
-            del self.axes_widget
 
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
@@ -3266,7 +3274,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise Exception('There must be one label for each point')
 
         if name is None:
-            name = '{}({})'.format(type(vtkpoints).__name__, str(hex(id(vtkpoints))))
+            name = '{}({})'.format(type(vtkpoints).__name__, vtkpoints.memory_address)
 
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')
@@ -4041,6 +4049,10 @@ class Plotter(BasePlotter):
         # add timer event if interactive render exists
         if hasattr(self, 'iren'):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
+
+        if rcParams["depth_peeling"]["enabled"]:
+            for renderer in self.renderers:
+                self.enable_depth_peeling()
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,

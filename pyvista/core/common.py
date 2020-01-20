@@ -294,6 +294,12 @@ class DataObject(object):
             self._remove_array(FIELD_DATA_FIELD, key)
 
 
+    @property
+    def memory_address(self):
+        """Get address of the underlying C++ object in format 'Addr=%p'."""
+        return self.GetInformation().GetAddressAsString("")
+
+
 
 class Common(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""

@@ -39,6 +39,9 @@
 .. |joss| image:: https://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
+.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -51,6 +54,8 @@
 +----------------------+------------------------+
 | Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
+| License              | |MIT|                  |
++----------------------+------------------------+
 
 
 About
@@ -59,7 +64,7 @@ About
 PyVista is...
 
 * *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets (finite element and volume)
+* mesh data structures and filtering methods for spatial datasets
 * 3D plotting made simple and built for large/complex data geometries
 
 .. _Visualization Toolkit: https://vtk.org

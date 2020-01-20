@@ -30,6 +30,9 @@ PyVista
 .. |codacy| image:: https://api.codacy.com/project/badge/Grade/e927f0afec7e4b51aeb7785847d0fd47
    :target: https://www.codacy.com/app/banesullivan/pyvista?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=akaszynski/pyvista&amp;utm_campaign=Badge_Grade
 
+.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -40,6 +43,8 @@ PyVista
 +----------------------+------------------------+
 | Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
+| License              | |MIT|                  |
++----------------------+------------------------+
 
 
     3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)
@@ -47,7 +52,7 @@ PyVista
 PyVista is...
 
 * *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
-* mesh data structures and filtering methods for spatial datasets (finite element and volume)
+* mesh data structures and filtering methods for spatial datasets
 * 3D plotting made simple and built for large/complex data geometries
 
 .. _Visualization Toolkit: https://vtk.org

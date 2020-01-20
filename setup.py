@@ -21,7 +21,7 @@ with io_open(version_file, mode='r') as fd:
 install_requires = ['numpy',
                     'imageio',
                     'appdirs',
-                    'scooby>=0.2.2',
+                    'scooby>=0.5.0',
                     'meshio>=3.3.0',
                     ]
 
