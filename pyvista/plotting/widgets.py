@@ -931,7 +931,7 @@ class WidgetHelper(object):
         else:
             _, field = get_array(mesh, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != pyvista.POINT_DATA_FIELD:
+        if field != pyvista.FieldAssociation.POINT:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
 
         rng = mesh.get_data_range(scalars)
