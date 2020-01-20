@@ -1010,9 +1010,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(scalars, str):
             self.mapper.SetArrayName(scalars)
 
-        actor, prop = self.add_actor(self.mapper,
-                                     reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=culling)
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
