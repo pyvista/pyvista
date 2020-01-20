@@ -967,11 +967,10 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
     def __getitem__(self, index):
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.Iterable) and not isinstance(index, str):
-            name, preference = index[0], index[1]
+        if isinstance(index, (list, tuple)):
+            name, preference = index
         elif isinstance(index, str):
-            name = index
-            preference = 'cell'
+            name, preference = index, 'cell'
         else:
             raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
         return self.get_array(name, preference=preference, info=False)
