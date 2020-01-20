@@ -1,8 +1,8 @@
 import numpy
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, ArrayAssociation, VTKArray
+from pyvista.utilities.helpers import convert_array, FieldAssociation
+from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 from vtk.vtkCommonCore import vtkWeakReference
 from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
-import pyvista.utilities.helpers as helpers
 
 
 class pyvista_ndarray(VTKArray):
@@ -14,7 +14,7 @@ class pyvista_ndarray(VTKArray):
     def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
         # Input array is an already formed ndarray instance
         obj = numpy.asarray(ndarray).view(cls)
-        obj.association = association or ArrayAssociation.FIELD
+        obj.association = association if association is not None else FieldAssociation.FIELD
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
         if dataset:
@@ -40,6 +40,9 @@ class pyvista_ndarray(VTKArray):
             The vtkDataSet which vtk_data_array belongs to. Required to
             update or access a dataset when this pyvista_ndarray is updated.
 
+        association : FieldAssociation, optional
+            The FieldAssociation of the dataset the input array belongs to.
+
         dtype : data-type, optional
             By default, the data-type is inferred from the input data.
 
@@ -48,7 +51,7 @@ class pyvista_ndarray(VTKArray):
 
         """
         if isinstance(obj, (vtkDataArray, vtkAbstractArray)):
-            return cls.from_vtk_data_array(vtk_data_array=obj, dataset=dataset)
+            return cls.from_vtk_data_array(vtk_data_array=obj, dataset=dataset, association=association)
         elif isinstance(obj, (list, tuple, numpy.ndarray)):
             return cls.from_iter(a=obj, dtype=dtype, order=order)
         else:
@@ -68,23 +71,26 @@ class pyvista_ndarray(VTKArray):
             The vtkDataSet which vtk_data_array belongs to. Required to
             update or access a dataset when this pyvista_ndarray is updated.
 
+        association : FieldAssociation, optional
+            The FieldAssociation of the dataset the input array belongs to.
+
         """
-        narray = helpers.convert_array(vtk_data_array)
+        narray = convert_array(vtk_data_array)
 
         # Make arrays of 9 components into matrices. Also transpose
         # as VTK stores matrices in Fortran order
         shape = narray.shape
         if len(shape) == 2 and shape[1] == 9:
             narray = narray.reshape((shape[0], 3, 3)).transpose(0, 2, 1)
-        return cls(narray, vtk_data_array, dataset=dataset)
+        return cls(narray, vtk_data_array, dataset=dataset, association=association)
 
     @classmethod
-    def from_iter(cls, a, dtype=None, order=None):
+    def from_iter(cls, iterable, dtype=None, order=None):
         """Create a ``pyvista_ndarray`` instance from an iterable.
 
         Parameters
         ----------
-        a : array_like
+        iterable : array_like
             Input data, in any form that can be converted to an array.
             This includes lists, lists of tuples, tuples, tuples of tuples, tuples of lists and ndarrays.
 
