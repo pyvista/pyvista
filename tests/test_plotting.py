@@ -522,24 +522,24 @@ def test_camera():
 def test_multi_renderers():
     plotter = pyvista.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
 
-    loc = (0, 0)
-    plotter.add_text('Render Window 0', loc=loc, font_size=30)
+    plotter.subplot(0, 0)
+    plotter.add_text('Render Window 0', font_size=30)
     sphere = pyvista.Sphere()
-    plotter.add_mesh(sphere, loc=loc, scalars=sphere.points[:, 2])
+    plotter.add_mesh(sphere, scalars=sphere.points[:, 2])
     plotter.add_scalar_bar('Z', vertical=True)
 
-    loc = (0, 1)
-    plotter.add_text('Render Window 1', loc=loc, font_size=30)
-    plotter.add_mesh(pyvista.Cube(), loc=loc, show_edges=True)
+    plotter.subplot(0, 1)
+    plotter.add_text('Render Window 1', font_size=30)
+    plotter.add_mesh(pyvista.Cube(), show_edges=True)
 
-    loc = (1, 0)
-    plotter.add_text('Render Window 2', loc=loc, font_size=30)
-    plotter.add_mesh(pyvista.Arrow(), color='y', loc=loc, show_edges=True)
+    plotter.subplot(1, 0)
+    plotter.add_text('Render Window 2', font_size=30)
+    plotter.add_mesh(pyvista.Arrow(), color='y', show_edges=True)
 
     plotter.subplot(1, 1)
     plotter.add_text('Render Window 3', position=(0., 0.),
-                     loc=loc, font_size=30, viewport=True)
-    plotter.add_mesh(pyvista.Cone(), color='g', loc=loc, show_edges=True,
+                     font_size=30, viewport=True)
+    plotter.add_mesh(pyvista.Cone(), color='g', show_edges=True,
                      culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
     plotter.show_bounds(all_edges=True)

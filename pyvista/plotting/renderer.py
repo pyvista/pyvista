@@ -173,8 +173,8 @@ class Renderer(vtkRenderer):
         self.AddViewProp(actor)
 
 
-    def add_actor(self, uinput, reset_camera=False, name=None, loc=None,
-                  culling=False, pickable=True):
+    def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
+                  pickable=True):
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -186,10 +186,6 @@ class Renderer(vtkRenderer):
 
         reset_camera : bool, optional
             Resets the camera when true.
-
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.
 
         culling : str, optional
             Does not render faces that are culled. Options are ``'front'`` or
@@ -349,7 +345,7 @@ class Renderer(vtkRenderer):
                     font_family=None, color=None,
                     xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                     use_2d=False, grid=None, location='closest', ticks=None,
-                    all_edges=False, corner_factor=0.5, loc=None, fmt=None,
+                    all_edges=False, corner_factor=0.5, fmt=None,
                     minor_ticks=False, padding=0.0):
         """Add bounds axes.
 
@@ -445,11 +441,6 @@ class Renderer(vtkRenderer):
         corner_factor : float, optional
             If ``all_edges````, this is the factor along each axis to
             draw the default box. Dafuault is 0.5 to show the full box.
-
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
-            active Renderer.
 
         padding : float, optional
             An optional percent padding along each axial direction to cushion
@@ -664,7 +655,7 @@ class Renderer(vtkRenderer):
     def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
                          opacity=1.0, render_lines_as_tubes=False,
                          lighting=None, reset_camera=None, outline=True,
-                         culling='front', loc=None):
+                         culling='front'):
         """Add an unlabeled and unticked box at the boundaries of plot.
 
         Useful for when wanting to plot outer grids while still retaining all
@@ -694,11 +685,6 @@ class Renderer(vtkRenderer):
         culling : str, optional
             Does not render faces that are culled. Options are ``'front'`` or
             ``'back'``. Default is ``'front'`` for bounding box.
-
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
-            active Renderer.
 
         """
         if lighting is None:

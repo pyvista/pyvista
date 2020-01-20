@@ -845,7 +845,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  render_points_as_spheres=None, render_lines_as_tubes=False,
                  smooth_shading=False, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
-                 loc=None, culling=None, rgb=False, categories=False,
+                 culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
                  log_scale=False, **kwargs):
@@ -1008,11 +1008,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         nan_opacity : float, optional
             Opacity of ``NaN`` values.  Should be between 0 and 1.
             Default 1.0
-
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
-            active Renderer.
 
         culling : str, optional
             Does not render faces that are culled. Options are ``'front'`` or
@@ -1210,7 +1205,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         actor, prop = self.add_actor(self.mapper,
                                      reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=culling)
+                                     name=name, culling=culling)
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -1238,7 +1233,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         actor, prop = self.add_actor(self.mapper,
                                      reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=culling,
+                                     name=name, culling=culling,
                                      pickable=pickable)
 
         # Make sure scalars is a numpy array after this point
@@ -1506,7 +1501,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_volume(self, volume, scalars=None, clim=None, resolution=None,
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
                    reset_camera=None, name=None, ambient=0.0, categories=False,
-                   loc=None, culling=False, multi_colors=False,
+                   culling=False, multi_colors=False,
                    blending='composite', mapper=None,
                    stitle=None, scalar_bar_args=None, show_scalar_bar=None,
                    annotations=None, pickable=True, preference="point",
@@ -1576,11 +1571,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             When lighting is enabled, this is the amount of light from
             0 to 1 that reaches the actor when not directed at the
             light source emitted from the viewer.  Default 0.0.
-
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.  If None, selects the last
-            active Renderer.
 
         culling : str, optional
             Does not render faces that are culled. Options are ``'front'`` or
@@ -1726,7 +1716,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 a = self.add_volume(block, resolution=block_resolution, opacity=opacity,
                                     n_colors=n_colors, cmap=color, flip_scalars=flip_scalars,
                                     reset_camera=reset_camera, name=next_name,
-                                    ambient=ambient, categories=categories, loc=loc,
+                                    ambient=ambient, categories=categories,
                                     culling=culling, clim=clim,
                                     mapper=mapper, pickable=pickable,
                                     opacity_unit_distance=opacity_unit_distance,
@@ -1906,7 +1896,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.volume.SetProperty(prop)
 
         actor, prop = self.add_actor(self.volume, reset_camera=reset_camera,
-                                     name=name, loc=loc, culling=culling,
+                                     name=name, culling=culling,
                                      pickable=pickable)
 
 
@@ -2548,7 +2538,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
-                 font=None, shadow=False, name=None, loc=None, viewport=False):
+                 font=None, shadow=False, name=None, viewport=False):
         """Add text to plot object in the top left corner by default.
 
         Parameters
@@ -2579,10 +2569,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The name for the added actor so that it can be easily updated.
             If an actor of this name already exists in the rendering window, it
             will be replaced by the new actor.
-
-        loc : int, tuple, or list
-            Index of the renderer to add the actor to.  For example,
-            ``loc=2`` or ``loc=(1, 1)``.
 
         viewport: bool
             If True and position is a tuple of float, uses
@@ -2652,7 +2638,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.textActor.GetTextProperty().SetFontFamily(FONT_KEYS[font])
         self.textActor.GetTextProperty().SetShadow(shadow)
 
-        self.add_actor(self.textActor, reset_camera=False, name=name, loc=loc, pickable=False)
+        self.add_actor(self.textActor, reset_camera=False, name=name, pickable=False)
         return self.textActor
 
     def open_movie(self, filename, framerate=24):
