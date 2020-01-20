@@ -8,14 +8,12 @@ import warnings
 
 import numpy as np
 import vtk
-from vtk.numpy_interface.dataset_adapter import ArrayAssociation
 from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
 import pyvista
 import pyvista.utilities.fileio as fileio
-from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD, POINT_DATA_FIELD,
-                               get_array, is_pyvista_dataset, parse_field_choice,
-                               raise_not_matching)
+from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
+                               parse_field_choice, raise_not_matching)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
@@ -279,7 +277,7 @@ class DataObject(vtkDataObject, ABC):
     @property
     def field_arrays(self):
         """"Return vtkFieldData as a DataSetAttributes instance."""
-        return DataSetAttributes(self.GetFieldData(), dataset=self, association=ArrayAssociation.FIELD)
+        return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.FIELD)
 
 
     def clear_field_arrays(self):
@@ -329,10 +327,10 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             active_point_array = first_valid_array_name(field_data=self.GetPointData())
             active_cell_array = first_valid_array_name(field_data=self.GetCellData())
             if active_point_array:
-                self._active_scalars_info = (POINT_DATA_FIELD, active_point_array)
+                self._active_scalars_info = (FieldAssociation.POINT, active_point_array)
                 self.GetPointData().SetActiveScalars(active_point_array)
             elif active_cell_array:
-                self._active_scalars_info = (CELL_DATA_FIELD, active_cell_array)
+                self._active_scalars_info = (FieldAssociation.CELL, active_cell_array)
                 self.GetCellData().SetActiveScalars(active_cell_array)
         return self._active_scalars_info
 
@@ -355,7 +353,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
             else:
-                self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
+                self._active_vectors_info = [FieldAssociation.POINT, None] # field and name
         _, name = self._active_vectors_info
         return self._active_vectors_info
 
@@ -365,9 +363,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         """Return the active vectors array."""
         field, name = self.active_vectors_info
         if name:
-            if field is POINT_DATA_FIELD:
+            if field is FieldAssociation.POINT:
                 return self.point_arrays[name]
-            if field is CELL_DATA_FIELD:
+            if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
 
 
@@ -534,9 +532,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             return
         _, field = get_array(self, name, preference=preference, info=True)
         self._last_active_scalars_name = self.active_scalars_info[1]
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.GetPointData().SetActiveScalars(name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not usable'.format(field))
@@ -563,9 +561,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             self.GetPointData().SetActiveVectors(None)
             return
         _, field = get_array(self, name, preference=preference, info=True)
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.GetPointData().SetActiveVectors(name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveVectors(name)
         else:
             raise RuntimeError('Data field ({}) not usable'.format(field))
@@ -575,11 +573,11 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     def rename_array(self, old_name, new_name, preference='cell'):
         """Change array name by searching for the array then renaming it."""
         _, field = get_array(self, old_name, preference=preference, info=True)
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
-        elif field == FIELD_DATA_FIELD:
+        elif field == FieldAssociation.FIELD:
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
@@ -603,9 +601,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         field, name = self.active_scalars_info
         if name is None:
             return None
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             return self._point_array(name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             return self._cell_array(name)
 
     @property
@@ -658,7 +656,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         self.point_arrays.append(scalars, name, deep_copy=deep)
         if set_active or self.active_scalar_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
-            self._active_scalars_info = (POINT_DATA_FIELD, name)
+            self._active_scalars_info = (FieldAssociation.POINT, name)
 
 
     def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
@@ -845,15 +843,15 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def point_arrays(self):
         """Return vtkPointData as a DataSetAttributes instance."""
-        return DataSetAttributes(self.GetPointData(), dataset=self, association=ArrayAssociation.POINT)
+        return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
 
 
     def _remove_array(self, field, name):
         """Remove a single array by name from each field (internal helper)."""
         field = parse_field_choice(field)
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.GetPointData().RemoveArray(name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.GetCellData().RemoveArray(name)
         elif field == FIELD_DATA_FIELD:
             self.GetFieldData().RemoveArray(name)
@@ -882,7 +880,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
     @property
     def cell_arrays(self):
         """Return vtkCellData as a DataSetAttributes instance."""
-        return DataSetAttributes(self.GetCellData(), dataset=self, association=ArrayAssociation.CELL)
+        return DataSetAttributes(self.GetCellData(), dataset=self, association=FieldAssociation.CELL)
 
 
     @property

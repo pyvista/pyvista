@@ -1,8 +1,8 @@
 import numpy
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, ArrayAssociation, VTKArray
+from pyvista.utilities.helpers import convert_array, FieldAssociation
+from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 from vtk.vtkCommonCore import vtkWeakReference
 from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
-import pyvista.utilities.helpers as helpers
 
 
 class pyvista_ndarray(VTKArray):
@@ -14,7 +14,7 @@ class pyvista_ndarray(VTKArray):
     def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
         # Input array is an already formed ndarray instance
         obj = numpy.asarray(ndarray).view(cls)
-        obj.association = association or ArrayAssociation.FIELD
+        obj.association = association or FieldAssociation.FIELD
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
         if dataset:
@@ -69,7 +69,7 @@ class pyvista_ndarray(VTKArray):
             update or access a dataset when this pyvista_ndarray is updated.
 
         """
-        narray = helpers.convert_array(vtk_data_array)
+        narray = convert_array(vtk_data_array)
 
         # Make arrays of 9 components into matrices. Also transpose
         # as VTK stores matrices in Fortran order

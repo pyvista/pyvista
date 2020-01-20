@@ -6,10 +6,9 @@ The data objects does not have any sort of spatial reference.
 
 import numpy as np
 import vtk
-from vtk.numpy_interface.dataset_adapter import ArrayAssociation
 
 import pyvista
-from pyvista.utilities import (assert_empty_kwargs, get_array, row_array)
+from pyvista.utilities import (assert_empty_kwargs, get_array, FieldAssociation, row_array)
 
 from .dataset import DataObject
 from .datasetattributes import DataSetAttributes
@@ -124,7 +123,7 @@ class Table(vtk.vtkTable, DataObject):
     @property
     def row_arrays(self):
         """Return the all row arrays."""
-        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=ArrayAssociation.ROW)
+        return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW)
 
 
     def keys(self):
