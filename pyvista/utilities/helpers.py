@@ -2,6 +2,7 @@
 
 import collections
 import ctypes
+import enum
 import logging
 import warnings
 
@@ -12,10 +13,12 @@ import vtk.util.numpy_support as nps
 
 import pyvista
 
-POINT_DATA_FIELD = 0
-CELL_DATA_FIELD = 1
-FIELD_DATA_FIELD = 2
-ROW_DATA_FIELD = 6
+
+class FieldAssociation(enum.Enum):
+    POINT = 0
+    CELL = 1
+    FIELD = 2
+    ROW = 6
 
 
 def get_vtk_type(typ):
