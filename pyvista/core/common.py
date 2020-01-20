@@ -3,17 +3,16 @@
 import collections
 import logging
 import warnings
-from weakref import proxy
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, convert_array, get_array,
                                is_pyvista_dataset, parse_field_choice, raise_not_matching,
                                vtk_bit_array_to_char, vtk_id_list_to_array)
-
+from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
 log = logging.getLogger(__name__)
