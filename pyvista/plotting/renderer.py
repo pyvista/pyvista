@@ -638,6 +638,21 @@ class Renderer(vtkRenderer):
         logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
         return self.show_bounds(*args, **kwargs)
 
+
+    def show_grid(self, **kwargs):
+        """Show gridlines and axes labels.
+
+        A wrapped implementation of ``show_bounds`` to change default
+        behaviour to use gridlines and showing the axes labels on the outer
+        edges. This is intended to be silimar to ``matplotlib``'s ``grid``
+        function.
+
+        """
+        kwargs.setdefault('grid', 'back')
+        kwargs.setdefault('location', 'outer')
+        kwargs.setdefault('ticks', 'both')
+        return self.show_bounds(**kwargs)
+
     def remove_bounding_box(self):
         """Remove bounding box."""
         if hasattr(self, '_box_object'):
@@ -1125,6 +1140,40 @@ class Renderer(vtkRenderer):
         y0 = int(self.GetPickY1())
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
+
+
+    def set_background(self, color, top=None):
+        """Set the background color.
+
+        Parameters
+        ----------
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.  For example:
+                color='white'
+                color='w'
+                color=[1, 1, 1]
+                color='#FFFFFF'
+
+        top : string or 3 item list, optional, defaults to None
+            If given, this will enable a gradient background where the
+            ``color`` argument is at the bottom and the color given in ``top``
+            will be the color at the top of the renderer.
+
+        """
+        if color is None:
+            color = rcParams['background']
+
+        use_gradient = False
+        if top is not None:
+            use_gradient = True
+
+        self.SetBackground(parse_color(color))
+        if use_gradient:
+            self.GradientBackgroundOn()
+            self.SetBackground2(parse_color(top))
+        else:
+            self.GradientBackgroundOff()
+        return
 
 
     def deep_clean(self):

@@ -273,10 +273,29 @@ def test_add_point_labels():
     with pytest.raises(Exception):
         plotter.add_point_labels(points, range(n - 1))
 
-    plotter.set_background('k')
-    plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
     plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
+    plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_set_background():
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.set_background('k')
+    plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
+    plotter.show()
+
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
+    plotter.set_background('orange')
+    for renderer in plotter.renderers:
+        assert renderer.GetBackground() == pyvista.parse_color('orange')
+    plotter.show()
+
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
+    plotter.subplot(0,1)
+    plotter.set_background('orange', all_renderers=False)
+    assert plotter.renderers[0].GetBackground() != pyvista.parse_color('orange')
+    assert plotter.renderers[1].GetBackground() == pyvista.parse_color('orange')
     plotter.show()
 
 
