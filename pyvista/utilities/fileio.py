@@ -61,23 +61,6 @@ READERS = {
     '.inp': vtk.vtkAVSucdReader,
 }
 
-WRITERS = {
-    '.vtk': vtk.vtkDataSetWriter,
-    '.pvtk': vtk.vtkPDataSetWriter,
-    '.vti': vtk.vtkXMLImageDataWriter,
-    '.pvti': vtk.vtkXMLPImageDataWriter,
-    '.vtr': vtk.vtkXMLRectilinearGridWriter,
-    '.pvtr': vtk.vtkXMLPRectilinearGridWriter,
-    '.vtu': vtk.vtkXMLUnstructuredGridWriter,
-    '.pvtu': vtk.vtkXMLPUnstructuredGridWriter,
-    '.ply': vtk.vtkPLYWriter,
-    '.stl': vtk.vtkSTLWriter,
-    '.vtp': vtk.vtkXMLPolyDataWriter,
-    '.vts': vtk.vtkXMLStructuredGridWriter,
-    '.vtm': vtk.vtkXMLMultiBlockDataWriter,
-    '.vtmb': vtk.vtkXMLMultiBlockDataWriter
-}
-
 VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
 VTK_MINOR = vtk.vtkVersion().GetVTKMinorVersion()
 
@@ -102,15 +85,6 @@ def get_reader(filename):
         return READERS[ext]() # Get and instantiate the reader
     except KeyError:
         raise ValueError('Extension "{}" is not a vtk readable format.'.format(ext))
-
-
-def get_writer(filename):
-    """Get the corresponding writer based on file extension and instantiates it."""
-    ext = get_ext(filename)
-    try:
-        return WRITERS[ext]()
-    except KeyError:
-        raise ValueError('Extension "{}" is not a vtk writable format.'.format(ext))
 
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
