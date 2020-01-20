@@ -101,4 +101,4 @@ class pyvista_ndarray(VTKArray):
             Whether to use row-major (C-style) or column-major (Fortran-style) memory representation. Defaults to ‘C’.
 
         """
-        return cls(numpy.asarray(a, dtype, order))
+        return cls(numpy.asarray(iterable, dtype, order))
