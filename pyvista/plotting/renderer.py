@@ -1132,7 +1132,8 @@ class Renderer(vtkRenderer):
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
                 self.remove_floor()
-                self.add_floor(**self._floor_kwargs)
+                if hasattr(self, '_floor_kwargs'):
+                    self.add_floor(**self._floor_kwargs)
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
