@@ -16,7 +16,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
 import scooby
-from pyvista.utilities import (assert_empty_kwargs, check_depth_peeling,
+from pyvista.utilities import (assert_empty_kwargs,
                                convert_array, convert_string_array, get_array,
                                is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, try_callback, wrap)
@@ -449,6 +449,23 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wraps ``Renderer.enable``."""
         return self.renderer.enable(*args, **kwarg)
 
+    @wraps(Renderer.enable_depth_peeling)
+    def enable_depth_peeling(self, *args, **kwargs):
+        """Wraps ``Renderer.enable_depth_peeling``."""
+        if hasattr(self, 'ren_win'):
+            result = self.renderer.enable_depth_peeling(*args, **kwargs)
+            if result:
+                self.ren_win.AlphaBitPlanesOn()
+
+        return result
+
+    @wraps(Renderer.disable_depth_peeling)
+    def disable_depth_peeling(self):
+        """Wraps ``Renderer.disable_depth_peeling``."""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.AlphaBitPlanesOff()
+            return self.renderer.disable_depth_peeling()
+
 
     ################
 
@@ -476,45 +493,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
         self._key_press_event_callbacks.pop(key)
-
-
-    def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=0.1):
-        """Enable depth peeling if supported.
-
-        Parameters
-        ----------
-        number_of_peels: int
-            The maximum number of peeling layers. A value of 0 means no limit.
-            Default is in ``rcParams``.
-
-        occlusion_ratio : float
-            The threshold under which the algorithm stops to iterate over peel
-            layers. A value of 0.0 means that the rendering have to be exact.
-            Greater values may speed-up the rendering with small impact on the
-            quality.
-
-        Return
-        ------
-        depth_peeling_supported: bool
-            If True, depth peeling is supported.
-
-        """
-        if number_of_peels is None:
-            number_of_peels = rcParams["depth_peeling"]["number_of_peels"]
-        depth_peeling_supported = check_depth_peeling(number_of_peels,
-                                                      occlusion_ratio)
-        if hasattr(self, 'ren_win') and depth_peeling_supported:
-            self.ren_win.AlphaBitPlanesOn()
-            self.renderer.enable_depth_peeling(number_of_peels,
-                                               occlusion_ratio)
-
-        return depth_peeling_supported
-
-    def disable_depth_peeling(self):
-        """Disables depth peeling."""
-        if hasattr(self, 'ren_win'):
-            self.ren_win.AlphaBitPlanesOff()
-            self.renderer.disable_depth_peeling()
 
 
     def store_mouse_position(self, *args):

@@ -9,7 +9,7 @@ import vtk
 from vtk import vtkRenderer
 
 import pyvista
-from pyvista.utilities import wrap
+from pyvista.utilities import wrap, check_depth_peeling
 
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
@@ -125,9 +125,15 @@ class Renderer(vtkRenderer):
 
     def enable_depth_peeling(self, number_of_peels=5, occlusion_ratio=0.1):
         """Enable depth peeling."""
-        self.SetUseDepthPeeling(True)
-        self.SetMaximumNumberOfPeels(number_of_peels)
-        self.SetOcclusionRatio(occlusion_ratio)
+        if number_of_peels is None:
+            number_of_peels = rcParams["depth_peeling"]["number_of_peels"]
+        depth_peeling_supported = check_depth_peeling(number_of_peels,
+                                                      occlusion_ratio)
+        if depth_peeling_supported:
+            self.SetUseDepthPeeling(True)
+            self.SetMaximumNumberOfPeels(number_of_peels)
+            self.SetOcclusionRatio(occlusion_ratio)
+        return depth_peeling_supported
 
     def disable_depth_peeling(self):
         """Disable depth peeling."""
