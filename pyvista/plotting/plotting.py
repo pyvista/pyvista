@@ -880,7 +880,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.update_style()
 
 
-    # TODO: this should be on the renderer....
     def _render(self):
         """Redraw the render window if it exists."""
         if hasattr(self, 'ren_win'):
