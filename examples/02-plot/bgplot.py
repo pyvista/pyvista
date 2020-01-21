@@ -17,5 +17,5 @@ p.add_mesh(pv.Cone())
 ###############################################################################
 
 p = pv.BackgroundPlotter()
-p.add_mesh(pv.Cone())
+p.add_mesh(pv.Sphere())
 p.close()

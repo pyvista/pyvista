@@ -522,25 +522,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def set_focus(self, point):
         """Set focus to a point."""
         self.renderer.set_focus(point)
-        self._render()
+        self.render()
 
     def set_position(self, point, reset=False):
         """Set camera position to a point."""
         self.renderer.set_position(point, reset=reset)
-        self._render()
+        self.render()
 
     def set_viewup(self, vector):
         """Set camera viewup vector."""
         self.renderer.set_viewup(vector)
-        self._render()
-
-    def _render(self):
-        """Redraw the render window if it exists."""
-        if hasattr(self, 'ren_win'):
-            if hasattr(self, 'render_trigger'):
-                self.render_trigger.emit()
-            elif not self._first_time:
-                self.render()
+        self.render()
 
     def add_axes(self, interactive=None, line_width=2,
                  color=None, x_color=None, y_color=None, z_color=None,
@@ -631,7 +623,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
 
-            self._render()
+            self.render()
             Plotter.last_update_time = curr_time
         else:
             if force_redraw:
@@ -2708,7 +2700,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mesh.points = points
 
         if render:
-            self._render()
+            self.render()
 
 
     def _clear_ren_win(self):
@@ -3447,11 +3439,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Plotter hasn't been rendered or was improperly closed
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
 
-        if isinstance(self, Plotter):
-            # TODO: we need a consistent rendering function
-            self.render()
-        else:
-            self._render()
+        self.render()
 
         # debug: this needs to be called twice for some reason,
         img = self.image
@@ -3589,7 +3577,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         self.renderers[self._active_renderer_index].reset_camera()
-        self._render()
+        self.render()
 
     def isometric_view(self):
         """Reset the camera to a default isometric view.
@@ -3704,7 +3692,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the legend actor."""
         if hasattr(self, 'legend'):
             self.remove_actor(self.legend, reset_camera=False)
-            self._render()
+            self.render()
 
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
@@ -3793,7 +3781,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.set_focus(focus)
                 self.set_viewup(viewup)
                 self.renderer.ResetCameraClippingRange()
-                self._render()
+                self.render()
                 if bkg:
                     time.sleep(step)
                 if write_frames:
@@ -4166,4 +4154,5 @@ class Plotter(BasePlotter):
 
     def render(self):
         """Render the main window."""
-        self.ren_win.Render()
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Render()

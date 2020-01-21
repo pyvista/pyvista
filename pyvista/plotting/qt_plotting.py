@@ -316,7 +316,25 @@ def pad_image(arr, max_size=400):
     return resample_image(img, max_size=max_size)
 
 
-class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
+class QVTKRenderWindowInteractorAdapter(QObject):
+    def __init__(self, parent, **kwargs):
+        self.interactor = QVTKRenderWindowInteractor(parent=parent)
+        super(QVTKRenderWindowInteractorAdapter, self).__init__(**kwargs)
+
+    def GetRenderWindow(self):
+        return self.interactor.GetRenderWindow()
+
+    def setWindowTitle(self, title):
+        return self.interactor.setWindowTitle(title)
+
+    def SetInteractorStyle(self, style):
+        return self.interactor.SetInteractorStyle(style)
+
+    def show(self):
+        return self.interactor.show()
+
+
+class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     """Extend QVTKRenderWindowInteractor class.
 
     This adds the methods available to pyvista.Plotter.
@@ -346,26 +364,20 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     signal_set_view_vector = pyqtSignal(tuple, tuple)
     signal_reset_camera = pyqtSignal()
-    signal_render = pyqtSignal()
     signal_enable_trackball_style = pyqtSignal()
     signal_remove_legend = pyqtSignal()
     signal_set_background = pyqtSignal(object)
     signal_remove_actor = pyqtSignal(object)
     allow_quit_keypress = True
 
-    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
-                 border=None, border_color='k', border_width=2.0,
+    def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, auto_update=True):
+                 splitting_position=None, auto_update=True, **kwargs):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
-        QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape, title=title,
-                             border=border, border_color=border_color,
-                             border_width=border_width,
-                             splitting_position=splitting_position)
+        super(QtInteractor, self).__init__(parent=parent, **kwargs)
         self.parent = parent
 
         if multi_samples is None:
@@ -373,7 +385,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         self.signal_set_view_vector.connect(super(QtInteractor, self).view_vector)
         self.signal_reset_camera.connect(super(QtInteractor, self).reset_camera)
-        self.signal_render.connect(super(QtInteractor, self)._render)
         self.signal_enable_trackball_style.connect(super(QtInteractor, self).enable_trackball_style)
         self.signal_remove_legend.connect(super(QtInteractor, self).remove_legend)
         self.signal_set_background.connect(super(QtInteractor, self).set_background)
@@ -497,8 +508,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     def quit(self):
         """Quit application."""
-        BasePlotter.close(self)
-        QVTKRenderWindowInteractor.close(self)
+        super(BackgroundPlotter, self).close()
 
 
     def reset_camera(self):
@@ -510,12 +520,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         """Set the view vector."""
         args = [vector, viewup]
         self.signal_view_vector.emit(*args)
-
-
-    def _render(self):
-        """Update the render window."""
-        self.signal_render.emit()
-
 
     def enable_trackball_style(self):
         """Enable trackball interactor style."""
@@ -540,8 +544,8 @@ class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None,
-                 off_screen=None, auto_update=True, **kwargs):
+    def __init__(self, show=True, app=None, window_size=None,
+                 off_screen=None, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -580,9 +584,8 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setFrameStyle(QFrame.NoFrame)
 
 
-        QtInteractor.__init__(self, parent=self.frame, shape=shape,
-                              off_screen=off_screen, auto_update=auto_update,
-                              **kwargs)
+        super(BackgroundPlotter, self).__init__(parent=self.frame, off_screen=off_screen,
+                                                **kwargs)
         self.app_window.signal_close.connect(self.quit)
         self.add_toolbars(self.app_window)
 
@@ -627,7 +630,7 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addSeparator()
 
         vlayout = QVBoxLayout()
-        vlayout.addWidget(self)
+        vlayout.addWidget(self.interactor)
 
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
@@ -645,6 +648,8 @@ class BackgroundPlotter(QtInteractor):
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
+
+        self.add_callback(self.update_app_icon)
 
         # Keypress events
         self.add_key_event("S", self._qt_screenshot) # shift + s
@@ -667,7 +672,7 @@ class BackgroundPlotter(QtInteractor):
         """
         twait = (rate**-1) * 1000.0
         self.render_timer = QTimer(parent=self.app_window)
-        self.render_timer.timeout.connect(self._render)
+        self.render_timer.timeout.connect(self.render)
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
@@ -754,11 +759,10 @@ class BackgroundPlotter(QtInteractor):
         return self.enable_parallel_projection()
 
     @pyqtSlot()
-    def _render(self):
-        super(BackgroundPlotter, self)._render()
-        self.update_app_icon()
-        self.ren_win.Render() # force rendering
-        return
+    def render(self):
+        """Render the main window."""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Render()
 
     @property
     def window_size(self):
