@@ -2538,8 +2538,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.scalar_bar.SetOrientationToHorizontal()
 
         if label_font_size is None or title_font_size is None:
-            self.scalar_bar.UnconstrainedFontSizeOn()
+            self.scalar_bar.UnconstrainedFontSizeOff()
             self.scalar_bar.AnnotationTextScalingOn()
+        else:
+            self.scalar_bar.UnconstrainedFontSizeOn()
 
         label_text = self.scalar_bar.GetLabelTextProperty()
         anno_text = self.scalar_bar.GetAnnotationTextProperty()
