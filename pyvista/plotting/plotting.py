@@ -277,181 +277,181 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @wraps(Renderer.enable_anti_aliasing)
     def enable_anti_aliasing(self, *args, **kwargs):
-        """Wraps ``Renderer.enable_anti_aliasing``."""
+        """Wrap ``Renderer.enable_anti_aliasing``."""
         self.renderer.enable_anti_aliasing(*args, **kwargs)
 
     @wraps(Renderer.disable_anti_aliasing)
     def disable_anti_aliasing(self, *args, **kwargs):
-        """Wraps ``Renderer.disable_anti_aliasing``."""
+        """Wrap ``Renderer.disable_anti_aliasing``."""
         self.renderer.disable_anti_aliasing(*args, **kwargs)
 
     @wraps(Renderer.set_focus)
     def set_focus(self, *args, **kwargs):
-        """Wraps ``Renderer.set_focus``."""
+        """Wrap ``Renderer.set_focus``."""
         self.renderer.set_focus(*args, **kwargs)
         self._render()
 
     @wraps(Renderer.set_position)
     def set_position(self, *args, **kwargs):
-        """Wraps ``Renderer.set_position``."""
+        """Wrap ``Renderer.set_position``."""
         self.renderer.set_position(*args, **kwargs)
         self._render()
 
     @wraps(Renderer.set_viewup)
     def set_viewup(self, *args, **kwargs):
-        """Wraps ``Renderer.set_viewup``."""
+        """Wrap ``Renderer.set_viewup``."""
         self.renderer.set_viewup(*args, **kwargs)
         self._render()
 
     @wraps(Renderer.add_axes)
     def add_axes(self, *args, **kwargs):
-        """Wraps ``Renderer.add_axes``."""
+        """Wrap ``Renderer.add_axes``."""
         return self.renderer.add_axes(*args, **kwargs)
 
     @wraps(Renderer.hide_axes)
     def hide_axes(self, *args, **kwargs):
-        """Wraps ``Renderer.hide_axes``."""
+        """Wrap ``Renderer.hide_axes``."""
         return self.renderer.hide_axes(*args, **kwargs)
 
     @wraps(Renderer.show_axes)
     def show_axes(self, *args, **kwargs):
-        """Wraps ``Renderer.show_axes``."""
+        """Wrap ``Renderer.show_axes``."""
         return self.renderer.show_axes(*args, **kwargs)
 
     @wraps(Renderer.update_bounds_axes)
     def update_bounds_axes(self, *args, **kwargs):
-        """Wraps ``Renderer.update_bounds_axes``."""
+        """Wrap ``Renderer.update_bounds_axes``."""
         return self.renderer.update_bounds_axes(*args, **kwargs)
 
     @wraps(Renderer.add_actor)
     def add_actor(self, *args, **kwargs):
-        """Wraps ``Renderer.add_actor``."""
+        """Wrap ``Renderer.add_actor``."""
         return self.renderer.add_actor(*args, **kwargs)
 
     @wraps(Renderer.enable_parallel_projection)
     def enable_parallel_projection(self, *args, **kwargs):
-        """Wraps ``Renderer.enable_parallel_projection``."""
+        """Wrap ``Renderer.enable_parallel_projection``."""
         return self.renderer.enable_parallel_projection(*args, **kwargs)
 
     @wraps(Renderer.disable_parallel_projection)
     def disable_parallel_projection(self, *args, **kwargs):
-        """Wraps ``Renderer.disable_parallel_projection``."""
+        """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
     @wraps(Renderer.add_axes_at_origin)
     def add_axes_at_origin(self, *args, **kwargs):
-        """Wraps ``Renderer.add_axes_at_origin``."""
+        """Wrap ``Renderer.add_axes_at_origin``."""
         return self.renderer.add_axes_at_origin(*args, **kwargs)
 
     @wraps(Renderer.show_bounds)
     def show_bounds(self, *args, **kwargs):
-        """Wraps ``Renderer.show_bounds``."""
+        """Wrap ``Renderer.show_bounds``."""
         return self.renderer.show_bounds(*args, **kwargs)
 
     @wraps(Renderer.add_bounds_axes)
     def add_bounds_axes(self, *args, **kwargs):
-        """Wraps ``add_bounds_axes``."""
+        """Wrap ``add_bounds_axes``."""
         return self.renderer.add_bounds_axes(*args, **kwargs)
 
     @wraps(Renderer.add_bounding_box)
     def add_bounding_box(self, *args, **kwargs):
-        """Wraps ``Renderer.add_bounding_box``."""
+        """Wrap ``Renderer.add_bounding_box``."""
         return self.renderer.add_bounding_box(*args, **kwargs)
 
     @wraps(Renderer.remove_bounding_box)
     def remove_bounding_box(self, *args, **kwargs):
-        """Wraps ``Renderer.remove_bounding_box``."""
+        """Wrap ``Renderer.remove_bounding_box``."""
         return self.renderer.remove_bounding_box(*args, **kwargs)
 
     @wraps(Renderer.remove_bounds_axes)
     def remove_bounds_axes(self, *args, **kwargs):
-        """Wraps ``Renderer.remove_bounds_axes``."""
+        """Wrap ``Renderer.remove_bounds_axes``."""
         return self.renderer.remove_bounds_axes(*args, **kwargs)
 
     @wraps(Renderer.show_grid)
     def show_grid(self, *args, **kwargs):
-        """Wraps ``Renderer.show_grid``."""
+        """Wrap ``Renderer.show_grid``."""
         return self.renderer.show_bounds(*args, **kwargs)
 
     @wraps(Renderer.set_scale)
     def set_scale(self, *args, **kwargs):
-        """Wraps ``Renderer.set_scale``."""
+        """Wrap ``Renderer.set_scale``."""
         return self.renderer.set_scale(*args, **kwargs)
 
     @wraps(Renderer.enable_eye_dome_lighting)
     def enable_eye_dome_lighting(self, *args, **kwargs):
-        """Wraps ``Renderer.enable_eye_dome_lighting``."""
+        """Wrap ``Renderer.enable_eye_dome_lighting``."""
         return self.renderer.enable_eye_dome_lighting(*args, **kwargs)
 
     @wraps(Renderer.disable_eye_dome_lighting)
     def disable_eye_dome_lighting(self, *args, **kwargs):
-        """Wraps ``Renderer.disable_eye_dome_lighting``."""
+        """Wrap ``Renderer.disable_eye_dome_lighting``."""
         return self.renderer.disable_eye_dome_lighting(*args, **kwargs)
 
     @wraps(Renderer.reset_camera)
     def reset_camera(self, *args, **kwargs):
-        """Wraps ``Renderer.reset_camera``."""
+        """Wrap ``Renderer.reset_camera``."""
         self.renderer.reset_camera(*args, **kwargs)
         self._render()
 
     @wraps(Renderer.isometric_view)
     def isometric_view(self, *args, **kwargs):
-        """Wraps ``Renderer.isometric_view``."""
+        """Wrap ``Renderer.isometric_view``."""
         return self.renderer.isometric_view(*args, **kwargs)
 
     @wraps(Renderer.view_isometric)
     def view_isometric(self, *args, **kwarg):
-        """Wraps ``Renderer.view_isometric``."""
+        """Wrap ``Renderer.view_isometric``."""
         return self.renderer.view_isometric(*args, **kwarg)
 
     @wraps(Renderer.view_vector)
     def view_vector(self, *args, **kwarg):
-        """Wraps ``Renderer.view_vector``."""
+        """Wrap ``Renderer.view_vector``."""
         return self.renderer.view_vector(*args, **kwarg)
 
     @wraps(Renderer.view_xy)
     def view_xy(self, *args, **kwarg):
-        """Wraps ``Renderer.view_xy``."""
+        """Wrap ``Renderer.view_xy``."""
         return self.renderer.view_xy(*args, **kwarg)
 
     @wraps(Renderer.view_yx)
     def view_yx(self, *args, **kwarg):
-        """Wraps ``Renderer.view_yx``."""
+        """Wrap ``Renderer.view_yx``."""
         return self.renderer.view_yx(*args, **kwarg)
 
     @wraps(Renderer.view_xz)
     def view_xz(self, *args, **kwarg):
-        """Wraps ``Renderer.view_xz``."""
+        """Wrap ``Renderer.view_xz``."""
         return self.renderer.view_xz(*args, **kwarg)
 
     @wraps(Renderer.view_zx)
     def view_zx(self, *args, **kwarg):
-        """Wraps ``Renderer.view_zx``."""
+        """Wrap ``Renderer.view_zx``."""
         return self.renderer.view_zx(*args, **kwarg)
 
     @wraps(Renderer.view_yz)
     def view_yz(self, *args, **kwarg):
-        """Wraps ``Renderer.view_yz``."""
+        """Wrap ``Renderer.view_yz``."""
         return self.renderer.view_yz(*args, **kwarg)
 
     @wraps(Renderer.view_zy)
     def view_zy(self, *args, **kwarg):
-        """Wraps ``Renderer.view_zy``."""
+        """Wrap ``Renderer.view_zy``."""
         return self.renderer.view_zy(*args, **kwarg)
 
     @wraps(Renderer.disable)
     def disable(self, *args, **kwarg):
-        """Wraps ``Renderer.disable``."""
+        """Wrap ``Renderer.disable``."""
         return self.renderer.disable(*args, **kwarg)
 
     @wraps(Renderer.enable)
     def enable(self, *args, **kwarg):
-        """Wraps ``Renderer.enable``."""
+        """Wrap ``Renderer.enable``."""
         return self.renderer.enable(*args, **kwarg)
 
     @wraps(Renderer.enable_depth_peeling)
     def enable_depth_peeling(self, *args, **kwargs):
-        """Wraps ``Renderer.enable_depth_peeling``."""
+        """Wrap ``Renderer.enable_depth_peeling``."""
         if hasattr(self, 'ren_win'):
             result = self.renderer.enable_depth_peeling(*args, **kwargs)
             if result:
@@ -461,7 +461,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @wraps(Renderer.disable_depth_peeling)
     def disable_depth_peeling(self):
-        """Wraps ``Renderer.disable_depth_peeling``."""
+        """Wrap ``Renderer.disable_depth_peeling``."""
         if hasattr(self, 'ren_win'):
             self.ren_win.AlphaBitPlanesOff()
             return self.renderer.disable_depth_peeling()
@@ -469,7 +469,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(self, *args, **kwargs):
-        """Wraps ``Renderer.get_default_cam_pos``."""
+        """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
 
@@ -3362,7 +3362,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             only applies to the active renderer.
 
         """
-
         if all_renderers:
             for renderer in self.renderers:
                 renderer.set_background(color, top=top)
