@@ -362,10 +362,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape, title=title,
-                             border=border, border_color=border_color,
-                             border_width=border_width,
-                             splitting_position=splitting_position)
         self.parent = parent
 
         if multi_samples is None:
