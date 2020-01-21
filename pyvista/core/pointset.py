@@ -24,7 +24,7 @@ log.setLevel('CRITICAL')
 
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
-    
+
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
@@ -132,7 +132,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         # Check if need to make vertex cells
         if self.n_points > 0 and self.n_cells == 0:
             # make vertex cells
-            self.faces = self._make_vertice_cells(self.n_points)
+            self.verts = self._make_vertice_cells(self.n_points)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -196,6 +196,32 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         # sanity check
         if not np.any(self.points):
             raise AssertionError('Empty or invalid file')
+
+    @property
+    def verts(self):
+        """Get the vertice cells."""
+        return vtk_to_numpy(self.GetVerts().GetData())
+
+    @verts.setter
+    def verts(self, verts):
+        """Set the vertice cells"""
+        if verts.dtype != pyvista.ID_TYPE:
+            verts = verts.astype(pyvista.ID_TYPE)
+
+        # get number of verts
+        if verts.ndim == 1:
+            log.debug('efficiency warning')
+            c = 0
+            nverts = 0
+            while c < verts.size:
+                c += verts[c] + 1
+                nverts += 1
+        else:
+            nverts = verts.shape[0]
+
+        vtkcells = vtk.vtkCellArray()
+        vtkcells.SetCells(nverts, numpy_to_vtkIdTypeArray(verts, deep=False))
+        self.SetVerts(vtkcells)
 
     @property
     def lines(self):
@@ -344,7 +370,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
-        file. If ply or stl format is chosen, the face normals are 
+        file. If ply or stl format is chosen, the face normals are
         computed in place to ensure the mesh is properly saved.
 
         Parameters
@@ -772,7 +798,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
-        
+
         Converts the following cell types to their linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
