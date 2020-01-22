@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         self.frame = QFrame()
         vlayout = QVBoxLayout()
         self.vtk_widget = QtInteractor(self.frame)
-        vlayout.addWidget(self.vtk_widget)
+        vlayout.addWidget(self.vtk_widget.interactor)
 
         self.frame.setLayout(vlayout)
         self.setCentralWidget(self.frame)

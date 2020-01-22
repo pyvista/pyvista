@@ -432,7 +432,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         if rcParams["depth_peeling"]["enabled"]:
             for renderer in self.renderers:
-                self.enable_depth_peeling()
+                renderer.enable_depth_peeling()
 
 
 
@@ -536,6 +536,11 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     def remove_actor(self, actor, reset_camera=None):
         """Remove an actor."""
         self.signal_remove_actor.emit(actor)
+
+    def render(self):
+        """Render the main window."""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Render()
 
 
 
@@ -761,8 +766,7 @@ class BackgroundPlotter(QtInteractor):
     @pyqtSlot()
     def render(self):
         """Render the main window."""
-        if hasattr(self, 'ren_win'):
-            self.ren_win.Render()
+        super(BackgroundPlotter, self).render()
 
     @property
     def window_size(self):
