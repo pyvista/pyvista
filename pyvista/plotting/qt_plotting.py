@@ -317,20 +317,27 @@ def pad_image(arr, max_size=400):
 
 
 class QVTKRenderWindowInteractorAdapter(QObject):
+    """Adapter class for QVTKRenderWindowInteractor that uses super()."""
+
     def __init__(self, parent, **kwargs):
+        """Initialize the internal interactor."""
         self.interactor = QVTKRenderWindowInteractor(parent=parent)
         super(QVTKRenderWindowInteractorAdapter, self).__init__(**kwargs)
 
     def GetRenderWindow(self):
+        """Get the render window."""
         return self.interactor.GetRenderWindow()
 
     def setWindowTitle(self, title):
+        """Set the window title."""
         return self.interactor.setWindowTitle(title)
 
     def SetInteractorStyle(self, style):
+        """Set the interactor style."""
         return self.interactor.SetInteractorStyle(style)
 
     def show(self):
+        """Show the window."""
         return self.interactor.show()
 
 
