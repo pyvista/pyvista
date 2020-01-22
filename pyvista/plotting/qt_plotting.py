@@ -687,12 +687,11 @@ class BackgroundPlotter(QtInteractor):
         """Close the plotter."""
         self.app_window.close()
 
-    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False, pickable=True):
+    def add_actor(self, actor, reset_camera=None, name=None, culling=False, pickable=True):
         """Add an actor."""
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
                                                                reset_camera=reset_camera,
                                                                name=name,
-                                                               loc=loc,
                                                                culling=culling,
                                                                pickable=pickable)
         self.update_app_icon()
