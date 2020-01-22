@@ -3973,7 +3973,7 @@ class Plotter(BasePlotter):
 
         if rcParams["depth_peeling"]["enabled"]:
             for renderer in self.renderers:
-                self.enable_depth_peeling()
+                renderer.enable_depth_peeling()
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
