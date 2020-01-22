@@ -350,10 +350,16 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     vtk_cells = mesh.cells
     vtk_cell_type = mesh.celltypes
 
+    # Check that meshio supports all cell types in input mesh
+    pixel_voxel = {8, 11}       # Handle pixels and voxels
+    for cell_type in np.unique(vtk_cell_type):
+        assert cell_type in vtk_to_meshio_type.keys() or cell_type in pixel_voxel, (
+            "meshio does not support VTK type {}.".format(cell_type)
+        )
+
     # Get cells
     cells = {}
     mapper = {}                 # For cell data
-    pixel_voxel = {8, 11}       # Handle pixels and voxels
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         numnodes = vtk_cells[offset]
         cell = vtk_cells[offset+1:offset+1+numnodes]
