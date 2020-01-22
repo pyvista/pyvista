@@ -733,11 +733,6 @@ class BackgroundPlotter(QtInteractor):
             return self.disable_parallel_projection()
         return self.enable_parallel_projection()
 
-    @pyqtSlot()
-    def render(self):
-        """Render the main window."""
-        super(BackgroundPlotter, self).render()
-
     @property
     def window_size(self):
         """Return render window size."""
