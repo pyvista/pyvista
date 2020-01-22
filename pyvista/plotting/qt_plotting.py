@@ -340,6 +340,10 @@ class QVTKRenderWindowInteractorAdapter(QObject):
         """Show the window."""
         return self.interactor.show()
 
+    def close(self):
+        """Close the window."""
+        return self.interactor.close()
+
 
 class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     """Extend QVTKRenderWindowInteractor class.
@@ -495,12 +499,13 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         """Make sure a screenhsot is acquired before closing."""
         if self.allow_quit_keypress:
             BasePlotter._close_callback(self)
-            self.quit()
+            self.close()
 
 
-    def quit(self):
+    def close(self):
         """Quit application."""
-        super(BackgroundPlotter, self).close()
+        BasePlotter.close(self)
+        QVTKRenderWindowInteractorAdapter.close(self)
 
 
     def render(self):
@@ -557,7 +562,7 @@ class BackgroundPlotter(QtInteractor):
 
         super(BackgroundPlotter, self).__init__(parent=self.frame, off_screen=off_screen,
                                                 **kwargs)
-        self.app_window.signal_close.connect(self.quit)
+        self.app_window.signal_close.connect(self._close)
         self.add_toolbars(self.app_window)
 
         # build main menu
@@ -655,12 +660,22 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.close()
 
 
-    def quit(self):
-        """Quit the plotter."""
-        QtInteractor.quit(self)
+    def _close(self):
+        """Close the plotter.
+
+        This function assumes that `self.app_window` is closing
+        or already closed.
+
+        """
+        super(BackgroundPlotter, self).close()
 
     def close(self):
-        """Close the plotter."""
+        """Close the plotter.
+
+        This function closes the window which in turn will
+        close the plotter through `signal_close`.
+
+        """
         self.app_window.close()
 
     def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False, pickable=True):
