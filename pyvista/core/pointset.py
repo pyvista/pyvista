@@ -204,7 +204,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @verts.setter
     def verts(self, verts):
-        """Set the vertice cells"""
+        """Set the vertice cells."""
         if verts.dtype != pyvista.ID_TYPE:
             verts = verts.astype(pyvista.ID_TYPE)
 
