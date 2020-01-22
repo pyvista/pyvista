@@ -369,12 +369,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
     """
 
-    signal_set_view_vector = pyqtSignal(tuple, tuple)
-    signal_reset_camera = pyqtSignal()
-    signal_enable_trackball_style = pyqtSignal()
-    signal_remove_legend = pyqtSignal()
-    signal_set_background = pyqtSignal(object)
-    signal_remove_actor = pyqtSignal(object)
     allow_quit_keypress = True
 
     def __init__(self, parent=None, title=None, off_screen=None,
@@ -389,13 +383,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
-
-        self.signal_set_view_vector.connect(super(QtInteractor, self).view_vector)
-        self.signal_reset_camera.connect(super(QtInteractor, self).reset_camera)
-        self.signal_enable_trackball_style.connect(super(QtInteractor, self).enable_trackball_style)
-        self.signal_remove_legend.connect(super(QtInteractor, self).remove_legend)
-        self.signal_set_background.connect(super(QtInteractor, self).set_background)
-        self.signal_remove_actor.connect(super(QtInteractor, self).remove_actor)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -442,7 +429,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
                 renderer.enable_depth_peeling()
 
 
-
     def add_toolbars(self, main_window):
         """Add the toolbars."""
         def _add_action(tool_bar, key, method):
@@ -453,7 +439,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         # Camera toolbar
         self.default_camera_tool_bar = main_window.addToolBar('Camera Position')
-        _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
+        _view_vector = lambda *args: self.view_vector(*args)
         cvec_setters = {
             # Viewing vector then view up vector
             'Top (-Z)': lambda: _view_vector((0,0,1), (0,1,0)),
@@ -512,37 +498,10 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
             self.quit()
 
 
-
     def quit(self):
         """Quit application."""
         super(BackgroundPlotter, self).close()
 
-
-    def reset_camera(self):
-        """Reset the camera."""
-        self.signal_reset_camera.emit()
-
-
-    def view_vector(self, vector, viewup=None):
-        """Set the view vector."""
-        args = [vector, viewup]
-        self.signal_view_vector.emit(*args)
-
-    def enable_trackball_style(self):
-        """Enable trackball interactor style."""
-        self.signal_enable_trackball_style.emit()
-
-    def remove_legend(self):
-        """Remove the legend."""
-        self.signal_remove_legend.emit()
-
-    def set_background(self, color):
-        """Set the background color."""
-        self.signal_set_background.emit(color)
-
-    def remove_actor(self, actor, reset_camera=None):
-        """Remove an actor."""
-        self.signal_remove_actor.emit(actor)
 
     def render(self):
         """Render the main window."""
