@@ -371,7 +371,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @wraps(Renderer.show_grid)
     def show_grid(self, *args, **kwargs):
         """Wrap ``Renderer.show_grid``."""
-        return self.renderer.show_bounds(*args, **kwargs)
+        return self.renderer.show_grid(*args, **kwargs)
 
     @wraps(Renderer.set_scale)
     def set_scale(self, *args, **kwargs):
