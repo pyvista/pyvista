@@ -2,7 +2,10 @@ import numpy
 from pyvista.utilities.helpers import convert_array, FieldAssociation
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 from vtk.vtkCommonCore import vtkWeakReference
-from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
+try:
+    from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
+except (ModuleNotFoundError, ImportError):
+    from vtk.vtkCommonCore import vtkDataArray, vtkAbstractArray
 
 
 class pyvista_ndarray(VTKArray):

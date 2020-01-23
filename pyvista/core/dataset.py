@@ -8,7 +8,10 @@ import warnings
 
 import numpy as np
 import vtk
-from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
+try:
+    from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
+except (ModuleNotFoundError, ImportError):
+    from vtk.vtkCommonDataModel import vtkDataObject, vtkDataSet
 
 import pyvista
 import pyvista.utilities.fileio as fileio
