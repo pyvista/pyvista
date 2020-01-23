@@ -3639,8 +3639,9 @@ class Plotter(BasePlotter):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
 
         if rcParams["depth_peeling"]["enabled"]:
-            for renderer in self.renderers:
-                renderer.enable_depth_peeling()
+            if self.enable_depth_peeling():
+                for renderer in self.renderers:
+                    renderer.enable_depth_peeling()
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
