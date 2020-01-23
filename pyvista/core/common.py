@@ -13,7 +13,8 @@ import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
                                POINT_DATA_FIELD, convert_array, get_array,
                                is_pyvista_dataset, parse_field_choice,
-                               raise_not_matching, vtk_bit_array_to_char)
+                               raise_not_matching, vtk_bit_array_to_char,
+                               vtk_id_list_to_array)
 
 from .filters import DataSetFilters
 
@@ -1407,7 +1408,7 @@ class Common(DataSetFilters, DataObject):
         return pyansys.CellQuality(dataset)
 
 
-    def find_closest_point(self, point):
+    def find_closest_point(self, point, n=1):
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -1418,7 +1419,11 @@ class Common(DataSetFilters, DataObject):
         Parameters
         ----------
         point : iterable(float)
-            Length 3 coordinate of the point to query
+            Length 3 coordinate of the point to query.
+
+        n : int, optional
+            If greater than ``1``, returns the indices of the ``n`` closest
+            points.
 
         Return
         ------
@@ -1426,10 +1431,17 @@ class Common(DataSetFilters, DataObject):
         """
         if not isinstance(point, collections.Iterable) or len(point) != 3:
             raise TypeError("Given point must be a length three iterable.")
+        if not isinstance(n, int) or n < 1:
+            raise TypeError("`n` must be a positive integer.")
         locator = vtk.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        index = locator.FindClosestPoint(point)
+        if n < 2:
+            index = locator.FindClosestPoint(point)
+        else:
+            id_list = vtk.vtkIdList()
+            locator.FindClosestNPoints(n, point, id_list)
+            index = vtk_id_list_to_array(id_list)
         return index
 
 
