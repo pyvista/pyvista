@@ -672,7 +672,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
         """
         self.point_arrays.append(scalars, name, deep_copy=deep)
-        if set_active or self.active_scalar_info[1] is None:
+        if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalars_info = (FieldAssociation.POINT, name)
 
@@ -838,6 +838,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
         """
         self.cell_arrays.append(scalars, name, deep_copy=deep)
+        if set_active or self.active_scalars_info[1] is None:
+            self.GetCellData().SetActiveScalars(name)
+            self._active_scalars_info = (FieldAssociation.CELL, name)
 
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):

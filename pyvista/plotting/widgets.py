@@ -863,7 +863,7 @@ class WidgetHelper(object):
 
         alg = vtk.vtkThreshold()
         alg.SetInputDataObject(mesh)
-        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         alg.SetUseContinuousCellRange(continuous)
 
         if not hasattr(self, "threshold_meshes"):
@@ -940,7 +940,7 @@ class WidgetHelper(object):
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
         alg.SetComputeScalars(compute_scalars)
-        alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetNumberOfContours(1) # Only one contour level
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
