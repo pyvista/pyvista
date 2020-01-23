@@ -752,6 +752,12 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['font']['color']
 
+        def normalize(point, shape):
+            return (point[0] / shape[1], point[1] / shape[0])
+
+        pointa = normalize(pointa, self.shape)
+        pointb = normalize(pointb, self.shape)
+
         slider_rep = vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
         slider_rep.SetMinimumValue(min)
@@ -763,9 +769,9 @@ class WidgetHelper(object):
         slider_rep.GetCapProperty().SetColor(parse_color(color))
         slider_rep.GetLabelProperty().SetColor(parse_color(color))
         slider_rep.GetTubeProperty().SetColor(parse_color(color))
-        slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedViewport()
+        slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint1Coordinate().SetValue(pointa[0], pointa[1])
-        slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedViewport()
+        slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint2Coordinate().SetValue(pointb[0], pointb[1])
         slider_rep.SetSliderLength(0.05)
         slider_rep.SetSliderWidth(0.05)

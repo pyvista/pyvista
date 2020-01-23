@@ -1407,6 +1407,32 @@ class Common(DataSetFilters, DataObject):
         return pyansys.CellQuality(dataset)
 
 
+    def find_closest_point(self, point):
+        """Find index of closest point in this mesh to the given point.
+
+        If wanting to query many points, use a KDTree with scipy or another
+        library as those implementations will be easier to work with.
+
+        See: https://github.com/pyvista/pyvista-support/issues/107
+
+        Parameters
+        ----------
+        point : iterable(float)
+            Length 3 coordinate of the point to query
+
+        Return
+        ------
+        int : the index of the point in this mesh that is closes to the given point.
+        """
+        if not isinstance(point, collections.Iterable) or len(point) != 3:
+            raise TypeError("Given point must be a length three iterable.")
+        locator = vtk.vtkPointLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        index = locator.FindClosestPoint(point)
+        return index
+
+
 
 class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries."""
