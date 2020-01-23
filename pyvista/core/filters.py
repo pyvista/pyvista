@@ -1598,12 +1598,41 @@ class DataSetFilters(object):
         return dataset.extract_geometry().triangulate().decimate(target_reduction)
 
 
+    def sample_over_line(dataset, pointa, pointb, resolution=None):
+        """Sample a dataset onto a line.
+
+        Parameters
+        ----------
+        pointa : np.ndarray or list
+            Location in [x, y, z].
+
+        pointb : np.ndarray or list
+            Location in [x, y, z].
+
+        resolution : int
+            Number of pieces to divide line into. Defaults to number of cells
+            in the input mesh. Must be a positive integer.
+
+        Return
+        ------
+        sampled_line : pv.PolyData
+            Line object with sampled data from dataset.
+        """
+        if resolution is None:
+            resolution = int(dataset.n_cells)
+        # Make a line and sample the dataset
+        line = pyvista.Line(pointa, pointb, resolution=resolution)
+        
+        sampled_line = line.sample(dataset)
+        return sampled_line
+
+
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
                        title=None, ylabel=None, figsize=None, figure=True,
                        show=True):
-        """Sample a dataset along a high resolution line.
+        """Sample a dataset along a high resolution line and plot.
 
-        Also plot the variables of interest in 2D where the X-axis is distance from
+        Plot the variables of interest in 2D where the X-axis is distance from
         Point A and the Y-axis is the variable of interest. Note that this filter
         returns None.
 
@@ -1645,13 +1674,8 @@ class DataSetFilters(object):
         except ImportError:
             raise ImportError('matplotlib must be available to use this filter.')
 
-        if resolution is None:
-            resolution = int(dataset.n_cells)
-        if not isinstance(resolution, int) or resolution < 0:
-            raise RuntimeError('`resolution` must be a positive integer, not {}'.format(type(resolution)))
-        # Make a line and probe the dataset
-        line = pyvista.Line(pointa, pointb, resolution=resolution)
-        sampled = line.sample(dataset)
+        # Sample on line
+        sampled = DataSetFilters.sample_over_line(dataset, pointa, pointb, resolution)
 
         # Get variable of interest
         if scalars is None:
@@ -1659,7 +1683,7 @@ class DataSetFilters(object):
         values = sampled.get_array(scalars)
         distance = sampled['Distance']
 
-        # Remainder of the is plotting
+        # Remainder is plotting
         if figure:
             plt.figure(figsize=figsize)
         # Plot it in 2D

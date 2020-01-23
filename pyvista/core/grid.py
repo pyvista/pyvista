@@ -94,6 +94,10 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
+            elif isinstance(args[0], np.ndarray):
+                self._from_arrays(args[0], None, None)
+            else:
+                raise TypeError("Type ({}) not understood by `RectilinearGrid`.".format(type(args[0])))
 
         elif len(args) == 3 or len(args) == 2:
             if all(isinstance(arg, np.ndarray) for arg in args):
@@ -121,7 +125,12 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         return {'.vtk': vtk.vtkRectilinearGridWriter, '.vtr': vtk.vtkXMLRectilinearGridWriter}
 
 
-    def _from_arrays(self, x, y, z):
+    def _update_dimensions(self):
+        """Update the dimensions if coordinates have changed."""
+        return self.SetDimensions(len(self.x), len(self.y), len(self.z))
+
+
+    def _from_arrays(self, x, y=None, z=None):
         """Create VTK rectilinear grid directly from numpy arrays.
 
         Each array gives the uniques coordinates of the mesh along each axial
@@ -140,24 +149,37 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             Coordinates of the nodes in z direction.
 
         """
+        # Set the coordinates along each axial direction
+        # Must at least be an x array
         x = np.unique(x.ravel())
-        y = np.unique(y.ravel())
-        z = np.unique(z.ravel())
-        # Set the cell spacings and dimensions of the grid
-        self.SetDimensions(len(x), len(y), len(z))
         self.SetXCoordinates(numpy_to_vtk(x))
-        self.SetYCoordinates(numpy_to_vtk(y))
-        self.SetZCoordinates(numpy_to_vtk(z))
+        if y is not None:
+            y = np.unique(y.ravel())
+            self.SetYCoordinates(numpy_to_vtk(y))
+        if z is not None:
+            z = np.unique(z.ravel())
+            self.SetZCoordinates(numpy_to_vtk(z))
+        # Ensure dimensions are properly set
+        self._update_dimensions()
+
+
+    @property
+    def meshgrid(self):
+        """Return the a meshgrid of numpy arrays for this mesh.
+
+        This simply returns a ``numpy.meshgrid`` of the coordinates for this
+        mesh in ``ij`` indexing.
+
+        """
+        return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
 
     @property
     def points(self):
-        """Return a pointer to the points as a numpy object."""
-        x = vtk_to_numpy(self.GetXCoordinates())
-        y = vtk_to_numpy(self.GetYCoordinates())
-        z = vtk_to_numpy(self.GetZCoordinates())
-        xx, yy, zz = np.meshgrid(x,y,z, indexing='ij')
+        """Return all of the points as an n by 3 numpy array."""
+        xx, yy, zz = self.meshgrid
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
+
 
     @points.setter
     def points(self, points):
@@ -183,6 +205,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     def x(self, coords):
         """Set the coordinates along the X-direction."""
         self.SetXCoordinates(numpy_to_vtk(coords))
+        self._update_dimensions()
         self.Modified()
 
     @property
@@ -194,6 +217,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     def y(self, coords):
         """Set the coordinates along the Y-direction."""
         self.SetYCoordinates(numpy_to_vtk(coords))
+        self._update_dimensions()
         self.Modified()
 
     @property
@@ -206,26 +230,22 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     def z(self, coords):
         """Set the coordinates along the Z-direction."""
         self.SetZCoordinates(numpy_to_vtk(coords))
+        self._update_dimensions()
         self.Modified()
 
 
-    # @property
-    # def quality(self):
-    #     """
-    #     Computes the minimum scaled jacobian of each cell.  Cells that have
-    #     values below 0 are invalid for a finite element analysis.
-    #
-    #     Returns
-    #     -------
-    #     cellquality : np.ndarray
-    #         Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
-    #
-    #     Notes
-    #     -----
-    #     Requires pyansys to be installed.
-    #
-    #     """
-    #     return UnstructuredGrid(self).quality
+    @Grid.dimensions.setter
+    def dimensions(self, dims):
+        """Do not let the dimensions of the RectilinearGrid be set."""
+        raise AttributeError("The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.")
+
+
+    def cast_to_structured_grid(self):
+        """Cast this rectilinear grid to a :class:`pyvista.StructuredGrid`."""
+        alg = vtk.vtkRectilinearGridToPointSet()
+        alg.SetInputData(self)
+        alg.Update()
+        return _get_output(alg)
 
 
 

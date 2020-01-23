@@ -140,7 +140,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
@@ -382,7 +382,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
@@ -453,7 +453,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
@@ -601,6 +601,96 @@ class WidgetHelper(object):
         return
 
 
+    def add_text_slider_widget(self, callback, data, value=None,
+                              pointa=(.4, .9), pointb=(.9, .9),
+                              color=None, event_type='end'):
+        """Add a text slider bar widget.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes a single argument, the value of this slider widget,
+        and performs a task with that value.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called every time the slider is updated. This should take
+            a single parameter: the float value of the slider
+
+        data: list
+            The list of possible values displayed on the slider bar
+
+        value : float, optional
+            The starting value of the slider
+
+        pointa : tuple(float)
+            The relative coordinates of the left point of the slider on the
+            display port
+
+        pointb : tuple(float)
+            The relative coordinates of the right point of the slider on the
+            display port
+
+        color : string or 3 item list, optional, defaults to white
+            Either a string, rgb list, or hex color string.
+
+        event_type: str
+            Either 'start', 'end' or 'always', this defines how often the
+            slider interacts with the callback.
+
+        Returns
+        -------
+        slider_widget: vtk.vtkSliderWidget
+            The VTK slider widget configured to display text.
+
+        """
+        if not isinstance(data, list):
+            raise TypeError("The `data` parameter must be a list "
+                            "but {} was given : ", type(data))
+        n_states = len(data)
+        if n_states == 0:
+            raise ValueError("The input list of values is empty")
+        delta = (n_states - 1) / float(n_states)
+        # avoid division by zero in case there is only one element
+        delta = 1 if delta == 0 else delta
+
+        def _the_callback(value):
+            if isinstance(value, float):
+                idx = int(value / delta)
+                # handle limit index
+                if idx == n_states:
+                    idx = n_states - 1
+                if hasattr(callback, '__call__'):
+                    try_callback(callback, data[idx])
+            return
+
+        slider_widget = self.add_slider_widget(callback=_the_callback, rng=[0, n_states - 1],
+                                               value=value,
+                                               pointa=pointa, pointb=pointb,
+                                               color=color, event_type=event_type)
+        slider_rep = slider_widget.GetRepresentation()
+        slider_rep.ShowSliderLabelOff()
+
+        def title_callback(widget, event):
+            value = widget.GetRepresentation().GetValue()
+            idx = int(value / delta)
+            # handle limit index
+            if idx == n_states:
+                idx = n_states - 1
+            slider_rep.SetTitleText(data[idx])
+
+        if event_type == 'start':
+            slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, title_callback)
+        elif event_type == 'end':
+            slider_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, title_callback)
+        elif event_type == 'always':
+            slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, title_callback)
+        else:
+            raise ValueError("Expected value for `event_type` is 'start',"
+                             " 'end' or 'always': {} was given.".format(event_type))
+        title_callback(slider_widget, None)
+        return slider_widget
+
+
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
@@ -662,6 +752,12 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['font']['color']
 
+        def normalize(point, shape):
+            return (point[0] / shape[1], point[1] / shape[0])
+
+        pointa = normalize(pointa, self.shape)
+        pointb = normalize(pointb, self.shape)
+
         slider_rep = vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
         slider_rep.SetMinimumValue(min)
@@ -673,9 +769,9 @@ class WidgetHelper(object):
         slider_rep.GetCapProperty().SetColor(parse_color(color))
         slider_rep.GetLabelProperty().SetColor(parse_color(color))
         slider_rep.GetTubeProperty().SetColor(parse_color(color))
-        slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedViewport()
+        slider_rep.GetPoint1Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint1Coordinate().SetValue(pointa[0], pointa[1])
-        slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedViewport()
+        slider_rep.GetPoint2Coordinate().SetCoordinateSystemToNormalizedDisplay()
         slider_rep.GetPoint2Coordinate().SetValue(pointb[0], pointb[1])
         slider_rep.SetSliderLength(0.05)
         slider_rep.SetSliderWidth(0.05)
@@ -752,7 +848,7 @@ class WidgetHelper(object):
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for threshold widget.')
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
@@ -822,7 +918,7 @@ class WidgetHelper(object):
         """
         if isinstance(mesh, pyvista.MultiBlock):
             raise TypeError('MultiBlock datasets are not supported for this widget.')
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
         if mesh.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have data arrays.')
@@ -997,7 +1093,7 @@ class WidgetHelper(object):
             control how the mesh is displayed.
 
         """
-        name = kwargs.get('name', str(hex(id(mesh))))
+        name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
 
@@ -1162,6 +1258,109 @@ class WidgetHelper(object):
         return
 
 
+    def add_checkbox_button_widget(self, callback, value=False,
+                                   position=(10., 10.), size=50, border_size=5,
+                                   color_on='blue', color_off='grey',
+                                   background_color='white'):
+        """Add a checkbox button widget to the scene.
+
+        This is useless without a callback function. You can pass a callable
+        function that takes a single argument, the state of this button widget
+        and performs a task with that value.
+
+        Parameters
+        ----------
+        callback : callable
+            The method called every time the button is clicked. This should take
+            a single parameter: the bool value of the button
+
+        value : bool
+            The default state of the button
+
+        position: tuple(float)
+            The absolute coordinates of the bottom left point of the button
+
+        size : int
+            The size of the button in number of pixels
+
+        border_size : int
+            The size of the borders of the button in pixels
+
+        color_on : string or 3 item list, optional
+            The color used when the button is checked. Default is 'blue'
+
+        color_off : string or 3 item list, optional
+            The color used when the button is not checked. Default is 'grey'
+
+        background_color : string or 3 item list, optional
+            The background color of the button. Default is 'white'
+
+        Returns
+        -------
+        button_widget: vtk.vtkButtonWidget
+            The VTK button widget configured as a checkbox button.
+
+        """
+        if not hasattr(self, "button_widgets"):
+            self.button_widgets = []
+
+        def create_button(color1, color2, color3, dims=[size, size, 1]):
+            color1 = np.array(parse_color(color1)) * 255
+            color2 = np.array(parse_color(color2)) * 255
+            color3 = np.array(parse_color(color3)) * 255
+
+            n_points = dims[0] * dims[1]
+            button = pyvista.UniformGrid(dims)
+            arr = np.array([color1] * n_points).reshape(dims[0], dims[1], 3)  # fill with color1
+            arr[1:dims[0]-1, 1:dims[1]-1] = color2  # apply color2
+            arr[
+                border_size:dims[0]-border_size,
+                border_size:dims[1]-border_size
+            ] = color3  # apply color3
+            button.point_arrays['texture'] = arr.reshape(n_points, 3).astype(np.uint8)
+            return button
+
+        button_on = create_button(color_on, background_color, color_on)
+        button_off = create_button(color_on, background_color, color_off)
+
+        bounds = [
+            position[0], position[0] + size,
+            position[1], position[1] + size,
+            0., 0.
+        ]
+
+        button_rep = vtk.vtkTexturedButtonRepresentation2D()
+        button_rep.SetNumberOfStates(2)
+        button_rep.SetState(value)
+        button_rep.SetButtonTexture(0, button_off)
+        button_rep.SetButtonTexture(1, button_on)
+        button_rep.SetPlaceFactor(1)
+        button_rep.PlaceWidget(bounds)
+
+        button_widget = vtk.vtkButtonWidget()
+        button_widget.SetInteractor(self.iren)
+        button_widget.SetRepresentation(button_rep)
+        button_widget.SetCurrentRenderer(self.renderer)
+        button_widget.On()
+
+        def _the_callback(widget, event):
+            state = widget.GetRepresentation().GetState()
+            if hasattr(callback, '__call__'):
+                try_callback(callback, bool(state))
+
+        button_widget.AddObserver(vtk.vtkCommand.StateChangedEvent, _the_callback)
+        self.button_widgets.append(button_widget)
+        return button_widget
+
+    def clear_button_widgets(self):
+        """Disable all of the button widgets."""
+        if hasattr(self, 'button_widgets'):
+            for widget in self.button_widgets:
+                widget.Off()
+            del self.button_widgets
+        return
+
+
     def close(self):
         """Close the widgets."""
         self.clear_box_widgets()
@@ -1170,3 +1369,4 @@ class WidgetHelper(object):
         self.clear_slider_widgets()
         self.clear_sphere_widgets()
         self.clear_spline_widgets()
+        self.clear_button_widgets()

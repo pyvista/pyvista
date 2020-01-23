@@ -21,14 +21,12 @@ def test_widget_box():
     func = lambda box: box # Does nothing
     p.add_mesh(mesh)
     p.add_box_widget(callback=func)
-    p.clear_box_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda box, widget: box # Does nothing
     p.add_mesh(mesh)
     p.add_box_widget(callback=func, pass_widget=True)
-    p.clear_box_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -42,28 +40,24 @@ def test_widget_plane():
     func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, implicit=True)
-    p.clear_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda normal, origin, widget: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=True)
-    p.clear_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda normal, origin: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, implicit=False)
-    p.clear_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda normal, origin, widget: normal # Does nothing
     p.add_mesh(mesh)
     p.add_plane_widget(callback=func, pass_widget=True, implicit=False)
-    p.clear_plane_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -85,21 +79,31 @@ def test_widget_line():
     func = lambda line: line # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func)
-    p.clear_line_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda line, widget: line # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func, pass_widget=True)
-    p.clear_line_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda a, b: (a, b) # Does nothing
     p.add_mesh(mesh)
     p.add_line_widget(callback=func, use_vertices=True)
-    p.clear_line_widgets()
+    p.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_widget_text_slider():
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    func = lambda value: value # Does nothing
+    p.add_mesh(mesh)
+    with pytest.raises(TypeError, match='must be a list'):
+        p.add_text_slider_widget(callback=func, data='foo')
+    with pytest.raises(ValueError, match='list of values is empty'):
+        p.add_text_slider_widget(callback=func, data=[])
+    p.add_text_slider_widget(callback=func, data=['foo', 'bar'])
     p.close()
 
 
@@ -109,7 +113,6 @@ def test_widget_slider():
     func = lambda value: value # Does nothing
     p.add_mesh(mesh)
     p.add_slider_widget(callback=func, rng=[0,10])
-    p.clear_slider_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -122,14 +125,12 @@ def test_widget_slider():
     with pytest.raises(ValueError, match='value for `event_type`'):
         p.add_slider_widget(callback=func, rng=[0,10],
                             event_type='foo')
-    p.clear_slider_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda value, widget: value # Does nothing
     p.add_mesh(mesh)
     p.add_slider_widget(callback=func, rng=[0,10], pass_widget=True)
-    p.clear_slider_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -153,19 +154,16 @@ def test_widget_spline():
     func = lambda spline: spline # Does nothing
     p.add_mesh(mesh)
     p.add_spline_widget(callback=func)
-    p.clear_spline_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda spline, widget: spline # Does nothing
     p.add_mesh(mesh)
     p.add_spline_widget(callback=func, pass_widget=True, color=None, show_ribbon=True)
-    p.clear_spline_widgets()
     p.close()
 
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh_slice_spline(mesh)
-    p.clear_spline_widgets()
     p.close()
 
 
@@ -174,12 +172,19 @@ def test_widget_sphere():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda center: center # Does nothing
     p.add_sphere_widget(callback=func, center=(0, 0, 0))
-    p.clear_sphere_widgets()
     p.close()
 
     nodes = np.array([[-1,-1,-1], [1,1,1]])
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     func = lambda center: center # Does nothing
     p.add_sphere_widget(callback=func, center=nodes)
-    p.clear_sphere_widgets()
+    p.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_widget_checkbox_button():
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    func = lambda value: value # Does nothing
+    p.add_mesh(mesh)
+    p.add_checkbox_button_widget(callback=func)
     p.close()
