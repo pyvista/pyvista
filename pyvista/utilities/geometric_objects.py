@@ -153,7 +153,7 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Make all the nodes in the grid
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
-    dz = height / z_resolution
+    dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
