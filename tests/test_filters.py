@@ -71,12 +71,12 @@ def test_clip_box_composite():
 def test_clip_surface():
     surface = pyvista.Cone(direction=(0,0,-1),
                            height=3.0, radius=1, resolution=50, )
-    xx = yy = zz = 1 - np.linspace(0, 51, 51) * 2 / 50
+    xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False)
-    assert clipped.n_points < dataset.n_points
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
     clipped = dataset.clip_surface(surface, invert=False, compute_distance=True)
-    assert clipped.n_points < dataset.n_points
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
 
 
