@@ -350,24 +350,36 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     vtk_cells = mesh.cells
     vtk_cell_type = mesh.celltypes
 
+    # Check that meshio supports all cell types in input mesh
+    pixel_voxel = {8, 11}       # Handle pixels and voxels
+    for cell_type in np.unique(vtk_cell_type):
+        assert cell_type in vtk_to_meshio_type.keys() or cell_type in pixel_voxel, (
+            "meshio does not support VTK type {}.".format(cell_type)
+        )
+
     # Get cells
-    cells = {k: [] for k in np.unique(vtk_cell_type)}
-    if 8 in cells.keys():
-        cells[9] = cells.pop(8)                 # Handle pixels
-    if 11 in cells.keys():
-        cells[12] = cells.pop(11)               # Handle voxels
-    mapper = {k: [] for k in cells.keys()}      # For cell data
+    cells = {}
+    mapper = {}                 # For cell data
     for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
         numnodes = vtk_cells[offset]
         cell = vtk_cells[offset+1:offset+1+numnodes]
-        cell = cell if cell_type not in {8, 11} \
-            else cell[[ 0, 1, 3, 2 ]] if cell_type == 8 \
-            else cell[[ 0, 1, 3, 2, 4, 5, 7, 6 ]]
-        cell_type = cell_type if cell_type not in {8, 11} else cell_type+1
-        cells[cell_type].append(cell)
-        mapper[cell_type].append(i)
-    cells = {vtk_to_meshio_type[k]: np.vstack(v) for k, v in cells.items()}
-    mapper = {vtk_to_meshio_type[k]: v for k, v in mapper.items()}
+        cell = (
+            cell if cell_type not in pixel_voxel
+            else cell[[0, 1, 3, 2]] if cell_type == 8
+            else cell[[0, 1, 3, 2, 4, 5, 7, 6]]
+        )
+        cell_type = cell_type if cell_type not in pixel_voxel else cell_type+1
+        cell_type = (
+            vtk_to_meshio_type[cell_type] if cell_type != 7
+            else "polygon{}".format(numnodes)
+        )
+        if cell_type not in cells.keys():
+            cells[cell_type] = [ cell ]
+            mapper[cell_type] = [ i ]
+        else:
+            cells[cell_type].append(cell)
+            mapper[cell_type].append(i)
+    cells = {k: np.vstack(v) for k, v in cells.items()}
 
     # Get point data
     point_data = {k.replace(" ", "_"): v for k, v in mesh.point_arrays.items()}
