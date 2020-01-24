@@ -603,6 +603,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     #### Everything else ####
 
+    def render(self):
+        """Render the main window."""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Render()
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -3819,8 +3823,3 @@ class Plotter(BasePlotter):
         """
         logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
-
-    def render(self):
-        """Render the main window."""
-        if hasattr(self, 'ren_win'):
-            self.ren_win.Render()

@@ -509,12 +509,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         QVTKRenderWindowInteractorAdapter.close(self)
 
 
-    def render(self):
-        """Render the main window."""
-        if hasattr(self, 'ren_win'):
-            self.ren_win.Render()
-
-
 
 class BackgroundPlotter(QtInteractor):
     """Qt interactive plotter."""
