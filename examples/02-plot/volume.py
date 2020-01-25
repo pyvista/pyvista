@@ -32,10 +32,10 @@ vol.plot(volume=True, cmap="bone", cpos=cpos)
 # Opacity Mappings
 # ++++++++++++++++
 #
-# Or use the :func:`pyvista.BasePlotter.add_volume` method like below.
+# Or use the :func:`pyvista.BaseBackgroundPlotter.add_volume` method like below.
 # Note that here we use a non-default opacity mapping to a sigmoid:
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_volume(vol, cmap="bone", opacity="sigmoid")
 p.camera_position = cpos
 p.show()
@@ -44,7 +44,7 @@ p.show()
 # You can also use a custom opacity mapping
 opacity = [0, 0, 0, 0.1, 0.3, 0.6, 1]
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_volume(vol, cmap="viridis", opacity=opacity)
 p.camera_position = cpos
 p.show()
@@ -52,7 +52,7 @@ p.show()
 ###############################################################################
 # We can also use a shading technique when volume rendering with the ``shade``
 # option
-p = pv.Plotter(shape=(1,2))
+p = pv.BackgroundPlotter(shape=(1,2))
 p.add_volume(vol, cmap="viridis", opacity=opacity, shade=False)
 p.add_text("No shading")
 p.subplot(0,1)
@@ -70,7 +70,7 @@ p.show()
 
 head = examples.download_head()
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_volume(head, cmap="cool", opacity="sigmoid_6")
 p.camera_position = [(-228.0, -418.0, -158.0), (94.0, 122.0, 82.0), (-0.2, -0.3, 0.9)]
 p.show()
@@ -79,7 +79,7 @@ p.show()
 
 bolt_nut = examples.download_bolt_nut()
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_volume(bolt_nut, cmap="coolwarm", opacity="sigmoid_5")
 p.show()
 
@@ -88,7 +88,7 @@ p.show()
 
 frog = examples.download_frog()
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_volume(frog, cmap="viridis", opacity="sigmoid_6")
 p.camera_position = [(929., 1067., -278.9),
                      (249.5, 234.5, 101.25),

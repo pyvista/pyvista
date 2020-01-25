@@ -27,7 +27,7 @@ cp = [
 ###############################################################################
 # Let's apply the gaussian smoothing with different values of standard
 # deviation.
-p = pv.Plotter(shape=(2, 2))
+p = pv.BackgroundPlotter(shape=(2, 2))
 
 p.subplot(0, 0)
 p.add_text("Original Image", font_size=24)
@@ -63,7 +63,7 @@ dargs = dict(clim=smoothed_data.get_data_range(),
 
 n = [100, 150, 200, 245, 255]
 
-p = pv.Plotter(shape=(1, 2), notebook=0)
+p = pv.BackgroundPlotter(shape=(1, 2), notebook=0)
 p.subplot(0, 0)
 p.add_text("Original Image", font_size=24)
 # p.add_mesh(data.contour(n), **dargs)

@@ -22,7 +22,7 @@ from pyvista import examples
 mesh = examples.download_st_helens().warp_by_scalar()
 
 # First a default plot with jet colormap
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 # Add the data, use active scalar for coloring, and show the scalar bar
 p.add_mesh(mesh)
 # Display the scene
@@ -32,13 +32,13 @@ p.show()
 # We could also plot the scene with an interactive scalar bar to move around
 # and place where we like by specifying passing keyword arguments to control
 # the scalar bar via the ``scalar_bar_args`` parameter in
-# :func:`pyvista.BasePlotter.add_mesh`. The keyword arguments to control the
-# scalar bar are defined in :func:`pyvista.BasePlotter.add_scalar_bar`.
+# :func:`pyvista.BaseBackgroundPlotter.add_mesh`. The keyword arguments to control the
+# scalar bar are defined in :func:`pyvista.BaseBackgroundPlotter.add_scalar_bar`.
 
 # create dictionary of parameters to control scalar bar
 sargs = dict(interactive=True)  # Simply make the bar interactive
 
-p = pv.Plotter(notebook=False)  # If in IPython, be sure to show the scene
+p = pv.BackgroundPlotter(notebook=False)  # If in IPython, be sure to show the scene
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 # Remove from plotters so output is not produced in docs
@@ -53,7 +53,7 @@ pv.plotting._ALL_PLOTTERS.clear()
 # Set a custom position and size
 sargs = dict(height=0.25, vertical=True, position_x=0.05, position_y=0.05)
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 
@@ -71,14 +71,14 @@ sargs = dict(
     font_family="arial",
 )
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, scalar_bar_args=sargs)
 p.show()
 
 
 ###############################################################################
 # Labelling values outside of the scalar range
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, clim=[1000, 2000],
            below_color='blue', above_color='red',
            scalar_bar_args=sargs)
@@ -95,6 +95,6 @@ annotations = {
     805.3: "Cutoff value",
 }
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, scalars='Elevation', annotations=annotations)
 p.show()

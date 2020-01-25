@@ -18,7 +18,7 @@ z = np.sin(r)
 grid = pv.StructuredGrid(x, y, z)
 
 # Create a plotter object and set the scalars to the Z height
-plotter = pv.Plotter()
+plotter = pv.BackgroundPlotter()
 plotter.add_mesh(grid, scalars=z.ravel())
 
 # setup camera and close

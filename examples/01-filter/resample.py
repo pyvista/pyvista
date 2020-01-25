@@ -20,7 +20,7 @@ data_to_probe = examples.load_uniform()
 
 ###############################################################################
 # Plot the two datasets
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(data_to_probe, opacity=0.5)
 p.show()
@@ -45,7 +45,7 @@ surface = examples.download_saddle_surface()
 points = examples.download_sparse_points()
 
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(points, point_size=30.0, render_points_as_spheres=True)
 p.add_mesh(surface)
 p.show()
@@ -56,7 +56,7 @@ p.show()
 interpolated = surface.interpolate(points, radius=12.0)
 
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(points, point_size=30.0, render_points_as_spheres=True)
 p.add_mesh(interpolated, scalars="val")
 p.show()

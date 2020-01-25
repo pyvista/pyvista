@@ -12,10 +12,10 @@ from pyvista import examples
 ###############################################################################
 # This example shows how to create a multi-window plotter by specifying the
 # ``shape`` parameter.  The window generated is a two by two window by setting
-# ``shape=(2, 2)``. Use the :func:`pyvista.BasePlotter.subplot` function to
+# ``shape=(2, 2)``. Use the :func:`pyvista.BaseBackgroundPlotter.subplot` function to
 # select the subplot you wish to be the active subplot.
 
-plotter = pv.Plotter(shape=(2, 2))
+plotter = pv.BackgroundPlotter(shape=(2, 2))
 
 plotter.subplot(0, 0)
 plotter.add_text("Render Window 0", font_size=30)
@@ -43,7 +43,7 @@ plotter.show()
 
 
 ###############################################################################
-plotter = pv.Plotter(shape=(1, 2))
+plotter = pv.BackgroundPlotter(shape=(1, 2))
 
 # Note that the (0, 0) location is active by default
 # load and plot an airplane on the left half of the screen
@@ -69,7 +69,7 @@ pv.rcParams['multi_rendering_splitting_position'] = 0.40
 
 # shape="3|1" means 3 plots on the left and 1 on the right,
 # shape="4/2" means 4 plots on top of 2 at bottom.
-plotter = pv.Plotter(shape='3|1', window_size=(1000,1200))
+plotter = pv.BackgroundPlotter(shape='3|1', window_size=(1000,1200))
 
 plotter.subplot(0)
 plotter.add_text("Airplane Example")

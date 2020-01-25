@@ -13,8 +13,8 @@ from pyvista import examples
 # Load an interesting example of geometry
 mesh = examples.load_random_hills()
 
-# Establish geometry within a pv.Plotter()
-p = pv.Plotter()
+# Establish geometry within a pv.BackgroundPlotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, color=True)
 p.show()
 

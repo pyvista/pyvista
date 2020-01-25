@@ -23,7 +23,7 @@ b = [mesh.bounds[1], mesh.bounds[3], mesh.bounds[5]]
 # Preview how this line intersects this mesh
 line = pv.Line(a, b)
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, style="wireframe", color="w")
 p.add_mesh(line, color="b")
 p.show()
@@ -47,7 +47,7 @@ b = [mesh.center[0], mesh.bounds[3], mesh.bounds[5]]
 # Preview how this line intersects this mesh
 line = pv.Line(a, b)
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh)
 p.add_mesh(line, color="white", line_width=10)
 p.add_point_labels(

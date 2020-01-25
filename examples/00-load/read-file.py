@@ -36,9 +36,9 @@ cpos = mesh.plot()
 
 ###############################################################################
 # You can also take a screenshot without creating an interactive plot window
-# using the ``Plotter``:
+# using the ``BackgroundPlotter``:
 
-plotter = pv.Plotter(off_screen=True)
+plotter = pv.BackgroundPlotter(off_screen=True)
 plotter.add_mesh(mesh)
 plotter.show(screenshot="myscreenshot.png")
 

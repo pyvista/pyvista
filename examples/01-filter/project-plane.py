@@ -22,7 +22,7 @@ origin[-1] -= poly.length / 3.0
 projected = poly.project_points_to_plane(origin=origin)
 
 # Display the results
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(poly)
 p.add_mesh(projected)
 p.show()

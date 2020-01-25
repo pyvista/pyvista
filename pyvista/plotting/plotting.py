@@ -81,6 +81,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     """
 
+    last_update_time = 0.0
     mouse_position = None
     click_position = None
 
@@ -922,21 +923,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
             stime = 1
 
         curr_time = time.time()
-        if Plotter.last_update_time > curr_time:
-            Plotter.last_update_time = curr_time
+        if BasePlotter.last_update_time > curr_time:
+            BasePlotter.last_update_time = curr_time
 
         if not hasattr(self, 'iren'):
             return
 
         update_rate = self.iren.GetDesiredUpdateRate()
-        if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
+        if (curr_time - BasePlotter.last_update_time) > (1.0/update_rate):
             self.right_timer_id = self.iren.CreateRepeatingTimer(stime)
 
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
 
             self.render()
-            Plotter.last_update_time = curr_time
+            BasePlotter.last_update_time = curr_time
         else:
             if force_redraw:
                 self.iren.Render()
@@ -3565,7 +3566,6 @@ class Plotter(BasePlotter):
 
     """
 
-    last_update_time = 0.0
     q_pressed = False
     right_timer_id = -1
 

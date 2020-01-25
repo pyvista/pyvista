@@ -1,8 +1,8 @@
 """
-BackgroundPlotter example.
+BackgroundBackgroundPlotter example.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This simple sphinx example uses BackgroundPlotter.
+This simple sphinx example uses BackgroundBackgroundPlotter.
 
 """
 

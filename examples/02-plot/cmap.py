@@ -102,7 +102,7 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 # must have Colorcet installed in your Python environment:
 # ``pip install colorcet``
 
-p = pv.Plotter(shape=(2, 2), border=False)
+p = pv.BackgroundPlotter(shape=(2, 2), border=False)
 p.subplot(0, 0)
 p.add_mesh(mesh, cmap="fire", lighting=True, stitle="Colorcet Fire")
 

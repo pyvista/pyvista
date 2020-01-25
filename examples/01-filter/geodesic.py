@@ -18,7 +18,7 @@ geodesic = sphere.geodesic(0, sphere.n_points - 1)
 ###############################################################################
 # Render the path along the sphere
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(geodesic, line_width=10, color="red", label="Geodesic Path")
 p.add_mesh(sphere, show_edges=True)
 p.camera_position = [-1, -1, 1]

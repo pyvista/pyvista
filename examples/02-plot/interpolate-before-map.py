@@ -37,7 +37,7 @@ cyl = pv.Cylinder(direction=(0,0,1), height=2).elevation()
 # Common display argument to make sure all else is constant
 dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True)
 
-p = pv.Plotter(shape=(1,2))
+p = pv.BackgroundPlotter(shape=(1,2))
 p.add_mesh(cyl, interpolate_before_map=False,
            stitle='Elevation - not interpolated', **dargs)
 p.subplot(0,1)
@@ -61,7 +61,7 @@ p.show()
 dargs = dict(scalars='Elevation', cmap='rainbow', show_edges=True,
              style='wireframe')
 
-p = pv.Plotter(shape=(1,2))
+p = pv.BackgroundPlotter(shape=(1,2))
 p.add_mesh(cyl, interpolate_before_map=False,
            stitle='Elevation - not interpolated', **dargs)
 p.subplot(0,1)
@@ -87,7 +87,7 @@ wavelet = pv.Wavelet().clip('x')
 # Common display argument to make sure all else is constant
 dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True)
 
-p = pv.Plotter(shape=(1,2))
+p = pv.BackgroundPlotter(shape=(1,2))
 p.add_mesh(wavelet, interpolate_before_map=False,
            stitle='RTData - not interpolated', **dargs)
 p.subplot(0,1)
@@ -108,7 +108,7 @@ p.show()
 
 dargs = dict(scalars='RTData', cmap='rainbow', show_edges=True, n_colors=8)
 
-p = pv.Plotter(shape=(1,2))
+p = pv.BackgroundPlotter(shape=(1,2))
 p.add_mesh(wavelet, interpolate_before_map=False,
            stitle='RTData - not interpolated', **dargs)
 p.subplot(0,1)

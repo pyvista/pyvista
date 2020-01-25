@@ -15,9 +15,9 @@ mesh = pv.read(filename)
 
 ###############################################################################
 # You can also take a screenshot without creating an interactive plot window
-# using the :class:`pyvista.Plotter`:
+# using the :class:`pyvista.BackgroundPlotter`:
 
-plotter = pv.Plotter(off_screen=True)
+plotter = pv.BackgroundPlotter(off_screen=True)
 plotter.add_mesh(mesh, color="orange")
 plotter.show(screenshot='airplane.png')
 

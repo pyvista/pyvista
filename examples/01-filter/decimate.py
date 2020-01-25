@@ -40,7 +40,7 @@ pro_decimated.plot(cpos=cpos, **dargs)
 ###############################################################################
 # Side by side comparison:
 
-p = pv.Plotter(shape=(1, 3))
+p = pv.BackgroundPlotter(shape=(1, 3))
 p.add_mesh(mesh, **dargs)
 p.add_text("Input mesh", font_size=24)
 p.camera_position = cpos

@@ -37,7 +37,7 @@ streamlines, src = mesh.streamlines(
 # Display the results! Please note that because this dataset's velocity field
 # was measured with low resolution, many streamlines travel outside the artery.
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh.outline(), color="k")
 p.add_mesh(streamlines.tube(radius=0.15))
 p.add_mesh(src)
@@ -61,7 +61,7 @@ streamlines, src = mesh.streamlines(
 ###############################################################################
 boundary = mesh.decimate_boundary().wireframe()
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(streamlines.tube(radius=0.2), lighting=False)
 p.add_mesh(src)
 p.add_mesh(boundary, color="grey", opacity=0.25)
@@ -82,7 +82,7 @@ kitchen = examples.download_kitchen(split=True)
 streamlines = mesh.streamlines(n_points=40, source_center=(0.08, 3, 0.71))
 
 ###############################################################################
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh.outline(), color="k")
 p.add_mesh(kitchen, color=True)
 p.add_mesh(streamlines.tube(radius=0.01), scalars="velocity", lighting=False)

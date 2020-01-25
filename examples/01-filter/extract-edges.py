@@ -28,7 +28,7 @@ mesh = examples.download_nefertiti()
 edges = mesh.extract_edges(12)
 
 # Render the edge lines ontop of the original mesh
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color="red", line_width=5)
 # Define a camera position that will zoom to her eye
@@ -43,7 +43,7 @@ mesh = examples.download_cow()
 
 edges = mesh.extract_edges(20)
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(mesh, color=True)
 p.add_mesh(edges, color="red", line_width=5)
 p.camera_position = [(9.5, 3.0, 5.5), (2.5, 1, 0), (0, 1, 0)]

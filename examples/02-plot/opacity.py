@@ -21,7 +21,7 @@ mesh = image.warp_by_scalar()
 # You can also apply a global opacity value to the mesh by passing a single
 # float between 0 and 1 which would enable you to see objects behind the mesh:
 
-p = pv.Plotter()
+p = pv.BackgroundPlotter()
 p.add_mesh(image.contour(), line_width=5,)
 p.add_mesh(mesh, opacity=0.85, color=True)
 p.show()
@@ -94,7 +94,7 @@ knee = examples.download_knee()
 
 ###############################################################################
 # And here we inspect the DICOM image with a few different opacity mappings:
-p = pv.Plotter(shape=(2, 2), border=False)
+p = pv.BackgroundPlotter(shape=(2, 2), border=False)
 
 p.add_mesh(knee, cmap="bone", stitle="No Opacity")
 p.view_xy()
@@ -133,7 +133,7 @@ contours.array_names
 # Make sure to flag ``use_transparency=True`` since we want areas of high
 # variance to have high transparency.
 
-p = pv.Plotter(shape=(1,2))
+p = pv.BackgroundPlotter(shape=(1,2))
 
 p.subplot(0,0)
 p.add_text('Opacity by Array')

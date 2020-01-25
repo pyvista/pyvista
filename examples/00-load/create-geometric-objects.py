@@ -27,7 +27,7 @@ disc = pv.Disc()
 ###############################################################################
 # Now let's plot them all in one window
 
-p = pv.Plotter(shape=(3, 3))
+p = pv.BackgroundPlotter(shape=(3, 3))
 # Top row
 p.subplot(0, 0)
 p.add_mesh(cyl, color="tan", show_edges=True)
