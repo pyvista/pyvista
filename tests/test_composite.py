@@ -347,6 +347,15 @@ def test_multi_block_list_index():
     for i, j in enumerate(indices):
         assert id(sub[i]) == id(multi[j])
         assert sub.get_block_name(i) == multi.get_block_name(j)
+    # check list of key names
+    multi = pyvista.MultiBlock()
+    multi["foo"] = pyvista.Sphere()
+    multi["goo"] = pyvista.Box()
+    multi["soo"] = pyvista.Cone()
+    indices = ["goo", "foo"]
+    sub = multi[indices]
+    assert len(sub) == len(indices)
+    assert isinstance(sub["foo"], pyvista.PolyData)
 
 def test_multi_block_volume():
     multi = pyvista.MultiBlock()
