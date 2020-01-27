@@ -1194,6 +1194,13 @@ class Renderer(vtkRenderer):
         return
 
 
+    def close(self):
+        """Close out widgets and sensitive elements."""
+        if hasattr(self, 'axes_widget'):
+            self.axes_widget.RemoveAllObservers()
+            del self.axes_widget
+
+
     def deep_clean(self):
         """Clean the renderer of the memory."""
         if hasattr(self, 'cube_axes_actor'):
@@ -1202,8 +1209,6 @@ class Renderer(vtkRenderer):
             del self.edl_pass
         if hasattr(self, '_box_object'):
             self.remove_bounding_box()
-        if hasattr(self, 'axes_widget'):
-            del self.axes_widget
 
         self.RemoveAllViewProps()
         self._actors = None
