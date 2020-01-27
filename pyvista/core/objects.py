@@ -499,3 +499,7 @@ class Texture(vtk.vtkTexture):
     @repeat.setter
     def repeat(self, flag):
         self.SetRepeat(flag)
+
+    def copy(self):
+        """Make a copy of this textrue."""
+        return Texture(self.to_image().copy())
