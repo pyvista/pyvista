@@ -94,7 +94,7 @@ class PickingHelper(object):
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
-        if mesh is None and through:
+        if mesh is None:
             if not hasattr(self, 'mesh'):
                 raise Exception('Input a mesh into the Plotter class first or '
                                 'or set it in this function')
@@ -105,8 +105,12 @@ class PickingHelper(object):
         def end_pick_helper(picker, event_id):
             if show:
                 # Use try in case selection is empty
+                if isinstance(self.picked_cells, pyvista.MultiBlock):
+                    picked = self.picked_cells.combine()
+                else:
+                    picked = self.picked_cells
                 try:
-                    self.add_mesh(self.picked_cells, name='_cell_picking_selection',
+                    self.add_mesh(picked, name='_cell_picking_selection',
                                   style=style, color=color,
                                   line_width=line_width, pickable=False,
                                   reset_camera=False, **kwargs)
@@ -170,8 +174,6 @@ class PickingHelper(object):
                       "not work properly with non-NVIDIA GPUs. Please "\
                       "consider triangulating your mesh:\n"\
                       "\t`.extract_geometry().triangulate()`"
-            if mesh is None:
-                mesh = self.mesh
             if not isinstance(mesh, pyvista.PolyData) or not mesh.is_all_triangles():
                 logging.warning(message)
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
