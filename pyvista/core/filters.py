@@ -1623,7 +1623,7 @@ class DataSetFilters(object):
             resolution = int(dataset.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        
+
         sampled_line = line.sample(dataset)
         return sampled_line
 
@@ -3564,5 +3564,26 @@ class UniformGridFilters(DataSetFilters):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def extract_subset(dataset, voi):
+        """Select piece (e.g., volume of interest).
+
+        To use this filter set the VOI ivar which are i-j-k min/max indices
+        that specify a rectangular region in the data. (Note that these are
+        0-offset.) You can also specify a sampling rate to subsample the
+        data.
+
+        Parameters
+        ----------
+        voi : tuple(int)
+            Length 6 tuple of integers specifying the volume of interest in
+            i-j-k min/max indices.
+        """
+        alg = vtk.vtkExtractVOI()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
