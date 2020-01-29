@@ -31,6 +31,10 @@ class PickingHelper(object):
         turn it off. Selection will be saved to ``self.picked_cells``. Also
         press "p" to pick a single cell under the mouse location.
 
+        When using ``through=False``, and multiple meshes are being picked,
+        the picked cells in ````self.picked_cells`` will be a
+        :class:`MultiBlock` dataset for each mesh's selection.
+
         Uses last input mesh for input by default.
 
         Warning
@@ -43,8 +47,12 @@ class PickingHelper(object):
         Parameters
         ----------
         mesh : pyvista.Common, optional
-            UnstructuredGrid grid to select cells from.  Uses last
-            input grid by default.
+            Mesh to select cells from. When ``through`` is ``True``, uses last
+            input mesh by default. When ``through`` is ``False``, all meshes
+            in the scene are available for picking and this argument is
+            ignored. If you would like to only pick a single mesh in the scene,
+            use the ``pickable=False`` argument when adding the other meshes
+            to the scene.
 
         callback : function, optional
             When input, calls this function after a selection is made.
@@ -86,12 +94,13 @@ class PickingHelper(object):
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Cell picking not available in notebook plotting')
-        if mesh is None:
+        if mesh is None and through:
             if not hasattr(self, 'mesh'):
                 raise Exception('Input a mesh into the Plotter class first or '
                                 'or set it in this function')
             mesh = self.mesh
 
+        renderer = self.renderer # make sure to consistently use renderer
 
         def end_pick_helper(picker, event_id):
             if show:
@@ -122,22 +131,30 @@ class PickingHelper(object):
 
 
         def visible_pick_call_back(picker, event_id):
-            x0,y0,x1,y1 = self.get_pick_position()
+            x0,y0,x1,y1 = renderer.get_pick_position()
             selector = vtk.vtkOpenGLHardwareSelector()
             selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
-            selector.SetRenderer(self.renderer)
+            selector.SetRenderer(renderer)
             selector.SetArea(x0,y0,x1,y1)
-            cellids = selector.Select().GetNode(0)
-            if cellids is None:
-                # No selection
-                return
-            selection = vtk.vtkSelection()
-            selection.AddNode(cellids)
-            extract = vtk.vtkExtractSelectedIds()
-            extract.SetInputData(0, mesh)
-            extract.SetInputData(1, selection)
-            extract.Update()
-            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            selection = selector.Select()
+            picked = pyvista.MultiBlock()
+            for node in range(selection.GetNumberOfNodes()):
+                cellids = selection.GetNode(node)
+                if cellids is None:
+                    # No selection
+                    continue
+                smesh = cellids.GetProperties().Get(vtk.vtkSelectionNode.PROP()).GetMapper().GetInputAsDataSet()
+                selection_filter = vtk.vtkSelection()
+                selection_filter.AddNode(cellids)
+                extract = vtk.vtkExtractSelectedIds()
+                extract.SetInputData(0, smesh)
+                extract.SetInputData(1, selection_filter)
+                extract.Update()
+                picked.append(pyvista.wrap(extract.GetOutput()))
+            if len(picked) == 1:
+                self.picked_cells = picked[0]
+            else:
+                self.picked_cells = picked
             return end_pick_helper(picker, event_id)
 
 
