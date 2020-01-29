@@ -170,9 +170,9 @@ class PickingHelper(object):
                       "not work properly with non-NVIDIA GPUs. Please "\
                       "consider triangulating your mesh:\n"\
                       "\t`.extract_geometry().triangulate()`"
-            if (not isinstance(mesh, pyvista.PolyData) or
-                    mesh.faces.size % 4 or
-                    not np.all(mesh.faces.reshape(-1, 4)[:,0] == 3)):
+            if mesh is None:
+                mesh = self.mesh
+            if not isinstance(mesh, pyvista.PolyData) or not mesh.is_all_triangles():
                 logging.warning(message)
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
