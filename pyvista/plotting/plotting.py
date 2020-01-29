@@ -1325,7 +1325,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     scalars = None
 
         # set main values
-        self.mesh = mesh
+        self.mesh = type(mesh)()
+        self.mesh.shallow_copy(mesh)
         self.mapper = make_mapper(vtk.vtkDataSetMapper)
         self.mapper.SetInputData(self.mesh)
         self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
