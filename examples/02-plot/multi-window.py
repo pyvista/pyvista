@@ -90,3 +90,32 @@ plotter.add_mesh(pv.Cone(), show_edges=True)
 
 # Display the window
 plotter.show()
+
+
+###############################################################################
+# Note that you can easily plot the same mesh in multiple sublplots displaying
+# different scalar values on that mesh.
+
+# Load a mesh with three scalar arrays
+mesh = examples.download_blood_vessels().ctp()
+contours = mesh.contour(scalars="shearstress")
+
+
+plotter = pv.Plotter(shape=(1,3), window_size=[2048*3, 1536])
+
+plotter.add_mesh(contours, scalars="density")
+
+plotter.subplot(0,1)
+plotter.add_mesh(contours, scalars="velocity")
+
+plotter.subplot(0,2)
+plotter.add_mesh(contours, scalars="shearstress")
+
+plotter.link_views()
+plotter.camera_position = [
+    (104.95248078038908, -157.07391180168247, -16.534092166373355),
+    (87.72735313495542, 82.94721195427934, 110.3163662948969),
+    (-0.6644780195578007, -0.38590290740723265, 0.6399593015022035)
+  ]
+
+plotter.show()

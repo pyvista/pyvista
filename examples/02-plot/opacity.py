@@ -137,7 +137,7 @@ p = pv.Plotter(shape=(1,2))
 
 p.subplot(0,0)
 p.add_text('Opacity by Array')
-p.add_mesh(contours.copy(), scalars='Temperature',
+p.add_mesh(contours, scalars='Temperature',
            opacity='Temperature_var',
            use_transparency=True,
            cmap='bwr')

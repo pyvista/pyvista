@@ -38,7 +38,7 @@ p.add_text("Depth Peeling")
 
 p.subplot(0,1)
 p.add_text("Standard")
-p.add_mesh(spheres.copy(), **dargs)
+p.add_mesh(spheres, **dargs)
 
 p.link_views()
 p.camera_position = [(11.695377287877744, 4.697473022306675, -4.313491106516902),
@@ -60,7 +60,7 @@ p.add_text("Depth Peeling")
 
 p.subplot(0,1)
 p.add_text("Standard")
-p.add_mesh(mesh.copy(), opacity=0.5, cmap=cmap)
+p.add_mesh(mesh, opacity=0.5, cmap=cmap)
 
 p.link_views()
 p.camera_position = [(418.29917315895693, 658.9752095516966, 53.784143976243364),
