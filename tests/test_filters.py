@@ -619,5 +619,5 @@ def test_compute_gradients():
 
 def test_extract_subset():
     volume = examples.load_uniform()
-    voi = volume.extract_subset(0,3,1,4,5,7)
+    voi = volume.extract_subset([0,3,1,4,5,7])
     assert isinstance(voi, pyvista.UniformGrid)
