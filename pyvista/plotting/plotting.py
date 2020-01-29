@@ -2090,13 +2090,31 @@ class BasePlotter(PickingHelper, WidgetHelper):
             views cameras.
 
         """
+        bounds = [np.inf,-np.inf, np.inf,-np.inf, np.inf,-np.inf]
+
+        def update_bounds(ax, nb, bounds):
+            """Update bounds while keeping track (internal helper)."""
+            if nb[2*ax] < bounds[2*ax]:
+                bounds[2*ax] = nb[2*ax]
+            if nb[2*ax+1] > bounds[2*ax+1]:
+                bounds[2*ax+1] = nb[2*ax+1]
+            return bounds
+
         if isinstance(views, int):
             for renderer in self.renderers:
                 renderer.camera = self.renderers[views].camera
+                bnds = renderer.bounds
+                for a in range(3):
+                    bounds = update_bounds(a, bnds, bounds)
+            self.renderers[views].ResetCameraClippingRange(bounds)
         elif isinstance(views, collections.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = \
                     self.renderers[views[0]].camera
+                bnds = self.renderers[view_index].bounds
+                for a in range(3):
+                    bounds = update_bounds(a, bnds, bounds)
+            self.renderers[views[0]].ResetCameraClippingRange(bounds)
         else:
             raise TypeError('Expected type is int, list or tuple:'
                             '{} is given'.format(type(views)))
