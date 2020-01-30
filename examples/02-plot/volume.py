@@ -126,6 +126,11 @@ p.show()
 ###############################################################################
 # Woah, that's a big volume! We probably don't want to volume render the
 # whole thing. So let's extract a region of interest under the volcano.
+#
+# The region we will extract will be between nodes 175 and 200 on the x-axis,
+# between nodes 105 and 132 on the y-axis, and between nodes 98 and 170 on
+# the z-axis.
+
 voi = large_vol.extract_subset([175, 200, 105, 132, 98, 170])
 
 p = pv.Plotter()
