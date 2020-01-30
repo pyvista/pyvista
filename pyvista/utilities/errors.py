@@ -116,6 +116,8 @@ def get_gpu_info():
     plotter.show(auto_close=False)
     gpu_info = plotter.ren_win.ReportCapabilities()
     plotter.close()
+    # Remove from list of Plotters
+    pyvista.plotting._ALL_PLOTTERS.pop(plotter._id_name)
     return gpu_info
 
 
