@@ -716,6 +716,10 @@ def test_volume_rendering():
     data['d'].rename_array('Spatial Point Data', 'd')
     data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
 
+    # Check that NumPy arrays work
+    arr = vol["Spatial Point Data"].reshape(vol.dimensions)
+    pyvista.plot(arr, off_screen=OFF_SCREEN, volume=True, opacity='linear')
+
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

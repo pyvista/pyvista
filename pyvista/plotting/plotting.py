@@ -1748,9 +1748,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         # Handle default arguments
 
-        if name is None:
-            name = '{}({})'.format(type(volume).__name__, volume.memory_address)
-
         # Supported aliases
         clim = kwargs.pop('rng', clim)
         cmap = kwargs.pop('colormap', cmap)
@@ -1789,6 +1786,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # HACK: Make a copy so the original object is not altered
             volume = volume.copy()
 
+
+        if name is None:
+            name = '{}({})'.format(type(volume).__name__, volume.memory_address)
 
         if isinstance(volume, pyvista.MultiBlock):
             from itertools import cycle
