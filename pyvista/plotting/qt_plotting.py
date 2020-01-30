@@ -7,14 +7,20 @@ import time
 import numpy as np
 import scooby
 import vtk
-import vtk.qt
 
 import pyvista
 from .plotting import BasePlotter
 from .theme import rcParams
 
 # for display bugs due to older intel integrated GPUs
-vtk.qt.QVTKRWIBase = 'QGLWidget'
+vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
+vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
+if vtk_major_version == 8 and vtk_minor_version < 2:
+    import vtk.qt
+    vtk.qt.QVTKRWIBase = 'QGLWidget'
+else:
+    import vtkmodules.qt
+    vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
@@ -145,7 +151,7 @@ class FileDialog(QFileDialog):
 
 class DoubleSlider(QSlider):
     """Double precision slider.
-    
+
     Reference:
     https://gist.github.com/dennis-tra/994a65d6165a328d4eabaadbaedac2cc
 
@@ -351,7 +357,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None):
+                 splitting_position=None, auto_update=True):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -402,12 +408,20 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             # Enter trackball camera mode
             istyle = vtk.vtkInteractorStyleTrackballCamera()
             self.SetInteractorStyle(istyle)
-            self.add_axes()
 
             self.iren.Initialize()
 
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
 
+        if auto_update:
+            update_event = lambda *args: self.update()
+            for renderer in self.renderers:
+                renderer.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
+                renderer.camera.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
+
+        if rcParams["depth_peeling"]["enabled"]:
+            for renderer in self.renderers:
+                self.enable_depth_peeling()
 
 
 
@@ -527,7 +541,7 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, shape=(1, 1), window_size=None,
-                 off_screen=None, **kwargs):
+                 off_screen=None, auto_update=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -567,7 +581,8 @@ class BackgroundPlotter(QtInteractor):
 
 
         QtInteractor.__init__(self, parent=self.frame, shape=shape,
-                              off_screen=off_screen, **kwargs)
+                              off_screen=off_screen, auto_update=auto_update,
+                              **kwargs)
         self.app_window.signal_close.connect(self.quit)
         self.add_toolbars(self.app_window)
 
@@ -597,8 +612,8 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addSeparator()
         # Orientation marker
         orien_menu = view_menu.addMenu('Orientation Marker')
-        orien_menu.addAction('Show', self.show_axes)
-        orien_menu.addAction('Hide', self.hide_axes)
+        orien_menu.addAction('Show All', self.show_axes_all)
+        orien_menu.addAction('Hide All', self.hide_axes_all)
         # Bounds axes
         axes_menu = view_menu.addMenu('Bounds Axes')
         axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)
@@ -669,15 +684,14 @@ class BackgroundPlotter(QtInteractor):
         QtInteractor.quit(self)
 
     def close(self):
-        """Close the plotter.""" 
+        """Close the plotter."""
         self.app_window.close()
 
-    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False, pickable=True):
+    def add_actor(self, actor, reset_camera=None, name=None, culling=False, pickable=True):
         """Add an actor."""
         actor, prop = super(BackgroundPlotter, self).add_actor(actor,
                                                                reset_camera=reset_camera,
                                                                name=name,
-                                                               loc=loc,
                                                                culling=culling,
                                                                pickable=pickable)
         self.update_app_icon()

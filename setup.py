@@ -21,7 +21,8 @@ with io_open(version_file, mode='r') as fd:
 install_requires = ['numpy',
                     'imageio',
                     'appdirs',
-                    'scooby>=0.2.2',
+                    'scooby>=0.5.0',
+                    'meshio>=3.3.0',
                     ]
 
 # add vtk if not windows and 2.7
@@ -54,7 +55,6 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Operating System :: MacOS',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
@@ -66,7 +66,7 @@ setup(
                                        'hexbeam.vtk', 'sphere.ply',
                                        'uniform.vtk', 'rectilinear.vtk',
                                        'globe.vtk', '2k_earth_daymap.jpg']},
-    python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*',
+    python_requires='>=3.5.*',
     install_requires=install_requires,
     extras_require={
         'colormaps': ['matplotlib', 'colorcet', 'cmocean']

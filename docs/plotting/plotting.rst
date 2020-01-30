@@ -31,7 +31,7 @@ shortcuts are available:
 +-------------------------------------+-----------------+-----------------------------------------------------+
 | ``shift+s``                                           | Save a screenhsot (only on ``BackgroundPlotter``)   |
 +-------------------------------------+-----------------+-----------------------------------------------------+
-| ``c``                                                 | Enable interactive cell selection/picking           |
+| ``shift+c``                                           | Enable interactive cell selection/picking           |
 +-------------------------------------+-----------------+-----------------------------------------------------+
 | ``up``/``down``                                       | Zoom in and out                                     |
 +-------------------------------------+-----------------+-----------------------------------------------------+
@@ -212,7 +212,7 @@ values change through time:
 
     globe = examples.load_globe()
     globe.point_arrays['scalars'] = np.random.rand(globe.n_points)
-    globe.set_active_scalar('scalars')
+    globe.set_active_scalars('scalars')
 
 
     plotter = pv.BackgroundPlotter()

@@ -55,11 +55,11 @@ def _download_file(filename):
     url = _get_vtk_file_url(filename)
     return _retrieve_file(url, filename)
 
-def _download_and_read(filename, texture=False):
+def _download_and_read(filename, texture=False, file_format=None):
     saved_file, _ = _download_file(filename)
     if texture:
         return pyvista.read_texture(saved_file)
-    return pyvista.read(saved_file)
+    return pyvista.read(saved_file, file_format=file_format)
 
 
 ###############################################################################
@@ -182,7 +182,7 @@ def download_saddle_surface():
 
 def download_sparse_points():
     """Download sparse points dataset.
-    
+
     Used with ``download_saddle_surface``.
 
     """
@@ -375,7 +375,7 @@ def download_spider():
 def download_carotid():
     """Download carotid dataset."""
     mesh = _download_and_read('carotid.vtk')
-    mesh.set_active_scalar('scalars')
+    mesh.set_active_scalars('scalars')
     mesh.set_active_vectors('vectors')
     return mesh
 
@@ -452,10 +452,10 @@ def download_tetra_dc_mesh():
     local_path, _ = _download_file('dc-inversion.zip')
     filename = os.path.join(local_path, 'mesh-forward.vtu')
     fwd = pyvista.read(filename)
-    fwd.set_active_scalar('Resistivity(log10)-fwd')
+    fwd.set_active_scalars('Resistivity(log10)-fwd')
     filename = os.path.join(local_path, 'mesh-inverse.vtu')
     inv = pyvista.read(filename)
-    inv.set_active_scalar('Resistivity(log10)')
+    inv.set_active_scalars('Resistivity(log10)')
     return pyvista.MultiBlock({'forward':fwd, 'inverse':inv})
 
 
@@ -577,3 +577,8 @@ def download_crater_topo():
 def download_crater_imagery():
     """Download crater texture."""
     return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True)
+
+
+def download_dolfin():
+    """Download crater texture."""
+    return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml")

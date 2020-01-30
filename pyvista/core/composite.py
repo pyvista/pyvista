@@ -245,13 +245,13 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
 
     def get_data_range(self, name):
-        """Get the min/max of a scalar given its name across all blocks."""
+        """Get the min/max of an array given its name across all blocks."""
         mini, maxi = np.inf, -np.inf
         for i in range(self.n_blocks):
             data = self[i]
             if data is None:
                 continue
-            # get the scalar if available
+            # get the scalars if available
             arr = get_array(data, name)
             if arr is None or not np.issubdtype(arr.dtype, np.number):
                 continue
@@ -277,8 +277,25 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         If the name is non-unique then returns the first occurrence.
 
         """
-        if isinstance(index, str):
+        if isinstance(index, slice):
+            stop = index.stop if index.stop >= 0 else self.n_blocks + index.stop + 1
+            step = index.step if isinstance(index.step, int) else 1
+            multi = MultiBlock()
+            for i in range(index.start, stop, step):
+                multi[-1, self.get_block_name(i)] = self[i]
+            return multi
+        elif isinstance(index, (list, tuple, np.ndarray)):
+            multi = MultiBlock()
+            for i in index:
+                if isinstance(i, str):
+                    name = i
+                else:
+                    name = self.get_block_name(i)
+                multi[-1, name] = self[i]
+            return multi
+        elif isinstance(index, str):
             index = self.get_index_by_name(index)
+        ############################
         if index < 0:
             index = self.n_blocks + index
         if index < 0 or index >= self.n_blocks:

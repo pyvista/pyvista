@@ -39,6 +39,9 @@
 .. |joss| image:: https://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
    :target: https://joss.theoj.org/papers/10.21105/joss.01450
 
+.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -51,10 +54,21 @@
 +----------------------+------------------------+
 | Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
+| License              | |MIT|                  |
++----------------------+------------------------+
 
 
 About
 *****
+
+PyVista is...
+
+* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* mesh data structures and filtering methods for spatial datasets
+* 3D plotting made simple and built for large/complex data geometries
+
+.. _Visualization Toolkit: https://vtk.org
+
 
 PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
 (VTK) that takes a different approach on interfacing with VTK through NumPy and
@@ -93,7 +107,7 @@ Support
 For general questions about the project, its applications, or about software
 usage, please create an issue in the `pyvista/pyvista-support`_ repository
 where the community can collectively address your questions. You are also
-welcome to join us on join us on Slack_ or send one of the developers an email.
+welcome to join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
 
 .. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
@@ -108,6 +122,7 @@ PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
 Here are a few open-source projects that leverage PyVista:
 
+* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
@@ -116,6 +131,7 @@ Here are a few open-source projects that leverage PyVista:
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
+.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista

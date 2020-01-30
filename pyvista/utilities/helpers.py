@@ -3,6 +3,7 @@
 import collections
 import ctypes
 import logging
+import warnings
 
 import numpy as np
 import scooby
@@ -10,6 +11,7 @@ import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
+from .fileio import from_meshio
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -125,23 +127,47 @@ def is_pyvista_dataset(obj):
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
 
 
-def point_scalar(mesh, name):
-    """Return point scalars of a vtk object."""
+def point_array(mesh, name):
+    """Return point array of a vtk object."""
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
-def field_scalar(mesh, name):
-    """Return field scalars of a vtk object."""
+def point_scalar(mesh, name):
+    """Return point array of a vtk object.
+
+    DEPRECATED: please use `point_array` instead.
+    """
+    warnings.warn("DEPRECATED: please use `point_array` instead.")
+    return point_array(mesh, name)
+
+def field_array(mesh, name):
+    """Return field array of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
-def cell_scalar(mesh, name):
-    """Return cell scalars of a vtk object."""
+def field_scalar(mesh, name):
+    """Return field array of a vtk object.
+
+    DEPRECATED: please use `field_array` instead.
+    """
+    warnings.warn("DEPRECATED: please use `field_array` instead.")
+    return field_array(mesh, name)
+
+def cell_array(mesh, name):
+    """Return cell array of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+def cell_scalar(mesh, name):
+    """Return cell array of a vtk object.
+
+    DEPRECATED: please use `cell_array` instead.
+    """
+    warnings.warn("DEPRECATED: please use `cell_array` instead.")
+    return cell_array(mesh, name)
+
 def row_array(data_object, name):
-    """Return cell scalars of a vtk object."""
+    """Return row array of a vtk object."""
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
@@ -175,12 +201,12 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         The name of the array to get the range.
 
     preference : str, optional
-        When scalars is specified, this is the perfered scalar type to
+        When scalars is specified, this is the perfered array type to
         search for in the dataset.  Must be either ``'point'``, ``'cell'``, or
         ``'field'``
 
     info : bool
-        Return info about the scalar rather than the array itself.
+        Return info about the array rather than the array itself.
 
     err : bool
         Boolean to control whether to throw an error if array is not present.
@@ -189,15 +215,15 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     if isinstance(mesh, vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
+            raise KeyError('Data array ({}) not present in this dataset.'.format(name))
         field = ROW_DATA_FIELD
         if info:
             return arr, field
         return arr
 
-    parr = point_scalar(mesh, name)
-    carr = cell_scalar(mesh, name)
-    farr = field_scalar(mesh, name)
+    parr = point_array(mesh, name)
+    carr = cell_array(mesh, name)
+    farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
     if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
         if preference == CELL_DATA_FIELD:
@@ -229,7 +255,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = farr
         field = FIELD_DATA_FIELD
     elif err:
-        raise KeyError('Data scalar ({}) not present in this dataset.'.format(name))
+        raise KeyError('Data array ({}) not present in this dataset.'.format(name))
     if info:
         return arr, field
     return arr
@@ -380,6 +406,15 @@ def trans_from_matrix(matrix):
     return t
 
 
+def is_meshio_mesh(mesh):
+    """Test if passed object is instance of ``meshio.Mesh``."""
+    try:
+        import meshio
+        return isinstance(mesh, meshio.Mesh)
+    except ImportError:
+        return False
+
+
 def wrap(vtkdataset):
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -412,11 +447,13 @@ def wrap(vtkdataset):
         elif vtkdataset.ndim == 3:
             mesh = pyvista.UniformGrid(vtkdataset.shape)
             mesh['values'] = vtkdataset.ravel(order='F')
-            mesh.active_scalar_name = 'values'
+            mesh.active_scalars_name = 'values'
             return mesh
         else:
             print(vtkdataset.shape, vtkdataset)
             raise NotImplementedError('NumPy array could not be converted to PyVista.')
+    elif is_meshio_mesh(vtkdataset):
+        return from_meshio(vtkdataset)
     else:
         raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
     try:
@@ -492,7 +529,7 @@ def raise_not_matching(scalars, mesh):
         raise Exception('Number of scalars ({})'.format(scalars.size) +
                         'must match number of rows ' +
                         '({}).'.format(mesh.n_rows) )
-    raise Exception('Number of scalars ({})'.format(scalars.size) +
+    raise Exception('Number of scalars ({}) '.format(scalars.size) +
                     'must match either the number of points ' +
                     '({}) '.format(mesh.n_points) +
                     'or the number of cells ' +

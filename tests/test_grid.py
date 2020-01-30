@@ -33,11 +33,11 @@ def test_struct_example():
     # create and plot structured grid
     grid = examples.load_structured()
     cpos = grid.plot(off_screen=True)  # basic plot
-    assert isinstance(cpos, list)
+    assert isinstance(cpos, pyvista.CameraPosition)
 
     # Plot mean curvature
     cpos_curv = grid.plot_curvature(off_screen=True)
-    assert isinstance(cpos_curv, list)
+    assert isinstance(cpos_curv, pyvista.CameraPosition)
 
 
 def test_init_from_structured():
@@ -242,6 +242,12 @@ def test_create_rectilinear_grid_from_specs():
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 5)
     zrng = np.arange(-10, 10, 1)
+    grid = pyvista.RectilinearGrid(xrng)
+    assert grid.n_cells == 9
+    assert grid.n_points == 10
+    grid = pyvista.RectilinearGrid(xrng, yrng)
+    assert grid.n_cells == 9*3
+    assert grid.n_points == 10*4
     grid = pyvista.RectilinearGrid(xrng, yrng, zrng)
     assert grid.n_cells == 9*3*19
     assert grid.n_points == 10*4*20
@@ -254,6 +260,22 @@ def test_create_rectilinear_grid_from_specs():
     assert grid.n_cells == 5*5
     assert grid.n_points == 6*6
     assert grid.bounds == [1.,21., 1.,21., 0.,0.]
+
+
+def test_create_rectilinear_after_init():
+    x = np.array([0,1,2])
+    y = np.array([0,5,8])
+    z = np.array([3,2,1])
+    grid = pyvista.RectilinearGrid()
+    grid.x = x
+    assert grid.dimensions == [3, 1, 1]
+    grid.y = y
+    assert grid.dimensions == [3, 3, 1]
+    grid.z = z
+    assert grid.dimensions == [3, 3, 3]
+    assert np.allclose(grid.x, x)
+    assert np.allclose(grid.y, y)
+    assert np.allclose(grid.z, z)
 
 
 def test_create_rectilinear_grid_from_file():
@@ -269,6 +291,20 @@ def test_read_rectilinear_grid_from_file():
     assert grid.n_points == 18144
     assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
     assert grid.n_arrays == 1
+
+
+def test_cast_rectilinear_grid():
+    grid = pyvista.read(examples.rectfile)
+    structured = grid.cast_to_structured_grid()
+    assert isinstance(structured, pyvista.StructuredGrid)
+    assert structured.n_points == grid.n_points
+    assert structured.n_cells == grid.n_cells
+    assert np.allclose(structured.points, grid.points)
+    for k, v in grid.point_arrays.items():
+        assert np.allclose(structured.point_arrays[k], v)
+    for k, v in grid.cell_arrays.items():
+        assert np.allclose(structured.cell_arrays[k], v)
+
 
 
 def test_create_uniform_grid_from_specs():
@@ -414,16 +450,16 @@ def test_grid_extract_selection_points():
 
 def test_gaussian_smooth():
     uniform = examples.load_uniform()
-    active = uniform.active_scalar_name
-    values = uniform.active_scalar
+    active = uniform.active_scalars_name
+    values = uniform.active_scalars
 
     uniform = uniform.gaussian_smooth(scalars=active)
-    assert uniform.active_scalar_name == active
-    assert uniform.active_scalar.shape == values.shape
-    assert not np.all(uniform.active_scalar == values)
-    values = uniform.active_scalar
+    assert uniform.active_scalars_name == active
+    assert uniform.active_scalars.shape == values.shape
+    assert not np.all(uniform.active_scalars == values)
+    values = uniform.active_scalars
 
     uniform = uniform.gaussian_smooth(radius_factor=5, std_dev=1.3)
-    assert uniform.active_scalar_name == active
-    assert uniform.active_scalar.shape == values.shape
-    assert not np.all(uniform.active_scalar == values)
+    assert uniform.active_scalars_name == active
+    assert uniform.active_scalars.shape == values.shape
+    assert not np.all(uniform.active_scalars == values)

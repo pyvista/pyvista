@@ -153,7 +153,7 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Make all the nodes in the grid
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
-    dz = height / z_resolution
+    dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
@@ -338,6 +338,8 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
         number of pieces to divide line into
 
     """
+    if resolution <= 0:
+        raise ValueError('Resolution must be positive')
     if np.array(pointa).size != 3:
         raise TypeError('Point A must be a length three tuple of floats.')
     if np.array(pointb).size != 3:

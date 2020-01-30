@@ -1,5 +1,6 @@
 """Module managing different plotting theme parameters."""
 
+import os
 import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
@@ -20,7 +21,7 @@ rcParams = {
     },
     'window_size': [1024, 768],
     'font': {
-        'family': 'courier',
+        'family': 'arial',
         'size': 12,
         'title_size': None,
         'label_size': None,
@@ -58,10 +59,18 @@ rcParams = {
         'y_color': 'seagreen',
         'z_color': 'mediumblue',
         'box': False,
+        'show': True,
     },
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
+    'volume_mapper': 'fixed_point' if os.name == 'nt' else 'smart',
+    'depth_peeling': {
+        'number_of_peels': 5,
+        'enabled': True,
+    },
 }
+
+
 
 DEFAULT_THEME = dict(rcParams)
 
@@ -76,6 +85,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'white'
         rcParams['outline_color'] = 'white'
+        rcParams['edge_color'] = 'black'
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'gold'
         rcParams['axes']['z_color'] = 'green'
@@ -89,6 +99,7 @@ def set_plot_theme(theme):
         rcParams['show_edges'] = False
         rcParams['color'] = 'tan'
         rcParams['outline_color'] = 'black'
+        rcParams['edge_color'] = 'black'
         rcParams['axes']['x_color'] = 'tomato'
         rcParams['axes']['y_color'] = 'seagreen'
         rcParams['axes']['z_color'] = 'blue'

@@ -49,6 +49,18 @@ p.add_volume(vol, cmap="viridis", opacity=opacity)
 p.camera_position = cpos
 p.show()
 
+###############################################################################
+# We can also use a shading technique when volume rendering with the ``shade``
+# option
+p = pv.Plotter(shape=(1,2))
+p.add_volume(vol, cmap="viridis", opacity=opacity, shade=False)
+p.add_text("No shading")
+p.subplot(0,1)
+p.add_volume(vol, cmap="viridis", opacity=opacity, shade=True)
+p.add_text("Shading")
+p.link_views()
+p.camera_position = cpos
+p.show()
 
 ###############################################################################
 # Cool Volume Examples
