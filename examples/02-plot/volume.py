@@ -115,9 +115,10 @@ large_vol
 
 ###############################################################################
 opacity = [0, 0.75, 0, 0.75, 1.0]
+clim = [0, 100]
 
 p = pv.Plotter()
-p.add_volume(large_vol, cmap="magma",
+p.add_volume(large_vol, cmap="magma", clim=clim,
              opacity=opacity, opacity_unit_distance=6000,)
 p.show()
 
@@ -136,7 +137,7 @@ p.show()
 # Ah, much better. Let's now volume render that region of interest!
 
 p = pv.Plotter()
-p.add_volume(voi, cmap="magma", opacity=opacity,
+p.add_volume(voi, cmap="magma", clim=clim, opacity=opacity,
              opacity_unit_distance=2000)
 p.camera_position = [(531554.5542909054, 3944331.800171338, 26563.04809259223),
  (599088.1433822059, 3982089.287834022, -11965.14728669936),
