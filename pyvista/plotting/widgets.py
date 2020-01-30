@@ -143,6 +143,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -385,6 +386,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -456,6 +458,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -858,6 +861,7 @@ class WidgetHelper(object):
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
             title = scalars
+        mesh.set_active_scalars(scalars)
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
@@ -909,7 +913,7 @@ class WidgetHelper(object):
             The input dataset to add to the scene and contour
 
         scalars : str
-            The string name of the scalars on the mesh to threshold and display
+            The string name of the scalars on the mesh to contour and display
 
         kwargs : dict
             All additional keyword arguments are passed to ``add_mesh`` to
@@ -934,6 +938,7 @@ class WidgetHelper(object):
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
             title = scalars
+        mesh.set_active_scalars(scalars)
 
         alg = vtk.vtkContourFilter()
         alg.SetInputDataObject(mesh)
@@ -1096,6 +1101,7 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         rng = mesh.get_data_range(kwargs.get('scalars', None))
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
+        mesh.set_active_scalars(kwargs.get('scalars', mesh.active_scalars_name))
 
         self.add_mesh(mesh.outline(), name=name+"outline", opacity=0.0)
 
