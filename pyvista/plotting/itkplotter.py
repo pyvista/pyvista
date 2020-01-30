@@ -45,13 +45,13 @@ class PlotterITK():
             mesh = pv.wrap(mesh)
         mesh = mesh.copy()
         if scalars is None and color is None:
-            scalars = mesh.active_scalar_name
+            scalars = mesh.active_scalars_name
 
         if scalars is not None:
             array = mesh[scalars].copy()
             mesh.clear_arrays()
             mesh[scalars] = array
-            mesh.active_scalar_name = scalars
+            mesh.active_scalars_name = scalars
         elif color is not None:
             mesh.clear_arrays()
 
