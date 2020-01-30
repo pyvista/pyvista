@@ -114,24 +114,30 @@ large_vol = examples.download_damavand_volcano()
 large_vol
 
 ###############################################################################
-large_vol.plot()
+opacity = [0, 0.75, 0, 0.75, 1.0]
+
+p = pv.Plotter()
+p.add_volume(large_vol, cmap="magma",
+             opacity=opacity, opacity_unit_distance=6000,)
+p.show()
 
 
 ###############################################################################
 # Woah, that's a big volume! We probably don't want to volume render the
-# whole thing. So let's extract a region of interest.
+# whole thing. So let's extract a region of interest under the volcano.
 voi = large_vol.extract_subset([175, 200, 105, 132, 98, 170])
 
 p = pv.Plotter()
 p.add_mesh(large_vol.outline(), color="k")
-p.add_mesh(voi)
+p.add_mesh(voi, cmap="magma")
 p.show()
 
 ###############################################################################
 # Ah, much better. Let's now volume render that region of interest!
 
 p = pv.Plotter()
-p.add_volume(voi, opacity=[0, 0.75, 0, 0.75, 1.0], opacity_unit_distance=2000)
+p.add_volume(voi, cmap="magma", opacity=opacity,
+             opacity_unit_distance=2000)
 p.camera_position = [(531554.5542909054, 3944331.800171338, 26563.04809259223),
  (599088.1433822059, 3982089.287834022, -11965.14728669936),
  (0.3738545892415734, 0.244312810377319, 0.8947312427698892)]
