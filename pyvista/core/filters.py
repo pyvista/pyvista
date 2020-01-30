@@ -1623,7 +1623,7 @@ class DataSetFilters(object):
             resolution = int(dataset.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        
+
         sampled_line = line.sample(dataset)
         return sampled_line
 
@@ -2156,6 +2156,8 @@ class CompositeFilters(object):
         """
         alg = vtk.vtkAppendFilter()
         for block in composite:
+            if isinstance(block, vtk.vtkMultiBlockDataSet):
+                block = CompositeFilters.combine(block, merge_points=merge_points)
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
         alg.Update()
