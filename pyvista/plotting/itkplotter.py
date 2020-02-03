@@ -20,6 +20,7 @@ class PlotterITK():
     interface for 3D rendering with ``itkwidgets`` just like the
     :class:`pyvista.Plotter` class.
     """
+
     def __init__(self, **kwargs):
         """Initialize the itkwidgets plotter."""
         if not HAS_ITK:
