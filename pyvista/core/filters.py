@@ -32,7 +32,7 @@ from vtk.util.numpy_support import (numpy_to_vtkIdTypeArray, vtk_to_numpy)
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
                                assert_empty_kwargs, generate_plane, get_array,
-                               wrap)
+                               vtk_id_list_to_array, wrap)
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
@@ -3110,6 +3110,9 @@ class PolyDataFilters(DataSetFilters):
     def geodesic(poly_data, start_vertex, end_vertex, inplace=False):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
+        This will add an array titled `vtkOriginalPointIds` of the input
+        mesh's point ids to the output mesh.
+
         Parameters
         ----------
         start_vertex : int
@@ -3127,14 +3130,18 @@ class PolyDataFilters(DataSetFilters):
         """
         if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
             raise IndexError('Invalid indices.')
+        if not poly_data.is_all_triangles():
+            raise AssertionError("Input mesh for geodesic path must be all triangles.")
 
         dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(poly_data)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
         dijkstra.Update()
+        original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
+        output["vtkOriginalPointIds"] = original_ids
 
         # Do not copy textures from input
         output.clear_textures()
