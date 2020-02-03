@@ -11,6 +11,7 @@ import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
+from .fileio import from_meshio
 
 POINT_DATA_FIELD = 0
 CELL_DATA_FIELD = 1
@@ -40,6 +41,11 @@ def vtk_bit_array_to_char(vtkarr_bint):
     vtkarr = vtk.vtkCharArray()
     vtkarr.DeepCopy(vtkarr_bint)
     return vtkarr
+
+
+def vtk_id_list_to_array(vtk_id_list):
+    """Convert a vtkIdList to a NumPy array."""
+    return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
 
 
 def convert_string_array(arr, name=None):
@@ -405,6 +411,15 @@ def trans_from_matrix(matrix):
     return t
 
 
+def is_meshio_mesh(mesh):
+    """Test if passed object is instance of ``meshio.Mesh``."""
+    try:
+        import meshio
+        return isinstance(mesh, meshio.Mesh)
+    except ImportError:
+        return False
+
+
 def wrap(vtkdataset):
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -442,6 +457,8 @@ def wrap(vtkdataset):
         else:
             print(vtkdataset.shape, vtkdataset)
             raise NotImplementedError('NumPy array could not be converted to PyVista.')
+    elif is_meshio_mesh(vtkdataset):
+        return from_meshio(vtkdataset)
     else:
         raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
     try:

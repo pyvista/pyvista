@@ -237,10 +237,12 @@ def test_extract_geometry():
     multi.append(ex.load_ant())
     multi.append(ex.load_sphere())
     multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(ex.load_globe())
+    nested = pyvista.MultiBlock()
+    nested.append(ex.load_airplane())
+    nested.append(ex.load_globe())
+    multi.append(nested)
     # Now check everything
-    assert multi.n_blocks == 5
+    assert multi.n_blocks == 4
     # Now apply the geometry filter to combine a plethora of data blocks
     geom = multi.extract_geometry()
     assert isinstance(geom, pyvista.PolyData)
@@ -252,11 +254,13 @@ def test_combine_filter():
     multi.append(ex.load_ant())
     multi.append(ex.load_sphere())
     multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(ex.load_globe())
+    nested = pyvista.MultiBlock()
+    nested.append(ex.load_airplane())
+    nested.append(ex.load_globe())
+    multi.append(nested)
     # Now check everything
-    assert multi.n_blocks == 5
-    # Now apply the geometry filter to combine a plethora of data blocks
+    assert multi.n_blocks == 4
+    # Now apply the append filter to combine a plethora of data blocks
     geom = multi.combine()
     assert isinstance(geom, pyvista.UnstructuredGrid)
 
@@ -347,6 +351,15 @@ def test_multi_block_list_index():
     for i, j in enumerate(indices):
         assert id(sub[i]) == id(multi[j])
         assert sub.get_block_name(i) == multi.get_block_name(j)
+    # check list of key names
+    multi = pyvista.MultiBlock()
+    multi["foo"] = pyvista.Sphere()
+    multi["goo"] = pyvista.Box()
+    multi["soo"] = pyvista.Cone()
+    indices = ["goo", "foo"]
+    sub = multi[indices]
+    assert len(sub) == len(indices)
+    assert isinstance(sub["foo"], pyvista.PolyData)
 
 def test_multi_block_volume():
     multi = pyvista.MultiBlock()

@@ -13,3 +13,4 @@ from .renderer import CameraPosition, Renderer, scale_point
 from .plotting import BasePlotter, Plotter, close_all
 from .qt_plotting import BackgroundPlotter, QtInteractor, MainWindow, Counter
 from .helpers import plot, plot_arrows, plot_compare_four
+from .itkplotter import PlotterITK

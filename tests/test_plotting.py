@@ -315,19 +315,30 @@ def test_add_points():
 def test_key_press_event():
     plotter = pyvista.Plotter(off_screen=False)
     plotter.key_press_event(None, None)
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     plotter.left_button_down(None, None)
-    # assert np.allclose(plotter.pickpoint, [0, 0, 0])
+    # assert np.allclose(plotter.pickpoint, [0, 0, 0])\
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_show_axes():
+    # if not closed correctly, a seg fault occurs when exitting
+    plotter = pyvista.Plotter(off_screen=False)
+    plotter.show_axes()
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_update():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.update()
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -715,6 +726,10 @@ def test_volume_rendering():
     data['c'].rename_array('Spatial Point Data', 'c')
     data['d'].rename_array('Spatial Point Data', 'd')
     data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
+
+    # Check that NumPy arrays work
+    arr = vol["Spatial Point Data"].reshape(vol.dimensions)
+    pyvista.plot(arr, off_screen=OFF_SCREEN, volume=True, opacity='linear')
 
 
 

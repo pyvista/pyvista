@@ -136,6 +136,9 @@ def test_geodesic():
     sphere = SPHERE.copy()
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
     assert isinstance(geodesic, pyvista.PolyData)
+    assert "vtkOriginalPointIds" in geodesic.array_names
+    ids = geodesic.point_arrays["vtkOriginalPointIds"]
+    assert np.allclose(geodesic.points, sphere.points[ids])
 
 
 def test_geodesic_distance():

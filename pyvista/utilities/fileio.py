@@ -268,19 +268,12 @@ def read_exodus(filename,
     return pyvista.wrap(reader.GetOutput())
 
 
-def read_meshio(filename, file_format = None):
-    """Read any mesh file using meshio."""
-    import meshio
+def from_meshio(mesh):
+    """Convert a ``meshio`` mesh instance to a PyVista mesh."""
     from meshio.vtk._vtk import (
         meshio_to_vtk_type,
         vtk_type_to_numnodes,
     )
-
-    # Make sure relative paths will work
-    filename = os.path.abspath(os.path.expanduser(str(filename)))
-
-    # Read mesh file
-    mesh = meshio.read(filename, file_format)
 
     # Extract cells from meshio.Mesh object
     offset = []
@@ -322,6 +315,16 @@ def read_meshio(filename, file_format = None):
     grid.cell_arrays.update(cell_data)
 
     return grid
+
+
+def read_meshio(filename, file_format=None):
+    """Read any mesh file using meshio."""
+    import meshio
+    # Make sure relative paths will work
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
+    # Read mesh file
+    mesh = meshio.read(filename, file_format)
+    return from_meshio(mesh)
 
 
 def save_meshio(filename, mesh, file_format = None, **kwargs):
