@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 from pyvista import examples as ex
@@ -189,3 +190,14 @@ def test_assert_empty_kwargs():
     with pytest.raises(TypeError):
         kwargs = {"foo":6, "goo":"bad"}
         errors.assert_empty_kwargs(**kwargs)
+
+
+
+def test_convert_id_list():
+    ids = np.array([4, 5, 8])
+    id_list = vtk.vtkIdList()
+    id_list.SetNumberOfIds(len(ids))
+    for i, v in enumerate(ids):
+        id_list.SetId(i, v)
+    converted = helpers.vtk_id_list_to_array(id_list)
+    assert np.allclose(converted, ids)

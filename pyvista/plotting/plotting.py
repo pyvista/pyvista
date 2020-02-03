@@ -1898,8 +1898,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ###############
 
         scalars = scalars.astype(np.float)
-        idxs0 = scalars < clim[0]
-        idxs1 = scalars > clim[1]
+        with np.errstate(invalid='ignore'):
+            idxs0 = scalars < clim[0]
+            idxs1 = scalars > clim[1]
         scalars[idxs0] = clim[0]
         scalars[idxs1] = clim[1]
         scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
@@ -2534,6 +2535,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Close the render window."""
         # must close out widgets first
         super(BasePlotter, self).close()
+        # Renderer has an axes widget, so close it
+        for renderer in self.renderers:
+            renderer.close()
 
         # Grab screenshots of last render
         self.last_image = self.screenshot(None, return_img=True)

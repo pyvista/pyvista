@@ -32,7 +32,7 @@ from vtk.util.numpy_support import (numpy_to_vtkIdTypeArray, vtk_to_numpy)
 import pyvista
 from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
                                assert_empty_kwargs, generate_plane, get_array,
-                               wrap)
+                               vtk_id_list_to_array, wrap)
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
@@ -3110,6 +3110,9 @@ class PolyDataFilters(DataSetFilters):
     def geodesic(poly_data, start_vertex, end_vertex, inplace=False):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
+        This will add an array titled `vtkOriginalPointIds` of the input
+        mesh's point ids to the output mesh.
+
         Parameters
         ----------
         start_vertex : int
@@ -3127,14 +3130,18 @@ class PolyDataFilters(DataSetFilters):
         """
         if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
             raise IndexError('Invalid indices.')
+        if not poly_data.is_all_triangles():
+            raise AssertionError("Input mesh for geodesic path must be all triangles.")
 
         dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(poly_data)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
         dijkstra.Update()
+        original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
+        output["vtkOriginalPointIds"] = original_ids
 
         # Do not copy textures from input
         output.clear_textures()
@@ -3566,5 +3573,45 @@ class UniformGridFilters(DataSetFilters):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
+        """Select piece (e.g., volume of interest).
+
+        To use this filter set the VOI ivar which are i-j-k min/max indices
+        that specify a rectangular region in the data. (Note that these are
+        0-offset.) You can also specify a sampling rate to subsample the
+        data.
+
+        Typical applications of this filter are to extract a slice from a
+        volume for image processing, subsampling large volumes to reduce data
+        size, or extracting regions of a volume with interesting data.
+
+        Parameters
+        ----------
+        voi : tuple(int)
+            Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            These bounds specify the volume of interest in i-j-k min/max
+            indices.
+
+        rate : tuple(int)
+            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Default: ``(1, 1, 1)``
+
+        boundary : bool
+            Control whether to enforce that the "boundary" of the grid is
+            output in the subsampling process. (This only has effect
+            when the rate in any direction is not equal to 1). When
+            this is on, the subsampling will always include the boundary of
+            the grid even though the sample rate is not an even multiple of
+            the grid dimensions. (By default this is off.)
+        """
+        alg = vtk.vtkExtractVOI()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(dataset)
+        alg.SetSampleRate(rate)
+        alg.SetIncludeBoundary(boundary)
         alg.Update()
         return _get_output(alg)

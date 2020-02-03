@@ -1,5 +1,5 @@
 """Qt interactive plotter."""
-
+import warnings
 import logging
 import os
 import time
@@ -199,7 +199,9 @@ class DoubleSlider(QSlider):
         self.setValue(self.value())
 
 
-class RangeGroup(QHBoxLayout): # this is redefined from above ... why?
+# this is redefined from above because the above object is a dummy object
+# we use dummy objects to allow the module to import when PyQt5 isn't installed
+class RangeGroup(QHBoxLayout):
     """Range group box widget."""
 
     def __init__(self, parent, callback, minimum=0.0, maximum=20.0,
@@ -379,6 +381,8 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.signal_set_background.connect(super(QtInteractor, self).set_background)
         self.signal_remove_actor.connect(super(QtInteractor, self).remove_actor)
 
+        self.setAcceptDrops(True)
+
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
         self.ren_win.SetMultiSamples(multi_samples)
@@ -423,7 +427,32 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             for renderer in self.renderers:
                 self.enable_depth_peeling()
 
+    def dragEnterEvent(self, event):
+        """Event is called when something is dropped onto the vtk window.
 
+        Only triggers event when event contains file paths that
+        exist.  User can drop anything in this window and we only want
+        to allow files.
+        """
+        try:
+            for url in event.mimeData().urls():
+                if os.path.isfile(url.path()):
+                    # only call accept on files
+                    event.accept()
+        except Exception as e:
+            warnings.warn('Exception when droping files: %s' % str(e))
+
+    def dropEvent(self, event):
+        """Event is called after dragEnterEvent."""
+        for url in event.mimeData().urls():
+            self.url = url
+            filename = self.url.path()
+            if os.path.isfile(filename):
+                try:
+                    self.add_mesh(pyvista.read(filename))
+                except Exception as e:
+                    print(str(e))
+                    pass
 
     def add_toolbars(self, main_window):
         """Add the toolbars."""
@@ -438,13 +467,13 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
         cvec_setters = {
             # Viewing vector then view up vector
-            'Top (-Z)': lambda: _view_vector((0,0,1), (0,1,0)),
-            'Bottom (+Z)': lambda: _view_vector((0,0,-1), (0,1,0)),
-            'Front (-Y)': lambda: _view_vector((0,1,0), (0,0,1)),
-            'Back (+Y)': lambda: _view_vector((0,-1,0), (0,0,1)),
-            'Left (-X)': lambda: _view_vector((1,0,0), (0,0,1)),
-            'Right (+X)': lambda: _view_vector((-1,0,0), (0,0,1)),
-            'Isometric': lambda: _view_vector((1,1,1), (0,0,1))
+            'Top (-Z)': lambda: _view_vector((0, 0, 1),  (0, 1, 0)),
+            'Bottom (+Z)': lambda: _view_vector((0, 0, -1),  (0, 1, 0)),
+            'Front (-Y)': lambda: _view_vector((0, 1, 0),  (0, 0, 1)),
+            'Back (+Y)': lambda: _view_vector((0, -1, 0),  (0, 0, 1)),
+            'Left (-X)': lambda: _view_vector((1, 0, 0),  (0, 0, 1)),
+            'Right (+X)': lambda: _view_vector((-1, 0, 0),  (0, 0, 1)),
+            'Isometric': lambda: _view_vector((1, 1, 1),  (0, 0, 1))
         }
         for key, method in cvec_setters.items():
             _add_action(self.default_camera_tool_bar, key, method)
@@ -458,7 +487,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         _add_action(self.saved_cameras_tool_bar, CLEAR_CAMS_BUTTON_TEXT, self.clear_camera_positions)
 
         return
-
 
     def save_camera_position(self):
         """Save camera position to saved camera menu for recall."""
@@ -475,7 +503,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
             if ncam < 10:
                 self.add_key_event(str(ncam), load_camera_position)
         return
-
 
     def clear_camera_positions(self):
         """Clear all camera positions."""
@@ -671,13 +698,11 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
-
     def _close_callback(self):
         """Make sure a screenhsot is acquired before closing."""
         if self.allow_quit_keypress:
             BasePlotter._close_callback(self)
             self.app_window.close()
-
 
     def quit(self):
         """Quit the plotter."""
@@ -756,7 +781,7 @@ class BackgroundPlotter(QtInteractor):
     def _render(self):
         super(BackgroundPlotter, self)._render()
         self.update_app_icon()
-        self.ren_win.Render() # force rendering
+        self.ren_win.Render()  # force rendering
         return
 
     @property
@@ -764,7 +789,6 @@ class BackgroundPlotter(QtInteractor):
         """Return render window size."""
         the_size = self.app_window.baseSize()
         return the_size.width(), the_size.height()
-
 
     @window_size.setter
     def window_size(self, window_size):
