@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista import QtInteractor
+from pyvista import QtInteractor, MainWindow
 from pyvista.plotting import system_supports_plotting
 
 
@@ -23,33 +23,33 @@ except:
         pass
 
 
-class MainWindow(QMainWindow):
-
+class TestWindow(MainWindow):
     def __init__(self, parent=None, show=True):
-        QMainWindow.__init__(self, parent)
+        MainWindow.__init__(self, parent)
 
         self.frame = QFrame()
         vlayout = QVBoxLayout()
         self.vtk_widget = QtInteractor(self.frame)
-        vlayout.addWidget(self.vtk_widget)
+        vlayout.addWidget(self.vtk_widget.interactor)
 
         self.frame.setLayout(vlayout)
         self.setCentralWidget(self.frame)
 
         mainMenu = self.menuBar()
+
         fileMenu = mainMenu.addMenu('File')
-
-        exitButton = QAction('Exit', self)
-        exitButton.setShortcut('Ctrl+Q')
-        exitButton.triggered.connect(self.close)
-
-        fileMenu.addAction(exitButton)
+        self.exit_action = QAction('Exit', self)
+        self.exit_action.setShortcut('Ctrl+Q')
+        self.exit_action.triggered.connect(self.close)
+        fileMenu.addAction(self.exit_action)
 
         meshMenu = mainMenu.addMenu('Mesh')
         self.add_sphere_action = QAction('Add Sphere', self)
-
+        self.exit_action.setShortcut('Ctrl+A')
         self.add_sphere_action.triggered.connect(self.add_sphere)
         meshMenu.addAction(self.add_sphere_action)
+
+        self.signal_close.connect(self.vtk_widget.interactor.close)
 
         if show:
             self.show()
@@ -63,10 +63,11 @@ class MainWindow(QMainWindow):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
-    window = MainWindow(show=False)
+    window = TestWindow(show=False)
     qtbot.addWidget(window)
     window.add_sphere()
     assert np.any(window.vtk_widget.mesh.points)
+    window.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

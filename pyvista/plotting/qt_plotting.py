@@ -318,7 +318,50 @@ def pad_image(arr, max_size=400):
     return resample_image(img, max_size=max_size)
 
 
-class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
+class QVTKRenderWindowInteractorAdapter(QObject):
+    """Adapter class for QVTKRenderWindowInteractor that uses super()."""
+
+    def __init__(self, parent, **kwargs):
+        """Initialize the internal interactor."""
+        self.interactor = QVTKRenderWindowInteractor(parent=parent)
+        self.interactor.dragEnterEvent = self.dragEnterEvent
+        self.interactor.dropEvent = self.dropEvent
+        super(QVTKRenderWindowInteractorAdapter, self).__init__(**kwargs)
+
+    def GetRenderWindow(self):
+        """Get the render window."""
+        return self.interactor.GetRenderWindow()
+
+    def setWindowTitle(self, title):
+        """Set the window title."""
+        return self.interactor.setWindowTitle(title)
+
+    def SetInteractorStyle(self, style):
+        """Set the interactor style."""
+        return self.interactor.SetInteractorStyle(style)
+
+    def show(self):
+        """Show the window."""
+        return self.interactor.show()
+
+    def close(self):
+        """Close the window."""
+        return self.interactor.close()
+
+    def setAcceptDrops(self, state):
+        """Enable drop event or not."""
+        self.interactor.setAcceptDrops(state)
+
+    def dragEnterEvent(self, event):
+        """Manage drag event."""
+        pass
+
+    def dropEvent(self, event):
+        """Manage drop event."""
+        pass
+
+
+class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     """Extend QVTKRenderWindowInteractor class.
 
     This adds the methods available to pyvista.Plotter.
@@ -346,40 +389,20 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
     """
 
-    signal_set_view_vector = pyqtSignal(tuple, tuple)
-    signal_reset_camera = pyqtSignal()
-    signal_render = pyqtSignal()
-    signal_enable_trackball_style = pyqtSignal()
-    signal_remove_legend = pyqtSignal()
-    signal_set_background = pyqtSignal(object)
-    signal_remove_actor = pyqtSignal(object)
     allow_quit_keypress = True
 
-    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
-                 border=None, border_color='k', border_width=2.0,
+    def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, auto_update=True):
+                 splitting_position=None, auto_update=True, **kwargs):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
-        QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape, title=title,
-                             border=border, border_color=border_color,
-                             border_width=border_width,
-                             splitting_position=splitting_position)
+        super(QtInteractor, self).__init__(parent=parent, **kwargs)
         self.parent = parent
 
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
-
-        self.signal_set_view_vector.connect(super(QtInteractor, self).view_vector)
-        self.signal_reset_camera.connect(super(QtInteractor, self).reset_camera)
-        self.signal_render.connect(super(QtInteractor, self)._render)
-        self.signal_enable_trackball_style.connect(super(QtInteractor, self).enable_trackball_style)
-        self.signal_remove_legend.connect(super(QtInteractor, self).remove_legend)
-        self.signal_set_background.connect(super(QtInteractor, self).set_background)
-        self.signal_remove_actor.connect(super(QtInteractor, self).remove_actor)
 
         self.setAcceptDrops(True)
 
@@ -424,8 +447,9 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
                 renderer.camera.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
 
         if rcParams["depth_peeling"]["enabled"]:
-            for renderer in self.renderers:
-                self.enable_depth_peeling()
+            if self.enable_depth_peeling():
+                for renderer in self.renderers:
+                    renderer.enable_depth_peeling()
 
     def dragEnterEvent(self, event):
         """Event is called when something is dropped onto the vtk window.
@@ -464,7 +488,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         # Camera toolbar
         self.default_camera_tool_bar = main_window.addToolBar('Camera Position')
-        _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
+        _view_vector = lambda *args: self.view_vector(*args)
         cvec_setters = {
             # Viewing vector then view up vector
             'Top (-Z)': lambda: _view_vector((0, 0, 1),  (0, 1, 0)),
@@ -477,7 +501,7 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         }
         for key, method in cvec_setters.items():
             _add_action(self.default_camera_tool_bar, key, method)
-        _add_action(self.default_camera_tool_bar, 'Reset', self.reset_camera)
+        _add_action(self.default_camera_tool_bar, 'Reset', lambda: self.reset_camera())
 
         # Saved camera locations toolbar
         self.saved_camera_positions = []
@@ -518,47 +542,13 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         """Make sure a screenhsot is acquired before closing."""
         if self.allow_quit_keypress:
             BasePlotter._close_callback(self)
-            self.quit()
+            self.close()
 
 
-
-    def quit(self):
+    def close(self):
         """Quit application."""
         BasePlotter.close(self)
-        QVTKRenderWindowInteractor.close(self)
-
-
-    def reset_camera(self):
-        """Reset the camera."""
-        self.signal_reset_camera.emit()
-
-
-    def view_vector(self, vector, viewup=None):
-        """Set the view vector."""
-        args = [vector, viewup]
-        self.signal_view_vector.emit(*args)
-
-
-    def _render(self):
-        """Update the render window."""
-        self.signal_render.emit()
-
-
-    def enable_trackball_style(self):
-        """Enable trackball interactor style."""
-        self.signal_enable_trackball_style.emit()
-
-    def remove_legend(self):
-        """Remove the legend."""
-        self.signal_remove_legend.emit()
-
-    def set_background(self, color):
-        """Set the background color."""
-        self.signal_set_background.emit(color)
-
-    def remove_actor(self, actor, reset_camera=None):
-        """Remove an actor."""
-        self.signal_remove_actor.emit(actor)
+        QVTKRenderWindowInteractorAdapter.close(self)
 
 
 
@@ -567,8 +557,8 @@ class BackgroundPlotter(QtInteractor):
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None,
-                 off_screen=None, auto_update=True, **kwargs):
+    def __init__(self, show=True, app=None, window_size=None,
+                 off_screen=None, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -607,10 +597,9 @@ class BackgroundPlotter(QtInteractor):
         self.frame.setFrameStyle(QFrame.NoFrame)
 
 
-        QtInteractor.__init__(self, parent=self.frame, shape=shape,
-                              off_screen=off_screen, auto_update=auto_update,
-                              **kwargs)
-        self.app_window.signal_close.connect(self.quit)
+        super(BackgroundPlotter, self).__init__(parent=self.frame, off_screen=off_screen,
+                                                **kwargs)
+        self.app_window.signal_close.connect(self._close)
         self.add_toolbars(self.app_window)
 
         # build main menu
@@ -654,7 +643,7 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addSeparator()
 
         vlayout = QVBoxLayout()
-        vlayout.addWidget(self)
+        vlayout.addWidget(self.interactor)
 
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
@@ -672,6 +661,8 @@ class BackgroundPlotter(QtInteractor):
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
+
+        self.add_callback(self.update_app_icon)
 
         # Keypress events
         self.add_key_event("S", self._qt_screenshot) # shift + s
@@ -694,7 +685,7 @@ class BackgroundPlotter(QtInteractor):
         """
         twait = (rate**-1) * 1000.0
         self.render_timer = QTimer(parent=self.app_window)
-        self.render_timer.timeout.connect(self._render)
+        self.render_timer.timeout.connect(self.render)
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
 
@@ -704,23 +695,24 @@ class BackgroundPlotter(QtInteractor):
             BasePlotter._close_callback(self)
             self.app_window.close()
 
-    def quit(self):
-        """Quit the plotter."""
-        QtInteractor.quit(self)
+
+    def _close(self):
+        """Close the plotter.
+
+        This function assumes that `self.app_window` is closing
+        or already closed.
+
+        """
+        super(BackgroundPlotter, self).close()
 
     def close(self):
-        """Close the plotter."""
-        self.app_window.close()
+        """Close the plotter.
 
-    def add_actor(self, actor, reset_camera=None, name=None, culling=False, pickable=True):
-        """Add an actor."""
-        actor, prop = super(BackgroundPlotter, self).add_actor(actor,
-                                                               reset_camera=reset_camera,
-                                                               name=name,
-                                                               culling=culling,
-                                                               pickable=pickable)
-        self.update_app_icon()
-        return actor, prop
+        This function closes the window which in turn will
+        close the plotter through `signal_close`.
+
+        """
+        self.app_window.close()
 
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window."""
@@ -776,13 +768,6 @@ class BackgroundPlotter(QtInteractor):
         if self.camera.GetParallelProjection():
             return self.disable_parallel_projection()
         return self.enable_parallel_projection()
-
-    @pyqtSlot()
-    def _render(self):
-        super(BackgroundPlotter, self)._render()
-        self.update_app_icon()
-        self.ren_win.Render()  # force rendering
-        return
 
     @property
     def window_size(self):

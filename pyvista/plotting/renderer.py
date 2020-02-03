@@ -348,7 +348,7 @@ class Renderer(vtkRenderer):
         elif not self.camera_set and reset_camera is None and not rv:
             self.reset_camera()
         else:
-            self.parent._render()
+            self.parent.render()
 
         self.update_bounds_axes()
 
@@ -969,7 +969,7 @@ class Renderer(vtkRenderer):
         elif not self.camera_set and reset_camera is None:
             self.reset_camera()
         else:
-            self.parent._render()
+            self.parent.render()
         self.Modified()
         return True
 
@@ -993,7 +993,7 @@ class Renderer(vtkRenderer):
         transform = vtk.vtkTransform()
         transform.Scale(xscale, yscale, zscale)
         self.camera.SetModelTransformMatrix(transform.GetMatrix())
-        self.parent._render()
+        self.parent.render()
         if reset_camera:
             self.update_bounds_axes()
             self.reset_camera()
@@ -1039,7 +1039,7 @@ class Renderer(vtkRenderer):
 
         """
         self.ResetCamera()
-        self.parent._render()
+        self.parent.render()
 
     def isometric_view(self):
         """Reset the camera to a default isometric view.
