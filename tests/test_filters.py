@@ -614,3 +614,10 @@ def test_compute_gradients():
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3
+
+
+
+def test_extract_subset():
+    volume = examples.load_uniform()
+    voi = volume.extract_subset([0,3,1,4,5,7])
+    assert isinstance(voi, pyvista.UniformGrid)

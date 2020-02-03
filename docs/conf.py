@@ -20,6 +20,14 @@ pyvista.FIGURE_PATH = os.path.join(os.path.abspath('./images/'), 'auto-generated
 if not os.path.exists(pyvista.FIGURE_PATH):
     os.makedirs(pyvista.FIGURE_PATH)
 
+# SG warnins
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message='Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.',
+)
+
 # -- General configuration ------------------------------------------------
 numfig = False
 html_show_sourcelink = False

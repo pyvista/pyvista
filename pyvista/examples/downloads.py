@@ -582,3 +582,10 @@ def download_crater_imagery():
 def download_dolfin():
     """Download crater texture."""
     return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml")
+
+
+def download_damavand_volcano():
+    """Download damavand volcano model."""
+    volume = _download_and_read("damavand-volcano.vtk")
+    volume.rename_array("None", "data")
+    return volume

@@ -1898,8 +1898,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ###############
 
         scalars = scalars.astype(np.float)
-        idxs0 = scalars < clim[0]
-        idxs1 = scalars > clim[1]
+        with np.errstate(invalid='ignore'):
+            idxs0 = scalars < clim[0]
+            idxs1 = scalars > clim[1]
         scalars[idxs0] = clim[0]
         scalars[idxs1] = clim[1]
         scalars = ((scalars - np.nanmin(scalars)) / (np.nanmax(scalars) - np.nanmin(scalars))) * 255
