@@ -324,6 +324,8 @@ class QVTKRenderWindowInteractorAdapter(QObject):
     def __init__(self, parent, **kwargs):
         """Initialize the internal interactor."""
         self.interactor = QVTKRenderWindowInteractor(parent=parent)
+        self.interactor.dragEnterEvent = self.dragEnterEvent
+        self.interactor.dropEvent = self.dropEvent
         super(QVTKRenderWindowInteractorAdapter, self).__init__(**kwargs)
 
     def GetRenderWindow(self):
@@ -345,6 +347,18 @@ class QVTKRenderWindowInteractorAdapter(QObject):
     def close(self):
         """Close the window."""
         return self.interactor.close()
+
+    def setAcceptDrops(self, state):
+        """Enable drop event or not."""
+        self.interactor.setAcceptDrops(state)
+
+    def dragEnterEvent(self, event):
+        """Manage drag event."""
+        pass
+
+    def dropEvent(self, event):
+        """Manage drop event."""
+        pass
 
 
 class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
