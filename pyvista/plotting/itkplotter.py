@@ -1,5 +1,7 @@
 """PyVista-like ITKwidgets plotter.
 """
+from packaging import version
+
 import numpy as np
 import pyvista as pv
 
@@ -31,8 +33,14 @@ class PlotterITK():
 
     def __init__(self, **kwargs):
         """Initialize the itkwidgets plotter."""
+        itk_import_err = ImportError("Please install `itkwidgets>=0.25.2`")
         if not HAS_ITK:
-            raise ImportError("Please install `itkwidgets>=0.25.2`.")
+            raise itk_import_err
+
+        from itkwidgets import __version__
+        if version.parse(__version__) < version.parse("0.25.2"):
+            raise itk_import_err
+
         self._actors = []
         self._point_sets = []
         self._geometries = []
