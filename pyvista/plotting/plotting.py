@@ -2535,6 +2535,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Close the render window."""
         # must close out widgets first
         super(BasePlotter, self).close()
+        # Renderer has an axes widget, so close it
+        for renderer in self.renderers:
+            renderer.close()
 
         # Grab screenshots of last render
         self.last_image = self.screenshot(None, return_img=True)
