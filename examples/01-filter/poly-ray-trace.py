@@ -22,7 +22,7 @@ ray = pv.Line(start, stop)
 intersection = pv.PolyData(points)
 
 # Render the result
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(sphere,
            show_edges=True, opacity=0.5, color="w",
            lighting=False, label="Test Mesh")

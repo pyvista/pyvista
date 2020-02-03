@@ -18,7 +18,7 @@ import numpy as np
 dataset = examples.download_bunny_coarse()
 clipped = dataset.clip('y', invert=False)
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(dataset, style='wireframe', color='blue', label='Input')
 p.add_mesh(clipped, label='Clipped')
 p.add_legend()
@@ -39,7 +39,7 @@ dataset = examples.download_office()
 bounds = [2,4.5, 2,4.5, 1,3]
 clipped = dataset.clip_box(bounds)
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(dataset, style='wireframe', color='blue', label='Input')
 p.add_mesh(clipped, label='Clipped')
 p.add_legend()
@@ -61,7 +61,7 @@ xx = yy = zz = 1 - np.linspace(0, n, n) * 2 / (n-1)
 dataset = pv.RectilinearGrid(xx, yy, zz)
 
 # Preview the problem
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(surface, color='w', label='Surface')
 p.add_mesh(dataset, color='gold', show_edges=True,
            opacity=0.75, label='To Clip')
@@ -74,7 +74,7 @@ p.show()
 clipped = dataset.clip_surface(surface, invert=False)
 
 # Visualize the results
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(surface, color='w', opacity=0.75, label='Surface')
 p.add_mesh(clipped, color='gold', show_edges=True, label="clipped")
 p.add_legend()

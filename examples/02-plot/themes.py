@@ -14,7 +14,7 @@ mesh = examples.download_st_helens().warp_by_scalar()
 
 
 def plot_example():
-    p = pv.BackgroundPlotter()
+    p = pv.Plotter()
     p.add_mesh(mesh)
     p.add_bounding_box()
     return p.show()
@@ -67,7 +67,7 @@ plot_example()
 ###############################################################################
 # Note that you can also use color gradients for the background of the plotting
 # window!
-plotter = pv.BackgroundPlotter()
+plotter = pv.Plotter()
 plotter.add_mesh(mesh)
 plotter.show_grid()
 # Here we set the gradient

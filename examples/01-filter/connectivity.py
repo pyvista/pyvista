@@ -19,7 +19,7 @@ cpos = [(40.6018, -280.533, 47.0172),
         (0.0, 0.0, 1.0)]
 
 # Plot the raw data
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(mesh, color='#965434')
 p.add_mesh(mesh.outline())
 p.show(cpos=cpos)
@@ -35,7 +35,7 @@ p.show(cpos=cpos)
 largest = mesh.connectivity(largest=True)
 # or: largest = mesh.extract_largest()
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(largest, color='#965434')
 p.add_mesh(mesh.outline())
 p.camera_position = cpos

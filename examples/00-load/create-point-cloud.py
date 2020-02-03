@@ -107,7 +107,7 @@ point_cloud['vectors'] = vectors
 arrows = point_cloud.glyph(orient='vectors', scale=False, factor=0.15,)
 
 # Display the arrows
-plotter = pv.BackgroundPlotter()
+plotter = pv.Plotter()
 plotter.add_mesh(point_cloud, color='maroon', point_size=10.,
                  render_points_as_spheres=True)
 plotter.add_mesh(arrows, color='lightblue')

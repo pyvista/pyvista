@@ -782,31 +782,6 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.setBaseSize(*window_size)
         self.app_window.resize(*window_size)
 
-    def show(self, title=None, window_size=None, interactive=True,
-             auto_close=None, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=None, cpos=None,
-             height=400):
-        """Display the plotting window."""
-        super(BackgroundPlotter, self).show()
-        if self._first_time:  # and not self.camera_set:
-            for renderer in self.renderers:
-                if not renderer.camera_set and cpos is None:
-                    renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
-                elif cpos is not None:
-                    renderer.camera_position = cpos
-            self._first_time = False
-        cpos = self.camera_position
-        self.last_image = self.screenshot(screenshot, return_img=True)
-        self.last_image_depth = self.get_image_depth()
-        if window_size is not None:
-            self.window_size = window_size
-        if full_screen:
-            self.app_window.showFullScreen()
-        if return_img or screenshot is True:
-            return cpos, self.last_image
-        return cpos
-
     def __del__(self):  # pragma: no cover
         """Delete the qt plotter."""
         self.app_window.close()

@@ -44,7 +44,7 @@ outline = dataset.outline()
 # We can now plot this filtered dataset along side an outline of the original
 # dataset
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(outline, color="k")
 p.add_mesh(threshed)
 p.camera_position = [-2, 5, 3]
@@ -58,7 +58,7 @@ contours = dataset.contour()
 slices = dataset.slice_orthogonal()
 glyphs = dataset.glyph(factor=1e-3, geom=pv.Sphere())
 
-p = pv.BackgroundPlotter(shape=(2, 2))
+p = pv.Plotter(shape=(2, 2))
 # Show the threshold
 p.add_mesh(outline, color="k")
 p.add_mesh(threshed, show_scalar_bar=False)
@@ -103,7 +103,7 @@ result = dataset.threshold().elevation().clip(normal="z").slice_orthogonal()
 # And to view this filtered data, simply call the ``plot`` method
 # (``result.plot()``) or create a rendering scene:
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(outline, color="k")
 p.add_mesh(result, scalars="Elevation")
 p.view_isometric()

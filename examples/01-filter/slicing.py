@@ -51,7 +51,7 @@ slices.plot(cmap=cmap)
 # Single slice - origin defaults to the center of the mesh
 single_slice = mesh.slice(normal=[1, 1, 0])
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(mesh.outline(), color="k")
 p.add_mesh(single_slice, cmap=cmap)
 p.show()
@@ -100,7 +100,7 @@ slc
 
 ###############################################################################
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(slc)
 p.add_mesh(model.outline())
 p.show(cpos=[1, -1, 1])

@@ -21,7 +21,7 @@ dargs = dict(show_edges=True)
 rot = mesh.copy()
 rot.rotate_y(90)
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(mesh, color="Crimson", **dargs)
 p.add_mesh(rot, color="mintcream", opacity=0.35, **dargs)
 p.camera_position = cpos
@@ -42,7 +42,7 @@ outside = select.threshold(0.5, invert=True)
 ###############################################################################
 # display the results
 
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 p.add_mesh(outside, color="Crimson", **dargs)
 p.add_mesh(inside, color="green", **dargs)
 p.add_mesh(rot, color="mintcream", opacity=0.35, **dargs)

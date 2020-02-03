@@ -32,7 +32,7 @@ poly
 ###############################################################################
 # Now plot the points with labels:
 
-plotter = pv.BackgroundPlotter()
+plotter = pv.Plotter()
 plotter.add_point_labels(poly, "My Labels", point_size=20, font_size=36)
 plotter.show()
 
@@ -49,7 +49,7 @@ grid = pv.UnstructuredGrid(examples.hexbeamfile)
 
 ###############################################################################
 # Create plotting class and add the unstructured grid
-plotter = pv.BackgroundPlotter()
+plotter = pv.Plotter()
 plotter.add_mesh(grid, show_edges=True, color="tan")
 
 # Add labels to points on the yz plane (where x == 0)
@@ -76,7 +76,7 @@ plotter.show()
 mesh = examples.load_uniform().slice()
 
 ###############################################################################
-p = pv.BackgroundPlotter()
+p = pv.Plotter()
 
 # Add the mesh:
 p.add_mesh(mesh, scalars="Spatial Point Data", show_edges=True)

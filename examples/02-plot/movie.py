@@ -14,7 +14,7 @@ filename = "sphere-shrinking.mp4"
 mesh = pv.Sphere()
 mesh.cell_arrays["data"] = np.random.random(mesh.n_cells)
 
-plotter = pv.BackgroundPlotter()
+plotter = pv.Plotter()
 # Open a movie file
 plotter.open_movie(filename)
 
