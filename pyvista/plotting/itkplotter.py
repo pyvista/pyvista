@@ -2,6 +2,7 @@
 
 This is super experimental: use with caution.
 """
+import numpy as np
 
 import pyvista as pv
 
@@ -24,7 +25,7 @@ class PlotterITK():
     def __init__(self, **kwargs):
         """Initialize the itkwidgets plotter."""
         if not HAS_ITK:
-            raise ImportError("Please install `itkwidgets`.")
+            raise ImportError("Please install `itkwidgets>=0.25.2`.")
         self._actors = []
         self._point_sets = []
         self._geometries = []
@@ -48,32 +49,56 @@ class PlotterITK():
         self._point_sets.append(point_array)
 
     def add_mesh(self, mesh, color=None, scalars=None, clim=None,
-                 opacity=1.0, n_colors=256, cmap='Viridis (matplotlib)',
+                 opacity=1.0, n_colors=256, smooth_shading=False,
                  **kwargs):
         """Add mesh to the scene."""
         if not pv.is_pyvista_dataset(mesh):
             mesh = pv.wrap(mesh)
-        mesh = mesh.copy()
-        if scalars is None and color is None:
-            scalars = mesh.active_scalars_name
+        # mesh = mesh.copy()
+        # if scalars is None and color is None:
+        #     scalars = mesh.active_scalars_name
 
-        if scalars is not None:
-            array = mesh[scalars].copy()
-            mesh.clear_arrays()
+        if smooth_shading:
+            # extract surface if mesh is exterior
+            if not isinstance(mesh, pv.PolyData):
+                grid = mesh
+                mesh = grid.extract_surface()
+                ind = mesh.point_arrays['vtkOriginalPointIds']
+                # remap scalars
+                if isinstance(scalars, np.ndarray):
+                    scalars = scalars[ind]
+
+            mesh.compute_normals(cell_normals=False, inplace=True)
+        elif 'Normals' in mesh.point_arrays:
+            # if 'normals' in mesh.point_arrays:
+            mesh.point_arrays.pop('Normals')
+
+        # copy this mesh as we're going to be clearing out scalars
+        # mesh = mesh.copy()
+
+        # if scalars is None and color is None:
+        #     scalars = mesh.active_scalars_name
+
+        if isinstance(scalars, str):
+            if scalars in mesh:
+                array = mesh[scalars].copy()
+            else:
+                raise ValueError('Scalars %s not in mesh' % scalars)
             mesh[scalars] = array
             mesh.active_scalars_name = scalars
+        elif isinstance(scalars, np.ndarray):
+            array = scalars
+            scalar_name = '_scalars'
+            mesh[scalar_name] = array
+            mesh.active_scalars_name = scalar_name
         elif color is not None:
-            mesh.clear_arrays()
-
+            mesh.active_scalars_name = None
 
         mesh = to_geometry(mesh)
         self._geometries.append(mesh)
         self._geometry_colors.append(pv.parse_color(color))
         self._geometry_opacities.append(opacity)
-        self._cmap = cmap
-
-        return
-
+        # self._cmap = cmap
 
     def show(self, ui_collapsed=False):
         """Show in cell output."""
