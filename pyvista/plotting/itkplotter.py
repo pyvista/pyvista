@@ -14,7 +14,14 @@ except ImportError:
     pass
 
 class PlotterITK():
+    """An EXPERIMENTAL interface for plotting in Jupyter notebooks.
+
+    Use with caution, this is an experimental/demo feature. This creates an
+    interface for 3D rendering with ``itkwidgets`` just like the
+    :class:`pyvista.Plotter` class.
+    """
     def __init__(self, **kwargs):
+        """Initialize the itkwidgets plotter."""
         if not HAS_ITK:
             raise ImportError("Please install `itkwidgets`.")
         self._actors = []
@@ -26,9 +33,11 @@ class PlotterITK():
         self._point_set_colors = []
 
     def add_actor(self, actor):
+        """Append internal list of actors."""
         self._actors.append(actor)
 
     def add_points(self, points, color=None):
+        """Add XYZ points to the scene."""
         if pv.is_pyvista_dataset(points):
             point_array = points.points
         else:
