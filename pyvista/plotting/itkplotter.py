@@ -1,9 +1,6 @@
 """PyVista-like ITKwidgets plotter.
-
-This is super experimental: use with caution.
 """
 import numpy as np
-
 import pyvista as pv
 
 HAS_ITK = False
@@ -14,12 +11,22 @@ try:
 except ImportError:
     pass
 
-class PlotterITK():
-    """An EXPERIMENTAL interface for plotting in Jupyter notebooks.
 
-    Use with caution, this is an experimental/demo feature. This creates an
-    interface for 3D rendering with ``itkwidgets`` just like the
-    :class:`pyvista.Plotter` class.
+class PlotterITK():
+    """ITKwidgets plotter.  Used for plotting interactively within a
+    jupyter notebook.  Requires ``itkwidgets>=0.25.2``.  For
+    installation see:
+
+    https://github.com/InsightSoftwareConsortium/itkwidgets#installation
+
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> mesh = pyvista.Sphere()
+    >>> pl = pyvista.PlotterITK()  # doctest:+SKIP
+    >>> pl.add_mesh(mesh, color='w')  # doctest:+SKIP
+    >>> pl.show()  # doctest:+SKIP
     """
 
     def __init__(self, **kwargs):
@@ -31,15 +38,34 @@ class PlotterITK():
         self._geometries = []
         self._geometry_colors = []
         self._geometry_opacities = []
-        self._cmap = 'Viridis (matplotlib)'
         self._point_set_colors = []
 
     def add_actor(self, actor):
-        """Append internal list of actors."""
+        """Add an actor to the plotter.
+
+        Parameters
+        ----------
+        uinput : vtk.vtkActor
+            vtk actor to be added.
+        """
         self._actors.append(actor)
 
     def add_points(self, points, color=None):
-        """Add XYZ points to the scene."""
+        """Add points to plotting object.
+
+        Parameters
+        ----------
+        points : np.ndarray or pyvista.Common
+            n x 3 numpy array of points or pyvista dataset with points.
+
+        color : string or 3 item list, optional. Color of points (if visible).
+            Either a string, rgb list, or hex color string.  For example:
+
+            color='white'
+            color='w'
+            color=[1, 1, 1]
+            color='#FFFFFF'
+        """
         if pv.is_pyvista_dataset(points):
             point_array = points.points
         else:
@@ -128,13 +154,24 @@ class PlotterITK():
         # self._cmap = cmap
 
     def show(self, ui_collapsed=False):
-        """Show in cell output."""
+        """Show itkwidgets plotter in cell output.
+
+        Parameters
+        ----------
+        ui_collapsed : bool, optional
+            Plot with the user interface collapsed.  UI can be enabled
+            when plotting.  Default False.
+
+        Returns
+        --------
+        plotter : itkwidgets.Viewer
+            ITKwidgets viewer.
+        """
         plotter = Viewer(geometries=self._geometries,
                          geometry_colors=self._geometry_colors,
                          geometry_opacities=self._geometry_opacities,
                          point_set_colors=self._point_set_colors,
                          point_sets=self._point_sets,
                          ui_collapsed=ui_collapsed,
-                         actors=self._actors,
-                         cmap=self._cmap)
+                         actors=self._actors)
         return plotter
