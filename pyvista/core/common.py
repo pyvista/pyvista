@@ -1006,8 +1006,9 @@ class Common(DataSetFilters, DataObject):
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         if hasattr(ido, '_textures'):
-            self._textures = ido._textures
-
+            self._textures = {}
+            for name, tex in ido._textures.items():
+                self._textures[name] = tex.copy()
 
     @property
     def point_arrays(self):
