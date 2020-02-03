@@ -289,19 +289,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def set_focus(self, *args, **kwargs):
         """Wrap ``Renderer.set_focus``."""
         self.renderer.set_focus(*args, **kwargs)
-        self._render()
+        self.render()
 
     @wraps(Renderer.set_position)
     def set_position(self, *args, **kwargs):
         """Wrap ``Renderer.set_position``."""
         self.renderer.set_position(*args, **kwargs)
-        self._render()
+        self.render()
 
     @wraps(Renderer.set_viewup)
     def set_viewup(self, *args, **kwargs):
         """Wrap ``Renderer.set_viewup``."""
         self.renderer.set_viewup(*args, **kwargs)
-        self._render()
+        self.render()
 
     @wraps(Renderer.add_axes)
     def add_axes(self, *args, **kwargs):
@@ -392,7 +392,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def reset_camera(self, *args, **kwargs):
         """Wrap ``Renderer.reset_camera``."""
         self.renderer.reset_camera(*args, **kwargs)
-        self._render()
+        self.render()
 
     @wraps(Renderer.isometric_view)
     def isometric_view(self, *args, **kwargs):
@@ -603,6 +603,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     #### Everything else ####
 
+    def render(self):
+        """Render the main window."""
+        if hasattr(self, 'ren_win'):
+            self.ren_win.Render()
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -880,15 +884,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.update_style()
 
 
-    def _render(self):
-        """Redraw the render window if it exists."""
-        if hasattr(self, 'ren_win'):
-            if hasattr(self, 'render_trigger'):
-                self.render_trigger.emit()
-            elif not self._first_time:
-                self.render()
-
-
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
         for renderer in self.renderers:
@@ -940,7 +935,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.iren.Start()
             self.iren.DestroyTimer(self.right_timer_id)
 
-            self._render()
+            self.render()
             Plotter.last_update_time = curr_time
         else:
             if force_redraw:
@@ -2521,7 +2516,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         mesh.points = points
 
         if render:
-            self._render()
+            self.render()
 
 
     def _clear_ren_win(self):
@@ -3218,11 +3213,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Plotter hasn't been rendered or was improperly closed
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
 
-        if isinstance(self, Plotter):
-            # TODO: we need a consistent rendering function
-            self.render()
-        else:
-            self._render()
+        self.render()
 
         # debug: this needs to be called twice for some reason,
         img = self.image
@@ -3376,7 +3367,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the legend actor."""
         if hasattr(self, 'legend'):
             self.remove_actor(self.legend, reset_camera=False)
-            self._render()
+            self.render()
 
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
@@ -3465,7 +3456,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.set_focus(focus)
                 self.set_viewup(viewup)
                 self.renderer.ResetCameraClippingRange()
-                self._render()
+                self.render()
                 if bkg:
                     time.sleep(step)
                 if write_frames:
@@ -3656,8 +3647,9 @@ class Plotter(BasePlotter):
             self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
 
         if rcParams["depth_peeling"]["enabled"]:
-            for renderer in self.renderers:
-                self.enable_depth_peeling()
+            if self.enable_depth_peeling():
+                for renderer in self.renderers:
+                    renderer.enable_depth_peeling()
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
@@ -3835,7 +3827,3 @@ class Plotter(BasePlotter):
         """
         logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
-
-    def render(self):
-        """Render the main window."""
-        self.ren_win.Render()
