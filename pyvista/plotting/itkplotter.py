@@ -48,16 +48,48 @@ class PlotterITK():
         self._point_set_colors.append(pv.parse_color(color))
         self._point_sets.append(point_array)
 
-    def add_mesh(self, mesh, color=None, scalars=None, clim=None,
-                 opacity=1.0, n_colors=256, smooth_shading=False,
-                 **kwargs):
-        """Add mesh to the scene."""
+    def add_mesh(self, mesh, color=None, scalars=None,
+                 opacity=1.0, smooth_shading=False):
+        """Add any PyVista/VTK mesh or dataset that itkwidgets can
+        wrap to the scene.
+
+        Parameters
+        ----------
+        mesh : pyvista.Common or pyvista.MultiBlock
+            Any PyVista or VTK mesh is supported. Also, any dataset
+            that :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
+            points.
+
+        color : string or 3 item list, optional, defaults to white
+            Use to make the entire mesh have a single solid color.
+            Either a string, RGB list, or hex color string.  For example:
+            ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+            ``color='#FFFFFF'``. Color will be overridden if scalars are
+            specified.
+
+        scalars : str or numpy.ndarray, optional
+            Scalars used to "color" the mesh.  Accepts a string name of an
+            array that is present on the mesh or an array equal
+            to the number of cells or the number of points in the
+            mesh.  Array should be sized as a single vector. If both
+            ``color`` and ``scalars`` are ``None``, then the active scalars are
+            used.
+
+        opacity : float, optional
+            Opacity of the mesh. If a single float value is given, it will be
+            the global opacity of the mesh and uniformly applied everywhere -
+            should be between 0 and 1.  Default 1.0
+
+        smooth_shading : bool, optional
+            Smooth mesh surface mesh by taking into account surface
+            normals.  Surface will appear smoother while sharp edges
+            will still look sharp.  Default False.
+
+        """
         if not pv.is_pyvista_dataset(mesh):
             mesh = pv.wrap(mesh)
-        # mesh = mesh.copy()
-        # if scalars is None and color is None:
-        #     scalars = mesh.active_scalars_name
 
+        # smooth shading requires point normals to be freshly computed
         if smooth_shading:
             # extract surface if mesh is exterior
             if not isinstance(mesh, pv.PolyData):
@@ -73,12 +105,7 @@ class PlotterITK():
             # if 'normals' in mesh.point_arrays:
             mesh.point_arrays.pop('Normals')
 
-        # copy this mesh as we're going to be clearing out scalars
-        # mesh = mesh.copy()
-
-        # if scalars is None and color is None:
-        #     scalars = mesh.active_scalars_name
-
+        # make the scalars active
         if isinstance(scalars, str):
             if scalars in mesh:
                 array = mesh[scalars].copy()
