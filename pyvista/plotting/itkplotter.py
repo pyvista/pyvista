@@ -133,7 +133,7 @@ class PlotterITK():
 
         # make the scalars active
         if isinstance(scalars, str):
-            if scalars in mesh:
+            if scalars in mesh.point_arrays or scalars in mesh.cell_arrays:
                 array = mesh[scalars].copy()
             else:
                 raise ValueError('Scalars %s not in mesh' % scalars)
@@ -151,7 +151,6 @@ class PlotterITK():
         self._geometries.append(mesh)
         self._geometry_colors.append(pv.parse_color(color))
         self._geometry_opacities.append(opacity)
-        # self._cmap = cmap
 
     def show(self, ui_collapsed=False):
         """Show itkwidgets plotter in cell output.
