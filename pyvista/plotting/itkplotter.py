@@ -21,16 +21,16 @@ def meets_version(va, vb):
 
     Parameters
     ----------
-    va : tuple
-        Length 3 tuple containing int.  Represents version.
+    va : str
+        Version string.  For example ``'0.25.1'``.
 
-    va : tuple
-        Length 3 tuple containing int.  Represents target version.
+    va : str
+        Version string.  For example ``'0.25.2'``.
 
     Returns
     -------
     newer : bool
-        True if va is greater or equal to vb
+        True if version ``va`` is greater or equal to version ``vb``.
 
     Examples
     --------
