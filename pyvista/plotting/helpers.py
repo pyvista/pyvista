@@ -213,8 +213,10 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
 
 def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
              smooth_shading=False):
-    """Add any PyVista/VTK mesh or dataset that itkwidgets can
-    wrap to the scene.
+    """Plot a PyVista/VTK mesh or dataset.
+
+    Adds any PyVista/VTK mesh that itkwidgets can wrap to the
+    scene.
 
     Parameters
     ----------

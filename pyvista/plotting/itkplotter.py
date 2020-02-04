@@ -1,5 +1,4 @@
-"""PyVista-like ITKwidgets plotter.
-"""
+"""PyVista-like ITKwidgets plotter."""
 from packaging import version
 
 import numpy as np
@@ -15,12 +14,12 @@ except ImportError:
 
 
 class PlotterITK():
-    """ITKwidgets plotter.  Used for plotting interactively within a
-    jupyter notebook.  Requires ``itkwidgets>=0.25.2``.  For
-    installation see:
+    """ITKwidgets plotter.
+
+    Used for plotting interactively within a jupyter notebook.
+    Requires ``itkwidgets>=0.25.2``.  For installation see:
 
     https://github.com/InsightSoftwareConsortium/itkwidgets#installation
-
 
     Examples
     --------
@@ -84,8 +83,10 @@ class PlotterITK():
 
     def add_mesh(self, mesh, color=None, scalars=None,
                  opacity=1.0, smooth_shading=False):
-        """Add any PyVista/VTK mesh or dataset that itkwidgets can
-        wrap to the scene.
+        """Add a PyVista/VTK mesh or dataset.
+
+        Adds any PyVista/VTK mesh that itkwidgets can wrap to the
+        scene.
 
         Parameters
         ----------
