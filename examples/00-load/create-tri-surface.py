@@ -8,9 +8,13 @@ Create a surface from a set of points through a Delaunay triangulation.
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 import numpy as np
+from pyvista import examples
 
 ###############################################################################
-#  First, create some points for the surface.
+# Example A
+# +++++++++
+#
+# First, create some points for the surface.
 
 # Define a simple Gaussian surface
 n = 20
@@ -38,3 +42,21 @@ cloud.plot(point_size=15)
 
 surf = cloud.delaunay_2d()
 surf.plot(show_edges=True)
+
+
+###############################################################################
+# Example B
+# +++++++++
+#
+
+cpos = [(1428.9156647715076, -809.393306371347, -986.0854935143382),
+ (131.81156409644166, 11.062412559200027, -7.405967645460279),
+ (0.6932886107381906, 0.3348516198391111, 0.6381420648349653)]
+
+original_surface = examples.download_delaunay_example()
+cloud = pv.PolyData(original_surface.points)
+cloud.plot(point_size=15, cpos=cpos, show_grid=True)
+
+###############################################################################
+surf = cloud.delaunay_2d()
+surf.plot(cpos=cpos, show_grid=True, )

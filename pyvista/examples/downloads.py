@@ -589,3 +589,18 @@ def download_damavand_volcano():
     volume = _download_and_read("damavand-volcano.vtk")
     volume.rename_array("None", "data")
     return volume
+
+
+def download_delaunay_example():
+    """Download a pointset for the Delaunay example."""
+    return _download_and_read('250.vtk')
+
+
+def download_embryo():
+    """Download a volume of an embryo."""
+    return _download_and_read('embryo.slc')
+
+
+def download_antarctica_velocity():
+    """Download the antarctica velocity simulation results."""
+    return _download_and_read("antarctica_velocity.vtp")
