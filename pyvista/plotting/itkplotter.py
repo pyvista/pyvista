@@ -45,10 +45,8 @@ def meets_version(va, vb):
 
     for i in range(3):
         if va[i] > vb[i]:
-            print('ge')
             return True
         elif va[i] < vb[i]:
-            print('le')
             return False
     return True
 
