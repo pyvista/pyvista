@@ -145,7 +145,7 @@ class PlotterITK():
             if scalars in mesh.point_arrays or scalars in mesh.cell_arrays:
                 array = mesh[scalars].copy()
             else:
-                raise ValueError('Scalars %s not in mesh' % scalars)
+                raise ValueError('Scalars ({}) not in mesh'.format(scalars))
             mesh[scalars] = array
             mesh.active_scalars_name = scalars
         elif isinstance(scalars, np.ndarray):
