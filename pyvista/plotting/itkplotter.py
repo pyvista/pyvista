@@ -1,6 +1,4 @@
 """PyVista-like ITKwidgets plotter."""
-from packaging import version
-
 import numpy as np
 import pyvista as pv
 
@@ -11,6 +9,48 @@ try:
     HAS_ITK = True
 except ImportError:
     pass
+
+
+def version_tuple(v):
+    """Converts a version string to a tuple"""
+    return tuple(map(int, (v.split("."))))
+
+
+def meets_version(va, vb):
+    """Check if a version string meets a minimum version.
+
+    Parameters
+    ----------
+    va : tuple
+        Length 3 tuple containing int.  Represents version.
+
+    va : tuple
+        Length 3 tuple containing int.  Represents target version.
+
+    Returns
+    -------
+    newer : bool
+        True if va is greater or equal to vb
+
+    Examples
+    --------
+    >>> meets_version('0.25.1', '0.25.2')
+    False
+
+    >>> meets_version('0.26.0', '0.25.2')
+    True
+    """
+    va = version_tuple(va)
+    vb = version_tuple(vb)
+
+    for i in range(3):
+        if va[i] > vb[i]:
+            print('ge')
+            return True
+        elif va[i] < vb[i]:
+            print('le')
+            return False
+    return True
 
 
 class PlotterITK():
@@ -37,7 +77,7 @@ class PlotterITK():
             raise itk_import_err
 
         from itkwidgets import __version__
-        if version.parse(__version__) < version.parse("0.25.2"):
+        if not meets_version(__version__, "0.25.2"):
             raise itk_import_err
 
         self._actors = []
