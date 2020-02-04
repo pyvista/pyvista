@@ -295,6 +295,7 @@ class Renderer(vtkRenderer):
         actor.GetProperty().SetLineWidth(width)
 
         self.AddViewProp(actor)
+        return actor
 
 
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
@@ -444,7 +445,7 @@ class Renderer(vtkRenderer):
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         self.axes_widget.SetCurrentRenderer(self)
-        return
+        return self.axes_actor
 
 
     def hide_axes(self):
