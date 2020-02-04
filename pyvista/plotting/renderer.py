@@ -449,7 +449,7 @@ class Renderer(vtkRenderer):
 
     def hide_axes(self):
         """Hide the axes orientation widget."""
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
 
 
