@@ -24,7 +24,7 @@ contours = mesh.contour()
 
 p = pv.Plotter()
 p.add_mesh(mesh, opacity=0.85)
-p.add_mesh(contours, color="k")
+p.add_mesh(contours, color="white", line_width=5)
 p.show()
 
 
