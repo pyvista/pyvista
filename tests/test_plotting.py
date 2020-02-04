@@ -904,17 +904,56 @@ def test_vector_array():
     data['vector_values_points'] = vector_values_points
     data['vector_values_cells'] = vector_values_cells
 
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
-
     # test no component argument
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(data, scalars='vector_values_points')
+    p.show()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(data, scalars='vector_values_cells')
+    p.show()
 
     # test component argument
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(data, scalars='vector_values_points', component=0)
-    p.add_mesh(data, scalars='vector_values_cells', component=2)
-
     p.show()
+
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_cells', component=2)
+    p.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_vector_plotting_doesnt_modify_input():
+    data = examples.load_uniform()
+
+    vector_values_points = np.empty((data.n_points, 3))
+    vector_values_points[:, :] = [3., 4., 0.]  # Vector has this value at all points
+
+    copy_vector_values_points = vector_values_points.copy()
+
+    data['vector_values_points'] = vector_values_points
+
+    # test that adding a vector does not modify it.
+    assert np.array_equal(vector_values_points, copy_vector_values_points)
+    assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
+
+    # test that adding a vector with no component parameter to a Plotter instance
+    # does not modify it.
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_points')
+    p.show()
+    assert np.array_equal(vector_values_points, copy_vector_values_points)
+    assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
+
+
+    # test that adding a vector with component parameter to a Plotter instance
+    # does not modify it.
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(data, scalars='vector_values_points', component=0)
+    p.show()
+    assert np.array_equal(vector_values_points, copy_vector_values_points)
+    assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
