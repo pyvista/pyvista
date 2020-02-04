@@ -946,7 +946,6 @@ def test_vector_plotting_doesnt_modify_input():
     assert np.array_equal(vector_values_points, copy_vector_values_points)
     assert np.array_equal(data['vector_values_points'], copy_vector_values_points)
 
-
     # test that adding a vector with component parameter to a Plotter instance
     # does not modify it.
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
