@@ -182,7 +182,7 @@ def normalize(x, minimum=None, maximum=None):
 
 def opacity_transfer_function(mapping, n_colors, interpolate=True,
                               kind='quadratic'):
-    """Get the opacity transfer function results: range from 0 to 255.
+    """Get the opacity transfer function for a mapping.
 
     These values will map on to a scalar bar range and thus the number of
     colors (``n_colors``) must correspond to the number of colors in the color
@@ -195,9 +195,9 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
     This returns the opacity range from 0 to 255, where 0 is totally
     transparent and 255 is totally opaque.
 
-    The quation to create the sigmoid mapping is: ``1 / (1 + exp(-x))`` where
-    ``x`` is the range from ``-a`` to ``+a`` and a is the value given in the
-    ``mapping`` string. Default is ``a=10``.
+    The equation to create the sigmoid mapping is: ``1 / (1 + exp(-x))`` where
+    ``x`` is the range from ``-a`` to ``+a`` and ``a`` is the value given in
+    the ``mapping`` string. Default is ``a=10`` for 'sigmoid' mapping.
 
     Parameters
     ----------
@@ -205,8 +205,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
         The opacity mapping to use. Can be a ``str`` name of a predefined
         mapping including 'linear', 'geom', 'sigmoid', 'sigmoid_3-10'.
         Append an '_r' to any of those names to reverse that mapping.
-        This can also be an array of values that will be interpolated across
-        the ``n_color`` range for user defined mappings.
+        This can also be a custom array/list of values that will be
+        interpolated across the ``n_color`` range for user defined mappings.
 
     n_colors : int
         The amount of colors that the opacities must be mapped to.
@@ -228,7 +228,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
     >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
     >>> # Interpolate a user definned opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
-    >>> tf = pv.opacity_transfer_function(opacity, 256).astype(float) / 255.
+    >>> tf = pv.opacity_transfer_function(opacity, 256)
 
     """
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
