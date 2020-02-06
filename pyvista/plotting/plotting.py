@@ -3582,7 +3582,7 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, title=None):
+                 splitting_position=None, title=None, background_image=None):
         """Initialize a vtk plotting object."""
         super(Plotter, self).__init__(shape=shape, border=border,
                                       border_color=border_color,
@@ -3624,8 +3624,37 @@ class Plotter(BasePlotter):
         if polygon_smoothing:
             self.ren_win.PolygonSmoothingOn()
 
-        for renderer in self.renderers:
-            self.ren_win.AddRenderer(renderer)
+        if background_image is not None:
+            self.background_renderer = vtk.vtkRenderer()
+            self.background_renderer.SetLayer(0)
+            self.background_renderer.InteractiveOff()
+            self.ren_win.SetNumberOfLayers(len(self.renderers) + 1)
+            self.ren_win.AddRenderer(self.background_renderer)
+            for renderer in self.renderers:
+                renderer.SetLayer(1)
+                self.ren_win.AddRenderer(renderer)
+
+            self.image_data = pyvista.read(background_image)
+
+            image_actor = vtk.vtkImageActor()
+            image_actor.SetInputData(self.image_data)
+            self.background_renderer.AddActor(image_actor)
+            self.background_camera = self.background_renderer.GetActiveCamera()
+            self.background_camera.ParallelProjectionOn()
+
+            origin = self.image_data.GetOrigin()
+            extent = self.image_data.GetExtent()
+            spacing = self.image_data.GetSpacing()
+            xc = origin[0] + 0.5*(extent[0] + extent[1]) * spacing[0]
+            yc = origin[1] + 0.5*(extent[2] + extent[3]) * spacing[1]
+            yd = (extent[3] - extent[2] + 1) * spacing[1]
+            d = self.background_camera.GetDistance()
+            self.background_camera.SetParallelScale(0.5 * yd)
+            self.background_camera.SetFocalPoint(xc, yc, 0.0)
+            self.background_camera.SetPosition(xc, yc, d)
+        else:
+            for renderer in self.renderers:
+                self.ren_win.AddRenderer(renderer)
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
