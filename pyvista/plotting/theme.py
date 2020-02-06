@@ -65,7 +65,8 @@ rcParams = {
     'multi_rendering_splitting_position': None,
     'volume_mapper': 'fixed_point' if os.name == 'nt' else 'smart',
     'depth_peeling': {
-        'number_of_peels': 5,
+        'number_of_peels': 4,
+        'occlusion_ratio': 0.0,
         'enabled': True,
     },
 }

@@ -241,10 +241,29 @@ class Renderer(vtkRenderer):
 
     #### Everything else ####
 
-    def enable_depth_peeling(self, number_of_peels=5, occlusion_ratio=0.1):
-        """Enable depth peeling."""
+    def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
+        """Enable depth peeling to improve renderering of translucent geometry.
+
+        Parameters
+        ----------
+        number_of_peels : int
+            The maximum number of peeling layers. Initial value is 4 and is set
+            in the ``rcParams``. A special value of 0 means no maximum limit.
+            It has to be a positive value.
+
+        occlusion_ratio : float
+            The threshold under which the deepth peeling algorithm stops to
+            iterate over peel layers. This is the ratio of the number of pixels
+            that have been touched by the last layer over the total number of
+            pixels of the viewport area. Initial value is 0.0, meaning
+            rendering have to be exact. Greater values may speed-up the
+            rendering with small impact on the quality.
+
+        """
         if number_of_peels is None:
             number_of_peels = rcParams["depth_peeling"]["number_of_peels"]
+        if occlusion_ratio is None:
+            occlusion_ratio = rcParams["depth_peeling"]["occlusion_ratio"]
         depth_peeling_supported = check_depth_peeling(number_of_peels,
                                                       occlusion_ratio)
         if depth_peeling_supported:
@@ -295,6 +314,7 @@ class Renderer(vtkRenderer):
         actor.GetProperty().SetLineWidth(width)
 
         self.AddViewProp(actor)
+        return actor
 
 
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
@@ -348,7 +368,7 @@ class Renderer(vtkRenderer):
         elif not self.camera_set and reset_camera is None and not rv:
             self.reset_camera()
         else:
-            self.parent._render()
+            self.parent.render()
 
         self.update_bounds_axes()
 
@@ -444,12 +464,12 @@ class Renderer(vtkRenderer):
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         self.axes_widget.SetCurrentRenderer(self)
-        return
+        return self.axes_actor
 
 
     def hide_axes(self):
         """Hide the axes orientation widget."""
-        if hasattr(self, 'axes_widget'):
+        if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
 
 
@@ -969,7 +989,7 @@ class Renderer(vtkRenderer):
         elif not self.camera_set and reset_camera is None:
             self.reset_camera()
         else:
-            self.parent._render()
+            self.parent.render()
         self.Modified()
         return True
 
@@ -993,7 +1013,7 @@ class Renderer(vtkRenderer):
         transform = vtk.vtkTransform()
         transform.Scale(xscale, yscale, zscale)
         self.camera.SetModelTransformMatrix(transform.GetMatrix())
-        self.parent._render()
+        self.parent.render()
         if reset_camera:
             self.update_bounds_axes()
             self.reset_camera()
@@ -1039,7 +1059,7 @@ class Renderer(vtkRenderer):
 
         """
         self.ResetCamera()
-        self.parent._render()
+        self.parent.render()
 
     def isometric_view(self):
         """Reset the camera to a default isometric view.

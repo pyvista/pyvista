@@ -604,3 +604,14 @@ def download_embryo():
 def download_antarctica_velocity():
     """Download the antarctica velocity simulation results."""
     return _download_and_read("antarctica_velocity.vtp")
+
+
+def download_room_surface_mesh():
+    """Download the room surface mesh.
+
+    This mesh is for demonstrating the difference that depth peeling can
+    provide whenn rendering translucent geometries.
+
+    This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
+    """
+    return _download_and_read("room_surface_mesh.obj")
