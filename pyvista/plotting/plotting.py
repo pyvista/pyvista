@@ -604,8 +604,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Everything else ####
 
     def render(self):
-        """Render the main window."""
-        if hasattr(self, 'ren_win'):
+        """Render the main window.
+
+        If this is called before ``show()``, nothing will happen.
+        """
+        if hasattr(self, 'ren_win') and not self._first_time:
             self.ren_win.Render()
 
     def add_key_event(self, key, callback):
