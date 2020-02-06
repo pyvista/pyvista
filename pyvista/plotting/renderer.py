@@ -242,7 +242,7 @@ class Renderer(vtkRenderer):
     #### Everything else ####
 
     def enable_depth_peeling(self, number_of_peels=None, occlusion_ratio=None):
-        """Enable depth peeling to improve renderering of translucent geometry.
+        """Enable depth peeling to improve rendering of translucent geometry.
 
         Parameters
         ----------

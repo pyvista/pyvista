@@ -47,7 +47,7 @@ def test_multi_block_init_dict():
     multi = pyvista.MultiBlock(data)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
-    # Note that disctionaries do not maintain order
+    # Note that dictionaries do not maintain order
     assert isinstance(multi.GetBlock(0), (pyvista.RectilinearGrid, pyvista.PolyData))
     assert multi.get_block_name(0) in ['grid','poly']
     assert isinstance(multi.GetBlock(1), (pyvista.RectilinearGrid, pyvista.PolyData))

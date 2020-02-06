@@ -6,7 +6,7 @@ Depth peeling is a technique to correctly render translucent geometry.
 This is enabled by default in :any:`pyvista.rcParams`.
 
 For this example, we will showcase the difference that depth peeling provides
-as the justification for why we have enabled this by defualt.
+as the justification for why we have enabled this by default.
 
 """
 # sphinx_gallery_thumbnail_number = 2
