@@ -2060,8 +2060,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        actor : vtk.vtkActor
-            Actor that has previously added to the Renderer.
+        actor : str, vtk.vtkActor, list or tuple
+            If the type is ``str``, removes the previously added actor with
+            the given name. If the type is ``vtk.vtkActor``, removes the actor
+            if it's previously added to the Renderer. If ``list`` or ``tuple``,
+            removes iteratively each actor.
 
         reset_camera : bool, optional
             Resets camera so all actors can be seen.
