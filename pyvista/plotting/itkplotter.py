@@ -1,5 +1,6 @@
 """PyVista-like ITKwidgets plotter."""
 import numpy as np
+from scooby import meets_version
 import pyvista as pv
 
 HAS_ITK = False
@@ -9,46 +10,6 @@ try:
     HAS_ITK = True
 except ImportError:
     pass
-
-
-def version_tuple(v):
-    """Converts a version string to a tuple"""
-    return tuple(map(int, (v.split("."))))
-
-
-def meets_version(va, vb):
-    """Check if a version string meets a minimum version.
-
-    Parameters
-    ----------
-    va : str
-        Version string.  For example ``'0.25.1'``.
-
-    va : str
-        Version string.  For example ``'0.25.2'``.
-
-    Returns
-    -------
-    newer : bool
-        True if version ``va`` is greater or equal to version ``vb``.
-
-    Examples
-    --------
-    >>> meets_version('0.25.1', '0.25.2')
-    False
-
-    >>> meets_version('0.26.0', '0.25.2')
-    True
-    """
-    va = version_tuple(va)
-    vb = version_tuple(vb)
-
-    for i in range(3):
-        if va[i] > vb[i]:
-            return True
-        elif va[i] < vb[i]:
-            return False
-    return True
 
 
 class PlotterITK():
