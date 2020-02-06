@@ -82,13 +82,11 @@ matrix:
       env:
         - REPORT_COVERAGE: false
         - DEPLOY_DOCS: true
-      # Run `make html` before `make doctest` to avoid segfault.
-      # Then rerun `make html` to use updated figures from `make doctest`
+      # Run `make html` after `make doctest` to use auto generated figures.
       script: |
         cd ./docs/;
         export PYVISTA_OFFSCREEN=True;
         set -e;
-        make html;
         make doctest;
         make html;
         cd ..;
