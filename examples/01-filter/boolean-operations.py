@@ -20,34 +20,36 @@ Similarly, the ``-`` operator can be used between any two :class:`pyvista.PolyDa
 meshes in PyVista to cut the first mesh by the second.
 """
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 6
 import pyvista as pv
+import numpy as np
+
+def make_cube():
+    x = np.linspace(-0.5, 0.5, 25)
+    grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
+    return grid.extract_surface().triangulate()
 
 # Create to examplee PolyData meshes for boolean operations
-a = pv.Sphere(radius=1, center=(0, 0, 0))
-b = pv.Sphere(radius=1, center=(0.5, 0, 0))
-
-cpos = [(-1.1141408809624171, -4.055003246648033, 2.5275085053563373),
- (0.30835059413057386, -0.02838894321931945, -0.012326840224821223),
- (0.1877813462433568, 0.47569601812030493, 0.8593319872712285)]
-
-display_args = dict(opacity=0.5, show_edges=True)
+sphere = pv.Sphere(radius=0.65, center=(0, 0, 0))
+cube = make_cube()
 
 p = pv.Plotter()
-p.add_mesh(a, color="lightblue", **display_args)
-p.add_mesh(b, color="maroon", **display_args)
-p.camera_position = cpos
+p.add_mesh(sphere, color="yellow", opacity=0.5, show_edges=True)
+p.add_mesh(cube, color="royalblue", opacity=0.5, show_edges=True)
 p.show()
 
 ###############################################################################
 # Boolean Add
 # +++++++++++
 #
-# Add the two meshes together using the :func:`pyvista.PolyDataFilters.boolean_add`
-# filter or the ``+`` operator.
+# Add all of the two meshes together using the
+# :func:`pyvista.PolyDataFilters.boolean_add` filter or the ``+`` operator.
+#
+# Order of operations does not matter for boolean add as the entirety of both
+# meshes are appended together.
 
-c = a + b
-c.plot(cpos=cpos, **display_args)
+add = sphere + cube
+add.plot(opacity=0.5, color=True, show_edges=True)
 
 
 ###############################################################################
@@ -57,15 +59,15 @@ c.plot(cpos=cpos, **display_args)
 # Perform a boolean cut of ``a`` using ``b`` with the
 # :func:`pyvista.PolyDataFilters.boolean_cut` filter or the ``-`` operator
 # since both meshes are :class:`pyvista.PolyData`.
+#
+# Order of operations does not matter for boolean cut.
 
-c = a - b
+cut = cube - sphere
 
 p = pv.Plotter()
-p.add_mesh(a, color="lightblue", **display_args)
-p.add_mesh(b, color="maroon", **display_args)
-p.add_mesh(c, color="brown", **display_args)
-p.camera_position = cpos
+p.add_mesh(cut, opacity=0.5, show_edges=True, color=True)
 p.show()
+
 
 ###############################################################################
 # Boolean Difference
@@ -73,11 +75,23 @@ p.show()
 #
 # Combine two meshes and retains only the volume in common between the meshes
 # using the :func:`pyvista.PolyDataFilters.boolean_difference` method.
-c = b.boolean_difference(a)
+#
+# Note that the order of operations for a boolean difference will affect the
+# results.
+
+diff = sphere.boolean_difference(cube)
 
 p = pv.Plotter()
-p.add_mesh(c, color="brown", **display_args)
-p.camera_position = cpos
+p.add_mesh(diff, opacity=0.5, show_edges=True, color=True)
+p.show()
+
+
+###############################################################################
+
+diff = cube.boolean_difference(sphere)
+
+p = pv.Plotter()
+p.add_mesh(diff, opacity=0.5, show_edges=True, color=True)
 p.show()
 
 ###############################################################################
@@ -86,10 +100,11 @@ p.show()
 #
 # Combine two meshes and attempts to create a manifold mesh using the
 # :func:`pyvista.PolyDataFilters.boolean_union` method.
+#
+# Order of operations does not matter for boolean union.
 
-c = a.boolean_union(b)
+union = sphere.boolean_union(cube)
 
 p = pv.Plotter()
-p.add_mesh(c, color="brown", **display_args)
-p.camera_position = cpos
+p.add_mesh(union,  opacity=0.5, show_edges=True, color=True)
 p.show()
