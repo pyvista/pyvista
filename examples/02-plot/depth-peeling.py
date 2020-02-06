@@ -41,13 +41,40 @@ p.add_text("Standard")
 p.add_mesh(spheres.copy(), **dargs)
 
 p.link_views()
-p.camera_position = [(11.695377287877744, 4.697473022306675, -4.313491106516902),
- (0.0, 0.0, 0.0),
- (0.3201103754961452, 0.07054027895287238, 0.944750451995112)]
+p.camera_position = [(11.7, 4.7, -4.33),
+                     (0.0, 0.0, 0.0),
+                     (0.3, 0.07, 0.9)]
+p.show()
+
+###############################################################################
+# The following room surfaces example mesh, provided courtesy of
+# `Sam Potter <https://github.com/sampotter>`_ has coincident topology and
+# depth rendering helps correctly render those geometries when a global
+# opacity value is used.
+
+room = examples.download_room_surface_mesh()
+
+p = pv.Plotter(shape=(1,2))
+
+p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
+p.add_mesh(room, opacity=0.5, color="tan")
+p.add_text("Depth Peeling")
+
+p.subplot(0,1)
+p.add_text("Standard")
+p.add_mesh(room.copy(), opacity=0.5, color="tan")
+
+p.link_views()
+p.camera_position = [(43.6, 49.5, 19.8),
+                     (0.0, 2.25, 0.0),
+                    (-0.57, 0.70, -0.42)]
+
 p.show()
 
 
 ###############################################################################
+# And here is another example wheen rendering many translucent contour
+# surfaces.
 
 mesh = examples.download_brain().contour(5)
 cmap = "viridis_r"
@@ -63,9 +90,9 @@ p.add_text("Standard")
 p.add_mesh(mesh.copy(), opacity=0.5, cmap=cmap)
 
 p.link_views()
-p.camera_position = [(418.29917315895693, 658.9752095516966, 53.784143976243364),
- (90.19444444775581, 111.46052622795105, 90.0),
- (0.03282296324460818, 0.046369526043831856, 0.9983849558854109)]
+p.camera_position = [(418.3, 659., 53.8),
+                     (90.2, 111.5, 90.0),
+                     (0.03, 0.05, 1.0)]
 p.show()
 
 ###############################################################################
