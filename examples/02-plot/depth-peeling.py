@@ -58,7 +58,6 @@ p = pv.Plotter(shape=(1,2))
 
 p.enable_depth_peeling(number_of_peels=4, occlusion_ratio=0)
 p.add_mesh(room, opacity=0.5, color="tan")
-# p.enable_anti_aliasing()
 p.add_text("Depth Peeling")
 
 p.subplot(0,1)
