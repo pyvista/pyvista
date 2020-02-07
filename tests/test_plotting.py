@@ -778,12 +778,12 @@ def test_plot_eye_dome_lighting():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_opacity_by_array():
     mesh = examples.load_uniform()
-    # Test with opacity arry
+    # Test with opacity array
     mesh['opac'] = mesh['Spatial Point Data'] / 100.
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='opac',)
     p.show()
-    # Test with uncertainty array (transperancy)
+    # Test with uncertainty array (transparency)
     mesh['unc'] = mesh['Spatial Point Data']
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',

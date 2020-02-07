@@ -1,5 +1,5 @@
 """
-Tests for non-spatially referenced ojects
+Tests for non-spatially referenced objects
 """
 import sys
 

@@ -511,7 +511,7 @@ def test_lines():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
-    # Creat line segments
+    # Create line segments
     poly = pyvista.PolyData()
     poly.points = points
     cells = np.full((len(points)-1, 3), 2, dtype=np.int)
