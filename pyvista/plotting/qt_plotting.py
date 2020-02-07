@@ -688,6 +688,7 @@ class BackgroundPlotter(QtInteractor):
         self.render_timer.timeout.connect(self.render)
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
+        self._first_time = False
 
     def _close_callback(self):
         """Make sure a screenhsot is acquired before closing."""
