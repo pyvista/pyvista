@@ -225,7 +225,7 @@ class Report(scooby.Report):
         optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
                     'cmocean', 'panel']
 
-        # Information about the GPU - bare except incase there is a rendering
+        # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
         if gpu:
             try:

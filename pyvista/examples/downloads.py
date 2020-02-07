@@ -589,3 +589,14 @@ def download_damavand_volcano():
     volume = _download_and_read("damavand-volcano.vtk")
     volume.rename_array("None", "data")
     return volume
+
+
+def download_room_surface_mesh():
+    """Download the room surface mesh.
+
+    This mesh is for demonstrating the difference that depth peeling can
+    provide whenn rendering translucent geometries.
+
+    This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
+    """
+    return _download_and_read("room_surface_mesh.obj")
