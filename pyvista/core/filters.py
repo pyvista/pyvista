@@ -183,6 +183,36 @@ class DataSetFilters(object):
         return _get_output(alg, oport=port)
 
 
+    def compute_implicit_distance(dataset, surface, inplace=False):
+        """Compute the implicit distance from the points to a surface.
+
+        This filter will comput the implicit distance from all of the nodes of
+        this mesh to a given surface. This distance will be added as a point
+        array called ``'implicit_distance'``.
+
+        Parameters
+        ----------
+        surface : pyvista.Common
+            The surface used to compute the distance
+
+        inplace : bool
+            If True, a new scalar array will be added to the ``point_arrays``
+            of this mesh. Otherwise a copy of this mesh is returned with that
+            scalar field.
+        """
+        function = vtk.vtkImplicitPolyDataDistance()
+        function.SetInput(surface)
+        points = pyvista.convert_array(dataset.points)
+        dists = vtk.vtkDoubleArray()
+        function.FunctionValue(points, dists)
+        if inplace:
+            dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+            return
+        result = dataset.copy()
+        result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+        return result
+
+
     def clip_surface(dataset, surface, invert=True, value=0.0,
                      compute_distance=False):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
