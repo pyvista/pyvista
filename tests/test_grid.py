@@ -316,7 +316,7 @@ def test_create_uniform_grid_from_specs():
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [1.0, 1.0, 1.0]
     spacing = [2, 1, 5]
-    grid = pyvista.UniformGrid(dims, spacing) # Usign default origin
+    grid = pyvista.UniformGrid(dims, spacing) # Using default origin
     assert grid.dimensions == [10, 10, 10]
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [2.0, 1.0, 5.0]
@@ -414,7 +414,7 @@ def test_save_uniform(extension, binary, tmpdir):
 
 
 def test_grid_points():
-    """Test the points mehtods on UniformGrid and inearGrid"""
+    """Test the points methods on UniformGrid and RectilinearGrid"""
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
                        [1, 1, 0],

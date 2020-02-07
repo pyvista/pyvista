@@ -1,7 +1,7 @@
 # Simple makefile to simplify repetitive build env management tasks under posix
 
-CODESPELL_DIRS ?= "docs pyvista examples"
-CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti"
+CODESPELL_DIRS ?= pyvista/ examples/ tests/
+CODESPELL_SKIP ?= "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb"
 CODESPELL_IGNORE ?= "ignore_words.txt"
 
 all: doctest

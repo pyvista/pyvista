@@ -152,7 +152,7 @@ def read(filename, attrs=None, file_format=None):
     filename : str
         The string path to the file to read. If a list of files is given,
         a :class:`pyvista.MultiBlock` dataset is returned with each file being
-        a seperate block in the dataset.
+        a separate block in the dataset.
     attrs : dict, optional
         A dictionary of attributes to call on the reader. Keys of dictionary are
         the attribute/method names and values are the arguments passed to those
@@ -201,6 +201,8 @@ def read(filename, attrs=None, file_format=None):
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
         return read_legacy(filename)
+    elif ext in ['.jpeg', '.jpg']:
+        return read_texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:

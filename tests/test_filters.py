@@ -20,7 +20,7 @@ COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 
 def test_clip_filter():
-    """This tests the clip filter on all datatypes avaialble filters"""
+    """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(DATASETS):
         clp = dataset.clip(normal=normals[i], invert=True)
         assert clp is not None
@@ -81,7 +81,7 @@ def test_clip_surface():
 
 
 def test_slice_filter():
-    """This tests the slice filter on all datatypes avaialble filters"""
+    """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(DATASETS):
         slc = dataset.slice(normal=normals[i])
         assert slc is not None
@@ -102,7 +102,7 @@ def test_slice_filter_composite():
 
 
 def test_slice_orthogonal_filter():
-    """This tests the slice filter on all datatypes avaialble filters"""
+    """This tests the slice filter on all datatypes available filters"""
 
     for i, dataset in enumerate(DATASETS):
         slices = dataset.slice_orthogonal()
@@ -267,7 +267,7 @@ def test_elevation():
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
     # test vector args
     c = list(dataset.center)
-    t = list(c) # cast so it doesnt point to `c`
+    t = list(c) # cast so it does not point to `c`
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t)
     assert 'Elevation' in elev.array_names
