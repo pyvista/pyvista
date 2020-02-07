@@ -10,8 +10,8 @@ import pyvista as pv
 import numpy as np
 
 ###############################################################################
-# Example A
-# +++++++++
+# Simple Traingulations
+# +++++++++++++++++++++
 #
 # First, create some points for the surface.
 
@@ -44,8 +44,8 @@ surf.plot(show_edges=True)
 
 
 ###############################################################################
-# Example B
-# +++++++++
+# Masked Triangulations
+# +++++++++++++++++++++
 #
 
 x = np.arange(10, dtype=float)
