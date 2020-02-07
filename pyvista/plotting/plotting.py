@@ -473,6 +473,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
 
+    @wraps(Renderer.remove_actor)
+    def remove_actor(self, actor, reset_camera=False):
+        """Wrap ``Renderer.remove_actor``."""
+        for renderer in self.renderers:
+            renderer.remove_actor(actor, reset_camera)
+        return True
+
+
     #### Properties from Renderer ####
 
     @property
@@ -2054,13 +2062,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
         self.mesh = None
-
-    @wraps(Renderer.remove_actor)
-    def remove_actor(self, actor, reset_camera=False):
-        """Wrap ``Renderer.remove_actor``."""
-        for renderer in self.renderers:
-            renderer.remove_actor(actor, reset_camera)
-        return True
 
 
     def link_views(self, views=0):
