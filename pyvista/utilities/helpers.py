@@ -320,7 +320,7 @@ def line_segments_from_points(points):
     return poly
 
 
-def lines_from_points(points):
+def lines_from_points(points, close=False):
     """Make a connected line set given an array of points.
 
     Parameters
@@ -330,6 +330,9 @@ def lines_from_points(points):
         example, two line segments would be represented as:
 
         np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+    close : bool, optional
+        If True, close the line segments into a loop
 
     Return
     ------
@@ -342,6 +345,8 @@ def lines_from_points(points):
     cells = np.full((len(points)-1, 3), 2, dtype=np.int)
     cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    if close:
+        cells = np.append(cells, [[2, len(points)-1, 0],], axis=0)
     poly.lines = cells
     return poly
 

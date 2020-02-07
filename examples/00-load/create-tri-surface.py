@@ -8,7 +8,6 @@ Create a surface from a set of points through a Delaunay triangulation.
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 import numpy as np
-from pyvista import examples
 
 ###############################################################################
 # Example A
@@ -49,14 +48,48 @@ surf.plot(show_edges=True)
 # +++++++++
 #
 
-cpos = [(1428.9156647715076, -809.393306371347, -986.0854935143382),
- (131.81156409644166, 11.062412559200027, -7.405967645460279),
- (0.6932886107381906, 0.3348516198391111, 0.6381420648349653)]
-
-original_surface = examples.download_delaunay_example()
-cloud = pv.PolyData(original_surface.points)
-cloud.plot(point_size=15, cpos=cpos, show_grid=True)
+x = np.arange(10, dtype=float)
+xx, yy, zz = np.meshgrid(x, x, [0])
+points = np.column_stack((xx.ravel(order="F"),
+                          yy.ravel(order="F"),
+                          zz.ravel(order="F")))
+# Perturb the points
+points[:, 0] += np.random.rand(len(points)) * 0.3
+points[:, 1] += np.random.rand(len(points)) * 0.3
+# Create the point cloud mesh to triangulate from the coordinates
+cloud = pv.PolyData(points)
+cloud
 
 ###############################################################################
+# Run the triangulation on these points
 surf = cloud.delaunay_2d()
-surf.plot(cpos=cpos, show_grid=True, )
+surf.plot(cpos="xy", show_edges=True)
+
+
+###############################################################################
+# Note that some of the outer edges are unconstrained and the triangulation
+# added unwanted triangles. We cn mitigate that with the ``alpha`` parameter.
+surf = cloud.delaunay_2d(alpha=1.0)
+surf.plot(cpos="xy", show_edges=True)
+
+
+###############################################################################
+# We could also add a polygon to ignore during the triangulation via the
+# ``edge_source`` parameter.
+
+# Define a polygonal hole with a clockwise polygon
+ids = [22, 23, 24, 25, 35, 45, 44, 43, 42, 32]
+
+# Create a polydata to store the boundary
+polygon = pv.PolyData()
+# Make sure it has the same points as the mesh being triangulated
+polygon.points = points
+# But only has faces in regions to ignore
+polygon.faces = np.array([len(ids),] + ids)
+
+surf = cloud.delaunay_2d(alpha=1.0, edge_source=polygon)
+
+p = pv.Plotter()
+p.add_mesh(surf, show_edges=True)
+p.add_mesh(polygon, color="red", opacity=0.5)
+p.show(cpos="xy")

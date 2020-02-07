@@ -3408,8 +3408,45 @@ class PolyDataFilters(DataSetFilters):
         f[:, 1:] = f[:, 1:][:, ::-1]
 
 
-    def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False, inplace=False):
-        """Apply a delaunay 2D filter along the best fitting plane."""
+    def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
+                    inplace=False, edge_source=None):
+        """Apply a delaunay 2D filter along the best fitting plane.
+
+        Parameters
+        ----------
+        tol : float
+            Specify a tolerance to control discarding of closely spaced
+            points. This tolerance is specified as a fraction of the diagonal
+            length of the bounding box of the points.
+
+        alpha : float
+            Specify alpha (or distance) value to control output of this
+            filter. For a non-zero alpha value, only edges or triangles
+            contained within a sphere centered at mesh vertices will be
+            output. Otherwise, only triangles will be output.
+
+        offset : float
+            Specify a multiplier to control the size of the initial, bounding
+            Delaunay triangulation.
+
+        bound : bool
+            Boolean controls whether bounding triangulation points (and
+            associated triangles) are included in the output. (These are
+            introduced as an initial triangulation to begin the triangulation
+            process. This feature is nice for debugging output.)
+
+        inplace : bool
+            If True, overwrite this mesh with the triangulated mesh.
+
+        edge_source : pyvista.PolyData, optional
+            Specify the source object used to specify constrained edges and
+            loops. (This is optional.) If set, and lines/polygons are
+            defined, a constrained triangulation is created. The
+            lines/polygons are assumed to reference points in the input point
+            set (i.e. point ids are identical in the input and source). Note
+            that this method does not connect the pipeline. See
+            SetSourceConnection for connecting the pipeline.
+        """
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(poly_data)
@@ -3417,9 +3454,12 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAlpha(alpha)
         alg.SetOffset(offset)
         alg.SetBoundingTriangulation(bound)
+        if edge_source is not None:
+            alg.SetSourceData(edge_source)
         alg.Update()
 
-        mesh = _get_output(alg)
+        # Sometimes lines are given in the output. The `.triangulate()` filter cleans those
+        mesh = _get_output(alg).triangulate()
         if inplace:
             poly_data.overwrite(mesh)
         else:
