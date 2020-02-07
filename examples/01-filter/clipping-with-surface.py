@@ -36,9 +36,9 @@ p.show()
 
 
 ###############################################################################
-# Take a look at the implicit function used to perfrom the surface clipping by
+# Take a look at the implicit function used to perform the surface clipping by
 # using the :func:`pyvista.DataSetFilters.compute_implicit_distance` filter.
-# The clipping operation field is perfromed where the ``implicit_distance``
+# The clipping operation field is performed where the ``implicit_distance``
 # field is zero and the ``invert`` flag controls which sides of zero to
 # preserve.
 dataset.compute_implicit_distance(surface, inplace=True)
@@ -66,7 +66,7 @@ p.show()
 ###############################################################################
 # Clip the rectilinear grid dataset using the :class:`pyvista.PolyData`
 # surface mesh via the :func:`pyvista.DataSet.Filters.clip_surface` filter.
-# This will triangulate/tesselate the mesh geometries along the clip.
+# This will triangulate/tessellate the mesh geometries along the clip.
 clipped = dataset.clip_surface(surface, invert=False)
 
 # Visualize the results

@@ -22,7 +22,7 @@ import numpy as np
 from pyvista import examples
 
 ###############################################################################
-# Dowload a gridded topography surface (DEM)
+# Download a gridded topography surface (DEM)
 dem = examples.download_crater_topo()
 dem
 
