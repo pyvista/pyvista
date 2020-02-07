@@ -188,7 +188,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
     colors (``n_colors``) must correspond to the number of colors in the color
     mapping that these opacities are associated to.
 
-    If interpolatig, ``scipy.interpolate.interp1d`` is used if available,
+    If interpolating, ``scipy.interpolate.interp1d`` is used if available,
     otherwise ``np.interp`` is used. The ``kind`` argument controls the kind of
     interpolation for ``interp1d``.
 
@@ -226,7 +226,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
     >>> tf = pv.opacity_transfer_function("sigmoid", 256)
     >>> # Fetch the `geom_r` mapping between 0 and 1
     >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
-    >>> # Interpolate a user definned opacity mapping
+    >>> # Interpolate a user defined opacity mapping
     >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
     >>> tf = pv.opacity_transfer_function(opacity, 256)
 
