@@ -103,12 +103,21 @@ class PickingHelper(object):
         renderer = self.renderer # make sure to consistently use renderer
 
         def end_pick_helper(picker, event_id):
+            # Merge the selection into a sinlge mesh
+            picked = self.picked_cells
+            if isinstance(picked, pyvista.MultiBlock):
+                if picked.n_blocks > 0:
+                    picked = picked.combine()
+                else:
+                    picked = pyvista.UnstructuredGrid()
+            # Check if valid
+            is_valid_selection = False
+            if picked.n_cells > 0:
+                is_valid_selection = True
+
+
             if show:
                 # Use try in case selection is empty
-                if isinstance(self.picked_cells, pyvista.MultiBlock):
-                    picked = self.picked_cells.combine()
-                else:
-                    picked = self.picked_cells
                 try:
                     self.add_mesh(picked, name='_cell_picking_selection',
                                   style=style, color=color,
@@ -117,7 +126,7 @@ class PickingHelper(object):
                 except RuntimeError:
                     pass
 
-            if callback is not None and (isinstance(self.picked_cells, pyvista.MultiBlock) or self.picked_cells.n_cells > 0):
+            if callback is not None and is_valid_selection:
                 try_callback(callback, self.picked_cells)
 
             # TODO: Deactivate selection tool
