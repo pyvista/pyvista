@@ -97,4 +97,4 @@ p.show()
 
 ###############################################################################
 # Re-enable depth peeling
-pv.rcParams["depth_peeling"]["enabled"] = True
+pv.rcParams["depth_peeling"]["enabled"] = pv.DEFAULT_THEME["depth_peeling"]["enabled"]
