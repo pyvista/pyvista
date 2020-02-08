@@ -1305,8 +1305,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if smooth_shading:
             # extract surface if mesh is exterior
             if not isinstance(mesh, pyvista.PolyData):
-                grid = mesh
-                mesh = grid.extract_surface()
+                mesh = mesh.extract_surface()
+                warnings.warn("The surface of this mesh was extracted, it cannot be modified in the renderer.")
                 ind = mesh.point_arrays['vtkOriginalPointIds']
                 # remap scalars
                 if isinstance(scalars, np.ndarray):
@@ -1327,12 +1327,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 # Make sure scalars components are not vectors/tuples
                 scalars = mesh.active_scalars_name
-                # Don't allow plotting of string arrays by default
-                if scalars is not None:# and np.issubdtype(mesh.active_scalars.dtype, np.number):
-                    if stitle is None:
-                        stitle = scalars
-                else:
-                    scalars = None
 
         # set main values
         self.mesh = mesh
@@ -1411,13 +1405,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 cmap = rcParams['cmap']
         # Set the array title for when it is added back to the mesh
         if _custom_opac:
-            title = '__custom_rgba'
-        elif stitle is None:
-            title = 'Data'
-        else:
-            title = stitle
+            stitle = '__custom_rgba'
+        elif stitle is None and color is None:
+            stitle = 'Data'
+
         if scalars is not None:
-            # if scalars is a string, then get the first array found with that name
+
+            def _add_new_scalars(array, title):
+                """Helper to add scalars array that doesn't yet exist on the mesh."""
+                if array.shape[0] == mesh.n_points:
+                    self.mesh._add_point_array(array, title, True)
+                elif array.shape[0] == mesh.n_cells:
+                    self.mesh._add_cell_array(array, title, True)
 
             if not isinstance(scalars, np.ndarray):
                 scalars = np.asarray(scalars)
@@ -1429,10 +1428,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                title = '{}-digitized'.format(title)
+                stitle = '{}-digitized'.format(stitle)
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
+                _add_new_scalars(scalars, stitle)
 
             if rgb:
                 if scalars.ndim != 2 or scalars.shape[1] < 3 or scalars.shape[1] > 4:
@@ -1446,10 +1446,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         raise TypeError('component must be either None or an integer')
                     if component is None:
                         scalars = np.linalg.norm(scalars.copy(), axis=1)
-                        title = '{}-normed'.format(title)
+                        stitle = '{} (Normed)'.format(stitle)
                     elif component < scalars.shape[1] and component >= 0:
                         scalars = scalars[:, component].copy()
-                        title = '{}-{}'.format(title, component)
+                        stitle = '{} (Component {})'.format(stitle, component)
                     else:
                         raise ValueError(
                             ('component must be nonnegative and less than the '
@@ -1457,19 +1457,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                  scalars.shape[1]
                              )
                         )
+                    _add_new_scalars(scalars, stitle)
                 else:
                     scalars = scalars.ravel()
 
             if scalars.dtype == np.bool:
                 scalars = scalars.astype(np.float)
 
+            if stitle not in self.mesh.array_names and original_scalar_name is None:
+                _add_new_scalars(scalars, stitle)
+
+            if original_scalar_name is None:
+                self.mesh.set_active_scalars(stitle)
+            else:
+                self.mesh.set_active_scalars(original_scalar_name)
+
             def prepare_mapper(scalars):
                 # Scalars interpolation approach
                 if scalars.shape[0] == mesh.n_points:
-                    self.mesh._add_point_array(scalars, title, True)
                     self.mapper.SetScalarModeToUsePointData()
                 elif scalars.shape[0] == mesh.n_cells:
-                    self.mesh._add_cell_array(scalars, title, True)
                     self.mapper.SetScalarModeToUseCellData()
                 else:
                     raise_not_matching(scalars, mesh)
@@ -1615,7 +1622,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if line_width:
             prop.SetLineWidth(line_width)
 
-        # Add scalar bar if available
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
