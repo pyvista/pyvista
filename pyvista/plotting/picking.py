@@ -117,7 +117,7 @@ class PickingHelper(object):
                 except RuntimeError:
                     pass
 
-            if callback is not None and self.picked_cells.n_cells > 0:
+            if callback is not None and (isinstance(self.picked_cells, pyvista.MultiBlock) or self.picked_cells.n_cells > 0):
                 try_callback(callback, self.picked_cells)
 
             # TODO: Deactivate selection tool
