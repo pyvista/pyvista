@@ -111,9 +111,7 @@ class PickingHelper(object):
                 else:
                     picked = pyvista.UnstructuredGrid()
             # Check if valid
-            is_valid_selection = False
-            if picked.n_cells > 0:
-                is_valid_selection = True
+            is_valid_selection = picked.n_cells > 0
 
             if show and is_valid_selection:
                 # Use try in case selection is empty
