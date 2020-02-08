@@ -3,7 +3,8 @@ Depth Peeling
 ~~~~~~~~~~~~~
 
 Depth peeling is a technique to correctly render translucent geometry.
-This is enabled by default in :any:`pyvista.rcParams`.
+This is enabled by default in :any:`pyvista.rcParams` if your VTK version is
+less than 8.2.
 
 For this example, we will showcase the difference that depth peeling provides
 as the justification for why we have enabled this by default.
@@ -97,4 +98,4 @@ p.show()
 
 ###############################################################################
 # Re-enable depth peeling
-pv.rcParams["depth_peeling"]["enabled"] = True
+pv.rcParams["depth_peeling"]["enabled"] = pv.DEFAULT_THEME["depth_peeling"]["enabled"]
