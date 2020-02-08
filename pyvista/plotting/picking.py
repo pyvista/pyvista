@@ -115,16 +115,12 @@ class PickingHelper(object):
             if picked.n_cells > 0:
                 is_valid_selection = True
 
-
-            if show:
+            if show and is_valid_selection:
                 # Use try in case selection is empty
-                try:
-                    self.add_mesh(picked, name='_cell_picking_selection',
-                                  style=style, color=color,
-                                  line_width=line_width, pickable=False,
-                                  reset_camera=False, **kwargs)
-                except RuntimeError:
-                    pass
+                self.add_mesh(picked, name='_cell_picking_selection',
+                              style=style, color=color,
+                              line_width=line_width, pickable=False,
+                              reset_camera=False, **kwargs)
 
             if callback is not None and is_valid_selection:
                 try_callback(callback, self.picked_cells)
