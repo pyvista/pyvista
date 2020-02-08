@@ -1556,6 +1556,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     table.SetHueRange(0.66667, 0.0)
         else:
             self.mapper.SetScalarModeToUseFieldData()
+            show_scalar_bar = False
 
 
         # Set actor properties ================================================
