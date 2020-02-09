@@ -223,7 +223,7 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'panel']
+                    'cmocean', 'panel', 'scipy']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
