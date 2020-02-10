@@ -59,6 +59,7 @@ jobs:
     displayName: Install and test headless display
 
   - script: |
+      sudo apt-get install libgcc1 -y
       pip install -r requirements_test.txt
       pip install -r requirements_docs.txt
       pip install cookiecutter
