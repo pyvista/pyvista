@@ -1,5 +1,8 @@
 variables:
   ALLOW_PLOTTING: true
+  DISPLAY=:99.0
+  PYVISTA_OFF_SCREEN: True
+  
 
 jobs:
 - job: DocTest
@@ -50,8 +53,6 @@ jobs:
 
   - script: |
       .ci/setup_headless_display.sh
-      export DISPLAY=:99.0
-      export PYVISTA_OFF_SCREEN=True
       python .ci/pyvista_test.py
     displayName: Install and test headless display
 
