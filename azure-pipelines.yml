@@ -1,7 +1,5 @@
 variables:
   ALLOW_PLOTTING: true
-  DISPLAY=:99.0
-  PYVISTA_OFF_SCREEN: True
   
 
 jobs:
@@ -31,6 +29,10 @@ jobs:
 - job: Linux
   pool:
     vmImage: 'ubuntu-latest'
+  variables:
+    DISPLAY=:99.0
+    PYVISTA_OFF_SCREEN: True
+
   strategy:
     matrix:
       Python35:
@@ -75,6 +77,7 @@ jobs:
       pip install pytest pytest-azurepipelines
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
+
 
 - job: Windows
   pool:
