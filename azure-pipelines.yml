@@ -21,7 +21,7 @@ jobs:
   - script: |
       pip install codespell pydocstyle
       make doctest
-   displayName: 'Run doctest'
+    displayName: 'Run doctest'
 
 
 - job: Linux
