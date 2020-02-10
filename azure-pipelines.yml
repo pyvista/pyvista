@@ -7,11 +7,10 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
   steps:
-  - template: .ci/checkout.yml  # shallow checkout
+  # - template: .ci/checkout.yml  # shallow checkout
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.7'
-
   - script: |
       pip install -e .
       # which python
@@ -19,7 +18,6 @@ jobs:
       # pip list
       # python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install pyvista'
-
   - script: |
       pip install codespell pydocstyle
       make doctest
@@ -32,7 +30,6 @@ jobs:
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
-
   strategy:
     matrix:
       Python35:
@@ -41,23 +38,19 @@ jobs:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
-
   steps:
-  - template: .ci/checkout.yml
+  # - template: .ci/checkout.yml
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
-
   - script: |
       pip install -e .
     displayName: Install pyvista
-
   - script: |
       .ci/setup_headless_display.sh
       python .ci/pyvista_test.py
     displayName: Install and test headless display
-
   - script: |
       sudo apt-get install libgcc1 -y
       pip install -r requirements_test.txt
@@ -68,60 +61,58 @@ jobs:
       pip list
       python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install dependencies'
-
   - script: |
       pip install pytest-azurepipelines
       pytest -v --cov pyvista
     displayName: 'Test Core API'
-
   - script: |
       pip install pytest pytest-azurepipelines
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
 
 
-- job: Windows
-  pool:
-    vmIMage: 'VS2017-Win2016'
-  variables:
-    AZURE_CI_WINDOWS: 'true'
-  strategy:
-    maxParallel: 4
-    matrix:
-      Python37-64bit:
-        PYTHON_VERSION: '3.7'
-        PYTHON_ARCH: 'x64'
-      Python36-64bit:
-        PYTHON_VERSION: '3.6'
-        PYTHON_ARCH: 'x64'
-      Python35-64bit:
-        PYTHON_VERSION: '3.5'
-        PYTHON_ARCH: 'x64'
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: $(PYTHON_VERSION)
-      architecture: $(PYTHON_ARCH)
-      addToPath: true
-  - powershell: |
-      Set-StrictMode -Version Latest
-      $ErrorActionPreference = "Stop"
-      $PSDefaultParameterValues['*:ErrorAction']='Stop'
-      git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-      powershell gl-ci-helpers/appveyor/install_opengl.ps1
-    displayName: 'Install OpenGL'
-  - powershell: |
-      Set-StrictMode -Version Latest
-      $ErrorActionPreference = "Stop"
-      $PSDefaultParameterValues['*:ErrorAction']='Stop'
-      pip install -r requirements_test.txt
-    displayName: 'Install dependencies with pip'
-  - script: |
-      python setup.py sdist
-      python setup.py install
-      python -c "import pyvista; print(pyvista.Report())"
-    displayName: 'Install PyVista'
-  - script: |
-      del /Q tests\\test_qt_plotting.py
-      python -m pytest --cov -v .
-    displayName: 'Run Tests'
+# - job: Windows
+#   pool:
+#     vmIMage: 'VS2017-Win2016'
+#   variables:
+#     AZURE_CI_WINDOWS: 'true'
+#   strategy:
+#     maxParallel: 4
+#     matrix:
+#       Python37-64bit:
+#         PYTHON_VERSION: '3.7'
+#         PYTHON_ARCH: 'x64'
+#       Python36-64bit:
+#         PYTHON_VERSION: '3.6'
+#         PYTHON_ARCH: 'x64'
+#       Python35-64bit:
+#         PYTHON_VERSION: '3.5'
+#         PYTHON_ARCH: 'x64'
+#   steps:
+#   - task: UsePythonVersion@0
+#     inputs:
+#       versionSpec: $(PYTHON_VERSION)
+#       architecture: $(PYTHON_ARCH)
+#       addToPath: true
+#   - powershell: |
+#       Set-StrictMode -Version Latest
+#       $ErrorActionPreference = "Stop"
+#       $PSDefaultParameterValues['*:ErrorAction']='Stop'
+#       git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
+#       powershell gl-ci-helpers/appveyor/install_opengl.ps1
+#     displayName: 'Install OpenGL'
+#   - powershell: |
+#       Set-StrictMode -Version Latest
+#       $ErrorActionPreference = "Stop"
+#       $PSDefaultParameterValues['*:ErrorAction']='Stop'
+#       pip install -r requirements_test.txt
+#     displayName: 'Install dependencies with pip'
+#   - script: |
+#       python setup.py sdist
+#       python setup.py install
+#       python -c "import pyvista; print(pyvista.Report())"
+#     displayName: 'Install PyVista'
+#   - script: |
+#       del /Q tests\\test_qt_plotting.py
+#       python -m pytest --cov -v .
+#     displayName: 'Run Tests'
