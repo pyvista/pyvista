@@ -5,7 +5,6 @@ from math import pi
 import vtk
 
 import pyvista
-from pyvista.utilities import assert_empty_kwargs
 
 from .geometric_objects import translate
 

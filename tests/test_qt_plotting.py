@@ -1,6 +1,4 @@
 import os
-import sys
-import time
 
 import numpy as np
 import pytest
@@ -14,7 +12,6 @@ NO_PLOTTING = not system_supports_plotting()
 
 
 try:
-    import PyQt5
     from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QAction)
     has_pyqt5 = True
 except:

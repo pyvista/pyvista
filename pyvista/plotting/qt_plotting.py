@@ -96,8 +96,8 @@ try:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
                                  QFrame, QMainWindow, QSlider, QAction,
-                                 QSpinBox, QHBoxLayout, QDialog,
-                                 QFormLayout, QGroupBox, QFileDialog)
+                                 QHBoxLayout, QDialog,
+                                 QFormLayout, QFileDialog)
     has_pyqt = True
 except ImportError:  # pragma: no cover
     pass
