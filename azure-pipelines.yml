@@ -30,7 +30,7 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
   variables:
-    DISPLAY=:99.0
+    DISPLAY: ":99.0"
     PYVISTA_OFF_SCREEN: True
 
   strategy:
