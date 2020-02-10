@@ -2,6 +2,75 @@ variables:
   ALLOW_PLOTTING: true
 
 jobs:
+- job: DocTest
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+
+  - script: |
+      pip install -e .
+      # which python
+      # python -c "import vtk; print(vtk.VTK_VERSION)"
+      # pip list
+      # python -c "import pyvista; print(pyvista.Report())"
+    displayName: 'Install pyvista'
+
+  - script: |
+      pip install codespell pydocstyle
+      make doctest
+   displayName: 'Run doctest'
+
+
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-latest'
+  strategy:
+    matrix:
+      Python35:
+        python.version: '3.5'
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+
+  steps:
+  - template: .ci/checkout.yml
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - script: |
+      pip install -r requirements_test.txt
+      pip install -r requirements_docs.txt
+      pip install cookiecutter
+      pip install -e .
+      which python
+      python -c "import vtk; print(vtk.VTK_VERSION)"
+      pip list
+      python -c "import pyvista; print(pyvista.Report())"
+    displayName: 'Install dependencies'
+
+  - script: |
+      .ci/setup_headless_display.sh
+      export DISPLAY=:99.0
+      export PYVISTA_OFF_SCREEN=True
+      python .ci/pyvista_test.py
+    displayName: Install and test headless display
+
+  - script: |
+      pip install pytest-azurepipelines
+      pytest -v --cov pyvista
+    displayName: 'Test Core API'
+
+  - script: |
+      pip install pytest pytest-azurepipelines
+      pytest -v --doctest-modules pyvista
+    displayName: 'Test Package Docstrings'
+
 - job: Windows
   pool:
     vmIMage: 'VS2017-Win2016'

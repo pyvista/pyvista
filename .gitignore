@@ -54,3 +54,7 @@ docs/examples/
 docs/errors.txt
 docs/images/auto-generated
 **/myscreenshot.png
+
+
+# travisCI
+.travis.yml
