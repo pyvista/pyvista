@@ -6,6 +6,7 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
   steps:
+  - template: .ci/checkout.yml  # shallow checkout
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.7'
@@ -44,15 +45,8 @@ jobs:
     displayName: 'Use Python $(python.version)'
 
   - script: |
-      pip install -r requirements_test.txt
-      pip install -r requirements_docs.txt
-      pip install cookiecutter
       pip install -e .
-      which python
-      python -c "import vtk; print(vtk.VTK_VERSION)"
-      pip list
-      python -c "import pyvista; print(pyvista.Report())"
-    displayName: 'Install dependencies'
+    displayName: Install pyvista
 
   - script: |
       .ci/setup_headless_display.sh
@@ -60,6 +54,16 @@ jobs:
       export PYVISTA_OFF_SCREEN=True
       python .ci/pyvista_test.py
     displayName: Install and test headless display
+
+  - script: |
+      pip install -r requirements_test.txt
+      pip install -r requirements_docs.txt
+      pip install cookiecutter
+      which python
+      python -c "import vtk; print(vtk.VTK_VERSION)"
+      pip list
+      python -c "import pyvista; print(pyvista.Report())"
+    displayName: 'Install dependencies'
 
   - script: |
       pip install pytest-azurepipelines
@@ -105,7 +109,7 @@ jobs:
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
       $PSDefaultParameterValues['*:ErrorAction']='Stop'
-      pip install -r requirements.txt
+      pip install -r requirements_test.txt
     displayName: 'Install dependencies with pip'
   - script: |
       python setup.py sdist
