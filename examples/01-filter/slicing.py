@@ -101,6 +101,40 @@ slc
 ###############################################################################
 
 p = pv.Plotter()
-p.add_mesh(slc)
+p.add_mesh(slc, cmap=cmap)
 p.add_mesh(model.outline())
 p.show(cpos=[1, -1, 1])
+
+
+
+###############################################################################
+# Slice At Different Bearings
+# +++++++++++++++++++++++++++
+#
+# From `pyvista-support#23 <https://github.com/pyvista/pyvista-support/issues/23>`_
+#
+# An example of how to get many slices at different bearings all centered
+# around a user-chosen location.
+#
+# Create a point to orient slices around
+ranges = np.array(model.bounds).reshape(-1, 2).ptp(axis=1)
+point = np.array(model.center) - ranges*0.25
+
+###############################################################################
+# Now generate a few normal vectors to rotate a slice around the z-axis.
+# Use equation for circle since its about the Z-axis.
+increment = np.pi/6.
+# use a container to hold all the slices
+slices = pv.MultiBlock() # treat like a dictionary/list
+for theta in np.arange(0, np.pi, increment):
+    normal = np.array([np.cos(theta), np.sin(theta), 0.0]).dot(np.pi/2.)
+    name = 'Bearing: {:.2f}'.format(np.rad2deg(theta))
+    slices[name] = model.slice(origin=point, normal=normal)
+slices
+
+###############################################################################
+# And now display it!
+p = pv.Plotter()
+p.add_mesh(slices, cmap=cmap)
+p.add_mesh(model.outline())
+p.show()

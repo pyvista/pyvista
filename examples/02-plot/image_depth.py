@@ -5,7 +5,6 @@ Render a depth image
 Plot a depth image as viewed from a camera overlooking the "hills" example mesh.
 """
 # sphinx_gallery_thumbnail_number = 2
-import numpy as np
 import pyvista as pv
 import matplotlib.pyplot as plt
 from pyvista import examples

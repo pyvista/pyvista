@@ -96,8 +96,8 @@ try:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
                                  QFrame, QMainWindow, QSlider, QAction,
-                                 QSpinBox, QHBoxLayout, QDialog,
-                                 QFormLayout, QGroupBox, QFileDialog)
+                                 QHBoxLayout, QDialog,
+                                 QFormLayout, QFileDialog)
     has_pyqt = True
 except ImportError:  # pragma: no cover
     pass
@@ -464,7 +464,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
                     # only call accept on files
                     event.accept()
         except Exception as e:
-            warnings.warn('Exception when droping files: %s' % str(e))
+            warnings.warn('Exception when dropping files: %s' % str(e))
 
     def dropEvent(self, event):
         """Event is called after dragEnterEvent."""
@@ -688,6 +688,7 @@ class BackgroundPlotter(QtInteractor):
         self.render_timer.timeout.connect(self.render)
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
+        self._first_time = False
 
     def _close_callback(self):
         """Make sure a screenhsot is acquired before closing."""

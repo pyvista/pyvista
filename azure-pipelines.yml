@@ -62,6 +62,7 @@ jobs:
       python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install dependencies'
   - script: |
+<<<<<<< HEAD
       pip install pytest-azurepipelines
       pytest -v --cov pyvista
     displayName: 'Test Core API'
@@ -113,6 +114,5 @@ jobs:
 #       python -c "import pyvista; print(pyvista.Report())"
 #     displayName: 'Install PyVista'
 #   - script: |
-#       del /Q tests\\test_qt_plotting.py
 #       python -m pytest --cov -v .
 #     displayName: 'Run Tests'

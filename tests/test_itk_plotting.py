@@ -1,34 +1,59 @@
 import numpy as np
 import pytest
 
+<<<<<<< HEAD
 # for azure testing and itkwidgets
 import matplotlib
 matplotlib.use("agg")
 
 import itkwidgets
 
+=======
+>>>>>>> master
 import pyvista
 from pyvista.plotting import system_supports_plotting
 
 NO_PLOTTING = not system_supports_plotting()
 
+<<<<<<< HEAD
+=======
+HAS_ITK = False
+try:
+    import itkwidgets
+    HAS_ITK = True
+except ImportError:
+    pass
+
+>>>>>>> master
 SPHERE = pyvista.Sphere()
 SPHERE['z'] = SPHERE.points[:, 2]
 
 
+<<<<<<< HEAD
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+=======
+@pytest.mark.skipif(NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets.")
+>>>>>>> master
 def test_itk_plotting():
     viewer = pyvista.plot_itk(SPHERE)
     assert isinstance(viewer, itkwidgets.Viewer)
 
 
+<<<<<<< HEAD
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+=======
+@pytest.mark.skipif(NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets.")
+>>>>>>> master
 def test_itk_plotting_points():
     viewer = pyvista.plot_itk(np.random.random((100, 3)))
     assert isinstance(viewer, itkwidgets.Viewer)
 
 
+<<<<<<< HEAD
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+=======
+@pytest.mark.skipif(NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets.")
+>>>>>>> master
 def test_itk_plotting_class():
     pl = pyvista.PlotterITK()
     pl.add_mesh(SPHERE, scalars='z')
@@ -36,7 +61,11 @@ def test_itk_plotting_class():
     assert isinstance(viewer, itkwidgets.Viewer)
 
 
+<<<<<<< HEAD
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+=======
+@pytest.mark.skipif(NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets.")
+>>>>>>> master
 def test_itk_plotting_class_no_scalars():
     pl = pyvista.PlotterITK()
     pl.add_mesh(SPHERE, color='w')
@@ -44,7 +73,11 @@ def test_itk_plotting_class_no_scalars():
     assert isinstance(viewer, itkwidgets.Viewer)
 
 
+<<<<<<< HEAD
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+=======
+@pytest.mark.skipif(NO_PLOTTING or not HAS_ITK, reason="Requires system to support plotting and have itkwidgets.")
+>>>>>>> master
 def test_itk_plotting_class_npndarray_scalars():
     pl = pyvista.PlotterITK()
     pl.add_mesh(SPHERE, scalars=SPHERE.points[:, 0])

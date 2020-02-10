@@ -201,6 +201,8 @@ def read(filename, attrs=None, file_format=None):
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
         return read_legacy(filename)
+    elif ext in ['.jpeg', '.jpg']:
+        return read_texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:

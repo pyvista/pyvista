@@ -413,7 +413,7 @@ class RowScalarsDict(_ScalarsDict):
     """Update internal row data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize te row scalars dict."""
+        """Initialize the row scalars dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(ROW_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetRowData().Modified()

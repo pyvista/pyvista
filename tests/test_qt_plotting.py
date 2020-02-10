@@ -1,6 +1,4 @@
 import os
-import sys
-import time
 
 import numpy as np
 import pytest
@@ -14,7 +12,6 @@ NO_PLOTTING = not system_supports_plotting()
 
 
 try:
-    import PyQt5
     from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QAction)
     has_pyqt5 = True
 except:
@@ -107,7 +104,7 @@ def test_background_plotting_camera(qtbot):
     plotter.camera_position = [(0.0, 0.0, 3.0), (0.0, 0.0, 0.0), (0.0, 1.0, 0.0)]
 
     # load existing position
-    # NOTE: 2 because first two (0 and 1) bottons save and clear positions
+    # NOTE: 2 because first two (0 and 1) buttons save and clear positions
     plotter.saved_cameras_tool_bar.actions()[2].trigger()
     assert plotter.camera_position == cpos
 
@@ -152,7 +149,7 @@ def test_background_plotter_export_vtkjs(qtbot, tmpdir):
 def test_background_plotting_orbit(qtbot):
     plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
     plotter.add_mesh(pyvista.Sphere())
-    # perfrom the orbit:
+    # perform the orbit:
     plotter.orbit_on_path(bkg=False, step=0.0)
     plotter.close()
 

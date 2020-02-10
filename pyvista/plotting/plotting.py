@@ -473,6 +473,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
 
+    @wraps(Renderer.remove_actor)
+    def remove_actor(self, actor, reset_camera=False):
+        """Wrap ``Renderer.remove_actor``."""
+        for renderer in self.renderers:
+            renderer.remove_actor(actor, reset_camera)
+        return True
+
+
     #### Properties from Renderer ####
 
     @property
@@ -604,8 +612,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
     #### Everything else ####
 
     def render(self):
-        """Render the main window."""
-        if hasattr(self, 'ren_win'):
+        """Render the main window.
+
+        If this is called before ``show()``, nothing will happen.
+        """
+        if hasattr(self, 'ren_win') and not self._first_time:
             self.ren_win.Render()
 
     def add_key_event(self, key, callback):
@@ -2052,28 +2063,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._scalar_bar_widgets = {}
         self.mesh = None
 
-    def remove_actor(self, actor, reset_camera=False):
-        """Remove an actor from the Plotter.
-
-        Parameters
-        ----------
-        actor : vtk.vtkActor
-            Actor that has previously added to the Renderer.
-
-        reset_camera : bool, optional
-            Resets camera so all actors can be seen.
-
-        Returns
-        -------
-        success : bool
-            True when actor removed.  False when actor has not been
-            removed.
-
-        """
-        for renderer in self.renderers:
-            renderer.remove_actor(actor, reset_camera)
-        return True
-
 
     def link_views(self, views=0):
         """Link the views' cameras.
@@ -2434,6 +2423,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.scalar_bar.SetDrawFrame(False)
 
         self.add_actor(self.scalar_bar, reset_camera=False, pickable=False)
+
+        return self.scalar_bar # return the actor
 
     def update_scalars(self, scalars, mesh=None, render=True):
         """Update scalars of an object in the plotter.
@@ -2840,17 +2831,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self._labels.append([lines, label, rgb_color])
 
         # Create actor
-        self.scalar_bar = vtk.vtkActor()
-        self.scalar_bar.SetMapper(mapper)
-        self.scalar_bar.GetProperty().SetLineWidth(width)
-        self.scalar_bar.GetProperty().EdgeVisibilityOn()
-        self.scalar_bar.GetProperty().SetEdgeColor(rgb_color)
-        self.scalar_bar.GetProperty().SetColor(rgb_color)
-        self.scalar_bar.GetProperty().LightingOff()
+        actor = vtk.vtkActor()
+        actor.SetMapper(mapper)
+        actor.GetProperty().SetLineWidth(width)
+        actor.GetProperty().EdgeVisibilityOn()
+        actor.GetProperty().SetEdgeColor(rgb_color)
+        actor.GetProperty().SetColor(rgb_color)
+        actor.GetProperty().LightingOff()
 
         # Add to renderer
-        self.add_actor(self.scalar_bar, reset_camera=False, name=name, pickable=False)
-        return self.scalar_bar
+        self.add_actor(actor, reset_camera=False, name=name, pickable=False)
+        return actor
 
     def remove_scalar_bar(self):
         """Remove the scalar bar."""
@@ -2944,8 +2935,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Return
         ------
-        labelMapper : vtk.vtkvtkLabeledDataMapper
-            VTK label mapper.  Can be used to change properties of the labels.
+        labelActor : vtk.vtkActor2D
+            VTK label actor.  Can be used to change properties of the labels.
 
         """
         if font_family is None:
@@ -3037,7 +3028,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(labelActor, reset_camera=False,
                        name='{}-labels'.format(name), pickable=False)
 
-        return labelMapper
+        return labelActor
 
 
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
@@ -3074,7 +3065,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def add_points(self, points, **kwargs):
         """Add points to a mesh."""
         kwargs['style'] = 'points'
-        self.add_mesh(points, **kwargs)
+        return self.add_mesh(points, **kwargs)
 
     def add_arrows(self, cent, direction, mag=1, **kwargs):
         """Add arrows to plotting object."""
