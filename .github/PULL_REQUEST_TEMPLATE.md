@@ -1,18 +1,14 @@
-Subject: <short purpose of this pull request>
+### Overview
 
-### Feature or Bugfix
-<!-- please choose -->
-- Feature
-- Bugfix
+<!-- Please insert a high-level description of this pull request here. -->
 
-### Purpose
-- <long purpose of this pull request>
-- <Environment if this PR depends on>
+<!-- Be sure to link other PRs or issues that relate to this PR here. --> 
 
-### Detail
-- <feature1 or bug1>
-- <feature2 or bug2>
+<!-- If this fully addresses an issue, please use the keyword `resolves` in front of that issue number. -->
 
-### Relates
-- <URL or Ticket>
+
+### Details
+
+- < feature1 or bug1 description >
+- < feature2 or bug2 description >
 
