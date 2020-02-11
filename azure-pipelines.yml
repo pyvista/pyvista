@@ -7,7 +7,6 @@ jobs:
   pool:
     vmImage: 'ubuntu-latest'
   steps:
-  # - template: .ci/checkout.yml  # shallow checkout
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.7'
@@ -39,13 +38,14 @@ jobs:
       Python37:
         python.version: '3.7'
   steps:
-  # - template: .ci/checkout.yml
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
   - script: |
       pip install -e .
+      python -c "import vtk; print(vtk.VTK_VERSION)"
+      python -c "import pyvista; print(pyvista.Report())"
     displayName: Install pyvista
   - script: |
       .ci/setup_headless_display.sh
@@ -54,12 +54,10 @@ jobs:
   - script: |
       sudo apt-get install python3-tk
       pip install -r requirements_test.txt
-      pip install -r requirements_docs.txt
-      pip install cookiecutter
+      # pip install -r requirements_docs.txt
+      # pip install cookiecutter
       which python
-      python -c "import vtk; print(vtk.VTK_VERSION)"
       pip list
-      python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install dependencies'
   - script: |
       pip install pytest-azurepipelines
@@ -135,13 +133,12 @@ jobs:
     displayName: Install and test headless display
   - script: |
       sudo apt-get install python3-tk
-      pip install -r requirements_test.txt
       pip install -r requirements_docs.txt
       pip install cookiecutter
-      which python
-      python -c "import vtk; print(vtk.VTK_VERSION)"
-      pip list
-      python -c "import pyvista; print(pyvista.Report())"
+      # which python
+      # python -c "import vtk; print(vtk.VTK_VERSION)"
+      # pip list
+      # python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install dependencies'
   - script: |
       # Run `make html` before `make doctest` to avoid segfault.  (check this)
