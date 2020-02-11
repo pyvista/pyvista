@@ -115,7 +115,7 @@ jobs:
 #       python -m pytest --cov -v .
 #     displayName: 'Run Tests'
 
-- job: Build Documentation
+- job: BuildDocumentation
   pool:
     vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
   variables:
