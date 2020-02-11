@@ -117,7 +117,7 @@ jobs:
 
 - job: BuildDocumentation
   pool:
-    vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
+    vmImage: 'ubuntu-16.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
@@ -145,7 +145,7 @@ jobs:
     displayName: 'Install dependencies'
   - script: |
       # Run `make html` before `make doctest` to avoid segfault.  (check this)
-      make -C docs html  # see if we can get rid of one of these
+      # make -C docs html  # see if we can get rid of one of these
       make -C docs doctest
       make -C docs html
     displayName: 'Build documentation'
