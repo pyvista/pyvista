@@ -3,7 +3,7 @@ variables:
   
 
 jobs:
-- job: DocTest
+- job: CodeSpellStyle
   pool:
     vmImage: 'ubuntu-latest'
   steps:
@@ -12,10 +12,6 @@ jobs:
       versionSpec: '3.7'
   - script: |
       pip install -e .
-      # which python
-      # python -c "import vtk; print(vtk.VTK_VERSION)"
-      # pip list
-      # python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install pyvista'
   - script: |
       pip install codespell pydocstyle
@@ -44,8 +40,6 @@ jobs:
     displayName: 'Use Python $(python.version)'
   - script: |
       pip install -e .
-      python -c "import vtk; print(vtk.VTK_VERSION)"
-      python -c "import pyvista; print(pyvista.Report())"
     displayName: Install pyvista
   - script: |
       .ci/setup_headless_display.sh
@@ -54,6 +48,8 @@ jobs:
   - script: |
       sudo apt-get install python3-tk
       pip install -r requirements_test.txt
+      python -c "import vtk; print(vtk.VTK_VERSION)"
+      python -c "import pyvista; print(pyvista.Report())"
       # pip install -r requirements_docs.txt
       # pip install cookiecutter
       which python
