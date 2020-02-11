@@ -69,11 +69,17 @@ jobs:
     displayName: 'Test Package Docstrings'
   - script: |
       bash <(curl -s https://codecov.io/bash)
-    displayName: 'Upload to codecov.io'
+    displayName: 'Upload coverage to codecov.io'
     condition: eq(variables['python.version'], '3.7')
-    # condition: eq(variables['python.version'], '3.7')
-
-
+  - script: |
+      # Auth stored in $TWINE_USERNAME AND $TWINE_PASSWORD
+      pip install twine
+      python setup.py sdist
+      twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+      # twine upload dist/*
+    displayName: 'Upload to PyPi'
+    condition: eq(variables['python.version'], '3.7')
+    # condition: and(startsWith(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['python.version'], '3.7'))
 
 
 # DESCRIPTION:
@@ -124,40 +130,40 @@ jobs:
 #     displayName: 'Run Tests'
 
 
-# Builds the documentation
-- job: BuildDocumentation
-  pool:
-    vmImage: 'ubuntu-16.04'
-  variables:
-    DISPLAY: ':99.0'
-    PYVISTA_OFF_SCREEN: 'True'
-  steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: 3.7
-    displayName: 'Use Python 3.7'
-  - script: |
-      pip install -e .
-    displayName: Install pyvista
-  - script: |
-      .ci/setup_headless_display.sh
-      python .ci/pyvista_test.py
-    displayName: Install and test headless display
-  - script: |
-      sudo apt-get install python3-tk
-      pip install -r requirements_docs.txt
-      pip install cookiecutter
-      # which python
-      # python -c "import vtk; print(vtk.VTK_VERSION)"
-      # pip list
-      # python -c "import pyvista; print(pyvista.Report())"
-    displayName: 'Install dependencies'
-  - script: |
-      make -C docs html
-    displayName: 'Build documentation'
-  - script: |
-      make -C docs doctest
-    displayName: 'Test documentation code snippets'
-  - script: |
-      make -C docs html
-    displayName: 'Update figures from doctest'
+# # Builds the documentation
+# - job: BuildDocumentation
+#   pool:
+#     vmImage: 'ubuntu-16.04'
+#   variables:
+#     DISPLAY: ':99.0'
+#     PYVISTA_OFF_SCREEN: 'True'
+#   steps:
+#   - task: UsePythonVersion@0
+#     inputs:
+#       versionSpec: 3.7
+#     displayName: 'Use Python 3.7'
+#   - script: |
+#       pip install -e .
+#     displayName: Install pyvista
+#   - script: |
+#       .ci/setup_headless_display.sh
+#       python .ci/pyvista_test.py
+#     displayName: Install and test headless display
+#   - script: |
+#       sudo apt-get install python3-tk
+#       pip install -r requirements_docs.txt
+#       pip install cookiecutter
+#       # which python
+#       # python -c "import vtk; print(vtk.VTK_VERSION)"
+#       # pip list
+#       # python -c "import pyvista; print(pyvista.Report())"
+#     displayName: 'Install dependencies'
+#   - script: |
+#       make -C docs html
+#     displayName: 'Build documentation'
+#   - script: |
+#       make -C docs doctest
+#     displayName: 'Test documentation code snippets'
+#   - script: |
+#       make -C docs html
+#     displayName: 'Update figures from doctest'
