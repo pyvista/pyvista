@@ -29,6 +29,7 @@ jobs:
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
+
   strategy:
     matrix:
       Python35:
@@ -37,62 +38,56 @@ jobs:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+
   steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
+
   - script: |
       pip install -e .
     displayName: Install pyvista
+
   - script: |
       .ci/setup_headless_display.sh
       python .ci/pyvista_test.py
     displayName: Install and test headless display
+
   - script: |
       sudo apt-get install python3-tk
       pip install -r requirements_test.txt
       python -c "import vtk; print(vtk.VTK_VERSION)"
       python -c "import pyvista; print(pyvista.Report())"
-      # pip install -r requirements_docs.txt
-      # pip install cookiecutter
       which python
       pip list
     displayName: 'Install dependencies'
+
   - script: |
       pip install pytest-azurepipelines
       pytest -v --cov pyvista --cov-report html
     displayName: 'Test Core API'
+
   - script: |
       pip install pytest pytest-azurepipelines
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
+
   - script: |
       bash <(curl -s https://codecov.io/bash)
     displayName: 'Upload coverage to codecov.io'
     condition: eq(variables['python.version'], '3.7')
 
-  - script: twine upload --skip-existing dist/*.gz
-    displayName: "Upload sdist to PyPi"
-    
+  - script: |
+      pip install twine
+      python setup.py sdist
+      twine upload --skip-existing dist/pyvista*.gz
+    displayName: 'Upload to PyPi'
+    condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
       TWINE_USERNAME: $(twine.username)
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
-
-  - script: |
-      # Auth stored in $TWINE_USERNAME AND $TWINE_PASSWORD
-      pip install twine
-      python setup.py sdist
-      twine upload --repository-url https://test.pypi.org/legacy/ dist/pyvista*
-      # twine upload dist/*
-    displayName: 'Upload to PyPi'
-    condition: eq(variables['python.version'], '3.7')
-    # condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
-    env:
-      TWINE_USERNAME: $(twine.username)
-      TWINE_PASSWORD: $(twine.password)
-      # TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
 
 # DESCRIPTION:
@@ -143,40 +138,131 @@ jobs:
 #     displayName: 'Run Tests'
 
 
-# # Builds the documentation
-# - job: BuildDocumentation
+# Builds the documentation
+- job: BuildDocumentation
+  pool:
+    vmImage: 'ubuntu-16.04'
+
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+    GH_NAME: $(gh.name)
+    GH_EMAIL: $(gh.email)
+    GH_TOKEN: $(gh.token)
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: 3.7
+    displayName: 'Use Python 3.7'
+
+  - script: |
+      pip install -e .
+    displayName: Install pyvista
+
+  - script: |
+      .ci/setup_headless_display.sh
+      python .ci/pyvista_test.py
+    displayName: Install and test headless display
+
+  - script: |
+      sudo apt-get install python3-tk
+      pip install -r requirements_docs.txt
+      pip install cookiecutter
+      # which python
+      # python -c "import vtk; print(vtk.VTK_VERSION)"
+      # pip list
+      # python -c "import pyvista; print(pyvista.Report())"
+    displayName: 'Install dependencies'
+
+  - script: |
+      make -C docs html
+    displayName: 'Build documentation'
+
+  - script: |
+      make -C docs doctest
+    displayName: 'Test documentation code snippets'
+
+  - script: |
+      make -C docs html
+    displayName: 'Update figures from doctest'
+
+  - script: |
+      cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+      rm -rf ../pyvista-examples/notebooks/
+      cd docs
+      find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/;
+      cd ../../pyvista-examples/
+      git init
+      git add .
+      git commit -am "Updated site via $(Build.SourceVersion)"
+      REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-examples";
+      git config --global user.name "${GH_NAME}";
+      git config --global user.email "${GH_EMAIL}";
+      git remote add origin ${REMOTE};
+      git push -uf origin master;
+    displayName: 'Upload binder examples'
+    # condition: contains(variables['Build.SourceBranch'], 'refs/tags/')
+
+  # - script: |
+  #     cd ..
+  #     git clone --single-branch --branch gh-pages https://$(github_pat)@github.com/akaszynski/pyansys.git
+  #     git gc --prune=now
+  #     git remote prune origin
+  #     cd pyansys
+  #     git config user.email $(gh_email)
+  #     git config user.name $(gh_user)
+  #     rm -rf *
+  #     cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
+  #     touch .nojekyll
+  #     git add .
+  #     git commit -am "Pipelines-Bot: Updated site via $(Build.SourceVersion)"
+  #     # cd $BUILD_SOURCESDIRECTORY
+  #     git push
+  #   displayName: Push to gh-pages
+  #   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+
+
+  pool:
+    vmImage: 'ubuntu-16.04'
+  steps:
+    - template: .ci/build_documentation.yml
+
+
+# - job: GitHubRelease
 #   pool:
-#     vmImage: 'ubuntu-16.04'
-#   variables:
-#     DISPLAY: ':99.0'
-#     PYVISTA_OFF_SCREEN: 'True'
+#     vmImage: 'ubuntu-latest'
+#   dependsOn:
+#   - BuildDocumentation
+#   - Linux
+#   - Windows
+#   # - macOS
 #   steps:
-#   - task: UsePythonVersion@0
+#   - checkout: none
+#   - task: DownloadPipelineArtifact@2
 #     inputs:
-#       versionSpec: 3.7
-#     displayName: 'Use Python 3.7'
+#       buildType: 'current'
+#       targetPath: '$(Pipeline.Workspace)/artifacts'
 #   - script: |
-#       pip install -e .
-#     displayName: Install pyvista
-#   - script: |
-#       .ci/setup_headless_display.sh
-#       python .ci/pyvista_test.py
-#     displayName: Install and test headless display
-#   - script: |
-#       sudo apt-get install python3-tk
-#       pip install -r requirements_docs.txt
-#       pip install cookiecutter
-#       # which python
-#       # python -c "import vtk; print(vtk.VTK_VERSION)"
-#       # pip list
-#       # python -c "import pyvista; print(pyvista.Report())"
-#     displayName: 'Install dependencies'
-#   - script: |
-#       make -C docs html
-#     displayName: 'Build documentation'
-#   - script: |
-#       make -C docs doctest
-#     displayName: 'Test documentation code snippets'
-#   - script: |
-#       make -C docs html
-#     displayName: 'Update figures from doctest'
+#       ARTIFACTS='$(Pipeline.Workspace)/artifacts'
+#       RELEASE_FILES='$(Pipeline.Workspace)/release_files'
+#       mkdir -p $RELEASE_FILES
+#       find $ARTIFACTS -name "*.pdf" -execdir mv {} $RELEASE_FILES \;
+#       find $ARTIFACTS -name "*.whl" -execdir mv {} $RELEASE_FILES \;
+#       find $ARTIFACTS -name "*.zip" -execdir mv {} $RELEASE_FILES \;
+#       echo 'listing release files'
+#       ls $RELEASE_FILES -lh
+#     displayName: 'Flatten artifacts'
+#   - task: GitHubRelease@0
+#     inputs:
+#       gitHubConnection: 'github_auth'
+#       repositoryName: 'pyvista/pyvista'
+#       action: 'create'
+#       target: '$(Build.SourceVersion)'
+#       tagSource: 'auto'
+#       assets: '$(Pipeline.Workspace)/release_files/*'
+#       isDraft: true
+#       addChangeLog: true
+#     displayName: Create GitHub Release
+#   condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')
