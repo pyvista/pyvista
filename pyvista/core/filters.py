@@ -27,12 +27,13 @@ import logging
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import (numpy_to_vtkIdTypeArray, vtk_to_numpy)
+from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, POINT_DATA_FIELD, NORMALS,
-                               assert_empty_kwargs, generate_plane, get_array,
-                               vtk_id_list_to_array, wrap)
+from pyvista.utilities import (CELL_DATA_FIELD, NORMALS, POINT_DATA_FIELD,
+                               ProgressMonitor, assert_empty_kwargs,
+                               generate_plane, get_array, vtk_id_list_to_array,
+                               wrap)
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
@@ -1222,7 +1223,7 @@ class DataSetFilters(object):
             return mesh
 
 
-    def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5):
+    def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5, monitor=False):
         """Construct a 3D Delaunay triangulation of the mesh.
 
         This helps smooth out a rugged mesh.
@@ -1250,7 +1251,11 @@ class DataSetFilters(object):
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
-        alg.Update()
+        if monitor:
+            with ProgressMonitor(alg, message="Delaunay 3D"):
+                alg.Update()
+        else:
+            alg.Update()
         return _get_output(alg)
 
 

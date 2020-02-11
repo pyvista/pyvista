@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import scooby
+import signal
 import sys
 
 import vtk
@@ -97,6 +98,65 @@ class Observer:
         algorithm.AddObserver(self.event_type, self)
         self.__observing = True
         return
+
+
+
+class ProgressMonitor():
+    """A standard class for monitoring the progress of a VTK algorithm.
+
+    This must be use in a ``with`` context and it will block keyboard
+    interrupts from happening until the exit event as interrupts will crash
+    the kernel if the VTK algorithm is still executing.
+
+    """
+
+    def __init__(self, algorithm, message=""):
+        """Initialize observer."""
+        try:
+            from tqdm import tqdm
+        except ImportError:
+            raise ImportError("Please intall `tqdm` to monitor algorithms.")
+        self.event_type = vtk.vtkCommand.ProgressEvent
+        self.progress = 0.0
+        self._last_progress = self.progress
+        self.algorithm = algorithm
+        self.message = message
+        self._interrupt_signal_received = False
+
+    def handler(self, sig, frame):
+        """Custom interrupt handler."""
+        self._interrupt_signal_received = (sig, frame)
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until VTK algorithm finishes.')
+
+    def __call__(self, obj, event, *args):
+        """The progress updatee callback.
+
+        On an event occurrence, this function executes.
+
+        """
+        self.progress = float(obj.GetProgress()) * 100.0
+        step = self.progress - self._last_progress
+        self._last_progress = self.progress
+        self.progress_bar.update(step)
+
+    def __enter__(self):
+        """Enter event for ``with`` context."""
+        self._old_handler = signal.signal(signal.SIGINT, self.handler)
+        from tqdm import tqdm
+        self.progress_bar = tqdm(total=100)
+        self.progress_bar.set_description(self.message)
+        self.algorithm.AddObserver(self.event_type, self)
+        return self.progress_bar
+
+    def __exit__(self, type, value, traceback):
+        """Exit event for ``with`` context."""
+        self.progress_bar.update(100.0 - self.progress) # Finalize bar at 100%
+        self.progress_bar.close()
+        self.algorithm.RemoveObservers(self.event_type)
+        signal.signal(signal.SIGINT, self._old_handler)
+        if self._interrupt_signal_received:
+            self._old_handler(*self._interrupt_signal_received)
+
 
 
 def send_errors_to_logging():
