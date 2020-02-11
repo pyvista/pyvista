@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 
 # for azure testing and itkwidgets
-import matplotlib
-matplotlib.use("agg")
+# import matplotlib
+# matplotlib.use("agg")
 
 import pyvista
 from pyvista.plotting import system_supports_plotting
