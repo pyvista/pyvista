@@ -63,13 +63,12 @@ jobs:
     displayName: 'Install dependencies'
   - script: |
       pip install pytest-azurepipelines
-      pytest -v --cov pyvista
+      pytest -v --cov pyvista --cov-report html
     displayName: 'Test Core API'
   - script: |
       pip install pytest pytest-azurepipelines
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
-
 
 # - job: Windows
 #   pool:
@@ -115,3 +114,38 @@ jobs:
 #   - script: |
 #       python -m pytest --cov -v .
 #     displayName: 'Run Tests'
+
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: 3.7
+    displayName: 'Use Python 3.7'
+  - script: |
+      pip install -e .
+    displayName: Install pyvista
+  - script: |
+      .ci/setup_headless_display.sh
+      python .ci/pyvista_test.py
+    displayName: Install and test headless display
+  - script: |
+      sudo apt-get install python3-tk
+      pip install -r requirements_test.txt
+      pip install -r requirements_docs.txt
+      pip install cookiecutter
+      which python
+      python -c "import vtk; print(vtk.VTK_VERSION)"
+      pip list
+      python -c "import pyvista; print(pyvista.Report())"
+    displayName: 'Install dependencies'
+  - script: |
+      # Run `make html` before `make doctest` to avoid segfault.  (check this)
+      make -C docs html  # see if we can get rid of one of these
+      make -C docs doctest
+      make -C docs html
+    displayName: 'Build documentation'
