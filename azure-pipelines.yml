@@ -26,7 +26,7 @@ jobs:
 
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
@@ -52,7 +52,6 @@ jobs:
       python .ci/pyvista_test.py
     displayName: Install and test headless display
   - script: |
-      sudo apt-get install libgcc1 build-essential -y
       pip install -r requirements_test.txt
       pip install -r requirements_docs.txt
       pip install cookiecutter
