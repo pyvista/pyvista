@@ -67,6 +67,13 @@ jobs:
       pip install pytest pytest-azurepipelines
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
+  - script: |
+      codecov
+    displayName: 'Upload to codecov.io'
+    condition: eq(variables['python.version'], '3.7')
+    # condition: eq(variables['python.version'], '3.7')
+
+
 
 
 # DESCRIPTION:
@@ -146,8 +153,11 @@ jobs:
       # python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install dependencies'
   - script: |
+      make -C docs html
+    displayName: 'Build documentation'
+  - script: |
       make -C docs doctest
     displayName: 'Test documentation code snippets'
   - script: |
       make -C docs html
-    displayName: 'Build documentation'
+    displayName: 'Update figures from doctest'
