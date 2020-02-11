@@ -2,6 +2,8 @@ variables:
   ALLOW_PLOTTING: true
   
 
+# DESCRIPTION:
+# Quickly check the spelling and documentation style
 jobs:
 - job: CodeSpellStyle
   pool:
@@ -19,6 +21,8 @@ jobs:
     displayName: 'Run doctest'
 
 
+# DESCRIPTION:
+# Core API and doc string testing for Linux
 - job: Linux
   pool:
     vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
@@ -64,6 +68,9 @@ jobs:
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
 
+
+# DESCRIPTION:
+# Core API testing for Windows
 # - job: Windows
 #   pool:
 #     vmIMage: 'VS2017-Win2016'
@@ -72,14 +79,14 @@ jobs:
 #   strategy:
 #     maxParallel: 4
 #     matrix:
-#       Python37-64bit:
-#         PYTHON_VERSION: '3.7'
+#       Python35-64bit:
+#         PYTHON_VERSION: '3.5'
 #         PYTHON_ARCH: 'x64'
 #       Python36-64bit:
 #         PYTHON_VERSION: '3.6'
 #         PYTHON_ARCH: 'x64'
-#       Python35-64bit:
-#         PYTHON_VERSION: '3.5'
+#       Python37-64bit:
+#         PYTHON_VERSION: '3.7'
 #         PYTHON_ARCH: 'x64'
 #   steps:
 #   - task: UsePythonVersion@0
@@ -109,6 +116,8 @@ jobs:
 #       python -m pytest --cov -v .
 #     displayName: 'Run Tests'
 
+
+# Builds the documentation
 - job: BuildDocumentation
   pool:
     vmImage: 'ubuntu-16.04'
@@ -137,8 +146,8 @@ jobs:
       # python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install dependencies'
   - script: |
-      # Run `make html` before `make doctest` to avoid segfault.  (check this)
-      # make -C docs html  # see if we can get rid of one of these
       make -C docs doctest
+    displayName: 'Test documentation code snippets'
+  - script: |
       make -C docs html
     displayName: 'Build documentation'
