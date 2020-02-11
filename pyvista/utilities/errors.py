@@ -6,6 +6,7 @@ import re
 import scooby
 import signal
 import sys
+import warnings
 
 import vtk
 
@@ -155,7 +156,7 @@ class ProgressMonitor():
         self.algorithm.RemoveObservers(self.event_type)
         signal.signal(signal.SIGINT, self._old_handler)
         if self._interrupt_signal_received:
-            self._old_handler(*self._interrupt_signal_received)
+            warnings.warn("An interrupt event occured but was ignored.")
 
 
 
