@@ -389,12 +389,11 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
     """
 
-    allow_quit_keypress = True
-
     def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, auto_update=True, **kwargs):
+                 splitting_position=None, auto_update=True,
+                 allow_quit_keypress=True, **kwargs):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -449,6 +448,9 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+        if allow_quit_keypress:
+            self.add_key_event("q", lambda: self.close())
 
     def dragEnterEvent(self, event):
         """Event is called when something is dropped onto the vtk window.
@@ -535,13 +537,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
                     self.saved_cameras_tool_bar.removeAction(action)
         self.saved_camera_positions = []
         return
-
-
-    def _close_callback(self):
-        """Make sure a screenhsot is acquired before closing."""
-        if self.allow_quit_keypress:
-            BasePlotter._close_callback(self)
-            self.close()
 
 
     def close(self):
@@ -689,13 +684,6 @@ class BackgroundPlotter(QtInteractor):
         self.render_timer.start(twait)
         self._first_time = False
 
-    def _close_callback(self):
-        """Make sure a screenhsot is acquired before closing."""
-        if self.allow_quit_keypress:
-            BasePlotter._close_callback(self)
-            self.app_window.close()
-
-
     def _close(self):
         """Close the plotter.
 
@@ -703,7 +691,8 @@ class BackgroundPlotter(QtInteractor):
         or already closed.
 
         """
-        super(BackgroundPlotter, self).close()
+        # Do not call super - BasePlotter handles closing very meticulously
+        QtInteractor.close(self)
 
     def close(self):
         """Close the plotter.

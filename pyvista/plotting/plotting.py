@@ -728,9 +728,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._click_observer
 
 
-    def _close_callback(self):
-        """Make sure a screenhsot is acquired before closing."""
-        self.q_pressed = True
+    def _prep_for_close(self):
+        """Make sure a screenhsot is acquired before closing.
+
+        This doesn't actually close anything! It just preps the plotter for
+        closing.
+        """
         # Grab screenshot right before renderer closes
         self.last_image = self.screenshot(True, return_img=True)
         self.last_image_depth = self.get_image_depth()
@@ -758,8 +761,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
 
-        if not isinstance(self, pyvista.QtInteractor) or isinstance(self, pyvista.BackgroundPlotter):
-            self.add_key_event('q', self._close_callback)
+        self.add_key_event('q', self._prep_for_close) # Add no matter what
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
@@ -3561,7 +3563,6 @@ class Plotter(BasePlotter):
     """
 
     last_update_time = 0.0
-    q_pressed = False
     right_timer_id = -1
 
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
