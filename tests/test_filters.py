@@ -6,7 +6,7 @@ import pyvista
 from pyvista import examples
 
 try:
-    import matplotlib
+    import matplotlib.pyplot as plt
     HAS_MATPLOTLIB = True
 except:
     HAS_MATPLOTLIB = False
