@@ -52,7 +52,7 @@ jobs:
       python .ci/pyvista_test.py
     displayName: Install and test headless display
   - script: |
-      sudo apt-get install python3-tk python3.5-tk
+      sudo apt-get install python3-tk
       pip install -r requirements_test.txt
       pip install -r requirements_docs.txt
       pip install cookiecutter
