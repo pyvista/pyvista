@@ -392,8 +392,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, auto_update=True,
-                 allow_quit_keypress=True, **kwargs):
+                 splitting_position=None, auto_update=True, **kwargs):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -448,9 +447,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
-
-        if allow_quit_keypress:
-            self.add_key_event("q", lambda: self.close())
 
     def dragEnterEvent(self, event):
         """Event is called when something is dropped onto the vtk window.
@@ -552,12 +548,13 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, window_size=None,
-                 off_screen=None, **kwargs):
+                 off_screen=None, allow_quit_keypress=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
         self.counters = []
+        self.allow_quit_keypress = allow_quit_keypress
 
         if window_size is None:
             window_size = rcParams['window_size']
@@ -593,7 +590,7 @@ class BackgroundPlotter(QtInteractor):
 
         super(BackgroundPlotter, self).__init__(parent=self.frame, off_screen=off_screen,
                                                 **kwargs)
-        self.app_window.signal_close.connect(self._close)
+        self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
 
         # build main menu
@@ -662,6 +659,14 @@ class BackgroundPlotter(QtInteractor):
         self.add_key_event("S", self._qt_screenshot) # shift + s
 
 
+    def reset_key_events(self):
+        """Reset all of the key press events to their defaults.
+
+        Handles closing configuration for q-key.
+        """
+        super(BackgroundPlotter, self).reset_key_events()
+        if self.allow_quit_keypress:
+            self.add_key_event("q", lambda: self.close())
 
     def scale_axes_dialog(self, show=True):
         """Open scale axes dialog."""
@@ -683,16 +688,6 @@ class BackgroundPlotter(QtInteractor):
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
         self._first_time = False
-
-    def _close(self):
-        """Close the plotter.
-
-        This function assumes that `self.app_window` is closing
-        or already closed.
-
-        """
-        # Do not call super - BasePlotter handles closing very meticulously
-        QtInteractor.close(self)
 
     def close(self):
         """Close the plotter.
