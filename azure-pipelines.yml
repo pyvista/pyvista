@@ -75,7 +75,7 @@ jobs:
       # Auth stored in $TWINE_USERNAME AND $TWINE_PASSWORD
       pip install twine
       python setup.py sdist
-      twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+      twine upload --repository-url https://test.pypi.org/legacy/ dist/pyvista*
       # twine upload dist/*
     displayName: 'Upload to PyPi'
     condition: eq(variables['python.version'], '3.7')
