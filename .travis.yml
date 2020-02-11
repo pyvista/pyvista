@@ -89,8 +89,10 @@ matrix:
         export PYVISTA_OFFSCREEN=True;
         set -e;
         make html;
+        cat _build/html/python.txt
         make doctest;
         make html;
+        cat _build/html/python.txt
         cd ..;
 
 
