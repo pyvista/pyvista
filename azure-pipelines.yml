@@ -68,7 +68,7 @@ jobs:
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
   - script: |
-      codecov
+      bash <(curl -s https://codecov.io/bash)
     displayName: 'Upload to codecov.io'
     condition: eq(variables['python.version'], '3.7')
     # condition: eq(variables['python.version'], '3.7')
