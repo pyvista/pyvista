@@ -444,7 +444,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
             update_event = lambda *args: self.update()
             for renderer in self.renderers:
                 renderer.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
-                renderer.camera.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
 
         if rcParams["depth_peeling"]["enabled"]:
             if self.enable_depth_peeling():
