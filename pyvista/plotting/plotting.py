@@ -751,6 +751,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         prop.SetPointSize(prop.GetPointSize() + increment)
                     if hasattr(prop, "SetLineWidth"):
                         prop.SetLineWidth(prop.GetLineWidth() + increment)
+        self.render()
         return
 
 
