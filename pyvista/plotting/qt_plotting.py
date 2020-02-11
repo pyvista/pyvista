@@ -697,6 +697,7 @@ class BackgroundPlotter(QtInteractor):
 
         """
         self.app_window.close()
+        self.app.quit()
 
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window."""
