@@ -44,6 +44,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_copybutton',
               'sphinx_gallery.gen_gallery',
               'sphinx.ext.extlinks',
+              'sphinx.ext.coverage',
               ]
 
 

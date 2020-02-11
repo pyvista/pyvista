@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -b coverage
 SPHINXBUILD   = python -msphinx
 SPHINXPROJ    = pyvista
 SOURCEDIR     = .
