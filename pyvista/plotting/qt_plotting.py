@@ -397,7 +397,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, auto_update=True, **kwargs):
+                 splitting_position=None, update_rate=5.0, **kwargs):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -445,10 +445,22 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
             self.iren.AddObserver("KeyPressEvent", self.key_press_event)
 
-        if auto_update:
-            update_event = lambda *args: self.update()
-            for renderer in self.renderers:
-                renderer.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
+        # Make the render timer but only activate if using auto update
+        self.render_timer = QTimer(parent=parent)
+        _auto_update = kwargs.pop("auto_update", None)
+        if _auto_update:
+            warnings.warn("`auto_update` is deprecated. Please specify a time with `update_rate`.")
+        if _auto_update is False:
+            update_rate = False
+        if float(update_rate) > 0.0: # Can be False as well
+            # Spawn a thread that updates the render window.
+            # Sometimes directly modifiying object data doesn't trigger
+            # Modified() and upstream objects won't be updated.  This
+            # ensures the render window stays updated without consuming too
+            # many resources.
+            twait = (update_rate**-1) * 1000.0
+            self.render_timer.timeout.connect(self.render)
+            self.render_timer.start(twait)
 
         if rcParams["depth_peeling"]["enabled"]:
             if self.enable_depth_peeling():
@@ -558,6 +570,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
     def close(self):
         """Quit application."""
+        self.render_timer.stop()
         BasePlotter.close(self)
         QVTKRenderWindowInteractorAdapter.close(self)
 
@@ -667,8 +680,6 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        self._spawn_background_rendering()
-
         self.window_size = window_size
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
@@ -692,22 +703,6 @@ class BackgroundPlotter(QtInteractor):
     def scale_axes_dialog(self, show=True):
         """Open scale axes dialog."""
         return ScaleAxesDialog(self.app_window, self, show=show)
-
-
-    def _spawn_background_rendering(self, rate=5.0):
-        """Spawn a thread that updates the render window.
-
-        Sometimes directly modifiying object data doesn't trigger
-        Modified() and upstream objects won't be updated.  This
-        ensures the render window stays updated without consuming too
-        many resources.
-
-        """
-        twait = (rate**-1) * 1000.0
-        self.render_timer = QTimer(parent=self.app_window)
-        self.render_timer.timeout.connect(self.render)
-        self.app_window.signal_close.connect(self.render_timer.stop)
-        self.render_timer.start(twait)
 
     def close(self):
         """Close the plotter.
