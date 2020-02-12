@@ -171,8 +171,8 @@ latest state of the `master` branch locally and:
 1. Run all tests as outlined in the [Testing Section](#testing) and ensure
 all are passing.
 
-2. Ensure all builds and tests on Travis and Azure are passing for the
-latest commits on the `master` branch
+2. Ensure all builds and tests on Azure are passing for the latest commits on
+the `master` branch
 
 3. Locally test and build the documentation with link checking to make sure
 no links are outdated. Be sure to run `make clean` to ensure no results are
