@@ -330,7 +330,7 @@ class QVTKRenderWindowInteractorAdapter(QObject):
         self.interactor = QVTKRenderWindowInteractor(parent=parent)
         self.interactor.dragEnterEvent = self.dragEnterEvent
         self.interactor.dropEvent = self.dropEvent
-        super(QVTKRenderWindowInteractorAdapter, self).__init__(**kwargs)
+        super(QVTKRenderWindowInteractorAdapter, self).__init__()
 
     def GetRenderWindow(self):
         """Get the render window."""
