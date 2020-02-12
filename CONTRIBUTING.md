@@ -152,7 +152,7 @@ python -m pytest -v --doctest-modules pyvista
 And finally, test the documentation examples:
 
 ```bash
-cd ./docs/
+cd docs
 make clean
 make doctest
 make html -b linkcheck
@@ -175,12 +175,11 @@ all are passing.
 latest commits on the `master` branch
 
 3. Locally test and build the documentation with link checking to make sure
-no links are outdated. Be sure to run `make clean` and `rm -r docs/examples` to
-ensure no results are cached.
+no links are outdated. Be sure to run `make clean` to ensure no results are
+cached.
     ```bash
     cd docs
-    rm -r examples # deletes the sphinx-gallery cache
-    make clean
+    make clean  # deletes the sphinx-gallery cache
     make doctest
     make html -b linkcheck
     ```
