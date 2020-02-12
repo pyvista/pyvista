@@ -618,6 +618,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if hasattr(self, 'ren_win') and not self._first_time:
             self.ren_win.Render()
+        # Not sure if this is ever needed but here as a reminder
+        # if hasattr(self, 'iren') and not self._first_time:
+        #     self.iren.Render()
+        return
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.

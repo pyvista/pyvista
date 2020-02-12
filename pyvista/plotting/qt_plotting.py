@@ -454,6 +454,9 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
 
+        self._first_time = False # Crucial!
+        self.view_isometric()
+
 
     @wraps(BasePlotter.render)
     def _render(self, *args, **kwargs):
@@ -704,7 +707,6 @@ class BackgroundPlotter(QtInteractor):
         self.render_timer.timeout.connect(self.render)
         self.app_window.signal_close.connect(self.render_timer.stop)
         self.render_timer.start(twait)
-        self._first_time = False
 
     def close(self):
         """Close the plotter.
