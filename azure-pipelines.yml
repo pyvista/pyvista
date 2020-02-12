@@ -176,6 +176,20 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: |
+      EXAMPLES_PATH=$(python3 -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+      echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
+      PYVISTA_VERSION=$(python3 -c "import pyvista; print(pyvista.__version__)")
+      echo "##vso[task.setvariable variable=EXAMPLES_PATH]$PYVISTA_VERSION"
+      displayName: 'Store location of pyvista downloads cache'
+
+  # reset cache at every version bump
+  - task: Cache@2
+    inputs:
+      key: 'PYVISTA_DOWNLOADS | $(PYVISTA_VERSION)'
+      path: $(EXAMPLES_PATH)
+    displayName: Build pyvista examples cache
+
+  - script: |
       make -C docs html
     displayName: 'Build documentation'
 
@@ -188,8 +202,9 @@ jobs:
     displayName: 'Update figures from doctest'
 
   - script: |
-      git config --global user.name "${GH_NAME}";
-      git config --global user.email "${GH_EMAIL}"
+      git config --global user.name ${GH_NAME}
+      git config --global user.email ${GH_EMAIL}
+      git config --list | grep user.
     displayName: 'Configure git'
 
   - script: |
@@ -199,31 +214,34 @@ jobs:
       find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
       cd ../../pyvista-examples/
       git init
+      # git config --global user.name ${GH_NAME}
+      # git config --global user.email ${GH_EMAIL}
       git add .
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
       REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-examples"
       git remote add origin ${REMOTE}
       git push -uf origin master
+      cd $BUILD_SOURCESDIRECTORY
     displayName: 'Upload binder examples'
     # condition: contains(variables['Build.SourceBranch'], 'refs/tags/')
 
-  # - script: |
-  #     cd ..
-  #     git clone --depth 1 https://$(GH_TOKEN)@github.com/pyvista/pyvista-doc.git -b tmp_branch
-  #     git gc --prune=now
-  #     git remote prune origin
-  #     cd pyansys
-  #     git config user.email $(gh_email)
-  #     git config user.name $(gh_user)
-  #     rm -rf *
-  #     cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
-  #     touch .nojekyll
-  #     git add .
-  #     git commit -am "Pipelines-Bot: Updated site via $(Build.SourceVersion)"
-  #     # cd $BUILD_SOURCESDIRECTORY
-  #     git push
-  #   displayName: Push to gh-pages
-  #   condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+  - script: |
+      git clone --depth 1 https://$(GH_TOKEN)@github.com/pyvista/pyvista-docs.git -b tmp_branch
+      git gc --prune=now
+      git remote prune origin
+      cd pyansys-docs
+      cp README.md ../
+      cp CNAME ../
+      rm -rf *
+      touch .nojekyll
+      cp ../README.md .
+      cp ../CNAME .
+      cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
+      git add .
+      git commit -am "Azure CI commit ref $(Build.SourceVersion)"
+      git push
+    displayName: Upload Documentation to pyvista-docs
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 
 # - job: GitHubRelease
