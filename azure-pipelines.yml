@@ -240,7 +240,7 @@ jobs:
       find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
       cd ../../pyvista-examples/
       git init
-      git checkout develop
+      git checkout -b develop
       git add .
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
       REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-examples"
