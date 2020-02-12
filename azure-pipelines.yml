@@ -12,9 +12,6 @@ jobs:
     inputs:
       versionSpec: '3.7'
   - script: |
-      pip install -e .
-    displayName: 'Install pyvista'
-  - script: |
       pip install codespell pydocstyle
       make doctest
     displayName: 'Run doctest'
