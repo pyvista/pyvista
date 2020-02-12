@@ -199,22 +199,22 @@ jobs:
   - script: |
       sudo apt-get install python3-tk
       pip install -r requirements_docs.txt
-      # which python
-      # python -c "import vtk; print(vtk.VTK_VERSION)"
-      # pip list
-      # python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install dependencies'
 
   - script: |
+      # download a single file so path exists
+      # python -c "from pyvista import examples; examples.download_bunny_coarse()"
       EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+      mkdir -p EXAMPLES_PATH
       echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
       PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
       echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+      echo $EXAMPLES_PATH
     displayName: 'Store location of pyvista downloads cache and version'
   
   - task: Cache@2
     inputs:
-      key: 'PYVISTA_DOWNLOADS | "$(PYVISTA_VERSION)"'
+      key: 'PYVISTA_EXAMPLES | "$(PYVISTA_VERSION)"'
       path: $(EXAMPLES_PATH)
     displayName: Build pyvista examples cache
 
@@ -230,6 +230,7 @@ jobs:
       make -C docs html
     displayName: 'Update figures from doctest'
 
+  # Push example notebooks to pyvista-examples
   - script: |
       pip install cookiecutter
       cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
@@ -238,8 +239,6 @@ jobs:
       find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
       cd ../../pyvista-examples/
       git init
-      # git config --global user.name ${GH_NAME}
-      # git config --global user.email ${GH_EMAIL}
       git add .
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
       REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-examples"
@@ -247,7 +246,7 @@ jobs:
       git push -uf origin master
       cd $BUILD_SOURCESDIRECTORY
     displayName: 'Upload binder examples'
-    # condition: contains(variables['Build.SourceBranch'], 'refs/tags/')
+    condition: contains(variables['Build.SourceBranch'], 'refs/tags/')
     env:
       GH_TOKEN: $(gh.token)
 
@@ -255,7 +254,7 @@ jobs:
       git clone --depth 1 https://$(GH_TOKEN)@github.com/pyvista/pyvista-docs.git -b tmp_branch
       git gc --prune=now
       git remote prune origin
-      cd pyansys-docs
+      cd pyvista-docs
       cp README.md ../
       cp CNAME ../
       rm -rf *
@@ -269,6 +268,9 @@ jobs:
     displayName: Upload Documentation to pyvista-docs
     # condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
 
+  - script: |
+      ls $(EXAMPLES_PATH)
+    displayName: 'DEBUG: List downloads dir'
 
 # - job: GitHubRelease
 #   pool:
