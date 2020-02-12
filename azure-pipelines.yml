@@ -45,18 +45,18 @@ jobs:
       versionSpec: '$(python.version)'
     displayName: 'Use Python $(python.version)'
 
-  - script: |
-      PIP_CACHE=$(python3 -c "from pip._internal.utils.appdirs import user_cache_dir; print(user_cache_dir('pip'))")
-      echo "##vso[task.setvariable variable=PIP_CACHE]$PIP_CACHE"
-      PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
-      echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
-    displayName: 'Store location of pip downloads cache and version'
+  # - script: |
+  #     PIP_CACHE=$(python3 -c "from pip._internal.utils.appdirs import user_cache_dir; print(user_cache_dir('pip'))")
+  #     echo "##vso[task.setvariable variable=PIP_CACHE]$PIP_CACHE"
+  #     PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+  #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+  #   displayName: 'Store location of pip downloads cache and version'
 
-  - task: Cache@2
-    inputs:
-      key: 'PIP_CACHE | "$(Agent.OS)" | "$(python.version)" | "$(PYVISTA_VERSION)"'
-      path: $(PIP_CACHE)
-    displayName: Build pip cache
+  # - task: Cache@2
+  #   inputs:
+  #     key: 'PIP_CACHE | "$(Agent.OS)" | "$(python.version)" | "$(PYVISTA_VERSION)"'
+  #     path: $(PIP_CACHE)
+  #   displayName: Build pip cache
 
   - script: |
       pip install -e .
@@ -76,18 +76,18 @@ jobs:
       pip list
     displayName: 'Install dependencies'
 
-  - script: |
-      EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
-      echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
-      PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
-      echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
-    displayName: 'Store location of pyvista downloads cache and version'
+  # - script: |
+  #     EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+  #     echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
+  #     PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+  #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+  #   displayName: Store location of pyvista downloads cache and version
   
-  - task: Cache@2
-    inputs:
-      key: 'PYVISTA_DOWNLOADS | "$(PYVISTA_VERSION)"'
-      path: $(EXAMPLES_PATH)
-    displayName: Build pyvista examples cache
+  # - task: Cache@2
+  #   inputs:
+  #     key: 'PYVISTA_DOWNLOADS | "$(PYVISTA_VERSION)"'
+  #     path: $(EXAMPLES_PATH)
+  #   displayName: Build pyvista examples cache
 
   - script: |
       pip install pytest-azurepipelines
@@ -180,6 +180,15 @@ jobs:
     displayName: 'Use Python 3.7'
 
   - script: |
+      git config --global user.name ${GH_NAME}
+      git config --global user.email ${GH_EMAIL}
+      git config --list | grep user.
+    displayName: 'Configure git'
+    env:
+      GH_NAME: $(gh.name)
+      GH_EMAIL: $(gh.email)
+
+  - script: |
       pip install -e .
     displayName: Install pyvista
 
@@ -221,15 +230,6 @@ jobs:
   - script: |
       make -C docs html
     displayName: 'Update figures from doctest'
-
-  - script: |
-      git config --global user.name ${GH_NAME}
-      git config --global user.email ${GH_EMAIL}
-      git config --list | grep user.
-    displayName: 'Configure git'
-    env:
-      GH_NAME: $(gh.name)
-      GH_EMAIL: $(gh.email)
 
   - script: |
       pip install cookiecutter
