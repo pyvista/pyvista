@@ -4,6 +4,7 @@ import collections
 import ctypes
 import logging
 import warnings
+from threading import Thread
 
 import numpy as np
 import scooby
@@ -609,3 +610,12 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     renderer.SetOcclusionRatio(occlusion_ratio)
     renderWindow.Render()
     return renderer.GetLastRenderingUsedDepthPeeling() == 1
+
+
+def threaded(fn):
+    """Decorator to call a function using a thread."""
+    def wrapper(*args, **kwargs):
+        thread = Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper

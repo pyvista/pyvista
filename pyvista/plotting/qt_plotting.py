@@ -1,14 +1,17 @@
 """Qt interactive plotter."""
-import warnings
 import logging
 import os
 import time
+import warnings
+from functools import wraps
 
 import numpy as np
-import scooby
 import vtk
 
 import pyvista
+from pyvista.utilities import threaded
+import scooby
+
 from .plotting import BasePlotter
 from .theme import rcParams
 
@@ -388,6 +391,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         If True, enable polygon smothing
 
     """
+    render_signal = pyqtSignal() # This is necessary
 
     def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
@@ -416,6 +420,8 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
+
+        self.render_signal.connect(self._render)
 
         self.background_color = rcParams['background']
         if self.title:
@@ -447,6 +453,17 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+
+
+    @wraps(BasePlotter.render)
+    def _render(self, *args, **kwargs):
+        """Wrap ``BasePlotter.render``."""
+        return BasePlotter.render(self, *args, **kwargs)
+
+    @threaded
+    def render(self):
+        """Override the ``render`` method to handle threading issues."""
+        return self.render_signal.emit()
 
     def dragEnterEvent(self, event):
         """Event is called when something is dropped onto the vtk window.
