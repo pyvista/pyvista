@@ -97,11 +97,11 @@ def test_surface_indices():
     assert np.allclose(surf_ind, beam.surface_indices())
 
 
-def test_extract_edges():
-    edges = beam.extract_edges(90)
+def test_extract_feature_edges():
+    edges = beam.extract_feature_edges(90)
     assert edges.n_points
 
-    edges = beam.extract_edges(180)
+    edges = beam.extract_feature_edges(180)
     assert not edges.n_points
 
 

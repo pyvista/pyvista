@@ -230,7 +230,7 @@ def test_extract_geometry():
 
 def test_wireframe():
     for i, dataset in enumerate(DATASETS):
-        wire = dataset.wireframe()
+        wire = dataset.extract_all_edges()
         assert wire is not None
         assert isinstance(wire, pyvista.PolyData)
 
@@ -238,7 +238,7 @@ def test_wireframe():
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
 def test_wireframe_composite():
     # Now test composite data structures
-    output = COMPOSITE.wireframe()
+    output = COMPOSITE.extract_all_edges()
     assert output.n_blocks == COMPOSITE.n_blocks
 
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',

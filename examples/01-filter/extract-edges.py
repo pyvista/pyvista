@@ -25,7 +25,7 @@ from pyvista import examples
 mesh = examples.download_nefertiti()
 
 # Extract the edges above a 12 degree feature angle
-edges = mesh.extract_edges(12)
+edges = mesh.extract_feature_edges(12)
 
 # Render the edge lines ontop of the original mesh
 p = pv.Plotter()
@@ -41,7 +41,7 @@ p.show()
 
 mesh = examples.download_cow()
 
-edges = mesh.extract_edges(20)
+edges = mesh.extract_feature_edges(20)
 
 p = pv.Plotter()
 p.add_mesh(mesh, color=True)
@@ -52,7 +52,7 @@ p.show()
 
 ###############################################################################
 # We can leverage the :any:`pyvista.PolyData.n_open_edges` property and
-# :func:`pyvista.PolyDataFilters.extract_edges` filter to count and extract the
+# :func:`pyvista.PolyDataFilters.extract_feature_edges` filter to count and extract the
 # open edges on a :class:`pyvista.PolyData` mesh.
 
 # Download a sample surface mesh with visible open edges
@@ -65,8 +65,8 @@ mesh.n_open_edges
 
 ###############################################################################
 # And we can extract those edges with the ``boundary_edges`` option of
-# :func:`pyvista.PolyDataFilters.extract_edges`:
-edges = mesh.extract_edges(boundary_edges=True,
+# :func:`pyvista.PolyDataFilters.extract_feature_edges`:
+edges = mesh.extract_feature_edges(boundary_edges=True,
                            feature_edges=False,
                            manifold_edges=False)
 
