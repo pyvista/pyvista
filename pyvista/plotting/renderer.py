@@ -1245,6 +1245,8 @@ class Renderer(vtkRenderer):
 
     def close(self):
         """Close out widgets and sensitive elements."""
+        self.RemoveAllObservers()
+        self.camera.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
             self.hide_axes() # Necessary to avoid segfault
             del self.axes_widget
