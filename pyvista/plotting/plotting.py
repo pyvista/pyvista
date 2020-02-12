@@ -1604,6 +1604,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
+        self.renderer.Modified()
+
         return actor
 
 
@@ -2014,6 +2016,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if stitle is not None and show_scalar_bar:
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
+        self.renderer.Modified()
 
         return actor
 
