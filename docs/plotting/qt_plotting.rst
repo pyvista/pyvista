@@ -32,18 +32,18 @@ sphere to an empty plotting window.
         def __init__(self, parent=None, show=True):
             Qt.QMainWindow.__init__(self, parent)
 
-	    # create the frame
+            # create the frame
             self.frame = Qt.QFrame()
             vlayout = Qt.QVBoxLayout()
 
-	    # add the pyvista interactor object
-            self.vtk_widget = pv.QtInteractor(self.frame)
-            vlayout.addWidget(self.vtk_widget)
+            # add the pyvista interactor object
+            self.plotter = pv.QtInteractor(self.frame)
+            vlayout.addWidget(self.plotter.interactor)
 
             self.frame.setLayout(vlayout)
             self.setCentralWidget(self.frame)
 
-	    # simple menu to demo functions
+            # simple menu to demo functions
             mainMenu = self.menuBar()
             fileMenu = mainMenu.addMenu('File')
             exitButton = Qt.QAction('Exit', self)
@@ -51,7 +51,7 @@ sphere to an empty plotting window.
             exitButton.triggered.connect(self.close)
             fileMenu.addAction(exitButton)
 
-	    # allow adding a sphere
+            # allow adding a sphere
             meshMenu = mainMenu.addMenu('Mesh')
             self.add_sphere_action = Qt.QAction('Add Sphere', self)
             self.add_sphere_action.triggered.connect(self.add_sphere)
@@ -61,10 +61,10 @@ sphere to an empty plotting window.
                 self.show()
 
         def add_sphere(self):
-	    """ add a sphere to the pyqt frame """
+            """ add a sphere to the pyqt frame """
             sphere = pv.Sphere()
-            self.vtk_widget.add_mesh(sphere)
-            self.vtk_widget.reset_camera()
+            self.plotter.add_mesh(sphere)
+            self.plotter.reset_camera()
 
 
     if __name__ == '__main__':
