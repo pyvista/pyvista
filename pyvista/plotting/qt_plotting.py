@@ -448,7 +448,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         # Make the render timer but only activate if using auto update
         self.render_timer = QTimer(parent=parent)
         _auto_update = kwargs.pop("auto_update", None)
-        if _auto_update:
+        if _auto_update is not None:
             warnings.warn("`auto_update` is deprecated. Please specify a time with `update_rate`.")
         if _auto_update is False:
             update_rate = False
