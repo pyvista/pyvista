@@ -252,21 +252,21 @@ jobs:
 
   - script: |
       git clone --depth 1 https://$(GH_TOKEN)@github.com/pyvista/pyvista-docs.git -b tmp_branch
+      cd pyvista-docs
       git gc --prune=now
       git remote prune origin
-      cd pyvista-docs
-      cp README.md ../
-      cp CNAME ../
       rm -rf *
-      touch .nojekyll
-      cp ../README.md .
-      cp ../CNAME .
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
+      cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      touch .nojekyll
+      echo "docs.pyvista.org" >> CNAME
       git add .
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
-      git push
+      git push 
     displayName: Upload Documentation to pyvista-docs
     # condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+    env:
+      GH_TOKEN: $(gh.token)
 
   - script: |
       ls $(EXAMPLES_PATH)
