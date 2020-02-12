@@ -230,7 +230,7 @@ jobs:
       git push -uf origin master
       cd $BUILD_SOURCESDIRECTORY
     displayName: 'Upload binder examples'
-    condition: contains(variables['Build.SourceBranch'], 'refs/tags/')
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
       GH_TOKEN: $(gh.token)
 
@@ -251,7 +251,7 @@ jobs:
     displayName: Upload Documentation to pyvista-docs
     env:
       GH_TOKEN: $(gh.token)
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
 
   # - script: |
   #     ls $(EXAMPLES_PATH)
