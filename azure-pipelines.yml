@@ -170,9 +170,6 @@ jobs:
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
-    GH_NAME: $(gh.name)
-    GH_EMAIL: $(gh.email)
-    GH_TOKEN: $(gh.token)
 
   steps:
   - task: UsePythonVersion@0
@@ -229,6 +226,10 @@ jobs:
       git config --global user.email ${GH_EMAIL}
       git config --list | grep user.
     displayName: 'Configure git'
+    env:
+      GH_NAME: $(gh.name)
+      GH_EMAIL: $(gh.email)
+      GH_TOKEN: $(gh.token)   
 
   - script: |
       pip install cookiecutter
