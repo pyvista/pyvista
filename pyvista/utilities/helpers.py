@@ -619,3 +619,19 @@ def threaded(fn):
         thread.start()
         return thread
     return wrapper
+
+
+class conditional_decorator(object):
+    """Conditiona decorator for methods."""
+
+    def __init__(self, dec, condition):
+        """Initialize."""
+        self.decorator = dec
+        self.condition = condition
+
+    def __call__(self, func):
+        """Call the decorated function if condition is matched."""
+        if not self.condition:
+            # Return the function unchanged, not decorated.
+            return func
+        return self.decorator(func)

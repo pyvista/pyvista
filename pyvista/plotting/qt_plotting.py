@@ -1,6 +1,7 @@
 """Qt interactive plotter."""
 import logging
 import os
+import platform
 import time
 import warnings
 from functools import wraps
@@ -9,7 +10,7 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import threaded
+from pyvista.utilities import conditional_decorator, threaded
 import scooby
 
 from .plotting import BasePlotter
@@ -463,7 +464,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         """Wrap ``BasePlotter.render``."""
         return BasePlotter.render(self, *args, **kwargs)
 
-    @threaded
+    @conditional_decorator(threaded, platform.system() == 'Darwin')
     def render(self):
         """Override the ``render`` method to handle threading issues."""
         return self.render_signal.emit()
