@@ -76,16 +76,16 @@ jobs:
       pip list
     displayName: 'Install dependencies'
 
-  - script: |
-      EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
-      echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
-    displayName: 'Store location of pyvista downloads
+  # - script: |
+  #     EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+  #     echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
+  #   displayName: 'Store location of pyvista downloads
 
-  - task: Cache@2
-    inputs:
-      key: 'PYVISTA_DOWNLOADS | "$(PYVISTA_VERSION)"'
-      path: $(EXAMPLES_PATH)
-    displayName: Build pyvista examples cache
+  # - task: Cache@2
+  #   inputs:
+  #     key: 'PYVISTA_DOWNLOADS | "$(PYVISTA_VERSION)"'
+  #     path: $(EXAMPLES_PATH)
+  #   displayName: Build pyvista examples cache
 
   - script: |
       pip install pytest-azurepipelines
