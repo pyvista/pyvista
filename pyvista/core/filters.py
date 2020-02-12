@@ -1960,7 +1960,7 @@ class DataSetFilters(object):
 
         Grid is updated in-place by default.
 
-        Can be used to merge points of adjcent cells when no grids
+        Can be used to merge points of adjacent cells when no grids
         are input.
 
         Parameters
