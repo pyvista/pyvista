@@ -2,8 +2,7 @@ variables:
   ALLOW_PLOTTING: true
   
 
-# DESCRIPTION:
-# Quickly check the spelling and documentation style
+# DESCRIPTION: Quickly check the spelling and documentation style
 jobs:
 - job: CodeSpellStyle
   pool:
@@ -21,8 +20,7 @@ jobs:
     displayName: 'Run doctest'
 
 
-# DESCRIPTION:
-# Core API and doc string testing for Linux
+# DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
     vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
@@ -65,14 +63,16 @@ jobs:
 
   # - script: |
   #     EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+  #     mkdir -p EXAMPLES_PATH
   #     echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
   #     PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
   #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
-  #   displayName: Store location of pyvista downloads cache and version
+  #     echo $EXAMPLES_PATH
+  #   displayName: 'Store location of pyvista downloads cache and version'
   
   # - task: Cache@2
   #   inputs:
-  #     key: 'PYVISTA_DOWNLOADS | "$(PYVISTA_VERSION)"'
+  #     key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
   #     path: $(EXAMPLES_PATH)
   #   displayName: Build pyvista examples cache
 
@@ -102,52 +102,51 @@ jobs:
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
-# DESCRIPTION:
-# Core API testing for Windows
-# - job: Windows
-#   pool:
-#     vmIMage: 'VS2017-Win2016'
-#   variables:
-#     AZURE_CI_WINDOWS: 'true'
-#   strategy:
-#     maxParallel: 4
-#     matrix:
-#       Python35-64bit:
-#         PYTHON_VERSION: '3.5'
-#         PYTHON_ARCH: 'x64'
-#       Python36-64bit:
-#         PYTHON_VERSION: '3.6'
-#         PYTHON_ARCH: 'x64'
-#       Python37-64bit:
-#         PYTHON_VERSION: '3.7'
-#         PYTHON_ARCH: 'x64'
-#   steps:
-#   - task: UsePythonVersion@0
-#     inputs:
-#       versionSpec: $(PYTHON_VERSION)
-#       architecture: $(PYTHON_ARCH)
-#       addToPath: true
-#   - powershell: |
-#       Set-StrictMode -Version Latest
-#       $ErrorActionPreference = "Stop"
-#       $PSDefaultParameterValues['*:ErrorAction']='Stop'
-#       git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
-#       powershell gl-ci-helpers/appveyor/install_opengl.ps1
-#     displayName: 'Install OpenGL'
-#   - powershell: |
-#       Set-StrictMode -Version Latest
-#       $ErrorActionPreference = "Stop"
-#       $PSDefaultParameterValues['*:ErrorAction']='Stop'
-#       pip install -r requirements_test.txt
-#     displayName: 'Install dependencies with pip'
-#   - script: |
-#       python setup.py sdist
-#       python setup.py install
-#       python -c "import pyvista; print(pyvista.Report())"
-#     displayName: 'Install PyVista'
-#   - script: |
-#       python -m pytest --cov -v .
-#     displayName: 'Run Tests'
+# DESCRIPTION: Core API testing for Windows
+- job: Windows
+  pool:
+    vmIMage: 'VS2017-Win2016'
+  variables:
+    AZURE_CI_WINDOWS: 'true'
+  strategy:
+    maxParallel: 4
+    matrix:
+      Python35-64bit:
+        PYTHON_VERSION: '3.5'
+        PYTHON_ARCH: 'x64'
+      Python36-64bit:
+        PYTHON_VERSION: '3.6'
+        PYTHON_ARCH: 'x64'
+      Python37-64bit:
+        PYTHON_VERSION: '3.7'
+        PYTHON_ARCH: 'x64'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: $(PYTHON_VERSION)
+      architecture: $(PYTHON_ARCH)
+      addToPath: true
+  - powershell: |
+      Set-StrictMode -Version Latest
+      $ErrorActionPreference = "Stop"
+      $PSDefaultParameterValues['*:ErrorAction']='Stop'
+      git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
+      powershell gl-ci-helpers/appveyor/install_opengl.ps1
+    displayName: 'Install OpenGL'
+  - powershell: |
+      Set-StrictMode -Version Latest
+      $ErrorActionPreference = "Stop"
+      $PSDefaultParameterValues['*:ErrorAction']='Stop'
+      pip install -r requirements_test.txt
+    displayName: 'Install dependencies with pip'
+  - script: |
+      python setup.py sdist
+      python setup.py install
+      python -c "import pyvista; print(pyvista.Report())"
+    displayName: 'Install PyVista'
+  - script: |
+      python -m pytest --cov -v .
+    displayName: 'Run Tests'
 
 
 # Builds the documentation
@@ -235,8 +234,9 @@ jobs:
     env:
       GH_TOKEN: $(gh.token)
 
+  # upload documentation to pyvista-docs only on master
   - script: |
-      git clone --depth 1 https://${GH_TOKEN}@github.com/pyvista/pyvista-docs.git -b tmp_branch
+      git clone --depth 1 https://${GH_TOKEN}@github.com/pyvista/pyvista-docs.git
       cd pyvista-docs
       git gc --prune=now
       git remote prune origin
@@ -251,12 +251,11 @@ jobs:
     displayName: Upload Documentation to pyvista-docs
     env:
       GH_TOKEN: $(gh.token)
-    # condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
 
-
-  - script: |
-      ls $(EXAMPLES_PATH)
-    displayName: 'DEBUG: List downloads dir'
+  # - script: |
+  #     ls $(EXAMPLES_PATH)
+  #   displayName: 'DEBUG: List downloads dir'
 
 # - job: GitHubRelease
 #   pool:
