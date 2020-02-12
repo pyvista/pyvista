@@ -928,7 +928,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             milliseconds.
 
         force_redraw : bool, optional
-            Call vtkRenderWindowInteractor.Render() immediately.
+            Call ``render`` immediately.
 
         """
         if stime <= 0:
@@ -950,9 +950,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             self.render()
             Plotter.last_update_time = curr_time
-        else:
-            if force_redraw:
-                self.iren.Render()
+        elif force_redraw:
+            self.render()
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
                  clim=None, show_edges=None, edge_color=None,
@@ -2455,7 +2454,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
             if render:
-                self.ren_win.Render()
+                self.render()
             return
 
         if isinstance(scalars, str):
@@ -2464,7 +2463,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             if render:
-                self.ren_win.Render()
+                self.render()
             return
 
         if scalars.shape[0] == mesh.GetNumberOfPoints():
@@ -2488,7 +2487,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             pass
 
         if render:
-            self.ren_win.Render()
+            self.render()
 
     def update_coordinates(self, points, mesh=None, render=True):
         """Update the points of an object in the plotter.
@@ -3728,7 +3727,7 @@ class Plotter(BasePlotter):
 
         # Render
         log.debug('Rendering')
-        self.ren_win.Render()
+        self.render()
 
         # This has to be after the first render for some reason
         if title is None:
