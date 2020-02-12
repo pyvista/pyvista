@@ -115,7 +115,6 @@ jobs:
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
-
 # DESCRIPTION:
 # Core API testing for Windows
 # - job: Windows
@@ -252,7 +251,6 @@ jobs:
     env:
       GH_TOKEN: $(gh.token)
 
-
   - script: |
       git clone --depth 1 https://$(GH_TOKEN)@github.com/pyvista/pyvista-docs.git -b tmp_branch
       git gc --prune=now
@@ -269,7 +267,7 @@ jobs:
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
       git push
     displayName: Upload Documentation to pyvista-docs
-    condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
+    # condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/master'))
 
 
 # - job: GitHubRelease
