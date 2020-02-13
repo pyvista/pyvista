@@ -79,6 +79,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
     border_width : float, optional
         Width of the border in pixels when enabled.
 
+    title : str, optional
+        Window title of the scalar bar
+
     """
 
     mouse_position = None
@@ -776,7 +779,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 
-
     def key_press_event(self, obj, event):
         """Listen for key press event."""
         try:
@@ -787,7 +789,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Note that defaultdict's will never throw a key error
                 callbacks = self._key_press_event_callbacks[key]
                 for func in callbacks:
-                    print(func)
                     func()
         except Exception as e:
             log.error('Exception encountered for keypress "%s" % %s' (key, str(e)))
@@ -3528,7 +3529,7 @@ class Plotter(BasePlotter):
     Parameters
     ----------
     off_screen : bool, optional
-        Renders off screen when False.  Useful for automated screenshots.
+        Renders off screen when True.  Useful for automated screenshots.
 
     notebook : bool, optional
         When True, the resulting plot is placed inline a jupyter notebook.

@@ -10,7 +10,7 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import conditional_decorator, threaded
+from pyvista.utilities import (conditional_decorator, threaded, assert_empty_kwargs)
 import scooby
 
 from .plotting import BasePlotter
@@ -327,6 +327,11 @@ class QVTKRenderWindowInteractorAdapter(QObject):
 
     def __init__(self, parent, **kwargs):
         """Initialize the internal interactor."""
+        try:
+            assert_empty_kwargs(**kwargs)
+        except TypeError as e:
+            # user doesn't want to know about __init__
+            raise TypeError(str(e).split('for `')[0]) from None
         self.interactor = QVTKRenderWindowInteractor(parent=parent)
         self.interactor.dragEnterEvent = self.dragEnterEvent
         self.interactor.dropEvent = self.dropEvent
@@ -375,22 +380,28 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     parent :
         Qt parent.
 
-    title : string, optional
+    title : str, optional
         Title of plotting window.
 
-    multi_samples : int
+    multi_samples : int, optional
         The number of multi-samples used to mitigate aliasing. 4 is a
         good default but 8 will have better results with a potential
         impact on performance.
 
-    line_smoothing : bool
+    line_smoothing : bool, optional
         If True, enable line smothing
 
-    point_smoothing : bool
+    point_smoothing : bool, optional
         If True, enable point smothing
 
-    polygon_smoothing : bool
+    polygon_smoothing : bool, optional
         If True, enable polygon smothing
+
+    update_rate : float, optional
+        Automatic update rate in seconds.  Useful for automatically
+        updating the render window when actors are change without
+        being automatically ``Modified``.
+
     """
     # Signals must be class attributes
     render_signal = pyqtSignal()
@@ -579,14 +590,66 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         QVTKRenderWindowInteractorAdapter.close(self)
 
 
-
 class BackgroundPlotter(QtInteractor):
-    """Qt interactive plotter."""
+    """Qt interactive plotter.
+
+    Background plotter for pyvista that allows you to maintain an
+    interactive plotting window without blocking the main python
+    thread.
+
+    Parameters
+    ----------
+    show : bool, optional
+        Show the plotting window.  If ``False``, show this window by
+        running ``show()``
+
+    app : PyQt5.QtWidgets.QApplication, optional
+        Creates a `QApplication` if left as `None`.
+
+    window_size : list, optional
+        Window size in pixels.  Defaults to ``[1024, 768]``
+
+    off_screen : bool, optional
+        Renders off screen when True.  Useful for automated
+        screenshots or debug testing.
+
+    allow_quit_keypress : bool, optional
+        Allow user to exit by pressing ``"q"``.  Enabling this may
+        cause problems on Linux.
+
+    title : str, optional
+        Title of plotting window.
+
+    multi_samples : int, optional
+        The number of multi-samples used to mitigate aliasing. 4 is a
+        good default but 8 will have better results with a potential
+        impact on performance.
+
+    line_smoothing : bool, optional
+        If True, enable line smothing
+
+    point_smoothing : bool, optional
+        If True, enable point smothing
+
+    polygon_smoothing : bool, optional
+        If True, enable polygon smothing
+
+    update_rate : float, optional
+        Automatic update rate in seconds.  Useful for automatically
+        updating the render window when actors are change without
+        being automatically ``Modified``.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> plotter = pv.BackgroundPlotter()
+    >>> plotter.add_mesh(pv.Sphere())
+    """
 
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, window_size=None,
-                 off_screen=None, allow_quit_keypress=True, **kwargs):
+                 off_screen=None, allow_quit_keypress=False, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -625,8 +688,8 @@ class BackgroundPlotter(QtInteractor):
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
 
-
-        super(BackgroundPlotter, self).__init__(parent=self.frame, off_screen=off_screen,
+        super(BackgroundPlotter, self).__init__(parent=self.frame,
+                                                off_screen=off_screen,
                                                 **kwargs)
         self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
@@ -692,8 +755,7 @@ class BackgroundPlotter(QtInteractor):
         self.add_callback(self.update_app_icon)
 
         # Keypress events
-        self.add_key_event("S", self._qt_screenshot) # shift + s
-
+        self.add_key_event("S", self._qt_screenshot)  # shift + s
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults.
