@@ -779,15 +779,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def key_press_event(self, obj, event):
         """Listen for key press event."""
-        key = self.iren.GetKeySym()
-        log.debug('Key %s pressed' % key)
-        self._last_key = key
-        if key in self._key_press_event_callbacks.keys():
-            # Note that defaultdict's will never throw a key error
-            callbacks = self._key_press_event_callbacks[key]
-            for func in callbacks:
-                func()
-
+        try:
+            key = self.iren.GetKeySym()
+            log.debug('Key %s pressed' % key)
+            self._last_key = key
+            if key in self._key_press_event_callbacks.keys():
+                # Note that defaultdict's will never throw a key error
+                callbacks = self._key_press_event_callbacks[key]
+                for func in callbacks:
+                    print(func)
+                    func()
+        except Exception as e:
+            log.error('Exception encountered for keypress "%s" % %s' (key, str(e)))
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""

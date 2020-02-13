@@ -269,7 +269,7 @@ class ScaleAxesDialog(QDialog):
         super(ScaleAxesDialog, self).__init__(parent)
         self.setGeometry(300, 300, 50, 50)
         self.setMinimumWidth(500)
-        self.signal_close.connect(self.close)
+        self.signal_close.connect(self._close)
         self.plotter = plotter
 
         self.x_slider_group = RangeGroup(parent, self.update_scale,
@@ -373,14 +373,15 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     Parameters
     ----------
     parent :
+        Qt parent.
 
     title : string, optional
         Title of plotting window.
 
     multi_samples : int
-        The number of multi-samples used to mitigate aliasing. 4 is a good
-        default but 8 will have better results with a potential impact on
-        performance.
+        The number of multi-samples used to mitigate aliasing. 4 is a
+        good default but 8 will have better results with a potential
+        impact on performance.
 
     line_smoothing : bool
         If True, enable line smothing
@@ -390,9 +391,10 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
     polygon_smoothing : bool
         If True, enable polygon smothing
-
     """
-    render_signal = pyqtSignal() # This is necessary
+    # Signals must be class attributes
+    render_signal = pyqtSignal()
+    key_press_event_signal = pyqtSignal(vtk.vtkGenericRenderWindowInteractor, str)
 
     def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
@@ -423,6 +425,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
             self.ren_win.AddRenderer(renderer)
 
         self.render_signal.connect(self._render)
+        self.key_press_event_signal.connect(super(QtInteractor, self).key_press_event)
 
         self.background_color = rcParams['background']
         if self.title:
@@ -452,7 +455,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
             warnings.warn("`auto_update` is deprecated. Please specify a time with `update_rate`.")
         if _auto_update is False:
             update_rate = False
-        if float(update_rate) > 0.0: # Can be False as well
+        if float(update_rate) > 0.0:  # Can be False as well
             # Spawn a thread that updates the render window.
             # Sometimes directly modifiying object data doesn't trigger
             # Modified() and upstream objects won't be updated.  This
@@ -470,6 +473,8 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         self._first_time = False # Crucial!
         self.view_isometric()
 
+    def key_press_event(self, obj, event):
+        self.key_press_event_signal.emit(obj, event)
 
     @wraps(BasePlotter.render)
     def _render(self, *args, **kwargs):
@@ -566,7 +571,6 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
                     self.saved_cameras_tool_bar.removeAction(action)
         self.saved_camera_positions = []
         return
-
 
     def close(self):
         """Quit application."""
