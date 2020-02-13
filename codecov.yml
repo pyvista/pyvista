@@ -1,6 +1,7 @@
-comment:
-  layout: "diff"
-  behavior: default
-status:
-  project: off
-  patch: off
+coverage:
+  comment:
+    layout: "diff"
+    behavior: default
+  status:
+    project: off
+    patch: off
