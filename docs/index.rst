@@ -14,9 +14,6 @@
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-.. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/pyvista/pyvista
-
 .. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
    :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
 
@@ -46,7 +43,7 @@
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
 +----------------------+------------------------+
-| Build Status         | |travis| |azure|       |
+| Build Status         | |azure|                |
 +----------------------+------------------------+
 | Metrics              | |codacy| |codecov|     |
 +----------------------+------------------------+

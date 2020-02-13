@@ -20,7 +20,7 @@ except:
         pass
 
 
-class TestWindow(MainWindow):
+class TstWindow(MainWindow):
     def __init__(self, parent=None, show=True):
         MainWindow.__init__(self, parent)
 
@@ -60,7 +60,7 @@ class TestWindow(MainWindow):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
-    window = TestWindow(show=False)
+    window = TstWindow(show=False)
     qtbot.addWidget(window)
     window.add_sphere()
     assert np.any(window.vtk_widget.mesh.points)
