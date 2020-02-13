@@ -736,7 +736,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 
     def _prep_for_close(self):
-        """Make sure a screenhsot is acquired before closing.
+        """Make sure a screenshot is acquired before closing.
 
         This doesn't actually close anything! It just preps the plotter for
         closing.
