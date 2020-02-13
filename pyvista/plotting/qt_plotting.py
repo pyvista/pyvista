@@ -10,7 +10,7 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (conditional_decorator, threaded, assert_empty_kwargs)
+from pyvista.utilities import conditional_decorator, threaded
 import scooby
 
 from .plotting import BasePlotter
@@ -381,11 +381,10 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     polygon_smoothing : bool, optional
         If True, enable polygon smothing
 
-    update_rate : float, optional
+    auto_update : float, bool, optional
         Automatic update rate in seconds.  Useful for automatically
         updating the render window when actors are change without
         being automatically ``Modified``.
-
     """
 
     # Signals must be class attributes
@@ -395,7 +394,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, update_rate=5.0, **kwargs):
+                 splitting_position=None, auto_update=5.0, **kwargs):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -446,18 +445,13 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         # Make the render timer but only activate if using auto update
         self.render_timer = QTimer(parent=parent)
-        _auto_update = kwargs.pop("auto_update", None)
-        if _auto_update is not None:
-            warnings.warn("`auto_update` is deprecated. Please specify a time with `update_rate`.")
-        if _auto_update is False:
-            update_rate = False
-        if float(update_rate) > 0.0:  # Can be False as well
+        if float(auto_update) > 0.0:  # Can be False as well
             # Spawn a thread that updates the render window.
             # Sometimes directly modifiying object data doesn't trigger
             # Modified() and upstream objects won't be updated.  This
             # ensures the render window stays updated without consuming too
             # many resources.
-            twait = (update_rate**-1) * 1000.0
+            twait = (auto_update**-1) * 1000.0
             self.render_timer.timeout.connect(self.render)
             self.render_timer.start(twait)
 
@@ -620,10 +614,11 @@ class BackgroundPlotter(QtInteractor):
     polygon_smoothing : bool, optional
         If True, enable polygon smothing
 
-    update_rate : float, optional
+    auto_update : float, bool, optional
         Automatic update rate in seconds.  Useful for automatically
         updating the render window when actors are change without
-        being automatically ``Modified``.
+        being automatically ``Modified``.  If set to ``True``, update
+        rate will be 1 second.
 
     Examples
     --------
