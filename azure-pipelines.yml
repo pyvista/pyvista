@@ -20,7 +20,7 @@ jobs:
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
+    vmImage: 'ubuntu-18.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
@@ -149,7 +149,7 @@ jobs:
 # Builds the documentation
 - job: BuildDocumentation
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-18.04'
 
   variables:
     DISPLAY: ':99.0'
