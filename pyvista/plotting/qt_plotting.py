@@ -269,7 +269,7 @@ class ScaleAxesDialog(QDialog):
         super(ScaleAxesDialog, self).__init__(parent)
         self.setGeometry(300, 300, 50, 50)
         self.setMinimumWidth(500)
-        self.signal_close.connect(self._close)
+        self.signal_close.connect(self.close)
         self.plotter = plotter
 
         self.x_slider_group = RangeGroup(parent, self.update_scale,
