@@ -39,6 +39,12 @@
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
 
+.. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
+   :target: http://slack.pyvista.org
+
+.. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
+   :target: https://gitter.im/pyvista/community
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
@@ -52,6 +58,8 @@
 | Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
 | License              | |MIT|                  |
++----------------------+------------------------+
+| Community            | |slack| |gitter|       |
 +----------------------+------------------------+
 
 
