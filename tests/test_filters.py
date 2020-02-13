@@ -5,6 +5,12 @@ import sys
 import pyvista
 from pyvista import examples
 
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except:
+    HAS_MATPLOTLIB = False
+
 PYTHON_2 = int(sys.version[0]) < 3
 
 DATASETS = [
@@ -17,6 +23,8 @@ DATASETS = [
 normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
+
+
 
 
 def test_clip_filter():
@@ -505,6 +513,7 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Requires matplotlib")
 def test_plot_over_line():
     """this requires matplotlib"""
     mesh = examples.load_uniform()
