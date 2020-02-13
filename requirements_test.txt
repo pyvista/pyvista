@@ -6,7 +6,7 @@ pytest
 pytest-cov
 pytest-memprof
 codecov
-PyQt5==5.11.3
+PyQt5>=5.14.1
 pytest-qt
 imageio>=2.5.0
 imageio-ffmpeg
