@@ -594,8 +594,7 @@ class BackgroundPlotter(QtInteractor):
         screenshots or debug testing.
 
     allow_quit_keypress : bool, optional
-        Allow user to exit by pressing ``"q"``.  Enabling this may
-        cause problems on Linux.
+        Allow user to exit by pressing ``"q"``.
 
     title : str, optional
         Title of plotting window.
@@ -630,7 +629,7 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, window_size=None,
-                 off_screen=None, allow_quit_keypress=False, **kwargs):
+                 off_screen=None, allow_quit_keypress=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -671,7 +670,6 @@ class BackgroundPlotter(QtInteractor):
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
-        self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
 
         # build main menu
