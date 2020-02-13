@@ -613,7 +613,7 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
 
 def threaded(fn):
-    """Decorator to call a function using a thread."""
+    """Call a function using a thread."""
     def wrapper(*args, **kwargs):
         thread = Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()

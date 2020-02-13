@@ -403,6 +403,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         being automatically ``Modified``.
 
     """
+
     # Signals must be class attributes
     render_signal = pyqtSignal()
     key_press_event_signal = pyqtSignal(vtk.vtkGenericRenderWindowInteractor, str)
@@ -485,6 +486,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         self.view_isometric()
 
     def key_press_event(self, obj, event):
+        """Call `key_press_event` using a signal."""
         self.key_press_event_signal.emit(obj, event)
 
     @wraps(BasePlotter.render)
