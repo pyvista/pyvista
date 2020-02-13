@@ -206,9 +206,9 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         The name of the array to get the range.
 
     preference : str, optional
-        When scalars is specified, this is the perfered array type to
-        search for in the dataset.  Must be either ``'point'``, ``'cell'``, or
-        ``'field'``
+        When scalars is specified, this is the preferred array type to
+        search for in the dataset.  Must be either ``'point'``,
+        ``'cell'``, or ``'field'``
 
     info : bool
         Return info about the array rather than the array itself.
