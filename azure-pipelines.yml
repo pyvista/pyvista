@@ -1,6 +1,6 @@
 variables:
   ALLOW_PLOTTING: true
-  
+
 
 # DESCRIPTION: Quickly check the spelling and documentation style
 jobs:
@@ -66,7 +66,7 @@ jobs:
   #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
   #     echo $EXAMPLES_PATH
   #   displayName: 'Store location of pyvista downloads cache and version'
-  
+
   # - task: Cache@2
   #   inputs:
   #     key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
@@ -192,7 +192,7 @@ jobs:
       echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
       echo $EXAMPLES_PATH
     displayName: 'Store location of pyvista downloads cache and version'
-  
+
   - task: Cache@2
     inputs:
       key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
@@ -231,7 +231,7 @@ jobs:
     env:
       GH_TOKEN: $(gh.token)
 
-  # Push example notebooks to pyvista-examples
+  # Push example notebooks to pyvista-examples develop branch
   - script: |
       pip install cookiecutter
       cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
@@ -265,7 +265,7 @@ jobs:
       echo "docs.pyvista.org" >> CNAME
       git add .
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
-      git push 
+      git push
     displayName: Upload Documentation to pyvista-docs
     env:
       GH_TOKEN: $(gh.token)
@@ -273,20 +273,20 @@ jobs:
 
   # upload documentation to pyvista-docs develop when merging with master
   - script: |
-      mkdir pyvista-docs
-      cd pyvista-docs
+      mkdir pyvista-docs-dev
+      cd pyvista-docs-dev
       git init
-      git checkout -b develop
+      git checkout -b gh-pages
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
       cp $BUILD_SOURCESDIRECTORY/docs/README.md .
       touch .nojekyll
-      echo "docs.pyvista.org" >> CNAME
+      echo "dev.pyvista.org" >> CNAME
       git add .
-      REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-docs"
+      REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-docs-dev"
       git remote add origin ${REMOTE}
       git commit -am "Azure CI commit ref $(Build.SourceVersion)"
-      git push -uf origin develop
-    displayName: Upload Documentation to pyvista-docs develop
+      git push -uf origin gh-pages
+    displayName: Upload Documentation to pyvista-docs-dev
     env:
       GH_TOKEN: $(gh.token)
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
