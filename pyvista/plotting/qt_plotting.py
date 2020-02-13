@@ -649,6 +649,7 @@ class BackgroundPlotter(QtInteractor):
     """
 
     ICON_TIME_STEP = 5.0
+    _set_window_size_signal = pyqtSignal(list)
 
     def __init__(self, show=True, app=None, window_size=None,
                  off_screen=None, allow_quit_keypress=False, **kwargs):
@@ -689,10 +690,10 @@ class BackgroundPlotter(QtInteractor):
 
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
-
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
+        self._set_window_size_signal.connect(self._set_window_size)
         self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
 
@@ -749,8 +750,7 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        if not off_screen:
-            self.window_size = window_size
+        self.window_size = window_size
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
@@ -846,7 +846,14 @@ class BackgroundPlotter(QtInteractor):
 
     @window_size.setter
     def window_size(self, window_size):
-        """Set the render window size."""
+        """Set the render window size via a signal."""
+        self._set_window_size_signal.emit(window_size)
+
+    def _set_window_size(self, window_size):
+        """Set window size.
+
+        Directly calling this may segfault.
+        """
         BasePlotter.window_size.fset(self, window_size)
         self.app_window.setBaseSize(*window_size)
         self.app_window.resize(*window_size)
