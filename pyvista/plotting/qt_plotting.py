@@ -749,7 +749,8 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        self.window_size = window_size
+        if not off_screen:
+            self.window_size = window_size
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
