@@ -670,6 +670,7 @@ class BackgroundPlotter(QtInteractor):
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
+        self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
 
         # build main menu
@@ -748,6 +749,7 @@ class BackgroundPlotter(QtInteractor):
         """Open scale axes dialog."""
         return ScaleAxesDialog(self.app_window, self, show=show)
 
+    @threaded
     def close(self):
         """Close the plotter.
 
@@ -756,7 +758,6 @@ class BackgroundPlotter(QtInteractor):
 
         """
         self.app_window.close()
-        self.app.quit()
 
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window."""
