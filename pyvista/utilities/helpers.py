@@ -622,7 +622,7 @@ def threaded(fn):
 
 
 class conditional_decorator(object):
-    """Conditiona decorator for methods."""
+    """Conditional decorator for methods."""
 
     def __init__(self, dec, condition):
         """Initialize."""
