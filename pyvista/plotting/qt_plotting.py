@@ -629,11 +629,10 @@ class BackgroundPlotter(QtInteractor):
     --------
     >>> import pyvista as pv
     >>> plotter = pv.BackgroundPlotter()
-    >>> plotter.add_mesh(pv.Sphere())
+    >>> actor = plotter.add_mesh(pv.Sphere())
     """
 
     ICON_TIME_STEP = 5.0
-    # _set_window_size_signal = pyqtSignal(list)
 
     def __init__(self, show=True, app=None, window_size=None,
                  off_screen=None, allow_quit_keypress=False, **kwargs):
@@ -677,7 +676,6 @@ class BackgroundPlotter(QtInteractor):
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
-        # self._set_window_size_signal.connect(self._set_window_size)
         self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
 
@@ -831,19 +829,10 @@ class BackgroundPlotter(QtInteractor):
     @window_size.setter
     def window_size(self, window_size):
         """Set the render window size."""
-        pass
+        self.app_window.setBaseSize(*window_size)
+        self.app_window.resize(*window_size)
+        # NOTE: setting BasePlotter is unnecessary and Segfaults CI
         # BasePlotter.window_size.fset(self, window_size)
-        # self.app_window.setBaseSize(*window_size)
-        # self.app_window.resize(*window_size)
-
-    # def _set_window_size(self, window_size):
-    #     """Set window size.
-
-    #     Directly calling this may segfault.
-    #     """
-    #     BasePlotter.window_size.fset(self, window_size)
-    #     self.app_window.setBaseSize(*window_size)
-    #     self.app_window.resize(*window_size)
 
     def __del__(self):  # pragma: no cover
         """Delete the qt plotter."""
