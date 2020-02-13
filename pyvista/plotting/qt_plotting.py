@@ -35,18 +35,6 @@ CLEAR_CAMS_BUTTON_TEXT = 'Clear Cameras'
 
 
 # dummy reference for when PyQt5 is not installed (i.e. readthedocs)
-has_pyqt = False
-class QVTKRenderWindowInteractor(object):
-    """Dummy QVTKRenderWindowInteractor class."""
-
-    pass
-
-class RangeGroup(object):
-    """Dummy RangeGroup class."""
-
-    pass
-
-
 class QDialog(object):
     """Dummy QFileDialog class."""
 
@@ -93,6 +81,7 @@ class QObject(object):
     pass
 
 
+has_pyqt = False
 try:
     from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
@@ -327,15 +316,10 @@ class QVTKRenderWindowInteractorAdapter(QObject):
 
     def __init__(self, parent, **kwargs):
         """Initialize the internal interactor."""
-        try:
-            assert_empty_kwargs(**kwargs)
-        except TypeError as e:
-            # user doesn't want to know about __init__
-            raise TypeError(str(e).split('for `')[0]) from None
         self.interactor = QVTKRenderWindowInteractor(parent=parent)
         self.interactor.dragEnterEvent = self.dragEnterEvent
         self.interactor.dropEvent = self.dropEvent
-        super(QVTKRenderWindowInteractorAdapter, self).__init__()
+        super(QVTKRenderWindowInteractorAdapter, self).__init__(**kwargs)
 
     def GetRenderWindow(self):
         """Get the render window."""
@@ -649,7 +633,7 @@ class BackgroundPlotter(QtInteractor):
     """
 
     ICON_TIME_STEP = 5.0
-    _set_window_size_signal = pyqtSignal(list)
+    # _set_window_size_signal = pyqtSignal(list)
 
     def __init__(self, show=True, app=None, window_size=None,
                  off_screen=None, allow_quit_keypress=False, **kwargs):
@@ -693,7 +677,7 @@ class BackgroundPlotter(QtInteractor):
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
-        self._set_window_size_signal.connect(self._set_window_size)
+        # self._set_window_size_signal.connect(self._set_window_size)
         self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
 
@@ -847,16 +831,18 @@ class BackgroundPlotter(QtInteractor):
     @window_size.setter
     def window_size(self, window_size):
         """Set the render window size via a signal."""
-        self._set_window_size_signal.emit(window_size)
-
-    def _set_window_size(self, window_size):
-        """Set window size.
-
-        Directly calling this may segfault.
-        """
         BasePlotter.window_size.fset(self, window_size)
-        self.app_window.setBaseSize(*window_size)
-        self.app_window.resize(*window_size)
+        # self.app_window.setBaseSize(*window_size)
+        # self.app_window.resize(*window_size)
+
+    # def _set_window_size(self, window_size):
+    #     """Set window size.
+
+    #     Directly calling this may segfault.
+    #     """
+    #     BasePlotter.window_size.fset(self, window_size)
+    #     self.app_window.setBaseSize(*window_size)
+    #     self.app_window.resize(*window_size)
 
     def __del__(self):  # pragma: no cover
         """Delete the qt plotter."""
