@@ -1,7 +1,105 @@
 variables:
   ALLOW_PLOTTING: true
+  
 
+# DESCRIPTION: Quickly check the spelling and documentation style
 jobs:
+- job: CodeSpellStyle
+  pool:
+    vmImage: 'ubuntu-latest'
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.7'
+  - script: |
+      pip install codespell pydocstyle
+      make doctest
+    displayName: 'Run doctest'
+
+
+# DESCRIPTION: Core API and doc string testing for Linux
+- job: Linux
+  pool:
+    vmImage: 'ubuntu-16.04'  # WARNING: 18.04 fails
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+
+  strategy:
+    matrix:
+      Python35:
+        python.version: '3.5'
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
+
+  - script: |
+      pip install -e .
+    displayName: Install pyvista
+
+  - script: |
+      .ci/setup_headless_display.sh
+      # python .ci/pyvista_test.py
+    displayName: Install headless display
+
+  - script: |
+      sudo apt-get install python3-tk
+      pip install -r requirements_test.txt
+      # python -c "import vtk; print(vtk.VTK_VERSION)"
+      python -c "import pyvista; print(pyvista.Report())"
+      which python
+      pip list
+    displayName: 'Install dependencies'
+
+  # - script: |
+  #     EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+  #     mkdir -p EXAMPLES_PATH
+  #     echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
+  #     PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+  #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+  #     echo $EXAMPLES_PATH
+  #   displayName: 'Store location of pyvista downloads cache and version'
+  
+  # - task: Cache@2
+  #   inputs:
+  #     key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
+  #     path: $(EXAMPLES_PATH)
+  #   displayName: Build pyvista examples cache
+
+  - script: |
+      pip install pytest-azurepipelines
+      pytest -v --cov pyvista --cov-report html
+    displayName: 'Test Core API'
+
+  - script: |
+      pip install pytest pytest-azurepipelines
+      pytest -v --doctest-modules pyvista
+    displayName: 'Test Package Docstrings'
+
+  - script: |
+      bash <(curl -s https://codecov.io/bash)
+    displayName: 'Upload coverage to codecov.io'
+    condition: eq(variables['python.version'], '3.7')
+
+  - script: |
+      pip install twine
+      python setup.py sdist
+      twine upload --skip-existing dist/pyvista*.gz
+    displayName: 'Upload to PyPi'
+    condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+    env:
+      TWINE_USERNAME: $(twine.username)
+      TWINE_PASSWORD: $(twine.password)
+      TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
+
+# DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
     vmIMage: 'VS2017-Win2016'
@@ -10,14 +108,14 @@ jobs:
   strategy:
     maxParallel: 4
     matrix:
-      Python37-64bit:
-        PYTHON_VERSION: '3.7'
+      Python35-64bit:
+        PYTHON_VERSION: '3.5'
         PYTHON_ARCH: 'x64'
       Python36-64bit:
         PYTHON_VERSION: '3.6'
         PYTHON_ARCH: 'x64'
-      Python35-64bit:
-        PYTHON_VERSION: '3.5'
+      Python37-64bit:
+        PYTHON_VERSION: '3.7'
         PYTHON_ARCH: 'x64'
   steps:
   - task: UsePythonVersion@0
@@ -36,7 +134,7 @@ jobs:
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
       $PSDefaultParameterValues['*:ErrorAction']='Stop'
-      pip install -r requirements.txt
+      pip install -r requirements_test.txt
     displayName: 'Install dependencies with pip'
   - script: |
       python setup.py sdist
@@ -46,3 +144,190 @@ jobs:
   - script: |
       python -m pytest --cov -v .
     displayName: 'Run Tests'
+
+
+# Builds the documentation
+- job: BuildDocumentation
+  pool:
+    vmImage: 'ubuntu-16.04'
+
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+
+  steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: 3.7
+    displayName: 'Use Python 3.7'
+
+  - script: |
+      git config --global user.name ${GH_NAME}
+      git config --global user.email ${GH_EMAIL}
+      git config --list | grep user.
+    displayName: 'Configure git'
+    env:
+      GH_NAME: $(gh.name)
+      GH_EMAIL: $(gh.email)
+
+  - script: |
+      pip install -e .
+    displayName: Install pyvista
+
+  - script: |
+      .ci/setup_headless_display.sh
+      # python .ci/pyvista_test.py  # for debug
+    displayName: Install headless display
+
+  - script: |
+      sudo apt-get install python3-tk
+      pip install -r requirements_docs.txt
+    displayName: 'Install dependencies'
+
+  - script: |
+      EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+      mkdir -p EXAMPLES_PATH
+      echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
+      PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+      echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+      echo $EXAMPLES_PATH
+    displayName: 'Store location of pyvista downloads cache and version'
+  
+  - task: Cache@2
+    inputs:
+      key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
+      path: $(EXAMPLES_PATH)
+    displayName: Build pyvista examples cache
+
+  - script: |
+      make -C docs html
+    displayName: 'Build documentation'
+
+  - script: |
+      make -C docs doctest
+    displayName: 'Test documentation code snippets'
+
+  - script: |
+      make -C docs html
+    displayName: 'Update figures from doctest'
+
+  # Push example notebooks to pyvista-examples
+  - script: |
+      pip install cookiecutter
+      cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+      rm -rf ../pyvista-examples/notebooks/
+      cd docs
+      find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
+      cd ../../pyvista-examples/
+      git init
+      git add .
+      git commit -am "Azure CI commit ref $(Build.SourceVersion)"
+      REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-examples"
+      git remote add origin ${REMOTE}
+      git push -uf origin master
+      cd $BUILD_SOURCESDIRECTORY
+    displayName: 'Upload binder examples'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+    env:
+      GH_TOKEN: $(gh.token)
+
+  # Push example notebooks to pyvista-examples
+  - script: |
+      pip install cookiecutter
+      cookiecutter -f --no-input --config-file ./docs/pyvista-binder-config.yml -o .. https://github.com/pyvista/cookiecutter-pyvista-binder.git;
+      rm -rf ../pyvista-examples/notebooks/
+      cd docs
+      find examples -type f -name '*.ipynb' | cpio -p -d -v ../../pyvista-examples/
+      cd ../../pyvista-examples/
+      git init
+      git checkout -b develop
+      git add .
+      git commit -am "Azure CI commit ref $(Build.SourceVersion)"
+      REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-examples"
+      git remote add origin ${REMOTE}
+      git push -uf origin develop
+      cd $BUILD_SOURCESDIRECTORY
+    displayName: 'Upload binder examples to develop'
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    env:
+      GH_TOKEN: $(gh.token)
+
+  # upload documentation to pyvista-docs gh-pages on tags
+  - script: |
+      git clone --depth 1 https://${GH_TOKEN}@github.com/pyvista/pyvista-docs.git
+      cd pyvista-docs
+      git gc --prune=now
+      git remote prune origin
+      rm -rf *
+      cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
+      cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      touch .nojekyll
+      echo "docs.pyvista.org" >> CNAME
+      git add .
+      git commit -am "Azure CI commit ref $(Build.SourceVersion)"
+      git push 
+    displayName: Upload Documentation to pyvista-docs
+    env:
+      GH_TOKEN: $(gh.token)
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+
+  # upload documentation to pyvista-docs develop when merging with master
+  - script: |
+      mkdir pyvista-docs
+      cd pyvista-docs
+      git init
+      git checkout -b develop
+      cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
+      cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      touch .nojekyll
+      echo "docs.pyvista.org" >> CNAME
+      git add .
+      REMOTE="https://${GH_TOKEN}@github.com/pyvista/pyvista-docs"
+      git remote add origin ${REMOTE}
+      git commit -am "Azure CI commit ref $(Build.SourceVersion)"
+      git push -uf origin develop
+    displayName: Upload Documentation to pyvista-docs develop
+    env:
+      GH_TOKEN: $(gh.token)
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  # - script: |
+  #     ls $(EXAMPLES_PATH)
+  #   displayName: 'DEBUG: List downloads dir'
+
+# - job: GitHubRelease
+#   pool:
+#     vmImage: 'ubuntu-latest'
+#   dependsOn:
+#   - BuildDocumentation
+#   - Linux
+#   - Windows
+#   # - macOS
+#   steps:
+#   - checkout: none
+#   - task: DownloadPipelineArtifact@2
+#     inputs:
+#       buildType: 'current'
+#       targetPath: '$(Pipeline.Workspace)/artifacts'
+#   - script: |
+#       ARTIFACTS='$(Pipeline.Workspace)/artifacts'
+#       RELEASE_FILES='$(Pipeline.Workspace)/release_files'
+#       mkdir -p $RELEASE_FILES
+#       find $ARTIFACTS -name "*.pdf" -execdir mv {} $RELEASE_FILES \;
+#       find $ARTIFACTS -name "*.whl" -execdir mv {} $RELEASE_FILES \;
+#       find $ARTIFACTS -name "*.zip" -execdir mv {} $RELEASE_FILES \;
+#       echo 'listing release files'
+#       ls $RELEASE_FILES -lh
+#     displayName: 'Flatten artifacts'
+#   - task: GitHubRelease@0
+#     inputs:
+#       gitHubConnection: 'github_auth'
+#       repositoryName: 'pyvista/pyvista'
+#       action: 'create'
+#       target: '$(Build.SourceVersion)'
+#       tagSource: 'auto'
+#       assets: '$(Pipeline.Workspace)/release_files/*'
+#       isDraft: true
+#       addChangeLog: true
+#     displayName: Create GitHub Release
+#   condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/')

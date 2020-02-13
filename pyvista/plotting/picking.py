@@ -103,7 +103,7 @@ class PickingHelper(object):
         renderer = self.renderer # make sure to consistently use renderer
 
         def end_pick_helper(picker, event_id):
-            # Merge the selection into a sinlge mesh
+            # Merge the selection into a single mesh
             picked = self.picked_cells
             if isinstance(picked, pyvista.MultiBlock):
                 if picked.n_blocks > 0:
