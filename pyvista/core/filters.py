@@ -650,7 +650,7 @@ class DataSetFilters(object):
 
     @wraps(extract_all_edges)
     def wireframe(self, *args, **kwargs):
-        """Wraps ``extract_all_edges``.
+        """Wrap ``extract_all_edges``.
 
         DEPRECATED: Please use ``extract_all_edges`` instead.
 
@@ -1966,7 +1966,7 @@ class DataSetFilters(object):
 
     @wraps(extract_feature_edges)
     def extract_edges(self, *args, **kwargs):
-        """Wraps ``extract_feature_edges``.
+        """Wrap ``extract_feature_edges``.
 
         DEPRECATED: Please use ``extract_feature_edges`` instead.
 
