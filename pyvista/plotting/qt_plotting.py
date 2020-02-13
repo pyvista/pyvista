@@ -830,8 +830,9 @@ class BackgroundPlotter(QtInteractor):
 
     @window_size.setter
     def window_size(self, window_size):
-        """Set the render window size via a signal."""
-        BasePlotter.window_size.fset(self, window_size)
+        """Set the render window size."""
+        pass
+        # BasePlotter.window_size.fset(self, window_size)
         # self.app_window.setBaseSize(*window_size)
         # self.app_window.resize(*window_size)
 
