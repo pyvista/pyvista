@@ -21,6 +21,14 @@ elif VTK_ID_TYPE_SIZE == 8:
     ID_TYPE = np.int64
 
 
+try:
+    import faulthandler
+    faulthandler.enable()
+except ImportError:
+    pass
+
+
+
 # determine if using vtk > 5
 if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
     raise AssertionError('VTK version must be 5.0 or greater.')

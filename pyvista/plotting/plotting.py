@@ -79,6 +79,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
     border_width : float, optional
         Width of the border in pixels when enabled.
 
+    title : str, optional
+        Window title of the scalar bar
+
     """
 
     mouse_position = None
@@ -618,6 +621,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if hasattr(self, 'ren_win') and not self._first_time:
             self.ren_win.Render()
+        # Not sure if this is ever needed but here as a reminder
+        # if hasattr(self, 'iren') and not self._first_time:
+        #     self.iren.Render()
+        return
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -728,9 +735,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._click_observer
 
 
-    def _close_callback(self):
-        """Make sure a screenhsot is acquired before closing."""
-        self.q_pressed = True
+    def _prep_for_close(self):
+        """Make sure a screenshot is acquired before closing.
+
+        This doesn't actually close anything! It just preps the plotter for
+        closing.
+        """
         # Grab screenshot right before renderer closes
         self.last_image = self.screenshot(True, return_img=True)
         self.last_image_depth = self.get_image_depth()
@@ -759,8 +769,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
 
-        if not isinstance(self, pyvista.QtInteractor) or isinstance(self, pyvista.BackgroundPlotter):
-            self.add_key_event('q', self._close_callback)
+        self.add_key_event('q', self._prep_for_close) # Add no matter what
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
@@ -771,18 +780,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 
-
     def key_press_event(self, obj, event):
         """Listen for key press event."""
-        key = self.iren.GetKeySym()
-        log.debug('Key %s pressed' % key)
-        self._last_key = key
-        if key in self._key_press_event_callbacks.keys():
-            # Note that defaultdict's will never throw a key error
-            callbacks = self._key_press_event_callbacks[key]
-            for func in callbacks:
-                func()
-
+        try:
+            key = self.iren.GetKeySym()
+            log.debug('Key %s pressed' % key)
+            self._last_key = key
+            if key in self._key_press_event_callbacks.keys():
+                # Note that defaultdict's will never throw a key error
+                callbacks = self._key_press_event_callbacks[key]
+                for func in callbacks:
+                    func()
+        except Exception as e:
+            log.error('Exception encountered for keypress "%s" % %s' (key, str(e)))
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
@@ -927,7 +937,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             milliseconds.
 
         force_redraw : bool, optional
-            Call vtkRenderWindowInteractor.Render() immediately.
+            Call ``render`` immediately.
 
         """
         if stime <= 0:
@@ -949,9 +959,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             self.render()
             Plotter.last_update_time = curr_time
-        else:
-            if force_redraw:
-                self.iren.Render()
+        elif force_redraw:
+            self.render()
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
                  clim=None, show_edges=None, edge_color=None,
@@ -1603,6 +1612,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
+        self.renderer.Modified()
+
         return actor
 
 
@@ -2013,6 +2024,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if stitle is not None and show_scalar_bar:
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
+        self.renderer.Modified()
 
         return actor
 
@@ -2451,7 +2463,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
             if render:
-                self.ren_win.Render()
+                self.render()
             return
 
         if isinstance(scalars, str):
@@ -2460,7 +2472,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             if render:
-                self.ren_win.Render()
+                self.render()
             return
 
         if scalars.shape[0] == mesh.GetNumberOfPoints():
@@ -2484,7 +2496,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             pass
 
         if render:
-            self.ren_win.Render()
+            self.render()
 
     def update_coordinates(self, points, mesh=None, render=True):
         """Update the points of an object in the plotter.
@@ -3518,7 +3530,7 @@ class Plotter(BasePlotter):
     Parameters
     ----------
     off_screen : bool, optional
-        Renders off screen when False.  Useful for automated screenshots.
+        Renders off screen when True.  Useful for automated screenshots.
 
     notebook : bool, optional
         When True, the resulting plot is placed inline a jupyter notebook.
@@ -3562,7 +3574,6 @@ class Plotter(BasePlotter):
     """
 
     last_update_time = 0.0
-    q_pressed = False
     right_timer_id = -1
 
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
@@ -3725,7 +3736,7 @@ class Plotter(BasePlotter):
 
         # Render
         log.debug('Rendering')
-        self.ren_win.Render()
+        self.render()
 
         # This has to be after the first render for some reason
         if title is None:

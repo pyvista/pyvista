@@ -167,6 +167,7 @@ class Renderer(vtkRenderer):
         # reset clipping range
         self.ResetCameraClippingRange()
         self.camera_set = True
+        self.Modified()
 
     @property
     def camera(self):
@@ -182,6 +183,7 @@ class Renderer(vtkRenderer):
             scale_point(camera, camera.GetFocalPoint(), invert=True),
             camera.GetViewUp()
         )
+        self.Modified()
 
     @property
     def bounds(self):
@@ -237,6 +239,7 @@ class Renderer(vtkRenderer):
     def background_color(self, color):
         """Set the background color of this renderer."""
         self.set_background(color)
+        self.Modified()
 
 
     #### Everything else ####
@@ -270,19 +273,23 @@ class Renderer(vtkRenderer):
             self.SetUseDepthPeeling(True)
             self.SetMaximumNumberOfPeels(number_of_peels)
             self.SetOcclusionRatio(occlusion_ratio)
+        self.Modified()
         return depth_peeling_supported
 
     def disable_depth_peeling(self):
         """Disable depth peeling."""
         self.SetUseDepthPeeling(False)
+        self.Modified()
 
     def enable_anti_aliasing(self):
         """Enable anti-aliasing FXAA."""
         self.SetUseFXAA(True)
+        self.Modified()
 
     def disable_anti_aliasing(self):
         """Disable anti-aliasing FXAA."""
         self.SetUseFXAA(False)
+        self.Modified()
 
 
     def add_border(self, color=[1, 1, 1], width=2.0):
@@ -314,6 +321,7 @@ class Renderer(vtkRenderer):
         actor.GetProperty().SetLineWidth(width)
 
         self.AddViewProp(actor)
+        self.Modified()
         return actor
 
 
@@ -415,6 +423,7 @@ class Renderer(vtkRenderer):
         self.AddActor(self.marker_actor)
         memory_address = self.marker_actor.GetAddressAsString("")
         self._actors[memory_address] = self.marker_actor
+        self.Modified()
         return self.marker_actor
 
 
@@ -464,6 +473,7 @@ class Renderer(vtkRenderer):
             self.axes_widget.SetEnabled(1)
             self.axes_widget.SetInteractive(interactive)
         self.axes_widget.SetCurrentRenderer(self)
+        self.Modified()
         return self.axes_actor
 
 
@@ -471,6 +481,7 @@ class Renderer(vtkRenderer):
         """Hide the axes orientation widget."""
         if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
+            self.Modified()
 
 
     def show_axes(self):
@@ -480,6 +491,7 @@ class Renderer(vtkRenderer):
             self.axes_widget.SetCurrentRenderer(self)
         else:
             self.add_axes()
+        self.Modified()
 
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
@@ -762,6 +774,7 @@ class Renderer(vtkRenderer):
             cube_axes_actor.SetYLabelFormat(fmt)
             cube_axes_actor.SetZLabelFormat(fmt)
 
+        self.Modified()
         return cube_axes_actor
 
     def add_bounds_axes(self, *args, **kwargs):
@@ -795,6 +808,7 @@ class Renderer(vtkRenderer):
             self.bounding_box_actor = None
             del self._box_object
             self.remove_actor(actor, reset_camera=False)
+            self.Modified()
 
     def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
                          opacity=1.0, render_lines_as_tubes=False,
@@ -869,13 +883,14 @@ class Renderer(vtkRenderer):
             prop.SetLineWidth(line_width)
 
         prop.SetRepresentationToSurface()
-
+        self.Modified()
         return self.bounding_box_actor
 
     def remove_bounds_axes(self):
         """Remove bounds axes."""
         if hasattr(self, 'cube_axes_actor'):
             self.remove_actor(self.cube_axes_actor)
+            self.Modified()
 
 
     def clear(self):
@@ -897,6 +912,7 @@ class Renderer(vtkRenderer):
             if point.ndim != 1:
                 point = point.ravel()
         self.camera.SetFocalPoint(scale_point(self.camera, point, invert=False))
+        self.Modified()
 
     def set_position(self, point, reset=False):
         """Set camera position to a point."""
@@ -907,6 +923,7 @@ class Renderer(vtkRenderer):
         if reset:
             self.reset_camera()
         self.camera_set = True
+        self.Modified()
 
     def set_viewup(self, vector):
         """Set camera viewup vector."""
@@ -914,6 +931,7 @@ class Renderer(vtkRenderer):
             if vector.ndim != 1:
                 vector = vector.ravel()
         self.camera.SetViewUp(vector)
+        self.Modified()
 
 
     def enable_parallel_projection(self):
@@ -924,11 +942,13 @@ class Renderer(vtkRenderer):
 
         """
         self.camera.SetParallelProjection(True)
+        self.Modified()
 
 
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
         self.camera.SetParallelProjection(False)
+        self.Modified()
 
 
     def remove_actor(self, actor, reset_camera=False):
@@ -1020,6 +1040,7 @@ class Renderer(vtkRenderer):
         if reset_camera:
             self.update_bounds_axes()
             self.reset_camera()
+        self.Modified()
 
 
     def get_default_cam_pos(self, negative=False):
@@ -1053,6 +1074,7 @@ class Renderer(vtkRenderer):
                 self.cube_axes_actor.SetUse2DMode(True)
             else:
                 self.cube_axes_actor.SetUse2DMode(False)
+            self.Modified()
 
     def reset_camera(self):
         """Reset the camera of the active render window.
@@ -1063,6 +1085,7 @@ class Renderer(vtkRenderer):
         """
         self.ResetCamera()
         self.parent.render()
+        self.Modified()
 
     def isometric_view(self):
         """Reset the camera to a default isometric view.
@@ -1163,6 +1186,7 @@ class Renderer(vtkRenderer):
         # tell the renderer to use our render pass pipeline
         self.glrenderer = vtk.vtkOpenGLRenderer.SafeDownCast(self)
         self.glrenderer.SetPass(self.edl_pass)
+        self.Modified()
         return self.glrenderer
 
     def disable_eye_dome_lighting(self):
@@ -1171,6 +1195,7 @@ class Renderer(vtkRenderer):
             return
         self.SetPass(None)
         del self.edl_pass
+        self.Modified()
         return
 
 
@@ -1214,11 +1239,14 @@ class Renderer(vtkRenderer):
             self.SetBackground2(parse_color(top))
         else:
             self.GradientBackgroundOff()
+        self.Modified()
         return
 
 
     def close(self):
         """Close out widgets and sensitive elements."""
+        self.RemoveAllObservers()
+        self.camera.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
             self.hide_axes() # Necessary to avoid segfault
             del self.axes_widget
