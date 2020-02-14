@@ -1632,14 +1632,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.UnformGrid
+        volume : 3D numpy.ndarray or pyvista.UniformGrid
             The input volume to visualize. 3D numpy arrays are accepted.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
             array that is present on the mesh or an array equal
             to the number of cells or the number of points in the
-            mesh.  Array should be sized as a single vector.
+            mesh.  Array should be sized as a single vector. If ``scalars`` is
+            ``None``, then the active scalars are used.
 
         clim : 2 item list, optional
             Color bar range for scalars.  Defaults to minimum and
