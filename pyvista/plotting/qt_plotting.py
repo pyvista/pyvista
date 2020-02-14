@@ -749,7 +749,6 @@ class BackgroundPlotter(QtInteractor):
         """Open scale axes dialog."""
         return ScaleAxesDialog(self.app_window, self, show=show)
 
-    @threaded
     def close(self):
         """Close the plotter.
 
@@ -865,11 +864,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         """Initialize the main window."""
         super(MainWindow, self).__init__(parent)
-
-    def closeEvent(self, event):
-        """Manage the close event."""
-        self.signal_close.emit()
-        event.accept()
+        self.signal_close.connect(self.close)
 
 
 class Counter(QObject):
