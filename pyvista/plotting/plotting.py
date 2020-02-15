@@ -1632,16 +1632,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.UnformGrid
+        volume : 3D numpy.ndarray or pyvista.UniformGrid
             The input volume to visualize. 3D numpy arrays are accepted.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
             array that is present on the mesh or an array equal
             to the number of cells or the number of points in the
-            mesh.  Array should be sized as a single vector. If both
-            ``color`` and ``scalars`` are ``None``, then the active scalars are
-            used.
+            mesh.  Array should be sized as a single vector. If ``scalars`` is
+            ``None``, then the active scalars are used.
 
         clim : 2 item list, optional
             Color bar range for scalars.  Defaults to minimum and
@@ -1659,13 +1658,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         n_colors : int, optional
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
-
-        flip_scalars : bool, optional
-            Flip direction of cmap.
-
-        n_colors : int, optional
-            Number of colors to use when displaying scalars.  Default
-            256.
 
         cmap : str, optional
            Name of the Matplotlib colormap to us when mapping the ``scalars``.
@@ -1846,7 +1838,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return actors
 
         if not isinstance(volume, pyvista.UniformGrid):
-            raise TypeError('Type ({}) not supported for volume rendering at this time. Use `pyvista.UniformGrid`.')
+            raise TypeError('Type {} not supported for volume rendering at this time. Use `pyvista.UniformGrid`.'.format(type(volume)))
 
         if opacity_unit_distance is None:
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
