@@ -68,7 +68,7 @@ rcParams = {
     'depth_peeling': {
         'number_of_peels': 4,
         'occlusion_ratio': 0.0,
-        'enabled': False if scooby.meets_version(vtk.VTK_VERSION, '8.2.0') else True,
+        'enabled': False,
     },
 }
 
