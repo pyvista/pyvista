@@ -169,7 +169,7 @@ def test_background_plotting_add_callback(qtbot):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_close(qtbot):
-    # this should be used in a context mananger
+    # this should be used in a context manager
     from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
     close_all()
 
