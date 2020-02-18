@@ -173,7 +173,7 @@ def test_background_plotting_close(qtbot):
     from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
     close_all()
 
-    plotter = pyvista.BackgroundPlotter()
+    plotter = pyvista.BackgroundPlotter(off_screen=False)
     window = plotter.app_window  # MainWindow
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
