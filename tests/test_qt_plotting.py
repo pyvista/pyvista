@@ -60,6 +60,7 @@ class TstWindow(MainWindow):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
+    pytest.skip()
     window = TstWindow(show=False)
     qtbot.addWidget(window)
     window.add_sphere()
