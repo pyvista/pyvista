@@ -756,6 +756,8 @@ class BackgroundPlotter(QtInteractor):
         close the plotter through `signal_close`.
 
         """
+        if hasattr(self, "render_timer"):
+            self.render_timer.stop()
         self.app_window.close()
 
     def update_app_icon(self):
