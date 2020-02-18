@@ -164,3 +164,16 @@ def test_background_plotting_add_callback(qtbot):
         sphere.points *= 0.5
     plotter.add_callback(mycallback, interval=1000, count=3)
     plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting_close(qtbot):
+    # this should be used in a context mananger
+    from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
+    close_all()
+
+    plotter = pyvista.BackgroundPlotter()
+    plotter.close()
+
+    assert len(_ALL_PLOTTERS) == 1
