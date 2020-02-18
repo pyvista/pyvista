@@ -190,6 +190,6 @@ def test_background_plotting_close(qtbot):
     plotter.close()
 
     assert window.isVisible() == False
-    assert render_timer.isActive() == False
     assert interactor.isVisible() == False
+    assert render_timer.isActive() == False
     assert len(_ALL_PLOTTERS) == 1
