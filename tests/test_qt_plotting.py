@@ -174,6 +174,10 @@ def test_background_plotting_close(qtbot):
     close_all()
 
     plotter = pyvista.BackgroundPlotter()
+    window = plotter.app_window  # MainWindow
+    interactor = plotter.interactor  # QVTKRenderWindowInteractor
     plotter.close()
 
+    assert window.isVisible() == False
+    assert interactor.isVisible() == False
     assert len(_ALL_PLOTTERS) == 1
