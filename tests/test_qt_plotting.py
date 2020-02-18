@@ -183,8 +183,8 @@ def test_background_plotting_close(qtbot):
     with qtbot.wait_exposed(interactor, timeout=500):
         interactor.show()
 
-    assert render_timer.isActive() == True
     assert window.isVisible() == True
+    assert render_timer.isActive() == True
     assert interactor.isVisible() == True
 
     plotter.close()
