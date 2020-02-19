@@ -874,6 +874,7 @@ class MainWindow(QMainWindow):
         self.signal_close.connect(self.close)
 
     def closeEvent(self, event):
+        """Manage the close event."""
         self.signal_close_test.emit()
         event.accept()
 
