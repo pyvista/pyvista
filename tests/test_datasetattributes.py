@@ -41,7 +41,7 @@ def test_init(example_grid):
 class TestGetArray:
     @mark.parametrize('array_key', ['invalid_array_name', -1])
     def test_should_fail_if_does_not_exist(self, array_key, example_grid_point_attributes):
-        with raises(KeyError):
+        with raises((KeyError, IndexError)):
             example_grid_point_attributes.get_array(array_key)
 
     def test_should_return_bool_array(self, insert_bool_array):
@@ -73,6 +73,9 @@ class TestAdd:
         result_a = dsa.get_array('sample_array')
         result_b = dsa['sample_array']
         assert np.array_equal(result_a, result_b)
+
+    def test_should_add_scalar_values(self, example_grid_point_attributes):
+        example_grid_point_attributes.append(narray=1, name='int_array')
 
 
 class TestRemove:
