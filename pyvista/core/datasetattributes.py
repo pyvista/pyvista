@@ -134,9 +134,6 @@ class DataSetAttributes(VTKObjectWrapper):
             raise TypeError('narray cannot be None.')
         if isinstance(narray, (list, tuple)):
             narray = pyvista_ndarray.from_iter(narray)
-        if narray.dtype == numpy.bool:
-            self.dataset.association_bitarray_names[self.association].add(name)
-            narray = narray.view(numpy.uint8)
 
         if self.association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()
@@ -146,17 +143,22 @@ class DataSetAttributes(VTKObjectWrapper):
             array_len = narray.shape[0]
         else:
             array_len = narray.shape[0] if isinstance(narray, numpy.ndarray) else 1
+
+        # Fixup input array length for scalar input:
+        if not isinstance(narray, numpy.ndarray) or numpy.ndim(narray) == 0:
+            tmparray = numpy.empty(array_len)
+            tmparray.fill(narray)
+            narray = tmparray
+
         if narray.shape[0] != array_len:
             raise ValueError('narray length of ({}) != required length ({})'.format(
                 narray.shape[0], array_len))
 
-        # Fixup input array length:
-        if not isinstance(narray, numpy.ndarray) or numpy.ndim(narray) == 0: # Scalar input
-            tmparray = numpy.empty(array_len)
-            tmparray.fill(narray)
-            narray = tmparray
-        shape = narray.shape
+        if narray.dtype == numpy.bool:
+            self.dataset.association_bitarray_names[self.association].add(name)
+            narray = narray.view(numpy.uint8)
 
+        shape = narray.shape
         if len(shape) == 3:
             # Array of matrices. We need to make sure the order  in memory is right.
             # If column order (c order), transpose. VTK wants row order (fortran
