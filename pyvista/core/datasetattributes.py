@@ -51,7 +51,8 @@ class DataSetAttributes(VTKObjectWrapper):
     @property
     def active_scalars(self):
         self._raise_field_data_no_scalars_vectors()
-        return pyvista_ndarray.from_vtk_data_array(self.GetScalars(), dataset=self.dataset)
+        if self.GetScalars() is not None:
+            return pyvista_ndarray.from_vtk_data_array(self.GetScalars(), dataset=self.dataset)
 
     @active_scalars.setter
     def active_scalars(self, name: str):
@@ -61,7 +62,8 @@ class DataSetAttributes(VTKObjectWrapper):
     @property
     def active_vectors(self):
         self._raise_field_data_no_scalars_vectors()
-        return pyvista_ndarray.from_vtk_data_array(self.GetVectors(), dataset=self.dataset)
+        if self.GetVectors() is not None:
+            return pyvista_ndarray.from_vtk_data_array(self.GetVectors(), dataset=self.dataset)
 
     @active_vectors.setter
     def active_vectors(self, name: str):
