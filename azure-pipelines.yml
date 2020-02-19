@@ -145,6 +145,31 @@ jobs:
       python -m pytest --cov -v .
     displayName: 'Run Tests'
 
+# DESCRIPTION: Core API testing for MacOS
+- job: macOS
+  variables:
+    python.architecture: 'x64'
+  strategy:
+    matrix:
+      # Skipping Python 3.5: doesn't have great support on Azure
+      Python36:
+        python.version: '3.6'
+      Python37:
+        python.version: '3.7'
+  pool:
+    vmImage: 'macOS-10.14'
+  steps:
+    - script: .ci/macos-install-python.sh '$(python.version)'
+      displayName: Install Python
+    - script: |
+        python setup.py sdist
+        python setup.py install
+        python -c "import pyvista; print(pyvista.Report())"
+      displayName: 'Install PyVista'
+    - script: |
+        python -m pytest --cov -v .
+      displayName: 'Run Tests'
+
 
 # Builds the documentation
 - job: BuildDocumentation
