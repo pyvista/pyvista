@@ -168,8 +168,8 @@ jobs:
       displayName: 'Install PyVista'
     - script: |
         python -m pip install -r requirements_test.txt
-	python -m pip install pytest-azurepipelines
-	python -m pytest -v --cov pyvista --cov-report html
+        python -m pip install pytest-azurepipelines
+        python -m pytest -v --cov pyvista --cov-report html
       displayName: 'Run Tests'
 
 
