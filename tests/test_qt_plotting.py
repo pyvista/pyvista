@@ -157,12 +157,17 @@ def test_background_plotting_orbit(qtbot):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_add_callback(qtbot):
+    class CallBack(object):
+        def __init__(self, sphere):
+            self.sphere = sphere
+
+        def __call__(self):
+            self.sphere.points *= 0.5
+
     plotter = pyvista.BackgroundPlotter(show=False, title='Testing Window')
     sphere = pyvista.Sphere()
+    mycallback = CallBack(sphere)
     plotter.add_mesh(sphere)
-
-    def mycallback():
-        sphere.points *= 0.5
     plotter.add_callback(mycallback, interval=1000, count=3)
     plotter.close()
 
