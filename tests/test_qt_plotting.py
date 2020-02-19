@@ -177,6 +177,7 @@ def test_background_plotting_add_callback(qtbot):
 def test_background_plotting_close(qtbot):
     from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
     close_all()  # this is necessary to test _ALL_PLOTTERS
+    assert len(_ALL_PLOTTERS) == 0
 
     plotter = pyvista.BackgroundPlotter(show=False, off_screen=False)
     window = plotter.app_window  # MainWindow
