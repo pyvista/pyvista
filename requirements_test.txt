@@ -15,4 +15,5 @@ cmocean
 scooby>=0.5.1
 meshio>=4.0.1
 h5py
+netcdf4
 itkwidgets>=0.25.2
