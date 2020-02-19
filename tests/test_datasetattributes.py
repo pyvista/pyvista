@@ -159,3 +159,13 @@ class TestValues:
             if np.array_equal(sample_array, arr):
                 return
         raise AssertionError('Array not in values.')
+
+
+class TestScalars:
+    def test_active_scalars_setter(self, example_grid_point_attributes):
+        dsa = example_grid_point_attributes
+        assert dsa.active_scalars is None
+
+        dsa.active_scalars = 'sample_point_scalars'
+        assert dsa.active_scalars is not None
+        assert dsa.GetScalars().GetName() == 'sample_point_scalars'
