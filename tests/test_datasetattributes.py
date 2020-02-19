@@ -41,7 +41,7 @@ def test_init(example_grid):
 class TestGetArray:
     @mark.parametrize('array_key', ['invalid_array_name', -1])
     def test_should_fail_if_does_not_exist(self, array_key, example_grid_point_attributes):
-        with raises((KeyError, IndexError)):
+        with raises(KeyError):
             example_grid_point_attributes.get_array(array_key)
 
     def test_should_return_bool_array(self, insert_bool_array):
