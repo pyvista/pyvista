@@ -180,6 +180,17 @@ def test_background_plotting_close(qtbot):
     assert len(_ALL_PLOTTERS) == 0
 
     plotter = pyvista.BackgroundPlotter(show=False, off_screen=False)
+
+    # check that BackgroundPlotter.__init__() is called
+    assert hasattr(plotter, "app_window")
+    # check that BasePlotter.__init__() is called
+    assert hasattr(plotter, "_style")
+    # check that QtInteractor.__init__() is called
+    assert hasattr(plotter, "iren")
+    assert hasattr(plotter, "render_timer")
+    # check that QVTKRenderWindowInteractorAdapter._init__() is called
+    assert hasattr(plotter, "interactor")
+
     window = plotter.app_window  # MainWindow
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
@@ -207,6 +218,7 @@ def test_background_plotting_close(qtbot):
     assert not render_timer.isActive()
 
     # check that BasePlotter.close() is called
+    assert not hasattr(plotter, "_style")
     assert not hasattr(plotter, "iren")
 
     # check that BasePlotter.__init__() is called only once
