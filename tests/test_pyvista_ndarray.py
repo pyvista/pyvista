@@ -18,3 +18,8 @@ class TestConstructors:
     def test_from_any(self, arr):
         pv_arr = pyvista_ndarray.from_any(arr)
         assert np.equal(arr, pv_arr).all()
+
+    @mark.parametrize('var', [None, 1, False, -1.0])
+    def test_from_any_should_fail_if_not_array(self, var):
+        with raises(ValueError):
+            pyvista_ndarray.from_any(var)
