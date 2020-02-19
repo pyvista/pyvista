@@ -171,25 +171,33 @@ def test_background_plotting_add_callback(qtbot):
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_close(qtbot):
     from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
-    close_all()
+    close_all()  # this is necessary to test _ALL_PLOTTERS
 
     plotter = pyvista.BackgroundPlotter(show=False, off_screen=False)
     window = plotter.app_window  # MainWindow
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
 
+    # ensure that the widgets are showed
     with qtbot.wait_exposed(window, timeout=500):
         window.show()
     with qtbot.wait_exposed(interactor, timeout=500):
         interactor.show()
 
+    # check that the widgets are showed properly
     assert render_timer.isActive() == True
     assert window.isVisible() == True
     assert interactor.isVisible() == True
 
     plotter.close()
 
+    # check that the widgets are closed
     assert window.isVisible() == False
     assert interactor.isVisible() == False
     assert render_timer.isActive() == False
+
+    # check that BasePlotter.close() is called
+    assert hasattr(plotter, "iren") == False
+
+    # check that BasePlotter.__init__() is called only once
     assert len(_ALL_PLOTTERS) == 1

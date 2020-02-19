@@ -758,6 +758,7 @@ class BackgroundPlotter(QtInteractor):
         """
         if hasattr(self, "render_timer"):
             self.render_timer.stop()
+        BasePlotter.close(self)
         self.app_window.close()
 
     def update_app_icon(self):
