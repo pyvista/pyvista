@@ -670,6 +670,7 @@ class BackgroundPlotter(QtInteractor):
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
+        self.app_window.signal_close_test.connect(self._close)
         self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
         self.add_toolbars(self.app_window)
 
@@ -756,10 +757,12 @@ class BackgroundPlotter(QtInteractor):
         close the plotter through `signal_close`.
 
         """
+        self.app_window.close()
+
+    def _close(self):
         if hasattr(self, "render_timer"):
             self.render_timer.stop()
         BasePlotter.close(self)
-        self.app_window.close()
 
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window."""
@@ -863,11 +866,16 @@ class MainWindow(QMainWindow):
     """Convenience MainWindow that manages the application."""
 
     signal_close = pyqtSignal()
+    signal_close_test = pyqtSignal()
 
     def __init__(self, parent=None):
         """Initialize the main window."""
         super(MainWindow, self).__init__(parent)
         self.signal_close.connect(self.close)
+
+    def closeEvent(self, event):
+        self.signal_close_test.emit()
+        event.accept()
 
 
 class Counter(QObject):

@@ -210,7 +210,8 @@ def test_background_plotting_close(qtbot):
     assert window.isVisible()
     assert interactor.isVisible()
 
-    plotter.close()
+    with qtbot.wait_signals([window.signal_close_test], timeout=500):
+        plotter.close()
 
     # check that the widgets are closed
     assert not window.isVisible()
@@ -263,7 +264,8 @@ def test_background_plotting_window_close(qtbot):
     assert window.isVisible()
     assert interactor.isVisible()
 
-    window.close()
+    with qtbot.wait_signals([window.signal_close_test], timeout=500):
+        window.close()
 
     # check that the widgets are closed
     assert not window.isVisible()
