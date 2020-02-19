@@ -167,7 +167,9 @@ jobs:
         python -c "import pyvista; print(pyvista.Report())"
       displayName: 'Install PyVista'
     - script: |
-        python -m pytest --cov -v .
+        python -m pip install -r requirements_test.txt
+	python -m pip install pytest-azurepipelines
+	python -m pytest -v --cov pyvista --cov-report html
       displayName: 'Run Tests'
 
 
