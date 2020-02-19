@@ -56,7 +56,7 @@ class pyvista_ndarray(VTKArray):
         if isinstance(obj, (vtkDataArray, vtkAbstractArray)):
             return cls.from_vtk_data_array(vtk_data_array=obj, dataset=dataset, association=association)
         elif isinstance(obj, (list, tuple, numpy.ndarray)):
-            return cls.from_iter(a=obj, dtype=dtype, order=order)
+            return cls.from_iter(iterable=obj, dtype=dtype, order=order)
         else:
             raise ValueError('Cannot create {} from type: {}'.format(
                 type(cls).__name__, type(obj).__name__))
