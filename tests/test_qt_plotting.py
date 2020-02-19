@@ -184,6 +184,10 @@ def test_background_plotting_close(qtbot):
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
 
+    # ensure that self.render is called by the timer
+    render_blocker = qtbot.wait_signals([render_timer.timeout], timeout=500)
+    render_blocker.wait()
+
     # ensure that the widgets are showed
     with qtbot.wait_exposed(window, timeout=500):
         window.show()
@@ -191,19 +195,19 @@ def test_background_plotting_close(qtbot):
         interactor.show()
 
     # check that the widgets are showed properly
-    assert render_timer.isActive() == True
-    assert window.isVisible() == True
-    assert interactor.isVisible() == True
+    assert render_timer.isActive()
+    assert window.isVisible()
+    assert interactor.isVisible()
 
     plotter.close()
 
     # check that the widgets are closed
-    assert window.isVisible() == False
-    assert interactor.isVisible() == False
-    assert render_timer.isActive() == False
+    assert not window.isVisible()
+    assert not interactor.isVisible()
+    assert not render_timer.isActive()
 
     # check that BasePlotter.close() is called
-    assert hasattr(plotter, "iren") == False
+    assert not hasattr(plotter, "iren")
 
     # check that BasePlotter.__init__() is called only once
     assert len(_ALL_PLOTTERS) == 1
