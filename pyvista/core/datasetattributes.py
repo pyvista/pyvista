@@ -242,8 +242,9 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def _raise_index_out_of_bounds(self, index):
         max_index = self.VTKObject.GetNumberOfArrays()
-        if isinstance(index, int) and index >= self.VTKObject.GetNumberOfArrays():
-            raise IndexError('Array index ({}) out of range [0, {}]'.format(index, max_index))
+        if isinstance(index, int):
+            if index < 0 or index >= self.VTKObject.GetNumberOfArrays():
+                raise IndexError('Array index ({}) out of range [0, {}]'.format(index, max_index))
 
     def _raise_field_data_no_scalars_vectors(self):
         if self.association == FieldAssociation.FIELD:
