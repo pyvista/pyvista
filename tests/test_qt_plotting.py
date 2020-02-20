@@ -177,7 +177,7 @@ def test_background_plotting_add_callback(qtbot):
 @pytest.mark.parametrize('close_event', [
     "plotter_close",
     "window_close",
-    # "q_key_press",
+    "q_key_press",
     # "menu_exit"
     ])
 def test_background_plotting_close(qtbot, close_event):
@@ -221,6 +221,8 @@ def test_background_plotting_close(qtbot, close_event):
             plotter.close()
         elif close_event == "window_close":
             window.close()
+        elif close_event == "q_key_press":
+            qtbot.keyClick(interactor, "q")
 
     # check that the widgets are closed
     assert not window.isVisible()
