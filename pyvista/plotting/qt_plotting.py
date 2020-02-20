@@ -442,7 +442,8 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
             self.iren.Initialize()
 
-            self.iren.AddObserver("KeyPressEvent", self.key_press_event)
+            self._observers = {}    # Map of events to observers of self.iren
+            self._add_observer("KeyPressEvent", self.key_press_event)
 
         # Make the render timer but only activate if using auto update
         self.render_timer = QTimer(parent=parent)
