@@ -2547,15 +2547,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if hasattr(self, 'iren'):
             # self.iren.RemoveAllObservers()
-            self.iren.RemoveObserver(vtk.vtkCommand.MouseMoveEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.RightButtonPressEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.LeftButtonPressEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.KeyPressEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.TimerEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.EndPickEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.StartInteractionEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.EndInteractionEvent)
-            self.iren.RemoveObserver(vtk.vtkCommand.StateChangedEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.MouseMoveEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.RightButtonPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.LeftButtonPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.KeyPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.TimerEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.EndPickEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.StartInteractionEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.EndInteractionEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.StateChangedEvent)
             self.iren.TerminateApp()
             del self.iren
 
