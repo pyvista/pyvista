@@ -174,7 +174,13 @@ def test_background_plotting_add_callback(qtbot):
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
-def test_background_plotting_close(qtbot):
+@pytest.mark.parametrize('close_event', [
+    "plotter_close",
+    "window_close",
+    # "q_key_press",
+    # "menu_exit"
+    ])
+def test_background_plotting_close(qtbot, close_event):
     from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
     close_all()  # this is necessary to test _ALL_PLOTTERS
     assert len(_ALL_PLOTTERS) == 0
@@ -211,61 +217,10 @@ def test_background_plotting_close(qtbot):
     assert interactor.isVisible()
 
     with qtbot.wait_signals([window.signal_close_test], timeout=500):
-        plotter.close()
-
-    # check that the widgets are closed
-    assert not window.isVisible()
-    assert not interactor.isVisible()
-    assert not render_timer.isActive()
-
-    # check that BasePlotter.close() is called
-    assert not hasattr(plotter, "_style")
-    assert not hasattr(plotter, "iren")
-
-    # check that BasePlotter.__init__() is called only once
-    assert len(_ALL_PLOTTERS) == 1
-
-
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
-def test_background_plotting_window_close(qtbot):
-    from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
-    close_all()  # this is necessary to test _ALL_PLOTTERS
-    assert len(_ALL_PLOTTERS) == 0
-
-    plotter = pyvista.BackgroundPlotter(show=False, off_screen=False)
-
-    # check that BackgroundPlotter.__init__() is called
-    assert hasattr(plotter, "app_window")
-    # check that BasePlotter.__init__() is called
-    assert hasattr(plotter, "_style")
-    # check that QtInteractor.__init__() is called
-    assert hasattr(plotter, "iren")
-    assert hasattr(plotter, "render_timer")
-    # check that QVTKRenderWindowInteractorAdapter._init__() is called
-    assert hasattr(plotter, "interactor")
-
-    window = plotter.app_window  # MainWindow
-    interactor = plotter.interactor  # QVTKRenderWindowInteractor
-    render_timer = plotter.render_timer  # QTimer
-
-    # ensure that self.render is called by the timer
-    render_blocker = qtbot.wait_signals([render_timer.timeout], timeout=500)
-    render_blocker.wait()
-
-    # ensure that the widgets are showed
-    with qtbot.wait_exposed(window, timeout=500):
-        window.show()
-    with qtbot.wait_exposed(interactor, timeout=500):
-        interactor.show()
-
-    # check that the widgets are showed properly
-    assert render_timer.isActive()
-    assert window.isVisible()
-    assert interactor.isVisible()
-
-    with qtbot.wait_signals([window.signal_close_test], timeout=500):
-        window.close()
+        if close_event == "plotter_close":
+            plotter.close()
+        elif close_event == "window_close":
+            window.close()
 
     # check that the widgets are closed
     assert not window.isVisible()
