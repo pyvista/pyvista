@@ -2,8 +2,9 @@ variables:
   ALLOW_PLOTTING: true
 
 
-# # DESCRIPTION: Quickly check the spelling and documentation style
-# jobs:
+jobs:
+
+# DESCRIPTION: Quickly check the spelling and documentation style
 # - job: CodeSpellStyle
 #   pool:
 #     vmImage: 'ubuntu-latest'
