@@ -683,7 +683,8 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.app_window.close)
+        # member variable for testing only
+        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
 
         view_menu = self.main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)

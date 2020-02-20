@@ -178,7 +178,7 @@ def test_background_plotting_add_callback(qtbot):
     "plotter_close",
     "window_close",
     "q_key_press",
-    # "menu_exit"
+    "menu_exit"
     ])
 def test_background_plotting_close(qtbot, close_event):
     from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
@@ -226,6 +226,8 @@ def test_background_plotting_close(qtbot, close_event):
             window.close()
         elif close_event == "q_key_press":
             qtbot.keyClick(interactor, "q")
+        elif close_event == "menu_exit":
+            plotter._menu_close_action.trigger()
 
     # check that the widgets are closed
     assert not window.isVisible()
