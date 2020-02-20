@@ -2546,7 +2546,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._style
 
         if hasattr(self, 'iren'):
-            self.iren.RemoveAllObservers()
+            # self.iren.RemoveAllObservers()
+            self.iren.RemoveObserver(vtk.vtkCommand.MouseMoveEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.RightButtonPressEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.LeftButtonPressEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.KeyPressEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.TimerEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.EndPickEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.StartInteractionEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.EndInteractionEvent)
+            self.iren.RemoveObserver(vtk.vtkCommand.StateChangedEvent)
             self.iren.TerminateApp()
             del self.iren
 
