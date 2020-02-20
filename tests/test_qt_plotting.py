@@ -87,6 +87,7 @@ def test_background_plotting_axes_scale(qtbot):
     assert dlg.x_slider_group.value < 100
 
     plotter._last_update_time = 0.0
+    plotter.update()
     plotter.update_app_icon()
     plotter.close()
 
@@ -120,6 +121,23 @@ def test_background_plotter_export_files(qtbot, tmpdir):
     plotter.add_mesh(pyvista.Sphere())
 
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
+    plotter.update()
+    dlg = plotter._qt_screenshot(show=False)
+    dlg.selectFile(filename)
+    dlg.accept()
+    plotter.close()
+
+    assert os.path.isfile(filename)
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotter_export_files_again(qtbot, tmpdir):
+    plotter = pyvista.BackgroundPlotter(off_screen=False, show=False, title='Testing Window')
+    plotter.add_mesh(pyvista.Sphere())
+
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
+    # plotter.update()
     dlg = plotter._qt_screenshot(show=False)
     dlg.selectFile(filename)
     dlg.accept()
