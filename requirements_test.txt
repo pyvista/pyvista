@@ -13,5 +13,5 @@ imageio-ffmpeg
 colorcet
 cmocean
 scooby>=0.5.1
-meshio>=3.3.0
+meshio>=3.3.0,<4.0.0
 itkwidgets>=0.25.2
