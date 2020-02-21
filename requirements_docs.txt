@@ -5,7 +5,7 @@ imageio>=2.5.0
 imageio-ffmpeg
 colorcet
 cmocean
-meshio>=4.0.1
+meshio>=4.0.3
 Sphinx
 sphinx-autobuild
 sphinx-rtd-theme
