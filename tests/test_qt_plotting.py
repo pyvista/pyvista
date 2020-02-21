@@ -203,10 +203,7 @@ def test_background_plotting_close(qtbot, close_event):
     close_all()  # this is necessary to test _ALL_PLOTTERS
     assert len(_ALL_PLOTTERS) == 0
 
-    sphere = pyvista.Sphere()
     plotter = pyvista.BackgroundPlotter(show=False, off_screen=False)
-    plotter.add_mesh(sphere)
-    plotter.enable_cell_picking()
 
     # check that BackgroundPlotter.__init__() is called
     assert hasattr(plotter, "app_window")
