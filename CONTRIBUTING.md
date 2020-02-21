@@ -125,11 +125,11 @@ request. The following tests will be executed after any commit or pull request,
 so we ask that you perform the following sequence locally to track down any new
 issues from your changes.
 To run our comprehensive suite of unit tests, install all the dependencies
-listed in ``requirements.txt``, ``requirements_docs.txt``:
+listed in ``requirements_test.txt``, ``requirements_docs.txt``:
 
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_test.txt
 pip install -r requirements_docs.txt
 ```
 
