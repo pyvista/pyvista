@@ -122,8 +122,7 @@ def test_background_plotter_export_files(qtbot, tmpdir):
     plotter.add_mesh(pyvista.Sphere())
 
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
-    plotter.update()
-    dlg = plotter._qt_screenshot(show=False)
+    dlg = plotter._qt_screenshot(show=True)
     dlg.selectFile(filename)
     dlg.accept()
     plotter.close()
@@ -138,8 +137,7 @@ def test_background_plotter_export_files_again(qtbot, tmpdir):
     plotter.add_mesh(pyvista.Sphere())
 
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
-    # plotter.update()
-    dlg = plotter._qt_screenshot(show=False)
+    dlg = plotter._qt_screenshot(show=True)
     dlg.selectFile(filename)
     dlg.accept()
     plotter.close()
@@ -154,7 +152,7 @@ def test_background_plotter_export_vtkjs(qtbot, tmpdir):
     plotter.add_mesh(pyvista.Sphere())
 
     filename = str(tmpdir.mkdir("tmpdir").join('tmp'))
-    dlg = plotter._qt_export_vtkjs(show=False)
+    dlg = plotter._qt_export_vtkjs(show=True)
     dlg.selectFile(filename)
     dlg.accept()
     plotter.close()
