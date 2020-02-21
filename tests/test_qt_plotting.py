@@ -279,15 +279,21 @@ def _create_testing_scene(empty_scene, show=False, off_screen=False):
         )
         plotter.set_background('black', top='blue')
         plotter.subplot(0, 0)
-        actor = plotter.add_mesh(pyvista.Cone())
+        cone = pyvista.Cone(resolution=4)
+        actor = plotter.add_mesh(cone)
         plotter.remove_actor(actor)
         plotter.add_text('Actor is removed')
         plotter.subplot(0, 1)
         plotter.add_mesh(pyvista.Box(), color='green', opacity=0.8)
         plotter.subplot(1, 0)
-        plotter.add_mesh(pyvista.Cylinder(), smooth_shading=True)
+        cylinder = pyvista.Cylinder(resolution=6)
+        plotter.add_mesh(cylinder, smooth_shading=True)
         plotter.show_bounds()
         plotter.subplot(1, 1)
-        plotter.add_mesh(pyvista.Sphere())
+        sphere = pyvista.Sphere(
+            phi_resolution=6,
+            theta_resolution=6
+        )
+        plotter.add_mesh(sphere)
         plotter.enable_cell_picking()
     return plotter
