@@ -201,7 +201,7 @@ def test_background_plotting_close(qtbot, close_event):
     close_all()  # this is necessary to test _ALL_PLOTTERS
     assert len(_ALL_PLOTTERS) == 0
 
-    plotter = pyvista.BackgroundPlotter(show=False, off_screen=False)
+    plotter = _create_testing_scene(show=False, off_screen=False)
 
     # check that BackgroundPlotter.__init__() is called
     assert hasattr(plotter, "app_window")
@@ -253,3 +253,28 @@ def test_background_plotting_close(qtbot, close_event):
 
     # check that BasePlotter.__init__() is called only once
     assert len(_ALL_PLOTTERS) == 1
+
+
+def _create_testing_scene(show, off_screen):
+    plotter = pyvista.BackgroundPlotter(
+        shape=(2, 2),
+        border=True,
+        border_width=10,
+        border_color='grey',
+        show=show,
+        off_screen=off_screen
+    )
+    plotter.set_background('black', top='blue')
+    plotter.subplot(0, 0)
+    actor = plotter.add_mesh(pyvista.Cone())
+    plotter.remove_actor(actor)
+    plotter.add_text('Actor is removed')
+    plotter.subplot(0, 1)
+    plotter.add_mesh(pyvista.Box(), color='green', opacity=0.8)
+    plotter.subplot(1, 0)
+    plotter.add_mesh(pyvista.Cylinder(), smooth_shading=True)
+    plotter.show_bounds()
+    plotter.subplot(1, 1)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.enable_cell_picking()
+    return plotter
