@@ -196,12 +196,16 @@ def test_background_plotting_add_callback(qtbot):
     "q_key_press",
     "menu_exit"
     ])
-def test_background_plotting_close(qtbot, close_event):
+@pytest.mark.parametrize('empty_scene', [
+    True,
+    False,
+    ])
+def test_background_plotting_close(qtbot, close_event, empty_scene):
     from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
     close_all()  # this is necessary to test _ALL_PLOTTERS
     assert len(_ALL_PLOTTERS) == 0
 
-    plotter = _create_testing_scene(show=False, off_screen=False)
+    plotter = _create_testing_scene(empty_scene)
 
     # check that BackgroundPlotter.__init__() is called
     assert hasattr(plotter, "app_window")
@@ -221,10 +225,13 @@ def test_background_plotting_close(qtbot, close_event):
     render_blocker = qtbot.wait_signals([render_timer.timeout], timeout=500)
     render_blocker.wait()
 
+    # a full scene may take a while to setup, especially on macOS
+    show_timeout = 500 if empty_scene else 1000
+
     # ensure that the widgets are showed
-    with qtbot.wait_exposed(window, timeout=500):
+    with qtbot.wait_exposed(window, timeout=show_timeout):
         window.show()
-    with qtbot.wait_exposed(interactor, timeout=500):
+    with qtbot.wait_exposed(interactor, timeout=show_timeout):
         interactor.show()
 
     # check that the widgets are showed properly
@@ -255,26 +262,32 @@ def test_background_plotting_close(qtbot, close_event):
     assert len(_ALL_PLOTTERS) == 1
 
 
-def _create_testing_scene(show, off_screen):
-    plotter = pyvista.BackgroundPlotter(
-        shape=(2, 2),
-        border=True,
-        border_width=10,
-        border_color='grey',
-        show=show,
-        off_screen=off_screen
-    )
-    plotter.set_background('black', top='blue')
-    plotter.subplot(0, 0)
-    actor = plotter.add_mesh(pyvista.Cone())
-    plotter.remove_actor(actor)
-    plotter.add_text('Actor is removed')
-    plotter.subplot(0, 1)
-    plotter.add_mesh(pyvista.Box(), color='green', opacity=0.8)
-    plotter.subplot(1, 0)
-    plotter.add_mesh(pyvista.Cylinder(), smooth_shading=True)
-    plotter.show_bounds()
-    plotter.subplot(1, 1)
-    plotter.add_mesh(pyvista.Sphere())
-    plotter.enable_cell_picking()
+def _create_testing_scene(empty_scene, show=False, off_screen=False):
+    if empty_scene:
+        plotter = pyvista.BackgroundPlotter(
+            show=show,
+            off_screen=off_screen
+        )
+    else:
+        plotter = pyvista.BackgroundPlotter(
+            shape=(2, 2),
+            border=True,
+            border_width=10,
+            border_color='grey',
+            show=show,
+            off_screen=off_screen
+        )
+        plotter.set_background('black', top='blue')
+        plotter.subplot(0, 0)
+        actor = plotter.add_mesh(pyvista.Cone())
+        plotter.remove_actor(actor)
+        plotter.add_text('Actor is removed')
+        plotter.subplot(0, 1)
+        plotter.add_mesh(pyvista.Box(), color='green', opacity=0.8)
+        plotter.subplot(1, 0)
+        plotter.add_mesh(pyvista.Cylinder(), smooth_shading=True)
+        plotter.show_bounds()
+        plotter.subplot(1, 1)
+        plotter.add_mesh(pyvista.Sphere())
+        plotter.enable_cell_picking()
     return plotter
