@@ -76,7 +76,7 @@ def test_background_plotting_axes_scale(qtbot):
     plotter.add_mesh(sphere)
     assert np.any(plotter.mesh.points)
 
-    dlg = plotter.scale_axes_dialog(show=False)
+    dlg = plotter.scale_axes_dialog(show=True)
 
     value = 2.0
     dlg.x_slider_group.value = value
@@ -226,7 +226,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     render_blocker.wait()
 
     # a full scene may take a while to setup, especially on macOS
-    show_timeout = 500 if empty_scene else 1000
+    show_timeout = 500 if empty_scene else 1500
 
     # ensure that the widgets are showed
     with qtbot.wait_exposed(window, timeout=show_timeout):
