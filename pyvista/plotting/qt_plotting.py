@@ -677,6 +677,7 @@ class BackgroundPlotter(QtInteractor):
         self.main_menu = QMenuBar(parent=self.app_window)
         self.app_window.setMenuBar(self.main_menu)
         self.app_window.signal_close.connect(self.main_menu.clear)
+        self.app_window.signal_close.connect(self.main_menu.close)
 
         file_menu = self.main_menu.addMenu('File')
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
@@ -725,6 +726,7 @@ class BackgroundPlotter(QtInteractor):
 
         if show and not off_screen:  # pragma: no cover
             self.app_window.show()
+            self.main_menu.show()
             self.show()
 
         self.window_size = window_size
