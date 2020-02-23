@@ -184,8 +184,33 @@ def test_background_plotting_add_callback(qtbot):
     sphere = pyvista.Sphere()
     mycallback = CallBack(sphere)
     plotter.add_mesh(sphere)
-    plotter.add_callback(mycallback, interval=1000, count=3)
+    plotter.add_callback(mycallback, interval=200, count=3)
+
+    # check that timers are set properly in add_callback()
+    assert hasattr(plotter, "callback_timer")
+    assert hasattr(plotter, "counters")
+
+    callback_timer = plotter.callback_timer  # QTimer
+    counter = plotter.counters[-1]  # Counter
+
+    # ensure that self.callback_timer send a signal
+    callback_blocker = qtbot.wait_signals([callback_timer.timeout], timeout=300)
+    callback_blocker.wait()
+    # ensure that self.counters send a signal
+    counter_blocker = qtbot.wait_signals([counter.signal_finished], timeout=700)
+    counter_blocker.wait()
+    assert not callback_timer.isActive()  # counter stops the callback
+
+    plotter.add_callback(mycallback, interval=200)
+    callback_timer = plotter.callback_timer  # QTimer
+
+    # ensure that self.callback_timer send a signal
+    callback_blocker = qtbot.wait_signals([callback_timer.timeout], timeout=300)
+    callback_blocker.wait()
+
+    assert callback_timer.isActive()
     plotter.close()
+    assert not callback_timer.isActive()  # window stops the callback
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -209,6 +234,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
 
     # check that BackgroundPlotter.__init__() is called
     assert hasattr(plotter, "app_window")
+    assert hasattr(plotter, "main_menu")
     # check that BasePlotter.__init__() is called
     assert hasattr(plotter, "_style")
     # check that QtInteractor.__init__() is called
@@ -218,6 +244,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     assert hasattr(plotter, "interactor")
 
     window = plotter.app_window  # MainWindow
+    main_menu = plotter.main_menu  # QMenuBar
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
 
@@ -238,8 +265,9 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     assert render_timer.isActive()
     assert window.isVisible()
     assert interactor.isVisible()
+    assert main_menu.isVisible()
 
-    with qtbot.wait_signals([window.signal_close_test], timeout=500):
+    with qtbot.wait_signals([window.signal_close], timeout=500):
         if close_event == "plotter_close":
             plotter.close()
         elif close_event == "window_close":
@@ -252,6 +280,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     # check that the widgets are closed
     assert not window.isVisible()
     assert not interactor.isVisible()
+    assert not main_menu.isVisible()
     assert not render_timer.isActive()
 
     # check that BasePlotter.close() is called

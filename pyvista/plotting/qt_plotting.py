@@ -670,8 +670,7 @@ class BackgroundPlotter(QtInteractor):
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
-        self.app_window.signal_close_test.connect(self._close)
-        self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
+        self.app_window.signal_close.connect(self._close)
         self.add_toolbars(self.app_window)
 
         # build main menu
@@ -852,14 +851,14 @@ class BackgroundPlotter(QtInteractor):
             `func` will be called until the main window is closed.
 
         """
-        timer = QTimer(parent=self.app_window)
-        timer.timeout.connect(func)
-        timer.start(interval)
-        self.app_window.signal_close.connect(timer.stop)
+        self.callback_timer = QTimer(parent=self.app_window)
+        self.callback_timer.timeout.connect(func)
+        self.callback_timer.start(interval)
+        self.app_window.signal_close.connect(self.callback_timer.stop)
         if count is not None:
             counter = Counter(count)
-            counter.signal_finished.connect(timer.stop)
-            timer.timeout.connect(counter.decrease)
+            counter.signal_finished.connect(self.callback_timer.stop)
+            self.callback_timer.timeout.connect(counter.decrease)
             self.counters.append(counter)
 
 
@@ -867,16 +866,14 @@ class MainWindow(QMainWindow):
     """Convenience MainWindow that manages the application."""
 
     signal_close = pyqtSignal()
-    signal_close_test = pyqtSignal()
 
     def __init__(self, parent=None):
         """Initialize the main window."""
         super(MainWindow, self).__init__(parent)
-        self.signal_close.connect(self.close)
 
     def closeEvent(self, event):
         """Manage the close event."""
-        self.signal_close_test.emit()
+        self.signal_close.emit()
         event.accept()
 
 
