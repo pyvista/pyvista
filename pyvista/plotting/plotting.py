@@ -42,8 +42,9 @@ _ALL_PLOTTERS = {}
 def close_all():
     """Close all open/active plotters and clean up memory."""
     for key, p in _ALL_PLOTTERS.items():
-        p.close()
-        p.deep_clean()
+        if not hasattr(p, "_closed") or not p._closed:
+            p.close()
+            p.deep_clean()
     _ALL_PLOTTERS.clear()
     return True
 
@@ -2568,6 +2569,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.mwriter.close()
             except BaseException:
                 pass
+
+        # this helps managing closed plotters
+        self._closed = True
 
     def deep_clean(self):
         """Clean the plotter of the memory."""

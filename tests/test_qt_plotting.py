@@ -46,7 +46,7 @@ class TstWindow(MainWindow):
         self.add_sphere_action.triggered.connect(self.add_sphere)
         meshMenu.addAction(self.add_sphere_action)
 
-        self.signal_close.connect(self.vtk_widget.interactor.close)
+        self.signal_close.connect(self.vtk_widget.close)
 
         if show:
             self.show()
@@ -60,7 +60,6 @@ class TstWindow(MainWindow):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
-    pytest.skip()
     window = TstWindow(show=False)
     qtbot.addWidget(window)
     window.add_sphere()
