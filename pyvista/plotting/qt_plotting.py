@@ -682,7 +682,6 @@ class BackgroundPlotter(QtInteractor):
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.menuAction().setMenuRole(QAction.NoRole)
         # member variable for testing only
         self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
 
@@ -690,12 +689,10 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
         view_menu.addAction('Clear All', self.clear)
-        view_menu.menuAction().setMenuRole(QAction.NoRole)
 
         tool_menu = self.main_menu.addMenu('Tools')
         tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
         tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
-        tool_menu.menuAction().setMenuRole(QAction.NoRole)
 
         cam_menu = view_menu.addMenu('Camera')
         cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
