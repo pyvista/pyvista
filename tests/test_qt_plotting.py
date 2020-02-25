@@ -60,7 +60,7 @@ class TstWindow(MainWindow):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
-    window = TstWindow(show=False)
+    window = TstWindow(show=True)
     qtbot.addWidget(window)
     window.add_sphere()
     assert np.any(window.vtk_widget.mesh.points)
@@ -218,7 +218,7 @@ def test_background_plotting_add_callback(qtbot):
     "plotter_close",
     "window_close",
     "q_key_press",
-    "menu_exit"
+    "menu_exit",
     ])
 @pytest.mark.parametrize('empty_scene', [
     True,
@@ -285,6 +285,8 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     # check that BasePlotter.close() is called
     assert not hasattr(plotter, "_style")
     assert not hasattr(plotter, "iren")
+    assert hasattr(plotter, "_closed")
+    assert plotter._closed
 
     # check that BasePlotter.__init__() is called only once
     assert len(_ALL_PLOTTERS) == 1
