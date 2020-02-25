@@ -96,9 +96,9 @@ def test_qt_interactor(qtbot):
     window.add_sphere()
     assert np.any(window.vtk_widget.mesh.points)
 
-    with qtbot.wait_exposed(window, timeout=5000):
+    with qtbot.wait_exposed(window, timeout=10000):
         window.show()
-    with qtbot.wait_exposed(interactor, timeout=5000):
+    with qtbot.wait_exposed(interactor, timeout=10000):
         interactor.show()
 
     assert window.isVisible()
