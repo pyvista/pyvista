@@ -21,12 +21,15 @@ except:
 
 
 class TstWindow(MainWindow):
-    def __init__(self, parent=None, show=True):
+    def __init__(self, parent=None, show=True, off_screen=True):
         MainWindow.__init__(self, parent)
 
         self.frame = QFrame()
         vlayout = QVBoxLayout()
-        self.vtk_widget = QtInteractor(self.frame)
+        self.vtk_widget = QtInteractor(
+            parent=self.frame,
+            off_screen=off_screen
+        )
         vlayout.addWidget(self.vtk_widget.interactor)
 
         self.frame.setLayout(vlayout)
@@ -52,7 +55,10 @@ class TstWindow(MainWindow):
             self.show()
 
     def add_sphere(self):
-        sphere = pyvista.Sphere()
+        sphere = pyvista.Sphere(
+            phi_resolution=6,
+            theta_resolution=6
+        )
         self.vtk_widget.add_mesh(sphere)
         self.vtk_widget.reset_camera()
 
@@ -60,11 +66,59 @@ class TstWindow(MainWindow):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_qt_interactor(qtbot):
-    window = TstWindow(show=True)
-    qtbot.addWidget(window)
+    from pyvista.plotting.plotting import close_all, _ALL_PLOTTERS
+    close_all()  # this is necessary to test _ALL_PLOTTERS
+    assert len(_ALL_PLOTTERS) == 0
+
+    window = TstWindow(show=False, off_screen=False)
+    qtbot.addWidget(window)  # register the main widget
+
+    # check that TstWindow.__init__() is called
+    assert hasattr(window, "vtk_widget")
+
+    vtk_widget = window.vtk_widget  # QtInteractor
+
+    # check that QtInteractor.__init__() is called
+    assert hasattr(vtk_widget, "iren")
+    assert hasattr(vtk_widget, "render_timer")
+    # check that BasePlotter.__init__() is called
+    assert hasattr(vtk_widget, "_style")
+    # check that QVTKRenderWindowInteractorAdapter.__init__() is called
+    assert hasattr(vtk_widget, "interactor")
+
+    interactor = vtk_widget.interactor  # QVTKRenderWindowInteractor
+    render_timer = vtk_widget.render_timer  # QTimer
+
+    # ensure that self.render is called by the timer
+    render_blocker = qtbot.wait_signals([render_timer.timeout], timeout=500)
+    render_blocker.wait()
+
     window.add_sphere()
     assert np.any(window.vtk_widget.mesh.points)
+
+    with qtbot.wait_exposed(window, timeout=1000):
+        window.show()
+    with qtbot.wait_exposed(interactor, timeout=1000):
+        interactor.show()
+
+    assert window.isVisible()
+    assert interactor.isVisible()
+    assert render_timer.isActive()
+
     window.close()
+
+    assert not window.isVisible()
+    assert not interactor.isVisible()
+    assert not render_timer.isActive()
+
+    # check that BasePlotter.close() is called
+    assert not hasattr(vtk_widget, "_style")
+    assert not hasattr(vtk_widget, "iren")
+    assert hasattr(vtk_widget, "_closed")
+    assert vtk_widget._closed
+
+    # check that BasePlotter.__init__() is called only once
+    assert len(_ALL_PLOTTERS) == 1
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -234,11 +288,11 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     # check that BackgroundPlotter.__init__() is called
     assert hasattr(plotter, "app_window")
     assert hasattr(plotter, "main_menu")
-    # check that BasePlotter.__init__() is called
-    assert hasattr(plotter, "_style")
     # check that QtInteractor.__init__() is called
     assert hasattr(plotter, "iren")
     assert hasattr(plotter, "render_timer")
+    # check that BasePlotter.__init__() is called
+    assert hasattr(plotter, "_style")
     # check that QVTKRenderWindowInteractorAdapter._init__() is called
     assert hasattr(plotter, "interactor")
 
@@ -246,6 +300,8 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     main_menu = plotter.main_menu  # QMenuBar
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
+
+    qtbot.addWidget(window)  # register the main widget
 
     # ensure that self.render is called by the timer
     render_blocker = qtbot.wait_signals([render_timer.timeout], timeout=500)
@@ -261,10 +317,10 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
         interactor.show()
 
     # check that the widgets are showed properly
-    assert render_timer.isActive()
     assert window.isVisible()
     assert interactor.isVisible()
     assert main_menu.isVisible()
+    assert render_timer.isActive()
 
     with qtbot.wait_signals([window.signal_close], timeout=500):
         if close_event == "plotter_close":
