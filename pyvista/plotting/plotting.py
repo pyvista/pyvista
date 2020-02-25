@@ -44,7 +44,7 @@ def close_all():
     for key, p in _ALL_PLOTTERS.items():
         if not hasattr(p, "_closed") or not p._closed:
             p.close()
-            p.deep_clean()
+        p.deep_clean()
     _ALL_PLOTTERS.clear()
     return True
 
