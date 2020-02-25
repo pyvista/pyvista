@@ -3513,7 +3513,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        self.close()
+        if not hasattr(self, "_closed") or not self._closed:
+            self.close()
         self.deep_clean()
         del self.renderers
 
