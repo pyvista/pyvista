@@ -23,6 +23,8 @@ plotter.add_mesh(mesh, scalars="data", clim=[0, 1])
 # Add outline for shrinking reference
 plotter.add_mesh(mesh.outline_corners())
 
+print('Orient the view, then press "q" to close window and produce movie')
+
 # Render and do NOT close
 plotter.show(auto_close=False)
 
