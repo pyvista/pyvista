@@ -675,6 +675,7 @@ class BackgroundPlotter(QtInteractor):
 
         # build main menu
         self.main_menu = QMenuBar(parent=self.app_window)
+        self.main_menu.setNativeMenuBar(False)
         self.app_window.setMenuBar(self.main_menu)
         self.app_window.signal_close.connect(self.main_menu.clear)
 
