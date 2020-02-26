@@ -33,12 +33,12 @@ def test_meshio(mesh_in, tmpdir):
 
 
 def test_file_format():
-    from meshio._exceptions import ReadError
+    from meshio._exceptions import ReadError, WriteError
     with pytest.raises(ReadError):
         _ = pyvista.read_meshio(examples.hexbeamfile, file_format="bar")
 
-    with pytest.raises(KeyError):
+    with pytest.raises((KeyError, WriteError)):
         pyvista.save_meshio("foo.bar", beam, file_format="bar")
 
-    with pytest.raises(KeyError):
+    with pytest.raises((KeyError, WriteError)):
         pyvista.save_meshio("foo.npy", beam, file_format="npy")
