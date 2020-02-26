@@ -12,7 +12,7 @@ NO_PLOTTING = not system_supports_plotting()
 
 
 try:
-    from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QAction)
+    from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QMenuBar, QAction)
     has_pyqt5 = True
 except:
     has_pyqt5 = False
@@ -35,7 +35,9 @@ class TstWindow(MainWindow):
         self.frame.setLayout(vlayout)
         self.setCentralWidget(self.frame)
 
-        mainMenu = self.menuBar()
+        mainMenu = QMenuBar(parent=self)
+        mainMenu.setNativeMenuBar(False)
+        self.setMenuBar(mainMenu)
 
         fileMenu = mainMenu.addMenu('File')
         self.exit_action = QAction('Exit', self)
@@ -96,9 +98,9 @@ def test_qt_interactor(qtbot):
     window.add_sphere()
     assert np.any(window.vtk_widget.mesh.points)
 
-    with qtbot.wait_exposed(window, timeout=10000):
+    with qtbot.wait_exposed(window, timeout=5000):
         window.show()
-    with qtbot.wait_exposed(interactor, timeout=10000):
+    with qtbot.wait_exposed(interactor, timeout=5000):
         interactor.show()
 
     assert window.isVisible()
