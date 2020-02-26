@@ -243,10 +243,10 @@ def test_background_plotting_add_callback(qtbot):
     plotter.add_callback(mycallback, interval=200, count=3)
 
     # check that timers are set properly in add_callback()
-    assert hasattr(plotter, "callback_timer")
+    assert hasattr(plotter, "_callback_timer")
     assert hasattr(plotter, "counters")
 
-    callback_timer = plotter.callback_timer  # QTimer
+    callback_timer = plotter._callback_timer  # QTimer
     counter = plotter.counters[-1]  # Counter
 
     # ensure that self.callback_timer send a signal
@@ -258,7 +258,7 @@ def test_background_plotting_add_callback(qtbot):
     assert not callback_timer.isActive()  # counter stops the callback
 
     plotter.add_callback(mycallback, interval=200)
-    callback_timer = plotter.callback_timer  # QTimer
+    callback_timer = plotter._callback_timer  # QTimer
 
     # ensure that self.callback_timer send a signal
     callback_blocker = qtbot.wait_signals([callback_timer.timeout], timeout=300)

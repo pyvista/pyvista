@@ -852,14 +852,14 @@ class BackgroundPlotter(QtInteractor):
             `func` will be called until the main window is closed.
 
         """
-        self.callback_timer = QTimer(parent=self.app_window)
-        self.callback_timer.timeout.connect(func)
-        self.callback_timer.start(interval)
-        self.app_window.signal_close.connect(self.callback_timer.stop)
+        self._callback_timer = QTimer(parent=self.app_window)
+        self._callback_timer.timeout.connect(func)
+        self._callback_timer.start(interval)
+        self.app_window.signal_close.connect(self._callback_timer.stop)
         if count is not None:
             counter = Counter(count)
-            counter.signal_finished.connect(self.callback_timer.stop)
-            self.callback_timer.timeout.connect(counter.decrease)
+            counter.signal_finished.connect(self._callback_timer.stop)
+            self._callback_timer.timeout.connect(counter.decrease)
             self.counters.append(counter)
 
 
