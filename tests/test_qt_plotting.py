@@ -85,6 +85,7 @@ def test_qt_interactor(qtbot):
     assert hasattr(vtk_widget, "render_timer")
     # check that BasePlotter.__init__() is called
     assert hasattr(vtk_widget, "_style")
+    assert hasattr(vtk_widget, "_closed")
     # check that QVTKRenderWindowInteractorAdapter.__init__() is called
     assert hasattr(vtk_widget, "interactor")
 
@@ -106,6 +107,7 @@ def test_qt_interactor(qtbot):
     assert window.isVisible()
     assert interactor.isVisible()
     assert render_timer.isActive()
+    assert not vtk_widget._closed
 
     window.close()
 
@@ -116,7 +118,6 @@ def test_qt_interactor(qtbot):
     # check that BasePlotter.close() is called
     assert not hasattr(vtk_widget, "_style")
     assert not hasattr(vtk_widget, "iren")
-    assert hasattr(vtk_widget, "_closed")
     assert vtk_widget._closed
 
     # check that BasePlotter.__init__() is called only once
@@ -295,6 +296,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     assert hasattr(plotter, "render_timer")
     # check that BasePlotter.__init__() is called
     assert hasattr(plotter, "_style")
+    assert hasattr(plotter, "_closed")
     # check that QVTKRenderWindowInteractorAdapter._init__() is called
     assert hasattr(plotter, "interactor")
 
@@ -323,6 +325,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     assert interactor.isVisible()
     assert main_menu.isVisible()
     assert render_timer.isActive()
+    assert not plotter._closed
 
     with qtbot.wait_signals([window.signal_close], timeout=500):
         if close_event == "plotter_close":
@@ -343,7 +346,6 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     # check that BasePlotter.close() is called
     assert not hasattr(plotter, "_style")
     assert not hasattr(plotter, "iren")
-    assert hasattr(plotter, "_closed")
     assert plotter._closed
 
     # check that BasePlotter.__init__() is called only once

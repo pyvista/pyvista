@@ -42,7 +42,7 @@ _ALL_PLOTTERS = {}
 def close_all():
     """Close all open/active plotters and clean up memory."""
     for key, p in _ALL_PLOTTERS.items():
-        if not hasattr(p, "_closed") or not p._closed:
+        if not p._closed:
             p.close()
         p.deep_clean()
     _ALL_PLOTTERS.clear()
@@ -185,6 +185,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._labels = []
         # Set default style
         self._style = vtk.vtkInteractorStyleRubberBandPick()
+        # this helps managing closed plotters
+        self._closed = False
 
         # Add self to open plotters
         self._id_name = "{}-{}".format(str(hex(id(self))), len(_ALL_PLOTTERS))
@@ -3513,7 +3515,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        if not hasattr(self, "_closed") or not self._closed:
+        if not self._closed:
             self.close()
         self.deep_clean()
         del self.renderers
