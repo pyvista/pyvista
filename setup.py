@@ -22,7 +22,7 @@ install_requires = ['numpy',
                     'imageio',
                     'appdirs',
                     'scooby>=0.5.1',
-                    'meshio>=4.0.3',
+                    'meshio>=4.0.3, <5.0',
                     ]
 
 # add vtk if not windows and 2.7
