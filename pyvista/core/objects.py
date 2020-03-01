@@ -456,10 +456,14 @@ class Texture(vtk.vtkTexture):
 
 
     def _from_array(self, image):
-        if image.ndim != 3 or image.shape[2] != 3:
-            raise AssertionError('Input image must be nn by nm by RGB')
+        if image.ndim != 3:
+            raise AssertionError('Input image must be nn by nm by RGB[A]')
+
+        if image.shape[2] != 3 and image.shape[2] != 4:
+            raise AssertionError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-        grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
+        grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, image.shape[2]), order='F')
         grid.set_active_scalars('Image')
         return self._from_image_data(grid)
 
