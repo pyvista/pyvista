@@ -174,15 +174,49 @@ def test_background_plotting_camera(qtbot):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotter_export_files(qtbot, tmpdir):
-    plotter = pyvista.BackgroundPlotter(off_screen=False, title='Testing Window')
+    # setup filesystem
+    output_dir = tmpdir.mkdir("tmpdir")
+    assert os.path.isdir(output_dir)
+
+    plotter = pyvista.BackgroundPlotter(
+        show=False,
+        off_screen=False,
+        title='Testing Window'
+    )
+    assert hasattr(plotter, "app_window")
+    window = plotter.app_window  # MainWindow
+    qtbot.addWidget(window)  # register the window
+
+    # show the window
+    assert not window.isVisible()
+    with qtbot.wait_exposed(window, timeout=1000):
+        window.show()
+    assert window.isVisible()
+
     plotter.add_mesh(pyvista.Sphere())
+    assert hasattr(plotter, "renderer")
+    renderer = plotter.renderer
+    assert len(renderer._actors) == 1
 
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.png'))
-    dlg = plotter._qt_screenshot(show=True)
-    dlg.selectFile(filename)
-    dlg.accept()
+    dlg = plotter._qt_screenshot(show=False)  # FileDialog
+    qtbot.addWidget(dlg)  # register the dialog
+
+    filename = output_dir.join("tmp.png")
+    dlg.selectFile(str(filename))
+
+    # show the dialog
+    assert not dlg.isVisible()
+    with qtbot.wait_exposed(dlg, timeout=500):
+        dlg.show()
+    assert dlg.isVisible()
+
+    # synchronise signal and callback
+    with qtbot.wait_signals([dlg.accepted], timeout=10000):
+        dlg.accept()
+    assert not dlg.isVisible()  # dialog is closed after accept()
+
     plotter.close()
-
+    assert not window.isVisible()
     assert os.path.isfile(filename)
 
 
