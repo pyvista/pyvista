@@ -126,18 +126,45 @@ def test_qt_interactor(qtbot):
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
-def test_background_plotting_axes_scale(qtbot):
-    sphere = pyvista.Sphere()
-    plotter = pyvista.BackgroundPlotter(off_screen=False, title='Testing Window')
-    plotter.add_mesh(sphere)
+@pytest.mark.parametrize('show_plotter', [
+    True,
+    False,
+    ])
+def test_background_plotting_axes_scale(qtbot, show_plotter):
+    plotter = pyvista.BackgroundPlotter(
+        show=show_plotter,
+        off_screen=False,
+        title='Testing Window'
+    )
+    assert hasattr(plotter, "app_window")
+    window = plotter.app_window  # MainWindow
+    qtbot.addWidget(window)  # register the window
+
+    # show the window
+    if not show_plotter:
+        assert not window.isVisible()
+        with qtbot.wait_exposed(window, timeout=1000):
+            window.show()
+    assert window.isVisible()
+
+    plotter.add_mesh(pyvista.Sphere())
+    assert hasattr(plotter, "renderer")
+    renderer = plotter.renderer
+    assert len(renderer._actors) == 1
     assert np.any(plotter.mesh.points)
 
-    dlg = plotter.scale_axes_dialog(show=True)
+    dlg = plotter.scale_axes_dialog(show=False)  # ScaleAxesDialog
+    qtbot.addWidget(dlg)  # register the dialog
+
+    # show the dialog
+    assert not dlg.isVisible()
+    with qtbot.wait_exposed(dlg, timeout=500):
+        dlg.show()
+    assert dlg.isVisible()
 
     value = 2.0
     dlg.x_slider_group.value = value
     assert plotter.scale[0] == value
-
     dlg.x_slider_group.spinbox.setValue(-1)
     assert dlg.x_slider_group.value == 0
     dlg.x_slider_group.spinbox.setValue(1000.0)
@@ -147,6 +174,8 @@ def test_background_plotting_axes_scale(qtbot):
     plotter.update()
     plotter.update_app_icon()
     plotter.close()
+    assert not window.isVisible()
+    assert not dlg.isVisible()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -202,6 +231,7 @@ def test_background_plotter_export_files(qtbot, tmpdir, show_plotter):
     assert hasattr(plotter, "renderer")
     renderer = plotter.renderer
     assert len(renderer._actors) == 1
+    assert np.any(plotter.mesh.points)
 
     dlg = plotter._qt_screenshot(show=False)  # FileDialog
     qtbot.addWidget(dlg)  # register the dialog
@@ -256,6 +286,7 @@ def test_background_plotter_export_vtkjs(qtbot, tmpdir, show_plotter):
     assert hasattr(plotter, "renderer")
     renderer = plotter.renderer
     assert len(renderer._actors) == 1
+    assert np.any(plotter.mesh.points)
 
     dlg = plotter._qt_export_vtkjs(show=False)  # FileDialog
     qtbot.addWidget(dlg)  # register the dialog
@@ -299,19 +330,30 @@ def test_background_plotting_add_callback(qtbot):
         def __call__(self):
             self.sphere.points *= 0.5
 
-    plotter = pyvista.BackgroundPlotter(off_screen=False, title='Testing Window')
+    plotter = pyvista.BackgroundPlotter(
+            show=False,
+            off_screen=False,
+            title='Testing Window'
+    )
     sphere = pyvista.Sphere()
     mycallback = CallBack(sphere)
     plotter.add_mesh(sphere)
     plotter.add_callback(mycallback, interval=200, count=3)
 
     # check that timers are set properly in add_callback()
+    assert hasattr(plotter, "app_window")
     assert hasattr(plotter, "_callback_timer")
     assert hasattr(plotter, "counters")
 
+    window = plotter.app_window  # MainWindow
     callback_timer = plotter._callback_timer  # QTimer
     counter = plotter.counters[-1]  # Counter
 
+    # ensure that the window is showed
+    assert not window.isVisible()
+    with qtbot.wait_exposed(window, timeout=500):
+        window.show()
+    assert window.isVisible()
     # ensure that self.callback_timer send a signal
     callback_blocker = qtbot.wait_signals([callback_timer.timeout], timeout=300)
     callback_blocker.wait()
