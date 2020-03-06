@@ -4,8 +4,10 @@ import numpy as np
 import pytest
 
 import pyvista
-from pyvista import QtInteractor, MainWindow
+import vtk
+from pyvista import QtInteractor, MainWindow, Renderer
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.qt_plotting import QVTKRenderWindowInteractor, QTimer
 
 
 NO_PLOTTING = not system_supports_plotting()
@@ -76,18 +78,18 @@ def test_qt_interactor(qtbot):
     qtbot.addWidget(window)  # register the main widget
 
     # check that TstWindow.__init__() is called
-    assert hasattr(window, "vtk_widget")
+    assert _hasattr(window, "vtk_widget", QtInteractor)
 
     vtk_widget = window.vtk_widget  # QtInteractor
 
     # check that QtInteractor.__init__() is called
-    assert hasattr(vtk_widget, "iren")
-    assert hasattr(vtk_widget, "render_timer")
+    assert _hasattr(vtk_widget, "iren", vtk.vtkRenderWindowInteractor)
+    assert _hasattr(vtk_widget, "render_timer", QTimer)
     # check that BasePlotter.__init__() is called
-    assert hasattr(vtk_widget, "_style")
-    assert hasattr(vtk_widget, "_closed")
+    assert _hasattr(vtk_widget, "_style", vtk.vtkInteractorStyle)
+    assert _hasattr(vtk_widget, "_closed", bool)
     # check that QVTKRenderWindowInteractorAdapter.__init__() is called
-    assert hasattr(vtk_widget, "interactor")
+    assert _hasattr(vtk_widget, "interactor", QVTKRenderWindowInteractor)
 
     interactor = vtk_widget.interactor  # QVTKRenderWindowInteractor
     render_timer = vtk_widget.render_timer  # QTimer
@@ -136,7 +138,7 @@ def test_background_plotting_axes_scale(qtbot, show_plotter):
         off_screen=False,
         title='Testing Window'
     )
-    assert hasattr(plotter, "app_window")
+    assert _hasattr(plotter, "app_window", MainWindow)
     window = plotter.app_window  # MainWindow
     qtbot.addWidget(window)  # register the window
 
@@ -148,7 +150,7 @@ def test_background_plotting_axes_scale(qtbot, show_plotter):
     assert window.isVisible()
 
     plotter.add_mesh(pyvista.Sphere())
-    assert hasattr(plotter, "renderer")
+    assert _hasattr(plotter, "renderer", Renderer)
     renderer = plotter.renderer
     assert len(renderer._actors) == 1
     assert np.any(plotter.mesh.points)
@@ -216,7 +218,7 @@ def test_background_plotter_export_files(qtbot, tmpdir, show_plotter):
         off_screen=False,
         title='Testing Window'
     )
-    assert hasattr(plotter, "app_window")
+    assert _hasattr(plotter, "app_window", MainWindow)
     window = plotter.app_window  # MainWindow
     qtbot.addWidget(window)  # register the window
 
@@ -228,7 +230,7 @@ def test_background_plotter_export_files(qtbot, tmpdir, show_plotter):
     assert window.isVisible()
 
     plotter.add_mesh(pyvista.Sphere())
-    assert hasattr(plotter, "renderer")
+    assert _hasattr(plotter, "renderer", Renderer)
     renderer = plotter.renderer
     assert len(renderer._actors) == 1
     assert np.any(plotter.mesh.points)
@@ -271,7 +273,7 @@ def test_background_plotter_export_vtkjs(qtbot, tmpdir, show_plotter):
         off_screen=False,
         title='Testing Window'
     )
-    assert hasattr(plotter, "app_window")
+    assert _hasattr(plotter, "app_window", MainWindow)
     window = plotter.app_window  # MainWindow
     qtbot.addWidget(window)  # register the window
 
@@ -283,7 +285,7 @@ def test_background_plotter_export_vtkjs(qtbot, tmpdir, show_plotter):
     assert window.isVisible()
 
     plotter.add_mesh(pyvista.Sphere())
-    assert hasattr(plotter, "renderer")
+    assert _hasattr(plotter, "renderer", Renderer)
     renderer = plotter.renderer
     assert len(renderer._actors) == 1
     assert np.any(plotter.mesh.points)
@@ -341,9 +343,9 @@ def test_background_plotting_add_callback(qtbot):
     plotter.add_callback(mycallback, interval=200, count=3)
 
     # check that timers are set properly in add_callback()
-    assert hasattr(plotter, "app_window")
-    assert hasattr(plotter, "_callback_timer")
-    assert hasattr(plotter, "counters")
+    assert _hasattr(plotter, "app_window", MainWindow)
+    assert _hasattr(plotter, "_callback_timer", QTimer)
+    assert _hasattr(plotter, "counters", list)
 
     window = plotter.app_window  # MainWindow
     callback_timer = plotter._callback_timer  # QTimer
@@ -395,16 +397,16 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     plotter = _create_testing_scene(empty_scene)
 
     # check that BackgroundPlotter.__init__() is called
-    assert hasattr(plotter, "app_window")
-    assert hasattr(plotter, "main_menu")
+    assert _hasattr(plotter, "app_window", MainWindow)
+    assert _hasattr(plotter, "main_menu", QMenuBar)
     # check that QtInteractor.__init__() is called
-    assert hasattr(plotter, "iren")
-    assert hasattr(plotter, "render_timer")
+    assert _hasattr(plotter, "iren", vtk.vtkRenderWindowInteractor)
+    assert _hasattr(plotter, "render_timer", QTimer)
     # check that BasePlotter.__init__() is called
-    assert hasattr(plotter, "_style")
-    assert hasattr(plotter, "_closed")
+    assert _hasattr(plotter, "_style", vtk.vtkInteractorStyle)
+    assert _hasattr(plotter, "_closed", bool)
     # check that QVTKRenderWindowInteractorAdapter._init__() is called
-    assert hasattr(plotter, "interactor")
+    assert _hasattr(plotter, "interactor", QVTKRenderWindowInteractor)
 
     window = plotter.app_window  # MainWindow
     main_menu = plotter.main_menu  # QMenuBar
@@ -495,3 +497,9 @@ def _create_testing_scene(empty_scene, show=False, off_screen=False):
         plotter.add_mesh(sphere)
         plotter.enable_cell_picking()
     return plotter
+
+
+def _hasattr(variable, attribute_name, variable_type):
+    if not hasattr(variable, attribute_name):
+        return False
+    return isinstance(getattr(variable, attribute_name), variable_type)
