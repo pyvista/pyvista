@@ -7,7 +7,8 @@ import pyvista
 import vtk
 from pyvista import QtInteractor, MainWindow, Renderer
 from pyvista.plotting import system_supports_plotting
-from pyvista.plotting.qt_plotting import QVTKRenderWindowInteractor, QTimer
+from pyvista.plotting.qt_plotting import (QVTKRenderWindowInteractor, QTimer
+                                          _create_menu_bar)
 
 
 NO_PLOTTING = not system_supports_plotting()
@@ -37,9 +38,7 @@ class TstWindow(MainWindow):
         self.frame.setLayout(vlayout)
         self.setCentralWidget(self.frame)
 
-        mainMenu = QMenuBar(parent=self)
-        mainMenu.setNativeMenuBar(False)
-        self.setMenuBar(mainMenu)
+        mainMenu = _create_menu_bar(parent=self)
 
         fileMenu = mainMenu.addMenu('File')
         self.exit_action = QAction('Exit', self)

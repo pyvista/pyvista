@@ -675,9 +675,7 @@ class BackgroundPlotter(QtInteractor):
         self.add_toolbars(self.app_window)
 
         # build main menu
-        self.main_menu = QMenuBar(parent=self.app_window)
-        self.main_menu.setNativeMenuBar(False)
-        self.app_window.setMenuBar(self.main_menu)
+        self.main_menu = _create_menu_bar(parent=self.app_window)
         self.app_window.signal_close.connect(self.main_menu.clear)
 
         file_menu = self.main_menu.addMenu('File')
@@ -902,3 +900,18 @@ class Counter(QObject):
         self.count -= 1
         if self.count <= 0:
             self.signal_finished.emit()
+
+
+def _create_menu_bar(parent):
+    """Create a menu bar.
+
+    The menu bar is expected to behave consistently
+    for every operating system since `setNativeMenuBar(False)`
+    is called by default and therefore lifetime and ownership can
+    be tested.
+    """
+    menu_bar = QMenuBar(parent=parent)
+    menu_bar.setNativeMenuBar(False)
+    if parent is not None:
+        parent.setMenuBar(self.main_menu)
+    return menu_bar
