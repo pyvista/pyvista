@@ -7,7 +7,7 @@ import pyvista
 import vtk
 from pyvista import QtInteractor, MainWindow, Renderer
 from pyvista.plotting import system_supports_plotting
-from pyvista.plotting.qt_plotting import (QVTKRenderWindowInteractor, QTimer
+from pyvista.plotting.qt_plotting import (QVTKRenderWindowInteractor, QTimer,
                                           _create_menu_bar)
 
 
