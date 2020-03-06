@@ -410,6 +410,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
 
     window = plotter.app_window  # MainWindow
     main_menu = plotter.main_menu  # QMenuBar
+    assert not main_menu.isNativeMenuBar()
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
 
