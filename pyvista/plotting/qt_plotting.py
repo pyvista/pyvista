@@ -913,5 +913,5 @@ def _create_menu_bar(parent):
     menu_bar = QMenuBar(parent=parent)
     menu_bar.setNativeMenuBar(False)
     if parent is not None:
-        parent.setMenuBar(self.main_menu)
+        parent.setMenuBar(menu_bar)
     return menu_bar
