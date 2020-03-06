@@ -158,7 +158,7 @@ jobs:
       Python37:
         python.version: '3.7'
   pool:
-    vmImage: 'macOS-10.15.3'
+    vmImage: 'macOS-10.15'
   steps:
     - script: .ci/macos-install-python.sh '$(python.version)'
       displayName: Install Python
