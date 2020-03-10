@@ -99,9 +99,7 @@ from sphinx_gallery.sorting import FileNameSortKey
 
 sphinx_gallery_conf = {
     # path to your examples scripts
-    "examples_dirs": [
-        "../examples/",
-    ],
+    "examples_dirs": ["./sphinx_examples/"],
     # path where to save gallery generated examples
     "gallery_dirs": ["examples"],
     # Patter to search for example files
@@ -135,7 +133,7 @@ html_context = {
     # Format Template: https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}
     'github_user': 'pyvista',
     'github_repo': 'pyvista',
-    'github_version': 'master/',
+    'github_version': 'master/docs/',
     'menu_links_name': 'Getting Connected',
     'menu_links': [
         ('<i class="fa fa-slack fa-fw"></i> Slack Community', 'http://slack.pyvista.org'),
