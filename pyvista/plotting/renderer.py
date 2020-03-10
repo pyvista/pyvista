@@ -898,7 +898,7 @@ class Renderer(vtkRenderer):
         if self._actors:
             for actor in list(self._actors):
                 try:
-                    self.remove_actor(actor, reset_camera=False)
+                    self.remove_actor(actor, reset_camera=False, render=False)
                 except KeyError:
                     pass
 
@@ -951,7 +951,7 @@ class Renderer(vtkRenderer):
         self.Modified()
 
 
-    def remove_actor(self, actor, reset_camera=False):
+    def remove_actor(self, actor, reset_camera=False, render=True):
         """Remove an actor from the Renderer.
 
         Parameters
@@ -964,6 +964,10 @@ class Renderer(vtkRenderer):
 
         reset_camera : bool, optional
             Resets camera so all actors can be seen.
+
+        render : bool, optional
+            Render upon actor removal.  Set this to ``False`` to stop
+            the render window from rendering when an actor is removed.
 
         Return
         ------
@@ -1011,11 +1015,11 @@ class Renderer(vtkRenderer):
             self.reset_camera()
         elif not self.camera_set and reset_camera is None:
             self.reset_camera()
-        else:
+        elif render:
             self.parent.render()
+
         self.Modified()
         return True
-
 
     def set_scale(self, xscale=None, yscale=None, zscale=None, reset_camera=True):
         """Scale all the datasets in the scene.
