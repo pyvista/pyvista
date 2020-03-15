@@ -194,7 +194,7 @@ jobs:
     - script: |
         python -m pip install -r requirements_test.txt
         python -m pip install pytest-azurepipelines
-        python -m pytest -v --cov pyvista --cov-report html
+        python -m pytest -v --cov pyvista --cov-report html --durations=0
       displayName: 'Run Tests'
 
 

@@ -260,6 +260,7 @@ class ScaleAxesDialog(QDialog):
         self.setMinimumWidth(500)
         self.signal_close.connect(self.close)
         self.plotter = plotter
+        self.plotter.app_window.signal_close.connect(self.close)
 
         self.x_slider_group = RangeGroup(parent, self.update_scale,
                                          value=plotter.scale[0])
@@ -670,19 +671,19 @@ class BackgroundPlotter(QtInteractor):
         super(BackgroundPlotter, self).__init__(parent=self.frame,
                                                 off_screen=off_screen,
                                                 **kwargs)
-        self.app_window.signal_close.connect(lambda: QtInteractor.close(self))
+        self.app_window.signal_close.connect(self._close)
         self.add_toolbars(self.app_window)
 
         # build main menu
-        self.main_menu = QMenuBar(parent=self.app_window)
-        self.app_window.setMenuBar(self.main_menu)
+        self.main_menu = _create_menu_bar(parent=self.app_window)
         self.app_window.signal_close.connect(self.main_menu.clear)
 
         file_menu = self.main_menu.addMenu('File')
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.app_window.close)
+        # member variable for testing only
+        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
 
         view_menu = self.main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
@@ -758,6 +759,11 @@ class BackgroundPlotter(QtInteractor):
         """
         self.app_window.close()
 
+    def _close(self):
+        if hasattr(self, "render_timer"):
+            self.render_timer.stop()
+        BasePlotter.close(self)
+
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window."""
         if os.name == 'nt' or not hasattr(self, '_last_window_size'):  # pragma: no cover
@@ -829,7 +835,8 @@ class BackgroundPlotter(QtInteractor):
 
     def __del__(self):  # pragma: no cover
         """Delete the qt plotter."""
-        self.app_window.close()
+        if not self._closed:
+            self.app_window.close()
 
     def add_callback(self, func, interval=1000, count=None):
         """Add a function that can update the scene in the background.
@@ -845,14 +852,14 @@ class BackgroundPlotter(QtInteractor):
             `func` will be called until the main window is closed.
 
         """
-        timer = QTimer(parent=self.app_window)
-        timer.timeout.connect(func)
-        timer.start(interval)
-        self.app_window.signal_close.connect(timer.stop)
+        self._callback_timer = QTimer(parent=self.app_window)
+        self._callback_timer.timeout.connect(func)
+        self._callback_timer.start(interval)
+        self.app_window.signal_close.connect(self._callback_timer.stop)
         if count is not None:
             counter = Counter(count)
-            counter.signal_finished.connect(timer.stop)
-            timer.timeout.connect(counter.decrease)
+            counter.signal_finished.connect(self._callback_timer.stop)
+            self._callback_timer.timeout.connect(counter.decrease)
             self.counters.append(counter)
 
 
@@ -864,7 +871,11 @@ class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         """Initialize the main window."""
         super(MainWindow, self).__init__(parent)
-        self.signal_close.connect(self.close)
+
+    def closeEvent(self, event):
+        """Manage the close event."""
+        self.signal_close.emit()
+        event.accept()
 
 
 class Counter(QObject):
@@ -889,3 +900,18 @@ class Counter(QObject):
         self.count -= 1
         if self.count <= 0:
             self.signal_finished.emit()
+
+
+def _create_menu_bar(parent):
+    """Create a menu bar.
+
+    The menu bar is expected to behave consistently
+    for every operating system since `setNativeMenuBar(False)`
+    is called by default and therefore lifetime and ownership can
+    be tested.
+    """
+    menu_bar = QMenuBar(parent=parent)
+    menu_bar.setNativeMenuBar(False)
+    if parent is not None:
+        parent.setMenuBar(menu_bar)
+    return menu_bar

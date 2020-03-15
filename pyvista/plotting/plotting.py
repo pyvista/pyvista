@@ -42,7 +42,8 @@ _ALL_PLOTTERS = {}
 def close_all():
     """Close all open/active plotters and clean up memory."""
     for key, p in _ALL_PLOTTERS.items():
-        p.close()
+        if not p._closed:
+            p.close()
         p.deep_clean()
     _ALL_PLOTTERS.clear()
     return True
@@ -184,6 +185,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._labels = []
         # Set default style
         self._style = vtk.vtkInteractorStyleRubberBandPick()
+        # this helps managing closed plotters
+        self._closed = False
 
         # Add self to open plotters
         self._id_name = "{}-{}".format(str(hex(id(self))), len(_ALL_PLOTTERS))
@@ -2546,7 +2549,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._style
 
         if hasattr(self, 'iren'):
-            self.iren.RemoveAllObservers()
+            # self.iren.RemoveAllObservers()
+            self.iren.RemoveObservers(vtk.vtkCommand.MouseMoveEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.RightButtonPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.LeftButtonPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.KeyPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.TimerEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.EndPickEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.StartInteractionEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.EndInteractionEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.StateChangedEvent)
             self.iren.TerminateApp()
             del self.iren
 
@@ -2559,6 +2571,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.mwriter.close()
             except BaseException:
                 pass
+
+        # this helps managing closed plotters
+        self._closed = True
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -3500,7 +3515,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        self.close()
+        if not self._closed:
+            self.close()
         self.deep_clean()
         del self.renderers
 
