@@ -17,7 +17,7 @@ help:
 clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf examples/
-	rm errors.txt
+	rm -f errors.txt
 	rm -rf images/auto-generated
 
 
