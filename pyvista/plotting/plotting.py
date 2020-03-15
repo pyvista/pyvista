@@ -42,7 +42,8 @@ _ALL_PLOTTERS = {}
 def close_all():
     """Close all open/active plotters and clean up memory."""
     for key, p in _ALL_PLOTTERS.items():
-        p.close()
+        if not p._closed:
+            p.close()
         p.deep_clean()
     _ALL_PLOTTERS.clear()
     return True
@@ -78,6 +79,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     border_width : float, optional
         Width of the border in pixels when enabled.
+
+    title : str, optional
+        Window title of the scalar bar
 
     """
 
@@ -181,6 +185,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._labels = []
         # Set default style
         self._style = vtk.vtkInteractorStyleRubberBandPick()
+        # this helps managing closed plotters
+        self._closed = False
 
         # Add self to open plotters
         self._id_name = "{}-{}".format(str(hex(id(self))), len(_ALL_PLOTTERS))
@@ -618,6 +624,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if hasattr(self, 'ren_win') and not self._first_time:
             self.ren_win.Render()
+        # Not sure if this is ever needed but here as a reminder
+        # if hasattr(self, 'iren') and not self._first_time:
+        #     self.iren.Render()
+        return
 
     def add_key_event(self, key, callback):
         """Add a function to callback when the given key is pressed.
@@ -728,9 +738,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._click_observer
 
 
-    def _close_callback(self):
-        """Make sure a screenhsot is acquired before closing."""
-        self.q_pressed = True
+    def _prep_for_close(self):
+        """Make sure a screenshot is acquired before closing.
+
+        This doesn't actually close anything! It just preps the plotter for
+        closing.
+        """
         # Grab screenshot right before renderer closes
         self.last_image = self.screenshot(True, return_img=True)
         self.last_image_depth = self.get_image_depth()
@@ -751,6 +764,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         prop.SetPointSize(prop.GetPointSize() + increment)
                     if hasattr(prop, "SetLineWidth"):
                         prop.SetLineWidth(prop.GetLineWidth() + increment)
+        self.render()
         return
 
 
@@ -758,8 +772,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset all of the key press events to their defaults."""
         self._key_press_event_callbacks = collections.defaultdict(list)
 
-        if not isinstance(self, pyvista.QtInteractor) or isinstance(self, pyvista.BackgroundPlotter):
-            self.add_key_event('q', self._close_callback)
+        self.add_key_event('q', self._prep_for_close) # Add no matter what
         b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
@@ -770,18 +783,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_key_event('plus', lambda: self.increment_point_size_and_line_width(1))
         self.add_key_event('minus', lambda: self.increment_point_size_and_line_width(-1))
 
-
     def key_press_event(self, obj, event):
         """Listen for key press event."""
-        key = self.iren.GetKeySym()
-        log.debug('Key %s pressed' % key)
-        self._last_key = key
-        if key in self._key_press_event_callbacks.keys():
-            # Note that defaultdict's will never throw a key error
-            callbacks = self._key_press_event_callbacks[key]
-            for func in callbacks:
-                func()
-
+        try:
+            key = self.iren.GetKeySym()
+            log.debug('Key %s pressed' % key)
+            self._last_key = key
+            if key in self._key_press_event_callbacks.keys():
+                # Note that defaultdict's will never throw a key error
+                callbacks = self._key_press_event_callbacks[key]
+                for func in callbacks:
+                    func()
+        except Exception as e:
+            log.error('Exception encountered for keypress "%s" % %s' (key, str(e)))
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
@@ -926,7 +940,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             milliseconds.
 
         force_redraw : bool, optional
-            Call vtkRenderWindowInteractor.Render() immediately.
+            Call ``render`` immediately.
 
         """
         if stime <= 0:
@@ -948,9 +962,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
             self.render()
             Plotter.last_update_time = curr_time
-        else:
-            if force_redraw:
-                self.iren.Render()
+        elif force_redraw:
+            self.render()
 
     def add_mesh(self, mesh, color=None, style=None, scalars=None,
                  clim=None, show_edges=None, edge_color=None,
@@ -1602,6 +1615,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
+        self.renderer.Modified()
+
         return actor
 
 
@@ -1620,16 +1635,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         Parameters
         ----------
-        volume : 3D numpy.ndarray or pyvista.UnformGrid
+        volume : 3D numpy.ndarray or pyvista.UniformGrid
             The input volume to visualize. 3D numpy arrays are accepted.
 
         scalars : str or numpy.ndarray, optional
             Scalars used to "color" the mesh.  Accepts a string name of an
             array that is present on the mesh or an array equal
             to the number of cells or the number of points in the
-            mesh.  Array should be sized as a single vector. If both
-            ``color`` and ``scalars`` are ``None``, then the active scalars are
-            used.
+            mesh.  Array should be sized as a single vector. If ``scalars`` is
+            ``None``, then the active scalars are used.
 
         clim : 2 item list, optional
             Color bar range for scalars.  Defaults to minimum and
@@ -1647,13 +1661,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         n_colors : int, optional
             Number of colors to use when displaying scalars. Defaults to 256.
             The scalar bar will also have this many colors.
-
-        flip_scalars : bool, optional
-            Flip direction of cmap.
-
-        n_colors : int, optional
-            Number of colors to use when displaying scalars.  Default
-            256.
 
         cmap : str, optional
            Name of the Matplotlib colormap to us when mapping the ``scalars``.
@@ -1834,7 +1841,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return actors
 
         if not isinstance(volume, pyvista.UniformGrid):
-            raise TypeError('Type ({}) not supported for volume rendering at this time. Use `pyvista.UniformGrid`.')
+            raise TypeError('Type {} not supported for volume rendering at this time. Use `pyvista.UniformGrid`.'.format(type(volume)))
 
         if opacity_unit_distance is None:
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
@@ -2012,6 +2019,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if stitle is not None and show_scalar_bar:
             self.add_scalar_bar(stitle, **scalar_bar_args)
 
+        self.renderer.Modified()
 
         return actor
 
@@ -2450,7 +2458,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
             if render:
-                self.ren_win.Render()
+                self.render()
             return
 
         if isinstance(scalars, str):
@@ -2459,7 +2467,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if scalars is None:
             if render:
-                self.ren_win.Render()
+                self.render()
             return
 
         if scalars.shape[0] == mesh.GetNumberOfPoints():
@@ -2483,7 +2491,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             pass
 
         if render:
-            self.ren_win.Render()
+            self.render()
 
     def update_coordinates(self, points, mesh=None, render=True):
         """Update the points of an object in the plotter.
@@ -2541,7 +2549,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._style
 
         if hasattr(self, 'iren'):
-            self.iren.RemoveAllObservers()
+            # self.iren.RemoveAllObservers()
+            self.iren.RemoveObservers(vtk.vtkCommand.MouseMoveEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.RightButtonPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.LeftButtonPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.KeyPressEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.TimerEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.EndPickEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.StartInteractionEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.EndInteractionEvent)
+            self.iren.RemoveObservers(vtk.vtkCommand.StateChangedEvent)
             self.iren.TerminateApp()
             del self.iren
 
@@ -2554,6 +2571,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.mwriter.close()
             except BaseException:
                 pass
+
+        # this helps managing closed plotters
+        self._closed = True
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -3495,7 +3515,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __del__(self):
         """Delete the plotter."""
-        self.close()
+        if not self._closed:
+            self.close()
         self.deep_clean()
         del self.renderers
 
@@ -3517,7 +3538,7 @@ class Plotter(BasePlotter):
     Parameters
     ----------
     off_screen : bool, optional
-        Renders off screen when False.  Useful for automated screenshots.
+        Renders off screen when True.  Useful for automated screenshots.
 
     notebook : bool, optional
         When True, the resulting plot is placed inline a jupyter notebook.
@@ -3561,7 +3582,6 @@ class Plotter(BasePlotter):
     """
 
     last_update_time = 0.0
-    q_pressed = False
     right_timer_id = -1
 
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
@@ -3724,7 +3744,7 @@ class Plotter(BasePlotter):
 
         # Render
         log.debug('Rendering')
-        self.ren_win.Render()
+        self.render()
 
         # This has to be after the first render for some reason
         if title is None:

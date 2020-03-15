@@ -23,6 +23,7 @@ Example
 
 """
 import collections
+from functools import wraps
 import logging
 
 import numpy as np
@@ -637,7 +638,7 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def wireframe(dataset):
+    def extract_all_edges(dataset):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -647,6 +648,16 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
+
+    @wraps(extract_all_edges)
+    def wireframe(self, *args, **kwargs):
+        """Wrap ``extract_all_edges``.
+
+        DEPRECATED: Please use ``extract_all_edges`` instead.
+
+        """
+        logging.warning("DEPRECATED: ``.wireframe`` is deprecated. Use ``.extract_all_edges`` instead.")
+        return self.extract_all_edges(*args, **kwargs)
 
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
                   preference='point', set_active=True):
@@ -1899,9 +1910,9 @@ class DataSetFilters(object):
         return surf.point_arrays['vtkOriginalPointIds']
 
 
-    def extract_edges(dataset, feature_angle=30, boundary_edges=True,
-                      non_manifold_edges=True, feature_edges=True,
-                      manifold_edges=True, inplace=False):
+    def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
+                              non_manifold_edges=True, feature_edges=True,
+                              manifold_edges=True, inplace=False):
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -1958,6 +1969,15 @@ class DataSetFilters(object):
         else:
             return mesh
 
+    @wraps(extract_feature_edges)
+    def extract_edges(self, *args, **kwargs):
+        """Wrap ``extract_feature_edges``.
+
+        DEPRECATED: Please use ``extract_feature_edges`` instead.
+
+        """
+        logging.warning("DEPRECATED: ``.extract_edges`` is deprecated. Use ``.extract_feature_edges`` instead.")
+        return self.extract_feature_edges(*args, **kwargs)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
@@ -1965,7 +1985,7 @@ class DataSetFilters(object):
 
         Grid is updated in-place by default.
 
-        Can be used to merge points of adjcent cells when no grids
+        Can be used to merge points of adjacent cells when no grids
         are input.
 
         Parameters
@@ -2215,6 +2235,9 @@ class CompositeFilters(object):
 
 
     slice_along_line = DataSetFilters.slice_along_line
+
+
+    extract_all_edges = DataSetFilters.extract_all_edges
 
 
     wireframe = DataSetFilters.wireframe
