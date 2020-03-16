@@ -1,6 +1,13 @@
 variables:
   ALLOW_PLOTTING: true
 
+trigger:
+  branches:
+    include:
+    - '*'
+  tags:
+    include:
+    - '*'
 
 jobs:
 
