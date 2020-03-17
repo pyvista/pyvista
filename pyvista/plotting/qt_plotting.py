@@ -566,7 +566,10 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
     def close(self):
         """Quit application."""
-        self.render_timer.stop()
+        if self._closed:
+            return
+        if hasattr(self, "render_timer"):
+            self.render_timer.stop()
         BasePlotter.close(self)
         QVTKRenderWindowInteractorAdapter.close(self)
 
@@ -757,12 +760,11 @@ class BackgroundPlotter(QtInteractor):
         close the plotter through `signal_close`.
 
         """
-        self.app_window.close()
+        if not self._closed:
+            self.app_window.close()
 
     def _close(self):
-        if hasattr(self, "render_timer"):
-            self.render_timer.stop()
-        BasePlotter.close(self)
+        super().close()
 
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window."""
