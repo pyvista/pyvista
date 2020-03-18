@@ -926,3 +926,11 @@ def test_default_name_tracking():
     n_made_it = len(p.renderer._actors)
     p.show()
     assert n_made_it == N**2
+
+
+@pytest.mark.parametrize("as_global", [True, False])
+def test_add_background_image(as_global):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_background_image(examples.mapfile, as_global=as_global)
+    plotter.show()

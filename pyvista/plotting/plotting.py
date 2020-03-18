@@ -3586,7 +3586,7 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, title=None, background_image=None):
+                 splitting_position=None, title=None):
         """Initialize a vtk plotting object."""
         super(Plotter, self).__init__(shape=shape, border=border,
                                       border_color=border_color,
@@ -3613,6 +3613,7 @@ class Plotter(BasePlotter):
 
         if window_size is None:
             window_size = rcParams['window_size']
+        self.__prior_window_size = window_size
 
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
@@ -3628,37 +3629,8 @@ class Plotter(BasePlotter):
         if polygon_smoothing:
             self.ren_win.PolygonSmoothingOn()
 
-        if background_image is not None:
-            self.background_renderer = vtk.vtkRenderer()
-            self.background_renderer.SetLayer(0)
-            self.background_renderer.InteractiveOff()
-            self.ren_win.SetNumberOfLayers(len(self.renderers) + 1)
-            self.ren_win.AddRenderer(self.background_renderer)
-            for renderer in self.renderers:
-                renderer.SetLayer(1)
-                self.ren_win.AddRenderer(renderer)
-
-            self.image_data = pyvista.read(background_image)
-
-            image_actor = vtk.vtkImageActor()
-            image_actor.SetInputData(self.image_data)
-            self.background_renderer.AddActor(image_actor)
-            self.background_camera = self.background_renderer.GetActiveCamera()
-            self.background_camera.ParallelProjectionOn()
-
-            origin = self.image_data.GetOrigin()
-            extent = self.image_data.GetExtent()
-            spacing = self.image_data.GetSpacing()
-            xc = origin[0] + 0.5*(extent[0] + extent[1]) * spacing[0]
-            yc = origin[1] + 0.5*(extent[2] + extent[3]) * spacing[1]
-            yd = (extent[3] - extent[2] + 1) * spacing[1]
-            d = self.background_camera.GetDistance()
-            self.background_camera.SetParallelScale(0.5 * yd)
-            self.background_camera.SetFocalPoint(xc, yc, 0.0)
-            self.background_camera.SetPosition(xc, yc, d)
-        else:
-            for renderer in self.renderers:
-                self.ren_win.AddRenderer(renderer)
+        for renderer in self.renderers:
+            self.ren_win.AddRenderer(renderer)
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
@@ -3671,9 +3643,6 @@ class Plotter(BasePlotter):
             self._observers = {}    # Map of events to observers of self.iren
             self._add_observer("KeyPressEvent", self.key_press_event)
             self.update_style()
-
-            # for renderer in self.renderers:
-            #     self.iren.SetRenderWindow(renderer)
 
         # Set background
         self.set_background(rcParams['background'])
@@ -3865,3 +3834,98 @@ class Plotter(BasePlotter):
         """
         logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
+
+    def add_background_image(self, image_path, scale=None, auto_resize=True,
+                             as_global=True):
+        """Add a background image to a plot.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to an image file.
+
+        scale : float, optional
+            Scale the image larger or smaller relative to the size of
+            the window.  For example, a scale size of 2 will make the
+            largest dimension of the image twice as large as the
+            largest dimension of the render window.  If None, scaling
+            is 1.
+
+        auto_resize : bool, optional
+            Resize the background when the render window changes size.
+
+        as_global : bool, optional
+            When multiple render windows are present, setting
+            ``as_global=False`` will cause the background to only
+            appear in one window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> plotter = pyvista.Plotter()
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.add_background_image(examples.mapfile)
+        >>> plotter.show() # doctest:+SKIP
+
+        """
+        # make a renderer as layer zero and move all other renders forward
+        self._background_renderer = vtk.vtkRenderer()
+        self._background_renderer.SetLayer(0)
+        self._background_renderer.InteractiveOff()
+        self._background_renderer.SetBackground(self.renderer.GetBackground())
+        self.ren_win.SetNumberOfLayers(len(self.renderers) + 1)
+        self.ren_win.AddRenderer(self._background_renderer)
+
+        if as_global:
+            for renderer in self.renderers:
+                renderer.SetLayer(1)
+                self.ren_win.AddRenderer(renderer)
+        else:
+            view_port = self.renderer.GetViewport()
+            self._background_renderer.SetViewport(view_port)
+            self.renderer.SetLayer(1)
+
+        image_data = pyvista.read(image_path)
+
+        image_actor = vtk.vtkImageActor()
+        image_actor.SetInputData(image_data)
+        self._background_renderer.AddActor(image_actor)
+        self._background_camera = self._background_renderer.GetActiveCamera()
+        self._background_camera.ParallelProjectionOn()
+
+        origin = image_data.GetOrigin()
+        extent = image_data.GetExtent()
+        spacing = image_data.GetSpacing()
+        xc = origin[0] + 0.5*(extent[0] + extent[1]) * spacing[0]
+        yc = origin[1] + 0.5*(extent[2] + extent[3]) * spacing[1]
+        yd = (extent[3] - extent[2] + 1) * spacing[1]
+        d = self._background_camera.GetDistance()
+
+        # make the longest dimensions match the plotting window
+        img_dim = np.array(image_data.dimensions[:2])
+        self._background_camera.SetFocalPoint(xc, yc, 0.0)
+        self._background_camera.SetPosition(xc, yc, d)
+
+        def resize_background():  # pragma: no cover
+            ratio = img_dim/np.array(self.window_size)
+            scale_value = 1
+            if ratio.max() > 1:
+                # images are not scaled if larger than the window
+                scale_value = ratio.max()
+
+            if scale is not None:
+                scale_value /= scale
+
+            self._background_camera.SetParallelScale(0.5 * yd * scale_value)
+
+        resize_background()
+
+        # setup autoscaling of the image
+        if auto_resize and hasattr(self, 'iren'):  # pragma: no cover
+            def on_resize(*args):
+                if self.__prior_window_size != self.window_size:
+                    self.__prior_window_size = self.window_size
+                    resize_background()
+
+            self.iren.AddObserver('ModifiedEvent', on_resize)
