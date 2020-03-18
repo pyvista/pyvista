@@ -648,6 +648,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('callback must be callable.')
         self._key_press_event_callbacks[key].append(callback)
 
+    def _add_observer(self, event, call):
+        if hasattr(self, 'iren'):
+            self._observers[event] = self.iren.AddObserver(event, call)
+
+    def _remove_observer(self, event):
+        if hasattr(self, 'iren') and event in self._observers:
+            self.iren.RemoveObserver(event)
+            del self._observers[event]
 
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
@@ -675,15 +683,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if hasattr(self, "iren"):
-            obs = self.iren.AddObserver(vtk.vtkCommand.MouseMoveEvent,
-                                        self.store_mouse_position)
-            self._mouse_observer = obs
+            self._add_observer(vtk.vtkCommand.MouseMoveEvent,
+                               self.store_mouse_position)
 
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
-        if hasattr(self, "_mouse_observer"):
-            self.iren.RemoveObserver(self._mouse_observer)
-            del self._mouse_observer
+        self._remove_observer(vtk.vtkCommand.MouseMoveEvent)
 
 
     def track_click_position(self, callback=None, side="right",
@@ -727,8 +732,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     try_callback(callback, self.pick_click_position())
 
-        obs = self.iren.AddObserver(event, _click_callback)
-        self._click_observer = obs
+        self._add_observer(event, _click_callback)
 
 
     def untrack_click_position(self):
@@ -773,7 +777,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks = collections.defaultdict(list)
 
         self.add_key_event('q', self._prep_for_close) # Add no matter what
-        b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
+        b_left_down_callback = lambda: self._add_observer('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
         self.add_key_event('f', self.fly_to_mouse_position)
@@ -2550,15 +2554,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if hasattr(self, 'iren'):
             # self.iren.RemoveAllObservers()
-            self.iren.RemoveObservers(vtk.vtkCommand.MouseMoveEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.RightButtonPressEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.LeftButtonPressEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.KeyPressEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.TimerEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.EndPickEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.StartInteractionEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.EndInteractionEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.StateChangedEvent)
+            for obs in self._observers.values():
+                self.iren.RemoveObservers(obs)
+            del self._observers
             self.iren.TerminateApp()
             del self.iren
 
@@ -3641,7 +3639,8 @@ class Plotter(BasePlotter):
             self.iren.SetDesiredUpdateRate(30.0)
             self.iren.SetRenderWindow(self.ren_win)
             self.enable_trackball_style()
-            self.iren.AddObserver("KeyPressEvent", self.key_press_event)
+            self._observers = {}    # Map of events to observers of self.iren
+            self._add_observer("KeyPressEvent", self.key_press_event)
             self.update_style()
 
             # for renderer in self.renderers:
@@ -3654,8 +3653,7 @@ class Plotter(BasePlotter):
         self.window_size = window_size
 
         # add timer event if interactive render exists
-        if hasattr(self, 'iren'):
-            self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
+        self._add_observer(vtk.vtkCommand.TimerEvent, on_timer)
 
         if rcParams["depth_peeling"]["enabled"]:
             if self.enable_depth_peeling():
