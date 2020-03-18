@@ -5,6 +5,12 @@ import sys
 import pyvista
 from pyvista import examples
 
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except:
+    HAS_MATPLOTLIB = False
+
 PYTHON_2 = int(sys.version[0]) < 3
 
 DATASETS = [
@@ -17,6 +23,8 @@ DATASETS = [
 normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
+
+
 
 
 def test_clip_filter():
@@ -230,7 +238,7 @@ def test_extract_geometry():
 
 def test_wireframe():
     for i, dataset in enumerate(DATASETS):
-        wire = dataset.wireframe()
+        wire = dataset.extract_all_edges()
         assert wire is not None
         assert isinstance(wire, pyvista.PolyData)
 
@@ -238,7 +246,7 @@ def test_wireframe():
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
 def test_wireframe_composite():
     # Now test composite data structures
-    output = COMPOSITE.wireframe()
+    output = COMPOSITE.extract_all_edges()
     assert output.n_blocks == COMPOSITE.n_blocks
 
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
@@ -267,7 +275,7 @@ def test_elevation():
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
     # test vector args
     c = list(dataset.center)
-    t = list(c) # cast so it doesnt point to `c`
+    t = list(c) # cast so it does not point to `c`
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t)
     assert 'Elevation' in elev.array_names
@@ -505,6 +513,7 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
+@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Requires matplotlib")
 def test_plot_over_line():
     """this requires matplotlib"""
     mesh = examples.load_uniform()

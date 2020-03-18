@@ -391,8 +391,8 @@ class Table(vtk.vtkTable, DataObject):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
-            search for in the dataset.  Must be either ``'row'`` or
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'row'`` or
             ``'field'``.
 
         """
@@ -413,7 +413,7 @@ class RowScalarsDict(_ScalarsDict):
     """Update internal row data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize te row scalars dict."""
+        """Initialize the row scalars dict."""
         _ScalarsDict.__init__(self, data)
         self.remover = lambda key: self.data._remove_array(ROW_DATA_FIELD, key)
         self.modifier = lambda *args: self.data.GetRowData().Modified()

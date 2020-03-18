@@ -97,11 +97,11 @@ def test_surface_indices():
     assert np.allclose(surf_ind, beam.surface_indices())
 
 
-def test_extract_edges():
-    edges = beam.extract_edges(90)
+def test_extract_feature_edges():
+    edges = beam.extract_feature_edges(90)
     assert edges.n_points
 
-    edges = beam.extract_edges(180)
+    edges = beam.extract_feature_edges(180)
     assert not edges.n_points
 
 
@@ -316,7 +316,7 @@ def test_create_uniform_grid_from_specs():
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [1.0, 1.0, 1.0]
     spacing = [2, 1, 5]
-    grid = pyvista.UniformGrid(dims, spacing) # Usign default origin
+    grid = pyvista.UniformGrid(dims, spacing) # Using default origin
     assert grid.dimensions == [10, 10, 10]
     assert grid.origin == [0.0, 0.0, 0.0]
     assert grid.spacing == [2.0, 1.0, 5.0]
@@ -414,7 +414,16 @@ def test_save_uniform(extension, binary, tmpdir):
 
 
 def test_grid_points():
-    """Test the points mehtods on UniformGrid and inearGrid"""
+    """Test the points methods on UniformGrid and RectilinearGrid"""
+    # test creation of 2d grids
+    x_surf = y_surf = range(3)
+    z_surf = np.ones(3)
+    grid = pyvista.UniformGrid()
+    grid.points = np.array([x_surf, y_surf, z_surf]).transpose()
+    assert grid.n_points == 9
+    assert grid.n_cells == 4
+    del grid
+
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
                        [1, 1, 0],

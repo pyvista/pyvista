@@ -223,7 +223,7 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'panel']
+                    'cmocean', 'panel', 'scipy']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
@@ -243,14 +243,13 @@ def assert_empty_kwargs(**kwargs):
     """Assert that all keyword arguments have been used (internal helper).
 
     If any keyword arguments are passed, a ``TypeError`` is raised.
-
     """
     n = len(kwargs)
     if n == 0:
         return True
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
-    bad_arguments = "[" + ("{}, " * (n - 1) + "{}").format(*keys) + "]"
+    bad_arguments = ', '.join(['"%s"' % key for key in keys])
     if n == 1:
         grammar = "is an invalid keyword argument"
     else:

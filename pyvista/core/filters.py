@@ -23,6 +23,7 @@ Example
 
 """
 import collections
+from functools import wraps
 import logging
 
 import numpy as np
@@ -181,6 +182,36 @@ class DataSetFilters(object):
             alg.GenerateClippedOutputOn()
         alg.Update()
         return _get_output(alg, oport=port)
+
+
+    def compute_implicit_distance(dataset, surface, inplace=False):
+        """Compute the implicit distance from the points to a surface.
+
+        This filter will comput the implicit distance from all of the nodes of
+        this mesh to a given surface. This distance will be added as a point
+        array called ``'implicit_distance'``.
+
+        Parameters
+        ----------
+        surface : pyvista.Common
+            The surface used to compute the distance
+
+        inplace : bool
+            If True, a new scalar array will be added to the ``point_arrays``
+            of this mesh. Otherwise a copy of this mesh is returned with that
+            scalar field.
+        """
+        function = vtk.vtkImplicitPolyDataDistance()
+        function.SetInput(surface)
+        points = pyvista.convert_array(dataset.points)
+        dists = vtk.vtkDoubleArray()
+        function.FunctionValue(points, dists)
+        if inplace:
+            dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+            return
+        result = dataset.copy()
+        result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+        return result
 
 
     def clip_surface(dataset, surface, invert=True, value=0.0,
@@ -606,7 +637,7 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def wireframe(dataset):
+    def extract_all_edges(dataset):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -616,6 +647,16 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
+
+    @wraps(extract_all_edges)
+    def wireframe(self, *args, **kwargs):
+        """Wrap ``extract_all_edges``.
+
+        DEPRECATED: Please use ``extract_all_edges`` instead.
+
+        """
+        logging.warning("DEPRECATED: ``.wireframe`` is deprecated. Use ``.extract_all_edges`` instead.")
+        return self.extract_all_edges(*args, **kwargs)
 
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
                   preference='point', set_active=True):
@@ -1864,9 +1905,9 @@ class DataSetFilters(object):
         return surf.point_arrays['vtkOriginalPointIds']
 
 
-    def extract_edges(dataset, feature_angle=30, boundary_edges=True,
-                      non_manifold_edges=True, feature_edges=True,
-                      manifold_edges=True, inplace=False):
+    def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
+                              non_manifold_edges=True, feature_edges=True,
+                              manifold_edges=True, inplace=False):
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -1923,6 +1964,15 @@ class DataSetFilters(object):
         else:
             return mesh
 
+    @wraps(extract_feature_edges)
+    def extract_edges(self, *args, **kwargs):
+        """Wrap ``extract_feature_edges``.
+
+        DEPRECATED: Please use ``extract_feature_edges`` instead.
+
+        """
+        logging.warning("DEPRECATED: ``.extract_edges`` is deprecated. Use ``.extract_feature_edges`` instead.")
+        return self.extract_feature_edges(*args, **kwargs)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
@@ -1930,7 +1980,7 @@ class DataSetFilters(object):
 
         Grid is updated in-place by default.
 
-        Can be used to merge points of adjcent cells when no grids
+        Can be used to merge points of adjacent cells when no grids
         are input.
 
         Parameters
@@ -2180,6 +2230,9 @@ class CompositeFilters(object):
 
 
     slice_along_line = DataSetFilters.slice_along_line
+
+
+    extract_all_edges = DataSetFilters.extract_all_edges
 
 
     wireframe = DataSetFilters.wireframe
@@ -3378,8 +3431,45 @@ class PolyDataFilters(DataSetFilters):
         f[:, 1:] = f[:, 1:][:, ::-1]
 
 
-    def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False, inplace=False):
-        """Apply a delaunay 2D filter along the best fitting plane."""
+    def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
+                    inplace=False, edge_source=None):
+        """Apply a delaunay 2D filter along the best fitting plane.
+
+        Parameters
+        ----------
+        tol : float
+            Specify a tolerance to control discarding of closely spaced
+            points. This tolerance is specified as a fraction of the diagonal
+            length of the bounding box of the points.
+
+        alpha : float
+            Specify alpha (or distance) value to control output of this
+            filter. For a non-zero alpha value, only edges or triangles
+            contained within a sphere centered at mesh vertices will be
+            output. Otherwise, only triangles will be output.
+
+        offset : float
+            Specify a multiplier to control the size of the initial, bounding
+            Delaunay triangulation.
+
+        bound : bool
+            Boolean controls whether bounding triangulation points (and
+            associated triangles) are included in the output. (These are
+            introduced as an initial triangulation to begin the triangulation
+            process. This feature is nice for debugging output.)
+
+        inplace : bool
+            If True, overwrite this mesh with the triangulated mesh.
+
+        edge_source : pyvista.PolyData, optional
+            Specify the source object used to specify constrained edges and
+            loops. (This is optional.) If set, and lines/polygons are
+            defined, a constrained triangulation is created. The
+            lines/polygons are assumed to reference points in the input point
+            set (i.e. point ids are identical in the input and source). Note
+            that this method does not connect the pipeline. See
+            SetSourceConnection for connecting the pipeline.
+        """
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(poly_data)
@@ -3387,9 +3477,12 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAlpha(alpha)
         alg.SetOffset(offset)
         alg.SetBoundingTriangulation(bound)
+        if edge_source is not None:
+            alg.SetSourceData(edge_source)
         alg.Update()
 
-        mesh = _get_output(alg)
+        # Sometimes lines are given in the output. The `.triangulate()` filter cleans those
+        mesh = _get_output(alg).triangulate()
         if inplace:
             poly_data.overwrite(mesh)
         else:

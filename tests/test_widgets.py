@@ -1,6 +1,5 @@
 import numpy as np
 import pytest
-import sys
 
 import pyvista
 from pyvista import examples

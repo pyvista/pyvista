@@ -1,6 +1,7 @@
 """Module managing different plotting theme parameters."""
 
 import os
+import scooby
 import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
@@ -67,7 +68,7 @@ rcParams = {
     'depth_peeling': {
         'number_of_peels': 4,
         'occlusion_ratio': 0.0,
-        'enabled': True,
+        'enabled': False,
     },
 }
 

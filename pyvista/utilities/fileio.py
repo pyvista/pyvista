@@ -201,6 +201,8 @@ def read(filename, attrs=None, file_format=None):
     elif ext in ['.vtk']:
         # Attempt to use the legacy reader...
         return read_legacy(filename)
+    elif ext in ['.jpeg', '.jpg']:
+        return read_texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:
@@ -279,28 +281,24 @@ def from_meshio(mesh):
     offset = []
     cells = []
     cell_type = []
-    cell_data = {}
     next_offset = 0
-    for k, v in mesh.cells.items():
-        vtk_type = meshio_to_vtk_type[k]
+    for c in mesh.cells:
+        vtk_type = meshio_to_vtk_type[c.type]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        offset += [next_offset+i*(numnodes+1) for i in range(len(v))]
-        cells.append(np.hstack((np.full((len(v), 1), numnodes), v)).ravel())
-        cell_type += [vtk_type] * len(v)
+        offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
+        cells.append(
+            np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel()
+        )
+        cell_type += [vtk_type] * len(c.data)
         next_offset = offset[-1] + numnodes + 1
 
-        # Extract cell data
-        if k in mesh.cell_data.keys():
-            for kk, vv in mesh.cell_data[k].items():
-                if kk in cell_data:
-                    cell_data[kk] = np.concatenate((cell_data[kk], np.array(vv, np.float64)))
-                else:
-                    cell_data[kk] = np.array(vv, np.float64)
+    # Extract cell data from meshio.Mesh object
+    cell_data = {k: np.concatenate(v) for k, v in mesh.cell_data.items()}
 
     # Create pyvista.UnstructuredGrid object
     points = mesh.points
     if points.shape[1] == 2:
-        points = np.hstack((points, np.zeros((len(points),1))))
+        points = np.hstack((points, np.zeros((len(points), 1))))
 
     grid = pyvista.UnstructuredGrid(
         np.array(offset),
@@ -311,6 +309,7 @@ def from_meshio(mesh):
 
     # Set point data
     grid.point_arrays.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
+
     # Set cell data
     grid.cell_arrays.update(cell_data)
 
@@ -361,9 +360,8 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         )
 
     # Get cells
-    cells = {}
-    mapper = {}                 # For cell data
-    for i, (offset, cell_type) in enumerate(zip(vtk_offset, vtk_cell_type)):
+    cells = []
+    for offset, cell_type in zip(vtk_offset, vtk_cell_type):
         numnodes = vtk_cells[offset]
         cell = vtk_cells[offset+1:offset+1+numnodes]
         cell = (
@@ -376,23 +374,26 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
             vtk_to_meshio_type[cell_type] if cell_type != 7
             else "polygon{}".format(numnodes)
         )
-        if cell_type not in cells.keys():
-            cells[cell_type] = [ cell ]
-            mapper[cell_type] = [ i ]
+
+        if len(cells) > 0 and cells[-1][0] == cell_type:
+            cells[-1][1].append(cell)
         else:
-            cells[cell_type].append(cell)
-            mapper[cell_type].append(i)
-    cells = {k: np.vstack(v) for k, v in cells.items()}
+            cells.append((cell_type, [cell]))
+
+    for k, c in enumerate(cells):
+        cells[k] = (c[0], np.array(c[1]))
 
     # Get point data
     point_data = {k.replace(" ", "_"): v for k, v in mesh.point_arrays.items()}
 
     # Get cell data
     vtk_cell_data = mesh.cell_arrays
-    cell_data = {
-        k: {kk.replace(" ", "_"): vv[v] for kk, vv in vtk_cell_data.items()}
-        for k, v in mapper.items()
-    } if vtk_cell_data else {}
+    n_cells = np.cumsum([len(c[1]) for c in cells[:-1]])
+    cell_data = (
+        {k.replace(" ", "_"): np.split(v, n_cells) for k, v in vtk_cell_data.items()}
+        if vtk_cell_data
+        else {}
+    )
 
     # Save using meshio
     meshio.write_points_cells(

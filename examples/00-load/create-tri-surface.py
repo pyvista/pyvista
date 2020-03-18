@@ -10,7 +10,10 @@ import pyvista as pv
 import numpy as np
 
 ###############################################################################
-#  First, create some points for the surface.
+# Simple Traingulations
+# +++++++++++++++++++++
+#
+# First, create some points for the surface.
 
 # Define a simple Gaussian surface
 n = 20
@@ -38,3 +41,55 @@ cloud.plot(point_size=15)
 
 surf = cloud.delaunay_2d()
 surf.plot(show_edges=True)
+
+
+###############################################################################
+# Masked Triangulations
+# +++++++++++++++++++++
+#
+
+x = np.arange(10, dtype=float)
+xx, yy, zz = np.meshgrid(x, x, [0])
+points = np.column_stack((xx.ravel(order="F"),
+                          yy.ravel(order="F"),
+                          zz.ravel(order="F")))
+# Perturb the points
+points[:, 0] += np.random.rand(len(points)) * 0.3
+points[:, 1] += np.random.rand(len(points)) * 0.3
+# Create the point cloud mesh to triangulate from the coordinates
+cloud = pv.PolyData(points)
+cloud
+
+###############################################################################
+# Run the triangulation on these points
+surf = cloud.delaunay_2d()
+surf.plot(cpos="xy", show_edges=True)
+
+
+###############################################################################
+# Note that some of the outer edges are unconstrained and the triangulation
+# added unwanted triangles. We cn mitigate that with the ``alpha`` parameter.
+surf = cloud.delaunay_2d(alpha=1.0)
+surf.plot(cpos="xy", show_edges=True)
+
+
+###############################################################################
+# We could also add a polygon to ignore during the triangulation via the
+# ``edge_source`` parameter.
+
+# Define a polygonal hole with a clockwise polygon
+ids = [22, 23, 24, 25, 35, 45, 44, 43, 42, 32]
+
+# Create a polydata to store the boundary
+polygon = pv.PolyData()
+# Make sure it has the same points as the mesh being triangulated
+polygon.points = points
+# But only has faces in regions to ignore
+polygon.faces = np.array([len(ids),] + ids)
+
+surf = cloud.delaunay_2d(alpha=1.0, edge_source=polygon)
+
+p = pv.Plotter()
+p.add_mesh(surf, show_edges=True)
+p.add_mesh(polygon, color="red", opacity=0.5)
+p.show(cpos="xy")

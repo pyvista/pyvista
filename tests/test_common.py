@@ -568,7 +568,7 @@ def test_string_arrays():
 
 
 def test_clear_arrays():
-    # First try on an empy mesh
+    # First try on an empty mesh
     grid = pyvista.UniformGrid((10, 10, 10))
     grid.clear_arrays()
     # Now try something more complicated

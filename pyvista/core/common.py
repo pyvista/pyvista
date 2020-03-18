@@ -79,13 +79,13 @@ class DataObject(object):
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
-            is used
+            The name of the array to get the range. If None, the
+            active scalar is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
 
         """
         raise NotImplementedError('{} mesh type does not have a `get_data_range` method.'.format(type(self)))
@@ -804,13 +804,13 @@ class Common(DataSetFilters, DataObject):
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalars
-            is used
+            The name of the array to get the range. If None, the
+            active scalars is used.
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
 
         """
         if arr is None:

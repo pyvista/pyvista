@@ -4,6 +4,7 @@ import collections
 import ctypes
 import logging
 import warnings
+from threading import Thread
 
 import numpy as np
 import scooby
@@ -206,9 +207,9 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         The name of the array to get the range.
 
     preference : str, optional
-        When scalars is specified, this is the perfered array type to
-        search for in the dataset.  Must be either ``'point'``, ``'cell'``, or
-        ``'field'``
+        When scalars is specified, this is the preferred array type to
+        search for in the dataset.  Must be either ``'point'``,
+        ``'cell'``, or ``'field'``
 
     info : bool
         Return info about the array rather than the array itself.
@@ -320,7 +321,7 @@ def line_segments_from_points(points):
     return poly
 
 
-def lines_from_points(points):
+def lines_from_points(points, close=False):
     """Make a connected line set given an array of points.
 
     Parameters
@@ -330,6 +331,9 @@ def lines_from_points(points):
         example, two line segments would be represented as:
 
         np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+    close : bool, optional
+        If True, close the line segments into a loop
 
     Return
     ------
@@ -342,6 +346,8 @@ def lines_from_points(points):
     cells = np.full((len(points)-1, 3), 2, dtype=np.int)
     cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    if close:
+        cells = np.append(cells, [[2, len(points)-1, 0],], axis=0)
     poly.lines = cells
     return poly
 
@@ -604,3 +610,28 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     renderer.SetOcclusionRatio(occlusion_ratio)
     renderWindow.Render()
     return renderer.GetLastRenderingUsedDepthPeeling() == 1
+
+
+def threaded(fn):
+    """Call a function using a thread."""
+    def wrapper(*args, **kwargs):
+        thread = Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
+
+
+class conditional_decorator(object):
+    """Conditional decorator for methods."""
+
+    def __init__(self, dec, condition):
+        """Initialize."""
+        self.decorator = dec
+        self.condition = condition
+
+    def __call__(self, func):
+        """Call the decorated function if condition is matched."""
+        if not self.condition:
+            # Return the function unchanged, not decorated.
+            return func
+        return self.decorator(func)
