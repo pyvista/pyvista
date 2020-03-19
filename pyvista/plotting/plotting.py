@@ -3893,7 +3893,7 @@ class Plotter(BasePlotter):
             self.renderer.SetLayer(1)
             view_port = self.renderer.GetViewport()
 
-        renderer = BackgroundRenderer(self, scale, image_path, as_global, view_port)
+        renderer = BackgroundRenderer(self, image_path, scale, view_port)
         self.ren_win.AddRenderer(renderer)
         self._background_renderers[self._active_renderer_index] = renderer
 

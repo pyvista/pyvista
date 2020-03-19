@@ -219,7 +219,6 @@ class Renderer(vtkRenderer):
         """Return the length of the diagonal of the bounding box of the scene."""
         return pyvista.Box(self.bounds).length
 
-
     @property
     def center(self):
         """Return the center of the bounding box around all data present in the scene."""
@@ -228,7 +227,6 @@ class Renderer(vtkRenderer):
         y = (bounds[3] + bounds[2])/2
         z = (bounds[5] + bounds[4])/2
         return [x, y, z]
-
 
     @property
     def background_color(self):

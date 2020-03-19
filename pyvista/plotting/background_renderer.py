@@ -1,4 +1,4 @@
-"""Contains the BackgroundRenderer class"""
+"""Contains the BackgroundRenderer class."""
 import vtk
 import numpy as np
 
@@ -6,9 +6,10 @@ from .renderer import Renderer
 import pyvista
 
 class BackgroundRenderer(Renderer):
-    """BackgroundRenderer for visualizing a backgroud image."""
+    """BackgroundRenderer for visualizing a background image."""
 
-    def __init__(self, parent, scale, image_path, as_global=True, view_port=None):
+    def __init__(self, parent, image_path, scale=1, view_port=None):
+        """Initialize BackgroundRenderer with an image."""
         # read the image first as we don't need to create a render if
         # the image path is invalid
         image_data = pyvista.read(image_path)
@@ -31,7 +32,7 @@ class BackgroundRenderer(Renderer):
         self.resize()
 
     def resize(self, *args):
-        """Resize a background renderer"""
+        """Resize a background renderer."""
         if self.parent is None:  # when deleted
             return
 
@@ -62,4 +63,4 @@ class BackgroundRenderer(Renderer):
         if self._scale is not None:
             scale_value /= self._scale
 
-        self.camera.SetParallelScale(0.5 * yd * scale_value)
+        self.camera.SetParallelScale(0.5 * yd / self._scale)
