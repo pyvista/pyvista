@@ -1246,15 +1246,13 @@ class Renderer(vtkRenderer):
         self.Modified()
         return
 
-
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
         self.camera.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
-            self.hide_axes() # Necessary to avoid segfault
+            self.hide_axes()  # Necessary to avoid segfault
             del self.axes_widget
-
 
     def deep_clean(self):
         """Clean the renderer of the memory."""
@@ -1270,7 +1268,6 @@ class Renderer(vtkRenderer):
         # remove reference to parent last
         self.parent = None
         return
-
 
     def __del__(self):
         """Delete the renderer."""

@@ -26,6 +26,7 @@ from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer
+from .background_renderer import BackgroundRenderer
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
@@ -113,6 +114,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add render windows
         self._active_renderer_index = 0
         self.renderers = []
+        
 
         if isinstance(shape, str):
 
@@ -172,6 +174,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     renderer.SetViewport(y0, x0, y1, x1)
                     self.renderers.append(renderer)
 
+        # each render will also have an associated background renderer
+        self._background_renderers = [None for _ in range(len(self.renderers))]
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bar_ranges = {}
@@ -2577,6 +2581,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clean the plotter of the memory."""
         for renderer in self.renderers:
             renderer.deep_clean()
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.deep_clean()
         # Do not remove the renderers on the clean
         self.mesh = None
         self.mapper = None
@@ -3800,7 +3807,7 @@ class Plotter(BasePlotter):
         #       so we should display the static screenshot in notebooks for
         #       multi-view plots until we implement this feature
         # If notebook is true and panel display failed:
-        if self.notebook and (disp is None or self.shape != (1,1)):
+        if self.notebook and (disp is None or self.shape != (1, 1)):
             import PIL.Image
             # sanity check
             try:
@@ -3869,63 +3876,35 @@ class Plotter(BasePlotter):
         >>> plotter.show() # doctest:+SKIP
 
         """
-        # make a renderer as layer zero and move all other renders forward
-        self._background_renderer = vtk.vtkRenderer()
-        self._background_renderer.SetLayer(0)
-        self._background_renderer.InteractiveOff()
-        self._background_renderer.SetBackground(self.renderer.GetBackground())
-        self.ren_win.SetNumberOfLayers(len(self.renderers) + 1)
-        self.ren_win.AddRenderer(self._background_renderer)
+        # verify no render exists
+        if self._background_renderers[self._active_renderer_index] is not None:
+            raise RuntimeError('A background image already exists.  '
+                               'Remove it with remove_background_image '
+                               'before adding one')
 
+        # Need to change the number of layers to support an additional
+        # background layer
+        self.ren_win.SetNumberOfLayers(2)
         if as_global:
             for renderer in self.renderers:
                 renderer.SetLayer(1)
-                self.ren_win.AddRenderer(renderer)
+            view_port = None
         else:
-            view_port = self.renderer.GetViewport()
-            self._background_renderer.SetViewport(view_port)
             self.renderer.SetLayer(1)
+            view_port = self.renderer.GetViewport()
 
-        image_data = pyvista.read(image_path)
-
-        image_actor = vtk.vtkImageActor()
-        image_actor.SetInputData(image_data)
-        self._background_renderer.AddActor(image_actor)
-        self._background_camera = self._background_renderer.GetActiveCamera()
-        self._background_camera.ParallelProjectionOn()
-
-        origin = image_data.GetOrigin()
-        extent = image_data.GetExtent()
-        spacing = image_data.GetSpacing()
-        xc = origin[0] + 0.5*(extent[0] + extent[1]) * spacing[0]
-        yc = origin[1] + 0.5*(extent[2] + extent[3]) * spacing[1]
-        yd = (extent[3] - extent[2] + 1) * spacing[1]
-        d = self._background_camera.GetDistance()
-
-        # make the longest dimensions match the plotting window
-        img_dim = np.array(image_data.dimensions[:2])
-        self._background_camera.SetFocalPoint(xc, yc, 0.0)
-        self._background_camera.SetPosition(xc, yc, d)
-
-        def resize_background():  # pragma: no cover
-            ratio = img_dim/np.array(self.window_size)
-            scale_value = 1
-            if ratio.max() > 1:
-                # images are not scaled if larger than the window
-                scale_value = ratio.max()
-
-            if scale is not None:
-                scale_value /= scale
-
-            self._background_camera.SetParallelScale(0.5 * yd * scale_value)
-
-        resize_background()
+        renderer = BackgroundRenderer(self, scale, image_path, as_global, view_port)
+        self.ren_win.AddRenderer(renderer)
+        self._background_renderers[self._active_renderer_index] = renderer
 
         # setup autoscaling of the image
         if auto_resize and hasattr(self, 'iren'):  # pragma: no cover
-            def on_resize(*args):
-                if self.__prior_window_size != self.window_size:
-                    self.__prior_window_size = self.window_size
-                    resize_background()
+            self._add_observer('ModifiedEvent', renderer.resize)
 
-            self.iren.AddObserver('ModifiedEvent', on_resize)
+    def remove_background_image(self):
+        """Remove the background image from the current subplot."""
+        renderer = self._background_renderers[self._active_renderer_index]
+        if renderer is None:
+            raise RuntimeError('No background image to remove at this subplot')
+        renderer.deep_clean()
+        self._background_renderers[self._active_renderer_index] = None
