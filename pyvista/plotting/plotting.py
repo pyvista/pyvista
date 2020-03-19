@@ -3842,7 +3842,7 @@ class Plotter(BasePlotter):
         logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
 
-    def add_background_image(self, image_path, scale=None, auto_resize=True,
+    def add_background_image(self, image_path, scale=1, auto_resize=True,
                              as_global=True):
         """Add a background image to a plot.
 
@@ -3855,8 +3855,7 @@ class Plotter(BasePlotter):
             Scale the image larger or smaller relative to the size of
             the window.  For example, a scale size of 2 will make the
             largest dimension of the image twice as large as the
-            largest dimension of the render window.  If None, scaling
-            is 1.
+            largest dimension of the render window.  Defaults to 1.
 
         auto_resize : bool, optional
             Resize the background when the render window changes size.
