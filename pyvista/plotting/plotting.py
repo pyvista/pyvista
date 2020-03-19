@@ -3525,6 +3525,72 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.deep_clean()
         del self.renderers
 
+    def add_background_image(self, image_path, scale=1, auto_resize=True,
+                             as_global=True):
+        """Add a background image to a plot.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to an image file.
+
+        scale : float, optional
+            Scale the image larger or smaller relative to the size of
+            the window.  For example, a scale size of 2 will make the
+            largest dimension of the image twice as large as the
+            largest dimension of the render window.  Defaults to 1.
+
+        auto_resize : bool, optional
+            Resize the background when the render window changes size.
+
+        as_global : bool, optional
+            When multiple render windows are present, setting
+            ``as_global=False`` will cause the background to only
+            appear in one window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> plotter = pyvista.Plotter()
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.add_background_image(examples.mapfile)
+        >>> plotter.show() # doctest:+SKIP
+
+        """
+        # verify no render exists
+        if self._background_renderers[self._active_renderer_index] is not None:
+            raise RuntimeError('A background image already exists.  '
+                               'Remove it with remove_background_image '
+                               'before adding one')
+
+        # Need to change the number of layers to support an additional
+        # background layer
+        self.ren_win.SetNumberOfLayers(2)
+        if as_global:
+            for renderer in self.renderers:
+                renderer.SetLayer(1)
+            view_port = None
+        else:
+            self.renderer.SetLayer(1)
+            view_port = self.renderer.GetViewport()
+
+        renderer = BackgroundRenderer(self, image_path, scale, view_port)
+        self.ren_win.AddRenderer(renderer)
+        self._background_renderers[self._active_renderer_index] = renderer
+
+        # setup autoscaling of the image
+        if auto_resize and hasattr(self, 'iren'):  # pragma: no cover
+            self._add_observer('ModifiedEvent', renderer.resize)
+
+    def remove_background_image(self):
+        """Remove the background image from the current subplot."""
+        renderer = self._background_renderers[self._active_renderer_index]
+        if renderer is None:
+            raise RuntimeError('No background image to remove at this subplot')
+        renderer.deep_clean()
+        self._background_renderers[self._active_renderer_index] = None
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -3841,69 +3907,3 @@ class Plotter(BasePlotter):
         """
         logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
-
-    def add_background_image(self, image_path, scale=1, auto_resize=True,
-                             as_global=True):
-        """Add a background image to a plot.
-
-        Parameters
-        ----------
-        image_path : str
-            Path to an image file.
-
-        scale : float, optional
-            Scale the image larger or smaller relative to the size of
-            the window.  For example, a scale size of 2 will make the
-            largest dimension of the image twice as large as the
-            largest dimension of the render window.  Defaults to 1.
-
-        auto_resize : bool, optional
-            Resize the background when the render window changes size.
-
-        as_global : bool, optional
-            When multiple render windows are present, setting
-            ``as_global=False`` will cause the background to only
-            appear in one window.
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> from pyvista import examples
-        >>> plotter = pyvista.Plotter()
-        >>> actor = plotter.add_mesh(pyvista.Sphere())
-        >>> plotter.add_background_image(examples.mapfile)
-        >>> plotter.show() # doctest:+SKIP
-
-        """
-        # verify no render exists
-        if self._background_renderers[self._active_renderer_index] is not None:
-            raise RuntimeError('A background image already exists.  '
-                               'Remove it with remove_background_image '
-                               'before adding one')
-
-        # Need to change the number of layers to support an additional
-        # background layer
-        self.ren_win.SetNumberOfLayers(2)
-        if as_global:
-            for renderer in self.renderers:
-                renderer.SetLayer(1)
-            view_port = None
-        else:
-            self.renderer.SetLayer(1)
-            view_port = self.renderer.GetViewport()
-
-        renderer = BackgroundRenderer(self, image_path, scale, view_port)
-        self.ren_win.AddRenderer(renderer)
-        self._background_renderers[self._active_renderer_index] = renderer
-
-        # setup autoscaling of the image
-        if auto_resize and hasattr(self, 'iren'):  # pragma: no cover
-            self._add_observer('ModifiedEvent', renderer.resize)
-
-    def remove_background_image(self):
-        """Remove the background image from the current subplot."""
-        renderer = self._background_renderers[self._active_renderer_index]
-        if renderer is None:
-            raise RuntimeError('No background image to remove at this subplot')
-        renderer.deep_clean()
-        self._background_renderers[self._active_renderer_index] = None

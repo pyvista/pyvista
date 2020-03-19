@@ -944,5 +944,10 @@ def test_add_background_image_subplots():
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
     pl.add_mesh(examples.load_airplane())
     pl.remove_background_image()
+
+    # should error out as there's no background
+    with pytest.raises(RuntimeError):
+        pl.remove_background_image()
+
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
     pl.show()
