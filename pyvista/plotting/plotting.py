@@ -100,6 +100,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
 
+        self.mesh = None
         if title is None:
             title = rcParams['title']
         self.title = str(title)
@@ -114,7 +115,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add render windows
         self._active_renderer_index = 0
         self.renderers = []
-        
 
         if isinstance(shape, str):
 
@@ -2066,11 +2066,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
 
-
     def clear(self):
         """Clear plot by removing all actors and properties."""
         for renderer in self.renderers:
             renderer.clear()
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.clear()
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
@@ -2078,7 +2080,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
         self.mesh = None
-
 
     def link_views(self, views=0):
         """Link the views' cameras.
