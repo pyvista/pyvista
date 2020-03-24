@@ -26,6 +26,7 @@ from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer
+from .background_renderer import BackgroundRenderer
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
@@ -99,6 +100,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
 
+        self.mesh = None
         if title is None:
             title = rcParams['title']
         self.title = str(title)
@@ -172,6 +174,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     renderer.SetViewport(y0, x0, y1, x1)
                     self.renderers.append(renderer)
 
+        # each render will also have an associated background renderer
+        self._background_renderers = [None for _ in range(len(self.renderers))]
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bar_ranges = {}
@@ -2062,11 +2066,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
 
-
     def clear(self):
         """Clear plot by removing all actors and properties."""
         for renderer in self.renderers:
             renderer.clear()
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.clear()
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
@@ -2074,7 +2080,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
         self.mesh = None
-
 
     def link_views(self, views=0):
         """Link the views' cameras.
@@ -2577,6 +2582,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clean the plotter of the memory."""
         for renderer in self.renderers:
             renderer.deep_clean()
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.deep_clean()
         # Do not remove the renderers on the clean
         self.mesh = None
         self.mapper = None
@@ -3518,6 +3526,72 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.deep_clean()
         del self.renderers
 
+    def add_background_image(self, image_path, scale=1, auto_resize=True,
+                             as_global=True):
+        """Add a background image to a plot.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to an image file.
+
+        scale : float, optional
+            Scale the image larger or smaller relative to the size of
+            the window.  For example, a scale size of 2 will make the
+            largest dimension of the image twice as large as the
+            largest dimension of the render window.  Defaults to 1.
+
+        auto_resize : bool, optional
+            Resize the background when the render window changes size.
+
+        as_global : bool, optional
+            When multiple render windows are present, setting
+            ``as_global=False`` will cause the background to only
+            appear in one window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> plotter = pyvista.Plotter()
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.add_background_image(examples.mapfile)
+        >>> plotter.show() # doctest:+SKIP
+
+        """
+        # verify no render exists
+        if self._background_renderers[self._active_renderer_index] is not None:
+            raise RuntimeError('A background image already exists.  '
+                               'Remove it with remove_background_image '
+                               'before adding one')
+
+        # Need to change the number of layers to support an additional
+        # background layer
+        self.ren_win.SetNumberOfLayers(2)
+        if as_global:
+            for renderer in self.renderers:
+                renderer.SetLayer(1)
+            view_port = None
+        else:
+            self.renderer.SetLayer(1)
+            view_port = self.renderer.GetViewport()
+
+        renderer = BackgroundRenderer(self, image_path, scale, view_port)
+        self.ren_win.AddRenderer(renderer)
+        self._background_renderers[self._active_renderer_index] = renderer
+
+        # setup autoscaling of the image
+        if auto_resize and hasattr(self, 'iren'):  # pragma: no cover
+            self._add_observer('ModifiedEvent', renderer.resize)
+
+    def remove_background_image(self):
+        """Remove the background image from the current subplot."""
+        renderer = self._background_renderers[self._active_renderer_index]
+        if renderer is None:
+            raise RuntimeError('No background image to remove at this subplot')
+        renderer.deep_clean()
+        self._background_renderers[self._active_renderer_index] = None
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -3613,6 +3687,7 @@ class Plotter(BasePlotter):
 
         if window_size is None:
             window_size = rcParams['window_size']
+        self.__prior_window_size = window_size
 
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
@@ -3642,9 +3717,6 @@ class Plotter(BasePlotter):
             self._observers = {}    # Map of events to observers of self.iren
             self._add_observer("KeyPressEvent", self.key_press_event)
             self.update_style()
-
-            # for renderer in self.renderers:
-            #     self.iren.SetRenderWindow(renderer)
 
         # Set background
         self.set_background(rcParams['background'])
@@ -3802,7 +3874,7 @@ class Plotter(BasePlotter):
         #       so we should display the static screenshot in notebooks for
         #       multi-view plots until we implement this feature
         # If notebook is true and panel display failed:
-        if self.notebook and (disp is None or self.shape != (1,1)):
+        if self.notebook and (disp is None or self.shape != (1, 1)):
             import PIL.Image
             # sanity check
             try:

@@ -219,7 +219,6 @@ class Renderer(vtkRenderer):
         """Return the length of the diagonal of the bounding box of the scene."""
         return pyvista.Box(self.bounds).length
 
-
     @property
     def center(self):
         """Return the center of the bounding box around all data present in the scene."""
@@ -228,7 +227,6 @@ class Renderer(vtkRenderer):
         y = (bounds[3] + bounds[2])/2
         z = (bounds[5] + bounds[4])/2
         return [x, y, z]
-
 
     @property
     def background_color(self):
@@ -1246,15 +1244,13 @@ class Renderer(vtkRenderer):
         self.Modified()
         return
 
-
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
         self.camera.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
-            self.hide_axes() # Necessary to avoid segfault
+            self.hide_axes()  # Necessary to avoid segfault
             del self.axes_widget
-
 
     def deep_clean(self):
         """Clean the renderer of the memory."""
@@ -1270,7 +1266,6 @@ class Renderer(vtkRenderer):
         # remove reference to parent last
         self.parent = None
         return
-
 
     def __del__(self):
         """Delete the renderer."""

@@ -926,3 +926,28 @@ def test_default_name_tracking():
     n_made_it = len(p.renderer._actors)
     p.show()
     assert n_made_it == N**2
+
+
+@pytest.mark.parametrize("as_global", [True, False])
+def test_add_background_image(as_global):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_background_image(examples.mapfile, as_global=as_global)
+    plotter.show()
+
+
+def test_add_background_image_subplots():
+    pl = pyvista.Plotter(shape=(2, 2))
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.add_mesh(examples.load_airplane())
+    pl.subplot(1, 1)
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.add_mesh(examples.load_airplane())
+    pl.remove_background_image()
+
+    # should error out as there's no background
+    with pytest.raises(RuntimeError):
+        pl.remove_background_image()
+
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.show()
