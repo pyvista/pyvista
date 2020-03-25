@@ -1153,6 +1153,24 @@ class DataSetFilters(object):
             return
         return output
 
+    def warp_by_vector(dataset, scalars=None, factor=1.0):
+        """Warp the dataset's points by a point data vectors array's values.
+
+        This modifies point coordinates by moving points along point vectors by
+        the local vector times the scale factor.
+
+        A classical application of this transform is to visualize eigenmodes in mechanics.
+        """
+        if scalars is None:
+            field, scalars = dataset.active_scalars_info
+        arr, field = get_array(dataset, scalars, preference='point', info=True)
+        alg = vtk.vtkWarpVector()
+        alg.SetInputDataObject(dataset)
+        alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
+        alg.SetScaleFactor(factor)
+        alg.Update()
+        output = _get_output(alg)
+        return output
 
     def cell_data_to_point_data(dataset, pass_cell_data=False):
         """Transform cell data into point data.
