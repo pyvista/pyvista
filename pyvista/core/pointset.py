@@ -48,13 +48,44 @@ class PointSet(Common):
         alg.Update()
         return np.array(alg.GetCenter())
 
-
     def shallow_copy(self, to_copy):
         """Do a shallow copy the pointset."""
         # Set default points if needed
         if not to_copy.GetPoints():
             to_copy.SetPoints(vtk.vtkPoints())
         return Common.shallow_copy(self, to_copy)
+
+    def remove_cells(self, ind):
+        """Remove cells.
+
+        This modifies the mesh or grid in-place without making a copy.
+
+        Parameters
+        ----------
+        ind : np.ndarray, list
+            List or array of cell indices to be extracted.  The array
+            can also be a boolean array the same size as the number of
+            cells.
+
+        Examples
+        --------
+        Remove first 1000 cells from an unstructured grid
+
+        >>> import pyvista
+        >>> letter_a = pyvista.examples.download_letter_a()
+        >>> letter_a.remove_cells(range(1000))
+        """
+        if isinstance(ind, np.ndarray) and ind.dtype == np.bool:
+            if ind.size != self.n_cells:
+                raise ValueError('Boolean array size must match the '
+                                 'number of cells (%d)' % self.n_cells)
+            ghost_cells = ind.astype(np.uint8)
+        else:
+            ghost_cells = np.zeros(self.n_cells, np.uint8)
+            ghost_cells[ind] = 1
+
+        self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        self.RemoveGhostCells()
 
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
@@ -422,12 +453,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         ------
         volume : float
             Total volume of the mesh.
-
         """
         mprop = vtk.vtkMassProperties()
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
-
 
     @property
     def point_normals(self):
@@ -435,19 +464,16 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
 
-
     @property
     def cell_normals(self):
         """Return the cell normals."""
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
-
     @property
     def face_normals(self):
         """Return the cell normals."""
         return self.cell_normals
-
 
     @property
     def obbTree(self):
@@ -466,7 +492,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
         return self._obbTree
 
-
     @property
     def n_open_edges(self):
         """Return the number of open edges on this mesh."""
@@ -477,6 +502,28 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         alg.SetInputDataObject(self)
         alg.Update()
         return alg.GetOutput().GetNumberOfCells()
+
+    def remove_faces(self, ind):
+        """Remove faces from the mesh.
+
+        This modifies the mesh in-place without making a copy.
+
+        Parameters
+        ----------
+        ind : np.ndarray, list
+            List or array of cell indices to be extracted.  The array
+            can also be a boolean array the same size as the number of
+            faces.
+
+        Examples
+        --------
+        Remove first 100 faces from a sphere
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.remove_faces(range(100))
+        """
+        self.remove_cells(ind)
 
 
 class PointGrid(PointSet):
@@ -842,38 +889,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def offset(self):
         """Get Cell Locations Array."""
         return vtk_to_numpy(self.GetCellLocationsArray())
-
-    def remove_cells(self, ind):
-        """Remove cells in the grid.
-
-        This modifies the grid in-place.
-
-        Parameters
-        ----------
-        ind : np.ndarray, list
-            List or array of cell indices to be extracted.  The array
-            can also be a boolean array the same size as the number of
-            cells.
-
-        Examples
-        --------
-        Remove first 1000 cells from an unstructured grid
-
-        >>> import pyvista
-        >>> letter_a = pyvista.examples.download_letter_a()
-        >>> letter_a.remove_cells(range(1000))
-        """
-        if isinstance(ind, np.ndarray) and ind.dtype == np.bool:
-            if ind.size != self.n_cells:
-                raise ValueError('Boolean array size must match the '
-                                 'number of cells (%d)' % self.n_cells)
-            ghost_cells = ind.astype(np.uint8)
-        else:
-            ghost_cells = np.zeros(self.n_cells, np.uint8)
-            ghost_cells[ind] = 1
-
-        self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
-        self.RemoveGhostCells()
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
