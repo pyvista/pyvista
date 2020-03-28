@@ -24,7 +24,7 @@ log.setLevel('CRITICAL')
 
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
-    
+
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
@@ -528,7 +528,6 @@ class PointGrid(PointSet):
         return surf.volume
 
 
-
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     """
     Extends the functionality of a vtk.vtkUnstructuredGrid object.
@@ -597,16 +596,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             else:
                 raise Exception('All input types must be np.ndarray')
 
-
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
 
-
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -743,6 +739,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         one system may not be readable on other systems.  Binary can be used
         only ".vtk" files
 
+        Examples
+        --------
+        >>> import pyvista
+        >>> beam = pyvista.UnstructuredGrid(pyvista.examples.hexbeamfile)
+        >>> _ = beam.save('/tmp/tmp.vtk')  # or "C:/Users/where/tmp.vtk"
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
@@ -772,7 +773,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
-        
+
         Converts the following cell types to their linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
@@ -842,6 +843,37 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         """Get Cell Locations Array."""
         return vtk_to_numpy(self.GetCellLocationsArray())
 
+    def remove_cells(self, ind):
+        """Remove cells in the grid.
+
+        This modifies the grid in-place.
+
+        Parameters
+        ----------
+        ind : np.ndarray, list
+            List or array of cell indices to be extracted.  The array
+            can also be a boolean array the same size as the number of
+            cells.
+
+        Examples
+        --------
+        Remove first 1000 cells from an unstructured grid
+
+        >>> import pyvista
+        >>> letter_a = pyvista.examples.download_letter_a()
+        >>> letter_a.remove_cells(range(1000))
+        """
+        if isinstance(ind, np.ndarray) and ind.dtype == np.bool:
+            if ind.size != self.n_cells:
+                raise ValueError('Boolean array size must match the '
+                                 'number of cells (%d)' % self.n_cells)
+            ghost_cells = ind.astype(np.uint8)
+        else:
+            ghost_cells = np.zeros(self.n_cells, np.uint8)
+            ghost_cells[ind] = 1
+
+        self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        self.RemoveGhostCells()
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):

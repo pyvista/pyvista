@@ -402,11 +402,9 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         """Return the default representation."""
         return Common.__repr__(self)
 
-
     def __str__(self):
         """Return the default str representation."""
         return Common.__str__(self)
-
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
         """Create VTK image data directly from numpy arrays.

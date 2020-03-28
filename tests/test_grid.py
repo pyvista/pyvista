@@ -472,3 +472,17 @@ def test_gaussian_smooth():
     assert uniform.active_scalars_name == active
     assert uniform.active_scalars.shape == values.shape
     assert not np.all(uniform.active_scalars == values)
+
+
+@pytest.mark.parametrize('ind', [range(10), np.arange(10), np.
+                                 ones(beam.n_cells, np.bool)])
+def test_remove_cells(ind):
+    grid_copy = beam.copy()
+    grid_copy.remove_cells(ind)
+    assert grid_copy.n_cells < beam.n_cells
+
+
+def test_remove_cells_invalid():
+    grid_copy = beam.copy()
+    with pytest.raises(ValueError):
+        grid_copy.remove_cells(np.ones(10, np.bool))
