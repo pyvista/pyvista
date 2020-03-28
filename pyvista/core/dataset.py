@@ -16,7 +16,7 @@ except (ModuleNotFoundError, ImportError):
 import pyvista
 import pyvista.utilities.fileio as fileio
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               parse_field_choice, raise_not_matching)
+                               parse_field_choice, raise_not_matching, vtk_id_list_to_array)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
@@ -136,13 +136,13 @@ class DataObject(vtkDataObject, ABC):
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
-            is used
+            The name of the array to get the range. If None, the
+            active scalar is used
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
 
         """
         raise NotImplementedError('{} mesh type does not have a `get_data_range` method.'.format(type(self)))
@@ -318,7 +318,6 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
 
     def __init__(self, *args, **kwargs):
         super(DataSet, self).__init__(*args, **kwargs)
-        #TODO, remove because this information is already in DataSetAttributes.
         self._active_scalars_info = 0, None  # Scalar field and name
         self._last_active_scalars_name = None
 
@@ -371,7 +370,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
             else:
-                self._active_vectors_info = [FieldAssociation.POINT, None] # field and name
+                self._active_vectors_info = (FieldAssociation.POINT, None) # field and name
         _, name = self._active_vectors_info
         return self._active_vectors_info
 
@@ -585,7 +584,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
             self.GetCellData().SetActiveVectors(name)
         else:
             raise RuntimeError('Data field ({}) not usable'.format(field))
-        self._active_vectors_info = [field, name]
+        self._active_vectors_info = (field, name)
 
 
     def rename_array(self, old_name, new_name, preference='cell'):
@@ -693,13 +692,13 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalars
-            is used
+            The name of the array to get the range. If None, the
+            active scalars is used.
 
         preference : str, optional
-            When scalars is specified, this is the preferred array type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
 
         """
         if arr is None:
@@ -858,8 +857,9 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         if hasattr(ido, '_textures'):
-            self._textures = ido._textures
-
+            self._textures = {}
+            for name, tex in ido._textures.items():
+                self._textures[name] = tex.copy()
 
     @property
     def point_arrays(self):
@@ -1194,7 +1194,7 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         return pyansys.CellQuality(dataset)
 
 
-    def find_closest_point(self, point):
+    def find_closest_point(self, point, n=1):
         """Find index of closest point in this mesh to the given point.
 
         If wanting to query many points, use a KDTree with scipy or another
@@ -1205,7 +1205,11 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         Parameters
         ----------
         point : iterable(float)
-            Length 3 coordinate of the point to query
+            Length 3 coordinate of the point to query.
+
+        n : int, optional
+            If greater than ``1``, returns the indices of the ``n`` closest
+            points.
 
         Return
         ------
@@ -1213,10 +1217,17 @@ class DataSet(DataSetFilters, DataObject, vtkDataSet):
         """
         if not isinstance(point, collections.Iterable) or len(point) != 3:
             raise TypeError("Given point must be a length three iterable.")
+        if not isinstance(n, int) or n < 1:
+            raise TypeError("`n` must be a positive integer.")
         locator = vtk.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        index = locator.FindClosestPoint(point)
+        if n < 2:
+            index = locator.FindClosestPoint(point)
+        else:
+            id_list = vtk.vtkIdList()
+            locator.FindClosestNPoints(n, point, id_list)
+            index = vtk_id_list_to_array(id_list)
         return index
 
 

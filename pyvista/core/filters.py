@@ -23,6 +23,7 @@ Example
 
 """
 import collections
+from functools import wraps
 import logging
 
 import numpy as np
@@ -31,7 +32,8 @@ from vtk.util.numpy_support import (numpy_to_vtkIdTypeArray, vtk_to_numpy)
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
-                               generate_plane, get_array, wrap)
+                               generate_plane, get_array, vtk_id_list_to_array,
+                               wrap)
 
 
 def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
@@ -180,6 +182,36 @@ class DataSetFilters(object):
             alg.GenerateClippedOutputOn()
         alg.Update()
         return _get_output(alg, oport=port)
+
+
+    def compute_implicit_distance(dataset, surface, inplace=False):
+        """Compute the implicit distance from the points to a surface.
+
+        This filter will comput the implicit distance from all of the nodes of
+        this mesh to a given surface. This distance will be added as a point
+        array called ``'implicit_distance'``.
+
+        Parameters
+        ----------
+        surface : pyvista.Common
+            The surface used to compute the distance
+
+        inplace : bool
+            If True, a new scalar array will be added to the ``point_arrays``
+            of this mesh. Otherwise a copy of this mesh is returned with that
+            scalar field.
+        """
+        function = vtk.vtkImplicitPolyDataDistance()
+        function.SetInput(surface)
+        points = pyvista.convert_array(dataset.points)
+        dists = vtk.vtkDoubleArray()
+        function.FunctionValue(points, dists)
+        if inplace:
+            dataset.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+            return
+        result = dataset.copy()
+        result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
+        return result
 
 
     def clip_surface(dataset, surface, invert=True, value=0.0,
@@ -605,7 +637,7 @@ class DataSetFilters(object):
         alg.Update()
         return _get_output(alg)
 
-    def wireframe(dataset):
+    def extract_all_edges(dataset):
         """Extract all the internal/external edges of the dataset as PolyData.
 
         This produces a full wireframe representation of the input dataset.
@@ -615,6 +647,16 @@ class DataSetFilters(object):
         alg.SetInputDataObject(dataset)
         alg.Update()
         return _get_output(alg)
+
+    @wraps(extract_all_edges)
+    def wireframe(self, *args, **kwargs):
+        """Wrap ``extract_all_edges``.
+
+        DEPRECATED: Please use ``extract_all_edges`` instead.
+
+        """
+        logging.warning("DEPRECATED: ``.wireframe`` is deprecated. Use ``.extract_all_edges`` instead.")
+        return self.extract_all_edges(*args, **kwargs)
 
     def elevation(dataset, low_point=None, high_point=None, scalar_range=None,
                   preference='point', set_active=True):
@@ -1622,7 +1664,7 @@ class DataSetFilters(object):
             resolution = int(dataset.n_cells)
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
-        
+
         sampled_line = line.sample(dataset)
         return sampled_line
 
@@ -1863,9 +1905,9 @@ class DataSetFilters(object):
         return surf.point_arrays['vtkOriginalPointIds']
 
 
-    def extract_edges(dataset, feature_angle=30, boundary_edges=True,
-                      non_manifold_edges=True, feature_edges=True,
-                      manifold_edges=True, inplace=False):
+    def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
+                              non_manifold_edges=True, feature_edges=True,
+                              manifold_edges=True, inplace=False):
         """Extract edges from the surface of the mesh.
 
         If the given mesh is not PolyData, the external surface of the given
@@ -1922,6 +1964,15 @@ class DataSetFilters(object):
         else:
             return mesh
 
+    @wraps(extract_feature_edges)
+    def extract_edges(self, *args, **kwargs):
+        """Wrap ``extract_feature_edges``.
+
+        DEPRECATED: Please use ``extract_feature_edges`` instead.
+
+        """
+        logging.warning("DEPRECATED: ``.extract_edges`` is deprecated. Use ``.extract_feature_edges`` instead.")
+        return self.extract_feature_edges(*args, **kwargs)
 
     def merge(dataset, grid=None, merge_points=True, inplace=False,
               main_has_priority=True):
@@ -1929,7 +1980,7 @@ class DataSetFilters(object):
 
         Grid is updated in-place by default.
 
-        Can be used to merge points of adjcent cells when no grids
+        Can be used to merge points of adjacent cells when no grids
         are input.
 
         Parameters
@@ -2155,6 +2206,8 @@ class CompositeFilters(object):
         """
         alg = vtk.vtkAppendFilter()
         for block in composite:
+            if isinstance(block, vtk.vtkMultiBlockDataSet):
+                block = CompositeFilters.combine(block, merge_points=merge_points)
             alg.AddInputData(block)
         alg.SetMergePoints(merge_points)
         alg.Update()
@@ -2177,6 +2230,9 @@ class CompositeFilters(object):
 
 
     slice_along_line = DataSetFilters.slice_along_line
+
+
+    extract_all_edges = DataSetFilters.extract_all_edges
 
 
     wireframe = DataSetFilters.wireframe
@@ -3107,6 +3163,9 @@ class PolyDataFilters(DataSetFilters):
     def geodesic(poly_data, start_vertex, end_vertex, inplace=False):
         """Calculate the geodesic path between two vertices using Dijkstra's algorithm.
 
+        This will add an array titled `vtkOriginalPointIds` of the input
+        mesh's point ids to the output mesh.
+
         Parameters
         ----------
         start_vertex : int
@@ -3124,14 +3183,18 @@ class PolyDataFilters(DataSetFilters):
         """
         if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
             raise IndexError('Invalid indices.')
+        if not poly_data.is_all_triangles():
+            raise AssertionError("Input mesh for geodesic path must be all triangles.")
 
         dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(poly_data)
         dijkstra.SetStartVertex(start_vertex)
         dijkstra.SetEndVertex(end_vertex)
         dijkstra.Update()
+        original_ids = vtk_id_list_to_array(dijkstra.GetIdList())
 
         output = _get_output(dijkstra)
+        output["vtkOriginalPointIds"] = original_ids
 
         # Do not copy textures from input
         output.clear_textures()
@@ -3368,8 +3431,45 @@ class PolyDataFilters(DataSetFilters):
         f[:, 1:] = f[:, 1:][:, ::-1]
 
 
-    def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False, inplace=False):
-        """Apply a delaunay 2D filter along the best fitting plane."""
+    def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
+                    inplace=False, edge_source=None):
+        """Apply a delaunay 2D filter along the best fitting plane.
+
+        Parameters
+        ----------
+        tol : float
+            Specify a tolerance to control discarding of closely spaced
+            points. This tolerance is specified as a fraction of the diagonal
+            length of the bounding box of the points.
+
+        alpha : float
+            Specify alpha (or distance) value to control output of this
+            filter. For a non-zero alpha value, only edges or triangles
+            contained within a sphere centered at mesh vertices will be
+            output. Otherwise, only triangles will be output.
+
+        offset : float
+            Specify a multiplier to control the size of the initial, bounding
+            Delaunay triangulation.
+
+        bound : bool
+            Boolean controls whether bounding triangulation points (and
+            associated triangles) are included in the output. (These are
+            introduced as an initial triangulation to begin the triangulation
+            process. This feature is nice for debugging output.)
+
+        inplace : bool
+            If True, overwrite this mesh with the triangulated mesh.
+
+        edge_source : pyvista.PolyData, optional
+            Specify the source object used to specify constrained edges and
+            loops. (This is optional.) If set, and lines/polygons are
+            defined, a constrained triangulation is created. The
+            lines/polygons are assumed to reference points in the input point
+            set (i.e. point ids are identical in the input and source). Note
+            that this method does not connect the pipeline. See
+            SetSourceConnection for connecting the pipeline.
+        """
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
         alg.SetInputDataObject(poly_data)
@@ -3377,9 +3477,12 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAlpha(alpha)
         alg.SetOffset(offset)
         alg.SetBoundingTriangulation(bound)
+        if edge_source is not None:
+            alg.SetSourceData(edge_source)
         alg.Update()
 
-        mesh = _get_output(alg)
+        # Sometimes lines are given in the output. The `.triangulate()` filter cleans those
+        mesh = _get_output(alg).triangulate()
         if inplace:
             poly_data.overwrite(mesh)
         else:
@@ -3560,5 +3663,45 @@ class UniformGridFilters(DataSetFilters):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)
+        alg.Update()
+        return _get_output(alg)
+
+
+    def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
+        """Select piece (e.g., volume of interest).
+
+        To use this filter set the VOI ivar which are i-j-k min/max indices
+        that specify a rectangular region in the data. (Note that these are
+        0-offset.) You can also specify a sampling rate to subsample the
+        data.
+
+        Typical applications of this filter are to extract a slice from a
+        volume for image processing, subsampling large volumes to reduce data
+        size, or extracting regions of a volume with interesting data.
+
+        Parameters
+        ----------
+        voi : tuple(int)
+            Length 6 iterable of ints: ``(xmin, xmax, ymin, ymax, zmin, zmax)``.
+            These bounds specify the volume of interest in i-j-k min/max
+            indices.
+
+        rate : tuple(int)
+            Length 3 iterable of ints: ``(xrate, yrate, zrate)``.
+            Default: ``(1, 1, 1)``
+
+        boundary : bool
+            Control whether to enforce that the "boundary" of the grid is
+            output in the subsampling process. (This only has effect
+            when the rate in any direction is not equal to 1). When
+            this is on, the subsampling will always include the boundary of
+            the grid even though the sample rate is not an even multiple of
+            the grid dimensions. (By default this is off.)
+        """
+        alg = vtk.vtkExtractVOI()
+        alg.SetVOI(voi)
+        alg.SetInputDataObject(dataset)
+        alg.SetSampleRate(rate)
+        alg.SetIncludeBoundary(boundary)
         alg.Update()
         return _get_output(alg)

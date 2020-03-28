@@ -1,3 +1,11 @@
+scipy
+matplotlib
+PyQt5==5.11.3
+imageio>=2.5.0
+imageio-ffmpeg
+colorcet
+cmocean
+meshio>=4.0.3, <5.0
 Sphinx
 sphinx-autobuild
 sphinx-rtd-theme
@@ -7,5 +15,4 @@ pytest-sphinx
 sphinx-notfound-page>=0.3.0
 sphinx-copybutton
 sphinx-gallery>=0.4.0
-scipy
 lxml

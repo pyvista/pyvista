@@ -5,6 +5,7 @@ import ctypes
 import enum
 import logging
 import warnings
+from threading import Thread
 
 import numpy as np
 import scooby
@@ -12,6 +13,7 @@ import vtk
 import vtk.util.numpy_support as nps
 
 import pyvista
+from .fileio import from_meshio
 
 
 class FieldAssociation(enum.Enum):
@@ -43,6 +45,11 @@ def vtk_bit_array_to_char(vtkarr_bint):
     vtkarr = vtk.vtkCharArray()
     vtkarr.DeepCopy(vtkarr_bint)
     return vtkarr
+
+
+def vtk_id_list_to_array(vtk_id_list):
+    """Convert a vtkIdList to a NumPy array."""
+    return np.array([vtk_id_list.GetId(i) for i in range(vtk_id_list.GetNumberOfIds())])
 
 
 def convert_string_array(arr, name=None):
@@ -203,9 +210,9 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         The name of the array to get the range.
 
     preference : str, optional
-        When scalars is specified, this is the perfered array type to
-        search for in the dataset.  Must be either ``'point'``, ``'cell'``, or
-        ``'field'``
+        When scalars is specified, this is the preferred array type to
+        search for in the dataset.  Must be either ``'point'``,
+        ``'cell'``, or ``'field'``
 
     info : bool
         Return info about the array rather than the array itself.
@@ -317,7 +324,7 @@ def line_segments_from_points(points):
     return poly
 
 
-def lines_from_points(points):
+def lines_from_points(points, close=False):
     """Make a connected line set given an array of points.
 
     Parameters
@@ -327,6 +334,9 @@ def lines_from_points(points):
         example, two line segments would be represented as:
 
         np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+
+    close : bool, optional
+        If True, close the line segments into a loop
 
     Return
     ------
@@ -339,6 +349,8 @@ def lines_from_points(points):
     cells = np.full((len(points)-1, 3), 2, dtype=np.int)
     cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
     cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    if close:
+        cells = np.append(cells, [[2, len(points)-1, 0],], axis=0)
     poly.lines = cells
     return poly
 
@@ -408,6 +420,15 @@ def trans_from_matrix(matrix):
     return t
 
 
+def is_meshio_mesh(mesh):
+    """Test if passed object is instance of ``meshio.Mesh``."""
+    try:
+        import meshio
+        return isinstance(mesh, meshio.Mesh)
+    except ImportError:
+        return False
+
+
 def wrap(vtkdataset):
     """Wrap any given VTK data object to its appropriate PyVista data object.
 
@@ -445,6 +466,8 @@ def wrap(vtkdataset):
         else:
             print(vtkdataset.shape, vtkdataset)
             raise NotImplementedError('NumPy array could not be converted to PyVista.')
+    elif is_meshio_mesh(vtkdataset):
+        return from_meshio(vtkdataset)
     else:
         raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
     try:
@@ -590,3 +613,28 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     renderer.SetOcclusionRatio(occlusion_ratio)
     renderWindow.Render()
     return renderer.GetLastRenderingUsedDepthPeeling() == 1
+
+
+def threaded(fn):
+    """Call a function using a thread."""
+    def wrapper(*args, **kwargs):
+        thread = Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
+
+
+class conditional_decorator(object):
+    """Conditional decorator for methods."""
+
+    def __init__(self, dec, condition):
+        """Initialize."""
+        self.decorator = dec
+        self.condition = condition
+
+    def __call__(self, func):
+        """Call the decorated function if condition is matched."""
+        if not self.condition:
+            # Return the function unchanged, not decorated.
+            return func
+        return self.decorator(func)

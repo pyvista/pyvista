@@ -582,3 +582,36 @@ def download_crater_imagery():
 def download_dolfin():
     """Download crater texture."""
     return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml")
+
+
+def download_damavand_volcano():
+    """Download damavand volcano model."""
+    volume = _download_and_read("damavand-volcano.vtk")
+    volume.rename_array("None", "data")
+    return volume
+
+
+def download_delaunay_example():
+    """Download a pointset for the Delaunay example."""
+    return _download_and_read('250.vtk')
+
+
+def download_embryo():
+    """Download a volume of an embryo."""
+    return _download_and_read('embryo.slc')
+
+
+def download_antarctica_velocity():
+    """Download the antarctica velocity simulation results."""
+    return _download_and_read("antarctica_velocity.vtp")
+
+
+def download_room_surface_mesh():
+    """Download the room surface mesh.
+
+    This mesh is for demonstrating the difference that depth peeling can
+    provide whenn rendering translucent geometries.
+
+    This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
+    """
+    return _download_and_read("room_surface_mesh.obj")

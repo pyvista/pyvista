@@ -315,19 +315,30 @@ def test_add_points():
 def test_key_press_event():
     plotter = pyvista.Plotter(off_screen=False)
     plotter.key_press_event(None, None)
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     plotter.left_button_down(None, None)
-    # assert np.allclose(plotter.pickpoint, [0, 0, 0])
+    # assert np.allclose(plotter.pickpoint, [0, 0, 0])\
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_show_axes():
+    # if not closed correctly, a seg fault occurs when exitting
+    plotter = pyvista.Plotter(off_screen=False)
+    plotter.show_axes()
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_update():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.update()
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -716,6 +727,10 @@ def test_volume_rendering():
     data['d'].rename_array('Spatial Point Data', 'd')
     data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
 
+    # Check that NumPy arrays work
+    arr = vol["Spatial Point Data"].reshape(vol.dimensions)
+    pyvista.plot(arr, off_screen=OFF_SCREEN, volume=True, opacity='linear')
+
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -763,12 +778,12 @@ def test_plot_eye_dome_lighting():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_opacity_by_array():
     mesh = examples.load_uniform()
-    # Test with opacity arry
+    # Test with opacity array
     mesh['opac'] = mesh['Spatial Point Data'] / 100.
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='opac',)
     p.show()
-    # Test with uncertainty array (transperancy)
+    # Test with uncertainty array (transparency)
     mesh['unc'] = mesh['Spatial Point Data']
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',
@@ -911,3 +926,28 @@ def test_default_name_tracking():
     n_made_it = len(p.renderer._actors)
     p.show()
     assert n_made_it == N**2
+
+
+@pytest.mark.parametrize("as_global", [True, False])
+def test_add_background_image(as_global):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_background_image(examples.mapfile, as_global=as_global)
+    plotter.show()
+
+
+def test_add_background_image_subplots():
+    pl = pyvista.Plotter(shape=(2, 2))
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.add_mesh(examples.load_airplane())
+    pl.subplot(1, 1)
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.add_mesh(examples.load_airplane())
+    pl.remove_background_image()
+
+    # should error out as there's no background
+    with pytest.raises(RuntimeError):
+        pl.remove_background_image()
+
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.show()

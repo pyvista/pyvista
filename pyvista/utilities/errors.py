@@ -116,6 +116,8 @@ def get_gpu_info():
     plotter.show(auto_close=False)
     gpu_info = plotter.ren_win.ReportCapabilities()
     plotter.close()
+    # Remove from list of Plotters
+    pyvista.plotting._ALL_PLOTTERS.pop(plotter._id_name)
     return gpu_info
 
 
@@ -221,9 +223,9 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'panel']
+                    'cmocean', 'panel', 'scipy']
 
-        # Information about the GPU - bare except incase there is a rendering
+        # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
         if gpu:
             try:
@@ -241,14 +243,13 @@ def assert_empty_kwargs(**kwargs):
     """Assert that all keyword arguments have been used (internal helper).
 
     If any keyword arguments are passed, a ``TypeError`` is raised.
-
     """
     n = len(kwargs)
     if n == 0:
         return True
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
-    bad_arguments = "[" + ("{}, " * (n - 1) + "{}").format(*keys) + "]"
+    bad_arguments = ', '.join(['"%s"' % key for key in keys])
     if n == 1:
         grammar = "is an invalid keyword argument"
     else:

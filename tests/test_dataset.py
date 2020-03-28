@@ -562,7 +562,7 @@ def test_string_arrays():
 
 
 def test_clear_arrays():
-    # First try on an empy mesh
+    # First try on an empty mesh
     grid = pyvista.UniformGrid((10, 10, 10))
     grid.clear_arrays()
     # Now try something more complicated
@@ -657,3 +657,7 @@ def test_find_closest_point():
     # Make sure we can fetch that point
     closest = sphere.points[index]
     assert len(closest) == 3
+    # n points
+    node = np.array([0, 0.2, 0.2])
+    index = sphere.find_closest_point(node, 5)
+    assert len(index) == 5

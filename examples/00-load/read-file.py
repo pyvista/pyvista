@@ -16,8 +16,6 @@ Read a dataset from a known file type.
 # sphinx_gallery_thumbnail_number = 5
 import pyvista as pv
 from pyvista import examples
-import numpy as np
-import matplotlib.pyplot as plt
 
 ###############################################################################
 # The following code block uses a built-in example

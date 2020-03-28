@@ -1,13 +1,12 @@
 """
-Clipping Meshes
-~~~~~~~~~~~~~~~
+Clipping with Planes & Boxes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Clip/cut any dataset using using planes, boxes, or surface meshes.
+Clip/cut any dataset using using planes or boxes.
 """
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-import numpy as np
 
 ###############################################################################
 # Clip with Plane
@@ -29,11 +28,11 @@ p.show()
 
 
 ###############################################################################
-# Clip with Box
-# +++++++++++++
+# Clip with Bounds
+# ++++++++++++++++
 #
-# Clip any dataset by a solid box using the
-# :func:`pyvista.DataSetFilters.clip_box` filter
+# Clip any dataset by a set of XYZ bounds using the
+# :func:`pyvista.DataSetFilters.clip_box` filter.
 dataset = examples.download_office()
 
 bounds = [2,4.5, 2,4.5, 1,3]
@@ -47,51 +46,33 @@ p.show()
 
 
 ###############################################################################
-# Clip with Surface
-# +++++++++++++++++
+# Clip with Rotated Box
+# +++++++++++++++++++++
 #
-# Clip any PyVista dataset by a :class:`pyvista.PolyData` surface mesh using
-# the :func:`pyvista.DataSet.Filters.clip_surface` filter.
-surface = pv.Cone(direction=(0,0,-1), height=3.0, radius=1,
-                  resolution=50, capping=False)
+# Clip any dataset by an arbitrarily rotated solid box using the
+# :func:`pyvista.DataSetFilters.clip_box` filter.
+mesh = examples.load_airplane()
 
-# Make a gridded dataset
-n = 51
-xx = yy = zz = 1 - np.linspace(0, n, n) * 2 / (n-1)
-dataset = pv.RectilinearGrid(xx, yy, zz)
+# Use `pv.Box()` or `pv.Cube()` to create a region of interest
+roi = pv.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
+              x_length=500, y_length=500, z_length=500)
+roi.rotate_z(33)
 
-# Preview the problem
 p = pv.Plotter()
-p.add_mesh(surface, color='w', label='Surface')
-p.add_mesh(dataset, color='gold', show_edges=True,
-           opacity=0.75, label='To Clip')
-p.add_legend()
+p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(mesh, opacity=0.5)
 p.show()
 
 ###############################################################################
-# Clip the rectilinear grid dataset using the :class:`pyvista.PolyData`
-# surface mesh:
-clipped = dataset.clip_surface(surface, invert=False)
+# Run the box clipping algorithm
+extracted = mesh.clip_box(roi, invert=False)
 
-# Visualize the results
-p = pv.Plotter()
-p.add_mesh(surface, color='w', opacity=0.75, label='Surface')
-p.add_mesh(clipped, color='gold', show_edges=True, label="clipped")
-p.add_legend()
+p = pv.Plotter(shape=(1,2))
+p.add_mesh(roi, opacity=0.75, color="red")
+p.add_mesh(mesh)
+p.subplot(0,1)
+p.add_mesh(extracted)
+p.add_mesh(roi, opacity=0.75, color="red")
+p.link_views()
+p.view_isometric()
 p.show()
-
-
-###############################################################################
-# Here is another example of clipping a mesh by a surface. This time, we'll
-# generate a :class:`pyvista.UniformGrid` around a topography surface and then
-# clip that grid using the surface to create a closed 3D model of the surface
-surface = examples.load_random_hills()
-
-# Create a grid around that surface
-grid = pv.create_grid(surface)
-
-# Clip the grid using the surface
-model = grid.clip_surface(surface)
-
-# Compute height and display it
-model.elevation().plot()
