@@ -554,9 +554,3 @@ def test_is_all_triangles():
     assert not mesh.is_all_triangles()
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles()
-
-
-def test_remove_faces():
-    sphere = SPHERE.copy()
-    sphere.remove_cells(range(100))
-    assert sphere.n_faces < SPHERE.n_faces

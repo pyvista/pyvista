@@ -482,7 +482,21 @@ def test_remove_cells(ind):
     assert grid_copy.n_cells < beam.n_cells
 
 
+def test_remove_cells_not_inplace():
+    grid_copy = beam.copy()  # copy to protect
+    grid_w_removed = grid_copy.remove_cells(range(10))
+    assert grid_w_removed.n_cells < beam.n_cells
+    assert grid_copy.n_cells == beam.n_cells
+
+
 def test_remove_cells_invalid():
     grid_copy = beam.copy()
     with pytest.raises(ValueError):
         grid_copy.remove_cells(np.ones(10, np.bool))
+
+
+def test_hide_cells():
+    sgrid_copy = sgrid.copy()
+    sgrid_copy.hide_cells(range(10, 20))
+    sgrid_copy.UpdateCellGhostArrayCache()
+    assert sgrid_copy.HasAnyBlankCells()

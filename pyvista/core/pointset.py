@@ -55,17 +55,17 @@ class PointSet(Common):
             to_copy.SetPoints(vtk.vtkPoints())
         return Common.shallow_copy(self, to_copy)
 
-    def remove_cells(self, ind):
+    def remove_cells(self, ind, inplace=True):
         """Remove cells.
-
-        This modifies the mesh or grid in-place without making a copy.
 
         Parameters
         ----------
-        ind : np.ndarray, list
-            List or array of cell indices to be extracted.  The array
-            can also be a boolean array the same size as the number of
-            cells.
+        ind : iterable
+            Cell indices to be removed.  The array can also be a
+            boolean array the same size as the number of cells.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing when ``True``.
 
         Examples
         --------
@@ -84,8 +84,12 @@ class PointSet(Common):
             ghost_cells = np.zeros(self.n_cells, np.uint8)
             ghost_cells[ind] = 1
 
-        self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
-        self.RemoveGhostCells()
+        if inplace:
+            target = self
+        else:
+            target = self.copy()
+        target.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+        target.RemoveGhostCells()
 
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
@@ -503,28 +507,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         alg.Update()
         return alg.GetOutput().GetNumberOfCells()
 
-    def remove_faces(self, ind):
-        """Remove faces from the mesh.
-
-        This modifies the mesh in-place without making a copy.
-
-        Parameters
-        ----------
-        ind : np.ndarray, list
-            List or array of cell indices to be extracted.  The array
-            can also be a boolean array the same size as the number of
-            faces.
-
-        Examples
-        --------
-        Remove first 100 faces from a sphere
-
-        >>> import pyvista
-        >>> sphere = pyvista.Sphere()
-        >>> sphere.remove_faces(range(100))
-        """
-        self.remove_cells(ind)
-
 
 class PointGrid(PointSet):
     """Class in common with structured and unstructured grids."""
@@ -785,12 +767,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         Binary files write much faster than ASCII, but binary files written on
         one system may not be readable on other systems.  Binary can be used
         only ".vtk" files
-
-        Examples
-        --------
-        >>> import pyvista
-        >>> beam = pyvista.UnstructuredGrid(pyvista.examples.hexbeamfile)
-        >>> _ = beam.save('/tmp/tmp.vtk')  # or "C:/Users/where/tmp.vtk"
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
@@ -1101,3 +1077,39 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         attrs = PointGrid._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
+
+    def hide_cells(self, ind):
+        """Hide cells without deleting them.
+
+        Hides cells by setting the ghost_cells array to HIDDEN_CELL.
+
+        Parameters
+        ----------
+        ind : iterable
+            List or array of cell indices to be hidden.  The array can
+            also be a boolean array the same size as the number of
+            cells.
+
+        Examples
+        --------
+        Hide part of the middle of a structured surface
+
+        >>> import pyvista as pv
+        >>> import numpy as np
+        >>> x = np.arange(-10, 10, 0.25)
+        >>> y = np.arange(-10, 10, 0.25)
+        >>> z = 0
+        >>> x, y, z = np.meshgrid(x, y, z)
+        >>> grid = pv.StructuredGrid(x, y, z)
+        >>> grid.hide_cells(range(79*30, 79*50))
+        """
+        if isinstance(ind, np.ndarray) and ind.dtype == np.bool:
+            if ind.size != self.n_cells:
+                raise ValueError('Boolean array size must match the '
+                                 'number of cells (%d)' % self.n_cells)
+            ghost_cells = ind.astype(np.uint8)
+        else:
+            ghost_cells = np.zeros(self.n_cells, np.uint8)
+            ghost_cells[ind] = 32
+
+        self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
