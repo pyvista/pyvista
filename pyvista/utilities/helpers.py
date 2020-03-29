@@ -19,10 +19,10 @@ from .fileio import from_meshio
 class FieldAssociation(enum.Enum):
     """Represents which type of vtk field a scalar or vector array is associated with."""
 
-    POINT = 0
-    CELL = 1
-    FIELD = 2
-    ROW = 6
+    POINT = vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
+    CELL = vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
+    FIELD = vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
+    ROW = vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
 
 
 def get_vtk_type(typ):
