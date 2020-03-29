@@ -17,6 +17,8 @@ from .fileio import from_meshio
 
 
 class FieldAssociation(enum.Enum):
+    """Represents which type of vtk field a scalar or vector array is associated with."""
+
     POINT = 0
     CELL = 1
     FIELD = 2
