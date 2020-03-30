@@ -24,7 +24,7 @@ log.setLevel('CRITICAL')
 
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
-
+    
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
@@ -47,6 +47,7 @@ class PointSet(Common):
         alg.SetUseScalarsAsWeights(scalars_weight)
         alg.Update()
         return np.array(alg.GetCenter())
+
 
     def shallow_copy(self, to_copy):
         """Do a shallow copy the pointset."""
@@ -461,10 +462,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         ------
         volume : float
             Total volume of the mesh.
+
         """
         mprop = vtk.vtkMassProperties()
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
+
 
     @property
     def point_normals(self):
@@ -472,16 +475,19 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
 
+
     @property
     def cell_normals(self):
         """Return the cell normals."""
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
+
     @property
     def face_normals(self):
         """Return the cell normals."""
         return self.cell_normals
+
 
     @property
     def obbTree(self):
@@ -499,6 +505,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self._obbTree.BuildLocator()
 
         return self._obbTree
+
 
     @property
     def n_open_edges(self):
@@ -629,13 +636,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             else:
                 raise Exception('All input types must be np.ndarray')
 
+
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
 
+
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
+
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -771,6 +781,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         Binary files write much faster than ASCII, but binary files written on
         one system may not be readable on other systems.  Binary can be used
         only ".vtk" files
+
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         # Use legacy writer if vtk is in filename
@@ -864,6 +875,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def celltypes(self):
         """Get the cell types array."""
         return vtk_to_numpy(self.GetCellTypesArray())
+
 
     @property
     def offset(self):

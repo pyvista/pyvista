@@ -1747,6 +1747,7 @@ class DataSetFilters(object):
         if show:
             return plt.show()
 
+
     def extract_cells(dataset, ind):
         """Return a subset of the grid.
 
