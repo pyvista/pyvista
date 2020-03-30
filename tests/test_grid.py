@@ -484,7 +484,7 @@ def test_remove_cells(ind):
 
 def test_remove_cells_not_inplace():
     grid_copy = beam.copy()  # copy to protect
-    grid_w_removed = grid_copy.remove_cells(range(10))
+    grid_w_removed = grid_copy.remove_cells(range(10), inplace=False)
     assert grid_w_removed.n_cells < beam.n_cells
     assert grid_copy.n_cells == beam.n_cells
 

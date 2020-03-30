@@ -82,14 +82,18 @@ class PointSet(Common):
             ghost_cells = ind.astype(np.uint8)
         else:
             ghost_cells = np.zeros(self.n_cells, np.uint8)
-            ghost_cells[ind] = 1
+            ghost_cells[ind] = vtk.vtkDataSetAttributes.DUPLICATECELL
 
         if inplace:
             target = self
         else:
             target = self.copy()
+
         target.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
         target.RemoveGhostCells()
+
+        if not inplace:
+            return target
 
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
@@ -1110,6 +1114,6 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             ghost_cells = ind.astype(np.uint8)
         else:
             ghost_cells = np.zeros(self.n_cells, np.uint8)
-            ghost_cells[ind] = 32
+            ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
 
         self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
