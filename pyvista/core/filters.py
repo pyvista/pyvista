@@ -794,7 +794,7 @@ class DataSetFilters(object):
         else:
             _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != pyvista.FieldAssociation.POINT:
+        if field != FieldAssociation.POINT:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
@@ -1110,7 +1110,7 @@ class DataSetFilters(object):
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
-        if field != pyvista.FieldAssociation.POINT:
+        if field != FieldAssociation.POINT:
             raise AssertionError('Dataset can only by warped by a point data array.')
         # Run the algorithm
         alg = vtk.vtkWarpScalar()
