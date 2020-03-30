@@ -290,7 +290,7 @@ class DataObject(object):
         """Remove all field arrays."""
         keys = self.field_arrays.keys()
         for key in keys:
-            self._remove_array(FieldAssociation.FIELD, key)
+            self._remove_array(FieldAssociation.NONE, key)
 
 
     @property
@@ -665,7 +665,7 @@ class Common(DataSetFilters, DataObject):
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == FieldAssociation.CELL:
             self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
-        elif field == FieldAssociation.FIELD:
+        elif field == FieldAssociation.NONE:
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
@@ -1046,7 +1046,7 @@ class Common(DataSetFilters, DataObject):
             self.GetPointData().RemoveArray(key)
         elif field == FieldAssociation.CELL:
             self.GetCellData().RemoveArray(key)
-        elif field == FieldAssociation.FIELD:
+        elif field == FieldAssociation.NONE:
             self.GetFieldData().RemoveArray(key)
         else:
             raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
@@ -1538,7 +1538,7 @@ class FieldScalarsDict(_ScalarsDict):
     def __init__(self, data):
         """Initialize the field array dict."""
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(FieldAssociation.FIELD, key)
+        self.remover = lambda key: self.data._remove_array(FieldAssociation.NONE, key)
         self.modifier = lambda *args: self.data.GetFieldData().Modified()
 
 

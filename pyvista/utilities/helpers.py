@@ -21,7 +21,7 @@ class FieldAssociation(enum.Enum):
 
     POINT = vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
     CELL = vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
-    FIELD = vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
+    NONE = vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
     ROW = vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
 
 
@@ -191,7 +191,7 @@ def parse_field_choice(field):
         elif field in ['point', 'p', 'points']:
             field = FieldAssociation.POINT
         elif field in ['field', 'f', 'fields']:
-            field = FieldAssociation.FIELD
+            field = FieldAssociation.NONE
         elif field in ['row', 'r',]:
             field = FieldAssociation.ROW
         else:
@@ -247,9 +247,9 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
                 return parr, FieldAssociation.POINT
             else:
                 return parr
-        elif preference == FieldAssociation.FIELD:
+        elif preference == FieldAssociation.NONE:
             if info:
-                return farr, FieldAssociation.FIELD
+                return farr, FieldAssociation.NONE
             else:
                 return farr
         else:
@@ -264,7 +264,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         field = FieldAssociation.CELL
     elif farr is not None:
         arr = farr
-        field = FieldAssociation.FIELD
+        field = FieldAssociation.NONE
     elif err:
         raise KeyError('Data array ({}) not present in this dataset.'.format(name))
     if info:
