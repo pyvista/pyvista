@@ -1234,7 +1234,7 @@ class DataSetFilters(object):
             return mesh
 
 
-    def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5, monitor=False):
+    def delaunay_3d(dataset, alpha=0, tol=0.001, offset=2.5, progress_bar=False):
         """Construct a 3D Delaunay triangulation of the mesh.
 
         This helps smooth out a rugged mesh.
@@ -1256,13 +1256,15 @@ class DataSetFilters(object):
             multiplier to control the size of the initial, bounding Delaunay
             triangulation.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
         """
         alg = vtk.vtkDelaunay3D()
         alg.SetInputData(dataset)
         alg.SetAlpha(alpha)
         alg.SetTolerance(tol)
         alg.SetOffset(offset)
-        if monitor:
+        if progress_bar:
             with ProgressMonitor(alg, message="Delaunay 3D"):
                 alg.Update()
         else:

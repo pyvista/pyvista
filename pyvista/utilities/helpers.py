@@ -1,5 +1,6 @@
 """Supporting functions for polydata and grid objects."""
 
+import signal
 import collections
 import ctypes
 import logging
@@ -635,3 +636,64 @@ class conditional_decorator(object):
             # Return the function unchanged, not decorated.
             return func
         return self.decorator(func)
+
+
+class ProgressMonitor():
+    """A standard class for monitoring the progress of a VTK algorithm.
+
+    This must be use in a ``with`` context and it will block keyboard
+    interrupts from happening until the exit event as interrupts will crash
+    the kernel if the VTK algorithm is still executing.
+
+    """
+
+    def __init__(self, algorithm, message=""):
+        """Initialize observer."""
+        try:
+            from tqdm import tqdm
+        except ImportError:
+            raise ImportError("Please intall `tqdm` to monitor algorithms.")
+        self.event_type = vtk.vtkCommand.ProgressEvent
+        self.progress = 0.0
+        self._last_progress = self.progress
+        self.algorithm = algorithm
+        self.message = message
+        self._interrupt_signal_received = False
+        self._old_progress = 0
+        self._old_handler = None
+        self._progress_bar = None
+
+    def handler(self, sig, frame):
+        """Custom interrupt handler."""
+        self._interrupt_signal_received = (sig, frame)
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until '
+                      'VTK algorithm finishes.')
+
+    def __call__(self, obj, event, *args):
+        """The progress update callback.
+
+        On an event occurrence, this function executes.
+        """
+        progress = int(obj.GetProgress() * 100)
+        if self._interrupt_signal_received:
+            obj.AbortExecuteOn()
+        elif progress > self._old_progress:
+            self._progress_bar.update(1)
+            self._old_progress = progress
+
+    def __enter__(self):
+        """Enter event for ``with`` context."""
+        from tqdm import tqdm
+
+        self._old_handler = signal.signal(signal.SIGINT, self.handler)
+        self._progress_bar = tqdm(total=100, leave=False)
+        self._progress_bar.set_description(self.message)
+        self.algorithm.AddObserver(self.event_type, self)
+        return self._progress_bar
+
+    def __exit__(self, type, value, traceback):
+        """Exit event for ``with`` context."""
+        self._progress_bar.update(100.0 - self.progress)  # Finalize bar at 100%
+        self._progress_bar.close()
+        self.algorithm.RemoveObservers(self.event_type)
+        signal.signal(signal.SIGINT, self._old_handler)
