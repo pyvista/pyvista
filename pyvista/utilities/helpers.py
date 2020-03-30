@@ -647,7 +647,7 @@ class ProgressMonitor():
 
     """
 
-    def __init__(self, algorithm, message=""):
+    def __init__(self, algorithm, message="", scaling=100):
         """Initialize observer."""
         try:
             from tqdm import tqdm
@@ -674,11 +674,12 @@ class ProgressMonitor():
 
         On an event occurrence, this function executes.
         """
-        progress = int(obj.GetProgress() * 100)
         if self._interrupt_signal_received:
             obj.AbortExecuteOn()
-        elif progress > self._old_progress:
-            self._progress_bar.update(1)
+        else:
+            progress = obj.GetProgress()
+            step = progress - self._old_progress
+            self._progress_bar.update(step)
             self._old_progress = progress
 
     def __enter__(self):
@@ -686,14 +687,16 @@ class ProgressMonitor():
         from tqdm import tqdm
 
         self._old_handler = signal.signal(signal.SIGINT, self.handler)
-        self._progress_bar = tqdm(total=100, leave=False)
+        self._progress_bar = tqdm(total=1, leave=True,
+                                  bar_format='{l_bar}{bar}[{elapsed}<{remaining}]')
         self._progress_bar.set_description(self.message)
         self.algorithm.AddObserver(self.event_type, self)
         return self._progress_bar
 
     def __exit__(self, type, value, traceback):
         """Exit event for ``with`` context."""
-        self._progress_bar.update(100.0 - self.progress)  # Finalize bar at 100%
+        self._progress_bar.total = 1
+        self._progress_bar.refresh()
         self._progress_bar.close()
         self.algorithm.RemoveObservers(self.event_type)
         signal.signal(signal.SIGINT, self._old_handler)
