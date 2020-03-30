@@ -1798,6 +1798,7 @@ class DataSetFilters(object):
 
         return subgrid
 
+
     def extract_points(dataset, ind):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
@@ -1852,6 +1853,7 @@ class DataSetFilters(object):
         logging.warning("DEPRECATED: use ``extract_points`` instead.")
         return DataSetFilters.extract_points(dataset, ind)
 
+
     def extract_surface(dataset, pass_pointid=True, pass_cellid=True, inplace=False):
         """Extract surface mesh of the grid.
 
@@ -1888,6 +1890,7 @@ class DataSetFilters(object):
         else:
             return mesh
 
+
     def surface_indices(dataset):
         """Return the surface indices of a grid.
 
@@ -1899,6 +1902,7 @@ class DataSetFilters(object):
         """
         surf = DataSetFilters.extract_surface(dataset, pass_cellid=True)
         return surf.point_arrays['vtkOriginalPointIds']
+
 
     def extract_feature_edges(dataset, feature_angle=30, boundary_edges=True,
                               non_manifold_edges=True, feature_edges=True,
@@ -2034,9 +2038,11 @@ class DataSetFilters(object):
         else:
             return merged
 
+
     def __add__(dataset, grid):
         """Combine this mesh with another into an :class:`pyvista.UnstructuredGrid`."""
         return DataSetFilters.merge(dataset, grid)
+
 
     def compute_cell_quality(dataset, quality_measure='scaled_jacobian', null_value=-1.0):
         """Compute a function of (geometric) quality for each cell of a mesh.
@@ -2134,6 +2140,7 @@ class DataSetFilters(object):
         alg.SetUndefinedQuality(null_value)
         alg.Update()
         return _get_output(alg)
+
 
     def compute_gradient(dataset, scalars=None, gradient_name='gradient',
                          preference='point'):
