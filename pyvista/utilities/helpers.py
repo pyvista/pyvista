@@ -652,7 +652,7 @@ class ProgressMonitor():
         try:
             from tqdm import tqdm
         except ImportError:
-            raise ImportError("Please intall `tqdm` to monitor algorithms.")
+            raise ImportError("Please install `tqdm` to monitor algorithms.")
         self.event_type = vtk.vtkCommand.ProgressEvent
         self.progress = 0.0
         self._last_progress = self.progress
@@ -664,13 +664,13 @@ class ProgressMonitor():
         self._progress_bar = None
 
     def handler(self, sig, frame):
-        """Custom interrupt handler."""
+        """Pass signal to custom interrupt handler."""
         self._interrupt_signal_received = (sig, frame)
         logging.debug('SIGINT received. Delaying KeyboardInterrupt until '
                       'VTK algorithm finishes.')
 
     def __call__(self, obj, event, *args):
-        """The progress update callback.
+        """Call progress update callback.
 
         On an event occurrence, this function executes.
         """

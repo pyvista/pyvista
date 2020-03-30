@@ -204,9 +204,6 @@ def test_convert_id_list():
 
 
 def test_progress_monitor():
-    # dragon = ex.download_dragon()
-    mesh = ex.download_bunny()
+    mesh = pyvista.Sphere()
     ugrid = mesh.delaunay_3d(progress_bar=True)
-
-
-test_progress_monitor()
+    assert isinstance(ugrid, pyvista.UnstructuredGrid)
