@@ -482,9 +482,11 @@ def test_remove_cells(ind):
     assert grid_copy.n_cells < beam.n_cells
 
 
-def test_remove_cells_not_inplace():
+@pytest.mark.parametrize('ind', [range(10), np.arange(10),
+                                 np.ones(beam.n_cells, np.bool)])
+def test_remove_cells_not_inplace(ind):
     grid_copy = beam.copy()  # copy to protect
-    grid_w_removed = grid_copy.remove_cells(range(10), inplace=False)
+    grid_w_removed = grid_copy.remove_cells(ind, inplace=False)
     assert grid_w_removed.n_cells < beam.n_cells
     assert grid_copy.n_cells == beam.n_cells
 
@@ -495,7 +497,9 @@ def test_remove_cells_invalid():
         grid_copy.remove_cells(np.ones(10, np.bool))
 
 
-def test_hide_cells():
+@pytest.mark.parametrize('ind', [range(10), np.arange(10),
+                                 np.ones(sgrid.n_cells, np.bool)])
+def test_hide_cells(ind):
     sgrid_copy = sgrid.copy()
-    sgrid_copy.hide_cells(range(10, 20))
+    sgrid_copy.hide_cells(ind)
     assert sgrid_copy.HasAnyBlankCells()

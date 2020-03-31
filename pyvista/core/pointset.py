@@ -1118,8 +1118,8 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         >>> grid = pv.StructuredGrid(x, y, z)
         >>> grid.hide_cells(range(79*30, 79*50))
         """
-        if isinstance(ind, np.ndarray) and ind.dtype == np.bool:
-            if ind.size != self.n_cells:
+        if isinstance(ind, np.ndarray):
+            if ind.dtype == np.bool and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
                                  'number of cells (%d)' % self.n_cells)
         ghost_cells = np.zeros(self.n_cells, np.uint8)
