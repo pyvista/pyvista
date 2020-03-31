@@ -498,5 +498,4 @@ def test_remove_cells_invalid():
 def test_hide_cells():
     sgrid_copy = sgrid.copy()
     sgrid_copy.hide_cells(range(10, 20))
-    sgrid_copy.UpdateCellGhostArrayCache()
     assert sgrid_copy.HasAnyBlankCells()
