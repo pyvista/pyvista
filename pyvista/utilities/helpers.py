@@ -2,6 +2,7 @@
 
 import collections
 import ctypes
+import enum
 import logging
 import warnings
 from threading import Thread
@@ -14,10 +15,14 @@ import vtk.util.numpy_support as nps
 import pyvista
 from .fileio import from_meshio
 
-POINT_DATA_FIELD = 0
-CELL_DATA_FIELD = 1
-FIELD_DATA_FIELD = 2
-ROW_DATA_FIELD = 6
+
+class FieldAssociation(enum.Enum):
+    """Represents which type of vtk field a scalar or vector array is associated with."""
+
+    POINT = vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
+    CELL = vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
+    NONE = vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
+    ROW = vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
 
 
 def get_vtk_type(typ):
@@ -182,16 +187,16 @@ def parse_field_choice(field):
     if isinstance(field, str):
         field = field.strip().lower()
         if field in ['cell', 'c', 'cells']:
-            field = CELL_DATA_FIELD
+            field = FieldAssociation.CELL
         elif field in ['point', 'p', 'points']:
-            field = POINT_DATA_FIELD
+            field = FieldAssociation.POINT
         elif field in ['field', 'f', 'fields']:
-            field = FIELD_DATA_FIELD
+            field = FieldAssociation.NONE
         elif field in ['row', 'r',]:
-            field = ROW_DATA_FIELD
+            field = FieldAssociation.ROW
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(field))
-    elif isinstance(field, int):
+    elif isinstance(field, FieldAssociation):
         pass
     else:
         raise RuntimeError('Data field ({}) not supported.'.format(field))
@@ -222,7 +227,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError('Data array ({}) not present in this dataset.'.format(name))
-        field = ROW_DATA_FIELD
+        field = FieldAssociation.ROW
         if info:
             return arr, field
         return arr
@@ -232,19 +237,19 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
     if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
-        if preference == CELL_DATA_FIELD:
+        if preference == FieldAssociation.CELL:
             if info:
-                return carr, CELL_DATA_FIELD
+                return carr, FieldAssociation.CELL
             else:
                 return carr
-        elif preference == POINT_DATA_FIELD:
+        elif preference == FieldAssociation.POINT:
             if info:
-                return parr, POINT_DATA_FIELD
+                return parr, FieldAssociation.POINT
             else:
                 return parr
-        elif preference == FIELD_DATA_FIELD:
+        elif preference == FieldAssociation.NONE:
             if info:
-                return farr, FIELD_DATA_FIELD
+                return farr, FieldAssociation.NONE
             else:
                 return farr
         else:
@@ -253,13 +258,13 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     field = None
     if parr is not None:
         arr = parr
-        field = POINT_DATA_FIELD
+        field = FieldAssociation.POINT
     elif carr is not None:
         arr = carr
-        field = CELL_DATA_FIELD
+        field = FieldAssociation.CELL
     elif farr is not None:
         arr = farr
-        field = FIELD_DATA_FIELD
+        field = FieldAssociation.NONE
     elif err:
         raise KeyError('Data array ({}) not present in this dataset.'.format(name))
     if info:
