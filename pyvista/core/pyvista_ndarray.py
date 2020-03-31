@@ -28,6 +28,12 @@ class pyvista_ndarray(VTKArray):
                 obj.dataset.Set(dataset)
         return obj
 
+    def __setitem__(self, key, value):
+        """Set item at key index to value."""
+        super().__setitem__(key, value)
+        if self.VTKObject is not None:
+            self.VTKObject.Modified()
+
     @classmethod
     def from_any(cls, obj, dtype=None, order=None, dataset=None, association=None):
         """Create a `pyvista_ndarray`` instance from an object.

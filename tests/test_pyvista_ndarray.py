@@ -1,6 +1,6 @@
 import numpy as np
 from pytest import mark, raises
-from pyvista import pyvista_ndarray
+from pyvista import examples, UnstructuredGrid, pyvista_ndarray
 
 
 class TestConstructors:
@@ -23,3 +23,22 @@ class TestConstructors:
     def test_from_any_should_fail_if_not_array(self, var):
         with raises(ValueError):
             pyvista_ndarray.from_any(var)
+
+
+class TestSetItem:
+    def test_setitem_should_change_value(self):
+        GRID = UnstructuredGrid(examples.hexbeamfile)
+        vtk_arr = GRID.GetCellData().GetScalars()
+
+        pv_arr = pyvista_ndarray.from_vtk_data_array(vtk_data_array=vtk_arr, dataset=GRID)
+        pv_arr[0] = 99
+        assert pv_arr[0] == 99
+
+    def test_setitem_should_change_modified_time(self):
+        GRID = UnstructuredGrid(examples.hexbeamfile)
+        vtk_arr = GRID.GetCellData().GetScalars()
+
+        pv_arr = pyvista_ndarray.from_vtk_data_array(vtk_data_array=vtk_arr, dataset=GRID)
+        last_modified_time = pv_arr.VTKObject.GetMTime()
+        pv_arr[0] = 99
+        assert last_modified_time < pv_arr.VTKObject.GetMTime()
