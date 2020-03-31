@@ -76,8 +76,8 @@ class PointSet(Common):
         >>> letter_a = pyvista.examples.download_letter_a()
         >>> letter_a.remove_cells(range(1000))
         """
-        if isinstance(ind, np.ndarray) and ind.dtype == np.bool:
-            if ind.size != self.n_cells:
+        if isinstance(ind, np.ndarray):
+            if ind.dtype == np.bool and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
                                  'number of cells (%d)' % self.n_cells)
         ghost_cells = np.zeros(self.n_cells, np.uint8)
