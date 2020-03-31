@@ -14,7 +14,7 @@ class pyvista_ndarray(VTKArray):
     def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
         # Input array is an already formed ndarray instance
         obj = numpy.asarray(ndarray).view(cls)
-        obj.association = association if association is not None else FieldAssociation.FIELD
+        obj.association = association if association is not None else FieldAssociation.NONE
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
         if dataset:
