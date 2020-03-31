@@ -1,3 +1,5 @@
+"""Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
+
 import numpy
 from pyvista.utilities.helpers import convert_array, FieldAssociation
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
