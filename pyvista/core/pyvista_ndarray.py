@@ -30,7 +30,7 @@ class pyvista_ndarray(VTKArray):
 
     @classmethod
     def from_any(cls, obj, dtype=None, order=None, dataset=None, association=None):
-        """Factory method to create a `pyvista_ndarray`` instance from an object.
+        """Create a `pyvista_ndarray`` instance from an object.
 
         Parameters
         ----------
