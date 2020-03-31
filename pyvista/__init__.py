@@ -1,5 +1,6 @@
 """PyVista package for 3D plotting and mesh analysis."""
-
+import appdirs
+import os
 import warnings
 from pyvista._version import __version__
 from pyvista.plotting import *
@@ -24,9 +25,8 @@ elif VTK_ID_TYPE_SIZE == 8:
 try:
     import faulthandler
     faulthandler.enable()
-except ImportError:
+except (ImportError, RuntimeError):
     pass
-
 
 
 # determine if using vtk > 5
@@ -64,9 +64,6 @@ REPR_VOLUME_MAX_CELLS = 1e6
 FIGURE_PATH = None
 
 # Set up data directory
-import appdirs
-import os
-
 USER_DATA_PATH = appdirs.user_data_dir('pyvista')
 if not os.path.exists(USER_DATA_PATH):
     os.makedirs(USER_DATA_PATH)

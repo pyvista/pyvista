@@ -31,10 +31,9 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, NORMALS, POINT_DATA_FIELD,
-                               ProgressMonitor, assert_empty_kwargs,
+from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
-                               wrap)
+                               wrap, ProgressMonitor)
 
 
 def _update_alg(alg, progress_bar=False, message=''):
@@ -519,7 +518,7 @@ class DataSetFilters(object):
         # Run a standard threshold algorithm
         alg = vtk.vtkThreshold()
         alg.SetInputDataObject(dataset)
-        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set thresholding parameters
         alg.SetUseContinuousCellRange(continuous)
         # use valid range if no value given
@@ -815,9 +814,9 @@ class DataSetFilters(object):
         else:
             _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
-        if field != pyvista.POINT_DATA_FIELD:
+        if field != FieldAssociation.POINT:
             raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
-        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
             # generate values
@@ -1099,8 +1098,8 @@ class DataSetFilters(object):
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
                 # or else object is collected.
-                b._remove_array(CELL_DATA_FIELD, 'RegionId')
-                b._remove_array(POINT_DATA_FIELD, 'RegionId')
+                b._remove_array(FieldAssociation.CELL, 'RegionId')
+                b._remove_array(FieldAssociation.POINT, 'RegionId')
             bodies.append(b)
 
         return bodies
@@ -1135,12 +1134,12 @@ class DataSetFilters(object):
         if scalars is None:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
-        if field != pyvista.POINT_DATA_FIELD:
+        if field != FieldAssociation.POINT:
             raise AssertionError('Dataset can only by warped by a point data array.')
         # Run the algorithm
         alg = vtk.vtkWarpScalar()
         alg.SetInputDataObject(dataset)
-        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         alg.SetScaleFactor(factor)
         if normal is not None:
             alg.SetNormal(normal)
@@ -2191,7 +2190,7 @@ class DataSetFilters(object):
             raise TypeError('scalars array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
-        alg.SetInputArrayToProcess(0, 0, 0, field, scalars)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(dataset)
         alg.SetResultArrayName(gradient_name)
         alg.Update()
@@ -2780,7 +2779,7 @@ class PolyDataFilters(DataSetFilters):
                 raise TypeError('scalars array must be given as a string name')
             _, field = poly_data.get_array(scalars, preference=preference, info=True)
             # args: (idx, port, connection, field, name)
-            tube.SetInputArrayToProcess(0, 0, 0, field, scalars)
+            tube.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
             tube.SetVaryRadiusToVaryRadiusByScalar()
         # Apply the filter
         tube.Update()
@@ -3621,7 +3620,7 @@ class PolyDataFilters(DataSetFilters):
         alg.SetAngle(angle)
         if scalars is not None:
             alg.SetVaryWidth(True)
-            alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+            alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
             alg.SetWidthFactor(factor)
         else:
             alg.SetVaryWidth(False)
@@ -3703,7 +3702,7 @@ class UniformGridFilters(DataSetFilters):
             field, scalars = dataset.active_scalars_info
         else:
             _, field = dataset.get_array(scalars, preference=preference, info=True)
-        alg.SetInputArrayToProcess(0, 0, 0, field, scalars) # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         if isinstance(radius_factor, collections.Iterable):
             alg.SetRadiusFactors(radius_factor)
         else:

@@ -415,6 +415,15 @@ def test_save_uniform(extension, binary, tmpdir):
 
 def test_grid_points():
     """Test the points methods on UniformGrid and RectilinearGrid"""
+    # test creation of 2d grids
+    x_surf = y_surf = range(3)
+    z_surf = np.ones(3)
+    grid = pyvista.UniformGrid()
+    grid.points = np.array([x_surf, y_surf, z_surf]).transpose()
+    assert grid.n_points == 9
+    assert grid.n_cells == 4
+    del grid
+
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
                        [1, 1, 0],

@@ -26,6 +26,7 @@ from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer
+from .background_renderer import BackgroundRenderer
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
@@ -99,6 +100,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
 
+        self.mesh = None
         if title is None:
             title = rcParams['title']
         self.title = str(title)
@@ -172,6 +174,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     renderer.SetViewport(y0, x0, y1, x1)
                     self.renderers.append(renderer)
 
+        # each render will also have an associated background renderer
+        self._background_renderers = [None for _ in range(len(self.renderers))]
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bar_ranges = {}
@@ -648,6 +652,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('callback must be callable.')
         self._key_press_event_callbacks[key].append(callback)
 
+    def _add_observer(self, event, call):
+        if hasattr(self, 'iren'):
+            self._observers[event] = self.iren.AddObserver(event, call)
+
+    def _remove_observer(self, event):
+        if hasattr(self, 'iren') and event in self._observers:
+            self.iren.RemoveObserver(event)
+            del self._observers[event]
 
     def clear_events_for_key(self, key):
         """Remove the callbacks associated to the key."""
@@ -675,15 +687,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if hasattr(self, "iren"):
-            obs = self.iren.AddObserver(vtk.vtkCommand.MouseMoveEvent,
-                                        self.store_mouse_position)
-            self._mouse_observer = obs
+            self._add_observer(vtk.vtkCommand.MouseMoveEvent,
+                               self.store_mouse_position)
 
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
-        if hasattr(self, "_mouse_observer"):
-            self.iren.RemoveObserver(self._mouse_observer)
-            del self._mouse_observer
+        self._remove_observer(vtk.vtkCommand.MouseMoveEvent)
 
 
     def track_click_position(self, callback=None, side="right",
@@ -727,8 +736,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     try_callback(callback, self.pick_click_position())
 
-        obs = self.iren.AddObserver(event, _click_callback)
-        self._click_observer = obs
+        self._add_observer(event, _click_callback)
 
 
     def untrack_click_position(self):
@@ -773,7 +781,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks = collections.defaultdict(list)
 
         self.add_key_event('q', self._prep_for_close) # Add no matter what
-        b_left_down_callback = lambda: self.iren.AddObserver('LeftButtonPressEvent', self.left_button_down)
+        b_left_down_callback = lambda: self._add_observer('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
         self.add_key_event('f', self.fly_to_mouse_position)
@@ -795,7 +803,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 for func in callbacks:
                     func()
         except Exception as e:
-            log.error('Exception encountered for keypress "%s" % %s' (key, str(e)))
+            log.error('Exception encountered for keypress "%s": %s' % (key, e))
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
@@ -2058,11 +2066,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise KeyError('Name ({}) not valid/not found in this plotter.')
         return
 
-
     def clear(self):
         """Clear plot by removing all actors and properties."""
         for renderer in self.renderers:
             renderer.clear()
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.clear()
         self._scalar_bar_slots = set(range(MAX_N_COLOR_BARS))
         self._scalar_bar_slot_lookup = {}
         self._scalar_bar_ranges = {}
@@ -2070,7 +2080,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
         self.mesh = None
-
 
     def link_views(self, views=0):
         """Link the views' cameras.
@@ -2550,15 +2559,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if hasattr(self, 'iren'):
             # self.iren.RemoveAllObservers()
-            self.iren.RemoveObservers(vtk.vtkCommand.MouseMoveEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.RightButtonPressEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.LeftButtonPressEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.KeyPressEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.TimerEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.EndPickEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.StartInteractionEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.EndInteractionEvent)
-            self.iren.RemoveObservers(vtk.vtkCommand.StateChangedEvent)
+            for obs in self._observers.values():
+                self.iren.RemoveObservers(obs)
+            del self._observers
             self.iren.TerminateApp()
             del self.iren
 
@@ -2579,6 +2582,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clean the plotter of the memory."""
         for renderer in self.renderers:
             renderer.deep_clean()
+        for renderer in self._background_renderers:
+            if renderer is not None:
+                renderer.deep_clean()
         # Do not remove the renderers on the clean
         self.mesh = None
         self.mapper = None
@@ -3520,6 +3526,72 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.deep_clean()
         del self.renderers
 
+    def add_background_image(self, image_path, scale=1, auto_resize=True,
+                             as_global=True):
+        """Add a background image to a plot.
+
+        Parameters
+        ----------
+        image_path : str
+            Path to an image file.
+
+        scale : float, optional
+            Scale the image larger or smaller relative to the size of
+            the window.  For example, a scale size of 2 will make the
+            largest dimension of the image twice as large as the
+            largest dimension of the render window.  Defaults to 1.
+
+        auto_resize : bool, optional
+            Resize the background when the render window changes size.
+
+        as_global : bool, optional
+            When multiple render windows are present, setting
+            ``as_global=False`` will cause the background to only
+            appear in one window.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> from pyvista import examples
+        >>> plotter = pyvista.Plotter()
+        >>> actor = plotter.add_mesh(pyvista.Sphere())
+        >>> plotter.add_background_image(examples.mapfile)
+        >>> plotter.show() # doctest:+SKIP
+
+        """
+        # verify no render exists
+        if self._background_renderers[self._active_renderer_index] is not None:
+            raise RuntimeError('A background image already exists.  '
+                               'Remove it with remove_background_image '
+                               'before adding one')
+
+        # Need to change the number of layers to support an additional
+        # background layer
+        self.ren_win.SetNumberOfLayers(2)
+        if as_global:
+            for renderer in self.renderers:
+                renderer.SetLayer(1)
+            view_port = None
+        else:
+            self.renderer.SetLayer(1)
+            view_port = self.renderer.GetViewport()
+
+        renderer = BackgroundRenderer(self, image_path, scale, view_port)
+        self.ren_win.AddRenderer(renderer)
+        self._background_renderers[self._active_renderer_index] = renderer
+
+        # setup autoscaling of the image
+        if auto_resize and hasattr(self, 'iren'):  # pragma: no cover
+            self._add_observer('ModifiedEvent', renderer.resize)
+
+    def remove_background_image(self):
+        """Remove the background image from the current subplot."""
+        renderer = self._background_renderers[self._active_renderer_index]
+        if renderer is None:
+            raise RuntimeError('No background image to remove at this subplot')
+        renderer.deep_clean()
+        self._background_renderers[self._active_renderer_index] = None
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -3615,6 +3687,7 @@ class Plotter(BasePlotter):
 
         if window_size is None:
             window_size = rcParams['window_size']
+        self.__prior_window_size = window_size
 
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
@@ -3641,11 +3714,9 @@ class Plotter(BasePlotter):
             self.iren.SetDesiredUpdateRate(30.0)
             self.iren.SetRenderWindow(self.ren_win)
             self.enable_trackball_style()
-            self.iren.AddObserver("KeyPressEvent", self.key_press_event)
+            self._observers = {}    # Map of events to observers of self.iren
+            self._add_observer("KeyPressEvent", self.key_press_event)
             self.update_style()
-
-            # for renderer in self.renderers:
-            #     self.iren.SetRenderWindow(renderer)
 
         # Set background
         self.set_background(rcParams['background'])
@@ -3654,8 +3725,7 @@ class Plotter(BasePlotter):
         self.window_size = window_size
 
         # add timer event if interactive render exists
-        if hasattr(self, 'iren'):
-            self.iren.AddObserver(vtk.vtkCommand.TimerEvent, on_timer)
+        self._add_observer(vtk.vtkCommand.TimerEvent, on_timer)
 
         if rcParams["depth_peeling"]["enabled"]:
             if self.enable_depth_peeling():
@@ -3804,7 +3874,7 @@ class Plotter(BasePlotter):
         #       so we should display the static screenshot in notebooks for
         #       multi-view plots until we implement this feature
         # If notebook is true and panel display failed:
-        if self.notebook and (disp is None or self.shape != (1,1)):
+        if self.notebook and (disp is None or self.shape != (1, 1)):
             import PIL.Image
             # sanity check
             try:
