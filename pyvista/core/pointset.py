@@ -568,6 +568,7 @@ class PointGrid(PointSet):
         return surf.volume
 
 
+
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     """
     Extends the functionality of a vtk.vtkUnstructuredGrid object.
@@ -811,7 +812,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
-
+        
         Converts the following cell types to their linear equivalents.
 
         - VTK_QUADRATIC_TETRA      --> VTK_TETRA
@@ -876,11 +877,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         """Get the cell types array."""
         return vtk_to_numpy(self.GetCellTypesArray())
 
-
     @property
     def offset(self):
         """Get Cell Locations Array."""
         return vtk_to_numpy(self.GetCellLocationsArray())
+
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
@@ -1127,5 +1128,11 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         else:
             ghost_cells = np.zeros(self.n_cells, np.uint8)
             ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
+
+        # NOTE: cells cannot be removed from a structured grid, only
+        # hidden setting ghost_cells to a value besides
+        # vtk.vtkDataSetAttributes.HIDDENCELL will not hide them
+        # properly, additionally, calling self.RemoveGhostCells will
+        # have no effect
 
         self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
