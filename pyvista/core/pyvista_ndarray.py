@@ -11,7 +11,8 @@ class pyvista_ndarray(VTKArray):
     """This is a sub-class of numpy ndarray that stores a
     reference to a vtk array as well as the owning dataset.
     The numpy array and vtk array should point to the same
-    memory location."""
+    memory location.
+    """
 
     def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
         # Input array is an already formed ndarray instance
