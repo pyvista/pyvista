@@ -63,14 +63,14 @@ class PointSet(Common):
         ----------
         ind : iterable
             Cell indices to be removed.  The array can also be a
-            boolean array the same size as the number of cells.
+            boolean array of the same size as the number of cells.
 
         inplace : bool, optional
             Updates mesh in-place while returning nothing when ``True``.
 
         Examples
         --------
-        Remove first 1000 cells from an unstructured grid
+        Remove first 1000 cells from an unstructured grid.
 
         >>> import pyvista
         >>> letter_a = pyvista.examples.download_letter_a()
@@ -80,10 +80,8 @@ class PointSet(Common):
             if ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
                                  'number of cells (%d)' % self.n_cells)
-            ghost_cells = ind.astype(np.uint8)
-        else:
-            ghost_cells = np.zeros(self.n_cells, np.uint8)
-            ghost_cells[ind] = vtk.vtkDataSetAttributes.DUPLICATECELL
+        ghost_cells = np.zeros(self.n_cells, np.uint8)
+        ghost_cells[ind] = vtk.vtkDataSetAttributes.DUPLICATECELL
 
         if inplace:
             target = self
@@ -1104,12 +1102,12 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         ----------
         ind : iterable
             List or array of cell indices to be hidden.  The array can
-            also be a boolean array the same size as the number of
+            also be a boolean array of the same size as the number of
             cells.
 
         Examples
         --------
-        Hide part of the middle of a structured surface
+        Hide part of the middle of a structured surface.
 
         >>> import pyvista as pv
         >>> import numpy as np
@@ -1124,10 +1122,8 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
                                  'number of cells (%d)' % self.n_cells)
-            ghost_cells = ind.astype(np.uint8)
-        else:
-            ghost_cells = np.zeros(self.n_cells, np.uint8)
-            ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
+        ghost_cells = np.zeros(self.n_cells, np.uint8)
+        ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
 
         # NOTE: cells cannot be removed from a structured grid, only
         # hidden setting ghost_cells to a value besides

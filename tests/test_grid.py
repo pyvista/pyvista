@@ -474,8 +474,8 @@ def test_gaussian_smooth():
     assert not np.all(uniform.active_scalars == values)
 
 
-@pytest.mark.parametrize('ind', [range(10), np.arange(10), np.
-                                 ones(beam.n_cells, np.bool)])
+@pytest.mark.parametrize('ind', [range(10), np.arange(10),
+                                 np.ones(beam.n_cells, np.bool)])
 def test_remove_cells(ind):
     grid_copy = beam.copy()
     grid_copy.remove_cells(ind)
