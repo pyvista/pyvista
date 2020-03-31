@@ -15,15 +15,13 @@ class pyvista_ndarray(VTKArray):
     """
 
     def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
-        # Input array is an already formed ndarray instance
+        """Allocate the array."""
         obj = numpy.asarray(ndarray).view(cls)
         obj.association = association if association is not None else FieldAssociation.NONE
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
         if dataset:
             obj.dataset = vtkWeakReference()
-            # Unless ALL pyvista objects ARE vtk objects, OR, ALL pyvista objects ARE
-            # VTKObjectWrappers, which object gets set matters.
             if isinstance(dataset, VTKObjectWrapper):
                 obj.dataset.Set(dataset.VTKObject)
             else:
