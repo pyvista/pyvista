@@ -459,7 +459,7 @@ class Common(DataSetFilters, DataObject):
             return None
         vtk_data = pts.GetData()
         arr = vtk_to_numpy(vtk_data)
-        return pyvista_ndarray(arr, vtk_data)
+        return pyvista.pyvista_ndarray(arr, vtk_data)
 
 
     @points.setter
@@ -1579,29 +1579,3 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
     if not inplace:
         return points
-
-
-class pyvista_ndarray(np.ndarray):
-    """Link a numpy array with the vtk object the data is attached to.
-
-    When the array is changed it triggers "Modified()" which updates
-    all upstream objects, including any render windows holding the
-    object.
-
-    """
-
-    def __new__(cls, input_array, proxy):
-        """Allocate memory for the pyvista ndarray."""
-        obj = np.asarray(input_array).view(cls)
-        cls.proxy = proxy
-        return obj
-
-    def __array_finalize__(self, obj):
-        """Customize array at creation."""
-        if obj is None:
-            return
-
-    def __setitem__(self, coords, value):
-        """Update the array and update the vtk object."""
-        super(pyvista_ndarray, self).__setitem__(coords, value)
-        self.proxy.Modified()
