@@ -9,9 +9,10 @@ from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
 
 class pyvista_ndarray(VTKArray):
     """
-    A type of numpy.ndarray which stores a reference to a vtk array as well as the owning dataset.
+    A numpy.ndarray which can reference a vtk array and it's dataset.
 
-    If a vtk array is given, this array should point to the same memory location as the vtk array.
+    If a vtk array is given, this array points to the same memory
+    location as the given array.
     """
 
     def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
@@ -54,7 +55,8 @@ class pyvista_ndarray(VTKArray):
             By default, the data-type is inferred from the input data.
 
         order : {‘C’, ‘F’}, optional
-            Whether to use row-major (C-style) or column-major (Fortran-style) memory representation. Defaults to ‘C’.
+            Whether to use row-major (C-style) or column-major
+            (Fortran-style) memory representation. Defaults to ‘C’.
 
         """
         if isinstance(obj, (vtkDataArray, vtkAbstractArray)):
@@ -99,13 +101,15 @@ class pyvista_ndarray(VTKArray):
         ----------
         iterable : array_like
             Input data, in any form that can be converted to an array.
-            This includes lists, lists of tuples, tuples, tuples of tuples, tuples of lists and ndarrays.
+            This includes lists, lists of tuples, tuples, tuples of
+            tuples, tuples of lists and ndarrays.
 
         dtype : data-type, optional
             By default, the data-type is inferred from the input data.
 
         order : {‘C’, ‘F’}, optional
-            Whether to use row-major (C-style) or column-major (Fortran-style) memory representation. Defaults to ‘C’.
+            Whether to use row-major (C-style) or column-major
+            (Fortran-style) memory representation. Defaults to ‘C’.
 
         """
         return cls(numpy.asarray(iterable, dtype, order))
