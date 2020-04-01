@@ -30,7 +30,12 @@ class pyvista_ndarray(VTKArray):
         return obj
 
     def __setitem__(self, key, value):
-        """Set item at key index to value."""
+        """Set item at key index to value.
+
+        When the array is changed it triggers "Modified()" which updates
+        all upstream objects, including any render windows holding the
+        object.
+        """
         super().__setitem__(key, value)
         if self.VTKObject is not None:
             self.VTKObject.Modified()
