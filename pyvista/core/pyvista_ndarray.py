@@ -1,6 +1,6 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 
-import numpy
+import numpy as np
 from pyvista.utilities.helpers import convert_array, FieldAssociation
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 from vtk.vtkCommonCore import vtkWeakReference
@@ -17,7 +17,7 @@ class pyvista_ndarray(VTKArray):
 
     def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
         """Allocate the array."""
-        obj = numpy.asarray(ndarray).view(cls)
+        obj = np.asarray(ndarray).view(cls)
         obj.association = association if association is not None else FieldAssociation.NONE
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
@@ -61,7 +61,7 @@ class pyvista_ndarray(VTKArray):
         """
         if isinstance(obj, (vtkDataArray, vtkAbstractArray)):
             return cls.from_vtk_data_array(vtk_data_array=obj, dataset=dataset, association=association)
-        elif isinstance(obj, (list, tuple, numpy.ndarray)):
+        elif isinstance(obj, (list, tuple, np.ndarray)):
             return cls.from_iter(iterable=obj, dtype=dtype, order=order)
         else:
             raise ValueError('Cannot create {} from type: {}'.format(
@@ -112,4 +112,4 @@ class pyvista_ndarray(VTKArray):
             (Fortran-style) memory representation. Defaults to ‘C’.
 
         """
-        return cls(numpy.asarray(iterable, dtype, order))
+        return cls(np.asarray(iterable, dtype, order))
