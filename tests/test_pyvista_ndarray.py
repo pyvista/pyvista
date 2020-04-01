@@ -27,18 +27,18 @@ class TestConstructors:
 
 class TestSetItem:
     def test_setitem_should_change_value(self):
-        GRID = UnstructuredGrid(examples.hexbeamfile)
-        vtk_arr = GRID.GetCellData().GetScalars()
+        grid = UnstructuredGrid(examples.hexbeamfile)
+        vtk_arr = grid.GetCellData().GetScalars()
 
-        pv_arr = pyvista_ndarray.from_vtk_data_array(vtk_data_array=vtk_arr, dataset=GRID)
+        pv_arr = pyvista_ndarray.from_vtk_data_array(vtk_data_array=vtk_arr, dataset=grid)
         pv_arr[0] = 99
         assert pv_arr[0] == 99
 
     def test_setitem_should_change_modified_time(self):
-        GRID = UnstructuredGrid(examples.hexbeamfile)
-        vtk_arr = GRID.GetCellData().GetScalars()
+        grid = UnstructuredGrid(examples.hexbeamfile)
+        vtk_arr = grid.GetCellData().GetScalars()
 
-        pv_arr = pyvista_ndarray.from_vtk_data_array(vtk_data_array=vtk_arr, dataset=GRID)
+        pv_arr = pyvista_ndarray.from_vtk_data_array(vtk_data_array=vtk_arr, dataset=grid)
         last_modified_time = pv_arr.VTKObject.GetMTime()
         pv_arr[0] = 99
         assert last_modified_time < pv_arr.VTKObject.GetMTime()
