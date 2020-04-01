@@ -15,10 +15,10 @@ class pyvista_ndarray(VTKArray):
     location as the given array.
     """
 
-    def __new__(cls, ndarray, vtk_array=None, dataset=None, association=None):
+    def __new__(cls, ndarray, vtk_array=None, dataset=None, association=FieldAssociation.NONE):
         """Allocate the array."""
         obj = np.asarray(ndarray).view(cls)
-        obj.association = association if association is not None else FieldAssociation.NONE
+        obj.association = association
         # add the new attributes to the created instance
         obj.VTKObject = vtk_array
         if dataset:
