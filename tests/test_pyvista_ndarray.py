@@ -31,8 +31,9 @@ class TestSetItem:
         vtk_arr = grid.GetCellData().GetScalars()
 
         pv_arr = pyvista_ndarray.from_vtk_data_array(vtk_data_array=vtk_arr, dataset=grid)
-        pv_arr[0] = 99
-        assert pv_arr[0] == 99
+        assert pv_arr[0] != -1
+        pv_arr[0] = -1
+        assert pv_arr[0] == -1
 
     def test_setitem_should_change_modified_time(self):
         grid = UnstructuredGrid(examples.hexbeamfile)
