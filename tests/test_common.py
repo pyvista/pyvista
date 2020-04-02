@@ -519,7 +519,7 @@ def test_change_name_fail():
 
 def test_get_cell_array_fail():
     sphere = pyvista.Sphere()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         sphere._cell_array(name=None)
 
 
