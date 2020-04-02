@@ -282,8 +282,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
         self._active_renderer_index = self.loc_to_index((index_row, index_column))
 
-
     #### Wrap Renderer methods ####
+    @wraps(Renderer.add_floor)
+    def add_floor(self, *args, **kwargs):
+        """Wrap ``Renderer.add_floor``."""
+        return self.renderer.add_floor(*args, **kwargs)
+
+    @wraps(Renderer.remove_floors)
+    def remove_floors(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_floors``."""
+        return self.renderer.remove_floors(*args, **kwargs)
 
     @wraps(Renderer.enable_anti_aliasing)
     def enable_anti_aliasing(self, *args, **kwargs):
@@ -2080,71 +2088,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._scalar_bar_actors = {}
         self._scalar_bar_widgets = {}
         self.mesh = None
-
-    def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
-                  color=None, line_width=None, opacity=1.0, show_edges=False,
-                  lighting=False, edge_color=None, reset_camera=None, pad=0.01,
-                  offset=0.0, loc=None):
-        """Show a floor mesh.
-
-        This generates planes at the boundaries of the scene to behave like
-        floors or walls.
-
-        Parameters
-        ----------
-        face : str
-            The face at which to place the plane. Options are (-z, -y, -x, +z,
-            +y, and +z). Where the -/+ sign indicates on which side of the
-            axis the plane will lie. I.e. ``'-z'`` would generate a floor on
-            the XY-plane and the bottom of the scene (minimum z).
-
-        i_resolution : int
-            Number of points on the plane in the i direction.
-
-        j_resolution : int
-            Number of points on the plane in the j direction.
-
-        color : string or 3 item list, optional
-            Color of all labels and axis titles.  Default gray.
-            Either a string, rgb list, or hex color string.
-
-        line_width : int
-            Thickness of the edges. Only if ``show_edges`` is ``True``
-
-        opacity : float
-            The opacity of the generated surface
-
-        show_edges : bool
-            Flag on whether to show the mesh edges for tiling.
-
-        ine_width : float, optional
-            Thickness of lines.  Only valid for wireframe and surface
-            representations.  Default None.
-
-        lighting : bool, optional
-            Enable or disable view direction lighting.  Default False.
-
-        edge_color : string or 3 item list, optional
-            Color of of the edges of the mesh.
-
-        pad : float
-            Percantage padding between 0 and 1
-
-        offset : float
-            Percantage offset along plane normal
-        """
-        kwargs = locals()
-        _ = kwargs.pop('self')
-        _ = kwargs.pop('loc')
-        self._active_renderer_index = self.loc_to_index(loc)
-        renderer = self.renderers[self._active_renderer_index]
-        return renderer.add_floor(**kwargs)
-
-    def remove_floor(self, loc=None):
-        """Remove the floor mesh."""
-        self._active_renderer_index = self.loc_to_index(loc)
-        renderer = self.renderers[self._active_renderer_index]
-        renderer.remove_floor()
 
     def link_views(self, views=0):
         """Link the views' cameras.

@@ -114,6 +114,8 @@ class Renderer(vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+        self._floors = []
+        self._floor_kwargs = []
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -888,7 +890,7 @@ class Renderer(vtkRenderer):
     def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
                   color=None, line_width=None, opacity=1.0, show_edges=False,
                   lighting=False, edge_color=None, reset_camera=None, pad=0.0,
-                  offset=0.0, loc=None, pickable=False):
+                  offset=0.0, pickable=False, store_floor_kwargs=True):
         """Show a floor mesh.
 
         This generates planes at the boundaries of the scene to behave like
@@ -897,10 +899,11 @@ class Renderer(vtkRenderer):
         Parameters
         ----------
         face : str
-            The face at which to place the plane. Options are (-z, -y, -x, +z,
-            +y, and +z). Where the -/+ sign indicates on which side of the
-            axis the plane will lie. I.e. ``'-z'`` would generate a floor on
-            the XY-plane and the bottom of the scene (minimum z).
+            The face at which to place the plane. Options are (-z, -y,
+            -x, +z, +y, and +z). Where the -/+ sign indicates on which
+            side of the axis the plane will lie.  For example,
+            ``'-z'`` would generate a floor on the XY-plane and the
+            bottom of the scene (minimum z).
 
         i_resolution : int
             Number of points on the plane in the i direction.
@@ -937,9 +940,11 @@ class Renderer(vtkRenderer):
         offset : float
             Percantage offset along plane normal
         """
-        self._floor_kwargs = locals()
-        self._floor_kwargs.pop('self')
-        ranges = np.array(self.bounds).reshape(-1,2).ptp(axis=1)
+        if store_floor_kwargs:
+            kwargs = locals()
+            kwargs.pop('self')
+            self._floor_kwargs.append(kwargs)
+        ranges = np.array(self.bounds).reshape(-1, 2).ptp(axis=1)
         ranges += (ranges * pad)
         center = np.array(self.center)
         if face.lower() in '-z':
@@ -992,9 +997,9 @@ class Renderer(vtkRenderer):
         rgb_color = parse_color(color)
         mapper = vtk.vtkDataSetMapper()
         mapper.SetInputData(self._floor)
-        self.floor_actor, prop = self.add_actor(mapper,
-                                                reset_camera=reset_camera,
-                                                name=name, pickable=pickable)
+        actor, prop = self.add_actor(mapper,
+                                     reset_camera=reset_camera,
+                                     name=name, pickable=pickable)
 
         prop.SetColor(rgb_color)
         prop.SetOpacity(opacity)
@@ -1013,16 +1018,16 @@ class Renderer(vtkRenderer):
             prop.SetLineWidth(line_width)
 
         prop.SetRepresentationToSurface()
+        self._floors.append(actor)
+        return actor
 
-        return self.floor_actor
-
-    def remove_floor(self):
-        """Remove the floor actor."""
-        if hasattr(self, '_floor'):
-            actor = self.floor_actor
-            self.floor_actor = None
-            del self._floor
+    def remove_floors(self, clear_kwargs=True):
+        """Remove all floor actors."""
+        for actor in self._floors:
             self.remove_actor(actor, reset_camera=False)
+        self._floors.clear()
+        if clear_kwargs:
+            self._floor_kwargs.clear()
 
     def remove_bounds_axes(self):
         """Remove bounds axes."""
@@ -1210,9 +1215,10 @@ class Renderer(vtkRenderer):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
-                self.remove_floor()
-                if hasattr(self, '_floor_kwargs'):
-                    self.add_floor(**self._floor_kwargs)
+                self.remove_floors(clear_kwargs=False)
+                for floor_kwargs in self._floor_kwargs:
+                    floor_kwargs['store_floor_kwargs'] = False
+                    self.add_floor(**floor_kwargs)
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):
