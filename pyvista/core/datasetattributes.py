@@ -250,5 +250,5 @@ class DataSetAttributes(VTKObjectWrapper):
                 raise KeyError('Array index ({}) out of range [0, {}]'.format(index, max_index))
 
     def _raise_field_data_no_scalars_vectors(self):
-        if self.association == FieldAssociation.FIELD:
+        if self.association == FieldAssociation.NONE:
             raise TypeError('vtkFieldData does not have active scalars or vectors.')
