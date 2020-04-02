@@ -201,3 +201,9 @@ def test_convert_id_list():
         id_list.SetId(i, v)
     converted = helpers.vtk_id_list_to_array(id_list)
     assert np.allclose(converted, ids)
+
+
+def test_progress_monitor():
+    mesh = pyvista.Sphere()
+    ugrid = mesh.delaunay_3d(progress_bar=True)
+    assert isinstance(ugrid, pyvista.UnstructuredGrid)

@@ -5,6 +5,7 @@ import os
 import re
 import scooby
 import sys
+import warnings
 
 import vtk
 
