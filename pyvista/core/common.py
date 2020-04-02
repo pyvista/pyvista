@@ -6,12 +6,10 @@ import warnings
 
 import numpy as np
 import vtk
-from vtk.vtkCommonKitPython import vtkDataObject, vtkDataSet
 
 import pyvista
-from pyvista.utilities import (FieldAssociation, convert_array, get_array,
-                               is_pyvista_dataset, parse_field_choice, raise_not_matching,
-                               vtk_bit_array_to_char, vtk_id_list_to_array)
+from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
+                               parse_field_choice, raise_not_matching, vtk_id_list_to_array)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
