@@ -28,7 +28,10 @@ class DataObject(object):
 
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
-        self._field_bool_array_names = []
+        super().__init__()
+        # Remember which arrays come from numpy.bool arrays, because there is no direct
+        # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
+        self.association_bitarray_names = collections.defaultdict(set)
 
 
     def __new__(cls, *args, **kwargs):
