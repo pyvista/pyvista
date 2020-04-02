@@ -45,7 +45,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:,i], table['foo{}'.format(i)])
 
     dataset = examples.load_hexbeam()
-    array_dict = dataset.point_arrays
+    array_dict = dict(dataset.point_arrays)
     table = pyvista.Table(array_dict)
     assert table.n_rows == dataset.n_points
     assert table.n_columns == len(array_dict)
