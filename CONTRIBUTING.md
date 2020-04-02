@@ -27,7 +27,7 @@ python -m pip install -e .
 For general questions about the project, its applications, or about software
 usage, please create an issue in the [pyvista/pyvista-support](https://github.com/pyvista/pyvista-support)
 repository where the community can collectively address your questions.
-You are also welcome to join us on join us on [Slack](http://slack.pyvista.org)
+You are also welcome to join us on [Slack](http://slack.pyvista.org)
 or send one of the developers an email.
 The project support team can be reached at [info@pyvista.org](mailto:info@pyvista.org)
 
@@ -125,11 +125,11 @@ request. The following tests will be executed after any commit or pull request,
 so we ask that you perform the following sequence locally to track down any new
 issues from your changes.
 To run our comprehensive suite of unit tests, install all the dependencies
-listed in ``requirements.txt``, ``requirements_docs.txt``:
+listed in ``requirements_test.txt``, ``requirements_docs.txt``:
 
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_test.txt
 pip install -r requirements_docs.txt
 ```
 
@@ -152,7 +152,7 @@ python -m pytest -v --doctest-modules pyvista
 And finally, test the documentation examples:
 
 ```bash
-cd ./docs/
+cd docs
 make clean
 make doctest
 make html -b linkcheck
@@ -171,16 +171,15 @@ latest state of the `master` branch locally and:
 1. Run all tests as outlined in the [Testing Section](#testing) and ensure
 all are passing.
 
-2. Ensure all builds and tests on Travis and Azure are passing for the
-latest commits on the `master` branch
+2. Ensure all builds and tests on Azure are passing for the latest commits on
+the `master` branch
 
 3. Locally test and build the documentation with link checking to make sure
-no links are outdated. Be sure to run `make clean` and `rm -r docs/examples` to
-ensure no results are cached.
+no links are outdated. Be sure to run `make clean` to ensure no results are
+cached.
     ```bash
     cd docs
-    rm -r examples # deletes the sphinx-gallery cache
-    make clean
+    make clean  # deletes the sphinx-gallery cache
     make doctest
     make html -b linkcheck
     ```

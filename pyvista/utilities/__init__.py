@@ -1,6 +1,8 @@
-from .errors import (Observer, Report, assert_empty_kwargs,
-                     send_errors_to_logging, set_error_output_file,
-                     check_valid_vector)
+"""Utilities routines."""
+from .errors import (GPUInfo, Observer, Report,
+                     assert_empty_kwargs, get_gpu_info, send_errors_to_logging,
+                     set_error_output_file, check_valid_vector)
+
 from .features import *
 from .fileio import *
 from .geometric_objects import *

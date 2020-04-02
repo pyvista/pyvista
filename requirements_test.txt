@@ -6,8 +6,13 @@ pytest
 pytest-cov
 pytest-memprof
 codecov
-nbval
+PyQt5==5.11.3
+pytest-qt
 imageio>=2.5.0
+imageio-ffmpeg
 colorcet
 cmocean
-scooby>=0.2.2
+scooby>=0.5.1
+meshio>=4.0.3, <5.0
+itkwidgets>=0.25.2
+tqdm

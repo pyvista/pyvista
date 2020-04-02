@@ -5,7 +5,6 @@ Read Image Files
 Read and plot image files (JPEG, TIFF, PNG, etc).
 
 """
-import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
@@ -23,7 +22,7 @@ image = examples.download_puppy()
 
 ###############################################################################
 # When plotting images stored in :class:`pyvista.UniformGrid` objects, it is
-# important to specify usign the `rgb` option when plotting to ensure that the
+# important to specify using the `rgb` option when plotting to ensure that the
 # image's true colors are used and not mapped.
 
 # True image colors

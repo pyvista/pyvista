@@ -9,6 +9,7 @@ Create a StructuredGrid surface from NumPy arrays
 
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
+from pyvista import examples
 import numpy as np
 
 
@@ -41,7 +42,7 @@ grid.plot_curvature(clim=[-1, 1])
 # Generating a structured grid is a one liner in this module, and the points
 # from the resulting surface can be accessed as a NumPy array:
 
-print(grid.points)
+grid.points
 
 
 ###############################################################################
@@ -51,7 +52,7 @@ print(grid.points)
 # Quite often, you might be given a set of coordinates (XYZ points) in a simple
 # tabular format where there exists some structure such that grid could be
 # built between the nodes you have. A great example is found in
-# `pyvista-support#16`_ where a strucutred grid that is rotated from the
+# `pyvista-support#16`_ where a structured grid that is rotated from the
 # cartesian reference frame is given as just XYZ points. In these cases, all
 # that is needed to recover the grid is the dimensions of the grid
 # (`nx` by `ny` by `nz`) and that the coordinates are ordered appropriately.
@@ -80,7 +81,7 @@ def make_point_set():
 
 # Get the points as a 2D NumPy array (N by 3)
 points = make_point_set()
-print(points[0:5, :])
+points[0:5, :]
 
 ###############################################################################
 # Now pretend that the (n by 3) NumPy array above are coordinates that you
@@ -101,7 +102,7 @@ plt.show()
 
 ###############################################################################
 # In the figure above, we can see some inherit structure to the points and thus
-# we could connect the points as a structured gird. All we need to know are the
+# we could connect the points as a structured grid. All we need to know are the
 # dimensions of the grid present. In this case, we know (because we made this
 # dataset) the dimensions are ``[29, 32, 1]``, but you might not know the
 # dimensions of your pointset. There are a few ways to figure out the
@@ -121,3 +122,30 @@ mesh.dimensions = [29, 32, 1]
 
 # and then inspect it!
 mesh.plot(show_edges=True, show_grid=True, cpos="xy")
+
+
+###############################################################################
+# Extending a 2D StructuredGrid to 3D
+# +++++++++++++++++++++++++++++++++++
+#
+# A 2D :class:`pyvista.StructuredGrid` mesh can be extended into a 3D mesh.
+# This is highly applicable when wanting to create a terrain following mesh
+# in earth science research applications.
+#
+# For example, we could have a :class:`pyvista.StructuredGrid` of a topography
+# surface and extend that surface to a few different levels and connect each
+# "level" to create the 3D terrain following mesh.
+#
+# Let's start with a simple example by extending the wave mesh to 3D
+struct = examples.load_structured()
+struct.plot(show_edges=True)
+
+###############################################################################
+top = struct.points.copy()
+bottom = struct.points.copy()
+bottom[:,-1] = -10.0 # Wherever you want the plane
+
+vol = pv.StructuredGrid()
+vol.points = np.vstack((top, bottom))
+vol.dimensions = [*struct.dimensions[0:2], 2]
+vol.plot(show_edges=True)

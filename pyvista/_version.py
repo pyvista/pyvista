@@ -1,6 +1,6 @@
-""" version info for pyvista """
+"""Version info for pyvista."""
 # major, minor, patch
-version_info = 0, 22, 4
+version_info = 0, 24, 0
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))

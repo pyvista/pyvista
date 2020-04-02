@@ -54,3 +54,6 @@ docs/examples/
 docs/errors.txt
 docs/images/auto-generated
 **/myscreenshot.png
+
+# flycheck temp files
+flycheck*

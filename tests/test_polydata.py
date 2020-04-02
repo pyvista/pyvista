@@ -16,11 +16,9 @@ SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
 
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
-try:
-    test_path = os.path.dirname(os.path.abspath(__file__))
-    test_data_path = os.path.join(test_path, 'test_data')
-except:
-    test_data_path = '/home/alex/afrl/python/source/pyvista/tests/test_data'
+test_path = os.path.dirname(os.path.abspath(__file__))
+test_data_path = os.path.join(test_path, 'test_data')
+
 
 stl_test_file = os.path.join(test_data_path, 'sphere.stl')
 ply_test_file = os.path.join(test_data_path, 'sphere.ply')
@@ -136,6 +134,9 @@ def test_geodesic():
     sphere = SPHERE.copy()
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
     assert isinstance(geodesic, pyvista.PolyData)
+    assert "vtkOriginalPointIds" in geodesic.array_names
+    ids = geodesic.point_arrays["vtkOriginalPointIds"]
+    assert np.allclose(geodesic.points, sphere.points[ids])
 
 
 def test_geodesic_distance():
@@ -164,7 +165,7 @@ def test_ray_trace_plot():
 def test_plot_curvature():
     sphere = SPHERE.copy()
     cpos = sphere.plot_curvature(off_screen=True)
-    assert isinstance(cpos, list)
+    assert isinstance(cpos, pyvista.CameraPosition)
 
 
 def test_edge_mask():
@@ -292,17 +293,17 @@ def test_invalid_subdivision():
         mesh = sphere.subdivide(1, 'not valid')
 
 
-def test_extract_edges():
+def test_extract_feature_edges():
     # Test extraction of NO edges
     mesh = SPHERE.copy()
-    edges = mesh.extract_edges(90)
+    edges = mesh.extract_feature_edges(90)
     assert not edges.n_points
 
     mesh = pyvista.Cube() # use a mesh that actually has strongly defined edges
-    more_edges = mesh.extract_edges(10)
+    more_edges = mesh.extract_feature_edges(10)
     assert more_edges.n_points
 
-    mesh.extract_edges(10, inplace=True)
+    mesh.extract_feature_edges(10, inplace=True)
     assert mesh.n_points == more_edges.n_points
 
 
@@ -508,7 +509,7 @@ def test_lines():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
-    # Creat line segments
+    # Create line segments
     poly = pyvista.PolyData()
     poly.points = points
     cells = np.full((len(points)-1, 3), 2, dtype=np.int)
@@ -532,6 +533,25 @@ def test_ribbon_filter():
     ribbon = line.ribbon(width=0.5)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
     ribbon = line.ribbon(width=0.5, tcoords=True)
+
+
+def test_is_all_triangles():
+    # mesh points
+    vertices = np.array([[0, 0, 0],
+                         [1, 0, 0],
+                         [1, 1, 0],
+                         [0, 1, 0],
+                         [0.5, 0.5, -1]])
+
+    # mesh faces
+    faces = np.hstack([[4, 0, 1, 2, 3],  # square
+                       [3, 0, 1, 4],     # triangle
+                       [3, 1, 2, 4]])    # triangle
+
+    mesh = pyvista.PolyData(vertices, faces)
+    assert not mesh.is_all_triangles()
+    mesh = mesh.triangulate()
+    assert mesh.is_all_triangles()
 
 
 def test_extrude():

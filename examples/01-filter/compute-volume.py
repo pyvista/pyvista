@@ -8,7 +8,6 @@ Calculate mass properties such as the volume or area of datasets
 
 # sphinx_gallery_thumbnail_number = 4
 import numpy as np
-import pyvista as pv
 from pyvista import examples
 
 ###############################################################################
@@ -20,7 +19,7 @@ from pyvista import examples
 
 # Load a simple example mesh
 dataset = examples.load_uniform()
-dataset.set_active_scalar("Spatial Cell Data")
+dataset.set_active_scalars("Spatial Cell Data")
 
 ###############################################################################
 # We can then calculate the volume of every cell in the array using the
@@ -105,7 +104,7 @@ largest.plot(show_grid=True, cpos=[-2, 5, 3])
 
 # Load a simple example mesh
 dataset = examples.load_uniform()
-dataset.set_active_scalar("Spatial Cell Data")
+dataset.set_active_scalars("Spatial Cell Data")
 threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
 
 bodies = threshed.split_bodies()

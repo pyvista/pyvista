@@ -12,7 +12,7 @@ import numpy as np
 
 ###############################################################################
 # PyVista meshes have several slicing filters bound directly to all datasets.
-# Thes filters allow you to slice through a volumetric dataset to extract and
+# These filters allow you to slice through a volumetric dataset to extract and
 # view sections through the volume of data.
 #
 # One of the most common slicing filters used in PyVista is the
@@ -31,7 +31,7 @@ mesh.plot(cmap=cmap)
 ###############################################################################
 # Note that this dataset is a 3D volume and there might be regions within this
 # volume that we would like to inspect. We can create slices through the mesh
-# to gain furthur insight about the internals of the volume.
+# to gain further insight about the internals of the volume.
 
 slices = mesh.slice_orthogonal()
 
@@ -90,17 +90,51 @@ x, y = path(np.arange(model.bounds[2], model.bounds[3], 15.0))
 zo = np.linspace(9.0, 11.0, num=len(y))
 points = np.c_[x, y, zo]
 spline = pv.Spline(points, 15)
-print(spline)
+spline
 
 
 ###############################################################################
 # Then run the filter
 slc = model.slice_along_line(spline)
-print(slc)
+slc
 
 ###############################################################################
 
 p = pv.Plotter()
-p.add_mesh(slc)
+p.add_mesh(slc, cmap=cmap)
 p.add_mesh(model.outline())
 p.show(cpos=[1, -1, 1])
+
+
+
+###############################################################################
+# Slice At Different Bearings
+# +++++++++++++++++++++++++++
+#
+# From `pyvista-support#23 <https://github.com/pyvista/pyvista-support/issues/23>`_
+#
+# An example of how to get many slices at different bearings all centered
+# around a user-chosen location.
+#
+# Create a point to orient slices around
+ranges = np.array(model.bounds).reshape(-1, 2).ptp(axis=1)
+point = np.array(model.center) - ranges*0.25
+
+###############################################################################
+# Now generate a few normal vectors to rotate a slice around the z-axis.
+# Use equation for circle since its about the Z-axis.
+increment = np.pi/6.
+# use a container to hold all the slices
+slices = pv.MultiBlock() # treat like a dictionary/list
+for theta in np.arange(0, np.pi, increment):
+    normal = np.array([np.cos(theta), np.sin(theta), 0.0]).dot(np.pi/2.)
+    name = 'Bearing: {:.2f}'.format(np.rad2deg(theta))
+    slices[name] = model.slice(origin=point, normal=normal)
+slices
+
+###############################################################################
+# And now display it!
+p = pv.Plotter()
+p.add_mesh(slices, cmap=cmap)
+p.add_mesh(model.outline())
+p.show()

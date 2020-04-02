@@ -3,6 +3,7 @@ import os
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 from pyvista import examples as ex
@@ -55,10 +56,22 @@ def test_read(tmpdir):
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
-        data = pyvista.read(filename)
+        _ = pyvista.read(filename)
     # read non existing file
     with pytest.raises(IOError):
-        data = pyvista.read('this_file_totally_does_not_exist.vtk')
+        _ = pyvista.read('this_file_totally_does_not_exist.vtk')
+    # Now test reading lists of files as multi blocks
+    multi = pyvista.read(fnames)
+    assert isinstance(multi, pyvista.MultiBlock)
+    assert multi.n_blocks == len(fnames)
+    nested = [ex.planefile,
+              [ex.hexbeamfile, ex.uniformfile]]
+
+    multi = pyvista.read(nested)
+    assert isinstance(multi, pyvista.MultiBlock)
+    assert multi.n_blocks == 2
+    assert isinstance(multi[1], pyvista.MultiBlock)
+    assert multi[1].n_blocks == 2
 
 
 def test_get_array():
@@ -177,3 +190,20 @@ def test_assert_empty_kwargs():
     with pytest.raises(TypeError):
         kwargs = {"foo":6, "goo":"bad"}
         errors.assert_empty_kwargs(**kwargs)
+
+
+
+def test_convert_id_list():
+    ids = np.array([4, 5, 8])
+    id_list = vtk.vtkIdList()
+    id_list.SetNumberOfIds(len(ids))
+    for i, v in enumerate(ids):
+        id_list.SetId(i, v)
+    converted = helpers.vtk_id_list_to_array(id_list)
+    assert np.allclose(converted, ids)
+
+
+def test_progress_monitor():
+    mesh = pyvista.Sphere()
+    ugrid = mesh.delaunay_3d(progress_bar=True)
+    assert isinstance(ugrid, pyvista.UnstructuredGrid)

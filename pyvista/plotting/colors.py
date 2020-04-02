@@ -1,5 +1,4 @@
-"""
-Color module supporting plotting module
+"""Color module supporting plotting module.
 
 Used code from matplotlib.colors.  Thanks for your work!
 
@@ -169,7 +168,7 @@ hexcolors = {
     'blanchedalmond':       '#FFEBCD',
     'blue':                 '#0000FF',
     'blueviolet':           '#8A2BE2',
-    'brown':                '#A52A2A',
+    'brown':                '#654321',
     'burlywood':            '#DEB887',
     'cadetblue':            '#5F9EA0',
     'chartreuse':           '#7FFF00',
@@ -323,15 +322,15 @@ PARAVIEW_BACKGROUND = [82/255., 87/255., 110/255.]
 
 
 def hex_to_rgb(h):
-    """ Returns 0 to 1 rgb from a hex list or tuple """
+    """Return 0 to 1 rgb from a hex list or tuple."""
     h = h.lstrip('#')
     return tuple(int(h[i:i+2], 16)/255. for i in (0, 2, 4))
 
 
 def string_to_rgb(string):
-    """
-    Converts a literal color string (i.e. white) to a color rgb.  Also accepts
-    hex strings or single characters from the following list.
+    """Convert a literal color string (i.e. white) to a color rgb.
+
+    Also accepts hex strings or single characters from the following list.
 
         b: blue
         g: green
@@ -343,7 +342,6 @@ def string_to_rgb(string):
         w: white
 
     """
-
     # if a single character
     if len(string) == 1:
 
@@ -373,7 +371,7 @@ def string_to_rgb(string):
 
 
 def get_cmap_safe(cmap):
-    """Fetches a colormap by name from matplotlib, colorcet, or cmocean"""
+    """Fetch a colormap by name from matplotlib, colorcet, or cmocean."""
     try:
         from matplotlib.cm import get_cmap
     except ImportError:

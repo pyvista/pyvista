@@ -1,4 +1,4 @@
-"""Provides an easy way of generating several geometric objects
+"""Provides an easy way of generating several geometric objects.
 
 CONTAINS
 --------
@@ -31,8 +31,11 @@ NORMALS = {
 
 
 def translate(surf, center=[0., 0., 0.], direction=[1., 0., 0.]):
-    """Translates and orientates a mesh centered at the origin and
-    facing in the x direction to a new center and direction
+    """Translate and orientate a mesh to a new center and direction.
+
+    By default, the input mesh is considered centered at the origin
+    and facing in the x direction.
+
     """
     normx = np.array(direction)/np.linalg.norm(direction)
     normz = np.cross(normx, [0, 1.0, 0.0000001])
@@ -54,7 +57,7 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
              resolution=100, capping=True, **kwargs):
     """Create the surface of a cylinder.
 
-    See also :func:`pyvista.CylinderStructured`
+    See also :func:`pyvista.CylinderStructured`.
 
     Parameters
     ----------
@@ -76,8 +79,8 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
     capping : bool, optional
         Cap cylinder ends with polygons.  Default True
 
-    Returns
-    -------
+    Return
+    ------
     cylinder : pyvista.PolyData
         Cylinder surface.
 
@@ -106,9 +109,10 @@ def CylinderStructured(radius=0.5, height=1.0,
                        center=(0.,0.,0.), direction=(1.,0.,0.),
                        theta_resolution=32, z_resolution=10):
     """Create a cylinder mesh as a :class:`pyvista.StructuredGrid`.
-    The end caps are left open. This can create a surface mesh if a
-    single value for the ``radius`` is given or a 3D mesh if multiple
-    radii are given as a list/array in the ``radius`` argument.
+
+    The end caps are left open. This can create a surface mesh if a single
+    value for the ``radius`` is given or a 3D mesh if multiple radii are given
+    as a list/array in the ``radius`` argument.
 
     Parameters
     ----------
@@ -129,6 +133,7 @@ def CylinderStructured(radius=0.5, height=1.0,
 
     z_resolution : int
         Number of points along the height (Z-axis) of the cylinder
+
     """
     # Define grid in polar coordinates
     r = np.array([radius]).ravel()
@@ -140,14 +145,10 @@ def CylinderStructured(radius=0.5, height=1.0,
     X = radius_matrix * np.cos(theta_matrix)
     Y = radius_matrix * np.sin(theta_matrix)
 
-    # Duplicate the first point to close loop
-    X = np.append(X, X[0])
-    Y = np.append(Y, Y[0])
-
     # Make all the nodes in the grid
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
-    dz = height / z_resolution
+    dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
@@ -156,7 +157,7 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Create the grid
     grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
-    grid.dimensions = [nr, theta_resolution+1, z_resolution]
+    grid.dimensions = [nr, theta_resolution, z_resolution]
 
     # Orient properly in user direction
     vx = np.array([0., 0., 1.])
@@ -176,9 +177,9 @@ def CylinderStructured(radius=0.5, height=1.0,
 
 
 def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
-          tip_radius=0.1, shaft_radius=0.05, shaft_resolution=20):
-    """
-    Create a vtk Arrow
+          tip_radius=0.1, tip_resolution=20, shaft_radius=0.05,
+          shaft_resolution=20):
+    """Create a vtk Arrow.
 
     Parameters
     ----------
@@ -194,21 +195,26 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     tip_radius : float, optional
         Radius of the tip.
 
+    tip_resolution : int, optional
+        Number of faces around the tip.
+
     shaft_radius : float, optional
         Radius of the shaft.
 
     shaft_resolution : int, optional
-        Number of faces around the shaft
+        Number of faces around the shaft.
 
-    Returns
-    -------
+    Return
+    ------
     arrow : pyvista.PolyData
         Arrow surface.
+
     """
     # Create arrow object
     arrow = vtk.vtkArrowSource()
     arrow.SetTipLength(tip_length)
     arrow.SetTipRadius(tip_radius)
+    arrow.SetTipResolution(tip_resolution)
     arrow.SetShaftRadius(shaft_radius)
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
@@ -219,8 +225,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
 
 def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=30,
            phi_resolution=30, start_theta=0, end_theta=360, start_phi=0, end_phi=180):
-    """
-    Create a vtk Sphere
+    """Create a vtk Sphere.
 
     Parameters
     ----------
@@ -253,10 +258,11 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     end_phi : float, optional
         Ending latitude angle.
 
-    Returns
-    -------
+    Return
+    ------
     sphere : pyvista.PolyData
         Sphere mesh.
+
     """
     sphere = vtk.vtkSphereSource()
     sphere.SetRadius(radius)
@@ -275,8 +281,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
 
 def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
           i_resolution=10, j_resolution=10):
-    """
-    Create a plane
+    """Create a plane.
 
     Parameters
     ----------
@@ -298,8 +303,8 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
     j_resolution : int
         Number of points on the plane in the j direction.
 
-    Returns
-    -------
+    Return
+    ------
     plane : pyvista.PolyData
         Plane mesh
 
@@ -319,7 +324,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
 
 def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
-    """Create a line
+    """Create a line.
 
     Parameters
     ----------
@@ -331,7 +336,10 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
     resolution : int
         number of pieces to divide line into
+
     """
+    if resolution <= 0:
+        raise ValueError('Resolution must be positive')
     if np.array(pointa).size != 3:
         raise TypeError('Point A must be a length three tuple of floats.')
     if np.array(pointb).size != 3:
@@ -350,7 +358,9 @@ def Line(pointa=(-0.5, 0., 0.), pointb=(0.5, 0., 0.), resolution=1):
 
 
 def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=None):
-    """Create a cube by either specifying the center and side lengths or just
+    """Create a cube.
+
+    It's possible to specify either the center and side lengths or just
     the bounds of the cube. If ``bounds`` are given, all other arguments are
     ignored.
 
@@ -371,6 +381,7 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
     bounds : np.ndarray or list
         Specify the bounding box of the cube. If given, all other arguments are
         ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
+
     """
     src = vtk.vtkCubeSource()
     if bounds is not None:
@@ -387,20 +398,21 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
 
 
 def Box(bounds=(-1.,1.,-1.,1.,-1.,1.)):
-    """Creates a box with solid faces for the given bounds.
+    """Create a box with solid faces for the given bounds.
 
     Parameters
     ----------
     bounds : np.ndarray or list
         Specify the bounding box of the cube. If given, all other arguments are
         ignored. ``(xMin,xMax, yMin,yMax, zMin,zMax)``
+
     """
     return Cube(bounds=bounds)
 
 
 def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
          capping=True, angle=None, resolution=6):
-    """Create a cone
+    """Create a cone.
 
     Parameters
     ----------
@@ -424,6 +436,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
 
     resolution : int
         number of facets used to represent the cone
+
     """
     src = vtk.vtkConeSource()
     src.SetCapping(capping)
@@ -445,10 +458,11 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
 
 
 def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
-    """
-    Createa a polygonal disk with a hole in the center. The disk has zero
-    height. The user can specify the inner and outer radius of the disk, and
-    the radial and circumferential resolution of the polygonal representation.
+    """Create a polygonal disk with a hole in the center.
+
+    The disk has zero height. The user can specify the inner and outer radius
+    of the disk, and the radial and circumferential resolution of the polygonal
+    representation.
 
     Parameters
     ----------
@@ -463,6 +477,7 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
 
     n_sides : int
         Number of sides of the polygon
+
     """
     src = vtk.vtkRegularPolygonSource()
     src.SetCenter(center)
@@ -475,17 +490,18 @@ def Polygon(center=(0.,0.,0.), radius=1, normal=(0,0,1), n_sides=6):
 
 def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
          c_res=6):
-    """
-    Createa a polygonal disk with a hole in the center. The disk has zero
-    height. The user can specify the inner and outer radius of the disk, and
-    the radial and circumferential resolution of the polygonal representation.
+    """Create a polygonal disk with a hole in the center.
+
+    The disk has zero height. The user can specify the inner and outer radius
+    of the disk, and the radial and circumferential resolution of the polygonal
+    representation.
 
     Parameters
     ----------
     center : np.ndarray or list
         Center in [x, y, z]. middle of the axis of the disc.
 
-    inner : flaot
+    inner : float
         The inner radius
 
     outer : float
@@ -499,6 +515,7 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
 
     r_res: int
         number of points in circumferential direction.
+
     """
     src = vtk.vtkDiskSource()
     src.SetInnerRadius(inner)
@@ -510,7 +527,7 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
 
 
 def Text3D(string, depth=0.5):
-    """ Create 3D text from a string"""
+    """Create 3D text from a string."""
     vec_text = vtk.vtkVectorText()
     vec_text.SetText(string)
 
@@ -527,18 +544,27 @@ def Text3D(string, depth=0.5):
 
 
 def SuperToroid(*args, **kwargs):
-    """DEPRECATED: use :func:`pyvista.ParametricSuperToroid`"""
+    """Create a super toroid.
+
+    DEPRECATED: Please use `pyvista.ParametricSuperToroid` instead.
+
+    """
     raise RuntimeError('use `pyvista.ParametricSuperToroid` instead')
 
 
 def Ellipsoid(*args, **kwargs):
-    """DEPRECATED: use :func:`pyvista.ParametricEllipsoid`"""
+    """Create an ellipsoid.
+
+    DEPRECATED: Please use :func:`pyvista.ParametricEllipsoid` instead.
+
+    """
     raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
 
 
 def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
             x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
             std=0.5, subsample_rate=1):
+    """Create a wavelet."""
     wavelet_source = vtk.vtkRTAnalyticSource()
     wavelet_source.SetWholeExtent(*extent)
     wavelet_source.SetCenter(center)

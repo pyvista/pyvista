@@ -5,6 +5,12 @@ import sys
 import pyvista
 from pyvista import examples
 
+try:
+    import matplotlib.pyplot as plt
+    HAS_MATPLOTLIB = True
+except:
+    HAS_MATPLOTLIB = False
+
 PYTHON_2 = int(sys.version[0]) < 3
 
 DATASETS = [
@@ -19,8 +25,10 @@ normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 
+
+
 def test_clip_filter():
-    """This tests the clip filter on all datatypes avaialble filters"""
+    """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(DATASETS):
         clp = dataset.clip(normal=normals[i], invert=True)
         assert clp is not None
@@ -81,7 +89,7 @@ def test_clip_surface():
 
 
 def test_slice_filter():
-    """This tests the slice filter on all datatypes avaialble filters"""
+    """This tests the slice filter on all datatypes available filters"""
     for i, dataset in enumerate(DATASETS):
         slc = dataset.slice(normal=normals[i])
         assert slc is not None
@@ -102,7 +110,7 @@ def test_slice_filter_composite():
 
 
 def test_slice_orthogonal_filter():
-    """This tests the slice filter on all datatypes avaialble filters"""
+    """This tests the slice filter on all datatypes available filters"""
 
     for i, dataset in enumerate(DATASETS):
         slices = dataset.slice_orthogonal()
@@ -230,7 +238,7 @@ def test_extract_geometry():
 
 def test_wireframe():
     for i, dataset in enumerate(DATASETS):
-        wire = dataset.wireframe()
+        wire = dataset.extract_all_edges()
         assert wire is not None
         assert isinstance(wire, pyvista.PolyData)
 
@@ -238,7 +246,7 @@ def test_wireframe():
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
 def test_wireframe_composite():
     # Now test composite data structures
-    output = COMPOSITE.wireframe()
+    output = COMPOSITE.extract_all_edges()
     assert output.n_blocks == COMPOSITE.n_blocks
 
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
@@ -263,29 +271,29 @@ def test_elevation():
     # Test default params
     elev = dataset.elevation()
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.bounds[4], dataset.bounds[5])
     # test vector args
     c = list(dataset.center)
-    t = list(c) # cast so it doesnt point to `c`
+    t = list(c) # cast so it does not point to `c`
     t[2] = dataset.bounds[-1]
     elev = dataset.elevation(low_point=c, high_point=t)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range() == (dataset.center[2], dataset.bounds[5])
     # Test not setting active
     elev = dataset.elevation(set_active=False)
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' != elev.active_scalar_name
+    assert 'Elevation' != elev.active_scalars_name
     # Set use a range by scalar name
     elev = dataset.elevation(scalar_range='Spatial Point Data')
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert dataset.get_data_range('Spatial Point Data') == (elev.get_data_range('Elevation'))
     # Set use a user defined range
     elev = dataset.elevation(scalar_range=[1.0, 100.0])
     assert 'Elevation' in elev.array_names
-    assert 'Elevation' == elev.active_scalar_name
+    assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
     with pytest.raises(RuntimeError):
@@ -370,12 +378,14 @@ def test_glyph():
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
+                          clamping=False, rng=[1, 1])
 
 
 def test_split_and_connectivity():
     # Load a simple example mesh
     dataset = examples.load_uniform()
-    dataset.set_active_scalar('Spatial Cell Data')
+    dataset.set_active_scalars('Spatial Cell Data')
     threshed = dataset.threshold_percent([0.15, 0.50], invert=True)
 
     bodies = threshed.split_bodies()
@@ -482,6 +492,28 @@ def test_streamlines():
     assert src.n_points == 25
 
 
+def test_sample_over_line():
+    """Test that we get a sampled line."""
+    name = 'values'
+
+    line = pyvista.Line([0, 0, 0], [0, 0, 10], 9)
+    line[name] = np.linspace(0, 10, 10)
+
+    sampled_line = line.sample_over_line([0, 0, 0.5], [0, 0, 1.5], 2)
+
+    expected_result = np.array([0.5, 1, 1.5])
+    assert np.allclose(sampled_line[name], expected_result)
+    assert name in line.array_names # is name in sampled result
+
+    # test no resolution
+    sphere = pyvista.Sphere(center=(4.5,4.5,4.5), radius=4.5)
+    sampled_from_sphere = sphere.sample_over_line([3, 1, 1], [-3, -1, -1])
+    assert sampled_from_sphere.n_points == sphere.n_cells + 1
+    # is sampled result a polydata object
+    assert isinstance(sampled_from_sphere, pyvista.PolyData)
+
+
+@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Requires matplotlib")
 def test_plot_over_line():
     """this requires matplotlib"""
     mesh = examples.load_uniform()
@@ -591,3 +623,10 @@ def test_compute_gradients():
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3
+
+
+
+def test_extract_subset():
+    volume = examples.load_uniform()
+    voi = volume.extract_subset([0,3,1,4,5,7])
+    assert isinstance(voi, pyvista.UniformGrid)

@@ -41,7 +41,7 @@ p = pv.Plotter()
 p.add_mesh(mesh.outline(), color="k")
 p.add_mesh(streamlines.tube(radius=0.15))
 p.add_mesh(src)
-p.add_mesh(mesh.contour([160]).wireframe(), color="grey", opacity=0.25)
+p.add_mesh(mesh.contour([160]).extract_all_edges(), color="grey", opacity=0.25)
 p.camera_position = [(182.0, 177.0, 50), (139, 105, 19), (-0.2, -0.2, 1)]
 p.show()
 
@@ -52,14 +52,14 @@ p.show()
 # Here is another example of blood flow:
 
 mesh = examples.download_blood_vessels().cell_data_to_point_data()
-mesh.set_active_scalar("velocity")
+mesh.set_active_scalars("velocity")
 streamlines, src = mesh.streamlines(
     return_source=True, source_radius=10, source_center=(92.46, 74.37, 135.5)
 )
 
 
 ###############################################################################
-boundary = mesh.decimate_boundary().wireframe()
+boundary = mesh.decimate_boundary().extract_all_edges()
 
 p = pv.Plotter()
 p.add_mesh(streamlines.tube(radius=0.2), lighting=False)

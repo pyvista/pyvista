@@ -16,7 +16,7 @@ def test_spline():
 
 
 def test_ParametricBohemianDome():
-    geom = pyvista.ParametricBohemianDome()
+    geom = pyvista.ParametricBohemianDome(direction=[0,0,1])
     assert geom.n_points
 
 

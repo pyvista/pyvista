@@ -22,7 +22,7 @@ import numpy as np
 # `Colorcet's complete list`_, and `cmocean's complete list`_.
 #
 # .. _Matplotlib's complete list of available colormaps: https://matplotlib.org/tutorials/colors/colormaps.html
-# .. _Colorcet's complete list: https://colorcet.pyviz.org/user_guide/index.html
+# .. _Colorcet's complete list: https://colorcet.holoviz.org/user_guide/index.html
 # .. _cmocean's complete list: https://matplotlib.org/cmocean/
 
 ###############################################################################
@@ -33,7 +33,7 @@ import numpy as np
 # plot.
 
 mesh = examples.download_st_helens().warp_by_scalar()
-# Add scalar array with range (0, 100) taht correlates with elevation
+# Add scalar array with range (0, 100) that correlates with elevation
 mesh['values'] = pv.plotting.normalize(mesh['Elevation']) * 100
 
 ###############################################################################
@@ -74,7 +74,7 @@ mesh.plot(scalars='values', cmap=boring_cmap)
 mesh.plot(scalars=mesh['values'], cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 ###############################################################################
-# If you still wish to have control of the seperation of values, you
+# If you still wish to have control of the separation of values, you
 # can do this by creating a scalar array and passing that to the
 # plotter along with the the colormap
 scalars = np.empty(mesh.n_points)
@@ -93,7 +93,7 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 # Let's compare Colorcet's perceptually uniform "fire" colormap to Matplotlib's
 # "hot" colormap much like the example on the `first page of Colorcet's docs`_.
 #
-# .. _first page of Colorcet's docs: https://colorcet.pyviz.org/index.html
+# .. _first page of Colorcet's docs: https://colorcet.holoviz.org/index.html
 #
 # The "hot" version washes out detail at the high end, as if the image is
 # overexposed, while "fire" makes detail visible throughout the data range.
