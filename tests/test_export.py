@@ -3,7 +3,6 @@ import sys
 
 import numpy as np
 import pytest
-import vtk
 
 import pyvista
 from pyvista import examples as ex

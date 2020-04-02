@@ -14,9 +14,6 @@
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-.. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/pyvista/pyvista
-
 .. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
    :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
 
@@ -42,11 +39,17 @@
 .. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
 
+.. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
+   :target: http://slack.pyvista.org
+
+.. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
+   :target: https://gitter.im/pyvista/community
+
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
 +----------------------+------------------------+
-| Build Status         | |travis| |azure|       |
+| Build Status         | |azure|                |
 +----------------------+------------------------+
 | Metrics              | |codacy| |codecov|     |
 +----------------------+------------------------+
@@ -55,6 +58,8 @@
 | Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
 | License              | |MIT|                  |
++----------------------+------------------------+
+| Community            | |slack| |gitter|       |
 +----------------------+------------------------+
 
 

@@ -136,6 +136,9 @@ def test_geodesic():
     sphere = SPHERE.copy()
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
     assert isinstance(geodesic, pyvista.PolyData)
+    assert "vtkOriginalPointIds" in geodesic.array_names
+    ids = geodesic.point_arrays["vtkOriginalPointIds"]
+    assert np.allclose(geodesic.points, sphere.points[ids])
 
 
 def test_geodesic_distance():
@@ -292,17 +295,17 @@ def test_invalid_subdivision():
         mesh = sphere.subdivide(1, 'not valid')
 
 
-def test_extract_edges():
+def test_extract_feature_edges():
     # Test extraction of NO edges
     mesh = SPHERE.copy()
-    edges = mesh.extract_edges(90)
+    edges = mesh.extract_feature_edges(90)
     assert not edges.n_points
 
     mesh = pyvista.Cube() # use a mesh that actually has strongly defined edges
-    more_edges = mesh.extract_edges(10)
+    more_edges = mesh.extract_feature_edges(10)
     assert more_edges.n_points
 
-    mesh.extract_edges(10, inplace=True)
+    mesh.extract_feature_edges(10, inplace=True)
     assert mesh.n_points == more_edges.n_points
 
 
@@ -508,7 +511,7 @@ def test_lines():
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     points = np.column_stack((x, y, z))
-    # Creat line segments
+    # Create line segments
     poly = pyvista.PolyData()
     poly.points = points
     cells = np.full((len(points)-1, 3), 2, dtype=np.int)
