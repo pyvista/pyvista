@@ -43,7 +43,7 @@ Anaconda
 .. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-To install this package with Anaconda run::
+To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
 
