@@ -127,7 +127,12 @@ def test_init_as_points():
     assert len(mesh.verts) == vertices.shape[0] * 2
 
     vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
-    cells = np.array([1, 0, 1, 1, 1, 2])
+    cells = np.array([1, 0, 1, 1, 1, 2], np.int16)
+    to_check = pyvista.PolyData._make_vertice_cells(len(vertices))
+    assert np.allclose(to_check, cells)
+
+    # from list
+    mesh.verts = [[1, 0], [1, 1], [1, 2]]
     to_check = pyvista.PolyData._make_vertice_cells(len(vertices))
     assert np.allclose(to_check, cells)
 
@@ -137,7 +142,6 @@ def test_init_as_points():
     assert mesh.n_points == vertices.shape[0]
     assert mesh.n_cells == vertices.shape[0]
     assert np.allclose(mesh.verts, cells)
-
 
 
 def test_invalid_init():

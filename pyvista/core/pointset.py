@@ -243,6 +243,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @verts.setter
     def verts(self, verts):
         """Set the vertice cells."""
+        if not isinstance(verts, np.ndarray):
+            verts = np.asarray(verts)
+
         if verts.dtype != pyvista.ID_TYPE:
             verts = verts.astype(pyvista.ID_TYPE)
 
