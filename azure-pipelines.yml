@@ -118,8 +118,17 @@ jobs:
 
   strategy:
     matrix:
-      vars:
-        VTK_VERSION: [ '8.0', '8.1', '8.2' ]
+      VTKv80:
+        VTK.VERSION: '8.0'
+      VTKv81:
+        VTK.VERSION: '8.1'
+      VTKv82:
+        VTK.VERSION: '8.2'
+
+  - script: |
+      conda install --yes vtk=$(VTK.VERSION)
+      python -c "import pyvista; print(pyvista.Report())"
+    displayName: Install VTK
 
   - script: |
       .ci/setup_headless_display.sh
