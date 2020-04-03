@@ -3686,7 +3686,7 @@ class PolyDataFilters(DataSetFilters):
 
         >>> import pyvista
         >>> arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
-        >>> mesh = pyvista.extrude(arc, [0, 0, 1])
+        >>> mesh = arc.extrude([0, 0, 1])
         >>> mesh.plot()  # doctest:+SKIP
         """
         alg = vtk.vtkLinearExtrusionFilter()
