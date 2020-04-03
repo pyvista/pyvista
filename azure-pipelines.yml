@@ -42,56 +42,70 @@ jobs:
       Python37:
         python.version: '3.7'
 
-   steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '$(python.version)'
-      displayName: 'Use Python $(python.version)'
+  steps |
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
 
-    - script: |
-        pip install -e .
-      displayName: Install pyvista
-  
-    - script: |
-        .ci/setup_headless_display.sh
-        # python .ci/pyvista_test.py
-      displayName: Install headless display
+  - script: |
+      pip install -e .
+    displayName: Install pyvista
 
-    - script: |
-        sudo apt-get install python3-tk
-        pip install -r requirements_test.txt
-        # python -c "import vtk; print(vtk.VTK_VERSION)"
-        python -c "import pyvista; print(pyvista.Report())"
-        which python
-        pip list
-      displayName: 'Install dependencies'
+  - script: |
+      .ci/setup_headless_display.sh
+      # python .ci/pyvista_test.py
+    displayName: Install headless display
 
+  - script: |
+      sudo apt-get install python3-tk
+      pip install -r requirements_test.txt
+      # python -c "import vtk; print(vtk.VTK_VERSION)"
+      python -c "import pyvista; print(pyvista.Report())"
+      which python
+      pip list
+    displayName: 'Install dependencies'
 
-    - script: |
-        pip install pytest-azurepipelines
-        pytest -v --cov pyvista --cov-report html
-      displayName: 'Test Core API'
+  # - script: |
+  #     EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
+  #     mkdir -p EXAMPLES_PATH
+  #     echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
+  #     PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+  #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+  #     echo $EXAMPLES_PATH
+  #   displayName: 'Store location of pyvista downloads cache and version'
 
-    - script: |
-        pip install pytest pytest-azurepipelines
-        pytest -v --doctest-modules pyvista
-      displayName: 'Test Package Docstrings'
+  # - task: Cache@2
+  #   inputs:
+  #     key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
+  #     path: $(EXAMPLES_PATH)
+  #   displayName: Build pyvista examples cache
 
-    - script: |
-        bash <(curl -s https://codecov.io/bash)
-      displayName: 'Upload coverage to codecov.io'
-      condition: eq(variables['python.version'], '3.7')
+  - script: |
+      pip install pytest-azurepipelines
+      pytest -v --cov pyvista --cov-report html
+    displayName: 'Test Core API'
 
-    - script: |
-        pip install twine
-        python setup.py sdist
-        twine upload --skip-existing dist/pyvista*.gz
-      displayName: 'Upload to PyPi'
-      condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
-      env:
-        TWINE_USERNAME: $(twine.username)
-        TWINE_PASSWORD: $(twine.password)
-        TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
+  - script: |
+      pip install pytest pytest-azurepipelines
+      pytest -v --doctest-modules pyvista
+    displayName: 'Test Package Docstrings'
+
+  - script: |
+      bash <(curl -s https://codecov.io/bash)
+    displayName: 'Upload coverage to codecov.io'
+    condition: eq(variables['python.version'], '3.7')
+
+  - script: |
+      pip install twine
+      python setup.py sdist
+      twine upload --skip-existing dist/pyvista*.gz
+    displayName: 'Upload to PyPi'
+    condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+    env:
+      TWINE_USERNAME: $(twine.username)
+      TWINE_PASSWORD: $(twine.password)
+      TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
 
 # DESCRIPTION: Core API and doc string testing across VTK versions using conda
@@ -111,7 +125,7 @@ jobs:
       VTKv82:
         VTK.VERSION: '8.2'
 
-  steps:
+  steps |
     - script: |
         conda install --yes vtk=$(VTK.VERSION)
         python -c "import pyvista; print(pyvista.Report())"
