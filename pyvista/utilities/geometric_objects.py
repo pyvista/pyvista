@@ -636,9 +636,9 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
     >>> import pyvista
     >>> arc = pyvista.CircularArc([-1, 0, 0], [0, 1, 0], [0, 0, 0])
     >>> pl = pyvista.Plotter()
-    >>> pl.add_mesh(arc, color='k', line_width=4)
-    >>> pl.show_bounds(location='all')
-    >>> pl.view_xy()
+    >>> _ = pl.add_mesh(arc, color='k', line_width=4)
+    >>> _ = pl.show_bounds(location='all')
+    >>> _ = pl.view_xy()
     >>> pl.show() # doctest:+SKIP
 
     Quarter arc centered at the origin in the xz plane
