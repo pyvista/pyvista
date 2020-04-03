@@ -42,7 +42,7 @@ jobs:
       Python37:
         python.version: '3.7'
 
-  steps:
+ steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
@@ -125,37 +125,38 @@ jobs:
       VTKv82:
         VTK.VERSION: '8.2'
 
-  - script: |
-      conda install --yes vtk=$(VTK.VERSION)
-      python -c "import pyvista; print(pyvista.Report())"
-    displayName: Install VTK
+  steps:
+    - script: |
+        conda install --yes vtk=$(VTK.VERSION)
+        python -c "import pyvista; print(pyvista.Report())"
+      displayName: Install VTK
 
-  - script: |
-      .ci/setup_headless_display.sh
-    displayName: Install headless display
+    - script: |
+        .ci/setup_headless_display.sh
+      displayName: Install headless display
 
-  - script: |
-      conda env create --quiet --file environment.yml
-      conda activate pyvista-env
-      conda develop .
-      conda list
-      which python
-    displayName: Create Anaconda environment
+    - script: |
+        conda env create --quiet --file environment.yml
+        conda activate pyvista-env
+        conda develop .
+        conda list
+        which python
+      displayName: Create Anaconda environment
 
-  - script: |
-      conda install --yes vtk=$(VTK_VERSION)
-      python -c "import pyvista; print(pyvista.Report())"
-    displayName: Install VTK
+    - script: |
+        conda install --yes vtk=$(VTK_VERSION)
+        python -c "import pyvista; print(pyvista.Report())"
+      displayName: Install VTK
 
-  - script: |
-      conda install --yes pytest-azurepipelines
-      pytest -v --cov pyvista --cov-report html
-    displayName: 'Test Core API against VTK'
+    - script: |
+        conda install --yes pytest-azurepipelines
+        pytest -v --cov pyvista --cov-report html
+      displayName: 'Test Core API against VTK'
 
-  - script: |
-      conda install --yes pytest-azurepipelines
-      pytest -v --doctest-modules pyvista
-    displayName: 'Test Package Docstrings againsta VTK'
+    - script: |
+        conda install --yes pytest-azurepipelines
+        pytest -v --doctest-modules pyvista
+      displayName: 'Test Package Docstrings againsta VTK'
 
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
