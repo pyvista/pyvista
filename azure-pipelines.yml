@@ -107,6 +107,51 @@ jobs:
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
+
+# DESCRIPTION: Core API and doc string testing across VTK versions using conda
+- job: Linux_conda
+  pool:
+    vmImage: 'ubuntu-16.04'
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+
+  strategy:
+    matrix:
+      VTK8.0:
+        vtk.version: '8.0'
+      VTK8.1:
+        vtk.version: '8.1'
+      VTK8.2:
+        vtk.version: '8.2'
+
+  - script: |
+      .ci/setup_headless_display.sh
+    displayName: Install headless display
+
+  - script: |
+      conda env create --quiet --file environment.yml
+      conda activate pyvista-env
+      conda develop .
+      conda list
+      which python
+    displayName: Create Anaconda environment
+
+  - script: |
+      conda install --yes vtk=$(vtk.version)
+      python -c "import pyvista; print(pyvista.Report())"
+    displayName: Install VTK
+
+  - script: |
+      conda install --yes pytest-azurepipelines
+      pytest -v --cov pyvista --cov-report html
+    displayName: 'Test Core API against VTK'
+
+  - script: |
+      conda install --yes pytest-azurepipelines
+      pytest -v --doctest-modules pyvista
+    displayName: 'Test Package Docstrings againsta VTK'
+
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
