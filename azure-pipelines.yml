@@ -42,7 +42,7 @@ jobs:
       Python37:
         python.version: '3.7'
 
-  steps |
+  steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
@@ -109,7 +109,7 @@ jobs:
 
 
 # DESCRIPTION: Core API and doc string testing across VTK versions using conda
-- job: Linux_conda
+- job: LinuxConda
   pool:
     vmImage: 'ubuntu-16.04'
   variables:
@@ -119,13 +119,13 @@ jobs:
   strategy:
     matrix:
       VTKv80:
-        VTK.VERSION: '8.0'
+        VTK.VERSION: 8.0
       VTKv81:
-        VTK.VERSION: '8.1'
+        VTK.VERSION: 8.1
       VTKv82:
-        VTK.VERSION: '8.2'
+        VTK.VERSION: 8.2
 
-  steps |
+  steps:
     - script: |
         conda install --yes vtk=$(VTK.VERSION)
         python -c "import pyvista; print(pyvista.Report())"
