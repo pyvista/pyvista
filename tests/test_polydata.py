@@ -73,6 +73,25 @@ def test_init_from_arrays():
     assert not np.allclose(vertices[0], mesh.points[0])
 
 
+def test_init_from_arrays_with_vert():
+    vertices = np.array([[0, 0, 0],
+                         [1, 0, 0],
+                         [1, 1, 0],
+                         [0, 1, 0],
+                         [0.5, 0.5, -1],
+                         [0, 1.5, 1.5]])
+
+    # mesh faces
+    faces = np.hstack([[4, 0, 1, 2, 3],  # quad
+                       [3, 0, 1, 4],     # triangle
+                       [3, 1, 2, 4],     # triangle
+                       [1, 5]]).astype(np.int8)  # vertex
+
+    mesh = pyvista.PolyData(vertices, faces)
+    assert mesh.n_points == 6
+    assert mesh.n_cells == 4
+
+
 def test_init_from_arrays_triangular():
     vertices = np.array([[0, 0, 0],
                          [1, 0, 0],
