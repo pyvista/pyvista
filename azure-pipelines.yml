@@ -116,10 +116,14 @@ jobs:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
 
-  strategy:
-    matrix:
-      vars:
-        VTK_VERSION: [ '8.0', '8.1', '8.2' ]
+  parameters:
+    - name: VTK_VERSION
+      type: string
+      default: '8.2'
+      values:
+      - '8.0'
+      - '8.1'
+      - '8.2'
 
   - script: |
       .ci/setup_headless_display.sh
