@@ -162,10 +162,13 @@ def test_plotter_scale():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.set_scale(10, 10, 10)
+    assert plotter.scale == [10, 10, 10]
     plotter.set_scale(5.0)
     plotter.set_scale(yscale=6.0)
     plotter.set_scale(zscale=9.0)
     assert plotter.scale == [5.0, 6.0, 9.0]
+    plotter.scale = [1.0, 4.0, 2.0]
+    assert plotter.scale == [1.0, 4.0, 2.0]
     plotter.show()
 
 
@@ -273,10 +276,29 @@ def test_add_point_labels():
     with pytest.raises(Exception):
         plotter.add_point_labels(points, range(n - 1))
 
-    plotter.set_background('k')
-    plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
     plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
+    plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_set_background():
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.set_background('k')
+    plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
+    plotter.show()
+
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
+    plotter.set_background('orange')
+    for renderer in plotter.renderers:
+        assert renderer.GetBackground() == pyvista.parse_color('orange')
+    plotter.show()
+
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
+    plotter.subplot(0,1)
+    plotter.set_background('orange', all_renderers=False)
+    assert plotter.renderers[0].GetBackground() != pyvista.parse_color('orange')
+    assert plotter.renderers[1].GetBackground() == pyvista.parse_color('orange')
     plotter.show()
 
 
@@ -293,19 +315,30 @@ def test_add_points():
 def test_key_press_event():
     plotter = pyvista.Plotter(off_screen=False)
     plotter.key_press_event(None, None)
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     plotter.left_button_down(None, None)
-    # assert np.allclose(plotter.pickpoint, [0, 0, 0])
+    # assert np.allclose(plotter.pickpoint, [0, 0, 0])\
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_show_axes():
+    # if not closed correctly, a seg fault occurs when exitting
+    plotter = pyvista.Plotter(off_screen=False)
+    plotter.show_axes()
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_update():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.update()
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -503,24 +536,24 @@ def test_camera():
 def test_multi_renderers():
     plotter = pyvista.Plotter(shape=(2, 2), off_screen=OFF_SCREEN)
 
-    loc = (0, 0)
-    plotter.add_text('Render Window 0', loc=loc, font_size=30)
+    plotter.subplot(0, 0)
+    plotter.add_text('Render Window 0', font_size=30)
     sphere = pyvista.Sphere()
-    plotter.add_mesh(sphere, loc=loc, scalars=sphere.points[:, 2])
+    plotter.add_mesh(sphere, scalars=sphere.points[:, 2])
     plotter.add_scalar_bar('Z', vertical=True)
 
-    loc = (0, 1)
-    plotter.add_text('Render Window 1', loc=loc, font_size=30)
-    plotter.add_mesh(pyvista.Cube(), loc=loc, show_edges=True)
+    plotter.subplot(0, 1)
+    plotter.add_text('Render Window 1', font_size=30)
+    plotter.add_mesh(pyvista.Cube(), show_edges=True)
 
-    loc = (1, 0)
-    plotter.add_text('Render Window 2', loc=loc, font_size=30)
-    plotter.add_mesh(pyvista.Arrow(), color='y', loc=loc, show_edges=True)
+    plotter.subplot(1, 0)
+    plotter.add_text('Render Window 2', font_size=30)
+    plotter.add_mesh(pyvista.Arrow(), color='y', show_edges=True)
 
     plotter.subplot(1, 1)
     plotter.add_text('Render Window 3', position=(0., 0.),
-                     loc=loc, font_size=30, viewport=True)
-    plotter.add_mesh(pyvista.Cone(), color='g', loc=loc, show_edges=True,
+                     font_size=30, viewport=True)
+    plotter.add_mesh(pyvista.Cone(), color='g', show_edges=True,
                      culling=True)
     plotter.add_bounding_box(render_lines_as_tubes=True, line_width=5)
     plotter.show_bounds(all_edges=True)
@@ -694,6 +727,10 @@ def test_volume_rendering():
     data['d'].rename_array('Spatial Point Data', 'd')
     data.plot(off_screen=OFF_SCREEN, volume=True, multi_colors=True, )
 
+    # Check that NumPy arrays work
+    arr = vol["Spatial Point Data"].reshape(vol.dimensions)
+    pyvista.plot(arr, off_screen=OFF_SCREEN, volume=True, opacity='linear')
+
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -741,12 +778,12 @@ def test_plot_eye_dome_lighting():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_opacity_by_array():
     mesh = examples.load_uniform()
-    # Test with opacity arry
+    # Test with opacity array
     mesh['opac'] = mesh['Spatial Point Data'] / 100.
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='opac',)
     p.show()
-    # Test with uncertainty array (transperancy)
+    # Test with uncertainty array (transparency)
     mesh['unc'] = mesh['Spatial Point Data']
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',
@@ -889,3 +926,28 @@ def test_default_name_tracking():
     n_made_it = len(p.renderer._actors)
     p.show()
     assert n_made_it == N**2
+
+
+@pytest.mark.parametrize("as_global", [True, False])
+def test_add_background_image(as_global):
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_background_image(examples.mapfile, as_global=as_global)
+    plotter.show()
+
+
+def test_add_background_image_subplots():
+    pl = pyvista.Plotter(shape=(2, 2))
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.add_mesh(examples.load_airplane())
+    pl.subplot(1, 1)
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.add_mesh(examples.load_airplane())
+    pl.remove_background_image()
+
+    # should error out as there's no background
+    with pytest.raises(RuntimeError):
+        pl.remove_background_image()
+
+    pl.add_background_image(examples.mapfile, scale=1, as_global=False)
+    pl.show()

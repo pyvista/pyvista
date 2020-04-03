@@ -10,4 +10,5 @@ Plotting
 
    plotting
    qt_plotting
+   itk_plotting
    widgets

@@ -9,6 +9,7 @@ Create a StructuredGrid surface from NumPy arrays
 
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
+from pyvista import examples
 import numpy as np
 
 
@@ -121,3 +122,30 @@ mesh.dimensions = [29, 32, 1]
 
 # and then inspect it!
 mesh.plot(show_edges=True, show_grid=True, cpos="xy")
+
+
+###############################################################################
+# Extending a 2D StructuredGrid to 3D
+# +++++++++++++++++++++++++++++++++++
+#
+# A 2D :class:`pyvista.StructuredGrid` mesh can be extended into a 3D mesh.
+# This is highly applicable when wanting to create a terrain following mesh
+# in earth science research applications.
+#
+# For example, we could have a :class:`pyvista.StructuredGrid` of a topography
+# surface and extend that surface to a few different levels and connect each
+# "level" to create the 3D terrain following mesh.
+#
+# Let's start with a simple example by extending the wave mesh to 3D
+struct = examples.load_structured()
+struct.plot(show_edges=True)
+
+###############################################################################
+top = struct.points.copy()
+bottom = struct.points.copy()
+bottom[:,-1] = -10.0 # Wherever you want the plane
+
+vol = pv.StructuredGrid()
+vol.points = np.vstack((top, bottom))
+vol.dimensions = [*struct.dimensions[0:2], 2]
+vol.plot(show_edges=True)

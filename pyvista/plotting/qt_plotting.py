@@ -1,14 +1,18 @@
 """Qt interactive plotter."""
-
 import logging
 import os
+import platform
 import time
+import warnings
+from functools import wraps
 
 import numpy as np
-import scooby
 import vtk
 
 import pyvista
+from pyvista.utilities import conditional_decorator, threaded
+import scooby
+
 from .plotting import BasePlotter
 from .theme import rcParams
 
@@ -31,18 +35,6 @@ CLEAR_CAMS_BUTTON_TEXT = 'Clear Cameras'
 
 
 # dummy reference for when PyQt5 is not installed (i.e. readthedocs)
-has_pyqt = False
-class QVTKRenderWindowInteractor(object):
-    """Dummy QVTKRenderWindowInteractor class."""
-
-    pass
-
-class RangeGroup(object):
-    """Dummy RangeGroup class."""
-
-    pass
-
-
 class QDialog(object):
     """Dummy QFileDialog class."""
 
@@ -89,6 +81,7 @@ class QObject(object):
     pass
 
 
+has_pyqt = False
 try:
     from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject, QTimer
     from vtk.qt.QVTKRenderWindowInteractor import QVTKRenderWindowInteractor
@@ -96,8 +89,8 @@ try:
     from PyQt5 import QtCore
     from PyQt5.QtWidgets import (QMenuBar, QVBoxLayout, QHBoxLayout, QDoubleSpinBox,
                                  QFrame, QMainWindow, QSlider, QAction,
-                                 QSpinBox, QHBoxLayout, QDialog,
-                                 QFormLayout, QGroupBox, QFileDialog)
+                                 QHBoxLayout, QDialog,
+                                 QFormLayout, QFileDialog)
     has_pyqt = True
 except ImportError:  # pragma: no cover
     pass
@@ -199,7 +192,9 @@ class DoubleSlider(QSlider):
         self.setValue(self.value())
 
 
-class RangeGroup(QHBoxLayout): # this is redefined from above ... why?
+# this is redefined from above because the above object is a dummy object
+# we use dummy objects to allow the module to import when PyQt5 isn't installed
+class RangeGroup(QHBoxLayout):
     """Range group box widget."""
 
     def __init__(self, parent, callback, minimum=0.0, maximum=20.0,
@@ -265,6 +260,7 @@ class ScaleAxesDialog(QDialog):
         self.setMinimumWidth(500)
         self.signal_close.connect(self.close)
         self.plotter = plotter
+        self.plotter.app_window.signal_close.connect(self.close)
 
         self.x_slider_group = RangeGroup(parent, self.update_scale,
                                          value=plotter.scale[0])
@@ -316,7 +312,50 @@ def pad_image(arr, max_size=400):
     return resample_image(img, max_size=max_size)
 
 
-class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
+class QVTKRenderWindowInteractorAdapter(QObject):
+    """Adapter class for QVTKRenderWindowInteractor that uses super()."""
+
+    def __init__(self, parent, **kwargs):
+        """Initialize the internal interactor."""
+        self.interactor = QVTKRenderWindowInteractor(parent=parent)
+        self.interactor.dragEnterEvent = self.dragEnterEvent
+        self.interactor.dropEvent = self.dropEvent
+        super(QVTKRenderWindowInteractorAdapter, self).__init__(**kwargs)
+
+    def GetRenderWindow(self):
+        """Get the render window."""
+        return self.interactor.GetRenderWindow()
+
+    def setWindowTitle(self, title):
+        """Set the window title."""
+        return self.interactor.setWindowTitle(title)
+
+    def SetInteractorStyle(self, style):
+        """Set the interactor style."""
+        return self.interactor.SetInteractorStyle(style)
+
+    def show(self):
+        """Show the window."""
+        return self.interactor.show()
+
+    def close(self):
+        """Close the window."""
+        return self.interactor.close()
+
+    def setAcceptDrops(self, state):
+        """Enable drop event or not."""
+        self.interactor.setAcceptDrops(state)
+
+    def dragEnterEvent(self, event):
+        """Manage drag event."""
+        pass
+
+    def dropEvent(self, event):
+        """Manage drop event."""
+        pass
+
+
+class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
     """Extend QVTKRenderWindowInteractor class.
 
     This adds the methods available to pyvista.Plotter.
@@ -324,60 +363,49 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
     Parameters
     ----------
     parent :
+        Qt parent.
 
-    title : string, optional
+    title : str, optional
         Title of plotting window.
 
-    multi_samples : int
-        The number of multi-samples used to mitigate aliasing. 4 is a good
-        default but 8 will have better results with a potential impact on
-        performance.
+    multi_samples : int, optional
+        The number of multi-samples used to mitigate aliasing. 4 is a
+        good default but 8 will have better results with a potential
+        impact on performance.
 
-    line_smoothing : bool
+    line_smoothing : bool, optional
         If True, enable line smothing
 
-    point_smoothing : bool
+    point_smoothing : bool, optional
         If True, enable point smothing
 
-    polygon_smoothing : bool
+    polygon_smoothing : bool, optional
         If True, enable polygon smothing
 
+    auto_update : float, bool, optional
+        Automatic update rate in seconds.  Useful for automatically
+        updating the render window when actors are change without
+        being automatically ``Modified``.
     """
 
-    signal_set_view_vector = pyqtSignal(tuple, tuple)
-    signal_reset_camera = pyqtSignal()
-    signal_render = pyqtSignal()
-    signal_enable_trackball_style = pyqtSignal()
-    signal_remove_legend = pyqtSignal()
-    signal_set_background = pyqtSignal(object)
-    signal_remove_actor = pyqtSignal(object)
-    allow_quit_keypress = True
+    # Signals must be class attributes
+    render_signal = pyqtSignal()
+    key_press_event_signal = pyqtSignal(vtk.vtkGenericRenderWindowInteractor, str)
 
-    def __init__(self, parent=None, title=None, shape=(1, 1), off_screen=None,
-                 border=None, border_color='k', border_width=2.0,
+    def __init__(self, parent=None, title=None, off_screen=None,
                  multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, auto_update=True):
+                 splitting_position=None, auto_update=5.0, **kwargs):
         """Initialize Qt interactor."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
-        QVTKRenderWindowInteractor.__init__(self, parent)
-        BasePlotter.__init__(self, shape=shape, title=title,
-                             border=border, border_color=border_color,
-                             border_width=border_width,
-                             splitting_position=splitting_position)
+        super(QtInteractor, self).__init__(parent=parent, **kwargs)
         self.parent = parent
 
         if multi_samples is None:
             multi_samples = rcParams['multi_samples']
 
-        self.signal_set_view_vector.connect(super(QtInteractor, self).view_vector)
-        self.signal_reset_camera.connect(super(QtInteractor, self).reset_camera)
-        self.signal_render.connect(super(QtInteractor, self)._render)
-        self.signal_enable_trackball_style.connect(super(QtInteractor, self).enable_trackball_style)
-        self.signal_remove_legend.connect(super(QtInteractor, self).remove_legend)
-        self.signal_set_background.connect(super(QtInteractor, self).set_background)
-        self.signal_remove_actor.connect(super(QtInteractor, self).remove_actor)
+        self.setAcceptDrops(True)
 
         # Create and start the interactive renderer
         self.ren_win = self.GetRenderWindow()
@@ -391,6 +419,9 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
+
+        self.render_signal.connect(self._render)
+        self.key_press_event_signal.connect(super(QtInteractor, self).key_press_event)
 
         self.background_color = rcParams['background']
         if self.title:
@@ -411,19 +442,69 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
             self.iren.Initialize()
 
-            self.iren.AddObserver("KeyPressEvent", self.key_press_event)
+            self._observers = {}    # Map of events to observers of self.iren
+            self._add_observer("KeyPressEvent", self.key_press_event)
 
-        if auto_update:
-            update_event = lambda *args: self.update()
-            for renderer in self.renderers:
-                renderer.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
-                renderer.camera.AddObserver(vtk.vtkCommand.ModifiedEvent, update_event)
+        # Make the render timer but only activate if using auto update
+        self.render_timer = QTimer(parent=parent)
+        if float(auto_update) > 0.0:  # Can be False as well
+            # Spawn a thread that updates the render window.
+            # Sometimes directly modifiying object data doesn't trigger
+            # Modified() and upstream objects won't be updated.  This
+            # ensures the render window stays updated without consuming too
+            # many resources.
+            twait = (auto_update**-1) * 1000.0
+            self.render_timer.timeout.connect(self.render)
+            self.render_timer.start(twait)
 
         if rcParams["depth_peeling"]["enabled"]:
-            for renderer in self.renderers:
-                self.enable_depth_peeling()
+            if self.enable_depth_peeling():
+                for renderer in self.renderers:
+                    renderer.enable_depth_peeling()
 
+        self._first_time = False # Crucial!
+        self.view_isometric()
 
+    def key_press_event(self, obj, event):
+        """Call `key_press_event` using a signal."""
+        self.key_press_event_signal.emit(obj, event)
+
+    @wraps(BasePlotter.render)
+    def _render(self, *args, **kwargs):
+        """Wrap ``BasePlotter.render``."""
+        return BasePlotter.render(self, *args, **kwargs)
+
+    @conditional_decorator(threaded, platform.system() == 'Darwin')
+    def render(self):
+        """Override the ``render`` method to handle threading issues."""
+        return self.render_signal.emit()
+
+    def dragEnterEvent(self, event):
+        """Event is called when something is dropped onto the vtk window.
+
+        Only triggers event when event contains file paths that
+        exist.  User can drop anything in this window and we only want
+        to allow files.
+        """
+        try:
+            for url in event.mimeData().urls():
+                if os.path.isfile(url.path()):
+                    # only call accept on files
+                    event.accept()
+        except Exception as e:
+            warnings.warn('Exception when dropping files: %s' % str(e))
+
+    def dropEvent(self, event):
+        """Event is called after dragEnterEvent."""
+        for url in event.mimeData().urls():
+            self.url = url
+            filename = self.url.path()
+            if os.path.isfile(filename):
+                try:
+                    self.add_mesh(pyvista.read(filename))
+                except Exception as e:
+                    print(str(e))
+                    pass
 
     def add_toolbars(self, main_window):
         """Add the toolbars."""
@@ -435,20 +516,20 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
 
         # Camera toolbar
         self.default_camera_tool_bar = main_window.addToolBar('Camera Position')
-        _view_vector = lambda *args: self.signal_set_view_vector.emit(*args)
+        _view_vector = lambda *args: self.view_vector(*args)
         cvec_setters = {
             # Viewing vector then view up vector
-            'Top (-Z)': lambda: _view_vector((0,0,1), (0,1,0)),
-            'Bottom (+Z)': lambda: _view_vector((0,0,-1), (0,1,0)),
-            'Front (-Y)': lambda: _view_vector((0,1,0), (0,0,1)),
-            'Back (+Y)': lambda: _view_vector((0,-1,0), (0,0,1)),
-            'Left (-X)': lambda: _view_vector((1,0,0), (0,0,1)),
-            'Right (+X)': lambda: _view_vector((-1,0,0), (0,0,1)),
-            'Isometric': lambda: _view_vector((1,1,1), (0,0,1))
+            'Top (-Z)': lambda: _view_vector((0, 0, 1),  (0, 1, 0)),
+            'Bottom (+Z)': lambda: _view_vector((0, 0, -1),  (0, 1, 0)),
+            'Front (-Y)': lambda: _view_vector((0, 1, 0),  (0, 0, 1)),
+            'Back (+Y)': lambda: _view_vector((0, -1, 0),  (0, 0, 1)),
+            'Left (-X)': lambda: _view_vector((1, 0, 0),  (0, 0, 1)),
+            'Right (+X)': lambda: _view_vector((-1, 0, 0),  (0, 0, 1)),
+            'Isometric': lambda: _view_vector((1, 1, 1),  (0, 0, 1))
         }
         for key, method in cvec_setters.items():
             _add_action(self.default_camera_tool_bar, key, method)
-        _add_action(self.default_camera_tool_bar, 'Reset', self.reset_camera)
+        _add_action(self.default_camera_tool_bar, 'Reset', lambda: self.reset_camera())
 
         # Saved camera locations toolbar
         self.saved_camera_positions = []
@@ -458,7 +539,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         _add_action(self.saved_cameras_tool_bar, CLEAR_CAMS_BUTTON_TEXT, self.clear_camera_positions)
 
         return
-
 
     def save_camera_position(self):
         """Save camera position to saved camera menu for recall."""
@@ -476,7 +556,6 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
                 self.add_key_event(str(ncam), load_camera_position)
         return
 
-
     def clear_camera_positions(self):
         """Clear all camera positions."""
         if hasattr(self, "saved_cameras_tool_bar"):
@@ -486,67 +565,82 @@ class QtInteractor(QVTKRenderWindowInteractor, BasePlotter):
         self.saved_camera_positions = []
         return
 
-
-    def _close_callback(self):
-        """Make sure a screenhsot is acquired before closing."""
-        if self.allow_quit_keypress:
-            BasePlotter._close_callback(self)
-            self.quit()
-
-
-
-    def quit(self):
+    def close(self):
         """Quit application."""
+        if self._closed:
+            return
+        if hasattr(self, "render_timer"):
+            self.render_timer.stop()
         BasePlotter.close(self)
-        QVTKRenderWindowInteractor.close(self)
-
-
-    def reset_camera(self):
-        """Reset the camera."""
-        self.signal_reset_camera.emit()
-
-
-    def view_vector(self, vector, viewup=None):
-        """Set the view vector."""
-        args = [vector, viewup]
-        self.signal_view_vector.emit(*args)
-
-
-    def _render(self):
-        """Update the render window."""
-        self.signal_render.emit()
-
-
-    def enable_trackball_style(self):
-        """Enable trackball interactor style."""
-        self.signal_enable_trackball_style.emit()
-
-    def remove_legend(self):
-        """Remove the legend."""
-        self.signal_remove_legend.emit()
-
-    def set_background(self, color):
-        """Set the background color."""
-        self.signal_set_background.emit(color)
-
-    def remove_actor(self, actor, reset_camera=None):
-        """Remove an actor."""
-        self.signal_remove_actor.emit(actor)
-
+        QVTKRenderWindowInteractorAdapter.close(self)
 
 
 class BackgroundPlotter(QtInteractor):
-    """Qt interactive plotter."""
+    """Qt interactive plotter.
+
+    Background plotter for pyvista that allows you to maintain an
+    interactive plotting window without blocking the main python
+    thread.
+
+    Parameters
+    ----------
+    show : bool, optional
+        Show the plotting window.  If ``False``, show this window by
+        running ``show()``
+
+    app : PyQt5.QtWidgets.QApplication, optional
+        Creates a `QApplication` if left as `None`.
+
+    window_size : list, optional
+        Window size in pixels.  Defaults to ``[1024, 768]``
+
+    off_screen : bool, optional
+        Renders off screen when True.  Useful for automated
+        screenshots or debug testing.
+
+    allow_quit_keypress : bool, optional
+        Allow user to exit by pressing ``"q"``.
+
+    title : str, optional
+        Title of plotting window.
+
+    multi_samples : int, optional
+        The number of multi-samples used to mitigate aliasing. 4 is a
+        good default but 8 will have better results with a potential
+        impact on performance.
+
+    line_smoothing : bool, optional
+        If True, enable line smothing
+
+    point_smoothing : bool, optional
+        If True, enable point smothing
+
+    polygon_smoothing : bool, optional
+        If True, enable polygon smothing
+
+    auto_update : float, bool, optional
+        Automatic update rate in seconds.  Useful for automatically
+        updating the render window when actors are change without
+        being automatically ``Modified``.  If set to ``True``, update
+        rate will be 1 second.
+
+    Examples
+    --------
+    >>> import pyvista as pv
+    >>> plotter = pv.BackgroundPlotter()
+    >>> actor = plotter.add_mesh(pv.Sphere())
+    """
 
     ICON_TIME_STEP = 5.0
 
-    def __init__(self, show=True, app=None, shape=(1, 1), window_size=None,
-                 off_screen=None, auto_update=True, **kwargs):
+    def __init__(self, show=True, app=None, window_size=None,
+                 off_screen=None, allow_quit_keypress=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         self.active = True
         self.counters = []
+        self.allow_quit_keypress = allow_quit_keypress
 
         if window_size is None:
             window_size = rcParams['window_size']
@@ -578,24 +672,22 @@ class BackgroundPlotter(QtInteractor):
 
         self.frame = QFrame()
         self.frame.setFrameStyle(QFrame.NoFrame)
-
-
-        QtInteractor.__init__(self, parent=self.frame, shape=shape,
-                              off_screen=off_screen, auto_update=auto_update,
-                              **kwargs)
-        self.app_window.signal_close.connect(self.quit)
+        super(BackgroundPlotter, self).__init__(parent=self.frame,
+                                                off_screen=off_screen,
+                                                **kwargs)
+        self.app_window.signal_close.connect(self._close)
         self.add_toolbars(self.app_window)
 
         # build main menu
-        self.main_menu = QMenuBar(parent=self.app_window)
-        self.app_window.setMenuBar(self.main_menu)
+        self.main_menu = _create_menu_bar(parent=self.app_window)
         self.app_window.signal_close.connect(self.main_menu.clear)
 
         file_menu = self.main_menu.addMenu('File')
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
-        file_menu.addAction('Exit', self.app_window.close)
+        # member variable for testing only
+        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
 
         view_menu = self.main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
@@ -627,7 +719,7 @@ class BackgroundPlotter(QtInteractor):
         view_menu.addSeparator()
 
         vlayout = QVBoxLayout()
-        vlayout.addWidget(self)
+        vlayout.addWidget(self.interactor)
 
         self.frame.setLayout(vlayout)
         self.app_window.setCentralWidget(self.frame)
@@ -639,64 +731,41 @@ class BackgroundPlotter(QtInteractor):
             self.app_window.show()
             self.show()
 
-        self._spawn_background_rendering()
-
         self.window_size = window_size
         self._last_update_time = time.time() - BackgroundPlotter.ICON_TIME_STEP / 2
         self._last_window_size = self.window_size
         self._last_camera_pos = self.camera_position
 
+        self.add_callback(self.update_app_icon)
+
         # Keypress events
-        self.add_key_event("S", self._qt_screenshot) # shift + s
+        self.add_key_event("S", self._qt_screenshot)  # shift + s
 
+    def reset_key_events(self):
+        """Reset all of the key press events to their defaults.
 
+        Handles closing configuration for q-key.
+        """
+        super(BackgroundPlotter, self).reset_key_events()
+        if self.allow_quit_keypress:
+            self.add_key_event("q", lambda: self.close())
 
     def scale_axes_dialog(self, show=True):
         """Open scale axes dialog."""
         return ScaleAxesDialog(self.app_window, self, show=show)
 
+    def close(self):
+        """Close the plotter.
 
-    def _spawn_background_rendering(self, rate=5.0):
-        """Spawn a thread that updates the render window.
-
-        Sometimes directly modifiying object data doesn't trigger
-        Modified() and upstream objects won't be updated.  This
-        ensures the render window stays updated without consuming too
-        many resources.
+        This function closes the window which in turn will
+        close the plotter through `signal_close`.
 
         """
-        twait = (rate**-1) * 1000.0
-        self.render_timer = QTimer(parent=self.app_window)
-        self.render_timer.timeout.connect(self._render)
-        self.app_window.signal_close.connect(self.render_timer.stop)
-        self.render_timer.start(twait)
-
-
-    def _close_callback(self):
-        """Make sure a screenhsot is acquired before closing."""
-        if self.allow_quit_keypress:
-            BasePlotter._close_callback(self)
+        if not self._closed:
             self.app_window.close()
 
-
-    def quit(self):
-        """Quit the plotter."""
-        QtInteractor.quit(self)
-
-    def close(self):
-        """Close the plotter."""
-        self.app_window.close()
-
-    def add_actor(self, actor, reset_camera=None, name=None, loc=None, culling=False, pickable=True):
-        """Add an actor."""
-        actor, prop = super(BackgroundPlotter, self).add_actor(actor,
-                                                               reset_camera=reset_camera,
-                                                               name=name,
-                                                               loc=loc,
-                                                               culling=culling,
-                                                               pickable=pickable)
-        self.update_app_icon()
-        return actor, prop
+    def _close(self):
+        super().close()
 
     def update_app_icon(self):
         """Update the app icon if the user is not trying to resize the window."""
@@ -753,30 +822,24 @@ class BackgroundPlotter(QtInteractor):
             return self.disable_parallel_projection()
         return self.enable_parallel_projection()
 
-    @pyqtSlot()
-    def _render(self):
-        super(BackgroundPlotter, self)._render()
-        self.update_app_icon()
-        self.ren_win.Render() # force rendering
-        return
-
     @property
     def window_size(self):
         """Return render window size."""
         the_size = self.app_window.baseSize()
         return the_size.width(), the_size.height()
 
-
     @window_size.setter
     def window_size(self, window_size):
         """Set the render window size."""
-        BasePlotter.window_size.fset(self, window_size)
         self.app_window.setBaseSize(*window_size)
         self.app_window.resize(*window_size)
+        # NOTE: setting BasePlotter is unnecessary and Segfaults CI
+        # BasePlotter.window_size.fset(self, window_size)
 
     def __del__(self):  # pragma: no cover
         """Delete the qt plotter."""
-        self.app_window.close()
+        if not self._closed:
+            self.app_window.close()
 
     def add_callback(self, func, interval=1000, count=None):
         """Add a function that can update the scene in the background.
@@ -792,14 +855,14 @@ class BackgroundPlotter(QtInteractor):
             `func` will be called until the main window is closed.
 
         """
-        timer = QTimer(parent=self.app_window)
-        timer.timeout.connect(func)
-        timer.start(interval)
-        self.app_window.signal_close.connect(timer.stop)
+        self._callback_timer = QTimer(parent=self.app_window)
+        self._callback_timer.timeout.connect(func)
+        self._callback_timer.start(interval)
+        self.app_window.signal_close.connect(self._callback_timer.stop)
         if count is not None:
             counter = Counter(count)
-            counter.signal_finished.connect(timer.stop)
-            timer.timeout.connect(counter.decrease)
+            counter.signal_finished.connect(self._callback_timer.stop)
+            self._callback_timer.timeout.connect(counter.decrease)
             self.counters.append(counter)
 
 
@@ -840,3 +903,18 @@ class Counter(QObject):
         self.count -= 1
         if self.count <= 0:
             self.signal_finished.emit()
+
+
+def _create_menu_bar(parent):
+    """Create a menu bar.
+
+    The menu bar is expected to behave consistently
+    for every operating system since `setNativeMenuBar(False)`
+    is called by default and therefore lifetime and ownership can
+    be tested.
+    """
+    menu_bar = QMenuBar(parent=parent)
+    menu_bar.setNativeMenuBar(False)
+    if parent is not None:
+        parent.setMenuBar(menu_bar)
+    return menu_bar

@@ -146,14 +146,10 @@ def CylinderStructured(radius=0.5, height=1.0,
     X = radius_matrix * np.cos(theta_matrix)
     Y = radius_matrix * np.sin(theta_matrix)
 
-    # Duplicate the first point to close loop
-    X = np.append(X, X[0])
-    Y = np.append(Y, Y[0])
-
     # Make all the nodes in the grid
     xx = np.array([X] * z_resolution).ravel()
     yy = np.array([Y] * z_resolution).ravel()
-    dz = height / z_resolution
+    dz = height / (z_resolution - 1)
     zz = np.empty(yy.size)
     zz = np.full((X.size, z_resolution), dz)
     zz *= np.arange(z_resolution)
@@ -162,7 +158,7 @@ def CylinderStructured(radius=0.5, height=1.0,
     # Create the grid
     grid = pyvista.StructuredGrid()
     grid.points = np.c_[xx, yy, zz]
-    grid.dimensions = [nr, theta_resolution+1, z_resolution]
+    grid.dimensions = [nr, theta_resolution, z_resolution]
 
     # Orient properly in user direction
     vx = np.array([0., 0., 1.])
@@ -182,7 +178,8 @@ def CylinderStructured(radius=0.5, height=1.0,
 
 
 def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
-          tip_radius=0.1, shaft_radius=0.05, shaft_resolution=20):
+          tip_radius=0.1, tip_resolution=20, shaft_radius=0.05,
+          shaft_resolution=20):
     """Create a vtk Arrow.
 
     Parameters
@@ -199,11 +196,14 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     tip_radius : float, optional
         Radius of the tip.
 
+    tip_resolution : int, optional
+        Number of faces around the tip.
+
     shaft_radius : float, optional
         Radius of the shaft.
 
     shaft_resolution : int, optional
-        Number of faces around the shaft
+        Number of faces around the shaft.
 
     Return
     ------
@@ -215,6 +215,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     arrow = vtk.vtkArrowSource()
     arrow.SetTipLength(tip_length)
     arrow.SetTipRadius(tip_radius)
+    arrow.SetTipResolution(tip_resolution)
     arrow.SetShaftRadius(shaft_radius)
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
