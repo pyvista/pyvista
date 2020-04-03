@@ -73,6 +73,25 @@ def test_init_from_arrays():
     assert not np.allclose(vertices[0], mesh.points[0])
 
 
+def test_init_from_arrays_with_vert():
+    vertices = np.array([[0, 0, 0],
+                         [1, 0, 0],
+                         [1, 1, 0],
+                         [0, 1, 0],
+                         [0.5, 0.5, -1],
+                         [0, 1.5, 1.5]])
+
+    # mesh faces
+    faces = np.hstack([[4, 0, 1, 2, 3],  # quad
+                       [3, 0, 1, 4],     # triangle
+                       [3, 1, 2, 4],     # triangle
+                       [1, 5]]).astype(np.int8)  # vertex
+
+    mesh = pyvista.PolyData(vertices, faces)
+    assert mesh.n_points == 6
+    assert mesh.n_cells == 4
+
+
 def test_init_from_arrays_triangular():
     vertices = np.array([[0, 0, 0],
                          [1, 0, 0],
@@ -105,6 +124,24 @@ def test_init_as_points():
     mesh = pyvista.PolyData(vertices)
     assert mesh.n_points == vertices.shape[0]
     assert mesh.n_cells == vertices.shape[0]
+    assert len(mesh.verts) == vertices.shape[0] * 2
+
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0]])
+    cells = np.array([1, 0, 1, 1, 1, 2], np.int16)
+    to_check = pyvista.PolyData._make_vertice_cells(len(vertices))
+    assert np.allclose(to_check, cells)
+
+    # from list
+    mesh.verts = [[1, 0], [1, 1], [1, 2]]
+    to_check = pyvista.PolyData._make_vertice_cells(len(vertices))
+    assert np.allclose(to_check, cells)
+
+    mesh = pyvista.PolyData()
+    mesh.points = vertices
+    mesh.verts = cells
+    assert mesh.n_points == vertices.shape[0]
+    assert mesh.n_cells == vertices.shape[0]
+    assert np.allclose(mesh.verts, cells)
 
 
 def test_invalid_init():
