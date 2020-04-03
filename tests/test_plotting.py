@@ -951,3 +951,22 @@ def test_add_background_image_subplots():
 
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
     pl.show()
+
+
+def test_add_remove_floor():
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_floor(color='b', line_width=2, lighting=True)
+    pl.add_bounding_box()  # needed for update_bounds_axes
+    assert len(pl.renderer._floors) == 1
+    pl.add_mesh(sphere_b)
+    pl.update_bounds_axes()
+    assert len(pl.renderer._floors) == 1
+    pl.show()
+
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    pl.add_floor(color='b', line_width=2, lighting=True)
+    pl.remove_floors()
+    assert not pl.renderer._floors
+    pl.show()

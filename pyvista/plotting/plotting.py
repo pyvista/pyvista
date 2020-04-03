@@ -282,8 +282,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
         self._active_renderer_index = self.loc_to_index((index_row, index_column))
 
-
     #### Wrap Renderer methods ####
+    @wraps(Renderer.add_floor)
+    def add_floor(self, *args, **kwargs):
+        """Wrap ``Renderer.add_floor``."""
+        return self.renderer.add_floor(*args, **kwargs)
+
+    @wraps(Renderer.remove_floors)
+    def remove_floors(self, *args, **kwargs):
+        """Wrap ``Renderer.remove_floors``."""
+        return self.renderer.remove_floors(*args, **kwargs)
 
     @wraps(Renderer.enable_anti_aliasing)
     def enable_anti_aliasing(self, *args, **kwargs):

@@ -296,7 +296,7 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
         Size of the plane in the i direction.
 
     j_size : float
-        Size of the plane in the i direction.
+        Size of the plane in the j direction.
 
     i_resolution : int
         Number of points on the plane in the i direction.
