@@ -1,6 +1,6 @@
 """Implements DataSetAttributes, which represents & manipulates datasets."""
 
-import numpy
+import numpy as np
 import pyvista.utilities.helpers as helpers
 from .pyvista_ndarray import pyvista_ndarray
 from pyvista.utilities.helpers import FieldAssociation
@@ -110,7 +110,7 @@ class DataSetAttributes(VTKObjectWrapper):
     @t_coords.setter
     def t_coords(self, t_coords):
         """Set the array to use as the texture coordinates."""
-        if not isinstance(t_coords, numpy.ndarray):
+        if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
             raise AssertionError('Texture coordinates must be a 2-dimensional array')
@@ -146,7 +146,7 @@ class DataSetAttributes(VTKObjectWrapper):
             return vtk_arr
         narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
-            narray = narray.view(numpy.bool)
+            narray = narray.view(np.bool)
         return narray
 
     def append(self, narray, name, deep_copy=False):
@@ -176,11 +176,11 @@ class DataSetAttributes(VTKObjectWrapper):
         elif self.association == FieldAssociation.ROW:
             array_len = narray.shape[0]
         else:
-            array_len = narray.shape[0] if isinstance(narray, numpy.ndarray) else 1
+            array_len = narray.shape[0] if isinstance(narray, np.ndarray) else 1
 
         # Fixup input array length for scalar input:
-        if not isinstance(narray, numpy.ndarray) or numpy.ndim(narray) == 0:
-            tmparray = numpy.empty(array_len)
+        if not isinstance(narray, np.ndarray) or np.ndim(narray) == 0:
+            tmparray = np.empty(array_len)
             tmparray.fill(narray)
             narray = tmparray
 
@@ -188,9 +188,9 @@ class DataSetAttributes(VTKObjectWrapper):
             raise ValueError('narray length of ({}) != required length ({})'.format(
                 narray.shape[0], array_len))
 
-        if narray.dtype == numpy.bool:
+        if narray.dtype == np.bool:
             self.dataset.association_bitarray_names[self.association].add(name)
-            narray = narray.view(numpy.uint8)
+            narray = narray.view(np.uint8)
 
         shape = narray.shape
         if len(shape) == 3:
@@ -207,7 +207,7 @@ class DataSetAttributes(VTKObjectWrapper):
 
         # If array is not contiguous, make a deep copy that is contiguous
         if not narray.flags.contiguous:
-            narray = numpy.ascontiguousarray(narray)
+            narray = np.ascontiguousarray(narray)
 
         # Flatten array of matrices to array of vectors
         if len(shape) == 3:
