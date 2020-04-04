@@ -8,9 +8,8 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, convert_array,
-                               get_array, parse_field_choice, row_array, 
-                               vtk_bit_array_to_char)
+from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, get_array,
+                               row_array)
 
 from .common import DataObject
 from .datasetattributes import DataSetAttributes
