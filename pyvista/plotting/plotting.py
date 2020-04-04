@@ -1812,8 +1812,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if not is_pyvista_dataset(volume):
                     raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(volume)))
         else:
-            # HACK: Make a copy so the original object is not altered
-            volume = volume.copy()
+            # HACK: Make a copy so the original object is not altered.
+            #       Also, place all data on the nodes as issues arise when
+            #       volume rendering on the cells.
+            volume = volume.cell_data_to_point_data()
 
 
         if name is None:
