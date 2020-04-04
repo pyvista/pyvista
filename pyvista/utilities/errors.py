@@ -8,6 +8,7 @@ import sys
 import warnings
 
 import vtk
+import numpy as np
 
 import pyvista
 
@@ -257,3 +258,11 @@ def assert_empty_kwargs(**kwargs):
         grammar = "are invalid keyword arguments"
     message = "{} {} for `{}`".format(bad_arguments, grammar, caller)
     raise TypeError(message)
+
+
+def check_valid_vector(point, name=''):
+    """Check if a vector contains three components."""
+    if np.array(point).size != 3:
+        if name == '':
+            name = 'Vector'
+        raise TypeError('%s must be a length three tuple of floats.' % name)
