@@ -126,10 +126,6 @@ jobs:
         VTK.VERSION: 8.2
 
   steps:
-    - script: |
-        conda install --yes vtk=$(VTK.VERSION)
-        python -c "import pyvista; print(pyvista.Report())"
-      displayName: Install VTK
 
     - script: |
         .ci/setup_headless_display.sh
@@ -144,7 +140,7 @@ jobs:
       displayName: Create Anaconda environment
 
     - script: |
-        conda install --yes vtk=$(VTK_VERSION)
+        conda install --yes vtk=$(VTK.VERSION)
         python -c "import pyvista; print(pyvista.Report())"
       displayName: Install VTK
 
