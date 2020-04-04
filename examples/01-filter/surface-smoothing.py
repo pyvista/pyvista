@@ -1,12 +1,11 @@
 """
-Volume Smoothing
-~~~~~~~~~~~~~~~~
+Surface Smoothing
+~~~~~~~~~~~~~~~~~
 
-Smoothing rough edges of a volumetric surface
+Smoothing rough edges of a surface mesh
 """
 
 # sphinx_gallery_thumbnail_number = 4
-import pyvista as pv
 from pyvista import examples
 
 ###############################################################################

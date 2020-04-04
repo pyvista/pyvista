@@ -1,10 +1,5 @@
 .. title:: PyVista
 
-.. warning:: 🚨🚨 PyVista was formerly vtki 🚨🚨
-
-   We recently changed the name of this software and we apologize for any confusion this may be causing
-
-
 .. raw:: html
 
     <div class="banner">
@@ -18,9 +13,6 @@
 
 .. |conda| image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
-
-.. |travis| image:: https://img.shields.io/travis/pyvista/pyvista/master.svg?label=build&logo=travis
-   :target: https://travis-ci.org/pyvista/pyvista
 
 .. |azure| image:: https://dev.azure.com/pyvista/PyVista/_apis/build/status/pyvista.pyvista?branchName=master
    :target: https://dev.azure.com/pyvista/PyVista/_build/latest?definitionId=3&branchName=master
@@ -41,14 +33,23 @@
 .. |zenodo| image:: https://zenodo.org/badge/92974124.svg
    :target: https://zenodo.org/badge/latestdoi/92974124
 
-.. |joss| image:: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
-   :target: http://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978
+.. |joss| image:: https://joss.theoj.org/papers/78f2901bbdfbd2a6070ec41e8282d978/status.svg
+   :target: https://joss.theoj.org/papers/10.21105/joss.01450
+
+.. |MIT| image:: https://img.shields.io/badge/License-MIT-yellow.svg
+   :target: https://opensource.org/licenses/MIT
+
+.. |slack| image:: https://img.shields.io/badge/Slack-PyVista-green.svg?logo=slack
+   :target: http://slack.pyvista.org
+
+.. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
+   :target: https://gitter.im/pyvista/community
 
 
 +----------------------+------------------------+
 | Deployment           | |pypi| |conda|         |
 +----------------------+------------------------+
-| Build Status         | |travis| |azure|       |
+| Build Status         | |azure|                |
 +----------------------+------------------------+
 | Metrics              | |codacy| |codecov|     |
 +----------------------+------------------------+
@@ -56,27 +57,41 @@
 +----------------------+------------------------+
 | Citation             | |joss| |zenodo|        |
 +----------------------+------------------------+
+| License              | |MIT|                  |
++----------------------+------------------------+
+| Community            | |slack| |gitter|       |
++----------------------+------------------------+
 
 
 About
 *****
 
-PyVista is a helper module for the Visualization Toolkit (VTK) that takes a
-different approach on interfacing with VTK through NumPy and direct array
-access. This package provides a Pythonic, well-documented interface exposing
+PyVista is...
+
+* *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
+* mesh data structures and filtering methods for spatial datasets
+* 3D plotting made simple and built for large/complex data geometries
+
+.. _Visualization Toolkit: https://vtk.org
+
+
+PyVista (formerly ``vtki``) is a helper module for the Visualization Toolkit
+(VTK) that takes a different approach on interfacing with VTK through NumPy and
+direct array access.
+This package provides a Pythonic, well-documented interface exposing
 VTK's powerful visualization backend to facilitate rapid prototyping, analysis,
 and visual integration of spatially referenced datasets.
 
 This module can be used for scientific plotting for presentations and research
 papers as well as a supporting module for other mesh dependent Python modules.
 
-.. |tweet| image:: https://img.shields.io/twitter/url/http/shields.io.svg?style=social
+.. |tweet| image:: https://img.shields.io/twitter/url.svg?style=social&url=http%3A%2F%2Fshields.io
    :target: https://twitter.com/intent/tweet?text=Check%20out%20this%20project%20for%203D%20visualization%20in%20Python&url=https://github.com/pyvista/pyvista&hashtags=3D,visualization,Python,vtk,mesh,plotting,PyVista
 
 Share this project on Twitter: |tweet|
 
 
-.. |binder| image:: https://mybinder.org/badge_logo.svg
+.. |binder| image:: https://static.mybinder.org/badge_logo.svg
    :target: https://mybinder.org/v2/gh/pyvista/pyvista-examples/master
    :alt: Launch on Binder
 
@@ -97,7 +112,7 @@ Support
 For general questions about the project, its applications, or about software
 usage, please create an issue in the `pyvista/pyvista-support`_ repository
 where the community can collectively address your questions. You are also
-welcome to join us on join us on Slack_ or send one of the developers an email.
+welcome to join us on Slack_ or send one of the developers an email.
 The project support team can be reached at `info@pyvista.org`_.
 
 .. _pyvista/pyvista-support: https://github.com/pyvista/pyvista-support
@@ -112,6 +127,7 @@ PyVista is a powerful tool that researchers can harness to create compelling,
 integrated visualizations of large datasets in an intuitive, Pythonic manner.
 Here are a few open-source projects that leverage PyVista:
 
+* itkwidgets_: Interactive Jupyter widgets to visualize images, point sets, and meshes in 2D and 3D. Supports all PyVista mesh types.
 * pyansys_: Pythonic interface to ANSYS result, full, and archive files
 * PVGeo_: Python package of VTK-based algorithms to analyze geoscientific data and models. PyVista is used to make the inputs and outputs of PVGeo's algorithms more accessible.
 * omfvista_: 3D visualization for the Open Mining Format (omf). PyVista provides the foundation for this library's visualization.
@@ -120,11 +136,12 @@ Here are a few open-source projects that leverage PyVista:
 * tetgen_: Python Interface to Hang Si's C++ TetGen Library
 
 
+.. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets
 .. _pyansys: https://github.com/akaszynski/pyansys
 .. _PVGeo: https://github.com/OpenGeoVis/PVGeo
 .. _omfvista: https://github.com/OpenGeoVis/omfvista
 .. _discretize: http://discretize.simpeg.xyz/en/master/
-.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/content/mixins.html#module-discretize.mixins.vtkModule
+.. _creating compelling visualizations: http://discretize.simpeg.xyz/en/master/api/generated/discretize.mixins.vtkModule.html
 .. _pymeshfix: https://github.com/pyvista/pymeshfix
 .. _MeshFix: https://github.com/MarcoAttene/MeshFix-V2.1
 .. _tetgen: https://github.com/pyvista/tetgen
@@ -147,7 +164,7 @@ If you have a working copy of VTK, installation is simply::
 
     $ pip install pyvista
 
-You can also visit `PyPi <http://pypi.python.org/pypi/pyvista>`_ or
+You can also visit `PyPi <https://pypi.org/project/pyvista/>`_ or
 `GitHub <https://github.com/pyvista/pyvista>`_ to download the source.
 
 See :ref:`install_ref` for more details.
@@ -155,7 +172,7 @@ See :ref:`install_ref` for more details.
 
 Be sure to head over to the `examples gallery <./examples/index.html>`_
 to explore different use cases of PyVista and to start visualizing 3D data in
-Pyhton! Also, please explore the list of external projects leveraging PyVista
+Python! Also, please explore the list of external projects leveraging PyVista
 for 3D visualization in our `external examples list <./external_examples.html>`_
 
 

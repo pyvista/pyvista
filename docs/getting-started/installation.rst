@@ -18,6 +18,7 @@ the following projects are required dependencies of PyVista:
 * `numpy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
 * `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+* `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
 
 PyPI
 ~~~~
@@ -25,7 +26,7 @@ PyPI
 .. image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
 
-PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
 using ``pip``::
 
     pip install pyvista
@@ -57,6 +58,10 @@ The following are a list of optional dependencies and their purpose:
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
++-----------------------------------+-----------------------------------------+
+| ``colorcet``                      | Perceptually uniform colormaps          |
++-----------------------------------+-----------------------------------------+
+| ``cmocean``                       | Oceanographic colormaps                 |
 +-----------------------------------+-----------------------------------------+
 
 
@@ -122,7 +127,7 @@ Please see `this project`_ for a convenient Cookiecutter_ to get started using
 PyVista on the notebook hosting service MyBinder_.
 
 .. _this project: https://github.com/pyvista/cookiecutter-pyvista-binder
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _MyBinder: https://mybinder.org
 
 To get started, the Docker container will need to have ``libgl1-mesa-dev`` and

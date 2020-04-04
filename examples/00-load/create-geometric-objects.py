@@ -10,7 +10,7 @@ import pyvista as pv
 
 ###############################################################################
 # This runs through several of the available geomoetric objects available in
-# VTK which PyVista provides simple conveinance methods for generating.
+# VTK which PyVista provides simple convenience methods for generating.
 #
 # Let's run through creating a few geometric objects!
 

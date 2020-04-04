@@ -5,7 +5,6 @@ Saving Screenshots
 # sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
 from pyvista import examples
-import numpy as np
 import matplotlib.pyplot as plt
 
 # Get a sample file

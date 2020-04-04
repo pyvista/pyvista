@@ -1,3 +1,5 @@
+"""This module contains some convenience helper functions."""
+
 import numpy as np
 
 
@@ -14,8 +16,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, use_panel=None,
          volume=False, parallel_projection=False, **kwargs):
-    """
-    Convenience plotting function for a vtk or numpy object.
+    """Plot a vtk or numpy object.
 
     Parameters
     ----------
@@ -74,6 +75,11 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if notebook is None:
         notebook = scooby.in_ipykernel()
 
+    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
+    show_grid = kwargs.pop('show_grid', False)
+    height = kwargs.get('height', 400)
+    auto_close = kwargs.get('auto_close', rcParams['auto_close'])
+
     if notebook:
         off_screen = notebook
     plotter = Plotter(off_screen=off_screen, notebook=notebook)
@@ -109,11 +115,10 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if text:
         plotter.add_text(text)
 
-    if show_bounds or kwargs.get('show_grid', False):
-        if kwargs.get('show_grid', False):
-            plotter.show_grid()
-        else:
-            plotter.show_bounds()
+    if show_grid:
+        plotter.show_grid()
+    elif show_bounds:
+        plotter.show_bounds()
 
     if cpos is None:
         cpos = plotter.get_default_cam_pos()
@@ -122,7 +127,6 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     else:
         plotter.camera_position = cpos
 
-    eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     if eye_dome_lighting:
         plotter.enable_eye_dome_lighting()
 
@@ -136,10 +140,10 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           screenshot=screenshot,
                           return_img=return_img,
                           use_panel=use_panel,
-                          height=kwargs.get('height', 400))
+                          height=height)
 
     # close and return camera position and maybe image
-    if kwargs.get('auto_close', rcParams['auto_close']):
+    if auto_close:
         plotter.close()
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
@@ -147,8 +151,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
 
 def plot_arrows(cent, direction, **kwargs):
-    """
-    Plots arrows as vectors
+    """Plot arrows as vectors.
 
     Parameters
     ----------
@@ -173,8 +176,10 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                       plotter_kwargs=None, show_kwargs=None, screenshot=None,
                       camera_position=None, outline=None, outline_color='k',
                       labels=('A', 'B', 'C', 'D'), link=True, notebook=None):
-    """Plot a 2 by 2 comparison of data objects. Plotting parameters and camera
-    positions will all be the same.
+    """Plot a 2 by 2 comparison of data objects.
+
+    Plotting parameters and camera positions will all be the same.
+
     """
     datasets = [[data_a, data_b], [data_c, data_d]]
     labels = [labels[0:2], labels[2:4]]
@@ -204,3 +209,54 @@ def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
         p.link_views()
 
     return p.show(screenshot=screenshot, **show_kwargs)
+
+
+def plot_itk(mesh, color=None, scalars=None, opacity=1.0,
+             smooth_shading=False):
+    """Plot a PyVista/VTK mesh or dataset.
+
+    Adds any PyVista/VTK mesh that itkwidgets can wrap to the
+    scene.
+
+    Parameters
+    ----------
+    mesh : pyvista.Common or pyvista.MultiBlock
+        Any PyVista or VTK mesh is supported. Also, any dataset that
+        :func:`pyvista.wrap` can handle including NumPy arrays of XYZ
+        points.
+
+    color : string or 3 item list, optional, defaults to white
+        Use to make the entire mesh have a single solid color.  Either
+        a string, RGB list, or hex color string.  For example:
+        ``color='white'``, ``color='w'``, ``color=[1, 1, 1]``, or
+        ``color='#FFFFFF'``. Color will be overridden if scalars are
+        specified.
+
+    scalars : str or numpy.ndarray, optional
+        Scalars used to "color" the mesh.  Accepts a string name of an
+        array that is present on the mesh or an array equal to the
+        number of cells or the number of points in the mesh.  Array
+        should be sized as a single vector. If both ``color`` and
+        ``scalars`` are ``None``, then the active scalars are used.
+
+    opacity : float, optional
+        Opacity of the mesh. If a single float value is given, it will
+        be the global opacity of the mesh and uniformly applied
+        everywhere - should be between 0 and 1.  Default 1.0
+
+    smooth_shading : bool, optional
+        Smooth mesh surface mesh by taking into account surface
+        normals.  Surface will appear smoother while sharp edges will
+        still look sharp.  Default False.
+
+    Returns
+    --------
+    plotter : itkwidgets.Viewer
+        ITKwidgets viewer.
+    """
+    pl = pyvista.PlotterITK()
+    if isinstance(mesh, np.ndarray):
+        pl.add_points(mesh, color)
+    else:
+        pl.add_mesh(mesh, color, scalars, opacity, smooth_shading)
+    return pl.show()

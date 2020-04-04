@@ -29,6 +29,14 @@ shortcuts are available:
 +-------------------------------------+-----------------+-----------------------------------------------------+
 | ``mouse-wheel`` or ``right-click``  | ``ctl+click``   | Continuously zoom the rendering scene               |
 +-------------------------------------+-----------------+-----------------------------------------------------+
+| ``shift+s``                                           | Save a screenhsot (only on ``BackgroundPlotter``)   |
++-------------------------------------+-----------------+-----------------------------------------------------+
+| ``shift+c``                                           | Enable interactive cell selection/picking           |
++-------------------------------------+-----------------+-----------------------------------------------------+
+| ``up``/``down``                                       | Zoom in and out                                     |
++-------------------------------------+-----------------+-----------------------------------------------------+
+| ``+``/``-``                                           | Increase/decrease the point size and line widths    |
++-------------------------------------+-----------------+-----------------------------------------------------+
 
 
 
@@ -204,7 +212,7 @@ values change through time:
 
     globe = examples.load_globe()
     globe.point_arrays['scalars'] = np.random.rand(globe.n_points)
-    globe.set_active_scalar('scalars')
+    globe.set_active_scalars('scalars')
 
 
     plotter = pv.BackgroundPlotter()
