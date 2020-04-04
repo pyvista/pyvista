@@ -144,7 +144,8 @@ class DataSetAttributes(VTKObjectWrapper):
             raise KeyError('"{}"'.format(key))
         if type(vtk_arr) == vtk.vtkAbstractArray:
             return vtk_arr
-        narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset, association=self.association)
+        narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset,
+                                                     association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
             narray = narray.view(np.bool)
         return narray
