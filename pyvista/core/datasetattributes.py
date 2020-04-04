@@ -182,6 +182,10 @@ class DataSetAttributes(VTKObjectWrapper):
         if len(shape) == 3:
             narray = narray.reshape(shape[0], shape[1]*shape[2])
 
+        # Swap bytes from big to little endian.
+        if narray.dtype.byteorder == '>':
+            narray = narray.byteswap(inplace=True)
+
         # this handle the case when an input array is directly appended on the
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
