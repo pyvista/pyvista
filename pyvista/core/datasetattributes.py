@@ -1,6 +1,5 @@
 """Implements DataSetAttributes, which represents & manipulates datasets."""
 
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper
 import numpy
 import pyvista.utilities.helpers as helpers
 from .pyvista_ndarray import pyvista_ndarray
