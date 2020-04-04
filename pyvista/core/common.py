@@ -229,7 +229,7 @@ class DataObject(object):
 
     @property
     def field_arrays(self):
-        """"Return vtkFieldData as a DataSetAttributes instance."""
+        """Return vtkFieldData as DataSetAttributes."""
         return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
 
@@ -862,7 +862,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def point_arrays(self):
-        """Return vtkPointData as a DataSetAttributes instance."""
+        """Return vtkPointData as DataSetAttributes."""
         return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
 
 
@@ -900,7 +900,7 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def cell_arrays(self):
-        """Return vtkCellData as a DataSetAttributes instance."""
+        """Return vtkCellData as DataSetAttributes."""
         return DataSetAttributes(self.GetCellData(), dataset=self, association=FieldAssociation.CELL)
 
 
