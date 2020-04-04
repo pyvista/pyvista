@@ -4,6 +4,7 @@ import numpy as np
 import pyvista.utilities.helpers as helpers
 from .pyvista_ndarray import pyvista_ndarray
 from pyvista.utilities.helpers import FieldAssociation
+import vtk
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkDataArray
 
 
@@ -133,16 +134,15 @@ class DataSetAttributes(VTKObjectWrapper):
 
         Returns
         ----------
-        A pyvista_ndarray if the underlying array is a vtkDataArray,
+        A pyvista_ndarray if the underlying array is a vtkDataArray or vtkStringArray,
         vtkAbstractArray if the former does not exist, or raises
         KeyError if neither exist.
         """
         self._raise_index_out_of_bounds(index=key)
-        vtk_arr = self.VTKObject.GetArray(key)
-        if not vtk_arr:
-            vtk_arr = self.VTKObject.GetAbstractArray(key)
-            if vtk_arr is None:
-                raise KeyError('"{}"'.format(key))
+        vtk_arr = self.GetArray(key) or self.GetAbstractArray(key)
+        if vtk_arr is None:
+            raise KeyError('"{}"'.format(key))
+        if type(vtk_arr) == vtk.vtkAbstractArray:
             return vtk_arr
         narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
