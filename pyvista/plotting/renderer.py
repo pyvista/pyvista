@@ -185,6 +185,7 @@ class Renderer(vtkRenderer):
     def camera(self, camera):
         """Set the active camera for the rendering scene."""
         self.SetActiveCamera(camera)
+        self.etc_renderer.SetActiveCamera(camera)
         self.camera_position = CameraPosition(
             scale_point(camera, camera.GetPosition(), invert=True),
             scale_point(camera, camera.GetFocalPoint(), invert=True),
@@ -297,6 +298,14 @@ class Renderer(vtkRenderer):
         self.Modified()
 
 
+    def SetViewport(self, *args):
+        """Set the viewport."""
+        # Overide so that the etc renderer and this renderer share the same viewport
+        vtkRenderer.SetViewport(self, *args)
+        self.etc_renderer.SetViewport(*args)
+        return
+
+
     def add_border(self, color=[1, 1, 1], width=2.0):
         """Add borders around the frame."""
         points = np.array([[1., 1., 0.],
@@ -325,13 +334,15 @@ class Renderer(vtkRenderer):
         actor.GetProperty().SetColor(parse_color(color))
         actor.GetProperty().SetLineWidth(width)
 
+        self.etc_renderer.AddViewProp(actor)
+
         self.AddViewProp(actor)
         self.Modified()
         return actor
 
 
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
-                  pickable=True):
+                  pickable=True, etc=False):
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -428,7 +439,7 @@ class Renderer(vtkRenderer):
         self.marker_actor = create_axes_marker(line_width=line_width,
             x_color=x_color, y_color=y_color, z_color=z_color,
             xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.AddActor(self.marker_actor)
+        self.etc_renderer.AddActor(self.marker_actor)
         memory_address = self.marker_actor.GetAddressAsString("")
         self._actors[memory_address] = self.marker_actor
         self.Modified()
