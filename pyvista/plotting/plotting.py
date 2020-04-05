@@ -811,7 +811,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 for func in callbacks:
                     func()
         except Exception as e:
-            log.error('Exception encountered for keypress "%s": %s' % (key, e))
+            log.error('Exception encountered for keypress "%s": %s', key, e)
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
