@@ -118,17 +118,12 @@ jobs:
 
   strategy:
     matrix:
-      # conda installer is crazy slow if not given a python version -> use latest
-      # that is availabe with given vtk version.
       VTKv80:
         VTK.VERSION: 8.0
-        PYTHON.VERSION: 3.6
       VTKv81:
         VTK.VERSION: 8.1
-        PYTHON.VERSION: 3.7
       VTKv82:
         VTK.VERSION: 8.2
-        PYTHON.VERSION: 3.7
 
   steps:
 
@@ -139,7 +134,7 @@ jobs:
     - script: |
         export CONDA_ALWAYS_YES=1
         source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda env create --quiet --file environment.yml python=$(PYTHON.VERSION),vtk=$(VTK.VERSION)
+        conda env create --quiet --file environment.yml vtk=$(VTK.VERSION)
         conda activate pyvista-env
         conda install conda-build
         conda develop .
