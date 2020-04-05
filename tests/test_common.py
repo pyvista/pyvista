@@ -568,7 +568,7 @@ def test_string_arrays():
 
 
 def test_clear_arrays():
-    # First try on an empy mesh
+    # First try on an empty mesh
     grid = pyvista.UniformGrid((10, 10, 10))
     grid.clear_arrays()
     # Now try something more complicated
@@ -652,3 +652,18 @@ def test_shallow_copy_back_propagation():
     wrapped.points = np.random.rand(5, 3)
     orig_points = vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
+
+
+
+def test_find_closest_point():
+    sphere = pyvista.Sphere()
+    node = np.array([0, 0.2, 0.2])
+    index = sphere.find_closest_point(node)
+    assert isinstance(index, int)
+    # Make sure we can fetch that point
+    closest = sphere.points[index]
+    assert len(closest) == 3
+    # n points
+    node = np.array([0, 0.2, 0.2])
+    index = sphere.find_closest_point(node, 5)
+    assert len(index) == 5

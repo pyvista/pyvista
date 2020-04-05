@@ -8,9 +8,9 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (ROW_DATA_FIELD, assert_empty_kwargs,
-                               convert_array, get_array, parse_field_choice,
-                               row_array, vtk_bit_array_to_char)
+from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, convert_array,
+                               get_array, parse_field_choice, row_array, 
+                               vtk_bit_array_to_char)
 
 from .common import DataObject, _ScalarsDict
 
@@ -272,7 +272,7 @@ class Table(vtk.vtkTable, DataObject):
     def _remove_array(self, field, key):
         """Remove a single array by name from each field (internal helper)."""
         field = parse_field_choice(field)
-        if field == ROW_DATA_FIELD:
+        if field == FieldAssociation.ROW:
             self.GetRowData().RemoveArray(key)
         else:
             raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
@@ -391,8 +391,8 @@ class Table(vtk.vtkTable, DataObject):
             is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
-            search for in the dataset.  Must be either ``'row'`` or
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'row'`` or
             ``'field'``.
 
         """
@@ -413,9 +413,9 @@ class RowScalarsDict(_ScalarsDict):
     """Update internal row data when an array is added or removed from the dictionary."""
 
     def __init__(self, data):
-        """Initialize te row scalars dict."""
+        """Initialize the row scalars dict."""
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(ROW_DATA_FIELD, key)
+        self.remover = lambda key: self.data._remove_array(FieldAssociation.ROW, key)
         self.modifier = lambda *args: self.data.GetRowData().Modified()
 
 
@@ -499,3 +499,7 @@ class Texture(vtk.vtkTexture):
     @repeat.setter
     def repeat(self, flag):
         self.SetRepeat(flag)
+
+    def copy(self):
+        """Make a copy of this textrue."""
+        return Texture(self.to_image().copy())

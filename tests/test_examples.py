@@ -1,5 +1,4 @@
 import os
-from subprocess import PIPE, Popen
 
 import numpy as np
 import pytest

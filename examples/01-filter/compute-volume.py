@@ -8,7 +8,6 @@ Calculate mass properties such as the volume or area of datasets
 
 # sphinx_gallery_thumbnail_number = 4
 import numpy as np
-import pyvista as pv
 from pyvista import examples
 
 ###############################################################################

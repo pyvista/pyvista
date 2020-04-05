@@ -1,6 +1,7 @@
 """Module managing different plotting theme parameters."""
 
 import os
+import scooby
 import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
@@ -33,6 +34,7 @@ rcParams = {
     'nan_color': 'darkgray',
     'edge_color': 'black',
     'outline_color': 'white',
+    'floor_color': 'gray',
     'colorbar_orientation': 'horizontal',
     'colorbar_horizontal': {
         'width': 0.6,
@@ -65,8 +67,9 @@ rcParams = {
     'multi_rendering_splitting_position': None,
     'volume_mapper': 'fixed_point' if os.name == 'nt' else 'smart',
     'depth_peeling': {
-        'number_of_peels': 5,
-        'enabled': True,
+        'number_of_peels': 4,
+        'occlusion_ratio': 0.0,
+        'enabled': False,
     },
 }
 

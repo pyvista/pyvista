@@ -21,6 +21,8 @@ grid = pv.StructuredGrid(x, y, z)
 plotter = pv.Plotter()
 plotter.add_mesh(grid, scalars=z.ravel())
 
+print('Orient the view, then press "q" to close window and produce movie')
+
 # setup camera and close
 plotter.show(auto_close=False)
 

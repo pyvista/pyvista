@@ -10,10 +10,9 @@ import vtk
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (CELL_DATA_FIELD, FIELD_DATA_FIELD,
-                               POINT_DATA_FIELD, convert_array, get_array,
-                               is_pyvista_dataset, parse_field_choice,
-                               raise_not_matching, vtk_bit_array_to_char)
+from pyvista.utilities import (FieldAssociation, convert_array, get_array,
+                               is_pyvista_dataset, parse_field_choice, raise_not_matching,
+                               vtk_bit_array_to_char, vtk_id_list_to_array)
 
 from .filters import DataSetFilters
 
@@ -78,13 +77,13 @@ class DataObject(object):
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalar
-            is used
+            The name of the array to get the range. If None, the
+            active scalar is used
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
 
         """
         raise NotImplementedError('{} mesh type does not have a `get_data_range` method.'.format(type(self)))
@@ -291,7 +290,7 @@ class DataObject(object):
         """Remove all field arrays."""
         keys = self.field_arrays.keys()
         for key in keys:
-            self._remove_array(FIELD_DATA_FIELD, key)
+            self._remove_array(FieldAssociation.NONE, key)
 
 
     @property
@@ -327,7 +326,7 @@ class Common(DataSetFilters, DataObject):
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
         if not hasattr(self, '_active_scalars_info'):
-            self._active_scalars_info = [POINT_DATA_FIELD, None] # field and name
+            self._active_scalars_info = [FieldAssociation.POINT, None] # field and name
         if not hasattr(self, '_last_active_scalars_name'):
             self._last_active_scalars_name = None
         field, name = self._active_scalars_info
@@ -363,10 +362,10 @@ class Common(DataSetFilters, DataObject):
             parr = search_for_array(self.GetPointData())
             carr = search_for_array(self.GetCellData())
             if parr is not None:
-                self._active_scalars_info = [POINT_DATA_FIELD, parr]
+                self._active_scalars_info = [FieldAssociation.POINT, parr]
                 self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
-                self._active_scalars_info = [CELL_DATA_FIELD, carr]
+                self._active_scalars_info = [FieldAssociation.CELL, carr]
                 self.GetCellData().SetActiveScalars(carr)
 
         return self._active_scalars_info
@@ -389,7 +388,7 @@ class Common(DataSetFilters, DataObject):
             if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
             else:
-                self._active_vectors_info = [POINT_DATA_FIELD, None] # field and name
+                self._active_vectors_info = [FieldAssociation.POINT, None] # field and name
         _, name = self._active_vectors_info
 
         # rare error where name isn't a valid array
@@ -409,9 +408,9 @@ class Common(DataSetFilters, DataObject):
         """Return the active vectors array."""
         field, name = self.active_vectors_info
         if name:
-            if field is POINT_DATA_FIELD:
+            if field is FieldAssociation.POINT:
                 return self.point_arrays[name]
-            if field is CELL_DATA_FIELD:
+            if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
 
 
@@ -460,7 +459,7 @@ class Common(DataSetFilters, DataObject):
             return None
         vtk_data = pts.GetData()
         arr = vtk_to_numpy(vtk_data)
-        return pyvista_ndarray(arr, vtk_data)
+        return pyvista.pyvista_ndarray(arr, vtk_data)
 
 
     @points.setter
@@ -621,9 +620,9 @@ class Common(DataSetFilters, DataObject):
             return
         _, field = get_array(self, name, preference=preference, info=True)
         self._last_active_scalars_name = self.active_scalars_info[1]
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.GetPointData().SetActiveScalars(name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
@@ -650,9 +649,9 @@ class Common(DataSetFilters, DataObject):
             self.GetPointData().SetActiveVectors(None)
             return
         _, field = get_array(self, name, preference=preference, info=True)
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.GetPointData().SetActiveVectors(name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveVectors(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
@@ -662,11 +661,11 @@ class Common(DataSetFilters, DataObject):
     def rename_array(self, old_name, new_name, preference='cell'):
         """Change array name by searching for the array then renaming it."""
         _, field = get_array(self, old_name, preference=preference, info=True)
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
-        elif field == FIELD_DATA_FIELD:
+        elif field == FieldAssociation.NONE:
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
@@ -690,9 +689,9 @@ class Common(DataSetFilters, DataObject):
         field, name = self.active_scalars_info
         if name is None:
             return None
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             return self._point_array(name)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             return self._cell_array(name)
 
     @property
@@ -723,7 +722,7 @@ class Common(DataSetFilters, DataObject):
         if name is None:
             # use active scalars array
             field, name = self.active_scalars_info
-            if field != POINT_DATA_FIELD:
+            if field != FieldAssociation.POINT:
                 raise RuntimeError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetAbstractArray(name)
         if vtkarr is None:
@@ -784,7 +783,7 @@ class Common(DataSetFilters, DataObject):
         self.GetPointData().AddArray(vtkarr)
         if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
-            self._active_scalars_info = [POINT_DATA_FIELD, name]
+            self._active_scalars_info = [FieldAssociation.POINT, name]
 
 
     def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
@@ -803,13 +802,13 @@ class Common(DataSetFilters, DataObject):
         Parameters
         ----------
         arr : str, np.ndarray, optional
-            The name of the array to get the range. If None, the active scalars
-            is used
+            The name of the array to get the range. If None, the
+            active scalars is used.
 
         preference : str, optional
-            When scalars is specified, this is the perfered array type to
-            search for in the dataset.  Must be either ``'point'``, ``'cell'``,
-            or ``'field'``.
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
 
         """
         if arr is None:
@@ -928,7 +927,7 @@ class Common(DataSetFilters, DataObject):
         if name is None:
             # use active scalars array
             field, name = self.active_scalars_info
-            if field != CELL_DATA_FIELD:
+            if field != FieldAssociation.CELL:
                 raise RuntimeError('Must specify an array to fetch.')
 
         vtkarr = self.GetCellData().GetAbstractArray(name)
@@ -987,7 +986,7 @@ class Common(DataSetFilters, DataObject):
         self.GetCellData().AddArray(vtkarr)
         if set_active or self.active_scalars_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
-            self._active_scalars_info = [CELL_DATA_FIELD, name]
+            self._active_scalars_info = [FieldAssociation.CELL, name]
 
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
@@ -1005,8 +1004,9 @@ class Common(DataSetFilters, DataObject):
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         if hasattr(ido, '_textures'):
-            self._textures = ido._textures
-
+            self._textures = {}
+            for name, tex in ido._textures.items():
+                self._textures[name] = tex.copy()
 
     @property
     def point_arrays(self):
@@ -1042,11 +1042,11 @@ class Common(DataSetFilters, DataObject):
     def _remove_array(self, field, key):
         """Remove a single array by name from each field (internal helper)."""
         field = parse_field_choice(field)
-        if field == POINT_DATA_FIELD:
+        if field == FieldAssociation.POINT:
             self.GetPointData().RemoveArray(key)
-        elif field == CELL_DATA_FIELD:
+        elif field == FieldAssociation.CELL:
             self.GetCellData().RemoveArray(key)
-        elif field == FIELD_DATA_FIELD:
+        elif field == FieldAssociation.NONE:
             self.GetFieldData().RemoveArray(key)
         else:
             raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
@@ -1057,14 +1057,14 @@ class Common(DataSetFilters, DataObject):
         """Remove all point arrays."""
         keys = self.point_arrays.keys()
         for key in keys:
-            self._remove_array(POINT_DATA_FIELD, key)
+            self._remove_array(FieldAssociation.POINT, key)
 
 
     def clear_cell_arrays(self):
         """Remove all cell arrays."""
         keys = self.cell_arrays.keys()
         for key in keys:
-            self._remove_array(CELL_DATA_FIELD, key)
+            self._remove_array(FieldAssociation.CELL, key)
 
 
     def clear_arrays(self):
@@ -1407,6 +1407,43 @@ class Common(DataSetFilters, DataObject):
         return pyansys.CellQuality(dataset)
 
 
+    def find_closest_point(self, point, n=1):
+        """Find index of closest point in this mesh to the given point.
+
+        If wanting to query many points, use a KDTree with scipy or another
+        library as those implementations will be easier to work with.
+
+        See: https://github.com/pyvista/pyvista-support/issues/107
+
+        Parameters
+        ----------
+        point : iterable(float)
+            Length 3 coordinate of the point to query.
+
+        n : int, optional
+            If greater than ``1``, returns the indices of the ``n`` closest
+            points.
+
+        Return
+        ------
+        int : the index of the point in this mesh that is closes to the given point.
+        """
+        if not isinstance(point, collections.Iterable) or len(point) != 3:
+            raise TypeError("Given point must be a length three iterable.")
+        if not isinstance(n, int) or n < 1:
+            raise TypeError("`n` must be a positive integer.")
+        locator = vtk.vtkPointLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        if n < 2:
+            index = locator.FindClosestPoint(point)
+        else:
+            id_list = vtk.vtkIdList()
+            locator.FindClosestNPoints(n, point, id_list)
+            index = vtk_id_list_to_array(id_list)
+        return index
+
+
 
 class _ScalarsDict(dict):
     """Internal helper for scalars dictionaries."""
@@ -1471,7 +1508,7 @@ class CellScalarsDict(_ScalarsDict):
     def __init__(self, data):
         """Initialize the cell array dict."""
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(CELL_DATA_FIELD, key)
+        self.remover = lambda key: self.data._remove_array(FieldAssociation.CELL, key)
         self.modifier = lambda *args: self.data.GetCellData().Modified()
 
 
@@ -1486,7 +1523,7 @@ class PointScalarsDict(_ScalarsDict):
     def __init__(self, data):
         """Initialize the point array dict."""
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(POINT_DATA_FIELD, key)
+        self.remover = lambda key: self.data._remove_array(FieldAssociation.POINT, key)
         self.modifier = lambda *args: self.data.GetPointData().Modified()
 
 
@@ -1501,7 +1538,7 @@ class FieldScalarsDict(_ScalarsDict):
     def __init__(self, data):
         """Initialize the field array dict."""
         _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(FIELD_DATA_FIELD, key)
+        self.remover = lambda key: self.data._remove_array(FieldAssociation.NONE, key)
         self.modifier = lambda *args: self.data.GetFieldData().Modified()
 
 
@@ -1542,29 +1579,3 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
 
     if not inplace:
         return points
-
-
-class pyvista_ndarray(np.ndarray):
-    """Link a numpy array with the vtk object the data is attached to.
-
-    When the array is changed it triggers "Modified()" which updates
-    all upstream objects, including any render windows holding the
-    object.
-
-    """
-
-    def __new__(cls, input_array, proxy):
-        """Allocate memory for the pyvista ndarray."""
-        obj = np.asarray(input_array).view(cls)
-        cls.proxy = proxy
-        return obj
-
-    def __array_finalize__(self, obj):
-        """Customize array at creation."""
-        if obj is None:
-            return
-
-    def __setitem__(self, coords, value):
-        """Update the array and update the vtk object."""
-        super(pyvista_ndarray, self).__setitem__(coords, value)
-        self.proxy.Modified()

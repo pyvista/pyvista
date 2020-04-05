@@ -180,8 +180,57 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate=True):
-    """Get the opacity transfer function results: range from 0 to 255."""
+def opacity_transfer_function(mapping, n_colors, interpolate=True,
+                              kind='quadratic'):
+    """Get the opacity transfer function for a mapping.
+
+    These values will map on to a scalar bar range and thus the number of
+    colors (``n_colors``) must correspond to the number of colors in the color
+    mapping that these opacities are associated to.
+
+    If interpolating, ``scipy.interpolate.interp1d`` is used if available,
+    otherwise ``np.interp`` is used. The ``kind`` argument controls the kind of
+    interpolation for ``interp1d``.
+
+    This returns the opacity range from 0 to 255, where 0 is totally
+    transparent and 255 is totally opaque.
+
+    The equation to create the sigmoid mapping is: ``1 / (1 + exp(-x))`` where
+    ``x`` is the range from ``-a`` to ``+a`` and ``a`` is the value given in
+    the ``mapping`` string. Default is ``a=10`` for 'sigmoid' mapping.
+
+    Parameters
+    ----------
+    mapping : list(float) or str
+        The opacity mapping to use. Can be a ``str`` name of a predefined
+        mapping including 'linear', 'geom', 'sigmoid', 'sigmoid_3-10'.
+        Append an '_r' to any of those names to reverse that mapping.
+        This can also be a custom array/list of values that will be
+        interpolated across the ``n_color`` range for user defined mappings.
+
+    n_colors : int
+        The amount of colors that the opacities must be mapped to.
+
+    interpolate : bool
+        Flag on whether or not to interpolate the opacity mapping for all colors
+
+    kind : str
+        The interepolation kind if ``interpolate`` is true and ``scipy`` is
+        available. Options are ('linear', 'nearest', 'zero', 'slinear',
+        'quadratic', 'cubic', 'previous', 'next'.
+
+    Example
+    -------
+    >>> import pyvista as pv
+    >>> # Fetch the `sigmoid` mapping between 0 and 255
+    >>> tf = pv.opacity_transfer_function("sigmoid", 256)
+    >>> # Fetch the `geom_r` mapping between 0 and 1
+    >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
+    >>> # Interpolate a user defined opacity mapping
+    >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
+    >>> tf = pv.opacity_transfer_function(opacity, 256)
+
+    """
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
     transfer_func = {
         'linear': np.linspace(0, 255, n_colors, dtype=np.uint8),
@@ -227,7 +276,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True):
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
                 # quadratic has best/smoothest results
-                f = interp1d(xo, mapping, kind='quadratic')
+                f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
