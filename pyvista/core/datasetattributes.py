@@ -1,24 +1,26 @@
-"""Implements DataSetAttributes, which represents & manipulates datasets."""
+"""Implements DataSetAttributes, which represents and manipulates datasets."""
 
 import numpy as np
-import pyvista.utilities.helpers as helpers
-from .pyvista_ndarray import pyvista_ndarray
-from pyvista.utilities.helpers import FieldAssociation
+
 import vtk
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkDataArray
 
+from pyvista.utilities.helpers import FieldAssociation
+import pyvista.utilities.helpers as helpers
+from .pyvista_ndarray import pyvista_ndarray
+
 
 class DataSetAttributes(VTKObjectWrapper):
-    """
-    Python friendly wrapper of vtk.DataSetAttributes.
+    """Python friendly wrapper of ``vtk.DataSetAttributes``.
 
-    Implement a dict like interface for interacting with vtkDataArrays.
+    Implement a ``dict`` like interface for interacting with vtkDataArrays.
 
     Parameters
         ----------
         vtkobject : vtkFieldData
-            The vtk object to wrap as a DataSetAttribute,
-             usually an instance of vtkCellData, vtkPointData, vtkFieldData.
+            The vtk object to wrap as a DataSetAttribute, usually an
+             instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
+             ``vtk.vtkFieldData``.
 
         dataset : vtkDataSet
             The vtkDataSet containing the vtkobject.
@@ -91,13 +93,12 @@ class DataSetAttributes(VTKObjectWrapper):
     def valid_array_len(self):
         """Return the length an ndarray should be when added to the dataset.
 
-        If there are no restrictions, return None
+        If there are no restrictions, return ``None``
         """
         if self.association == FieldAssociation.POINT:
             return self.dataset.GetNumberOfPoints()
         elif self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
-        return None
 
     @property
     def t_coords(self):
@@ -117,7 +118,8 @@ class DataSetAttributes(VTKObjectWrapper):
         if t_coords.shape[0] != valid_length:
             raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
         if t_coords.shape[1] != 2:
-            raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
+            raise AssertionError('Texture coordinates must only have 2 components,'
+                                 ' not ({})'.format(t_coords.shape[1]))
         vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
@@ -132,9 +134,11 @@ class DataSetAttributes(VTKObjectWrapper):
 
         Returns
         ----------
-        A pyvista_ndarray if the underlying array is a vtkDataArray or vtkStringArray,
-        vtkAbstractArray if the former does not exist, or raises
-        KeyError if neither exist.
+        array : ``pyvista_ndarray`` or ``vtkDataArray``
+            A ``pyvista_ndarray`` if the underlying array is a
+            ``vtk.vtkDataArray`` or ``vtk.vtkStringArray``,
+            ``vtk.vtkAbstractArray`` if the former does not exist.
+            Raises a ``KeyError`` if neither exist.
         """
         self._raise_index_out_of_bounds(index=key)
         vtk_arr = self.GetArray(key)
@@ -163,7 +167,6 @@ class DataSetAttributes(VTKObjectWrapper):
 
         deep_copy : bool
             When True makes a full copy of the array.
-
         """
         if narray is None:
             raise TypeError('narray cannot be None.')
@@ -253,7 +256,12 @@ class DataSetAttributes(VTKObjectWrapper):
         Parameters
         ----------
         key : int, str
-            The name or index of the array to remove.
+            The name or index of the array to remove and return.
+
+        Returns
+        -------
+        arr : pyvista_ndarray
+            Requested array.
         """
         self._raise_index_out_of_bounds(index=key)
         vtk_arr = self.GetArray(key)
@@ -294,7 +302,8 @@ class DataSetAttributes(VTKObjectWrapper):
     def update(self, array_dict):
         """Update arrays in this instance.
 
-        For each key, value given, add the pair, if it already exists, update it.
+        For each key, value given, add the pair, if it already exists,
+        update it.
 
         Parameters
         ----------
