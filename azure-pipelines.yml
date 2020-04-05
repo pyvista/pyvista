@@ -133,6 +133,7 @@ jobs:
 
     - script: |
         export CONDA_ALWAYS_YES=1
+        source "$HOME/miniconda/etc/profile.d/conda.sh"
         conda env create --quiet --file environment.yml vtk=$(VTK.VERSION)
         conda activate pyvista-env
         conda install conda-build
