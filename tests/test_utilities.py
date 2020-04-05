@@ -3,11 +3,13 @@ import os
 
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 from pyvista import examples as ex
-from pyvista import utilities
-from pyvista import fileio
+from pyvista.utilities import helpers
+from pyvista.utilities import fileio
+from pyvista.utilities import errors
 
 # Only set this here just the once.
 pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
@@ -17,13 +19,13 @@ def test_createvectorpolydata_error():
     orig = np.random.random((3, 1))
     vec = np.random.random((3, 1))
     with pytest.raises(Exception):
-        utilities.vector_poly_data(orig, vec)
+        helpers.vector_poly_data(orig, vec)
 
 
 def test_createvectorpolydata_1D():
     orig = np.random.random(3)
     vec = np.random.random(3)
-    vdata = utilities.vector_poly_data(orig, vec)
+    vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_arrays['vectors'])
 
@@ -31,7 +33,7 @@ def test_createvectorpolydata_1D():
 def test_createvectorpolydata():
     orig = np.random.random((100, 3))
     vec = np.random.random((100, 3))
-    vdata = utilities.vector_poly_data(orig, vec)
+    vdata = helpers.vector_poly_data(orig, vec)
     assert np.any(vdata.points)
     assert np.any(vdata.point_arrays['vectors'])
 
@@ -54,10 +56,22 @@ def test_read(tmpdir):
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
-        data = pyvista.read(filename)
+        _ = pyvista.read(filename)
     # read non existing file
     with pytest.raises(IOError):
-        data = pyvista.read('this_file_totally_does_not_exist.vtk')
+        _ = pyvista.read('this_file_totally_does_not_exist.vtk')
+    # Now test reading lists of files as multi blocks
+    multi = pyvista.read(fnames)
+    assert isinstance(multi, pyvista.MultiBlock)
+    assert multi.n_blocks == len(fnames)
+    nested = [ex.planefile,
+              [ex.hexbeamfile, ex.uniformfile]]
+
+    multi = pyvista.read(nested)
+    assert isinstance(multi, pyvista.MultiBlock)
+    assert multi.n_blocks == 2
+    assert isinstance(multi[1], pyvista.MultiBlock)
+    assert multi[1].n_blocks == 2
 
 
 def test_get_array():
@@ -72,12 +86,12 @@ def test_get_array():
     grid._add_point_array(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
     grid._add_field_array(farr, 'field_data')
-    assert np.allclose(carr, utilities.get_array(grid, 'test_data', preference='cell'))
-    assert np.allclose(parr, utilities.get_array(grid, 'test_data', preference='point'))
-    assert np.allclose(oarr, utilities.get_array(grid, 'other'))
-    assert utilities.get_array(grid, 'foo') is None
-    assert utilities.get_array(grid, 'test_data', preference='field') is None
-    assert np.allclose(farr, utilities.get_array(grid, 'field_data', preference='field'))
+    assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
+    assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
+    assert np.allclose(oarr, helpers.get_array(grid, 'other'))
+    assert helpers.get_array(grid, 'foo') is None
+    assert helpers.get_array(grid, 'test_data', preference='field') is None
+    assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
 
 
 
@@ -85,11 +99,11 @@ def test_get_array():
 def test_is_inside_bounds():
     data = ex.load_uniform()
     bnds = data.bounds
-    assert utilities.is_inside_bounds((0.5, 0.5, 0.5), bnds)
-    assert not utilities.is_inside_bounds((12, 5, 5), bnds)
-    assert not utilities.is_inside_bounds((5, 12, 5), bnds)
-    assert not utilities.is_inside_bounds((5, 5, 12), bnds)
-    assert not utilities.is_inside_bounds((12, 12, 12), bnds)
+    assert helpers.is_inside_bounds((0.5, 0.5, 0.5), bnds)
+    assert not helpers.is_inside_bounds((12, 5, 5), bnds)
+    assert not helpers.is_inside_bounds((5, 12, 5), bnds)
+    assert not helpers.is_inside_bounds((5, 5, 12), bnds)
+    assert not helpers.is_inside_bounds((12, 12, 12), bnds)
 
 
 def test_get_sg_image_scraper():
@@ -166,3 +180,30 @@ def test_transform_vectors_sph_to_cart():
         [uu[-1, -1], vv[-1, -1], ww[-1, -1]],
         [67.80403533828323, 360.8359915416445, -70000.0],
     )
+
+def test_assert_empty_kwargs():
+    kwargs = {}
+    assert errors.assert_empty_kwargs(**kwargs)
+    with pytest.raises(TypeError):
+        kwargs = {"foo":6}
+        errors.assert_empty_kwargs(**kwargs)
+    with pytest.raises(TypeError):
+        kwargs = {"foo":6, "goo":"bad"}
+        errors.assert_empty_kwargs(**kwargs)
+
+
+
+def test_convert_id_list():
+    ids = np.array([4, 5, 8])
+    id_list = vtk.vtkIdList()
+    id_list.SetNumberOfIds(len(ids))
+    for i, v in enumerate(ids):
+        id_list.SetId(i, v)
+    converted = helpers.vtk_id_list_to_array(id_list)
+    assert np.allclose(converted, ids)
+
+
+def test_progress_monitor():
+    mesh = pyvista.Sphere()
+    ugrid = mesh.delaunay_3d(progress_bar=True)
+    assert isinstance(ugrid, pyvista.UnstructuredGrid)

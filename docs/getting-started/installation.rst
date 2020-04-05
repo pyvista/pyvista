@@ -3,10 +3,14 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.5+, with temporary support for
-Python 2.7 as outlined in `this issue`_.
+PyVista is supported on Python versions 3.5+. Previous versions of Python are
+no longer supported as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
+
+For the best experience, please considering using Anaconda as a virtual
+environment and package manager for Python and following the instructions to
+install PyVista with Anaconda.
 
 Dependencies
 ~~~~~~~~~~~~
@@ -18,6 +22,8 @@ the following projects are required dependencies of PyVista:
 * `numpy <https://pypi.org/project/numpy/>`_ - NumPy arrays provide a core foundation for PyVista's data array access.
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
 * `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
+* `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
+* `scooby <https://github.com/banesullivan/scooby>`_ - Debugging tools
 
 PyPI
 ~~~~
@@ -25,7 +31,7 @@ PyPI
 .. image:: https://img.shields.io/pypi/v/pyvista.svg?logo=python&logoColor=white
    :target: https://pypi.org/project/pyvista/
 
-PyVista can be installed from `PyPI <http://pypi.python.org/pypi/pyvista>`_
+PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
 using ``pip``::
 
     pip install pyvista
@@ -37,7 +43,7 @@ Anaconda
 .. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-To install this package with conda run::
+To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
 
@@ -54,9 +60,19 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``PyQt5==5.11.3``                 | Background plotting                     |
 +-----------------------------------+-----------------------------------------+
+| ``itkwidgets``                    | Interactive notebook rendering          |
++-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
++-----------------------------------+-----------------------------------------+
+| ``colorcet``                      | Perceptually uniform colormaps          |
++-----------------------------------+-----------------------------------------+
+| ``cmocean``                       | Oceanographic colormaps                 |
++-----------------------------------+-----------------------------------------+
+| ``imageio-ffmpeg``                | Saving movie files                      |
++-----------------------------------+-----------------------------------------+
+| ``tqdm``                          | Status bars for monitoring filters      |
 +-----------------------------------+-----------------------------------------+
 
 
@@ -64,12 +80,16 @@ Source / Developers
 ~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can install the latest version from GitHub by visiting
-`PyVista <https://github.com/pyvista/pyvista>`_, downloading the source
-(or cloning), and running::
+`PyVista <https://github.com/pyvista/pyvista>`_, and downloading the source
+(cloning) by running::
 
     git clone https://github.com/pyvista/pyvista.git
     cd pyvista
     python -m pip install -e .
+
+
+The latest documentation for the ``master`` branch of PyVista can be found at
+`dev.pyvista.org <https://dev.pyvista.org>`_.
 
 
 Test Installation
@@ -122,7 +142,7 @@ Please see `this project`_ for a convenient Cookiecutter_ to get started using
 PyVista on the notebook hosting service MyBinder_.
 
 .. _this project: https://github.com/pyvista/cookiecutter-pyvista-binder
-.. _Cookiecutter: https://github.com/audreyr/cookiecutter
+.. _Cookiecutter: https://github.com/cookiecutter/cookiecutter
 .. _MyBinder: https://mybinder.org
 
 To get started, the Docker container will need to have ``libgl1-mesa-dev`` and

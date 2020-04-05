@@ -2,7 +2,7 @@
 Plot with Opacity
 ~~~~~~~~~~~~~~~~~
 
-Plot a mesh's scalar array with an opacity transfer funciton or opacity mapping
+Plot a mesh's scalar array with an opacity transfer function or opacity mapping
 based on a scalar array.
 """
 # sphinx_gallery_thumbnail_number = 2
@@ -123,11 +123,11 @@ p.show()
 # a mesh that are uncertain and highlight regions that are well resolved.
 #
 # The following is a demonstration of plotting a mesh with colored values and
-# using a second array to control the transparancy of the mesh
+# using a second array to control the transparency of the mesh
 
 model = examples.download_model_with_variance()
 contours = model.contour(10, scalars='Temperature')
-print(contours.array_names)
+contours.array_names
 
 ###############################################################################
 # Make sure to flag ``use_transparency=True`` since we want areas of high

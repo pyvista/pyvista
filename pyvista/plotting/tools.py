@@ -1,3 +1,5 @@
+"""Module containing useful plotting tools."""
+
 import os
 from subprocess import PIPE, Popen
 
@@ -9,11 +11,10 @@ import pyvista
 from .theme import parse_color, rcParams
 
 def system_supports_plotting():
-    """
-    Check if x server is running
+    """Check if x server is running.
 
-    Returns
-    -------
+    Return
+    ------
     system_supports_plotting : bool
         True when on Linux and running an xserver.  Returns None when
         on a non-linux platform.
@@ -33,7 +34,7 @@ def system_supports_plotting():
 
 
 def update_axes_label_color(axes_actor, color=None):
-    """Internal helper to set the axes label color"""
+    """Set the axes label color (internale helper)."""
     if color is None:
         color = rcParams['font']['color']
     color = parse_color(color)
@@ -53,6 +54,7 @@ def update_axes_label_color(axes_actor, color=None):
 def create_axes_marker(label_color=None, x_color=None, y_color=None,
                        z_color=None, xlabel='X', ylabel='Y', zlabel='Z',
                        labels_off=False, line_width=2):
+    """Return an axis actor to add in the scene."""
     if x_color is None:
         x_color = rcParams['axes']['x_color']
     if y_color is None:
@@ -91,8 +93,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
                                 z_face_color='blue',
                                 color_box=False, label_color=None,
                                 labels_off=False, opacity=0.5,):
-    """Create a Box axes orientation widget with labels.
-    """
+    """Create a Box axes orientation widget with labels."""
     if x_color is None:
         x_color = rcParams['axes']['x_color']
     if y_color is None:
@@ -171,6 +172,7 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
 
 
 def normalize(x, minimum=None, maximum=None):
+    """Normalize the given value between [minimum, maximum]."""
     if minimum is None:
         minimum = np.nanmin(x)
     if maximum is None:
@@ -178,8 +180,56 @@ def normalize(x, minimum=None, maximum=None):
     return (x - minimum) / (maximum - minimum)
 
 
-def opacity_transfer_function(mapping, n_colors, interpolate=True):
-    """Get the opacity transfer function results: range from 0 to 255.
+def opacity_transfer_function(mapping, n_colors, interpolate=True,
+                              kind='quadratic'):
+    """Get the opacity transfer function for a mapping.
+
+    These values will map on to a scalar bar range and thus the number of
+    colors (``n_colors``) must correspond to the number of colors in the color
+    mapping that these opacities are associated to.
+
+    If interpolating, ``scipy.interpolate.interp1d`` is used if available,
+    otherwise ``np.interp`` is used. The ``kind`` argument controls the kind of
+    interpolation for ``interp1d``.
+
+    This returns the opacity range from 0 to 255, where 0 is totally
+    transparent and 255 is totally opaque.
+
+    The equation to create the sigmoid mapping is: ``1 / (1 + exp(-x))`` where
+    ``x`` is the range from ``-a`` to ``+a`` and ``a`` is the value given in
+    the ``mapping`` string. Default is ``a=10`` for 'sigmoid' mapping.
+
+    Parameters
+    ----------
+    mapping : list(float) or str
+        The opacity mapping to use. Can be a ``str`` name of a predefined
+        mapping including 'linear', 'geom', 'sigmoid', 'sigmoid_3-10'.
+        Append an '_r' to any of those names to reverse that mapping.
+        This can also be a custom array/list of values that will be
+        interpolated across the ``n_color`` range for user defined mappings.
+
+    n_colors : int
+        The amount of colors that the opacities must be mapped to.
+
+    interpolate : bool
+        Flag on whether or not to interpolate the opacity mapping for all colors
+
+    kind : str
+        The interepolation kind if ``interpolate`` is true and ``scipy`` is
+        available. Options are ('linear', 'nearest', 'zero', 'slinear',
+        'quadratic', 'cubic', 'previous', 'next'.
+
+    Example
+    -------
+    >>> import pyvista as pv
+    >>> # Fetch the `sigmoid` mapping between 0 and 255
+    >>> tf = pv.opacity_transfer_function("sigmoid", 256)
+    >>> # Fetch the `geom_r` mapping between 0 and 1
+    >>> tf = pv.opacity_transfer_function("geom_r", 256).astype(float) / 255.
+    >>> # Interpolate a user defined opacity mapping
+    >>> opacity = [0, 0.2, 0.9, 0.6, 0.3]
+    >>> tf = pv.opacity_transfer_function(opacity, 256)
+
     """
     sigmoid = lambda x: np.array(1 / (1 + np.exp(-x)) * 255, dtype=np.uint8)
     transfer_func = {
@@ -226,7 +276,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True):
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
                 # quadratic has best/smoothest results
-                f = interp1d(xo, mapping, kind='quadratic')
+                f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0

@@ -1,5 +1,6 @@
 import os
 import sys
+import datetime
 if sys.version_info >= (3, 0):
     import faulthandler
     faulthandler.enable()
@@ -18,6 +19,14 @@ pyvista.rcParams['window_size'] = np.array([1024, 768]) * 2
 pyvista.FIGURE_PATH = os.path.join(os.path.abspath('./images/'), 'auto-generated/')
 if not os.path.exists(pyvista.FIGURE_PATH):
     os.makedirs(pyvista.FIGURE_PATH)
+
+# SG warnins
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    category=UserWarning,
+    message='Matplotlib is currently using agg, which is a non-GUI backend, so cannot show the figure.',
+)
 
 # -- General configuration ------------------------------------------------
 numfig = False
@@ -52,7 +61,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'PyVista'
-copyright = u'2017-2019, The PyVista Developers'
+year = datetime.date.today().year
+copyright = u'2017-{}, The PyVista Developers'.format(year)
 author = u'Alex Kaszynski and Bane Sullivan'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -89,9 +99,7 @@ from sphinx_gallery.sorting import FileNameSortKey
 
 sphinx_gallery_conf = {
     # path to your examples scripts
-    "examples_dirs": [
-        "../examples/",
-    ],
+    "examples_dirs": ["../examples/"],
     # path where to save gallery generated examples
     "gallery_dirs": ["examples"],
     # Patter to search for example files
@@ -101,7 +109,7 @@ sphinx_gallery_conf = {
     # Sort gallery example by file name instead of number of lines (default)
     "within_subsection_order": FileNameSortKey,
     # directory where function granular galleries are stored
-    "backreferences_dir": False,
+    "backreferences_dir": None,
     # Modules for which function level galleries are created.  In
     "doc_module": "pyvista",
     "image_scrapers": ('pyvista', 'matplotlib'),
@@ -120,7 +128,7 @@ html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 html_context = {
     # Enable the "Edit in GitHub link within the header of each page.
-    'display_github': True,
+    'display_github': False,
     # Set the following variables to generate the resulting github URL for each page.
     # Format Template: https://{{ github_host|default("github.com") }}/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}{{ suffix }}
     'github_user': 'pyvista',

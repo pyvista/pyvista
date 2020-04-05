@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 import pyvista
 
@@ -33,12 +34,21 @@ def test_plane():
 
 
 def test_line():
-    line = pyvista.Line((0,0,0), (10, 1., 3))
+    pointa = (0, 0, 0)
+    pointb = (10, 1., 3)
+
+    line = pyvista.Line(pointa, pointb)
     assert line.n_points == 2
     assert line.n_cells == 1
-    line = pyvista.Line((0,0,0), (10, 1., 3), 10)
+    line = pyvista.Line(pointa, pointb, 10)
     assert line.n_points == 11
     assert line.n_cells == 1
+
+    with pytest.raises(ValueError):
+        pyvista.Line(pointa, pointb, -1)
+
+    with pytest.raises(TypeError):
+        pyvista.Line(pointa, pointb, 0.1) # from vtk
 
 
 def test_cube():
@@ -88,7 +98,24 @@ def test_text_3d():
     assert mesh.n_points
     assert mesh.n_cells
 
+
 def test_wavelet():
     mesh = pyvista.Wavelet()
+    assert mesh.n_points
+    assert mesh.n_cells
+
+
+def test_circular_arc():
+    pointa = [-1, 0, 0]
+    pointb = [0, 1, 0]
+    center = [0, 0, 0]
+    resolution = 100
+
+    mesh = pyvista.CircularArc(pointa, pointb, center, resolution)
+    assert mesh.n_points
+    assert mesh.n_cells
+
+    mesh = pyvista.CircularArc([-1, 0, 0], [0, 0, 1], [0, 0, 0], normal=[0, 0, 1],
+                               polar=[1, 0, 1], negative=True, angle=180)
     assert mesh.n_points
     assert mesh.n_cells

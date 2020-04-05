@@ -11,7 +11,6 @@ Resample one mesh's point/cell arrays onto another meshes nodes.
 # sphinx_gallery_thumbnail_number = 4
 import pyvista as pv
 from pyvista import examples
-import numpy as np
 
 ###############################################################################
 # Query a grids points onto a sphere
