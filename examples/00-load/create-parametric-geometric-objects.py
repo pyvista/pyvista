@@ -180,3 +180,34 @@ superellipsoid.plot(color="tan")
 
 torus = pv.ParametricTorus()
 torus.plot(color="tan")
+
+###############################################################################
+# Circular Arc
+# ++++++++++++
+
+pointa = [-1, 0, 0]
+pointb = [0, 1, 0]
+center = [0, 0, 0]
+resolution = 100
+
+arc = pv.CircularArc(pointa, pointb, center, resolution)
+
+pl = pv.Plotter()
+pl.add_mesh(arc, color='k', line_width=4)
+pl.show_bounds()
+pl.view_xy()
+pl.show()
+
+
+###############################################################################
+# Extruded Half Arc
+# +++++++++++++++++
+
+pointa = [-1, 0, 0]
+pointb = [1, 0, 0]
+center = [0, 0, 0]
+resolution = 100
+
+arc = pv.CircularArc(pointa, pointb, center, resolution)
+poly = arc.extrude([0, 0, 1])
+poly.plot(color="tan", cpos='iso', show_edges=True)

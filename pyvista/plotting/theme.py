@@ -34,6 +34,7 @@ rcParams = {
     'nan_color': 'darkgray',
     'edge_color': 'black',
     'outline_color': 'white',
+    'floor_color': 'gray',
     'colorbar_orientation': 'horizontal',
     'colorbar_horizontal': {
         'width': 0.6,
@@ -68,7 +69,7 @@ rcParams = {
     'depth_peeling': {
         'number_of_peels': 4,
         'occlusion_ratio': 0.0,
-        'enabled': False if scooby.meets_version(vtk.VTK_VERSION, '8.2.0') else True,
+        'enabled': False,
     },
 }
 

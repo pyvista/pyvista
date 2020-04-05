@@ -4,12 +4,13 @@ from scooby import meets_version
 import pyvista as pv
 
 HAS_ITK = False
+ITK_EXCEPTION = None
 try:
     from itkwidgets import Viewer
     from itkwidgets._transform_types import to_geometry
     HAS_ITK = True
-except ImportError:
-    pass
+except ImportError as e:
+    ITK_EXCEPTION = e
 
 
 class PlotterITK():
@@ -31,7 +32,8 @@ class PlotterITK():
 
     def __init__(self, **kwargs):
         """Initialize the itkwidgets plotter."""
-        itk_import_err = ImportError("Please install `itkwidgets>=0.25.2`")
+        itk_import_err = ImportError("Please install `itkwidgets>=0.25.2`:\n%s" %
+                                     str(ITK_EXCEPTION))
         if not HAS_ITK:
             raise itk_import_err
 

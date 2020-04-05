@@ -97,11 +97,11 @@ def test_surface_indices():
     assert np.allclose(surf_ind, beam.surface_indices())
 
 
-def test_extract_edges():
-    edges = beam.extract_edges(90)
+def test_extract_feature_edges():
+    edges = beam.extract_feature_edges(90)
     assert edges.n_points
 
-    edges = beam.extract_edges(180)
+    edges = beam.extract_feature_edges(180)
     assert not edges.n_points
 
 
@@ -415,6 +415,15 @@ def test_save_uniform(extension, binary, tmpdir):
 
 def test_grid_points():
     """Test the points methods on UniformGrid and RectilinearGrid"""
+    # test creation of 2d grids
+    x_surf = y_surf = range(3)
+    z_surf = np.ones(3)
+    grid = pyvista.UniformGrid()
+    grid.points = np.array([x_surf, y_surf, z_surf]).transpose()
+    assert grid.n_points == 9
+    assert grid.n_cells == 4
+    del grid
+
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
                        [1, 1, 0],
@@ -463,3 +472,34 @@ def test_gaussian_smooth():
     assert uniform.active_scalars_name == active
     assert uniform.active_scalars.shape == values.shape
     assert not np.all(uniform.active_scalars == values)
+
+
+@pytest.mark.parametrize('ind', [range(10), np.arange(10),
+                                 np.ones(beam.n_cells, np.bool)])
+def test_remove_cells(ind):
+    grid_copy = beam.copy()
+    grid_copy.remove_cells(ind)
+    assert grid_copy.n_cells < beam.n_cells
+
+
+@pytest.mark.parametrize('ind', [range(10), np.arange(10),
+                                 np.ones(beam.n_cells, np.bool)])
+def test_remove_cells_not_inplace(ind):
+    grid_copy = beam.copy()  # copy to protect
+    grid_w_removed = grid_copy.remove_cells(ind, inplace=False)
+    assert grid_w_removed.n_cells < beam.n_cells
+    assert grid_copy.n_cells == beam.n_cells
+
+
+def test_remove_cells_invalid():
+    grid_copy = beam.copy()
+    with pytest.raises(ValueError):
+        grid_copy.remove_cells(np.ones(10, np.bool))
+
+
+@pytest.mark.parametrize('ind', [range(10), np.arange(10),
+                                 np.ones(sgrid.n_cells, np.bool)])
+def test_hide_cells(ind):
+    sgrid_copy = sgrid.copy()
+    sgrid_copy.hide_cells(ind)
+    assert sgrid_copy.HasAnyBlankCells()

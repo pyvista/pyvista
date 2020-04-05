@@ -5,8 +5,10 @@ import os
 import re
 import scooby
 import sys
+import warnings
 
 import vtk
+import numpy as np
 
 import pyvista
 
@@ -243,17 +245,24 @@ def assert_empty_kwargs(**kwargs):
     """Assert that all keyword arguments have been used (internal helper).
 
     If any keyword arguments are passed, a ``TypeError`` is raised.
-
     """
     n = len(kwargs)
     if n == 0:
         return True
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
-    bad_arguments = "[" + ("{}, " * (n - 1) + "{}").format(*keys) + "]"
+    bad_arguments = ', '.join(['"%s"' % key for key in keys])
     if n == 1:
         grammar = "is an invalid keyword argument"
     else:
         grammar = "are invalid keyword arguments"
     message = "{} {} for `{}`".format(bad_arguments, grammar, caller)
     raise TypeError(message)
+
+
+def check_valid_vector(point, name=''):
+    """Check if a vector contains three components."""
+    if np.array(point).size != 3:
+        if name == '':
+            name = 'Vector'
+        raise TypeError('%s must be a length three tuple of floats.' % name)

@@ -1,9 +1,12 @@
 """Supporting functions for polydata and grid objects."""
 
+import signal
 import collections
 import ctypes
+import enum
 import logging
 import warnings
+from threading import Thread
 
 import numpy as np
 import scooby
@@ -13,10 +16,14 @@ import vtk.util.numpy_support as nps
 import pyvista
 from .fileio import from_meshio
 
-POINT_DATA_FIELD = 0
-CELL_DATA_FIELD = 1
-FIELD_DATA_FIELD = 2
-ROW_DATA_FIELD = 6
+
+class FieldAssociation(enum.Enum):
+    """Represents which type of vtk field a scalar or vector array is associated with."""
+
+    POINT = vtk.vtkDataObject.FIELD_ASSOCIATION_POINTS
+    CELL = vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS
+    NONE = vtk.vtkDataObject.FIELD_ASSOCIATION_NONE
+    ROW = vtk.vtkDataObject.FIELD_ASSOCIATION_ROWS
 
 
 def get_vtk_type(typ):
@@ -181,16 +188,16 @@ def parse_field_choice(field):
     if isinstance(field, str):
         field = field.strip().lower()
         if field in ['cell', 'c', 'cells']:
-            field = CELL_DATA_FIELD
+            field = FieldAssociation.CELL
         elif field in ['point', 'p', 'points']:
-            field = POINT_DATA_FIELD
+            field = FieldAssociation.POINT
         elif field in ['field', 'f', 'fields']:
-            field = FIELD_DATA_FIELD
+            field = FieldAssociation.NONE
         elif field in ['row', 'r',]:
-            field = ROW_DATA_FIELD
+            field = FieldAssociation.ROW
         else:
             raise RuntimeError('Data field ({}) not supported.'.format(field))
-    elif isinstance(field, int):
+    elif isinstance(field, FieldAssociation):
         pass
     else:
         raise RuntimeError('Data field ({}) not supported.'.format(field))
@@ -206,9 +213,9 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         The name of the array to get the range.
 
     preference : str, optional
-        When scalars is specified, this is the perfered array type to
-        search for in the dataset.  Must be either ``'point'``, ``'cell'``, or
-        ``'field'``
+        When scalars is specified, this is the preferred array type to
+        search for in the dataset.  Must be either ``'point'``,
+        ``'cell'``, or ``'field'``
 
     info : bool
         Return info about the array rather than the array itself.
@@ -221,7 +228,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = row_array(mesh, name)
         if arr is None and err:
             raise KeyError('Data array ({}) not present in this dataset.'.format(name))
-        field = ROW_DATA_FIELD
+        field = FieldAssociation.ROW
         if info:
             return arr, field
         return arr
@@ -231,19 +238,19 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     farr = field_array(mesh, name)
     preference = parse_field_choice(preference)
     if np.sum([parr is not None, carr is not None, farr is not None]) > 1:
-        if preference == CELL_DATA_FIELD:
+        if preference == FieldAssociation.CELL:
             if info:
-                return carr, CELL_DATA_FIELD
+                return carr, FieldAssociation.CELL
             else:
                 return carr
-        elif preference == POINT_DATA_FIELD:
+        elif preference == FieldAssociation.POINT:
             if info:
-                return parr, POINT_DATA_FIELD
+                return parr, FieldAssociation.POINT
             else:
                 return parr
-        elif preference == FIELD_DATA_FIELD:
+        elif preference == FieldAssociation.NONE:
             if info:
-                return farr, FIELD_DATA_FIELD
+                return farr, FieldAssociation.NONE
             else:
                 return farr
         else:
@@ -252,13 +259,13 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     field = None
     if parr is not None:
         arr = parr
-        field = POINT_DATA_FIELD
+        field = FieldAssociation.POINT
     elif carr is not None:
         arr = carr
-        field = CELL_DATA_FIELD
+        field = FieldAssociation.CELL
     elif farr is not None:
         arr = farr
-        field = FIELD_DATA_FIELD
+        field = FieldAssociation.NONE
     elif err:
         raise KeyError('Data array ({}) not present in this dataset.'.format(name))
     if info:
@@ -609,3 +616,92 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
     renderer.SetOcclusionRatio(occlusion_ratio)
     renderWindow.Render()
     return renderer.GetLastRenderingUsedDepthPeeling() == 1
+
+
+def threaded(fn):
+    """Call a function using a thread."""
+    def wrapper(*args, **kwargs):
+        thread = Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
+
+
+class conditional_decorator(object):
+    """Conditional decorator for methods."""
+
+    def __init__(self, dec, condition):
+        """Initialize."""
+        self.decorator = dec
+        self.condition = condition
+
+    def __call__(self, func):
+        """Call the decorated function if condition is matched."""
+        if not self.condition:
+            # Return the function unchanged, not decorated.
+            return func
+        return self.decorator(func)
+
+
+class ProgressMonitor():
+    """A standard class for monitoring the progress of a VTK algorithm.
+
+    This must be use in a ``with`` context and it will block keyboard
+    interrupts from happening until the exit event as interrupts will crash
+    the kernel if the VTK algorithm is still executing.
+
+    """
+
+    def __init__(self, algorithm, message="", scaling=100):
+        """Initialize observer."""
+        try:
+            from tqdm import tqdm
+        except ImportError:
+            raise ImportError("Please install `tqdm` to monitor algorithms.")
+        self.event_type = vtk.vtkCommand.ProgressEvent
+        self.progress = 0.0
+        self._last_progress = self.progress
+        self.algorithm = algorithm
+        self.message = message
+        self._interrupt_signal_received = False
+        self._old_progress = 0
+        self._old_handler = None
+        self._progress_bar = None
+
+    def handler(self, sig, frame):
+        """Pass signal to custom interrupt handler."""
+        self._interrupt_signal_received = (sig, frame)
+        logging.debug('SIGINT received. Delaying KeyboardInterrupt until '
+                      'VTK algorithm finishes.')
+
+    def __call__(self, obj, event, *args):
+        """Call progress update callback.
+
+        On an event occurrence, this function executes.
+        """
+        if self._interrupt_signal_received:
+            obj.AbortExecuteOn()
+        else:
+            progress = obj.GetProgress()
+            step = progress - self._old_progress
+            self._progress_bar.update(step)
+            self._old_progress = progress
+
+    def __enter__(self):
+        """Enter event for ``with`` context."""
+        from tqdm import tqdm
+
+        self._old_handler = signal.signal(signal.SIGINT, self.handler)
+        self._progress_bar = tqdm(total=1, leave=True,
+                                  bar_format='{l_bar}{bar}[{elapsed}<{remaining}]')
+        self._progress_bar.set_description(self.message)
+        self.algorithm.AddObserver(self.event_type, self)
+        return self._progress_bar
+
+    def __exit__(self, type, value, traceback):
+        """Exit event for ``with`` context."""
+        self._progress_bar.total = 1
+        self._progress_bar.refresh()
+        self._progress_bar.close()
+        self.algorithm.RemoveObservers(self.event_type)
+        signal.signal(signal.SIGINT, self._old_handler)

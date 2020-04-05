@@ -46,6 +46,6 @@ p.show(cpos=cpos)
 ###############################################################################
 
 p = pv.Plotter()
-p.add_mesh(grid.wireframe(), color="k", line_width=1)
+p.add_mesh(grid.extract_all_edges(), color="k", line_width=1)
 p.add_mesh(centers, color="r", point_size=8.0, render_points_as_spheres=True)
 p.show(cpos=cpos)
