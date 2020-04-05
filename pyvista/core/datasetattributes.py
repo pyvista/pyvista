@@ -322,3 +322,10 @@ class DataSetAttributes(VTKObjectWrapper):
     def _raise_field_data_no_scalars_vectors(self):
         if self.association == FieldAssociation.NONE:
             raise TypeError('vtkFieldData does not have active scalars or vectors.')
+
+    def __repr__(self):
+        """Printable representation of DataSetAttributes."""
+        txt = 'pyvista %s DataSetAttributes\n' % self.association
+        txt += 'Containing the following keys:\n'
+        txt += '\n'.join(['\t%s' % key for key in self.keys()])
+        return txt
