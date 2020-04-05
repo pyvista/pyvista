@@ -139,7 +139,7 @@ jobs:
     - script: |
         export CONDA_ALWAYS_YES=1
         source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda env create --quiet --file environment.yml python=$(PYTHON.VERSION) vtk=$(VTK.VERSION)
+        conda env create --quiet --file environment.yml python=$(PYTHON.VERSION),vtk=$(VTK.VERSION)
         conda activate pyvista-env
         conda install conda-build
         conda develop .
