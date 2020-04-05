@@ -132,17 +132,13 @@ jobs:
       displayName: Install headless display
 
     - script: |
-        conda env create --quiet --file environment.yml
+        conda env create --quiet --file environment.yml vtk=$(VTK.VERSION)
         conda activate pyvista-env
         conda develop .
         conda list
         which python
-      displayName: Create Anaconda environment
-
-    - script: |
-        conda install --yes vtk=$(VTK.VERSION)
         python -c "import pyvista; print(pyvista.Report())"
-      displayName: Install VTK
+      displayName: Create Anaconda environment
 
     - script: |
         conda install --yes pytest-azurepipelines
