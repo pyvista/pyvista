@@ -134,6 +134,7 @@ jobs:
     - script: |
         conda env create --quiet --file environment.yml vtk=$(VTK.VERSION)
         conda activate pyvista-env
+        conda install conda-build
         conda develop .
         conda list
         which python

@@ -20,6 +20,7 @@ dependencies:
   - pytest-cov
   - pytest-qt
   - codecov
+  - appdirs
   - pip
   - pip:
       - pytest-memprof
