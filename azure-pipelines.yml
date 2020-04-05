@@ -132,6 +132,7 @@ jobs:
       displayName: Install headless display
 
     - script: |
+        export CONDA_ALWAYS_YES=1
         conda env create --quiet --file environment.yml vtk=$(VTK.VERSION)
         conda activate pyvista-env
         conda install conda-build
