@@ -144,12 +144,14 @@ jobs:
       displayName: Create Anaconda environment
 
     - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-env
         conda install --yes pytest-azurepipelines
         pytest -v --cov pyvista --cov-report html
       displayName: 'Test Core API against VTK'
 
     - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-env
         conda install --yes pytest-azurepipelines
         pytest -v --doctest-modules pyvista
