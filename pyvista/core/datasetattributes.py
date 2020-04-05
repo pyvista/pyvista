@@ -139,11 +139,13 @@ class DataSetAttributes(VTKObjectWrapper):
         KeyError if neither exist.
         """
         self._raise_index_out_of_bounds(index=key)
-        vtk_arr = self.GetArray(key) or self.GetAbstractArray(key)
+        vtk_arr = self.GetArray(key)
         if vtk_arr is None:
-            raise KeyError('"{}"'.format(key))
-        if type(vtk_arr) == vtk.vtkAbstractArray:
-            return vtk_arr
+            vtk_arr = self.GetAbstractArray(key)
+            if vtk_arr is None:
+                raise KeyError('"{}"'.format(key))
+            if type(vtk_arr) == vtk.vtkAbstractArray:
+                return vtk_arr
         narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset,
                                                      association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
