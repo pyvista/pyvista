@@ -120,10 +120,13 @@ jobs:
     matrix:
       VTKv80:
         VTK.VERSION: 8.0
+        PYTHON.VERSION: 3.6
       VTKv81:
         VTK.VERSION: 8.1
+        PYTHON.VERSION: 3.7
       VTKv82:
         VTK.VERSION: 8.2
+        PYTHON.VERSION: 3.7
 
   steps:
 
@@ -134,9 +137,10 @@ jobs:
     - script: |
         export CONDA_ALWAYS_YES=1
         source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda config --add channels conda-forge
         conda env create --quiet -n pyvista-vtk$(VTK.VERSION) --file environment.yml
         conda activate pyvista-vtk$(VTK.VERSION)
-        conda install vtk=$(VTK.VERSION) pytest-azurepipelines
+        conda install python=$(PYTHON.VERSION) vtk=$(VTK.VERSION) pytest-azurepipelines
         pip install -e .
         conda list
         which python
