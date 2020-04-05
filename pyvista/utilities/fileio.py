@@ -181,21 +181,22 @@ def read(filename, attrs=None, file_format=None):
         return read_meshio(filename, file_format)
 
     # From the extension, decide which reader to use
+    name = os.path.basename(filename)
     if attrs is not None:
         reader = get_reader(filename)
         return standard_reader_routine(reader, filename, attrs=attrs)
     elif ext in '.vti': # ImageData
-        return pyvista.UniformGrid(filename)
+        return pyvista.UniformGrid(filename, name=name)
     elif ext in '.vtr': # RectilinearGrid
-        return pyvista.RectilinearGrid(filename)
+        return pyvista.RectilinearGrid(filename, name=name)
     elif ext in '.vtu': # UnstructuredGrid
-        return pyvista.UnstructuredGrid(filename)
+        return pyvista.UnstructuredGrid(filename, name=name)
     elif ext in ['.ply', '.obj', '.stl']: # PolyData
-        return pyvista.PolyData(filename)
+        return pyvista.PolyData(filename, name=name)
     elif ext in '.vts': # StructuredGrid
-        return pyvista.StructuredGrid(filename)
+        return pyvista.StructuredGrid(filename, name=name)
     elif ext in ['.vtm', '.vtmb']:
-        return pyvista.MultiBlock(filename)
+        return pyvista.MultiBlock(filename, name=name)
     elif ext in ['.e', '.exo']:
         return read_exodus(filename)
     elif ext in ['.vtk']:

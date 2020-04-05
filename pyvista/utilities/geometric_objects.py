@@ -13,6 +13,7 @@ vtkDiskSource
 vtkRegularPolygonSource
 
 """
+
 import numpy as np
 import vtk
 

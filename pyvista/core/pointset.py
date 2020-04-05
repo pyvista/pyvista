@@ -134,7 +134,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     def __init__(self, *args, **kwargs):
         """Initialize the polydata."""
-        super(PolyData, self).__init__()
+        super(PolyData, self).__init__(*args, **kwargs)
 
         deep = kwargs.pop('deep', False)
 
@@ -234,6 +234,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         # sanity check
         if not np.any(self.points):
             raise AssertionError('Empty or invalid file')
+
+        if not self.name:
+            self.name = os.path.basename(filename)
 
     @property
     def verts(self):
@@ -790,6 +793,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         reader.Update()
         grid = reader.GetOutput()
         self.shallow_copy(grid)
+        if not self.name:
+            self.name = os.path.basename(filename)
 
     def save(self, filename, binary=True):
         """Write an unstructured grid to disk.

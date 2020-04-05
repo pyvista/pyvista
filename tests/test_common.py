@@ -1,5 +1,3 @@
-import sys
-
 import numpy as np
 import pytest
 import vtk
@@ -9,8 +7,6 @@ import pyvista
 from pyvista import examples
 
 GRID = pyvista.UnstructuredGrid(examples.hexbeamfile)
-
-py2 = sys.version_info.major == 2
 
 
 def test_point_arrays():
@@ -342,14 +338,22 @@ def test_html_repr():
     repr_html = grid._repr_html_()
     assert repr_html is not None
 
+
+def test_name():
+    assert GRID.name == 'hexbeam.vtk'
+    grid = GRID.copy()
+    grid.name = 'changed'
+    assert grid.name == 'changed'
+
+
 def test_print_repr():
     """
     This just tests to make sure no errors are thrown on the text friendly
     representation method for Common datasets.
     """
     grid = GRID.copy()
-    repr = grid.head()
-    assert repr is not None
+    repr_ = grid.head()
+    assert repr_ is not None
 
 
 def test_texture():

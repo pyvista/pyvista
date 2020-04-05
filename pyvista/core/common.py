@@ -1,5 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
+import inspect
 import collections
 import logging
 import warnings
@@ -30,7 +31,6 @@ class DataObject(object):
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
         self._field_bool_array_names = []
-
 
     def __new__(cls, *args, **kwargs):
         """Allocate memory for the data object."""
@@ -100,6 +100,12 @@ class DataObject(object):
         If in IPython, this will be formatted to HTML. Otherwise returns a console friendly string.
 
         """
+        def format_attr(attr):
+            """Take a tuple and format it."""
+            if isinstance(attr[1], collections.Iterable):
+                return row.format(attr[0], attr[2].format(*attr[1]))
+            return row.format(attr[0], attr[2].format(attr[1]))
+        
         # Generate the output
         if html:
             fmt = ""
@@ -109,11 +115,7 @@ class DataObject(object):
             fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(type(self).__name__)
             row = "<tr><td>{}</td><td>{}</td></tr>\n"
             # now make a call on the object to get its attributes as a list of len 2 tuples
-            for attr in self._get_attrs():
-                try:
-                    fmt += row.format(attr[0], attr[2].format(*attr[1]))
-                except:
-                    fmt += row.format(attr[0], attr[2].format(attr[1]))
+            fmt += ''.join([format_attr(attr) for attr in self._get_attrs()])
             if hasattr(self, 'n_arrays'):
                 fmt += row.format('N Arrays', self.n_arrays)
             fmt += "</table>\n"
@@ -126,16 +128,11 @@ class DataObject(object):
         # Otherwise return a string that is Python console friendly
         fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
         # now make a call on the object to get its attributes as a list of len 2 tuples
-        row = "  {}:\t{}\n"
-        for attr in self._get_attrs():
-            try:
-                fmt += row.format(attr[0], attr[2].format(*attr[1]))
-            except:
-                fmt += row.format(attr[0], attr[2].format(attr[1]))
+        row = "  {:10s}:\t{}\n"
+        fmt += ''.join([format_attr(attr) for attr in self._get_attrs()])
         if hasattr(self, 'n_arrays'):
             fmt += row.format('N Arrays', self.n_arrays)
         return fmt
-
 
     def _repr_html_(self):
         """Return a pretty representation for Jupyter notebooks.
@@ -320,7 +317,24 @@ class Common(DataSetFilters, DataObject):
         self.references = []
         self._point_bool_array_names = []
         self._cell_bool_array_names = []
+        self._name = kwargs.pop('name', '')
 
+        # attempt to get the caller name (might be a geometric object)
+        if not self._name:
+            previous_frame = inspect.currentframe().f_back.f_back
+            function_name = inspect.getframeinfo(previous_frame)[2]
+            if function_name != '__init__':
+                self.name = function_name
+
+    @property
+    def name(self):
+        """Automatic or user supplied of the wrapped vtk object."""
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        """Set the name of the wrapped vtk object."""
+        self._name = str(name)
 
     @property
     def active_scalars_info(self):
@@ -1281,6 +1295,7 @@ class Common(DataSetFilters, DataObject):
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = []
+        attrs.append(('Name', [self._name], "{:s}"))
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
