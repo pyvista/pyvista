@@ -253,6 +253,7 @@ jobs:
 
   - script: |
       make -C docs html
+      cat doc/_build/html/python.txt
     displayName: 'Build documentation'
 
   - script: |
