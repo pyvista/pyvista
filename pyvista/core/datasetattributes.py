@@ -34,8 +34,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.association = association
 
     def __getitem__(self, key):
-        """
-        Implement get behaviour of [] operator.
+        """Implement get behaviour of [] operator.
 
         Accepts an array name or an index.
         """
@@ -90,8 +89,7 @@ class DataSetAttributes(VTKObjectWrapper):
 
     @property
     def valid_array_len(self):
-        """
-        Return the length an ndarray should be when added to the dataset.
+        """Return the length an ndarray should be when added to the dataset.
 
         If there are no restrictions, return None
         """
