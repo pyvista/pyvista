@@ -136,8 +136,7 @@ jobs:
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda env create --quiet --file environment.yml vtk=$(VTK.VERSION)
         conda activate pyvista-env
-        conda install conda-build
-        conda develop .
+        pip install -e .
         conda list
         which python
         python -c "import pyvista; print(pyvista.Report())"
