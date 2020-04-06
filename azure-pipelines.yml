@@ -134,11 +134,9 @@ jobs:
     - script: |
         export CONDA_ALWAYS_YES=1
         source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda config --add channels conda-forge
-        conda env create --quiet -n pyvista-vtk$(VTK.VERSION)
+        conda env create --quiet -n pyvista-vtk$(VTK.VERSION) --file environment.yml
         conda activate pyvista-vtk$(VTK.VERSION)
         conda install vtk=$(VTK.VERSION) pytest-azurepipelines
-        conda env update --quiet -n pyvista-vtk$(VTK.VERSION) --file environment.yml
         pip install -e .
         conda list
         which python
