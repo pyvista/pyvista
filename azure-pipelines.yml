@@ -134,8 +134,8 @@ jobs:
     - script: |
         export CONDA_ALWAYS_YES=1
         source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda env create --quiet --file environment.yml vtk=$(VTK.VERSION)
-        conda activate pyvista-env
+        conda env create --quiet -n pyvista-vtk$(VTK.VERSION) --file environment.yml vtk=$(VTK.VERSION)
+        conda activate pyvista-vtk$(VTK.VERSION)
         conda install pytest-azurepipelines
         pip install -e .
         conda list
@@ -145,13 +145,13 @@ jobs:
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda activate pyvista-env
+        conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --cov pyvista --cov-report html
       displayName: 'Test Core API against VTK'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
-        conda activate pyvista-env
+        conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --doctest-modules pyvista
       displayName: 'Test Package Docstrings againsta VTK'
 
