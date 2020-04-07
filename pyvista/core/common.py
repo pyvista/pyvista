@@ -458,8 +458,8 @@ class Common(DataSetFilters, DataObject):
         if pts is None:
             return None
         vtk_data = pts.GetData()
-        arr = vtk_to_numpy(vtk_data)
-        return pyvista.pyvista_ndarray(arr, vtk_data)
+        # arr = vtk_to_numpy(vtk_data)
+        return pyvista.pyvista_ndarray(vtk_data)
 
 
     @points.setter

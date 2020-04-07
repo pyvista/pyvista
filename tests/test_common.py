@@ -667,3 +667,9 @@ def test_find_closest_point():
     node = np.array([0, 0.2, 0.2])
     index = sphere.find_closest_point(node, 5)
     assert len(index) == 5
+
+
+def test_setting_points_from_self():
+    grid = GRID.copy()
+    grid.points = GRID.points
+    assert np.allclose(grid.points, GRID.points)
