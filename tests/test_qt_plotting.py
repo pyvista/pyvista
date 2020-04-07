@@ -15,7 +15,7 @@ NO_PLOTTING = not system_supports_plotting()
 
 
 try:
-    from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QMenuBar, QAction)
+    from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QMenuBar, QAction, QToolBar)
     has_pyqt5 = True
 except:
     has_pyqt5 = False
@@ -318,6 +318,18 @@ def test_background_plotting_orbit(qtbot):
     plotter.add_mesh(pyvista.Sphere())
     # perform the orbit:
     plotter.orbit_on_path(bkg=False, step=0.0)
+    plotter.close()
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting_toolbar(qtbot):
+    plotter = pyvista.BackgroundPlotter(off_screen=False)
+    assert _hasattr(plotter, "default_camera_tool_bar", QToolBar)
+    assert _hasattr(plotter, "saved_cameras_tool_bar", QToolBar)
+    plotter.close()
+    plotter = pyvista.BackgroundPlotter(off_screen=False, toolbar=False)
+    assert not hasattr(plotter, "default_camera_tool_bar")
+    assert not hasattr(plotter, "saved_cameras_tool_bar")
     plotter.close()
 
 

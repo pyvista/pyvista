@@ -634,7 +634,8 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, window_size=None,
-                 off_screen=None, allow_quit_keypress=True, **kwargs):
+                 off_screen=None, allow_quit_keypress=True,
+                 toolbar=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
@@ -676,7 +677,8 @@ class BackgroundPlotter(QtInteractor):
                                                 off_screen=off_screen,
                                                 **kwargs)
         self.app_window.signal_close.connect(self._close)
-        self.add_toolbars(self.app_window)
+        if toolbar:
+            self.add_toolbars(self.app_window)
 
         # build main menu
         self.main_menu = _create_menu_bar(parent=self.app_window)
