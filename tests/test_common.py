@@ -202,11 +202,10 @@ def test_rotate_z(grid):
 
 
 def test_make_points_double(grid):
-    grid_copy = grid.copy()
-    grid_copy.points = grid_copy.points.astype(np.float32)
-    assert grid_copy.points.dtype == np.float32
-    grid_copy.points_to_double()
-    assert grid_copy.points.dtype == np.double
+    grid.points = grid.points.astype(np.float32)
+    assert grid.points.dtype == np.float32
+    grid.points_to_double()
+    assert grid.points.dtype == np.double
 
 
 def test_invalid_points(grid):
@@ -426,15 +425,14 @@ def test_set_active_vectors_fail(grid):
 
 
 def test_set_active_scalars(grid):
-    grid_copy = grid.copy()
-    arr = np.arange(grid_copy.n_cells)
-    grid_copy.cell_arrays['tmp'] = arr
-    grid_copy.set_active_scalars('tmp')
-    assert np.allclose(grid_copy.active_scalars, arr)
+    arr = np.arange(grid.n_cells)
+    grid.cell_arrays['tmp'] = arr
+    grid.set_active_scalars('tmp')
+    assert np.allclose(grid.active_scalars, arr)
     # Make sure we can set no active scalars
-    grid_copy.set_active_scalars(None)
-    assert grid_copy.GetPointData().GetScalars() is None
-    assert grid_copy.GetCellData().GetScalars() is None
+    grid.set_active_scalars(None)
+    assert grid.GetPointData().GetScalars() is None
+    assert grid.GetCellData().GetScalars() is None
 
 
 def test_set_active_scalars_name(grid):
