@@ -10,7 +10,8 @@ of the Acoustical Society of America 90, nᵒ 4 (1 octobre 1991): 2154‑62. htt
 """
 
 ###############################################################################
-# First, let's solve the eigenvalue problem for a vibrating cube.
+# First, let's solve the eigenvalue problem for a vibrating cube. We use
+# a crude approximation (by choosing a low max polynomial order) to get a fast computation.
 import numpy as np
 from scipy.linalg import eigh
 import pyvista as pv
@@ -132,7 +133,6 @@ E, G, quadruplets = assemble_mass_and_stiffness(N, analytical_integral_rppd, geo
 
 # solving the eigenvalue problem using symmetric solver
 w, vr = eigh(a=G, b=E)
-# assert all(wi >= 0. or abs(wi) < EPS for wi in w)
 omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
 # expected values from (Bernard 2014, p.14)
