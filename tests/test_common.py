@@ -484,9 +484,10 @@ def test_extent(grid):
     assert grid.extent is None
 
 
-def set_cell_vectors(grid):
+def test_set_cell_vectors(grid):
     grid.cell_arrays['_cell_vectors'] = np.random.random((grid.n_cells, 3))
     grid.set_active_vectors('_cell_vectors')
+    assert grid.active_vectors_name == '_cell_vectors'
 
 
 def test_axis_rotation_invalid():
