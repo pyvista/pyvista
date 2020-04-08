@@ -525,7 +525,6 @@ def test_string_arrays():
 def test_clear_arrays(grid):
     # First try on an empty mesh
     grid = pyvista.UniformGrid((10, 10, 10))
-    grid.clear_arrays()
     # Now try something more complicated
     grid.clear_arrays()
     grid['foo-p'] = np.random.rand(grid.n_points)
