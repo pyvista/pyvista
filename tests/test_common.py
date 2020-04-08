@@ -8,8 +8,6 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista
 from pyvista import examples
 
-py2 = sys.version_info.major == 2
-
 
 @pytest.fixture()
 def grid():
