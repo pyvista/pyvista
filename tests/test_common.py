@@ -522,7 +522,7 @@ def test_string_arrays():
     assert len(back) == 10
 
 
-def test_clear_arrays(grid):
+def test_clear_arrays():
     # First try on an empty mesh
     grid = pyvista.UniformGrid((10, 10, 10))
     # Now try something more complicated
