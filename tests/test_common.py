@@ -396,6 +396,7 @@ def test_arrows(grid):
 
 def test_set_active_vectors_name(grid):
     grid.active_vectors_name = None
+    assert grid.active_vectors_name is None
 
 
 def test_set_t_coords(grid):
