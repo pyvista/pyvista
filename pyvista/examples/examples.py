@@ -254,3 +254,21 @@ def load_random_hills():
     mesh = pyvista.ParametricRandomHills()
     mesh.rotate_y(90)
     return mesh.elevation()
+
+
+def load_sphere_vectors():
+    """Creates an example sphere with a swirly vector field attached."""
+    sphere = pyvista.Sphere(radius=3.14)
+
+    # make cool swirly pattern
+    vectors = np.vstack(
+        (
+            np.sin(sphere.points[:, 0]),
+            np.cos(sphere.points[:, 1]),
+            np.cos(sphere.points[:, 2]),
+        )
+    ).T
+
+    # add and scale
+    sphere.vectors = vectors * 0.3
+    return sphere
