@@ -410,6 +410,17 @@ def test_warp_by_scalar():
     foo.warp_by_scalar(inplace=True)
     assert np.allclose(foo.points, warped.points)
 
+def test_warp_by_vector():
+    # Test when inplace=False (default)
+    data = examples.load_uniform()
+    warped = data.warp_by_vector('Spatial Point Data')
+    assert data.n_points == warped.n_points
+    # Test when inplace=True
+    data = examples.load_uniform()
+    warped = data.warp_by_vector('Spatial Point Data')
+    assert np.allclose(data.points, warped.points)
+    data.warp_by_vector('Spatial Point Data', inplace=True)
+    assert np.allclose(data.points, warped.points)
 
 
 def test_cell_data_to_point_data():
