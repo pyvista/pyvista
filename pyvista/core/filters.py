@@ -1187,6 +1187,7 @@ class DataSetFilters(object):
         warped_mesh = _get_output(alg)
         if inplace:
             dataset.overwrite(warped_mesh)
+            return
         return warped_mesh
 
     def cell_data_to_point_data(dataset, pass_cell_data=False):
