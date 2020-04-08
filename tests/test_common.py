@@ -312,8 +312,7 @@ def test_html_repr(grid):
     This just tests to make sure no errors are thrown on the HTML
     representation method for Common datasets.
     """
-    repr_html = grid._repr_html_()
-    assert repr_html is not None
+    assert grid._repr_html_() is not None
 
 
 def test_print_repr(grid):
@@ -321,8 +320,7 @@ def test_print_repr(grid):
     This just tests to make sure no errors are thrown on the text friendly
     representation method for Common datasets.
     """
-    repr = grid.head()
-    assert repr is not None
+    assert grid.head() is not None
 
 
 def test_texture():
