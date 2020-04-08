@@ -1180,7 +1180,7 @@ class DataSetFilters(object):
             field, vectors = dataset.active_vectors_info
         arr, field = get_array(dataset, vectors, preference='point', info=True)
         # check that this is indeed a vector field
-        if field != pyvista.POINT_DATA_FIELD or arr.ndim != 2 or arr.shape[1] != 3 :
+        if arr.ndim != 2 or arr.shape[1] != 3:
             raise AssertionError('Dataset can only by warped by a 3D vector point data array.' + \
                                  'The values you provided do not satisfy this requirement')
         alg = vtk.vtkWarpVector()
