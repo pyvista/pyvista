@@ -391,7 +391,7 @@ def test_arrows(grid):
     assert isinstance(arrows, pyvista.PolyData)
     assert np.any(arrows.points)
     sphere.set_active_vectors('_vectors')
-    sphere.active_vectors_name == '_vectors'
+    assert sphere.active_vectors_name == '_vectors'
 
 
 def test_set_active_vectors_name(grid):
