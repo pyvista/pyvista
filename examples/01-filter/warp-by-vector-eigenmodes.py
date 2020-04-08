@@ -67,8 +67,10 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
     """Returns first N unique frequencies with amplitude above threshold based on first decimals."""
-    nonzero_freqs = freqs[freqs > thresh]
-    return (np.unique(np.round(nonzero_freqs, decimals=decimals)))[:N]
+    unique_freqs, unique_indices = np.unique(np.round(freqs, decimals=decimals), return_index=True)
+    nonzero = unique_freqs > thresh
+    unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[nonzero]
+    return unique_freqs[:N], unique_indices[:N]
 
 
 def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
@@ -123,23 +125,24 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     return E, G, quadruplets
 
 
-N = 6  # maximum order of x^p y^q z^r polynomials
+N = 8  # maximum order of x^p y^q z^r polynomials
 rho = 8.0  # g/cm^3
 l1, l2, l3 = .2, .2, .2  # all in cm
-a, b, c = l1 / 2., l2 / 2., l3 / 2.
 geometry_parameters = {'a': l1 / 2., 'b': l2 / 2., 'c': l3 / 2.}
-cijkl, cij = make_cijkl_E_nu(200, 0.3)
+cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
 E, G, quadruplets = assemble_mass_and_stiffness(N, analytical_integral_rppd, geometry_parameters, cijkl)
 
 # solving the eigenvalue problem using symmetric solver
 w, vr = eigh(a=G, b=E)
 omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
-# expected values from (Bernard 2014, p.14)
+# expected values from (Bernard 2014, p.14), error depends on polynomial order ``N``
 expected_freqs_kHz = np.array([704.8, 949., 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])
+computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thresh=1, decimals=1)
 print('found the following first unique eigenfrequencies:')
-for ind, freq in enumerate(get_first_N_above_thresh(8, freqs, thresh=1, decimals=1)):
-    print(f"freq. {ind + 1:1}: {freq * 1e-3:8.1f} kHz, expected: {expected_freqs_kHz[ind]:8.1f} kHz")
+for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
+    error = np.abs(freq2 - freq1) / freq1 * 100.
+    print(f"freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %")
 
 ###############################################################################
 # Now, let's display a mode on a mesh of the cube.
@@ -164,7 +167,7 @@ vol = pv.StructuredGrid()
 vol.points = np.vstack(slices)
 vol.dimensions = [*grid.dimensions[0:2], nz]
 
-for i, mode_index in enumerate([6, 8, 12, 14, 19, 22, 24, 25, 27]):
+for i, mode_index in enumerate(mode_indices):
     eigenvector = vr[:, mode_index]
     displacement_points = np.zeros_like(vol.points)
     for weight, (component, p, q, r) in zip(eigenvector, quadruplets):
@@ -175,7 +178,7 @@ for i, mode_index in enumerate([6, 8, 12, 14, 19, 22, 24, 25, 27]):
         displacement_points /= displacement_points.max()
     vol[f'eigenmode_{i:02}'] = displacement_points
 
-warpby = 'eigenmode_01'
+warpby = 'eigenmode_00'
 warped = vol.warp_by_vector(warpby, factor=0.04)
 warped.translate([-1.5 * l1, 0., 0.])
 p = pv.Plotter()
@@ -183,19 +186,16 @@ p.add_mesh(vol, style='wireframe', scalars=warpby)
 p.add_mesh(warped, scalars=warpby)
 p.show()
 
-
 ###############################################################################
-# Finally, let's make a gallery of the first 9 unique eigenmodes.
+# Finally, let's make a gallery of the first 8 unique eigenmodes.
 
 
-start = 0
-modes = np.arange(start, start + 9)
-
-p = pv.Plotter(shape=(3, 3))
-for i in range(3):
-    for j in range(3):
+p = pv.Plotter(shape=(2, 4))
+for i in range(2):
+    for j in range(4):
         p.subplot(i, j)
-        p.add_text(f"mode {modes[3 * i + j]}", font_size=10)
-        vector = f"eigenmode_{modes[3 * i + j]:02}"
+        current_index = 4 * i + j
+        vector = f"eigenmode_{current_index:02}"
+        p.add_text(f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz", font_size=10)
         p.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector)
 p.show()
