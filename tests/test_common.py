@@ -554,7 +554,7 @@ def test_scalars_dict_update():
     assert len(mesh.point_arrays) == n + 2
 
 
-def test_hanlde_array_with_null_name():
+def test_handle_array_with_null_name():
     poly = pyvista.PolyData()
     # Add point array with no name
     poly.GetPointData().AddArray(pyvista.convert_array(np.array([])))
