@@ -102,8 +102,6 @@ def test_field_arrays(grid):
     assert np.allclose(grid.field_arrays['list'], np.arange(n))
 
 
-
-
 def test_field_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.field_arrays['new_array'] = None
@@ -320,6 +318,7 @@ def test_html_repr(grid):
     repr_html = grid._repr_html_()
     assert repr_html is not None
 
+
 def test_print_repr(grid):
     """
     This just tests to make sure no errors are thrown on the text friendly
@@ -358,7 +357,6 @@ def test_texture():
     assert mesh.textures['map'] is not None
     mesh.clear_textures()
     assert len(mesh.textures) == 0
-
 
 
 def test_invalid_vector(grid):
@@ -440,6 +438,7 @@ def test_set_active_scalars(grid):
     assert grid_copy.GetPointData().GetScalars() is None
     assert grid_copy.GetCellData().GetScalars() is None
 
+
 def test_set_active_scalars_name(grid):
     point_keys = list(grid.point_arrays.keys())
     grid.active_scalars_name = point_keys[0]
@@ -488,7 +487,6 @@ def test_get_cell_array_fail():
 
 def test_extent(grid):
     assert grid.extent is None
-
 
 
 def set_cell_vectors(grid):
@@ -588,7 +586,6 @@ def test_hanlde_array_with_null_name():
     assert len(fdata) == 1
 
 
-
 def test_shallow_copy_back_propagation():
     """Test that the original data object's points get modified after a
     shallow copy.
@@ -612,7 +609,6 @@ def test_shallow_copy_back_propagation():
     wrapped.points = np.random.rand(5, 3)
     orig_points = vtk_to_numpy(original.GetPoints().GetData())
     assert np.allclose(orig_points, wrapped.points)
-
 
 
 def test_find_closest_point():
