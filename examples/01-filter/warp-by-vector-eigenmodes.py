@@ -176,9 +176,11 @@ for i, mode_index in enumerate([6, 8, 12, 14, 19, 22, 24, 25, 27]):
     vol[f'eigenmode_{i:02}'] = displacement_points
 
 warpby = 'eigenmode_01'
+warped = vol.warp_by_vector(warpby, factor=0.04)
+warped.translate([-1.5 * l1, 0., 0.])
 p = pv.Plotter()
-p.add_mesh(vol, style='wireframe')
-p.add_mesh(vol.warp_by_vector(warpby, inplace=False, factor=0.01), scalars=warpby)
+p.add_mesh(vol, style='wireframe', scalars=warpby)
+p.add_mesh(warped, scalars=warpby)
 p.show()
 
 
@@ -195,5 +197,5 @@ for i in range(3):
         p.subplot(i, j)
         p.add_text(f"mode {modes[3 * i + j]}", font_size=10)
         vector = f"eigenmode_{modes[3 * i + j]:02}"
-        p.add_mesh(vol.warp_by_vector(vector, factor=0.02), scalars=vector)
+        p.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector)
 p.show()
