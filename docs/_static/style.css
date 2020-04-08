@@ -111,3 +111,11 @@ h1 {
 .rst-content div.figure p.caption {
     font-style: normal;
 }
+
+.sphx-glr-thumbcontainer {
+    margin: 10px !important;
+}
+.sphx-glr-thumbcontainer .figure {
+    width: 160px !important;
+    max-height: 100px !important;
+}

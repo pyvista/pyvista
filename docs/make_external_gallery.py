@@ -90,6 +90,18 @@ articles = dict(
         description="FLEM: A diffusive landscape evolution model",
         link="https://github.com/johnjarmitage/flem",
         image="flem.png"),
+    optimization=Example(title="Optimization visualization with PyVista",
+        description="Optimization visualization with PyVista",
+        link="https://gist.github.com/hichamjanati/6668d91848283c31ac18d801552fb582",
+        image="optimization.gif"),
+    anvil_cirrus_plumes=Example(title="Anvil Cirrus Plumes",
+        description="Dr. Morgan O'Neill at Stanford University is researching Above Anvil Cirrus Plumes and its dynamics as a hydraulic jump.",
+        link="https://www.youtube.com/watch?v=cCPjnF_vHxw&feature=youtu.be",
+        image="anvil_cirrus_plumes.png"),
+    damavand=Example(title="Damavand Volcano",
+        description="Visualize 3D models of Damavand Volcano, Alborz, Iran.",
+        link="https://nbviewer.jupyter.org/github/banesullivan/damavand-volcano/blob/master/Damavand_Volcano.ipynb",
+        image="damavand_volcano.gif"),
     atmos_conv=Example(title="Atmospheric Convection",
         description="Atmospheric convection plays a key role in the climate of tidally-locked terrestrial exoplanets: insights from high-resolution simulations",
         link="https://dennissergeev.github.io/exoconvection-apj-2020/",
@@ -98,8 +110,6 @@ articles = dict(
     #     description="",
     #     link="",
     #     image=""),
-
-
 )
 
 
@@ -130,7 +140,8 @@ button at the top of this page and adding a link to your project!
 
 
 """)
-        for Example in articles.values():
+        # Reverse to put the latest items at the top
+        for Example in list(articles.values())[::-1]:
             f.write(Example.format())
 
         f.write("""
