@@ -7,8 +7,7 @@ trigger:
     include:
     - '*'
     exclude:
-    - no-ci*
-    - refs/head/no-ci/*
+    - *no-ci*
   tags:
     include:
     - '*'
