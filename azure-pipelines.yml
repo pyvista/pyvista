@@ -6,6 +6,8 @@ trigger:
   branches:
     include:
     - '*'
+    exclude:
+    - no-ci*
   tags:
     include:
     - '*'
