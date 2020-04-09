@@ -134,8 +134,8 @@ Here are a list of longer, more technical examples of what PyVista can do!
 
 Do you have a technical processing workflow or visualization routine you
 would like to share?
-If so, please consider sharing your work here by clicking the `Edit on GitHub`
-button at the top of this page and adding a link to your project!
+If so, please consider sharing your work here submitting a PR at
+https://github.com/pyvista and we would be glad to add it!
 
 
 
