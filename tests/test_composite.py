@@ -12,7 +12,7 @@ def vtk_multi():
     return vtk.vtkMultiBlockDataSet()
 
 
-@pyvista.fixture()
+@pytest.fixture()
 def pyvista_multi():
     return pyvista.MultiBlock
 
