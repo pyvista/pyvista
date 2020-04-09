@@ -122,11 +122,9 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     # Now check everything
     assert multi.n_blocks == 5
     assert multi.bounds is not None
-    assert isinstance(multi[0], pyvista.PolyData)
-    assert isinstance(multi[1], pyvista.PolyData)
-    assert isinstance(multi[2], pyvista.UniformGrid)
-    assert isinstance(multi[3], pyvista.PolyData)
-    assert isinstance(multi[4], pyvista.RectilinearGrid)
+    indices = range(5)
+    types = (PolyData, PolyData, UniformGrid, PolyData, RectilinearGrid)
+    assert all(type(multi[i]) == t for i, t in zip(indices, types))
     # Now overwrite a block
     multi[4] = pyvista.Sphere()
     assert isinstance(multi[4], pyvista.PolyData)
