@@ -11,6 +11,11 @@ def vtk_multi():
     return vtk.vtkMultiBlockDataSet()
 
 
+@pyvista.fixture()
+def pyvista_multi():
+    return pyvista.MultiBlock
+
+
 @pytest.fixture()
 def airplane():
     return ex.load_airplane()
