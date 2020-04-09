@@ -35,6 +35,7 @@ jobs:
     displayName: 'Run doctest'
   condition: not(contains(variables['Build.SourceBranchName'], 'no-ci'))
 
+
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
