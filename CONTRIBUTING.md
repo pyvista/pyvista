@@ -2,7 +2,7 @@
 
 We absolutely welcome contributions and we hope that this guide will facilitate
 an understanding of the PyVista code repository. It is important to note that
-the  PyVista software package is maintained on a volunteer basis and thus we
+the PyVista software package is maintained on a volunteer basis and thus we
 need to foster a community that can support user questions and develop new
 features to make this software a useful tool for all users.
 
@@ -62,7 +62,7 @@ a feature request which we can use as a discussion thread to work through how to
 implement the contribution.
 
 Once you are ready to start coding and develop for PyVista, please see the
-[Development Practices](#development-practices) section for more detials.
+[Development Practices](#development-practices) section for more details.
 
 ## Licensing
 
@@ -131,9 +131,11 @@ any given branch is introducing before looking at the code.
 - `fix/`: any bug fixes, patches, or experimental changes that are minor
 - `feat/`: any changes that introduce a new feature or significant addition
 - `junk/`: for any experimental changes that can be deleted if gone stale
-- `maint/`: for general maintence of the repository or CI routines
+- `maint/`: for general maintenance of the repository or CI routines
 - `doc/`: for any changes only pertaining to documentation
 - `no-ci/`: for low impact activity that should NOT trigger the CI routines
+- `release/`: releases (see below)
+
 
 ### Testing
 
@@ -178,18 +180,50 @@ make html -b linkcheck
 The finished documentation can be found in the `docs/_build/html` directory.
 
 
-### Making a Release
+### Branching Model and Releases
 
-The following is a list of steps to complete before taging a release.
-This helps us ensure everything goes smoothly before our army of robots send
-PyVista out to PyPI and Conda-Forge for deployment. Please checkout the
-latest state of the `master` branch locally and:
+This project follows a modified
+[gitflow](https://datasift.github.io/gitflow/IntroducingGitFlow.html)
+branching model.  The purpose of this is to enable rapid development
+of features without sacrificing stability.  These are the main
+features:
 
-1. Run all tests as outlined in the [Testing Section](#testing) and ensure
-all are passing.
+- The `master` branch is the main development branch.  All features,
+  patches, and other branches should be merged here.  While all PRs
+  should pass all applicable CI checks, this branch may be
+  functionally unstable as changes might have introduced unintended
+  side-effects or bugs that were not caught through unit testing.
+- There will be one or many `release/` branches based on minor
+  releases (for example `release/0.24`) which contain a stable version
+  of the code base that is also reflected on PyPi/.  Hotfixes from
+  `fix/` branches should be merged both to master and to these
+  branches.  When necessary to create a new patch release these
+  release branches will have their `__version__.py` updated and be
+  tagged with a patched semantic version (e.g. `0.24.1`).  This
+  triggers CI to push to PyPi, and allow us to rapidly push hotfixes
+  for past versions of `pyvista` without having to worry about
+  untested features.
+- When a minor release canidate is ready, a new `release` branch will
+  be created from `master` will be created with the next incremented
+  minor version (e.g. `release/0.25.0`), which will be throughly
+  tested.  When deemed stable, the release branch will be tagged with
+  the version (`0.25.0` in this case), and if necessary merged with
+  master if any changes were pushed to it.  Feature development then
+  continues on `master` and any hotfixes will now be merged with this
+  release.  Older release branches may be deleted when needed.
 
-2. Ensure all builds and tests on Azure are passing for the latest commits on
-the `master` branch.
+
+#### Minor Release Steps
+
+Minor releases are feature and bug releases that improve the
+functionality and stability of `pyvista`.  Before a minor release is
+created the following will occur:
+
+1.  Create a new branch from the `master` branch with name
+    `release/MAJOR.MINOR` (e.g. `release/0.25`).
+
+2. Locally verify run all tests as outlined in the [Testing Section](#testing) 
+and ensure all are passing.
 
 3. Locally test and build the documentation with link checking to make sure
 no links are outdated. Be sure to run `make clean` to ensure no results are
@@ -202,35 +236,55 @@ cached.
     ```
 
 4. After building the documentation, open the local build and examine the
-examples gallery for any obvious issues. If issues are present, abort the
-release.
+examples gallery for any obvious issues.
 
+5. Update the version numbers in `pyvista/_version.py` and commit it.
+   Push the branch to GitHub and create a new PR for this release that
+   merges it to master.  Development to master should be limited at
+   this point while effort is focused on the release.
 
-5. At this point, there are two routes to take: a) making a patch release or b) making a major/minor.
-    - a) If making a patch release, checkout the current minor version's `release/` branch and proceed.
-    - b) If making a major/minor release, create a new branch from the `master` branch with name `release/MAJOR.MINOR` (e.g. `release/0.25`).
+6. It is now the responsibility of the `pyvista` community to
+   functionally test the new release.  It is best to locally install
+   this branch and use it in production.  Any bugs identified should
+   have their hotfixes pushed to this release branch.
 
-5. Update the version numbers in `pyvista/_version.py`, commit those
-changes, and then tag with the same version. Push the changes *and* the tags:
+7. When the branch is deemed as stable for public release, the PR will
+   be merged to master and the `master` branch will be tagged with a
+   `MAJOR.MINOR.0` release.  The release branch will not be deleted.
+   Tag the release with:
+
     ```bash
-    git push origin release/MAJOR.MINOR
+	git tag MAJOR.MINOR.0
     git push origin --tags
     ```
 
-6. Create a list of all changes for the release. It is often helpful to
+8. Create a list of all changes for the release. It is often helpful to
 leverage [GitHub's *compare* feature](https://github.com/pyvista/pyvista/compare)
 to see the differences from the last tag and the `master` branch.
 Be sure to acknowledge new contributors by their GitHub username and place
 mentions where appropriate if a specific contributor is to thank for a new
 feature.
 
-7. Place your release notes from step 6 in the description for
+9. Place your release notes from step 8 in the description for
 [the new release on GitHub](https://github.com/pyvista/pyvista/releases/new)
 
-8. Go grab a beer/coffee and wait for
+10. Go grab a beer/coffee/water and wait for
 [@regro-cf-autotick-bot](https://github.com/regro-cf-autotick-bot) to open a
-pull reequest on the conda-forge
+pull request on the conda-forge
 [PyVista feedstock](https://github.com/conda-forge/pyvista-feedstock).
 Merge that pull request.
 
-9. Announce the new release in the PyVista Slack workspace and celebrate!
+11. Announce the new release in the PyVista Slack workspace and celebrate!
+
+
+#### Patch Release Steps
+
+Patch releases are for critical and important bugfixes that can not or should not wait until a minor release.  The steps for a patch release 
+
+1. Push the necessary bugfix(es) to the applicable release branch.  This will generally be the latest release branch (e.g. `release/0.25`).
+
+2. Update `__version__.py` with the next patch increment (e.g. `0.25.1`), commit it, and open a PR that merge with the release branch.  This gives the `pyvista` community a chance to validate and approve the bugfix release.  Any additional hotfixes should be outside of this PR.
+
+3. When approved, merge with the release branch, but not `master` as there is no reason to increment the version of the `master` branch.  Then create a tag from the release branch with the applicable version number (see above for the correct steps).
+
+4. If deemed necessary, create a release notes page.  Also, open the PR from conda and follow the directions in step 10 in the minor release section.
