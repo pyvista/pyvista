@@ -176,7 +176,7 @@ def test_multi_block_set_get_ers():
         _ = multi.get_index_by_name('foo')
 
 
-def test_mutli_block_clean():
+def test_multi_block_clean(rectilinear, uniform, ant):
     # now test a clean of the null values
     multi = pyvista.MultiBlock()
     multi[1, 'rect'] = ex.load_rectilinear()
@@ -198,7 +198,7 @@ def test_mutli_block_clean():
     multi = pyvista.MultiBlock()
     multi[1, 'rect'] = ex.load_rectilinear()
     multi[5, 'multi'] = foo
-    # perfromt he clean to remove all Null elements
+    # perform the clean to remove all Null elements
     assert multi.n_blocks == 6
     multi.clean()
     assert multi.n_blocks == 2
