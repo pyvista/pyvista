@@ -2,10 +2,13 @@ variables:
   ALLOW_PLOTTING: true
   SHELLOPTS: 'errexit:pipefail'
 
+
 trigger:
   branches:
     include:
     - '*'
+    exclude:
+    - '*no-ci*'
   tags:
     include:
     - '*'
