@@ -127,7 +127,9 @@ Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvi
 To submit new code to pyvista, first fork the (pyvista GitHub
 Repo)[https://github.com/pyvista/pyvista] and then clone the forked
 repository to your computer.  Then, create a new branch based on the
-branch naming convention in the next section in your local repository.
+[Branch Naming Conventions Section](#branch-naming-conventions) in
+your local repository.
+
 Next, add your new feature and commit it locally.  Be sure to commit
 often as it is often helpful to revert to past commits, especially if
 your change is complex.  Also, be sure to test often.  See the
@@ -136,6 +138,8 @@ your change is complex.  Also, be sure to test often.  See the
 When you are ready to submit your code, create a pull request by
 following the steps in the 
 [Creating a New Pull Request section](#creating-a-new-pull-request).
+
+
 
 
 #### Branch Naming Conventions
