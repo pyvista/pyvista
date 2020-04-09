@@ -256,15 +256,9 @@ def test_multi_io_erros(tmpdir):
         _ = pyvista.MultiBlock(bad_ext_name)
 
 
-def test_extract_geometry():
-    multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    nested = pyvista.MultiBlock()
-    nested.append(ex.load_airplane())
-    nested.append(ex.load_globe())
+def test_extract_geometry(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_examples(ant, sphere, uniform)
+    nested = multi_from_examples(airplane, globe)
     multi.append(nested)
     # Now check everything
     assert multi.n_blocks == 4
