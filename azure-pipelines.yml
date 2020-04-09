@@ -33,7 +33,7 @@ jobs:
       pip install codespell pydocstyle
       make doctest
     displayName: 'Run doctest'
-  condition: not(contains(variables['Build.SourceBranchName'], 'no-ci'))
+  condition: not(contains(variables['Build.SourceBranch'], 'no-ci'))
 
 
 # DESCRIPTION: Core API and doc string testing for Linux
