@@ -7,7 +7,7 @@ from pyvista import examples as ex
 
 
 @pytest.fixture()
-def multi():
+def vtk_multi():
     return vtk.vtkMultiBlockDataSet()
 
 
