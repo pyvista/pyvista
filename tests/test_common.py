@@ -7,11 +7,6 @@ import pyvista
 from pyvista import examples
 
 
-@pytest.fixture()
-def grid():
-    return pyvista.UnstructuredGrid(examples.hexbeamfile)
-
-
 def test_point_arrays(grid):
     key = 'test_array_points'
     grid[key] = np.arange(grid.n_points)
