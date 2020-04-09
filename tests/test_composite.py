@@ -226,15 +226,9 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_multi_block_io(extension, binary, tmpdir):
+def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
-    multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(ex.load_globe())
+    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
     # Now check everything
     assert multi.n_blocks == 5
     # Save it out
