@@ -1185,7 +1185,7 @@ class DataSetFilters(object):
                                  'The values you provided do not satisfy this requirement')
         alg = vtk.vtkWarpVector()
         alg.SetInputDataObject(dataset)
-        alg.SetInputArrayToProcess(0, 0, 0, field, vectors)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors)
         alg.SetScaleFactor(factor)
         alg.Update()
         warped_mesh = _get_output(alg)
