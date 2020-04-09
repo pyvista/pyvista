@@ -75,24 +75,20 @@ def test_multi_block_init_vtk():
     assert isinstance(multi.GetBlock(2), pyvista.MultiBlock)
 
 
-def test_multi_block_init_dict():
-    data = dict()
-    data['grid'] = ex.load_rectilinear()
-    data['poly'] = ex.load_airplane()
+def test_multi_block_init_dict(rectilinear, airplane):
+    data = {'grid': rectilinear, 'poly': airplane}
     multi = pyvista.MultiBlock(data)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
     # Note that dictionaries do not maintain order
-    assert isinstance(multi.GetBlock(0), (pyvista.RectilinearGrid, pyvista.PolyData))
-    assert multi.get_block_name(0) in ['grid','poly']
-    assert isinstance(multi.GetBlock(1), (pyvista.RectilinearGrid, pyvista.PolyData))
+    assert type(multi.GetBlock(0) in (pyvista.RectilinearGrid, pyvista.PolyData))
+    assert multi.get_block_name(0) in ['grid', 'poly']
+    assert type(multi.GetBlock(1) in (pyvista.RectilinearGrid, pyvista.PolyData))
     assert multi.get_block_name(1) in ['grid','poly']
 
 
-def test_multi_block_keys():
-    data = dict()
-    data['grid'] = ex.load_rectilinear()
-    data['poly'] = ex.load_airplane()
+def test_multi_block_keys(rectilinear, airplane):
+    data = {'grid': rectilinear, 'poly': airplane}
     multi = pyvista.MultiBlock(data)
     assert len(multi.keys()) == 2
     assert 'grid' in multi.keys()
