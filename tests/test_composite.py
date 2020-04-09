@@ -42,6 +42,11 @@ def ant():
     return ex.load_ant()
 
 
+@pytest.fixture()
+def globe():
+    return ex.load_globe()
+
+
 def multi_from_examples(*examples):
     """Return pyvista multiblock composed of any number of examples."""
     return pyvista.MultiBlock([*examples])
