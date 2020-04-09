@@ -210,8 +210,6 @@ def test_mutli_block_clean():
     assert foo.n_blocks == 1
 
 
-
-
 def test_multi_block_repr():
     multi = pyvista.MultiBlock()
     # Add examples
@@ -265,7 +263,6 @@ def test_multi_io_erros(tmpdir):
         _ = pyvista.MultiBlock(bad_ext_name)
 
 
-
 def test_extract_geometry():
     multi = pyvista.MultiBlock()
     # Add examples
@@ -298,7 +295,6 @@ def test_combine_filter():
     # Now apply the append filter to combine a plethora of data blocks
     geom = multi.combine()
     assert isinstance(geom, pyvista.UnstructuredGrid)
-
 
 
 def test_multi_block_copy():
@@ -371,6 +367,7 @@ def test_multi_slice_index():
         assert id(sub[i]) == id(multi[j])
         assert sub.get_block_name(i) == multi.get_block_name(j)
 
+
 def test_multi_block_list_index():
     multi = pyvista.MultiBlock()
     # Add examples
@@ -395,6 +392,7 @@ def test_multi_block_list_index():
     sub = multi[indices]
     assert len(sub) == len(indices)
     assert isinstance(sub["foo"], pyvista.PolyData)
+
 
 def test_multi_block_volume():
     multi = pyvista.MultiBlock()
