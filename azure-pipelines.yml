@@ -4,13 +4,19 @@ variables:
 
 trigger:
   branches:
-    # include:
-    # - '*'
     exclude:
-    - '*no-ci*'
-  tags:
-    include:
     - '*'
+
+
+# trigger:
+#   branches:
+#     # include:
+#     - '*'
+#     exclude:
+#     - '*no-ci*'
+#   tags:
+#     include:
+#     - '*'
 
 jobs:
 
