@@ -19,6 +19,7 @@ clean:
 	rm -rf examples/
 	rm -f errors.txt
 	rm -rf images/auto-generated
+	rm -f external_examples.rst
 
 
 # Catch-all target: route all unknown targets to Sphinx using the new
