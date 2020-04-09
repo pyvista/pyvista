@@ -8,6 +8,7 @@ trigger:
     - '*'
     exclude:
     - no-ci*
+    - refs/head/feature-no-ci/*
   tags:
     include:
     - '*'
