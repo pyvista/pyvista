@@ -152,7 +152,7 @@ jobs:
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --doctest-modules pyvista
-      displayName: 'Test Package Docstrings againsta VTK'
+      displayName: 'Test Package Docstrings against VTK'
 
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
