@@ -120,10 +120,10 @@ def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     multi = pyvista.MultiBlock()
     # Add and test examples
     datasets = (ant, sphere, uniform, airplane, rectilinear)
-    for i, dataset in enumerate(datasets, 1):
+    for i, dataset in enumerate(datasets):
         multi.append(dataset)
-        assert multi.n_blocks == i
-        assert isinstance(multi[i-1], type(dataset))
+        assert multi.n_blocks == i + 1
+        assert isinstance(multi[i], type(dataset))
     assert multi.bounds is not None
     # Now overwrite a block
     multi[4] = pyvista.Sphere()
