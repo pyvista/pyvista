@@ -405,12 +405,6 @@ def test_multi_block_volume():
     assert multi.volume
 
 
-def test_multi_block_length():
-    multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(None)
+def test_multi_block_length(ant, sphere, uniform, airplane):
+    multi = multi_from_examples(ant, sphere, uniform, airplane, None)
     assert multi.length
