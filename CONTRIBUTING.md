@@ -122,7 +122,14 @@ There are two important copyright guidelines:
 Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvista/blob/master/CODE_OF_CONDUCT.md)
 
 
-### Branch Naming Conventions
+### Contributing to pyvista through GitHub
+
+To submit new code to pyvista, first fork the (pyvista GitHub Repo)[https://github.com/pyvista/pyvista] and then clone the forked repository to your computer.  Then, create a new branch based on the branch naming convention in the next section in your local repository.  Next, add your new feature and commit it locally.  Be sure to commit often as it is often helpful to revert to past commits, especially if your change is complex.  Also, be sure to test often.  See the testing section below for automating testing.
+
+When you are ready to submit your code, create a pull request by following the steps in the Creating a New Pull Request section.
+
+
+#### Branch Naming Conventions
 
 To streamline development, we have the following requirements for naming
 branches. These requirements help the core developers know what kind of changes
@@ -137,7 +144,7 @@ any given branch is introducing before looking at the code.
 - `release/`: releases (see below)
 
 
-### Testing
+#### Testing
 
 After making changes, please test changes locally before creating a pull
 request. The following tests will be executed after any commit or pull request,
@@ -176,9 +183,8 @@ If you are running windows and `make` is unavailable, then run:
 ```
 pydocstyle pyvista
 
-codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*"$(CODESPELL_SKIP) -I "ignore_words.txt"
+codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*" -I "ignore_words.txt"
 ```
-
 
 And finally, test the documentation examples:
 
@@ -191,8 +197,27 @@ make html -b linkcheck
 
 The finished documentation can be found in the `docs/_build/html` directory.
 
+#### Creating a New Pull Request
 
-### Branching Model and Releases
+Once you have tested your branch locally, push your branch to (pyvista
+GitHub)[https://github.com/pyvista/pyvista] and create a pull request
+while merging to master.  This will automatically run continious
+integration (CI) testing and verify your changes will work across
+several platforms.
+
+To ensure someone else reviews your code, at least one other member of
+the pyvista contributiors group must review and verify your code meets
+our community's standards.  Once approved, if you have write
+permission you may merge the branch.  If you don't have write
+permission, the reviewer or someone else with write permission will
+merge the branch and close out the PR.
+
+Since it may be necessary to merge your branch with the current
+release branch (see below), please do not close out your branch if it
+is a `fix/` branch.
+
+
+### Branching Model
 
 This project follows a modified
 [gitflow](https://datasift.github.io/gitflow/IntroducingGitFlow.html)
