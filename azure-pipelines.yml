@@ -4,8 +4,8 @@ variables:
 
 trigger:
   branches:
-    include:
-    - '*'
+    # include:
+    # - '*'
     exclude:
     - '*no-ci*'
   tags:
