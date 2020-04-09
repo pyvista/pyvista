@@ -100,8 +100,8 @@ def test_multi_block_keys(rectilinear, airplane):
     assert 'poly' in multi.keys()
 
 
-def test_multi_block_init_list():
-    data = [ex.load_rectilinear(), ex.load_airplane()]
+def test_multi_block_init_list(rectilinear, airplane):
+    data = [rectilinear, airplane]
     multi = pyvista.MultiBlock(data)
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
