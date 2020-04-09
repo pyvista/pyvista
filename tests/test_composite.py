@@ -118,18 +118,13 @@ def test_multi_block_init_list(rectilinear, airplane):
 def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     """This puts all of the example data objects into a a MultiBlock container"""
     multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ant)
-    multi.append(sphere)
-    multi.append(uniform)
-    multi.append(airplane)
-    multi.append(rectilinear)
-    # Now check everything
-    assert multi.n_blocks == 5
+    # Add and test examples
+    datasets = (ant, sphere, uniform, airplane, rectilinear)
+    for i, dataset in enumerate(datasets, 1):
+        multi.append(dataset)
+        assert multi.n_blocks == i
+        assert isinstance(multi[i-1], type(dataset))
     assert multi.bounds is not None
-    indices = range(5)
-    types = (PolyData, PolyData, UniformGrid, PolyData, RectilinearGrid)
-    assert all(type(multi[i]) == t for i, t in zip(indices, types))
     # Now overwrite a block
     multi[4] = pyvista.Sphere()
     assert isinstance(multi[4], pyvista.PolyData)
