@@ -278,29 +278,22 @@ def test_combine_filter(ant, sphere, uniform, airplane, globe):
     assert isinstance(geom, pyvista.UnstructuredGrid)
 
 
-def test_multi_block_copy():
-    multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(ex.load_globe())
+def test_multi_block_copy(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
     # Now check everything
-    newobj = multi.copy()
-    assert multi.n_blocks == 5 == newobj.n_blocks
-    assert id(multi[0]) != id(newobj[0])
-    assert id(multi[-1]) != id(newobj[-1])
-    for i in range(newobj.n_blocks):
-        assert pyvista.is_pyvista_dataset(newobj.GetBlock(i))
+    multi_copy = multi.copy()
+    assert multi.n_blocks == 5 == multi_copy.n_blocks
+    assert id(multi[0]) != id(multi_copy[0])
+    assert id(multi[-1]) != id(multi_copy[-1])
+    for i in range(multi_copy.n_blocks):
+        assert pyvista.is_pyvista_dataset(multi_copy.GetBlock(i))
     # Now check shallow
-    newobj = multi.copy(deep=False)
-    assert multi.n_blocks == 5 == newobj.n_blocks
-    assert id(multi[0]) == id(newobj[0])
-    assert id(multi[-1]) == id(newobj[-1])
-    for i in range(newobj.n_blocks):
-        assert pyvista.is_pyvista_dataset(newobj.GetBlock(i))
-    return
+    multi_copy = multi.copy(deep=False)
+    assert multi.n_blocks == 5 == multi_copy.n_blocks
+    assert id(multi[0]) == id(multi_copy[0])
+    assert id(multi[-1]) == id(multi_copy[-1])
+    for i in range(multi_copy.n_blocks):
+        assert pyvista.is_pyvista_dataset(multi_copy.GetBlock(i))
 
 
 def test_multi_block_negative_index():
