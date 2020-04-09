@@ -167,6 +167,18 @@ Run all code examples in the docstrings:
 python -m pytest -v --doctest-modules pyvista
 ```
 
+Run documentation testing by running
+```bash
+make
+```
+
+If you are running windows and `make` is unavailable, then run:
+```
+pydocstyle pyvista
+
+codespell pyvista/ examples/ tests/ -S "*.pyc,*.txt,*.gif,*.png,*.jpg,*.ply,*.vtk,*.vti,*.js,*.html,*.doctree,*.ttf,*.woff,*.woff2,*.eot,*.mp4,*.inv,*.pickle,*.ipynb,flycheck*"$(CODESPELL_SKIP) -I "ignore_words.txt"
+```
+
 
 And finally, test the documentation examples:
 
