@@ -92,9 +92,9 @@ def test_multi_block_init_dict(rectilinear, airplane):
     assert isinstance(multi, pyvista.MultiBlock)
     assert multi.n_blocks == 2
     # Note that dictionaries do not maintain order
-    assert type(multi.GetBlock(0) in (pyvista.RectilinearGrid, pyvista.PolyData))
-    assert multi.get_block_name(0) in ['grid', 'poly']
-    assert type(multi.GetBlock(1) in (pyvista.RectilinearGrid, pyvista.PolyData))
+    assert isinstance(multi.GetBlock(0), (pyvista.RectilinearGrid, pyvista.PolyData))
+    assert multi.get_block_name(0) in ['grid','poly']
+    assert isinstance(multi.GetBlock(1), (pyvista.RectilinearGrid, pyvista.PolyData))
     assert multi.get_block_name(1) in ['grid','poly']
 
 
