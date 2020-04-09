@@ -47,9 +47,9 @@ def globe():
     return ex.load_globe()
 
 
-def multi_from_examples(*examples):
-    """Return pyvista multiblock composed of any number of examples."""
-    return pyvista.MultiBlock([*examples])
+def multi_from_datasets(*datasets):
+    """Return pyvista multiblock composed of any number of datasets."""
+    return pyvista.MultiBlock([*datasets])
 
 
 def test_multi_block_init_vtk():
@@ -216,7 +216,7 @@ def test_multi_block_clean(rectilinear, uniform, ant):
 
 
 def test_multi_block_repr(ant, sphere, uniform, airplane):
-    multi = multi_from_examples(ant, sphere, uniform, airplane, None)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
     # Now check everything
     assert multi.n_blocks == 5
     assert multi._repr_html_() is not None
@@ -228,7 +228,7 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
 def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
-    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
     # Now check everything
     assert multi.n_blocks == 5
     # Save it out
@@ -257,8 +257,8 @@ def test_multi_io_erros(tmpdir):
 
 
 def test_extract_geometry(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_examples(ant, sphere, uniform)
-    nested = multi_from_examples(airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform)
+    nested = multi_from_datasets(airplane, globe)
     multi.append(nested)
     # Now check everything
     assert multi.n_blocks == 4
@@ -268,8 +268,8 @@ def test_extract_geometry(ant, sphere, uniform, airplane, globe):
 
 
 def test_combine_filter(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_examples(ant, sphere, uniform)
-    nested = multi_from_examples(airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform)
+    nested = multi_from_datasets(airplane, globe)
     multi.append(nested)
     # Now check everything
     assert multi.n_blocks == 4
@@ -279,7 +279,7 @@ def test_combine_filter(ant, sphere, uniform, airplane, globe):
 
 
 def test_multi_block_copy(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
     # Now check everything
     multi_copy = multi.copy()
     assert multi.n_blocks == 5 == multi_copy.n_blocks
@@ -297,7 +297,7 @@ def test_multi_block_copy(ant, sphere, uniform, airplane, globe):
 
 
 def test_multi_block_negative_index(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
     # Now check everything
     assert id(multi[-1]) == id(multi[4])
     assert id(multi[-2]) == id(multi[3])
@@ -309,7 +309,7 @@ def test_multi_block_negative_index(ant, sphere, uniform, airplane, globe):
 
 
 def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
     # Now check everything
     sub = multi[0:3]
     assert len(sub) == 3
@@ -330,7 +330,7 @@ def test_multi_slice_index(ant, sphere, uniform, airplane, globe):
 
 
 def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
-    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
     # Now check everything
     indices = [0, 3, 4]
     sub = multi[indices]
@@ -350,10 +350,10 @@ def test_multi_block_list_index(ant, sphere, uniform, airplane, globe):
 
 
 def test_multi_block_volume(ant, airplane, sphere, uniform):
-    multi = multi_from_examples(ant, sphere, uniform, airplane, None)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
     assert multi.volume
 
 
 def test_multi_block_length(ant, sphere, uniform, airplane):
-    multi = multi_from_examples(ant, sphere, uniform, airplane, None)
+    multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
     assert multi.length
