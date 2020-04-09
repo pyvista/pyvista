@@ -183,8 +183,8 @@ def test_mutli_block_clean():
     multi[1, 'rect'] = ex.load_rectilinear()
     multi[2, 'empty'] = pyvista.PolyData()
     multi[3, 'mempty'] = pyvista.MultiBlock()
-    multi[5, 'uni'] = ex.load_uniform()
-    # perfromt he clean to remove all Null elements
+    multi[5, 'uni'] = uniform
+    # perform the clean to remove all Null elements
     multi.clean()
     assert multi.n_blocks == 2
     assert multi.GetNumberOfBlocks() == 2
