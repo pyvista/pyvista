@@ -4,7 +4,7 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
-from pyvista import PolyData, RectilinearGrid, UniformGrid
+from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
 
 
 @pytest.fixture()
