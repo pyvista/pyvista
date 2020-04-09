@@ -12,6 +12,13 @@ trigger:
     include:
     - '*'
 
+pr:
+  branches:
+    include:
+    - '*'
+    exclude:
+    - '*no-ci*'
+
 jobs:
 
 # DESCRIPTION: Quickly check the spelling and documentation style
