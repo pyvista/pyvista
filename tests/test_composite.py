@@ -394,14 +394,8 @@ def test_multi_block_list_index():
     assert isinstance(sub["foo"], pyvista.PolyData)
 
 
-def test_multi_block_volume():
-    multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(None)
+def test_multi_block_volume(ant, airplane, sphere, uniform):
+    multi = multi_from_examples(ant, sphere, uniform, airplane, None)
     assert multi.volume
 
 
