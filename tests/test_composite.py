@@ -6,6 +6,36 @@ import pyvista
 from pyvista import examples as ex
 
 
+@pytest.fixture()
+def multi():
+    return vtk.vtkMultiBlockDataSet()
+
+
+@pytest.fixture()
+def airplane():
+    return ex.load_airplane()
+
+
+@pytest.fixture()
+def rectilinear():
+    return ex.load_rectilinear()
+
+
+@pytest.fixture()
+def sphere():
+    return ex.load_sphere()
+
+
+@pytest.fixture()
+def uniform():
+    return ex.load_uniform()
+
+
+@pytest.fixture()
+def ant():
+    return ex.load_ant()
+
+
 def test_multi_block_init_vtk():
     multi = vtk.vtkMultiBlockDataSet()
     multi.SetBlock(0, vtk.vtkRectilinearGrid())
