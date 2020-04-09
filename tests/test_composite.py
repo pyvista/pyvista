@@ -7,6 +7,46 @@ from pyvista import examples as ex
 from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
 
 
+@pytest.fixture()
+def vtk_multi():
+    return vtk.vtkMultiBlockDataSet()
+
+
+@pytest.fixture()
+def pyvista_multi():
+    return pyvista.MultiBlock
+
+
+@pytest.fixture()
+def airplane():
+    return ex.load_airplane()
+
+
+@pytest.fixture()
+def rectilinear():
+    return ex.load_rectilinear()
+
+
+@pytest.fixture()
+def sphere():
+    return ex.load_sphere()
+
+
+@pytest.fixture()
+def uniform():
+    return ex.load_uniform()
+
+
+@pytest.fixture()
+def ant():
+    return ex.load_ant()
+
+
+@pytest.fixture()
+def globe():
+    return ex.load_globe()
+
+
 def multi_from_datasets(*datasets):
     """Return pyvista multiblock composed of any number of datasets."""
     return MultiBlock([*datasets])
