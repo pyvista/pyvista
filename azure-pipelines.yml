@@ -353,5 +353,3 @@ jobs:
     env:
       GH_TOKEN: $(gh.token)
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
-
-  condition: not(contains(variables['Build.SourceBranchName'], 'no-ci')
