@@ -140,7 +140,17 @@ following the steps in the
 [Creating a New Pull Request section](#creating-a-new-pull-request).
 
 
+#### Coding Style
 
+We adhere to [PEP 8](https://www.python.org/dev/peps/pep-0008/)
+wherever possible, except that line widths are permitted to go beyond
+79 characters to a max of 90 to 100 characters.
+
+Outside of PEP 8, when coding please consider [PEP 20 -- The Zen of Python](https://www.python.org/dev/peps/pep-0020/).  When in doubt:
+
+```python
+import this
+```
 
 #### Branch Naming Conventions
 
