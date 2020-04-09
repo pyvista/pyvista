@@ -296,14 +296,8 @@ def test_multi_block_copy(ant, sphere, uniform, airplane, globe):
         assert pyvista.is_pyvista_dataset(multi_copy.GetBlock(i))
 
 
-def test_multi_block_negative_index():
-    multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(ex.load_globe())
+def test_multi_block_negative_index(ant, sphere, uniform, airplane, globe):
+    multi = multi_from_examples(ant, sphere, uniform, airplane, globe)
     # Now check everything
     assert id(multi[-1]) == id(multi[4])
     assert id(multi[-2]) == id(multi[3])
@@ -312,7 +306,6 @@ def test_multi_block_negative_index():
     assert id(multi[-5]) == id(multi[0])
     with pytest.raises(IndexError):
         _ = multi[-6]
-    return
 
 
 def test_multi_slice_index():
