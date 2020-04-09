@@ -619,4 +619,6 @@ def test_find_closest_point():
 
 
 def test_setting_points_from_self(grid):
-    assert np.allclose(grid.points, grid.points)
+    grid_copy = grid.copy()
+    grid.points = grid_copy.points
+    assert np.allclose(grid.points, grid_copy.points)
