@@ -109,15 +109,15 @@ def test_multi_block_init_list(rectilinear, airplane):
     assert isinstance(multi.GetBlock(1), pyvista.PolyData)
 
 
-def test_multi_block_append():
+def test_multi_block_append(ant, sphere, uniform, airplane, rectilinear):
     """This puts all of the example data objects into a a MultiBlock container"""
     multi = pyvista.MultiBlock()
     # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(ex.load_rectilinear())
+    multi.append(ant)
+    multi.append(sphere)
+    multi.append(uniform)
+    multi.append(airplane)
+    multi.append(rectilinear)
     # Now check everything
     assert multi.n_blocks == 5
     assert multi.bounds is not None
