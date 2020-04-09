@@ -2,21 +2,16 @@ variables:
   ALLOW_PLOTTING: true
   SHELLOPTS: 'errexit:pipefail'
 
+
 trigger:
   branches:
-    exclude:
+    include:
     - '*'
-
-
-# trigger:
-#   branches:
-#     # include:
-#     - '*'
-#     exclude:
-#     - '*no-ci*'
-#   tags:
-#     include:
-#     - '*'
+    exclude:
+    - '*no-ci*'
+  tags:
+    include:
+    - '*'
 
 jobs:
 
