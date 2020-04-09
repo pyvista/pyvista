@@ -36,6 +36,11 @@ def ant():
     return ex.load_ant()
 
 
+def multi_from_examples(*examples):
+    """Return pyvista multiblock composed of any number of examples."""
+    return pyvista.MultiBlock([*examples])
+
+
 def test_multi_block_init_vtk():
     multi = vtk.vtkMultiBlockDataSet()
     multi.SetBlock(0, vtk.vtkRectilinearGrid())
