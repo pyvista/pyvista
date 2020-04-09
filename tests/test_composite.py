@@ -179,7 +179,7 @@ def test_multi_block_set_get_ers():
 def test_multi_block_clean(rectilinear, uniform, ant):
     # now test a clean of the null values
     multi = pyvista.MultiBlock()
-    multi[1, 'rect'] = ex.load_rectilinear()
+    multi[1, 'rect'] = rectilinear
     multi[2, 'empty'] = pyvista.PolyData()
     multi[3, 'mempty'] = pyvista.MultiBlock()
     multi[5, 'uni'] = uniform
@@ -193,10 +193,10 @@ def test_multi_block_clean(rectilinear, uniform, ant):
     assert multi.get_block_name(1) == 'uni'
     # Test a nested data struct
     foo = pyvista.MultiBlock()
-    foo[3] = ex.load_ant()
+    foo[3] = ant
     assert foo.n_blocks == 4
     multi = pyvista.MultiBlock()
-    multi[1, 'rect'] = ex.load_rectilinear()
+    multi[1, 'rect'] = rectilinear
     multi[5, 'multi'] = foo
     # perform the clean to remove all Null elements
     assert multi.n_blocks == 6
