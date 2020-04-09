@@ -210,14 +210,8 @@ def test_multi_block_clean(rectilinear, uniform, ant):
     assert foo.n_blocks == 1
 
 
-def test_multi_block_repr():
-    multi = pyvista.MultiBlock()
-    # Add examples
-    multi.append(ex.load_ant())
-    multi.append(ex.load_sphere())
-    multi.append(ex.load_uniform())
-    multi.append(ex.load_airplane())
-    multi.append(None)
+def test_multi_block_repr(ant, sphere, uniform, airplane):
+    multi = multi_from_examples(ant, sphere, uniform, airplane, None)
     # Now check everything
     assert multi.n_blocks == 5
     assert multi._repr_html_() is not None
