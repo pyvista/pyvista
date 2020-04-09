@@ -2,16 +2,19 @@
 Displaying eigenmodes of vibration using ``warp_by_vector``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example applies the ``warp_by_vector`` filter to a cube whose eigenmodes have been computed
-using the Ritz method, as outlined in Visscher, William M., Albert Migliori, Thomas M. Bell, et Robert A. Reinert.
-« On the normal modes of free vibration of inhomogeneous and anisotropic elastic objects ». The Journal
-of the Acoustical Society of America 90, nᵒ 4 (1 octobre 1991): 2154‑62. https://doi.org/10.1121/1.401643.
+This example applies the ``warp_by_vector`` filter to a cube whose eigenmodes
+have been computed using the Ritz method, as outlined in Visscher, William M.,
+Albert Migliori, Thomas M. Bell, et Robert A. Reinert. « On the normal modes
+of free vibration of inhomogeneous and anisotropic elastic objects ». The
+Journal of the Acoustical Society of America 90, nᵒ 4 (october 1991): 2154‑62.
+https://doi.org/10.1121/1.401643.
 
 """
 
 ###############################################################################
 # First, let's solve the eigenvalue problem for a vibrating cube. We use
-# a crude approximation (by choosing a low max polynomial order) to get a fast computation.
+# a crude approximation (by choosing a low max polynomial order) to get a fast
+# computation.
 import numpy as np
 from scipy.linalg import eigh
 import pyvista as pv
@@ -66,10 +69,13 @@ def make_cijkl_E_nu(E=200, nu=0.3):
 
 
 def get_first_N_above_thresh(N, freqs, thresh, decimals=3):
-    """Returns first N unique frequencies with amplitude above threshold based on first decimals."""
-    unique_freqs, unique_indices = np.unique(np.round(freqs, decimals=decimals), return_index=True)
+    """Returns first N unique frequencies with amplitude above threshold based
+    on first decimals."""
+    unique_freqs, unique_indices = np.unique(
+        np.round(freqs, decimals=decimals), return_index=True)
     nonzero = unique_freqs > thresh
-    unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[nonzero]
+    unique_freqs, unique_indices = unique_freqs[nonzero], unique_indices[
+        nonzero]
     return unique_freqs[:N], unique_indices[:N]
 
 
@@ -78,7 +84,8 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
     It first builds an index of basis functions as a quadruplet of
     component and polynomial order for (x^p, y^q, z^r) of maximum order N.
 
-    This routine only builds the symmetric part of the matrix to speed things up.
+    This routine only builds the symmetric part of the matrix to speed
+    things up.
     """
     # building coordinates
     triplets = []
@@ -103,25 +110,36 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
         for index2, quad2 in enumerate(quadruplets[index1:]):
             index2 = index2 + index1
             J, p2, q2, r2 = quad2
-            G[index1, index2] = cijkl[I, 1 - 1, J, 1 - 1] * p1 * p2 * F(p1 + p2 - 2, q1 + q2, r1 + r2, **geom_params) + \
-                                cijkl[I, 1 - 1, J, 2 - 1] * p1 * q2 * F(p1 + p2 - 1, q1 + q2 - 1, r1 + r2,
-                                                                        **geom_params) + \
-                                cijkl[I, 1 - 1, J, 3 - 1] * p1 * r2 * F(p1 + p2 - 1, q1 + q2, r1 + r2 - 1,
-                                                                        **geom_params) + \
-                                cijkl[I, 2 - 1, J, 1 - 1] * q1 * p2 * F(p1 + p2 - 1, q1 + q2 - 1, r1 + r2,
-                                                                        **geom_params) + \
-                                cijkl[I, 2 - 1, J, 2 - 1] * q1 * q2 * F(p1 + p2, q1 + q2 - 2, r1 + r2, **geom_params) + \
-                                cijkl[I, 2 - 1, J, 3 - 1] * q1 * r2 * F(p1 + p2, q1 + q2 - 1, r1 + r2 - 1,
-                                                                        **geom_params) + \
-                                cijkl[I, 3 - 1, J, 1 - 1] * r1 * p2 * F(p1 + p2 - 1, q1 + q2, r1 + r2 - 1,
-                                                                        **geom_params) + \
-                                cijkl[I, 3 - 1, J, 2 - 1] * r1 * q2 * F(p1 + p2, q1 + q2 - 1, r1 + r2 - 1,
-                                                                        **geom_params) + \
-                                cijkl[I, 3 - 1, J, 3 - 1] * r1 * r2 * F(p1 + p2, q1 + q2, r1 + r2 - 2, **geom_params)
-            G[index2, index1] = G[index1, index2]  # since stiffness matrix is symmetric
+            G[index1, index2] = cijkl[I, 1 - 1, J, 1 - 1] * p1 * p2 * F(
+                p1 + p2 - 2, q1 + q2, r1 + r2, **geom_params) + \
+                                cijkl[I, 1 - 1, J, 2 - 1] * p1 * q2 * F(
+                p1 + p2 - 1, q1 + q2 - 1, r1 + r2,
+                **geom_params) + \
+                                cijkl[I, 1 - 1, J, 3 - 1] * p1 * r2 * F(
+                p1 + p2 - 1, q1 + q2, r1 + r2 - 1,
+                **geom_params) + \
+                                cijkl[I, 2 - 1, J, 1 - 1] * q1 * p2 * F(
+                p1 + p2 - 1, q1 + q2 - 1, r1 + r2,
+                **geom_params) + \
+                                cijkl[I, 2 - 1, J, 2 - 1] * q1 * q2 * F(
+                p1 + p2, q1 + q2 - 2, r1 + r2, **geom_params) + \
+                                cijkl[I, 2 - 1, J, 3 - 1] * q1 * r2 * F(
+                p1 + p2, q1 + q2 - 1, r1 + r2 - 1,
+                **geom_params) + \
+                                cijkl[I, 3 - 1, J, 1 - 1] * r1 * p2 * F(
+                p1 + p2 - 1, q1 + q2, r1 + r2 - 1,
+                **geom_params) + \
+                                cijkl[I, 3 - 1, J, 2 - 1] * r1 * q2 * F(
+                p1 + p2, q1 + q2 - 1, r1 + r2 - 1,
+                **geom_params) + \
+                                cijkl[I, 3 - 1, J, 3 - 1] * r1 * r2 * F(
+                p1 + p2, q1 + q2, r1 + r2 - 2, **geom_params)
+            G[index2, index1] = G[
+                index1, index2]  # since stiffness matrix is symmetric
             if I == J:
                 E[index1, index2] = F(p1 + p2, q1 + q2, r1 + r2, **geom_params)
-                E[index2, index1] = E[index1, index2]  # since mass matrix is symmetric
+                E[index2, index1] = E[
+                    index1, index2]  # since mass matrix is symmetric
     return E, G, quadruplets
 
 
@@ -130,19 +148,27 @@ rho = 8.0  # g/cm^3
 l1, l2, l3 = .2, .2, .2  # all in cm
 geometry_parameters = {'a': l1 / 2., 'b': l2 / 2., 'c': l3 / 2.}
 cijkl, cij = make_cijkl_E_nu(200, 0.3)  # Gpa, without unit
-E, G, quadruplets = assemble_mass_and_stiffness(N, analytical_integral_rppd, geometry_parameters, cijkl)
+E, G, quadruplets = assemble_mass_and_stiffness(N, analytical_integral_rppd,
+                                                geometry_parameters, cijkl)
 
 # solving the eigenvalue problem using symmetric solver
 w, vr = eigh(a=G, b=E)
 omegas = np.sqrt(np.abs(w) / rho) * 1e5  # convert back to Hz
 freqs = omegas / (2 * np.pi)
-# expected values from (Bernard 2014, p.14), error depends on polynomial order ``N``
-expected_freqs_kHz = np.array([704.8, 949., 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])
-computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3, thresh=1, decimals=1)
+# expected values from (Bernard 2014, p.14),
+# error depends on polynomial order ``N``
+expected_freqs_kHz = np.array(
+    [704.8, 949., 965.2, 1096.3, 1128.4, 1182.8, 1338.9, 1360.9])
+computed_freqs_kHz, mode_indices = get_first_N_above_thresh(8, freqs / 1e3,
+                                                            thresh=1,
+                                                            decimals=1)
 print('found the following first unique eigenfrequencies:')
-for ind, (freq1, freq2) in enumerate(zip(computed_freqs_kHz, expected_freqs_kHz)):
+for ind, (freq1, freq2) in enumerate(
+        zip(computed_freqs_kHz, expected_freqs_kHz)):
     error = np.abs(freq2 - freq1) / freq1 * 100.
-    print(f"freq. {ind + 1:1}: {freq1:8.1f} kHz, expected: {freq2:8.1f} kHz, error: {error:.2f} %")
+    print(
+        f"freq. {ind + 1:1}: {freq1:8.1f} kHz," + \
+        f" expected: {freq2:8.1f} kHz, error: {error:.2f} %")
 
 ###############################################################################
 # Now, let's display a mode on a mesh of the cube.
@@ -196,6 +222,9 @@ for i in range(2):
         p.subplot(i, j)
         current_index = 4 * i + j
         vector = f"eigenmode_{current_index:02}"
-        p.add_text(f"mode {current_index}, freq. {computed_freqs_kHz[current_index]:.1f} kHz", font_size=10)
+        p.add_text(
+            f"mode {current_index}," + \
+            f" freq. {computed_freqs_kHz[current_index]:.1f} kHz",
+            font_size=10)
         p.add_mesh(vol.warp_by_vector(vector, factor=0.03), scalars=vector)
 p.show()

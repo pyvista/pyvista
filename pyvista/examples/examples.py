@@ -257,7 +257,7 @@ def load_random_hills():
 
 
 def load_sphere_vectors():
-    """Create example sphere with a swirly vector field defined on nodesg."""
+    """Create example sphere with a swirly vector field defined on nodes."""
     sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern

@@ -2,8 +2,8 @@
 Warping a mesh using ``warp_by_vector``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This example applies the ``warp_by_vector`` filter to a sphere mesh that has 3D displacement vectors defined
-at each node.
+This example applies the ``warp_by_vector`` filter to a sphere mesh that has
+3D displacement vectors defined at each node.
 """
 
 ###############################################################################
@@ -22,8 +22,9 @@ p.add_mesh(warped, color='white')
 p.show()
 
 ###############################################################################
-# We then use several values for the scale factor applied to the warp operation.
-# Applying a warping factor that is too high can often lead to unrealistic results.
+# We then use several values for the scale factor applied to the warp
+# operation. Applying a warping factor that is too high can often lead to
+# unrealistic results.
 
 warp_factors = [0, 1.5, 3.5, 5.5]
 p = pv.Plotter(shape=(2, 2))
