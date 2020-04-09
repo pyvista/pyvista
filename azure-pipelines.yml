@@ -33,7 +33,7 @@ jobs:
       pip install codespell pydocstyle
       make doctest
     displayName: 'Run doctest'
-
+  condition: not(contains(variables['Build.SourceBranchName'], 'no-ci')
 
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
@@ -352,3 +352,5 @@ jobs:
     env:
       GH_TOKEN: $(gh.token)
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  condition: not(contains(variables['Build.SourceBranchName'], 'no-ci')
