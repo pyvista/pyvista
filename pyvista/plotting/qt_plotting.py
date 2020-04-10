@@ -642,6 +642,9 @@ class BackgroundPlotter(QtInteractor):
     allow_quit_keypress : bool, optional
         Allow user to exit by pressing ``"q"``.
 
+    menu_bar: bool, optional
+        Display the default main menu. Defaults to True.
+
     title : str, optional
         Title of plotting window.
 
@@ -675,10 +678,14 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, window_size=None,
-                 off_screen=None, allow_quit_keypress=True, **kwargs):
+                 off_screen=None, allow_quit_keypress=True,
+                 menu_bar=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
+        if not isinstance(menu_bar, bool):
+            raise TypeError("Expected type for ``menu_bar`` is bool"
+                            " but {} was given.".format(type(menu_bar)))
         self.active = True
         self.counters = []
         self.allow_quit_keypress = allow_quit_keypress
@@ -718,7 +725,8 @@ class BackgroundPlotter(QtInteractor):
                                                 **kwargs)
         self.app_window.signal_close.connect(self._close)
         self.add_toolbars(self.app_window)
-        self.add_menu_bar(self.app_window)
+        if menu_bar:
+            self.add_menu_bar(self.app_window)
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self.interactor)
