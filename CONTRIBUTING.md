@@ -262,14 +262,14 @@ branching model are:
   for past versions of `pyvista` without having to worry about
   untested features.
 - When a minor release candidate is ready, a new `release` branch will
-  be created from `master` with the next incremented
-  minor version (e.g. `release/0.25.0`), which will be thoroughly
-  tested.  When deemed stable, the release branch will be tagged with
-  the version (`0.25.0` in this case), and if necessary merged with
-  master if any changes were pushed to it.  Feature development then
-  continues on `master` and any hotfixes will now be merged with this
-  release.  Older release branches should not be deleted so they can
-  be patched as needed.
+  be created from `master` with the next incremented minor version
+  (e.g. `release/0.25`), which will be thoroughly tested.  When deemed
+  stable, the release branch will be tagged with the version (`0.25.0`
+  in this case), and if necessary merged with master if any changes
+  were pushed to it.  Feature development then continues on `master`
+  and any hotfixes will now be merged with this release.  Older
+  release branches should not be deleted so they can be patched as
+  needed.
 
 
 #### Minor Release Steps
