@@ -222,11 +222,10 @@ The finished documentation can be found in the `docs/_build/html` directory.
 
 #### Creating a New Pull Request
 
-Once you have tested your branch locally, push your branch to (pyvista
-GitHub)[https://github.com/pyvista/pyvista] and create a pull request
-while merging to master.  This will automatically run continious
-integration (CI) testing and verify your changes will work across
-several platforms.
+Once you have tested your branch locally, create a pull request on
+(pyvista GitHub)[https://github.com/pyvista/pyvista] while merging to
+master.  This will automatically run continious integration (CI)
+testing and verify your changes will work across several platforms.
 
 To ensure someone else reviews your code, at least one other member of
 the pyvista contributors group must review and verify your code meets
@@ -242,11 +241,10 @@ is a `fix/` branch.
 
 ### Branching Model
 
-This project follows a modified
-[gitflow](https://datasift.github.io/gitflow/IntroducingGitFlow.html)
-branching model.  The purpose of this is to enable rapid development
-of features without sacrificing stability.  These are the main
-features:
+This project has a branching model that enables rapid development of
+features without sacrificing stability.  The main features of our
+branching model are:
+
 
 - The `master` branch is the main development branch.  All features,
   patches, and other branches should be merged here.  While all PRs
@@ -270,7 +268,8 @@ features:
   the version (`0.25.0` in this case), and if necessary merged with
   master if any changes were pushed to it.  Feature development then
   continues on `master` and any hotfixes will now be merged with this
-  release.  Older release branches may be deleted when needed.
+  release.  Older release branches should not be deleted so they can
+  be patched as needed.
 
 
 #### Minor Release Steps
