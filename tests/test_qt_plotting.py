@@ -325,13 +325,28 @@ def test_background_plotting_orbit(qtbot):
 def test_background_plotting_toolbar(qtbot):
     with pytest.raises(TypeError, match='toolbar'):
         pyvista.BackgroundPlotter(off_screen=False, toolbar="foo")
-    plotter = pyvista.BackgroundPlotter(off_screen=False)
-    assert _hasattr(plotter, "default_camera_tool_bar", QToolBar)
-    assert _hasattr(plotter, "saved_cameras_tool_bar", QToolBar)
-    plotter.close()
+
     plotter = pyvista.BackgroundPlotter(off_screen=False, toolbar=False)
     assert not hasattr(plotter, "default_camera_tool_bar")
     assert not hasattr(plotter, "saved_cameras_tool_bar")
+    plotter.close()
+
+    plotter = pyvista.BackgroundPlotter(off_screen=False)
+
+    assert _hasattr(plotter, "app_window", MainWindow)
+    assert _hasattr(plotter, "default_camera_tool_bar", QToolBar)
+    assert _hasattr(plotter, "saved_cameras_tool_bar", QToolBar)
+
+    window = plotter.app_window
+    default_camera_tool_bar = plotter.default_camera_tool_bar
+    saved_cameras_tool_bar = plotter.saved_cameras_tool_bar
+
+    with qtbot.wait_exposed(window, timeout=500):
+        window.show()
+
+    assert default_camera_tool_bar.isVisible()
+    assert saved_cameras_tool_bar.isVisible()
+
     plotter.close()
 
 
