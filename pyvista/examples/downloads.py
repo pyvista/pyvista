@@ -615,3 +615,7 @@ def download_room_surface_mesh():
     This mesh is courtesy of `Sam Potter <https://github.com/sampotter>`_.
     """
     return _download_and_read("room_surface_mesh.obj")
+
+def download_beach():
+    """Download the beach NRRD image."""
+    return _download_and_read("beach.nrrd")
