@@ -540,6 +540,47 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         return
 
+    def add_menu_bar(self, main_window):
+        """Add the main menu bar."""
+        self.main_menu = _create_menu_bar(parent=self.app_window)
+        self.app_window.signal_close.connect(self.main_menu.clear)
+
+        file_menu = self.main_menu.addMenu('File')
+        file_menu.addAction('Take Screenshot', self._qt_screenshot)
+        file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
+        file_menu.addSeparator()
+        # member variable for testing only
+        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
+
+        view_menu = self.main_menu.addMenu('View')
+        view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
+        view_menu.addAction('Scale Axes', self.scale_axes_dialog)
+        view_menu.addAction('Clear All', self.clear)
+
+        tool_menu = self.main_menu.addMenu('Tools')
+        tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
+        tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
+
+        cam_menu = view_menu.addMenu('Camera')
+        cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
+
+        view_menu.addSeparator()
+        # Orientation marker
+        orien_menu = view_menu.addMenu('Orientation Marker')
+        orien_menu.addAction('Show All', self.show_axes_all)
+        orien_menu.addAction('Hide All', self.hide_axes_all)
+        # Bounds axes
+        axes_menu = view_menu.addMenu('Bounds Axes')
+        axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)
+        axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
+        axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
+        axes_menu.addSeparator()
+        axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
+        axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
+
+        # A final separator to separate OS options
+        view_menu.addSeparator()
+
     def save_camera_position(self):
         """Save camera position to saved camera menu for recall."""
         self.saved_camera_positions.append(self.camera_position)
@@ -677,46 +718,7 @@ class BackgroundPlotter(QtInteractor):
                                                 **kwargs)
         self.app_window.signal_close.connect(self._close)
         self.add_toolbars(self.app_window)
-
-        # build main menu
-        self.main_menu = _create_menu_bar(parent=self.app_window)
-        self.app_window.signal_close.connect(self.main_menu.clear)
-
-        file_menu = self.main_menu.addMenu('File')
-        file_menu.addAction('Take Screenshot', self._qt_screenshot)
-        file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
-        file_menu.addSeparator()
-        # member variable for testing only
-        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
-
-        view_menu = self.main_menu.addMenu('View')
-        view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
-        view_menu.addAction('Scale Axes', self.scale_axes_dialog)
-        view_menu.addAction('Clear All', self.clear)
-
-        tool_menu = self.main_menu.addMenu('Tools')
-        tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
-        tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
-
-        cam_menu = view_menu.addMenu('Camera')
-        cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
-
-        view_menu.addSeparator()
-        # Orientation marker
-        orien_menu = view_menu.addMenu('Orientation Marker')
-        orien_menu.addAction('Show All', self.show_axes_all)
-        orien_menu.addAction('Hide All', self.hide_axes_all)
-        # Bounds axes
-        axes_menu = view_menu.addMenu('Bounds Axes')
-        axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)
-        axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
-        axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
-        axes_menu.addSeparator()
-        axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
-        axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
-
-        # A final separator to separate OS options
-        view_menu.addSeparator()
+        self.add_menu_bar(self.app_window)
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self.interactor)
