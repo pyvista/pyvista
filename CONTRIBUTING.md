@@ -229,14 +229,14 @@ integration (CI) testing and verify your changes will work across
 several platforms.
 
 To ensure someone else reviews your code, at least one other member of
-the pyvista contributiors group must review and verify your code meets
+the pyvista contributors group must review and verify your code meets
 our community's standards.  Once approved, if you have write
 permission you may merge the branch.  If you don't have write
 permission, the reviewer or someone else with write permission will
-merge the branch and close out the PR.
+merge the branch and delete the PR branch.
 
 Since it may be necessary to merge your branch with the current
-release branch (see below), please do not close out your branch if it
+release branch (see below), please do not delete your branch if it
 is a `fix/` branch.
 
 
@@ -263,9 +263,9 @@ features:
   triggers CI to push to PyPi, and allow us to rapidly push hotfixes
   for past versions of `pyvista` without having to worry about
   untested features.
-- When a minor release canidate is ready, a new `release` branch will
-  be created from `master` will be created with the next incremented
-  minor version (e.g. `release/0.25.0`), which will be throughly
+- When a minor release candidate is ready, a new `release` branch will
+  be created from `master` with the next incremented
+  minor version (e.g. `release/0.25.0`), which will be thoroughly
   tested.  When deemed stable, the release branch will be tagged with
   the version (`0.25.0` in this case), and if necessary merged with
   master if any changes were pushed to it.  Feature development then
@@ -282,7 +282,7 @@ created the following will occur:
 1.  Create a new branch from the `master` branch with name
     `release/MAJOR.MINOR` (e.g. `release/0.25`).
 
-2. Locally verify run all tests as outlined in the [Testing Section](#testing) 
+2. Locally run all tests as outlined in the [Testing Section](#testing) 
 and ensure all are passing.
 
 3. Locally test and build the documentation with link checking to make sure
