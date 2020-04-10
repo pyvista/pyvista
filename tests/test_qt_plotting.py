@@ -323,6 +323,18 @@ def test_background_plotting_orbit(qtbot):
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting_menu_bar(qtbot):
+    with pytest.raises(TypeError, match='menu_bar'):
+        pyvista.BackgroundPlotter(off_screen=False, menu_bar="foo")
+
+    plotter = pyvista.BackgroundPlotter(off_screen=False, menu_bar=False)
+    assert not hasattr(plotter, "main_menu")
+    assert not hasattr(plotter, "_menu_close_action")
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_add_callback(qtbot):
     class CallBack(object):
         def __init__(self, sphere):
