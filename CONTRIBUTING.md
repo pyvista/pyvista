@@ -224,7 +224,7 @@ The finished documentation can be found in the `docs/_build/html` directory.
 
 Once you have tested your branch locally, create a pull request on
 (pyvista GitHub)[https://github.com/pyvista/pyvista] while merging to
-master.  This will automatically run continious integration (CI)
+master.  This will automatically run continuous integration (CI)
 testing and verify your changes will work across several platforms.
 
 To ensure someone else reviews your code, at least one other member of
