@@ -601,6 +601,9 @@ class BackgroundPlotter(QtInteractor):
     allow_quit_keypress : bool, optional
         Allow user to exit by pressing ``"q"``.
 
+    toolbar : bool, optional
+       Display the default camera toolbar. Defaults to True.
+
     title : str, optional
         Title of plotting window.
 
@@ -639,6 +642,9 @@ class BackgroundPlotter(QtInteractor):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
+        if not isinstance(toolbar, bool):
+            raise TypeError("Expected type for ``toolbar`` is bool"
+                            " but {} was given.".format(type(toolbar)))
         self.active = True
         self.counters = []
         self.allow_quit_keypress = allow_quit_keypress

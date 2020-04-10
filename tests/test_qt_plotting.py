@@ -323,6 +323,8 @@ def test_background_plotting_orbit(qtbot):
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
 def test_background_plotting_toolbar(qtbot):
+    with pytest.raises(TypeError, match='toolbar'):
+        pyvista.BackgroundPlotter(off_screen=False, toolbar="foo")
     plotter = pyvista.BackgroundPlotter(off_screen=False)
     assert _hasattr(plotter, "default_camera_tool_bar", QToolBar)
     assert _hasattr(plotter, "saved_cameras_tool_bar", QToolBar)
