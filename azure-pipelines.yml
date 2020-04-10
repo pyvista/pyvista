@@ -6,9 +6,18 @@ trigger:
   branches:
     include:
     - '*'
+    exclude:
+    - '*no-ci*'
   tags:
     include:
     - '*'
+
+pr:
+  branches:
+    include:
+    - '*'
+    exclude:
+    - '*no-ci*'
 
 jobs:
 

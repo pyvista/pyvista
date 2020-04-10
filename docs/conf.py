@@ -5,6 +5,11 @@ if sys.version_info >= (3, 0):
     import faulthandler
     faulthandler.enable()
 
+sys.path.insert(0, os.path.abspath('.'))
+import make_external_gallery
+make_external_gallery.make_example_gallery()
+
+
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
 import numpy as np
