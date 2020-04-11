@@ -152,7 +152,7 @@ def test_transform_errors(grid):
 
 @settings(max_examples=8)
 @given(axis_amounts=n_numbers(3))
-def test_translate(axis_amounts, grid):
+def test_translate_should_translate_grid(axis_amounts, grid):
     grid_copy = grid.copy()
     grid_copy.translate(axis_amounts)
 
