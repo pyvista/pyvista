@@ -158,7 +158,7 @@ class TestTransform:
 class TestTranslate:
     @settings(max_examples=20)
     @given(axis_amounts=n_numbers(3))
-    def test_should_translate_grid(axis_amounts, grid):
+    def test_should_translate_grid(self, axis_amounts, grid):
         grid_copy = grid.copy()
         grid_copy.translate(axis_amounts)
 
@@ -170,7 +170,7 @@ class TestRotate:
     @settings(max_examples=50)
     @given(angle=one_of(floats(), integers()))
     @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
-    def test_should_match_vtk_rotation(angle, axis, grid):
+    def test_should_match_vtk_rotation(self, angle, axis, grid):
         trans = vtk.vtkTransform()
         getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
         trans.Update()
