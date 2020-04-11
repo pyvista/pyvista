@@ -150,7 +150,7 @@ def test_translate(grid):
     assert np.allclose(grid_copy.points, grid_points)
 
 
-@settings(max_examples=20)
+@settings(max_examples=5)
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
 def test_rotate(angle, axis, grid):
