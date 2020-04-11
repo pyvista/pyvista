@@ -150,13 +150,13 @@ def test_transform_errors(grid):
         grid.transform(np.array([1]))
 
 
-@given(one_of(floats(allow_infinity=False, allow_nan=False), integers()))
-def test_translate(grid):
+@settings(max_examples=8)
+@given(axis_amounts=n_numbers(3))
+def test_translate(axis_amounts, grid):
     grid_copy = grid.copy()
-    xyz = [1, 1, 1]
-    grid_copy.translate(xyz)
+    grid_copy.translate(axis_amounts)
 
-    grid_points = grid.points.copy() + np.array(xyz)
+    grid_points = grid.points.copy() + np.array(axis_amounts)
     assert np.allclose(grid_copy.points, grid_points)
 
 
