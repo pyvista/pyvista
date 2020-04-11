@@ -142,7 +142,7 @@ class TestTransform:
         assert np.allclose(grid_a.points, grid_b.points)
         assert np.allclose(grid_a.points, grid_c.points)
 
-    def test_transform_errors(self, grid):
+    def test_should_fail_if_given_none(self, grid):
         with pytest.raises(TypeError):
             grid.transform(None)
 
