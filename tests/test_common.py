@@ -1,5 +1,5 @@
 from hypothesis import given, settings
-from hypothesis.strategies import integers, floats, one_of
+from hypothesis.strategies import composite, integers, floats, one_of
 import numpy as np
 import pytest
 import vtk
@@ -12,6 +12,15 @@ from pyvista import examples
 @pytest.fixture()
 def grid():
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
+
+
+@composite
+def n_numbers(draw, n):
+    numbers = []
+    for _ in range(n):
+        number = draw(one_of(floats(allow_infinity=False, allow_nan=False), integers()))
+        numbers.append(number)
+    return numbers
 
 
 def test_point_arrays(grid):
@@ -141,6 +150,7 @@ def test_transform_errors(grid):
         grid.transform(np.array([1]))
 
 
+@given(one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 def test_translate(grid):
     grid_copy = grid.copy()
     xyz = [1, 1, 1]
