@@ -124,30 +124,30 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
-@settings(max_examples=10)
-@given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
-def test_transform_should_match_vtk(rotate_amounts, translate_amounts, grid):
-    trans = vtk.vtkTransform()
-    trans.RotateWXYZ(0, *rotate_amounts)
-    trans.Translate(translate_amounts)
-    trans.Update()
+class TestTransform:
+    @settings(max_examples=10)
+    @given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
+    def test_should_match_vtk(self, rotate_amounts, translate_amounts, grid):
+        trans = vtk.vtkTransform()
+        trans.RotateWXYZ(0, *rotate_amounts)
+        trans.Translate(translate_amounts)
+        trans.Update()
 
-    grid_a = grid.copy()
-    grid_b = grid.copy()
-    grid_c = grid.copy()
-    grid_a.transform(trans)
-    grid_b.transform(trans.GetMatrix())
-    grid_c.transform(pyvista.trans_from_matrix(trans.GetMatrix()))
-    assert np.allclose(grid_a.points, grid_b.points)
-    assert np.allclose(grid_a.points, grid_c.points)
+        grid_a = grid.copy()
+        grid_b = grid.copy()
+        grid_c = grid.copy()
+        grid_a.transform(trans)
+        grid_b.transform(trans.GetMatrix())
+        grid_c.transform(pyvista.trans_from_matrix(trans.GetMatrix()))
+        assert np.allclose(grid_a.points, grid_b.points)
+        assert np.allclose(grid_a.points, grid_c.points)
 
+    def test_transform_errors(self, grid):
+        with pytest.raises(TypeError):
+            grid.transform(None)
 
-def test_transform_errors(grid):
-    with pytest.raises(TypeError):
-        grid.transform(None)
-
-    with pytest.raises(Exception):
-        grid.transform(np.array([1]))
+        with pytest.raises(Exception):
+            grid.transform(np.array([1]))
 
 
 @settings(max_examples=20)
