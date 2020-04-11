@@ -153,7 +153,7 @@ def test_translate(grid):
 @settings(max_examples=5)
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
-def test_rotate(angle, axis, grid):
+def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     trans = vtk.vtkTransform()
     getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
     trans.Update()
