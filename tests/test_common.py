@@ -161,23 +161,24 @@ class TestTranslate:
         assert np.allclose(grid_copy.points, grid_points)
 
 
-@settings(max_examples=50)
-@given(angle=one_of(floats(), integers()))
-@pytest.mark.parametrize('axis', ('x', 'y', 'z'))
-def test_rotate_should_match_vtk_rotation(angle, axis, grid):
-    trans = vtk.vtkTransform()
-    getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
-    trans.Update()
+class TestRotate:
+    @settings(max_examples=50)
+    @given(angle=one_of(floats(), integers()))
+    @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
+    def test_should_match_vtk_rotation(angle, axis, grid):
+        trans = vtk.vtkTransform()
+        getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
+        trans.Update()
 
-    trans_filter = vtk.vtkTransformFilter()
-    trans_filter.SetTransform(trans)
-    trans_filter.SetInputData(grid)
-    trans_filter.Update()
-    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
+        trans_filter = vtk.vtkTransformFilter()
+        trans_filter.SetTransform(trans)
+        trans_filter.SetInputData(grid)
+        trans_filter.Update()
+        grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
-    grid_b = grid.copy()
-    getattr(grid_b, 'rotate_{}'.format(axis))(angle)
-    assert np.allclose(grid_a.points, grid_b.points)
+        grid_b = grid.copy()
+        getattr(grid_b, 'rotate_{}'.format(axis))(angle)
+        assert np.allclose(grid_a.points, grid_b.points)
 
 
 def test_make_points_double(grid):
