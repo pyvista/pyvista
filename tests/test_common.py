@@ -150,7 +150,7 @@ def test_transform_errors(grid):
         grid.transform(np.array([1]))
 
 
-@settings(max_examples=8)
+@settings(max_examples=20)
 @given(axis_amounts=n_numbers(3))
 def test_translate_should_translate_grid(axis_amounts, grid):
     grid_copy = grid.copy()
