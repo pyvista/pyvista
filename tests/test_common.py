@@ -150,14 +150,15 @@ class TestTransform:
             grid.transform(np.array([1]))
 
 
-@settings(max_examples=20)
-@given(axis_amounts=n_numbers(3))
-def test_translate_should_translate_grid(axis_amounts, grid):
-    grid_copy = grid.copy()
-    grid_copy.translate(axis_amounts)
+class TestTranslate:
+    @settings(max_examples=20)
+    @given(axis_amounts=n_numbers(3))
+    def test_should_translate_grid(axis_amounts, grid):
+        grid_copy = grid.copy()
+        grid_copy.translate(axis_amounts)
 
-    grid_points = grid.points.copy() + np.array(axis_amounts)
-    assert np.allclose(grid_copy.points, grid_points)
+        grid_points = grid.points.copy() + np.array(axis_amounts)
+        assert np.allclose(grid_copy.points, grid_points)
 
 
 @settings(max_examples=50)
