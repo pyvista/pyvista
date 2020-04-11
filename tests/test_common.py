@@ -1,4 +1,4 @@
-from hypothesis import given, settings
+from hypothesis import given
 from hypothesis.extra.numpy import arrays, array_shapes
 from hypothesis.strategies import composite, integers, floats, one_of
 import numpy as np
