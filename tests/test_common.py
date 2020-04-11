@@ -1,4 +1,4 @@
-from hypothesis import given
+from hypothesis import assume, given
 from hypothesis.extra.numpy import arrays, array_shapes
 from hypothesis.strategies import composite, integers, floats, one_of
 import numpy as np
@@ -148,8 +148,7 @@ class TestTransform:
 
     @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
     def test_should_fail_if_given_wrong_numpy_shape(self, array):
-        if array.shape == (4, 4):
-            return
+        assume(array.shape != (4, 4))
         with pytest.raises(Exception):
             grid.transform(array)
 
