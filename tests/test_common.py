@@ -124,12 +124,12 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
-def test_transform(grid):
+@settings(max_examples=10)
+@given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
+def test_transform_should_match_vtk(rotate_amounts, translate_amounts, grid):
     trans = vtk.vtkTransform()
-    trans.RotateX(30)
-    trans.RotateY(30)
-    trans.RotateZ(30)
-    trans.Translate(1, 1, 2)
+    trans.RotateWXYZ(0, *rotate_amounts)
+    trans.Translate(translate_amounts)
     trans.Update()
 
     grid_a = grid.copy()
