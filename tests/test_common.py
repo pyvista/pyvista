@@ -1,3 +1,5 @@
+from hypothesis import given, settings
+from hypothesis.strategies import integers, floats, one_of
 import numpy as np
 import pytest
 import vtk
@@ -148,10 +150,12 @@ def test_translate(grid):
     assert np.allclose(grid_copy.points, grid_points)
 
 
-def test_rotate_x(grid):
-    angle = 30
+@settings(max_examples=20)
+@given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
+@pytest.mark.parametrize('axis', ('x', 'y', 'z'))
+def test_rotate(angle, axis, grid):
     trans = vtk.vtkTransform()
-    trans.RotateX(angle)
+    getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
     trans.Update()
 
     trans_filter = vtk.vtkTransformFilter()
@@ -161,41 +165,7 @@ def test_rotate_x(grid):
     grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
     grid_b = grid.copy()
-    grid_b.rotate_x(angle)
-    assert np.allclose(grid_a.points, grid_b.points)
-
-
-def test_rotate_y(grid):
-    angle = 30
-    trans = vtk.vtkTransform()
-    trans.RotateY(angle)
-    trans.Update()
-
-    trans_filter = vtk.vtkTransformFilter()
-    trans_filter.SetTransform(trans)
-    trans_filter.SetInputData(grid)
-    trans_filter.Update()
-    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
-
-    grid_b = grid.copy()
-    grid_b.rotate_y(angle)
-    assert np.allclose(grid_a.points, grid_b.points)
-
-
-def test_rotate_z(grid):
-    angle = 30
-    trans = vtk.vtkTransform()
-    trans.RotateZ(angle)
-    trans.Update()
-
-    trans_filter = vtk.vtkTransformFilter()
-    trans_filter.SetTransform(trans)
-    trans_filter.SetInputData(grid)
-    trans_filter.Update()
-    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
-
-    grid_b = grid.copy()
-    grid_b.rotate_z(angle)
+    getattr(grid_b, 'rotate_{}'.format(axis))(angle)
     assert np.allclose(grid_a.points, grid_b.points)
 
 
