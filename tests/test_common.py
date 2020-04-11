@@ -19,7 +19,7 @@ def grid():
 def n_numbers(draw, n):
     numbers = []
     for _ in range(n):
-        number = draw(one_of(floats(allow_infinity=False, allow_nan=False), integers()))
+        number = draw(one_of(floats(), integers()))
         numbers.append(number)
     return numbers
 
