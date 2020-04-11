@@ -127,7 +127,7 @@ def test_copy(grid):
 class TestTransform:
     @settings(max_examples=10)
     @given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
-    def test_should_match_vtk(self, rotate_amounts, translate_amounts, grid):
+    def test_should_match_vtk_translation(self, rotate_amounts, translate_amounts, grid):
         trans = vtk.vtkTransform()
         trans.RotateWXYZ(0, *rotate_amounts)
         trans.Translate(translate_amounts)
