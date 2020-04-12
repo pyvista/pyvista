@@ -1,5 +1,3 @@
-import sys
-
 import numpy as np
 import pytest
 import vtk
@@ -8,14 +6,14 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista
 from pyvista import examples
 
-GRID = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
-py2 = sys.version_info.major == 2
+@pytest.fixture()
+def grid():
+    return pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
-def test_point_arrays():
+def test_point_arrays(grid):
     key = 'test_array_points'
-    grid = GRID.copy()
     grid[key] = np.arange(grid.n_points)
     assert key in grid.point_arrays
 
@@ -39,8 +37,7 @@ def test_point_arrays():
     assert np.allclose(grid.point_arrays['list'], np.arange(grid.n_points))
 
 
-def test_point_arrays_bad_value():
-    grid = GRID.copy()
+def test_point_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.point_arrays['new_array'] = None
 
@@ -48,9 +45,8 @@ def test_point_arrays_bad_value():
         grid.point_arrays['new_array'] = np.arange(grid.n_points - 1)
 
 
-def test_cell_arrays():
+def test_cell_arrays(grid):
     key = 'test_array_cells'
-    grid = GRID.copy()
     grid[key] = np.arange(grid.n_cells)
     assert key in grid.cell_arrays
 
@@ -71,8 +67,7 @@ def test_cell_arrays():
     assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
 
 
-def test_cell_arrays_bad_value():
-    grid = GRID.copy()
+def test_cell_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_arrays['new_array'] = None
 
@@ -80,9 +75,8 @@ def test_cell_arrays_bad_value():
         grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
 
 
-def test_field_arrays():
+def test_field_arrays(grid):
     key = 'test_array_field'
-    grid = GRID.copy()
     # Add array of length not equal to n_cells or n_points
     n = grid.n_cells // 3
     grid.field_arrays[key] = np.arange(n)
@@ -104,16 +98,12 @@ def test_field_arrays():
     assert np.allclose(grid.field_arrays['list'], np.arange(n))
 
 
-
-
-def test_field_arrays_bad_value():
-    grid = GRID.copy()
+def test_field_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.field_arrays['new_array'] = None
 
 
-def test_copy():
-    grid = GRID.copy()
+def test_copy(grid):
     grid_copy = grid.copy(deep=True)
     grid_copy.points[0] = np.nan
     assert not np.any(np.isnan(grid.points[0]))
@@ -123,8 +113,7 @@ def test_copy():
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
-def test_transform():
-    grid = GRID.copy()
+def test_transform(grid):
     trans = vtk.vtkTransform()
     trans.RotateX(30)
     trans.RotateY(30)
@@ -142,8 +131,7 @@ def test_transform():
     assert np.allclose(grid_a.points, grid_c.points)
 
 
-def test_transform_errors():
-    grid = GRID.copy()
+def test_transform_errors(grid):
     with pytest.raises(TypeError):
         grid.transform(None)
 
@@ -151,8 +139,7 @@ def test_transform_errors():
         grid.transform(np.array([1]))
 
 
-def test_translate():
-    grid = GRID.copy()
+def test_translate(grid):
     grid_copy = grid.copy()
     xyz = [1, 1, 1]
     grid_copy.translate(xyz)
@@ -161,8 +148,7 @@ def test_translate():
     assert np.allclose(grid_copy.points, grid_points)
 
 
-def test_rotate_x():
-    grid = GRID.copy()
+def test_rotate_x(grid):
     angle = 30
     trans = vtk.vtkTransform()
     trans.RotateX(angle)
@@ -179,8 +165,7 @@ def test_rotate_x():
     assert np.allclose(grid_a.points, grid_b.points)
 
 
-def test_rotate_y():
-    grid = GRID.copy()
+def test_rotate_y(grid):
     angle = 30
     trans = vtk.vtkTransform()
     trans.RotateY(angle)
@@ -197,8 +182,7 @@ def test_rotate_y():
     assert np.allclose(grid_a.points, grid_b.points)
 
 
-def test_rotate_z():
-    grid = GRID.copy()
+def test_rotate_z(grid):
     angle = 30
     trans = vtk.vtkTransform()
     trans.RotateZ(angle)
@@ -215,23 +199,19 @@ def test_rotate_z():
     assert np.allclose(grid_a.points, grid_b.points)
 
 
-def test_make_points_double():
-    grid = GRID.copy()
-    grid_copy = grid.copy()
-    grid_copy.points = grid_copy.points.astype(np.float32)
-    assert grid_copy.points.dtype == np.float32
-    grid_copy.points_to_double()
-    assert grid_copy.points.dtype == np.double
+def test_make_points_double(grid):
+    grid.points = grid.points.astype(np.float32)
+    assert grid.points.dtype == np.float32
+    grid.points_to_double()
+    assert grid.points.dtype == np.double
 
 
-def test_invalid_points():
-    grid = GRID.copy()
+def test_invalid_points(grid):
     with pytest.raises(TypeError):
         grid.points = None
 
 
-def test_points_np_bool():
-    grid = GRID.copy()
+def test_points_np_bool(grid):
     bool_arr = np.zeros(grid.n_points, np.bool)
     grid.point_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
@@ -240,8 +220,7 @@ def test_points_np_bool():
     assert grid._point_array('bool_arr').dtype == np.bool
 
 
-def test_cells_np_bool():
-    grid = GRID.copy()
+def test_cells_np_bool(grid):
     bool_arr = np.zeros(grid.n_cells, np.bool)
     grid.cell_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
@@ -250,8 +229,7 @@ def test_cells_np_bool():
     assert grid._cell_array('bool_arr').dtype == np.bool
 
 
-def test_field_np_bool():
-    grid = GRID.copy()
+def test_field_np_bool(grid):
     bool_arr = np.zeros(grid.n_cells // 3, np.bool)
     grid.field_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
@@ -260,24 +238,21 @@ def test_field_np_bool():
     assert grid._field_array('bool_arr').dtype == np.bool
 
 
-def test_cells_uint8():
-    grid = GRID.copy()
+def test_cells_uint8(grid):
     arr = np.zeros(grid.n_cells, np.uint8)
     grid.cell_arrays['arr'] = arr
     arr[:] = np.arange(grid.n_cells)
     assert np.allclose(grid.cell_arrays['arr'], np.arange(grid.n_cells))
 
 
-def test_points_uint8():
-    grid = GRID.copy()
+def test_points_uint8(grid):
     arr = np.zeros(grid.n_points, np.uint8)
     grid.point_arrays['arr'] = arr
     arr[:] = np.arange(grid.n_points)
     assert np.allclose(grid.point_arrays['arr'], np.arange(grid.n_points))
 
 
-def test_field_uint8():
-    grid = GRID.copy()
+def test_field_uint8(grid):
     n = grid.n_points//3
     arr = np.zeros(n, np.uint8)
     grid.field_arrays['arr'] = arr
@@ -285,8 +260,7 @@ def test_field_uint8():
     assert np.allclose(grid.field_arrays['arr'], np.arange(n))
 
 
-def test_bitarray_points():
-    grid = GRID.copy()
+def test_bitarray_points(grid):
     n = grid.n_points
     vtk_array = vtk.vtkBitArray()
     np_array = np.empty(n, np.bool)
@@ -301,8 +275,7 @@ def test_bitarray_points():
     assert np.allclose(grid.point_arrays['bint_arr'], np_array)
 
 
-def test_bitarray_cells():
-    grid = GRID.copy()
+def test_bitarray_cells(grid):
     n = grid.n_cells
     vtk_array = vtk.vtkBitArray()
     np_array = np.empty(n, np.bool)
@@ -317,8 +290,7 @@ def test_bitarray_cells():
     assert np.allclose(grid.cell_arrays['bint_arr'], np_array)
 
 
-def test_bitarray_field():
-    grid = GRID.copy()
+def test_bitarray_field(grid):
     n = grid.n_cells // 3
     vtk_array = vtk.vtkBitArray()
     np_array = np.empty(n, np.bool)
@@ -333,23 +305,20 @@ def test_bitarray_field():
     assert np.allclose(grid.field_arrays['bint_arr'], np_array)
 
 
-def test_html_repr():
+def test_html_repr(grid):
     """
     This just tests to make sure no errors are thrown on the HTML
     representation method for Common datasets.
     """
-    grid = GRID.copy()
-    repr_html = grid._repr_html_()
-    assert repr_html is not None
+    assert grid._repr_html_() is not None
 
-def test_print_repr():
+
+def test_print_repr(grid):
     """
     This just tests to make sure no errors are thrown on the text friendly
     representation method for Common datasets.
     """
-    grid = GRID.copy()
-    repr = grid.head()
-    assert repr is not None
+    assert grid.head() is not None
 
 
 def test_texture():
@@ -383,9 +352,7 @@ def test_texture():
     assert len(mesh.textures) == 0
 
 
-
-def test_invalid_vector():
-    grid = GRID.copy()
+def test_invalid_vector(grid):
     with pytest.raises(AssertionError):
         grid.vectors = np.empty(10)
 
@@ -396,18 +363,15 @@ def test_invalid_vector():
         grid.vectors = np.empty((3, 3))
 
 
-def test_no_t_coords():
-    grid = GRID.copy()
+def test_no_t_coords(grid):
     assert grid.t_coords is None
 
 
-def test_no_arrows():
-    grid = GRID.copy()
+def test_no_arrows(grid):
     assert grid.arrows is None
 
 
-def test_arrows():
-    grid = GRID.copy()
+def test_arrows(grid):
     sphere = pyvista.Sphere(radius=3.14)
 
     # make cool swirly pattern
@@ -425,16 +389,15 @@ def test_arrows():
     assert isinstance(arrows, pyvista.PolyData)
     assert np.any(arrows.points)
     sphere.set_active_vectors('_vectors')
-    sphere.active_vectors_name == '_vectors'
+    assert sphere.active_vectors_name == '_vectors'
 
 
-def test_set_active_vectors_name():
-    grid = GRID.copy()
+def test_set_active_vectors_name(grid):
     grid.active_vectors_name = None
+    assert grid.active_vectors_name is None
 
 
-def test_set_t_coords():
-    grid = GRID.copy()
+def test_set_t_coords(grid):
     with pytest.raises(TypeError):
         grid.t_coords = [1, 2, 3]
 
@@ -448,39 +411,34 @@ def test_set_t_coords():
         grid.t_coords = np.empty((grid.n_points, 1))
 
 
-def test_activate_texture_none():
-    grid = GRID.copy()
+def test_activate_texture_none(grid):
     assert grid._activate_texture('not a key') is None
     assert grid._activate_texture(True) is None
 
 
-def test_set_active_vectors_fail():
-    grid = GRID.copy()
+def test_set_active_vectors_fail(grid):
     with pytest.raises(RuntimeError):
         grid.set_active_vectors('not a vector')
 
 
-def test_set_active_scalars():
-    grid = GRID.copy()
-    grid_copy = grid.copy()
-    arr = np.arange(grid_copy.n_cells)
-    grid_copy.cell_arrays['tmp'] = arr
-    grid_copy.set_active_scalars('tmp')
-    assert np.allclose(grid_copy.active_scalars, arr)
+def test_set_active_scalars(grid):
+    arr = np.arange(grid.n_cells)
+    grid.cell_arrays['tmp'] = arr
+    grid.set_active_scalars('tmp')
+    assert np.allclose(grid.active_scalars, arr)
     # Make sure we can set no active scalars
-    grid_copy.set_active_scalars(None)
-    assert grid_copy.GetPointData().GetScalars() is None
-    assert grid_copy.GetCellData().GetScalars() is None
+    grid.set_active_scalars(None)
+    assert grid.GetPointData().GetScalars() is None
+    assert grid.GetCellData().GetScalars() is None
 
-def test_set_active_scalars_name():
-    grid = GRID.copy()
+
+def test_set_active_scalars_name(grid):
     point_keys = list(grid.point_arrays.keys())
     grid.active_scalars_name = point_keys[0]
     grid.active_scalars_name = None
 
 
-def test_rename_array_point():
-    grid = GRID.copy()
+def test_rename_array_point(grid):
     point_keys = list(grid.point_arrays.keys())
     old_name = point_keys[0]
     new_name = 'point changed'
@@ -490,8 +448,7 @@ def test_rename_array_point():
     assert old_name not in grid.point_arrays
 
 
-def test_rename_array_cell():
-    grid = GRID.copy()
+def test_rename_array_cell(grid):
     cell_keys = list(grid.cell_arrays.keys())
     old_name = cell_keys[0]
     new_name = 'cell changed'
@@ -500,8 +457,7 @@ def test_rename_array_cell():
     assert old_name not in grid.cell_arrays
 
 
-def test_rename_array_field():
-    grid = GRID.copy()
+def test_rename_array_field(grid):
     grid.field_arrays['fieldfoo'] = np.array([8, 6, 7])
     field_keys = list(grid.field_arrays.keys())
     old_name = field_keys[0]
@@ -511,8 +467,7 @@ def test_rename_array_field():
     assert old_name not in grid.field_arrays
 
 
-def test_change_name_fail():
-    grid = GRID.copy()
+def test_change_name_fail(grid):
     with pytest.raises(RuntimeError):
         grid.rename_array('not a key', '')
 
@@ -523,16 +478,14 @@ def test_get_cell_array_fail():
         sphere._cell_array(name=None)
 
 
-def test_extent():
-    grid = GRID.copy()
+def test_extent(grid):
     assert grid.extent is None
 
 
-
-def set_cell_vectors():
-    grid = GRID.copy()
+def test_set_cell_vectors(grid):
     grid.cell_arrays['_cell_vectors'] = np.random.random((grid.n_cells, 3))
     grid.set_active_vectors('_cell_vectors')
+    assert grid.active_vectors_name == '_cell_vectors'
 
 
 def test_axis_rotation_invalid():
@@ -570,9 +523,7 @@ def test_string_arrays():
 def test_clear_arrays():
     # First try on an empty mesh
     grid = pyvista.UniformGrid((10, 10, 10))
-    grid.clear_arrays()
     # Now try something more complicated
-    grid = GRID.copy()
     grid.clear_arrays()
     grid['foo-p'] = np.random.rand(grid.n_points)
     grid['foo-c'] = np.random.rand(grid.n_cells)
@@ -603,7 +554,7 @@ def test_scalars_dict_update():
     assert len(mesh.point_arrays) == n + 2
 
 
-def test_hanlde_array_with_null_name():
+def test_handle_array_with_null_name():
     poly = pyvista.PolyData()
     # Add point array with no name
     poly.GetPointData().AddArray(pyvista.convert_array(np.array([])))
@@ -626,7 +577,6 @@ def test_hanlde_array_with_null_name():
     fdata = poly.field_arrays
     assert fdata is not None
     assert len(fdata) == 1
-
 
 
 def test_shallow_copy_back_propagation():
@@ -654,7 +604,6 @@ def test_shallow_copy_back_propagation():
     assert np.allclose(orig_points, wrapped.points)
 
 
-
 def test_find_closest_point():
     sphere = pyvista.Sphere()
     node = np.array([0, 0.2, 0.2])
@@ -667,3 +616,9 @@ def test_find_closest_point():
     node = np.array([0, 0.2, 0.2])
     index = sphere.find_closest_point(node, 5)
     assert len(index) == 5
+
+
+def test_setting_points_from_self(grid):
+    grid_copy = grid.copy()
+    grid.points = grid_copy.points
+    assert np.allclose(grid.points, grid_copy.points)

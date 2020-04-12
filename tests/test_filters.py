@@ -79,12 +79,12 @@ def test_clip_box_composite():
 def test_clip_surface():
     surface = pyvista.Cone(direction=(0,0,-1),
                            height=3.0, radius=1, resolution=50, )
-    xx = yy = zz = 1 - np.linspace(0, 51, 51) * 2 / 50
+    xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
     dataset = pyvista.RectilinearGrid(xx, yy, zz)
     clipped = dataset.clip_surface(surface, invert=False)
-    assert clipped.n_points < dataset.n_points
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
     clipped = dataset.clip_surface(surface, invert=False, compute_distance=True)
-    assert clipped.n_points < dataset.n_points
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
 
 
@@ -410,6 +410,20 @@ def test_warp_by_scalar():
     foo.warp_by_scalar(inplace=True)
     assert np.allclose(foo.points, warped.points)
 
+def test_warp_by_vector():
+    # Test when inplace=False (default)
+    data = examples.load_sphere_vectors()
+    warped = data.warp_by_vector()
+    assert data.n_points == warped.n_points
+    assert not np.allclose(data.points, warped.points)
+    warped = data.warp_by_vector(factor=3)
+    assert data.n_points == warped.n_points
+    assert not np.allclose(data.points, warped.points)
+    # Test when inplace=True
+    foo = examples.load_sphere_vectors()
+    warped = foo.warp_by_vector()
+    foo.warp_by_vector(inplace=True)
+    assert np.allclose(foo.points, warped.points)
 
 
 def test_cell_data_to_point_data():

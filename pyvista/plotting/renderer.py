@@ -114,6 +114,8 @@ class Renderer(vtkRenderer):
         self.bounding_box_actor = None
         self.scale = [1.0, 1.0, 1.0]
         self.AutomaticLightCreationOff()
+        self._floors = []
+        self._floor_kwargs = []
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -884,6 +886,149 @@ class Renderer(vtkRenderer):
         self.Modified()
         return self.bounding_box_actor
 
+
+    def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
+                  color=None, line_width=None, opacity=1.0, show_edges=False,
+                  lighting=False, edge_color=None, reset_camera=None, pad=0.0,
+                  offset=0.0, pickable=False, store_floor_kwargs=True):
+        """Show a floor mesh.
+
+        This generates planes at the boundaries of the scene to behave like
+        floors or walls.
+
+        Parameters
+        ----------
+        face : str
+            The face at which to place the plane. Options are (-z, -y,
+            -x, +z, +y, and +z). Where the -/+ sign indicates on which
+            side of the axis the plane will lie.  For example,
+            ``'-z'`` would generate a floor on the XY-plane and the
+            bottom of the scene (minimum z).
+
+        i_resolution : int
+            Number of points on the plane in the i direction.
+
+        j_resolution : int
+            Number of points on the plane in the j direction.
+
+        color : string or 3 item list, optional
+            Color of all labels and axis titles.  Default gray.
+            Either a string, rgb list, or hex color string.
+
+        line_width : int
+            Thickness of the edges. Only if ``show_edges`` is ``True``
+
+        opacity : float
+            The opacity of the generated surface
+
+        show_edges : bool
+            Flag on whether to show the mesh edges for tiling.
+
+        ine_width : float, optional
+            Thickness of lines.  Only valid for wireframe and surface
+            representations.  Default None.
+
+        lighting : bool, optional
+            Enable or disable view direction lighting.  Default False.
+
+        edge_color : string or 3 item list, optional
+            Color of of the edges of the mesh.
+
+        pad : float
+            Percantage padding between 0 and 1
+
+        offset : float
+            Percantage offset along plane normal
+        """
+        if store_floor_kwargs:
+            kwargs = locals()
+            kwargs.pop('self')
+            self._floor_kwargs.append(kwargs)
+        ranges = np.array(self.bounds).reshape(-1, 2).ptp(axis=1)
+        ranges += (ranges * pad)
+        center = np.array(self.center)
+        if face.lower() in '-z':
+            center[2] = self.bounds[4] - (ranges[2] * offset)
+            normal = (0,0,1)
+            i_size = ranges[0]
+            j_size = ranges[1]
+        elif face.lower() in '-y':
+            center[1] = self.bounds[2] - (ranges[1] * offset)
+            normal = (0,1,0)
+            i_size = ranges[0]
+            j_size = ranges[2]
+        elif face.lower() in '-x':
+            center[0] = self.bounds[0] - (ranges[0] * offset)
+            normal = (1,0,0)
+            i_size = ranges[2]
+            j_size = ranges[1]
+        elif face.lower() in '+z':
+            center[2] = self.bounds[5] + (ranges[2] * offset)
+            normal = (0,0,-1)
+            i_size = ranges[0]
+            j_size = ranges[1]
+        elif face.lower() in '+y':
+            center[1] = self.bounds[3] + (ranges[1] * offset)
+            normal = (0,-1,0)
+            i_size = ranges[0]
+            j_size = ranges[2]
+        elif face.lower() in '+x':
+            center[0] = self.bounds[1] + (ranges[0] * offset)
+            normal = (-1,0,0)
+            i_size = ranges[2]
+            j_size = ranges[1]
+        else:
+            raise NotImplementedError('Face ({}) not implementd'.format(face))
+        self._floor = pyvista.Plane(center=center, direction=normal,
+                                    i_size=i_size, j_size=j_size,
+                                    i_resolution=i_resolution,
+                                    j_resolution=j_resolution)
+        name = 'Floor({})'.format(face)
+        # use floor
+        if lighting is None:
+            lighting = rcParams['lighting']
+
+        if edge_color is None:
+            edge_color = rcParams['edge_color']
+
+        self.remove_bounding_box()
+        if color is None:
+            color = rcParams['floor_color']
+        rgb_color = parse_color(color)
+        mapper = vtk.vtkDataSetMapper()
+        mapper.SetInputData(self._floor)
+        actor, prop = self.add_actor(mapper,
+                                     reset_camera=reset_camera,
+                                     name=name, pickable=pickable)
+
+        prop.SetColor(rgb_color)
+        prop.SetOpacity(opacity)
+
+        # edge display style
+        if show_edges:
+            prop.EdgeVisibilityOn()
+        prop.SetEdgeColor(parse_color(edge_color))
+
+        # lighting display style
+        if lighting is False:
+            prop.LightingOff()
+
+        # set line thickness
+        if line_width:
+            prop.SetLineWidth(line_width)
+
+        prop.SetRepresentationToSurface()
+        self._floors.append(actor)
+        return actor
+
+    def remove_floors(self, clear_kwargs=True):
+        """Remove all floor actors."""
+        for actor in self._floors:
+            self.remove_actor(actor, reset_camera=False)
+        self._floors.clear()
+        if clear_kwargs:
+            self._floor_kwargs.clear()
+
     def remove_bounds_axes(self):
         """Remove bounds axes."""
         if hasattr(self, 'cube_axes_actor'):
@@ -1070,6 +1215,10 @@ class Renderer(vtkRenderer):
                 color = self.bounding_box_actor.GetProperty().GetColor()
                 self.remove_bounding_box()
                 self.add_bounding_box(color=color)
+                self.remove_floors(clear_kwargs=False)
+                for floor_kwargs in self._floor_kwargs:
+                    floor_kwargs['store_floor_kwargs'] = False
+                    self.add_floor(**floor_kwargs)
         if hasattr(self, 'cube_axes_actor'):
             self.cube_axes_actor.SetBounds(self.bounds)
             if not np.allclose(self.scale, [1.0, 1.0, 1.0]):

@@ -34,6 +34,7 @@ rcParams = {
     'nan_color': 'darkgray',
     'edge_color': 'black',
     'outline_color': 'white',
+    'floor_color': 'gray',
     'colorbar_orientation': 'horizontal',
     'colorbar_horizontal': {
         'width': 0.6,
