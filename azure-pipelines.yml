@@ -121,6 +121,53 @@ jobs:
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
+# DESCRIPTION: Core API and doc string testing across VTK versions using conda
+- job: LinuxConda
+  pool:
+    vmImage: 'ubuntu-16.04'
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+
+  strategy:
+    matrix:
+      VTKv81:
+        VTK.VERSION: 8.1
+      VTKv82:
+        VTK.VERSION: 8.2
+
+  steps:
+
+    - script: |
+        .ci/setup_headless_display.sh
+      displayName: Install headless display
+
+    - script: |
+        export CONDA_ALWAYS_YES=1
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda config --add channels conda-forge
+        sed -i -e 's/- vtk$/- vtk=$(VTK.VERSION)/' environment.yml
+        conda env create --quiet -n pyvista-vtk$(VTK.VERSION) --file environment.yml
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pip install -e .
+        conda list
+        which python
+        python -c "import pyvista; print(pyvista.Report())"
+      displayName: Create Anaconda environment
+
+    - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pytest -v --cov pyvista --cov-report html
+      displayName: 'Test Core API against VTK'
+
+    - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pytest -v --doctest-modules pyvista
+      displayName: 'Test Package Docstrings against VTK'
+
+
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
