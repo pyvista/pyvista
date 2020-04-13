@@ -179,7 +179,7 @@ class TestRotate:
 
         grid_b = grid.copy()
         getattr(grid_b, 'rotate_{}'.format(axis))(angle)
-        assert np.allclose(grid_a.points, grid_b.points)
+        assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
 
 
 def test_make_points_double(grid):
