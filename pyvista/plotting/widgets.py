@@ -785,8 +785,8 @@ class WidgetHelper(object):
 
         if style is not None:
             if not isinstance(style, str):
-                raise TypeError("Expected type for ``style`` is NoneType or "
-                                "str but {} was given.".format(type(style)))
+                raise TypeError("Expected type for ``style`` is str but"
+                                " {} was given.".format(type(style)))
             style_params = rcParams['slider_style'].get(style, None)
             if style_params is None:
                 raise KeyError("The requested style does not exist: "
