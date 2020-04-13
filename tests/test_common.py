@@ -139,8 +139,8 @@ class TestTransform:
         grid_a.transform(trans)
         grid_b.transform(trans.GetMatrix())
         grid_c.transform(pyvista.trans_from_matrix(trans.GetMatrix()))
-        assert np.allclose(grid_a.points, grid_b.points)
-        assert np.allclose(grid_a.points, grid_c.points)
+        assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
+        assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
 
     def test_should_fail_if_given_none(self, grid):
         with pytest.raises(TypeError):
