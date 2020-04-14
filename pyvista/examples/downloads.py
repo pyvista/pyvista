@@ -616,6 +616,17 @@ def download_room_surface_mesh():
     """
     return _download_and_read("room_surface_mesh.obj")
 
+
 def download_beach():
     """Download the beach NRRD image."""
     return _download_and_read("beach.nrrd")
+
+
+def download_rgba_texture():
+    """Download a texture with an alpha channel."""
+    return _download_and_read("alphachannel.png", texture=True)
+
+
+def download_vtk_logo():
+    """Download a texture of the VTK logo."""
+    return _download_and_read("vtk.png", texture=True)
