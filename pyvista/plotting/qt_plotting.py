@@ -540,9 +540,9 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         return
 
-    def add_menu_bar(self, main_window):
+    def add_menu_bar(self):
         """Add the main menu bar."""
-        main_menu = _create_menu_bar(parent=main_window)
+        main_menu = _create_menu_bar(parent=self.app_window)
         self.app_window.signal_close.connect(main_menu.clear)
 
         file_menu = main_menu.addMenu('File')
@@ -550,7 +550,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
         # member variable for testing only
-        self._menu_close_action = file_menu.addAction('Exit', main_window.close)
+        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
 
         view_menu = main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
