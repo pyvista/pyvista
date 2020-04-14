@@ -496,7 +496,7 @@ class Texture(vtk.vtkTexture):
 
     @property
     def n_components(self):
-        """The number of components in the image (e.g. 3 [or 4] for RGB[A])."""
+        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
         image = self.to_image()
         return image.active_scalars.shape[1]
 

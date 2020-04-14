@@ -100,7 +100,7 @@ curvsurf.plot(texture=tex)
 # ++++++++++++++++++++++++++
 #
 # Textures can also specify per-pixel opacity values. The image must
-# contain a 4th channel specifiying the opacity value from 0 [transparent] to
+# contain a 4th channel specifying the opacity value from 0 [transparent] to
 # 255 [fully visible]. To enable this feature just pass the opacity array as the
 # 4th channel of the image as a 3 dimensional matrix with shape [nrows, ncols, 4]
 # :func:`pyvista.numpy_to_texture`.
