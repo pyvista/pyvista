@@ -661,6 +661,9 @@ class Common(DataSetFilters, DataObject):
     def rename_array(self, old_name, new_name, preference='cell'):
         """Change array name by searching for the array then renaming it."""
         _, field = get_array(self, old_name, preference=preference, info=True)
+        was_active = False
+        if self.active_scalars_name == old_name:
+            was_active = True
         if field == FieldAssociation.POINT:
             self.point_arrays[new_name] = self.point_arrays.pop(old_name)
         elif field == FieldAssociation.CELL:
@@ -669,7 +672,7 @@ class Common(DataSetFilters, DataObject):
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
             raise RuntimeError('Array not found.')
-        if self.active_scalars_info[1] == old_name:
+        if was_active:
             self.set_active_scalars(new_name, preference=field)
 
 

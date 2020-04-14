@@ -45,6 +45,10 @@ def test_point_arrays_bad_value(grid):
         grid.point_arrays['new_array'] = np.arange(grid.n_points - 1)
 
 
+def test_ipython_key_completions(grid):
+    assert isinstance(grid._ipython_key_completions_(), list)
+
+
 def test_cell_arrays(grid):
     key = 'test_array_cells'
     grid[key] = np.arange(grid.n_cells)
@@ -97,6 +101,13 @@ def test_field_arrays(grid):
     assert isinstance(grid.field_arrays['list'], np.ndarray)
     assert np.allclose(grid.field_arrays['list'], np.arange(n))
 
+    foo = np.arange(n) * 5
+    grid.add_field_array(foo, 'foo')
+    assert isinstance(grid.field_arrays['foo'], np.ndarray)
+    assert np.allclose(grid.field_arrays['foo'], foo)
+
+    with pytest.raises(RuntimeError):
+        grid.set_active_scalars('foo')
 
 def test_field_arrays_bad_value(grid):
     with pytest.raises(TypeError):
@@ -351,6 +362,22 @@ def test_texture():
     mesh.clear_textures()
     assert len(mesh.textures) == 0
 
+    mesh = examples.load_airplane()
+    mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
+    mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
+    assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
+    mesh.textures["tex_a"] = texture.copy()
+    mesh.textures["tex_b"] = texture.copy()
+    mesh._activate_texture("tex_a")
+    assert np.allclose(mesh.t_coords, mesh["tex_a"])
+    mesh._activate_texture("tex_b")
+    assert np.allclose(mesh.t_coords, mesh["tex_b"])
+
+    # Now test copying
+    cmesh = mesh.copy()
+    assert len(cmesh.textures) == 2
+    assert "tex_a" in cmesh.textures
+    assert "tex_b" in cmesh.textures
 
 def test_invalid_vector(grid):
     with pytest.raises(AssertionError):
@@ -446,6 +473,7 @@ def test_rename_array_point(grid):
     grid.rename_array(old_name, new_name, preference='point')
     assert new_name in grid.point_arrays
     assert old_name not in grid.point_arrays
+    assert new_name == grid.active_scalars_name
 
 
 def test_rename_array_cell(grid):
@@ -510,6 +538,8 @@ def test_bad_instantiation():
         pyvista.PointGrid()
     with pytest.raises(TypeError):
         pyvista.BasePlotter()
+    with pytest.raises(TypeError):
+        pyvista.DataObject()
 
 
 def test_string_arrays():
