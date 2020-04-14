@@ -95,6 +95,44 @@ tex = pv.numpy_to_texture(image)
 # Render it!
 curvsurf.plot(texture=tex)
 
+###############################################################################
+# Textures with transparency mapping
+# ++++++++++++++++++++++++
+#
+# Textures can also specify per-pixel opacity values. The image must 
+# contain a 4th channel specifiying the opacity value from 0 [transparent] to
+# 255 [fully visible]. To enable this feature just pass the opacity array as the
+# 4th channel of the image as a 3 dimensional matrix with shape [nrows, ncols, 4]
+# :func:`pyvista.numpy_to_texture`.
+
+from matplotlib.colors import ListedColormap
+
+# create an image using numpy,
+xx, yy = np.meshgrid(np.linspace(-200, 200, 20), np.linspace(-200, 200, 20))
+A, b = 500, 100
+zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
+
+# Creating a custom RGB image
+cmap = get_cmap("nipy_spectral")
+
+# alter the colormap to support a linear transparency
+# see https://stackoverflow.com/questions/37327308/add-alpha-to-an-existing-matplotlib-colormap
+alpha_cmap = cmap(np.arange(cmap.N))
+alpha_cmap[:,-1] = np.linspace(0, 1, cmap.N)
+# Create the new colormap
+alpha_cmap = ListedColormap(alpha_cmap)
+
+norm = lambda x: (x - np.nanmin(x)) / (np.nanmax(x) - np.nanmin(x))
+hue = norm(zz.ravel())
+colors = (alpha_cmap(hue) * 255.0).astype(np.uint8)
+image = colors.reshape((xx.shape[0], xx.shape[1], 4), order="F")
+
+# Convert 3D numpy array to texture
+tex = pv.numpy_to_texture(image)
+
+# Render it!
+curvsurf.plot(texture=tex)
+
 
 ###############################################################################
 # Repeating Textures
