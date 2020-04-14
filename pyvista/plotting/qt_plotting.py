@@ -506,16 +506,16 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
                     print(str(e))
                     pass
 
-    def add_toolbars(self, main_window):
+    def add_toolbars(self):
         """Add the toolbars."""
         def _add_action(tool_bar, key, method):
-            action = QAction(key, main_window)
+            action = QAction(key, self.app_window)
             action.triggered.connect(method)
             tool_bar.addAction(action)
             return
 
         # Camera toolbar
-        self.default_camera_tool_bar = main_window.addToolBar('Camera Position')
+        self.default_camera_tool_bar = self.app_window.addToolBar('Camera Position')
         _view_vector = lambda *args: self.view_vector(*args)
         cvec_setters = {
             # Viewing vector then view up vector
@@ -533,7 +533,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         # Saved camera locations toolbar
         self.saved_camera_positions = []
-        self.saved_cameras_tool_bar = main_window.addToolBar('Saved Camera Positions')
+        self.saved_cameras_tool_bar = self.app_window.addToolBar('Saved Camera Positions')
 
         _add_action(self.saved_cameras_tool_bar, SAVE_CAM_BUTTON_TEXT, self.save_camera_position)
         _add_action(self.saved_cameras_tool_bar, CLEAR_CAMS_BUTTON_TEXT, self.clear_camera_positions)
@@ -737,8 +737,11 @@ class BackgroundPlotter(QtInteractor):
         if menu_bar:
             self.add_menu_bar()
 
+        self.default_camera_tool_bar = None
+        self.saved_camera_positions = None
+        self.saved_cameras_tool_bar = None
         if toolbar:
-            self.add_toolbars(self.app_window)
+            self.add_toolbars()
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self.interactor)

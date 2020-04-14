@@ -327,14 +327,16 @@ def test_background_plotting_toolbar(qtbot):
         pyvista.BackgroundPlotter(off_screen=False, toolbar="foo")
 
     plotter = pyvista.BackgroundPlotter(off_screen=False, toolbar=False)
-    assert not hasattr(plotter, "default_camera_tool_bar")
-    assert not hasattr(plotter, "saved_cameras_tool_bar")
+    assert plotter.default_camera_tool_bar is None
+    assert plotter.saved_camera_positions is None
+    assert plotter.saved_cameras_tool_bar is None
     plotter.close()
 
     plotter = pyvista.BackgroundPlotter(off_screen=False)
 
     assert _hasattr(plotter, "app_window", MainWindow)
     assert _hasattr(plotter, "default_camera_tool_bar", QToolBar)
+    assert _hasattr(plotter, "saved_camera_positions", list)
     assert _hasattr(plotter, "saved_cameras_tool_bar", QToolBar)
 
     window = plotter.app_window
