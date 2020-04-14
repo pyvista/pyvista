@@ -9,7 +9,7 @@ import vtk
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, convert_array,
-                               get_array, parse_field_choice, row_array, 
+                               get_array, parse_field_choice, row_array,
                                vtk_bit_array_to_char)
 
 from .common import DataObject, _ScalarsDict
@@ -445,9 +445,11 @@ class Texture(vtk.vtkTexture):
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
+
     def _from_texture(self, texture):
         image = texture.GetInput()
         self._from_image_data(image)
+
 
     def _from_image_data(self, image):
         if not isinstance(image, pyvista.UniformGrid):
@@ -457,7 +459,8 @@ class Texture(vtk.vtkTexture):
 
 
     def _from_array(self, image):
-        if image.ndim not in [2,3]: # we support 2 [single scalars image] or 3 [e.g. rgb or rgba] dims
+        if image.ndim not in [2,3]:
+            # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise AssertionError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
@@ -474,7 +477,6 @@ class Texture(vtk.vtkTexture):
         grid.set_active_scalars('Image')
 
         return self._from_image_data(grid)
-
 
 
     def flip(self, axis):
@@ -495,12 +497,12 @@ class Texture(vtk.vtkTexture):
     def to_array(self):
         """Return the texture as an array."""
         image = self.to_image()
-        n_comps = image.active_scalars.shape[0] / image.dimensions[0] / image.dimensions[1]
 
-        if n_comps == 1:
-            shape = (image.dimensions[0], image.dimensions[1])
+        if image.active_scalars.ndim > 1:
+            n_components = image.active_scalars.shape[1]
+            shape = (image.dimensions[1], image.dimensions[0], n_components)
         else:
-            shape = (image.dimensions[0], image.dimensions[1], n_comps)
+            shape = (image.dimensions[1], image.dimensions[0])
 
         return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1,0)
 
@@ -515,9 +517,11 @@ class Texture(vtk.vtkTexture):
         """Repeat the texture."""
         return self.GetRepeat()
 
+
     @repeat.setter
     def repeat(self, flag):
         self.SetRepeat(flag)
+
 
     def copy(self):
         """Make a copy of this textrue."""
