@@ -433,7 +433,11 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
         if off_screen:
             self.ren_win.SetOffScreenRendering(1)
         else:
-            self.iren = self.ren_win.GetInteractor()
+            # On VTK 9 the existing interactor is a
+            # vtkGenericRenderWindowInteractor, which just hangs when you call
+            # Initialize, so create our own instead
+            self.iren = vtk.vtkRenderWindowInteractor()
+            self.ren_win.SetInteractor(self.iren)
             self.iren.RemoveObservers('MouseMoveEvent')  # slows window update?
 
             # Enter trackball camera mode
