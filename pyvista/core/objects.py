@@ -494,13 +494,19 @@ class Texture(vtk.vtkTexture):
         return self.GetInput()
 
 
+    @property
+    def n_components(self):
+        """The number of components in the image (e.g. 3 [or 4] for RGB[A])."""
+        image = self.to_image()
+        return image.active_scalars.shape[1]
+
+
     def to_array(self):
         """Return the texture as an array."""
         image = self.to_image()
 
         if image.active_scalars.ndim > 1:
-            n_components = image.active_scalars.shape[1]
-            shape = (image.dimensions[1], image.dimensions[0], n_components)
+            shape = (image.dimensions[1], image.dimensions[0], self.n_components)
         else:
             shape = (image.dimensions[1], image.dimensions[0])
 
