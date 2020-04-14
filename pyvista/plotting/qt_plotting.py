@@ -542,22 +542,22 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
     def add_menu_bar(self, main_window):
         """Add the main menu bar."""
-        self.main_menu = _create_menu_bar(parent=main_window)
-        self.app_window.signal_close.connect(self.main_menu.clear)
+        main_menu = _create_menu_bar(parent=main_window)
+        self.app_window.signal_close.connect(main_menu.clear)
 
-        file_menu = self.main_menu.addMenu('File')
+        file_menu = main_menu.addMenu('File')
         file_menu.addAction('Take Screenshot', self._qt_screenshot)
         file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
         file_menu.addSeparator()
         # member variable for testing only
         self._menu_close_action = file_menu.addAction('Exit', main_window.close)
 
-        view_menu = self.main_menu.addMenu('View')
+        view_menu = main_menu.addMenu('View')
         view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
         view_menu.addAction('Scale Axes', self.scale_axes_dialog)
         view_menu.addAction('Clear All', self.clear)
 
-        tool_menu = self.main_menu.addMenu('Tools')
+        tool_menu = main_menu.addMenu('Tools')
         tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
         tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
 
@@ -642,8 +642,13 @@ class BackgroundPlotter(QtInteractor):
     allow_quit_keypress : bool, optional
         Allow user to exit by pressing ``"q"``.
 
+<<<<<<< HEAD
     menu_bar: bool, optional
         Display the default main menu. Defaults to True.
+=======
+    toolbar : bool, optional
+       Display the default camera toolbar. Defaults to True.
+>>>>>>> master
 
     title : str, optional
         Title of plotting window.
@@ -679,13 +684,17 @@ class BackgroundPlotter(QtInteractor):
 
     def __init__(self, show=True, app=None, window_size=None,
                  off_screen=None, allow_quit_keypress=True,
-                 menu_bar=True, **kwargs):
+                 toolbar=True, menu_bar=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
         if not isinstance(menu_bar, bool):
             raise TypeError("Expected type for ``menu_bar`` is bool"
                             " but {} was given.".format(type(menu_bar)))
+        if not isinstance(toolbar, bool):
+            raise TypeError("Expected type for ``toolbar`` is bool"
+                            " but {} was given.".format(type(toolbar)))
+
         self.active = True
         self.counters = []
         self.allow_quit_keypress = allow_quit_keypress
@@ -724,9 +733,14 @@ class BackgroundPlotter(QtInteractor):
                                                 off_screen=off_screen,
                                                 **kwargs)
         self.app_window.signal_close.connect(self._close)
-        self.add_toolbars(self.app_window)
+
+        self.main_menu = None
+        self._menu_close_action = None
         if menu_bar:
-            self.add_menu_bar(self.app_window)
+            self.main_menu = self.add_menu_bar(self.app_window)
+
+        if toolbar:
+            self.add_toolbars(self.app_window)
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self.interactor)

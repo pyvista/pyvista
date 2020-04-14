@@ -33,6 +33,8 @@ READERS = {
     '.jpeg': vtk.vtkJPEGReader,
     '.jpg': vtk.vtkJPEGReader,
     '.mhd': vtk.vtkMetaImageReader,
+    '.nrrd': vtk.vtkNrrdReader,
+    '.nhdr': vtk.vtkNrrdReader,
     '.png': vtk.vtkPNGReader,
     '.pnm': vtk.vtkPNMReader, # TODO: not tested
     '.slc': vtk.vtkSLCReader,
