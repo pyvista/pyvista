@@ -363,6 +363,23 @@ def test_background_plotting_menu_bar(qtbot):
     assert plotter._menu_close_action is None
     plotter.close()
 
+    plotter = pyvista.BackgroundPlotter(off_screen=False)  # menu_bar=True
+
+    assert _hasattr(plotter, "app_window", MainWindow)
+    assert _hasattr(plotter, "main_menu", QMenuBar)
+    assert _hasattr(plotter, "_menu_close_action", QAction)
+
+    window = plotter.app_window
+    main_menu = plotter.main_menu
+    assert not main_menu.isNativeMenuBar()
+
+    with qtbot.wait_exposed(window, timeout=500):
+        window.show()
+
+    assert main_menu.isVisible()
+    plotter.close()
+    assert not main_menu.isVisible()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
@@ -440,7 +457,6 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
 
     # check that BackgroundPlotter.__init__() is called
     assert _hasattr(plotter, "app_window", MainWindow)
-    assert _hasattr(plotter, "main_menu", QMenuBar)
     # check that QtInteractor.__init__() is called
     assert _hasattr(plotter, "iren", vtk.vtkRenderWindowInteractor)
     assert _hasattr(plotter, "render_timer", QTimer)
@@ -451,8 +467,6 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     assert _hasattr(plotter, "interactor", QVTKRenderWindowInteractor)
 
     window = plotter.app_window  # MainWindow
-    main_menu = plotter.main_menu  # QMenuBar
-    assert not main_menu.isNativeMenuBar()
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer
 
@@ -474,7 +488,6 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     # check that the widgets are showed properly
     assert window.isVisible()
     assert interactor.isVisible()
-    assert main_menu.isVisible()
     assert render_timer.isActive()
     assert not plotter._closed
 
@@ -493,7 +506,6 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     # check that the widgets are closed
     assert not window.isVisible()
     assert not interactor.isVisible()
-    assert not main_menu.isVisible()
     assert not render_timer.isActive()
 
     # check that BasePlotter.close() is called
