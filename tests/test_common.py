@@ -153,14 +153,13 @@ class TestTransform:
             grid.transform(array)
 
 
-class TestTranslate:
-    @given(axis_amounts=n_numbers(3))
-    def test_should_translate_grid(self, axis_amounts, grid):
-        grid_copy = grid.copy()
-        grid_copy.translate(axis_amounts)
+@pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
+def test_translate_should_translate_grid(grid, axis_amounts):
+    grid_copy = grid.copy()
+    grid_copy.translate(axis_amounts)
 
-        grid_points = grid.points.copy() + np.array(axis_amounts)
-        assert np.allclose(grid_copy.points, grid_points)
+    grid_points = grid.points.copy() + np.array(axis_amounts)
+    assert np.allclose(grid_copy.points, grid_points)
 
 
 class TestRotate:
