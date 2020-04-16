@@ -20,7 +20,7 @@ dependencies:
   - pytest-cov
   - pytest-qt
   - codecov
-  - hypothesis
+  - hypothesis>=5.8.0
   - pip
   - pip:
       - pytest-memprof
