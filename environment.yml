@@ -1,0 +1,25 @@
+name: pyvista-env
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.5
+  - numpy
+  - vtk
+  - scooby>=0.5.1
+  - meshio>=4.0.3, <5.0
+  - matplotlib
+  - appdirs
+  - pyqt
+  - imageio>=2.5.0
+  - imageio-ffmpeg
+  - colorcet
+  - cmocean
+  - itkwidgets>=0.25.2
+  - tqdm
+  - pytest
+  - pytest-cov
+  - pytest-qt
+  - codecov
+  - pip
+  - pip:
+      - pytest-memprof

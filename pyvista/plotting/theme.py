@@ -71,6 +71,28 @@ rcParams = {
         'occlusion_ratio': 0.0,
         'enabled': False,
     },
+    'slider_style': {
+        'classic': {
+            'slider_length': 0.02,
+            'slider_width': 0.04,
+            'slider_color': (0.5, 0.5, 0.5),
+            'tube_width': 0.005,
+            'tube_color': (1, 1, 1),
+            'cap_opacity': 1,
+            'cap_length': 0.01,
+            'cap_width': 0.02,
+        },
+        'modern': {
+            'slider_length': 0.02,
+            'slider_width': 0.04,
+            'slider_color': (0.43137255, 0.44313725, 0.45882353),
+            'tube_width': 0.04,
+            'tube_color': (0.69803922, 0.70196078, 0.70980392),
+            'cap_opacity': 0,
+            'cap_length': 0.01,
+            'cap_width': 0.02,
+        },
+    },
 }
 
 
