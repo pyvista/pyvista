@@ -125,32 +125,33 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
-class TestTransform:
-    @given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
-    def test_should_match_vtk_transformation(self, rotate_amounts, translate_amounts, grid):
-        trans = vtk.vtkTransform()
-        trans.RotateWXYZ(0, *rotate_amounts)
-        trans.Translate(translate_amounts)
-        trans.Update()
+@given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
+def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
+    trans = vtk.vtkTransform()
+    trans.RotateWXYZ(0, *rotate_amounts)
+    trans.Translate(translate_amounts)
+    trans.Update()
 
-        grid_a = grid.copy()
-        grid_b = grid.copy()
-        grid_c = grid.copy()
-        grid_a.transform(trans)
-        grid_b.transform(trans.GetMatrix())
-        grid_c.transform(pyvista.trans_from_matrix(trans.GetMatrix()))
-        assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
-        assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
+    grid_a = grid.copy()
+    grid_b = grid.copy()
+    grid_c = grid.copy()
+    grid_a.transform(trans)
+    grid_b.transform(trans.GetMatrix())
+    grid_c.transform(pyvista.trans_from_matrix(trans.GetMatrix()))
+    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
+    assert np.allclose(grid_a.points, grid_c.points, equal_nan=True)
 
-    def test_should_fail_if_given_none(self, grid):
-        with pytest.raises(TypeError):
-            grid.transform(None)
 
-    @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
-    def test_should_fail_if_given_wrong_numpy_shape(self, array):
-        assume(array.shape != (4, 4))
-        with pytest.raises(Exception):
-            grid.transform(array)
+def test_translate_should_fail_given_none(grid):
+    with pytest.raises(TypeError):
+        grid.transform(None)
+
+
+@given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
+def test_transform_should_fail_given_wrong_numpy_shape(array):
+    assume(array.shape != (4, 4))
+    with pytest.raises(Exception):
+        grid.transform(array)
 
 
 @pytest.mark.parametrize('axis_amounts', [[1, 1, 1], [0, 0, 0], [-1, -1, -1]])
@@ -162,23 +163,22 @@ def test_translate_should_translate_grid(grid, axis_amounts):
     assert np.allclose(grid_copy.points, grid_points)
 
 
-class TestRotate:
-    @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
-    @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
-    def test_should_match_vtk_rotation(self, angle, axis, grid):
-        trans = vtk.vtkTransform()
-        getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
-        trans.Update()
+@given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
+@pytest.mark.parametrize('axis', ('x', 'y', 'z'))
+def test_rotate_should_match_vtk_rotation(angle, axis, grid):
+    trans = vtk.vtkTransform()
+    getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
+    trans.Update()
 
-        trans_filter = vtk.vtkTransformFilter()
-        trans_filter.SetTransform(trans)
-        trans_filter.SetInputData(grid)
-        trans_filter.Update()
-        grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
+    trans_filter = vtk.vtkTransformFilter()
+    trans_filter.SetTransform(trans)
+    trans_filter.SetInputData(grid)
+    trans_filter.Update()
+    grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
-        grid_b = grid.copy()
-        getattr(grid_b, 'rotate_{}'.format(axis))(angle)
-        assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
+    grid_b = grid.copy()
+    getattr(grid_b, 'rotate_{}'.format(axis))(angle)
+    assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
 
 
 def test_make_points_double(grid):
