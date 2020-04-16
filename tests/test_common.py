@@ -362,11 +362,13 @@ def test_texture():
     mesh.clear_textures()
     assert len(mesh.textures) == 0
 
+
 def test_texture_airplane():
     mesh = examples.load_airplane()
     mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
     assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
+    texture = pyvista.read_texture(examples.mapfile)
     mesh.textures["tex_a"] = texture.copy()
     mesh.textures["tex_b"] = texture.copy()
     mesh._activate_texture("tex_a")
