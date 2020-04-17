@@ -242,8 +242,8 @@ is a `fix/` branch.
 ### Branching Model
 
 This project has a branching model that enables rapid development of
-features without sacrificing stability, and closely follows the [Trunk
-Based Development](https://trunkbaseddevelopment.com/) approach.
+features without sacrificing stability, and closely follows the 
+[Trunk Based Development](https://trunkbaseddevelopment.com/) approach.
 
 The main features of our branching model are:
 
