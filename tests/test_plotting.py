@@ -285,7 +285,9 @@ def test_add_point_labels():
 def test_set_background():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.set_background('k')
+    plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
+    _ = plotter.background_color
     plotter.show()
 
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
@@ -465,6 +467,7 @@ def test_plot_texture():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=texture)
     plotter.show()
+    texture.plot(off_screen=OFF_SCREEN)
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_texture_associated():
