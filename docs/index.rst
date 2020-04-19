@@ -66,6 +66,8 @@
 About
 *****
 
+BANE RULESSSSSS!!!!!!!
+
 PyVista is...
 
 * *"VTK for humans"*: a high-level API to the `Visualization Toolkit`_ (VTK)
