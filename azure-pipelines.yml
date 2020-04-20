@@ -166,7 +166,7 @@ jobs:
         conda activate pyvista-vtk$(VTK.VERSION)
         pytest -v --doctest-modules pyvista
       displayName: 'Test Package Docstrings against VTK'
-
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 # DESCRIPTION: Core API testing for Windows
 - job: Windows

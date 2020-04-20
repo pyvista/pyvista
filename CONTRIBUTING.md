@@ -124,8 +124,8 @@ Please also take a look at our [Code of Conduct](https://github.com/pyvista/pyvi
 
 ### Contributing to pyvista through GitHub
 
-To submit new code to pyvista, first fork the (pyvista GitHub
-Repo)[https://github.com/pyvista/pyvista] and then clone the forked
+To submit new code to pyvista, first fork the [pyvista GitHub
+Repo](https://github.com/pyvista/pyvista) and then clone the forked
 repository to your computer.  Then, create a new branch based on the
 [Branch Naming Conventions Section](#branch-naming-conventions) in
 your local repository.
@@ -223,7 +223,7 @@ The finished documentation can be found in the `docs/_build/html` directory.
 #### Creating a New Pull Request
 
 Once you have tested your branch locally, create a pull request on
-(pyvista GitHub)[https://github.com/pyvista/pyvista] while merging to
+[pyvista GitHub](https://github.com/pyvista/pyvista) while merging to
 master.  This will automatically run continuous integration (CI)
 testing and verify your changes will work across several platforms.
 
@@ -242,9 +242,10 @@ is a `fix/` branch.
 ### Branching Model
 
 This project has a branching model that enables rapid development of
-features without sacrificing stability.  The main features of our
-branching model are:
+features without sacrificing stability, and closely follows the 
+[Trunk Based Development](https://trunkbaseddevelopment.com/) approach.
 
+The main features of our branching model are:
 
 - The `master` branch is the main development branch.  All features,
   patches, and other branches should be merged here.  While all PRs
