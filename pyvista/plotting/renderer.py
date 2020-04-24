@@ -1146,7 +1146,10 @@ class Renderer(vtkRenderer):
 
         # First remove this actor's mapper from _scalar_bar_mappers
         _remove_mapper_from_plotter(self.parent, actor, False)
-        self.RemoveActor(actor)
+        if isinstance(actor, vtk.vtkScalarBarActor):
+            self.RemoveActor2D(actor)
+        else:
+            self.RemoveActor(actor)
 
         if name is None:
             for k, v in self._actors.items():
