@@ -21,9 +21,10 @@ from .theme import rcParams
 # for display bugs due to older intel integrated GPUs
 vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
 vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
+vtk_base_widget = 'QGLWidget'
 if vtk_major_version == 8 and vtk_minor_version < 2:
     import vtk.qt
-    vtk.qt.QVTKRWIBase = 'QGLWidget'
+    vtk.qt.QVTKRWIBase = vtk_base_widget
 else:
     import vtkmodules.qt
     if sys.platform == 'linux' and vtk_major_version >= 9:
@@ -31,12 +32,12 @@ else:
         try:
             from PyQt5.QtCore import QT_VERSION_STR
         except ImportError:
-            vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
+            pass
         else:
-            if LooseVersion(QT_VERSION_STR) < LooseVersion('5.14'):
-                vtkmodules.qt.QVTKRWIBase = 'QWidget'
-            else:
-                vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
+            if LooseVersion(QT_VERSION_STR) < LooseVersion('5.14.2'):
+                vtk_base_widget = 'QWidget'
+    vtkmodules.qt.QVTKRWIBase = vtk_base_widget
+del vtk_base_widget
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
