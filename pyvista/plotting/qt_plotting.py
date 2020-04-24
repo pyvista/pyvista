@@ -1,7 +1,9 @@
 """Qt interactive plotter."""
+from distutils.version import LooseVersion
 import logging
 import os
 import platform
+import sys
 import time
 import warnings
 from functools import wraps
@@ -19,12 +21,22 @@ from .theme import rcParams
 # for display bugs due to older intel integrated GPUs
 vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
 vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
+use_base = 'QGLWidget'
 if vtk_major_version == 8 and vtk_minor_version < 2:
     import vtk.qt
-    vtk.qt.QVTKRWIBase = 'QGLWidget'
+    vtk.qt.QVTKRWIBase = use_base
 else:
+    # Qt 5.13.2 + VTK 9 ends up with GenericWindowInteractor on Linux
+    if sys.platform == 'linux':
+        try:
+            from PyQt5.QtCore import QT_VERSION_STR
+        except ImportError:
+            pass
+        else:
+            if LooseVersion(QT_VERSION_STR) < LooseVersion('5.14'):
+                use_base = 'QWidget'
     import vtkmodules.qt
-    vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
+    vtkmodules.qt.QVTKRWIBase = use_base
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
