@@ -25,7 +25,8 @@ elif VTK_ID_TYPE_SIZE == 8:
 try:
     import faulthandler
     faulthandler.enable()
-except (ImportError, RuntimeError):
+except:
+    warnings.warn('Unable to enable faulthandler')
     pass
 
 
