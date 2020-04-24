@@ -21,22 +21,22 @@ from .theme import rcParams
 # for display bugs due to older intel integrated GPUs
 vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
 vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
-use_base = 'QGLWidget'
 if vtk_major_version == 8 and vtk_minor_version < 2:
     import vtk.qt
-    vtk.qt.QVTKRWIBase = use_base
+    vtk.qt.QVTKRWIBase = 'QGLWidget'
 else:
-    # Qt 5.13.2 + VTK 9 ends up with GenericWindowInteractor on Linux
-    if sys.platform == 'linux':
+    import vtkmodules.qt
+    if sys.platform == 'linux' and vtk_major_version >= 9:
+        # Qt 5.13.2 + VTK 9 ends up with GenericWindowInteractor on Linux
         try:
             from PyQt5.QtCore import QT_VERSION_STR
         except ImportError:
-            pass
+            vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
         else:
             if LooseVersion(QT_VERSION_STR) < LooseVersion('5.14'):
-                use_base = 'QWidget'
-    import vtkmodules.qt
-    vtkmodules.qt.QVTKRWIBase = use_base
+                vtkmodules.qt.QVTKRWIBase = 'QWidget'
+            else:
+                vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
