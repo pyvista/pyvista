@@ -4,7 +4,7 @@ Filters
 -------
 
 
-.. automodule:: pyvista.filters
+.. automodule:: pyvista.core.filters
 
 
 
