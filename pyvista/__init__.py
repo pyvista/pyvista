@@ -21,12 +21,12 @@ if VTK_ID_TYPE_SIZE == 4:
 elif VTK_ID_TYPE_SIZE == 8:
     ID_TYPE = np.int64
 
-
+# for additional error output for VTK segfaults
 try:
     import faulthandler
     faulthandler.enable()
-except (ImportError, RuntimeError):
-    pass
+except Exception as e:  # pragma: no cover
+    warnings.warn('Unable to enable faulthandler:\n%s' % str(e))
 
 
 # determine if using vtk > 5
