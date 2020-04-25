@@ -1115,10 +1115,10 @@ class DataSetFilters(object):
         Parameters
         ----------
         scalars : str, optional
-            Name of scalars to warb by. Defaults to currently active scalars.
+            Name of scalars to warp by. Defaults to currently active scalars.
 
         factor : float, optional
-            A scalaing factor to increase the scaling effect. Alias
+            A scaling factor to increase the scaling effect. Alias
             ``scale_factor`` also accepted - if present, overrides ``factor``.
 
         normal : np.array, list, tuple of length 3
@@ -1153,6 +1153,50 @@ class DataSetFilters(object):
             return
         return output
 
+    def warp_by_vector(dataset, vectors=None, factor=1.0, inplace=False):
+        """Warp the dataset's points by a point data vectors array's values.
+
+        This modifies point coordinates by moving points along point vectors by
+        the local vector times the scale factor.
+
+        A classical application of this transform is to visualize eigenmodes in
+        mechanics.
+
+        Parameters
+        ----------
+        vectors : str, optional
+            Name of vector to warp by. Defaults to currently active vector.
+        factor : float, optional
+            A scaling factor that multiplies the vectors to warp by. Can
+            be used to enhance the warping effect.
+        inplace : bool, optional
+            If True, the function will update the mesh in-place and
+            return ``None``.
+        
+        Returns
+        -------
+        warped_mesh : mesh
+            The warped mesh resulting from the operation.
+
+        """
+        if vectors is None:
+            field, vectors = dataset.active_vectors_info
+        arr, field = get_array(dataset, vectors, preference='point', info=True)
+        # check that this is indeed a vector field
+        if arr.ndim != 2 or arr.shape[1] != 3:
+            raise AssertionError(
+                'Dataset can only by warped by a 3D vector point data array.' + \
+                'The values you provided do not satisfy this requirement')
+        alg = vtk.vtkWarpVector()
+        alg.SetInputDataObject(dataset)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, vectors)
+        alg.SetScaleFactor(factor)
+        alg.Update()
+        warped_mesh = _get_output(alg)
+        if inplace:
+            dataset.overwrite(warped_mesh)
+            return
+        return warped_mesh
 
     def cell_data_to_point_data(dataset, pass_cell_data=False):
         """Transform cell data into point data.

@@ -221,11 +221,12 @@ class Report(scooby.Report):
 
         """
         # Mandatory packages.
-        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
+        core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby',
+                'meshio']
 
         # Optional packages.
         optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'panel', 'scipy']
+                    'cmocean', 'panel', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
@@ -234,6 +235,8 @@ class Report(scooby.Report):
                 extra_meta = [(t[1], t[0]) for t in GPUInfo().get_info()]
             except:
                 extra_meta = ("GPU Details", "error")
+        else:
+            extra_meta = ("GPU Details", "None")
 
         scooby.Report.__init__(self, additional=additional, core=core,
                                optional=optional, ncol=ncol,

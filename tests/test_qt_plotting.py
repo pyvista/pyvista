@@ -15,7 +15,7 @@ NO_PLOTTING = not system_supports_plotting()
 
 
 try:
-    from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QMenuBar, QAction)
+    from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QMenuBar, QAction, QToolBar)
     has_pyqt5 = True
 except:
     has_pyqt5 = False
@@ -320,6 +320,66 @@ def test_background_plotting_orbit(qtbot):
     plotter.orbit_on_path(bkg=False, step=0.0)
     plotter.close()
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting_toolbar(qtbot):
+    with pytest.raises(TypeError, match='toolbar'):
+        pyvista.BackgroundPlotter(off_screen=False, toolbar="foo")
+
+    plotter = pyvista.BackgroundPlotter(off_screen=False, toolbar=False)
+    assert plotter.default_camera_tool_bar is None
+    assert plotter.saved_camera_positions is None
+    assert plotter.saved_cameras_tool_bar is None
+    plotter.close()
+
+    plotter = pyvista.BackgroundPlotter(off_screen=False)
+
+    assert _hasattr(plotter, "app_window", MainWindow)
+    assert _hasattr(plotter, "default_camera_tool_bar", QToolBar)
+    assert _hasattr(plotter, "saved_camera_positions", list)
+    assert _hasattr(plotter, "saved_cameras_tool_bar", QToolBar)
+
+    window = plotter.app_window
+    default_camera_tool_bar = plotter.default_camera_tool_bar
+    saved_cameras_tool_bar = plotter.saved_cameras_tool_bar
+
+    with qtbot.wait_exposed(window, timeout=500):
+        window.show()
+
+    assert default_camera_tool_bar.isVisible()
+    assert saved_cameras_tool_bar.isVisible()
+
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
+def test_background_plotting_menu_bar(qtbot):
+    with pytest.raises(TypeError, match='menu_bar'):
+        pyvista.BackgroundPlotter(off_screen=False, menu_bar="foo")
+
+    plotter = pyvista.BackgroundPlotter(off_screen=False, menu_bar=False)
+    assert plotter.main_menu is None
+    assert plotter._menu_close_action is None
+    plotter.close()
+
+    plotter = pyvista.BackgroundPlotter(off_screen=False)  # menu_bar=True
+
+    assert _hasattr(plotter, "app_window", MainWindow)
+    assert _hasattr(plotter, "main_menu", QMenuBar)
+    assert _hasattr(plotter, "_menu_close_action", QAction)
+
+    window = plotter.app_window
+    main_menu = plotter.main_menu
+    assert not main_menu.isNativeMenuBar()
+
+    with qtbot.wait_exposed(window, timeout=500):
+        window.show()
+
+    assert main_menu.isVisible()
+    plotter.close()
+    assert not main_menu.isVisible()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")
@@ -408,7 +468,7 @@ def test_background_plotting_close(qtbot, close_event, empty_scene):
     assert _hasattr(plotter, "interactor", QVTKRenderWindowInteractor)
 
     window = plotter.app_window  # MainWindow
-    main_menu = plotter.main_menu  # QMenuBar
+    main_menu = plotter.main_menu
     assert not main_menu.isNativeMenuBar()
     interactor = plotter.interactor  # QVTKRenderWindowInteractor
     render_timer = plotter.render_timer  # QTimer

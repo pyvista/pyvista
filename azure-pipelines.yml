@@ -1,13 +1,23 @@
 variables:
   ALLOW_PLOTTING: true
+  SHELLOPTS: 'errexit:pipefail'
 
 trigger:
   branches:
     include:
     - '*'
+    exclude:
+    - '*no-ci*'
   tags:
     include:
     - '*'
+
+pr:
+  branches:
+    include:
+    - '*'
+    exclude:
+    - '*no-ci*'
 
 jobs:
 
@@ -107,6 +117,57 @@ jobs:
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
+
+
+# DESCRIPTION: Core API and doc string testing across VTK versions using conda
+- job: LinuxConda
+  pool:
+    vmImage: 'ubuntu-16.04'
+  variables:
+    DISPLAY: ':99.0'
+    PYVISTA_OFF_SCREEN: 'True'
+
+  strategy:
+    matrix:
+      VTKv81:
+        VTK.VERSION: 8.1
+      VTKv82:
+        VTK.VERSION: 8.2
+
+  steps:
+
+    - script: |
+        .ci/setup_headless_display.sh
+      displayName: Install headless display
+
+    - script: |
+        export CONDA_ALWAYS_YES=1
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda config --add channels conda-forge
+        sed -i -e 's/- vtk$/- vtk=$(VTK.VERSION)/' environment.yml
+        conda env create --quiet -n pyvista-vtk$(VTK.VERSION) --file environment.yml
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pip install -e .
+        conda list
+        which python
+        python -c "import pyvista; print(pyvista.Report())"
+      displayName: Create Anaconda environment
+
+    - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pytest -v --cov pyvista --cov-report html
+      displayName: 'Test Core API against VTK'
+
+    - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pytest -v --doctest-modules pyvista
+      displayName: 'Test Package Docstrings against VTK'
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
+
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
@@ -153,6 +214,10 @@ jobs:
       python -m pytest --cov -v .
     displayName: 'Run Tests'
 
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
+
+
 # DESCRIPTION: Core API testing for MacOS
 - job: macOS
   variables:
@@ -196,6 +261,9 @@ jobs:
         python -m pip install pytest-azurepipelines
         python -m pytest -v --cov pyvista --cov-report html --durations=0
       displayName: 'Run Tests'
+
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
 # Builds the documentation
@@ -253,6 +321,7 @@ jobs:
 
   - script: |
       make -C docs html
+      cat docs/_build/html/python.txt
     displayName: 'Build documentation'
 
   - script: |
@@ -342,3 +411,6 @@ jobs:
     env:
       GH_TOKEN: $(gh.token)
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
