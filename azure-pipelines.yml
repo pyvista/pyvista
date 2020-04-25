@@ -320,8 +320,8 @@ jobs:
     displayName: Build pyvista examples cache
 
   - script: |
-      make -C docs html
-      cat docs/_build/html/python.txt
+      make -C docs html -b coverage
+      cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
 
   - script: |
