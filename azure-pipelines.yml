@@ -321,7 +321,7 @@ jobs:
 
   - script: |
       make -C docs html -b coverage
-      cat docs/_build/html/python.txt
+      cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
 
   - script: |
