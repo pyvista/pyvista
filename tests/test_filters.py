@@ -656,8 +656,25 @@ def test_compute_gradients():
     assert np.shape(grad['gradient'])[1] == 3
 
 
-
 def test_extract_subset():
     volume = examples.load_uniform()
     voi = volume.extract_subset([0,3,1,4,5,7])
     assert isinstance(voi, pyvista.UniformGrid)
+
+
+def test_struct_subsample():
+    x = np.arange(-10, 10, 0.25)
+    y = np.arange(-10, 10, 0.25)
+    x, y = np.meshgrid(x, y)
+    r = np.sqrt(x ** 2 + y ** 2)
+    z = np.sin(r)
+    grid = pyvista.StructuredGrid(x, y, z)
+    a, b = 5, 4
+    # perfrom subsampling
+    sub = grid.subsample(k=(a,b,None))
+    assert sub.dimensions[0] == grid.dimensions[0] // a
+    assert sub.dimensions[1] == grid.dimensions[1] // b
+    assert sub.dimensions[2] == grid.dimensions[2]
+    ids = sub["vtkOriginalPointIds"]
+    # TODO: huh, this is failing and thats not good
+    assert np.allclose(sub.points, grid.points[ids])
