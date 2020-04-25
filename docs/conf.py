@@ -279,5 +279,5 @@ class AutoAutoSummary(Autosummary):
 def setup(app):
     AutoAutoSummary.app = app
     app.add_directive('autoautosummary', AutoAutoSummary)
-    app.add_stylesheet("style.css")
-    app.add_stylesheet("copybutton.css")
+    app.add_css_file("style.css")
+    app.add_css_file("copybutton.css")
