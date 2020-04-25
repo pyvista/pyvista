@@ -90,3 +90,66 @@ plotter.add_mesh(pv.Cone(), show_edges=True)
 
 # Display the window
 plotter.show()
+
+
+###############################################################################
+# Create a layout grid and register groups which can span over multiple rows
+# and columns.
+import numpy as np # numpy is imported for a more convenient slice notation through np.s_
+
+shape = (5,5) # 5 by 5 grid
+groups = [
+    (0,np.s_[:]),               # First group spans over all columns of the first row (0)
+    ([1,3],0),                  # Second group spans over row 1-3 of the first column (0)
+    (np.s_[2:],[1,2]),          # Third group spans over rows 2-4 and columns 1-2
+    (np.s_[1:-1],slice(3,None)),# Fourth group spans over rows 1-3 and columns 3-4
+    (4,[3,4]),                  # Fifth group spans over column 3-4 of the last row (4)
+]
+
+plotter = pv.Plotter(shape=shape,groups=groups)
+
+# Access all subplots and groups and plot something:
+# Note that a group can be accessed through any of its composing cells
+plotter.subplot(0,0)
+plotter.add_text("Group 1")
+plotter.add_mesh(pv.Cylinder(direction=[0,1,0],height=20))
+plotter.view_yz()
+plotter.camera.Zoom(5)
+plotter.camera_set = True
+
+plotter.subplot(2,0)
+plotter.add_text("Group 2")
+plotter.add_mesh(pv.ParametricCatalanMinimal(), show_edges=False, color="tan")
+plotter.view_isometric()
+plotter.camera.Zoom(2)
+plotter.camera_set = True
+
+plotter.subplot(2,1)
+plotter.add_text("Group 3")
+plotter.add_mesh(examples.load_uniform(), show_edges=True)
+
+plotter.subplot(1,3)
+plotter.add_text("Group 4")
+plotter.add_mesh(examples.load_globe())
+
+plotter.subplot(4,3)
+plotter.add_text("Group 5")
+plotter.add_mesh(pv.Cube(), show_edges=True, color="tan")
+
+plotter.subplot(1,1)
+plotter.add_text("Cell (1,1)")
+sphere = pv.Sphere()
+plotter.add_mesh(sphere, scalars=sphere.points[:, 2])
+plotter.add_scalar_bar("Z")
+plotter.add_axes(interactive=True)
+
+plotter.subplot(1,2)
+plotter.add_text("Cell (1,2)")
+plotter.add_mesh(pv.Cone(), show_edges=True)
+
+plotter.subplot(4,0)
+plotter.add_text("Cell (4,0)")
+plotter.add_mesh(examples.load_airplane(), show_edges=False)
+
+# Display the window
+plotter.show()
