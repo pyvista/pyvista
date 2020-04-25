@@ -95,7 +95,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError("pyvista.BasePlotter is an abstract class and may not be instantiated.")
         return object.__new__(cls)
 
-    def __init__(self, shape=(1, 1), border=None, border_color='k',
+    def __init__(self, shape=(1, 1), groups=None, border=None, border_color='k',
                  border_width=2.0, title=None, splitting_position=None):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
@@ -115,6 +115,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add render windows
         self._active_renderer_index = 0
         self.renderers = []
+
+        self.groups = np.empty((0,4),dtype=int)
 
         if isinstance(shape, str):
 
@@ -155,7 +157,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
                 self.renderers.append(arenderer)
 
-                self.shape = (n+m,)
+            self.shape = (n+m,)
+            self._render_idxs = np.arange(n+m)
 
         else:
 
@@ -164,15 +167,50 @@ class BasePlotter(PickingHelper, WidgetHelper):
             assert shape[0] > 0, '"shape" must be positive'
             assert shape[1] > 0, '"shape" must be positive'
             self.shape = shape
-            for i in reversed(range(shape[0])):
-                for j in range(shape[1]):
-                    renderer = Renderer(self, border, border_color, border_width)
-                    x0 = i/shape[0]
-                    y0 = j/shape[1]
-                    x1 = (i+1)/shape[0]
-                    y1 = (j+1)/shape[1]
-                    renderer.SetViewport(y0, x0, y1, x1)
-                    self.renderers.append(renderer)
+            self._render_idxs = np.empty(self.shape,dtype=int)
+            # Check and convert groups to internal format (Nx4 matrix where every row contains the row and col index of the top left cell
+            # together with the row and col index of the bottom right cell)
+            if groups is not None:
+                assert isinstance(groups, collections.Sequence), '"groups" should be a list or tuple'
+                for group in groups:
+                    assert isinstance(group, collections.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
+                    rows = group[0]
+                    if isinstance(rows,slice):
+                        rows = np.arange(self.shape[0],dtype=int)[rows]
+                    cols = group[1]
+                    if isinstance(cols,slice):
+                        cols = np.arange(self.shape[1],dtype=int)[cols]
+                    # Get the normalized group, i.e. extract top left corner and bottom right corner from the given rows and cols
+                    norm_group = [np.min(rows),np.min(cols),np.max(rows),np.max(cols)]
+                    # Check for overlap with already defined groups:
+                    for i in range(norm_group[0],norm_group[2]+1):
+                        for j in range(norm_group[1],norm_group[3]+1):
+                            assert self.loc_to_group((i,j)) is None, 'groups cannot overlap'
+                    self.groups = np.concatenate((self.groups,np.array([norm_group],dtype=int)),axis=0)
+            for row in range(shape[0]):
+                for col in range(shape[1]):
+                    group = self.loc_to_group((row,col))
+                    nb_rows = None
+                    nb_cols = None
+                    if group is not None:
+                        if row==self.groups[group,0] and col==self.groups[group,1]:
+                            # Only add renderer for first location of the group
+                            nb_rows = 1+self.groups[group,2]-self.groups[group,0]
+                            nb_cols = 1+self.groups[group,3]-self.groups[group,1]
+                    else:
+                        nb_rows = 1
+                        nb_cols = 1
+                    if nb_rows is not None:
+                        renderer = Renderer(self, border, border_color, border_width)
+                        x0 = col/shape[1]
+                        y0 = 1-(row+nb_rows)/shape[0]
+                        x1 = (col+nb_cols)/shape[1]
+                        y1 = 1-row/shape[0]
+                        renderer.SetViewport(x0, y0, x1, y1)
+                        self._render_idxs[row,col] = len(self.renderers)
+                        self.renderers.append(renderer)
+                    else:
+                        self._render_idxs[row,col] = self._render_idxs[self.groups[group,0],self.groups[group,1]]
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self.renderers))]
@@ -209,6 +247,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
 
     #### Manage the active Renderer ####
+    
+    def loc_to_group(self, loc):
+        """Return group id of the given location index. Or None if this location is not part of any group."""
+        group_idxs = np.arange(self.groups.shape[0])
+        I = (loc[0]>=self.groups[:,0]) & (loc[0]<=self.groups[:,2]) & (loc[1]>=self.groups[:,1]) & (loc[1]<=self.groups[:,3])
+        group = group_idxs[I]
+        return None if group.size==0 else group[0]
 
     def loc_to_index(self, loc):
         """Return index of the render window given a location index.
@@ -238,18 +283,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
             if index_column < 0 or index_column >= self.shape[1]:
                 raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
-            sz = int(self.shape[0] * self.shape[1])
-            idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
-            return idxs[index_row, index_column]
+            return self._render_idxs[index_row,index_column]
 
 
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid."""
         if len(self.shape) == 1:
             return index
-        sz = int(self.shape[0] * self.shape[1])
-        idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
-        args = np.argwhere(idxs == index)
+        args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
             raise RuntimeError('Index ({}) is out of range.')
         return args[0]
@@ -3666,13 +3707,13 @@ class Plotter(BasePlotter):
     last_update_time = 0.0
     right_timer_id = -1
 
-    def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
+    def __init__(self, off_screen=None, notebook=None, shape=(1, 1), groups=None,
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
                  splitting_position=None, title=None):
         """Initialize a vtk plotting object."""
-        super(Plotter, self).__init__(shape=shape, border=border,
+        super(Plotter, self).__init__(shape=shape, groups=groups, border=border,
                                       border_color=border_color,
                                       border_width=border_width,
                                       splitting_position=splitting_position,
