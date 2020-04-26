@@ -3526,6 +3526,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Check VTK version as this was introduced in VTK 9
         if vtk.vtkVersion().GetVTKMajorVersion() < 9:
             raise ValueError("VTK version 9 at least required.")
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir)
         exporter = vtk.vtkJSONRenderWindowExporter()
         exporter.GetArchiver().SetArchiveName(output_dir)
         exporter.SetRenderWindow(self.ren_win)
