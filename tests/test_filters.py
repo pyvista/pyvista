@@ -669,12 +669,18 @@ def test_struct_subsample():
     r = np.sqrt(x ** 2 + y ** 2)
     z = np.sin(r)
     grid = pyvista.StructuredGrid(x, y, z)
-    a, b = 5, 4
+    grid["foo_p"] = np.random.rand(grid.n_points)
+    grid["foo_c"] = np.random.rand(grid.n_cells)
     # perfrom subsampling
+    a, b = 5, 4
     sub = grid.subsample(k=(a,b,None))
     assert sub.dimensions[0] == grid.dimensions[0] // a
     assert sub.dimensions[1] == grid.dimensions[1] // b
     assert sub.dimensions[2] == grid.dimensions[2]
-    ids = sub["vtkOriginalPointIds"]
+    ids_p = sub["vtkOriginalPointIds"]
+    ids_p = sub["vtkOriginalCellIds"]
+    assert np.allclose(sub["foo_p"], grid["foo_p"][ids_p])
+    # TODO: cell data is not properly sampled
+    assert np.allclose(sub["foo_c"], grid["foo_c"][ids_c])
     # TODO: huh, this is failing and thats not good
     assert np.allclose(sub.points, grid.points[ids])
