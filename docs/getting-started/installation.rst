@@ -3,10 +3,14 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.5+, with temporary support for
-Python 2.7 as outlined in `this issue`_.
+PyVista is supported on Python versions 3.5+. Previous versions of Python are
+no longer supported as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
+
+For the best experience, please considering using Anaconda as a virtual
+environment and package manager for Python and following the instructions to
+install PyVista with Anaconda.
 
 Dependencies
 ~~~~~~~~~~~~
@@ -19,6 +23,7 @@ the following projects are required dependencies of PyVista:
 * `imageio <https://pypi.org/project/imageio/>`_ - This library is used for saving screenshots.
 * `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
+* `scooby <https://github.com/banesullivan/scooby>`_ - Debugging tools
 
 PyPI
 ~~~~
@@ -38,7 +43,7 @@ Anaconda
 .. image:: https://img.shields.io/conda/vn/conda-forge/pyvista.svg?logo=conda-forge&logoColor=white
    :target: https://anaconda.org/conda-forge/pyvista
 
-To install this package with conda run::
+To install this package with ``conda`` run::
 
     conda install -c conda-forge pyvista
 
@@ -55,6 +60,8 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``PyQt5==5.11.3``                 | Background plotting                     |
 +-----------------------------------+-----------------------------------------+
+| ``itkwidgets``                    | Interactive notebook rendering          |
++-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
@@ -63,18 +70,26 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``cmocean``                       | Oceanographic colormaps                 |
 +-----------------------------------+-----------------------------------------+
+| ``imageio-ffmpeg``                | Saving movie files                      |
++-----------------------------------+-----------------------------------------+
+| ``tqdm``                          | Status bars for monitoring filters      |
++-----------------------------------+-----------------------------------------+
 
 
 Source / Developers
 ~~~~~~~~~~~~~~~~~~~
 
 Alternatively, you can install the latest version from GitHub by visiting
-`PyVista <https://github.com/pyvista/pyvista>`_, downloading the source
-(or cloning), and running::
+`PyVista <https://github.com/pyvista/pyvista>`_, and downloading the source
+(cloning) by running::
 
     git clone https://github.com/pyvista/pyvista.git
     cd pyvista
     python -m pip install -e .
+
+
+The latest documentation for the ``master`` branch of PyVista can be found at
+`dev.pyvista.org <https://dev.pyvista.org>`_.
 
 
 Test Installation

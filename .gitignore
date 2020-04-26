@@ -57,3 +57,9 @@ docs/images/auto-generated
 
 # flycheck temp files
 flycheck*
+
+
+docs/external_examples.rst
+
+# hypothesis
+.hypothesis

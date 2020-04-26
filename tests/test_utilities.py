@@ -119,7 +119,9 @@ def test_voxelize():
 
 
 def test_report():
-    report = pyvista.Report()
+    report = pyvista.Report(gpu=True)
+    assert report is not None
+    report = pyvista.Report(gpu=False)
     assert report is not None
 
 

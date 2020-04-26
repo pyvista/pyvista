@@ -16,11 +16,9 @@ SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
 
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
-try:
-    test_path = os.path.dirname(os.path.abspath(__file__))
-    test_data_path = os.path.join(test_path, 'test_data')
-except:
-    test_data_path = '/home/alex/afrl/python/source/pyvista/tests/test_data'
+test_path = os.path.dirname(os.path.abspath(__file__))
+test_data_path = os.path.join(test_path, 'test_data')
+
 
 stl_test_file = os.path.join(test_data_path, 'sphere.stl')
 ply_test_file = os.path.join(test_data_path, 'sphere.ply')
@@ -591,3 +589,14 @@ def test_is_all_triangles():
     assert not mesh.is_all_triangles()
     mesh = mesh.triangulate()
     assert mesh.is_all_triangles()
+
+
+def test_extrude():
+    arc = pyvista.CircularArc([-1, 0, 0], [1, 0, 0], [0, 0, 0])
+    poly = arc.extrude([0, 0, 1])
+    assert poly.n_points
+    assert poly.n_cells
+
+    n_points_old = arc.n_points
+    arc.extrude([0, 0, 1], inplace=True)
+    assert arc.n_points != n_points_old

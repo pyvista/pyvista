@@ -5,6 +5,11 @@ if sys.version_info >= (3, 0):
     import faulthandler
     faulthandler.enable()
 
+sys.path.insert(0, os.path.abspath('.'))
+import make_external_gallery
+make_external_gallery.make_example_gallery()
+
+
 # -- pyvista configuration ---------------------------------------------------
 import pyvista
 import numpy as np
@@ -44,6 +49,7 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx_copybutton',
               'sphinx_gallery.gen_gallery',
               'sphinx.ext.extlinks',
+              'sphinx.ext.coverage',
               ]
 
 
@@ -273,5 +279,5 @@ class AutoAutoSummary(Autosummary):
 def setup(app):
     AutoAutoSummary.app = app
     app.add_directive('autoautosummary', AutoAutoSummary)
-    app.add_stylesheet("style.css")
-    app.add_stylesheet("copybutton.css")
+    app.add_css_file("style.css")
+    app.add_css_file("copybutton.css")
