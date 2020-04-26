@@ -288,3 +288,48 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
             raise RuntimeError('Transfer function cannot have more values than `n_colors`. This has {} elements'.format(mapping.size))
         return mapping
     raise TypeError('Transfer function type ({}) not understood'.format(type(mapping)))
+
+
+def convert_dropbox_url(url):
+    """Convert dropbox url to direct download link."""
+    return url.replace("https://www.dropbox.com", "https://dl.dropbox.com")
+
+def generate_viewer_url(dataURL):
+    """Generate viewer url with data link."""
+    viewerURL = "http://viewer.pyvista.org/"
+    return viewerURL + '%s%s' % ("?fileURL=", dataURL)
+
+def get_vtkjs_url(*args):
+    """Provide shareable link from the vtkjs script.
+
+    After using ``export_vtkjs()`` to create a ``.vtkjs`` file from a
+    data scene which is uploaded to an online file hosting service like Dropbox,
+    use this method to get a shareable link to that scene on the
+    `PVGeo VTKjs viewer`_.
+
+    .. _PVGeo VTKjs viewer: http://viewer.pyvista.org
+
+    **Current file hosts supported:**
+
+    - Dropbox
+
+    Args:
+        host (str): the name of the file hosting service.
+        inURL (str): the web URL to the ``.vtkjs`` file.
+
+    """
+    if len(args) == 1:
+        host = 'dropbox'
+        inURL = args[0]
+    elif len(args) == 2:
+        host = args[0]
+        inURL = args[1]
+    else:
+        raise RuntimeError('Arguments not understood.')
+    if host.lower() == "dropbox":
+        convertURL = convert_dropbox_url(inURL)
+    else:
+        print("--> Warning: Web host not specified or supported. URL is simply appended to standalone scene loader link.")
+        convertURL = inURL
+    #print("--> Your link: %s" % generate_viewer_url(convertURL))
+    return generate_viewer_url(convertURL)

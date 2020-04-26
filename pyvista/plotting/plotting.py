@@ -6,7 +6,9 @@ import os
 import time
 import warnings
 from functools import wraps
+import shutil
 from threading import Thread
+import zipfile
 
 import imageio
 import numpy as np
@@ -3499,20 +3501,56 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return
 
 
-    def export_vtkjs(self, filename, compress_arrays=False):
+    def export_vtkjs(self, output_dir, archive=True):
         """Export the current rendering scene as a VTKjs scene.
 
-        It can be used for rendering in a web browser.
+        This constructs a scene graph from the render window and generates an
+        archive for vtk-js for rendering in a web browser.
+
+        Parameters
+        ----------
+        output_dir : str
+            The output directory for the scene graph archive.
+
+        archive : bool
+            Default True. If true, the archive will be compressed into a single
+            archive file for vtk-js and an extension of ``.vtkjs`` will be
+            added to the output directory.
 
         """
         if not hasattr(self, 'ren_win'):
             raise RuntimeError('Export must be called before showing/closing the scene.')
-        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-            filename = os.path.join(pyvista.FIGURE_PATH, filename)
+        if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(output_dir):
+            output_dir = os.path.join(pyvista.FIGURE_PATH, output_dir)
         else:
-            filename = os.path.abspath(os.path.expanduser(filename))
-        return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
+            output_dir = os.path.abspath(os.path.expanduser(output_dir))
+        # Check VTK version as this was introduced in VTK 9
+        if vtk.vtkVersion().GetVTKMajorVersion() < 9:
+            raise ValueError("VTK version 9 at least required.")
+        exporter = vtk.vtkJSONRenderWindowExporter()
+        exporter.GetArchiver().SetArchiveName(output_dir)
+        exporter.SetRenderWindow(self.ren_win)
+        exporter.Write()
+        filename = output_dir
+        if archive:
+            scene_name = os.path.split(filename)[1]
+            filename = output_dir + ".vtkjs"
+            try:
+                import zlib
+                compression = zipfile.ZIP_DEFLATED
+            except:
+                compression = zipfile.ZIP_STORED
+            zf = zipfile.ZipFile(filename, mode='w')
+            for dir_name, _, file_list in os.walk(output_dir):
+                for fname in file_list:
+                    full_path = os.path.join(dir_name, fname)
+                    rel_path = '%s/%s' % (scene_name,
+                                         os.path.relpath(full_path, output_dir))
+                    zf.write(full_path, arcname=rel_path, compress_type=compression)
+            zf.close()
+            shutil.rmtree(output_dir)
 
+        return filename
 
 
     def export_obj(self, filename):
