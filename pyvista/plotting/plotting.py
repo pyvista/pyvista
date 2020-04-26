@@ -24,7 +24,6 @@ from pyvista.utilities import (assert_empty_kwargs,
                                raise_not_matching, try_callback, wrap)
 
 from .colors import get_cmap_safe
-from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer
