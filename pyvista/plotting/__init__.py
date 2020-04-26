@@ -2,7 +2,6 @@
 
 from .colors import (color_char_to_word, get_cmap_safe, hex_to_rgb, hexcolors,
                      string_to_rgb, PARAVIEW_BACKGROUND)
-from .export_vtkjs import export_plotter_vtkjs
 from .theme import (DEFAULT_THEME, FONT_KEYS, MAX_N_COLOR_BARS,
                     parse_color, parse_font_family, rcParams, set_plot_theme)
 from .tools import (create_axes_marker, create_axes_orientation_box,
