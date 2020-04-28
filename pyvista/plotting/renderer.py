@@ -427,10 +427,54 @@ class Renderer(vtkRenderer):
         return self.marker_actor
 
 
+    def add_orientation_widget(self, actor, interactive=None, color=None, opacity=1.0):
+        """Use the given actor in an orienntation marker widget.
+
+        Parameters
+        ----------
+        actor : vtk.vtkActor or pyvista.Common
+            The mesh or actor to use as the marker.
+
+        color : string, optional
+            The color of the actor.
+
+        opacity : int or float, optional
+            Opacity of the marker.
+
+        """
+        if not isinstance(actor, vtk.vtkActor):
+            mapper = vtk.vtkDataSetMapper()
+            mesh = actor.copy()
+            mesh.clear_arrays()
+            mapper.SetInputData(mesh)
+            actor = vtk.vtkActor()
+            actor.SetMapper(mapper)
+        prop = actor.GetProperty()
+        if color is not None:
+            prop.SetColor(parse_color(color))
+        prop.SetOpacity(opacity)
+        if hasattr(self, 'axes_widget'):
+            # Delete the old one
+            self.axes_widget.EnabledOff()
+            self.Modified()
+            del self.axes_widget
+        if interactive is None:
+            interactive = rcParams['interactive']
+        self.axes_widget = vtk.vtkOrientationMarkerWidget()
+        self.axes_widget.SetOrientationMarker(actor)
+        if hasattr(self.parent, 'iren'):
+            self.axes_widget.SetInteractor(self.parent.iren)
+            self.axes_widget.SetEnabled(1)
+            self.axes_widget.SetInteractive(interactive)
+        self.axes_widget.SetCurrentRenderer(self)
+        self.Modified()
+        return self.axes_widget
+
+
     def add_axes(self, interactive=None, line_width=2,
                  color=None, x_color=None, y_color=None, z_color=None,
                  xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
-                 box=None, box_args=None):
+                 box=None, box_args=None, opacity=1.0):
         """Add an interactive axes widget in the bottom left corner.
 
         Parameters
@@ -444,6 +488,9 @@ class Renderer(vtkRenderer):
         box : bool
             Show a box orientation marker. Use ``box_args`` to adjust.
             See :any:`pyvista.create_axes_orientation_box` for details.
+
+        opacity : int or float, optional
+            The opacity of the marker.
         """
         if interactive is None:
             interactive = rcParams['interactive']
@@ -466,14 +513,8 @@ class Renderer(vtkRenderer):
                 label_color=color, line_width=line_width,
                 x_color=x_color, y_color=y_color, z_color=z_color,
                 xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
-        self.axes_widget = vtk.vtkOrientationMarkerWidget()
-        self.axes_widget.SetOrientationMarker(self.axes_actor)
-        if hasattr(self.parent, 'iren'):
-            self.axes_widget.SetInteractor(self.parent.iren)
-            self.axes_widget.SetEnabled(1)
-            self.axes_widget.SetInteractive(interactive)
-        self.axes_widget.SetCurrentRenderer(self)
-        self.Modified()
+        self.add_orientation_widget(self.axes_actor, interactive=interactive,
+                                    color=None, opacity=opacity)
         return self.axes_actor
 
 

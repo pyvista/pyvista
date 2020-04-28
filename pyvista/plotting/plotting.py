@@ -321,6 +321,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.set_viewup(*args, **kwargs)
         self.render()
 
+    @wraps(Renderer.add_orientation_widget)
+    def add_orientation_widget(self, *args, **kwargs):
+        """Wrap ``Renderer.add_orientation_widget``."""
+        return self.renderer.add_orientation_widget(*args, **kwargs)
+
     @wraps(Renderer.add_axes)
     def add_axes(self, *args, **kwargs):
         """Wrap ``Renderer.add_axes``."""
