@@ -391,6 +391,10 @@ def test_axes():
     plotter.add_axes()
     plotter.add_mesh(pyvista.Sphere())
     plotter.show()
+    plotter = pyvista.Plotter(off_screen=True)
+    plotter.add_orientation_widget(pyvista.Cube())
+    plotter.add_mesh(pyvista.Cube())
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
