@@ -427,8 +427,11 @@ class Renderer(vtkRenderer):
         return self.marker_actor
 
 
-    def add_orientation_widget(self, actor, interactive=None, color=None, opacity=1.0):
+    def add_orientation_widget(self, actor, interactive=None, color=None,
+                               opacity=1.0):
         """Use the given actor in an orienntation marker widget.
+
+        Color and opacity are only valid arguments if a mesh is passed.
 
         Parameters
         ----------
@@ -442,17 +445,17 @@ class Renderer(vtkRenderer):
             Opacity of the marker.
 
         """
-        if not isinstance(actor, vtk.vtkActor):
+        if isinstance(actor, pyvista.Common):
             mapper = vtk.vtkDataSetMapper()
             mesh = actor.copy()
             mesh.clear_arrays()
             mapper.SetInputData(mesh)
             actor = vtk.vtkActor()
             actor.SetMapper(mapper)
-        prop = actor.GetProperty()
-        if color is not None:
-            prop.SetColor(parse_color(color))
-        prop.SetOpacity(opacity)
+            prop = actor.GetProperty()
+            if color is not None:
+                prop.SetColor(parse_color(color))
+            prop.SetOpacity(opacity)
         if hasattr(self, 'axes_widget'):
             # Delete the old one
             self.axes_widget.EnabledOff()
@@ -474,7 +477,7 @@ class Renderer(vtkRenderer):
     def add_axes(self, interactive=None, line_width=2,
                  color=None, x_color=None, y_color=None, z_color=None,
                  xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
-                 box=None, box_args=None, opacity=1.0):
+                 box=None, box_args=None):
         """Add an interactive axes widget in the bottom left corner.
 
         Parameters
@@ -495,9 +498,9 @@ class Renderer(vtkRenderer):
         if interactive is None:
             interactive = rcParams['interactive']
         if hasattr(self, 'axes_widget'):
-            self.axes_widget.SetInteractive(interactive)
-            update_axes_label_color(color)
-            return
+            self.axes_widget.EnabledOff()
+            self.Modified()
+            del self.axes_widget
         if box is None:
             box = rcParams['axes']['box']
         if box:
@@ -514,7 +517,7 @@ class Renderer(vtkRenderer):
                 x_color=x_color, y_color=y_color, z_color=z_color,
                 xlabel=xlabel, ylabel=ylabel, zlabel=zlabel, labels_off=labels_off)
         self.add_orientation_widget(self.axes_actor, interactive=interactive,
-                                    color=None, opacity=opacity)
+                                    color=None)
         return self.axes_actor
 
 
