@@ -449,7 +449,7 @@ class Renderer(vtkRenderer):
             interactive = rcParams['interactive']
         if hasattr(self, 'axes_widget'):
             self.axes_widget.SetInteractive(interactive)
-            update_axes_label_color(color)
+            update_axes_label_color(self.axes_actor, color)
             return
         if box is None:
             box = rcParams['axes']['box']
