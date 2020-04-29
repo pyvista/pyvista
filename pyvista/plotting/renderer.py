@@ -429,7 +429,7 @@ class Renderer(vtkRenderer):
 
     def add_orientation_widget(self, actor, interactive=None, color=None,
                                opacity=1.0):
-        """Use the given actor in an orienntation marker widget.
+        """Use the given actor in an orientation marker widget.
 
         Color and opacity are only valid arguments if a mesh is passed.
 
