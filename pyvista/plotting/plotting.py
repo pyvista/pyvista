@@ -11,6 +11,7 @@ from threading import Thread
 import imageio
 import numpy as np
 import vtk
+
 from vtk.util import numpy_support as VN
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
