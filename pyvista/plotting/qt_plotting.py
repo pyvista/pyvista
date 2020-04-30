@@ -18,26 +18,11 @@ import scooby
 from .plotting import BasePlotter
 from .theme import rcParams
 
-# for display bugs due to older intel integrated GPUs
-vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
-vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
-vtk_base_widget = 'QGLWidget'
-if vtk_major_version == 8 and vtk_minor_version < 2:
-    import vtk.qt
-    vtk.qt.QVTKRWIBase = vtk_base_widget
-else:
-    import vtkmodules.qt
-    if sys.platform == 'linux' and vtk_major_version >= 9:
-        # Qt 5.13.2 + VTK 9 ends up with GenericWindowInteractor on Linux
-        try:
-            from PyQt5.QtCore import QT_VERSION_STR
-        except ImportError:
-            pass
-        else:
-            if LooseVersion(QT_VERSION_STR) < LooseVersion('5.14.2'):
-                vtk_base_widget = 'QWidget'
-    vtkmodules.qt.QVTKRWIBase = vtk_base_widget
-del vtk_base_widget
+# for display bugs due to older intel integrated GPUs, setting
+# vtkmodules.qt.QVTKRWIBase = 'QGLWidget' could help. However, its use
+# is discouraged and does not work well on VTK9+, so let's not bother
+# changing it from the default 'QWidget'.
+# See https://github.com/pyvista/pyvista/pull/693
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
