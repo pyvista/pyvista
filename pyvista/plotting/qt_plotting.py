@@ -1,9 +1,7 @@
 """Qt interactive plotter."""
-from distutils.version import LooseVersion
 import logging
 import os
 import platform
-import sys
 import time
 import warnings
 from functools import wraps
