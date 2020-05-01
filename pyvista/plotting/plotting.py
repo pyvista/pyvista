@@ -95,8 +95,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError("pyvista.BasePlotter is an abstract class and may not be instantiated.")
         return object.__new__(cls)
 
-    def __init__(self, shape=(1, 1), groups=None, border=None, border_color='k',
-                 border_width=2.0, title=None, splitting_position=None):
+    def __init__(self, shape=(1, 1), border=None, border_color='k',
+                 border_width=2.0, title=None, splitting_position=None,
+                 groups=None, row_weights=None, col_weights=None):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
 
@@ -168,6 +169,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             assert shape[1] > 0, '"shape" must be positive'
             self.shape = shape
             self._render_idxs = np.empty(self.shape,dtype=int)
+            # Check if row and col weights correspond to given shape, or initialize them to defaults (equally weighted)
+            # and convert to normalized offsets
+            if row_weights is None:
+                row_weights = np.ones(shape[0])
+            if col_weights is None:
+                col_weights = np.ones(shape[1])
+            assert(np.array(row_weights).size==shape[0])
+            assert(np.array(col_weights).size==shape[1])
+            row_off = np.cumsum(np.abs(row_weights))/np.sum(np.abs(row_weights))
+            row_off = 1-np.concatenate(([0],row_off))
+            col_off = np.cumsum(np.abs(col_weights))/np.sum(np.abs(col_weights))
+            col_off = np.concatenate(([0],col_off))
             # Check and convert groups to internal format (Nx4 matrix where every row contains the row and col index of the top left cell
             # together with the row and col index of the bottom right cell)
             if groups is not None:
@@ -187,6 +200,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         for j in range(norm_group[1],norm_group[3]+1):
                             assert self.loc_to_group((i,j)) is None, 'groups cannot overlap'
                     self.groups = np.concatenate((self.groups,np.array([norm_group],dtype=int)),axis=0)
+            # Create subplot renderers
             for row in range(shape[0]):
                 for col in range(shape[1]):
                     group = self.loc_to_group((row,col))
@@ -202,10 +216,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         nb_cols = 1
                     if nb_rows is not None:
                         renderer = Renderer(self, border, border_color, border_width)
-                        x0 = col/shape[1]
-                        y0 = 1-(row+nb_rows)/shape[0]
-                        x1 = (col+nb_cols)/shape[1]
-                        y1 = 1-row/shape[0]
+                        x0 = col_off[col]
+                        y0 = row_off[row+nb_rows]
+                        x1 = col_off[col+nb_cols]
+                        y1 = row_off[row]
                         renderer.SetViewport(x0, y0, x1, y1)
                         self._render_idxs[row,col] = len(self.renderers)
                         self.renderers.append(renderer)
@@ -3707,15 +3721,17 @@ class Plotter(BasePlotter):
     last_update_time = 0.0
     right_timer_id = -1
 
-    def __init__(self, off_screen=None, notebook=None, shape=(1, 1), groups=None,
+    def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
+                 groups=None, row_weights=None, col_weights=None,
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
                  splitting_position=None, title=None):
         """Initialize a vtk plotting object."""
-        super(Plotter, self).__init__(shape=shape, groups=groups, border=border,
+        super(Plotter, self).__init__(shape=shape, border=border,
                                       border_color=border_color,
                                       border_width=border_width,
+                                      groups=groups, row_weights=row_weights, col_weights=col_weights,
                                       splitting_position=splitting_position,
                                       title=title)
         log.debug('Initializing')
