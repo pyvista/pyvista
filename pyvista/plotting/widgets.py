@@ -758,11 +758,11 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['font']['color']
 
-        def normalize(point, shape):
-            return (point[0] / shape[1], point[1] / shape[0])
+        def normalize(point, viewport):
+            return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
 
-        pointa = normalize(pointa, self.shape)
-        pointb = normalize(pointb, self.shape)
+        pointa = normalize(pointa, self.renderer.GetViewport())
+        pointb = normalize(pointb, self.renderer.GetViewport())
 
         slider_rep = vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
