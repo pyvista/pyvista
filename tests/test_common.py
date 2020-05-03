@@ -24,6 +24,11 @@ def n_numbers(draw, n):
     return numbers
 
 
+def test_memory_address(grid):
+    assert isinstance(grid.memory_address, str)
+    assert 'Addr' in grid.memory_address
+
+
 def test_point_arrays(grid):
     key = 'test_array_points'
     grid[key] = np.arange(grid.n_points)
@@ -140,6 +145,13 @@ def test_modify_field_array(grid):
     assert np.allclose(grid.field_arrays['foo'], field)
 
 
+def test_active_scalars_cell(grid):
+    grid.add_field_array(range(5), 'foo')
+    del grid.point_arrays['sample_point_scalars']
+    del grid.point_arrays['VTKorigID']
+    assert grid.active_scalars_info[1] == 'sample_cell_scalars'
+
+
 def test_field_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.field_arrays['new_array'] = None
@@ -178,9 +190,9 @@ def test_translate_should_fail_given_none(grid):
 
 
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
-def test_transform_should_fail_given_wrong_numpy_shape(array):
+def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
     assume(array.shape != (4, 4))
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.transform(array)
 
 
@@ -619,6 +631,12 @@ def test_handle_array_with_null_name():
     assert len(fdata) == 1
 
 
+def test_add_point_array_list(grid):
+    rng = range(grid.n_points)
+    grid.point_arrays['tmp'] = rng
+    assert np.allclose(grid.point_arrays['tmp'], rng)
+
+
 def test_shallow_copy_back_propagation():
     """Test that the original data object's points get modified after a
     shallow copy.
@@ -662,3 +680,16 @@ def test_setting_points_from_self(grid):
     grid_copy = grid.copy()
     grid.points = grid_copy.points
     assert np.allclose(grid.points, grid_copy.points)
+
+
+def test_empty_points():
+    pdata = pyvista.PolyData()
+    assert pdata.points is None
+
+
+def test_no_active():
+    pdata = pyvista.PolyData()
+    assert pdata.active_scalars is None
+
+    with pytest.raises(ValueError):
+        pdata._point_array()

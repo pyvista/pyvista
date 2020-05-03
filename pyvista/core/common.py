@@ -249,7 +249,7 @@ class DataObject(object):
             fdata.RemoveArray(name)
         fdata.AddArray(vtkarr)
 
-    def _add_field_scalar(self, scalars, name, set_active=False, deep=True):
+    def _add_field_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add a field array.
 
         DEPRECATED: Please use `_add_field_array` instead.
@@ -301,7 +301,6 @@ class DataObject(object):
     def memory_address(self):
         """Get address of the underlying C++ object in format 'Addr=%p'."""
         return self.GetInformation().GetAddressAsString("")
-
 
 
 class Common(DataSetFilters, DataObject):
@@ -442,14 +441,14 @@ class Common(DataSetFilters, DataObject):
         return self.set_active_scalars(name)
 
     @property
-    def active_scalar_name(self):
+    def active_scalar_name(self):  # pragma: no cover
         """Return the active scalar's name."""
         warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
         return self.active_scalars_name
 
 
     @active_scalar_name.setter
-    def active_scalar_name(self, name):
+    def active_scalar_name(self, name):  # pragma: no cover
         """Set the name of the active scalar."""
         warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
         self.active_scalars_name = name
@@ -588,7 +587,7 @@ class Common(DataSetFilters, DataObject):
             keys = list(mesh.textures.keys())
             # Grab the first name available if True
             idx = 0 if not isinstance(name, int) or name is True else name
-            if idx > len(keys):
+            if idx > len(keys):  # is this necessary?
                 idx = 0
             try:
                 name = keys[idx]
@@ -633,7 +632,7 @@ class Common(DataSetFilters, DataObject):
         self._active_scalars_info = [field, name]
 
 
-    def set_active_scalar(self, name, preference='cell'):
+    def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
         """Find the scalars by name and appropriately sets it as active.
 
         To deactivate any active scalars, pass ``None`` as the ``name``.
@@ -680,7 +679,7 @@ class Common(DataSetFilters, DataObject):
             self.set_active_scalars(new_name, preference=field)
 
 
-    def rename_scalar(self, old_name, new_name, preference='cell'):
+    def rename_scalar(self, old_name, new_name, preference='cell'):  # pragma: no cover
         """Change an array name by searching for the array then renaming it.
 
         DEPRECATED: please use `.rename_array` instead.
@@ -702,7 +701,7 @@ class Common(DataSetFilters, DataObject):
             return self._cell_array(name)
 
     @property
-    def active_scalar(self):
+    def active_scalar(self):  # pragma: no cover
         """Return the active scalars as an array.
 
         DEPRECATED: Please use `.active_scalars` instead.
@@ -729,8 +728,8 @@ class Common(DataSetFilters, DataObject):
         if name is None:
             # use active scalars array
             field, name = self.active_scalars_info
-            if field != FieldAssociation.POINT:
-                raise RuntimeError('Must specify an array to fetch.')
+            if field != FieldAssociation.POINT or name is None:
+                raise ValueError('Must specify an array to fetch.')
         vtkarr = self.GetPointData().GetAbstractArray(name)
         if vtkarr is None:
             raise AssertionError('({}) is not a point scalar'.format(name))
@@ -793,7 +792,7 @@ class Common(DataSetFilters, DataObject):
             self._active_scalars_info = [FieldAssociation.POINT, name]
 
 
-    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):
+    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add points array.
 
         DEPRECATED: Please use `_add_point_array` instead.
@@ -898,8 +897,10 @@ class Common(DataSetFilters, DataObject):
         elif isinstance(trans, vtk.vtkTransform):
             t = pyvista.trans_from_matrix(trans.GetMatrix())
         elif isinstance(trans, np.ndarray):
-            if trans.shape[0] != 4 or trans.shape[1] != 4:
-                raise Exception('Transformation array must be 4x4')
+            if trans.ndim != 2:
+                raise ValueError('Transformation array must be 4x4')
+            elif trans.shape[0] != 4 or trans.shape[1] != 4:
+                raise ValueError('Transformation array must be 4x4')
             t = trans
         else:
             raise TypeError('Input transform must be either:\n'
@@ -996,7 +997,7 @@ class Common(DataSetFilters, DataObject):
             self._active_scalars_info = [FieldAssociation.CELL, name]
 
 
-    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):
+    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add a cell array.
 
         DEPRECATED: Please use `_add_cell_array` instead.
@@ -1242,7 +1243,7 @@ class Common(DataSetFilters, DataObject):
 
 
     @property
-    def n_scalars(self):
+    def n_scalars(self):  # pragma: no cover
         """Return the number of scalars.
 
         DEPRECATED: Please use `n_arrays` instead.
@@ -1275,7 +1276,7 @@ class Common(DataSetFilters, DataObject):
 
 
     @property
-    def scalar_names(self):
+    def scalar_names(self):  # pragma: no cover
         """Return the array names.
 
         DEPRECATED: Please use `array_names` instead.
