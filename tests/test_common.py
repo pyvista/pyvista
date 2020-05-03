@@ -560,6 +560,30 @@ def test_set_extent():
     assert np.allclose(uni_grid.extent, extent)
 
 
+def test_get_item(grid):
+    with pytest.raises(KeyError):
+        grid[0]
+
+
+def test_set_item(grid):
+    with pytest.raises(TypeError):
+        grid['tmp'] = None
+
+    # field data
+    with pytest.raises(Exception):
+        grid['bad_field'] = range(5)
+
+
+def test_set_item_range(grid):
+    rng = range(grid.n_points)
+    grid['pt_rng'] = rng
+    assert np.allclose(grid['pt_rng'], rng)
+
+
+def test_str(grid):
+    assert 'UnstructuredGrid' in str(grid)
+
+
 def test_set_cell_vectors(grid):
     arr = np.random.random((grid.n_cells, 3))
     grid.cell_arrays['_cell_vectors'] = arr
@@ -695,6 +719,16 @@ def test_shallow_copy_back_propagation():
 def test_find_closest_point():
     sphere = pyvista.Sphere()
     node = np.array([0, 0.2, 0.2])
+
+    with pytest.raises(TypeError):
+        sphere.find_closest_point([1, 2])
+
+    with pytest.raises(ValueError):
+        sphere.find_closest_point([0, 0, 0], n=0)
+
+    with pytest.raises(TypeError):
+        sphere.find_closest_point([0, 0, 0], n=3.0)
+
     index = sphere.find_closest_point(node)
     assert isinstance(index, int)
     # Make sure we can fetch that point

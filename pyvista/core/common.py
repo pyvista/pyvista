@@ -1170,7 +1170,7 @@ class Common(DataSetFilters, DataObject):
         """Set the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
             if len(extent) != 6:
-                raise ValueError('Extent must be a vector of 6 values')
+                raise ValueError('Extent must be a vector of 6 values.')
             return self.SetExtent(extent)
         else:
             raise AttributeError('This mesh type does not handle extents.')
@@ -1220,7 +1220,7 @@ class Common(DataSetFilters, DataObject):
         #   there would be the same number of cells as points but we'd want
         #   the data to be on the nodes.
         if scalars is None:
-            raise TypeError('Empty array unable to be added')
+            raise TypeError('Empty array unable to be added.')
         if not isinstance(scalars, np.ndarray):
             scalars = np.array(scalars)
         # Now check array size to determine which field to place array
@@ -1385,7 +1385,7 @@ class Common(DataSetFilters, DataObject):
 
 
     @property
-    def quality(self):
+    def quality(self):  # no cover
         """Return cell quality using PyANSYS.
 
         Computes the minimum scaled jacobian of each cell.
@@ -1409,7 +1409,7 @@ class Common(DataSetFilters, DataObject):
         try:
             import pyansys
         except ImportError:
-            raise Exception('Install pyansys for this function')
+            raise ImportError('Install pyansys for this function')
         if not isinstance(self, pyvista.UnstructuredGrid):
             dataset = self.cast_to_unstructured_grid()
         else:
@@ -1440,8 +1440,10 @@ class Common(DataSetFilters, DataObject):
         """
         if not isinstance(point, collections.Iterable) or len(point) != 3:
             raise TypeError("Given point must be a length three iterable.")
-        if not isinstance(n, int) or n < 1:
+        if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
+        if n < 1:
+             raise ValueError("`n` must be a positive integer.")
         locator = vtk.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
@@ -1472,7 +1474,7 @@ class _ScalarsDict(dict):
         self.callback_enabled = True
 
 
-    def adder(self, scalars, name, set_active=False, deep=True):
+    def adder(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         raise NotImplementedError()
 
 
@@ -1484,7 +1486,7 @@ class _ScalarsDict(dict):
 
 
     def update(self, data):
-        """Update this dictionary with th key-value pairs from a given dictionary."""
+        """Update this dictionary with the key-value pairs from a given dictionary."""
         if not isinstance(data, (dict, pyvista.Table)):
             raise TypeError('Data to update must be in a dictionary or PyVista Table.')
         for k, v in data.items():
