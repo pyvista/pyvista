@@ -88,6 +88,18 @@ def test_cell_arrays(grid):
     assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
 
 
+def test_cell_array_non_contiguous(grid):
+    arr = np.empty((grid.n_cells, 2))[:, 0]
+    with pytest.raises(ValueError):
+        grid.cell_arrays['tmp'] = arr
+
+
+def test_cell_array_range(grid):
+    rng = range(grid.n_cells)
+    grid.cell_arrays['tmp'] = rng
+    assert np.allclose(rng, grid.cell_arrays['tmp'])
+
+
 def test_cell_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_arrays['new_array'] = None
@@ -528,14 +540,32 @@ def test_get_cell_array_fail():
         sphere._cell_array(name=None)
 
 
-def test_extent(grid):
+def test_extent_none(grid):
     assert grid.extent is None
 
 
+def test_set_extent_expect_error(grid):
+    with pytest.raises(AttributeError):
+        grid.extent = [1, 2, 3]
+
+
+def test_set_extent():
+    dims = [10, 10, 10]
+    uni_grid = pyvista.UniformGrid(dims)
+    with pytest.raises(ValueError):
+        uni_grid.extent = [0, 1]
+
+    extent = [0, 1, 0, 1, 0, 1]
+    uni_grid.extent = extent
+    assert np.allclose(uni_grid.extent, extent)
+
+
 def test_set_cell_vectors(grid):
-    grid.cell_arrays['_cell_vectors'] = np.random.random((grid.n_cells, 3))
+    arr = np.random.random((grid.n_cells, 3))
+    grid.cell_arrays['_cell_vectors'] = arr
     grid.set_active_vectors('_cell_vectors')
     assert grid.active_vectors_name == '_cell_vectors'
+    assert np.allclose(grid.active_vectors, arr)
 
 
 def test_axis_rotation_invalid():

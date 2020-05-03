@@ -49,7 +49,7 @@ class DataObject(object):
         return self.DeepCopy(to_copy)
 
 
-    def save(self, filename, binary=True):
+    def save(self, filename, binary=True):  # pragma: no cover
         """Write this mesh to a file.
 
         Parameters
@@ -71,7 +71,7 @@ class DataObject(object):
         raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
 
 
-    def get_data_range(self, arr=None, preference='field'):
+    def get_data_range(self, arr=None, preference='field'):  # pragma: no cover
         """Get the non-NaN min and max of a named array.
 
         Parameters
@@ -374,7 +374,7 @@ class Common(DataSetFilters, DataObject):
         return self._active_scalars_info
 
     @property
-    def active_scalar_info(self):
+    def active_scalar_info(self):  # pragma: no cover
         """Return the active scalar's field and name.
 
         DEPRECATED: use `.active_scalars_info` instead
@@ -980,11 +980,11 @@ class Common(DataSetFilters, DataObject):
             scalars = np.array(scalars)
 
         if scalars.shape[0] != self.n_cells:
-            raise Exception('Number of scalars must match the number of cells (%d)'
-                            % self.n_cells)
+            raise ValueError('Number of scalars must match the number of cells (%d)'
+                             % self.n_cells)
 
         if not scalars.flags.c_contiguous:
-            raise AssertionError('Array must be contigious')
+            raise ValueError('Array must be contigious')
         if scalars.dtype == np.bool:
             scalars = scalars.view(np.uint8)
             self._cell_bool_array_names.append(name)
@@ -1167,8 +1167,10 @@ class Common(DataSetFilters, DataObject):
 
     @extent.setter
     def extent(self, extent):
-        """Return the range of the bounding box."""
+        """Set the range of the bounding box."""
         if hasattr(self, 'SetExtent'):
+            if len(extent) != 6:
+                raise ValueError('Extent must be a vector of 6 values')
             return self.SetExtent(extent)
         else:
             raise AttributeError('This mesh type does not handle extents.')
