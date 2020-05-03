@@ -121,6 +121,25 @@ def test_field_arrays(grid):
     with pytest.raises(RuntimeError):
         grid.set_active_scalars('foo')
 
+
+@pytest.mark.parametrize('field', (range(5), np.ones((3,3))[:, 0]))
+def test_add_field_array(grid, field):
+    grid.add_field_array(field, 'foo')
+    assert isinstance(grid.field_arrays['foo'], np.ndarray)
+    assert np.allclose(grid.field_arrays['foo'], field)
+
+
+def test_modify_field_array(grid):
+    field = range(4)
+    grid.add_field_array(range(5), 'foo')
+    grid.add_field_array(field, 'foo')
+    assert np.allclose(grid.field_arrays['foo'], field)
+
+    field = range(8)
+    grid.field_arrays['foo'] = field
+    assert np.allclose(grid.field_arrays['foo'], field)
+
+
 def test_field_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.field_arrays['new_array'] = None
@@ -306,12 +325,18 @@ def test_html_repr(grid):
     assert grid._repr_html_() is not None
 
 
-def test_print_repr(grid):
+@pytest.mark.parametrize('html', (True, False))
+@pytest.mark.parametrize('display', (True, False))
+def test_print_repr(grid, display, html):
     """
     This just tests to make sure no errors are thrown on the text friendly
     representation method for Common datasets.
     """
-    assert grid.head() is not None
+    result = grid.head(display=display, html=html)
+    if display and html:
+        assert result is None
+    else:
+        assert result is not None
 
 
 def test_texture():

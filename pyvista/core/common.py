@@ -89,9 +89,9 @@ class DataObject(object):
         raise NotImplementedError('{} mesh type does not have a `get_data_range` method.'.format(type(self)))
 
 
-    def _get_attrs(self):
+    def _get_attrs(self):  # pragma: no cover
         """Return the representation methods (internal helper)."""
-        raise NotImplementedError
+        raise NotImplementedError('Called only by the inherited class')
 
 
     def head(self, display=True, html=None):
@@ -137,18 +137,18 @@ class DataObject(object):
         return fmt
 
 
-    def _repr_html_(self):
+    def _repr_html_(self):  # pragma: no cover
         """Return a pretty representation for Jupyter notebooks.
 
         This includes header details and information about all arrays.
 
         """
-        raise NotImplemented
+        raise NotImplemented('Called only by the inherited class')
 
 
-    def copy_meta_from(self, ido):
+    def copy_meta_from(self, ido):  # pragma: no cover
         """Copy pyvista meta data onto this object from another object."""
-        pass
+        pass  # called only by the inherited class
 
 
     def copy(self, deep=True):
@@ -242,8 +242,12 @@ class DataObject(object):
 
         vtkarr = convert_array(scalars, deep=deep)
         vtkarr.SetName(name)
-        self.GetFieldData().AddArray(vtkarr)
 
+        fdata = self.GetFieldData()
+        # must remove array if it already exists
+        if fdata.HasArray(name):
+            fdata.RemoveArray(name)
+        fdata.AddArray(vtkarr)
 
     def _add_field_scalar(self, scalars, name, set_active=False, deep=True):
         """Add a field array.
