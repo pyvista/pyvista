@@ -229,7 +229,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     if isinstance(scale, float) or isinstance(scale, int):
         surf.points *= scale
     elif scale is not None:
-        raise("Scale must be either float, int or 'auto'.")
+        raise TypeError("Scale must be either float, int or 'auto'.")
 
     translate(surf, start, direction)
     return surf
