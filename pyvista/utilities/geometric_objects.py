@@ -178,7 +178,7 @@ def CylinderStructured(radius=0.5, height=1.0,
 
 def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
           tip_radius=0.1, tip_resolution=20, shaft_radius=0.05,
-          shaft_resolution=20):
+          shaft_resolution=20, scale=None):
     """Create a vtk Arrow.
 
     Parameters
@@ -204,6 +204,10 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     shaft_resolution : int, optional
         Number of faces around the shaft.
 
+    scale : float or str, optional
+        Scale factor of the entire object, default is None (i.e. scale of 1).
+        'auto' scales to length of direction array.
+
     Return
     ------
     arrow : pyvista.PolyData
@@ -219,6 +223,14 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
     surf = pyvista.PolyData(arrow.GetOutput())
+
+    if scale == 'auto':
+        scale = float(np.linalg.norm(direction))
+    if isinstance(scale, float) or isinstance(scale, int):
+        surf.points *= scale
+    elif scale is not None:
+        raise TypeError("Scale must be either float, int or 'auto'.")
+
     translate(surf, start, direction)
     return surf
 
