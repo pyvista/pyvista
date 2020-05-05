@@ -16,13 +16,13 @@ def test_cylinder_structured():
 
 
 @pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
-def test_arrow():
+def test_arrow(scale):
     surf = pyvista.Arrow([0, 0, 0], [1, 1, 1], scale=scale)
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
 def test_arrow_raises_error():
-    with pytest.raises(TypeError)
+    with pytest.raises(TypeError):
         surf = pyvista.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
 
 def test_sphere():
