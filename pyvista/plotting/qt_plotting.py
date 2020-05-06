@@ -16,15 +16,11 @@ import scooby
 from .plotting import BasePlotter
 from .theme import rcParams
 
-# for display bugs due to older intel integrated GPUs
-vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
-vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
-if vtk_major_version == 8 and vtk_minor_version < 2:
-    import vtk.qt
-    vtk.qt.QVTKRWIBase = 'QGLWidget'
-else:
-    import vtkmodules.qt
-    vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
+# for display bugs due to older intel integrated GPUs, setting
+# vtkmodules.qt.QVTKRWIBase = 'QGLWidget' could help. However, its use
+# is discouraged and does not work well on VTK9+, so let's not bother
+# changing it from the default 'QWidget'.
+# See https://github.com/pyvista/pyvista/pull/693
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
