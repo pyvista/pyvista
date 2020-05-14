@@ -182,10 +182,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @staticmethod
     def _make_vertice_cells(npoints):
-        cells = np.hstack((np.ones((npoints, 1)),
-                           np.arange(npoints).reshape(-1, 1)))
-        cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-        cells = np.reshape(cells, (2*npoints))
+        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
+        cells[:, 0] = 1
+        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
         return cells
 
     def _load_file(self, filename):
