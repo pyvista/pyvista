@@ -3,7 +3,7 @@
 PyVista PyQt Interface
 ----------------------
 
-PyVista has an interface for placing plots in ``PyQt5`` that extends the
+PyVista has an interface for placing plots in ``pyvista_qt`` that extends the
 functionality of the ``QVTKRenderWindowInteractor`` class.
 The ``pyvista.QtInteractor`` class allows you to have the same functionality
 of the ``Plotter`` class within a ``PyQt5`` application.
@@ -25,7 +25,7 @@ sphere to an empty plotting window.
     import numpy as np
 
     import pyvista as pv
-
+    from pyvista_qt import QtInteractor
 
     class MainWindow(Qt.QMainWindow):
 
@@ -37,7 +37,7 @@ sphere to an empty plotting window.
             vlayout = Qt.QVBoxLayout()
 
             # add the pyvista interactor object
-            self.plotter = pv.QtInteractor(self.frame)
+            self.plotter = QtInteractor(self.frame)
             vlayout.addWidget(self.plotter.interactor)
 
             self.frame.setLayout(vlayout)
@@ -84,7 +84,7 @@ Background Plotting
 
 Normal PyVista plotting windows exhibit blocking behavior, but it is possible
 to plot in the background and update the plotter in real-time using the
-``BackgroundPlotter`` object.  This requires ``PyQt5``, but otherwise appears
+``BackgroundPlotter`` object.  This requires ``pyvista-qt``, but otherwise appears
 and functions like a normal PyVista ``Plotter`` instance.  For example:
 
 .. code:: python

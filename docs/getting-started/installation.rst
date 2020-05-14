@@ -58,7 +58,7 @@ The following are a list of optional dependencies and their purpose:
 +===================================+=========================================+
 | ``matplotlib``                    | Using Colormaps                         |
 +-----------------------------------+-----------------------------------------+
-| ``PyQt5==5.11.3``                 | Background plotting                     |
+| ``pyvista_qt``                    | Background plotting                     |
 +-----------------------------------+-----------------------------------------+
 | ``itkwidgets``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+

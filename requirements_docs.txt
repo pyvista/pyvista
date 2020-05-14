@@ -1,6 +1,5 @@
 scipy
 matplotlib
-PyQt5==5.11.3
 imageio>=2.5.0
 imageio-ffmpeg
 colorcet
@@ -12,6 +11,7 @@ sphinx-rtd-theme
 sphinxcontrib-napoleon
 sphinxcontrib-websupport
 pytest-sphinx
+pyvista_qt>=0.1.0
 sphinx-notfound-page>=0.3.0
 sphinx-copybutton
 sphinx-gallery>=0.4.0

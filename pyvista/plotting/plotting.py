@@ -3494,8 +3494,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if write_frames:
                     self.write_frame()
 
-
-        if bkg and isinstance(self, pyvista.BackgroundPlotter):
+        is_background_plotter = 'BackgroundPlotter' in str(type(self))
+        if bkg and is_background_plotter:
             thread = Thread(target=orbit)
             thread.start()
         else:

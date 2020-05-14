@@ -225,7 +225,7 @@ class Report(scooby.Report):
                 'meshio']
 
         # Optional packages.
-        optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
+        optional = ['matplotlib', 'pyvista_qt', 'PyQt5', 'IPython', 'colorcet',
                     'cmocean', 'panel', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
