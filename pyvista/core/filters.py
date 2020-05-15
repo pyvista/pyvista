@@ -1,6 +1,6 @@
 """These classes hold methods to apply general filters to any data type.
 
-By inherritting these classes into the wrapped VTK data structures, a user
+By inheriting these classes into the wrapped VTK data structures, a user
 can easily apply common filters in an intuitive manner.
 
 Example
@@ -663,7 +663,7 @@ class DataSetFilters(object):
         return _get_output(alg)
 
     @wraps(extract_all_edges)
-    def wireframe(self, *args, **kwargs):
+    def wireframe(self, *args, **kwargs):  # pragma: no cover
         """Wrap ``extract_all_edges``.
 
         DEPRECATED: Please use ``extract_all_edges`` instead.
@@ -1915,7 +1915,7 @@ class DataSetFilters(object):
         return _get_output(extract_sel)
 
 
-    def extract_selection_points(dataset, ind):
+    def extract_selection_points(dataset, ind):  # pragma: no cover
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         DEPRECATED: Please use ``extract_points`` instead.
@@ -2035,7 +2035,7 @@ class DataSetFilters(object):
             return mesh
 
     @wraps(extract_feature_edges)
-    def extract_edges(self, *args, **kwargs):
+    def extract_edges(self, *args, **kwargs):  # pragma: no cover
         """Wrap ``extract_feature_edges``.
 
         DEPRECATED: Please use ``extract_feature_edges`` instead.
@@ -2636,7 +2636,7 @@ class PolyDataFilters(DataSetFilters):
             return mesh
 
 
-    def tri_filter(poly_data, inplace=False):
+    def tri_filter(poly_data, inplace=False):  # pragma: no cover
         """Return an all triangle mesh.
 
         DEPRECATED: Please use ``triangulate`` instead.
@@ -3113,7 +3113,7 @@ class PolyDataFilters(DataSetFilters):
             return mesh
 
 
-    def clip_with_plane(poly_data, origin, normal, value=0, invert=False, inplace=False):
+    def clip_with_plane(poly_data, origin, normal, value=0, invert=False, inplace=False):  # pragma: no cover
         """Clip a dataset by a plane by specifying the origin and normal.
 
         DEPRECATED: Please use `.clip` instead.

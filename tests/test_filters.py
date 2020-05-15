@@ -11,8 +11,6 @@ try:
 except:
     HAS_MATPLOTLIB = False
 
-PYTHON_2 = int(sys.version[0]) < 3
-
 DATASETS = [
     examples.load_uniform(), # UniformGrid
     examples.load_rectilinear(), # RectilinearGrid
@@ -25,6 +23,13 @@ normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 
+skip_binding = pytest.mark.skipif(int(sys.version[0]) < 3,
+                                  reason="Python 2 doesn't support binding methods")
+
+
+def test_datasetfilters_init():
+    with pytest.raises(TypeError):
+        pyvista.core.filters.DataSetFilters()
 
 
 def test_clip_filter():
@@ -38,7 +43,7 @@ def test_clip_filter():
             assert isinstance(clp, pyvista.UnstructuredGrid)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_clip_filter_composite():
     # Now test composite data structures
     output = COMPOSITE.clip(normal=normals[0], invert=False)
@@ -68,8 +73,11 @@ def test_clip_box():
     result = mesh.clip_box(box, invert=True)
     assert result.n_cells
 
+    with pytest.raises(RuntimeError):
+        dataset.clip_box(bounds=pyvista.Sphere())
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+
+@skip_binding
 def test_clip_box_composite():
     # Now test composite data structures
     output = COMPOSITE.clip_box(invert=False)
@@ -116,7 +124,7 @@ def test_slice_filter():
     assert result.n_points < 1
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_slice_filter_composite():
     # Now test composite data structures
     output = COMPOSITE.slice(normal=normals[0])
@@ -135,7 +143,7 @@ def test_slice_orthogonal_filter():
             assert isinstance(slc, pyvista.PolyData)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_slice_orthogonal_filter_composite():
     # Now test composite data structures
     output = COMPOSITE.slice_orthogonal()
@@ -158,7 +166,7 @@ def test_slice_along_axis():
         dataset.slice_along_axis(axis='u')
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_slice_along_axis_composite():
     # Now test composite data structures
     output = COMPOSITE.slice_along_axis()
@@ -215,7 +223,7 @@ def test_outline():
         assert isinstance(outline, pyvista.PolyData)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_outline_composite():
     # Now test composite data structures
     output = COMPOSITE.outline()
@@ -231,7 +239,7 @@ def test_outline_corners():
         assert isinstance(outline, pyvista.PolyData)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_outline_corners_composite():
     # Now test composite data structures
     output = COMPOSITE.outline_corners()
@@ -257,7 +265,7 @@ def test_wireframe():
         assert isinstance(wire, pyvista.PolyData)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_wireframe_composite():
     # Now test composite data structures
     output = COMPOSITE.extract_all_edges()
@@ -314,7 +322,7 @@ def test_elevation():
         elev = dataset.elevation(scalar_range=0.5)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_elevation_composite():
     # Now test composite data structures
     output = COMPOSITE.elevation()
@@ -353,7 +361,7 @@ def test_compute_cell_sizes():
     assert np.allclose(grid.volume, volume)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_compute_cell_sizes_composite():
     # Now test composite data structures
     output = COMPOSITE.compute_cell_sizes()
@@ -367,7 +375,7 @@ def test_cell_centers():
         assert isinstance(result, pyvista.PolyData)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_cell_centers_composite():
     # Now test composite data structures
     output = COMPOSITE.cell_centers()
@@ -449,7 +457,7 @@ def test_cell_data_to_point_data():
     _ = data.ctp()
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_cell_data_to_point_data_composite():
     # Now test composite data structures
     output = COMPOSITE.cell_data_to_point_data()
@@ -465,7 +473,7 @@ def test_point_data_to_cell_data():
     _ = data.ptc()
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_point_data_to_cell_data_composite():
     # Now test composite data structures
     output = COMPOSITE.point_data_to_cell_data()
@@ -479,7 +487,7 @@ def test_triangulate():
     assert np.any(tri.cells)
 
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+@skip_binding
 def test_triangulate_composite():
     # Now test composite data structures
     output = COMPOSITE.triangulate()
@@ -582,8 +590,12 @@ def test_slice_along_line():
     with pytest.raises(AssertionError):
         slc = model.slice_along_line(line)
 
+    with pytest.raises(TypeError):
+        one_cell = model.extract_cells(0)
+        model.slice_along_line(one_cell)
 
-@pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
+
+@skip_binding
 def test_slice_along_line_composite():
     # Now test composite data structures
     a = [COMPOSITE.bounds[0], COMPOSITE.bounds[2], COMPOSITE.bounds[4]]
