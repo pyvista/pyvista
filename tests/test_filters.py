@@ -28,7 +28,8 @@ COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 
 # allow certain flaky MacOS tests to fail
-mac_xfail = pytest.mark.xfail(platform.system() == 'Darwin')
+mac_xfail = pytest.mark.xfail(platform.system() == 'Darwin',
+                              reason='Mac OS is flaky on download examples')
 
 
 def test_clip_filter():
@@ -519,7 +520,7 @@ def test_resample():
 
 @mac_xfail
 def test_streamlines():
-    mesh = examples.download_carotid()  # flaky on mac os
+    mesh = examples.download_carotid()
     stream, src = mesh.streamlines(return_source=True, max_time=100.0,
                                    initial_step_length=2., terminal_speed=0.1,
                                    n_points=25, source_radius=2.0,
