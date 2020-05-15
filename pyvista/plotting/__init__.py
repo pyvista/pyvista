@@ -13,12 +13,3 @@ from .renderer import CameraPosition, Renderer, scale_point
 from .plotting import BasePlotter, Plotter, close_all
 from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
 from .itkplotter import PlotterITK
-
-# placeholder for pyvista_qt.BackgroundPlotter
-try:
-    from pyvista_qt import BackgroundPlotter
-except Exception as exception:
-    class BackgroundPlotter():
-        """Placeholder for the background plotter"""
-        def __init__(self, *args, **kwargs):
-            raise exception
