@@ -3607,6 +3607,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer.deep_clean()
         self._background_renderers[self._active_renderer_index] = None
 
+    def reset_camera_clipping_range(self):
+        """Reset camera clipping planes."""
+        self.renderer.ResetCameraClippingRange()
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
