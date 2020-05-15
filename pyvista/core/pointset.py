@@ -148,8 +148,13 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                     self.shallow_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
-            elif isinstance(args[0], np.ndarray):
-                points = args[0]
+            elif isinstance(args[0], (np.ndarray, list)):
+                if isinstance(args[0], list):
+                    points = np.asarray(args[0])
+                    if not np.issubdtype(points.dtype, np.number):
+                        raise TypeError('Points must be a numeric type')
+                else:
+                    points = args[0]
                 if points.ndim != 2:
                     points = points.reshape((-1, 3))
                 cells = self._make_vertice_cells(points.shape[0])

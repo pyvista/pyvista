@@ -141,6 +141,13 @@ def test_init_as_points():
     assert mesh.n_cells == vertices.shape[0]
     assert np.allclose(mesh.verts, cells)
 
+def test_init_as_points_from_list():
+    points = [[0, 0, 0],
+              [0, 1, 0],
+              [0, 0, 1]]
+    mesh = pyvista.PolyData(points)
+    assert np.allclose(mesh.points, points)
+
 
 def test_invalid_init():
     with pytest.raises(ValueError):
