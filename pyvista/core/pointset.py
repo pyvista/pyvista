@@ -148,8 +148,13 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                     self.shallow_copy(args[0])
             elif isinstance(args[0], str):
                 self._load_file(args[0])
-            elif isinstance(args[0], np.ndarray):
-                points = args[0]
+            elif isinstance(args[0], (np.ndarray, list)):
+                if isinstance(args[0], list):
+                    points = np.asarray(args[0])
+                    if not np.issubdtype(points.dtype, np.number):
+                        raise TypeError('Points must be a numeric type')
+                else:
+                    points = args[0]
                 if points.ndim != 2:
                     points = points.reshape((-1, 3))
                 cells = self._make_vertice_cells(points.shape[0])
@@ -182,10 +187,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @staticmethod
     def _make_vertice_cells(npoints):
-        cells = np.hstack((np.ones((npoints, 1)),
-                           np.arange(npoints).reshape(-1, 1)))
-        cells = np.ascontiguousarray(cells, dtype=pyvista.ID_TYPE)
-        cells = np.reshape(cells, (2*npoints))
+        cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
+        cells[:, 0] = 1
+        cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
         return cells
 
     def _load_file(self, filename):
