@@ -124,11 +124,14 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         # Select reader
         if ext in ['.vtm', '.vtmb']:
             reader = vtk.vtkXMLMultiBlockDataReader()
+            reader.SetFileName(filename)
+        elif ext in ['.case']:
+            reader = vtk.vtkGenericEnSightReader()
+            reader.SetCaseFileName(filename)
         else:
-            raise IOError('File extension must be either "vtm" or "vtmb"')
+            raise IOError('File extension must be either "vtm", "vtmb" or ".case"')
 
         # Load file
-        reader.SetFileName(filename)
         reader.Update()
         self.shallow_copy(reader.GetOutput())
 
@@ -158,6 +161,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         ext = pyvista.get_ext(filename)
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
+        elif ext in ['.case']:
+            raise Exception('".case" not yet supported for writing.')
         else:
             raise Exception('File extension must be either "vtm" or "vtmb"')
 
