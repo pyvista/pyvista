@@ -25,6 +25,7 @@ READERS = {
     '.vts': vtk.vtkXMLStructuredGridReader,
     '.vtm': vtk.vtkXMLMultiBlockDataReader,
     '.vtmb': vtk.vtkXMLMultiBlockDataReader,
+    '.case': vtk.vtkGenericEnSightReader,
     # Image formats:
     '.bmp': vtk.vtkBMPReader,
     '.dem': vtk.vtkDEMReader,
@@ -196,7 +197,7 @@ def read(filename, attrs=None, file_format=None):
         return pyvista.PolyData(filename)
     elif ext in '.vts': # StructuredGrid
         return pyvista.StructuredGrid(filename)
-    elif ext in ['.vtm', '.vtmb']:
+    elif ext in ['.vtm', '.vtmb', '.case']:
         return pyvista.MultiBlock(filename)
     elif ext in ['.e', '.exo']:
         return read_exodus(filename)
