@@ -13,3 +13,27 @@ from .renderer import CameraPosition, Renderer, scale_point
 from .plotting import BasePlotter, Plotter, close_all
 from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
 from .itkplotter import PlotterITK
+
+
+
+class DeprecationError(Exception):
+    """Depreciation Error."""
+
+    pass
+
+
+
+class BackgroundPlotter():
+    """This class has been moved to pyvistaqt."""
+
+    def __init__(self, *args, **kwargs):
+        """Empty init."""
+        raise DeprecationError('`BackgroundPlotter` has moved to pyvistaqt')
+
+
+class QtInteractor():
+    """This class has been moved to pyvistaqt."""
+
+    def __init__(self, *args, **kwargs):
+        """Empty init."""
+        raise DeprecationError('`QtInteractor` has moved to pyvistaqt')
