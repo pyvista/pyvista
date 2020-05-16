@@ -203,6 +203,26 @@ def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplan
     foo = pyvista.read(filename)
     assert foo.n_blocks == multi.n_blocks
 
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
+def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    multi = ex.load_bfs()  # .case file
+    # Now check everything
+    assert multi.n_blocks == 4
+    array_names = ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
+    for block in multi:
+        assert block.array_names == array_names
+    # Save it out
+    multi.save(filename, binary)
+    foo = MultiBlock(filename)
+    assert foo.n_blocks == multi.n_blocks
+    for block in foo:
+        assert block.array_names == array_names
+    foo = pyvista.read(filename)
+    assert foo.n_blocks == multi.n_blocks
+    for block in foo:
+        assert block.array_names == array_names
 
 def test_multi_io_erros(tmpdir):
     fdir = tmpdir.mkdir("tmpdir")

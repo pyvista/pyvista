@@ -161,8 +161,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         ext = pyvista.get_ext(filename)
         if ext in ['.vtm', '.vtmb']:
             writer = vtk.vtkXMLMultiBlockDataWriter()
-        elif ext in ['.case']:
-            raise Exception('".case" not yet supported for writing.')
         else:
             raise Exception('File extension must be either "vtm" or "vtmb"')
 
