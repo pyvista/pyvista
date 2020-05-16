@@ -56,7 +56,7 @@ log.setLevel('CRITICAL')
 
 
 class BasePlotter(PickingHelper, WidgetHelper):
-    """To be used by the Plotter and pyvista_qt.QtInteractor classes.
+    """To be used by the Plotter and pyvistaqt.QtInteractor classes.
 
     Parameters
     ----------
