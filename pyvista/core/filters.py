@@ -504,7 +504,7 @@ class DataSetFilters(object):
         >>> import numpy as np
         >>> volume = np.zeros([10, 10, 10])
         >>> volume[:3] = 1
-        >>> v = pv.wrap(volume)
+        >>> v = pyvista.wrap(volume)
         >>> threshed = v.threshold(0.1)
         """
         # set the scalaras to threshold on
