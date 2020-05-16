@@ -1,6 +1,8 @@
+import platform
+import sys
+
 import numpy as np
 import pytest
-import sys
 
 import pyvista
 from pyvista import examples
@@ -25,6 +27,9 @@ normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 
+# allow certain flaky MacOS tests to fail
+mac_xfail = pytest.mark.xfail(platform.system() == 'Darwin',
+                              reason='Mac OS is flaky on download examples')
 
 
 def test_clip_filter():
@@ -513,6 +518,7 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
+@mac_xfail
 def test_streamlines():
     mesh = examples.download_carotid()
     stream, src = mesh.streamlines(return_source=True, max_time=100.0,
@@ -593,6 +599,7 @@ def test_slice_along_line_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
+@mac_xfail
 def test_interpolate():
     surface = examples.download_saddle_surface()
     points = examples.download_sparse_points()
