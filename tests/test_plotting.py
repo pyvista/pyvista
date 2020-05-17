@@ -977,3 +977,19 @@ def test_add_remove_floor():
     pl.remove_floors()
     assert not pl.renderer._floors
     pl.show()
+
+
+def test_reset_camera_clipping_range():
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    
+    default_clipping_range = pl.camera.GetClippingRange() # get default clipping range
+    assert default_clipping_range != (10,100) # make sure we assign something different than default
+    
+    pl.camera.SetClippingRange(10,100) # set clipping range to some random numbers
+    assert pl.camera.GetClippingRange() == (10,100) # make sure assignment is successful
+    
+    pl.reset_camera_clipping_range()
+    assert pl.camera.GetClippingRange() ==  default_clipping_range
+    assert pl.camera.GetClippingRange() != (10,100)
+
