@@ -51,7 +51,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:,i], table['foo{}'.format(i)])
 
     dataset = examples.load_hexbeam()
-    array_dict = dataset.point_arrays
+    array_dict = dict(dataset.point_arrays)
     table = pyvista.Table(array_dict)
     assert table.n_rows == dataset.n_points
     assert table.n_columns == len(array_dict)
@@ -109,7 +109,6 @@ def test_table_row_arrays():
     assert table.n_rows == nr
     for i in range(nc):
         assert np.allclose(table['foo{}'.format(i)], arrays[:, i])
-    _ = table._row_array()
     # Multi component
     table = pyvista.Table()
     table['multi'] = arrays
