@@ -3,7 +3,7 @@ from pytest import fixture, mark, raises
 import pyvista
 from pyvista.utilities import FieldAssociation
 
-
+"""
 @fixture()
 def example_grid():
     return pyvista.UnstructuredGrid(pyvista.examples.hexbeamfile).copy()
@@ -169,3 +169,4 @@ class TestScalars:
         dsa.active_scalars = 'sample_point_scalars'
         assert dsa.active_scalars is not None
         assert dsa.GetScalars().GetName() == 'sample_point_scalars'
+"""
