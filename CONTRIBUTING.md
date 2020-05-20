@@ -1,5 +1,5 @@
 # Contributing
-
+ 
 We absolutely welcome contributions and we hope that this guide will facilitate
 an understanding of the PyVista code repository. It is important to note that
 the PyVista software package is maintained on a volunteer basis and thus we
