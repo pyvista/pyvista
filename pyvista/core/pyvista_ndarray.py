@@ -8,7 +8,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 try:
     from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
-except ImportError:
+except (ModuleNotFoundError, ImportError):
     from vtk.vtkCommonCore import vtkDataArray, vtkAbstractArray
 
 
