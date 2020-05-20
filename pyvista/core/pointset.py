@@ -154,7 +154,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                     if not np.issubdtype(points.dtype, np.number):
                         raise TypeError('Points must be a numeric type')
                 else:
-                    points = args[0]
+                    points = args[0].copy()
                 if points.ndim != 2:
                     points = points.reshape((-1, 3))
                 cells = self._make_vertice_cells(points.shape[0])
