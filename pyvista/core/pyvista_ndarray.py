@@ -40,5 +40,5 @@ class pyvista_ndarray(np.ndarray):
         self._proxy.Modified()
 
     def __getattr__(self, item):
-        """Forwards unknown attribute requests to VTK array."""
+        """Forward unknown attribute requests to VTK array."""
         return self._proxy.__getattribute__(item)
