@@ -1,5 +1,6 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
+from collections.abc import Iterable
 import numpy as np
 
 import vtk
@@ -68,7 +69,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Return the active scalar array as pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
-            return pyvista_ndarray.from_vtk_data_array(self.GetScalars(), dataset=self.dataset)
+            return pyvista_ndarray(self.GetScalars())
 
     @active_scalars.setter
     def active_scalars(self, name: str):
@@ -81,7 +82,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Return the active scalar array as pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetVectors() is not None:
-            return pyvista_ndarray.from_vtk_data_array(self.GetVectors(), dataset=self.dataset)
+            return pyvista_ndarray(self.GetVectors())
 
     @active_vectors.setter
     def active_vectors(self, name: str):
@@ -105,7 +106,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Return the active texture coordinates on the points."""
         t_coords = self.GetTCoords()
         if t_coords is not None:
-            return pyvista_ndarray.from_vtk_data_array(t_coords)
+            return pyvista_ndarray(t_coords)
 
     @t_coords.setter
     def t_coords(self, t_coords):
@@ -148,8 +149,7 @@ class DataSetAttributes(VTKObjectWrapper):
                 raise KeyError('"{}"'.format(key))
             if type(vtk_arr) == vtk.vtkAbstractArray:
                 return vtk_arr
-        narray = pyvista_ndarray.from_vtk_data_array(vtk_arr, dataset=self.dataset,
-                                                     association=self.association)
+        narray = pyvista_ndarray(vtk_arr)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
             narray = narray.view(np.bool)
         return narray
@@ -170,8 +170,8 @@ class DataSetAttributes(VTKObjectWrapper):
         """
         if narray is None:
             raise TypeError('narray cannot be None.')
-        if isinstance(narray, (list, tuple)):
-            narray = pyvista_ndarray.from_iter(narray)
+        if isinstance(narray, Iterable):
+            narray = pyvista_ndarray(narray)
 
         if self.association == FieldAssociation.POINT:
             array_len = self.dataset.GetNumberOfPoints()
@@ -270,7 +270,7 @@ class DataSetAttributes(VTKObjectWrapper):
             copy.DeepCopy(vtk_arr)
             vtk_arr = copy
         self.remove(key)
-        return pyvista_ndarray.from_vtk_data_array(vtk_arr)
+        return pyvista_ndarray(vtk_arr)
 
     def items(self):
         """Return a list of (array name, array value)."""
@@ -291,7 +291,7 @@ class DataSetAttributes(VTKObjectWrapper):
         for i in range(self.GetNumberOfArrays()):
             array = self.VTKObject.GetAbstractArray(i)
             if array.GetName():
-                values.append(pyvista_ndarray.from_vtk_data_array(array))
+                values.append(pyvista_ndarray(array))
         return values
 
     def clear(self):
@@ -311,7 +311,7 @@ class DataSetAttributes(VTKObjectWrapper):
             A dictionary of (array name, numpy.ndarray)
         """
         for name, array in array_dict.items():
-            self[name] = array
+            self[name] = np.array(array)
 
     def _raise_index_out_of_bounds(self, index):
         max_index = self.VTKObject.GetNumberOfArrays()

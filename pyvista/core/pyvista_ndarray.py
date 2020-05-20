@@ -24,7 +24,8 @@ class pyvista_ndarray(np.ndarray):
         """Allocate memory for the pyvista ndarray."""
         if proxy is None:
             proxy = input_array
-            input_array = vtk_to_numpy(input_array)
+            if isinstance(input_array, vtkDataArray):
+                input_array = convert_array(input_array)
             obj = np.asarray(input_array).view(cls)
             cls._proxy = proxy
             return obj
@@ -37,3 +38,7 @@ class pyvista_ndarray(np.ndarray):
         """Update the array and update the vtk object."""
         super(pyvista_ndarray, self).__setitem__(coords, value)
         self._proxy.Modified()
+
+    def __getattr__(self, item):
+        """Forwards unknown attribute requests to VTK array."""
+        return self._proxy.__getattribute__(item)
