@@ -37,26 +37,26 @@ class DataSetAttributes(VTKObjectWrapper):
         self.association = association
 
     def __getitem__(self, key):
-        """Implement get behaviour of [] operator.
+        """Implement [] operator.
 
         Accepts an array name or an index.
         """
         return self.get_array(key)
 
     def __setitem__(self, key, value):
-        """Implement setting behaviour of [] operator."""
+        """Implement setting with the [] operator."""
         self.append(narray=value, name=key)
 
-    def __delitem__(self, key):
-        """Implement del."""
+    def __delitem__(self, key: [str, int]):
+        """Implement del with array name or index."""
         self.remove(key)
 
-    def __contains__(self, item):
-        """Implement 'in' operator. Accepts a string array name."""
-        return item in self.keys()
+    def __contains__(self, name: str):
+        """Implement 'in' operator."""
+        return name in self.keys()
 
     def __iter__(self):
-        """Implement for _ in self."""
+        """Implement for loop iteration."""
         for array in self.keys():
             yield array
 
@@ -109,8 +109,8 @@ class DataSetAttributes(VTKObjectWrapper):
             return pyvista_ndarray(t_coords)
 
     @t_coords.setter
-    def t_coords(self, t_coords):
-        """Set the array to use as the texture coordinates."""
+    def t_coords(self, t_coords: np.ndarray):
+        """Set the texture coordinates using an np.ndarray."""
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
@@ -126,7 +126,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.Modified()
 
     def get_array(self, key):
-        """Get an array in this instance.
+        """Get an array in this object.
 
         Parameters
         ----------
@@ -139,7 +139,7 @@ class DataSetAttributes(VTKObjectWrapper):
             A ``pyvista_ndarray`` if the underlying array is a
             ``vtk.vtkDataArray`` or ``vtk.vtkStringArray``,
             ``vtk.vtkAbstractArray`` if the former does not exist.
-            Raises a ``KeyError`` if neither exist.
+            Raises ``KeyError`` if neither exist.
         """
         self._raise_index_out_of_bounds(index=key)
         vtk_arr = self.GetArray(key)
@@ -155,7 +155,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return narray
 
     def append(self, narray, name, deep_copy=False):
-        """Add an array to the data set attributes.
+        """Add an array to the this object.
 
         Parameters
         ----------
@@ -231,7 +231,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def remove(self, key):
-        """Remove an array by key.
+        """Remove an array.
 
         Parameters
         ----------
@@ -248,7 +248,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.Modified()
 
     def pop(self, key):
-        """Remove an array by key and return it.
+        """Remove an array and return it.
 
         Parameters
         ----------
@@ -292,12 +292,12 @@ class DataSetAttributes(VTKObjectWrapper):
         return values
 
     def clear(self):
-        """Remove all arrays in this instance."""
+        """Remove all arrays in this object."""
         for array_name in self.keys():
             self.remove(key=array_name)
 
     def update(self, array_dict):
-        """Update arrays in this instance.
+        """Update arrays in this object.
 
         For each key, value given, add the pair, if it already exists,
         update it.
