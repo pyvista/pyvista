@@ -224,10 +224,7 @@ class DataSetAttributes(VTKObjectWrapper):
         # this handles the case when an input array is directly appended on the
         # output. We want to make sure that the array added to the output is not
         # referring to the input dataset.
-        try:
-            copy = pyvista_ndarray(narray, vtk_array=narray.VTKObject)
-        except AttributeError:
-            copy = pyvista_ndarray(narray)
+        copy = pyvista_ndarray(narray)
 
         vtk_arr = helpers.convert_array(copy, name, deep=deep_copy)
         self.VTKObject.AddArray(vtk_arr)

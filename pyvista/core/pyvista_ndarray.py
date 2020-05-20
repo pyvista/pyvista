@@ -23,11 +23,10 @@ class pyvista_ndarray(np.ndarray):
     def __new__(cls, input_array, proxy=None):
         """Allocate memory for the pyvista ndarray."""
         if proxy is None:
-            proxy = input_array
             if isinstance(input_array, vtkDataArray):
+                cls._proxy = input_array
                 input_array = convert_array(input_array)
             obj = np.asarray(input_array).view(cls)
-            cls._proxy = proxy
             return obj
         else:
             obj = np.asarray(input_array).view(cls)
