@@ -31,6 +31,12 @@ def test_table_init(tmpdir):
     for i in range(nc):
         assert np.allclose(arrays[:,i], table[i])
 
+    with pytest.raises(AssertionError):
+        pyvista.Table(np.random.rand(100))
+
+    with pytest.raises(AssertionError):
+        pyvista.Table(np.random.rand(100, 2, 3))
+
 
     # create from dictionary
     array_dict = {}
@@ -66,7 +72,11 @@ def test_table_init(tmpdir):
     reader.Update()
 
     # Test init
-    table = pyvista.Table(reader.GetOutput())
+    table = pyvista.Table(reader.GetOutput(), deep=True)
+    assert isinstance(table, vtk.vtkTable)
+    assert isinstance(table, pyvista.Table)
+
+    table = pyvista.Table(reader.GetOutput(), deep=False)
     assert isinstance(table, vtk.vtkTable)
     assert isinstance(table, pyvista.Table)
 
@@ -82,6 +92,9 @@ def test_table_init(tmpdir):
     for i in range(nc):
         assert np.allclose(arrays[:,i], table[i])
 
+    with pytest.raises(TypeError):
+        pyvista.Table("foo")
+
     return
 
 
@@ -96,6 +109,7 @@ def test_table_row_arrays():
     assert table.n_rows == nr
     for i in range(nc):
         assert np.allclose(table['foo{}'.format(i)], arrays[:, i])
+    _ = table._row_array()
     # Multi component
     table = pyvista.Table()
     table['multi'] = arrays

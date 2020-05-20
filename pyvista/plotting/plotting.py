@@ -321,6 +321,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.set_viewup(*args, **kwargs)
         self.render()
 
+    @wraps(Renderer.add_orientation_widget)
+    def add_orientation_widget(self, *args, **kwargs):
+        """Wrap ``Renderer.add_orientation_widget``."""
+        return self.renderer.add_orientation_widget(*args, **kwargs)
+
     @wraps(Renderer.add_axes)
     def add_axes(self, *args, **kwargs):
         """Wrap ``Renderer.add_axes``."""
@@ -3602,6 +3607,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         renderer.deep_clean()
         self._background_renderers[self._active_renderer_index] = None
 
+    def reset_camera_clipping_range(self):
+        """Reset camera clipping planes."""
+        self.renderer.ResetCameraClippingRange()
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.

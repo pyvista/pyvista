@@ -16,15 +16,11 @@ import scooby
 from .plotting import BasePlotter
 from .theme import rcParams
 
-# for display bugs due to older intel integrated GPUs
-vtk_major_version = vtk.vtkVersion.GetVTKMajorVersion()
-vtk_minor_version = vtk.vtkVersion.GetVTKMinorVersion()
-if vtk_major_version == 8 and vtk_minor_version < 2:
-    import vtk.qt
-    vtk.qt.QVTKRWIBase = 'QGLWidget'
-else:
-    import vtkmodules.qt
-    vtkmodules.qt.QVTKRWIBase = 'QGLWidget'
+# for display bugs due to older intel integrated GPUs, setting
+# vtkmodules.qt.QVTKRWIBase = 'QGLWidget' could help. However, its use
+# is discouraged and does not work well on VTK9+, so let's not bother
+# changing it from the default 'QWidget'.
+# See https://github.com/pyvista/pyvista/pull/693
 
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
@@ -506,16 +502,16 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
                     print(str(e))
                     pass
 
-    def add_toolbars(self, main_window):
+    def add_toolbars(self):
         """Add the toolbars."""
         def _add_action(tool_bar, key, method):
-            action = QAction(key, main_window)
+            action = QAction(key, self.app_window)
             action.triggered.connect(method)
             tool_bar.addAction(action)
             return
 
         # Camera toolbar
-        self.default_camera_tool_bar = main_window.addToolBar('Camera Position')
+        self.default_camera_tool_bar = self.app_window.addToolBar('Camera Position')
         _view_vector = lambda *args: self.view_vector(*args)
         cvec_setters = {
             # Viewing vector then view up vector
@@ -533,12 +529,53 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
         # Saved camera locations toolbar
         self.saved_camera_positions = []
-        self.saved_cameras_tool_bar = main_window.addToolBar('Saved Camera Positions')
+        self.saved_cameras_tool_bar = self.app_window.addToolBar('Saved Camera Positions')
 
         _add_action(self.saved_cameras_tool_bar, SAVE_CAM_BUTTON_TEXT, self.save_camera_position)
         _add_action(self.saved_cameras_tool_bar, CLEAR_CAMS_BUTTON_TEXT, self.clear_camera_positions)
 
         return
+
+    def add_menu_bar(self):
+        """Add the main menu bar."""
+        self.main_menu = _create_menu_bar(parent=self.app_window)
+        self.app_window.signal_close.connect(self.main_menu.clear)
+
+        file_menu = self.main_menu.addMenu('File')
+        file_menu.addAction('Take Screenshot', self._qt_screenshot)
+        file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
+        file_menu.addSeparator()
+        # member variable for testing only
+        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
+
+        view_menu = self.main_menu.addMenu('View')
+        view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
+        view_menu.addAction('Scale Axes', self.scale_axes_dialog)
+        view_menu.addAction('Clear All', self.clear)
+
+        tool_menu = self.main_menu.addMenu('Tools')
+        tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
+        tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
+
+        cam_menu = view_menu.addMenu('Camera')
+        cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
+
+        view_menu.addSeparator()
+        # Orientation marker
+        orien_menu = view_menu.addMenu('Orientation Marker')
+        orien_menu.addAction('Show All', self.show_axes_all)
+        orien_menu.addAction('Hide All', self.hide_axes_all)
+        # Bounds axes
+        axes_menu = view_menu.addMenu('Bounds Axes')
+        axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)
+        axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
+        axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
+        axes_menu.addSeparator()
+        axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
+        axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
+
+        # A final separator to separate OS options
+        view_menu.addSeparator()
 
     def save_camera_position(self):
         """Save camera position to saved camera menu for recall."""
@@ -601,6 +638,12 @@ class BackgroundPlotter(QtInteractor):
     allow_quit_keypress : bool, optional
         Allow user to exit by pressing ``"q"``.
 
+    menu_bar: bool, optional
+        Display the default main menu. Defaults to True.
+
+    toolbar : bool, optional
+       Display the default camera toolbar. Defaults to True.
+
     title : str, optional
         Title of plotting window.
 
@@ -634,10 +677,18 @@ class BackgroundPlotter(QtInteractor):
     ICON_TIME_STEP = 5.0
 
     def __init__(self, show=True, app=None, window_size=None,
-                 off_screen=None, allow_quit_keypress=True, **kwargs):
+                 off_screen=None, allow_quit_keypress=True,
+                 toolbar=True, menu_bar=True, **kwargs):
         """Initialize the qt plotter."""
         if not has_pyqt:
             raise AssertionError('Requires PyQt5')
+        if not isinstance(menu_bar, bool):
+            raise TypeError("Expected type for ``menu_bar`` is bool"
+                            " but {} was given.".format(type(menu_bar)))
+        if not isinstance(toolbar, bool):
+            raise TypeError("Expected type for ``toolbar`` is bool"
+                            " but {} was given.".format(type(toolbar)))
+
         self.active = True
         self.counters = []
         self.allow_quit_keypress = allow_quit_keypress
@@ -676,47 +727,17 @@ class BackgroundPlotter(QtInteractor):
                                                 off_screen=off_screen,
                                                 **kwargs)
         self.app_window.signal_close.connect(self._close)
-        self.add_toolbars(self.app_window)
 
-        # build main menu
-        self.main_menu = _create_menu_bar(parent=self.app_window)
-        self.app_window.signal_close.connect(self.main_menu.clear)
+        self.main_menu = None
+        self._menu_close_action = None
+        if menu_bar:
+            self.add_menu_bar()
 
-        file_menu = self.main_menu.addMenu('File')
-        file_menu.addAction('Take Screenshot', self._qt_screenshot)
-        file_menu.addAction('Export as VTKjs', self._qt_export_vtkjs)
-        file_menu.addSeparator()
-        # member variable for testing only
-        self._menu_close_action = file_menu.addAction('Exit', self.app_window.close)
-
-        view_menu = self.main_menu.addMenu('View')
-        view_menu.addAction('Toggle Eye Dome Lighting', self._toggle_edl)
-        view_menu.addAction('Scale Axes', self.scale_axes_dialog)
-        view_menu.addAction('Clear All', self.clear)
-
-        tool_menu = self.main_menu.addMenu('Tools')
-        tool_menu.addAction('Enable Cell Picking (through)', self.enable_cell_picking)
-        tool_menu.addAction('Enable Cell Picking (visible)', lambda: self.enable_cell_picking(through=False))
-
-        cam_menu = view_menu.addMenu('Camera')
-        cam_menu.addAction('Toggle Parallel Projection', self._toggle_parallel_projection)
-
-        view_menu.addSeparator()
-        # Orientation marker
-        orien_menu = view_menu.addMenu('Orientation Marker')
-        orien_menu.addAction('Show All', self.show_axes_all)
-        orien_menu.addAction('Hide All', self.hide_axes_all)
-        # Bounds axes
-        axes_menu = view_menu.addMenu('Bounds Axes')
-        axes_menu.addAction('Add Bounds Axes (front)', self.show_bounds)
-        axes_menu.addAction('Add Bounds Grid (back)', self.show_grid)
-        axes_menu.addAction('Add Bounding Box', self.add_bounding_box)
-        axes_menu.addSeparator()
-        axes_menu.addAction('Remove Bounding Box', self.remove_bounding_box)
-        axes_menu.addAction('Remove Bounds', self.remove_bounds_axes)
-
-        # A final separator to separate OS options
-        view_menu.addSeparator()
+        self.default_camera_tool_bar = None
+        self.saved_camera_positions = None
+        self.saved_cameras_tool_bar = None
+        if toolbar:
+            self.add_toolbars()
 
         vlayout = QVBoxLayout()
         vlayout.addWidget(self.interactor)

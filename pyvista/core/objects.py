@@ -71,7 +71,7 @@ class Table(vtk.vtkTable, DataObject):
     def _from_dict(self, array_dict):
         for array in array_dict.values():
             if not isinstance(array, (np.ndarray)) and array.ndim < 3:
-                raise RuntimeError('Dictionaty must contain only NumPy arrays with maximum of 2D.')
+                raise RuntimeError('Dictionary must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
         return
@@ -324,6 +324,7 @@ class Texture(vtk.vtkTexture):
         """Initialize the texture."""
         assert_empty_kwargs(**kwargs)
 
+
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkTexture):
                 self._from_texture(args[0])
@@ -336,9 +337,11 @@ class Texture(vtk.vtkTexture):
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
+
     def _from_texture(self, texture):
         image = texture.GetInput()
         self._from_image_data(image)
+
 
     def _from_image_data(self, image):
         if not isinstance(image, pyvista.UniformGrid):
@@ -348,11 +351,23 @@ class Texture(vtk.vtkTexture):
 
 
     def _from_array(self, image):
-        if image.ndim != 3 or image.shape[2] != 3:
-            raise AssertionError('Input image must be nn by nm by RGB')
+        if image.ndim not in [2,3]:
+            # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
+            raise AssertionError('Input image must be nn by nm by RGB[A]')
+
+        if image.ndim == 3:
+            if image.shape[2] != 3 and image.shape[2] != 4:
+                raise AssertionError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+
+            n_components = image.shape[2]
+
+        elif image.ndim == 2:
+            n_components = 1
+
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-        grid.point_arrays['Image'] = np.flip(image.swapaxes(0,1), axis=1).reshape((-1, 3), order='F')
+        grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
+
         return self._from_image_data(grid)
 
 
@@ -371,10 +386,22 @@ class Texture(vtk.vtkTexture):
         return self.GetInput()
 
 
+    @property
+    def n_components(self):
+        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
+        image = self.to_image()
+        return image.active_scalars.shape[1]
+
+
     def to_array(self):
         """Return the texture as an array."""
         image = self.to_image()
-        shape = (image.dimensions[0], image.dimensions[1], 3)
+
+        if image.active_scalars.ndim > 1:
+            shape = (image.dimensions[1], image.dimensions[0], self.n_components)
+        else:
+            shape = (image.dimensions[1], image.dimensions[0])
+
         return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1,0)
 
 
@@ -388,9 +415,11 @@ class Texture(vtk.vtkTexture):
         """Repeat the texture."""
         return self.GetRepeat()
 
+
     @repeat.setter
     def repeat(self, flag):
         self.SetRepeat(flag)
+
 
     def copy(self):
         """Make a copy of this textrue."""

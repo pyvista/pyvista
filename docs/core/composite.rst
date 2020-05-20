@@ -1,7 +1,7 @@
 Composite Datasets
 ==================
 
-.. automodule:: pyvista.composite
+.. automodule:: pyvista.core.composite
    :show-inheritance:
 
 MultiBlock Datasets

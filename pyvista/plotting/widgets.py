@@ -697,7 +697,7 @@ class WidgetHelper(object):
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
-                          event_type='end'):
+                          event_type='end', style=None):
         """Add a slider bar widget.
 
         This is useless without a callback function. You can pass a callable
@@ -734,10 +734,13 @@ class WidgetHelper(object):
             If true, the widget will be passed as the last argument of the
             callback
 
-        event_type: str
+        event_type : str
             Either 'start', 'end' or 'always', this defines how often the
             slider interacts with the callback.
 
+        style : str, optional
+            The name of the slider style. The list of available styles are in
+            ``rcParams['slider_style']``. Defaults to None.
         """
         if hasattr(self, 'notebook') and self.notebook:
             raise AssertionError('Slider widget not available in notebook plotting')
@@ -755,11 +758,11 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['font']['color']
 
-        def normalize(point, shape):
-            return (point[0] / shape[1], point[1] / shape[0])
+        def normalize(point, viewport):
+            return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
 
-        pointa = normalize(pointa, self.shape)
-        pointb = normalize(pointb, self.shape)
+        pointa = normalize(pointa, self.renderer.GetViewport())
+        pointb = normalize(pointb, self.renderer.GetViewport())
 
         slider_rep = vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
@@ -779,6 +782,24 @@ class WidgetHelper(object):
         slider_rep.SetSliderLength(0.05)
         slider_rep.SetSliderWidth(0.05)
         slider_rep.SetEndCapLength(0.01)
+
+        if style is not None:
+            if not isinstance(style, str):
+                raise TypeError("Expected type for ``style`` is str but"
+                                " {} was given.".format(type(style)))
+            style_params = rcParams['slider_style'].get(style, None)
+            if style_params is None:
+                raise KeyError("The requested style does not exist: "
+                               "{}. The styles available are {}.".format(style,
+                                   list(rcParams['slider_style'].keys())))
+            slider_rep.SetSliderLength(style_params['slider_length'])
+            slider_rep.SetSliderWidth(style_params['slider_width'])
+            slider_rep.GetSliderProperty().SetColor(style_params['slider_color'])
+            slider_rep.SetTubeWidth(style_params['tube_width'])
+            slider_rep.GetTubeProperty().SetColor(style_params['tube_color'])
+            slider_rep.GetCapProperty().SetOpacity(style_params['cap_opacity'])
+            slider_rep.SetEndCapLength(style_params['cap_length'])
+            slider_rep.SetEndCapWidth(style_params['cap_width'])
 
         def _the_callback(widget, event):
             value = widget.GetRepresentation().GetValue()

@@ -60,3 +60,9 @@ flycheck*
 
 
 docs/external_examples.rst
+
+# hypothesis
+.hypothesis
+
+# vim
+*.swp

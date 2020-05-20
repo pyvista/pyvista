@@ -1,6 +1,8 @@
+import platform
+import sys
+
 import numpy as np
 import pytest
-import sys
 
 import pyvista
 from pyvista import examples
@@ -25,6 +27,9 @@ normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 
+# allow certain flaky MacOS tests to fail
+mac_xfail = pytest.mark.xfail(platform.system() == 'Darwin',
+                              reason='Mac OS is flaky on download examples')
 
 
 def test_clip_filter():
@@ -86,6 +91,20 @@ def test_clip_surface():
     clipped = dataset.clip_surface(surface, invert=False, compute_distance=True)
     assert isinstance(clipped, pyvista.UnstructuredGrid)
     assert 'implicit_distance' in clipped.array_names
+    clipped = dataset.clip_surface(surface.cast_to_unstructured_grid(),)
+    assert isinstance(clipped, pyvista.UnstructuredGrid)
+    assert 'implicit_distance' in clipped.array_names
+
+
+def test_implicit_distance():
+    surface = pyvista.Cone(direction=(0,0,-1),
+                           height=3.0, radius=1, resolution=50, )
+    xx = yy = zz = 1 - np.linspace(0, 51, 11) * 2 / 50
+    dataset = pyvista.RectilinearGrid(xx, yy, zz)
+    res = dataset.compute_implicit_distance(surface)
+    assert "implicit_distance" in res.point_arrays
+    dataset.compute_implicit_distance(surface, inplace=True)
+    assert "implicit_distance" in dataset.point_arrays
 
 
 def test_slice_filter():
@@ -375,6 +394,7 @@ def test_glyph():
     sphere.vectors = vectors*0.3
     sphere.point_arrays['foo'] = np.random.rand(sphere.n_points)
     sphere.point_arrays['arr'] = np.ones(sphere.n_points)
+    result = sphere.glyph(scale=False)
     result = sphere.glyph(scale='arr')
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1)
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
@@ -431,6 +451,7 @@ def test_cell_data_to_point_data():
     foo = data.cell_data_to_point_data()
     assert foo.n_arrays == 2
     assert len(foo.cell_arrays.keys()) == 0
+    _ = data.ctp()
 
 
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
@@ -446,6 +467,7 @@ def test_point_data_to_cell_data():
     foo = data.point_data_to_cell_data()
     assert foo.n_arrays == 2
     assert len(foo.point_arrays.keys()) == 0
+    _ = data.ptc()
 
 
 @pytest.mark.skipif(PYTHON_2, reason="Python 2 doesn't support binding methods")
@@ -496,6 +518,7 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
+@mac_xfail
 def test_streamlines():
     mesh = examples.download_carotid()
     stream, src = mesh.streamlines(return_source=True, max_time=100.0,
@@ -576,6 +599,7 @@ def test_slice_along_line_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
+@mac_xfail
 def test_interpolate():
     surface = examples.download_saddle_surface()
     points = examples.download_sparse_points()

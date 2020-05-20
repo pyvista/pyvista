@@ -285,7 +285,9 @@ def test_add_point_labels():
 def test_set_background():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.set_background('k')
+    plotter.background_color = "yellow"
     plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
+    _ = plotter.background_color
     plotter.show()
 
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
@@ -389,6 +391,10 @@ def test_axes():
     plotter.add_axes()
     plotter.add_mesh(pyvista.Sphere())
     plotter.show()
+    plotter = pyvista.Plotter(off_screen=True)
+    plotter.add_orientation_widget(pyvista.Cube())
+    plotter.add_mesh(pyvista.Cube())
+    plotter.show()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -465,6 +471,7 @@ def test_plot_texture():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=texture)
     plotter.show()
+    texture.plot(off_screen=OFF_SCREEN)
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_texture_associated():
@@ -970,3 +977,19 @@ def test_add_remove_floor():
     pl.remove_floors()
     assert not pl.renderer._floors
     pl.show()
+
+
+def test_reset_camera_clipping_range():
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+    
+    default_clipping_range = pl.camera.GetClippingRange() # get default clipping range
+    assert default_clipping_range != (10,100) # make sure we assign something different than default
+    
+    pl.camera.SetClippingRange(10,100) # set clipping range to some random numbers
+    assert pl.camera.GetClippingRange() == (10,100) # make sure assignment is successful
+    
+    pl.reset_camera_clipping_range()
+    assert pl.camera.GetClippingRange() ==  default_clipping_range
+    assert pl.camera.GetClippingRange() != (10,100)
+
