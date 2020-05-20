@@ -308,7 +308,7 @@ class DataSetAttributes(VTKObjectWrapper):
             A dictionary of (array name, numpy.ndarray)
         """
         for name, array in array_dict.items():
-            self[name] = np.array(array)
+            self[name] = array.copy()
 
     def _raise_index_out_of_bounds(self, index):
         max_index = self.VTKObject.GetNumberOfArrays()
