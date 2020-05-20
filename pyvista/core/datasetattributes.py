@@ -1,5 +1,6 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
+'''
 from collections.abc import Iterable
 import numpy as np
 
@@ -326,3 +327,4 @@ class DataSetAttributes(VTKObjectWrapper):
         txt += 'Containing the following keys:\n'
         txt += '\n'.join(['\t%s' % key for key in self.keys()])
         return txt
+'''
