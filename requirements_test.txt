@@ -1,5 +1,5 @@
 numpy
-vtk
+vtk==8.1.2
 matplotlib
 appdirs
 pytest
