@@ -88,12 +88,6 @@ def test_cell_arrays(grid):
     assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
 
 
-def test_cell_array_non_contiguous(grid):
-    arr = np.empty((grid.n_cells, 2))[:, 0]
-    with pytest.raises(ValueError):
-        grid.cell_arrays['tmp'] = arr
-
-
 def test_cell_array_range(grid):
     rng = range(grid.n_cells)
     grid.cell_arrays['tmp'] = rng
