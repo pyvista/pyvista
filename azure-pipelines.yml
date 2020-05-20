@@ -6,9 +6,18 @@ trigger:
   branches:
     include:
     - '*'
+    exclude:
+    - '*no-ci*'
   tags:
     include:
     - '*'
+
+pr:
+  branches:
+    include:
+    - '*'
+    exclude:
+    - '*no-ci*'
 
 jobs:
 
@@ -108,6 +117,10 @@ jobs:
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
 
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
+
+
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
@@ -154,6 +167,10 @@ jobs:
       python -m pytest --cov -v .
     displayName: 'Run Tests'
 
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
+
+
 # DESCRIPTION: Core API testing for MacOS
 - job: macOS
   variables:
@@ -197,6 +214,9 @@ jobs:
         python -m pip install pytest-azurepipelines
         python -m pytest -v --cov pyvista --cov-report html --durations=0
       displayName: 'Run Tests'
+
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
 
 # Builds the documentation
@@ -343,3 +363,6 @@ jobs:
     env:
       GH_TOKEN: $(gh.token)
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+
+  # don't run job on no-ci builds
+  condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
