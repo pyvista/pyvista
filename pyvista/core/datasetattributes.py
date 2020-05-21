@@ -322,7 +322,6 @@ class DataSetAttributes(VTKObjectWrapper):
 
     def __repr__(self):
         """Printable representation of DataSetAttributes."""
-        txt = 'pyvista %s DataSetAttributes\n' % self.association
-        txt += 'Containing the following keys:\n'
-        txt += '\n'.join(['\t%s' % key for key in self.keys()])
-        return txt
+        return 'pyvista {} DataSetAttributes\n' \
+               'Contains keys:\n' \
+               '\t{}'.format(self.association.name, '\n\t'.join(self.keys()))
