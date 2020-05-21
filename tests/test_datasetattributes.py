@@ -5,13 +5,8 @@ from pyvista.utilities import FieldAssociation
 
 
 @fixture()
-def example_grid():
-    return pyvista.UnstructuredGrid(pyvista.examples.hexbeamfile).copy()
-
-
-@fixture()
-def example_grid_point_attributes(example_grid):
-    return example_grid.point_arrays
+def example_grid_point_attributes(hexbeam):
+    return hexbeam.point_arrays
 
 
 @fixture()
@@ -30,11 +25,11 @@ def insert_bool_array(example_grid_point_attributes):
     return example_grid_point_attributes, sample_array
 
 
-def test_init(example_grid):
+def test_init(hexbeam):
     attributes = pyvista.DataSetAttributes(
-        example_grid.GetPointData(), dataset=example_grid, association=FieldAssociation.POINT)
-    assert attributes.VTKObject == example_grid.GetPointData()
-    assert attributes.dataset == example_grid
+        hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT)
+    assert attributes.VTKObject == hexbeam.GetPointData()
+    assert attributes.dataset == hexbeam
     assert attributes.association == FieldAssociation.POINT
 
 
