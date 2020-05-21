@@ -36,6 +36,12 @@ class DataSetAttributes(VTKObjectWrapper):
         self.dataset = dataset
         self.association = association
 
+    def __repr__(self):
+        """Printable representation of DataSetAttributes."""
+        return 'pyvista {} DataSetAttributes\n' \
+               'Contains keys:\n' \
+               '\t{}'.format(self.association.name, '\n\t'.join(self.keys()))
+
     def __getitem__(self, key):
         """Implement [] operator.
 
@@ -319,9 +325,3 @@ class DataSetAttributes(VTKObjectWrapper):
     def _raise_field_data_no_scalars_vectors(self):
         if self.association == FieldAssociation.NONE:
             raise TypeError('vtkFieldData does not have active scalars or vectors.')
-
-    def __repr__(self):
-        """Printable representation of DataSetAttributes."""
-        return 'pyvista {} DataSetAttributes\n' \
-               'Contains keys:\n' \
-               '\t{}'.format(self.association.name, '\n\t'.join(self.keys()))
