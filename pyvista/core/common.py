@@ -1132,7 +1132,7 @@ class Common(DataSetFilters, DataObject):
                     ncomp = 1
                 return row.format(name, field, arr.dtype, ncomp, dl, dh)
 
-            for name, arr in self.point_arrays.items():
+            for key, arr in self.point_arrays.items():
                 fmt += format_array(key, arr, 'Points')
             for key, arr in self.cell_arrays.items():
                 fmt += format_array(key, arr, 'Cells')
