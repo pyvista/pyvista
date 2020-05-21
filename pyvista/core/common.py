@@ -1132,12 +1132,12 @@ class Common(DataSetFilters, DataObject):
                     ncomp = 1
                 return row.format(name, field, arr.dtype, ncomp, dl, dh)
 
-            for array in self.point_arrays.values():
-                fmt += format_array(array.GetName(), array, 'Points')
-            for array in self.cell_arrays.values():
-                fmt += format_array(array.GetName(), array, 'Cells')
-            for array in self.field_arrays.values():
-                fmt += format_array(array.GetName(), array, 'Fields')
+            for name, arr in self.point_arrays.items():
+                fmt += format_array(key, arr, 'Points')
+            for key, arr in self.cell_arrays.items():
+                fmt += format_array(key, arr, 'Cells')
+            for key, arr in self.field_arrays.items():
+                fmt += format_array(key, arr, 'Fields')
 
             fmt += "</table>\n"
             fmt += "\n"
