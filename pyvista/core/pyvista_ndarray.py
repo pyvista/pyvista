@@ -26,12 +26,8 @@ class pyvista_ndarray(np.ndarray):
             if isinstance(input_array, vtkDataArray):
                 cls._proxy = input_array
                 input_array = convert_array(input_array)
-            obj = np.asarray(input_array).view(cls)
-            return obj
-        else:
-            obj = np.asarray(input_array).view(cls)
-            cls._proxy = proxy
-            return obj
+        obj = np.asarray(input_array).view(cls)
+        return obj
 
     def __setitem__(self, coords, value):
         """Update the array and update the vtk object."""
