@@ -1,3 +1,4 @@
+vtk==8.1.2
 scipy
 matplotlib
 PyQt5==5.11.3
