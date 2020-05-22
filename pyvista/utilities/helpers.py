@@ -73,12 +73,9 @@ def convert_string_array(arr, name=None):
             vtkarr.SetName(name)
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
-    carr = np.empty(arr.GetNumberOfValues(), dtype='O')
     ############### OPTIMIZE ###############
-    for i in range(arr.GetNumberOfValues()):
-        carr[i] = arr.GetValue(i)
-    ########################################
-    return carr.astype('|S')
+    return np.array([arr.GetValue(i) for i in range(arr.GetNumberOfValues())])
+    ########################################    
 
 
 def convert_array(arr, name=None, deep=0, array_type=None):

@@ -86,8 +86,12 @@ def test_append_should_add_scalar_values(example_grid_point_attributes):
 
 @given(arr=arrays(byte_string_dtypes(), shape=10))
 def test_append_should_add_string_array(arr, example_grid_field_attributes):
+    try:  # only accept unicode
+        arr.astype('|U')
+    except:
+        return
     example_grid_field_attributes.append(arr, 'string_array')
-    assert np.array_equal(arr, example_grid_field_attributes['string_array'])
+    assert np.array_equal(arr.astype('|U'), example_grid_field_attributes['string_array'])
 
 
 def test_should_remove_array(insert_arange_narray):
