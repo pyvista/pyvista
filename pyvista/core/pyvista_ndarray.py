@@ -1,10 +1,7 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 
 import numpy as np
-from pyvista.utilities.helpers import convert_array, FieldAssociation
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
-from vtk.vtkCommonCore import vtkWeakReference
-from vtk.util.numpy_support import vtk_to_numpy
+from pyvista.utilities.helpers import convert_array
 
 try:
     from vtk.vtkCommonKitPython import vtkAbstractArray
