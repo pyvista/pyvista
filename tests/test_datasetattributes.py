@@ -1,3 +1,5 @@
+from hypothesis import given
+from hypothesis.extra.numpy import arrays, byte_string_dtypes
 import numpy as np
 from pytest import fixture, mark, raises
 import pyvista
@@ -7,6 +9,11 @@ from pyvista.utilities import FieldAssociation
 @fixture()
 def example_grid_point_attributes(hexbeam):
     return hexbeam.point_arrays
+
+
+@fixture()
+def example_grid_field_attributes(hexbeam):
+    return hexbeam.field_arrays
 
 
 @fixture()
@@ -75,6 +82,12 @@ def test_getters_should_return_same_result(insert_arange_narray):
 
 def test_append_should_add_scalar_values(example_grid_point_attributes):
     example_grid_point_attributes.append(narray=1, name='int_array')
+
+
+@given(arr=arrays(byte_string_dtypes(), shape=10))
+def test_append_should_add_string_array(arr, example_grid_field_attributes):
+    example_grid_field_attributes.append(arr, 'string_array')
+    assert np.array_equal(arr, example_grid_field_attributes['string_array'])
 
 
 def test_should_remove_array(insert_arange_narray):
