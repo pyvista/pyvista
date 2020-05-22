@@ -7,9 +7,9 @@ from vtk.vtkCommonCore import vtkWeakReference
 from vtk.util.numpy_support import vtk_to_numpy
 
 try:
-    from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
+    from vtk.vtkCommonKitPython import vtkAbstractArray
 except ImportError:
-    from vtk.vtkCommonCore import vtkDataArray, vtkAbstractArray
+    from vtk.vtkCommonCore import vtkAbstractArray
 
 
 class pyvista_ndarray(np.ndarray):
@@ -22,10 +22,12 @@ class pyvista_ndarray(np.ndarray):
 
     def __new__(cls, input_array, proxy=None):
         """Allocate memory for the pyvista ndarray."""
-        if proxy is None:
-            if isinstance(input_array, vtkDataArray):
+        if isinstance(input_array, vtkAbstractArray):
+            if proxy is None:
                 cls._proxy = input_array
                 input_array = convert_array(input_array)
+            else:
+                cls._proxy = input_array
         obj = np.asarray(input_array).view(cls)
         return obj
 
