@@ -74,7 +74,7 @@ def convert_string_array(arr, name=None):
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
     ############### OPTIMIZE ###############
-    return np.array([arr.GetValue(i) for i in range(arr.GetNumberOfValues())])
+    return np.array([arr.GetValue(i) for i in range(arr.GetNumberOfValues())], '|U')
     ########################################    
 
 
