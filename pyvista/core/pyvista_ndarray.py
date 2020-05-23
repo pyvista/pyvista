@@ -15,7 +15,7 @@ class pyvista_ndarray(np.ndarray):
 
     def __new__(cls, array, dataset=None, association=FieldAssociation.NONE):
         """Allocate the array."""
-        if isinstance(array, (Iterable, np.ndarray)):
+        if isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
         elif isinstance(array, vtkAbstractArray):
             obj = convert_array(array).view(cls)
