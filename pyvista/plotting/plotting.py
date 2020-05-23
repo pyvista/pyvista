@@ -2557,8 +2557,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.close()
 
         # Grab screenshots of last render
-        self.last_image = self.screenshot(None, return_img=True)
-        self.last_image_depth = self.get_image_depth()
+        if pyvista.BUILDING_GALLERY:
+            self.last_image = self.screenshot(None, return_img=True)
+            self.last_image_depth = self.get_image_depth()
 
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
