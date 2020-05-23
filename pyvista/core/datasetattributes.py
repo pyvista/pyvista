@@ -86,7 +86,7 @@ class DataSetAttributes(VTKObjectWrapper):
 
     @property
     def active_vectors(self):
-        """Return the active scalar array as pyvista_ndarray."""
+        """Return the active vectors as a pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetVectors() is not None:
             return pyvista_ndarray(self.GetVectors())

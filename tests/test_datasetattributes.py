@@ -1,12 +1,14 @@
+from string import ascii_letters, digits, whitespace
+import sys
+
 from hypothesis import given, settings
 from hypothesis.strategies import integers, lists, text
 from hypothesis.extra.numpy import arrays
 import numpy as np
 from pytest import fixture, mark, raises
+
 import pyvista
 from pyvista.utilities import FieldAssociation
-from string import ascii_letters, digits, whitespace
-import sys
 
 
 @fixture()
@@ -35,12 +37,41 @@ def insert_bool_array(hexbeam_point_attributes):
     return hexbeam_point_attributes, sample_array
 
 
+def test_repr(hexbeam_point_attributes):
+    assert 'POINT' in str(hexbeam_point_attributes)
+    assert 'DataSetAttributes' in str(hexbeam_point_attributes)
+    assert 'Contains keys:' in str(hexbeam_point_attributes)
+
+
 def test_init(hexbeam):
     attributes = pyvista.DataSetAttributes(
         hexbeam.GetPointData(), dataset=hexbeam, association=FieldAssociation.POINT)
     assert attributes.VTKObject == hexbeam.GetPointData()
     assert attributes.dataset == hexbeam
     assert attributes.association == FieldAssociation.POINT
+
+
+def test_empty_active_vectors(hexbeam):
+    assert hexbeam.active_vectors is None
+
+
+def test_valid_array_len_cells(hexbeam):
+    assert hexbeam.cell_arrays.valid_array_len == hexbeam.n_cells
+
+
+def test_append_matrix(hexbeam):
+    mat_shape = (hexbeam.n_points, 3, 2)
+    mat = np.random.random(mat_shape)
+    hexbeam.point_arrays.append(mat, 'mat')
+    matout = hexbeam.point_arrays['mat'].reshape(mat_shape)
+    assert np.allclose(mat, matout)
+
+
+def test_set_vectors(hexbeam):
+    vectors = np.random.random((hexbeam.n_points, 3))
+    hexbeam['vectors'] = vectors
+    hexbeam.set_active_vectors('vectors')
+    assert np.allclose(hexbeam.active_vectors, vectors)
 
 
 @mark.parametrize('array_key', ['invalid_array_name', -1])
@@ -112,6 +143,11 @@ def test_append_string_lists_should_equal(arr, hexbeam_field_attributes):
 def test_append_string_array_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
     assert np.array_equiv(arr, hexbeam_field_attributes['string_arr'])
+
+
+def test_hexbeam_field_attributes_active_scalars(hexbeam_field_attributes):
+    with raises(TypeError):
+        hexbeam_field_attributes.active_scalars
 
 
 def test_should_remove_array(insert_arange_narray):
