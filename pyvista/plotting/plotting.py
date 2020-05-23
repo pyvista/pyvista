@@ -54,7 +54,6 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-
 class BasePlotter(PickingHelper, WidgetHelper):
     """To be used by the Plotter and QtInteractor classes.
 
@@ -2558,8 +2557,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.close()
 
         # Grab screenshots of last render
-        self.last_image = self.screenshot(None, return_img=True)
-        self.last_image_depth = self.get_image_depth()
+        if pyvista.BUILDING_GALLERY:
+            self.last_image = self.screenshot(None, return_img=True)
+            self.last_image_depth = self.get_image_depth()
 
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
@@ -3842,8 +3842,10 @@ class Plotter(BasePlotter):
             self.title = title
 
         # Keep track of image for sphinx-gallery
-        self.last_image = self.screenshot(screenshot, return_img=True)
-        self.last_image_depth = self.get_image_depth()
+        if pyvista.BUILDING_GALLERY or screenshot:
+             # always save screenshots for sphinx_gallery
+            self.last_image = self.screenshot(screenshot, return_img=True)
+            self.last_image_depth = self.get_image_depth()
         disp = None
 
         self.update() # For Windows issues. Resolves #186
@@ -3899,6 +3901,8 @@ class Plotter(BasePlotter):
                 import IPython
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
+            if not hasattr(self, 'last_image'):
+                self.last_image = self.screenshot(screenshot, return_img=True)
             disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
 
         # Cleanup

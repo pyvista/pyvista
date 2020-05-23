@@ -7,6 +7,15 @@ from vtk.vtkCommonCore import vtkWeakReference
 from vtk.util.numpy_support import vtk_to_numpy
 
 try:
+    ModuleNotFoundError
+except:
+    class ModuleNotFoundError():
+        """Empty placeholder for Python3.5 backwards compatibility."""
+
+        pass
+
+
+try:
     from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
 except (ModuleNotFoundError, ImportError):
     from vtk.vtkCommonCore import vtkDataArray, vtkAbstractArray
