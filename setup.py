@@ -34,6 +34,8 @@ if os.name == 'nt':
                       'https://anaconda.org/anaconda/vtk')
     elif sys.version_info.minor <= 5:
         install_requires.append(['vtk<=9.0'])
+    else:
+        install_requires.append(['vtk'])
 else:
     install_requires.append(['vtk'])
 
