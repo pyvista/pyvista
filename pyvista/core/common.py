@@ -3,17 +3,15 @@
 import collections
 import logging
 import warnings
-from weakref import proxy
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
+from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (FieldAssociation, convert_array, get_array,
-                               is_pyvista_dataset, parse_field_choice, raise_not_matching,
-                               vtk_bit_array_to_char, vtk_id_list_to_array)
-
+from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
+                               parse_field_choice, raise_not_matching, vtk_id_list_to_array)
+from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
 log = logging.getLogger(__name__)
@@ -29,7 +27,10 @@ class DataObject(object):
 
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
-        self._field_bool_array_names = []
+        super().__init__()
+        # Remember which arrays come from numpy.bool arrays, because there is no direct
+        # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
+        self.association_bitarray_names = collections.defaultdict(set)
 
 
     def __new__(cls, *args, **kwargs):
@@ -175,7 +176,7 @@ class DataObject(object):
         return newobject
 
 
-    def _field_array(self, name=None):
+    def _field_array(self, name):
         """Return field scalars of a vtk object.
 
         Parameters
@@ -189,22 +190,7 @@ class DataObject(object):
             Numpy array of scalars
 
         """
-        if name is None:
-            raise RuntimeError('Must specify an array to fetch.')
-        vtkarr = self.GetFieldData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a valid field array.'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._point_bool_array_names:
-                self._field_bool_array_names.append(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._field_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.field_arrays[name]
 
 
     def _add_field_array(self, scalars, name, deep=True):
@@ -224,30 +210,8 @@ class DataObject(object):
             must be kept to avoid a segfault.
 
         """
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
+        self.field_arrays.append(scalars, name, deep_copy=deep)
 
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-
-        # need to track which arrays are boolean as all boolean arrays
-        # must be stored as uint8
-        if scalars.dtype == np.bool:
-            scalars = scalars.view(np.uint8)
-            if name not in self._field_bool_array_names:
-                self._field_bool_array_names.append(name)
-
-        if not scalars.flags.c_contiguous:
-            scalars = np.ascontiguousarray(scalars)
-
-        vtkarr = convert_array(scalars, deep=deep)
-        vtkarr.SetName(name)
-
-        fdata = self.GetFieldData()
-        # must remove array if it already exists
-        if fdata.HasArray(name):
-            fdata.RemoveArray(name)
-        fdata.AddArray(vtkarr)
 
     def _add_field_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add a field array.
@@ -256,8 +220,7 @@ class DataObject(object):
 
         """
         warnings.warn('Deprecation Warning: `_add_field_scalar` is now `_add_field_array`', RuntimeWarning)
-        return self._add_field_array(scalars, name, set_active=set_active, deep=deep)
-
+        return self._add_field_array(scalars, name, deep=deep)
 
     def add_field_array(self, scalars, name, deep=True):
         """Add a field array."""
@@ -266,35 +229,13 @@ class DataObject(object):
 
     @property
     def field_arrays(self):
-        """Return all field arrays."""
-        fdata = self.GetFieldData()
-        narr = fdata.GetNumberOfArrays()
-
-        # just return if unmodified
-        if hasattr(self, '_field_arrays'):
-            keys = list(self._field_arrays.keys())
-            if narr == len(keys):
-                return self._field_arrays
-
-        # dictionary with callbacks
-        self._field_arrays = FieldScalarsDict(self)
-
-        for i in range(narr):
-            name = fdata.GetArrayName(i)
-            if name is None or len(name) < 1:
-                name = 'Field Array {}'.format(i)
-                fdata.GetAbstractArray(i).SetName(name)
-            self._field_arrays[name] = self._field_array(name)
-
-        self._field_arrays.enable_callback()
-        return self._field_arrays
+        """Return vtkFieldData as DataSetAttributes."""
+        return DataSetAttributes(self.GetFieldData(), dataset=self, association=FieldAssociation.NONE)
 
 
     def clear_field_arrays(self):
         """Remove all field arrays."""
-        keys = self.field_arrays.keys()
-        for key in keys:
-            self._remove_array(FieldAssociation.NONE, key)
+        self.field_arrays.clear()
 
 
     @property
@@ -523,30 +464,13 @@ class Common(DataSetFilters, DataObject):
     @property
     def t_coords(self):
         """Return the active texture coordinates on the points."""
-        if self.GetPointData().GetTCoords() is not None:
-            return vtk_to_numpy(self.GetPointData().GetTCoords())
-        return None
+        return self.point_arrays.t_coords
 
 
     @t_coords.setter
     def t_coords(self, t_coords):
         """Set the array to use as the texture coordinates."""
-        if not isinstance(t_coords, np.ndarray):
-            raise TypeError('Texture coordinates must be a numpy array')
-        if t_coords.ndim != 2:
-            raise AssertionError('Texture coordinates must be a 2-dimensional array')
-        if t_coords.shape[0] != self.n_points:
-            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], self.n_points))
-        if t_coords.shape[1] != 2:
-            raise AssertionError('Texture coordinates must only have 2 components, not ({})'.format(t_coords.shape[1]))
-        # if np.min(t_coords) < 0.0 or np.max(t_coords) > 1.0:
-        #     warnings.warn('Texture coordinates are typically within (0, 1) range. Textures will repeat on this mesh.', RuntimeWarning)
-        # convert the array
-        vtkarr = numpy_to_vtk(t_coords)
-        vtkarr.SetName('Texture Coordinates')
-        self.GetPointData().SetTCoords(vtkarr)
-        self.GetPointData().Modified()
-        return
+        self.point_arrays.t_coords = t_coords
 
 
     @property
@@ -725,25 +649,7 @@ class Common(DataSetFilters, DataObject):
             Numpy array of scalars
 
         """
-        if name is None:
-            # use active scalars array
-            field, name = self.active_scalars_info
-            if field != FieldAssociation.POINT or name is None:
-                raise ValueError('Must specify an array to fetch.')
-        vtkarr = self.GetPointData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a point scalar'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._point_bool_array_names:
-                self._point_bool_array_names.append(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._point_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.point_arrays[name]
 
 
     def _add_point_array(self, scalars, name, set_active=False, deep=True):
@@ -765,28 +671,7 @@ class Common(DataSetFilters, DataObject):
             must be kept to avoid a segfault.
 
         """
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
-
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-
-        if scalars.shape[0] != self.n_points:
-            raise Exception('Number of scalars must match the number of points')
-
-        # need to track which arrays are boolean as all boolean arrays
-        # must be stored as uint8
-        if scalars.dtype == np.bool:
-            scalars = scalars.view(np.uint8)
-            if name not in self._point_bool_array_names:
-                self._point_bool_array_names.append(name)
-
-        if not scalars.flags.c_contiguous:
-            scalars = np.ascontiguousarray(scalars)
-
-        vtkarr = convert_array(scalars, deep=deep)
-        vtkarr.SetName(name)
-        self.GetPointData().AddArray(vtkarr)
+        self.point_arrays.append(scalars, name, deep_copy=deep)
         if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalars_info = [FieldAssociation.POINT, name]
@@ -932,26 +817,7 @@ class Common(DataSetFilters, DataObject):
             Numpy array of scalars
 
         """
-        if name is None:
-            # use active scalars array
-            field, name = self.active_scalars_info
-            if field != FieldAssociation.CELL:
-                raise RuntimeError('Must specify an array to fetch.')
-
-        vtkarr = self.GetCellData().GetAbstractArray(name)
-        if vtkarr is None:
-            raise AssertionError('({}) is not a cell scalar'.format(name))
-
-        # numpy does not support bit array data types
-        if isinstance(vtkarr, vtk.vtkBitArray):
-            vtkarr = vtk_bit_array_to_char(vtkarr)
-            if name not in self._cell_bool_array_names:
-                self._cell_bool_array_names.append(name)
-
-        array = convert_array(vtkarr)
-        if array.dtype == np.uint8 and name in self._cell_bool_array_names:
-            array = array.view(np.bool)
-        return array
+        return self.cell_arrays[name]
 
 
     def _add_cell_array(self, scalars, name, set_active=False, deep=True):
@@ -973,25 +839,7 @@ class Common(DataSetFilters, DataObject):
             must be kept to avoid a segfault.
 
         """
-        if scalars is None:
-            raise TypeError('Empty array unable to be added')
-
-        if not isinstance(scalars, np.ndarray):
-            scalars = np.array(scalars)
-
-        if scalars.shape[0] != self.n_cells:
-            raise ValueError('Number of scalars must match the number of cells (%d)'
-                             % self.n_cells)
-
-        if not scalars.flags.c_contiguous:
-            raise ValueError('Array must be contigious')
-        if scalars.dtype == np.bool:
-            scalars = scalars.view(np.uint8)
-            self._cell_bool_array_names.append(name)
-
-        vtkarr = convert_array(scalars, deep=deep)
-        vtkarr.SetName(name)
-        self.GetCellData().AddArray(vtkarr)
+        self.cell_arrays.append(scalars, name, deep_copy=deep)
         if set_active or self.active_scalars_info[1] is None:
             self.GetCellData().SetActiveScalars(name)
             self._active_scalars_info = [FieldAssociation.CELL, name]
@@ -1018,32 +866,8 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def point_arrays(self):
-        """Return the all point arrays."""
-        pdata = self.GetPointData()
-        narr = pdata.GetNumberOfArrays()
-
-        # Update data if necessary
-        if hasattr(self, '_point_arrays'):
-            keys = list(self._point_arrays.keys())
-            if narr == len(keys):
-                if keys:
-                    if self._point_arrays[keys[0]].shape[0] == self.n_points:
-                        return self._point_arrays
-                else:
-                    return self._point_arrays
-
-        # dictionary with callbacks
-        self._point_arrays = PointScalarsDict(self)
-
-        for i in range(narr):
-            name = pdata.GetArrayName(i)
-            if name is None or len(name) < 1:
-                name = 'Point Array {}'.format(i)
-                pdata.GetAbstractArray(i).SetName(name)
-            self._point_arrays[name] = self._point_array(name)
-
-        self._point_arrays.enable_callback()
-        return self._point_arrays
+        """Return vtkPointData as DataSetAttributes."""
+        return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
 
 
 
@@ -1063,16 +887,12 @@ class Common(DataSetFilters, DataObject):
 
     def clear_point_arrays(self):
         """Remove all point arrays."""
-        keys = self.point_arrays.keys()
-        for key in keys:
-            self._remove_array(FieldAssociation.POINT, key)
+        self.point_arrays.clear()
 
 
     def clear_cell_arrays(self):
         """Remove all cell arrays."""
-        keys = self.cell_arrays.keys()
-        for key in keys:
-            self._remove_array(FieldAssociation.CELL, key)
+        self.cell_arrays.clear()
 
 
     def clear_arrays(self):
@@ -1084,32 +904,8 @@ class Common(DataSetFilters, DataObject):
 
     @property
     def cell_arrays(self):
-        """Return the all cell arrays."""
-        cdata = self.GetCellData()
-        narr = cdata.GetNumberOfArrays()
-
-        # Update data if necessary
-        if hasattr(self, '_cell_arrays'):
-            keys = list(self._cell_arrays.keys())
-            if narr == len(keys):
-                if keys:
-                    if self._cell_arrays[keys[0]].shape[0] == self.n_cells:
-                        return self._cell_arrays
-                else:
-                    return self._cell_arrays
-
-        # dictionary with callbacks
-        self._cell_arrays = CellScalarsDict(self)
-
-        for i in range(narr):
-            name = cdata.GetArrayName(i)
-            if name is None or len(name) < 1:
-                name = 'Cell Array {}'.format(i)
-                cdata.GetAbstractArray(i).SetName(name)
-            self._cell_arrays[name] = self._cell_array(name)
-
-        self._cell_arrays.enable_callback()
-        return self._cell_arrays
+        """Return vtkCellData as DataSetAttributes."""
+        return DataSetAttributes(self.GetCellData(), dataset=self, association=FieldAssociation.CELL)
 
 
     @property
@@ -1263,12 +1059,9 @@ class Common(DataSetFilters, DataObject):
 
         """
         names = []
-        for i in range(self.GetPointData().GetNumberOfArrays()):
-            names.append(self.GetPointData().GetArrayName(i))
-        for i in range(self.GetCellData().GetNumberOfArrays()):
-            names.append(self.GetCellData().GetArrayName(i))
-        for i in range(self.GetFieldData().GetNumberOfArrays()):
-            names.append(self.GetFieldData().GetArrayName(i))
+        names.extend(self.field_arrays.keys())
+        names.extend(self.point_arrays.keys())
+        names.extend(self.cell_arrays.keys())
         try:
             names.remove(self.active_scalars_name)
             names.insert(0, self.active_scalars_name)
@@ -1456,107 +1249,6 @@ class Common(DataSetFilters, DataObject):
         return index
 
 
-
-class _ScalarsDict(dict):
-    """Internal helper for scalars dictionaries."""
-
-    def __init__(self, data):
-        """Initialize the scalars dict."""
-        self.data = proxy(data)
-        dict.__init__(self)
-        self.callback_enabled = False
-        self.remover = None
-        self.modifier = None
-
-
-    def enable_callback(self):
-        """Enable callbacks to be set True."""
-        self.callback_enabled = True
-
-
-    def adder(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
-        raise NotImplementedError()
-
-
-    def pop(self, key):
-        """Get and remove an element by key name."""
-        arr = dict.pop(self, key).copy()
-        self.remover(key)
-        return arr
-
-
-    def update(self, data):
-        """Update this dictionary with the key-value pairs from a given dictionary."""
-        if not isinstance(data, (dict, pyvista.Table)):
-            raise TypeError('Data to update must be in a dictionary or PyVista Table.')
-        for k, v in data.items():
-            arr = np.array(v)
-            try:
-                self[k] = arr
-            except TypeError:
-                logging.warning("Values under key ({}) not supported by VTK".format(k))
-        return
-
-
-    def __setitem__(self, key, val):
-        """Ensure that data is contiguous."""
-        if isinstance(val, (list, tuple)):
-            val = np.array(val)
-        if self.callback_enabled:
-            self.adder(val, key, deep=False)
-        dict.__setitem__(self, key, val)
-        self.modifier()
-
-
-    def __delitem__(self, key):
-        """Remove item by key name."""
-        self.remover(key)
-        return dict.__delitem__(self, key)
-
-
-class CellScalarsDict(_ScalarsDict):
-    """Update internal cell data when an array is added or removed from the dictionary."""
-
-    def __init__(self, data):
-        """Initialize the cell array dict."""
-        _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(FieldAssociation.CELL, key)
-        self.modifier = lambda *args: self.data.GetCellData().Modified()
-
-
-    def adder(self, scalars, name, set_active=False, deep=True):
-        """Add a cell array."""
-        self.data._add_cell_array(scalars, name, set_active=False, deep=deep)
-
-
-class PointScalarsDict(_ScalarsDict):
-    """Update internal point data when an array is added or removed from the dictionary."""
-
-    def __init__(self, data):
-        """Initialize the point array dict."""
-        _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(FieldAssociation.POINT, key)
-        self.modifier = lambda *args: self.data.GetPointData().Modified()
-
-
-    def adder(self, scalars, name, set_active=False, deep=True):
-        """Add a point array."""
-        self.data._add_point_array(scalars, name, set_active=False, deep=deep)
-
-
-class FieldScalarsDict(_ScalarsDict):
-    """Update internal field data when an array is added or removed from the dictionary."""
-
-    def __init__(self, data):
-        """Initialize the field array dict."""
-        _ScalarsDict.__init__(self, data)
-        self.remover = lambda key: self.data._remove_array(FieldAssociation.NONE, key)
-        self.modifier = lambda *args: self.data.GetFieldData().Modified()
-
-
-    def adder(self, scalars, name, set_active=False, deep=True):
-        """Add a field array."""
-        self.data._add_field_array(scalars, name, deep=deep)
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):

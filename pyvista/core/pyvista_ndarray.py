@@ -1,24 +1,12 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 
 import numpy as np
-from pyvista.utilities.helpers import convert_array, FieldAssociation
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
-from vtk.vtkCommonCore import vtkWeakReference
-from vtk.util.numpy_support import vtk_to_numpy
+from pyvista.utilities.helpers import convert_array
 
 try:
-    ModuleNotFoundError
-except:
-    class ModuleNotFoundError():
-        """Empty placeholder for Python3.5 backwards compatibility."""
-
-        pass
-
-
-try:
-    from vtk.vtkCommonKitPython import vtkDataArray, vtkAbstractArray
-except (ModuleNotFoundError, ImportError):
-    from vtk.vtkCommonCore import vtkDataArray, vtkAbstractArray
+    from vtk.vtkCommonKitPython import vtkAbstractArray
+except ImportError:
+    from vtk.vtkCommonCore import vtkAbstractArray
 
 
 class pyvista_ndarray(np.ndarray):
@@ -31,18 +19,20 @@ class pyvista_ndarray(np.ndarray):
 
     def __new__(cls, input_array, proxy=None):
         """Allocate memory for the pyvista ndarray."""
-        if proxy is None:
-            proxy = input_array
-            input_array = vtk_to_numpy(input_array)
-            obj = np.asarray(input_array).view(cls)
-            cls._proxy = proxy
-            return obj
-        else:
-            obj = np.asarray(input_array).view(cls)
-            cls._proxy = proxy
-            return obj
+        if isinstance(input_array, vtkAbstractArray):
+            if proxy is None:
+                cls._proxy = input_array
+                input_array = convert_array(input_array)
+            else:
+                cls._proxy = input_array
+        obj = np.asarray(input_array).view(cls)
+        return obj
 
     def __setitem__(self, coords, value):
         """Update the array and update the vtk object."""
         super(pyvista_ndarray, self).__setitem__(coords, value)
         self._proxy.Modified()
+
+    def __getattr__(self, item):
+        """Forward unknown attribute requests to VTK array."""
+        return self._proxy.__getattribute__(item)

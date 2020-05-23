@@ -30,3 +30,8 @@ def ant():
 @fixture()
 def globe():
     return examples.load_globe()
+
+
+@fixture()
+def hexbeam():
+    return examples.load_hexbeam()
