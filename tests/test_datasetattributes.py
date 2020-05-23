@@ -1,6 +1,6 @@
-from hypothesis import given, example
-from hypothesis.strategies import lists, text
-from hypothesis.extra.numpy import arrays, byte_string_dtypes
+from hypothesis import assume, given
+from hypothesis.strategies import lists, one_of, text
+from hypothesis.extra.numpy import arrays, byte_string_dtypes, from_dtype, unicode_string_dtypes
 import numpy as np
 from pytest import fixture, mark, raises
 import pyvista
@@ -92,14 +92,10 @@ def test_append_string_lists_should_equal(arr, example_grid_field_attributes):
     assert arr == example_grid_field_attributes['string_arr'].tolist()
 
 
-@given(arr=arrays(byte_string_dtypes(), shape=10))
+@given(arr=arrays(dtype='U', shape=10))
 def test_append_should_add_string_array(arr, example_grid_field_attributes):
-    try:  # only accept unicode
-        arr.astype('|U')
-    except:
-        return
-    example_grid_field_attributes.append(arr, 'string_array')
-    assert np.array_equal(arr, example_grid_field_attributes['string_array'])
+    example_grid_field_attributes['string_arr'] = arr
+    assert np.array_equiv(arr, example_grid_field_attributes['string_arr'])
 
 
 def test_should_remove_array(insert_arange_narray):
