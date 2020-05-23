@@ -88,6 +88,7 @@ def get_reader(filename):
 
 
 def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    """Sets any vtk writer to write as binary or ascii."""
     if isinstance(vtk_writer, vtk.vtkDataWriter):
         if use_binary:
             vtk_writer.SetFileTypeToBinary()
