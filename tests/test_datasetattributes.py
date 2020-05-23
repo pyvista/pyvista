@@ -87,7 +87,7 @@ def test_append_should_add_scalar_values(example_grid_point_attributes):
 
 
 @given(arr=lists(text(alphabet=ascii_letters + digits + whitespace), max_size=16))
-def test_append_string_list_should_equal(arr, example_grid_field_attributes):
+def test_append_string_lists_should_equal(arr, example_grid_field_attributes):
     example_grid_field_attributes['string_arr'] = arr
     assert arr == example_grid_field_attributes['string_arr'].tolist()
 
