@@ -1,6 +1,6 @@
-from hypothesis import assume, given
-from hypothesis.strategies import lists, one_of, text
-from hypothesis.extra.numpy import arrays, byte_string_dtypes, from_dtype, unicode_string_dtypes
+from hypothesis import given
+from hypothesis.strategies import lists, text
+from hypothesis.extra.numpy import arrays
 import numpy as np
 from pytest import fixture, mark, raises
 import pyvista
