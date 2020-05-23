@@ -3,6 +3,7 @@
 import collections
 import logging
 import warnings
+from abc import abstractmethod
 
 import numpy as np
 import vtk
@@ -38,6 +39,24 @@ class DataObject(object):
         if cls is DataObject:
             raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
+
+
+    @property
+    @abstractmethod
+    def _vtk_writers(self):
+        """Return a dictionary of str:vtkWriter/vtkXMLWriter. Which is used to
+         select a valid vtk writer for a given file extension. For example,
+         {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}"""
+        raise NotImplementedError
+
+
+    @property
+    @abstractmethod
+    def _vtk_readers(self):
+        """Return a dictionary of str:vtkWriter/vtkXMLWriter. Which is used to
+         select a valid vtk reader for a given file extension. For example,
+         {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}"""
+        raise NotImplementedError
 
 
     def shallow_copy(self, to_copy):
