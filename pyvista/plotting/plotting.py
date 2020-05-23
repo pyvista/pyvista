@@ -261,12 +261,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def store_image(self):
-        """Returns if an image will be saved on close."""
+        """Return if an image will be saved on close."""
         return self._store_image
 
     @store_image.setter
     def store_image(self, value):
-        """Stores last rendered frame on close."""
+        """Store last rendered frame on close."""
         self._store_image = bool(value)
 
     def subplot(self, index_row, index_column=None):
