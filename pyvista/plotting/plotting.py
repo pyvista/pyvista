@@ -99,6 +99,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
 
+        self._store_image = False
         self.mesh = None
         if title is None:
             title = rcParams['title']
@@ -258,6 +259,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return the active renderer."""
         return self.renderers[self._active_renderer_index]
 
+    @property
+    def store_image(self):
+        """Returns if an image will be saved on close."""
+        return self._store_image
+
+    @store_image.setter
+    def store_image(self, value):
+        """Stores last rendered frame on close."""
+        self._store_image = bool(value)
 
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
@@ -619,7 +629,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def image(self):
-        """Return an image array of current render window."""
+        """Return an image array of current render window.
+
+        To retrieve an image after the render window has been closed,
+        set: `plotter.store_image = True`
+        """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
         ifilter = vtk.vtkWindowToImageFilter()
@@ -2547,7 +2561,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.ren_win.Finalize()
             del self.ren_win
 
-
     def close(self):
         """Close the render window."""
         # must close out widgets first
@@ -2557,7 +2570,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.close()
 
         # Grab screenshots of last render
-        if pyvista.BUILDING_GALLERY:
+        if self._store_image:
             self.last_image = self.screenshot(None, return_img=True)
             self.last_image_depth = self.get_image_depth()
 
