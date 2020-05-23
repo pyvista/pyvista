@@ -12,7 +12,7 @@ except ImportError:
 
 
 class pyvista_ndarray(np.ndarray):
-    """Link a numpy array with the vtk object the data is attached to."""
+    """An ndarray which references the owning dataset and the underlying vtkArray."""
 
     def __new__(cls, array: [Iterable, vtkAbstractArray], dataset=None, association=FieldAssociation.NONE):
         """Allocate the array."""
