@@ -11,12 +11,7 @@ except ImportError:
 
 
 class pyvista_ndarray(np.ndarray):
-    """Link a numpy array with the vtk object the data is attached to.
-
-    When the array is changed it triggers "Modified()" which updates
-    all upstream objects, including any render windows holding the
-    object.
-    """
+    """Link a numpy array with the vtk object the data is attached to."""
 
     def __new__(cls, array, dataset=None, association=FieldAssociation.NONE):
         """Allocate the array."""
@@ -38,6 +33,7 @@ class pyvista_ndarray(np.ndarray):
 
     def __setitem__(self, key, value):
         """Set item at key index to value.
+
         When the array is changed it triggers "Modified()" which updates
         all upstream objects, including any render windows holding the
         object.
