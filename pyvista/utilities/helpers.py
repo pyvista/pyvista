@@ -73,12 +73,10 @@ def convert_string_array(arr, name=None):
             vtkarr.SetName(name)
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
-    carr = np.empty(arr.GetNumberOfValues(), dtype='O')
     ############### OPTIMIZE ###############
-    for i in range(arr.GetNumberOfValues()):
-        carr[i] = arr.GetValue(i)
-    ########################################
-    return carr.astype('|S')
+    nvalues = arr.GetNumberOfValues()
+    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    ########################################    
 
 
 def convert_array(arr, name=None, deep=0, array_type=None):
@@ -108,15 +106,14 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         if arr.dtype is np.dtype('O'):
             arr = arr.astype('|S')
         arr = np.ascontiguousarray(arr)
-        try:
+        if arr.dtype.type in (np.str_, np.bytes_):
+            # This handles strings
+            vtk_data = convert_string_array(arr)
+        else:
             # This will handle numerical data
             arr = np.ascontiguousarray(arr)
             vtk_data = nps.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
-        except ValueError:
-            # This handles strings
-            typ = get_vtk_type(arr.dtype)
-            if typ == 13:
-                vtk_data = convert_string_array(arr)
+
         if isinstance(name, str):
             vtk_data.SetName(name)
         return vtk_data
