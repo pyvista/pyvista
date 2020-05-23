@@ -89,8 +89,9 @@ class DataObject(object):
             raise FileNotFoundError('File %s does not exist' % filename)
         file_ext = fileio.get_ext(filename)
         if file_ext not in self._vtk_readers:
-            raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
-                ', '.join(self._vtk_readers.keys())))
+            keys_list = ', '.join(self._vtk_readers.keys())
+            raise ValueError('Invalid file extension for this data type({}). Must be one of: {}'.format(
+                file_ext, keys_list))
         reader = self._vtk_readers[file_ext]()
         reader.SetFileName(filename)
         reader.Update()
