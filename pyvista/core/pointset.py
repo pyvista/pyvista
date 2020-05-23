@@ -18,7 +18,7 @@ import pyvista
 
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
-from .. import get_ext
+from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
