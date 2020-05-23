@@ -1,9 +1,11 @@
-from hypothesis import given
+from hypothesis import given, example
+from hypothesis.strategies import lists, text
 from hypothesis.extra.numpy import arrays, byte_string_dtypes
 import numpy as np
 from pytest import fixture, mark, raises
 import pyvista
 from pyvista.utilities import FieldAssociation
+from string import ascii_letters, digits, whitespace
 
 
 @fixture()
@@ -82,6 +84,12 @@ def test_getters_should_return_same_result(insert_arange_narray):
 
 def test_append_should_add_scalar_values(example_grid_point_attributes):
     example_grid_point_attributes.append(narray=1, name='int_array')
+
+
+@given(arr=lists(text(alphabet=ascii_letters + digits), max_size=16))
+def test_append_string_list_should_equal(arr, example_grid_field_attributes):
+    example_grid_field_attributes['string_arr'] = arr
+    assert arr == example_grid_field_attributes['string_arr'].tolist()
 
 
 @given(arr=arrays(byte_string_dtypes(), shape=10))
