@@ -1,15 +1,13 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 from collections import Iterable
-
 import numpy as np
+from pyvista.utilities.helpers import FieldAssociation, convert_array
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 
-from pyvista.utilities.helpers import FieldAssociation, convert_array
-
 try:
-    from vtk.vtkCommonKitPython import vtkAbstractArray, vtkWeakReference, buffer_shared
+    from vtk.vtkCommonKitPython import buffer_shared, vtkAbstractArray, vtkWeakReference
 except ImportError:
-    from vtk.vtkCommonCore import vtkAbstractArray, vtkWeakReference, buffer_shared
+    from vtk.vtkCommonCore import buffer_shared, vtkAbstractArray, vtkWeakReference
 
 
 class pyvista_ndarray(np.ndarray):
