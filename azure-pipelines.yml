@@ -322,7 +322,7 @@ jobs:
   - task: Cache@2
     inputs:
       key: 'PYVISTA_DOC_EXAMPLES_CACHE'
-      path: $(Pipeline.Workspace)/docs/examples'
+      path: '$(Build.SourcesDirectory)/docs/examples'
     displayName: Build pyvista doc examples cache
 
   - script: |
