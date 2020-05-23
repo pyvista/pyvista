@@ -153,7 +153,7 @@ class DataSetAttributes(VTKObjectWrapper):
         if vtk_arr is None:
             vtk_arr = self.GetAbstractArray(key)
             if vtk_arr is None:
-                raise KeyError('"{}"'.format(key))
+                raise KeyError('{}'.format(key))
             if type(vtk_arr) == vtk.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr)
