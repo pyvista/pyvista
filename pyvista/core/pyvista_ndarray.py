@@ -2,7 +2,6 @@
 from collections import Iterable
 import numpy as np
 
-from pyvista import Common
 from pyvista.utilities.helpers import FieldAssociation, convert_array
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 
@@ -15,7 +14,7 @@ except ImportError:
 class pyvista_ndarray(np.ndarray):
     """Link a numpy array with the vtk object the data is attached to."""
 
-    def __new__(cls, array: Iterable, dataset: Common=None, association=FieldAssociation.NONE):
+    def __new__(cls, array: [Iterable, vtkAbstractArray], dataset=None, association=FieldAssociation.NONE):
         """Allocate the array."""
         if isinstance(array, Iterable):
             obj = np.asarray(array).view(cls)
