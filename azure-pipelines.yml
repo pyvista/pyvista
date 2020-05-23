@@ -192,6 +192,10 @@ jobs:
       versionSpec: $(PYTHON_VERSION)
       architecture: $(PYTHON_ARCH)
       addToPath: true
+  - script: |
+      pip install .
+      python -c "import pyvista; print(pyvista.Report())"
+    displayName: 'Install PyVista'
   - powershell: |
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
@@ -199,17 +203,9 @@ jobs:
       git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
       powershell gl-ci-helpers/appveyor/install_opengl.ps1
     displayName: 'Install OpenGL'
-  - powershell: |
-      Set-StrictMode -Version Latest
-      $ErrorActionPreference = "Stop"
-      $PSDefaultParameterValues['*:ErrorAction']='Stop'
-      pip install -r requirements_test.txt
-    displayName: 'Install dependencies with pip'
   - script: |
-      python setup.py sdist
-      python setup.py install
-      python -c "import pyvista; print(pyvista.Report())"
-    displayName: 'Install PyVista'
+      pip install -r requirements_test.txt
+    displayName: 'Install test dependencies'
   - script: |
       python -m pytest --cov -v .
     displayName: 'Run Tests'
