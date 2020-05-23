@@ -93,7 +93,7 @@ def test_append_string_lists_should_equal(arr, example_grid_field_attributes):
 
 
 @given(arr=arrays(dtype='U', shape=10))
-def test_append_should_add_string_array(arr, example_grid_field_attributes):
+def test_append_string_array_should_equal(arr, example_grid_field_attributes):
     example_grid_field_attributes['string_arr'] = arr
     assert np.array_equiv(arr, example_grid_field_attributes['string_arr'])
 
