@@ -5,6 +5,7 @@ from weakref import proxy
 import imageio
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 from pyvista import examples
@@ -29,7 +30,7 @@ else:
     OFF_SCREEN = False
 
 pyvista.OFF_SCREEN = OFF_SCREEN
-
+VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
@@ -227,7 +228,7 @@ def test_make_movie():
                      scalars=np.random.random(movie_sphere.n_faces))
     plotter.show(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
-    for i in range(10):
+    for i in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
         random_points = np.random.random(movie_sphere.points.shape)
         movie_sphere.points = random_points*0.01 + movie_sphere.points*0.99
@@ -323,8 +324,11 @@ def test_key_press_event():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
-    plotter.left_button_down(None, None)
-    # assert np.allclose(plotter.pickpoint, [0, 0, 0])\
+    if VTK9:
+        with pytest.raises(RuntimeError):
+            plotter.left_button_down(None, None)
+    else:
+        plotter.left_button_down(None, None)
     plotter.close()
 
 
