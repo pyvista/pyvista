@@ -66,7 +66,7 @@ def test_init_bad_input():
 
 
 def test_init_from_arrays():
-    cells = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+    cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
     cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int32)
 
     cell1 = np.array([[0, 0, 0],
@@ -90,11 +90,11 @@ def test_init_from_arrays():
     points = np.vstack((cell1, cell2)).astype(np.int32)
 
     if VTK9:
-        grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+        grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
         assert np.allclose(grid.cells, cells)
     else:
         offset = np.array([0, 9], np.int8)
-        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
+        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points, deep=False)
         assert np.allclose(grid.offset, offset)
 
     assert grid.n_cells == 2
