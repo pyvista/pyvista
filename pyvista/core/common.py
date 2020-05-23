@@ -90,7 +90,7 @@ class DataObject(object):
         file_ext = fileio.get_ext(filename)
         if file_ext not in self._vtk_readers:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
-                self._vtk_readers.keys()))
+                ', '.join(self._vtk_readers.keys())))
         reader = self._vtk_readers[file_ext]()
         reader.SetFileName(filename)
         reader.Update()
