@@ -1,11 +1,12 @@
-from hypothesis import given
-from hypothesis.strategies import lists, text
+from hypothesis import given, settings
+from hypothesis.strategies import integers, lists, text
 from hypothesis.extra.numpy import arrays
 import numpy as np
 from pytest import fixture, mark, raises
 import pyvista
 from pyvista.utilities import FieldAssociation
 from string import ascii_letters, digits, whitespace
+import sys
 
 
 @fixture()
@@ -82,8 +83,23 @@ def test_getters_should_return_same_result(insert_arange_narray):
     assert np.array_equal(result_a, result_b)
 
 
-def test_append_should_add_scalar_values(example_grid_point_attributes):
-    example_grid_point_attributes.append(narray=1, name='int_array')
+def test_contains_should_contain_when_added(insert_arange_narray):
+    dsa, sample_array = insert_arange_narray
+    assert 'sample_array' in dsa
+
+
+@settings(max_examples=20)
+@given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
+def test_append_should_accept_scalar_value(scalar, example_grid_point_attributes):
+    example_grid_point_attributes.append(narray=scalar, name='int_array')
+
+
+@settings(max_examples=20)
+@given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
+def test_append_scalar_value_should_give_array(scalar, example_grid_point_attributes):
+    example_grid_point_attributes.append(narray=scalar, name='int_array')
+    expected = np.full(example_grid_point_attributes.dataset.n_points, scalar)
+    assert np.array_equal(expected, example_grid_point_attributes['int_array'])
 
 
 @given(arr=lists(text(alphabet=ascii_letters + digits + whitespace), max_size=16))
@@ -140,7 +156,7 @@ def test_pop_should_fail_bad_argument(removed_key, example_grid_point_attributes
         example_grid_point_attributes.pop(removed_key)
 
 
-def test_length_should_increase_on_add(example_grid_point_attributes):
+def test_length_should_increment_on_append(example_grid_point_attributes):
     initial_len = len(example_grid_point_attributes)
     n_points = example_grid_point_attributes.dataset.GetNumberOfPoints()
     sample_array = np.arange(n_points)
@@ -148,10 +164,17 @@ def test_length_should_increase_on_add(example_grid_point_attributes):
     assert len(example_grid_point_attributes) == initial_len + 1
 
 
-def test_length_should_decrease_on_remove(insert_arange_narray):
+def test_length_should_decrement_on_remove(insert_arange_narray):
     dsa, sample_array = insert_arange_narray
     initial_len = len(dsa)
     dsa.remove('sample_array')
+    assert len(dsa) == initial_len - 1
+
+
+def test_length_should_decrement_on_pop(insert_arange_narray):
+    dsa, sample_array = insert_arange_narray
+    initial_len = len(dsa)
+    dsa.pop('sample_array')
     assert len(dsa) == initial_len - 1
 
 
