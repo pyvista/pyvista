@@ -274,7 +274,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @property
     def lines(self):
         """Return a pointer to the lines as a numpy object."""
-        return vtk_to_numpy(self.GetLines().GetData())
+        return vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
     def lines(self, lines):

@@ -27,72 +27,72 @@ except KeyError:
     pass
 
 
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_docexample_advancedplottingwithnumpy():
-    import pyvista
-    import numpy as np
+# @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+# def test_docexample_advancedplottingwithnumpy():
+#     import pyvista
+#     import numpy as np
 
-    # Make a grid
-    x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 5))
+#     # Make a grid
+#     x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
+#                           np.linspace(-5, 5, 20),
+#                           np.linspace(-5, 5, 5))
 
-    points = np.empty((x.size, 3))
-    points[:, 0] = x.ravel('F')
-    points[:, 1] = y.ravel('F')
-    points[:, 2] = z.ravel('F')
+#     points = np.empty((x.size, 3))
+#     points[:, 0] = x.ravel('F')
+#     points[:, 1] = y.ravel('F')
+#     points[:, 2] = z.ravel('F')
 
-    # Compute a direction for the vector field
-    direction = np.sin(points)**3
+#     # Compute a direction for the vector field
+#     direction = np.sin(points)**3
 
-    # plot using the plotting class
-    plotter = pyvista.Plotter(off_screen=True)
-    plotter.add_arrows(points, direction, 0.5)
-    plotter.set_background([0, 0, 0]) # RGB set to black
-    plotter.show(auto_close=False)
-    np.any(plotter.screenshot())
-    plotter.close()
+#     # plot using the plotting class
+#     plotter = pyvista.Plotter(off_screen=True)
+#     plotter.add_arrows(points, direction, 0.5)
+#     plotter.set_background([0, 0, 0]) # RGB set to black
+#     plotter.show(auto_close=False)
+#     np.any(plotter.screenshot())
+#     plotter.close()
 
 
-@pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_creatingagifmovie(tmpdir, off_screen=True):
-    if tmpdir:
-        filename = str(tmpdir.mkdir("tmpdir").join('wave.gif'))
-    else:
-        filename = '/tmp/wave.gif'
+# @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
+# @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
+# def test_creatingagifmovie(tmpdir, off_screen=True):
+#     if tmpdir:
+#         filename = str(tmpdir.mkdir("tmpdir").join('wave.gif'))
+#     else:
+#         filename = '/tmp/wave.gif'
 
-    x = np.arange(-10, 10, 0.25)
-    y = np.arange(-10, 10, 0.25)
-    x, y = np.meshgrid(x, y)
-    r = np.sqrt(x**2 + y**2)
-    z = np.sin(r)
+#     x = np.arange(-10, 10, 0.25)
+#     y = np.arange(-10, 10, 0.25)
+#     x, y = np.meshgrid(x, y)
+#     r = np.sqrt(x**2 + y**2)
+#     z = np.sin(r)
 
-    # Create and structured surface
-    grid = pyvista.StructuredGrid(x, y, z)
+#     # Create and structured surface
+#     grid = pyvista.StructuredGrid(x, y, z)
 
-    # Make copy of points
-    pts = grid.points.copy()
+#     # Make copy of points
+#     pts = grid.points.copy()
 
-    # Start a plotter object and set the scalars to the Z height
-    plotter = pyvista.Plotter(off_screen=off_screen)
-    plotter.add_mesh(grid, scalars=z.ravel())
-    plotter.show(auto_close=False)
+#     # Start a plotter object and set the scalars to the Z height
+#     plotter = pyvista.Plotter(off_screen=off_screen)
+#     plotter.add_mesh(grid, scalars=z.ravel())
+#     plotter.show(auto_close=False)
 
-    # Open a gif
-    plotter.open_gif(filename)
+#     # Open a gif
+#     plotter.open_gif(filename)
 
-    # Update Z and write a frame for each updated position
-    nframe = 5
-    for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
-        z = np.sin(r + phase)
-        pts[:, -1] = z.ravel()
-        plotter.update_coordinates(pts)
-        plotter.update_scalars(z.ravel())
-        plotter.write_frame()
+#     # Update Z and write a frame for each updated position
+#     nframe = 3
+#     for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
+#         z = np.sin(r + phase)
+#         pts[:, -1] = z.ravel()
+#         plotter.update_coordinates(pts)
+#         plotter.update_scalars(z.ravel())
+#         plotter.write_frame()
 
-    # Close movie and delete object
-    plotter.close()
+#     # Close movie and delete object
+#     plotter.close()
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")

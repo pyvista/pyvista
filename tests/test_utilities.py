@@ -131,8 +131,8 @@ def test_line_segments_from_points():
     assert poly.n_cells == 2
     assert poly.n_points == 4
     cells = poly.lines
-    assert np.allclose(cells[0], [2, 0,1])
-    assert np.allclose(cells[1], [2, 2,3])
+    assert np.allclose(cells[:3], [2, 0, 1])
+    assert np.allclose(cells[3:], [2, 2, 3])
 
 
 def test_lines_from_points():
@@ -141,8 +141,8 @@ def test_lines_from_points():
     assert poly.n_cells == 2
     assert poly.n_points == 3
     cells = poly.lines
-    assert np.allclose(cells[0], [2, 0,1])
-    assert np.allclose(cells[1], [2, 1,2])
+    assert np.allclose(cells[:3], [2, 0, 1])
+    assert np.allclose(cells[3:], [2, 1, 2])
 
 
 def test_grid_from_sph_coords():

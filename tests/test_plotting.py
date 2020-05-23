@@ -377,16 +377,14 @@ def test_invalid_n_arrays():
 def test_plot_arrow():
     cent = np.random.random(3)
     direction = np.random.random(3)
-    cpos, img = pyvista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
-    assert np.any(img)
+    pyvista.plot_arrows(cent, direction, off_screen=OFF_SCREEN)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_arrows():
     cent = np.random.random((100, 3))
     direction = np.random.random((100, 3))
-    cpos, img = pyvista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
-    assert np.any(img)
+    pyvista.plot_arrows(cent, direction, off_screen=OFF_SCREEN)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
