@@ -105,19 +105,19 @@ class DataSetAttributes(VTKObjectWrapper):
         """
         if self.association == FieldAssociation.POINT:
             return self.dataset.GetNumberOfPoints()
-        elif self.association == FieldAssociation.CELL:
+        if self.association == FieldAssociation.CELL:
             return self.dataset.GetNumberOfCells()
 
     @property
     def t_coords(self):
-        """Return the active texture coordinates on the points."""
+        """Return the active texture coordinates."""
         t_coords = self.GetTCoords()
         if t_coords is not None:
             return pyvista_ndarray(t_coords)
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):
-        """Set the texture coordinates using an np.ndarray."""
+        """Set the active texture coordinates using an np.ndarray."""
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
@@ -292,10 +292,9 @@ class DataSetAttributes(VTKObjectWrapper):
     def values(self):
         """Return the arrays as a list."""
         values = []
-        for i in range(self.GetNumberOfArrays()):
-            array = self.VTKObject.GetAbstractArray(i)
-            if array.GetName():
-                values.append(pyvista_ndarray(array))
+        for name in self.keys():
+            array = self.VTKObject.GetAbstractArray(name)
+            values.append(pyvista_ndarray(array))
         return values
 
     def clear(self):
