@@ -1,22 +1,28 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
 from collections import Iterable
-import numpy as np
 
-from pyvista.utilities.helpers import FieldAssociation, convert_array
+import numpy as np
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
 
+from pyvista.utilities.helpers import FieldAssociation, convert_array
+
 try:
-    from vtk.vtkCommonKitPython import buffer_shared, vtkAbstractArray, vtkWeakReference
+    from vtk.vtkCommonKitPython import vtkAbstractArray, vtkWeakReference, buffer_shared
 except ImportError:
-    from vtk.vtkCommonCore import buffer_shared, vtkAbstractArray, vtkWeakReference
+    from vtk.vtkCommonCore import vtkAbstractArray, vtkWeakReference, buffer_shared
 
 
 class pyvista_ndarray(np.ndarray):
-    """An ndarray which references the owning dataset and the underlying vtkArray."""
+    """Link a numpy array with the vtk object the data is attached to.
 
-    def __new__(cls, array: [Iterable, vtkAbstractArray], dataset=None, association=FieldAssociation.NONE):
+    When the array is changed it triggers "Modified()" which updates
+    all upstream objects, including any render windows holding the
+    object.
+    """
+
+    def __new__(cls, array, dataset=None, association=FieldAssociation.NONE):
         """Allocate the array."""
-        if isinstance(array, Iterable):
+        if isinstance(array, (Iterable, np.ndarray)):
             obj = np.asarray(array).view(cls)
         elif isinstance(array, vtkAbstractArray):
             obj = convert_array(array).view(cls)
@@ -32,9 +38,8 @@ class pyvista_ndarray(np.ndarray):
 
     __array_finalize__ = VTKArray.__array_finalize__
 
-    def __setitem__(self, key: int, value):
-        """Implement [] set operator.
-
+    def __setitem__(self, key, value):
+        """Set item at key index to value.
         When the array is changed it triggers "Modified()" which updates
         all upstream objects, including any render windows holding the
         object.
