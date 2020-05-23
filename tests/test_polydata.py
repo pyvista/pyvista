@@ -167,7 +167,7 @@ def test_invalid_file():
     with pytest.raises(Exception):
         mesh = pyvista.PolyData('file.bad')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         filename = os.path.join(test_path, 'test_polydata.py')
         mesh = pyvista.PolyData(filename)
 
