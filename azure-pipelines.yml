@@ -321,7 +321,7 @@ jobs:
 
   - task: Cache@2
     inputs:
-      key: 'PYVISTA_DOC_EXAMPLES_CACHE'
+      key: 'PYVISTA_DOC_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
       path: '$(Build.SourcesDirectory)/docs/examples'
     displayName: Build pyvista doc examples cache
 
