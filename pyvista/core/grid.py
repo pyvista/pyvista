@@ -128,6 +128,16 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         return Common.__str__(self)
 
 
+    @property
+    def _vtk_readers(self):
+        return {'.vtk': vtk.vtkRectilinearGridReader, '.vtr': vtk.vtkXMLRectilinearGridReader}
+
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtk': vtk.vtkRectilinearGridWriter, '.vtr': vtk.vtkXMLRectilinearGridWriter}
+
+
     def _update_dimensions(self):
         """Update the dimensions if coordinates have changed."""
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
@@ -406,6 +416,16 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
     def __str__(self):
         """Return the default str representation."""
         return Common.__str__(self)
+
+
+    @property
+    def _vtk_readers(self):
+        return {'.vtk': vtk.vtkDataSetReader, '.vti': vtk.vtkXMLImageDataReader}
+
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtk': vtk.vtkDataSetWriter, '.vti': vtk.vtkXMLImageDataWriter}
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):

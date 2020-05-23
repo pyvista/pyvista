@@ -188,6 +188,16 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Return the standard str representation."""
         return Common.__str__(self)
 
+    @property
+    def _vtk_readers(self):
+        return {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader, '.vtk': vtk.vtkPolyDataReader,
+                '.vtp': vtk.vtkXMLPolyDataReader, '.obj': vtk.vtkOBJReader}
+
+    @property
+    def _vtk_writers(self):
+        return {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter, '.stl': vtk.vtkSTLWriter,
+                '.vtk': vtk.vtkPolyDataWriter}
+
     @staticmethod
     def _make_vertice_cells(npoints):
         cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
@@ -694,6 +704,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         """Return the standard str representation."""
         return Common.__str__(self)
 
+    @property
+    def _vtk_readers(self):
+        return {'.vtu': vtk.vtkXMLUnstructuredGridReader, '.vtk': vtk.vtkUnstructuredGridReader}
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtu': vtk.vtkXMLUnstructuredGridWriter, '.vtk': vtk.vtkUnstructuredGridWriter}
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -997,6 +1014,13 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         """Return the standard str representation."""
         return Common.__str__(self)
 
+    @property
+    def _vtk_readers(self):
+        return {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}
+
+    @property
+    def _vtk_writers(self):
+        return {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.

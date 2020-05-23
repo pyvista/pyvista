@@ -93,6 +93,16 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self.wrap_nested()
 
 
+    @property
+    def _vtk_readers(self):
+        return dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataReader)
+
+
+    @property
+    def _vtk_writers(self):
+        return dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
+
+
     def wrap_nested(self):
         """Ensure that all nested data structures are wrapped as PyVista datasets.
 
