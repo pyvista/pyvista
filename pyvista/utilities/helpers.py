@@ -106,7 +106,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         if arr.dtype is np.dtype('O'):
             arr = arr.astype('|S')
         arr = np.ascontiguousarray(arr)
-        if arr.dtype.type is np.str_:
+        if arr.dtype.type in (np.str_, np.bytes_):
             # This handles strings
             vtk_data = convert_string_array(arr)
         else:
