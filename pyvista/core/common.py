@@ -44,7 +44,7 @@ class DataObject(object):
 
     @property
     @abstractmethod
-    def _vtk_writers(self):
+    def _vtk_writers(self): # pragma: no cover
         """Return dict of {file extension: vtkWriter}.
 
         This is used to select a valid vtk writer for a given file extension. eg:
@@ -55,7 +55,7 @@ class DataObject(object):
 
     @property
     @abstractmethod
-    def _vtk_readers(self):
+    def _vtk_readers(self): # pragma: no cover
         """Return dict of {file extension: vtkReader}.
 
         This is used to select a valid vtk reader for a given file extension. eg:
@@ -91,11 +91,13 @@ class DataObject(object):
         filename = os.path.abspath(os.path.expanduser(filename))
         if not os.path.isfile(filename):
             raise FileNotFoundError('File %s does not exist' % filename)
+
         file_ext = fileio.get_ext(filename)
         if file_ext not in self._vtk_readers:
             keys_list = ', '.join(self._vtk_readers.keys())
             raise ValueError('Invalid file extension for {}({}). Must be one of: {}'.format(
                 self.__class__.__name__, file_ext, keys_list))
+
         reader = self._vtk_readers[file_ext]()
         reader.SetFileName(filename)
         reader.Update()
@@ -125,6 +127,7 @@ class DataObject(object):
         if file_ext not in self._vtk_writers:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
                 self._vtk_writers.keys()))
+
         writer = self._vtk_writers[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
