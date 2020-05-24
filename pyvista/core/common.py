@@ -26,7 +26,7 @@ DEFAULT_VECTOR_KEY = '_vectors'
 class DataObject(object):
     """Methods common to all wrapped data objects."""
 
-    _VTK_READERS = None
+    _READERS = None
     _VTK_WRITERS = None
 
     def __init__(self, *args, **kwargs):
@@ -64,7 +64,7 @@ class DataObject(object):
         Binary files load much faster than ASCII.
 
         """
-        if self._VTK_READERS is None:
+        if self._READERS is None:
             raise NotImplementedError('{} readers are not specified, this should be a' \
                                       ' dict of (file extension: vtkReader type)'
                                       .format(self.__class__.__name__))
@@ -74,12 +74,12 @@ class DataObject(object):
             raise FileNotFoundError('File %s does not exist' % filename)
 
         file_ext = fileio.get_ext(filename)
-        if file_ext not in self._VTK_READERS:
-            keys_list = ', '.join(self._VTK_READERS.keys())
+        if file_ext not in self._READERS:
+            keys_list = ', '.join(self._READERS.keys())
             raise ValueError('Invalid file extension for {}({}). Must be one of: {}'.format(
                 self.__class__.__name__, file_ext, keys_list))
 
-        reader = self._VTK_READERS[file_ext]()
+        reader = self._READERS[file_ext]()
         reader.SetFileName(filename)
         reader.Update()
         self.shallow_copy(reader.GetOutput())
