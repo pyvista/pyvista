@@ -186,6 +186,9 @@ jobs:
       Python37-64bit:
         PYTHON_VERSION: '3.7'
         PYTHON_ARCH: 'x64'
+      Python38-64bit:
+        PYTHON_VERSION: '3.8'
+        PYTHON_ARCH: 'x64'
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -225,6 +228,8 @@ jobs:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+      Python38:
+        python.version: '3.8'
   pool:
     vmImage: 'macOS-10.14'
   steps:
