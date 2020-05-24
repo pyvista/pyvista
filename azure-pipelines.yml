@@ -317,7 +317,13 @@ jobs:
     inputs:
       key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
       path: $(EXAMPLES_PATH)
-    displayName: Build pyvista examples cache
+    displayName: Build pyvista examples directory cache
+
+  - task: Cache@2
+    inputs:
+      key: 'PYVISTA_DOC_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
+      path: '$(Build.SourcesDirectory)/docs/examples'
+    displayName: Build pyvista doc examples cache
 
   - script: |
       make -C docs html -b coverage
