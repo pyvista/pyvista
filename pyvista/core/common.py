@@ -27,7 +27,7 @@ class DataObject(object):
     """Methods common to all wrapped data objects."""
 
     _READERS = None
-    _VTK_WRITERS = None
+    _WRITERS = None
 
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
@@ -102,18 +102,18 @@ class DataObject(object):
         file size.
 
         """
-        if self._VTK_WRITERS is None:
+        if self._WRITERS is None:
             raise NotImplementedError('{} writers are not specified, this should be a' \
                                       ' dict of (file extension: vtkWriter type)'
                                       .format(self.__class__.__name__))
 
         filename = os.path.abspath(os.path.expanduser(filename))
         file_ext = fileio.get_ext(filename)
-        if file_ext not in self._VTK_WRITERS:
+        if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
-                self._VTK_WRITERS.keys()))
+                self._WRITERS.keys()))
 
-        writer = self._VTK_WRITERS[file_ext]()
+        writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
