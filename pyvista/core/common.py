@@ -64,6 +64,11 @@ class DataObject(object):
         Binary files load much faster than ASCII.
 
         """
+        if self._VTK_READERS is None:
+            raise NotImplementedError('{} readers are not specified, this should be a' \
+                                      ' dict of (file extension: vtkReader type)'
+                                      .format(self.__class__.__name__))
+
         filename = os.path.abspath(os.path.expanduser(filename))
         if not os.path.isfile(filename):
             raise FileNotFoundError('File %s does not exist' % filename)
@@ -97,6 +102,11 @@ class DataObject(object):
         file size.
 
         """
+        if self._VTK_WRITERS is None:
+            raise NotImplementedError('{} writers are not specified, this should be a' \
+                                      ' dict of (file extension: vtkWriter type)'
+                                      .format(self.__class__.__name__))
+
         filename = os.path.abspath(os.path.expanduser(filename))
         file_ext = fileio.get_ext(filename)
         if file_ext not in self._VTK_WRITERS:
