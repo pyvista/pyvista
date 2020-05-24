@@ -46,6 +46,7 @@ class DataObject(object):
         if cls._VTK_READERS is None or cls._VTK_WRITERS is None:
             raise NotImplementedError
 
+    #TODO remove
     @property
     @abstractmethod
     def _vtk_writers(self): # pragma: no cover
@@ -56,6 +57,7 @@ class DataObject(object):
         """
         raise NotImplementedError
 
+    #TODO remove
     @property
     @abstractmethod
     def _vtk_readers(self): # pragma: no cover
