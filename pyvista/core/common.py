@@ -403,7 +403,7 @@ class Common(DataSetFilters, DataObject):
             return None
         vtk_data = pts.GetData()
         # arr = vtk_to_numpy(vtk_data)
-        return pyvista.pyvista_ndarray(vtk_data)
+        return pyvista.pyvista_ndarray(vtk_data, dataset=self)
 
 
     @points.setter
