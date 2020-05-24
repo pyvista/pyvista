@@ -26,6 +26,9 @@ DEFAULT_VECTOR_KEY = '_vectors'
 class DataObject(object):
     """Methods common to all wrapped data objects."""
 
+    _VTK_READERS = None
+    _VTK_WRITERS = None
+
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
         super().__init__()
@@ -38,6 +41,10 @@ class DataObject(object):
         if cls is DataObject:
             raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
+
+    def __init_subclass__(cls, **kwargs):
+        if cls._VTK_READERS is None or cls._VTK_WRITERS is None:
+            raise NotImplementedError
 
     @property
     @abstractmethod
