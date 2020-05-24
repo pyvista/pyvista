@@ -1164,6 +1164,9 @@ class Common(DataSetFilters, DataObject):
             The overwriting mesh.
 
         """
+        if not isinstance(mesh, type(self)):
+            raise TypeError('The Input DataSet type must match '
+                            'the one being overwritten %s' % type(self))
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)

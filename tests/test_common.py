@@ -15,6 +15,11 @@ def grid():
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
+def test_invalid_overwrite(grid):
+    with pytest.raises(TypeError):
+        grid.overwrite(pyvista.Plane())
+
+
 @composite
 def n_numbers(draw, n):
     numbers = []
