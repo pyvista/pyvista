@@ -76,7 +76,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Return the active scalar array as pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
-            return pyvista_ndarray(self.GetScalars())
+            return pyvista_ndarray(self.GetScalars(), dataset=self.dataset, association=self.association)
 
     @active_scalars.setter
     def active_scalars(self, name: str):
@@ -89,7 +89,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Return the active vectors as a pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetVectors() is not None:
-            return pyvista_ndarray(self.GetVectors())
+            return pyvista_ndarray(self.GetVectors(), dataset=self.dataset, association=self.association)
 
     @active_vectors.setter
     def active_vectors(self, name: str):
@@ -113,7 +113,7 @@ class DataSetAttributes(VTKObjectWrapper):
         """Return the active texture coordinates."""
         t_coords = self.GetTCoords()
         if t_coords is not None:
-            return pyvista_ndarray(t_coords)
+            return pyvista_ndarray(t_coords, dataset=self.dataset, association=self.association)
 
     @t_coords.setter
     def t_coords(self, t_coords: np.ndarray):
@@ -156,7 +156,7 @@ class DataSetAttributes(VTKObjectWrapper):
                 raise KeyError('{}'.format(key))
             if type(vtk_arr) == vtk.vtkAbstractArray:
                 return vtk_arr
-        narray = pyvista_ndarray(vtk_arr)
+        narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
             narray = narray.view(np.bool)
         return narray
@@ -274,7 +274,7 @@ class DataSetAttributes(VTKObjectWrapper):
             copy.DeepCopy(vtk_arr)
             vtk_arr = copy
         self.remove(key)
-        return pyvista_ndarray(vtk_arr)
+        return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
     def items(self):
         """Return a list of (array name, array value)."""
@@ -294,7 +294,8 @@ class DataSetAttributes(VTKObjectWrapper):
         values = []
         for name in self.keys():
             array = self.VTKObject.GetAbstractArray(name)
-            values.append(pyvista_ndarray(array))
+            arr = pyvista_ndarray(array, dataset=self.dataset, association=self.association)
+            values.append(arr)
         return values
 
     def clear(self):
