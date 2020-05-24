@@ -458,7 +458,7 @@ class DataSetFilters(object):
 
 
     def threshold(dataset, value=None, scalars=None, invert=False, continuous=False,
-                  preference='cell'):
+                  preference='cell', all_scalars=True):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
         This filter will apply a ``vtkThreshold`` filter to the input dataset
@@ -484,13 +484,28 @@ class DataSetFilters(object):
 
         continuous : bool, optional
             When True, the continuous interval [minimum cell scalar,
-            maxmimum cell scalar] will be used to intersect the threshold bound,
+            maximum cell scalar] will be used to intersect the threshold bound,
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
             When scalars is specified, this is the preferred array type to
             search for in the dataset.  Must be either ``'point'`` or ``'cell'``
 
+        all_scalars : bool, optional
+            If using scalars from point data, all scalars for all
+            points in a cell must satisfy the threshold when this
+            value is ``True``.  When ``False``, any point of the cell
+            with a scalar value satisfying the threshold criterion
+            will extract the cell.
+
+        Examples
+        --------
+        >>> import pyvista
+        >>> import numpy as np
+        >>> volume = np.zeros([10, 10, 10])
+        >>> volume[:3] = 1
+        >>> v = pyvista.wrap(volume)
+        >>> threshed = v.threshold(0.1)
         """
         # set the scalaras to threshold on
         if scalars is None:
@@ -517,6 +532,7 @@ class DataSetFilters(object):
 
         # Run a standard threshold algorithm
         alg = vtk.vtkThreshold()
+        alg.SetAllScalars(all_scalars)
         alg.SetInputDataObject(dataset)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set thresholding parameters
