@@ -267,6 +267,7 @@ def test_wireframe_composite():
     output = COMPOSITE.extract_all_edges()
     assert output.n_blocks == COMPOSITE.n_blocks
 
+
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
                                     'flying_edges'])
 def test_contour(method):
@@ -341,7 +342,6 @@ def test_texture_map_to_plane():
     # FINAL: Test in place modifiacation
     dataset.texture_map_to_plane(inplace=True)
     assert 'Texture Coordinates' in dataset.array_names
-
 
 
 def test_compute_cell_sizes():
@@ -429,6 +429,7 @@ def test_warp_by_scalar():
     foo.warp_by_scalar(inplace=True)
     assert np.allclose(foo.points, warped.points)
 
+
 def test_warp_by_vector():
     # Test when inplace=False (default)
     data = examples.load_sphere_vectors()
@@ -458,7 +459,6 @@ def test_cell_data_to_point_data_composite():
     # Now test composite data structures
     output = COMPOSITE.cell_data_to_point_data()
     assert output.n_blocks == COMPOSITE.n_blocks
-
 
 
 def test_point_data_to_cell_data():
@@ -660,7 +660,6 @@ def test_compute_gradients():
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3
-
 
 
 def test_extract_subset():

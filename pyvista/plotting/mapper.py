@@ -8,6 +8,7 @@ def make_mapper(mapper_class):
     mappers with scalar bars in a consistent way since not all mapper classes
     have scalar ranges and lookup tables.
     """
+
     class MapperHelper(mapper_class):
         """A helper that dynamically inherits the mapper's class."""
 
@@ -15,13 +16,11 @@ def make_mapper(mapper_class):
             self._scalar_range = None
             self._lut = None
 
-
         @property
         def scalar_range(self):
             if hasattr(self, 'GetScalarRange'):
                 self._scalar_range = self.GetScalarRange()
             return self._scalar_range
-
 
         @scalar_range.setter
         def scalar_range(self, clim):
@@ -31,13 +30,11 @@ def make_mapper(mapper_class):
                 self.lookup_table.SetRange(*clim)
             self._scalar_range = clim
 
-
         @property
         def lookup_table(self):
             if hasattr(self, 'GetLookupTable'):
                 self._lut = self.GetLookupTable()
             return self._lut
-
 
         @lookup_table.setter
         def lookup_table(self, lut):

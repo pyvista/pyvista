@@ -10,15 +10,16 @@ from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.qt_plotting import (QVTKRenderWindowInteractor, QTimer,
                                           _create_menu_bar)
 
-
 NO_PLOTTING = not system_supports_plotting()
-
 
 try:
     from PyQt5.Qt import (QMainWindow, QFrame, QVBoxLayout, QMenuBar, QAction, QToolBar)
+
     has_pyqt5 = True
 except:
     has_pyqt5 = False
+
+
     class QMainWindow(object):
         pass
 
@@ -319,6 +320,7 @@ def test_background_plotting_orbit(qtbot):
     # perform the orbit:
     plotter.orbit_on_path(bkg=False, step=0.0)
     plotter.close()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 @pytest.mark.skipif(not has_pyqt5, reason="requires pyqt5")

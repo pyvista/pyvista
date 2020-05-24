@@ -25,7 +25,6 @@ from .theme import rcParams
 log = logging.getLogger(__name__)
 log.setLevel('DEBUG')
 
-
 SAVE_CAM_BUTTON_TEXT = 'Save Camera'
 CLEAR_CAMS_BUTTON_TEXT = 'Clear Cameras'
 
@@ -87,6 +86,7 @@ try:
                                  QFrame, QMainWindow, QSlider, QAction,
                                  QHBoxLayout, QDialog,
                                  QFormLayout, QFileDialog)
+
     has_pyqt = True
 except ImportError:  # pragma: no cover
     pass
@@ -504,6 +504,7 @@ class QtInteractor(QVTKRenderWindowInteractorAdapter, BasePlotter):
 
     def add_toolbars(self):
         """Add the toolbars."""
+
         def _add_action(tool_bar, key, method):
             action = QAction(key, self.app_window)
             action.triggered.connect(method)

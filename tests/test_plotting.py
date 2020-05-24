@@ -23,7 +23,6 @@ try:
 except:
     ffmpeg_failed = True
 
-
 if __name__ != '__main__':
     OFF_SCREEN = 'pytest' in sys.modules
 else:
@@ -35,6 +34,7 @@ VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
 sphere_c = pyvista.Sphere(2.0)
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot(tmpdir):
@@ -138,6 +138,7 @@ def test_plot_show_bounds():
                             use_2d=True)
     plotter.show()
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_label_fmt():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -198,6 +199,7 @@ def test_plot_list():
     pyvista.plot([sphere, sphere_b, sphere_c],
                  off_screen=OFF_SCREEN,
                  style='wireframe')
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_lines_invalid():
@@ -355,6 +357,7 @@ def test_plot_cell_arrays():
                      n_colors=5, rng=10)
     plotter.show()
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_clim():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -428,7 +431,6 @@ def test_screenshot(tmpdir):
         raise Exception('Plotter did not close')
 
 
-
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_scalars_by_name():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -475,6 +477,7 @@ def test_plot_texture():
     plotter.show()
     texture.plot(off_screen=OFF_SCREEN)
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_texture_associated():
     """"Test adding a texture to a plot"""
@@ -482,6 +485,7 @@ def test_plot_texture_associated():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=True)
     plotter.show()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_read_texture_from_numpy():
@@ -599,7 +603,6 @@ def test_multi_renderers():
         plotter.add_mesh(pyvista.Cube())
         plotter.show()
 
-
     # Test subplot 3 on left, 1 on right
     plotter = pyvista.Plotter(shape='3|1', off_screen=OFF_SCREEN)
     # First column
@@ -625,7 +628,6 @@ def test_multi_renderers():
     plotter.subplot(3)
     plotter.add_mesh(pyvista.Cone())
     plotter.show()
-
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -683,6 +685,7 @@ def test_orthographic_slicer():
     p.disable()
 
     p.show()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_remove_actor():
@@ -743,7 +746,6 @@ def test_volume_rendering():
     pyvista.plot(arr, off_screen=OFF_SCREEN, volume=True, opacity='linear')
 
 
-
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_compar_four():
     # Really just making sure no errors are thrown
@@ -783,7 +785,6 @@ def test_plot_eye_dome_lighting():
     p.enable_eye_dome_lighting()
     p.disable_eye_dome_lighting()
     p.show()
-
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -986,14 +987,13 @@ def test_add_remove_floor():
 def test_reset_camera_clipping_range():
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
-    
+
     default_clipping_range = pl.camera.GetClippingRange() # get default clipping range
     assert default_clipping_range != (10,100) # make sure we assign something different than default
-    
+
     pl.camera.SetClippingRange(10,100) # set clipping range to some random numbers
     assert pl.camera.GetClippingRange() == (10,100) # make sure assignment is successful
-    
+
     pl.reset_camera_clipping_range()
     assert pl.camera.GetClippingRange() ==  default_clipping_range
     assert pl.camera.GetClippingRange() != (10,100)
-

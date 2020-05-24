@@ -5,6 +5,7 @@ import numpy as np
 from .renderer import Renderer
 import pyvista
 
+
 class BackgroundRenderer(Renderer):
     """BackgroundRenderer for visualizing a background image."""
 

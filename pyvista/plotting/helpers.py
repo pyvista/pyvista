@@ -2,7 +2,6 @@
 
 import numpy as np
 
-
 import pyvista
 
 from .theme import rcParams
@@ -171,6 +170,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     """
     return plot([cent, direction], **kwargs)
+
 
 def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                       plotter_kwargs=None, show_kwargs=None, screenshot=None,

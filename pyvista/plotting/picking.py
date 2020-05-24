@@ -7,6 +7,7 @@ import vtk
 import pyvista
 from pyvista.utilities import try_callback
 
+
 class PickingHelper(object):
     """An internal class to hold picking related features."""
 
@@ -19,7 +20,6 @@ class PickingHelper(object):
     def get_pick_position(self):
         """Get the pick position/area as x0, y0, x1, y1."""
         return self.renderer.get_pick_position()
-
 
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
                             show=True, show_message=True, style='wireframe',
@@ -126,7 +126,6 @@ class PickingHelper(object):
             # TODO: Deactivate selection tool
             return
 
-
         def through_pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
             mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
@@ -135,7 +134,6 @@ class PickingHelper(object):
             extract.Update()
             self.picked_cells = pyvista.wrap(extract.GetOutput())
             return end_pick_helper(picker, event_id)
-
 
         def visible_pick_call_back(picker, event_id):
             x0,y0,x1,y1 = renderer.get_pick_position()
@@ -163,7 +161,6 @@ class PickingHelper(object):
             else:
                 self.picked_cells = picked
             return end_pick_helper(picker, event_id)
-
 
         area_picker = vtk.vtkRenderedAreaPicker()
         if through:
@@ -196,7 +193,6 @@ class PickingHelper(object):
             self._style.StartSelect()
 
         return
-
 
     def enable_point_picking(self, callback=None, show_message=True,
                              font_size=18, color='pink', point_size=10,
@@ -278,7 +274,6 @@ class PickingHelper(object):
 
         return
 
-
     def enable_path_picking(self, callback=None, show_message=True,
                             font_size=18, color='pink', point_size=10,
                             line_width=5, show_path=True, tolerance=0.025,
@@ -340,7 +335,6 @@ class PickingHelper(object):
         the_points = []
         the_ids = []
 
-
         def _the_callback(mesh, idx):
             if mesh is None:
                 return
@@ -369,7 +363,6 @@ class PickingHelper(object):
         return self.enable_point_picking(callback=_the_callback, use_mesh=True,
                 font_size=font_size, show_message=show_message,
                 show_point=False, tolerance=tolerance)
-
 
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
@@ -464,8 +457,6 @@ class PickingHelper(object):
                 font_size=font_size, show_message=show_message,
                 tolerance=tolerance, show_point=False)
 
-
-
     def enable_horizon_picking(self, callback=None, normal=(0,0,1),
                                width=None, show_message=True,
                                font_size=18, color='pink', point_size=10,
@@ -549,7 +540,6 @@ class PickingHelper(object):
             point_size=point_size, line_width=line_width, show_path=show_path,
             **kwargs)
 
-
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot."""
         if self.click_position is None:
@@ -558,7 +548,6 @@ class PickingHelper(object):
         picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
         return picker.GetPickPosition()
 
-
     def pick_mouse_position(self):
         """Get corresponding mouse location in the 3D plot."""
         if self.mouse_position is None:
@@ -566,7 +555,6 @@ class PickingHelper(object):
         picker = vtk.vtkWorldPointPicker()
         picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
         return picker.GetPickPosition()
-
 
     def fly_to_mouse_position(self, focus=False):
         """Focus on last stored mouse position."""
@@ -578,7 +566,6 @@ class PickingHelper(object):
         else:
             self.fly_to(click_point)
 
-
     def enable_fly_to_right_click(self, callback=None):
         """Set the camera to track right click positions.
 
@@ -587,6 +574,7 @@ class PickingHelper(object):
         3D space.
 
         """
+
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)

@@ -412,6 +412,7 @@ def test_texture_airplane():
     assert "tex_a" in cmesh.textures
     assert "tex_b" in cmesh.textures
 
+
 def test_invalid_vector(grid):
     with pytest.raises(AssertionError):
         grid.vectors = np.empty(10)

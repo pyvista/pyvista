@@ -94,8 +94,6 @@ def test_get_array():
     assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
 
 
-
-
 def test_is_inside_bounds():
     data = ex.load_uniform()
     bnds = data.bounds
@@ -183,6 +181,7 @@ def test_transform_vectors_sph_to_cart():
         [67.80403533828323, 360.8359915416445, -70000.0],
     )
 
+
 def test_assert_empty_kwargs():
     kwargs = {}
     assert errors.assert_empty_kwargs(**kwargs)
@@ -192,7 +191,6 @@ def test_assert_empty_kwargs():
     with pytest.raises(TypeError):
         kwargs = {"foo":6, "goo":"bad"}
         errors.assert_empty_kwargs(**kwargs)
-
 
 
 def test_convert_id_list():
