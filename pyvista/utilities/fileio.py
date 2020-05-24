@@ -7,6 +7,7 @@ import vtk
 
 import pyvista
 
+VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 READERS = {
     # Standard dataset readers:
@@ -84,6 +85,21 @@ def get_reader(filename):
     """Get the corresponding reader based on file extension and instantiates it."""
     ext = get_ext(filename)
     return READERS[ext]() # Get and instantiate the reader
+
+
+def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    """Set any vtk writer to write as binary or ascii."""
+    if isinstance(vtk_writer, vtk.vtkDataWriter):
+        if use_binary:
+            vtk_writer.SetFileTypeToBinary()
+        else:
+            vtk_writer.SetFileTypeToASCII()
+    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+        if use_binary:
+            vtk_writer.SetDataModeToBinary()
+        else:
+            vtk_writer.SetDataModeToAscii()
+    return vtk_writer
 
 
 def standard_reader_routine(reader, filename, attrs=None):
@@ -287,12 +303,13 @@ def from_meshio(mesh):
     for c in mesh.cells:
         vtk_type = meshio_to_vtk_type[c.type]
         numnodes = vtk_type_to_numnodes[vtk_type]
-        offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
         cells.append(
             np.hstack((np.full((len(c.data), 1), numnodes), c.data)).ravel()
         )
         cell_type += [vtk_type] * len(c.data)
-        next_offset = offset[-1] + numnodes + 1
+        if not VTK9:
+            offset += [next_offset + i * (numnodes + 1) for i in range(len(c.data))]
+            next_offset = offset[-1] + numnodes + 1
 
     # Extract cell data from meshio.Mesh object
     cell_data = {k: np.concatenate(v) for k, v in mesh.cell_data.items()}
@@ -302,12 +319,19 @@ def from_meshio(mesh):
     if points.shape[1] == 2:
         points = np.hstack((points, np.zeros((len(points), 1))))
 
-    grid = pyvista.UnstructuredGrid(
-        np.array(offset),
-        np.concatenate(cells),
-        np.array(cell_type),
-        np.array(points, np.float64),
-    )
+    if VTK9:
+        grid = pyvista.UnstructuredGrid(
+            np.concatenate(cells),
+            np.array(cell_type),
+            np.array(points, np.float64),
+        )
+    else:
+        grid = pyvista.UnstructuredGrid(
+            np.array(offset),
+            np.concatenate(cells),
+            np.array(cell_type),
+            np.array(points, np.float64),
+        )
 
     # Set point data
     grid.point_arrays.update({k: np.array(v, np.float64) for k, v in mesh.point_data.items()})
@@ -363,9 +387,14 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
 
     # Get cells
     cells = []
+    c = 0
     for offset, cell_type in zip(vtk_offset, vtk_cell_type):
-        numnodes = vtk_cells[offset]
-        cell = vtk_cells[offset+1:offset+1+numnodes]
+        numnodes = vtk_cells[offset+c]
+        if VTK9:  # must offset by cell count
+            cell = vtk_cells[offset+1+c:offset+1+c+numnodes]
+            c += 1
+        else:
+            cell = vtk_cells[offset+1:offset+1+numnodes]
         cell = (
             cell if cell_type not in pixel_voxel
             else cell[[0, 1, 3, 2]] if cell_type == 8
@@ -399,11 +428,11 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
 
     # Save using meshio
     meshio.write_points_cells(
-        filename = filename,
-        points = np.array(mesh.points),
-        cells = cells,
-        point_data = point_data,
-        cell_data = cell_data,
-        file_format = file_format,
+        filename=filename,
+        points=np.array(mesh.points),
+        cells=cells,
+        point_data=point_data,
+        cell_data=cell_data,
+        file_format=file_format,
         **kwargs
     )

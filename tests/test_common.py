@@ -15,6 +15,11 @@ def grid():
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
 
 
+def test_invalid_overwrite(grid):
+    with pytest.raises(TypeError):
+        grid.overwrite(pyvista.Plane())
+
+
 @composite
 def n_numbers(draw, n):
     numbers = []
@@ -86,12 +91,6 @@ def test_cell_arrays(grid):
     grid.cell_arrays['list'] = np.arange(grid.n_cells).tolist()
     assert isinstance(grid.cell_arrays['list'], np.ndarray)
     assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
-
-
-def test_cell_array_non_contiguous(grid):
-    arr = np.empty((grid.n_cells, 2))[:, 0]
-    with pytest.raises(ValueError):
-        grid.cell_arrays['tmp'] = arr
 
 
 def test_cell_array_range(grid):
@@ -413,6 +412,7 @@ def test_texture_airplane():
     assert "tex_a" in cmesh.textures
     assert "tex_b" in cmesh.textures
 
+
 def test_invalid_vector(grid):
     with pytest.raises(AssertionError):
         grid.vectors = np.empty(10)
@@ -536,7 +536,7 @@ def test_change_name_fail(grid):
 
 def test_get_cell_array_fail():
     sphere = pyvista.Sphere()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         sphere._cell_array(name=None)
 
 
@@ -755,5 +755,5 @@ def test_no_active():
     pdata = pyvista.PolyData()
     assert pdata.active_scalars is None
 
-    with pytest.raises(ValueError):
+    with pytest.raises(KeyError):
         pdata._point_array()

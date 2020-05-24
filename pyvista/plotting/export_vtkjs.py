@@ -636,15 +636,16 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
     print('Finished exporting dataset to: ', sceneFileName)
 
 
-
 def convert_dropbox_url(url):
     """Convert dropbox url to direct download link."""
     return url.replace("https://www.dropbox.com", "https://dl.dropbox.com")
+
 
 def generate_viewer_url(dataURL):
     """Generate viewer url with data link."""
     viewerURL = "http://viewer.pyvista.org/"
     return viewerURL + '%s%s' % ("?fileURL=", dataURL)
+
 
 def get_vtkjs_url(*args):
     """Provide shareable link from the vtkjs script.

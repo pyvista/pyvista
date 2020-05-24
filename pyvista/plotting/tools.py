@@ -10,6 +10,7 @@ import pyvista
 
 from .theme import parse_color, rcParams
 
+
 def system_supports_plotting():
     """Check if x server is running.
 

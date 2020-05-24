@@ -16,6 +16,16 @@ from .filters import _get_output, UniformGridFilters
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
+RECTILINEARGRID_READERS = {'.vtk': vtk.vtkRectilinearGridReader,
+                           '.vtr': vtk.vtkXMLRectilinearGridReader}
+RECTILINEARGRID_WRITERS = {'.vtk': vtk.vtkRectilinearGridWriter,
+                           '.vtr': vtk.vtkXMLRectilinearGridWriter}
+
+IMAGEDATA_READERS = {'.vtk': vtk.vtkDataSetReader,
+                     '.vti': vtk.vtkXMLImageDataReader}
+IMAGEDATA_WRITERS = {'.vtk': vtk.vtkDataSetWriter,
+                     '.vti': vtk.vtkXMLImageDataWriter}
+
 
 class Grid(Common):
     """A class full of common methods for non-pointset grids."""
@@ -109,7 +119,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             else:
                 arg2_is_arr = False
 
-
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
             elif all([arg0_is_arr, arg1_is_arr]):
@@ -117,21 +126,25 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             else:
                 raise TypeError("Arguments not understood by `RectilinearGrid`.")
 
-
     def __repr__(self):
         """Return the default representation."""
         return Common.__repr__(self)
-
 
     def __str__(self):
         """Return the str representation."""
         return Common.__str__(self)
 
+    @property
+    def _vtk_readers(self):
+        return RECTILINEARGRID_READERS
+
+    @property
+    def _vtk_writers(self):
+        return RECTILINEARGRID_WRITERS
 
     def _update_dimensions(self):
         """Update the dimensions if coordinates have changed."""
         return self.SetDimensions(len(self.x), len(self.y), len(self.z))
-
 
     def _from_arrays(self, x, y, z):
         """Create VTK rectilinear grid directly from numpy arrays.
@@ -165,7 +178,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         # Ensure dimensions are properly set
         self._update_dimensions()
 
-
     @property
     def meshgrid(self):
         """Return the a meshgrid of numpy arrays for this mesh.
@@ -176,13 +188,11 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         """
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
-
     @property
     def points(self):
         """Return all of the points as an n by 3 numpy array."""
         xx, yy, zz = self.meshgrid
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
-
 
     @points.setter
     def points(self, points):
@@ -197,86 +207,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         self._from_arrays(x, y, z)
         #self._point_ref = points
         self.Modified()
-
-
-    def _load_file(self, filename):
-        """
-        Load a rectilinear grid from a file.
-
-        The file extension will select the type of reader to use.  A .vtk
-        extension will use the legacy reader, while .vtr will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('{} does not exist'.format(filename))
-
-        # Check file extension
-        if '.vtr' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
-            raise Exception(
-                'Extension should be either ".vtr" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        if legacy_writer:
-            reader = vtk.vtkRectilinearGridReader()
-        else:
-            reader = vtk.vtkXMLRectilinearGridReader()
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write a rectilinear grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vtr" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only with the legacy writer.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkRectilinearGridWriter()
-            legacy = True
-        elif '.vtr' in filename:
-            writer = vtk.vtkXMLRectilinearGridWriter()
-            legacy = False
-        else:
-            raise Exception('Extension should be either ".vtr" (xml) or'
-                            '".vtk" (legacy)')
-        # Write
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
-        writer.Write()
 
     @property
     def x(self):
@@ -307,7 +237,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         """Get the coordinates along the Z-direction."""
         return vtk_to_numpy(self.GetZCoordinates())
 
-
     @z.setter
     def z(self, coords):
         """Set the coordinates along the Z-direction."""
@@ -315,12 +244,10 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         self._update_dimensions()
         self.Modified()
 
-
     @Grid.dimensions.setter
     def dimensions(self, dims):
         """Do not let the dimensions of the RectilinearGrid be set."""
         raise AttributeError("The dimensions of a `RectilinearGrid` are implicitly defined and thus cannot be set.")
-
 
     def cast_to_structured_grid(self):
         """Cast this rectilinear grid to a :class:`pyvista.StructuredGrid`."""
@@ -328,8 +255,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)
-
-
 
 
 class UniformGrid(vtkImageData, Grid, UniformGridFilters):
@@ -402,11 +327,17 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         """Return the default representation."""
         return Common.__repr__(self)
 
-
     def __str__(self):
         """Return the default str representation."""
         return Common.__str__(self)
 
+    @property
+    def _vtk_readers(self):
+        return IMAGEDATA_READERS
+
+    @property
+    def _vtk_writers(self):
+        return IMAGEDATA_WRITERS
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
         """Create VTK image data directly from numpy arrays.
@@ -433,7 +364,6 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         self.SetDimensions(xn, yn, zn)
         self.SetOrigin(xo, yo, zo)
         self.SetSpacing(xs, ys, zs)
-
 
     @property
     def points(self):
@@ -472,86 +402,6 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         self._from_specs((nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
         #self._point_ref = points
         self.Modified()
-
-
-    def _load_file(self, filename):
-        """
-        Load image data from a file.
-
-        The file extension will select the type of reader to use.  A ``.vtk``
-        extension will use the legacy reader, while ``.vti`` will select the VTK
-        XML reader.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be loaded.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # check file exists
-        if not os.path.isfile(filename):
-            raise Exception('{} does not exist'.format(filename))
-
-        # Check file extension
-        if '.vti' in filename:
-            legacy_writer = False
-        elif '.vtk' in filename:
-            legacy_writer = True
-        else:
-            raise Exception(
-                'Extension should be either ".vti" (xml) or ".vtk" (legacy)')
-
-        # Create reader
-        if legacy_writer:
-            reader = vtk.vtkDataSetReader()
-        else:
-            reader = vtk.vtkXMLImageDataReader()
-
-        # load file to self
-        reader.SetFileName(filename)
-        reader.Update()
-        grid = reader.GetOutput()
-        self.shallow_copy(grid)
-
-    def save(self, filename, binary=True):
-        """Write image data grid to disk.
-
-        Parameters
-        ----------
-        filename : str
-            Filename of grid to be written.  The file extension will select the
-            type of writer to use.  ".vtk" will use the legacy writer, while
-            ".vti" will select the VTK XML writer.
-
-        binary : bool, optional
-            Writes as a binary file by default.  Set to False to write ASCII.
-
-
-        Notes
-        -----
-        Binary files write much faster than ASCII, but binary files written on
-        one system may not be readable on other systems.  Binary can be used
-        only with the legacy writer.
-
-        """
-        filename = os.path.abspath(os.path.expanduser(filename))
-        # Use legacy writer if vtk is in filename
-        if '.vtk' in filename:
-            writer = vtk.vtkDataSetWriter()
-            legacy = True
-        elif '.vti' in filename:
-            writer = vtk.vtkXMLImageDataWriter()
-            legacy = False
-        else:
-            raise Exception('Extension should be either ".vti" (xml) or'
-                            '".vtk" (legacy)')
-        # Write
-        writer.SetFileName(filename)
-        writer.SetInputData(self)
-        if binary and legacy:
-            writer.SetFileTypeToBinary()
-        writer.Write()
 
     @property
     def x(self):
@@ -596,7 +446,6 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         self.SetSpacing(dx, dy, dz)
         self.Modified()
 
-
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""
         attrs = Grid._get_attrs(self)
@@ -604,14 +453,12 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         attrs.append(("Spacing", self.spacing, fmt))
         return attrs
 
-
     def cast_to_structured_grid(self):
         """Cast this uniform grid to a :class:`pyvista.StructuredGrid`."""
         alg = vtk.vtkImageToStructuredGrid()
         alg.SetInputData(self)
         alg.Update()
         return _get_output(alg)
-
 
     def cast_to_rectilinear_grid(self):
         """Cast this uniform grid to a :class:`pyvista.RectilinearGrid`."""

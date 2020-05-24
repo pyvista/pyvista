@@ -54,7 +54,6 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
-
 class BasePlotter(PickingHelper, WidgetHelper):
     """To be used by the Plotter and pyvistaqt.QtInteractor classes.
 
@@ -100,6 +99,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
 
+        self._store_image = False
         self.mesh = None
         if title is None:
             title = rcParams['title']
@@ -207,7 +207,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Key bindings
         self.reset_key_events()
 
-
     #### Manage the active Renderer ####
 
     def loc_to_index(self, loc):
@@ -242,7 +241,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
             return idxs[index_row, index_column]
 
-
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid."""
         if len(self.shape) == 1:
@@ -259,6 +257,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return the active renderer."""
         return self.renderers[self._active_renderer_index]
 
+    @property
+    def store_image(self):
+        """Return if an image will be saved on close."""
+        return self._store_image
+
+    @store_image.setter
+    def store_image(self, value):
+        """Store last rendered frame on close."""
+        self._store_image = bool(value)
 
     def subplot(self, index_row, index_column=None):
         """Set the active subplot.
@@ -489,12 +496,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.ren_win.AlphaBitPlanesOff()
             return self.renderer.disable_depth_peeling()
 
-
     @wraps(Renderer.get_default_cam_pos)
     def get_default_cam_pos(self, *args, **kwargs):
         """Wrap ``Renderer.get_default_cam_pos``."""
         return self.renderer.get_default_cam_pos(*args, **kwargs)
-
 
     @wraps(Renderer.remove_actor)
     def remove_actor(self, actor, reset_camera=False):
@@ -502,7 +507,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for renderer in self.renderers:
             renderer.remove_actor(actor, reset_camera)
         return True
-
 
     #### Properties from Renderer ####
 
@@ -581,7 +585,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Set camera position of the active render window."""
         self.renderer.camera_position = camera_location
 
-
     @property
     def background_color(self):
         """Return the background color of the first render window."""
@@ -592,8 +595,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Set the background color of all the render windows."""
         self.set_background(color)
 
-
-
     #### Properties of the BasePlotter ####
 
     @property
@@ -601,12 +602,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return the render window size."""
         return list(self.ren_win.GetSize())
 
-
     @window_size.setter
     def window_size(self, window_size):
         """Set the render window size."""
         self.ren_win.SetSize(window_size[0], window_size[1])
-
 
     @property
     def image_depth(self):
@@ -617,10 +616,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         return self.get_image_depth()
 
-
     @property
     def image(self):
-        """Return an image array of current render window."""
+        """Return an image array of current render window.
+
+        To retrieve an image after the render window has been closed,
+        set: `plotter.store_image = True`
+        """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
         ifilter = vtk.vtkWindowToImageFilter()
@@ -678,7 +680,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the callbacks associated to the key."""
         self._key_press_event_callbacks.pop(key)
 
-
     def store_mouse_position(self, *args):
         """Store mouse position."""
         if not hasattr(self, "iren"):
@@ -706,7 +707,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def untrack_mouse_position(self):
         """Stop tracking the mouse position."""
         self._remove_observer(vtk.vtkCommand.MouseMoveEvent)
-
 
     def track_click_position(self, callback=None, side="right",
                              viewport=False):
@@ -751,13 +751,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._add_observer(event, _click_callback)
 
-
     def untrack_click_position(self):
         """Stop tracking the click position."""
         if hasattr(self, "_click_observer"):
             self.iren.RemoveObserver(self._click_observer)
             del self._click_observer
-
 
     def _prep_for_close(self):
         """Make sure a screenshot is acquired before closing.
@@ -768,7 +766,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Grab screenshot right before renderer closes
         self.last_image = self.screenshot(True, return_img=True)
         self.last_image_depth = self.get_image_depth()
-
 
     def increment_point_size_and_line_width(self, increment):
         """Increment point size and line width of all actors.
@@ -787,7 +784,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         prop.SetLineWidth(prop.GetLineWidth() + increment)
         self.render()
         return
-
 
     def reset_key_events(self):
         """Reset all of the key press events to their defaults."""
@@ -820,6 +816,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
+        if hasattr(self.ren_win, 'GetOffScreenFramebuffer'):
+            if not self.ren_win.GetOffScreenFramebuffer().GetFBOIndex():
+                # must raise a runtime error as this causes a segfault on VTK9
+                raise RuntimeError('Invoking helper with no framebuffer')
         # Get 2D click location on window
         click_pos = self.iren.GetEventPosition()
 
@@ -829,7 +829,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.pickpoint = np.asarray(picker.GetPickPosition()).reshape((-1, 3))
         if np.any(np.isnan(self.pickpoint)):
             self.pickpoint[:] = 0
-
 
     def update_style(self):
         """Update the camera interactor style."""
@@ -929,13 +928,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._style = vtk.vtkInteractorStyleRubberBandPick()
         return self.update_style()
 
-
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
         for renderer in self.renderers:
             renderer.hide_axes()
         return
-
 
     def show_axes_all(self):
         """Show the axes orientation widget in all renderers."""
@@ -1347,7 +1344,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh.n_points < 1:
             raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
-
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
             # Prefer texture first
@@ -1386,7 +1382,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                 preference=preference, err=True)
             if stitle is None:
                 stitle = original_scalar_name
-
 
         if texture is True or isinstance(texture, (str, int)):
             texture = mesh._activate_texture(texture)
@@ -1500,7 +1495,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.mapper.SetColorModeToMapScalars()
                 return
 
-
             prepare_mapper(scalars)
             table = self.mapper.GetLookupTable()
             if log_scale:
@@ -1566,7 +1560,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     table.SetHueRange(0.66667, 0.0)
         else:
             self.mapper.SetScalarModeToUseFieldData()
-
 
         # Set actor properties ================================================
 
@@ -1639,7 +1632,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
 
         return actor
-
 
     def add_volume(self, volume, scalars=None, clim=None, resolution=None,
                    opacity='linear', n_colors=256, cmap=None, flip_scalars=False,
@@ -1822,7 +1814,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             #       volume rendering on the cells.
             volume = volume.cell_data_to_point_data()
 
-
         if name is None:
             name = '{}({})'.format(type(volume).__name__, volume.memory_address)
 
@@ -1896,7 +1887,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if not np.issubdtype(scalars.dtype, np.number):
             raise TypeError('Non-numeric scalars are currently not supported for volume rendering.')
-
 
         if scalars.ndim != 1:
             scalars = scalars.ravel()
@@ -1972,7 +1962,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if flip_scalars:
             cmap = cmap.reversed()
 
-
         color_tf = vtk.vtkColorTransferFunction()
         for ii in range(n_colors):
             color_tf.AddRGBPoint(ii, *cmap(ii)[:-1])
@@ -1989,7 +1978,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         opacity_tf = vtk.vtkPiecewiseFunction()
         for ii in range(n_colors):
             opacity_tf.AddPoint(ii, opacity_values[ii] / n_colors)
-
 
         # Now put color tf and opacity tf into a lookup table for the scalar bar
         table.SetNumberOfTableValues(n_colors)
@@ -2037,7 +2025,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
                                      name=name, culling=culling,
                                      pickable=pickable)
 
-
         # Add scalar bar
         if stitle is not None and show_scalar_bar:
             self.add_scalar_bar(stitle, **scalar_bar_args)
@@ -2045,7 +2032,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.renderer.Modified()
 
         return actor
-
 
     def update_scalar_bar_range(self, clim, name=None):
         """Update the value range of the active or named scalar bar.
@@ -2143,7 +2129,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             raise TypeError('Expected type is None, int, list or tuple:'
                             '{} is given'.format(type(views)))
-
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
                        bold=False, title_font_size=None,
@@ -2541,13 +2526,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if render:
             self.render()
 
-
     def _clear_ren_win(self):
         """Clear the render window."""
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
             del self.ren_win
-
 
     def close(self):
         """Close the render window."""
@@ -2558,8 +2541,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.close()
 
         # Grab screenshots of last render
-        self.last_image = self.screenshot(None, return_img=True)
-        self.last_image_depth = self.get_image_depth()
+        if self._store_image:
+            self.last_image = self.screenshot(None, return_img=True)
+            self.last_image_depth = self.get_image_depth()
 
         if hasattr(self, 'scalar_widget'):
             del self.scalar_widget
@@ -2747,7 +2731,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise AssertionError('This plotter has not opened a movie or GIF file.')
         self.mwriter.append_data(self.image)
 
-
     def _run_image_filter(self, ifilter):
         # Update filter and grab pixels
         ifilter.Modified()
@@ -2759,7 +2742,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Reshape and write
         tgt_size = (img_size[1], img_size[0], -1)
         return img_array.reshape(tgt_size)[::-1]
-
 
     def get_image_depth(self,
                         fill_value=np.nan,
@@ -2819,8 +2801,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             zval[args] = fill_value
 
         return zval
-
-
 
     def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
         """Add lines to the plotting object.
@@ -2888,7 +2868,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Remove the scalar bar."""
         if hasattr(self, 'scalar_bar'):
             self.remove_actor(self.scalar_bar, reset_camera=False)
-
 
     def add_point_labels(self, points, labels, italic=False, bold=True,
                          font_size=None, text_color=None,
@@ -3071,7 +3050,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return labelActor
 
-
     def add_point_scalar_labels(self, points, labels, fmt=None, preamble='', **kwargs):
         """Label the points from a dataset with the values of their scalars.
 
@@ -3101,7 +3079,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         phrase = '{} {}'.format(preamble, '%.3e')
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
-
 
     def add_points(self, points, **kwargs):
         """Add points to a mesh."""
@@ -3135,7 +3112,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         return self.add_mesh(arrows, **kwargs)
 
-
     @staticmethod
     def _save_image(image, filename, return_img=None):
         """Save a NumPy image array.
@@ -3157,7 +3133,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not return_img:
                 return w
         return image
-
 
     def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
         """Save a screenshot of the rendering window as a graphic file.
@@ -3192,7 +3167,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             writer.UsePainterSettings()
         writer.Update()
         return
-
 
     def screenshot(self, filename=None, transparent_background=None,
                    return_img=None, window_size=None):
@@ -3365,7 +3339,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(self.legend, reset_camera=False, name=name, pickable=False)
         return self.legend
 
-
     def set_background(self, color, top=None, all_renderers=True):
         """Set the background color.
 
@@ -3394,13 +3367,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             self.renderer.set_background(color, top=top)
 
-
     def remove_legend(self):
         """Remove the legend actor."""
         if hasattr(self, 'legend'):
             self.remove_actor(self.legend, reset_camera=False)
             self.render()
-
 
     def generate_orbital_path(self, factor=3., n_points=20, viewup=None, shift=0.0):
         """Generate an orbital path around the data scene.
@@ -3431,7 +3402,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         center += np.array(viewup) * shift
         return pyvista.Polygon(center=center, radius=radius, normal=viewup, n_sides=n_points)
 
-
     def fly_to(self, point):
         """Move the current camera's focal point to a position point.
 
@@ -3443,9 +3413,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise AttributeError('This plotter does not have an interactive window')
         return self.iren.FlyTo(self.renderer, *point)
 
-
     def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
-                      bkg=True, write_frames=False):
+                      write_frames=False, threaded=False):
         """Orbit on the given path focusing on the focus point.
 
         Parameters
@@ -3466,6 +3435,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         write_frames : bool
             Assume a file is open and write a frame on each camera view during
             the orbit.
+
+        threaded : bool, optional
+            Run this as a background thread.  Generally used within a
+            GUI (i.e. PyQt).
 
         """
         if focus is None:
@@ -3489,20 +3462,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.set_viewup(viewup)
                 self.renderer.ResetCameraClippingRange()
                 self.render()
-                if bkg:
-                    time.sleep(step)
+                time.sleep(step)
                 if write_frames:
                     self.write_frame()
 
-        is_background_plotter = 'BackgroundPlotter' in str(type(self))
-        if bkg and is_background_plotter:
+        if threaded:
             thread = Thread(target=orbit)
             thread.start()
         else:
-            bkg = False
             orbit()
-        return
 
+        return
 
     def export_vtkjs(self, filename, compress_arrays=False):
         """Export the current rendering scene as a VTKjs scene.
@@ -3518,8 +3488,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             filename = os.path.abspath(os.path.expanduser(filename))
         return export_plotter_vtkjs(self, filename, compress_arrays=compress_arrays)
 
-
-
     def export_obj(self, filename):
         """Export scene to OBJ format."""
         if not hasattr(self, "ren_win"):
@@ -3532,7 +3500,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         exporter.SetFilePrefix(filename)
         exporter.SetRenderWindow(self.ren_win)
         return exporter.Write()
-
 
     def __del__(self):
         """Delete the plotter."""
@@ -3606,6 +3573,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise RuntimeError('No background image to remove at this subplot')
         renderer.deep_clean()
         self._background_renderers[self._active_renderer_index] = None
+
+    def reset_camera_clipping_range(self):
+        """Reset camera clipping planes."""
+        self.renderer.ResetCameraClippingRange()
 
 
 class Plotter(BasePlotter):
@@ -3817,7 +3788,6 @@ class Plotter(BasePlotter):
                     renderer.camera_position = cpos
             self._first_time = False
 
-
         # if full_screen:
         if full_screen:
             self.ren_win.SetFullScreen(True)
@@ -3839,8 +3809,10 @@ class Plotter(BasePlotter):
             self.title = title
 
         # Keep track of image for sphinx-gallery
-        self.last_image = self.screenshot(screenshot, return_img=True)
-        self.last_image_depth = self.get_image_depth()
+        if pyvista.BUILDING_GALLERY or screenshot:
+             # always save screenshots for sphinx_gallery
+            self.last_image = self.screenshot(screenshot, return_img=True)
+            self.last_image_depth = self.get_image_depth()
         disp = None
 
         self.update() # For Windows issues. Resolves #186
@@ -3896,6 +3868,8 @@ class Plotter(BasePlotter):
                 import IPython
             except ImportError:
                 raise Exception('Install IPython to display image in a notebook')
+            if not hasattr(self, 'last_image'):
+                self.last_image = self.screenshot(screenshot, return_img=True)
             disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
 
         # Cleanup

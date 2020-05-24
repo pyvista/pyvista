@@ -73,12 +73,10 @@ def convert_string_array(arr, name=None):
             vtkarr.SetName(name)
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
-    carr = np.empty(arr.GetNumberOfValues(), dtype='O')
     ############### OPTIMIZE ###############
-    for i in range(arr.GetNumberOfValues()):
-        carr[i] = arr.GetValue(i)
-    ########################################
-    return carr.astype('|S')
+    nvalues = arr.GetNumberOfValues()
+    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    ########################################    
 
 
 def convert_array(arr, name=None, deep=0, array_type=None):
@@ -108,15 +106,14 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         if arr.dtype is np.dtype('O'):
             arr = arr.astype('|S')
         arr = np.ascontiguousarray(arr)
-        try:
+        if arr.dtype.type in (np.str_, np.bytes_):
+            # This handles strings
+            vtk_data = convert_string_array(arr)
+        else:
             # This will handle numerical data
             arr = np.ascontiguousarray(arr)
             vtk_data = nps.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
-        except ValueError:
-            # This handles strings
-            typ = get_vtk_type(arr.dtype)
-            if typ == 13:
-                vtk_data = convert_string_array(arr)
+
         if isinstance(name, str):
             vtk_data.SetName(name)
         return vtk_data
@@ -133,7 +130,6 @@ def convert_array(arr, name=None, deep=0, array_type=None):
     return nps.vtk_to_numpy(arr)
 
 
-
 def is_pyvista_dataset(obj):
     """Return True if the Object is a PyVista wrapped dataset."""
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
@@ -144,6 +140,7 @@ def point_array(mesh, name):
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+
 def point_scalar(mesh, name):
     """Return point array of a vtk object.
 
@@ -152,10 +149,12 @@ def point_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `point_array` instead.")
     return point_array(mesh, name)
 
+
 def field_array(mesh, name):
     """Return field array of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def field_scalar(mesh, name):
     """Return field array of a vtk object.
@@ -165,10 +164,12 @@ def field_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `field_array` instead.")
     return field_array(mesh, name)
 
+
 def cell_array(mesh, name):
     """Return cell array of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def cell_scalar(mesh, name):
     """Return cell array of a vtk object.
@@ -178,10 +179,12 @@ def cell_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `cell_array` instead.")
     return cell_array(mesh, name)
 
+
 def row_array(data_object, name):
     """Return row array of a vtk object."""
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def parse_field_choice(field):
     """Return the id of the given field."""
@@ -620,10 +623,12 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
 def threaded(fn):
     """Call a function using a thread."""
+
     def wrapper(*args, **kwargs):
         thread = Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
+
     return wrapper
 
 

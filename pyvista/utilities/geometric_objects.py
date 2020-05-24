@@ -19,7 +19,6 @@ import vtk
 import pyvista
 from pyvista.utilities import assert_empty_kwargs, check_valid_vector
 
-
 NORMALS = {
     'x': [1, 0, 0],
     'y': [0, 1, 0],

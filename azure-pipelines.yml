@@ -30,7 +30,7 @@ jobs:
     inputs:
       versionSpec: '3.7'
   - script: |
-      pip install codespell pydocstyle
+      pip install -r requirements_style.txt
       make doctest
     displayName: 'Run doctest'
 
@@ -199,17 +199,13 @@ jobs:
       git clone --depth 1 git://github.com/pyvista/gl-ci-helpers.git
       powershell gl-ci-helpers/appveyor/install_opengl.ps1
     displayName: 'Install OpenGL'
-  - powershell: |
-      Set-StrictMode -Version Latest
-      $ErrorActionPreference = "Stop"
-      $PSDefaultParameterValues['*:ErrorAction']='Stop'
-      pip install -r requirements_test.txt
-    displayName: 'Install dependencies with pip'
   - script: |
-      python setup.py sdist
-      python setup.py install
+      pip install .
       python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install PyVista'
+  - script: |
+      pip install -r requirements_test.txt
+    displayName: 'Install test dependencies'
   - script: |
       python -m pytest --cov -v .
     displayName: 'Run Tests'
@@ -317,7 +313,13 @@ jobs:
     inputs:
       key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
       path: $(EXAMPLES_PATH)
-    displayName: Build pyvista examples cache
+    displayName: Build pyvista examples directory cache
+
+  - task: Cache@2
+    inputs:
+      key: 'PYVISTA_DOC_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
+      path: '$(Build.SourcesDirectory)/docs/examples'
+    displayName: Build pyvista doc examples cache
 
   - script: |
       make -C docs html -b coverage

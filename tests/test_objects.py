@@ -14,7 +14,6 @@ except ImportError:
     pd = None
 
 
-
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'csv'))
@@ -37,7 +36,6 @@ def test_table_init(tmpdir):
     with pytest.raises(AssertionError):
         pyvista.Table(np.random.rand(100, 2, 3))
 
-
     # create from dictionary
     array_dict = {}
     for i in range(nc):
@@ -51,7 +49,7 @@ def test_table_init(tmpdir):
         assert np.allclose(arrays[:,i], table['foo{}'.format(i)])
 
     dataset = examples.load_hexbeam()
-    array_dict = dataset.point_arrays
+    array_dict = dict(dataset.point_arrays)
     table = pyvista.Table(array_dict)
     assert table.n_rows == dataset.n_points
     assert table.n_columns == len(array_dict)
@@ -98,7 +96,6 @@ def test_table_init(tmpdir):
     return
 
 
-
 def test_table_row_arrays():
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
@@ -109,7 +106,6 @@ def test_table_row_arrays():
     assert table.n_rows == nr
     for i in range(nc):
         assert np.allclose(table['foo{}'.format(i)], arrays[:, i])
-    _ = table._row_array()
     # Multi component
     table = pyvista.Table()
     table['multi'] = arrays

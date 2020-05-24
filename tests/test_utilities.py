@@ -94,8 +94,6 @@ def test_get_array():
     assert np.allclose(farr, helpers.get_array(grid, 'field_data', preference='field'))
 
 
-
-
 def test_is_inside_bounds():
     data = ex.load_uniform()
     bnds = data.bounds
@@ -131,8 +129,8 @@ def test_line_segments_from_points():
     assert poly.n_cells == 2
     assert poly.n_points == 4
     cells = poly.lines
-    assert np.allclose(cells[0], [2, 0,1])
-    assert np.allclose(cells[1], [2, 2,3])
+    assert np.allclose(cells[:3], [2, 0, 1])
+    assert np.allclose(cells[3:], [2, 2, 3])
 
 
 def test_lines_from_points():
@@ -141,8 +139,8 @@ def test_lines_from_points():
     assert poly.n_cells == 2
     assert poly.n_points == 3
     cells = poly.lines
-    assert np.allclose(cells[0], [2, 0,1])
-    assert np.allclose(cells[1], [2, 1,2])
+    assert np.allclose(cells[:3], [2, 0, 1])
+    assert np.allclose(cells[3:], [2, 1, 2])
 
 
 def test_grid_from_sph_coords():
@@ -183,6 +181,7 @@ def test_transform_vectors_sph_to_cart():
         [67.80403533828323, 360.8359915416445, -70000.0],
     )
 
+
 def test_assert_empty_kwargs():
     kwargs = {}
     assert errors.assert_empty_kwargs(**kwargs)
@@ -192,7 +191,6 @@ def test_assert_empty_kwargs():
     with pytest.raises(TypeError):
         kwargs = {"foo":6, "goo":"bad"}
         errors.assert_empty_kwargs(**kwargs)
-
 
 
 def test_convert_id_list():
