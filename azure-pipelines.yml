@@ -30,7 +30,7 @@ jobs:
     inputs:
       versionSpec: '3.7'
   - script: |
-      pip install codespell pydocstyle
+      pip install -r requirements_style.txt
       make doctest
     displayName: 'Run doctest'
 
