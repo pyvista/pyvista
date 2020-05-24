@@ -42,32 +42,6 @@ class DataObject(object):
             raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
 
-    def __init_subclass__(cls, **kwargs):
-        if cls._VTK_READERS is None or cls._VTK_WRITERS is None:
-            raise NotImplementedError
-
-    #TODO remove
-    @property
-    @abstractmethod
-    def _vtk_writers(self): # pragma: no cover
-        """Return dict of {file extension: vtkWriter}.
-
-        This is used to select a valid vtk writer for a given file extension. eg:
-        {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
-        """
-        raise NotImplementedError
-
-    #TODO remove
-    @property
-    @abstractmethod
-    def _vtk_readers(self): # pragma: no cover
-        """Return dict of {file extension: vtkReader}.
-
-        This is used to select a valid vtk reader for a given file extension. eg:
-        {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
-        """
-        raise NotImplementedError
-
     def shallow_copy(self, to_copy):
         """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
@@ -95,12 +69,12 @@ class DataObject(object):
             raise FileNotFoundError('File %s does not exist' % filename)
 
         file_ext = fileio.get_ext(filename)
-        if file_ext not in self._vtk_readers:
-            keys_list = ', '.join(self._vtk_readers.keys())
+        if file_ext not in self._VTK_READERS:
+            keys_list = ', '.join(self._VTK_READERS.keys())
             raise ValueError('Invalid file extension for {}({}). Must be one of: {}'.format(
                 self.__class__.__name__, file_ext, keys_list))
 
-        reader = self._vtk_readers[file_ext]()
+        reader = self._VTK_READERS[file_ext]()
         reader.SetFileName(filename)
         reader.Update()
         self.shallow_copy(reader.GetOutput())
@@ -125,11 +99,11 @@ class DataObject(object):
         """
         filename = os.path.abspath(os.path.expanduser(filename))
         file_ext = fileio.get_ext(filename)
-        if file_ext not in self._vtk_writers:
+        if file_ext not in self._VTK_WRITERS:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
-                self._vtk_writers.keys()))
+                self._VTK_WRITERS.keys()))
 
-        writer = self._vtk_writers[file_ext]()
+        writer = self._VTK_WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
