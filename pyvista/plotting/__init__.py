@@ -11,6 +11,34 @@ from .widgets import WidgetHelper
 
 from .renderer import CameraPosition, Renderer, scale_point
 from .plotting import BasePlotter, Plotter, close_all
-from .qt_plotting import BackgroundPlotter, QtInteractor, MainWindow, Counter
 from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
 from .itkplotter import PlotterITK
+
+
+class QtDeprecationError(Exception):
+    """Depreciation Error for features that moved to `pyvistaqt`."""
+    
+    message = """`{}` has moved to pyvistaqt.
+    You can install this from PyPI with: `pip install pyvistaqt`
+    See https://github.com/pyvista/pyvistaqt
+"""
+
+    def __init__(self, feature_name):
+        """Empty init."""
+        Exception.__init__(self, self.message.format(feature_name))
+
+
+class BackgroundPlotter():
+    """This class has been moved to pyvistaqt."""
+
+    def __init__(self, *args, **kwargs):
+        """Empty init."""
+        raise QtDeprecationError('BackgroundPlotter')
+
+
+class QtInteractor():
+    """This class has been moved to pyvistaqt."""
+
+    def __init__(self, *args, **kwargs):
+        """Empty init."""
+        raise QtDeprecationError('QtInteractor')
