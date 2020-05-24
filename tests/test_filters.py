@@ -221,7 +221,11 @@ def test_outline_composite():
     output = COMPOSITE.outline()
     assert isinstance(output, pyvista.PolyData)
     output = COMPOSITE.outline(nested=True)
-    assert output.n_blocks == COMPOSITE.n_blocks
+
+    # vtk 9.0.0 returns polydata
+    assert isinstance(output, (pyvista.MultiBlock, pyvista.PolyData))
+    if isinstance(output, pyvista.MultiBlock):
+        assert output.n_blocks == COMPOSITE.n_blocks
 
 
 def test_outline_corners():

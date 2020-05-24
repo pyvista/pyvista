@@ -27,6 +27,8 @@ except:
 def test_volume():
     assert beam.volume > 0.0
 
+VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_struct_example():
@@ -51,6 +53,7 @@ def test_init_from_unstructured():
     grid.points += 1
     assert not np.any(grid.points == beam.points)
 
+
 def test_init_bad_input():
     with pytest.raises(Exception):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1))
@@ -63,7 +66,6 @@ def test_init_bad_input():
 
 
 def test_init_from_arrays():
-    offset = np.array([0, 9], np.int8)
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
     cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int32)
 
@@ -86,10 +88,18 @@ def test_init_from_arrays():
                       [0, 1, 3]])
 
     points = np.vstack((cell1, cell2)).astype(np.int32)
-    grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
+
+    if VTK9:
+        grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
+        assert np.allclose(grid.cells, cells)
+    else:
+        offset = np.array([0, 9], np.int8)
+        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points, deep=False)
+        assert np.allclose(grid.offset, offset)
 
     assert grid.n_cells == 2
-    assert np.allclose(grid.offset, offset)
+    assert np.allclose(cells, grid.cells)
+
 
 def test_surface_indices():
     surf = beam.extract_surface()
