@@ -231,7 +231,7 @@ jobs:
       Python38:
         python.version: '3.8'
   pool:
-    vmImage: 'macOS-10.14'
+    vmImage: 'macOS-10.15'
   steps:
     - script: .ci/macos-install-python.sh '$(python.version)'
       displayName: Install Python
