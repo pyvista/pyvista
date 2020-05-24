@@ -1164,7 +1164,7 @@ class Common(DataSetFilters, DataObject):
             The overwriting mesh.
 
         """
-        if not isinstance(type(mesh), type(self)):
+        if not isinstance(mesh, type(self)):
             raise TypeError('The Input DataSet type must match '
                             'the one being overwritten %s' % type(self))
         self.deep_copy(mesh)
