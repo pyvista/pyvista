@@ -190,7 +190,7 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.composite.MULTIBLOCK_WRITERS)
+@pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._VTK_WRITERS)
 def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
