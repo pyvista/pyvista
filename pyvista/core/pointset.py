@@ -1,4 +1,5 @@
-"""Sub-classes for vtk.vtkPolyData."""
+"""Sub-classes and wrappers for vtk.vtkPointSet."""
+import warnings
 import logging
 import os
 
@@ -20,6 +21,8 @@ from .filters import PolyDataFilters, UnstructuredGridFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
+
+VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 
 class PointSet(Common):
@@ -271,7 +274,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @property
     def lines(self):
         """Return a pointer to the lines as a numpy object."""
-        return vtk_to_numpy(self.GetLines().GetData())
+        return vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
     def lines(self, lines):
@@ -624,8 +627,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
-    >>> # from arrays
-    >>> #grid = pyvista.UnstructuredGrid(offset, cells, cell_type, nodes, deep=True)
+    >>> # from arrays (vtk9)
+    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, deep=True)
+
+    >>> # from arrays (vtk<9)
+    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, offset, deep=True)
 
     >>> # From a string filename
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
@@ -657,6 +663,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 itype = type(args[0])
                 raise Exception('Cannot work with input type %s' % itype)
 
+        elif len(args) == 3:
+            arg0_is_arr = isinstance(args[0], np.ndarray)
+            arg1_is_arr = isinstance(args[1], np.ndarray)
+            arg2_is_arr = isinstance(args[2], np.ndarray)
+
+            if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
+                self._from_arrays(None, args[0], args[1], args[2], deep)
+            else:
+                raise Exception('All input types must be np.ndarray')
+
         elif len(args) == 4:
             arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
@@ -686,7 +702,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         ----------
         offset : np.ndarray dtype=np.int64
             Array indicating the start location of each cell in the cells
-            array.
+            array.  Set to ``None`` when using VTK 9+.
 
         cells : np.ndarray dtype=np.int64
             Array of cells.  Each cell contains the number of points in the
@@ -731,9 +747,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         >>> grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
 
         """
-        if offset.dtype != pyvista.ID_TYPE:
-            offset = offset.astype(pyvista.ID_TYPE)
-
         if cells.dtype != pyvista.ID_TYPE:
             cells = cells.astype(pyvista.ID_TYPE)
 
@@ -751,17 +764,24 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
         # Convert to vtk arrays
         cell_type = numpy_to_vtk(cell_type, deep=deep)
-        offset = numpy_to_vtkIdTypeArray(offset, deep=deep)
 
         vtkcells = vtk.vtkCellArray()
         vtkcells.SetCells(ncells, numpy_to_vtkIdTypeArray(cells.ravel(), deep=deep))
 
         # Convert points to vtkPoints object
         points = pyvista.vtk_points(points, deep=deep)
-
-        # Create unstructured grid
         self.SetPoints(points)
-        self.SetCells(cell_type, offset, vtkcells)
+
+        # vtk9 does not require an offset array
+        if VTK9:
+            if offset is not None:
+                warnings.warn('VTK 9 no longer accepts an offset array')
+            self.SetCells(cell_type, vtkcells)
+        else:
+            if offset.dtype != pyvista.ID_TYPE:
+                offset = offset.astype(pyvista.ID_TYPE)
+            offset = numpy_to_vtkIdTypeArray(offset, deep=deep)
+            self.SetCells(cell_type, offset, vtkcells)
 
     def _load_file(self, filename):
         """Load an unstructured grid from a file.

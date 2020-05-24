@@ -833,6 +833,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
+        if hasattr(self.ren_win, 'GetOffScreenFramebuffer'):
+            if not self.ren_win.GetOffScreenFramebuffer().GetFBOIndex():
+                # must raise a runtime error as this causes a segfault on VTK9
+                raise RuntimeError('Invoking helper with no framebuffer')
         # Get 2D click location on window
         click_pos = self.iren.GetEventPosition()
 
