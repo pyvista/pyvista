@@ -1,4 +1,7 @@
 from pytest import fixture
+
+import numpy as np
+import pyvista
 from pyvista import examples
 
 
@@ -35,3 +38,11 @@ def globe():
 @fixture()
 def hexbeam():
     return examples.load_hexbeam()
+
+
+@fixture()
+def struct_grid():
+    x, y, z = np.meshgrid(np.arange(-10, 10, 2),
+                          np.arange(-10, 10, 2),
+                          np.arange(-10, 10, 2))
+    return pyvista.StructuredGrid(x, y, z)

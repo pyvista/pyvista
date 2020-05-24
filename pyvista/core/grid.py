@@ -17,6 +17,17 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
+RECTILINEARGRID_READERS = {'.vtk': vtk.vtkRectilinearGridReader,
+                           '.vtr': vtk.vtkXMLRectilinearGridReader}
+RECTILINEARGRID_WRITERS = {'.vtk': vtk.vtkRectilinearGridWriter,
+                           '.vtr': vtk.vtkXMLRectilinearGridWriter}
+
+IMAGEDATA_READERS = {'.vtk': vtk.vtkDataSetReader,
+                     '.vti': vtk.vtkXMLImageDataReader}
+IMAGEDATA_WRITERS = {'.vtk': vtk.vtkDataSetWriter,
+                     '.vti': vtk.vtkXMLImageDataWriter}
+
+
 class Grid(Common):
     """A class full of common methods for non-pointset grids."""
 
@@ -130,12 +141,12 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @property
     def _vtk_readers(self):
-        return {'.vtk': vtk.vtkRectilinearGridReader, '.vtr': vtk.vtkXMLRectilinearGridReader}
+        return RECTILINEARGRID_READERS
 
 
     @property
     def _vtk_writers(self):
-        return {'.vtk': vtk.vtkRectilinearGridWriter, '.vtr': vtk.vtkXMLRectilinearGridWriter}
+        return RECTILINEARGRID_WRITERS
 
 
     def _update_dimensions(self):
@@ -340,12 +351,12 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @property
     def _vtk_readers(self):
-        return {'.vtk': vtk.vtkDataSetReader, '.vti': vtk.vtkXMLImageDataReader}
+        return IMAGEDATA_READERS
 
 
     @property
     def _vtk_writers(self):
-        return {'.vtk': vtk.vtkDataSetWriter, '.vti': vtk.vtkXMLImageDataWriter}
+        return IMAGEDATA_WRITERS
 
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):

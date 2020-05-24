@@ -21,6 +21,10 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
+MULTIBLOCK_READERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataReader)
+MULTIBLOCK_WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
+
+
 class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """A composite class to hold many data sets which can be iterated over.
 
@@ -95,12 +99,12 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     @property
     def _vtk_readers(self):
-        return dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataReader)
+        return MULTIBLOCK_READERS
 
 
     @property
     def _vtk_writers(self):
-        return dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
+        return MULTIBLOCK_WRITERS
 
 
     def wrap_nested(self):
