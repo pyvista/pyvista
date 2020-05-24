@@ -4,7 +4,6 @@ import collections
 import logging
 import os
 import warnings
-from abc import abstractmethod
 
 import numpy as np
 import vtk
