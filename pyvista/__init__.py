@@ -44,6 +44,12 @@ try:
 except KeyError:
     pass
 
+# flag for when building the sphinx_gallery
+BUILDING_GALLERY = False
+if 'PYVISTA_BUILDING_GALLERY' in os.environ:
+    if os.environ['PYVISTA_BUILDING_GALLERY'].lower() == 'true':
+        BUILDING_GALLERY = True
+
 # Grab system flag for anti-aliasing
 try:
     rcParams['multi_samples'] = int(os.environ['PYVISTA_MULTI_SAMPLES'])

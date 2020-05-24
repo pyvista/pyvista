@@ -705,6 +705,8 @@ def test_image_properties():
     p.close()
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh)
+    p.store_image = True
+    assert p.store_image is True
     p.show() # close plotter
     # Get RGB image
     _ = p.image
