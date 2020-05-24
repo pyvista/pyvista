@@ -15,12 +15,17 @@ from .helpers import plot, plot_arrows, plot_compare_four, plot_itk
 from .itkplotter import PlotterITK
 
 
+class QtDeprecationError(Exception):
+    """Depreciation Error for features that moved to `pyvistaqt`."""
+    
+    message = """`{}` has moved to pyvistaqt.
+    You can install this from PyPI with: `pip install pyvistaqt`
+    See https://github.com/pyvista/pyvistaqt
+"""
 
-class DeprecationError(Exception):
-    """Depreciation Error."""
-
-    pass
-
+    def __init__(self, feature_name):
+        """Empty init."""
+        Exception.__init__(self, self.message.format(feature_name))
 
 
 class BackgroundPlotter():
@@ -28,7 +33,7 @@ class BackgroundPlotter():
 
     def __init__(self, *args, **kwargs):
         """Empty init."""
-        raise DeprecationError('`BackgroundPlotter` has moved to pyvistaqt')
+        raise QtDeprecationError('BackgroundPlotter')
 
 
 class QtInteractor():
@@ -36,4 +41,4 @@ class QtInteractor():
 
     def __init__(self, *args, **kwargs):
         """Empty init."""
-        raise DeprecationError('`QtInteractor` has moved to pyvistaqt')
+        raise QtDeprecationError('QtInteractor')

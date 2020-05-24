@@ -10,3 +10,4 @@ Plotting
    plotting
    itk_plotting
    widgets
+   qt_plotting
