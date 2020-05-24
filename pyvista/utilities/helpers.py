@@ -130,7 +130,6 @@ def convert_array(arr, name=None, deep=0, array_type=None):
     return nps.vtk_to_numpy(arr)
 
 
-
 def is_pyvista_dataset(obj):
     """Return True if the Object is a PyVista wrapped dataset."""
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
@@ -141,6 +140,7 @@ def point_array(mesh, name):
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+
 def point_scalar(mesh, name):
     """Return point array of a vtk object.
 
@@ -149,10 +149,12 @@ def point_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `point_array` instead.")
     return point_array(mesh, name)
 
+
 def field_array(mesh, name):
     """Return field array of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def field_scalar(mesh, name):
     """Return field array of a vtk object.
@@ -162,10 +164,12 @@ def field_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `field_array` instead.")
     return field_array(mesh, name)
 
+
 def cell_array(mesh, name):
     """Return cell array of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def cell_scalar(mesh, name):
     """Return cell array of a vtk object.
@@ -175,10 +179,12 @@ def cell_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `cell_array` instead.")
     return cell_array(mesh, name)
 
+
 def row_array(data_object, name):
     """Return row array of a vtk object."""
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def parse_field_choice(field):
     """Return the id of the given field."""
@@ -617,10 +623,12 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
 def threaded(fn):
     """Call a function using a thread."""
+
     def wrapper(*args, **kwargs):
         thread = Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
+
     return wrapper
 
 

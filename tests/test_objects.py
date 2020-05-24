@@ -14,7 +14,6 @@ except ImportError:
     pd = None
 
 
-
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'csv'))
@@ -36,7 +35,6 @@ def test_table_init(tmpdir):
 
     with pytest.raises(AssertionError):
         pyvista.Table(np.random.rand(100, 2, 3))
-
 
     # create from dictionary
     array_dict = {}
@@ -96,7 +94,6 @@ def test_table_init(tmpdir):
         pyvista.Table("foo")
 
     return
-
 
 
 def test_table_row_arrays():

@@ -9,6 +9,7 @@ def test_cylinder():
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
+
 def test_cylinder_structured():
     cyl = pyvista.CylinderStructured()
     assert np.any(cyl.points)
@@ -21,9 +22,11 @@ def test_arrow(scale):
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
+
 def test_arrow_raises_error():
     with pytest.raises(TypeError):
         surf = pyvista.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
+
 
 def test_sphere():
     surf = pyvista.Sphere()

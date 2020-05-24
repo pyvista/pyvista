@@ -8,10 +8,8 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
-
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_data_path = os.path.join(test_path, 'test_data')
-
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
@@ -289,6 +287,7 @@ def test_create_rectilinear_grid_from_file():
     assert grid.bounds == [-350.0,1350.0, -400.0,1350.0, -850.0,0.0]
     assert grid.n_arrays == 1
 
+
 def test_read_rectilinear_grid_from_file():
     grid = pyvista.read(examples.rectfile)
     assert grid.n_cells == 16146
@@ -308,7 +307,6 @@ def test_cast_rectilinear_grid():
         assert np.allclose(structured.point_arrays[k], v)
     for k, v in grid.cell_arrays.items():
         assert np.allclose(structured.cell_arrays[k], v)
-
 
 
 def test_create_uniform_grid_from_specs():
@@ -352,6 +350,7 @@ def test_create_uniform_grid_from_file():
     assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
     assert grid.n_arrays == 2
     assert grid.dimensions == [10, 10, 10]
+
 
 def test_read_uniform_grid_from_file():
     grid = pyvista.read(examples.uniformfile)
@@ -397,6 +396,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
     assert np.allclose(grid.y, ogrid.y)
     assert np.allclose(grid.z, ogrid.z)
     assert grid.dimensions == ogrid.dimensions
+
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.grid.IMAGEDATA_READERS)

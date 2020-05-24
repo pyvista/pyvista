@@ -20,10 +20,6 @@ except ImportError:
     pd = None
 
 
-
-
-
-
 class Table(vtk.vtkTable, DataObject):
     """Wrapper for the ``vtkTable`` class.
 
@@ -58,7 +54,6 @@ class Table(vtk.vtkTable, DataObject):
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
-
     def _from_arrays(self, arrays):
         if not arrays.ndim == 2:
             raise AssertionError('Only 2D arrays are supported by Tables.')
@@ -66,7 +61,6 @@ class Table(vtk.vtkTable, DataObject):
         for i, array in enumerate(np_table):
             self.row_arrays['Array {}'.format(i)] = array
         return
-
 
     def _from_dict(self, array_dict):
         for array in array_dict.values():
@@ -76,29 +70,24 @@ class Table(vtk.vtkTable, DataObject):
             self.row_arrays[name] = array
         return
 
-
     def _from_pandas(self, data_frame):
         for name in data_frame.keys():
             self.row_arrays[name] = data_frame[name].values
-
 
     @property
     def n_rows(self):
         """Return the number of rows."""
         return self.GetNumberOfRows()
 
-
     @n_rows.setter
     def n_rows(self, n):
         """Set the number of rows."""
         self.SetNumberOfRows(n)
 
-
     @property
     def n_columns(self):
         """Return the number of columns."""
         return self.GetNumberOfColumns()
-
 
     @property
     def n_arrays(self):
@@ -108,7 +97,6 @@ class Table(vtk.vtkTable, DataObject):
 
         """
         return self.n_columns
-
 
     def _row_array(self, name=None):
         """Return row scalars of a vtk object.
@@ -126,37 +114,30 @@ class Table(vtk.vtkTable, DataObject):
         """
         return self.row_arrays[name]
 
-
     @property
     def row_arrays(self):
         """Return the all row arrays."""
         return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW)
 
-
     def keys(self):
         """Return the table keys."""
         return self.row_arrays.keys()
-
 
     def items(self):
         """Return the table items."""
         return self.row_arrays.items()
 
-
     def values(self):
         """Return the table values."""
         return self.row_arrays.values()
-
 
     def update(self, data):
         """Set the table data."""
         self.row_arrays.update(data)
 
-
     def pop(self, name):
         """Pops off an array by the specified name."""
         return self.row_arrays.pop(name)
-
 
     def _add_row_array(self, scalars, name, deep=True):
         """Add scalars to the vtk object.
@@ -176,48 +157,39 @@ class Table(vtk.vtkTable, DataObject):
         """
         self.row_arrays[name] = scalars
 
-
     def __getitem__(self, index):
         """Search row data for an array."""
         return self._row_array(name=index)
 
-
     def _ipython_key_completions_(self):
         return self.keys()
-
 
     def get(self, index):
         """Get an array by its name."""
         return self[index]
 
-
     def __setitem__(self, name, scalars):
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
-
 
     def _remove_array(self, field, key):
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
-
     def __delitem__(self, name):
         """Remove an array by the specified name."""
         del self.row_arrays[name]
-
 
     def __iter__(self):
         """Return the iterator across all arrays."""
         for array_name in self.row_arrays:
             yield self.row_arrays[array_name]
 
-
     def _get_attrs(self):
         """Return the representation methods."""
         attrs = []
         attrs.append(("N Rows", self.n_rows, "{}"))
         return attrs
-
 
     def _repr_html_(self):
         """Return a pretty representation for Jupyter notebooks.
@@ -263,16 +235,13 @@ class Table(vtk.vtkTable, DataObject):
             fmt += "</td></tr> </table>"
         return fmt
 
-
     def __repr__(self):
         """Return the object representation."""
         return self.head(display=False, html=False)
 
-
     def __str__(self):
         """Return the object string representation."""
         return self.head(display=False, html=False)
-
 
     def to_pandas(self):
         """Create a Pandas DataFrame from this Table."""
@@ -283,12 +252,10 @@ class Table(vtk.vtkTable, DataObject):
             data_frame[name] = array
         return data_frame
 
-
     def save(self, *args, **kwargs):
         """Save the table."""
         raise NotImplementedError("Please use the `to_pandas` method and "
                                   "harness Pandas' wonderful file IO methods.")
-
 
     def get_data_range(self, arr=None, preference='row'):
         """Get the non-NaN min and max of a named array.
@@ -324,7 +291,6 @@ class Texture(vtk.vtkTexture):
         """Initialize the texture."""
         assert_empty_kwargs(**kwargs)
 
-
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkTexture):
                 self._from_texture(args[0])
@@ -337,18 +303,15 @@ class Texture(vtk.vtkTexture):
             else:
                 raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
 
-
     def _from_texture(self, texture):
         image = texture.GetInput()
         self._from_image_data(image)
-
 
     def _from_image_data(self, image):
         if not isinstance(image, pyvista.UniformGrid):
             image = pyvista.UniformGrid(image)
         self.SetInputDataObject(image)
         return self.Update()
-
 
     def _from_array(self, image):
         if image.ndim not in [2,3]:
@@ -370,7 +333,6 @@ class Texture(vtk.vtkTexture):
 
         return self._from_image_data(grid)
 
-
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
         if axis < 0 or axis > 1:
@@ -380,18 +342,15 @@ class Texture(vtk.vtkTexture):
         array = np.flip(array, axis=ax[axis])
         return self._from_array(array)
 
-
     def to_image(self):
         """Return the texture as an image."""
         return self.GetInput()
-
 
     @property
     def n_components(self):
         """Components in the image (e.g. 3 [or 4] for RGB[A])."""
         image = self.to_image()
         return image.active_scalars.shape[1]
-
 
     def to_array(self):
         """Return the texture as an array."""
@@ -404,22 +363,18 @@ class Texture(vtk.vtkTexture):
 
         return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1,0)
 
-
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""
         return self.to_image().plot(*args, **kwargs)
-
 
     @property
     def repeat(self):
         """Repeat the texture."""
         return self.GetRepeat()
 
-
     @repeat.setter
     def repeat(self, flag):
         self.SetRepeat(flag)
-
 
     def copy(self):
         """Make a copy of this textrue."""

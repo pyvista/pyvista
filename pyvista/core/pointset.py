@@ -25,7 +25,6 @@ log.setLevel('CRITICAL')
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
-
 UNSTRUCTUREDGRID_READERS = {'.vtu': vtk.vtkXMLUnstructuredGridReader,
                             '.vtk': vtk.vtkUnstructuredGridReader}
 UNSTRUCTUREDGRID_WRITERS = {'.vtu': vtk.vtkXMLUnstructuredGridWriter,
@@ -68,7 +67,6 @@ class PointSet(Common):
         alg.SetUseScalarsAsWeights(scalars_weight)
         alg.Update()
         return np.array(alg.GetCenter())
-
 
     def shallow_copy(self, to_copy):
         """Do a shallow copy the pointset."""
@@ -313,7 +311,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
     #     return np.ascontiguousarray(lines[:, 1:])
 
-
     def is_all_triangles(self):
         """Return True if all the faces of the polydata are triangles."""
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
@@ -392,7 +389,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         """Return the number of cells."""
         return self.n_cells
 
-
     def save(self, filename, binary=True):
         """Write a surface mesh to disk.
 
@@ -425,7 +421,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self.compute_normals(inplace=True)
         super().save(filename, binary)
 
-
     @property
     def area(self):
         """Return the mesh surface area.
@@ -456,13 +451,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mprop.SetInputData(self.triangulate())
         return mprop.GetVolume()
 
-
     @property
     def point_normals(self):
         """Return the point normals."""
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
-
 
     @property
     def cell_normals(self):
@@ -470,12 +463,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
-
     @property
     def face_normals(self):
         """Return the cell normals."""
         return self.cell_normals
-
 
     @property
     def obbTree(self):
@@ -493,7 +484,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             self._obbTree.BuildLocator()
 
         return self._obbTree
-
 
     @property
     def n_open_edges(self):
@@ -554,7 +544,6 @@ class PointGrid(PointSet):
         """
         surf = self.extract_surface().triangulate()
         return surf.volume
-
 
 
 class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
@@ -638,11 +627,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             else:
                 raise Exception('All input types must be np.ndarray')
 
-
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
-
 
     def __str__(self):
         """Return the standard str representation."""
@@ -822,7 +809,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return vtk_to_numpy(self.GetCellLocationsArray())
 
 
-
 class StructuredGrid(vtkStructuredGrid, PointGrid):
     """Extend the functionality of a vtk.vtkStructuredGrid object.
 
@@ -875,11 +861,9 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(args[0], args[1], args[2])
 
-
     def __repr__(self):
         """Return the standard representation."""
         return Common.__repr__(self)
-
 
     def __str__(self):
         """Return the standard str representation."""
