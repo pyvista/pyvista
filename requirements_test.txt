@@ -4,6 +4,7 @@ appdirs
 pytest
 pytest-cov
 pytest-memprof
+pytest-parallel
 codecov
 PyQt5==5.11.3
 pytest-qt
