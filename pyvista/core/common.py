@@ -2,7 +2,9 @@
 
 import collections
 import logging
+import os
 import warnings
+from abc import abstractmethod
 
 import numpy as np
 import vtk
@@ -10,7 +12,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               parse_field_choice, raise_not_matching, vtk_id_list_to_array)
+                               parse_field_choice, raise_not_matching, vtk_id_list_to_array, fileio)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
@@ -40,6 +42,28 @@ class DataObject(object):
         return object.__new__(cls, *args, **kwargs)
 
 
+    @property
+    @abstractmethod
+    def _vtk_writers(self): # pragma: no cover
+        """Return dict of {file extension: vtkWriter}.
+
+        This is used to select a valid vtk writer for a given file extension. eg:
+        {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
+        """
+        raise NotImplementedError
+
+
+    @property
+    @abstractmethod
+    def _vtk_readers(self): # pragma: no cover
+        """Return dict of {file extension: vtkReader}.
+
+        This is used to select a valid vtk reader for a given file extension. eg:
+        {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
+        """
+        raise NotImplementedError
+
+
     def shallow_copy(self, to_copy):
         """Shallow copy the given mesh to this mesh."""
         return self.ShallowCopy(to_copy)
@@ -50,18 +74,47 @@ class DataObject(object):
         return self.DeepCopy(to_copy)
 
 
-    def save(self, filename, binary=True):  # pragma: no cover
-        """Write this mesh to a file.
+    def _load_file(self, filename):
+        """Generically load a vtk object from file.
 
         Parameters
         ----------
         filename : str
-         Filename of mesh to be written.  File type is inferred from
-         the extension of the filename unless overridden with
-         ftype.
+            Filename of object to be loaded.  File/reader type is inferred from the
+            extension of the filename.
+
+        Notes
+        -----
+        Binary files load much faster than ASCII.
+
+        """
+        filename = os.path.abspath(os.path.expanduser(filename))
+        if not os.path.isfile(filename):
+            raise FileNotFoundError('File %s does not exist' % filename)
+
+        file_ext = fileio.get_ext(filename)
+        if file_ext not in self._vtk_readers:
+            keys_list = ', '.join(self._vtk_readers.keys())
+            raise ValueError('Invalid file extension for {}({}). Must be one of: {}'.format(
+                self.__class__.__name__, file_ext, keys_list))
+
+        reader = self._vtk_readers[file_ext]()
+        reader.SetFileName(filename)
+        reader.Update()
+        self.shallow_copy(reader.GetOutput())
+
+
+    def save(self, filename, binary=True):
+        """Save this vtk object to file.
+
+        Parameters
+        ----------
+        filename : str
+         Filename of output file. Writer type is inferred from
+         the extension of the filename.
 
         binary : bool, optional
-         Writes the file as binary when True and ASCII when False.
+         If True, write as binary, else ASCII.
 
         Notes
         -----
@@ -69,7 +122,17 @@ class DataObject(object):
         file size.
 
         """
-        raise NotImplementedError('{} mesh type does not have a save method.'.format(type(self)))
+        filename = os.path.abspath(os.path.expanduser(filename))
+        file_ext = fileio.get_ext(filename)
+        if file_ext not in self._vtk_writers:
+            raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
+                self._vtk_writers.keys()))
+
+        writer = self._vtk_writers[file_ext]()
+        fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
+        writer.SetFileName(filename)
+        writer.SetInputData(self)
+        writer.Write()
 
 
     def get_data_range(self, arr=None, preference='field'):  # pragma: no cover

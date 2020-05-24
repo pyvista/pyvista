@@ -87,6 +87,21 @@ def get_reader(filename):
     return READERS[ext]() # Get and instantiate the reader
 
 
+def set_vtkwriter_mode(vtk_writer, use_binary=True):
+    """Set any vtk writer to write as binary or ascii."""
+    if isinstance(vtk_writer, vtk.vtkDataWriter):
+        if use_binary:
+            vtk_writer.SetFileTypeToBinary()
+        else:
+            vtk_writer.SetFileTypeToASCII()
+    elif isinstance(vtk_writer, vtk.vtkXMLWriter):
+        if use_binary:
+            vtk_writer.SetDataModeToBinary()
+        else:
+            vtk_writer.SetDataModeToAscii()
+    return vtk_writer
+
+
 def standard_reader_routine(reader, filename, attrs=None):
     """Use a given reader in the common VTK reading pipeline routine.
 

@@ -8,26 +8,20 @@ import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
-beam = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
-# create structured grid
-x = np.arange(-10, 10, 2)
-y = np.arange(-10, 10, 2)
-z = np.arange(-10, 10, 2)
-x, y, z = np.meshgrid(x, y, z)
-sgrid = pyvista.StructuredGrid(x, y, z)
+test_path = os.path.dirname(os.path.abspath(__file__))
+test_data_path = os.path.join(test_path, 'test_data')
 
-try:
-    test_path = os.path.dirname(os.path.abspath(__file__))
-    test_data_path = os.path.join(test_path, 'test_data')
-except:
-    test_path = '/home/alex/afrl/python/source/pyvista/tests'
-
-
-def test_volume():
-    assert beam.volume > 0.0
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+
+# must be manually set until pytest adds parametrize with fixture feature
+HEXBEAM_CELLS_BOOL = np.ones(40, np.bool)  # matches hexbeam.n_cells == 40
+STRUCTGRID_CELLS_BOOL = np.ones(729, np.bool)  # struct_grid.n_cells == 729
+
+
+def test_volume(hexbeam):
+    assert hexbeam.volume > 0.0
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -42,16 +36,16 @@ def test_struct_example():
     assert isinstance(cpos_curv, pyvista.CameraPosition)
 
 
-def test_init_from_structured():
-    unstruct_grid = pyvista.UnstructuredGrid(sgrid)
-    assert unstruct_grid.points.shape[0] == x.size
+def test_init_from_structured(struct_grid):
+    unstruct_grid = pyvista.UnstructuredGrid(struct_grid)
+    assert unstruct_grid.points.shape[0] == struct_grid.x.size
     assert np.all(unstruct_grid.celltypes == 12)
 
 
-def test_init_from_unstructured():
-    grid = pyvista.UnstructuredGrid(beam, deep=True)
+def test_init_from_unstructured(hexbeam):
+    grid = pyvista.UnstructuredGrid(hexbeam, deep=True)
     grid.points += 1
-    assert not np.any(grid.points == beam.points)
+    assert not np.any(grid.points == hexbeam.points)
 
 
 def test_init_bad_input():
@@ -101,33 +95,33 @@ def test_init_from_arrays():
     assert np.allclose(cells, grid.cells)
 
 
-def test_surface_indices():
-    surf = beam.extract_surface()
+def test_surface_indices(hexbeam):
+    surf = hexbeam.extract_surface()
     surf_ind = surf.point_arrays['vtkOriginalPointIds']
-    assert np.allclose(surf_ind, beam.surface_indices())
+    assert np.allclose(surf_ind, hexbeam.surface_indices())
 
 
-def test_extract_feature_edges():
-    edges = beam.extract_feature_edges(90)
+def test_extract_feature_edges(hexbeam):
+    edges = hexbeam.extract_feature_edges(90)
     assert edges.n_points
 
-    edges = beam.extract_feature_edges(180)
+    edges = hexbeam.extract_feature_edges(180)
     assert not edges.n_points
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtu', 'vtk'])
-def test_save(extension, binary, tmpdir):
+@pytest.mark.parametrize('extension', pyvista.pointset.UNSTRUCTUREDGRID_WRITERS)
+def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
-    beam.save(filename, binary)
+    hexbeam.save(filename, binary)
 
     grid = pyvista.UnstructuredGrid(filename)
-    assert grid.cells.shape == beam.cells.shape
-    assert grid.points.shape == beam.points.shape
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
 
     grid = pyvista.read(filename)
-    assert grid.cells.shape == beam.cells.shape
-    assert grid.points.shape == beam.points.shape
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
     assert isinstance(grid, pyvista.UnstructuredGrid)
 
 
@@ -145,66 +139,66 @@ def test_save_bad_extension():
         grid = pyvista.UnstructuredGrid('file.abc')
 
 
-def test_linear_copy():
+def test_linear_copy(hexbeam):
     # need a grid with quadratic cells
-    lgrid = beam.linear_copy()
+    lgrid = hexbeam.linear_copy()
     assert np.all(lgrid.celltypes < 20)
 
 
-def test_extract_cells():
+def test_extract_cells(hexbeam):
     ind = [1, 2, 3]
-    part_beam = beam.extract_cells(ind)
+    part_beam = hexbeam.extract_cells(ind)
     assert part_beam.n_cells == len(ind)
-    assert part_beam.n_points < beam.n_points
+    assert part_beam.n_points < hexbeam.n_points
 
-    mask = np.zeros(beam.n_cells, np.bool)
+    mask = np.zeros(hexbeam.n_cells, np.bool)
     mask[:3] = True
-    part_beam = beam.extract_cells(mask)
+    part_beam = hexbeam.extract_cells(mask)
     assert part_beam.n_cells == len(ind)
-    assert part_beam.n_points < beam.n_points
+    assert part_beam.n_points < hexbeam.n_points
 
 
-def test_merge():
-    grid = beam.copy()
+def test_merge(hexbeam):
+    grid = hexbeam.copy()
     grid.points[:, 0] += 1
-    unmerged = grid.merge(beam, inplace=False, merge_points=False)
+    unmerged = grid.merge(hexbeam, inplace=False, merge_points=False)
 
-    grid.merge(beam, inplace=True, merge_points=True)
-    assert grid.n_points > beam.n_points
+    grid.merge(hexbeam, inplace=True, merge_points=True)
+    assert grid.n_points > hexbeam.n_points
     assert grid.n_points < unmerged.n_points
 
 
-def test_merge_not_main():
-    grid = beam.copy()
+def test_merge_not_main(hexbeam):
+    grid = hexbeam.copy()
     grid.points[:, 0] += 1
-    unmerged = grid.merge(beam, inplace=False, merge_points=False,
+    unmerged = grid.merge(hexbeam, inplace=False, merge_points=False,
                           main_has_priority=False)
 
-    grid.merge(beam, inplace=True, merge_points=True)
-    assert grid.n_points > beam.n_points
+    grid.merge(hexbeam, inplace=True, merge_points=True)
+    assert grid.n_points > hexbeam.n_points
     assert grid.n_points < unmerged.n_points
 
 
-def test_merge_list():
-    grid_a = beam.copy()
+def test_merge_list(hexbeam):
+    grid_a = hexbeam.copy()
     grid_a.points[:, 0] += 1
 
-    grid_b = beam.copy()
+    grid_b = hexbeam.copy()
     grid_b.points[:, 1] += 1
 
-    grid_a.merge([beam, grid_b], inplace=True, merge_points=True)
-    assert grid_a.n_points > beam.n_points
+    grid_a.merge([hexbeam, grid_b], inplace=True, merge_points=True)
+    assert grid_a.n_points > hexbeam.n_points
 
 
-def test_init_structured():
+def test_init_structured(struct_grid):
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 2)
     zrng = np.arange(-10, 10, 2)
     x, y, z = np.meshgrid(xrng, yrng, zrng)
     grid = pyvista.StructuredGrid(x, y, z)
-    assert np.allclose(sgrid.x, x)
-    assert np.allclose(sgrid.y, y)
-    assert np.allclose(sgrid.z, z)
+    assert np.allclose(struct_grid.x, x)
+    assert np.allclose(struct_grid.y, y)
+    assert np.allclose(struct_grid.z, z)
 
     grid_a = pyvista.StructuredGrid(grid)
     assert np.allclose(grid_a.points, grid.points)
@@ -221,20 +215,20 @@ def test_invalid_init_structured():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vts', 'vtk'])
-def test_save_structured(extension, binary, tmpdir):
+@pytest.mark.parametrize('extension', pyvista.pointset.STRUCTUREDGRID_WRITERS)
+def test_save_structured(extension, binary, tmpdir, struct_grid):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
-    sgrid.save(filename, binary)
+    struct_grid.save(filename, binary)
 
     grid = pyvista.StructuredGrid(filename)
-    assert grid.x.shape == sgrid.y.shape
+    assert grid.x.shape == struct_grid.y.shape
     assert grid.n_cells
-    assert grid.points.shape == sgrid.points.shape
+    assert grid.points.shape == struct_grid.points.shape
 
     grid = pyvista.read(filename)
-    assert grid.x.shape == sgrid.y.shape
+    assert grid.x.shape == struct_grid.y.shape
     assert grid.n_cells
-    assert grid.points.shape == sgrid.points.shape
+    assert grid.points.shape == struct_grid.points.shape
     assert isinstance(grid, pyvista.StructuredGrid)
 
 
@@ -385,7 +379,7 @@ def test_cast_uniform_to_rectilinear():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtr', 'vtk'])
+@pytest.mark.parametrize('extension', pyvista.core.grid.RECTILINEARGRID_READERS)
 def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_rectilinear()
@@ -405,7 +399,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
     assert grid.dimensions == ogrid.dimensions
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vti', 'vtk'])
+@pytest.mark.parametrize('extension', pyvista.core.grid.IMAGEDATA_READERS)
 def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_uniform()
@@ -458,8 +452,8 @@ def test_grid_points():
     assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
 
 
-def test_grid_extract_selection_points():
-    grid = pyvista.UnstructuredGrid(sgrid)
+def test_grid_extract_selection_points(struct_grid):
+    grid = pyvista.UnstructuredGrid(struct_grid)
     sub_grid = grid.extract_selection_points([0])
     assert sub_grid.n_cells == 1
 
@@ -467,7 +461,7 @@ def test_grid_extract_selection_points():
     assert sub_grid.n_cells > 1
 
 
-def test_gaussian_smooth():
+def test_gaussian_smooth(hexbeam):
     uniform = examples.load_uniform()
     active = uniform.active_scalars_name
     values = uniform.active_scalars
@@ -485,31 +479,31 @@ def test_gaussian_smooth():
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10),
-                                 np.ones(beam.n_cells, np.bool)])
-def test_remove_cells(ind):
-    grid_copy = beam.copy()
+                                 HEXBEAM_CELLS_BOOL])
+def test_remove_cells(ind, hexbeam):
+    grid_copy = hexbeam.copy()
     grid_copy.remove_cells(ind)
-    assert grid_copy.n_cells < beam.n_cells
+    assert grid_copy.n_cells < hexbeam.n_cells
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10),
-                                 np.ones(beam.n_cells, np.bool)])
-def test_remove_cells_not_inplace(ind):
-    grid_copy = beam.copy()  # copy to protect
+                                 HEXBEAM_CELLS_BOOL])
+def test_remove_cells_not_inplace(ind, hexbeam):
+    grid_copy = hexbeam.copy()  # copy to protect
     grid_w_removed = grid_copy.remove_cells(ind, inplace=False)
-    assert grid_w_removed.n_cells < beam.n_cells
-    assert grid_copy.n_cells == beam.n_cells
+    assert grid_w_removed.n_cells < hexbeam.n_cells
+    assert grid_copy.n_cells == hexbeam.n_cells
 
 
-def test_remove_cells_invalid():
-    grid_copy = beam.copy()
+def test_remove_cells_invalid(hexbeam):
+    grid_copy = hexbeam.copy()
     with pytest.raises(ValueError):
         grid_copy.remove_cells(np.ones(10, np.bool))
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10),
-                                 np.ones(sgrid.n_cells, np.bool)])
-def test_hide_cells(ind):
-    sgrid_copy = sgrid.copy()
+                                 STRUCTGRID_CELLS_BOOL])
+def test_hide_cells(ind, struct_grid):
+    sgrid_copy = struct_grid.copy()
     sgrid_copy.hide_cells(ind)
     assert sgrid_copy.HasAnyBlankCells()

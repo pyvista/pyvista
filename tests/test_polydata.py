@@ -167,7 +167,7 @@ def test_invalid_file():
     with pytest.raises(Exception):
         mesh = pyvista.PolyData('file.bad')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         filename = os.path.join(test_path, 'test_polydata.py')
         mesh = pyvista.PolyData(filename)
 
@@ -295,7 +295,7 @@ def test_invalid_curvature():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['stl', 'vtk', 'ply', 'vtp'])
+@pytest.mark.parametrize('extension', pyvista.core.pointset.POLYDATA_WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
