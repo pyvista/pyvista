@@ -1,10 +1,10 @@
-from string import ascii_letters, digits, whitespace
 import sys
+from string import ascii_letters, digits, whitespace
 
-from hypothesis import given, settings
-from hypothesis.strategies import integers, lists, text
-from hypothesis.extra.numpy import arrays
 import numpy as np
+from hypothesis import given, settings
+from hypothesis.extra.numpy import arrays
+from hypothesis.strategies import integers, lists, text
 from pytest import fixture, mark, raises
 
 import pyvista

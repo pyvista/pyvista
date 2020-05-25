@@ -1,10 +1,10 @@
 """Supporting functions for polydata and grid objects."""
 
-import signal
 import collections
 import ctypes
 import enum
 import logging
+import signal
 import warnings
 from threading import Thread
 

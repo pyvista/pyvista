@@ -7,7 +7,6 @@ import warnings
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
@@ -294,9 +293,6 @@ class Common(DataSetFilters, DataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the common object."""
         super().__init__()
-        self.references = []
-        self._point_bool_array_names = []
-        self._cell_bool_array_names = []
 
     @property
     def active_scalars_info(self):

@@ -1,9 +1,9 @@
-from hypothesis import assume, given
-from hypothesis.extra.numpy import arrays, array_shapes
-from hypothesis.strategies import composite, integers, floats, one_of
 import numpy as np
 import pytest
 import vtk
+from hypothesis import assume, given
+from hypothesis.extra.numpy import arrays, array_shapes
+from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
