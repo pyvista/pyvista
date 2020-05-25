@@ -8,7 +8,7 @@ import pyvista
 from pyvista.utilities import try_callback
 
 
-class PickingHelper(object):
+class PickingHelper:
     """An internal class to hold picking related features."""
 
     picked_cells = None

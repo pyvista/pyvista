@@ -2535,7 +2535,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def close(self):
         """Close the render window."""
         # must close out widgets first
-        super(BasePlotter, self).close()
+        super().close()
         # Renderer has an axes widget, so close it
         for renderer in self.renderers:
             renderer.close()
@@ -3648,11 +3648,11 @@ class Plotter(BasePlotter):
                  point_smoothing=False, polygon_smoothing=False,
                  splitting_position=None, title=None):
         """Initialize a vtk plotting object."""
-        super(Plotter, self).__init__(shape=shape, border=border,
-                                      border_color=border_color,
-                                      border_width=border_width,
-                                      splitting_position=splitting_position,
-                                      title=title)
+        super().__init__(shape=shape, border=border,
+                         border_color=border_color,
+                         border_width=border_width,
+                         splitting_position=splitting_position,
+                         title=title)
         log.debug('Initializing')
 
         def on_timer(iren, event_id):

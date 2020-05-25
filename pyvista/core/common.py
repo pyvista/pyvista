@@ -4,7 +4,6 @@ import collections
 import logging
 import os
 import warnings
-from abc import abstractmethod
 
 import numpy as np
 import vtk
@@ -23,8 +22,11 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class DataObject(object):
+class DataObject:
     """Methods common to all wrapped data objects."""
+
+    _READERS = None
+    _WRITERS = None
 
     def __init__(self, *args, **kwargs):
         """Initialize the data object."""
@@ -38,26 +40,6 @@ class DataObject(object):
         if cls is DataObject:
             raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
         return object.__new__(cls, *args, **kwargs)
-
-    @property
-    @abstractmethod
-    def _vtk_writers(self): # pragma: no cover
-        """Return dict of {file extension: vtkWriter}.
-
-        This is used to select a valid vtk writer for a given file extension. eg:
-        {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
-        """
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def _vtk_readers(self): # pragma: no cover
-        """Return dict of {file extension: vtkReader}.
-
-        This is used to select a valid vtk reader for a given file extension. eg:
-        {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
-        """
-        raise NotImplementedError
 
     def shallow_copy(self, to_copy):
         """Shallow copy the given mesh to this mesh."""
@@ -81,17 +63,22 @@ class DataObject(object):
         Binary files load much faster than ASCII.
 
         """
+        if self._READERS is None:
+            raise NotImplementedError('{} readers are not specified, this should be a' \
+                                      ' dict of (file extension: vtkReader type)'
+                                      .format(self.__class__.__name__))
+
         filename = os.path.abspath(os.path.expanduser(filename))
         if not os.path.isfile(filename):
             raise FileNotFoundError('File %s does not exist' % filename)
 
         file_ext = fileio.get_ext(filename)
-        if file_ext not in self._vtk_readers:
-            keys_list = ', '.join(self._vtk_readers.keys())
+        if file_ext not in self._READERS:
+            keys_list = ', '.join(self._READERS.keys())
             raise ValueError('Invalid file extension for {}({}). Must be one of: {}'.format(
                 self.__class__.__name__, file_ext, keys_list))
 
-        reader = self._vtk_readers[file_ext]()
+        reader = self._READERS[file_ext]()
         reader.SetFileName(filename)
         reader.Update()
         self.shallow_copy(reader.GetOutput())
@@ -114,13 +101,18 @@ class DataObject(object):
         file size.
 
         """
+        if self._WRITERS is None:
+            raise NotImplementedError('{} writers are not specified, this should be a' \
+                                      ' dict of (file extension: vtkWriter type)'
+                                      .format(self.__class__.__name__))
+
         filename = os.path.abspath(os.path.expanduser(filename))
         file_ext = fileio.get_ext(filename)
-        if file_ext not in self._vtk_writers:
+        if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
-                self._vtk_writers.keys()))
+                self._WRITERS.keys()))
 
-        writer = self._vtk_writers[file_ext]()
+        writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
         writer.SetFileName(filename)
         writer.SetInputData(self)
@@ -301,7 +293,7 @@ class Common(DataSetFilters, DataObject):
 
     def __init__(self, *args, **kwargs):
         """Initialize the common object."""
-        super(Common, self).__init__()
+        super().__init__()
 
     @property
     def active_scalars_info(self):
