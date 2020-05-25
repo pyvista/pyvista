@@ -292,8 +292,8 @@ class Common(DataSetFilters, DataObject):
         # rare error where scalars name isn't a valid scalar
         if name not in self.point_arrays.keys() + self.cell_arrays.keys():
             if name in self.field_arrays:
-                raise RuntimeError('Field arrays cannot be made active. '
-                                   'Convert to point/cell arrays if possible.')
+                raise ValueError('Field arrays cannot be made active. '
+                                 'Convert to point/cell arrays if possible.')
             else:
                 name = None
 
