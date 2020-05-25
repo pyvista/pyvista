@@ -180,7 +180,6 @@ jobs:
   - powershell: |
       $PIP_CACHE_PATH = (pip cache dir) | Out-String
       echo "##vso[task.setvariable variable=PIP_CACHE_PATH]$PIP_CACHE_PATH"
-      echo $(PIP_CACHE_PATH)
       PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
       echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
     displayName: 'Store pip cache path and pyvista version'
