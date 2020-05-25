@@ -9,7 +9,6 @@ from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
 test_path = os.path.dirname(os.path.abspath(__file__))
-test_data_path = os.path.join(test_path, 'test_data')
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
@@ -467,10 +466,10 @@ def test_grid_points():
 
 def test_grid_extract_selection_points(struct_grid):
     grid = pyvista.UnstructuredGrid(struct_grid)
-    sub_grid = grid.extract_selection_points([0])
+    sub_grid = grid.extract_points([0])
     assert sub_grid.n_cells == 1
 
-    sub_grid = grid.extract_selection_points(range(100))
+    sub_grid = grid.extract_points(range(100))
     assert sub_grid.n_cells > 1
 
 

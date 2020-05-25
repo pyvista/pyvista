@@ -639,8 +639,7 @@ def test_extrude():
     assert arc.n_points != n_points_old
 
 
-def test_flip_normals():
-    sphere = SPHERE.copy()
+def test_flip_normals(sphere):
     sphere.compute_normals(inplace=True)
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
