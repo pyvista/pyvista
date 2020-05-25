@@ -78,7 +78,7 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
-      pytest -v --cov pyvista --cov-report html -n 2
+      pytest -v --cov pyvista --cov-report html
     displayName: 'Test Core API'
 
   - script: |
@@ -143,7 +143,7 @@ jobs:
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
-        pytest -v --cov pyvista --cov-report html -n 2
+        pytest -v --cov pyvista --cov-report html
       displayName: 'Test Core API against VTK'
 
     - script: |
@@ -178,6 +178,18 @@ jobs:
       architecture: $(PYTHON_ARCH)
       addToPath: true
   - powershell: |
+      $PIP_CACHE_PATH = (pip cache dir) | Out-String
+      echo "##vso[task.setvariable variable=PIP_CACHE_PATH]$PIP_CACHE_PATH"
+      echo $(PIP_CACHE_PATH)
+      PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+      echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+    displayName: 'Store pip cache path and pyvista version'
+  - task: Cache@2
+    inputs:
+      key: 'PIP_CACHE | $(Agent.OS) | "$(PYTHON_VERSION)" | "$(PYVISTA_VERSION)"'
+      path: $(PIP_CACHE_PATH)
+    displayName: Pip cache
+  - powershell: |
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
       $PSDefaultParameterValues['*:ErrorAction']='Stop'
@@ -192,7 +204,7 @@ jobs:
       pip install -r requirements_test.txt
     displayName: 'Install test dependencies'
   - script: |
-      python -m pytest --cov -v . -n 2
+      python -m pytest --cov -v .
     displayName: 'Run Tests'
 
   # don't run job on no-ci builds
@@ -224,7 +236,10 @@ jobs:
 
     - script: |
         python -m pip install -r requirements_test.txt
-        python -m pip install pytest-azurepipelines
+        python -m pip install pytest-azurepipelines pytest-xdist
+      displayName: 'Install test dependencies'
+
+    - script: |
         python -m pytest -v --cov pyvista --cov-report html --durations=0 -n 2
       displayName: 'Run Tests'
 

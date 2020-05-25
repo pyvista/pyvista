@@ -2,7 +2,6 @@ matplotlib
 pytest
 pytest-cov
 pytest-memprof
-pytest-xdist
 codecov
 imageio>=2.5.0
 imageio-ffmpeg
