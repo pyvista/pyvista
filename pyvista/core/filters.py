@@ -28,13 +28,13 @@ from functools import wraps
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
+from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
                                wrap, ProgressMonitor)
-
+from pyvista.core.cells import numpy_to_idarr
 
 def _update_alg(alg, progress_bar=False, message=''):
     """Update an algorithm with or without a progress bar."""
@@ -1816,25 +1816,11 @@ class DataSetFilters:
             Subselected grid
 
         """
-        if not isinstance(ind, np.ndarray):
-            ind = np.array(ind, np.ndarray)
-
-        if ind.dtype == np.bool:
-            ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
-
-        if ind.dtype != pyvista.ID_TYPE:
-            ind = ind.astype(pyvista.ID_TYPE)
-
-        if not ind.flags.c_contiguous:
-            ind = np.ascontiguousarray(ind)
-
-        vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=False)
-
         # Create selection objects
         selectionNode = vtk.vtkSelectionNode()
         selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
         selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(vtk_ind)
+        selectionNode.SetSelectionList(numpy_to_idarr(ind))
 
         selection = vtk.vtkSelection()
         selection.AddNode(selectionNode)
@@ -1867,24 +1853,11 @@ class DataSetFilters:
             Subselected grid.
 
         """
-        try:
-            ind = np.array(ind)
-        except:
-            raise Exception('indices must be either a mask, array, list, or iterable')
-
-        # Convert to vtk indices
-        if ind.dtype == np.bool:
-            ind = ind.nonzero()[0]
-
-        if ind.dtype != np.int64:
-            ind = ind.astype(np.int64)
-        vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=True)
-
         # Create selection objects
         selectionNode = vtk.vtkSelectionNode()
         selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
         selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(vtk_ind)
+        selectionNode.SetSelectionList(numpy_to_idarr(ind))
         selectionNode.GetProperties().Set(vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
 
         selection = vtk.vtkSelection()
