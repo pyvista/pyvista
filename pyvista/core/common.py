@@ -290,13 +290,12 @@ class Common(DataSetFilters, DataObject):
         field, name = self._active_scalars_info
 
         # rare error where scalars name isn't a valid scalar
-        if name not in self.point_arrays:
-            if name not in self.cell_arrays:
-                if name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. '
-                                       'Convert to point/cell arrays if possible.')
-                else:
-                    name = None
+        if name not in self.point_arrays.keys() + self.cell_arrays.keys():
+            if name in self.field_arrays:
+                raise RuntimeError('Field arrays cannot be made active. '
+                                   'Convert to point/cell arrays if possible.')
+            else:
+                name = None
 
         exclude = ['__custom_rgba', 'Normals', 'vtkOriginalPointIds',
                    'TCoords']
