@@ -10,23 +10,22 @@ from threading import Thread
 
 import imageio
 import numpy as np
+import scooby
 import vtk
 from vtk.util import numpy_support as VN
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-import scooby
 from pyvista.utilities import (assert_empty_kwargs,
                                convert_array, convert_string_array, get_array,
                                is_pyvista_dataset, numpy_to_texture,
                                raise_not_matching, try_callback, wrap)
-
+from .background_renderer import BackgroundRenderer
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer
-from .background_renderer import BackgroundRenderer
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function

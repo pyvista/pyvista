@@ -1,7 +1,7 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import warnings
 import logging
 import os
+import warnings
 
 import numpy as np
 import vtk
@@ -15,7 +15,6 @@ from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
                                     vtk_to_numpy)
 
 import pyvista
-
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
 from ..utilities.fileio import get_ext

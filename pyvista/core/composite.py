@@ -5,7 +5,6 @@ to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections
 import logging
-import os
 
 import numpy as np
 import vtk
@@ -13,7 +12,6 @@ from vtk import vtkMultiBlockDataSet
 
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
-
 from .common import DataObject
 from .filters import CompositeFilters
 

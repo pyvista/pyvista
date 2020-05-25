@@ -8,7 +8,6 @@ from abc import abstractmethod
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
