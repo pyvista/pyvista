@@ -633,7 +633,7 @@ def threaded(fn):
     return wrapper
 
 
-class conditional_decorator(object):
+class conditional_decorator:
     """Conditional decorator for methods."""
 
     def __init__(self, dec, condition):

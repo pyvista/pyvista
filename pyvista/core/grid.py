@@ -16,16 +16,6 @@ from .filters import _get_output, UniformGridFilters
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-RECTILINEARGRID_READERS = {'.vtk': vtk.vtkRectilinearGridReader,
-                           '.vtr': vtk.vtkXMLRectilinearGridReader}
-RECTILINEARGRID_WRITERS = {'.vtk': vtk.vtkRectilinearGridWriter,
-                           '.vtr': vtk.vtkXMLRectilinearGridWriter}
-
-IMAGEDATA_READERS = {'.vtk': vtk.vtkDataSetReader,
-                     '.vti': vtk.vtkXMLImageDataReader}
-IMAGEDATA_WRITERS = {'.vtk': vtk.vtkDataSetWriter,
-                     '.vti': vtk.vtkXMLImageDataWriter}
-
 
 class Grid(Common):
     """A class full of common methods for non-pointset grids."""
@@ -38,7 +28,7 @@ class Grid(Common):
 
     def __init__(self, *args, **kwargs):
         """Initialize the grid."""
-        super(Grid, self).__init__()
+        super().__init__()
 
     @property
     def dimensions(self):
@@ -97,9 +87,12 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     """
 
+    _READERS = {'.vtk': vtk.vtkRectilinearGridReader, '.vtr': vtk.vtkXMLRectilinearGridReader}
+    _WRITERS = {'.vtk': vtk.vtkRectilinearGridWriter, '.vtr': vtk.vtkXMLRectilinearGridWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the rectilinear grid."""
-        super(RectilinearGrid, self).__init__()
+        super().__init__()
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkRectilinearGrid):
@@ -133,14 +126,6 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
     def __str__(self):
         """Return the str representation."""
         return Common.__str__(self)
-
-    @property
-    def _vtk_readers(self):
-        return RECTILINEARGRID_READERS
-
-    @property
-    def _vtk_writers(self):
-        return RECTILINEARGRID_WRITERS
 
     def _update_dimensions(self):
         """Update the dimensions if coordinates have changed."""
@@ -296,9 +281,12 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     """
 
+    _READERS = {'.vtk': vtk.vtkDataSetReader, '.vti': vtk.vtkXMLImageDataReader}
+    _WRITERS = {'.vtk': vtk.vtkDataSetWriter, '.vti': vtk.vtkXMLImageDataWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the uniform grid."""
-        super(UniformGrid, self).__init__()
+        super().__init__()
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkImageData):
@@ -330,14 +318,6 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
     def __str__(self):
         """Return the default str representation."""
         return Common.__str__(self)
-
-    @property
-    def _vtk_readers(self):
-        return IMAGEDATA_READERS
-
-    @property
-    def _vtk_writers(self):
-        return IMAGEDATA_WRITERS
 
     def _from_specs(self, dims, spacing=(1.0,1.0,1.0), origin=(0.0, 0.0, 0.0)):
         """Create VTK image data directly from numpy arrays.

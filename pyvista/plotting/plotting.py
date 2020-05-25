@@ -55,7 +55,7 @@ log.setLevel('CRITICAL')
 
 
 class BasePlotter(PickingHelper, WidgetHelper):
-    """To be used by the Plotter and QtInteractor classes.
+    """To be used by the Plotter and pyvistaqt.QtInteractor classes.
 
     Parameters
     ----------
@@ -2535,7 +2535,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def close(self):
         """Close the render window."""
         # must close out widgets first
-        super(BasePlotter, self).close()
+        super().close()
         # Renderer has an axes widget, so close it
         for renderer in self.renderers:
             renderer.close()
@@ -3414,7 +3414,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.iren.FlyTo(self.renderer, *point)
 
     def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
-                      bkg=True, write_frames=False):
+                      write_frames=False, threaded=False):
         """Orbit on the given path focusing on the focus point.
 
         Parameters
@@ -3435,6 +3435,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         write_frames : bool
             Assume a file is open and write a frame on each camera view during
             the orbit.
+
+        threaded : bool, optional
+            Run this as a background thread.  Generally used within a
+            GUI (i.e. PyQt).
 
         """
         if focus is None:
@@ -3458,17 +3462,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.set_viewup(viewup)
                 self.renderer.ResetCameraClippingRange()
                 self.render()
-                if bkg:
-                    time.sleep(step)
+                time.sleep(step)
                 if write_frames:
                     self.write_frame()
 
-        if bkg and isinstance(self, pyvista.BackgroundPlotter):
+        if threaded:
             thread = Thread(target=orbit)
             thread.start()
         else:
-            bkg = False
             orbit()
+
         return
 
     def export_vtkjs(self, filename, compress_arrays=False):
@@ -3645,11 +3648,11 @@ class Plotter(BasePlotter):
                  point_smoothing=False, polygon_smoothing=False,
                  splitting_position=None, title=None):
         """Initialize a vtk plotting object."""
-        super(Plotter, self).__init__(shape=shape, border=border,
-                                      border_color=border_color,
-                                      border_width=border_width,
-                                      splitting_position=splitting_position,
-                                      title=title)
+        super().__init__(shape=shape, border=border,
+                         border_color=border_color,
+                         border_width=border_width,
+                         splitting_position=splitting_position,
+                         title=title)
         log.debug('Initializing')
 
         def on_timer(iren, event_id):

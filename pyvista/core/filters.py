@@ -57,7 +57,7 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
     return data
 
 
-class DataSetFilters(object):
+class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
     def __new__(cls, *args, **kwargs):
@@ -2217,7 +2217,7 @@ class DataSetFilters(object):
         return _get_output(alg)
 
 
-class CompositeFilters(object):
+class CompositeFilters:
     """An internal class to manage filtes/algorithms for composite datasets."""
 
     def __new__(cls, *args, **kwargs):
