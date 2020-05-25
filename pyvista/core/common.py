@@ -262,7 +262,7 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
 
-ActiveInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
+ActiveArrayInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
 
 
 class Common(DataSetFilters, DataObject):
@@ -280,9 +280,9 @@ class Common(DataSetFilters, DataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the common object."""
         super().__init__()
-        self._active_scalars_info = ActiveInfo(association=FieldAssociation.NONE, name=None)
+        self._active_scalars_info = ActiveArrayInfo(association=FieldAssociation.NONE, name=None)
         self._last_active_scalars_name = None
-        self._active_vectors_info = ActiveInfo(association=FieldAssociation.NONE, name=None)
+        self._active_vectors_info = ActiveArrayInfo(association=FieldAssociation.NONE, name=None)
 
     @property
     def active_scalars_info(self):
@@ -299,7 +299,7 @@ class Common(DataSetFilters, DataObject):
             for attributes in (self.point_arrays, self.cell_arrays):
                 first_arr = next((arr for arr in attributes if arr not in exclude), None)
                 if first_arr is not None:
-                    self._active_scalars_info = ActiveInfo(attributes.association, first_arr)
+                    self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
                     attributes.active_scalars = first_arr
                     break
         return self._active_scalars_info
@@ -321,7 +321,7 @@ class Common(DataSetFilters, DataObject):
             if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
             else:
-                self._active_vectors_info = ActiveInfo(FieldAssociation.POINT, None) # field and name
+                self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, None) # field and name
         _, name = self._active_vectors_info
 
         return self._active_vectors_info
@@ -516,7 +516,7 @@ class Common(DataSetFilters, DataObject):
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
-        self._active_scalars_info = ActiveInfo(field, name)
+        self._active_scalars_info = ActiveArrayInfo(field, name)
 
     def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
         """Find the scalars by name and appropriately sets it as active.
@@ -543,7 +543,7 @@ class Common(DataSetFilters, DataObject):
             self.GetCellData().SetActiveVectors(name)
         else:
             raise ValueError('Data field ({}) not usable'.format(field))
-        self._active_vectors_info = ActiveInfo(field, name)
+        self._active_vectors_info = ActiveArrayInfo(field, name)
 
     def rename_array(self, old_name, new_name, preference='cell'):
         """Change array name by searching for the array then renaming it."""
@@ -612,7 +612,7 @@ class Common(DataSetFilters, DataObject):
         self.point_arrays.append(scalars, name, deep_copy=deep)
         if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
-            self._active_scalars_info = ActiveInfo(FieldAssociation.POINT, name)
+            self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name)
 
     def _add_point_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add points array.
@@ -754,7 +754,7 @@ class Common(DataSetFilters, DataObject):
         self.cell_arrays.append(scalars, name, deep_copy=deep)
         if set_active or self.active_scalars_info.name is None:
             self.GetCellData().SetActiveScalars(name)
-            self._active_scalars_info = ActiveInfo(FieldAssociation.CELL, name)
+            self._active_scalars_info = ActiveArrayInfo(FieldAssociation.CELL, name)
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add a cell array.
