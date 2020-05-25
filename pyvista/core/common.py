@@ -304,7 +304,7 @@ class Common(DataSetFilters, DataObject):
             name = self._last_active_scalars_name
 
         if name is None:
-            if self.n_arrays < 1:
+            if self.n_arrays == 0:
                 return ActiveInfo(field, name)
             # find some array in the set field
             parr = next((arr for arr in self.point_arrays if arr not in exclude), None)
