@@ -314,7 +314,7 @@ class Common(DataSetFilters, DataObject):
 
         if name is None:
             if self.n_arrays < 1:
-                return field, name
+                return ActiveInfo(field, name)
             # find some array in the set field
             parr = search_for_array(self.GetPointData())
             carr = search_for_array(self.GetCellData())
@@ -548,7 +548,7 @@ class Common(DataSetFilters, DataObject):
             self.GetCellData().SetActiveScalars(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
-        self._active_scalars_info = [field, name]
+        self._active_scalars_info = ActiveInfo(field, name)
 
     def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
         """Find the scalars by name and appropriately sets it as active.
@@ -646,7 +646,7 @@ class Common(DataSetFilters, DataObject):
         self.point_arrays.append(scalars, name, deep_copy=deep)
         if set_active or self.active_scalars_info[1] is None:
             self.GetPointData().SetActiveScalars(name)
-            self._active_scalars_info = [FieldAssociation.POINT, name]
+            self._active_scalars_info = ActiveInfo(FieldAssociation.POINT, name)
 
     def _add_point_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add points array.
@@ -786,9 +786,9 @@ class Common(DataSetFilters, DataObject):
 
         """
         self.cell_arrays.append(scalars, name, deep_copy=deep)
-        if set_active or self.active_scalars_info[1] is None:
+        if set_active or self.active_scalars_info.name is None:
             self.GetCellData().SetActiveScalars(name)
-            self._active_scalars_info = [FieldAssociation.CELL, name]
+            self._active_scalars_info = ActiveInfo(FieldAssociation.CELL, name)
 
     def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
         """Add a cell array.
