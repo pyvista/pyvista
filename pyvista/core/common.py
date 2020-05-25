@@ -372,7 +372,7 @@ class Common(DataSetFilters, DataObject):
     @property
     def active_vectors_name(self):
         """Return the name of the active vectors array."""
-        return self.active_vectors_info[1]
+        return self.active_vectors_info.name
 
     @active_vectors_name.setter
     def active_vectors_name(self, name):
@@ -382,7 +382,7 @@ class Common(DataSetFilters, DataObject):
     @property
     def active_scalars_name(self):
         """Return the active scalar's name."""
-        return self.active_scalars_info[1]
+        return self.active_scalars_info.name
 
     @active_scalars_name.setter
     def active_scalars_name(self, name):
@@ -542,7 +542,7 @@ class Common(DataSetFilters, DataObject):
             self.GetPointData().SetActiveScalars(None)
             return
         _, field = get_array(self, name, preference=preference, info=True)
-        self._last_active_scalars_name = self.active_scalars_info[1]
+        self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
             self.GetPointData().SetActiveScalars(name)
         elif field == FieldAssociation.CELL:
@@ -921,7 +921,7 @@ class Common(DataSetFilters, DataObject):
     def __getitem__(self, index):
         """Search both point, cell, and field data for an array."""
         if isinstance(index, collections.Iterable) and not isinstance(index, str):
-            name, preference = index[0], index[1]
+            name, preference = index
         elif isinstance(index, str):
             name = index
             preference = 'cell'
