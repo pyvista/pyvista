@@ -282,7 +282,7 @@ class Common(DataSetFilters, DataObject):
         super().__init__()
         self._active_scalars_info = ActiveArrayInfo(association=FieldAssociation.NONE, name=None)
         self._last_active_scalars_name = None
-        self._active_vectors_info = ActiveArrayInfo(association=FieldAssociation.NONE, name=None)
+        self._active_vectors_info = ActiveArrayInfo(association=FieldAssociation.POINT, name=None)
 
     @property
     def active_scalars_info(self):
