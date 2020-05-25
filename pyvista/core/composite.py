@@ -5,6 +5,7 @@ to VTK algorithms and PyVista filtering/plotting routines.
 """
 import collections
 import logging
+from typing import List
 
 import numpy as np
 import vtk
@@ -135,28 +136,28 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         return bounds
 
     @property
-    def center(self):
+    def center(self) -> np.ndarray:
         """Return the center of the bounding box."""
         return np.array(self.bounds).reshape(3,2).mean(axis=1)
 
     @property
-    def length(self):
+    def length(self) -> float:
         """Return the length of the diagonal of the bounding box."""
         return pyvista.Box(self.bounds).length
 
     @property
-    def n_blocks(self):
+    def n_blocks(self) -> int:
         """Return the total number of blocks set."""
         return self.GetNumberOfBlocks()
 
     @n_blocks.setter
-    def n_blocks(self, n):
+    def n_blocks(self, n: int) :
         """Return the total number of blocks set."""
         self.SetNumberOfBlocks(n)
         self.Modified()
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """Return the total volume of all meshes in this dataset.
 
         Return
@@ -190,14 +191,14 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 maxi = tma
         return mini, maxi
 
-    def get_index_by_name(self, name):
+    def get_index_by_name(self, name) -> int:
         """Find the index number by block name."""
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
         raise KeyError('Block name ({}) not found'.format(name))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> 'pyvista.MultiBlock':
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -241,7 +242,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         self[index] = data
         self.refs.append(data)
 
-    def get(self, index):
+    def get(self, index: [int, str]) -> 'pyvista.MultiBlock':
         """Get a block by its index or name.
 
         If the name is non-unique then returns the first occurrence.
@@ -249,21 +250,21 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         """
         return self[index]
 
-    def set_block_name(self, index, name):
+    def set_block_name(self, index: int, name: str):
         """Set a block's string name at the specified index."""
         if name is None:
             return
         self.GetMetaData(index).Set(vtk.vtkCompositeDataSet.NAME(), name)
         self.Modified()
 
-    def get_block_name(self, index):
+    def get_block_name(self, index: int):
         """Return the string name of the block at the given index."""
         meta = self.GetMetaData(index)
         if meta is not None:
             return meta.Get(vtk.vtkCompositeDataSet.NAME())
         return None
 
-    def keys(self):
+    def keys(self) -> List[str]:
         """Get all the block names in the dataset."""
         names = []
         for i in range(self.n_blocks):
@@ -334,7 +335,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     __next__ = next
 
-    def pop(self, index):
+    def pop(self, index: int) -> 'pyvista.MultiBlock':
         """Pop off a block at the specified index."""
         data = self[index]
         del self[index]

@@ -162,7 +162,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         self._update_dimensions()
 
     @property
-    def meshgrid(self):
+    def meshgrid(self) -> np.meshgrid:
         """Return the a meshgrid of numpy arrays for this mesh.
 
         This simply returns a ``numpy.meshgrid`` of the coordinates for this
@@ -172,13 +172,13 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
     @property
-    def points(self):
+    def points(self) -> np.ndarray:
         """Return all of the points as an n by 3 numpy array."""
         xx, yy, zz = self.meshgrid
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
-    def points(self, points):
+    def points(self, points: np.ndarray):
         """Set points without copying."""
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
@@ -192,36 +192,36 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         self.Modified()
 
     @property
-    def x(self):
+    def x(self) -> np.ndarray:
         """Get the coordinates along the X-direction."""
         return vtk_to_numpy(self.GetXCoordinates())
 
     @x.setter
-    def x(self, coords):
+    def x(self, coords: np.ndarray):
         """Set the coordinates along the X-direction."""
         self.SetXCoordinates(numpy_to_vtk(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
-    def y(self):
+    def y(self) -> np.ndarray:
         """Get the coordinates along the Y-direction."""
         return vtk_to_numpy(self.GetYCoordinates())
 
     @y.setter
-    def y(self, coords):
+    def y(self, coords: np.ndarray):
         """Set the coordinates along the Y-direction."""
         self.SetYCoordinates(numpy_to_vtk(coords))
         self._update_dimensions()
         self.Modified()
 
     @property
-    def z(self):
+    def z(self) -> np.ndarray:
         """Get the coordinates along the Z-direction."""
         return vtk_to_numpy(self.GetZCoordinates())
 
     @z.setter
-    def z(self, coords):
+    def z(self, coords: np.ndarray):
         """Set the coordinates along the Z-direction."""
         self.SetZCoordinates(numpy_to_vtk(coords))
         self._update_dimensions()
@@ -344,7 +344,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         self.SetSpacing(xs, ys, zs)
 
     @property
-    def points(self):
+    def points(self) -> np.ndarray:
         """Return a pointer to the points as a numpy object."""
         # Get grid dimensions
         nx, ny, nz = self.dimensions
@@ -362,7 +362,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
-    def points(self, points):
+    def points(self, points: np.ndarray):
         """Set points without copying."""
         if not isinstance(points, np.ndarray):
             raise TypeError('Points must be a numpy array')
@@ -382,17 +382,17 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         self.Modified()
 
     @property
-    def x(self):
+    def x(self) -> np.ndarray:
         """Return all the X points."""
         return self.points[:, 0]
 
     @property
-    def y(self):
+    def y(self) -> np.ndarray:
         """Return all the Y points."""
         return self.points[:, 1]
 
     @property
-    def z(self):
+    def z(self) -> np.ndarray:
         """Return all the Z points."""
         return self.points[:, 2]
 

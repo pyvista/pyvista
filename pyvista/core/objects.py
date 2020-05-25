@@ -4,6 +4,8 @@ The data objects does not have any sort of spatial reference.
 
 """
 
+from typing import Dict, List, Tuple
+
 import numpy as np
 import vtk
 
@@ -74,22 +76,22 @@ class Table(vtk.vtkTable, DataObject):
             self.row_arrays[name] = data_frame[name].values
 
     @property
-    def n_rows(self):
+    def n_rows(self) -> int:
         """Return the number of rows."""
         return self.GetNumberOfRows()
 
     @n_rows.setter
-    def n_rows(self, n):
+    def n_rows(self, n: int):
         """Set the number of rows."""
         self.SetNumberOfRows(n)
 
     @property
-    def n_columns(self):
+    def n_columns(self) -> int:
         """Return the number of columns."""
         return self.GetNumberOfColumns()
 
     @property
-    def n_arrays(self):
+    def n_arrays(self) -> int:
         """Return the number of columns.
 
         Alias for: ``n_columns``.
@@ -114,27 +116,27 @@ class Table(vtk.vtkTable, DataObject):
         return self.row_arrays[name]
 
     @property
-    def row_arrays(self):
+    def row_arrays(self) -> DataSetAttributes:
         """Return the all row arrays."""
         return DataSetAttributes(vtkobject=self.GetRowData(), dataset=self, association=FieldAssociation.ROW)
 
-    def keys(self):
+    def keys(self) -> List[str]:
         """Return the table keys."""
         return self.row_arrays.keys()
 
-    def items(self):
+    def items(self) -> List[Tuple[str, np.ndarray]]:
         """Return the table items."""
         return self.row_arrays.items()
 
-    def values(self):
+    def values(self) -> List[np.ndarray]:
         """Return the table values."""
         return self.row_arrays.values()
 
-    def update(self, data):
+    def update(self, data: [DataSetAttributes, Dict[str, np.ndarray]]):
         """Set the table data."""
         self.row_arrays.update(data)
 
-    def pop(self, name):
+    def pop(self, name: str):
         """Pops off an array by the specified name."""
         return self.row_arrays.pop(name)
 
@@ -156,18 +158,18 @@ class Table(vtk.vtkTable, DataObject):
         """
         self.row_arrays[name] = scalars
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> [np.ndarray, vtk.vtkAbstractArray]:
         """Search row data for an array."""
         return self._row_array(name=index)
 
     def _ipython_key_completions_(self):
         return self.keys()
 
-    def get(self, index):
+    def get(self, index) -> [np.ndarray, vtk.vtkAbstractArray]:
         """Get an array by its name."""
         return self[index]
 
-    def __setitem__(self, name, scalars):
+    def __setitem__(self, name: str, scalars: np.ndarray):
         """Add/set an array in the row_arrays."""
         self.row_arrays[name] = scalars
 
@@ -175,7 +177,7 @@ class Table(vtk.vtkTable, DataObject):
         """Remove a single array by name from each field (internal helper)."""
         self.row_arrays.remove(key)
 
-    def __delitem__(self, name):
+    def __delitem__(self, name: str):
         """Remove an array by the specified name."""
         del self.row_arrays[name]
 
@@ -242,7 +244,7 @@ class Table(vtk.vtkTable, DataObject):
         """Return the object string representation."""
         return self.head(display=False, html=False)
 
-    def to_pandas(self):
+    def to_pandas(self) -> 'pd.DataFrame':
         """Create a Pandas DataFrame from this Table."""
         if pd is None:
             raise ImportError('You must have Pandas installed.')
@@ -332,7 +334,7 @@ class Texture(vtk.vtkTexture):
 
         return self._from_image_data(grid)
 
-    def flip(self, axis):
+    def flip(self, axis: int):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
         if axis < 0 or axis > 1:
             raise RuntimeError("Axis {} out of bounds".format(axis))
@@ -346,7 +348,7 @@ class Texture(vtk.vtkTexture):
         return self.GetInput()
 
     @property
-    def n_components(self):
+    def n_components(self) -> int:
         """Components in the image (e.g. 3 [or 4] for RGB[A])."""
         image = self.to_image()
         return image.active_scalars.shape[1]

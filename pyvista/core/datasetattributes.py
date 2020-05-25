@@ -1,6 +1,7 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
 from collections.abc import Iterable
+from typing import Dict, List, Tuple
 
 import numpy as np
 import vtk
@@ -43,14 +44,14 @@ class DataSetAttributes(VTKObjectWrapper):
                'Contains keys:\n' \
                '\t{}'.format(self.association.name, '\n\t'.join(self.keys()))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: [str, int]) -> [np.ndarray, vtk.vtkAbstractArray]:
         """Implement [] operator.
 
         Accepts an array name or an index.
         """
         return self.get_array(key)
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: [str, int], value: np.ndarray):
         """Implement setting with the [] operator."""
         self.append(narray=value, name=key)
 
@@ -72,7 +73,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return self.VTKObject.GetNumberOfArrays()
 
     @property
-    def active_scalars(self):
+    def active_scalars(self) -> np.ndarray:
         """Return the active scalar array as pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetScalars() is not None:
@@ -85,7 +86,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.SetActiveScalars(name)
 
     @property
-    def active_vectors(self):
+    def active_vectors(self) -> np.ndarray:
         """Return the active vectors as a pyvista_ndarray."""
         self._raise_field_data_no_scalars_vectors()
         if self.GetVectors() is not None:
@@ -98,7 +99,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.SetActiveVectors(name)
 
     @property
-    def valid_array_len(self):
+    def valid_array_len(self) -> int:
         """Return the length an ndarray should be when added to the dataset.
 
         If there are no restrictions, return ``None``
@@ -109,7 +110,7 @@ class DataSetAttributes(VTKObjectWrapper):
             return self.dataset.GetNumberOfCells()
 
     @property
-    def t_coords(self):
+    def t_coords(self) -> np.ndarray:
         """Return the active texture coordinates."""
         t_coords = self.GetTCoords()
         if t_coords is not None:
@@ -132,7 +133,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.SetTCoords(vtkarr)
         self.Modified()
 
-    def get_array(self, key):
+    def get_array(self, key: [str, int]) -> [np.ndarray, vtk.vtkAbstractArray]:
         """Get an array in this object.
 
         Parameters
@@ -237,7 +238,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.AddArray(vtk_arr)
         self.VTKObject.Modified()
 
-    def remove(self, key):
+    def remove(self, key: [str, int]):
         """Remove an array.
 
         Parameters
@@ -254,7 +255,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(self, key):
+    def pop(self, key: [str, int]) -> np.ndarray:
         """Remove an array and return it.
 
         Parameters
@@ -276,11 +277,11 @@ class DataSetAttributes(VTKObjectWrapper):
         self.remove(key)
         return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
-    def items(self):
+    def items(self) -> List[Tuple[str, np.ndarray]]:
         """Return a list of (array name, array value)."""
         return list(zip(self.keys(), self.values()))
 
-    def keys(self):
+    def keys(self) -> List[str]:
         """Return the names of the arrays as a list."""
         keys = []
         for i in range(self.GetNumberOfArrays()):
@@ -289,7 +290,7 @@ class DataSetAttributes(VTKObjectWrapper):
                 keys.append(name)
         return keys
 
-    def values(self):
+    def values(self) -> List[np.ndarray]:
         """Return the arrays as a list."""
         values = []
         for name in self.keys():
@@ -303,7 +304,7 @@ class DataSetAttributes(VTKObjectWrapper):
         for array_name in self.keys():
             self.remove(key=array_name)
 
-    def update(self, array_dict):
+    def update(self, array_dict: ['DataSetAttributes', Dict[str, np.ndarray]]):
         """Update arrays in this object.
 
         For each key, value given, add the pair, if it already exists,
@@ -317,7 +318,7 @@ class DataSetAttributes(VTKObjectWrapper):
         for name, array in array_dict.items():
             self[name] = array.copy()
 
-    def _raise_index_out_of_bounds(self, index):
+    def _raise_index_out_of_bounds(self, index: int):
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int):
             if index < 0 or index >= self.VTKObject.GetNumberOfArrays():

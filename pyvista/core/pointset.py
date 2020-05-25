@@ -2,6 +2,7 @@
 import logging
 import os
 import warnings
+from typing import List
 
 import numpy as np
 import vtk
@@ -31,7 +32,7 @@ class PointSet(Common):
     This holds methods common to PolyData and UnstructuredGrid.
     """
 
-    def center_of_mass(self, scalars_weight=False):
+    def center_of_mass(self, scalars_weight=False) -> np.ndarray:
         """Return the coordinates for the center of mass of the mesh.
 
         Parameters
@@ -58,7 +59,7 @@ class PointSet(Common):
             to_copy.SetPoints(vtk.vtkPoints())
         return Common.shallow_copy(self, to_copy)
 
-    def remove_cells(self, ind, inplace=True):
+    def remove_cells(self, ind: [List[int], List[bool]], inplace=True):
         """Remove cells.
 
         Parameters
@@ -201,12 +202,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return cells
 
     @property
-    def verts(self):
+    def verts(self) -> np.ndarray:
         """Get the vertice cells."""
         return vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
-    def verts(self, verts):
+    def verts(self, verts: np.ndarray):
         """Set the vertice cells."""
         if not isinstance(verts, np.ndarray):
             verts = np.asarray(verts)
@@ -230,12 +231,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         self.SetVerts(vtkcells)
 
     @property
-    def lines(self):
+    def lines(self) -> np.ndarray:
         """Return a pointer to the lines as a numpy object."""
         return vtk_to_numpy(self.GetLines().GetData()).ravel()
 
     @lines.setter
-    def lines(self, lines):
+    def lines(self, lines: np.ndarray):
         """Set the lines of the polydata."""
         if lines.dtype != pyvista.ID_TYPE:
             lines = lines.astype(pyvista.ID_TYPE)
@@ -256,12 +257,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         self.SetLines(vtkcells)
 
     @property
-    def faces(self):
+    def faces(self) -> np.ndarray:
         """Return a pointer to the points as a numpy object."""
         return vtk_to_numpy(self.GetPolys().GetData())
 
     @faces.setter
-    def faces(self, faces):
+    def faces(self, faces: np.ndarray):
         """Set faces without copying."""
         if faces.dtype != pyvista.ID_TYPE:
             faces = faces.astype(pyvista.ID_TYPE)
@@ -292,11 +293,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
     #     return np.ascontiguousarray(lines[:, 1:])
 
-    def is_all_triangles(self):
+    def is_all_triangles(self) -> bool:
         """Return True if all the faces of the polydata are triangles."""
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
 
-    def _from_arrays(self, vertices, faces, deep=True, verts=False):
+    def _from_arrays(self, vertices: np.ndarray, faces, deep=True, verts=False):
         """Set polygons and points from numpy arrays.
 
         Parameters
@@ -357,7 +358,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return self.boolean_cut(cutting_mesh)
 
     @property
-    def n_faces(self):
+    def n_faces(self) -> int:
         """Return the number of cells.
 
         Alias for ``n_cells``.
@@ -366,11 +367,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return self.n_cells
 
     @property
-    def number_of_faces(self):
+    def number_of_faces(self) -> int:
         """Return the number of cells."""
         return self.n_cells
 
-    def save(self, filename, binary=True):
+    def save(self, filename: str, binary=True):
         """Write a surface mesh to disk.
 
         Written file may be an ASCII or binary ply, stl, or vtk mesh
@@ -403,7 +404,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         super().save(filename, binary)
 
     @property
-    def area(self):
+    def area(self) -> float:
         """Return the mesh surface area.
 
         Return
@@ -417,7 +418,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return mprop.GetSurfaceArea()
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """Return the mesh volume.
 
         This will throw a VTK error/warning if not a closed surface
@@ -433,19 +434,19 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return mprop.GetVolume()
 
     @property
-    def point_normals(self):
+    def point_normals(self) -> np.ndarray:
         """Return the point normals."""
         mesh = self.compute_normals(cell_normals=False, inplace=False)
         return mesh.point_arrays['Normals']
 
     @property
-    def cell_normals(self):
+    def cell_normals(self) -> np.ndarray:
         """Return the cell normals."""
         mesh = self.compute_normals(point_normals=False, inplace=False)
         return mesh.cell_arrays['Normals']
 
     @property
-    def face_normals(self):
+    def face_normals(self) -> np.ndarray:
         """Return the cell normals."""
         return self.cell_normals
 
@@ -467,7 +468,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return self._obbTree
 
     @property
-    def n_open_edges(self):
+    def n_open_edges(self) -> int:
         """Return the number of open edges on this mesh."""
         alg = vtk.vtkFeatureEdges()
         alg.FeatureEdgesOff()
@@ -518,7 +519,7 @@ class PointGrid(PointSet):
         return trisurf.plot_curvature(curv_type, **kwargs)
 
     @property
-    def volume(self):
+    def volume(self) -> float:
         """Compute the volume of the point grid.
 
         This extracts the external surface and computes the interior volume
@@ -708,11 +709,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             self.SetCells(cell_type, offset, vtkcells)
 
     @property
-    def cells(self):
+    def cells(self) -> np.ndarray:
         """Return a pointer to the cells as a numpy object."""
         return vtk_to_numpy(self.GetCells().GetData())
 
-    def linear_copy(self, deep=False):
+    def linear_copy(self, deep=False) -> 'UnstructuredGrid':
         """Return a copy of the unstructured grid containing only linear cells.
 
         Converts the following cell types to their linear equivalents.
@@ -775,12 +776,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return lgrid
 
     @property
-    def celltypes(self):
+    def celltypes(self) -> np.ndarray:
         """Get the cell types array."""
         return vtk_to_numpy(self.GetCellTypesArray())
 
     @property
-    def offset(self):
+    def offset(self) -> np.ndarray:
         """Get Cell Locations Array."""
         return vtk_to_numpy(self.GetCellLocationsArray())
 
@@ -894,17 +895,17 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         self.Modified()
 
     @property
-    def x(self):
+    def x(self) -> np.ndarray:
         """Return the X coordinates of all points."""
         return self.points[:, 0].reshape(self.dimensions, order='F')
 
     @property
-    def y(self):
+    def y(self) -> np.ndarray:
         """Return the Y coordinates of all points."""
         return self.points[:, 1].reshape(self.dimensions, order='F')
 
     @property
-    def z(self):
+    def z(self) -> np.ndarray:
         """Return the Z coordinates of all points."""
         return self.points[:, 2].reshape(self.dimensions, order='F')
 
@@ -914,7 +915,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
 
-    def hide_cells(self, ind):
+    def hide_cells(self, ind: [List[int], List[bool]]):
         """Hide cells without deleting them.
 
         Hides cells by setting the ghost_cells array to HIDDEN_CELL.
