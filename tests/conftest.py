@@ -51,3 +51,8 @@ def struct_grid():
 @fixture()
 def plane():
     return pyvista.Plane()
+
+
+@fixture()
+def spline():
+    return examples.load_spline()

@@ -3170,7 +3170,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Check output so no segfaults occur
         if output.n_points < 1:
-            raise AssertionError('Clean tolerance is too high. Empty mesh returned.')
+            raise RuntimeError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
             poly_data.overwrite(output)

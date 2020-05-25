@@ -43,13 +43,6 @@ def test_init_from_pdata():
     assert not np.allclose(sphere.points[0], mesh.points[0])
 
 
-# @pytest.mark.parametrize('filename', test_files)
-# def test_init_from_file(filename):
-#     mesh = pyvista.PolyData(filename)
-#     assert mesh.faces.shape == sphere.faces.shape
-#     assert mesh.points.shape == sphere.points.shape
-
-
 def test_init_from_arrays():
     vertices = np.array([[0, 0, 0],
                          [1, 0, 0],
@@ -182,15 +175,22 @@ def test_geodesic(sphere):
     ids = geodesic.point_arrays["vtkOriginalPointIds"]
     assert np.allclose(geodesic.points, sphere.points[ids])
 
+    # finally, inplace
+    sphere.geodesic(0, sphere.n_points - 1, inplace=True)
+    assert np.allclose(geodesic.points, sphere.points)
+
+
+def test_geodesic_fail(sphere, plane):
+    with pytest.raises(IndexError):
+        sphere.geodesic(-1, -1)
+
+    with pytest.raises(NotAllTrianglesError):
+        plane.geodesic(0, 10)
+
 
 def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
-
-
-def test_geodesic_fail(sphere):
-    with pytest.raises(IndexError):
-        sphere.geodesic(-1, -1)
 
 
 def test_ray_trace():
@@ -417,8 +417,7 @@ def test_clip_plane():
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
 
-def test_extract_largest():
-    sphere = SPHERE.copy()
+def test_extract_largest(sphere):
     mesh = sphere + pyvista.Sphere(0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
     assert largest.n_faces == sphere.n_faces
@@ -427,8 +426,7 @@ def test_extract_largest():
     assert mesh.n_faces == sphere.n_faces
 
 
-def test_clean():
-    sphere = SPHERE.copy()
+def test_clean(sphere):
     mesh = sphere + sphere
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1E-5)
@@ -540,15 +538,28 @@ def test_project_points_to_plane():
     assert np.allclose(poly.points, projected.points)
 
 
-def test_tube():
+def test_tube(spline):
     # Simple
-    mesh = pyvista.Line()
-    tube = mesh.tube(n_sides=2)
+    line = pyvista.Line()
+    tube = line.tube(n_sides=2)
     assert tube.n_points, tube.n_cells
+
+    # inplace
+    line.tube(n_sides=2, inplace=True)
+    assert np.allclose(line.points, tube.points)
+
     # Complicated
-    mesh = examples.load_spline()
-    tube = mesh.tube(radius=5, scalars='arc_length')
+    tube = spline.tube(radius=0.5, scalars='arc_length')
     assert tube.n_points, tube.n_cells
+
+    with pytest.raises(TypeError):
+        spline.tube(scalars=range(10))
+
+
+def test_smooth_inplace(sphere):
+    orig_pts = sphere.points.copy()
+    sphere.smooth(inplace=True)
+    assert not np.allclose(orig_pts, sphere.points)
 
 
 def test_delaunay_2d():
