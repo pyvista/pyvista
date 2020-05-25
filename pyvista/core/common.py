@@ -320,10 +320,6 @@ class Common(DataSetFilters, DataObject):
             # Sometimes, precomputed normals aren't set as active
             if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
-            else:
-                self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, None) # field and name
-        _, name = self._active_vectors_info
-
         return self._active_vectors_info
 
     @property
