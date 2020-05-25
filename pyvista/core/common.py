@@ -375,7 +375,7 @@ class Common(DataSetFilters, DataObject):
     @active_vectors_name.setter
     def active_vectors_name(self, name):
         """Set the name of the active vector."""
-        return self.set_active_vectors(name)
+        self.set_active_vectors(name)
 
     @property
     def active_scalars_name(self):
@@ -385,7 +385,7 @@ class Common(DataSetFilters, DataObject):
     @active_scalars_name.setter
     def active_scalars_name(self, name):
         """Set the name of the active scalar."""
-        return self.set_active_scalars(name)
+        self.set_active_scalars(name)
 
     @property
     def active_scalar_name(self):  # pragma: no cover
@@ -895,7 +895,7 @@ class Common(DataSetFilters, DataObject):
         if hasattr(self, 'SetExtent'):
             if len(extent) != 6:
                 raise ValueError('Extent must be a vector of 6 values.')
-            return self.SetExtent(extent)
+            self.SetExtent(extent)
         else:
             raise AttributeError('This mesh type does not handle extents.')
 

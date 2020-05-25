@@ -572,7 +572,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @scale.setter
     def scale(self, scale):
         """Set the scaling of the active renderer."""
-        return self.renderer.set_scale(*scale)
+        self.renderer.set_scale(*scale)
 
     @property
     def camera_position(self):
