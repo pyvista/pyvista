@@ -303,9 +303,7 @@ class Common(DataSetFilters, DataObject):
         if name in exclude:
             name = self._last_active_scalars_name
 
-        if name is None:
-            if self.n_arrays == 0:
-                return ActiveInfo(field, name)
+        if name is None and self.n_arrays > 0:
             # find some array in the set field
             parr = next((arr for arr in self.point_arrays if arr not in exclude), None)
             carr = next((arr for arr in self.cell_arrays if arr not in exclude), None)
@@ -315,7 +313,6 @@ class Common(DataSetFilters, DataObject):
             elif carr is not None:
                 self._active_scalars_info = ActiveInfo(FieldAssociation.CELL, carr)
                 self.GetCellData().SetActiveScalars(carr)
-
         return self._active_scalars_info
 
     @property
