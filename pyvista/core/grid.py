@@ -28,7 +28,7 @@ class Grid(Common):
 
     def __init__(self, *args, **kwargs):
         """Initialize the grid."""
-        super(Grid, self).__init__()
+        super().__init__()
 
     @property
     def dimensions(self):
@@ -92,7 +92,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     def __init__(self, *args, **kwargs):
         """Initialize the rectilinear grid."""
-        super(RectilinearGrid, self).__init__()
+        super().__init__()
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkRectilinearGrid):
@@ -286,7 +286,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     def __init__(self, *args, **kwargs):
         """Initialize the uniform grid."""
-        super(UniformGrid, self).__init__()
+        super().__init__()
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkImageData):

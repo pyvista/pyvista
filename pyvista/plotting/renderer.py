@@ -42,7 +42,7 @@ def scale_point(camera, point, invert=False):
     return (scaled[0], scaled[1], scaled[2])
 
 
-class CameraPosition(object):
+class CameraPosition:
     """Container to hold camera location attributes."""
 
     def __init__(self, position, focal_point, viewup):
@@ -104,7 +104,7 @@ class Renderer(vtkRenderer):
     def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         """Initialize the renderer."""
-        super(Renderer, self).__init__()
+        super().__init__()
         self._actors = {}
         self.parent = parent
         self.camera_set = False

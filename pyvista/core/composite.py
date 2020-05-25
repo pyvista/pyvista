@@ -67,7 +67,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     def __init__(self, *args, **kwargs):
         """Initialize multi block."""
-        super(MultiBlock, self).__init__()
+        super().__init__()
         deep = kwargs.pop('deep', False)
         self.refs = []
 

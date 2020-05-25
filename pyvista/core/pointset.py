@@ -143,7 +143,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     def __init__(self, *args, **kwargs):
         """Initialize the polydata."""
-        super(PolyData, self).__init__()
+        super().__init__()
 
         deep = kwargs.pop('deep', False)
 
@@ -490,7 +490,7 @@ class PointGrid(PointSet):
 
     def __init__(self, *args, **kwargs):
         """Initialize the point grid."""
-        super(PointGrid, self).__init__()
+        super().__init__()
 
     def plot_curvature(self, curv_type='mean', **kwargs):
         """Plot the curvature of the external surface of the grid.
@@ -568,7 +568,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     def __init__(self, *args, **kwargs):
         """Initialize the unstructured grid."""
-        super(UnstructuredGrid, self).__init__()
+        super().__init__()
         deep = kwargs.pop('deep', False)
 
         if len(args) == 1:
@@ -825,7 +825,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     def __init__(self, *args, **kwargs):
         """Initialize the structured grid."""
-        super(StructuredGrid, self).__init__()
+        super().__init__()
 
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkStructuredGrid):
