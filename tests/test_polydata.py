@@ -639,7 +639,8 @@ def test_extrude():
     assert arc.n_points != n_points_old
 
 
-def test_flip_normals(sphere):
+def test_flip_normals():
+    sphere = SPHERE.copy()
     sphere.compute_normals(inplace=True)
     sphere_flipped = sphere.copy()
     sphere_flipped.flip_normals()
@@ -647,5 +648,5 @@ def test_flip_normals(sphere):
 
     # can't flip and compare normals as windows and Mac compute them
     # differently
-    assert not np.allclose(sphere_flipped.point_arrays['Normals'],
-                           sphere.point_arrays['Normals'])
+    assert np.allclose(sphere_flipped.point_arrays['Normals'],
+                       -sphere.point_arrays['Normals'])
