@@ -215,22 +215,6 @@ class DataObject:
         newobject.copy_meta_from(self)
         return newobject
 
-    def _field_array(self, name):
-        """Return field scalars of a vtk object.
-
-        Parameters
-        ----------
-        name : str
-            Name of field scalars to retrieve.
-
-        Return
-        ------
-        scalars : np.ndarray
-            Numpy array of scalars
-
-        """
-        return self.field_arrays[name]
-
     def _add_field_array(self, scalars, name, deep=True):
         """Add a field array to the mesh.
 
@@ -625,9 +609,9 @@ class Common(DataSetFilters, DataObject):
         if name is None:
             return None
         if field == FieldAssociation.POINT:
-            return self._point_array(name)
+            return self.point_arrays[name]
         elif field == FieldAssociation.CELL:
-            return self._cell_array(name)
+            return self.cell_arrays[name]
 
     @property
     def active_scalar(self):  # pragma: no cover
@@ -638,22 +622,6 @@ class Common(DataSetFilters, DataObject):
         """
         warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
         return self.active_scalars
-
-    def _point_array(self, name=None):
-        """Return point scalars of a vtk object.
-
-        Parameters
-        ----------
-        name : str
-            Name of point scalars to retrieve.
-
-        Return
-        ------
-        scalars : np.ndarray
-            Numpy array of scalars
-
-        """
-        return self.point_arrays[name]
 
     def _add_point_array(self, scalars, name, set_active=False, deep=True):
         """Add point scalars to the mesh.
@@ -796,22 +764,6 @@ class Common(DataSetFilters, DataObject):
         self.points[:, 0] = x
         self.points[:, 1] = y
         self.points[:, 2] = z
-
-    def _cell_array(self, name=None):
-        """Return the cell scalars of a vtk object.
-
-        Parameters
-        ----------
-        name : str
-            Name of cell scalars to retrieve.
-
-        Return
-        ------
-        scalars : np.ndarray
-            Numpy array of scalars
-
-        """
-        return self.cell_arrays[name]
 
     def _add_cell_array(self, scalars, name, set_active=False, deep=True):
         """Add cell scalars to the vtk object.
