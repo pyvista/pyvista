@@ -420,11 +420,11 @@ class Common(DataSetFilters, DataObject):
     def vectors(self, array):
         """Set the active vector."""
         if array.ndim != 2:
-            raise AssertionError('vector array must be a 2-dimensional array')
+            raise ValueError('vector array must be a 2-dimensional array')
         elif array.shape[1] != 3:
-            raise RuntimeError('vector array must be 3D')
+            raise ValueError('vector array must be 3D')
         elif array.shape[0] != self.n_points:
-            raise RuntimeError('Number of vectors be the same as the number of points')
+            raise ValueError('Number of vectors be the same as the number of points')
 
         self.point_arrays[DEFAULT_VECTOR_KEY] = array
         self.active_vectors_name = DEFAULT_VECTOR_KEY

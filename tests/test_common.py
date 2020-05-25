@@ -414,13 +414,13 @@ def test_texture_airplane():
 
 
 def test_invalid_vector(grid):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty(10)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 2))
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 3))
 
 
