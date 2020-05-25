@@ -1880,6 +1880,8 @@ class DataSetFilters:
             raise ValueError('`ind` be a numeric array or bool')
 
         # Convert to vtk indices
+        if ind.dtype != pyvista.ID_TYPE:
+            ind = pyvista.ID_TYPE
         vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=False)
 
         # Create selection objects
