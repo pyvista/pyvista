@@ -295,16 +295,14 @@ class Common(DataSetFilters, DataObject):
         if name in exclude:
             name = self._last_active_scalars_name
 
-        if name is None and self.n_arrays > 0:
-            # find some array in the set field
-            parr = next((arr for arr in self.point_arrays if arr not in exclude), None)
-            carr = next((arr for arr in self.cell_arrays if arr not in exclude), None)
-            if parr is not None:
-                self._active_scalars_info = ActiveInfo(FieldAssociation.POINT, parr)
-                self.GetPointData().SetActiveScalars(parr)
-            elif carr is not None:
-                self._active_scalars_info = ActiveInfo(FieldAssociation.CELL, carr)
-                self.GetCellData().SetActiveScalars(carr)
+        if name is None:
+            # find first available array name
+            for attributes in (self.point_arrays, self.cell_arrays):
+                first_arr = next((arr for arr in attributes if arr not in exclude), None)
+                if first_arr is not None:
+                    self._active_scalars_info = ActiveInfo(attributes.association, first_arr)
+                    attributes.active_scalars = first_arr
+                    break
         return self._active_scalars_info
 
     @property
@@ -319,7 +317,7 @@ class Common(DataSetFilters, DataObject):
     @property
     def active_vectors_info(self):
         """Return the active scalar's field and name: [field, name]."""
-        if self._active_vectors_info.association is FieldAssociation.NONE:
+        if self._active_vectors_info.name is None:
             # Sometimes, precomputed normals aren't set as active
             if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
