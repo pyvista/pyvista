@@ -226,7 +226,7 @@ jobs:
     python.architecture: 'x64'
   strategy:
     matrix:
-      # Skipping Python 3.5: doesn't have great support on Azure
+      # Skipping Python 3.5: Python 3.5 not supported on Azure Mac OS
       Python36:
         python.version: '3.6'
       Python37:
