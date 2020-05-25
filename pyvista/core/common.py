@@ -575,7 +575,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveVectors(name)
         else:
-            raise RuntimeError('Data field ({}) not useable'.format(field))
+            raise ValueError('Data field ({}) not usable'.format(field))
         self._active_vectors_info = ActiveInfo(field, name)
 
     def rename_array(self, old_name, new_name, preference='cell'):

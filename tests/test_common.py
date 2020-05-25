@@ -478,7 +478,7 @@ def test_activate_texture_none(grid):
 
 
 def test_set_active_vectors_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.set_active_vectors('not a vector')
 
 
