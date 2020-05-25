@@ -7,7 +7,7 @@ import pyvista
 
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
-    """Safely convert a numpy array to a vtkIdTypeArray"""
+    """Safely convert a numpy array to a vtkIdTypeArray."""
     try:
         ind = np.array(ind)
     except:
@@ -51,7 +51,7 @@ class CellArray(vtkCellArray):
     """
 
     def __init__(self, cells=None, n_cells=None, deep=False):
-        """Initialize a vtkCellArray"""
+        """Initialize a vtkCellArray."""
         if cells is not None:
             self._set_cells(cells, n_cells, deep)
 
@@ -72,8 +72,10 @@ class CellArray(vtkCellArray):
 
     @property
     def cells(self):
+        """Return a numpy array of the cells."""
         return vtk_to_numpy(self.GetData()).ravel()
 
     @property
     def n_cells(self):
+        """Return the number of cells."""
         return self.GetNumberOfCells()
