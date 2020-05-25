@@ -295,7 +295,7 @@ class Common(DataSetFilters, DataObject):
         if name in exclude:
             name = self._last_active_scalars_name
 
-        if name is None:
+        if name is None and self.n_arrays > 0:
             # find first available array name
             for attributes in (self.point_arrays, self.cell_arrays):
                 first_arr = next((arr for arr in attributes if arr not in exclude), None)
