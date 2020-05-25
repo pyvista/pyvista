@@ -293,9 +293,6 @@ class Common(DataSetFilters, DataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the common object."""
         super().__init__()
-        self.references = []
-        self._point_bool_array_names = []
-        self._cell_bool_array_names = []
 
     @property
     def active_scalars_info(self):
