@@ -107,6 +107,11 @@ def test_extract_feature_edges(hexbeam):
     assert not edges.n_points
 
 
+def test_triangulate_inplace(hexbeam):
+    hexbeam.triangulate(inplace=True)
+    assert (hexbeam.celltypes == vtk.VTK_TETRA).all()
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):

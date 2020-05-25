@@ -309,11 +309,10 @@ def test_invalid_save():
         sphere.save('file.abc')
 
 
-def test_triangulate_filter():
-    arrow = pyvista.Arrow([0, 0, 0], [1, 1, 1])
-    assert arrow.faces.size % 4
-    arrow.triangulate(inplace=True)
-    assert not(arrow.faces.size % 4)
+def test_triangulate_filter(plane):
+    assert not plane.is_all_triangles()
+    plane.triangulate(inplace=True)
+    assert plane.is_all_triangles()
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])

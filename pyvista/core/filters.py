@@ -2562,7 +2562,7 @@ class PolyDataFilters(DataSetFilters):
     def triangulate(poly_data, inplace=False):
         """Return an all triangle mesh.
 
-        More complex polygons will be broken down into triangles.
+        More complex polygons will be broken down into tetrahedrals.
 
         Parameters
         ----------

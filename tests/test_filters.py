@@ -481,7 +481,7 @@ def test_invalid_warp_scalar_inplace(uniform):
 def test_invalid_warp_vector(sphere):
     sphere.compute_normals(inplace=True)
     sphere.point_arrays['Normals'] = np.empty((sphere.n_points, 2))
-    with pytest.raises(ValueError):
+    with pytest.raises(RuntimeError):
         sphere.warp_by_vector()
 
     sphere.point_arrays.clear()
