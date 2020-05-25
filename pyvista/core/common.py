@@ -1142,7 +1142,7 @@ class Common(DataSetFilters, DataObject):
         return pyvista.filters._get_output(alg)
 
     @property
-    def quality(self):  # no cover
+    def quality(self):  # pragma: no cover
         """Return cell quality using PyANSYS.
 
         Computes the minimum scaled jacobian of each cell.
