@@ -511,7 +511,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveScalars(name)
         else:
-            raise RuntimeError('Data field ({}) not useable'.format(field))
+            raise ValueError('Data field ({}) not usable'.format(field))
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
     def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
