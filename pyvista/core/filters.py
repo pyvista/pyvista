@@ -1881,7 +1881,7 @@ class DataSetFilters:
 
         # Convert to vtk indices
         if ind.dtype != pyvista.ID_TYPE:
-            ind = pyvista.astype(pyvista.ID_TYPE)
+            ind = ind.astype(pyvista.ID_TYPE)
         vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=False)
 
         # Create selection objects
@@ -3436,12 +3436,7 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError('Can only flip normals on an all triangle mesh')
 
         f = poly_data.faces.reshape((-1, 4))
-        f[:, 1:] = f[:, 1:][:, ::-1]
-
-        # verify the points have changed and overwrite if they have not.
-        if (poly_data.faces[:4] != f[0]).any():
-            poly_data.faces = f
-        
+        f[:, 1:] = f[:, 1:][:, ::-1]        
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):
