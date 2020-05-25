@@ -262,6 +262,9 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
 
+ActiveInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
+
+
 class Common(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
@@ -277,14 +280,13 @@ class Common(DataSetFilters, DataObject):
     def __init__(self, *args, **kwargs):
         """Initialize the common object."""
         super().__init__()
+        self._active_scalars_info = ActiveInfo(association=FieldAssociation.NONE, name=None)
+        self._last_active_scalars_name = None
+        self._active_vectors_info = ActiveInfo(association=FieldAssociation.NONE, name=None)
 
     @property
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
-        if not hasattr(self, '_active_scalars_info'):
-            self._active_scalars_info = [FieldAssociation.POINT, None] # field and name
-        if not hasattr(self, '_last_active_scalars_name'):
-            self._last_active_scalars_name = None
         field, name = self._active_scalars_info
 
         # rare error where scalars name isn't a valid scalar
@@ -318,10 +320,10 @@ class Common(DataSetFilters, DataObject):
             parr = search_for_array(self.GetPointData())
             carr = search_for_array(self.GetCellData())
             if parr is not None:
-                self._active_scalars_info = [FieldAssociation.POINT, parr]
+                self._active_scalars_info = ActiveInfo(FieldAssociation.POINT, parr)
                 self.GetPointData().SetActiveScalars(parr)
             elif carr is not None:
-                self._active_scalars_info = [FieldAssociation.CELL, carr]
+                self._active_scalars_info = ActiveInfo(FieldAssociation.CELL, carr)
                 self.GetCellData().SetActiveScalars(carr)
 
         return self._active_scalars_info
@@ -338,12 +340,12 @@ class Common(DataSetFilters, DataObject):
     @property
     def active_vectors_info(self):
         """Return the active scalar's field and name: [field, name]."""
-        if not hasattr(self, '_active_vectors_info'):
+        if self._active_vectors_info.association is FieldAssociation.NONE:
             # Sometimes, precomputed normals aren't set as active
             if 'Normals' in self.array_names:
                 self.set_active_vectors('Normals')
             else:
-                self._active_vectors_info = [FieldAssociation.POINT, None] # field and name
+                self._active_vectors_info = ActiveInfo(FieldAssociation.POINT, None) # field and name
         _, name = self._active_vectors_info
 
         # rare error where name isn't a valid array
@@ -574,7 +576,7 @@ class Common(DataSetFilters, DataObject):
             self.GetCellData().SetActiveVectors(name)
         else:
             raise RuntimeError('Data field ({}) not useable'.format(field))
-        self._active_vectors_info = [field, name]
+        self._active_vectors_info = ActiveInfo(field, name)
 
     def rename_array(self, old_name, new_name, preference='cell'):
         """Change array name by searching for the array then renaming it."""
