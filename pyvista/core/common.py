@@ -606,7 +606,7 @@ class Common(DataSetFilters, DataObject):
 
         """
         self.point_arrays.append(scalars, name, deep_copy=deep)
-        if set_active or self.active_scalars_info[1] is None:
+        if set_active or self.active_scalars_info.name is None:
             self.GetPointData().SetActiveScalars(name)
             self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name)
 
@@ -1005,7 +1005,7 @@ class Common(DataSetFilters, DataObject):
                 dl, dh = self.get_data_range(arr)
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
-                if name == self.active_scalars_info[1]:
+                if name == self.active_scalars_info.name:
                     name = '<b>{}</b>'.format(name)
                 if arr.ndim > 1:
                     ncomp = arr.shape[1]
