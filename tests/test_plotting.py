@@ -5,6 +5,7 @@ from weakref import proxy
 import imageio
 import numpy as np
 import pytest
+import vtk
 
 import pyvista
 from pyvista import examples
@@ -22,18 +23,18 @@ try:
 except:
     ffmpeg_failed = True
 
-
 if __name__ != '__main__':
     OFF_SCREEN = 'pytest' in sys.modules
 else:
     OFF_SCREEN = False
 
 pyvista.OFF_SCREEN = OFF_SCREEN
-
+VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
 sphere_c = pyvista.Sphere(2.0)
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot(tmpdir):
@@ -137,6 +138,7 @@ def test_plot_show_bounds():
                             use_2d=True)
     plotter.show()
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_label_fmt():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -198,6 +200,7 @@ def test_plot_list():
                  off_screen=OFF_SCREEN,
                  style='wireframe')
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_lines_invalid():
     plotter = pyvista.Plotter()
@@ -227,7 +230,7 @@ def test_make_movie():
                      scalars=np.random.random(movie_sphere.n_faces))
     plotter.show(auto_close=False, window_size=[304, 304])
     plotter.set_focus([0, 0, 0])
-    for i in range(10):
+    for i in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
         random_points = np.random.random(movie_sphere.points.shape)
         movie_sphere.points = random_points*0.01 + movie_sphere.points*0.99
@@ -323,8 +326,11 @@ def test_key_press_event():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
-    plotter.left_button_down(None, None)
-    # assert np.allclose(plotter.pickpoint, [0, 0, 0])\
+    if VTK9:
+        with pytest.raises(RuntimeError):
+            plotter.left_button_down(None, None)
+    else:
+        plotter.left_button_down(None, None)
     plotter.close()
 
 
@@ -351,6 +357,7 @@ def test_plot_cell_arrays():
                      n_colors=5, rng=10)
     plotter.show()
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_clim():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
@@ -373,16 +380,14 @@ def test_invalid_n_arrays():
 def test_plot_arrow():
     cent = np.random.random(3)
     direction = np.random.random(3)
-    cpos, img = pyvista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
-    assert np.any(img)
+    pyvista.plot_arrows(cent, direction, off_screen=OFF_SCREEN)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_arrows():
     cent = np.random.random((100, 3))
     direction = np.random.random((100, 3))
-    cpos, img = pyvista.plot_arrows(cent, direction, off_screen=True, screenshot=True)
-    assert np.any(img)
+    pyvista.plot_arrows(cent, direction, off_screen=OFF_SCREEN)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -424,7 +429,6 @@ def test_screenshot(tmpdir):
         ref
     except:
         raise Exception('Plotter did not close')
-
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -473,6 +477,7 @@ def test_plot_texture():
     plotter.show()
     texture.plot(off_screen=OFF_SCREEN)
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_texture_associated():
     """"Test adding a texture to a plot"""
@@ -480,6 +485,7 @@ def test_plot_texture_associated():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(globe, texture=True)
     plotter.show()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_read_texture_from_numpy():
@@ -597,7 +603,6 @@ def test_multi_renderers():
         plotter.add_mesh(pyvista.Cube())
         plotter.show()
 
-
     # Test subplot 3 on left, 1 on right
     plotter = pyvista.Plotter(shape='3|1', off_screen=OFF_SCREEN)
     # First column
@@ -623,7 +628,6 @@ def test_multi_renderers():
     plotter.subplot(3)
     plotter.add_mesh(pyvista.Cone())
     plotter.show()
-
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -682,6 +686,7 @@ def test_orthographic_slicer():
 
     p.show()
 
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_remove_actor():
     data = examples.load_uniform()
@@ -705,6 +710,8 @@ def test_image_properties():
     p.close()
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh)
+    p.store_image = True
+    assert p.store_image is True
     p.show() # close plotter
     # Get RGB image
     _ = p.image
@@ -737,7 +744,6 @@ def test_volume_rendering():
     # Check that NumPy arrays work
     arr = vol["Spatial Point Data"].reshape(vol.dimensions)
     pyvista.plot(arr, off_screen=OFF_SCREEN, volume=True, opacity='linear')
-
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -779,7 +785,6 @@ def test_plot_eye_dome_lighting():
     p.enable_eye_dome_lighting()
     p.disable_eye_dome_lighting()
     p.show()
-
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -977,3 +982,18 @@ def test_add_remove_floor():
     pl.remove_floors()
     assert not pl.renderer._floors
     pl.show()
+
+
+def test_reset_camera_clipping_range():
+    pl = pyvista.Plotter()
+    pl.add_mesh(sphere)
+
+    default_clipping_range = pl.camera.GetClippingRange() # get default clipping range
+    assert default_clipping_range != (10,100) # make sure we assign something different than default
+
+    pl.camera.SetClippingRange(10,100) # set clipping range to some random numbers
+    assert pl.camera.GetClippingRange() == (10,100) # make sure assignment is successful
+
+    pl.reset_camera_clipping_range()
+    assert pl.camera.GetClippingRange() ==  default_clipping_range
+    assert pl.camera.GetClippingRange() != (10,100)

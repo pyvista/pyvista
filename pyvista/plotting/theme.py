@@ -6,12 +6,10 @@ import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
 
-
 MAX_N_COLOR_BARS = 10
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
              'times': vtk.VTK_TIMES}
-
 
 rcParams = {
     'auto_close': True, # DANGER: set to False with extreme caution
@@ -95,8 +93,6 @@ rcParams = {
     },
 }
 
-
-
 DEFAULT_THEME = dict(rcParams)
 
 def set_plot_theme(theme):
@@ -144,7 +140,6 @@ def set_plot_theme(theme):
             rcParams[k] = v
 
 
-
 def parse_color(color, opacity=None):
     """Parse color into a vtk friendly rgb list.
 
@@ -170,7 +165,6 @@ def parse_color(color, opacity=None):
     if opacity is not None and isinstance(opacity, (float, int)):
         color = [color[0], color[1], color[2], opacity]
     return color
-
 
 
 def parse_font_family(font_family):

@@ -757,7 +757,6 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
     if amplitudescalefactor is not None:
         parametric_function.SetAmplitudeScaleFactor(amplitudescalefactor)
 
-
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
     surf = surface_from_para(parametric_function, **kwargs)

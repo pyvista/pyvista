@@ -190,7 +190,7 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
+@pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
@@ -217,7 +217,7 @@ def test_multi_io_erros(tmpdir):
     with pytest.raises(Exception):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(IOError):
+    with pytest.raises(ValueError):
         _ = MultiBlock(bad_ext_name)
 
 

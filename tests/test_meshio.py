@@ -1,11 +1,9 @@
-
 import numpy as np
 import sys
 import pytest
 
 import pyvista
 from pyvista import examples
-
 
 beam = pyvista.UnstructuredGrid(examples.hexbeamfile)
 airplane = examples.load_airplane().cast_to_unstructured_grid()

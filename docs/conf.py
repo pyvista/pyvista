@@ -25,6 +25,9 @@ pyvista.FIGURE_PATH = os.path.join(os.path.abspath('./images/'), 'auto-generated
 if not os.path.exists(pyvista.FIGURE_PATH):
     os.makedirs(pyvista.FIGURE_PATH)
 
+# necessary when building the sphinx gallery
+pyvista.BUILDING_GALLERY = True
+
 # SG warnins
 import warnings
 warnings.filterwarnings(
@@ -274,7 +277,7 @@ class AutoAutoSummary(Autosummary):
         except:
             print('Something went wrong when autodocumenting {}'.format(clazz))
         finally:
-            return super(AutoAutoSummary, self).run()
+            return super().run()
 
 def setup(app):
     AutoAutoSummary.app = app

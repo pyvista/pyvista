@@ -19,7 +19,6 @@ SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 test_path = os.path.dirname(os.path.abspath(__file__))
 test_data_path = os.path.join(test_path, 'test_data')
 
-
 stl_test_file = os.path.join(test_data_path, 'sphere.stl')
 ply_test_file = os.path.join(test_data_path, 'sphere.ply')
 vtk_test_file = os.path.join(test_data_path, 'sphere.vtk')
@@ -106,7 +105,6 @@ def test_init_from_arrays_triangular():
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
 
-
     mesh = pyvista.PolyData(vertices, faces, deep=True)
     assert mesh.n_points == 5
     assert mesh.n_cells == 3
@@ -141,6 +139,7 @@ def test_init_as_points():
     assert mesh.n_cells == vertices.shape[0]
     assert np.allclose(mesh.verts, cells)
 
+
 def test_init_as_points_from_list():
     points = [[0, 0, 0],
               [0, 1, 0],
@@ -167,12 +166,13 @@ def test_invalid_file():
     with pytest.raises(Exception):
         mesh = pyvista.PolyData('file.bad')
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         filename = os.path.join(test_path, 'test_polydata.py')
         mesh = pyvista.PolyData(filename)
 
     # with pytest.raises(Exception):
         # pyvista.PolyData(examples.hexbeamfile)
+
 
 def test_geodesic():
     sphere = SPHERE.copy()
@@ -295,7 +295,7 @@ def test_invalid_curvature():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['stl', 'vtk', 'ply', 'vtp'])
+@pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
@@ -304,6 +304,7 @@ def test_save(extension, binary, tmpdir):
     mesh = pyvista.PolyData(filename)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
+
 
 def test_invalid_save():
     sphere = SPHERE.copy()

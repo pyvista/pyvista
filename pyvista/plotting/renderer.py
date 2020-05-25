@@ -15,7 +15,6 @@ from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
 from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
 
 
-
 def scale_point(camera, point, invert=False):
     """Scale a point using the camera's transform matrix.
 
@@ -43,8 +42,7 @@ def scale_point(camera, point, invert=False):
     return (scaled[0], scaled[1], scaled[2])
 
 
-
-class CameraPosition(object):
+class CameraPosition:
     """Container to hold camera location attributes."""
 
     def __init__(self, position, focal_point, viewup):
@@ -100,14 +98,13 @@ class CameraPosition(object):
         self._viewup = value
 
 
-
 class Renderer(vtkRenderer):
     """Renderer class."""
 
     def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         """Initialize the renderer."""
-        super(Renderer, self).__init__()
+        super().__init__()
         self._actors = {}
         self.parent = parent
         self.camera_set = False
@@ -124,7 +121,6 @@ class Renderer(vtkRenderer):
 
         if border:
             self.add_border(border_color, border_width)
-
 
     #### Properties ####
 
@@ -215,7 +211,6 @@ class Renderer(vtkRenderer):
 
         return the_bounds.tolist()
 
-
     @property
     def length(self):
         """Return the length of the diagonal of the bounding box of the scene."""
@@ -240,7 +235,6 @@ class Renderer(vtkRenderer):
         """Set the background color of this renderer."""
         self.set_background(color)
         self.Modified()
-
 
     #### Everything else ####
 
@@ -291,7 +285,6 @@ class Renderer(vtkRenderer):
         self.SetUseFXAA(False)
         self.Modified()
 
-
     def add_border(self, color=[1, 1, 1], width=2.0):
         """Add borders around the frame."""
         points = np.array([[1., 1., 0.],
@@ -323,7 +316,6 @@ class Renderer(vtkRenderer):
         self.AddViewProp(actor)
         self.Modified()
         return actor
-
 
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
                   pickable=True):
@@ -405,7 +397,6 @@ class Renderer(vtkRenderer):
 
         return actor, actor.GetProperty()
 
-
     def add_axes_at_origin(self, x_color=None, y_color=None, z_color=None,
                            xlabel='X', ylabel='Y', zlabel='Z', line_width=2,
                            labels_off=False):
@@ -425,7 +416,6 @@ class Renderer(vtkRenderer):
         self._actors[memory_address] = self.marker_actor
         self.Modified()
         return self.marker_actor
-
 
     def add_orientation_widget(self, actor, interactive=None, color=None,
                                opacity=1.0):
@@ -473,7 +463,6 @@ class Renderer(vtkRenderer):
         self.Modified()
         return self.axes_widget
 
-
     def add_axes(self, interactive=None, line_width=2,
                  color=None, x_color=None, y_color=None, z_color=None,
                  xlabel='X', ylabel='Y', zlabel='Z', labels_off=False,
@@ -520,13 +509,11 @@ class Renderer(vtkRenderer):
                                     color=None)
         return self.axes_actor
 
-
     def hide_axes(self):
         """Hide the axes orientation widget."""
         if hasattr(self, 'axes_widget') and self.axes_widget.GetEnabled():
             self.axes_widget.EnabledOff()
             self.Modified()
-
 
     def show_axes(self):
         """Show the axes orientation widget."""
@@ -536,7 +523,6 @@ class Renderer(vtkRenderer):
         else:
             self.add_axes()
         self.Modified()
-
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                     show_yaxis=True, show_zaxis=True, show_xlabels=True,
@@ -830,7 +816,6 @@ class Renderer(vtkRenderer):
         logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
         return self.show_bounds(*args, **kwargs)
 
-
     def show_grid(self, **kwargs):
         """Show gridlines and axes labels.
 
@@ -929,7 +914,6 @@ class Renderer(vtkRenderer):
         prop.SetRepresentationToSurface()
         self.Modified()
         return self.bounding_box_actor
-
 
     def add_floor(self, face='-z', i_resolution=10, j_resolution=10,
                   color=None, line_width=None, opacity=1.0, show_edges=False,
@@ -1079,7 +1063,6 @@ class Renderer(vtkRenderer):
             self.remove_actor(self.cube_axes_actor)
             self.Modified()
 
-
     def clear(self):
         """Remove all actors and properties."""
         if self._actors:
@@ -1091,7 +1074,6 @@ class Renderer(vtkRenderer):
 
         self.RemoveAllViewProps()
         self.Modified()
-
 
     def set_focus(self, point):
         """Set focus to a point."""
@@ -1120,7 +1102,6 @@ class Renderer(vtkRenderer):
         self.camera.SetViewUp(vector)
         self.Modified()
 
-
     def enable_parallel_projection(self):
         """Enable parallel projection.
 
@@ -1131,12 +1112,10 @@ class Renderer(vtkRenderer):
         self.camera.SetParallelProjection(True)
         self.Modified()
 
-
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
         self.camera.SetParallelProjection(False)
         self.Modified()
-
 
     def remove_actor(self, actor, reset_camera=False, render=True):
         """Remove an actor from the Renderer.
@@ -1232,7 +1211,6 @@ class Renderer(vtkRenderer):
             self.update_bounds_axes()
             self.reset_camera()
         self.Modified()
-
 
     def get_default_cam_pos(self, negative=False):
         """Return the default focal points and viewup.
@@ -1350,7 +1328,6 @@ class Renderer(vtkRenderer):
             vec *= -1
         return self.view_vector(vec, viewup)
 
-
     def view_zy(self, negative=False):
         """View the ZY plane."""
         vec = np.array([-1,0,0])
@@ -1393,7 +1370,6 @@ class Renderer(vtkRenderer):
         self.Modified()
         return
 
-
     def get_pick_position(self):
         """Get the pick position/area as x0, y0, x1, y1."""
         x0 = int(self.GetPickX1())
@@ -1401,7 +1377,6 @@ class Renderer(vtkRenderer):
         y0 = int(self.GetPickY1())
         y1 = int(self.GetPickY2())
         return x0, y0, x1, y1
-
 
     def set_background(self, color, top=None):
         """Set the background color.
