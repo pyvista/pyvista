@@ -46,8 +46,7 @@ class CellArray(vtkCellArray):
     --------
     Create a cell array containing two triangles.
     >>> from pyvista.core.cells import CellArray
-    >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5]
-
+    >>> cellarr = CellArray([3, 0, 1, 2, 3, 3, 4, 5])
     """
 
     def __init__(self, cells=None, n_cells=None, deep=False):
