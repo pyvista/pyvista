@@ -289,8 +289,7 @@ class Common(DataSetFilters, DataObject):
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalars_info
 
-        exclude = ['__custom_rgba', 'Normals', 'vtkOriginalPointIds',
-                   'TCoords']
+        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
 
         if name in exclude:
             name = self._last_active_scalars_name
