@@ -34,6 +34,7 @@ import pyvista
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
                                wrap, ProgressMonitor)
+from pyvista.core.errors import NotAllTrianglesError
 
 
 def _update_alg(alg, progress_bar=False, message=''):
@@ -2374,7 +2375,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         if not poly_data.is_all_triangles() or not cut.is_all_triangles():
-            raise RuntimeError("Make sure both the input and output are triangulated.")
+            raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
 
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToIntersection()
@@ -3200,7 +3201,7 @@ class PolyDataFilters(DataSetFilters):
         if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
             raise IndexError('Invalid indices.')
         if not poly_data.is_all_triangles():
-            raise AssertionError("Input mesh for geodesic path must be all triangles.")
+            raise NotAllTrianglesError("Input mesh for geodesic path must be all triangles.")
 
         dijkstra = vtk.vtkDijkstraGraphGeodesicPath()
         dijkstra.SetInputData(poly_data)
@@ -3382,19 +3383,19 @@ class PolyDataFilters(DataSetFilters):
             returned when inplace=False.
 
         """
-        if isinstance(remove, list):
+        if isinstance(remove, collections.Iterable):
             remove = np.asarray(remove)
 
         if remove.dtype == np.bool:
             if remove.size != poly_data.n_points:
-                raise AssertionError('Mask different size than n_points')
+                raise ValueError('Mask different size than n_points')
             remove_mask = remove
         else:
             remove_mask = np.zeros(poly_data.n_points, np.bool)
             remove_mask[remove] = True
 
         if not poly_data.is_all_triangles():
-            raise RuntimeError('Mesh must consist of only triangles')
+            raise NotAllTrianglesError
 
         f = poly_data.faces.reshape(-1, 4)[:, 1:]
         vmask = remove_mask.take(f)

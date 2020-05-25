@@ -46,3 +46,8 @@ def struct_grid():
                           np.arange(-10, 10, 2),
                           np.arange(-10, 10, 2))
     return pyvista.StructuredGrid(x, y, z)
+
+
+@fixture()
+def plane():
+    return pyvista.Plane()

@@ -7,6 +7,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
+from pyvista.core.errors import NotAllTrianglesError
 
 radius = 0.5
 SPHERE = pyvista.Sphere(radius, theta_resolution=10, phi_resolution=10)
@@ -150,32 +151,31 @@ def test_init_as_points_from_list():
 
 def test_invalid_init():
     with pytest.raises(ValueError):
-        mesh = pyvista.PolyData(np.array([1]))
+        pyvista.PolyData(np.array([1]))
 
     with pytest.raises(TypeError):
-        mesh = pyvista.PolyData(np.array([1]), 'woa')
+        pyvista.PolyData(np.array([1]), 'woa')
 
     with pytest.raises(TypeError):
-        mesh = pyvista.PolyData('woa', 'woa')
+        pyvista.PolyData('woa', 'woa')
 
     with pytest.raises(TypeError):
-        mesh = pyvista.PolyData('woa', 'woa', 'woa')
+        pyvista.PolyData('woa', 'woa', 'woa')
 
 
 def test_invalid_file():
     with pytest.raises(Exception):
-        mesh = pyvista.PolyData('file.bad')
+        pyvista.PolyData('file.bad')
 
     with pytest.raises(ValueError):
         filename = os.path.join(test_path, 'test_polydata.py')
-        mesh = pyvista.PolyData(filename)
+        pyvista.PolyData(filename)
 
     # with pytest.raises(Exception):
         # pyvista.PolyData(examples.hexbeamfile)
 
 
-def test_geodesic():
-    sphere = SPHERE.copy()
+def test_geodesic(sphere):
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
     assert isinstance(geodesic, pyvista.PolyData)
     assert "vtkOriginalPointIds" in geodesic.array_names
@@ -183,10 +183,14 @@ def test_geodesic():
     assert np.allclose(geodesic.points, sphere.points[ids])
 
 
-def test_geodesic_distance():
-    sphere = SPHERE.copy()
+def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
+
+
+def test_geodesic_fail(sphere):
+    with pytest.raises(IndexError):
+        sphere.geodesic(-1, -1)
 
 
 def test_ray_trace():
@@ -457,9 +461,9 @@ def test_plot_boundaries():
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_plot_normals():
-    sphere = SPHERE.copy()
-    sphere.plot_normals(off_screen=True)
+@pytest.mark.parametrize('flip', [True, False])
+def test_plot_normals(sphere, flip):
+    sphere.plot_normals(off_screen=True, flip=flip)
 
 
 def test_remove_points_any():
@@ -481,14 +485,14 @@ def test_remove_points_all():
     assert sphere_copy.n_faces == sphere.n_faces - 1
 
 
-def test_remove_points_fail():
-    arrow = pyvista.Arrow([0, 0, 0], [1, 0, 0])
-    with pytest.raises(Exception):
-        arrow.remove_points(range(10))
-
-    plane = pyvista.Plane()
-    with pytest.raises(RuntimeError):
+def test_remove_points_fail(sphere, plane):
+    # not triangles:
+    with pytest.raises(NotAllTrianglesError):
         plane.remove_points([0])
+
+    # invalid bool mask size
+    with pytest.raises(ValueError):
+        sphere.remove_points(np.ones(10, np.bool))
 
 
 def test_vertice_cells_on_read(tmpdir):
