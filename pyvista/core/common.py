@@ -289,14 +289,6 @@ class Common(DataSetFilters, DataObject):
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalars_info
 
-        # rare error where scalars name isn't a valid scalar
-        if name not in self.point_arrays.keys() + self.cell_arrays.keys():
-            if name in self.field_arrays:
-                raise ValueError('Field arrays cannot be made active. '
-                                 'Convert to point/cell arrays if possible.')
-            else:
-                name = None
-
         exclude = ['__custom_rgba', 'Normals', 'vtkOriginalPointIds',
                    'TCoords']
 
@@ -334,15 +326,6 @@ class Common(DataSetFilters, DataObject):
             else:
                 self._active_vectors_info = ActiveInfo(FieldAssociation.POINT, None) # field and name
         _, name = self._active_vectors_info
-
-        # rare error where name isn't a valid array
-        if name not in self.point_arrays:
-            if name not in self.cell_arrays:
-                if name in self.field_arrays:
-                    raise RuntimeError('Field arrays cannot be made active. '
-                                       'Convert to point/cell array if possible.')
-                else:
-                    name = None
 
         return self._active_vectors_info
 
