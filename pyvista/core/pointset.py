@@ -25,22 +25,6 @@ log.setLevel('CRITICAL')
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
-UNSTRUCTUREDGRID_READERS = {'.vtu': vtk.vtkXMLUnstructuredGridReader,
-                            '.vtk': vtk.vtkUnstructuredGridReader}
-UNSTRUCTUREDGRID_WRITERS = {'.vtu': vtk.vtkXMLUnstructuredGridWriter,
-                            '.vtk': vtk.vtkUnstructuredGridWriter}
-
-STRUCTUREDGRID_READERS = {'.vtk': vtk.vtkStructuredGridReader,
-                          '.vts': vtk.vtkXMLStructuredGridReader}
-STRUCTUREDGRID_WRITERS = {'.vtk': vtk.vtkStructuredGridWriter,
-                          '.vts': vtk.vtkXMLStructuredGridWriter}
-
-POLYDATA_READERS = {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader,
-                    '.vtk': vtk.vtkPolyDataReader, '.vtp': vtk.vtkXMLPolyDataReader,
-                    '.obj': vtk.vtkOBJReader}
-POLYDATA_WRITERS = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter,
-                    '.stl': vtk.vtkSTLWriter, '.vtk': vtk.vtkPolyDataWriter}
-
 
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
@@ -151,6 +135,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     """
 
+    _READERS = {'.ply': vtk.vtkPLYReader, '.stl': vtk.vtkSTLReader,
+                    '.vtk': vtk.vtkPolyDataReader, '.vtp': vtk.vtkXMLPolyDataReader,
+                    '.obj': vtk.vtkOBJReader}
+    _WRITERS = {'.ply': vtk.vtkPLYWriter, '.vtp': vtk.vtkXMLPolyDataWriter,
+                    '.stl': vtk.vtkSTLWriter, '.vtk': vtk.vtkPolyDataWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the polydata."""
         super(PolyData, self).__init__()
@@ -203,14 +193,6 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
-    @property
-    def _vtk_readers(self):
-        return POLYDATA_READERS
-
-    @property
-    def _vtk_writers(self):
-        return POLYDATA_WRITERS
 
     @staticmethod
     def _make_vertice_cells(npoints):
@@ -581,6 +563,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     """
 
+    _READERS = {'.vtu': vtk.vtkXMLUnstructuredGridReader, '.vtk': vtk.vtkUnstructuredGridReader}
+    _WRITERS = {'.vtu': vtk.vtkXMLUnstructuredGridWriter, '.vtk': vtk.vtkUnstructuredGridWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the unstructured grid."""
         super(UnstructuredGrid, self).__init__()
@@ -634,14 +619,6 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
-    @property
-    def _vtk_readers(self):
-        return UNSTRUCTUREDGRID_READERS
-
-    @property
-    def _vtk_writers(self):
-        return UNSTRUCTUREDGRID_WRITERS
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -843,6 +820,9 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
     """
 
+    _READERS = {'.vtk': vtk.vtkStructuredGridReader, '.vts': vtk.vtkXMLStructuredGridReader}
+    _WRITERS = {'.vtk': vtk.vtkStructuredGridWriter, '.vts': vtk.vtkXMLStructuredGridWriter}
+
     def __init__(self, *args, **kwargs):
         """Initialize the structured grid."""
         super(StructuredGrid, self).__init__()
@@ -868,14 +848,6 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
-
-    @property
-    def _vtk_readers(self):
-        return STRUCTUREDGRID_READERS
-
-    @property
-    def _vtk_writers(self):
-        return STRUCTUREDGRID_WRITERS
 
     def _from_arrays(self, x, y, z):
         """Create VTK structured grid directly from numpy arrays.

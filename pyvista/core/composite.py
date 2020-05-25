@@ -20,9 +20,6 @@ from .filters import CompositeFilters
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-MULTIBLOCK_READERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataReader)
-MULTIBLOCK_WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
-
 
 class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     """A composite class to hold many data sets which can be iterated over.
@@ -65,6 +62,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     # Bind pyvista.plotting.plot to the object
     plot = pyvista.plot
+    _READERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataReader)
+    _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs):
         """Initialize multi block."""
@@ -94,14 +93,6 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
-
-    @property
-    def _vtk_readers(self):
-        return MULTIBLOCK_READERS
-
-    @property
-    def _vtk_writers(self):
-        return MULTIBLOCK_WRITERS
 
     def wrap_nested(self):
         """Ensure that all nested data structures are wrapped as PyVista datasets.
