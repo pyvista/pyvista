@@ -486,6 +486,10 @@ def test_remove_points_fail():
     with pytest.raises(Exception):
         arrow.remove_points(range(10))
 
+    plane = pyvista.Plane()
+    with pytest.raises(RuntimeError):
+        plane.remove_points([0])
+
 
 def test_vertice_cells_on_read(tmpdir):
     point_cloud = pyvista.PolyData(np.random.rand(100, 3))
@@ -517,20 +521,30 @@ def test_project_points_to_plane():
     zz = A*np.exp(-0.5*((xx/b)**2. + (yy/b)**2.))
     poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry()
     poly['elev'] = zz.ravel(order='f')
+
+    with pytest.raises(TypeError):
+        poly.project_points_to_plane(normal=(0, 0, 1, 1))
+
     # Test the filter
     projected = poly.project_points_to_plane(origin=poly.center, normal=(0,0,1))
     assert np.allclose(projected.points[:,-1], poly.center[-1])
     projected = poly.project_points_to_plane(normal=(0,1,1))
     assert projected.n_points
 
+    # finally, test inplace
+    poly.project_points_to_plane(normal=(0,1,1), inplace=True)
+    assert np.allclose(poly.points, projected.points)
+
 
 def test_tube():
     # Simple
     mesh = pyvista.Line()
     tube = mesh.tube(n_sides=2)
+    assert tube.n_points, tube.n_cells
     # Complicated
     mesh = examples.load_spline()
     tube = mesh.tube(radius=5, scalars='arc_length')
+    assert tube.n_points, tube.n_cells
 
 
 def test_delaunay_2d():
@@ -542,9 +556,14 @@ def test_delaunay_2d():
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     # Get the points as a 2D NumPy array (N by 3)
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
-    surf = pyvista.PolyData(points).delaunay_2d()
+    pdata = pyvista.PolyData(points)
+    surf = pdata.delaunay_2d()
     # Make sure we have an all triangle mesh now
     assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)
+
+    # test inplace
+    pdata.delaunay_2d(inplace=True)
+    assert np.allclose(pdata.points, surf.points)
 
 
 def test_lines():
@@ -575,9 +594,12 @@ def test_lines():
 
 def test_ribbon_filter():
     line = examples.load_spline().compute_arc_length()
-    ribbon = line.ribbon(width=0.5)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
-    ribbon = line.ribbon(width=0.5, tcoords=True)
+    assert ribbon.n_points
+
+    for tcoords in [True, 'lower', 'normalized', False]:
+        ribbon = line.ribbon(width=0.5, tcoords=tcoords)
+        assert ribbon.n_points
 
 
 def test_is_all_triangles():
@@ -608,3 +630,12 @@ def test_extrude():
     n_points_old = arc.n_points
     arc.extrude([0, 0, 1], inplace=True)
     assert arc.n_points != n_points_old
+
+
+def test_flip_normals(sphere):
+    sphere.compute_normals(inplace=True)
+    sphere_flipped = sphere.copy()
+    sphere_flipped.flip_normals()
+    sphere_flipped.compute_normals(inplace=True)
+    assert np.allclose(-sphere_flipped.point_arrays['Normals'],
+                       sphere.point_arrays['Normals'])

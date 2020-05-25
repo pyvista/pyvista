@@ -3393,11 +3393,10 @@ class PolyDataFilters(DataSetFilters):
             remove_mask = np.zeros(poly_data.n_points, np.bool)
             remove_mask[remove] = True
 
-        try:
-            f = poly_data.faces.reshape(-1, 4)[:, 1:]
-        except:
-            raise Exception('Mesh must consist of only triangles')
+        if not poly_data.is_all_triangles():
+            raise RuntimeError('Mesh must consist of only triangles')
 
+        f = poly_data.faces.reshape(-1, 4)[:, 1:]
         vmask = remove_mask.take(f)
         if mode == 'all':
             fmask = ~(vmask).all(1)
@@ -3501,7 +3500,7 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
-    def delauney_2d(poly_data):
+    def delauney_2d(poly_data):  # pragma: no cover
         """Apply a delaunay 2D filter along the best fitting plane.
 
         DEPRECATED. Please see :func:`pyvista.PolyData.delaunay_2d`.
@@ -3676,7 +3675,7 @@ class PolyDataFilters(DataSetFilters):
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for unstructured grid datasets."""
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # pragma: no cover
         """Allocate memory for the unstructured grid."""
         if cls is UnstructuredGridFilters:
             raise TypeError("pyvista.UnstructuredGridFilters is an abstract class and may not be instantiated.")
@@ -3702,7 +3701,7 @@ class UnstructuredGridFilters(DataSetFilters):
 class UniformGridFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for uniform grid datasets."""
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # pragma: no cover
         """Allocate memory for the uniform grid."""
         if cls is UniformGridFilters:
             raise TypeError("pyvista.UniformGridFilters is an abstract class and may not be instantiated.")

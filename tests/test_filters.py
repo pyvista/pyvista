@@ -276,6 +276,12 @@ def test_wireframe_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
+def test_delaunay_2d():
+    mesh = DATASETS[2].delaunay_2d()  # UnstructuredGrid
+    assert isinstance(mesh, pyvista.PolyData)
+    assert mesh.n_points
+
+
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
                                     'flying_edges'])
 def test_contour(method):
