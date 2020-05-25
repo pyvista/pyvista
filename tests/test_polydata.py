@@ -295,7 +295,7 @@ def test_invalid_curvature():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._VTK_WRITERS)
+@pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))

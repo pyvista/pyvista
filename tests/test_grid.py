@@ -108,7 +108,7 @@ def test_extract_feature_edges(hexbeam):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._VTK_WRITERS)
+@pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     hexbeam.save(filename, binary)
@@ -213,7 +213,7 @@ def test_invalid_init_structured():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.pointset.StructuredGrid._VTK_WRITERS)
+@pytest.mark.parametrize('extension', pyvista.pointset.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     struct_grid.save(filename, binary)
@@ -378,7 +378,7 @@ def test_cast_uniform_to_rectilinear():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.RectilinearGrid._VTK_READERS)
+@pytest.mark.parametrize('extension', pyvista.core.grid.RectilinearGrid._READERS)
 def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_rectilinear()
@@ -399,7 +399,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.UniformGrid._VTK_READERS)
+@pytest.mark.parametrize('extension', pyvista.core.grid.UniformGrid._READERS)
 def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_uniform()
