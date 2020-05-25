@@ -20,6 +20,8 @@ log.setLevel('CRITICAL')
 # vector array names
 DEFAULT_VECTOR_KEY = '_vectors'
 
+ActiveArrayInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
+
 
 class DataObject:
     """Methods common to all wrapped data objects."""
@@ -260,9 +262,6 @@ class DataObject:
     def memory_address(self):
         """Get address of the underlying C++ object in format 'Addr=%p'."""
         return self.GetInformation().GetAddressAsString("")
-
-
-ActiveArrayInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
 
 
 class Common(DataSetFilters, DataObject):
