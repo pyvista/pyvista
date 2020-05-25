@@ -7,7 +7,6 @@ import numpy as np
 import vtk
 
 import pyvista
-
 from .theme import parse_color, rcParams
 
 

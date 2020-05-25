@@ -23,8 +23,8 @@ Example
 
 """
 import collections
-from functools import wraps
 import logging
+from functools import wraps
 
 import numpy as np
 import vtk

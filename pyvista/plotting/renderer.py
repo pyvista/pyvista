@@ -10,9 +10,8 @@ from vtk import vtkRenderer
 
 import pyvista
 from pyvista.utilities import wrap, check_depth_peeling
-
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
-from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
+from .tools import create_axes_orientation_box, create_axes_marker
 
 
 def scale_point(camera, point, invert=False):

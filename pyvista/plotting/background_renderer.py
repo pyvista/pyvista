@@ -1,9 +1,9 @@
 """Contains the BackgroundRenderer class."""
-import vtk
 import numpy as np
+import vtk
 
-from .renderer import Renderer
 import pyvista
+from .renderer import Renderer
 
 
 class BackgroundRenderer(Renderer):

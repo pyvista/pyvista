@@ -1,6 +1,6 @@
+import numpy as np
 from pytest import fixture
 
-import numpy as np
 import pyvista
 from pyvista import examples
 

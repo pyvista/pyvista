@@ -1,8 +1,8 @@
 """Module containing geometry helper functions."""
 
 import ctypes
+
 import numpy as np
-import vtk
 
 import pyvista
 
