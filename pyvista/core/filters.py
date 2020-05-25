@@ -61,11 +61,10 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # pragma: no cover
         """Allocate memory for the dataset filters."""
         if cls is DataSetFilters:
             raise TypeError("pyvista.DataSetFilters is an abstract class and may not be instantiated.")
-        return object.__new__(cls)
 
     def _clip_with_function(dataset, function, invert=True, value=0.0):
         """Clip using an implicit function (internal helper)."""
@@ -736,7 +735,7 @@ class DataSetFilters:
             scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
         elif isinstance(scalar_range, collections.Iterable):
             if len(scalar_range) != 2:
-                raise AssertionError('scalar_range must have a length of two defining the min and max')
+                raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
             raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
         # Construct the filter
@@ -803,7 +802,7 @@ class DataSetFilters:
         elif method == 'flying_edges':
             alg = vtk.vtkFlyingEdges3D()
         else:
-            raise RuntimeError("Method '{}' is not supported".format(method))
+            raise ValueError("Method '{}' is not supported".format(method))
         # Make sure the input has scalars to contour on
         if dataset.n_arrays < 1:
             raise AssertionError('Input dataset for the contour filter must have scalar data.')
@@ -2221,11 +2220,10 @@ class DataSetFilters:
 class CompositeFilters:
     """An internal class to manage filtes/algorithms for composite datasets."""
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # pragma: no cover
         """Allocate memory for the composite filters."""
         if cls is CompositeFilters:
             raise TypeError("pyvista.CompositeFilters is an abstract class and may not be instantiated.")
-        return object.__new__(cls)
 
     def extract_geometry(composite):
         """Combine the geomertry of all blocks into a single ``PolyData`` object.
@@ -2325,11 +2323,10 @@ class CompositeFilters:
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for polydata datasets."""
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # pragma: no cover
         """Allocate memory for the polydata filters."""
         if cls is PolyDataFilters:
             raise TypeError("pyvista.PolyDataFilters is an abstract class and may not be instantiated.")
-        return object.__new__(cls)
 
     def edge_mask(poly_data, angle):
         """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
@@ -3680,7 +3677,6 @@ class UnstructuredGridFilters(DataSetFilters):
         """Allocate memory for the unstructured grid."""
         if cls is UnstructuredGridFilters:
             raise TypeError("pyvista.UnstructuredGridFilters is an abstract class and may not be instantiated.")
-        return object.__new__(cls)
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     progress_bar=False):
@@ -3706,7 +3702,6 @@ class UniformGridFilters(DataSetFilters):
         """Allocate memory for the uniform grid."""
         if cls is UniformGridFilters:
             raise TypeError("pyvista.UniformGridFilters is an abstract class and may not be instantiated.")
-        return object.__new__(cls)
 
     def gaussian_smooth(dataset, radius_factor=1.5, std_dev=2.,
                         scalars=None, preference='points', progress_bar=False):

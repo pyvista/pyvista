@@ -18,14 +18,6 @@ SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 test_path = os.path.dirname(os.path.abspath(__file__))
-test_data_path = os.path.join(test_path, 'test_data')
-
-stl_test_file = os.path.join(test_data_path, 'sphere.stl')
-ply_test_file = os.path.join(test_data_path, 'sphere.ply')
-vtk_test_file = os.path.join(test_data_path, 'sphere.vtk')
-test_files = [stl_test_file,
-              ply_test_file,
-              vtk_test_file]
 
 
 def test_init():
@@ -34,8 +26,7 @@ def test_init():
     assert not mesh.n_cells
 
 
-def test_init_from_pdata():
-    sphere = SPHERE.copy()
+def test_init_from_pdata(sphere):
     mesh = pyvista.PolyData(sphere, deep=True)
     assert mesh.n_points
     assert mesh.n_cells
@@ -164,9 +155,6 @@ def test_invalid_file():
         filename = os.path.join(test_path, 'test_polydata.py')
         pyvista.PolyData(filename)
 
-    # with pytest.raises(Exception):
-        # pyvista.PolyData(examples.hexbeamfile)
-
 
 def test_geodesic(sphere):
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
@@ -227,6 +215,11 @@ def test_boolean_cut_inplace():
     sub_mesh.boolean_cut(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
+
+
+def test_boolean_cut_fail(plane):
+    with pytest.raises(NotAllTrianglesError):
+        plane - plane
 
 
 def test_subtract():

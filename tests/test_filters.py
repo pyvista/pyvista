@@ -284,19 +284,23 @@ def test_delaunay_2d():
 
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
                                     'flying_edges'])
-def test_contour(method):
-    dataset = examples.load_uniform()
-    iso = dataset.contour(method=method)
+def test_contour(uniform, method):
+    iso = uniform.contour(method=method)
     assert iso is not None
-    iso = dataset.contour(isosurfaces=[100, 300, 500], method=method)
+    iso = uniform.contour(isosurfaces=[100, 300, 500], method=method)
     assert iso is not None
+
+
+def test_contour_errors(uniform):
     with pytest.raises(AssertionError):
-        result = dataset.contour(scalars='Spatial Cell Data')
+        uniform.contour(scalars='Spatial Cell Data')
     with pytest.raises(RuntimeError):
-        result = dataset.contour(isosurfaces=pyvista.PolyData())
-    dataset = examples.load_airplane()
+        uniform.contour(isosurfaces=pyvista.PolyData())
+    uniform = examples.load_airplane()
     with pytest.raises(AssertionError):
-        result = dataset.contour()
+        uniform.contour()
+    with pytest.raises(ValueError):
+        uniform.contour(method='invalid method')
 
 
 def test_elevation():
@@ -331,6 +335,8 @@ def test_elevation():
     # test errors
     with pytest.raises(RuntimeError):
         elev = dataset.elevation(scalar_range=0.5)
+    with pytest.raises(ValueError):
+        elev = dataset.elevation(scalar_range=[1, 2, 3])
 
 
 @skip_py2_nobind
