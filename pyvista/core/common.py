@@ -23,7 +23,7 @@ log.setLevel('CRITICAL')
 DEFAULT_VECTOR_KEY = '_vectors'
 
 
-class DataObject(object):
+class DataObject:
     """Methods common to all wrapped data objects."""
 
     def __init__(self, *args, **kwargs):
@@ -301,7 +301,7 @@ class Common(DataSetFilters, DataObject):
 
     def __init__(self, *args, **kwargs):
         """Initialize the common object."""
-        super(Common, self).__init__()
+        super().__init__()
         self.references = []
         self._point_bool_array_names = []
         self._cell_bool_array_names = []
