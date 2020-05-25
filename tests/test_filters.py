@@ -466,6 +466,29 @@ def test_warp_by_vector():
     assert np.allclose(foo.points, warped.points)
 
 
+def test_invalid_warp_scalar(sphere):
+    sphere['cellscalars'] = np.random.random(sphere.n_cells)
+    sphere.point_arrays.clear()
+    with pytest.raises(RuntimeError):
+        sphere.warp_by_scalar()
+
+
+def test_invalid_warp_scalar_inplace(uniform):
+    with pytest.raises(TypeError):
+        uniform.warp_by_scalar(inplace=True)
+
+
+def test_invalid_warp_vector(sphere):
+    sphere.compute_normals(inplace=True)
+    sphere.point_arrays['Normals'] = np.empty((sphere.n_points, 2))
+    with pytest.raises(ValueError):
+        sphere.warp_by_vector()
+
+    sphere.point_arrays.clear()
+    with pytest.raises(RuntimeError):
+        sphere.warp_by_vector()
+
+
 def test_cell_data_to_point_data():
     data = examples.load_uniform()
     foo = data.cell_data_to_point_data()

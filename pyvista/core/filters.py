@@ -1131,7 +1131,7 @@ class DataSetFilters:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != FieldAssociation.POINT:
-            raise AssertionError('Dataset can only by warped by a point data array.')
+            raise RuntimeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
         alg = vtk.vtkWarpScalar()
         alg.SetInputDataObject(dataset)
@@ -1162,13 +1162,15 @@ class DataSetFilters:
         ----------
         vectors : str, optional
             Name of vector to warp by. Defaults to currently active vector.
+
         factor : float, optional
             A scaling factor that multiplies the vectors to warp by. Can
             be used to enhance the warping effect.
+
         inplace : bool, optional
             If True, the function will update the mesh in-place and
             return ``None``.
-        
+
         Returns
         -------
         warped_mesh : mesh
@@ -1178,9 +1180,12 @@ class DataSetFilters:
         if vectors is None:
             field, vectors = dataset.active_vectors_info
         arr, field = get_array(dataset, vectors, preference='point', info=True)
+        if arr is None:
+            raise RuntimeError('No active vectors')
+
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
-            raise AssertionError(
+            raise ValueError(
                 'Dataset can only by warped by a 3D vector point data array.' + \
                 'The values you provided do not satisfy this requirement')
         alg = vtk.vtkWarpVector()
