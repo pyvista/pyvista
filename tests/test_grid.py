@@ -160,6 +160,9 @@ def test_extract_cells(hexbeam):
     assert part_beam.n_cells == len(ind)
     assert part_beam.n_points < hexbeam.n_points
 
+    ind = np.vstack(([1, 2], [4, 5]))[:, 0]
+    part_beam = hexbeam.extract_cells(ind)
+
 
 def test_merge(hexbeam):
     grid = hexbeam.copy()
@@ -191,6 +194,11 @@ def test_merge_list(hexbeam):
 
     grid_a.merge([hexbeam, grid_b], inplace=True, merge_points=True)
     assert grid_a.n_points > hexbeam.n_points
+
+
+def test_merge_invalid(hexbeam, sphere):
+    with pytest.raises(TypeError):
+        sphere.merge([hexbeam], inplace=True)
 
 
 def test_init_structured(struct_grid):

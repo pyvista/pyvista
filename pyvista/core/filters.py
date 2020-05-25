@@ -865,7 +865,7 @@ class DataSetFilters:
             The string name to give the new texture coordinates if applying
             the filter inplace.
 
-        use_bounds : bool
+        use_bounds : bool, optional
             Use the bounds to set the mapping plane by default (bottom plane
             of the bounding box).
 
@@ -873,8 +873,6 @@ class DataSetFilters:
         if use_bounds:
             if isinstance(use_bounds, (int, bool)):
                 b = dataset.GetBounds()
-            else:
-                b = use_bounds
             origin = [b[0], b[2], b[4]]   # BOTTOM LEFT CORNER
             point_u = [b[1], b[2], b[4]]  # BOTTOM RIGHT CORNER
             point_v = [b[0], b[3], b[4]] # TOP LEFT CORNER
@@ -1607,15 +1605,15 @@ class DataSetFilters:
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
-            raise RuntimeError("integration direction must be one of: 'backward', 'forward', or 'both' - not '{}'.".format(integration_direction))
+            raise ValueError("integration direction must be one of: 'backward', 'forward', or 'both' - not '{}'.".format(integration_direction))
         if integrator_type not in [2, 4, 45]:
-            raise RuntimeError('integrator type must be one of `2`, `4`, or `45`.')
+            raise ValueError('integrator type must be one of `2`, `4`, or `45`.')
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
-            raise RuntimeError("interpolator type must be either 'cell' or 'point'")
+            raise ValueError("interpolator type must be either 'cell' or 'point'")
         if step_unit not in ['l', 'cl']:
-            raise RuntimeError("step unit must be either 'l' or 'cl'")
-        step_unit = {'cl':vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
-                     'l':vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
+            raise ValueError("step unit must be either 'l' or 'cl'")
+        step_unit = {'cl': vtk.vtkStreamTracer.CELL_LENGTH_UNIT,
+                     'l': vtk.vtkStreamTracer.LENGTH_UNIT}[step_unit]
         if isinstance(vectors, str):
             dataset.set_active_scalars(vectors)
             dataset.set_active_vectors(vectors)
@@ -1773,7 +1771,7 @@ class DataSetFilters:
         # Ensure matplotlib is available
         try:
             import matplotlib.pyplot as plt
-        except ImportError:
+        except ImportError:  # pragma: no cover
             raise ImportError('matplotlib must be available to use this filter.')
 
         # Sample on line
@@ -1804,7 +1802,7 @@ class DataSetFilters:
             plt.title('{} Profile'.format(scalars))
         else:
             plt.title(title)
-        if show:
+        if show:  # pragma: no cover
             return plt.show()
 
     def extract_cells(dataset, ind):
@@ -1872,18 +1870,17 @@ class DataSetFilters:
             Subselected grid.
 
         """
-        try:
-            ind = np.array(ind)
-        except:
-            raise Exception('indices must be either a mask, array, list, or iterable')
+        if not isinstance(ind, collections.Iterable):
+            raise TypeError('`ind` must be either a mask, array, list, or iterable')
 
-        # Convert to vtk indices
+        ind = np.asarray(ind)
         if ind.dtype == np.bool:
             ind = ind.nonzero()[0]
+        elif not np.issubdtype(ind.dtype, np.number):
+            raise ValueError('`ind` be a numeric array or bool')
 
-        if ind.dtype != np.int64:
-            ind = ind.astype(np.int64)
-        vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=True)
+        # Convert to vtk indices
+        vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=False)
 
         # Create selection objects
         selectionNode = vtk.vtkSelectionNode()
@@ -1924,9 +1921,6 @@ class DataSetFilters:
             Adds a cell array "vtkOriginalPointIds" that idenfities which
             original cells these surface cells correspond to
 
-        inplace : bool, optional
-            Return new mesh or overwrite input.
-
         Return
         ------
         extsurf : pyvista.PolyData
@@ -1942,10 +1936,7 @@ class DataSetFilters:
         surf_filter.Update()
 
         mesh = _get_output(surf_filter)
-        if inplace:
-            dataset.overwrite(mesh)
-        else:
-            return mesh
+        return mesh
 
     def surface_indices(dataset):
         """Return the surface indices of a grid.
@@ -2089,7 +2080,7 @@ class DataSetFilters:
             if type(dataset) == type(merged):
                 dataset.deep_copy(merged)
             else:
-                raise TypeError("Mesh tpye {} not able to be overridden by output.".format(type(dataset)))
+                raise TypeError("Mesh type {} cannot be overridden by output.".format(type(dataset)))
         else:
             return merged
 
@@ -2200,7 +2191,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        scalars : str
+        scalars : str, optional
             String name of the scalars array to use when computing gradient.
 
         gradient_name : str, optional
@@ -2211,6 +2202,8 @@ class DataSetFilters:
         # Check if scalars array given
         if scalars is None:
             field, scalars = dataset.active_scalars_info
+            if scalars is None:
+                raise RuntimeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
@@ -2342,7 +2335,7 @@ class PolyDataFilters(DataSetFilters):
             Angle to consider an edge.
 
         """
-        if not isinstance(poly_data, pyvista.PolyData):
+        if not isinstance(poly_data, pyvista.PolyData):  # pragma: no cover
             poly_data = pyvista.PolyData(poly_data)
         poly_data.point_arrays['point_ind'] = np.arange(poly_data.n_points)
         featureEdges = vtk.vtkFeatureEdges()
