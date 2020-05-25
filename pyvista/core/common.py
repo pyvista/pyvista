@@ -570,10 +570,11 @@ class Common(DataSetFilters, DataObject):
     def active_scalars(self):
         """Return the active scalars as an array."""
         field, name = self.active_scalars_info
-        if field == FieldAssociation.POINT:
-            return self.point_arrays.active_scalars
-        if field == FieldAssociation.CELL:
-            return self.cell_arrays.active_scalars
+        if name is not None:
+            if field == FieldAssociation.POINT:
+                return self.point_arrays[name]
+            elif field == FieldAssociation.CELL:
+                return self.cell_arrays[name]
 
     @property
     def active_scalar(self):  # pragma: no cover
