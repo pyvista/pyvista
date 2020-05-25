@@ -339,11 +339,13 @@ def test_multi_block_save_lines(tmpdir):
         blocks.append(poly)
 
     path = tmpdir.mkdir("tmpdir")
-    poly.save(path.join('lines.vtk'))
-    blocks.save(path.join('blocks.vtmb'))
+    line_filename = str(path.join('lines.vtk'))
+    block_filename = str(path.join('blocks.vtmb'))
+    poly.save(line_filename)
+    blocks.save(block_filename)
 
-    poly_load = pyvista.read(path.join('lines.vtk'))
+    poly_load = pyvista.read(line_filename)
     assert np.allclose(poly_load.points, poly.points)
 
-    blocks_load = pyvista.read(path.join('blocks.vtmb'))
+    blocks_load = pyvista.read(block_filename)
     assert np.allclose(blocks_load[0].points, blocks[0].points)
