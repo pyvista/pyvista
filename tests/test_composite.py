@@ -322,3 +322,28 @@ def test_multi_block_volume(ant, airplane, sphere, uniform):
 def test_multi_block_length(ant, sphere, uniform, airplane):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
     assert multi.length
+
+
+def test_multi_block_save_lines(tmpdir):
+    radius = 1
+    xr = np.random.random(10)
+    yr = np.random.random(10)
+    x = radius * np.sin(yr) * np.cos(xr)
+    y = radius * np.sin(yr) * np.sin(xr)
+    z = radius * np.cos(yr)
+    xyz = np.stack((x, y, z), axis=1)
+
+    poly = pyvista.lines_from_points(xyz, close=False)
+    blocks = pyvista.MultiBlock()
+    for _ in range(2):
+        blocks.append(poly)
+
+    path = tmpdir.mkdir("tmpdir")
+    poly.save(path.join('lines.vtk'))
+    blocks.save(path.join('blocks.vtmb'))
+
+    poly_load = pyvista.read(path.join('lines.vtk'))
+    assert np.allclose(poly_load.points, poly.points)
+
+    blocks_load = pyvista.read(path.join('blocks.vtmb'))
+    assert np.allclose(blocks_load[0].points, blocks[0].points)

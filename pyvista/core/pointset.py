@@ -251,6 +251,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         else:
             nlines = lines.shape[0]
 
+        # must ravel or this segfaults on multiblock
+        lines = lines.ravel()
         vtkcells = vtk.vtkCellArray()
         vtkcells.SetCells(nlines, numpy_to_vtkIdTypeArray(lines, deep=False))
         self.SetLines(vtkcells)
