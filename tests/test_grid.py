@@ -9,7 +9,6 @@ from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
 test_path = os.path.dirname(os.path.abspath(__file__))
-test_data_path = os.path.join(test_path, 'test_data')
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
@@ -107,8 +106,13 @@ def test_extract_feature_edges(hexbeam):
     assert not edges.n_points
 
 
+def test_triangulate_inplace(hexbeam):
+    hexbeam.triangulate(inplace=True)
+    assert (hexbeam.celltypes == vtk.VTK_TETRA).all()
+
+
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.pointset.UNSTRUCTUREDGRID_WRITERS)
+@pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     hexbeam.save(filename, binary)
@@ -155,6 +159,9 @@ def test_extract_cells(hexbeam):
     assert part_beam.n_cells == len(ind)
     assert part_beam.n_points < hexbeam.n_points
 
+    ind = np.vstack(([1, 2], [4, 5]))[:, 0]
+    part_beam = hexbeam.extract_cells(ind)
+
 
 def test_merge(hexbeam):
     grid = hexbeam.copy()
@@ -188,6 +195,11 @@ def test_merge_list(hexbeam):
     assert grid_a.n_points > hexbeam.n_points
 
 
+def test_merge_invalid(hexbeam, sphere):
+    with pytest.raises(TypeError):
+        sphere.merge([hexbeam], inplace=True)
+
+
 def test_init_structured(struct_grid):
     xrng = np.arange(-10, 10, 2)
     yrng = np.arange(-10, 10, 2)
@@ -213,7 +225,7 @@ def test_invalid_init_structured():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.pointset.STRUCTUREDGRID_WRITERS)
+@pytest.mark.parametrize('extension', pyvista.pointset.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     struct_grid.save(filename, binary)
@@ -378,7 +390,7 @@ def test_cast_uniform_to_rectilinear():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.RECTILINEARGRID_READERS)
+@pytest.mark.parametrize('extension', pyvista.core.grid.RectilinearGrid._READERS)
 def test_save_rectilinear(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_rectilinear()
@@ -399,7 +411,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.grid.IMAGEDATA_READERS)
+@pytest.mark.parametrize('extension', pyvista.core.grid.UniformGrid._READERS)
 def test_save_uniform(extension, binary, tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     ogrid = examples.load_uniform()
@@ -454,10 +466,10 @@ def test_grid_points():
 
 def test_grid_extract_selection_points(struct_grid):
     grid = pyvista.UnstructuredGrid(struct_grid)
-    sub_grid = grid.extract_selection_points([0])
+    sub_grid = grid.extract_points([0])
     assert sub_grid.n_cells == 1
 
-    sub_grid = grid.extract_selection_points(range(100))
+    sub_grid = grid.extract_points(range(100))
     assert sub_grid.n_cells > 1
 
 

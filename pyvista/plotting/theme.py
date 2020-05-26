@@ -1,7 +1,7 @@
 """Module managing different plotting theme parameters."""
 
 import os
-import scooby
+
 import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND

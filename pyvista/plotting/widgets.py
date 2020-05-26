@@ -5,11 +5,10 @@ import vtk
 
 import pyvista
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
-
 from .theme import rcParams, parse_color
 
 
-class WidgetHelper(object):
+class WidgetHelper:
     """An internal class to manage widgets.
 
     It also manages and other helper methods involving widgets.

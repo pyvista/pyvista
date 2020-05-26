@@ -1,12 +1,13 @@
 """Supporting functions for polydata and grid objects."""
 
-import signal
 import collections
 import ctypes
 import enum
 import logging
+import signal
 import warnings
 from threading import Thread
+import threading
 
 import numpy as np
 import scooby
@@ -632,7 +633,7 @@ def threaded(fn):
     return wrapper
 
 
-class conditional_decorator(object):
+class conditional_decorator:
     """Conditional decorator for methods."""
 
     def __init__(self, dec, condition):
@@ -696,7 +697,9 @@ class ProgressMonitor():
         """Enter event for ``with`` context."""
         from tqdm import tqdm
 
-        self._old_handler = signal.signal(signal.SIGINT, self.handler)
+        # check if in main thread
+        if threading.current_thread().__class__.__name__ == '_MainThread':
+            self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(total=1, leave=True,
                                   bar_format='{l_bar}{bar}[{elapsed}<{remaining}]')
         self._progress_bar.set_description(self.message)
@@ -709,4 +712,5 @@ class ProgressMonitor():
         self._progress_bar.refresh()
         self._progress_bar.close()
         self.algorithm.RemoveObservers(self.event_type)
-        signal.signal(signal.SIGINT, self._old_handler)
+        if threading.current_thread().__class__.__name__ == '_MainThread':
+            signal.signal(signal.SIGINT, self._old_handler)

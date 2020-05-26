@@ -10,9 +10,8 @@ from vtk import vtkRenderer
 
 import pyvista
 from pyvista.utilities import wrap, check_depth_peeling
-
 from .theme import parse_color, parse_font_family, rcParams, MAX_N_COLOR_BARS
-from .tools import update_axes_label_color, create_axes_orientation_box, create_axes_marker
+from .tools import create_axes_orientation_box, create_axes_marker
 
 
 def scale_point(camera, point, invert=False):
@@ -42,7 +41,7 @@ def scale_point(camera, point, invert=False):
     return (scaled[0], scaled[1], scaled[2])
 
 
-class CameraPosition(object):
+class CameraPosition:
     """Container to hold camera location attributes."""
 
     def __init__(self, position, focal_point, viewup):
@@ -104,7 +103,7 @@ class Renderer(vtkRenderer):
     def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         """Initialize the renderer."""
-        super(Renderer, self).__init__()
+        super().__init__()
         self._actors = {}
         self.parent = parent
         self.camera_set = False
@@ -155,7 +154,7 @@ class Renderer(vtkRenderer):
             return
 
         if isinstance(camera_location[0], (int, float)):
-            return self.view_vector(camera_location)
+            self.view_vector(camera_location)
 
         # everything is set explicitly
         self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))

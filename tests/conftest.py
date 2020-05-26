@@ -1,6 +1,6 @@
+import numpy as np
 from pytest import fixture
 
-import numpy as np
 import pyvista
 from pyvista import examples
 
@@ -46,3 +46,13 @@ def struct_grid():
                           np.arange(-10, 10, 2),
                           np.arange(-10, 10, 2))
     return pyvista.StructuredGrid(x, y, z)
+
+
+@fixture()
+def plane():
+    return pyvista.Plane()
+
+
+@fixture()
+def spline():
+    return examples.load_spline()

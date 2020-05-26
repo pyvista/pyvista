@@ -1,6 +1,7 @@
 """Module managing picking events."""
 
 import logging
+
 import numpy as np
 import vtk
 
@@ -8,7 +9,7 @@ import pyvista
 from pyvista.utilities import try_callback
 
 
-class PickingHelper(object):
+class PickingHelper:
     """An internal class to hold picking related features."""
 
     picked_cells = None

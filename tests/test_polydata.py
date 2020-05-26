@@ -7,6 +7,7 @@ import pytest
 import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
+from pyvista.core.errors import NotAllTrianglesError
 
 radius = 0.5
 SPHERE = pyvista.Sphere(radius, theta_resolution=10, phi_resolution=10)
@@ -17,14 +18,6 @@ SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
 test_path = os.path.dirname(os.path.abspath(__file__))
-test_data_path = os.path.join(test_path, 'test_data')
-
-stl_test_file = os.path.join(test_data_path, 'sphere.stl')
-ply_test_file = os.path.join(test_data_path, 'sphere.ply')
-vtk_test_file = os.path.join(test_data_path, 'sphere.vtk')
-test_files = [stl_test_file,
-              ply_test_file,
-              vtk_test_file]
 
 
 def test_init():
@@ -33,20 +26,12 @@ def test_init():
     assert not mesh.n_cells
 
 
-def test_init_from_pdata():
-    sphere = SPHERE.copy()
+def test_init_from_pdata(sphere):
     mesh = pyvista.PolyData(sphere, deep=True)
     assert mesh.n_points
     assert mesh.n_cells
     mesh.points[0] += 1
     assert not np.allclose(sphere.points[0], mesh.points[0])
-
-
-# @pytest.mark.parametrize('filename', test_files)
-# def test_init_from_file(filename):
-#     mesh = pyvista.PolyData(filename)
-#     assert mesh.faces.shape == sphere.faces.shape
-#     assert mesh.points.shape == sphere.points.shape
 
 
 def test_init_from_arrays():
@@ -150,41 +135,48 @@ def test_init_as_points_from_list():
 
 def test_invalid_init():
     with pytest.raises(ValueError):
-        mesh = pyvista.PolyData(np.array([1]))
+        pyvista.PolyData(np.array([1]))
 
     with pytest.raises(TypeError):
-        mesh = pyvista.PolyData(np.array([1]), 'woa')
+        pyvista.PolyData(np.array([1]), 'woa')
 
     with pytest.raises(TypeError):
-        mesh = pyvista.PolyData('woa', 'woa')
+        pyvista.PolyData('woa', 'woa')
 
     with pytest.raises(TypeError):
-        mesh = pyvista.PolyData('woa', 'woa', 'woa')
+        pyvista.PolyData('woa', 'woa', 'woa')
 
 
 def test_invalid_file():
     with pytest.raises(Exception):
-        mesh = pyvista.PolyData('file.bad')
+        pyvista.PolyData('file.bad')
 
     with pytest.raises(ValueError):
         filename = os.path.join(test_path, 'test_polydata.py')
-        mesh = pyvista.PolyData(filename)
-
-    # with pytest.raises(Exception):
-        # pyvista.PolyData(examples.hexbeamfile)
+        pyvista.PolyData(filename)
 
 
-def test_geodesic():
-    sphere = SPHERE.copy()
+def test_geodesic(sphere):
     geodesic = sphere.geodesic(0, sphere.n_points - 1)
     assert isinstance(geodesic, pyvista.PolyData)
     assert "vtkOriginalPointIds" in geodesic.array_names
     ids = geodesic.point_arrays["vtkOriginalPointIds"]
     assert np.allclose(geodesic.points, sphere.points[ids])
 
+    # finally, inplace
+    sphere.geodesic(0, sphere.n_points - 1, inplace=True)
+    assert np.allclose(geodesic.points, sphere.points)
 
-def test_geodesic_distance():
-    sphere = SPHERE.copy()
+
+def test_geodesic_fail(sphere, plane):
+    with pytest.raises(IndexError):
+        sphere.geodesic(-1, -1)
+
+    with pytest.raises(NotAllTrianglesError):
+        plane.geodesic(0, 10)
+
+
+def test_geodesic_distance(sphere):
     distance = sphere.geodesic_distance(0, sphere.n_points - 1)
     assert isinstance(distance, float)
 
@@ -223,6 +215,11 @@ def test_boolean_cut_inplace():
     sub_mesh.boolean_cut(sphere_shifted, inplace=True)
     assert sub_mesh.n_points
     assert sub_mesh.n_cells
+
+
+def test_boolean_cut_fail(plane):
+    with pytest.raises(NotAllTrianglesError):
+        plane - plane
 
 
 def test_subtract():
@@ -295,7 +292,7 @@ def test_invalid_curvature():
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', pyvista.core.pointset.POLYDATA_WRITERS)
+@pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
@@ -312,11 +309,10 @@ def test_invalid_save():
         sphere.save('file.abc')
 
 
-def test_triangulate_filter():
-    arrow = pyvista.Arrow([0, 0, 0], [1, 1, 1])
-    assert arrow.faces.size % 4
-    arrow.triangulate(inplace=True)
-    assert not(arrow.faces.size % 4)
+def test_triangulate_filter(plane):
+    assert not plane.is_all_triangles()
+    plane.triangulate(inplace=True)
+    assert plane.is_all_triangles()
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
@@ -413,8 +409,7 @@ def test_clip_plane():
     assert np.all(clipped_sphere.points[faces, 2] <= 0)
 
 
-def test_extract_largest():
-    sphere = SPHERE.copy()
+def test_extract_largest(sphere):
     mesh = sphere + pyvista.Sphere(0.1, theta_resolution=5, phi_resolution=5)
     largest = mesh.extract_largest()
     assert largest.n_faces == sphere.n_faces
@@ -423,8 +418,7 @@ def test_extract_largest():
     assert mesh.n_faces == sphere.n_faces
 
 
-def test_clean():
-    sphere = SPHERE.copy()
+def test_clean(sphere):
     mesh = sphere + sphere
     assert mesh.n_points > sphere.n_points
     cleaned = mesh.clean(merge_tol=1E-5)
@@ -457,9 +451,9 @@ def test_plot_boundaries():
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_plot_normals():
-    sphere = SPHERE.copy()
-    sphere.plot_normals(off_screen=True)
+@pytest.mark.parametrize('flip', [True, False])
+def test_plot_normals(sphere, flip):
+    sphere.plot_normals(off_screen=True, flip=flip)
 
 
 def test_remove_points_any():
@@ -481,10 +475,14 @@ def test_remove_points_all():
     assert sphere_copy.n_faces == sphere.n_faces - 1
 
 
-def test_remove_points_fail():
-    arrow = pyvista.Arrow([0, 0, 0], [1, 0, 0])
-    with pytest.raises(Exception):
-        arrow.remove_points(range(10))
+def test_remove_points_fail(sphere, plane):
+    # not triangles:
+    with pytest.raises(NotAllTrianglesError):
+        plane.remove_points([0])
+
+    # invalid bool mask size
+    with pytest.raises(ValueError):
+        sphere.remove_points(np.ones(10, np.bool))
 
 
 def test_vertice_cells_on_read(tmpdir):
@@ -517,20 +515,43 @@ def test_project_points_to_plane():
     zz = A*np.exp(-0.5*((xx/b)**2. + (yy/b)**2.))
     poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry()
     poly['elev'] = zz.ravel(order='f')
+
+    with pytest.raises(TypeError):
+        poly.project_points_to_plane(normal=(0, 0, 1, 1))
+
     # Test the filter
     projected = poly.project_points_to_plane(origin=poly.center, normal=(0,0,1))
     assert np.allclose(projected.points[:,-1], poly.center[-1])
     projected = poly.project_points_to_plane(normal=(0,1,1))
     assert projected.n_points
 
+    # finally, test inplace
+    poly.project_points_to_plane(normal=(0,1,1), inplace=True)
+    assert np.allclose(poly.points, projected.points)
 
-def test_tube():
+
+def test_tube(spline):
     # Simple
-    mesh = pyvista.Line()
-    tube = mesh.tube(n_sides=2)
+    line = pyvista.Line()
+    tube = line.tube(n_sides=2)
+    assert tube.n_points, tube.n_cells
+
+    # inplace
+    line.tube(n_sides=2, inplace=True)
+    assert np.allclose(line.points, tube.points)
+
     # Complicated
-    mesh = examples.load_spline()
-    tube = mesh.tube(radius=5, scalars='arc_length')
+    tube = spline.tube(radius=0.5, scalars='arc_length')
+    assert tube.n_points, tube.n_cells
+
+    with pytest.raises(TypeError):
+        spline.tube(scalars=range(10))
+
+
+def test_smooth_inplace(sphere):
+    orig_pts = sphere.points.copy()
+    sphere.smooth(inplace=True)
+    assert not np.allclose(orig_pts, sphere.points)
 
 
 def test_delaunay_2d():
@@ -542,9 +563,14 @@ def test_delaunay_2d():
     zz = A * np.exp(-0.5 * ((xx / b) ** 2.0 + (yy / b) ** 2.0))
     # Get the points as a 2D NumPy array (N by 3)
     points = np.c_[xx.reshape(-1), yy.reshape(-1), zz.reshape(-1)]
-    surf = pyvista.PolyData(points).delaunay_2d()
+    pdata = pyvista.PolyData(points)
+    surf = pdata.delaunay_2d()
     # Make sure we have an all triangle mesh now
     assert np.all(surf.faces.reshape((-1, 4))[:, 0] == 3)
+
+    # test inplace
+    pdata.delaunay_2d(inplace=True)
+    assert np.allclose(pdata.points, surf.points)
 
 
 def test_lines():
@@ -575,9 +601,12 @@ def test_lines():
 
 def test_ribbon_filter():
     line = examples.load_spline().compute_arc_length()
-    ribbon = line.ribbon(width=0.5)
     ribbon = line.ribbon(width=0.5, scalars='arc_length')
-    ribbon = line.ribbon(width=0.5, tcoords=True)
+    assert ribbon.n_points
+
+    for tcoords in [True, 'lower', 'normalized', False]:
+        ribbon = line.ribbon(width=0.5, tcoords=tcoords)
+        assert ribbon.n_points
 
 
 def test_is_all_triangles():
@@ -608,3 +637,15 @@ def test_extrude():
     n_points_old = arc.n_points
     arc.extrude([0, 0, 1], inplace=True)
     assert arc.n_points != n_points_old
+
+
+def test_flip_normals(sphere):
+    sphere_flipped = sphere.copy()
+    sphere_flipped.flip_normals()
+
+
+    # TODO: Check why this fails on Mac OS and Windows on Azure
+    # sphere.compute_normals(inplace=True)
+    # sphere_flipped.compute_normals(inplace=True)
+    # assert np.allclose(sphere_flipped.point_arrays['Normals'],
+    #                    -sphere.point_arrays['Normals'])

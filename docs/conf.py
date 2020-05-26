@@ -277,7 +277,7 @@ class AutoAutoSummary(Autosummary):
         except:
             print('Something went wrong when autodocumenting {}'.format(clazz))
         finally:
-            return super(AutoAutoSummary, self).run()
+            return super().run()
 
 def setup(app):
     AutoAutoSummary.app = app

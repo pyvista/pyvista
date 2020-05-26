@@ -1,13 +1,13 @@
 """Implements DataSetAttributes, which represents and manipulates datasets."""
 
 from collections.abc import Iterable
-import numpy as np
 
+import numpy as np
 import vtk
 from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkDataArray
 
-from pyvista.utilities.helpers import FieldAssociation
 import pyvista.utilities.helpers as helpers
+from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
 
 

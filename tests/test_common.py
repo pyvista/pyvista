@@ -1,9 +1,9 @@
-from hypothesis import assume, given
-from hypothesis.extra.numpy import arrays, array_shapes
-from hypothesis.strategies import composite, integers, floats, one_of
 import numpy as np
 import pytest
 import vtk
+from hypothesis import assume, given
+from hypothesis.extra.numpy import arrays, array_shapes
+from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
@@ -41,7 +41,7 @@ def test_point_arrays(grid):
 
     orig_value = grid.point_arrays[key][0]/1.0
     grid.point_arrays[key][0] += 1
-    assert orig_value == grid._point_array(key)[0] - 1
+    assert orig_value == grid.point_arrays[key][0] - 1
 
     del grid.point_arrays[key]
     assert key not in grid.point_arrays
@@ -134,7 +134,7 @@ def test_field_arrays(grid):
     assert isinstance(grid.field_arrays['foo'], np.ndarray)
     assert np.allclose(grid.field_arrays['foo'], foo)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.set_active_scalars('foo')
 
 
@@ -251,8 +251,8 @@ def test_points_np_bool(grid):
     grid.point_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.point_arrays['bool_arr'].all()
-    assert grid._point_array('bool_arr').all()
-    assert grid._point_array('bool_arr').dtype == np.bool
+    assert grid.point_arrays['bool_arr'].all()
+    assert grid.point_arrays['bool_arr'].dtype == np.bool
 
 
 def test_cells_np_bool(grid):
@@ -260,8 +260,8 @@ def test_cells_np_bool(grid):
     grid.cell_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.cell_arrays['bool_arr'].all()
-    assert grid._cell_array('bool_arr').all()
-    assert grid._cell_array('bool_arr').dtype == np.bool
+    assert grid.cell_arrays['bool_arr'].all()
+    assert grid.cell_arrays['bool_arr'].dtype == np.bool
 
 
 def test_field_np_bool(grid):
@@ -269,8 +269,8 @@ def test_field_np_bool(grid):
     grid.field_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.field_arrays['bool_arr'].all()
-    assert grid._field_array('bool_arr').all()
-    assert grid._field_array('bool_arr').dtype == np.bool
+    assert grid.field_arrays['bool_arr'].all()
+    assert grid.field_arrays['bool_arr'].dtype == np.bool
 
 
 def test_cells_uint8(grid):
@@ -414,13 +414,13 @@ def test_texture_airplane():
 
 
 def test_invalid_vector(grid):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty(10)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 2))
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 3))
 
 
@@ -478,7 +478,7 @@ def test_activate_texture_none(grid):
 
 
 def test_set_active_vectors_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.set_active_vectors('not a vector')
 
 
@@ -537,7 +537,7 @@ def test_change_name_fail(grid):
 def test_get_cell_array_fail():
     sphere = pyvista.Sphere()
     with pytest.raises(KeyError):
-        sphere._cell_array(name=None)
+        sphere.cell_arrays[None]
 
 
 def test_extent_none(grid):
@@ -756,4 +756,4 @@ def test_no_active():
     assert pdata.active_scalars is None
 
     with pytest.raises(KeyError):
-        pdata._point_array()
+        pdata.point_arrays[None]

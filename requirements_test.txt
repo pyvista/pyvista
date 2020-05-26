@@ -1,6 +1,4 @@
-numpy
 matplotlib
-appdirs
 pytest
 pytest-cov
 pytest-memprof
@@ -9,8 +7,6 @@ imageio>=2.5.0
 imageio-ffmpeg
 colorcet
 cmocean
-scooby>=0.5.1
-meshio>=4.0.3, <5.0
 itkwidgets>=0.25.2
 tqdm
 hypothesis>=5.8.0

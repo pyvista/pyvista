@@ -3,12 +3,11 @@
 import logging
 import os
 import re
-import scooby
 import sys
-import warnings
 
-import vtk
 import numpy as np
+import scooby
+import vtk
 
 import pyvista
 

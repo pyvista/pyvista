@@ -17,7 +17,7 @@ def _get_sg_image_scraper():
     return Scraper()
 
 
-class Scraper(object):
+class Scraper:
     """
     Save ``pyvista.Plotter`` objects.
 
