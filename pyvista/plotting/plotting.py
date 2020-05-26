@@ -18,7 +18,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 from pyvista.utilities import (assert_empty_kwargs,
                                convert_array, convert_string_array, get_array,
-                               is_pyvista_dataset, numpy_to_texture,
+                               is_pyvista_dataset, numpy_to_texture, abstract_class,
                                raise_not_matching, try_callback, wrap)
 from .background_renderer import BackgroundRenderer
 from .colors import get_cmap_safe
@@ -53,6 +53,7 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
+@abstract_class
 class BasePlotter(PickingHelper, WidgetHelper):
     """To be used by the Plotter and pyvistaqt.QtInteractor classes.
 
@@ -86,12 +87,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     mouse_position = None
     click_position = None
-
-    def __new__(cls, *args, **kwargs):
-        """Create an instance of base plotter."""
-        if cls is BasePlotter:
-            raise TypeError("pyvista.BasePlotter is an abstract class and may not be instantiated.")
-        return object.__new__(cls)
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=2.0, title=None, splitting_position=None):

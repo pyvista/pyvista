@@ -33,7 +33,7 @@ from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
 import pyvista
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
-                               wrap, ProgressMonitor)
+                               wrap, ProgressMonitor, abstract_class)
 from pyvista.core.errors import NotAllTrianglesError
 
 
@@ -58,13 +58,9 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
     return data
 
 
+@abstract_class
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the dataset filters."""
-        if cls is DataSetFilters:
-            raise TypeError("pyvista.DataSetFilters is an abstract class and may not be instantiated.")
 
     def _clip_with_function(dataset, function, invert=True, value=0.0):
         """Clip using an implicit function (internal helper)."""
@@ -2217,13 +2213,9 @@ class DataSetFilters:
         return _get_output(alg)
 
 
+@abstract_class
 class CompositeFilters:
     """An internal class to manage filtes/algorithms for composite datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the composite filters."""
-        if cls is CompositeFilters:
-            raise TypeError("pyvista.CompositeFilters is an abstract class and may not be instantiated.")
 
     def extract_geometry(composite):
         """Combine the geomertry of all blocks into a single ``PolyData`` object.
@@ -2320,13 +2312,9 @@ class CompositeFilters:
         return box.outline_corners(factor=factor)
 
 
+@abstract_class
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for polydata datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the polydata filters."""
-        if cls is PolyDataFilters:
-            raise TypeError("pyvista.PolyDataFilters is an abstract class and may not be instantiated.")
 
     def edge_mask(poly_data, angle):
         """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
@@ -3436,7 +3424,7 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError('Can only flip normals on an all triangle mesh')
 
         f = poly_data.faces.reshape((-1, 4))
-        f[:, 1:] = f[:, 1:][:, ::-1]        
+        f[:, 1:] = f[:, 1:][:, ::-1]
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):
@@ -3670,13 +3658,9 @@ class PolyDataFilters(DataSetFilters):
         poly_data.overwrite(output)
 
 
+@abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for unstructured grid datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the unstructured grid."""
-        if cls is UnstructuredGridFilters:
-            raise TypeError("pyvista.UnstructuredGridFilters is an abstract class and may not be instantiated.")
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     progress_bar=False):
@@ -3695,13 +3679,9 @@ class UnstructuredGridFilters(DataSetFilters):
                                                           progress_bar=progress_bar)
 
 
+@abstract_class
 class UniformGridFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for uniform grid datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the uniform grid."""
-        if cls is UniformGridFilters:
-            raise TypeError("pyvista.UniformGridFilters is an abstract class and may not be instantiated.")
 
     def gaussian_smooth(dataset, radius_factor=1.5, std_dev=2.,
                         scalars=None, preference='points', progress_bar=False):

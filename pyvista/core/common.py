@@ -10,7 +10,8 @@ import vtk
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               parse_field_choice, raise_not_matching, vtk_id_list_to_array, fileio)
+                               parse_field_choice, raise_not_matching, vtk_id_list_to_array,
+                               fileio, abstract_class)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
@@ -23,6 +24,7 @@ DEFAULT_VECTOR_KEY = '_vectors'
 ActiveArrayInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
 
 
+@abstract_class
 class DataObject:
     """Methods common to all wrapped data objects."""
 
@@ -35,12 +37,6 @@ class DataObject:
         # Remember which arrays come from numpy.bool arrays, because there is no direct
         # conversion from bool to vtkBitArray, such arrays are stored as vtkCharArray.
         self.association_bitarray_names = collections.defaultdict(set)
-
-    def __new__(cls, *args, **kwargs):
-        """Allocate memory for the data object."""
-        if cls is DataObject:
-            raise TypeError("pyvista.DataObject is an abstract class and may not be instantiated.")
-        return object.__new__(cls, *args, **kwargs)
 
     def shallow_copy(self, to_copy):
         """Shallow copy the given mesh to this mesh."""
@@ -264,17 +260,12 @@ class DataObject:
         return self.GetInformation().GetAddressAsString("")
 
 
+@abstract_class
 class Common(DataSetFilters, DataObject):
     """Methods in common to spatially referenced objects."""
 
     # Simply bind pyvista.plotting.plot to the object
     plot = pyvista.plot
-
-    def __new__(cls, *args, **kwargs):
-        """Allocate memory for the common object."""
-        if cls is Common:
-            raise TypeError("pyvista.Common is an abstract class and may not be instantiated.")
-        return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         """Initialize the common object."""

@@ -8,6 +8,7 @@ from vtk import vtkImageData, vtkRectilinearGrid
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
+from pyvista.utilities import abstract_class
 from .common import Common
 from .filters import _get_output, UniformGridFilters
 
@@ -15,14 +16,9 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
+@abstract_class
 class Grid(Common):
     """A class full of common methods for non-pointset grids."""
-
-    def __new__(cls, *args, **kwargs):
-        """Allocate a grid."""
-        if cls is Grid:
-            raise TypeError("pyvista.Grid is an abstract class and may not be instantiated.")
-        return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         """Initialize the grid."""
