@@ -9,7 +9,6 @@ from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 
 test_path = os.path.dirname(os.path.abspath(__file__))
-test_data_path = os.path.join(test_path, 'test_data')
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
@@ -107,6 +106,11 @@ def test_extract_feature_edges(hexbeam):
     assert not edges.n_points
 
 
+def test_triangulate_inplace(hexbeam):
+    hexbeam.triangulate(inplace=True)
+    assert (hexbeam.celltypes == vtk.VTK_TETRA).all()
+
+
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
@@ -157,6 +161,9 @@ def test_extract_cells(hexbeam):
     assert part_beam.n_points < hexbeam.n_points
     assert np.allclose(part_beam.cell_arrays['vtkOriginalCellIds'], ind)
 
+    ind = np.vstack(([1, 2], [4, 5]))[:, 0]
+    part_beam = hexbeam.extract_cells(ind)
+
 
 def test_merge(hexbeam):
     grid = hexbeam.copy()
@@ -188,6 +195,11 @@ def test_merge_list(hexbeam):
 
     grid_a.merge([hexbeam, grid_b], inplace=True, merge_points=True)
     assert grid_a.n_points > hexbeam.n_points
+
+
+def test_merge_invalid(hexbeam, sphere):
+    with pytest.raises(TypeError):
+        sphere.merge([hexbeam], inplace=True)
 
 
 def test_init_structured(struct_grid):
@@ -456,10 +468,10 @@ def test_grid_points():
 
 def test_grid_extract_selection_points(struct_grid):
     grid = pyvista.UnstructuredGrid(struct_grid)
-    sub_grid = grid.extract_selection_points([0])
+    sub_grid = grid.extract_points([0])
     assert sub_grid.n_cells == 1
 
-    sub_grid = grid.extract_selection_points(range(100))
+    sub_grid = grid.extract_points(range(100))
     assert sub_grid.n_cells > 1
 
 

@@ -27,6 +27,20 @@ skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
                                      reason="Python 2 doesn't support binding methods")
 
 
+@pytest.fixture(scope='module')
+def uniform_vec():
+    nx, ny, nz = 20, 15, 5
+    origin = (-(nx - 1)*0.1/2, -(ny - 1)*0.1/2, -(nz - 1)*0.1/2)
+    mesh = pyvista.UniformGrid((nx, ny, nz), (.1, .1, .1), origin)
+    mesh['vectors'] = mesh.points
+    return mesh
+
+
+def test_datasetfilters_init():
+    with pytest.raises(TypeError):
+        pyvista.core.filters.DataSetFilters()
+
+
 def test_clip_filter():
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(DATASETS):
@@ -67,6 +81,9 @@ def test_clip_box():
     assert result.n_cells
     result = mesh.clip_box(box, invert=True)
     assert result.n_cells
+
+    with pytest.raises(RuntimeError):
+        dataset.clip_box(bounds=pyvista.Sphere())
 
 
 @skip_py2_nobind
@@ -268,21 +285,31 @@ def test_wireframe_composite():
     assert output.n_blocks == COMPOSITE.n_blocks
 
 
+def test_delaunay_2d():
+    mesh = DATASETS[2].delaunay_2d()  # UnstructuredGrid
+    assert isinstance(mesh, pyvista.PolyData)
+    assert mesh.n_points
+
+
 @pytest.mark.parametrize('method', ['contour', 'marching_cubes',
                                     'flying_edges'])
-def test_contour(method):
-    dataset = examples.load_uniform()
-    iso = dataset.contour(method=method)
+def test_contour(uniform, method):
+    iso = uniform.contour(method=method)
     assert iso is not None
-    iso = dataset.contour(isosurfaces=[100, 300, 500], method=method)
+    iso = uniform.contour(isosurfaces=[100, 300, 500], method=method)
     assert iso is not None
+
+
+def test_contour_errors(uniform):
     with pytest.raises(AssertionError):
-        result = dataset.contour(scalars='Spatial Cell Data')
+        uniform.contour(scalars='Spatial Cell Data')
     with pytest.raises(RuntimeError):
-        result = dataset.contour(isosurfaces=pyvista.PolyData())
-    dataset = examples.load_airplane()
+        uniform.contour(isosurfaces=pyvista.PolyData())
+    uniform = examples.load_airplane()
     with pytest.raises(AssertionError):
-        result = dataset.contour()
+        uniform.contour()
+    with pytest.raises(ValueError):
+        uniform.contour(method='invalid method')
 
 
 def test_elevation():
@@ -317,6 +344,8 @@ def test_elevation():
     # test errors
     with pytest.raises(RuntimeError):
         elev = dataset.elevation(scalar_range=0.5)
+    with pytest.raises(ValueError):
+        elev = dataset.elevation(scalar_range=[1, 2, 3])
 
 
 @skip_py2_nobind
@@ -446,6 +475,30 @@ def test_warp_by_vector():
     assert np.allclose(foo.points, warped.points)
 
 
+def test_invalid_warp_scalar(sphere):
+    sphere['cellscalars'] = np.random.random(sphere.n_cells)
+    sphere.point_arrays.clear()
+    with pytest.raises(RuntimeError):
+        sphere.warp_by_scalar()
+
+
+def test_invalid_warp_scalar_inplace(uniform):
+    with pytest.raises(TypeError):
+        uniform.warp_by_scalar(inplace=True)
+
+
+def test_invalid_warp_vector(sphere):
+    # bad vectors
+    sphere.point_arrays['Normals'] = np.empty((sphere.n_points, 2))
+    with pytest.raises(ValueError):
+        sphere.warp_by_vector('Normals')
+
+    # no vectors
+    sphere.point_arrays.clear()
+    with pytest.raises(RuntimeError):
+        sphere.warp_by_vector()
+
+
 def test_cell_data_to_point_data():
     data = examples.load_uniform()
     foo = data.cell_data_to_point_data()
@@ -517,15 +570,43 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
-def test_streamlines():
-    nx, ny, nz = 20, 15, 5
-    origin = (-(nx - 1)*0.1/2, -(ny - 1)*0.1/2, -(nz - 1)*0.1/2)
-    mesh = pyvista.UniformGrid((nx, ny, nz), (.1, .1, .1), origin)
-    mesh['vectors'] = mesh.points
-    stream, src = mesh.streamlines('vectors', return_source=True)
-    assert stream.n_points
-    assert stream.n_cells
-    assert src.n_points
+@pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
+def test_streamlines_dir(uniform_vec, integration_direction):
+    stream = uniform_vec.streamlines('vectors',
+                                     integration_direction=integration_direction)
+    assert all([stream.n_points, stream.n_cells])
+
+
+@pytest.mark.parametrize('integrator_type', [2, 4, 45])
+def test_streamlines_type(uniform_vec, integrator_type):
+    stream = uniform_vec.streamlines('vectors', integrator_type=integrator_type)
+    assert all([stream.n_points, stream.n_cells])
+
+
+@pytest.mark.parametrize('interpolator_type', ['point', 'cell'])
+def test_streamlines(uniform_vec, interpolator_type):
+    stream = uniform_vec.streamlines('vectors',
+                                     interpolator_type=interpolator_type)
+    assert all([stream.n_points, stream.n_cells])
+
+
+def test_streamlines(uniform_vec):
+    stream, src = uniform_vec.streamlines('vectors', return_source=True,
+                                          pointa=(0.0, 0.0, 0.0),
+                                          pointb=(1.1, 1.1, 0.1))
+    assert all([stream.n_points, stream.n_cells, src.n_points])
+
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', integration_direction='not valid')
+
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', integrator_type=42)
+
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', interpolator_type='not valid')
+
+    with pytest.raises(ValueError):
+        uniform_vec.streamlines('vectors', step_unit='not valid')
 
 
 def test_sample_over_line():
@@ -587,6 +668,18 @@ def test_slice_along_line():
     with pytest.raises(AssertionError):
         slc = model.slice_along_line(line)
 
+    with pytest.raises(TypeError):
+        one_cell = model.extract_cells(0)
+        model.slice_along_line(one_cell)
+
+
+def extract_points_invalid(sphere):
+    with pytest.raises(ValueError):
+        sphere.extract_points('invalid')
+
+    with pytest.raises(TypeError):
+        sphere.extract_points(object)
+
 
 @skip_py2_nobind
 def test_slice_along_line_composite():
@@ -608,13 +701,14 @@ def test_interpolate():
     assert interp.n_arrays
 
 
-def test_select_enclosed_points():
-    mesh = examples.load_uniform()
-    surf = pyvista.Sphere(center=mesh.center, radius=mesh.length/2.)
-    result = mesh.select_enclosed_points(surf)
-    assert isinstance(result, type(mesh))
+def test_select_enclosed_points(uniform, hexbeam):
+    surf = pyvista.Sphere(center=uniform.center, radius=uniform.length/2.)
+    result = uniform.select_enclosed_points(surf)
+    assert isinstance(result, type(uniform))
     assert 'SelectedPoints' in result.array_names
-    assert result.n_arrays == mesh.n_arrays + 1
+    assert result['SelectedPoints'].any()
+    assert result.n_arrays == uniform.n_arrays + 1
+
     # Now check non-closed surface
     mesh = pyvista.ParametricEllipsoid(0.2, 0.7, 0.7, )
     surf = mesh.copy()
@@ -625,6 +719,8 @@ def test_select_enclosed_points():
     assert result.n_arrays == mesh.n_arrays + 1
     with pytest.raises(RuntimeError):
         result = mesh.select_enclosed_points(surf, check_surface=True)
+    with pytest.raises(TypeError):
+        result = mesh.select_enclosed_points(hexbeam, check_surface=True)
 
 
 def test_decimate_boundary():
@@ -660,6 +756,13 @@ def test_compute_gradients():
     assert 'gradient' in grad.array_names
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3
+
+    with pytest.raises(TypeError):
+        grad = mesh.compute_gradient(object)
+
+    mesh.point_arrays.clear()
+    with pytest.raises(RuntimeError):
+        grad = mesh.compute_gradient()
 
 
 def test_extract_subset():

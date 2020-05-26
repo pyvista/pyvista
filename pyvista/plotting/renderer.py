@@ -154,7 +154,7 @@ class Renderer(vtkRenderer):
             return
 
         if isinstance(camera_location[0], (int, float)):
-            return self.view_vector(camera_location)
+            self.view_vector(camera_location)
 
         # everything is set explicitly
         self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))
