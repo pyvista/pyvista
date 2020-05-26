@@ -287,13 +287,12 @@ class Common(DataSetFilters, DataObject):
     def active_scalars_info(self):
         """Return the active scalar's field and name: [field, name]."""
         field, name = self._active_scalars_info
-
         exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
-
         if name in exclude:
             name = self._last_active_scalars_name
 
-        if name is None and self.n_arrays > 0:
+        all_arrays = self.point_arrays.keys() + self.cell_arrays.keys()
+        if name is None or name not in all_arrays:
             # find first available array name
             for attributes in (self.point_arrays, self.cell_arrays):
                 first_arr = next((arr for arr in attributes if arr not in exclude), None)
@@ -301,6 +300,8 @@ class Common(DataSetFilters, DataObject):
                     self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
                     attributes.active_scalars = first_arr
                     break
+            else:
+                self._active_scalars_info = ActiveArrayInfo(field, None)
         return self._active_scalars_info
 
     @property
