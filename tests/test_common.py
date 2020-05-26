@@ -134,7 +134,7 @@ def test_field_arrays(grid):
     assert isinstance(grid.field_arrays['foo'], np.ndarray)
     assert np.allclose(grid.field_arrays['foo'], foo)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.set_active_scalars('foo')
 
 
@@ -414,13 +414,13 @@ def test_texture_airplane():
 
 
 def test_invalid_vector(grid):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty(10)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 2))
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 3))
 
 
@@ -478,7 +478,7 @@ def test_activate_texture_none(grid):
 
 
 def test_set_active_vectors_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.set_active_vectors('not a vector')
 
 
