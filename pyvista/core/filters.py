@@ -22,7 +22,7 @@ Example
 >>> iso = dataset.contour()
 
 """
-import collections
+import collections.abc
 import logging
 from functools import wraps
 
@@ -175,7 +175,7 @@ class DataSetFilters:
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
-        if not isinstance(bounds, collections.Iterable) or not (len(bounds) == 6 or len(bounds) == 12):
+        if not isinstance(bounds, collections.abc.Iterable) or not (len(bounds) == 6 or len(bounds) == 12):
             raise AssertionError('Bounds must be a length 6 iterable of floats.')
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(dataset)
@@ -505,7 +505,7 @@ class DataSetFilters:
             raise AssertionError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two filters:
-        if isinstance(value, collections.Iterable) and invert:
+        if isinstance(value, collections.abc.Iterable) and invert:
             valid_range = [np.nanmin(arr), np.nanmax(arr)]
             # Create two thresholds
             t1 = dataset.threshold([valid_range[0], value[0]], scalars=scalars,
@@ -530,7 +530,7 @@ class DataSetFilters:
         if value is None:
             value = dataset.get_data_range(scalars)
         # check if value is iterable (if so threshold by min max range like ParaView)
-        if isinstance(value, collections.Iterable):
+        if isinstance(value, collections.abc.Iterable):
             if len(value) != 2:
                 raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
@@ -595,7 +595,7 @@ class DataSetFilters:
             return dmin + float(percent) * (dmax - dmin)
 
         # Compute the values
-        if isinstance(percent, collections.Iterable):
+        if isinstance(percent, collections.abc.Iterable):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
         else:
@@ -733,7 +733,7 @@ class DataSetFilters:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
             scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
-        elif isinstance(scalar_range, collections.Iterable):
+        elif isinstance(scalar_range, collections.abc.Iterable):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
@@ -825,7 +825,7 @@ class DataSetFilters:
             if rng is None:
                 rng = dataset.get_data_range(scalars)
             alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, collections.Iterable):
+        elif isinstance(isosurfaces, collections.abc.Iterable):
             alg.SetNumberOfContours(len(isosurfaces))
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
@@ -1870,7 +1870,7 @@ class DataSetFilters:
             Subselected grid.
 
         """
-        if not isinstance(ind, collections.Iterable):
+        if not isinstance(ind, collections.abc.Iterable):
             raise TypeError('`ind` must be either a mask, array, list, or iterable')
 
         ind = np.asarray(ind)
@@ -3380,7 +3380,7 @@ class PolyDataFilters(DataSetFilters):
             returned when inplace=False.
 
         """
-        if isinstance(remove, collections.Iterable):
+        if isinstance(remove, collections.abc.Iterable):
             remove = np.asarray(remove)
 
         if remove.dtype == np.bool:
@@ -3523,7 +3523,7 @@ class PolyDataFilters(DataSetFilters):
 
     def project_points_to_plane(poly_data, origin=None, normal=(0,0,1), inplace=False):
         """Project points of this mesh to a plane."""
-        if not isinstance(normal, collections.Iterable) or len(normal) != 3:
+        if not isinstance(normal, collections.abc.Iterable) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
             origin = np.array(poly_data.center) - np.array(normal)*poly_data.length/2.
@@ -3732,11 +3732,11 @@ class UniformGridFilters(DataSetFilters):
         else:
             _, field = dataset.get_array(scalars, preference=preference, info=True)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
-        if isinstance(radius_factor, collections.Iterable):
+        if isinstance(radius_factor, collections.abc.Iterable):
             alg.SetRadiusFactors(radius_factor)
         else:
             alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
-        if isinstance(std_dev, collections.Iterable):
+        if isinstance(std_dev, collections.abc.Iterable):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)

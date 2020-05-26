@@ -1,6 +1,6 @@
 """Pyvista plotting module."""
 
-import collections
+import collections.abc
 import logging
 import os
 import time
@@ -159,7 +159,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
 
             assert_str = '"shape" should be a list, tuple or string descriptor'
-            assert isinstance(shape, collections.Iterable), assert_str
+            assert isinstance(shape, collections.abc.Iterable), assert_str
             assert shape[0] > 0, '"shape" must be positive'
             assert shape[1] > 0, '"shape" must be positive'
             self.shape = shape
@@ -227,7 +227,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return self._active_renderer_index
         elif isinstance(loc, int):
             return loc
-        elif isinstance(loc, collections.Iterable):
+        elif isinstance(loc, collections.abc.Iterable):
             if not len(loc) == 2:
                 raise AssertionError('"loc" must contain two items')
             index_row = loc[0]
@@ -2095,7 +2095,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(views, int):
             for renderer in self.renderers:
                 renderer.camera = self.renderers[views].camera
-        elif isinstance(views, collections.Iterable):
+        elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = \
                     self.renderers[views[0]].camera
@@ -2121,7 +2121,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(views, int):
             self.renderers[views].camera = vtk.vtkCamera()
             self.renderers[views].reset_camera()
-        elif isinstance(views, collections.Iterable):
+        elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = vtk.vtkCamera()
                 self.renderers[view_index].reset_camera()
@@ -2461,7 +2461,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh is None:
             mesh = self.mesh
 
-        if isinstance(mesh, (collections.Iterable, pyvista.MultiBlock)):
+        if isinstance(mesh, (collections.abc.Iterable, pyvista.MultiBlock)):
             # Recursive if need to update scalars on many meshes
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
