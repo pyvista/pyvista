@@ -14,10 +14,7 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
         raise TypeError('Indices must be either a mask, array, list, or iterable')
 
     if ind.dtype == np.bool:
-        ind = ind.nonzero()[0]
-
-    if not isinstance(ind, np.ndarray):
-        ind = np.asarray(ind, pyvista.ID_TYPE)
+        ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
     elif ind.dtype != pyvista.ID_TYPE:
         ind = ind.astype(pyvista.ID_TYPE)
     elif not ind.flags['C_CONTIGUOUS']:
