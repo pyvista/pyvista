@@ -389,7 +389,7 @@ def vector_poly_data(orig, vec):
     cells = np.empty((npts, 2), dtype=pyvista.ID_TYPE)
     cells[:, 0] = 1
     cells[:, 1] = np.arange(npts, dtype=pyvista.ID_TYPE)
-    vcells = pyvista.core.cells.CellArray(cells, npts)
+    vcells = pyvista.utilities.cells.CellArray(cells, npts)
 
     # Create vtkPolyData object
     pdata = vtk.vtkPolyData()

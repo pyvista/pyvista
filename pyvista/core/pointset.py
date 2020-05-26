@@ -14,10 +14,10 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
 from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
+from pyvista.utilities.cells import CellArray, numpy_to_idarr
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
 from ..utilities.fileio import get_ext
-from .cells import CellArray, numpy_to_idarr
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
