@@ -717,8 +717,10 @@ class ProgressMonitor():
 
 
 def abstract_class(cls_):
-    """Decorator which overrides __new__ preventing a class from being,
-      instantiated, similar to abc.ABCMeta but does not require an abstract method.
+    """Decorate a class, overriding __new__.
+
+    Preventing a class from being instantiated similar to abc.ABCMeta
+      but does not require an abstract method.
     """
 
     def __new__(cls, *args, **kwargs):
