@@ -289,7 +289,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         3
 
         """
-        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
+        if isinstance(index, (np.ndarray, collections.abc.Sequence)) and not isinstance(index, str):
             i, name = index[0], index[1]
         elif isinstance(index, str):
             try:

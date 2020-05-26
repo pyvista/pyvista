@@ -1110,8 +1110,8 @@ class Common(DataSetFilters, DataObject):
         ------
         int : the index of the point in this mesh that is closes to the given point.
         """
-        if not isinstance(point, collections.abc.Iterable) or len(point) != 3:
-            raise TypeError("Given point must be a length three iterable.")
+        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+            raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
         if n < 1:

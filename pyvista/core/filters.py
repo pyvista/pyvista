@@ -130,13 +130,13 @@ class DataSetFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
-        Parameters
+        Parametersequence
         ----------
         bounds : tuple(float)
-            Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax).
-            Length 3 iterable of floats: distances from the min coordinate of
+            Length 6 sequence of floats: (xmin, xmax, ymin, ymax, zmin, zmax).
+            Length 3 sequence of floats: distances from the min coordinate of
             of the input mesh. Single float value: uniform distance from the
-            min coordinate. Length 12 iterable of length 3 iterable of floats:
+            min coordinate. Length 12 sequence of length 3 sequence of floats:
             a plane collection (normal, center, ...).
             :class:`pyvista.PolyData`: if a poly mesh is passed that represents
             a box with 6 faces that all form a standard box, then planes will
@@ -175,8 +175,8 @@ class DataSetFilters:
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
-        if not isinstance(bounds, collections.abc.Iterable) or not (len(bounds) == 6 or len(bounds) == 12):
-            raise AssertionError('Bounds must be a length 6 iterable of floats.')
+        if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)) or not (len(bounds) == 6 or len(bounds) == 12):
+            raise AssertionError('Bounds must be a length 6 sequence of floats.')
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(dataset)
         alg.SetBoxClip(*bounds)
@@ -457,9 +457,9 @@ class DataSetFilters:
 
         Parameters
         ----------
-        value : float or iterable, optional
+        value : float or sequence, optional
             Single value or (min, max) to be used for the data threshold.  If
-            iterable, then length must be 2. If no value is specified, the
+            a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
 
         scalars : str, optional
@@ -505,7 +505,7 @@ class DataSetFilters:
             raise AssertionError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two filters:
-        if isinstance(value, collections.abc.Iterable) and invert:
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)) and invert:
             valid_range = [np.nanmin(arr), np.nanmax(arr)]
             # Create two thresholds
             t1 = dataset.threshold([valid_range[0], value[0]], scalars=scalars,
@@ -529,8 +529,8 @@ class DataSetFilters:
         # use valid range if no value given
         if value is None:
             value = dataset.get_data_range(scalars)
-        # check if value is iterable (if so threshold by min max range like ParaView)
-        if isinstance(value, collections.abc.Iterable):
+        # check if value is a sequence (if so threshold by min max range like ParaView)
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             if len(value) != 2:
                 raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
@@ -595,7 +595,7 @@ class DataSetFilters:
             return dmin + float(percent) * (dmax - dmin)
 
         # Compute the values
-        if isinstance(percent, collections.abc.Iterable):
+        if isinstance(percent, (np.ndarray, collections.abc.Sequence)):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
         else:
@@ -733,7 +733,7 @@ class DataSetFilters:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
             scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
-        elif isinstance(scalar_range, collections.abc.Iterable):
+        elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
@@ -758,13 +758,13 @@ class DataSetFilters:
         """Contour an input dataset by an array.
 
         ``isosurfaces`` can be an integer specifying the number of isosurfaces in
-        the data range or an iterable set of values for explicitly setting the isosurfaces.
+        the data range or a sequence of values for explicitly setting the isosurfaces.
 
         Parameters
         ----------
-        isosurfaces : int or iterable
-            Number of isosurfaces to compute across valid data range or an
-            iterable of float values to explicitly use as the isosurfaces.
+        isosurfaces : int or sequence
+            Number of isosurfaces to compute across valid data range or a
+            sequence of float values to explicitly use as the isosurfaces.
 
         scalars : str, optional
             Name of scalars to threshold on. Defaults to currently active scalars.
@@ -825,7 +825,7 @@ class DataSetFilters:
             if rng is None:
                 rng = dataset.get_data_range(scalars)
             alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, collections.abc.Iterable):
+        elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
@@ -1861,7 +1861,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        ind : np.ndarray, list, or iterable
+        ind : np.ndarray, list, or sequence
             Numpy array of point indices to be extracted.
 
         Return
@@ -1870,8 +1870,8 @@ class DataSetFilters:
             Subselected grid.
 
         """
-        if not isinstance(ind, collections.abc.Iterable):
-            raise TypeError('`ind` must be either a mask, array, list, or iterable')
+        if not isinstance(ind, (np.ndarray, collections.abc.Sequence)):
+            raise TypeError('`ind` must be either a mask, array, list, or other sequence')
 
         ind = np.asarray(ind)
         if ind.dtype == np.bool:
@@ -3380,7 +3380,7 @@ class PolyDataFilters(DataSetFilters):
             returned when inplace=False.
 
         """
-        if isinstance(remove, collections.abc.Iterable):
+        if isinstance(remove, (np.ndarray, collections.abc.Sequence)):
             remove = np.asarray(remove)
 
         if remove.dtype == np.bool:
@@ -3523,7 +3523,7 @@ class PolyDataFilters(DataSetFilters):
 
     def project_points_to_plane(poly_data, origin=None, normal=(0,0,1), inplace=False):
         """Project points of this mesh to a plane."""
-        if not isinstance(normal, collections.abc.Iterable) or len(normal) != 3:
+        if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
             origin = np.array(poly_data.center) - np.array(normal)*poly_data.length/2.
