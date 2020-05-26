@@ -59,6 +59,20 @@ jobs:
     displayName: 'Use Python $(python.version)'
 
   - script: |
+      PIP_CACHE_PATH=$(pip cache dir)
+      echo "##vso[task.setvariable variable=PIP_CACHE_PATH]$PIP_CACHE_PATH"
+      PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
+      echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+    displayName: 'Store pip cache path and pyvista version'
+
+  - task: Cache@2
+    inputs:
+      key: 'PIP_WHEEL_CACHE | $(Agent.OS) | "$(python.version)" | "$(PYVISTA_VERSION)"'
+      path: $(PIP_CACHE_PATH)
+    displayName: Cache pip
+
+  - script: |
+      pip install wheel
       pip install -e .
     displayName: Install pyvista
 
@@ -75,21 +89,6 @@ jobs:
       which python
       pip list
     displayName: 'Install dependencies'
-
-  # - script: |
-  #     EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
-  #     mkdir -p EXAMPLES_PATH
-  #     echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
-  #     PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
-  #     echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
-  #     echo $EXAMPLES_PATH
-  #   displayName: 'Store location of pyvista downloads cache and version'
-
-  # - task: Cache@2
-  #   inputs:
-  #     key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
-  #     path: $(EXAMPLES_PATH)
-  #   displayName: Build pyvista examples cache
 
   - script: |
       pip install pytest-azurepipelines
@@ -168,6 +167,7 @@ jobs:
       displayName: 'Test Package Docstrings against VTK'
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
 
+
 # DESCRIPTION: Core API testing for Windows
 - job: Windows
   pool:
@@ -178,20 +178,27 @@ jobs:
     maxParallel: 4
     matrix:
       Python35-64bit:
-        PYTHON_VERSION: '3.5'
-        PYTHON_ARCH: 'x64'
+        python.version: '3.5'
       Python36-64bit:
-        PYTHON_VERSION: '3.6'
-        PYTHON_ARCH: 'x64'
+        python.version: '3.6'
       Python37-64bit:
-        PYTHON_VERSION: '3.7'
-        PYTHON_ARCH: 'x64'
+        python.version: '3.7'
   steps:
   - task: UsePythonVersion@0
     inputs:
-      versionSpec: $(PYTHON_VERSION)
-      architecture: $(PYTHON_ARCH)
+      versionSpec: $(python.version)
       addToPath: true
+  - powershell: |
+      $PIP_CACHE_PATH = (pip cache dir) | Out-String
+      echo "##vso[task.setvariable variable=PIP_CACHE_PATH]$PIP_CACHE_PATH"
+      $PYVISTA_VERSION = $(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)") | Out-String
+      echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
+    displayName: 'Store pip cache path and pyvista version'
+  - task: Cache@2
+    inputs:
+      key: 'PIP_WHEEL_CACHE | $(Agent.OS) | "$(python.version)" | "$(PYVISTA_VERSION)"'
+      path: $(PIP_CACHE_PATH)
+    displayName: Cache pip
   - powershell: |
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
@@ -200,6 +207,7 @@ jobs:
       powershell gl-ci-helpers/appveyor/install_opengl.ps1
     displayName: 'Install OpenGL'
   - script: |
+      pip install wheel
       pip install .
       python -c "import pyvista; print(pyvista.Report())"
     displayName: 'Install PyVista'
@@ -220,7 +228,7 @@ jobs:
     python.architecture: 'x64'
   strategy:
     matrix:
-      # Skipping Python 3.5: doesn't have great support on Azure
+      # Skipping Python 3.5: Python 3.5 not supported on Azure Mac OS
       Python36:
         python.version: '3.6'
       Python37:
@@ -238,24 +246,12 @@ jobs:
       displayName: 'Install PyVista'
 
     - script: |
-        EXAMPLES_PATH=$(python -c "import pyvista; print(pyvista.EXAMPLES_PATH)")
-        mkdir -p EXAMPLES_PATH
-        echo "##vso[task.setvariable variable=EXAMPLES_PATH]$EXAMPLES_PATH"
-        PYVISTA_VERSION=$(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)")
-        echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
-        echo $EXAMPLES_PATH
-      displayName: 'Store location of pyvista downloads cache and version'
-
-    - task: Cache@2
-      inputs:
-        key: 'PYVISTA_EXAMPLES_CACHE | "$(PYVISTA_VERSION)"'
-        path: $(EXAMPLES_PATH)
-      displayName: Build pyvista examples cache
+        python -m pip install -r requirements_test.txt
+        python -m pip install pytest-azurepipelines pytest-xdist
+      displayName: 'Install test dependencies'
 
     - script: |
-        python -m pip install -r requirements_test.txt
-        python -m pip install pytest-azurepipelines
-        python -m pytest -v --cov pyvista --cov-report html --durations=0
+        python -m pytest -v --cov pyvista --cov-report html --durations=0 -n 2
       displayName: 'Run Tests'
 
   # don't run job on no-ci builds
