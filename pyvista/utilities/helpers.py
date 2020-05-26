@@ -714,3 +714,13 @@ class ProgressMonitor():
         self.algorithm.RemoveObservers(self.event_type)
         if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)
+
+
+def abstract_class(cls):
+    """Decorator which prevents a class from being instantiated,
+     similar to abc.ABCMeta but does not require an abstract method.
+    """
+
+    def new(cls, *args, **kwargs):
+        raise TypeError("pyvista.Common is an abstract class and may not be instantiated.")
+    return type(name=cls.__name__, bases=(), dict={'__new__': new})
