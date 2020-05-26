@@ -716,13 +716,15 @@ class ProgressMonitor():
             signal.signal(signal.SIGINT, self._old_handler)
 
 
-def abstract_class(cls):
+def abstract_class(cls_):
     """Decorator which overrides __new__ preventing a class from being,
       instantiated, similar to abc.ABCMeta but does not require an abstract method.
     """
 
     def __new__(cls, *args, **kwargs):
-        raise TypeError('{} is an abstract class and may not be instantiated.'
-                        .format(cls.__name__))
-    cls.__new__ = __new__
-    return cls
+        if cls is cls_:
+            raise TypeError('{} is an abstract class and may not be instantiated.'
+                            .format(cls.__name__))
+        return object.__new__(cls)
+    cls_.__new__ = __new__
+    return cls_
