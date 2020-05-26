@@ -9,7 +9,7 @@ import pyvista
 def numpy_to_idarr(ind, deep=False, return_ind=False):
     """Safely convert a numpy array to a vtkIdTypeArray."""
     try:
-        ind = np.array(ind)
+        ind = np.asarray(ind)
     except:
         raise TypeError('Indices must be either a mask, array, list, or iterable')
 
