@@ -426,7 +426,7 @@ class DataSetFilters:
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
-            raise AssertionError('Input line must have only one cell.')
+            raise ValueError('Input line must have only one cell.')
         polyline = line.GetCell(0)
         if not isinstance(polyline, vtk.vtkPolyLine):
             raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
