@@ -588,7 +588,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             else:
                 itype = type(args[0])
-                raise Exception('Cannot work with input type %s' % itype)
+                raise TypeError('Cannot work with input type %s' % itype)
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
