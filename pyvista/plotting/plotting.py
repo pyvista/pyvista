@@ -3304,10 +3304,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if labels is None:
             # use existing labels
             if not self._labels:
-                raise Exception('No labels input.\n\n'
-                                'Add labels to individual items when adding them to'
-                                'the plotting object with the "label=" parameter.  '
-                                'or enter them as the "labels" parameter.')
+                raise ValueError('No labels input.\n\n'
+                                 'Add labels to individual items when adding them to'
+                                 'the plotting object with the "label=" parameter.  '
+                                 'or enter them as the "labels" parameter.')
 
             self.legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels):
