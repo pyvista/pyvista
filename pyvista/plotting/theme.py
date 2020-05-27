@@ -172,7 +172,7 @@ def parse_font_family(font_family):
     # check font name
     font_family = font_family.lower()
     if font_family not in ['courier', 'times', 'arial']:
-        raise Exception('Font must be either "courier", "times" '
-                        'or "arial"')
+        raise ValueError('Font must be either "courier", "times" '
+                         'or "arial"')
 
     return FONT_KEYS[font_family]
