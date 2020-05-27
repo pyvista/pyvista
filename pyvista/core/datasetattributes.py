@@ -161,7 +161,7 @@ class DataSetAttributes(VTKObjectWrapper):
             narray = narray.view(np.bool)
         return narray
 
-    def append(self, narray, name, deep_copy=False):
+    def append(self, narray, name, deep_copy=False, active_vectors=True, active_scalars=True):
         """Add an array to the this object.
 
         Parameters
@@ -174,6 +174,12 @@ class DataSetAttributes(VTKObjectWrapper):
 
         deep_copy : bool
             When True makes a full copy of the array.
+
+        active_vectors : bool
+            If True, make this the active vector array.
+
+        active_scalars : bool:
+            If True, make this the active scalar array.
         """
         if narray is None:
             raise TypeError('narray cannot be None.')
@@ -235,7 +241,15 @@ class DataSetAttributes(VTKObjectWrapper):
 
         vtk_arr = helpers.convert_array(copy, name, deep=deep_copy)
         self.VTKObject.AddArray(vtk_arr)
+        try:
+            if active_scalars or self.active_scalars is None:
+                self.active_scalars = name
+            if active_vectors or self.active_vectors is None:
+                self.active_vectors = name
+        except TypeError:
+            pass
         self.VTKObject.Modified()
+
 
     def remove(self, key):
         """Remove an array.
