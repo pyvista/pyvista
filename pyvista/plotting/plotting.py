@@ -1575,10 +1575,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif style == 'surface':
             prop.SetRepresentationToSurface()
         else:
-            raise Exception('Invalid style.  Must be one of the following:\n'
-                            '\t"surface"\n'
-                            '\t"wireframe"\n'
-                            '\t"points"\n')
+            raise ValueError('Invalid style.  Must be one of the following:\n'
+                             '\t"surface"\n'
+                             '\t"wireframe"\n'
+                             '\t"points"\n')
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
