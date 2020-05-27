@@ -507,7 +507,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             else:
                 itype = type(args[0])
-                raise Exception('Cannot work with input type %s' % itype)
+                raise TypeError('Cannot work with input type %s' % itype)
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -517,7 +517,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(None, args[0], args[1], args[2], deep)
             else:
-                raise Exception('All input types must be np.ndarray')
+                raise TypeError('All input types must be np.ndarray')
 
         elif len(args) == 4:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -528,7 +528,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
             else:
-                raise Exception('All input types must be np.ndarray')
+                raise TypeError('All input types must be np.ndarray')
 
     def __repr__(self):
         """Return the standard representation."""
@@ -765,7 +765,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         """
         if not(x.shape == y.shape == z.shape):
-            raise Exception('Input point array shapes must match exactly')
+            raise ValueError('Input point array shapes must match exactly')
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)

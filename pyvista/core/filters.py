@@ -2494,8 +2494,8 @@ class PolyDataFilters(DataSetFilters):
         elif curv_type == 'minimum':
             curvefilter.SetCurvatureTypeToMinimum()
         else:
-            raise Exception('Curv_Type must be either "Mean", '
-                            '"Gaussian", "Maximum", or "Minimum"')
+            raise ValueError('Curv_Type must be either "Mean", '
+                             '"Gaussian", "Maximum", or "Minimum"')
         curvefilter.Update()
 
         # Compute and return curvature
@@ -2806,8 +2806,8 @@ class PolyDataFilters(DataSetFilters):
         elif subfilter == 'loop':
             sfilter = vtk.vtkLoopSubdivisionFilter()
         else:
-            raise Exception("Subdivision filter must be one of the following: "
-                            "'butterfly', 'loop', or 'linear'")
+            raise ValueError("Subdivision filter must be one of the following: "
+                             "'butterfly', 'loop', or 'linear'")
 
         # Subdivide
         sfilter.SetNumberOfSubdivisions(nsub)

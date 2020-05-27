@@ -148,7 +148,7 @@ def test_invalid_init():
 
 
 def test_invalid_file():
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         pyvista.PolyData('file.bad')
 
     with pytest.raises(ValueError):
@@ -287,7 +287,7 @@ def test_curvature(curv_type):
 
 def test_invalid_curvature():
     sphere = SPHERE.copy()
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         curv = sphere.curvature('not valid')
 
 
@@ -305,7 +305,7 @@ def test_save(extension, binary, tmpdir):
 
 def test_invalid_save():
     sphere = SPHERE.copy()
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         sphere.save('file.abc')
 
 
@@ -330,7 +330,7 @@ def test_subdivision(subfilter):
 
 def test_invalid_subdivision():
     sphere = SPHERE.copy()
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         mesh = sphere.subdivide(1, 'not valid')
 
 

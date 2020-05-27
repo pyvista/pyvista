@@ -1575,10 +1575,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif style == 'surface':
             prop.SetRepresentationToSurface()
         else:
-            raise Exception('Invalid style.  Must be one of the following:\n'
-                            '\t"surface"\n'
-                            '\t"wireframe"\n'
-                            '\t"points"\n')
+            raise ValueError('Invalid style.  Must be one of the following:\n'
+                             '\t"surface"\n'
+                             '\t"wireframe"\n'
+                             '\t"points"\n')
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
@@ -2254,8 +2254,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # check if maper exists
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
-                raise Exception('Mapper does not exist.  '
-                                'Add a mesh with scalars first.')
+                raise AttributeError('Mapper does not exist.  '
+                                     'Add a mesh with scalars first.')
             mapper = self.mapper
 
         if title:
@@ -2412,8 +2412,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if self.shape != (1, 1):
                 interactive = False
         elif interactive and self.shape != (1, 1):
-            err_str = 'Interactive scalar bars disabled for multi-renderer plots'
-            raise Exception(err_str)
+            raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
 
         if interactive and hasattr(self, 'iren'):
             self.scalar_widget = vtk.vtkScalarBarWidget()
@@ -2487,7 +2486,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         vtk_scalars = data.GetScalars()
         if vtk_scalars is None:
-            raise Exception('No active scalars')
+            raise ValueError('No active scalars')
         s = convert_array(vtk_scalars)
         s[:] = scalars
         data.Modified()
@@ -2718,7 +2717,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if filename[-3:] != 'gif':
-            raise Exception('Unsupported filetype.  Must end in .gif')
+            raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
@@ -2834,7 +2833,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not isinstance(lines, np.ndarray):
-            raise Exception('Input should be an array of point segments')
+            raise TypeError('Input should be an array of point segments')
 
         lines = pyvista.lines_from_points(lines)
 
@@ -2980,7 +2979,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Points type not usable: {}'.format(type(points)))
 
         if len(vtkpoints.points) != len(labels):
-            raise Exception('There must be one label for each point')
+            raise ValueError('There must be one label for each point')
 
         if name is None:
             name = '{}({})'.format(type(vtkpoints).__name__, vtkpoints.memory_address)
@@ -3119,7 +3118,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not image.size:
-            raise Exception('Empty image.  Have you run plot() first?')
+            raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file
         supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
         if isinstance(filename, str):
@@ -3305,10 +3304,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if labels is None:
             # use existing labels
             if not self._labels:
-                raise Exception('No labels input.\n\n'
-                                'Add labels to individual items when adding them to'
-                                'the plotting object with the "label=" parameter.  '
-                                'or enter them as the "labels" parameter.')
+                raise ValueError('No labels input.\n\n'
+                                 'Add labels to individual items when adding them to'
+                                 'the plotting object with the "label=" parameter.  '
+                                 'or enter them as the "labels" parameter.')
 
             self.legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels):
@@ -3866,7 +3865,7 @@ class Plotter(BasePlotter):
             try:
                 import IPython
             except ImportError:
-                raise Exception('Install IPython to display image in a notebook')
+                raise ImportError('Install IPython to display image in a notebook')
             if not hasattr(self, 'last_image'):
                 self.last_image = self.screenshot(screenshot, return_img=True)
             disp = IPython.display.display(PIL.Image.fromarray(self.last_image))

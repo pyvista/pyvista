@@ -374,12 +374,12 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise Exception('orig array must be 3D')
+        raise ValueError('orig array must be 3D')
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise Exception('vec array must be 3D')
+        raise ValueError('vec array must be 3D')
 
     # Create vtk points and cells objects
     vpts = vtk.vtkPoints()
@@ -543,14 +543,14 @@ def fit_plane_to_points(points, return_meta=False):
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
     if isinstance(mesh, vtk.vtkTable):
-        raise Exception('Number of scalars ({})'.format(scalars.size) +
-                        'must match number of rows ' +
-                        '({}).'.format(mesh.n_rows) )
-    raise Exception('Number of scalars ({}) '.format(scalars.size) +
-                    'must match either the number of points ' +
-                    '({}) '.format(mesh.n_points) +
-                    'or the number of cells ' +
-                    '({}). '.format(mesh.n_cells) )
+        raise ValueError('Number of scalars ({})'.format(scalars.size) +
+                         'must match number of rows ' +
+                         '({}).'.format(mesh.n_rows) )
+    raise ValueError('Number of scalars ({}) '.format(scalars.size) +
+                     'must match either the number of points ' +
+                     '({}) '.format(mesh.n_points) +
+                     'or the number of cells ' +
+                     '({}). '.format(mesh.n_cells) )
 
 
 def generate_plane(normal, origin):

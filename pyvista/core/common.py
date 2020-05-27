@@ -1156,7 +1156,7 @@ def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
         points[:, 0] = x
         points[:, 1] = y
     else:
-        raise Exception('invalid axis.  Must be either "x", "y", or "z"')
+        raise ValueError('invalid axis. Must be either "x", "y", or "z"')
 
     if not inplace:
         return points

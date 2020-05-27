@@ -209,12 +209,12 @@ def test_multi_io_erros(tmpdir):
     multi = MultiBlock()
     # Check saving with bad extension
     bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         multi.save(bad_ext_name)
     arr = np.random.rand(10, 10)
     np.save(bad_ext_name, arr)
     # Load non existing file
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
     with pytest.raises(ValueError):
