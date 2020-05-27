@@ -11,10 +11,10 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
                  VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
                  VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
                  vtkUnstructuredGrid)
-from vtk.util.numpy_support import (numpy_to_vtk, numpy_to_vtkIdTypeArray,
-                                    vtk_to_numpy)
+from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
+from pyvista.utilities.cells import CellArray, numpy_to_idarr
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
 from ..utilities.fileio import get_ext
@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+
+
 
 
 class PointSet(Common):
@@ -165,7 +167,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                     points = args[0]
                 if points.ndim != 2:
                     points = points.reshape((-1, 3))
-                cells = self._make_vertice_cells(points.shape[0])
+                cells = self._make_vertex_cells(points.shape[0])
                 self._from_arrays(points, cells, deep, verts=True)
             else:
                 raise TypeError('Invalid input type')
@@ -183,7 +185,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         # Check if need to make vertex cells
         if self.n_points > 0 and self.n_cells == 0:
             # make vertex cells
-            self.verts = self._make_vertice_cells(self.n_points)
+            self.verts = self._make_vertex_cells(self.n_points)
 
     def __repr__(self):
         """Return the standard representation."""
@@ -194,7 +196,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return Common.__str__(self)
 
     @staticmethod
-    def _make_vertice_cells(npoints):
+    def _make_vertex_cells(npoints):
         cells = np.empty((npoints, 2), dtype=pyvista.ID_TYPE)
         cells[:, 0] = 1
         cells[:, 1] = np.arange(npoints, dtype=pyvista.ID_TYPE)
@@ -202,32 +204,13 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @property
     def verts(self):
-        """Get the vertice cells."""
+        """Get the vertex cells."""
         return vtk_to_numpy(self.GetVerts().GetData())
 
     @verts.setter
     def verts(self, verts):
-        """Set the vertice cells."""
-        if not isinstance(verts, np.ndarray):
-            verts = np.asarray(verts)
-
-        if verts.dtype != pyvista.ID_TYPE:
-            verts = verts.astype(pyvista.ID_TYPE)
-
-        # get number of verts
-        if verts.ndim == 1:
-            log.debug('efficiency warning')
-            c = 0
-            nverts = 0
-            while c < verts.size:
-                c += verts[c] + 1
-                nverts += 1
-        else:
-            nverts = verts.shape[0]
-
-        vtkcells = vtk.vtkCellArray()
-        vtkcells.SetCells(nverts, numpy_to_vtkIdTypeArray(verts, deep=False))
-        self.SetVerts(vtkcells)
+        """Set the vertex cells."""
+        self.SetVerts(CellArray(verts))
 
     @property
     def lines(self):
@@ -237,23 +220,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     @lines.setter
     def lines(self, lines):
         """Set the lines of the polydata."""
-        if lines.dtype != pyvista.ID_TYPE:
-            lines = lines.astype(pyvista.ID_TYPE)
-
-        # get number of lines
-        if lines.ndim == 1:
-            log.debug('efficiency warning')
-            c = 0
-            nlines = 0
-            while c < lines.size:
-                c += lines[c] + 1
-                nlines += 1
-        else:
-            nlines = lines.shape[0]
-
-        vtkcells = vtk.vtkCellArray()
-        vtkcells.SetCells(nlines, numpy_to_vtkIdTypeArray(lines, deep=False))
-        self.SetLines(vtkcells)
+        self.SetLines(CellArray(lines))
 
     @property
     def faces(self):
@@ -262,35 +229,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     @faces.setter
     def faces(self, faces):
-        """Set faces without copying."""
-        if faces.dtype != pyvista.ID_TYPE:
-            faces = faces.astype(pyvista.ID_TYPE)
-
-        # get number of faces
-        if faces.ndim == 1:
-            log.debug('efficiency warning')
-            c = 0
-            nfaces = 0
-            while c < faces.size:
-                c += faces[c] + 1
-                nfaces += 1
-        else:
-            nfaces = faces.shape[0]
-
-        vtkcells = vtk.vtkCellArray()
-        vtkcells.SetCells(nfaces, numpy_to_vtkIdTypeArray(faces, deep=False))
-        if faces.ndim > 1 and faces.shape[1] == 2:
-            self.SetVerts(vtkcells)
-        else:
-            self.SetPolys(vtkcells)
-        self._face_ref = faces
-        self.Modified()
-
-    # @property
-    # def lines(self):
-    #     """ returns a copy of the indices of the lines """
-    #     lines = vtk_to_numpy(self.GetLines().GetData()).reshape((-1, 3))
-    #     return np.ascontiguousarray(lines[:, 1:])
+        """Set the face cells."""
+        self.SetPolys(CellArray(faces))
 
     def is_all_triangles(self):
         """Return True if all the faces of the polydata are triangles."""
@@ -307,6 +247,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         faces : np.ndarray of dtype=np.int64
             Face index array.  Faces can contain any number of points.
 
+        verts : bool, optional
+            Faces array is a vertex array.
+
         Examples
         --------
         >>> import numpy as np
@@ -322,35 +265,11 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         >>> surf = pyvista.PolyData(vertices, faces)
 
         """
-        if deep or verts:
-            vtkpoints = vtk.vtkPoints()
-            vtkpoints.SetData(numpy_to_vtk(vertices, deep=deep))
-            self.SetPoints(vtkpoints)
-
-            # Convert to a vtk array
-            vtkcells = vtk.vtkCellArray()
-            if faces.dtype != pyvista.ID_TYPE:
-                faces = faces.astype(pyvista.ID_TYPE)
-
-            # get number of faces
-            if faces.ndim == 1:
-                c = 0
-                nfaces = 0
-                while c < faces.size:
-                    c += faces[c] + 1
-                    nfaces += 1
-            else:
-                nfaces = faces.shape[0]
-
-            idarr = numpy_to_vtkIdTypeArray(faces.ravel(), deep=deep)
-            vtkcells.SetCells(nfaces, idarr)
-            if (faces.ndim > 1 and faces.shape[1] == 2) or verts:
-                self.SetVerts(vtkcells)
-            else:
-                self.SetPolys(vtkcells)
+        self.SetPoints(pyvista.vtk_points(vertices, deep=deep))
+        if verts:
+            self.SetVerts(CellArray(faces))
         else:
-            self.points = vertices
-            self.faces = faces
+            self.SetPolys(CellArray(faces))
 
     def __sub__(self, cutting_mesh):
         """Subtract two meshes."""
@@ -671,26 +590,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         >>> grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
 
         """
-        if cells.dtype != pyvista.ID_TYPE:
-            cells = cells.astype(pyvista.ID_TYPE)
-
-        if not cells.flags['C_CONTIGUOUS']:
-            cells = np.ascontiguousarray(cells)
-
-        # if cells.ndim != 1:
-            # cells = cells.ravel()
-
+        # Convert to vtk arrays
+        vtkcells = CellArray(cells, cell_type.size, deep)
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
-
-        # Get number of cells
-        ncells = cell_type.size
-
-        # Convert to vtk arrays
         cell_type = numpy_to_vtk(cell_type, deep=deep)
-
-        vtkcells = vtk.vtkCellArray()
-        vtkcells.SetCells(ncells, numpy_to_vtkIdTypeArray(cells.ravel(), deep=deep))
 
         # Convert points to vtkPoints object
         points = pyvista.vtk_points(points, deep=deep)
@@ -702,10 +606,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 warnings.warn('VTK 9 no longer accepts an offset array')
             self.SetCells(cell_type, vtkcells)
         else:
-            if offset.dtype != pyvista.ID_TYPE:
-                offset = offset.astype(pyvista.ID_TYPE)
-            offset = numpy_to_vtkIdTypeArray(offset, deep=deep)
-            self.SetCells(cell_type, offset, vtkcells)
+            self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)
 
     @property
     def cells(self):
