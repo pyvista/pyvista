@@ -162,7 +162,7 @@ class DataSetAttributes(VTKObjectWrapper):
         return narray
 
     def append(self, narray, name, deep_copy=False, active_vectors=True, active_scalars=True):
-        """Add an array to the this object.
+        """Add an array to this object.
 
         Parameters
         ----------
