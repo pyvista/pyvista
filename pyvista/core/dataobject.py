@@ -5,15 +5,8 @@ import logging
 import os
 import warnings
 
-import numpy as np
-import vtk
-
-import pyvista
-from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               parse_field_choice, raise_not_matching, vtk_id_list_to_array,
-                               fileio, abstract_class)
+from pyvista.utilities import (FieldAssociation, fileio, abstract_class)
 from .datasetattributes import DataSetAttributes
-from .filters import DataSetFilters
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
