@@ -1057,38 +1057,6 @@ class Common(DataSetFilters, DataObject):
         alg.Update()
         return pyvista.filters._get_output(alg)
 
-    @property
-    def quality(self):  # pragma: no cover
-        """Return cell quality using PyANSYS.
-
-        Computes the minimum scaled jacobian of each cell.
-        Cells that have values below 0 are invalid for
-        a finite element analysis.
-
-        Note
-        ----
-        This casts the input to an unstructured grid
-
-        Return
-        ------
-        cellquality : np.ndarray
-            Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
-
-        Notes
-        -----
-        Requires pyansys to be installed.
-
-        """
-        try:
-            import pyansys
-        except ImportError:
-            raise ImportError('Install pyansys for this function')
-        if not isinstance(self, pyvista.UnstructuredGrid):
-            dataset = self.cast_to_unstructured_grid()
-        else:
-            dataset = self
-        return pyansys.CellQuality(dataset)
-
     def find_closest_point(self, point, n=1):
         """Find index of closest point in this mesh to the given point.
 
