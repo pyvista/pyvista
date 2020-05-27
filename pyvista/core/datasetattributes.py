@@ -121,13 +121,13 @@ class DataSetAttributes(VTKObjectWrapper):
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
-            raise AssertionError('Texture coordinates must be a 2-dimensional array')
+            raise ValueError('Texture coordinates must be a 2-dimensional array')
         valid_length = self.valid_array_len
         if t_coords.shape[0] != valid_length:
-            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
+            raise ValueError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
         if t_coords.shape[1] != 2:
-            raise AssertionError('Texture coordinates must only have 2 components,'
-                                 ' not ({})'.format(t_coords.shape[1]))
+            raise ValueError('Texture coordinates must only have 2 components,'
+                             ' not ({})'.format(t_coords.shape[1]))
         vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
