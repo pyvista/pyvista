@@ -2254,8 +2254,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # check if maper exists
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
-                raise Exception('Mapper does not exist.  '
-                                'Add a mesh with scalars first.')
+                raise AttributeError('Mapper does not exist.  '
+                                     'Add a mesh with scalars first.')
             mapper = self.mapper
 
         if title:
