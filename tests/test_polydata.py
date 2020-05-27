@@ -583,16 +583,16 @@ def test_lines():
     # Create line segments
     poly = pyvista.PolyData()
     poly.points = points
-    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
-    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
-    cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    cells = np.full((len(points)-1, 3), 2, dtype=np.int_)
+    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int_)
+    cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     poly.lines = cells
     assert poly.n_points == len(points)
     assert poly.n_cells == len(points) - 1
     # Create a poly line
     poly = pyvista.PolyData()
     poly.points = points
-    the_cell = np.arange(0, len(points), dtype=np.int)
+    the_cell = np.arange(0, len(points), dtype=np.int_)
     the_cell = np.insert(the_cell, 0, len(points))
     poly.lines = the_cell
     assert poly.n_points == len(points)
