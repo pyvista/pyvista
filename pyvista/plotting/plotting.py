@@ -224,7 +224,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return loc
         elif isinstance(loc, collections.Iterable):
             if not len(loc) == 2:
-                raise AssertionError('"loc" must contain two items')
+                raise ValueError('"loc" must contain two items')
             index_row = loc[0]
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
@@ -1386,7 +1386,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(texture, (vtk.vtkTexture, vtk.vtkOpenGLTexture)):
                 raise TypeError('Invalid texture type ({})'.format(type(texture)))
             if mesh.GetPointData().GetTCoords() is None:
-                raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
+                raise ValueError('Input mesh does not have texture coordinates to support the texture.')
             actor.SetTexture(texture)
             # Set color to white by default when using a texture
             if color is None:
@@ -1603,7 +1603,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # legend label
         if label:
             if not isinstance(label, str):
-                raise AssertionError('Label must be a string')
+                raise TypeError('Label must be a string')
             geom = pyvista.single_triangle()
             if scalars is not None:
                 geom = pyvista.Box()
@@ -2721,7 +2721,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def write_frame(self):
         """Write a single frame to the movie file."""
         if not hasattr(self, 'mwriter'):
-            raise AssertionError('This plotter has not opened a movie or GIF file.')
+            raise RuntimeError('This plotter has not opened a movie or GIF file.')
         self.mwriter.append_data(self.image)
 
     def _run_image_filter(self, ifilter):
@@ -2841,7 +2841,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # legend label
         if label:
             if not isinstance(label, str):
-                raise AssertionError('Label must be a string')
+                raise TypeError('Label must be a string')
             self._labels.append([lines, label, rgb_color])
 
         # Create actor

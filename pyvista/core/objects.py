@@ -55,7 +55,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def _from_arrays(self, arrays):
         if not arrays.ndim == 2:
-            raise AssertionError('Only 2D arrays are supported by Tables.')
+            raise ValueError('Only 2D arrays are supported by Tables.')
         np_table = arrays.T
         for i, array in enumerate(np_table):
             self.row_arrays['Array {}'.format(i)] = array
@@ -315,11 +315,11 @@ class Texture(vtk.vtkTexture):
     def _from_array(self, image):
         if image.ndim not in [2,3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
-            raise AssertionError('Input image must be nn by nm by RGB[A]')
+            raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
             if image.shape[2] != 3 and image.shape[2] != 4:
-                raise AssertionError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
 
             n_components = image.shape[2]
 
