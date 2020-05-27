@@ -97,8 +97,8 @@ class PickingHelper:
             raise AssertionError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
-                raise Exception('Input a mesh into the Plotter class first or '
-                                'or set it in this function')
+                raise AttributeError('Input a mesh into the Plotter class first or '
+                                     'or set it in this function')
             mesh = self.mesh
 
         renderer = self.renderer # make sure to consistently use renderer
