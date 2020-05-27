@@ -593,7 +593,7 @@ def test_set_cell_vectors(grid):
 
 
 def test_axis_rotation_invalid():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
