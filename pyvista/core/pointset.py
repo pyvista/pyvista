@@ -864,7 +864,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         """
         if not(x.shape == y.shape == z.shape):
-            raise Exception('Input point array shapes must match exactly')
+            raise ValueError('Input point array shapes must match exactly')
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
