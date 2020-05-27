@@ -501,7 +501,7 @@ class DataSetFilters:
         arr, field = get_array(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
-            raise AssertionError('No arrays present to threshold.')
+            raise ValueError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two filters:
         if isinstance(value, collections.Iterable) and invert:
@@ -531,7 +531,7 @@ class DataSetFilters:
         # check if value is iterable (if so threshold by min max range like ParaView)
         if isinstance(value, collections.Iterable):
             if len(value) != 2:
-                raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
+                raise ValueError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
         else:
             # just a single value
