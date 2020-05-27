@@ -1,4 +1,5 @@
 import os
+import weakref
 
 import numpy as np
 import pytest
@@ -90,6 +91,13 @@ def test_init_from_arrays():
 
     assert grid.n_cells == 2
     assert np.allclose(cells, grid.cells)
+
+
+def test_destructor():
+    ugrid = examples.load_hexbeam()
+    ref = weakref.ref(ugrid)
+    del ugrid
+    assert ref() is None
 
 
 def test_surface_indices(hexbeam):
