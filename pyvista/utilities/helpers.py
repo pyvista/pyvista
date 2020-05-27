@@ -317,7 +317,7 @@ def line_segments_from_points(points):
     >>> lines.plot() # doctest:+SKIP
 
     """
-    if len(points) % 2 == 0:
+    if len(points) % 2 != 0:
         raise ValueError("An even number of points must be given to define each segment.")
     # Assuming ordered points, create array defining line order
     n_points = len(points)
