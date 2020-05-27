@@ -155,7 +155,7 @@ def read_legacy(filename):
     reader.Update()
     output = reader.GetOutputDataObject(0)
     if output is None:
-        raise AssertionError('No output when using VTKs legacy reader')
+        raise RuntimeError('No output when using VTKs legacy reader')
     return pyvista.wrap(output)
 
 
@@ -249,7 +249,7 @@ def read_texture(filename, attrs=None):
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         if image.n_points < 2:
-            raise AssertionError("Problem reading the image with VTK.")
+            raise RuntimeError("Problem reading the image with VTK.")
         return pyvista.image_to_texture(image)
     except (KeyError, AssertionError):
         # Otherwise, use the imageio reader

@@ -503,7 +503,7 @@ def is_inside_bounds(point, bounds):
         point = [point]
     if isinstance(point, collections.Iterable) and not isinstance(point, collections.deque):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise AssertionError('Bounds mismatch point dimensionality')
+            raise ValueError('Bounds mismatch point dimensionality')
         point = collections.deque(point)
         bounds = collections.deque(bounds)
         return is_inside_bounds(point, bounds)
