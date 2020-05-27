@@ -1,6 +1,7 @@
 """Core routines."""
 
-from .dataobject import Common, DataObject
+from .dataobject import DataObject
+from .dataset import Common
 from .composite import MultiBlock
 from .datasetattributes import DataSetAttributes
 from .filters import (CompositeFilters, DataSetFilters, PolyDataFilters,

@@ -1,0 +1,917 @@
+"""Attributes common to PolyData and Grid Objects."""
+
+import collections
+import logging
+import os
+import warnings
+
+import numpy as np
+import vtk
+
+import pyvista
+from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
+                               parse_field_choice, raise_not_matching, vtk_id_list_to_array,
+                               fileio, abstract_class)
+from .datasetattributes import DataSetAttributes
+from .filters import DataSetFilters
+
+log = logging.getLogger(__name__)
+log.setLevel('CRITICAL')
+
+# vector array names
+DEFAULT_VECTOR_KEY = '_vectors'
+
+ActiveArrayInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
+
+
+@abstract_class
+class Common(DataSetFilters, DataObject):
+    """Methods in common to spatially referenced objects."""
+
+    # Simply bind pyvista.plotting.plot to the object
+    plot = pyvista.plot
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the common object."""
+        super().__init__()
+        self._last_active_scalars_name = None
+        self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+        self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+
+    @property
+    def active_scalars_info(self):
+        """Return the active scalar's field and name: [field, name]."""
+        field, name = self._active_scalars_info
+        exclude = {'__custom_rgba', 'Normals', 'vtkOriginalPointIds', 'TCoords'}
+        if name in exclude:
+            name = self._last_active_scalars_name
+
+        all_arrays = self.point_arrays.keys() + self.cell_arrays.keys()
+        if name is None or name not in all_arrays:
+            # find first available array name
+            for attributes in (self.point_arrays, self.cell_arrays):
+                first_arr = next((arr for arr in attributes if arr not in exclude), None)
+                if first_arr is not None:
+                    self._active_scalars_info = ActiveArrayInfo(attributes.association, first_arr)
+                    attributes.active_scalars = first_arr
+                    break
+            else:
+                self._active_scalars_info = ActiveArrayInfo(field, None)
+        return self._active_scalars_info
+
+    @property
+    def active_scalar_info(self):  # pragma: no cover
+        """Return the active scalar's field and name.
+
+        DEPRECATED: use `.active_scalars_info` instead
+        """
+        warnings.warn("DEPRECATED: use `.active_scalars_info` instead")
+        return self.active_scalars_info
+
+    @property
+    def active_vectors_info(self):
+        """Return the active scalar's field and name: [field, name]."""
+        if self._active_vectors_info.name is None:
+            # Sometimes, precomputed normals aren't set as active
+            if 'Normals' in self.array_names:
+                self.set_active_vectors('Normals')
+        return self._active_vectors_info
+
+    @property
+    def active_vectors(self):
+        """Return the active vectors array."""
+        field, name = self.active_vectors_info
+        if name:
+            if field is FieldAssociation.POINT:
+                return self.point_arrays[name]
+            if field is FieldAssociation.CELL:
+                return self.cell_arrays[name]
+
+    @property
+    def active_vectors_name(self):
+        """Return the name of the active vectors array."""
+        return self.active_vectors_info.name
+
+    @active_vectors_name.setter
+    def active_vectors_name(self, name):
+        """Set the name of the active vector."""
+        self.set_active_vectors(name)
+
+    @property
+    def active_scalars_name(self):
+        """Return the active scalar's name."""
+        return self.active_scalars_info.name
+
+    @active_scalars_name.setter
+    def active_scalars_name(self, name):
+        """Set the name of the active scalar."""
+        self.set_active_scalars(name)
+
+    @property
+    def active_scalar_name(self):  # pragma: no cover
+        """Return the active scalar's name."""
+        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
+        return self.active_scalars_name
+
+    @active_scalar_name.setter
+    def active_scalar_name(self, name):  # pragma: no cover
+        """Set the name of the active scalar."""
+        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
+        self.active_scalars_name = name
+
+    @property
+    def points(self):
+        """Return a pointer to the points as a numpy object."""
+        pts = self.GetPoints()
+        if pts is None:
+            return None
+        vtk_data = pts.GetData()
+        # arr = vtk_to_numpy(vtk_data)
+        return pyvista.pyvista_ndarray(vtk_data, dataset=self)
+
+    @points.setter
+    def points(self, points):
+        """Set points without copying."""
+        if not isinstance(points, np.ndarray):
+            raise TypeError('Points must be a numpy array')
+        vtk_points = pyvista.vtk_points(points, False)
+        pdata = self.GetPoints()
+        if not pdata:
+            self.SetPoints(vtk_points)
+        else:
+            pdata.SetData(vtk_points.GetData())
+        self.GetPoints().Modified()
+        self.Modified()
+
+    @property
+    def arrows(self):
+        """Return a glyph representation of the active vector data as arrows.
+
+        Arrows will be located at the points of the mesh and
+        their size will be dependent on the length of the vector.
+        Their direction will be the "direction" of the vector
+
+        Return
+        ------
+        arrows : pyvista.PolyData
+            Active scalars represented as arrows.
+
+        """
+        if self.active_vectors is None:
+            return
+        name = self.active_vectors_name
+        return self.glyph(scale=name, orient=name)
+
+    @property
+    def vectors(self):
+        """Return active vectors."""
+        return self.active_vectors
+
+    @vectors.setter
+    def vectors(self, array):
+        """Set the active vector."""
+        if array.ndim != 2:
+            raise ValueError('vector array must be a 2-dimensional array')
+        elif array.shape[1] != 3:
+            raise ValueError('vector array must be 3D')
+        elif array.shape[0] != self.n_points:
+            raise ValueError('Number of vectors be the same as the number of points')
+
+        self.point_arrays[DEFAULT_VECTOR_KEY] = array
+        self.active_vectors_name = DEFAULT_VECTOR_KEY
+
+    @property
+    def t_coords(self):
+        """Return the active texture coordinates on the points."""
+        return self.point_arrays.t_coords
+
+    @t_coords.setter
+    def t_coords(self, t_coords):
+        """Set the array to use as the texture coordinates."""
+        self.point_arrays.t_coords = t_coords
+
+    @property
+    def textures(self):
+        """Return a dictionary to hold compatible ``vtk.vtkTexture`` objects.
+
+        When casting back to a VTK dataset or filtering this dataset, these textures
+        will not be passed.
+
+        """
+        if not hasattr(self, '_textures'):
+            self._textures = {}
+        return self._textures
+
+    def clear_textures(self):
+        """Clear the textures from this mesh."""
+        if hasattr(self, '_textures'):
+            del self._textures
+
+    def _activate_texture(mesh, name):
+        """Grab a texture and update the active texture coordinates.
+
+        This makes sure to not destroy old texture coordinates.
+
+        Parameters
+        ----------
+        name : str
+            The name of the texture and texture coordinates to activate
+
+        Return
+        ------
+        vtk.vtkTexture : The active texture
+
+        """
+        if name is True or isinstance(name, int):
+            keys = list(mesh.textures.keys())
+            # Grab the first name available if True
+            idx = 0 if not isinstance(name, int) or name is True else name
+            if idx > len(keys):  # is this necessary?
+                idx = 0
+            try:
+                name = keys[idx]
+            except IndexError:
+                logging.warning('No textures associated with input mesh.')
+                return None
+        # Grab the texture object by name
+        try:
+            texture = mesh.textures[name]
+        except KeyError:
+            logging.warning('Texture ({}) not associated with this dataset'.format(name))
+            texture = None
+        else:
+            # Be sure to reset the tcoords if present
+            # Grab old coordinates
+            if name in mesh.array_names:
+                old_tcoord = mesh.GetPointData().GetTCoords()
+                mesh.GetPointData().SetTCoords(mesh.GetPointData().GetAbstractArray(name))
+                mesh.GetPointData().AddArray(old_tcoord)
+                mesh.Modified()
+        return texture
+
+    def set_active_scalars(self, name, preference='cell'):
+        """Find the scalars by name and appropriately sets it as active.
+
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+
+        """
+        if name is None:
+            self.GetCellData().SetActiveScalars(None)
+            self.GetPointData().SetActiveScalars(None)
+            return
+        _, field = get_array(self, name, preference=preference, info=True)
+        self._last_active_scalars_name = self.active_scalars_info.name
+        if field == FieldAssociation.POINT:
+            self.GetPointData().SetActiveScalars(name)
+        elif field == FieldAssociation.CELL:
+            self.GetCellData().SetActiveScalars(name)
+        else:
+            raise ValueError('Data field ({}) not usable'.format(field))
+        self._active_scalars_info = ActiveArrayInfo(field, name)
+
+    def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
+        """Find the scalars by name and appropriately sets it as active.
+
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+        """
+        warnings.warn("DEPRECATED: please use `.set_active_scalars` instead.")
+        return self.set_active_scalars(name, preference=preference)
+
+    def set_active_vectors(self, name, preference='point'):
+        """Find the vectors by name and appropriately sets it as active.
+
+        To deactivate any active scalars, pass ``None`` as the ``name``.
+
+        """
+        if name is None:
+            self.GetCellData().SetActiveVectors(None)
+            self.GetPointData().SetActiveVectors(None)
+            return
+        _, field = get_array(self, name, preference=preference, info=True)
+        if field == FieldAssociation.POINT:
+            self.GetPointData().SetActiveVectors(name)
+        elif field == FieldAssociation.CELL:
+            self.GetCellData().SetActiveVectors(name)
+        else:
+            raise ValueError('Data field ({}) not usable'.format(field))
+        self._active_vectors_info = ActiveArrayInfo(field, name)
+
+    def rename_array(self, old_name, new_name, preference='cell'):
+        """Change array name by searching for the array then renaming it."""
+        _, field = get_array(self, old_name, preference=preference, info=True)
+        was_active = False
+        if self.active_scalars_name == old_name:
+            was_active = True
+        if field == FieldAssociation.POINT:
+            self.point_arrays[new_name] = self.point_arrays.pop(old_name)
+        elif field == FieldAssociation.CELL:
+            self.cell_arrays[new_name] = self.cell_arrays.pop(old_name)
+        elif field == FieldAssociation.NONE:
+            self.field_arrays[new_name] = self.field_arrays.pop(old_name)
+        else:
+            raise RuntimeError('Array not found.')
+        if was_active:
+            self.set_active_scalars(new_name, preference=field)
+
+    def rename_scalar(self, old_name, new_name, preference='cell'):  # pragma: no cover
+        """Change an array name by searching for the array then renaming it.
+
+        DEPRECATED: please use `.rename_array` instead.
+
+        """
+        warnings.warn("DEPRECATED: please use `.rename_array` instead.")
+        return self.rename_array(old_name, new_name, preference=preference)
+
+    @property
+    def active_scalars(self):
+        """Return the active scalars as an array."""
+        field, name = self.active_scalars_info
+        if name is not None:
+            if field == FieldAssociation.POINT:
+                return self.point_arrays[name]
+            elif field == FieldAssociation.CELL:
+                return self.cell_arrays[name]
+
+    @property
+    def active_scalar(self):  # pragma: no cover
+        """Return the active scalars as an array.
+
+        DEPRECATED: Please use `.active_scalars` instead.
+
+        """
+        warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
+        return self.active_scalars
+
+    def _add_point_array(self, scalars, name, set_active=False, deep=True):
+        """Add point scalars to the mesh.
+
+        Parameters
+        ----------
+        scalars : numpy.ndarray
+            Numpy array of scalars.  Must match number of points.
+
+        name : str
+            Name of point scalars to add.
+
+        set_active : bool, optional
+            Sets the scalars to the active plotting scalars.  Default False.
+
+        deep : bool, optional
+            Does not copy scalars when False.  A reference to the scalars
+            must be kept to avoid a segfault.
+
+        """
+        self.point_arrays.append(scalars, name, deep_copy=deep)
+        if set_active or self.active_scalars_info.name is None:
+            self.GetPointData().SetActiveScalars(name)
+            self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name)
+
+    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
+        """Add points array.
+
+        DEPRECATED: Please use `_add_point_array` instead.
+
+        """
+        warnings.warn('Deprecation Warning: `_add_point_scalar` is now `_add_point_array`', RuntimeWarning)
+        return self._add_point_array(scalars, name, set_active=set_active, deep=deep)
+
+    def get_data_range(self, arr=None, preference='cell'):
+        """Get the non-NaN min and max of a named array.
+
+        Parameters
+        ----------
+        arr : str, np.ndarray, optional
+            The name of the array to get the range. If None, the
+            active scalars is used.
+
+        preference : str, optional
+            When scalars is specified, this is the preferred array type
+            to search for in the dataset.  Must be either ``'point'``,
+            ``'cell'``, or ``'field'``.
+
+        """
+        if arr is None:
+            # use active scalars array
+            _, arr = self.active_scalars_info
+        if isinstance(arr, str):
+            arr = get_array(self, arr, preference=preference)
+        # If array has no tuples return a NaN range
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+            return (np.nan, np.nan)
+        # Use the array range
+        return np.nanmin(arr), np.nanmax(arr)
+
+    def points_to_double(self):
+        """Make points double precision."""
+        if self.points.dtype != np.double:
+            self.points = self.points.astype(np.double)
+
+    def rotate_x(self, angle):
+        """Rotate mesh about the x-axis.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the x-axis.
+
+        """
+        axis_rotation(self.points, angle, inplace=True, axis='x')
+
+    def rotate_y(self, angle):
+        """Rotate mesh about the y-axis.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the y-axis.
+
+        """
+        axis_rotation(self.points, angle, inplace=True, axis='y')
+
+    def rotate_z(self, angle):
+        """Rotate mesh about the z-axis.
+
+        Parameters
+        ----------
+        angle : float
+            Angle in degrees to rotate about the z-axis.
+
+        """
+        axis_rotation(self.points, angle, inplace=True, axis='z')
+
+    def translate(self, xyz):
+        """Translate the mesh.
+
+        Parameters
+        ----------
+        xyz : list or np.ndarray
+            Length 3 list or array.
+
+        """
+        self.points += np.asarray(xyz)
+
+    def transform(self, trans):
+        """Compute a transformation in place using a 4x4 transform.
+
+        Parameters
+        ----------
+        trans : vtk.vtkMatrix4x4, vtk.vtkTransform, or np.ndarray
+            Accepts a vtk transformation object or a 4x4 transformation matrix.
+
+        """
+        if isinstance(trans, vtk.vtkMatrix4x4):
+            t = pyvista.trans_from_matrix(trans)
+        elif isinstance(trans, vtk.vtkTransform):
+            t = pyvista.trans_from_matrix(trans.GetMatrix())
+        elif isinstance(trans, np.ndarray):
+            if trans.ndim != 2:
+                raise ValueError('Transformation array must be 4x4')
+            elif trans.shape[0] != 4 or trans.shape[1] != 4:
+                raise ValueError('Transformation array must be 4x4')
+            t = trans
+        else:
+            raise TypeError('Input transform must be either:\n'
+                            '\tvtk.vtkMatrix4x4\n'
+                            '\tvtk.vtkTransform\n'
+                            '\t4x4 np.ndarray\n')
+
+        x = (self.points*t[0, :3]).sum(1) + t[0, -1]
+        y = (self.points*t[1, :3]).sum(1) + t[1, -1]
+        z = (self.points*t[2, :3]).sum(1) + t[2, -1]
+
+        # overwrite points
+        self.points[:, 0] = x
+        self.points[:, 1] = y
+        self.points[:, 2] = z
+
+    def _add_cell_array(self, scalars, name, set_active=False, deep=True):
+        """Add cell scalars to the vtk object.
+
+        Parameters
+        ----------
+        scalars : numpy.ndarray
+            Numpy array of scalars.  Must match number of points.
+
+        name : str
+            Name of point scalars to add.
+
+        set_active : bool, optional
+            Sets the scalars to the active plotting scalars.  Default False.
+
+        deep : bool, optional
+            Does not copy scalars when False.  A reference to the scalars
+            must be kept to avoid a segfault.
+
+        """
+        self.cell_arrays.append(scalars, name, deep_copy=deep)
+        if set_active or self.active_scalars_info.name is None:
+            self.GetCellData().SetActiveScalars(name)
+            self._active_scalars_info = ActiveArrayInfo(FieldAssociation.CELL, name)
+
+    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
+        """Add a cell array.
+
+        DEPRECATED: Please use `_add_cell_array` instead.
+
+        """
+        warnings.warn('Deprecation Warning: `_add_cell_scalar` is now `_add_cell_array`', RuntimeWarning)
+        return self._add_cell_array(scalars, name, set_active=set_active, deep=deep)
+
+    def copy_meta_from(self, ido):
+        """Copy pyvista meta data onto this object from another object."""
+        self._active_scalars_info = ido.active_scalars_info
+        self._active_vectors_info = ido.active_vectors_info
+        if hasattr(ido, '_textures'):
+            self._textures = {}
+            for name, tex in ido._textures.items():
+                self._textures[name] = tex.copy()
+
+    @property
+    def point_arrays(self):
+        """Return vtkPointData as DataSetAttributes."""
+        return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
+
+    def _remove_array(self, field, key):
+        """Remove a single array by name from each field (internal helper)."""
+        field = parse_field_choice(field)
+        if field == FieldAssociation.POINT:
+            self.GetPointData().RemoveArray(key)
+        elif field == FieldAssociation.CELL:
+            self.GetCellData().RemoveArray(key)
+        elif field == FieldAssociation.NONE:
+            self.GetFieldData().RemoveArray(key)
+        else:
+            raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
+        return
+
+    def clear_point_arrays(self):
+        """Remove all point arrays."""
+        self.point_arrays.clear()
+
+    def clear_cell_arrays(self):
+        """Remove all cell arrays."""
+        self.cell_arrays.clear()
+
+    def clear_arrays(self):
+        """Remove all arrays from point/cell/field data."""
+        self.clear_point_arrays()
+        self.clear_cell_arrays()
+        self.clear_field_arrays()
+
+    @property
+    def cell_arrays(self):
+        """Return vtkCellData as DataSetAttributes."""
+        return DataSetAttributes(self.GetCellData(), dataset=self, association=FieldAssociation.CELL)
+
+    @property
+    def n_points(self):
+        """Return the number of points in the entire dataset."""
+        return self.GetNumberOfPoints()
+
+    @property
+    def n_cells(self):
+        """Return the number of cells in the entire dataset."""
+        return self.GetNumberOfCells()
+
+    @property
+    def number_of_points(self):  # pragma: no cover
+        """Return the number of points."""
+        return self.GetNumberOfPoints()
+
+    @property
+    def number_of_cells(self):  # pragma: no cover
+        """Return the number of cells."""
+        return self.GetNumberOfCells()
+
+    @property
+    def bounds(self):
+        """Return the bounding box of this dataset.
+
+        The form is: (xmin,xmax, ymin,ymax, zmin,zmax).
+
+        """
+        return list(self.GetBounds())
+
+    @property
+    def length(self):
+        """Return the length of the diagonal of the bounding box."""
+        return self.GetLength()
+
+    @property
+    def center(self):
+        """Return the center of the bounding box."""
+        return list(self.GetCenter())
+
+    @property
+    def extent(self):
+        """Return the range of the bounding box."""
+        if hasattr(self, 'GetExtent'):
+            return list(self.GetExtent())
+
+    @extent.setter
+    def extent(self, extent):
+        """Set the range of the bounding box."""
+        if hasattr(self, 'SetExtent'):
+            if len(extent) != 6:
+                raise ValueError('Extent must be a vector of 6 values.')
+            self.SetExtent(extent)
+        else:
+            raise AttributeError('This mesh type does not handle extents.')
+
+    @property
+    def volume(self):
+        """Return the mesh volume.
+
+        Return
+        ------
+        volume : float
+            Total volume of the mesh.
+
+        """
+        sizes = self.compute_cell_sizes(length=False, area=False, volume=True)
+        return np.sum(sizes.cell_arrays['Volume'])
+
+    def get_array(self, name, preference='cell', info=False):
+        """Search both point, cell and field data for an array."""
+        return get_array(self, name, preference=preference, info=info)
+
+    def __getitem__(self, index):
+        """Search both point, cell, and field data for an array."""
+        if isinstance(index, collections.Iterable) and not isinstance(index, str):
+            name, preference = index
+        elif isinstance(index, str):
+            name = index
+            preference = 'cell'
+        else:
+            raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
+        return self.get_array(name, preference=preference, info=False)
+
+    def _ipython_key_completions_(self):
+        return self.array_names
+
+    def __setitem__(self, name, scalars):
+        """Add/set an array in the point_arrays, or cell_arrays accordingly.
+
+        It depends on the array's length, or specified mode.
+
+        """
+        # First check points - think of case with vertex cells
+        #   there would be the same number of cells as points but we'd want
+        #   the data to be on the nodes.
+        if scalars is None:
+            raise TypeError('Empty array unable to be added.')
+        if not isinstance(scalars, np.ndarray):
+            scalars = np.array(scalars)
+        # Now check array size to determine which field to place array
+        if scalars.shape[0] == self.n_points:
+            self.point_arrays[name] = scalars
+        elif scalars.shape[0] == self.n_cells:
+            self.cell_arrays[name] = scalars
+        else:
+            # Field data must be set explicitly as it could be a point of
+            # confusion for new users
+            raise_not_matching(scalars, self)
+        return
+
+    @property
+    def n_arrays(self):
+        """Return the number of arrays present in the dataset."""
+        n = self.GetPointData().GetNumberOfArrays()
+        n += self.GetCellData().GetNumberOfArrays()
+        n += self.GetFieldData().GetNumberOfArrays()
+        return n
+
+    @property
+    def n_scalars(self):  # pragma: no cover
+        """Return the number of scalars.
+
+        DEPRECATED: Please use `n_arrays` instead.
+
+        """
+        warnings.warn('Deprecation Warning: `n_scalars` is now `n_arrays`', RuntimeWarning)
+        return self.n_arrays
+
+    @property
+    def array_names(self):
+        """Return a list of array names for the dataset.
+
+        This makes sure to put the active scalars' name first in the list.
+
+        """
+        names = []
+        names.extend(self.field_arrays.keys())
+        names.extend(self.point_arrays.keys())
+        names.extend(self.cell_arrays.keys())
+        try:
+            names.remove(self.active_scalars_name)
+            names.insert(0, self.active_scalars_name)
+        except ValueError:
+            pass
+        return names
+
+    @property
+    def scalar_names(self):  # pragma: no cover
+        """Return the array names.
+
+        DEPRECATED: Please use `array_names` instead.
+
+        """
+        warnings.warn('Deprecation Warning: `scalar_names` is now `array_names`', RuntimeWarning)
+        return self.array_names
+
+    def _get_attrs(self):
+        """Return the representation methods (internal helper)."""
+        attrs = []
+        attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
+        attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
+        bds = self.bounds
+        fmt = "{}, {}".format(pyvista.FLOAT_FORMAT, pyvista.FLOAT_FORMAT)
+        attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
+        attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
+        attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
+        # if self.n_cells <= pyvista.REPR_VOLUME_MAX_CELLS and self.n_cells > 0:
+        #     attrs.append(("Volume", (self.volume), pyvista.FLOAT_FORMAT))
+        return attrs
+
+    def _repr_html_(self):
+        """Return a pretty representation for Jupyter notebooks.
+
+        It includes header details and information about all arrays.
+
+        """
+        fmt = ""
+        if self.n_arrays > 0:
+            fmt += "<table>"
+            fmt += "<tr><th>Header</th><th>Data Arrays</th></tr>"
+            fmt += "<tr><td>"
+        # Get the header info
+        fmt += self.head(display=False, html=True)
+        # Fill out arrays
+        if self.n_arrays > 0:
+            fmt += "</td><td>"
+            fmt += "\n"
+            fmt += "<table>\n"
+            titles = ["Name", "Field", "Type", "N Comp", "Min", "Max"]
+            fmt += "<tr>" + "".join(["<th>{}</th>".format(t) for t in titles]) + "</tr>\n"
+            row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
+            row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
+
+            def format_array(name, arr, field):
+                """Format array information for printing (internal helper)."""
+                dl, dh = self.get_data_range(arr)
+                dl = pyvista.FLOAT_FORMAT.format(dl)
+                dh = pyvista.FLOAT_FORMAT.format(dh)
+                if name == self.active_scalars_info.name:
+                    name = '<b>{}</b>'.format(name)
+                if arr.ndim > 1:
+                    ncomp = arr.shape[1]
+                else:
+                    ncomp = 1
+                return row.format(name, field, arr.dtype, ncomp, dl, dh)
+
+            for key, arr in self.point_arrays.items():
+                fmt += format_array(key, arr, 'Points')
+            for key, arr in self.cell_arrays.items():
+                fmt += format_array(key, arr, 'Cells')
+            for key, arr in self.field_arrays.items():
+                fmt += format_array(key, arr, 'Fields')
+
+            fmt += "</table>\n"
+            fmt += "\n"
+            fmt += "</td></tr> </table>"
+        return fmt
+
+    def __repr__(self):
+        """Return the object representation."""
+        return self.head(display=False, html=False)
+
+    def __str__(self):
+        """Return the object string representation."""
+        return self.head(display=False, html=False)
+
+    def overwrite(self, mesh):
+        """Overwrite this mesh inplace with the new mesh's geometries and data.
+
+        Parameters
+        ----------
+        mesh : vtk.vtkDataSet
+            The overwriting mesh.
+
+        """
+        if not isinstance(mesh, type(self)):
+            raise TypeError('The Input DataSet type must match '
+                            'the one being overwritten %s' % type(self))
+        self.deep_copy(mesh)
+        if is_pyvista_dataset(mesh):
+            self.copy_meta_from(mesh)
+
+    def cast_to_unstructured_grid(self):
+        """Get a new representation of this object as an :class:`pyvista.UnstructuredGrid`."""
+        alg = vtk.vtkAppendFilter()
+        alg.AddInputData(self)
+        alg.Update()
+        return pyvista.filters._get_output(alg)
+
+    @property
+    def quality(self):  # pragma: no cover
+        """Return cell quality using PyANSYS.
+
+        Computes the minimum scaled jacobian of each cell.
+        Cells that have values below 0 are invalid for
+        a finite element analysis.
+
+        Note
+        ----
+        This casts the input to an unstructured grid
+
+        Return
+        ------
+        cellquality : np.ndarray
+            Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
+
+        Notes
+        -----
+        Requires pyansys to be installed.
+
+        """
+        try:
+            import pyansys
+        except ImportError:
+            raise ImportError('Install pyansys for this function')
+        if not isinstance(self, pyvista.UnstructuredGrid):
+            dataset = self.cast_to_unstructured_grid()
+        else:
+            dataset = self
+        return pyansys.CellQuality(dataset)
+
+    def find_closest_point(self, point, n=1):
+        """Find index of closest point in this mesh to the given point.
+
+        If wanting to query many points, use a KDTree with scipy or another
+        library as those implementations will be easier to work with.
+
+        See: https://github.com/pyvista/pyvista-support/issues/107
+
+        Parameters
+        ----------
+        point : iterable(float)
+            Length 3 coordinate of the point to query.
+
+        n : int, optional
+            If greater than ``1``, returns the indices of the ``n`` closest
+            points.
+
+        Return
+        ------
+        int : the index of the point in this mesh that is closes to the given point.
+        """
+        if not isinstance(point, collections.Iterable) or len(point) != 3:
+            raise TypeError("Given point must be a length three iterable.")
+        if not isinstance(n, int):
+            raise TypeError("`n` must be a positive integer.")
+        if n < 1:
+             raise ValueError("`n` must be a positive integer.")
+        locator = vtk.vtkPointLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        if n < 2:
+            index = locator.FindClosestPoint(point)
+        else:
+            id_list = vtk.vtkIdList()
+            locator.FindClosestNPoints(n, point, id_list)
+            index = vtk_id_list_to_array(id_list)
+        return index
+
+
+def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
+    """Rotate points angle (in deg) about an axis."""
+    axis = axis.lower()
+
+    # Copy original array to if not inplace
+    if not inplace:
+        points = points.copy()
+
+    # Convert angle to radians
+    if deg:
+        angle *= np.pi / 180
+
+    if axis == 'x':
+        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
+        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
+        points[:, 1] = y
+        points[:, 2] = z
+    elif axis == 'y':
+        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
+        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
+        points[:, 0] = x
+        points[:, 2] = z
+    elif axis == 'z':
+        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
+        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
+        points[:, 0] = x
+        points[:, 1] = y
+    else:
+        raise ValueError('invalid axis. Must be either "x", "y", or "z"')
+
+    if not inplace:
+        return points
