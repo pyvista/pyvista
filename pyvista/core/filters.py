@@ -161,7 +161,7 @@ class DataSetFilters:
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
-                raise RuntimeError("The bounds mesh must have only 6 faces.")
+                raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
             poly.compute_normals()
             for cid in range(6):
@@ -379,7 +379,7 @@ class DataSetFilters:
             try:
                 ax = axes[axis]
             except KeyError:
-                raise RuntimeError('Axis ({}) not understood'.format(axis))
+                raise TypeError('Axis ({}) not understood'.format(axis))
         # get the locations along that axis
         if bounds is None:
             bounds = dataset.bounds
@@ -583,9 +583,9 @@ class DataSetFilters:
             if percent >= 1:
                 percent = float(percent) / 100.0
                 if percent > 1:
-                    raise RuntimeError('Percentage ({}) is out of range (0, 1).'.format(percent))
+                    raise ValueError('Percentage ({}) is out of range (0, 1).'.format(percent))
             if percent < 1e-10:
-                raise RuntimeError('Percentage ({}) is too close to zero or negative.'.format(percent))
+                raise ValueError('Percentage ({}) is too close to zero or negative.'.format(percent))
             return percent
 
         def _get_val(percent, dmin, dmax):
@@ -736,7 +736,7 @@ class DataSetFilters:
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
-            raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
+            raise TypeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
         # Construct the filter
         alg = vtk.vtkElevationFilter()
         alg.SetInputDataObject(dataset)
@@ -829,7 +829,7 @@ class DataSetFilters:
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
         else:
-            raise RuntimeError('isosurfaces not understood.')
+            raise TypeError('isosurfaces not understood.')
         _update_alg(alg, progress_bar, 'Computing Contour')
         return _get_output(alg)
 
@@ -1128,7 +1128,7 @@ class DataSetFilters:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != FieldAssociation.POINT:
-            raise RuntimeError('Dataset can only by warped by a point data array.')
+            raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
         alg = vtk.vtkWarpScalar()
         alg.SetInputDataObject(dataset)
@@ -1178,7 +1178,7 @@ class DataSetFilters:
             field, vectors = dataset.active_vectors_info
         arr, field = get_array(dataset, vectors, preference='point', info=True)
         if arr is None:
-            raise RuntimeError('No active vectors')
+            raise ValueError('No active vectors')
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
@@ -2176,7 +2176,7 @@ class DataSetFilters:
         if scalars is None:
             field, scalars = dataset.active_scalars_info
             if scalars is None:
-                raise RuntimeError('No active scalars.  Must input scalars array name')
+                raise ValueError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
@@ -3130,7 +3130,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Check output so no segfaults occur
         if output.n_points < 1:
-            raise RuntimeError('Clean tolerance is too high. Empty mesh returned.')
+            raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
             poly_data.overwrite(output)

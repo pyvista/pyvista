@@ -386,7 +386,7 @@ class Renderer(vtkRenderer):
                 except AttributeError:  # pragma: no cover
                     pass
             else:
-                raise RuntimeError('Culling option ({}) not understood.'.format(culling))
+                raise ValueError('Culling option ({}) not understood.'.format(culling))
 
         actor.SetPickable(pickable)
 
