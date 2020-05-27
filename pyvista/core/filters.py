@@ -804,7 +804,7 @@ class DataSetFilters:
             raise ValueError("Method '{}' is not supported".format(method))
         # Make sure the input has scalars to contour on
         if dataset.n_arrays < 1:
-            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+            raise ValueError('Input dataset for the contour filter must have scalar data.')
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
