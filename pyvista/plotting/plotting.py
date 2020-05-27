@@ -3865,7 +3865,7 @@ class Plotter(BasePlotter):
             try:
                 import IPython
             except ImportError:
-                raise Exception('Install IPython to display image in a notebook')
+                raise ImportError('Install IPython to display image in a notebook')
             if not hasattr(self, 'last_image'):
                 self.last_image = self.screenshot(screenshot, return_img=True)
             disp = IPython.display.display(PIL.Image.fromarray(self.last_image))
