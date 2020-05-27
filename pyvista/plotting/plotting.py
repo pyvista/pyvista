@@ -2979,7 +2979,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Points type not usable: {}'.format(type(points)))
 
         if len(vtkpoints.points) != len(labels):
-            raise Exception('There must be one label for each point')
+            raise ValueError('There must be one label for each point')
 
         if name is None:
             name = '{}({})'.format(type(vtkpoints).__name__, vtkpoints.memory_address)
