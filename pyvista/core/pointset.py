@@ -16,7 +16,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 import pyvista
 from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr
-from .common import Common
+from .dataset import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
 from ..utilities.fileio import get_ext
 
