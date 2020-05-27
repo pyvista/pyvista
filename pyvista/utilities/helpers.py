@@ -374,12 +374,12 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise Exception('orig array must be 3D')
+        raise ValueError('orig array must be 3D')
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise Exception('vec array must be 3D')
+        raise ValueError('vec array must be 3D')
 
     # Create vtk points and cells objects
     vpts = vtk.vtkPoints()
