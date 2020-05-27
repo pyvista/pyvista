@@ -1,4 +1,5 @@
 """pyvista wrapping of vtkCellArray."""
+import collections.abc
 import numpy as np
 from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
 from vtk import vtkCellArray
@@ -8,12 +9,13 @@ import pyvista
 
 def numpy_to_idarr(ind, deep=False, return_ind=False):
     """Safely convert a numpy array to a vtkIdTypeArray."""
-    try:
-        ind = np.asarray(ind)
-    except:
-        raise TypeError('Indices must be either a mask, array, list, or iterable')
+    ind = np.asarray(ind)
 
-    if ind.dtype == np.bool:
+    # np.asarray will eat anything, so we have to weed out bogus inputs
+    if not issubclass(ind.dtype.type, (np.bool_, np.integer, np.floating)):
+        raise TypeError('Indices must be either a mask or a numeric array-like')
+
+    if ind.dtype == np.bool_:
         ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
     elif ind.dtype != pyvista.ID_TYPE:
         ind = ind.astype(pyvista.ID_TYPE)
