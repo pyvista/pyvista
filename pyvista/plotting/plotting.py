@@ -2486,7 +2486,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         vtk_scalars = data.GetScalars()
         if vtk_scalars is None:
-            raise Exception('No active scalars')
+            raise ValueError('No active scalars')
         s = convert_array(vtk_scalars)
         s[:] = scalars
         data.Modified()
