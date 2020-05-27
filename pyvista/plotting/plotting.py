@@ -3118,7 +3118,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not image.size:
-            raise Exception('Empty image.  Have you run plot() first?')
+            raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file
         supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
         if isinstance(filename, str):
