@@ -456,7 +456,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     src.SetHeight(height)
     # Contributed by @kjelljorner in #249:
     if angle and radius:
-        raise Exception("Both radius and angle specified. They are mutually exclusive.")
+        raise RuntimeError("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
         src.SetAngle(angle)
     elif not angle and radius:
