@@ -552,7 +552,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
     >>> # from arrays (vtk9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+    >>> #grid = pyvista.UnstructuredGrid(cells, celltypes, points)
 
     >>> # from arrays (vtk<9)
     >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
