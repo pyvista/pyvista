@@ -2833,8 +2833,8 @@ class PolyDataFilters(DataSetFilters):
         elif subfilter == 'loop':
             sfilter = vtk.vtkLoopSubdivisionFilter()
         else:
-            raise Exception("Subdivision filter must be one of the following: "
-                            "'butterfly', 'loop', or 'linear'")
+            raise ValueError("Subdivision filter must be one of the following: "
+                             "'butterfly', 'loop', or 'linear'")
 
         # Subdivide
         sfilter.SetNumberOfSubdivisions(nsub)
