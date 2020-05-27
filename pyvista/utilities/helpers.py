@@ -547,14 +547,14 @@ def fit_plane_to_points(points, return_meta=False):
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
     if isinstance(mesh, vtk.vtkTable):
-        raise Exception('Number of scalars ({})'.format(scalars.size) +
-                        'must match number of rows ' +
-                        '({}).'.format(mesh.n_rows) )
-    raise Exception('Number of scalars ({}) '.format(scalars.size) +
-                    'must match either the number of points ' +
-                    '({}) '.format(mesh.n_points) +
-                    'or the number of cells ' +
-                    '({}). '.format(mesh.n_cells) )
+        raise ValueError('Number of scalars ({})'.format(scalars.size) +
+                         'must match number of rows ' +
+                         '({}).'.format(mesh.n_rows) )
+    raise ValueError('Number of scalars ({}) '.format(scalars.size) +
+                     'must match either the number of points ' +
+                     '({}) '.format(mesh.n_points) +
+                     'or the number of cells ' +
+                     '({}). '.format(mesh.n_cells) )
 
 
 def generate_plane(normal, origin):
