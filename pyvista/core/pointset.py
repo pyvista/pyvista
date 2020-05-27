@@ -598,7 +598,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(None, args[0], args[1], args[2], deep)
             else:
-                raise Exception('All input types must be np.ndarray')
+                raise TypeError('All input types must be np.ndarray')
 
         elif len(args) == 4:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -609,7 +609,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
             else:
-                raise Exception('All input types must be np.ndarray')
+                raise TypeError('All input types must be np.ndarray')
 
     def __repr__(self):
         """Return the standard representation."""
