@@ -68,7 +68,7 @@ def test_plot(tmpdir):
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_invalid_style():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         pyvista.plot(sphere, style='not a style')
 
 
@@ -111,9 +111,9 @@ def test_set_camera_position():
 def test_plot_no_active_scalars():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         plotter.update_scalars(np.arange(5))
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         plotter.update_scalars(np.arange(sphere.n_faces))
 
 
@@ -185,7 +185,7 @@ def test_plot_add_scalar_bar():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_invalid_add_scalar_bar():
-    with pytest.raises(Exception):
+    with pytest.raises(TypeError):
         plotter = pyvista.Plotter()
         plotter.add_scalar_bar()
 
@@ -204,14 +204,14 @@ def test_plot_list():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_add_lines_invalid():
     plotter = pyvista.Plotter()
-    with pytest.raises(Exception):
+    with pytest.raises(TypeError):
         plotter.add_lines(range(10))
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_open_gif_invalid():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         plotter.open_gif('file.abs')
 
 
@@ -255,7 +255,7 @@ def test_make_movie():
 def test_add_legend():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         plotter.add_legend()
     legend_labels = [['sphere', 'r']]
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
@@ -276,7 +276,7 @@ def test_add_point_labels():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     points = np.random.random((n, 3))
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         plotter.add_point_labels(points, range(n - 1))
 
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
@@ -370,7 +370,7 @@ def test_plot_clim():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_invalid_n_arrays():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
         plotter.add_mesh(sphere, scalars=np.arange(10))
         plotter.show()

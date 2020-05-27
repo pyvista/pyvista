@@ -24,5 +24,5 @@ def test_color_str():
 def test_font():
     font = pyvista.parse_font_family('times')
     assert font == vtk.VTK_TIMES
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         pyvista.parse_font_family('not a font')
