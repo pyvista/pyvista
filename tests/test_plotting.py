@@ -802,7 +802,7 @@ def test_opacity_by_array():
                use_transparency=True)
     p.show()
     # Test using mismatched arrays
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         p = pyvista.Plotter(off_screen=OFF_SCREEN)
         p.add_mesh(mesh, scalars='Spatial Cell Data', opacity='unc',)
         p.show()
