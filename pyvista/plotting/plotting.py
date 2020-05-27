@@ -242,8 +242,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         sz = int(self.shape[0] * self.shape[1])
         idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
         args = np.argwhere(idxs == index)
-        if len(args) < 1:
-            raise RuntimeError('Index ({}) is out of range.')
         return args[0]
 
     @property
@@ -813,7 +811,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self.ren_win, 'GetOffScreenFramebuffer'):
             if not self.ren_win.GetOffScreenFramebuffer().GetFBOIndex():
                 # must raise a runtime error as this causes a segfault on VTK9
-                raise RuntimeError('Invoking helper with no framebuffer')
+                raise ValueError('Invoking helper with no framebuffer')
         # Get 2D click location on window
         click_pos = self.iren.GetEventPosition()
 
@@ -1262,7 +1260,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     #       arrays where first index corresponds to
                     #       the block? This could get complicated real
                     #       quick.
-                    raise RuntimeError('scalars array must be given as a string name for multiblock datasets.')
+                    raise TypeError('scalars array must be given as a string name for multiblock datasets.')
 
             the_arguments = locals()
             the_arguments.pop('self')
@@ -1336,7 +1334,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh.compute_normals(cell_normals=False, inplace=True)
 
         if mesh.n_points < 1:
-            raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
+            raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -1410,7 +1408,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity = opacity_transfer_function(opacity, n_colors)
             else:
                 if scalars.shape[0] != opacity.shape[0]:
-                    raise RuntimeError('Opacity array and scalars array must have the same number of elements.')
+                    raise ValueError('Opacity array and scalars array must have the same number of elements.')
         elif isinstance(opacity, (np.ndarray, list, tuple)):
             opacity = np.array(opacity)
             if scalars.shape[0] == opacity.shape[0]:
@@ -1862,7 +1860,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if stitle is None:
                     stitle = volume.active_scalars_info[1]
             else:
-                raise RuntimeError('No scalars to use for volume rendering.')
+                raise ValueError('No scalars to use for volume rendering.')
         elif isinstance(scalars, str):
             pass
 
@@ -1896,7 +1894,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'smart': vtk.vtkSmartVolumeMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers.keys():
-            raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
+            raise TypeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
         self.mapper = make_mapper(mappers[mapper])
 
         # Scalars interpolation approach
@@ -1944,8 +1942,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if cmap is not None:
             if not has_matplotlib:
-                cmap = None
-                raise RuntimeError('Please install matplotlib for volume rendering.')
+                raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
             if categories:
@@ -2045,7 +2042,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('clim argument must be a length 2 iterable of values: (min, max).')
         if name is None:
             if not hasattr(self, 'mapper'):
-                raise RuntimeError('This plotter does not have an active mapper.')
+                raise AttributeError('This plotter does not have an active mapper.')
             self.mapper.scalar_range = clim
             return
 
@@ -3006,7 +3003,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif shape.lower() in 'rounded_rect':
             labelMapper.SetShapeToRoundedRect()
         else:
-            raise RuntimeError('Shape ({}) not understood'.format(shape))
+            raise ValueError('Shape ({}) not understood'.format(shape))
         if fill_shape:
             labelMapper.SetStyleToFilled()
         else:
@@ -3141,7 +3138,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         extension = pyvista.fileio.get_ext(filename)
         valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
         if extension not in valid:
-            raise RuntimeError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
+            raise ValueError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
         writer = vtk.vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,

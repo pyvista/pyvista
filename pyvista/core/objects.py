@@ -63,8 +63,8 @@ class Table(vtk.vtkTable, DataObject):
 
     def _from_dict(self, array_dict):
         for array in array_dict.values():
-            if not isinstance(array, (np.ndarray)) and array.ndim < 3:
-                raise RuntimeError('Dictionary must contain only NumPy arrays with maximum of 2D.')
+            if not isinstance(array, np.ndarray) and array.ndim < 3:
+                raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
         return
@@ -335,7 +335,7 @@ class Texture(vtk.vtkTexture):
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
         if axis < 0 or axis > 1:
-            raise RuntimeError("Axis {} out of bounds".format(axis))
+            raise ValueError("Axis {} out of bounds".format(axis))
         ax = [1, 0]
         array = self.to_array()
         array = np.flip(array, axis=ax[axis])

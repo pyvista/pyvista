@@ -545,7 +545,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FieldAssociation.NONE:
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
-            raise RuntimeError('Array not found.')
+            raise KeyError('Array with name {} not found.'.format(old_name))
         if was_active:
             self.set_active_scalars(new_name, preference=field)
 
