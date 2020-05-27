@@ -153,10 +153,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         else:
 
-            assert_str = '"shape" should be a list, tuple or string descriptor'
-            assert isinstance(shape, collections.Iterable), assert_str
-            assert shape[0] > 0, '"shape" must be positive'
-            assert shape[1] > 0, '"shape" must be positive'
+            if not isinstance(shape, collections.Iterable):
+                raise TypeError('"shape" should be a list, tuple or string descriptor')
+            if shape[0] <= 0 or shape[1] <= 0:
+                raise ValueError('"shape" must be positive')
             self.shape = shape
             for i in reversed(range(shape[0])):
                 for j in range(shape[1]):
