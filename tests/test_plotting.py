@@ -248,7 +248,7 @@ def test_make_movie():
     try:
         ref
     except:
-        raise Exception('Plotter did not close')
+        raise RuntimeError('Plotter did not close')
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -428,7 +428,7 @@ def test_screenshot(tmpdir):
     try:
         ref
     except:
-        raise Exception('Plotter did not close')
+        raise RuntimeError('Plotter did not close')
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
