@@ -730,7 +730,7 @@ class WidgetHelper:
             ``rcParams['slider_style']``. Defaults to None.
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Slider widget not available in notebook plotting')
+            raise TypeError('Slider widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
 
