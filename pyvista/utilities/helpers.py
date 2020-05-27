@@ -505,7 +505,7 @@ def is_inside_bounds(point, bounds):
     """
     if isinstance(point, (int, float)):
         point = [point]
-    if isinstance(point, collections.abc.Iterable) and not isinstance(point, collections.deque):
+    if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(point, collections.deque):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
             raise AssertionError('Bounds mismatch point dimensionality')
         point = collections.deque(point)

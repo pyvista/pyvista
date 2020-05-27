@@ -130,7 +130,7 @@ class DataSetFilters:
 
         If no bounds are given, a corner of the dataset bounds will be removed.
 
-        Parametersequence
+        Parameters
         ----------
         bounds : tuple(float)
             Length 6 sequence of floats: (xmin, xmax, ymin, ymax, zmin, zmax).
