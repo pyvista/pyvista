@@ -2717,7 +2717,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if filename[-3:] != 'gif':
-            raise Exception('Unsupported filetype.  Must end in .gif')
+            raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
