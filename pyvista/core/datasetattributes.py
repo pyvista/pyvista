@@ -246,9 +246,8 @@ class DataSetAttributes(VTKObjectWrapper):
                 self.active_scalars = name
             if active_vectors or self.active_vectors is None:
                 # verify this is actually vector data
-                if len(shape) == 2:
-                    if shape[1] == 3:
-                        self.active_vectors = name
+                if len(shape) == 2 and shape[1] == 3:
+                    self.active_vectors = name
         except TypeError:
             pass
         self.VTKObject.Modified()
