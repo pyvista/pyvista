@@ -82,7 +82,7 @@ def test_clip_box():
     result = mesh.clip_box(box, invert=True)
     assert result.n_cells
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         dataset.clip_box(bounds=pyvista.Sphere())
 
 
@@ -171,7 +171,7 @@ def test_slice_along_axis():
         for slc in slices:
             assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         dataset.slice_along_axis(axis='u')
 
 
@@ -219,9 +219,9 @@ def test_threshold_percent():
         assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
     result = dataset.threshold_percent(0.75, scalars='Spatial Cell Data')
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         result = dataset.threshold_percent(20000)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         result = dataset.threshold_percent(0.0)
 
 
@@ -303,7 +303,7 @@ def test_contour(uniform, method):
 def test_contour_errors(uniform):
     with pytest.raises(TypeError):
         uniform.contour(scalars='Spatial Cell Data')
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         uniform.contour(isosurfaces=pyvista.PolyData())
     uniform = examples.load_airplane()
     with pytest.raises(ValueError):
@@ -342,7 +342,7 @@ def test_elevation():
     assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         elev = dataset.elevation(scalar_range=0.5)
     with pytest.raises(ValueError):
         elev = dataset.elevation(scalar_range=[1, 2, 3])
@@ -478,7 +478,7 @@ def test_warp_by_vector():
 def test_invalid_warp_scalar(sphere):
     sphere['cellscalars'] = np.random.random(sphere.n_cells)
     sphere.point_arrays.clear()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         sphere.warp_by_scalar()
 
 
@@ -495,7 +495,7 @@ def test_invalid_warp_vector(sphere):
 
     # no vectors
     sphere.point_arrays.clear()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         sphere.warp_by_vector()
 
 
@@ -761,7 +761,7 @@ def test_compute_gradients():
         grad = mesh.compute_gradient(object)
 
     mesh.point_arrays.clear()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         grad = mesh.compute_gradient()
 
 

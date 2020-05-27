@@ -379,7 +379,7 @@ class DataSetFilters:
             try:
                 ax = axes[axis]
             except KeyError:
-                raise TypeError('Axis ({}) not understood'.format(axis))
+                raise ValueError('Axis ({}) not understood'.format(axis))
         # get the locations along that axis
         if bounds is None:
             bounds = dataset.bounds
@@ -1178,7 +1178,7 @@ class DataSetFilters:
             field, vectors = dataset.active_vectors_info
         arr, field = get_array(dataset, vectors, preference='point', info=True)
         if arr is None:
-            raise ValueError('No active vectors')
+            raise TypeError('No active vectors')
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
@@ -2176,7 +2176,7 @@ class DataSetFilters:
         if scalars is None:
             field, scalars = dataset.active_scalars_info
             if scalars is None:
-                raise ValueError('No active scalars.  Must input scalars array name')
+                raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
