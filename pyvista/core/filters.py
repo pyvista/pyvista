@@ -2521,8 +2521,8 @@ class PolyDataFilters(DataSetFilters):
         elif curv_type == 'minimum':
             curvefilter.SetCurvatureTypeToMinimum()
         else:
-            raise Exception('Curv_Type must be either "Mean", '
-                            '"Gaussian", "Maximum", or "Minimum"')
+            raise ValueError('Curv_Type must be either "Mean", '
+                             '"Gaussian", "Maximum", or "Minimum"')
         curvefilter.Update()
 
         # Compute and return curvature
