@@ -185,7 +185,7 @@ def test_plot_add_scalar_bar():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_invalid_add_scalar_bar():
-    with pytest.raises(TypeError):
+    with pytest.raises(AttributeError):
         plotter = pyvista.Plotter()
         plotter.add_scalar_bar()
 
