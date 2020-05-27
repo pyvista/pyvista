@@ -14,8 +14,8 @@ test_path = os.path.dirname(os.path.abspath(__file__))
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 # must be manually set until pytest adds parametrize with fixture feature
-HEXBEAM_CELLS_BOOL = np.ones(40, np.bool)  # matches hexbeam.n_cells == 40
-STRUCTGRID_CELLS_BOOL = np.ones(729, np.bool)  # struct_grid.n_cells == 729
+HEXBEAM_CELLS_BOOL = np.ones(40, np.bool_)  # matches hexbeam.n_cells == 40
+STRUCTGRID_CELLS_BOOL = np.ones(729, np.bool_)  # struct_grid.n_cells == 729
 
 
 def test_volume(hexbeam):
@@ -162,7 +162,7 @@ def test_extract_cells(hexbeam):
     assert part_beam.n_points < hexbeam.n_points
     assert np.allclose(part_beam.cell_arrays['vtkOriginalCellIds'], ind)
 
-    mask = np.zeros(hexbeam.n_cells, np.bool)
+    mask = np.zeros(hexbeam.n_cells, np.bool_)
     mask[ind] = True
     part_beam = hexbeam.extract_cells(mask)
     assert part_beam.n_cells == len(ind)
@@ -520,7 +520,7 @@ def test_remove_cells_not_inplace(ind, hexbeam):
 def test_remove_cells_invalid(hexbeam):
     grid_copy = hexbeam.copy()
     with pytest.raises(ValueError):
-        grid_copy.remove_cells(np.ones(10, np.bool))
+        grid_copy.remove_cells(np.ones(10, np.bool_))
 
 
 @pytest.mark.parametrize('ind', [range(10), np.arange(10),

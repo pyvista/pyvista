@@ -458,7 +458,7 @@ def test_plot_normals(sphere, flip):
 
 def test_remove_points_any():
     sphere = SPHERE.copy()
-    remove_mask = np.zeros(sphere.n_points, np.bool)
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
     sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
     assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
@@ -482,7 +482,7 @@ def test_remove_points_fail(sphere, plane):
 
     # invalid bool mask size
     with pytest.raises(ValueError):
-        sphere.remove_points(np.ones(10, np.bool))
+        sphere.remove_points(np.ones(10, np.bool_))
 
 
 def test_vertice_cells_on_read(tmpdir):

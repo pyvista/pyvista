@@ -3344,12 +3344,12 @@ class PolyDataFilters(DataSetFilters):
         if isinstance(remove, collections.Iterable):
             remove = np.asarray(remove)
 
-        if remove.dtype == np.bool:
+        if remove.dtype == np.bool_:
             if remove.size != poly_data.n_points:
                 raise ValueError('Mask different size than n_points')
             remove_mask = remove
         else:
-            remove_mask = np.zeros(poly_data.n_points, np.bool)
+            remove_mask = np.zeros(poly_data.n_points, np.bool_)
             remove_mask[remove] = True
 
         if not poly_data.is_all_triangles():

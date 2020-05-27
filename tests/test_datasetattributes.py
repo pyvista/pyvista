@@ -32,7 +32,7 @@ def insert_arange_narray(hexbeam_point_attributes):
 @fixture()
 def insert_bool_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
-    sample_array = np.ones(n_points, np.bool)
+    sample_array = np.ones(n_points, np.bool_)
     hexbeam_point_attributes.append(sample_array, 'sample_array')
     return hexbeam_point_attributes, sample_array
 
@@ -83,7 +83,7 @@ def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attrib
 def test_get_array_should_return_bool_array(insert_bool_array):
     dsa, _ = insert_bool_array
     output_array = dsa.get_array('sample_array')
-    assert output_array.dtype == np.bool
+    assert output_array.dtype == np.bool_
 
 
 def test_get_array_bool_array_should_be_identical(insert_bool_array):

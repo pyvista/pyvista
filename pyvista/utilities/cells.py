@@ -13,7 +13,7 @@ def numpy_to_idarr(ind, deep=False, return_ind=False):
     except:
         raise TypeError('Indices must be either a mask, array, list, or iterable')
 
-    if ind.dtype == np.bool:
+    if ind.dtype == np.bool_:
         ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
     elif ind.dtype != pyvista.ID_TYPE:
         ind = ind.astype(pyvista.ID_TYPE)

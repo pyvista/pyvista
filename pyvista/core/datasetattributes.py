@@ -158,7 +158,7 @@ class DataSetAttributes(VTKObjectWrapper):
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
-            narray = narray.view(np.bool)
+            narray = narray.view(np.bool_)
         return narray
 
     def append(self, narray, name, deep_copy=False, active_vectors=True, active_scalars=True):
@@ -205,7 +205,7 @@ class DataSetAttributes(VTKObjectWrapper):
             raise ValueError('narray length of ({}) != required length ({})'.format(
                 narray.shape[0], array_len))
 
-        if narray.dtype == np.bool:
+        if narray.dtype == np.bool_:
             self.dataset.association_bitarray_names[self.association].add(name)
             narray = narray.view(np.uint8)
 
