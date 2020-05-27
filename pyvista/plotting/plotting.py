@@ -1467,7 +1467,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     scalars = scalars.ravel()
 
             if scalars.dtype == np.bool_:
-                scalars = scalars.astype(np.float)
+                scalars = scalars.astype(np.float_)
 
             def prepare_mapper(scalars):
                 # Scalars interpolation approach
@@ -1886,7 +1886,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars = scalars.ravel()
 
         if scalars.dtype == np.bool_ or scalars.dtype == np.uint8:
-            scalars = scalars.astype(np.float)
+            scalars = scalars.astype(np.float_)
 
         # Define mapper, volume, and add the correct properties
         mappers = {
@@ -1917,7 +1917,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         ###############
 
-        scalars = scalars.astype(np.float)
+        scalars = scalars.astype(np.float_)
         with np.errstate(invalid='ignore'):
             idxs0 = scalars < clim[0]
             idxs1 = scalars > clim[1]
