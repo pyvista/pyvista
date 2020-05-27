@@ -2833,7 +2833,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not isinstance(lines, np.ndarray):
-            raise Exception('Input should be an array of point segments')
+            raise TypeError('Input should be an array of point segments')
 
         lines = pyvista.lines_from_points(lines)
 
