@@ -70,7 +70,7 @@ def test_clip_box():
     dataset = examples.load_uniform()
     result = dataset.clip_box(bounds=0.5)
     assert result.n_cells
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         dataset.clip_box(bounds=(5, 6,))
     # Test with a poly data box
     mesh = examples.load_airplane()
@@ -199,13 +199,13 @@ def test_threshold():
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
     # Now test DATASETS without arrays
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         for i, dataset in enumerate(DATASETS[3:-1]):
             thresh = dataset.threshold()
             assert thresh is not None
             assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300])
 
 
@@ -301,12 +301,12 @@ def test_contour(uniform, method):
 
 
 def test_contour_errors(uniform):
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         uniform.contour(scalars='Spatial Cell Data')
     with pytest.raises(RuntimeError):
         uniform.contour(isosurfaces=pyvista.PolyData())
     uniform = examples.load_airplane()
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         uniform.contour()
     with pytest.raises(ValueError):
         uniform.contour(method='invalid method')
@@ -665,7 +665,7 @@ def test_slice_along_line():
     b = [model.bounds[1], model.bounds[2], model.bounds[5]]
     line2 = pyvista.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         slc = model.slice_along_line(line)
 
     with pytest.raises(TypeError):
