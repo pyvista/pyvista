@@ -2412,8 +2412,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if self.shape != (1, 1):
                 interactive = False
         elif interactive and self.shape != (1, 1):
-            err_str = 'Interactive scalar bars disabled for multi-renderer plots'
-            raise Exception(err_str)
+            raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
 
         if interactive and hasattr(self, 'iren'):
             self.scalar_widget = vtk.vtkScalarBarWidget()
