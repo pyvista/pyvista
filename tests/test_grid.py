@@ -152,12 +152,14 @@ def test_extract_cells(hexbeam):
     part_beam = hexbeam.extract_cells(ind)
     assert part_beam.n_cells == len(ind)
     assert part_beam.n_points < hexbeam.n_points
+    assert np.allclose(part_beam.cell_arrays['vtkOriginalCellIds'], ind)
 
     mask = np.zeros(hexbeam.n_cells, np.bool)
-    mask[:3] = True
+    mask[ind] = True
     part_beam = hexbeam.extract_cells(mask)
     assert part_beam.n_cells == len(ind)
     assert part_beam.n_points < hexbeam.n_points
+    assert np.allclose(part_beam.cell_arrays['vtkOriginalCellIds'], ind)
 
     ind = np.vstack(([1, 2], [4, 5]))[:, 0]
     part_beam = hexbeam.extract_cells(ind)
