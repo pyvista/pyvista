@@ -28,12 +28,13 @@ from functools import wraps
 
 import numpy as np
 import vtk
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
+from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
                                wrap, ProgressMonitor, abstract_class)
+from pyvista.utilities.cells import numpy_to_idarr
 from pyvista.core.errors import NotAllTrianglesError
 
 
@@ -1815,25 +1816,11 @@ class DataSetFilters:
             Subselected grid
 
         """
-        if not isinstance(ind, np.ndarray):
-            ind = np.array(ind, np.ndarray)
-
-        if ind.dtype == np.bool:
-            ind = ind.nonzero()[0].astype(pyvista.ID_TYPE)
-
-        if ind.dtype != pyvista.ID_TYPE:
-            ind = ind.astype(pyvista.ID_TYPE)
-
-        if not ind.flags.c_contiguous:
-            ind = np.ascontiguousarray(ind)
-
-        vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=False)
-
         # Create selection objects
         selectionNode = vtk.vtkSelectionNode()
         selectionNode.SetFieldType(vtk.vtkSelectionNode.CELL)
         selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(vtk_ind)
+        selectionNode.SetSelectionList(numpy_to_idarr(ind))
 
         selection = vtk.vtkSelection()
         selection.AddNode(selectionNode)
@@ -1866,25 +1853,11 @@ class DataSetFilters:
             Subselected grid.
 
         """
-        if not isinstance(ind, collections.Iterable):
-            raise TypeError('`ind` must be either a mask, array, list, or iterable')
-
-        ind = np.asarray(ind)
-        if ind.dtype == np.bool:
-            ind = ind.nonzero()[0]
-        elif not np.issubdtype(ind.dtype, np.number):
-            raise ValueError('`ind` be a numeric array or bool')
-
-        # Convert to vtk indices
-        if ind.dtype != pyvista.ID_TYPE:
-            ind = ind.astype(pyvista.ID_TYPE)
-        vtk_ind = numpy_to_vtkIdTypeArray(ind, deep=False)
-
         # Create selection objects
         selectionNode = vtk.vtkSelectionNode()
         selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
         selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
-        selectionNode.SetSelectionList(vtk_ind)
+        selectionNode.SetSelectionList(numpy_to_idarr(ind))
         selectionNode.GetProperties().Set(vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
 
         selection = vtk.vtkSelection()

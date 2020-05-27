@@ -386,14 +386,10 @@ def vector_poly_data(orig, vec):
     vpts.SetData(nps.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
-    cells = np.hstack((np.ones((npts, 1), 'int'),
-                       np.arange(npts).reshape((-1, 1))))
-
-    if cells.dtype != ctypes.c_int64 or cells.flags.c_contiguous:
-        cells = np.ascontiguousarray(cells, ctypes.c_int64)
-    cells = np.reshape(cells, (2*npts))
-    vcells = vtk.vtkCellArray()
-    vcells.SetCells(npts, nps.numpy_to_vtkIdTypeArray(cells, deep=True))
+    cells = np.empty((npts, 2), dtype=pyvista.ID_TYPE)
+    cells[:, 0] = 1
+    cells[:, 1] = np.arange(npts, dtype=pyvista.ID_TYPE)
+    vcells = pyvista.utilities.cells.CellArray(cells, npts)
 
     # Create vtkPolyData object
     pdata = vtk.vtkPolyData()
