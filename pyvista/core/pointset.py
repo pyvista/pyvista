@@ -14,6 +14,7 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
 from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
+from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
@@ -397,14 +398,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return alg.GetOutput().GetNumberOfCells()
 
 
+@abstract_class
 class PointGrid(PointSet):
     """Class in common with structured and unstructured grids."""
-
-    def __new__(cls, *args, **kwargs):
-        """Allocate memory for the point grid."""
-        if cls is PointGrid:
-            raise TypeError("pyvista.PointGrid is an abstract class and may not be instantiated.")
-        return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         """Initialize the point grid."""

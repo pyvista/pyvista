@@ -710,3 +710,19 @@ class ProgressMonitor():
         self.algorithm.RemoveObservers(self.event_type)
         if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)
+
+
+def abstract_class(cls_):
+    """Decorate a class, overriding __new__.
+
+    Preventing a class from being instantiated similar to abc.ABCMeta
+      but does not require an abstract method.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        if cls is cls_:
+            raise TypeError('{} is an abstract class and may not be instantiated.'
+                            .format(cls.__name__))
+        return object.__new__(cls)
+    cls_.__new__ = __new__
+    return cls_
