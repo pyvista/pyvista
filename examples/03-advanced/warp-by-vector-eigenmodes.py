@@ -45,7 +45,8 @@ def make_cijkl_E_nu(E=200, nu=0.3):
     cij[(0, 0, 1, 1, 2, 2), (1, 2, 0, 2, 0, 1)] = lambd
     cij[(3, 4, 5), (3, 4, 5)] = mu
     # check symmetry
-    assert np.allclose(cij, cij.T)
+    if not np.allclose(cij, cij.T):
+        raise ValueError
     # convert to order 4 tensor
     coord_mapping = {(1, 1): 1,
                      (2, 2): 2,
@@ -93,13 +94,15 @@ def assemble_mass_and_stiffness(N, F, geom_params, cijkl):
         for q in range(N - p + 1):
             for r in range(N - p - q + 1):
                 triplets.append((p, q, r))
-    assert len(triplets) == (N + 1) * (N + 2) * (N + 3) // 6
+    if len(triplets) != (N + 1) * (N + 2) * (N + 3) // 6:
+        raise ValueError
 
     quadruplets = []
     for i in range(3):
         for triplet in triplets:
             quadruplets.append((i, *triplet))
-    assert len(quadruplets) == 3 * (N + 1) * (N + 2) * (N + 3) // 6
+    if len(quadruplets) != 3 * (N + 1) * (N + 2) * (N + 3) // 6:
+        raise ValueError
 
     # assembling the mass and stiffness matrix in a single loop
     R = len(triplets)

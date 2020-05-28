@@ -25,7 +25,7 @@ except Exception as e:  # pragma: no cover
 
 # determine if using vtk > 5
 if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
-    raise AssertionError('VTK version must be 5.0 or greater.')
+    raise RuntimeError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)

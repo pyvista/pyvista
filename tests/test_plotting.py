@@ -327,7 +327,7 @@ def test_key_press_event():
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     if VTK9:
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError):
             plotter.left_button_down(None, None)
     else:
         plotter.left_button_down(None, None)
@@ -802,7 +802,7 @@ def test_opacity_by_array():
                use_transparency=True)
     p.show()
     # Test using mismatched arrays
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         p = pyvista.Plotter(off_screen=OFF_SCREEN)
         p.add_mesh(mesh, scalars='Spatial Cell Data', opacity='unc',)
         p.show()

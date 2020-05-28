@@ -200,11 +200,11 @@ def parse_field_choice(field):
         elif field in ['row', 'r',]:
             field = FieldAssociation.ROW
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(field))
+            raise ValueError('Data field ({}) not supported.'.format(field))
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise RuntimeError('Data field ({}) not supported.'.format(field))
+        raise ValueError('Data field ({}) not supported.'.format(field))
     return field
 
 
@@ -258,7 +258,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
             else:
                 return farr
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(preference))
+            raise ValueError('Data field ({}) not supported.'.format(preference))
     arr = None
     field = None
     if parr is not None:
@@ -317,8 +317,8 @@ def line_segments_from_points(points):
     >>> lines.plot() # doctest:+SKIP
 
     """
-    if len(points) % 2:
-        raise RuntimeError("An even number of points must be given to define each segment.")
+    if len(points) % 2 != 0:
+        raise ValueError("An even number of points must be given to define each segment.")
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -503,7 +503,7 @@ def is_inside_bounds(point, bounds):
         point = [point]
     if isinstance(point, collections.Iterable) and not isinstance(point, collections.deque):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise AssertionError('Bounds mismatch point dimensionality')
+            raise ValueError('Bounds mismatch point dimensionality')
         point = collections.deque(point)
         bounds = collections.deque(bounds)
         return is_inside_bounds(point, bounds)

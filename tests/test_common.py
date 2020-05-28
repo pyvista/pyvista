@@ -462,13 +462,13 @@ def test_set_t_coords(grid):
     with pytest.raises(TypeError):
         grid.t_coords = [1, 2, 3]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty(10)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((3, 3))
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((grid.n_points, 1))
 
 
@@ -530,7 +530,7 @@ def test_rename_array_field(grid):
 
 
 def test_change_name_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         grid.rename_array('not a key', '')
 
 
