@@ -606,8 +606,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     @property
     def cells(self):
-        """Return a pointer to the cells as a numpy object."""
+        """Legacy method: Return a pointer to the cells as a numpy object."""
         return vtk_to_numpy(self.GetCells().GetData())
+
+    @property
+    def cell_connectivity(self):
+        """Return a the vtk cell connectivity as a numpy array."""
+        carr = self.GetCells()
+        if hasattr(carr, 'GetConnectivityArray'):  # available >= VTK9
+            return vtk_to_numpy(carr.GetConnectivityArray())
+        return None
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
@@ -678,8 +686,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     @property
     def offset(self):
-        """Get Cell Locations Array."""
-        return vtk_to_numpy(self.GetCellLocationsArray())
+        """Get cell locations Array."""
+        carr = self.GetCells()
+        if hasattr(carr, 'GetOffsetsArray'):  # available >= VTK9
+            # This will be the number of cells + 1.
+            return vtk_to_numpy(carr.GetOffsetsArray())[:-1]
+        else:  # this is no longer used in >= VTK9
+            return vtk_to_numpy(self.GetCellLocationsArray())
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
