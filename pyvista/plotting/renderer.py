@@ -175,9 +175,9 @@ class Renderer(vtkRenderer):
                                                   invert=False))
             self.camera.SetViewUp(camera_location[2])
 
-            # reset clipping range
-            self.ResetCameraClippingRange()
-            self.camera_set = True
+        # reset clipping range
+        self.ResetCameraClippingRange()
+        self.camera_set = True
         self.Modified()
 
     @property
