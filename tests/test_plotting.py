@@ -327,7 +327,7 @@ def test_key_press_event():
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     if VTK9:
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError):
             plotter.left_button_down(None, None)
     else:
         plotter.left_button_down(None, None)
