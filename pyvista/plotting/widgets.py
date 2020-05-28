@@ -5,11 +5,10 @@ import vtk
 
 import pyvista
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
-
 from .theme import rcParams, parse_color
 
 
-class WidgetHelper(object):
+class WidgetHelper:
     """An internal class to manage widgets.
 
     It also manages and other helper methods involving widgets.
@@ -60,7 +59,7 @@ class WidgetHelper(object):
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Box widget not available in notebook plotting')
+            raise TypeError('Box widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "box_widgets"):
@@ -102,7 +101,6 @@ class WidgetHelper(object):
         self.box_widgets.append(box_widget)
         return box_widget
 
-
     def clear_box_widgets(self):
         """Disable all of the box widgets."""
         if hasattr(self, 'box_widgets'):
@@ -110,7 +108,6 @@ class WidgetHelper(object):
                 widget.Off()
             del self.box_widgets
         return
-
 
     def add_mesh_clip_box(self, mesh, invert=False, rotation_enabled=True,
                           widget_color=None, outline_translation=True,
@@ -244,7 +241,7 @@ class WidgetHelper(object):
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Plane widget not available in notebook plotting')
+            raise TypeError('Plane widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "plane_widgets"):
@@ -345,7 +342,6 @@ class WidgetHelper(object):
         self.plane_widgets.append(plane_widget)
         return plane_widget
 
-
     def clear_plane_widgets(self):
         """Disable all of the plane widgets."""
         if hasattr(self, 'plane_widgets'):
@@ -353,7 +349,6 @@ class WidgetHelper(object):
                 widget.Off()
             del self.plane_widgets
         return
-
 
     def add_mesh_clip_plane(self, mesh, normal='x', invert=False,
                             widget_color=None, value=0.0, assign_to_axis=None,
@@ -424,8 +419,6 @@ class WidgetHelper(object):
 
         return actor
 
-
-
     def add_mesh_slice(self, mesh, normal='x', generate_triangles=False,
                        widget_color=None, assign_to_axis=None,
                        tubing=False, origin_translation=True,
@@ -491,7 +484,6 @@ class WidgetHelper(object):
 
         return actor
 
-
     def add_mesh_slice_orthogonal(self, mesh, generate_triangles=False,
                                   widget_color=None, tubing=False, **kwargs):
         """Slice a mesh with three interactive planes.
@@ -511,8 +503,6 @@ class WidgetHelper(object):
             actors.append(a)
 
         return actors
-
-
 
     def add_line_widget(self, callback, bounds=None, factor=1.25,
                         resolution=100, color=None, use_vertices=False,
@@ -553,7 +543,7 @@ class WidgetHelper(object):
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Line widget not available in notebook plotting')
+            raise TypeError('Line widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "line_widgets"):
@@ -594,7 +584,6 @@ class WidgetHelper(object):
         self.line_widgets.append(line_widget)
         return line_widget
 
-
     def clear_line_widgets(self):
         """Disable all of the line widgets."""
         if hasattr(self, 'line_widgets'):
@@ -602,7 +591,6 @@ class WidgetHelper(object):
                 widget.Off()
             del self.line_widgets
         return
-
 
     def add_text_slider_widget(self, callback, data, value=None,
                               pointa=(.4, .9), pointb=(.9, .9),
@@ -693,7 +681,6 @@ class WidgetHelper(object):
         title_callback(slider_widget, None)
         return slider_widget
 
-
     def add_slider_widget(self, callback, rng, value=None, title=None,
                           pointa=(.4, .9), pointb=(.9, .9),
                           color=None, pass_widget=False,
@@ -743,7 +730,7 @@ class WidgetHelper(object):
             ``rcParams['slider_style']``. Defaults to None.
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Slider widget not available in notebook plotting')
+            raise TypeError('Slider widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
 
@@ -758,11 +745,11 @@ class WidgetHelper(object):
         if color is None:
             color = rcParams['font']['color']
 
-        def normalize(point, shape):
-            return (point[0] / shape[1], point[1] / shape[0])
+        def normalize(point, viewport):
+            return (point[0]*(viewport[2]-viewport[0]),point[1]*(viewport[3]-viewport[1]))
 
-        pointa = normalize(pointa, self.shape)
-        pointb = normalize(pointb, self.shape)
+        pointa = normalize(pointa, self.renderer.GetViewport())
+        pointb = normalize(pointb, self.renderer.GetViewport())
 
         slider_rep = vtk.vtkSliderRepresentation2D()
         slider_rep.SetPickable(False)
@@ -832,7 +819,6 @@ class WidgetHelper(object):
         self.slider_widgets.append(slider_widget)
         return slider_widget
 
-
     def clear_slider_widgets(self):
         """Disable all of the slider widgets."""
         if hasattr(self, 'slider_widgets'):
@@ -840,7 +826,6 @@ class WidgetHelper(object):
                 widget.Off()
             del self.slider_widgets
         return
-
 
     def add_mesh_threshold(self, mesh, scalars=None, invert=False,
                            widget_color=None, preference='cell',
@@ -877,7 +862,7 @@ class WidgetHelper(object):
             field, scalars = mesh.active_scalars_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
         if arr is None:
-            raise AssertionError('No arrays present to threshold.')
+            raise ValueError('No arrays present to threshold.')
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
@@ -896,7 +881,6 @@ class WidgetHelper(object):
         threshold_mesh = pyvista.wrap(alg.GetOutput())
         self.threshold_meshes.append(threshold_mesh)
 
-
         def callback(value):
             if invert:
                 alg.ThresholdByLower(value)
@@ -904,7 +888,6 @@ class WidgetHelper(object):
                 alg.ThresholdByUpper(value)
             alg.Update()
             threshold_mesh.shallow_copy(alg.GetOutput())
-
 
         self.add_slider_widget(callback=callback, rng=rng, title=title,
                                color=widget_color, pointa=pointa,
@@ -914,7 +897,6 @@ class WidgetHelper(object):
         actor = self.add_mesh(threshold_mesh, scalars=scalars, **kwargs)
 
         return actor
-
 
     def add_mesh_isovalue(self, mesh, scalars=None, compute_normals=False,
                           compute_gradients=False, compute_scalars=True,
@@ -946,14 +928,14 @@ class WidgetHelper(object):
         name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
         if mesh.n_arrays < 1:
-            raise AssertionError('Input dataset for the contour filter must have data arrays.')
+            raise ValueError('Input dataset for the contour filter must have data arrays.')
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         else:
             _, field = get_array(mesh, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
-            raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
+            raise TypeError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
 
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -989,7 +971,6 @@ class WidgetHelper(object):
         actor = self.add_mesh(isovalue_mesh, scalars=scalars, **kwargs)
 
         return actor
-
 
     def add_spline_widget(self, callback, bounds=None, factor=1.25,
                           n_hanldes=5, resolution=25, color="yellow",
@@ -1038,7 +1019,7 @@ class WidgetHelper(object):
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Spline widget not available in notebook plotting')
+            raise TypeError('Spline widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
 
@@ -1083,14 +1064,12 @@ class WidgetHelper(object):
         self.spline_widgets.append(spline_widget)
         return spline_widget
 
-
     def clear_spline_widgets(self):
         """Disable all of the spline widgets."""
         if hasattr(self, 'spline_widgets'):
             for widget in self.spline_widgets:
                 widget.Off()
             del self.spline_widgets
-
 
     def add_mesh_slice_spline(self, mesh, generate_triangles=False,
                               n_hanldes=5, resolution=25,
@@ -1156,7 +1135,6 @@ class WidgetHelper(object):
 
         return actor
 
-
     def add_sphere_widget(self, callback, center=(0, 0, 0), radius=0.5,
                           theta_resolution=30, phi_resolution=30,
                           color=None, style="surface",
@@ -1207,7 +1185,7 @@ class WidgetHelper(object):
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Sphere widget not available in notebook plotting')
+            raise TypeError('Sphere widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
 
@@ -1275,7 +1253,6 @@ class WidgetHelper(object):
 
         return sphere_widget
 
-
     def clear_sphere_widgets(self):
         """Disable all of the sphere widgets."""
         if hasattr(self, 'sphere_widgets'):
@@ -1283,7 +1260,6 @@ class WidgetHelper(object):
                 widget.Off()
             del self.sphere_widgets
         return
-
 
     def add_checkbox_button_widget(self, callback, value=False,
                                    position=(10., 10.), size=50, border_size=5,
@@ -1386,7 +1362,6 @@ class WidgetHelper(object):
                 widget.Off()
             del self.button_widgets
         return
-
 
     def close(self):
         """Close the widgets."""

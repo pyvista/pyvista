@@ -9,7 +9,7 @@ lithological layers in a subsurface geological model and you want to know the
 average thickness of a unit between those boundaries.
 
 We can compute the thickness between the two surfaces using a few different
-methods. First, wee will demo a method where we compute the normals of the
+methods. First, we will demo a method where we compute the normals of the
 bottom surface, and then project a ray to the top surface to compute the
 distance along the surface normals. Second, we will use a KDTree to compute
 the distance from eevery point in the bottom mesh to it's closest point in

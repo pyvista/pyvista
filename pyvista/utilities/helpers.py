@@ -1,12 +1,13 @@
 """Supporting functions for polydata and grid objects."""
 
-import signal
 import collections
 import ctypes
 import enum
 import logging
+import signal
 import warnings
 from threading import Thread
+import threading
 
 import numpy as np
 import scooby
@@ -73,12 +74,10 @@ def convert_string_array(arr, name=None):
             vtkarr.SetName(name)
         return vtkarr
     # Otherwise it is a vtk array and needs to be converted back to numpy
-    carr = np.empty(arr.GetNumberOfValues(), dtype='O')
     ############### OPTIMIZE ###############
-    for i in range(arr.GetNumberOfValues()):
-        carr[i] = arr.GetValue(i)
-    ########################################
-    return carr.astype('|S')
+    nvalues = arr.GetNumberOfValues()
+    return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
+    ########################################    
 
 
 def convert_array(arr, name=None, deep=0, array_type=None):
@@ -108,15 +107,14 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         if arr.dtype is np.dtype('O'):
             arr = arr.astype('|S')
         arr = np.ascontiguousarray(arr)
-        try:
+        if arr.dtype.type in (np.str_, np.bytes_):
+            # This handles strings
+            vtk_data = convert_string_array(arr)
+        else:
             # This will handle numerical data
             arr = np.ascontiguousarray(arr)
             vtk_data = nps.numpy_to_vtk(num_array=arr, deep=deep, array_type=array_type)
-        except ValueError:
-            # This handles strings
-            typ = get_vtk_type(arr.dtype)
-            if typ == 13:
-                vtk_data = convert_string_array(arr)
+
         if isinstance(name, str):
             vtk_data.SetName(name)
         return vtk_data
@@ -133,7 +131,6 @@ def convert_array(arr, name=None, deep=0, array_type=None):
     return nps.vtk_to_numpy(arr)
 
 
-
 def is_pyvista_dataset(obj):
     """Return True if the Object is a PyVista wrapped dataset."""
     return isinstance(obj, (pyvista.Common, pyvista.MultiBlock))
@@ -144,6 +141,7 @@ def point_array(mesh, name):
     vtkarr = mesh.GetPointData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
+
 def point_scalar(mesh, name):
     """Return point array of a vtk object.
 
@@ -152,10 +150,12 @@ def point_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `point_array` instead.")
     return point_array(mesh, name)
 
+
 def field_array(mesh, name):
     """Return field array of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def field_scalar(mesh, name):
     """Return field array of a vtk object.
@@ -165,10 +165,12 @@ def field_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `field_array` instead.")
     return field_array(mesh, name)
 
+
 def cell_array(mesh, name):
     """Return cell array of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def cell_scalar(mesh, name):
     """Return cell array of a vtk object.
@@ -178,10 +180,12 @@ def cell_scalar(mesh, name):
     warnings.warn("DEPRECATED: please use `cell_array` instead.")
     return cell_array(mesh, name)
 
+
 def row_array(data_object, name):
     """Return row array of a vtk object."""
     vtkarr = data_object.GetRowData().GetAbstractArray(name)
     return convert_array(vtkarr)
+
 
 def parse_field_choice(field):
     """Return the id of the given field."""
@@ -196,11 +200,11 @@ def parse_field_choice(field):
         elif field in ['row', 'r',]:
             field = FieldAssociation.ROW
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(field))
+            raise ValueError('Data field ({}) not supported.'.format(field))
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise RuntimeError('Data field ({}) not supported.'.format(field))
+        raise ValueError('Data field ({}) not supported.'.format(field))
     return field
 
 
@@ -254,7 +258,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
             else:
                 return farr
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(preference))
+            raise ValueError('Data field ({}) not supported.'.format(preference))
     arr = None
     field = None
     if parr is not None:
@@ -313,8 +317,8 @@ def line_segments_from_points(points):
     >>> lines.plot() # doctest:+SKIP
 
     """
-    if len(points) % 2:
-        raise RuntimeError("An even number of points must be given to define each segment.")
+    if len(points) % 2 != 0:
+        raise ValueError("An even number of points must be given to define each segment.")
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -370,26 +374,22 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise Exception('orig array must be 3D')
+        raise ValueError('orig array must be 3D')
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise Exception('vec array must be 3D')
+        raise ValueError('vec array must be 3D')
 
     # Create vtk points and cells objects
     vpts = vtk.vtkPoints()
     vpts.SetData(nps.numpy_to_vtk(np.ascontiguousarray(orig), deep=True))
 
     npts = orig.shape[0]
-    cells = np.hstack((np.ones((npts, 1), 'int'),
-                       np.arange(npts).reshape((-1, 1))))
-
-    if cells.dtype != ctypes.c_int64 or cells.flags.c_contiguous:
-        cells = np.ascontiguousarray(cells, ctypes.c_int64)
-    cells = np.reshape(cells, (2*npts))
-    vcells = vtk.vtkCellArray()
-    vcells.SetCells(npts, nps.numpy_to_vtkIdTypeArray(cells, deep=True))
+    cells = np.empty((npts, 2), dtype=pyvista.ID_TYPE)
+    cells[:, 0] = 1
+    cells[:, 1] = np.arange(npts, dtype=pyvista.ID_TYPE)
+    vcells = pyvista.utilities.cells.CellArray(cells, npts)
 
     # Create vtkPolyData object
     pdata = vtk.vtkPolyData()
@@ -503,7 +503,7 @@ def is_inside_bounds(point, bounds):
         point = [point]
     if isinstance(point, collections.Iterable) and not isinstance(point, collections.deque):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise AssertionError('Bounds mismatch point dimensionality')
+            raise ValueError('Bounds mismatch point dimensionality')
         point = collections.deque(point)
         bounds = collections.deque(bounds)
         return is_inside_bounds(point, bounds)
@@ -543,14 +543,14 @@ def fit_plane_to_points(points, return_meta=False):
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
     if isinstance(mesh, vtk.vtkTable):
-        raise Exception('Number of scalars ({})'.format(scalars.size) +
-                        'must match number of rows ' +
-                        '({}).'.format(mesh.n_rows) )
-    raise Exception('Number of scalars ({}) '.format(scalars.size) +
-                    'must match either the number of points ' +
-                    '({}) '.format(mesh.n_points) +
-                    'or the number of cells ' +
-                    '({}). '.format(mesh.n_cells) )
+        raise ValueError('Number of scalars ({})'.format(scalars.size) +
+                         'must match number of rows ' +
+                         '({}).'.format(mesh.n_rows) )
+    raise ValueError('Number of scalars ({}) '.format(scalars.size) +
+                     'must match either the number of points ' +
+                     '({}) '.format(mesh.n_points) +
+                     'or the number of cells ' +
+                     '({}). '.format(mesh.n_cells) )
 
 
 def generate_plane(normal, origin):
@@ -620,14 +620,16 @@ def check_depth_peeling(number_of_peels=100, occlusion_ratio=0.0):
 
 def threaded(fn):
     """Call a function using a thread."""
+
     def wrapper(*args, **kwargs):
         thread = Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
+
     return wrapper
 
 
-class conditional_decorator(object):
+class conditional_decorator:
     """Conditional decorator for methods."""
 
     def __init__(self, dec, condition):
@@ -691,7 +693,9 @@ class ProgressMonitor():
         """Enter event for ``with`` context."""
         from tqdm import tqdm
 
-        self._old_handler = signal.signal(signal.SIGINT, self.handler)
+        # check if in main thread
+        if threading.current_thread().__class__.__name__ == '_MainThread':
+            self._old_handler = signal.signal(signal.SIGINT, self.handler)
         self._progress_bar = tqdm(total=1, leave=True,
                                   bar_format='{l_bar}{bar}[{elapsed}<{remaining}]')
         self._progress_bar.set_description(self.message)
@@ -704,4 +708,21 @@ class ProgressMonitor():
         self._progress_bar.refresh()
         self._progress_bar.close()
         self.algorithm.RemoveObservers(self.event_type)
-        signal.signal(signal.SIGINT, self._old_handler)
+        if threading.current_thread().__class__.__name__ == '_MainThread':
+            signal.signal(signal.SIGINT, self._old_handler)
+
+
+def abstract_class(cls_):
+    """Decorate a class, overriding __new__.
+
+    Preventing a class from being instantiated similar to abc.ABCMeta
+      but does not require an abstract method.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        if cls is cls_:
+            raise TypeError('{} is an abstract class and may not be instantiated.'
+                            .format(cls.__name__))
+        return object.__new__(cls)
+    cls_.__new__ = __new__
+    return cls_

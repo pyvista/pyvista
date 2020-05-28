@@ -10,7 +10,10 @@ case $PYTHON_VERSION in
   FULL_VERSION=3.6.8
   ;;
 3.7)
-  FULL_VERSION=3.7.3
+  FULL_VERSION=3.7.7
+  ;;
+3.8)
+  FULL_VERSION=3.8.3
   ;;
 esac
 
@@ -31,7 +34,5 @@ sudo ln -s /usr/local/bin/python$PYTHON_VERSION /usr/local/bin/python
 which python
 python --version
 python -m ensurepip
-python -m pip install setuptools twine wheel numpy
-
-# install openmp
-# brew install libomp
+python -m pip install --upgrade pip
+python -m pip install setuptools twine wheel

@@ -10,7 +10,6 @@ NO_PLOTTING = not system_supports_plotting()
 # Widgets cannot be used off screen - they must have an interactive renderer
 OFF_SCREEN = False
 
-
 mesh = examples.load_uniform()
 
 

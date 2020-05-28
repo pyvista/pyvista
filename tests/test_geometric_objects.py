@@ -9,16 +9,23 @@ def test_cylinder():
     assert np.any(surf.points)
     assert np.any(surf.faces)
 
+
 def test_cylinder_structured():
     cyl = pyvista.CylinderStructured()
     assert np.any(cyl.points)
     assert np.any(cyl.n_cells)
 
 
-def test_arrow():
-    surf = pyvista.Arrow([0, 0, 0], [1, 1, 1])
+@pytest.mark.parametrize('scale', [None, 2.0, 4, 'auto'])
+def test_arrow(scale):
+    surf = pyvista.Arrow([0, 0, 0], [1, 1, 1], scale=scale)
     assert np.any(surf.points)
     assert np.any(surf.faces)
+
+
+def test_arrow_raises_error():
+    with pytest.raises(TypeError):
+        surf = pyvista.Arrow([0, 0, 0], [1, 1, 1], scale='badarg')
 
 
 def test_sphere():

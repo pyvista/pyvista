@@ -1,14 +1,12 @@
 """This module contains some convenience helper functions."""
 
 import numpy as np
-
+import scooby
 
 import pyvista
-
-from .theme import rcParams
 from pyvista.utilities import is_pyvista_dataset
 from .plotting import Plotter
-import scooby
+from .theme import rcParams
 
 
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
@@ -171,6 +169,7 @@ def plot_arrows(cent, direction, **kwargs):
 
     """
     return plot([cent, direction], **kwargs)
+
 
 def plot_compare_four(data_a, data_b, data_c, data_d, disply_kwargs=None,
                       plotter_kwargs=None, show_kwargs=None, screenshot=None,

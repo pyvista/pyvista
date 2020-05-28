@@ -1,9 +1,10 @@
 """Contains the BackgroundRenderer class."""
-import vtk
 import numpy as np
+import vtk
 
-from .renderer import Renderer
 import pyvista
+from .renderer import Renderer
+
 
 class BackgroundRenderer(Renderer):
     """BackgroundRenderer for visualizing a background image."""
@@ -14,7 +15,7 @@ class BackgroundRenderer(Renderer):
         # the image path is invalid
         image_data = pyvista.read(image_path)
 
-        super(BackgroundRenderer, self).__init__(parent, border=False)
+        super().__init__(parent, border=False)
         self.SetLayer(0)
         self.InteractiveOff()
         self.SetBackground(self.parent.renderer.GetBackground())

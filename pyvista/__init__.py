@@ -1,17 +1,11 @@
 """PyVista package for 3D plotting and mesh analysis."""
 import appdirs
-import os
-import warnings
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
-
-import numpy as np
-import scooby
-import vtk
 
 # get the int type from vtk
 VTK_ID_TYPE_SIZE = vtk.vtkIdTypeArray().GetDataTypeSize()
@@ -21,17 +15,17 @@ if VTK_ID_TYPE_SIZE == 4:
 elif VTK_ID_TYPE_SIZE == 8:
     ID_TYPE = np.int64
 
-
+# for additional error output for VTK segfaults
 try:
     import faulthandler
     faulthandler.enable()
-except (ImportError, RuntimeError):
-    pass
+except Exception as e:  # pragma: no cover
+    warnings.warn('Unable to enable faulthandler:\n%s' % str(e))
 
 
 # determine if using vtk > 5
 if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
-    raise AssertionError('VTK version must be 5.0 or greater.')
+    raise RuntimeError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -43,6 +37,12 @@ try:
         OFF_SCREEN = True
 except KeyError:
     pass
+
+# flag for when building the sphinx_gallery
+BUILDING_GALLERY = False
+if 'PYVISTA_BUILDING_GALLERY' in os.environ:
+    if os.environ['PYVISTA_BUILDING_GALLERY'].lower() == 'true':
+        BUILDING_GALLERY = True
 
 # Grab system flag for anti-aliasing
 try:

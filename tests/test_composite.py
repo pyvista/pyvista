@@ -3,8 +3,8 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import examples as ex
 from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
+from pyvista import examples as ex
 
 
 @pytest.fixture()
@@ -190,7 +190,7 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
+@pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
@@ -209,15 +209,15 @@ def test_multi_io_erros(tmpdir):
     multi = MultiBlock()
     # Check saving with bad extension
     bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         multi.save(bad_ext_name)
     arr = np.random.rand(10, 10)
     np.save(bad_ext_name, arr)
     # Load non existing file
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(IOError):
+    with pytest.raises(ValueError):
         _ = MultiBlock(bad_ext_name)
 
 
@@ -322,3 +322,30 @@ def test_multi_block_volume(ant, airplane, sphere, uniform):
 def test_multi_block_length(ant, sphere, uniform, airplane):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
     assert multi.length
+
+
+def test_multi_block_save_lines(tmpdir):
+    radius = 1
+    xr = np.random.random(10)
+    yr = np.random.random(10)
+    x = radius * np.sin(yr) * np.cos(xr)
+    y = radius * np.sin(yr) * np.sin(xr)
+    z = radius * np.cos(yr)
+    xyz = np.stack((x, y, z), axis=1)
+
+    poly = pyvista.lines_from_points(xyz, close=False)
+    blocks = pyvista.MultiBlock()
+    for _ in range(2):
+        blocks.append(poly)
+
+    path = tmpdir.mkdir("tmpdir")
+    line_filename = str(path.join('lines.vtk'))
+    block_filename = str(path.join('blocks.vtmb'))
+    poly.save(line_filename)
+    blocks.save(block_filename)
+
+    poly_load = pyvista.read(line_filename)
+    assert np.allclose(poly_load.points, poly.points)
+
+    blocks_load = pyvista.read(block_filename)
+    assert np.allclose(blocks_load[0].points, blocks[0].points)

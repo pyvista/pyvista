@@ -1,17 +1,15 @@
 """Module managing different plotting theme parameters."""
 
 import os
-import scooby
+
 import vtk
 
 from .colors import string_to_rgb, PARAVIEW_BACKGROUND
-
 
 MAX_N_COLOR_BARS = 10
 FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'courier': vtk.VTK_COURIER,
              'times': vtk.VTK_TIMES}
-
 
 rcParams = {
     'auto_close': True, # DANGER: set to False with extreme caution
@@ -95,8 +93,6 @@ rcParams = {
     },
 }
 
-
-
 DEFAULT_THEME = dict(rcParams)
 
 def set_plot_theme(theme):
@@ -144,7 +140,6 @@ def set_plot_theme(theme):
             rcParams[k] = v
 
 
-
 def parse_color(color, opacity=None):
     """Parse color into a vtk friendly rgb list.
 
@@ -160,7 +155,7 @@ def parse_color(color, opacity=None):
     elif len(color) == 4:
         color = color[:3]
     else:
-        raise Exception("""
+        raise ValueError("""
     Invalid color input: ({})
     Must be string, rgb list, or hex color string.  For example:
         color='white'
@@ -172,13 +167,12 @@ def parse_color(color, opacity=None):
     return color
 
 
-
 def parse_font_family(font_family):
     """Check font name."""
     # check font name
     font_family = font_family.lower()
     if font_family not in ['courier', 'times', 'arial']:
-        raise Exception('Font must be either "courier", "times" '
-                        'or "arial"')
+        raise ValueError('Font must be either "courier", "times" '
+                         'or "arial"')
 
     return FONT_KEYS[font_family]

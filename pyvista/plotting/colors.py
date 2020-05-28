@@ -375,7 +375,7 @@ def get_cmap_safe(cmap):
     try:
         from matplotlib.cm import get_cmap
     except ImportError:
-        raise Exception('cmap requires matplotlib')
+        raise ImportError('cmap requires matplotlib')
     if isinstance(cmap, str):
         # Try colorcet first
         try:

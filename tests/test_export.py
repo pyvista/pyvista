@@ -13,6 +13,7 @@ if __name__ != '__main__':
 else:
     OFF_SCREEN = False
 
+
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_export_single(tmpdir):
     filename = str(tmpdir.mkdir("tmpdir").join('scene-single'))
@@ -73,6 +74,7 @@ def test_export_verts(tmpdir):
     plotter.close()
     # Now make sure the file is there
     assert os.path.isfile('{}.vtkjs'.format(filename))
+
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_export_color(tmpdir):

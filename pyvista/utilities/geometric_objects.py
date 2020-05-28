@@ -19,7 +19,6 @@ import vtk
 import pyvista
 from pyvista.utilities import assert_empty_kwargs, check_valid_vector
 
-
 NORMALS = {
     'x': [1, 0, 0],
     'y': [0, 1, 0],
@@ -178,7 +177,7 @@ def CylinderStructured(radius=0.5, height=1.0,
 
 def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
           tip_radius=0.1, tip_resolution=20, shaft_radius=0.05,
-          shaft_resolution=20):
+          shaft_resolution=20, scale=None):
     """Create a vtk Arrow.
 
     Parameters
@@ -204,6 +203,10 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     shaft_resolution : int, optional
         Number of faces around the shaft.
 
+    scale : float or str, optional
+        Scale factor of the entire object, default is None (i.e. scale of 1).
+        'auto' scales to length of direction array.
+
     Return
     ------
     arrow : pyvista.PolyData
@@ -219,6 +222,14 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     arrow.SetShaftResolution(shaft_resolution)
     arrow.Update()
     surf = pyvista.PolyData(arrow.GetOutput())
+
+    if scale == 'auto':
+        scale = float(np.linalg.norm(direction))
+    if isinstance(scale, float) or isinstance(scale, int):
+        surf.points *= scale
+    elif scale is not None:
+        raise TypeError("Scale must be either float, int or 'auto'.")
+
     translate(surf, start, direction)
     return surf
 
@@ -445,7 +456,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     src.SetHeight(height)
     # Contributed by @kjelljorner in #249:
     if angle and radius:
-        raise Exception("Both radius and angle specified. They are mutually exclusive.")
+        raise ValueError("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
         src.SetAngle(angle)
     elif not angle and radius:
@@ -549,7 +560,7 @@ def SuperToroid(*args, **kwargs):
     DEPRECATED: Please use `pyvista.ParametricSuperToroid` instead.
 
     """
-    raise RuntimeError('use `pyvista.ParametricSuperToroid` instead')
+    raise NotImplementedError('use `pyvista.ParametricSuperToroid` instead')
 
 
 def Ellipsoid(*args, **kwargs):
@@ -558,7 +569,7 @@ def Ellipsoid(*args, **kwargs):
     DEPRECATED: Please use :func:`pyvista.ParametricEllipsoid` instead.
 
     """
-    raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
+    raise NotImplementedError('use `pyvista.ParametricEllipsoid` instead')
 
 
 def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,

@@ -5,7 +5,6 @@ from math import pi
 import vtk
 
 import pyvista
-
 from .geometric_objects import translate
 
 
@@ -369,7 +368,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     parametric_keywords(parametric_function, min_u=kwargs.pop("min_u", 0),
                         max_u=kwargs.pop("max_u", 2*pi),
                         min_v=kwargs.pop("min_v", 0.0),
-                        max_v=kwargs.pop("max_v", 2*pi),
+                        max_v=kwargs.pop("max_v", pi),
                         join_u=kwargs.pop("join_u", False),
                         join_v=kwargs.pop("join_v", False),
                         twist_u=kwargs.pop("twist_u", False),
@@ -756,7 +755,6 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
 
     if amplitudescalefactor is not None:
         parametric_function.SetAmplitudeScaleFactor(amplitudescalefactor)
-
 
     center = kwargs.pop('center', [0., 0., 0.])
     direction = kwargs.pop('direction', [0., 0., 1.])
