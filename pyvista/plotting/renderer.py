@@ -136,8 +136,7 @@ class Renderer(vtkRenderer):
         """Set camera position of all active render windows."""
         if camera_location is None:
             return
-
-        if isinstance(camera_location, str):
+        elif isinstance(camera_location, str):
             camera_location = camera_location.lower()
             if camera_location == 'xy':
                 self.view_xy()
@@ -151,15 +150,30 @@ class Renderer(vtkRenderer):
                 self.view_zx()
             elif camera_location == 'zy':
                 self.view_zy()
-            return
+            else:
+                err = pyvista.core.errors.InvalidCameraError
+                raise err('Invalid view direction.  '
+                          'Use one of the following:\n'
+                          "    'xy', 'xz', 'yz', 'yx', 'zx', 'zy'")
 
-        if isinstance(camera_location[0], (int, float)):
+        elif isinstance(camera_location[0], (int, float)):
+            if len(camera_location) != 3:
+                raise pyvista.core.errors.InvalidCameraError
             self.view_vector(camera_location)
+        else:
+            # check if a valid camera position
+            if not isinstance(camera_location, CameraPosition):
+                if not len(camera_location) == 3:
+                    raise pyvista.core.errors.InvalidCameraError
+                elif any([len(item) != 3 for item in camera_location]):
+                    raise pyvista.core.errors.InvalidCameraError
 
-        # everything is set explicitly
-        self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))
-        self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1], invert=False))
-        self.camera.SetViewUp(camera_location[2])
+            # everything is set explicitly
+            self.camera.SetPosition(scale_point(self.camera, camera_location[0],
+                                                invert=False))
+            self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1],
+                                                  invert=False))
+            self.camera.SetViewUp(camera_location[2])
 
         # reset clipping range
         self.ResetCameraClippingRange()

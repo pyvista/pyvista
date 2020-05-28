@@ -87,24 +87,34 @@ def test_plot_show_grid():
     plotter.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_set_camera_position():
-    # with pytest.raises(Exception):
-    cpos = [(2.085387555594636, 5.259683527170288, 13.092943022481887),
-            (0.0, 0.0, 0.0),
-            (-0.7611973344707588, -0.5507178512374836, 0.3424740374436883)]
 
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.parametrize('cpos', [[(2.0, 5.0, 13.0),
+                                   (0.0, 0.0, 0.0),
+                                   (-0.7, -0.5, 0.3)],
+                                  [-1, 2, -5],  # trigger view vector
+                                  [1.0, 2.0, 3.0],
+                                  'xy', 'xz', 'yz', 'yx', 'zx', 'zy'])
+def test_set_camera_position(cpos, sphere):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
-    plotter.camera_position = 'xy'
-    plotter.camera_position = 'xz'
-    plotter.camera_position = 'yz'
-    plotter.camera_position = 'yx'
-    plotter.camera_position = 'zx'
-    plotter.camera_position = 'zy'
     plotter.camera_position = cpos
-    cpos_out = plotter.show()
-    assert cpos_out == cpos
+    plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.parametrize('cpos', [[(2.0, 5.0),
+                                   (0.0, 0.0, 0.0),
+                                   (-0.7, -0.5, 0.3)],
+                                  [-1, 2],
+                                  [(1,2,3)],
+                                  'notvalid'])
+def test_set_camera_position_invalid(cpos, sphere):
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    with pytest.raises(pyvista.core.errors.InvalidCameraError):
+        plotter.camera_position = cpos
+
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
