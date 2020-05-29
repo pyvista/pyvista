@@ -175,7 +175,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @points.setter
     def points(self, points):
-        """The points must be set along each axial direction.
+        """Points must be set along each axial direction.
 
         Please set the point coordinates with the ``x``, ``y``, and ``z``
         setters.
@@ -361,7 +361,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @points.setter
     def points(self, points):
-        """The points cannot be set.
+        """Points cannot be set.
 
         This setter overrides the base class' setter to ensure a user does not
         attempt to set them. See https://github.com/pyvista/pyvista/issues/713.
