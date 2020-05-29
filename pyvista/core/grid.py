@@ -185,8 +185,8 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
         """
         raise AttributeError("The points cannot be set. The points of "
-            "`UniformGrid`/`vtkImageData` are implicitly defined by the "
-            "`origin`, `spacing`, and `dimensions` of the grid."
+            "`RectilinearGrid` are defined in each axial direction. Please "
+            "use the `x`, `y`, and `z` setters individually."
             )
 
     @property
