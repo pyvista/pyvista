@@ -1438,7 +1438,7 @@ class Renderer(vtkRenderer):
             self.remove_bounding_box()
 
         self.RemoveAllViewProps()
-        self._actors = None
+        self._actors = {}
         # remove reference to parent last
         self.parent = None
         return
