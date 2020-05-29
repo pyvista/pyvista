@@ -92,12 +92,6 @@ def test_init_from_arrays():
     assert grid.n_cells == 2
     assert np.allclose(cells, grid.cells)
 
-    if VTK9:
-        assert np.allclose(grid.cell_connectivity, np.arange(16))
-        assert np.allclose(grid.offset, np.array([0, 8]))
-    else:
-        assert np.allclose(grid.offset, offset)
-
 
 def test_destructor():
     ugrid = examples.load_hexbeam()
