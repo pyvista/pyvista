@@ -159,33 +159,35 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
 
     @property
     def meshgrid(self):
-        """Return the a meshgrid of numpy arrays for this mesh.
+        """Return a meshgrid of numpy arrays for this mesh.
 
         This simply returns a ``numpy.meshgrid`` of the coordinates for this
-        mesh in ``ij`` indexing.
+        mesh in ``ij`` indexing. These are a copy of the points of this mesh.
 
         """
         return np.meshgrid(self.x, self.y, self.z, indexing='ij')
 
     @property
     def points(self):
-        """Return all of the points as an n by 3 numpy array."""
+        """Return a copy of the points as an n by 3 numpy array."""
         xx, yy, zz = self.meshgrid
         return np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
 
     @points.setter
     def points(self, points):
-        """Set points without copying."""
-        if not isinstance(points, np.ndarray):
-            raise TypeError('Points must be a numpy array')
-        # get the unique coordinates along each axial direction
-        x = np.unique(points[:,0])
-        y = np.unique(points[:,1])
-        z = np.unique(points[:,2])
-        # Set the vtk coordinates
-        self._from_arrays(x, y, z)
-        #self._point_ref = points
-        self.Modified()
+        """The points must be set along each axial direction.
+
+        Please set the point coordinates with the ``x``, ``y``, and ``z``
+        setters.
+
+        This setter overrides the base class' setter to ensure a user does not
+        attempt to set them.
+
+        """
+        raise AttributeError("The points cannot be set. The points of "
+            "`UniformGrid`/`vtkImageData` are implicitly defined by the "
+            "`origin`, `spacing`, and `dimensions` of the grid."
+            )
 
     @property
     def x(self):
@@ -341,7 +343,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @property
     def points(self):
-        """Return a pointer to the points as a numpy object."""
+        """Build a copy of the implicitly defined points as a numpy array."""
         # Get grid dimensions
         nx, ny, nz = self.dimensions
         nx -= 1
@@ -359,23 +361,16 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
 
     @points.setter
     def points(self, points):
-        """Set points without copying."""
-        if not isinstance(points, np.ndarray):
-            raise TypeError('Points must be a numpy array')
-        # get the unique coordinates along each axial direction
-        x = np.unique(points[:,0])
-        y = np.unique(points[:,1])
-        z = np.unique(points[:,2])
-        nx, ny, nz = len(x), len(y), len(z)
-        # diff returns an empty array if the input is constant
-        dx, dy, dz = [np.diff(d) if len(np.diff(d)) > 0 else d for d in (x, y, z)]
-        # TODO: this needs to be tested (unique might return a tuple)
-        dx, dy, dz = np.unique(dx), np.unique(dy), np.unique(dz)
-        ox, oy, oz = np.min(x), np.min(y), np.min(z)
-        # Build the vtk object
-        self._from_specs((nx,ny,nz), (dx,dy,dz), (ox,oy,oz))
-        #self._point_ref = points
-        self.Modified()
+        """The points cannot be set.
+
+        This setter overrides the base class' setter to ensure a user does not
+        attempt to set them. See https://github.com/pyvista/pyvista/issues/713.
+
+        """
+        raise AttributeError("The points cannot be set. The points of "
+            "`UniformGrid`/`vtkImageData` are implicitly defined by the "
+            "`origin`, `spacing`, and `dimensions` of the grid."
+            )
 
     @property
     def x(self):
