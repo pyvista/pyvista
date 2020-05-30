@@ -88,13 +88,15 @@ def test_plot_show_grid():
 
 
 
+cpos_param = [[(2.0, 5.0, 13.0),
+              (0.0, 0.0, 0.0),
+              (-0.7, -0.5, 0.3)],
+             [-1, 2, -5],  # trigger view vector
+             [1.0, 2.0, 3.0],
+]
+cpos_param.extend(pyvista.plotting.Renderer.CAMERA_STR_ATTR_MAP)
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-@pytest.mark.parametrize('cpos', [[(2.0, 5.0, 13.0),
-                                   (0.0, 0.0, 0.0),
-                                   (-0.7, -0.5, 0.3)],
-                                  [-1, 2, -5],  # trigger view vector
-                                  [1.0, 2.0, 3.0],
-                                  'xy', 'xz', 'yz', 'yx', 'zx', 'zy'])
+@pytest.mark.parametrize('cpos', cpos_param)
 def test_set_camera_position(cpos, sphere):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
