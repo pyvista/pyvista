@@ -3357,8 +3357,11 @@ class PolyDataFilters(DataSetFilters):
             returned when inplace=False.
 
         """
-        if isinstance(remove, (np.ndarray, collections.abc.Sequence)):
-            remove = np.asarray(remove)
+        remove = np.asarray(remove)
+    
+        # np.asarray will eat anything, so we have to weed out bogus inputs
+        if not issubclass(remove.dtype.type, (np.bool_, np.integer)):
+            raise TypeError('Remove must be either a mask or an integer array-like')
 
         if remove.dtype == np.bool:
             if remove.size != poly_data.n_points:
