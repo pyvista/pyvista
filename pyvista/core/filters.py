@@ -174,7 +174,7 @@ class DataSetFilters:
                 bounds.append(normal)
                 bounds.append(cell.center)
         if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)) or len(bounds) not in [3, 6, 12]:
-            raise AssertionError('Bounds must be a sequence of floats with length 3, 6 or 12.')
+            raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])

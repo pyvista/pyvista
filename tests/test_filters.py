@@ -70,7 +70,7 @@ def test_clip_box():
     dataset = examples.load_uniform()
     result = dataset.clip_box(bounds=0.5)
     assert result.n_cells
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         dataset.clip_box(bounds=(5, 6,))
     # Test with a poly data box
     mesh = examples.load_airplane()
