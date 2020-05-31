@@ -158,11 +158,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         else:
 
-            assert_str = '"shape" should be a list, tuple or string descriptor'
-            assert isinstance(shape, (np.ndarray, collections.abc.Sequence)), assert_str
-            assert shape[0] > 0, '"shape" must be positive'
-            assert shape[1] > 0, '"shape" must be positive'
-            self.shape = shape
+            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
+                raise TypeError('"shape" should be a list, tuple or string descriptor.')
+            if len(shape) != 2:
+                raise ValueError('"shape" must have length 2.')
+            shape = np.asarray(shape)
+            if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
+                raise ValueError('"shape" must contain only positive integers.')
+            # always assign shape as a tuple
+            self.shape = tuple(shape)
             for i in reversed(range(shape[0])):
                 for j in range(shape[1]):
                     renderer = Renderer(self, border, border_color, border_width)
@@ -225,7 +229,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if loc is None:
             return self._active_renderer_index
-        elif isinstance(loc, int):
+        elif isinstance(loc, (int, np.integer)):
             return loc
         elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
             if not len(loc) == 2:
@@ -239,9 +243,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             sz = int(self.shape[0] * self.shape[1])
             idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
             return idxs[index_row, index_column]
+        else:
+            raise TypeError('"loc" must be an integer or a sequence.')
 
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid."""
+        if not isinstance(index, (int, np.integer)):
+            raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
             return index
         sz = int(self.shape[0] * self.shape[1])
@@ -2092,10 +2100,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             views cameras.
 
         """
-        if isinstance(views, int):
+        if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
                 renderer.camera = self.renderers[views].camera
-        elif isinstance(views, (np.ndarray, collections.abc.Sequence)):
+            return
+        views = np.asarray(views)
+        if np.issubdtype(views.dtype, np.integer):
             for view_index in views:
                 self.renderers[view_index].camera = \
                     self.renderers[views[0]].camera
