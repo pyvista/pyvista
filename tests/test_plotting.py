@@ -642,6 +642,32 @@ def test_multi_renderers():
     plotter.show()
 
 
+def test_subplot_groups():
+    plotter = pyvista.Plotter(shape=(3,3), groups=[(1,[1,2]),(np.s_[:],0)])
+    plotter.subplot(0,0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(0,1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(0,2)
+    plotter.add_mesh(pyvista.Arrow())
+    plotter.subplot(1,1)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(2,1)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.subplot(2,2)
+    plotter.add_mesh(pyvista.Box())
+    # Test group overlap
+    with pytest.raises(AssertionError):
+        # Partial overlap
+        pyvista.Plotter(shape=(3,3),groups=[([1,2],[0,1]),([0,1],[1,2])])
+    with pytest.raises(AssertionError):
+        # Full overlap (inner)
+        pyvista.Plotter(shape=(4,4),groups=[(np.s_[:],np.s_[:]),([1,2],[1,2])])
+    with pytest.raises(AssertionError):
+        # Full overlap (outer)
+        pyvista.Plotter(shape=(4,4),groups=[(1,[1,2]),([0,3],np.s_[:])])
+
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_link_views():
     plotter = pyvista.Plotter(shape=(1, 4), off_screen=OFF_SCREEN)
