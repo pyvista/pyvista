@@ -535,6 +535,8 @@ class DataSetFilters:
             if len(value) != 2:
                 raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
+        elif isinstance(value, collections.abc.Iterable):
+            raise TypeError('Value must either be a single scalar or a sequence.')
         else:
             # just a single value
             if invert:
@@ -599,6 +601,8 @@ class DataSetFilters:
         if isinstance(percent, (np.ndarray, collections.abc.Sequence)):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
+        elif isinstance(percent, collections.abc.Iterable):
+            raise TypeError('Percent must either be a single scalar or a sequence.')
         else:
             # Compute one value to threshold
             value = _get_val(percent, dmin, dmax)
