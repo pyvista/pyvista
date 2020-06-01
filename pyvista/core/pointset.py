@@ -465,10 +465,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
     >>> # from arrays (vtk9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, deep=True)
+    >>> #grid = pyvista.UnstructuredGrid(cells, celltypes, points)
 
     >>> # from arrays (vtk<9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, offset, deep=True)
+    >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
 
     >>> # From a string filename
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)

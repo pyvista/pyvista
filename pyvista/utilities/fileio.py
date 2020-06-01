@@ -155,7 +155,7 @@ def read_legacy(filename):
     reader.Update()
     output = reader.GetOutputDataObject(0)
     if output is None:
-        raise AssertionError('No output when using VTKs legacy reader')
+        raise RuntimeError('No output when using VTKs legacy reader')
     return pyvista.wrap(output)
 
 
@@ -249,9 +249,9 @@ def read_texture(filename, attrs=None):
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         if image.n_points < 2:
-            raise AssertionError("Problem reading the image with VTK.")
+            raise RuntimeError("Problem reading the image with VTK.")
         return pyvista.image_to_texture(image)
-    except (KeyError, AssertionError):
+    except (KeyError, RuntimeError):
         # Otherwise, use the imageio reader
         pass
     import imageio
@@ -381,9 +381,8 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     # Check that meshio supports all cell types in input mesh
     pixel_voxel = {8, 11}       # Handle pixels and voxels
     for cell_type in np.unique(vtk_cell_type):
-        assert cell_type in vtk_to_meshio_type.keys() or cell_type in pixel_voxel, (
-            "meshio does not support VTK type {}.".format(cell_type)
-        )
+        if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
+            raise TypeError("meshio does not support VTK type {}.".format(cell_type))
 
     # Get cells
     cells = []

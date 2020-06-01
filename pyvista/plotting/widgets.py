@@ -59,7 +59,7 @@ class WidgetHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Box widget not available in notebook plotting')
+            raise TypeError('Box widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "box_widgets"):
@@ -241,7 +241,7 @@ class WidgetHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Plane widget not available in notebook plotting')
+            raise TypeError('Plane widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "plane_widgets"):
@@ -543,7 +543,7 @@ class WidgetHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Line widget not available in notebook plotting')
+            raise TypeError('Line widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "line_widgets"):
@@ -730,7 +730,7 @@ class WidgetHelper:
             ``rcParams['slider_style']``. Defaults to None.
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Slider widget not available in notebook plotting')
+            raise TypeError('Slider widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
 
@@ -862,7 +862,7 @@ class WidgetHelper:
             field, scalars = mesh.active_scalars_info
         arr, field = get_array(mesh, scalars, preference=preference, info=True)
         if arr is None:
-            raise AssertionError('No arrays present to threshold.')
+            raise ValueError('No arrays present to threshold.')
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
         if title is None:
@@ -928,14 +928,14 @@ class WidgetHelper:
         name = kwargs.get('name', mesh.memory_address)
         # set the array to contour on
         if mesh.n_arrays < 1:
-            raise AssertionError('Input dataset for the contour filter must have data arrays.')
+            raise ValueError('Input dataset for the contour filter must have data arrays.')
         if scalars is None:
             field, scalars = mesh.active_scalars_info
         else:
             _, field = get_array(mesh, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
-            raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
+            raise TypeError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
 
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))
@@ -1019,7 +1019,7 @@ class WidgetHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Spline widget not available in notebook plotting')
+            raise TypeError('Spline widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
 
@@ -1185,7 +1185,7 @@ class WidgetHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Sphere widget not available in notebook plotting')
+            raise TypeError('Sphere widget not available in notebook plotting')
         if not hasattr(self, 'iren'):
             raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
 
