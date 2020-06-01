@@ -688,7 +688,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         carr = self.GetCells()
         if hasattr(carr, 'GetOffsetsArray'):  # available >= VTK9
             # This will be the number of cells + 1.
-            return vtk_to_numpy(carr.GetOffsetsArray())[:-1]
+            return vtk_to_numpy(carr.GetOffsetsArray())
         else:  # this is no longer used in >= VTK9
             return vtk_to_numpy(self.GetCellLocationsArray())
 
