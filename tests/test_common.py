@@ -729,6 +729,10 @@ def test_find_closest_point():
     with pytest.raises(TypeError):
         sphere.find_closest_point([0, 0, 0], n=3.0)
 
+    with pytest.raises(TypeError):
+        # allow Sequence but not Iterable
+        sphere.find_closest_point({1, 2, 3})
+
     index = sphere.find_closest_point(node)
     assert isinstance(index, int)
     # Make sure we can fetch that point

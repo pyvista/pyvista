@@ -144,6 +144,9 @@ def test_multi_block_set_get_ers():
     assert multi.get_block_name(10) is None
     with pytest.raises(KeyError):
         _ = multi.get_index_by_name('foo')
+    # allow Sequence but not Iterable in setitem
+    with pytest.raises(TypeError):
+        multi[{1, 'foo'}] = data
 
 
 def test_multi_block_clean(rectilinear, uniform, ant):

@@ -73,6 +73,21 @@ def test_plot_invalid_style():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_plotter_shape_invalid():
+    # wrong size
+    with pytest.raises(ValueError):
+        pyvista.Plotter(shape=(1,))
+    # not positive
+    with pytest.raises(ValueError):
+        pyvista.Plotter(shape=(1, 0))
+    with pytest.raises(ValueError):
+        pyvista.Plotter(shape=(0, 2))
+    # not a sequence
+    with pytest.raises(TypeError):
+        pyvista.Plotter(shape={1, 2})
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_bounds_axes_with_no_data():
     plotter = pyvista.Plotter()
     plotter.show_bounds()
@@ -997,3 +1012,35 @@ def test_reset_camera_clipping_range():
     pl.reset_camera_clipping_range()
     assert pl.camera.GetClippingRange() ==  default_clipping_range
     assert pl.camera.GetClippingRange() != (10,100)
+
+
+def test_index_vs_loc():
+    # first: 2d grid
+    pl = pyvista.Plotter(shape=(2, 3))
+    # index_to_loc valid cases
+    vals = [0, 2, 4]
+    expecteds = [(0, 0), (0, 2), (1, 1)]
+    for val,expected in zip(vals, expecteds):
+        assert tuple(pl.index_to_loc(val)) == expected
+    # loc_to_index valid cases
+    vals = [(0, 0), (0, 2), (1, 1)]
+    expecteds = [0, 2, 4]
+    for val,expected in zip(vals, expecteds):
+        assert pl.loc_to_index(val) == expected
+        assert pl.loc_to_index(expected) == expected
+    # failing cases
+    with pytest.raises(TypeError):
+        pl.loc_to_index({1, 2})
+    with pytest.raises(TypeError):
+        pl.index_to_loc(1.5)
+    with pytest.raises(TypeError):
+        pl.index_to_loc((1, 2))
+
+    # then: "1d" grid
+    pl = pyvista.Plotter(shape='2|3')
+    # valid cases
+    for val in range(5):
+        assert pl.index_to_loc(val) == val
+        assert pl.index_to_loc(np.int_(val)) == val
+        assert pl.loc_to_index(val) == val
+        assert pl.loc_to_index(np.int_(val)) == val
