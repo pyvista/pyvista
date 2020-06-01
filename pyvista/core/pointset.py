@@ -26,8 +26,6 @@ log.setLevel('CRITICAL')
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 
-
-
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
 
