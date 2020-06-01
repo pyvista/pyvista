@@ -161,7 +161,7 @@ def test_linear_copy(hexbeam):
 
 
 def test_linear_copy_surf_elem():
-    cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 6, 8, 9, 10, 11, 12, 13], np.int32)
     celltypes = np.array([vtk.VTK_QUADRATIC_QUAD, vtk.VTK_QUADRATIC_TRIANGLE],
                          np.uint8)
 
@@ -174,9 +174,28 @@ def test_linear_copy_surf_elem():
              [0.5, 0.9, 0.0],
              [0.1, 0.5, 0.0]]
 
-    points = np.hstack((cell0))
-    grid = pyvista.UnstructuredGrid(cells, celltypes, points, deep=False)
-    
+    cell1 = [[0.0, 0.0, 1.0],
+             [1.0, 0.0, 1.0],
+             [0.5, 0.5, 1.0],
+             [0.5, 0.0, 1.3],
+             [0.7, 0.7, 1.3],
+             [0.1, 0.1, 1.3]]
+
+    points = np.vstack((cell0, cell1))
+    if VTK9:
+        grid = pyvista.UnstructuredGrid(cells, celltypes, points, deep=False)
+    else:
+        offset = np.array([0, 9])
+        grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points, deep=False)
+
+    lgrid = grid.linear_copy()
+
+    qfilter = vtk.vtkMeshQuality()
+    qfilter.SetInputData(lgrid)
+    qfilter.Update()
+    qual = pyvista.wrap(qfilter.GetOutput())['Quality']
+    assert np.allclose(qual, [1, 1.4], atol=0.01)
+
 
 def test_extract_cells(hexbeam):
     ind = [1, 2, 3]

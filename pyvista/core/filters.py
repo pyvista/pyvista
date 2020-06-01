@@ -1912,6 +1912,9 @@ class DataSetFilters:
             surf_filter.PassThroughPointIdsOn()
         surf_filter.Update()
 
+        # need to add
+        # surf_filter.SetNonlinearSubdivisionLevel(subdivision)
+
         mesh = _get_output(surf_filter)
         return mesh
 

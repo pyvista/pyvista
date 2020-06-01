@@ -483,6 +483,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         super().__init__()
         deep = kwargs.pop('deep', False)
 
+        if not len(args):
+            return
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkUnstructuredGrid):
                 if deep:
@@ -503,7 +505,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 itype = type(args[0])
                 raise TypeError('Cannot work with input type %s' % itype)
 
-        elif len(args) == 3:
+        elif len(args) == 3 and VTK9:
             arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
             arg2_is_arr = isinstance(args[2], np.ndarray)
@@ -523,6 +525,14 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
             else:
                 raise TypeError('All input types must be np.ndarray')
+
+        else:
+            err_msg = 'Invalid parameters.  Initialization with arrays ' +\
+                      'requires the following arrays:\n'
+            if VTK9:
+                raise TypeError(err_msg + '`cells`, `cell_type`, `points`')
+            else:
+                raise TypeError(err_msg + '`offset`, `cells`, `cell_type`, `points`')
 
     def __repr__(self):
         """Return the standard representation."""
@@ -663,7 +673,11 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         if np.any(quad_quad_mask):
             if VTK9:
                 quad_offset = lgrid.offset[:-1][quad_quad_mask]
-                base_point = lgrid.cells[quad_offset]
+                base_point = lgrid.cell_connectivity[quad_offset]
+                lgrid.cell_connectivity[quad_offset + 4] = base_point
+                lgrid.cell_connectivity[quad_offset + 5] = base_point
+                lgrid.cell_connectivity[quad_offset + 6] = base_point
+                lgrid.cell_connectivity[quad_offset + 7] = base_point
             else:
                 quad_offset = lgrid.offset[quad_quad_mask]
                 base_point = lgrid.cells[quad_offset + 1]
@@ -675,13 +689,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         if np.any(quad_tri_mask):
             if VTK9:
                 tri_offset = lgrid.offset[:-1][quad_tri_mask]
-                base_point = lgrid.cells[tri_offset]
+                base_point = lgrid.cell_connectivity[tri_offset]
+                lgrid.cell_connectivity[tri_offset + 3] = base_point
+                lgrid.cell_connectivity[tri_offset + 4] = base_point
+                lgrid.cell_connectivity[tri_offset + 5] = base_point
             else:
                 tri_offset = lgrid.offset[quad_tri_mask]
                 base_point = lgrid.cells[tri_offset + 1]
-            lgrid.cells[tri_offset + 4] = base_point
-            lgrid.cells[tri_offset + 5] = base_point
-            lgrid.cells[tri_offset + 6] = base_point
+                lgrid.cells[tri_offset + 4] = base_point
+                lgrid.cells[tri_offset + 5] = base_point
+                lgrid.cells[tri_offset + 6] = base_point
 
         return lgrid
 
