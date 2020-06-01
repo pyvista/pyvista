@@ -661,16 +661,24 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):
-            quad_offset = lgrid.offset[quad_quad_mask]
-            base_point = lgrid.cells[quad_offset + 1]
-            lgrid.cells[quad_offset + 5] = base_point
-            lgrid.cells[quad_offset + 6] = base_point
-            lgrid.cells[quad_offset + 7] = base_point
-            lgrid.cells[quad_offset + 8] = base_point
+            if VTK9:
+                quad_offset = lgrid.offset[:-1][quad_quad_mask]
+                base_point = lgrid.cells[quad_offset]
+            else:
+                quad_offset = lgrid.offset[quad_quad_mask]
+                base_point = lgrid.cells[quad_offset + 1]
+                lgrid.cells[quad_offset + 5] = base_point
+                lgrid.cells[quad_offset + 6] = base_point
+                lgrid.cells[quad_offset + 7] = base_point
+                lgrid.cells[quad_offset + 8] = base_point
 
         if np.any(quad_tri_mask):
-            tri_offset = lgrid.offset[quad_tri_mask]
-            base_point = lgrid.cells[tri_offset + 1]
+            if VTK9:
+                tri_offset = lgrid.offset[:-1][quad_tri_mask]
+                base_point = lgrid.cells[tri_offset]
+            else:
+                tri_offset = lgrid.offset[quad_tri_mask]
+                base_point = lgrid.cells[tri_offset + 1]
             lgrid.cells[tri_offset + 4] = base_point
             lgrid.cells[tri_offset + 5] = base_point
             lgrid.cells[tri_offset + 6] = base_point

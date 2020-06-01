@@ -160,6 +160,24 @@ def test_linear_copy(hexbeam):
     assert np.all(lgrid.celltypes < 20)
 
 
+def test_linear_copy_surf_elem():
+    cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7])
+    celltypes = np.array([vtk.VTK_QUADRATIC_QUAD, vtk.VTK_QUADRATIC_TRIANGLE],
+                         np.uint8)
+
+    cell0 = [[0.0, 0.0, 0.0],
+             [1.0, 0.0, 0.0],
+             [1.0, 1.0, 0.0],
+             [0.0, 1.0, 0.0],
+             [0.5, 0.1, 0.0],
+             [1.1, 0.5, 0.0],
+             [0.5, 0.9, 0.0],
+             [0.1, 0.5, 0.0]]
+
+    points = np.hstack((cell0))
+    grid = pyvista.UnstructuredGrid(cells, celltypes, points, deep=False)
+    
+
 def test_extract_cells(hexbeam):
     ind = [1, 2, 3]
     part_beam = hexbeam.extract_cells(ind)
