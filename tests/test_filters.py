@@ -72,6 +72,9 @@ def test_clip_box():
     assert result.n_cells
     with pytest.raises(ValueError):
         dataset.clip_box(bounds=(5, 6,))
+    # allow Sequence but not Iterable bounds
+    with pytest.raises(TypeError):
+        dataset.clip_box(bounds={5, 6, 7})
     # Test with a poly data box
     mesh = examples.load_airplane()
     box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
@@ -198,6 +201,9 @@ def test_threshold():
     thresh = dataset.threshold([100, 500], invert=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
+    # allow Sequence but not Iterable
+    with pytest.raises(TypeError):
+        dataset.threshold({100, 500})
     # Now test DATASETS without arrays
     with pytest.raises(ValueError):
         for i, dataset in enumerate(DATASETS[3:-1]):
@@ -223,6 +229,9 @@ def test_threshold_percent():
         result = dataset.threshold_percent(20000)
     with pytest.raises(ValueError):
         result = dataset.threshold_percent(0.0)
+    # allow Sequence but not Iterable
+    with pytest.raises(TypeError):
+        dataset.threshold_percent({18.0, 85.0})
 
 
 def test_outline():
@@ -305,6 +314,8 @@ def test_contour_errors(uniform):
         uniform.contour(scalars='Spatial Cell Data')
     with pytest.raises(TypeError):
         uniform.contour(isosurfaces=pyvista.PolyData())
+    with pytest.raises(TypeError):
+        uniform.contour(isosurfaces={100, 300, 500})
     uniform = examples.load_airplane()
     with pytest.raises(ValueError):
         uniform.contour()
@@ -346,6 +357,8 @@ def test_elevation():
         elev = dataset.elevation(scalar_range=0.5)
     with pytest.raises(ValueError):
         elev = dataset.elevation(scalar_range=[1, 2, 3])
+    with pytest.raises(TypeError):
+        elev = dataset.elevation(scalar_range={1, 2})
 
 
 @skip_py2_nobind

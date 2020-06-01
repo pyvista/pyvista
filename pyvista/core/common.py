@@ -1,6 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
-import collections
+import collections.abc
 import logging
 import os
 import warnings
@@ -873,7 +873,7 @@ class Common(DataSetFilters, DataObject):
 
     def __getitem__(self, index):
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.Iterable) and not isinstance(index, str):
+        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
             name, preference = index
         elif isinstance(index, str):
             name = index
@@ -1069,8 +1069,8 @@ class Common(DataSetFilters, DataObject):
         ------
         int : the index of the point in this mesh that is closes to the given point.
         """
-        if not isinstance(point, collections.Iterable) or len(point) != 3:
-            raise TypeError("Given point must be a length three iterable.")
+        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+            raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
         if n < 1:

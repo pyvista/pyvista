@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
-import collections
+import collections.abc
 import logging
 from weakref import proxy
 
@@ -1165,7 +1165,7 @@ class Renderer(vtkRenderer):
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
-        if isinstance(actor, collections.Iterable):
+        if isinstance(actor, collections.abc.Iterable):
             success = False
             for a in actor:
                 rv = self.remove_actor(a, reset_camera=reset_camera)

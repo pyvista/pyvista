@@ -1,6 +1,6 @@
 """Pyvista plotting module."""
 
-import collections
+import collections.abc
 import logging
 import os
 import time
@@ -157,11 +157,15 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         else:
 
-            if not isinstance(shape, collections.Iterable):
+            if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
                 raise TypeError('"shape" should be a list, tuple or string descriptor')
-            if shape[0] <= 0 or shape[1] <= 0:
-                raise ValueError('"shape" must be positive')
-            self.shape = shape
+            if len(shape) != 2:
+                raise ValueError('"shape" must have length 2.')
+            shape = np.asarray(shape)
+            if not np.issubdtype(shape.dtype, np.integer) or (shape <= 0).any():
+                raise ValueError('"shape" must contain only positive integers.')
+            # always assign shape as a tuple
+            self.shape = tuple(shape)
             self._render_idxs = np.empty(self.shape,dtype=int)
             # Check if row and col weights correspond to given shape, or initialize them to defaults (equally weighted)
             # and convert to normalized offsets
@@ -178,9 +182,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Check and convert groups to internal format (Nx4 matrix where every row contains the row and col index of the top left cell
             # together with the row and col index of the bottom right cell)
             if groups is not None:
-                assert isinstance(groups, collections.Sequence), '"groups" should be a list or tuple'
+                assert isinstance(groups, collections.abc.Sequence), '"groups" should be a list or tuple'
                 for group in groups:
-                    assert isinstance(group, collections.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
+                    assert isinstance(group, collections.abc.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
                     rows = group[0]
                     if isinstance(rows,slice):
                         rows = np.arange(self.shape[0],dtype=int)[rows]
@@ -279,9 +283,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if loc is None:
             return self._active_renderer_index
-        elif isinstance(loc, int):
+        elif isinstance(loc, (int, np.integer)):
             return loc
-        elif isinstance(loc, collections.Iterable):
+        elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
             if not len(loc) == 2:
                 raise ValueError('"loc" must contain two items')
             index_row = loc[0]
@@ -291,9 +295,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if index_column < 0 or index_column >= self.shape[1]:
                 raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
             return self._render_idxs[index_row,index_column]
+        else:
+            raise TypeError('"loc" must be an integer or a sequence.')
 
     def index_to_loc(self, index):
         """Convert a 1D index location to the 2D location on the plotting grid."""
+        if not isinstance(index, (int, np.integer)):
+            raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
             return index
         args = np.argwhere(self._render_idxs == index)
@@ -2141,10 +2149,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             views cameras.
 
         """
-        if isinstance(views, int):
+        if isinstance(views, (int, np.integer)):
             for renderer in self.renderers:
                 renderer.camera = self.renderers[views].camera
-        elif isinstance(views, collections.Iterable):
+            return
+        views = np.asarray(views)
+        if np.issubdtype(views.dtype, np.integer):
             for view_index in views:
                 self.renderers[view_index].camera = \
                     self.renderers[views[0]].camera
@@ -2170,7 +2180,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif isinstance(views, int):
             self.renderers[views].camera = vtk.vtkCamera()
             self.renderers[views].reset_camera()
-        elif isinstance(views, collections.Iterable):
+        elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
                 self.renderers[view_index].camera = vtk.vtkCamera()
                 self.renderers[view_index].reset_camera()
@@ -2509,7 +2519,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if mesh is None:
             mesh = self.mesh
 
-        if isinstance(mesh, (collections.Iterable, pyvista.MultiBlock)):
+        if isinstance(mesh, (collections.abc.Iterable, pyvista.MultiBlock)):
             # Recursive if need to update scalars on many meshes
             for m in mesh:
                 self.update_scalars(scalars, mesh=m, render=False)
