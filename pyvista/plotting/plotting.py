@@ -182,9 +182,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Check and convert groups to internal format (Nx4 matrix where every row contains the row and col index of the top left cell
             # together with the row and col index of the bottom right cell)
             if groups is not None:
-                assert isinstance(groups, collections.Sequence), '"groups" should be a list or tuple'
+                assert isinstance(groups, collections.abc.Sequence), '"groups" should be a list or tuple'
                 for group in groups:
-                    assert isinstance(group, collections.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
+                    assert isinstance(group, collections.abc.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
                     rows = group[0]
                     if isinstance(rows,slice):
                         rows = np.arange(self.shape[0],dtype=int)[rows]
