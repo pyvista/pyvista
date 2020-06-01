@@ -455,7 +455,7 @@ def test_grid_points():
     assert grid.n_points == 9
     assert grid.n_cells == 4
     assert np.allclose(grid.points, points)
-    del grid
+
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
                        [1, 1, 0],
@@ -473,7 +473,6 @@ def test_grid_points():
     assert np.allclose(np.unique(opts, axis=0), np.unique(points, axis=0))
 
     # Now test rectilinear grid
-    del grid
     grid = pyvista.RectilinearGrid()
     with pytest.raises(AttributeError):
         grid.points = points
