@@ -70,8 +70,11 @@ def test_clip_box():
     dataset = examples.load_uniform()
     result = dataset.clip_box(bounds=0.5)
     assert result.n_cells
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         dataset.clip_box(bounds=(5, 6,))
+    # allow Sequence but not Iterable bounds
+    with pytest.raises(TypeError):
+        dataset.clip_box(bounds={5, 6, 7})
     # Test with a poly data box
     mesh = examples.load_airplane()
     box = pyvista.Cube(center=(0.9e3, 0.2e3, mesh.center[2]),
@@ -82,7 +85,7 @@ def test_clip_box():
     result = mesh.clip_box(box, invert=True)
     assert result.n_cells
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         dataset.clip_box(bounds=pyvista.Sphere())
 
 
@@ -171,7 +174,7 @@ def test_slice_along_axis():
         for slc in slices:
             assert isinstance(slc, pyvista.PolyData)
     dataset = examples.load_uniform()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         dataset.slice_along_axis(axis='u')
 
 
@@ -198,14 +201,17 @@ def test_threshold():
     thresh = dataset.threshold([100, 500], invert=True)
     assert thresh is not None
     assert isinstance(thresh, pyvista.UnstructuredGrid)
+    # allow Sequence but not Iterable
+    with pytest.raises(TypeError):
+        dataset.threshold({100, 500})
     # Now test DATASETS without arrays
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         for i, dataset in enumerate(DATASETS[3:-1]):
             thresh = dataset.threshold()
             assert thresh is not None
             assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300])
 
 
@@ -219,10 +225,13 @@ def test_threshold_percent():
         assert isinstance(thresh, pyvista.UnstructuredGrid)
     dataset = examples.load_uniform()
     result = dataset.threshold_percent(0.75, scalars='Spatial Cell Data')
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         result = dataset.threshold_percent(20000)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         result = dataset.threshold_percent(0.0)
+    # allow Sequence but not Iterable
+    with pytest.raises(TypeError):
+        dataset.threshold_percent({18.0, 85.0})
 
 
 def test_outline():
@@ -301,12 +310,14 @@ def test_contour(uniform, method):
 
 
 def test_contour_errors(uniform):
-    with pytest.raises(AssertionError):
+    with pytest.raises(TypeError):
         uniform.contour(scalars='Spatial Cell Data')
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         uniform.contour(isosurfaces=pyvista.PolyData())
+    with pytest.raises(TypeError):
+        uniform.contour(isosurfaces={100, 300, 500})
     uniform = examples.load_airplane()
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         uniform.contour()
     with pytest.raises(ValueError):
         uniform.contour(method='invalid method')
@@ -342,10 +353,12 @@ def test_elevation():
     assert 'Elevation' == elev.active_scalars_name
     assert elev.get_data_range('Elevation') == (1.0, 100.0)
     # test errors
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         elev = dataset.elevation(scalar_range=0.5)
     with pytest.raises(ValueError):
         elev = dataset.elevation(scalar_range=[1, 2, 3])
+    with pytest.raises(TypeError):
+        elev = dataset.elevation(scalar_range={1, 2})
 
 
 @skip_py2_nobind
@@ -478,7 +491,7 @@ def test_warp_by_vector():
 def test_invalid_warp_scalar(sphere):
     sphere['cellscalars'] = np.random.random(sphere.n_cells)
     sphere.point_arrays.clear()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         sphere.warp_by_scalar()
 
 
@@ -495,7 +508,7 @@ def test_invalid_warp_vector(sphere):
 
     # no vectors
     sphere.point_arrays.clear()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         sphere.warp_by_vector()
 
 
@@ -665,7 +678,7 @@ def test_slice_along_line():
     b = [model.bounds[1], model.bounds[2], model.bounds[5]]
     line2 = pyvista.Line(a, b, resolution=10)
     line = line2.cast_to_unstructured_grid().merge(line.cast_to_unstructured_grid())
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         slc = model.slice_along_line(line)
 
     with pytest.raises(TypeError):
@@ -761,7 +774,7 @@ def test_compute_gradients():
         grad = mesh.compute_gradient(object)
 
     mesh.point_arrays.clear()
-    with pytest.raises(RuntimeError):
+    with pytest.raises(TypeError):
         grad = mesh.compute_gradient()
 
 

@@ -22,7 +22,7 @@ Example
 >>> iso = dataset.contour()
 
 """
-import collections
+import collections.abc
 import logging
 from functools import wraps
 
@@ -130,10 +130,10 @@ class DataSetFilters:
         Parameters
         ----------
         bounds : tuple(float)
-            Length 6 iterable of floats: (xmin, xmax, ymin, ymax, zmin, zmax).
-            Length 3 iterable of floats: distances from the min coordinate of
+            Length 6 sequence of floats: (xmin, xmax, ymin, ymax, zmin, zmax).
+            Length 3 sequence of floats: distances from the min coordinate of
             of the input mesh. Single float value: uniform distance from the
-            min coordinate. Length 12 iterable of length 3 iterable of floats:
+            min coordinate. Length 12 sequence of length 3 sequence of floats:
             a plane collection (normal, center, ...).
             :class:`pyvista.PolyData`: if a poly mesh is passed that represents
             a box with 6 faces that all form a standard box, then planes will
@@ -161,7 +161,7 @@ class DataSetFilters:
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
-                raise RuntimeError("The bounds mesh must have only 6 faces.")
+                raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
             poly.compute_normals()
             for cid in range(6):
@@ -169,11 +169,13 @@ class DataSetFilters:
                 normal = cell["Normals"][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
+        if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)):
+            raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
+        if len(bounds) not in [3, 6, 12]:
+            raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
-        if not isinstance(bounds, collections.Iterable) or not (len(bounds) == 6 or len(bounds) == 12):
-            raise AssertionError('Bounds must be a length 6 iterable of floats.')
         alg = vtk.vtkBoxClipDataSet()
         alg.SetInputDataObject(dataset)
         alg.SetBoxClip(*bounds)
@@ -377,7 +379,7 @@ class DataSetFilters:
             try:
                 ax = axes[axis]
             except KeyError:
-                raise RuntimeError('Axis ({}) not understood'.format(axis))
+                raise ValueError('Axis ({}) not understood'.format(axis))
         # get the locations along that axis
         if bounds is None:
             bounds = dataset.bounds
@@ -424,7 +426,7 @@ class DataSetFilters:
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
-            raise AssertionError('Input line must have only one cell.')
+            raise ValueError('Input line must have only one cell.')
         polyline = line.GetCell(0)
         if not isinstance(polyline, vtk.vtkPolyLine):
             raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
@@ -454,9 +456,9 @@ class DataSetFilters:
 
         Parameters
         ----------
-        value : float or iterable, optional
+        value : float or sequence, optional
             Single value or (min, max) to be used for the data threshold.  If
-            iterable, then length must be 2. If no value is specified, the
+            a sequence, then length must be 2. If no value is specified, the
             non-NaN data range will be used to remove any NaN values.
 
         scalars : str, optional
@@ -499,10 +501,10 @@ class DataSetFilters:
         arr, field = get_array(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
-            raise AssertionError('No arrays present to threshold.')
+            raise ValueError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two filters:
-        if isinstance(value, collections.Iterable) and invert:
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)) and invert:
             valid_range = [np.nanmin(arr), np.nanmax(arr)]
             # Create two thresholds
             t1 = dataset.threshold([valid_range[0], value[0]], scalars=scalars,
@@ -526,11 +528,13 @@ class DataSetFilters:
         # use valid range if no value given
         if value is None:
             value = dataset.get_data_range(scalars)
-        # check if value is iterable (if so threshold by min max range like ParaView)
-        if isinstance(value, collections.Iterable):
+        # check if value is a sequence (if so threshold by min max range like ParaView)
+        if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             if len(value) != 2:
-                raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
+                raise ValueError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
+        elif isinstance(value, collections.abc.Iterable):
+            raise TypeError('Value must either be a single scalar or a sequence.')
         else:
             # just a single value
             if invert:
@@ -581,9 +585,9 @@ class DataSetFilters:
             if percent >= 1:
                 percent = float(percent) / 100.0
                 if percent > 1:
-                    raise RuntimeError('Percentage ({}) is out of range (0, 1).'.format(percent))
+                    raise ValueError('Percentage ({}) is out of range (0, 1).'.format(percent))
             if percent < 1e-10:
-                raise RuntimeError('Percentage ({}) is too close to zero or negative.'.format(percent))
+                raise ValueError('Percentage ({}) is too close to zero or negative.'.format(percent))
             return percent
 
         def _get_val(percent, dmin, dmax):
@@ -592,9 +596,11 @@ class DataSetFilters:
             return dmin + float(percent) * (dmax - dmin)
 
         # Compute the values
-        if isinstance(percent, collections.Iterable):
+        if isinstance(percent, (np.ndarray, collections.abc.Sequence)):
             # Get two values
             value = [_get_val(percent[0], dmin, dmax), _get_val(percent[1], dmin, dmax)]
+        elif isinstance(percent, collections.abc.Iterable):
+            raise TypeError('Percent must either be a single scalar or a sequence.')
         else:
             # Compute one value to threshold
             value = _get_val(percent, dmin, dmax)
@@ -730,11 +736,11 @@ class DataSetFilters:
             scalar_range = (low_point[2], high_point[2])
         elif isinstance(scalar_range, str):
             scalar_range = dataset.get_data_range(arr=scalar_range, preference=preference)
-        elif isinstance(scalar_range, collections.Iterable):
+        elif isinstance(scalar_range, (np.ndarray, collections.abc.Sequence)):
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
-            raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
+            raise TypeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
         # Construct the filter
         alg = vtk.vtkElevationFilter()
         alg.SetInputDataObject(dataset)
@@ -755,13 +761,13 @@ class DataSetFilters:
         """Contour an input dataset by an array.
 
         ``isosurfaces`` can be an integer specifying the number of isosurfaces in
-        the data range or an iterable set of values for explicitly setting the isosurfaces.
+        the data range or a sequence of values for explicitly setting the isosurfaces.
 
         Parameters
         ----------
-        isosurfaces : int or iterable
-            Number of isosurfaces to compute across valid data range or an
-            iterable of float values to explicitly use as the isosurfaces.
+        isosurfaces : int or sequence
+            Number of isosurfaces to compute across valid data range or a
+            sequence of float values to explicitly use as the isosurfaces.
 
         scalars : str, optional
             Name of scalars to threshold on. Defaults to currently active scalars.
@@ -802,7 +808,7 @@ class DataSetFilters:
             raise ValueError("Method '{}' is not supported".format(method))
         # Make sure the input has scalars to contour on
         if dataset.n_arrays < 1:
-            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+            raise ValueError('Input dataset for the contour filter must have scalar data.')
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
@@ -814,7 +820,7 @@ class DataSetFilters:
             _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
+            raise TypeError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
@@ -822,12 +828,12 @@ class DataSetFilters:
             if rng is None:
                 rng = dataset.get_data_range(scalars)
             alg.GenerateValues(isosurfaces, rng)
-        elif isinstance(isosurfaces, collections.Iterable):
+        elif isinstance(isosurfaces, (np.ndarray, collections.abc.Sequence)):
             alg.SetNumberOfContours(len(isosurfaces))
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
         else:
-            raise RuntimeError('isosurfaces not understood.')
+            raise TypeError('isosurfaces not understood.')
         _update_alg(alg, progress_bar, 'Computing Contour')
         return _get_output(alg)
 
@@ -1126,7 +1132,7 @@ class DataSetFilters:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != FieldAssociation.POINT:
-            raise RuntimeError('Dataset can only by warped by a point data array.')
+            raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
         alg = vtk.vtkWarpScalar()
         alg.SetInputDataObject(dataset)
@@ -1176,7 +1182,7 @@ class DataSetFilters:
             field, vectors = dataset.active_vectors_info
         arr, field = get_array(dataset, vectors, preference='point', info=True)
         if arr is None:
-            raise RuntimeError('No active vectors')
+            raise TypeError('No active vectors')
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
@@ -1844,7 +1850,7 @@ class DataSetFilters:
 
         Parameters
         ----------
-        ind : np.ndarray, list, or iterable
+        ind : np.ndarray, list, or sequence
             Numpy array of point indices to be extracted.
 
         Return
@@ -2174,7 +2180,7 @@ class DataSetFilters:
         if scalars is None:
             field, scalars = dataset.active_scalars_info
             if scalars is None:
-                raise RuntimeError('No active scalars.  Must input scalars array name')
+                raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
@@ -3128,7 +3134,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Check output so no segfaults occur
         if output.n_points < 1:
-            raise RuntimeError('Clean tolerance is too high. Empty mesh returned.')
+            raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
             poly_data.overwrite(output)
@@ -3341,8 +3347,11 @@ class PolyDataFilters(DataSetFilters):
             returned when inplace=False.
 
         """
-        if isinstance(remove, collections.Iterable):
-            remove = np.asarray(remove)
+        remove = np.asarray(remove)
+    
+        # np.asarray will eat anything, so we have to weed out bogus inputs
+        if not issubclass(remove.dtype.type, (np.bool_, np.integer)):
+            raise TypeError('Remove must be either a mask or an integer array-like')
 
         if remove.dtype == np.bool_:
             if remove.size != poly_data.n_points:
@@ -3484,7 +3493,7 @@ class PolyDataFilters(DataSetFilters):
 
     def project_points_to_plane(poly_data, origin=None, normal=(0,0,1), inplace=False):
         """Project points of this mesh to a plane."""
-        if not isinstance(normal, collections.Iterable) or len(normal) != 3:
+        if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
             origin = np.array(poly_data.center) - np.array(normal)*poly_data.length/2.
@@ -3685,11 +3694,11 @@ class UniformGridFilters(DataSetFilters):
         else:
             _, field = dataset.get_array(scalars, preference=preference, info=True)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
-        if isinstance(radius_factor, collections.Iterable):
+        if isinstance(radius_factor, collections.abc.Iterable):
             alg.SetRadiusFactors(radius_factor)
         else:
             alg.SetRadiusFactors(radius_factor, radius_factor, radius_factor)
-        if isinstance(std_dev, collections.Iterable):
+        if isinstance(std_dev, collections.abc.Iterable):
             alg.SetStandardDeviations(std_dev)
         else:
             alg.SetStandardDeviations(std_dev, std_dev, std_dev)

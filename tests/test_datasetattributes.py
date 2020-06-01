@@ -74,6 +74,13 @@ def test_set_vectors(hexbeam):
     assert np.allclose(hexbeam.active_vectors, vectors)
 
 
+def test_set_active_vectors_invalid(hexbeam):
+    # verify non-vector data does not become active vectors
+    not_vectors = np.random.random((hexbeam.points.shape))
+    hexbeam.point_arrays['not_vectors'] = not_vectors
+    assert np.allclose(hexbeam.point_arrays.active_vectors, not_vectors)
+
+
 @mark.parametrize('array_key', ['invalid_array_name', -1])
 def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attributes):
     with raises(KeyError):

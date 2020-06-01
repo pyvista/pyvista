@@ -272,7 +272,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
             xx = np.linspace(0, n_colors, n_colors, dtype=np.int_)
             try:
                 if not interpolate:
-                    raise AssertionError('No interpolation.')
+                    raise ValueError('No interpolation.')
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
                 # quadratic has best/smoothest results
@@ -281,7 +281,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                 vals[vals < 0] = 0.0
                 vals[vals > 1.0] = 1.0
                 mapping = (vals * 255.).astype(np.uint8)
-            except (ImportError, AssertionError):
+            except (ImportError, ValueError):
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:

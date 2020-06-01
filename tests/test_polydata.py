@@ -484,6 +484,10 @@ def test_remove_points_fail(sphere, plane):
     with pytest.raises(ValueError):
         sphere.remove_points(np.ones(10, np.bool_))
 
+    # invalid mask type
+    with pytest.raises(TypeError):
+        sphere.remove_points([0.0])
+
 
 def test_vertice_cells_on_read(tmpdir):
     point_cloud = pyvista.PolyData(np.random.rand(100, 3))
@@ -516,8 +520,12 @@ def test_project_points_to_plane():
     poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry()
     poly['elev'] = zz.ravel(order='f')
 
+    # Wrong normal length
     with pytest.raises(TypeError):
         poly.project_points_to_plane(normal=(0, 0, 1, 1))
+    # allow Sequence but not Iterable
+    with pytest.raises(TypeError):
+        poly.project_points_to_plane(normal={0, 1, 2})
 
     # Test the filter
     projected = poly.project_points_to_plane(origin=poly.center, normal=(0,0,1))

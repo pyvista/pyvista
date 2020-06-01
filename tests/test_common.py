@@ -462,13 +462,13 @@ def test_set_t_coords(grid):
     with pytest.raises(TypeError):
         grid.t_coords = [1, 2, 3]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty(10)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((3, 3))
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((grid.n_points, 1))
 
 
@@ -530,7 +530,7 @@ def test_rename_array_field(grid):
 
 
 def test_change_name_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         grid.rename_array('not a key', '')
 
 
@@ -728,6 +728,10 @@ def test_find_closest_point():
 
     with pytest.raises(TypeError):
         sphere.find_closest_point([0, 0, 0], n=3.0)
+
+    with pytest.raises(TypeError):
+        # allow Sequence but not Iterable
+        sphere.find_closest_point({1, 2, 3})
 
     index = sphere.find_closest_point(node)
     assert isinstance(index, int)

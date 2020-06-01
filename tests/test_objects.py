@@ -30,10 +30,10 @@ def test_table_init(tmpdir):
     for i in range(nc):
         assert np.allclose(arrays[:,i], table[i])
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         pyvista.Table(np.random.rand(100))
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         pyvista.Table(np.random.rand(100, 2, 3))
 
     # create from dictionary

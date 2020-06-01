@@ -94,7 +94,7 @@ class PickingHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Cell picking not available in notebook plotting')
+            raise TypeError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
                 raise AttributeError('Input a mesh into the Plotter class first or '
@@ -243,7 +243,7 @@ class PickingHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Point picking not available in notebook plotting')
+            raise TypeError('Point picking not available in notebook plotting')
 
         def _end_pick_event(picker, event):
             self.picked_point = np.array(picker.GetPickPosition())
