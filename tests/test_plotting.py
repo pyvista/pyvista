@@ -73,6 +73,21 @@ def test_plot_invalid_style():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_plotter_shape_invalid():
+    # wrong size
+    with pytest.raises(ValueError):
+        pyvista.Plotter(shape=(1,))
+    # not positive
+    with pytest.raises(ValueError):
+        pyvista.Plotter(shape=(1, 0))
+    with pytest.raises(ValueError):
+        pyvista.Plotter(shape=(0, 2))
+    # not a sequence
+    with pytest.raises(TypeError):
+        pyvista.Plotter(shape={1, 2})
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_bounds_axes_with_no_data():
     plotter = pyvista.Plotter()
     plotter.show_bounds()
@@ -88,13 +103,15 @@ def test_plot_show_grid():
 
 
 
+cpos_param = [[(2.0, 5.0, 13.0),
+              (0.0, 0.0, 0.0),
+              (-0.7, -0.5, 0.3)],
+             [-1, 2, -5],  # trigger view vector
+             [1.0, 2.0, 3.0],
+]
+cpos_param.extend(pyvista.plotting.Renderer.CAMERA_STR_ATTR_MAP)
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-@pytest.mark.parametrize('cpos', [[(2.0, 5.0, 13.0),
-                                   (0.0, 0.0, 0.0),
-                                   (-0.7, -0.5, 0.3)],
-                                  [-1, 2, -5],  # trigger view vector
-                                  [1.0, 2.0, 3.0],
-                                  'xy', 'xz', 'yz', 'yx', 'zx', 'zy'])
+@pytest.mark.parametrize('cpos', cpos_param)
 def test_set_camera_position(cpos, sphere):
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
@@ -640,6 +657,32 @@ def test_multi_renderers():
     plotter.show()
 
 
+def test_subplot_groups():
+    plotter = pyvista.Plotter(shape=(3,3), groups=[(1,[1,2]),(np.s_[:],0)])
+    plotter.subplot(0,0)
+    plotter.add_mesh(pyvista.Sphere())
+    plotter.subplot(0,1)
+    plotter.add_mesh(pyvista.Cube())
+    plotter.subplot(0,2)
+    plotter.add_mesh(pyvista.Arrow())
+    plotter.subplot(1,1)
+    plotter.add_mesh(pyvista.Cylinder())
+    plotter.subplot(2,1)
+    plotter.add_mesh(pyvista.Cone())
+    plotter.subplot(2,2)
+    plotter.add_mesh(pyvista.Box())
+    # Test group overlap
+    with pytest.raises(AssertionError):
+        # Partial overlap
+        pyvista.Plotter(shape=(3,3),groups=[([1,2],[0,1]),([0,1],[1,2])])
+    with pytest.raises(AssertionError):
+        # Full overlap (inner)
+        pyvista.Plotter(shape=(4,4),groups=[(np.s_[:],np.s_[:]),([1,2],[1,2])])
+    with pytest.raises(AssertionError):
+        # Full overlap (outer)
+        pyvista.Plotter(shape=(4,4),groups=[(1,[1,2]),([0,3],np.s_[:])])
+
+
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_link_views():
     plotter = pyvista.Plotter(shape=(1, 4), off_screen=OFF_SCREEN)
@@ -1007,3 +1050,35 @@ def test_reset_camera_clipping_range():
     pl.reset_camera_clipping_range()
     assert pl.camera.GetClippingRange() ==  default_clipping_range
     assert pl.camera.GetClippingRange() != (10,100)
+
+
+def test_index_vs_loc():
+    # first: 2d grid
+    pl = pyvista.Plotter(shape=(2, 3))
+    # index_to_loc valid cases
+    vals = [0, 2, 4]
+    expecteds = [(0, 0), (0, 2), (1, 1)]
+    for val,expected in zip(vals, expecteds):
+        assert tuple(pl.index_to_loc(val)) == expected
+    # loc_to_index valid cases
+    vals = [(0, 0), (0, 2), (1, 1)]
+    expecteds = [0, 2, 4]
+    for val,expected in zip(vals, expecteds):
+        assert pl.loc_to_index(val) == expected
+        assert pl.loc_to_index(expected) == expected
+    # failing cases
+    with pytest.raises(TypeError):
+        pl.loc_to_index({1, 2})
+    with pytest.raises(TypeError):
+        pl.index_to_loc(1.5)
+    with pytest.raises(TypeError):
+        pl.index_to_loc((1, 2))
+
+    # then: "1d" grid
+    pl = pyvista.Plotter(shape='2|3')
+    # valid cases
+    for val in range(5):
+        assert pl.index_to_loc(val) == val
+        assert pl.index_to_loc(np.int_(val)) == val
+        assert pl.loc_to_index(val) == val
+        assert pl.loc_to_index(np.int_(val)) == val

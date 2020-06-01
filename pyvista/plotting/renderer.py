@@ -1,6 +1,6 @@
 """Module containing pyvista implementation of vtkRenderer."""
 
-import collections
+import collections.abc
 import logging
 from weakref import proxy
 
@@ -100,6 +100,12 @@ class CameraPosition:
 class Renderer(vtkRenderer):
     """Renderer class."""
 
+    # map camera_position string to an attribute
+    CAMERA_STR_ATTR_MAP = {'xy': 'view_xy', 'xz': 'view_xz',
+                           'yz': 'view_yz', 'yx': 'view_yx',
+                           'zx': 'view_zx', 'zy': 'view_zy',
+                           'iso': 'view_isometric'}
+
     def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         """Initialize the renderer."""
@@ -138,23 +144,12 @@ class Renderer(vtkRenderer):
             return
         elif isinstance(camera_location, str):
             camera_location = camera_location.lower()
-            if camera_location == 'xy':
-                self.view_xy()
-            elif camera_location == 'xz':
-                self.view_xz()
-            elif camera_location == 'yz':
-                self.view_yz()
-            elif camera_location == 'yx':
-                self.view_yx()
-            elif camera_location == 'zx':
-                self.view_zx()
-            elif camera_location == 'zy':
-                self.view_zy()
-            else:
+            if camera_location not in self.CAMERA_STR_ATTR_MAP:
                 err = pyvista.core.errors.InvalidCameraError
                 raise err('Invalid view direction.  '
-                          'Use one of the following:\n'
-                          "    'xy', 'xz', 'yz', 'yx', 'zx', 'zy'")
+                          'Use one of the following:\n    %s'
+                          % ', '.join(self.CAMERA_STR_ATTR_MAP))
+            getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
         elif isinstance(camera_location[0], (int, float)):
             if len(camera_location) != 3:
@@ -1170,7 +1165,7 @@ class Renderer(vtkRenderer):
             except KeyError:
                 # If actor of that name is not present then return success
                 return False
-        if isinstance(actor, collections.Iterable):
+        if isinstance(actor, collections.abc.Iterable):
             success = False
             for a in actor:
                 rv = self.remove_actor(a, reset_camera=reset_camera)
@@ -1443,7 +1438,7 @@ class Renderer(vtkRenderer):
             self.remove_bounding_box()
 
         self.RemoveAllViewProps()
-        self._actors = None
+        self._actors = {}
         # remove reference to parent last
         self.parent = None
         return
