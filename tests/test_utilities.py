@@ -18,7 +18,7 @@ pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUT
 def test_createvectorpolydata_error():
     orig = np.random.random((3, 1))
     vec = np.random.random((3, 1))
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         helpers.vector_poly_data(orig, vec)
 
 

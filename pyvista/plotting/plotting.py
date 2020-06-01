@@ -18,7 +18,7 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import pyvista
 from pyvista.utilities import (assert_empty_kwargs,
                                convert_array, convert_string_array, get_array,
-                               is_pyvista_dataset, numpy_to_texture,
+                               is_pyvista_dataset, numpy_to_texture, abstract_class,
                                raise_not_matching, try_callback, wrap)
 from .background_renderer import BackgroundRenderer
 from .colors import get_cmap_safe
@@ -53,6 +53,7 @@ log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
 
+@abstract_class
 class BasePlotter(PickingHelper, WidgetHelper):
     """To be used by the Plotter and pyvistaqt.QtInteractor classes.
 
@@ -87,14 +88,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
     mouse_position = None
     click_position = None
 
-    def __new__(cls, *args, **kwargs):
-        """Create an instance of base plotter."""
-        if cls is BasePlotter:
-            raise TypeError("pyvista.BasePlotter is an abstract class and may not be instantiated.")
-        return object.__new__(cls)
-
     def __init__(self, shape=(1, 1), border=None, border_color='k',
-                 border_width=2.0, title=None, splitting_position=None):
+                 border_width=2.0, title=None, splitting_position=None,
+                 groups=None, row_weights=None, col_weights=None):
         """Initialize base plotter."""
         self.image_transparent_background = rcParams['transparent_background']
 
@@ -114,6 +110,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add render windows
         self._active_renderer_index = 0
         self.renderers = []
+
+        self.groups = np.empty((0,4),dtype=int)
 
         if isinstance(shape, str):
 
@@ -154,12 +152,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
                 self.renderers.append(arenderer)
 
-                self.shape = (n+m,)
+            self.shape = (n+m,)
+            self._render_idxs = np.arange(n+m)
 
         else:
 
             if not isinstance(shape, (np.ndarray, collections.abc.Sequence)):
-                raise TypeError('"shape" should be a list, tuple or string descriptor.')
+                raise TypeError('"shape" should be a list, tuple or string descriptor')
             if len(shape) != 2:
                 raise ValueError('"shape" must have length 2.')
             shape = np.asarray(shape)
@@ -167,15 +166,63 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError('"shape" must contain only positive integers.')
             # always assign shape as a tuple
             self.shape = tuple(shape)
-            for i in reversed(range(shape[0])):
-                for j in range(shape[1]):
-                    renderer = Renderer(self, border, border_color, border_width)
-                    x0 = i/shape[0]
-                    y0 = j/shape[1]
-                    x1 = (i+1)/shape[0]
-                    y1 = (j+1)/shape[1]
-                    renderer.SetViewport(y0, x0, y1, x1)
-                    self.renderers.append(renderer)
+            self._render_idxs = np.empty(self.shape,dtype=int)
+            # Check if row and col weights correspond to given shape, or initialize them to defaults (equally weighted)
+            # and convert to normalized offsets
+            if row_weights is None:
+                row_weights = np.ones(shape[0])
+            if col_weights is None:
+                col_weights = np.ones(shape[1])
+            assert(np.array(row_weights).size==shape[0])
+            assert(np.array(col_weights).size==shape[1])
+            row_off = np.cumsum(np.abs(row_weights))/np.sum(np.abs(row_weights))
+            row_off = 1-np.concatenate(([0],row_off))
+            col_off = np.cumsum(np.abs(col_weights))/np.sum(np.abs(col_weights))
+            col_off = np.concatenate(([0],col_off))
+            # Check and convert groups to internal format (Nx4 matrix where every row contains the row and col index of the top left cell
+            # together with the row and col index of the bottom right cell)
+            if groups is not None:
+                assert isinstance(groups, collections.Sequence), '"groups" should be a list or tuple'
+                for group in groups:
+                    assert isinstance(group, collections.Sequence) and len(group)==2, 'each group entry should be a list or tuple of 2 elements'
+                    rows = group[0]
+                    if isinstance(rows,slice):
+                        rows = np.arange(self.shape[0],dtype=int)[rows]
+                    cols = group[1]
+                    if isinstance(cols,slice):
+                        cols = np.arange(self.shape[1],dtype=int)[cols]
+                    # Get the normalized group, i.e. extract top left corner and bottom right corner from the given rows and cols
+                    norm_group = [np.min(rows),np.min(cols),np.max(rows),np.max(cols)]
+                    # Check for overlap with already defined groups:
+                    for i in range(norm_group[0],norm_group[2]+1):
+                        for j in range(norm_group[1],norm_group[3]+1):
+                            assert self.loc_to_group((i,j)) is None, 'groups cannot overlap'
+                    self.groups = np.concatenate((self.groups,np.array([norm_group],dtype=int)),axis=0)
+            # Create subplot renderers
+            for row in range(shape[0]):
+                for col in range(shape[1]):
+                    group = self.loc_to_group((row,col))
+                    nb_rows = None
+                    nb_cols = None
+                    if group is not None:
+                        if row==self.groups[group,0] and col==self.groups[group,1]:
+                            # Only add renderer for first location of the group
+                            nb_rows = 1+self.groups[group,2]-self.groups[group,0]
+                            nb_cols = 1+self.groups[group,3]-self.groups[group,1]
+                    else:
+                        nb_rows = 1
+                        nb_cols = 1
+                    if nb_rows is not None:
+                        renderer = Renderer(self, border, border_color, border_width)
+                        x0 = col_off[col]
+                        y0 = row_off[row+nb_rows]
+                        x1 = col_off[col+nb_cols]
+                        y1 = row_off[row]
+                        renderer.SetViewport(x0, y0, x1, y1)
+                        self._render_idxs[row,col] = len(self.renderers)
+                        self.renderers.append(renderer)
+                    else:
+                        self._render_idxs[row,col] = self._render_idxs[self.groups[group,0],self.groups[group,1]]
 
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self.renderers))]
@@ -211,6 +258,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.reset_key_events()
 
     #### Manage the active Renderer ####
+    
+    def loc_to_group(self, loc):
+        """Return group id of the given location index. Or None if this location is not part of any group."""
+        group_idxs = np.arange(self.groups.shape[0])
+        I = (loc[0]>=self.groups[:,0]) & (loc[0]<=self.groups[:,2]) & (loc[1]>=self.groups[:,1]) & (loc[1]<=self.groups[:,3])
+        group = group_idxs[I]
+        return None if group.size==0 else group[0]
 
     def loc_to_index(self, loc):
         """Return index of the render window given a location index.
@@ -233,16 +287,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return loc
         elif isinstance(loc, (np.ndarray, collections.abc.Sequence)):
             if not len(loc) == 2:
-                raise AssertionError('"loc" must contain two items')
+                raise ValueError('"loc" must contain two items')
             index_row = loc[0]
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
                 raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
             if index_column < 0 or index_column >= self.shape[1]:
                 raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
-            sz = int(self.shape[0] * self.shape[1])
-            idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
-            return idxs[index_row, index_column]
+            return self._render_idxs[index_row,index_column]
         else:
             raise TypeError('"loc" must be an integer or a sequence.')
 
@@ -252,11 +304,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('"index" must be a scalar integer.')
         if len(self.shape) == 1:
             return index
-        sz = int(self.shape[0] * self.shape[1])
-        idxs = np.array([i for i in range(sz)], dtype=int).reshape(self.shape)
-        args = np.argwhere(idxs == index)
+        args = np.argwhere(self._render_idxs == index)
         if len(args) < 1:
-            raise RuntimeError('Index ({}) is out of range.')
+            raise IndexError('Index ({}) is out of range.')
         return args[0]
 
     @property
@@ -826,7 +876,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self.ren_win, 'GetOffScreenFramebuffer'):
             if not self.ren_win.GetOffScreenFramebuffer().GetFBOIndex():
                 # must raise a runtime error as this causes a segfault on VTK9
-                raise RuntimeError('Invoking helper with no framebuffer')
+                raise ValueError('Invoking helper with no framebuffer')
         # Get 2D click location on window
         click_pos = self.iren.GetEventPosition()
 
@@ -1275,7 +1325,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     #       arrays where first index corresponds to
                     #       the block? This could get complicated real
                     #       quick.
-                    raise RuntimeError('scalars array must be given as a string name for multiblock datasets.')
+                    raise TypeError('scalars array must be given as a string name for multiblock datasets.')
 
             the_arguments = locals()
             the_arguments.pop('self')
@@ -1349,7 +1399,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             mesh.compute_normals(cell_normals=False, inplace=True)
 
         if mesh.n_points < 1:
-            raise RuntimeError('Empty meshes cannot be plotted. Input mesh has zero points.')
+            raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
 
         # Try to plot something if no preference given
         if scalars is None and color is None and texture is None:
@@ -1399,7 +1449,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not isinstance(texture, (vtk.vtkTexture, vtk.vtkOpenGLTexture)):
                 raise TypeError('Invalid texture type ({})'.format(type(texture)))
             if mesh.GetPointData().GetTCoords() is None:
-                raise AssertionError('Input mesh does not have texture coordinates to support the texture.')
+                raise ValueError('Input mesh does not have texture coordinates to support the texture.')
             actor.SetTexture(texture)
             # Set color to white by default when using a texture
             if color is None:
@@ -1423,7 +1473,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 opacity = opacity_transfer_function(opacity, n_colors)
             else:
                 if scalars.shape[0] != opacity.shape[0]:
-                    raise RuntimeError('Opacity array and scalars array must have the same number of elements.')
+                    raise ValueError('Opacity array and scalars array must have the same number of elements.')
         elif isinstance(opacity, (np.ndarray, list, tuple)):
             opacity = np.array(opacity)
             if scalars.shape[0] == opacity.shape[0]:
@@ -1583,10 +1633,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif style == 'surface':
             prop.SetRepresentationToSurface()
         else:
-            raise Exception('Invalid style.  Must be one of the following:\n'
-                            '\t"surface"\n'
-                            '\t"wireframe"\n'
-                            '\t"points"\n')
+            raise ValueError('Invalid style.  Must be one of the following:\n'
+                             '\t"surface"\n'
+                             '\t"wireframe"\n'
+                             '\t"points"\n')
 
         prop.SetPointSize(point_size)
         prop.SetAmbient(ambient)
@@ -1616,7 +1666,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # legend label
         if label:
             if not isinstance(label, str):
-                raise AssertionError('Label must be a string')
+                raise TypeError('Label must be a string')
             geom = pyvista.single_triangle()
             if scalars is not None:
                 geom = pyvista.Box()
@@ -1875,7 +1925,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if stitle is None:
                     stitle = volume.active_scalars_info[1]
             else:
-                raise RuntimeError('No scalars to use for volume rendering.')
+                raise ValueError('No scalars to use for volume rendering.')
         elif isinstance(scalars, str):
             pass
 
@@ -1909,7 +1959,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'smart': vtk.vtkSmartVolumeMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers.keys():
-            raise RuntimeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
+            raise TypeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
         self.mapper = make_mapper(mappers[mapper])
 
         # Scalars interpolation approach
@@ -1957,8 +2007,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if cmap is not None:
             if not has_matplotlib:
-                cmap = None
-                raise RuntimeError('Please install matplotlib for volume rendering.')
+                raise ImportError('Please install matplotlib for volume rendering.')
 
             cmap = get_cmap_safe(cmap)
             if categories:
@@ -2058,7 +2107,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('clim argument must be a length 2 iterable of values: (min, max).')
         if name is None:
             if not hasattr(self, 'mapper'):
-                raise RuntimeError('This plotter does not have an active mapper.')
+                raise AttributeError('This plotter does not have an active mapper.')
             self.mapper.scalar_range = clim
             return
 
@@ -2264,8 +2313,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # check if maper exists
         if mapper is None:
             if not hasattr(self, 'mapper') or self.mapper is None:
-                raise Exception('Mapper does not exist.  '
-                                'Add a mesh with scalars first.')
+                raise AttributeError('Mapper does not exist.  '
+                                     'Add a mesh with scalars first.')
             mapper = self.mapper
 
         if title:
@@ -2422,8 +2471,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if self.shape != (1, 1):
                 interactive = False
         elif interactive and self.shape != (1, 1):
-            err_str = 'Interactive scalar bars disabled for multi-renderer plots'
-            raise Exception(err_str)
+            raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
 
         if interactive and hasattr(self, 'iren'):
             self.scalar_widget = vtk.vtkScalarBarWidget()
@@ -2497,7 +2545,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         vtk_scalars = data.GetScalars()
         if vtk_scalars is None:
-            raise Exception('No active scalars')
+            raise ValueError('No active scalars')
         s = convert_array(vtk_scalars)
         s[:] = scalars
         data.Modified()
@@ -2728,7 +2776,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if filename[-3:] != 'gif':
-            raise Exception('Unsupported filetype.  Must end in .gif')
+            raise ValueError('Unsupported filetype.  Must end in .gif')
         if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
             filename = os.path.join(pyvista.FIGURE_PATH, filename)
         self._gif_filename = os.path.abspath(filename)
@@ -2737,7 +2785,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def write_frame(self):
         """Write a single frame to the movie file."""
         if not hasattr(self, 'mwriter'):
-            raise AssertionError('This plotter has not opened a movie or GIF file.')
+            raise RuntimeError('This plotter has not opened a movie or GIF file.')
         self.mwriter.append_data(self.image)
 
     def _run_image_filter(self, ifilter):
@@ -2844,7 +2892,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not isinstance(lines, np.ndarray):
-            raise Exception('Input should be an array of point segments')
+            raise TypeError('Input should be an array of point segments')
 
         lines = pyvista.lines_from_points(lines)
 
@@ -2857,7 +2905,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # legend label
         if label:
             if not isinstance(label, str):
-                raise AssertionError('Label must be a string')
+                raise TypeError('Label must be a string')
             self._labels.append([lines, label, rgb_color])
 
         # Create actor
@@ -2990,7 +3038,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise TypeError('Points type not usable: {}'.format(type(points)))
 
         if len(vtkpoints.points) != len(labels):
-            raise Exception('There must be one label for each point')
+            raise ValueError('There must be one label for each point')
 
         if name is None:
             name = '{}({})'.format(type(vtkpoints).__name__, vtkpoints.memory_address)
@@ -3022,7 +3070,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif shape.lower() in 'rounded_rect':
             labelMapper.SetShapeToRoundedRect()
         else:
-            raise RuntimeError('Shape ({}) not understood'.format(shape))
+            raise ValueError('Shape ({}) not understood'.format(shape))
         if fill_shape:
             labelMapper.SetStyleToFilled()
         else:
@@ -3129,7 +3177,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not image.size:
-            raise Exception('Empty image.  Have you run plot() first?')
+            raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file
         supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
         if isinstance(filename, str):
@@ -3157,7 +3205,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         extension = pyvista.fileio.get_ext(filename)
         valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
         if extension not in valid:
-            raise RuntimeError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
+            raise ValueError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
         writer = vtk.vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
@@ -3315,10 +3363,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if labels is None:
             # use existing labels
             if not self._labels:
-                raise Exception('No labels input.\n\n'
-                                'Add labels to individual items when adding them to'
-                                'the plotting object with the "label=" parameter.  '
-                                'or enter them as the "labels" parameter.')
+                raise ValueError('No labels input.\n\n'
+                                 'Add labels to individual items when adding them to'
+                                 'the plotting object with the "label=" parameter.  '
+                                 'or enter them as the "labels" parameter.')
 
             self.legend.SetNumberOfEntries(len(self._labels))
             for i, (vtk_object, text, color) in enumerate(self._labels):
@@ -3652,6 +3700,7 @@ class Plotter(BasePlotter):
     right_timer_id = -1
 
     def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
+                 groups=None, row_weights=None, col_weights=None,
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
@@ -3660,8 +3709,11 @@ class Plotter(BasePlotter):
         super().__init__(shape=shape, border=border,
                          border_color=border_color,
                          border_width=border_width,
+                         groups=groups, row_weights=row_weights, 
+                         col_weights=col_weights,
                          splitting_position=splitting_position,
                          title=title)
+
         log.debug('Initializing')
 
         def on_timer(iren, event_id):
@@ -3876,7 +3928,7 @@ class Plotter(BasePlotter):
             try:
                 import IPython
             except ImportError:
-                raise Exception('Install IPython to display image in a notebook')
+                raise ImportError('Install IPython to display image in a notebook')
             if not hasattr(self, 'last_image'):
                 self.last_image = self.screenshot(screenshot, return_img=True)
             disp = IPython.display.display(PIL.Image.fromarray(self.last_image))

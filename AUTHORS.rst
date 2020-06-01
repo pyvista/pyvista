@@ -16,3 +16,4 @@ considered "The PyVista Developers":
 - Bane Sullivan, (`@banesullivan <https://github.com/banesullivan/>`_)
 - Henrik Åhl, (`@supersubscript <https://github.com/supersubscript/>`_)
 - Guillaume Favelier, (`@GuillaumeFavelier <https://github.com/GuillaumeFavelier/>`_)
+- Jevin Jones, (`@JevinJ <https://github.com/JevinJ/>`_)

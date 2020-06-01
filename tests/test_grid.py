@@ -1,4 +1,5 @@
 import os
+import weakref
 
 import numpy as np
 import pytest
@@ -46,10 +47,10 @@ def test_init_from_unstructured(hexbeam):
 
 
 def test_init_bad_input():
-    with pytest.raises(Exception):
+    with pytest.raises(TypeError):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1))
 
-    with pytest.raises(Exception):
+    with pytest.raises(TypeError):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1),
                                                  np.array(1),
                                                  np.array(1),
@@ -92,6 +93,13 @@ def test_init_from_arrays():
     assert np.allclose(cells, grid.cells)
 
 
+def test_destructor():
+    ugrid = examples.load_hexbeam()
+    ref = weakref.ref(ugrid)
+    del ugrid
+    assert ref() is None
+
+
 def test_surface_indices(hexbeam):
     surf = hexbeam.extract_surface()
     surf_ind = surf.point_arrays['vtkOriginalPointIds']
@@ -129,15 +137,15 @@ def test_save(extension, binary, tmpdir, hexbeam):
 
 def test_init_bad_filename():
     filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid = pyvista.UnstructuredGrid(filename)
 
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         grid = pyvista.UnstructuredGrid('not a file')
 
 
 def test_save_bad_extension():
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         grid = pyvista.UnstructuredGrid('file.abc')
 
 
@@ -222,7 +230,7 @@ def test_invalid_init_structured():
     zrng = np.arange(-10, 10, 2)
     x, y, z = np.meshgrid(xrng, yrng, zrng)
     z = z[:, :, :2]
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid = pyvista.StructuredGrid(x, y, z)
 
 
@@ -245,11 +253,11 @@ def test_save_structured(extension, binary, tmpdir, struct_grid):
 
 
 def test_load_structured_bad_filename():
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         pyvista.StructuredGrid('not a file')
 
     filename = os.path.join(test_path, 'test_grid.py')
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid = pyvista.StructuredGrid(filename)
 
 

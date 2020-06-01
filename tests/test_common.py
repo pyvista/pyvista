@@ -63,7 +63,7 @@ def test_point_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.point_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.point_arrays['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -103,7 +103,7 @@ def test_cell_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
 
 
@@ -462,13 +462,13 @@ def test_set_t_coords(grid):
     with pytest.raises(TypeError):
         grid.t_coords = [1, 2, 3]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty(10)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((3, 3))
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((grid.n_points, 1))
 
 
@@ -530,7 +530,7 @@ def test_rename_array_field(grid):
 
 
 def test_change_name_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         grid.rename_array('not a key', '')
 
 
@@ -570,7 +570,7 @@ def test_set_item(grid):
         grid['tmp'] = None
 
     # field data
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid['bad_field'] = range(5)
 
 
@@ -593,7 +593,7 @@ def test_set_cell_vectors(grid):
 
 
 def test_axis_rotation_invalid():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 

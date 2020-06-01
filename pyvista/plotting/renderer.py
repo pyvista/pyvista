@@ -100,6 +100,12 @@ class CameraPosition:
 class Renderer(vtkRenderer):
     """Renderer class."""
 
+    # map camera_position string to an attribute
+    CAMERA_STR_ATTR_MAP = {'xy': 'view_xy', 'xz': 'view_xz',
+                           'yz': 'view_yz', 'yx': 'view_yx',
+                           'zx': 'view_zx', 'zy': 'view_zy',
+                           'iso': 'view_isometric'}
+
     def __init__(self, parent, border=True, border_color=(1, 1, 1),
                  border_width=2.0):
         """Initialize the renderer."""
@@ -136,30 +142,33 @@ class Renderer(vtkRenderer):
         """Set camera position of all active render windows."""
         if camera_location is None:
             return
-
-        if isinstance(camera_location, str):
+        elif isinstance(camera_location, str):
             camera_location = camera_location.lower()
-            if camera_location == 'xy':
-                self.view_xy()
-            elif camera_location == 'xz':
-                self.view_xz()
-            elif camera_location == 'yz':
-                self.view_yz()
-            elif camera_location == 'yx':
-                self.view_yx()
-            elif camera_location == 'zx':
-                self.view_zx()
-            elif camera_location == 'zy':
-                self.view_zy()
-            return
+            if camera_location not in self.CAMERA_STR_ATTR_MAP:
+                err = pyvista.core.errors.InvalidCameraError
+                raise err('Invalid view direction.  '
+                          'Use one of the following:\n    %s'
+                          % ', '.join(self.CAMERA_STR_ATTR_MAP))
+            getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
-        if isinstance(camera_location[0], (int, float)):
+        elif isinstance(camera_location[0], (int, float)):
+            if len(camera_location) != 3:
+                raise pyvista.core.errors.InvalidCameraError
             self.view_vector(camera_location)
+        else:
+            # check if a valid camera position
+            if not isinstance(camera_location, CameraPosition):
+                if not len(camera_location) == 3:
+                    raise pyvista.core.errors.InvalidCameraError
+                elif any([len(item) != 3 for item in camera_location]):
+                    raise pyvista.core.errors.InvalidCameraError
 
-        # everything is set explicitly
-        self.camera.SetPosition(scale_point(self.camera, camera_location[0], invert=False))
-        self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1], invert=False))
-        self.camera.SetViewUp(camera_location[2])
+            # everything is set explicitly
+            self.camera.SetPosition(scale_point(self.camera, camera_location[0],
+                                                invert=False))
+            self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1],
+                                                  invert=False))
+            self.camera.SetViewUp(camera_location[2])
 
         # reset clipping range
         self.ResetCameraClippingRange()
@@ -386,7 +395,7 @@ class Renderer(vtkRenderer):
                 except AttributeError:  # pragma: no cover
                     pass
             else:
-                raise RuntimeError('Culling option ({}) not understood.'.format(culling))
+                raise ValueError('Culling option ({}) not understood.'.format(culling))
 
         actor.SetPickable(pickable)
 
@@ -1429,7 +1438,7 @@ class Renderer(vtkRenderer):
             self.remove_bounding_box()
 
         self.RemoveAllViewProps()
-        self._actors = None
+        self._actors = {}
         # remove reference to parent last
         self.parent = None
         return

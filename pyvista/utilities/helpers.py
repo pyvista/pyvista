@@ -200,11 +200,11 @@ def parse_field_choice(field):
         elif field in ['row', 'r',]:
             field = FieldAssociation.ROW
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(field))
+            raise ValueError('Data field ({}) not supported.'.format(field))
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise RuntimeError('Data field ({}) not supported.'.format(field))
+        raise ValueError('Data field ({}) not supported.'.format(field))
     return field
 
 
@@ -258,7 +258,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
             else:
                 return farr
         else:
-            raise RuntimeError('Data field ({}) not supported.'.format(preference))
+            raise ValueError('Data field ({}) not supported.'.format(preference))
     arr = None
     field = None
     if parr is not None:
@@ -317,8 +317,8 @@ def line_segments_from_points(points):
     >>> lines.plot() # doctest:+SKIP
 
     """
-    if len(points) % 2:
-        raise RuntimeError("An even number of points must be given to define each segment.")
+    if len(points) % 2 != 0:
+        raise ValueError("An even number of points must be given to define each segment.")
     # Assuming ordered points, create array defining line order
     n_points = len(points)
     n_lines = n_points // 2
@@ -374,12 +374,12 @@ def vector_poly_data(orig, vec):
     if orig.ndim != 2:
         orig = orig.reshape((-1, 3))
     elif orig.shape[1] != 3:
-        raise Exception('orig array must be 3D')
+        raise ValueError('orig array must be 3D')
 
     if vec.ndim != 2:
         vec = vec.reshape((-1, 3))
     elif vec.shape[1] != 3:
-        raise Exception('vec array must be 3D')
+        raise ValueError('vec array must be 3D')
 
     # Create vtk points and cells objects
     vpts = vtk.vtkPoints()
@@ -503,7 +503,7 @@ def is_inside_bounds(point, bounds):
         point = [point]
     if isinstance(point, (np.ndarray, collections.abc.Sequence)) and not isinstance(point, collections.deque):
         if len(bounds) < 2 * len(point) or len(bounds) % 2 != 0:
-            raise AssertionError('Bounds mismatch point dimensionality')
+            raise ValueError('Bounds mismatch point dimensionality')
         point = collections.deque(point)
         bounds = collections.deque(bounds)
         return is_inside_bounds(point, bounds)
@@ -543,14 +543,14 @@ def fit_plane_to_points(points, return_meta=False):
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
     if isinstance(mesh, vtk.vtkTable):
-        raise Exception('Number of scalars ({})'.format(scalars.size) +
-                        'must match number of rows ' +
-                        '({}).'.format(mesh.n_rows) )
-    raise Exception('Number of scalars ({}) '.format(scalars.size) +
-                    'must match either the number of points ' +
-                    '({}) '.format(mesh.n_points) +
-                    'or the number of cells ' +
-                    '({}). '.format(mesh.n_cells) )
+        raise ValueError('Number of scalars ({})'.format(scalars.size) +
+                         'must match number of rows ' +
+                         '({}).'.format(mesh.n_rows) )
+    raise ValueError('Number of scalars ({}) '.format(scalars.size) +
+                     'must match either the number of points ' +
+                     '({}) '.format(mesh.n_points) +
+                     'or the number of cells ' +
+                     '({}). '.format(mesh.n_cells) )
 
 
 def generate_plane(normal, origin):
@@ -710,3 +710,19 @@ class ProgressMonitor():
         self.algorithm.RemoveObservers(self.event_type)
         if threading.current_thread().__class__.__name__ == '_MainThread':
             signal.signal(signal.SIGINT, self._old_handler)
+
+
+def abstract_class(cls_):
+    """Decorate a class, overriding __new__.
+
+    Preventing a class from being instantiated similar to abc.ABCMeta
+      but does not require an abstract method.
+    """
+
+    def __new__(cls, *args, **kwargs):
+        if cls is cls_:
+            raise TypeError('{} is an abstract class and may not be instantiated.'
+                            .format(cls.__name__))
+        return object.__new__(cls)
+    cls_.__new__ = __new__
+    return cls_

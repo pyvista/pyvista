@@ -33,7 +33,7 @@ from vtk.util.numpy_support import vtk_to_numpy
 import pyvista
 from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
                                generate_plane, get_array, vtk_id_list_to_array,
-                               wrap, ProgressMonitor)
+                               wrap, ProgressMonitor, abstract_class)
 from pyvista.utilities.cells import numpy_to_idarr
 from pyvista.core.errors import NotAllTrianglesError
 
@@ -59,13 +59,9 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
     return data
 
 
+@abstract_class
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the dataset filters."""
-        if cls is DataSetFilters:
-            raise TypeError("pyvista.DataSetFilters is an abstract class and may not be instantiated.")
 
     def _clip_with_function(dataset, function, invert=True, value=0.0):
         """Clip using an implicit function (internal helper)."""
@@ -165,7 +161,7 @@ class DataSetFilters:
         elif isinstance(bounds, pyvista.PolyData):
             poly = bounds
             if poly.n_cells != 6:
-                raise RuntimeError("The bounds mesh must have only 6 faces.")
+                raise ValueError("The bounds mesh must have only 6 faces.")
             bounds = []
             poly.compute_normals()
             for cid in range(6):
@@ -173,8 +169,10 @@ class DataSetFilters:
                 normal = cell["Normals"][0]
                 bounds.append(normal)
                 bounds.append(cell.center)
-        if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)) or len(bounds) not in [3, 6, 12]:
+        if not isinstance(bounds, (np.ndarray, collections.abc.Sequence)):
             raise TypeError('Bounds must be a sequence of floats with length 3, 6 or 12.')
+        if len(bounds) not in [3, 6, 12]:
+            raise ValueError('Bounds must be a sequence of floats with length 3, 6 or 12.')
         if len(bounds) == 3:
             xmin, xmax, ymin, ymax, zmin, zmax = dataset.bounds
             bounds = (xmin,xmin+bounds[0], ymin,ymin+bounds[1], zmin,zmin+bounds[2])
@@ -381,7 +379,7 @@ class DataSetFilters:
             try:
                 ax = axes[axis]
             except KeyError:
-                raise RuntimeError('Axis ({}) not understood'.format(axis))
+                raise ValueError('Axis ({}) not understood'.format(axis))
         # get the locations along that axis
         if bounds is None:
             bounds = dataset.bounds
@@ -428,7 +426,7 @@ class DataSetFilters:
         """
         # check that we have a PolyLine cell in the input line
         if line.GetNumberOfCells() != 1:
-            raise AssertionError('Input line must have only one cell.')
+            raise ValueError('Input line must have only one cell.')
         polyline = line.GetCell(0)
         if not isinstance(polyline, vtk.vtkPolyLine):
             raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
@@ -503,7 +501,7 @@ class DataSetFilters:
         arr, field = get_array(dataset, scalars, preference=preference, info=True)
 
         if arr is None:
-            raise AssertionError('No arrays present to threshold.')
+            raise ValueError('No arrays present to threshold.')
 
         # If using an inverted range, merge the result of two filters:
         if isinstance(value, (np.ndarray, collections.abc.Sequence)) and invert:
@@ -533,7 +531,7 @@ class DataSetFilters:
         # check if value is a sequence (if so threshold by min max range like ParaView)
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             if len(value) != 2:
-                raise AssertionError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
+                raise ValueError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
             alg.ThresholdBetween(value[0], value[1])
         elif isinstance(value, collections.abc.Iterable):
             raise TypeError('Value must either be a single scalar or a sequence.')
@@ -587,9 +585,9 @@ class DataSetFilters:
             if percent >= 1:
                 percent = float(percent) / 100.0
                 if percent > 1:
-                    raise RuntimeError('Percentage ({}) is out of range (0, 1).'.format(percent))
+                    raise ValueError('Percentage ({}) is out of range (0, 1).'.format(percent))
             if percent < 1e-10:
-                raise RuntimeError('Percentage ({}) is too close to zero or negative.'.format(percent))
+                raise ValueError('Percentage ({}) is too close to zero or negative.'.format(percent))
             return percent
 
         def _get_val(percent, dmin, dmax):
@@ -742,7 +740,7 @@ class DataSetFilters:
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
-            raise RuntimeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
+            raise TypeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
         # Construct the filter
         alg = vtk.vtkElevationFilter()
         alg.SetInputDataObject(dataset)
@@ -810,7 +808,7 @@ class DataSetFilters:
             raise ValueError("Method '{}' is not supported".format(method))
         # Make sure the input has scalars to contour on
         if dataset.n_arrays < 1:
-            raise AssertionError('Input dataset for the contour filter must have scalar data.')
+            raise ValueError('Input dataset for the contour filter must have scalar data.')
         alg.SetInputDataObject(dataset)
         alg.SetComputeNormals(compute_normals)
         alg.SetComputeGradients(compute_gradients)
@@ -822,7 +820,7 @@ class DataSetFilters:
             _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise AssertionError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
+            raise TypeError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
@@ -835,7 +833,7 @@ class DataSetFilters:
             for i, val in enumerate(isosurfaces):
                 alg.SetValue(i, val)
         else:
-            raise RuntimeError('isosurfaces not understood.')
+            raise TypeError('isosurfaces not understood.')
         _update_alg(alg, progress_bar, 'Computing Contour')
         return _get_output(alg)
 
@@ -1134,7 +1132,7 @@ class DataSetFilters:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference='point', info=True)
         if field != FieldAssociation.POINT:
-            raise RuntimeError('Dataset can only by warped by a point data array.')
+            raise TypeError('Dataset can only by warped by a point data array.')
         # Run the algorithm
         alg = vtk.vtkWarpScalar()
         alg.SetInputDataObject(dataset)
@@ -1184,7 +1182,7 @@ class DataSetFilters:
             field, vectors = dataset.active_vectors_info
         arr, field = get_array(dataset, vectors, preference='point', info=True)
         if arr is None:
-            raise RuntimeError('No active vectors')
+            raise TypeError('No active vectors')
 
         # check that this is indeed a vector field
         if arr.ndim != 2 or arr.shape[1] != 3:
@@ -2182,7 +2180,7 @@ class DataSetFilters:
         if scalars is None:
             field, scalars = dataset.active_scalars_info
             if scalars is None:
-                raise RuntimeError('No active scalars.  Must input scalars array name')
+                raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
         _, field = dataset.get_array(scalars, preference=preference, info=True)
@@ -2194,13 +2192,9 @@ class DataSetFilters:
         return _get_output(alg)
 
 
+@abstract_class
 class CompositeFilters:
     """An internal class to manage filtes/algorithms for composite datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the composite filters."""
-        if cls is CompositeFilters:
-            raise TypeError("pyvista.CompositeFilters is an abstract class and may not be instantiated.")
 
     def extract_geometry(composite):
         """Combine the geomertry of all blocks into a single ``PolyData`` object.
@@ -2297,13 +2291,9 @@ class CompositeFilters:
         return box.outline_corners(factor=factor)
 
 
+@abstract_class
 class PolyDataFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for polydata datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the polydata filters."""
-        if cls is PolyDataFilters:
-            raise TypeError("pyvista.PolyDataFilters is an abstract class and may not be instantiated.")
 
     def edge_mask(poly_data, angle):
         """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
@@ -2498,8 +2488,8 @@ class PolyDataFilters(DataSetFilters):
         elif curv_type == 'minimum':
             curvefilter.SetCurvatureTypeToMinimum()
         else:
-            raise Exception('Curv_Type must be either "Mean", '
-                            '"Gaussian", "Maximum", or "Minimum"')
+            raise ValueError('Curv_Type must be either "Mean", '
+                             '"Gaussian", "Maximum", or "Minimum"')
         curvefilter.Update()
 
         # Compute and return curvature
@@ -2810,8 +2800,8 @@ class PolyDataFilters(DataSetFilters):
         elif subfilter == 'loop':
             sfilter = vtk.vtkLoopSubdivisionFilter()
         else:
-            raise Exception("Subdivision filter must be one of the following: "
-                            "'butterfly', 'loop', or 'linear'")
+            raise ValueError("Subdivision filter must be one of the following: "
+                             "'butterfly', 'loop', or 'linear'")
 
         # Subdivide
         sfilter.SetNumberOfSubdivisions(nsub)
@@ -3144,7 +3134,7 @@ class PolyDataFilters(DataSetFilters):
 
         # Check output so no segfaults occur
         if output.n_points < 1:
-            raise RuntimeError('Clean tolerance is too high. Empty mesh returned.')
+            raise ValueError('Clean tolerance is too high. Empty mesh returned.')
 
         if inplace:
             poly_data.overwrite(output)
@@ -3416,7 +3406,7 @@ class PolyDataFilters(DataSetFilters):
             raise NotAllTrianglesError('Can only flip normals on an all triangle mesh')
 
         f = poly_data.faces.reshape((-1, 4))
-        f[:, 1:] = f[:, 1:][:, ::-1]        
+        f[:, 1:] = f[:, 1:][:, ::-1]
 
     def delaunay_2d(poly_data, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     inplace=False, edge_source=None, progress_bar=False):
@@ -3650,13 +3640,9 @@ class PolyDataFilters(DataSetFilters):
         poly_data.overwrite(output)
 
 
+@abstract_class
 class UnstructuredGridFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for unstructured grid datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the unstructured grid."""
-        if cls is UnstructuredGridFilters:
-            raise TypeError("pyvista.UnstructuredGridFilters is an abstract class and may not be instantiated.")
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     progress_bar=False):
@@ -3675,13 +3661,9 @@ class UnstructuredGridFilters(DataSetFilters):
                                                           progress_bar=progress_bar)
 
 
+@abstract_class
 class UniformGridFilters(DataSetFilters):
     """An internal class to manage filtes/algorithms for uniform grid datasets."""
-
-    def __new__(cls, *args, **kwargs):  # pragma: no cover
-        """Allocate memory for the uniform grid."""
-        if cls is UniformGridFilters:
-            raise TypeError("pyvista.UniformGridFilters is an abstract class and may not be instantiated.")
 
     def gaussian_smooth(dataset, radius_factor=1.5, std_dev=2.,
                         scalars=None, preference='points', progress_bar=False):

@@ -14,6 +14,7 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
 from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
+from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
@@ -397,14 +398,9 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return alg.GetOutput().GetNumberOfCells()
 
 
+@abstract_class
 class PointGrid(PointSet):
     """Class in common with structured and unstructured grids."""
-
-    def __new__(cls, *args, **kwargs):
-        """Allocate memory for the point grid."""
-        if cls is PointGrid:
-            raise TypeError("pyvista.PointGrid is an abstract class and may not be instantiated.")
-        return object.__new__(cls, *args, **kwargs)
 
     def __init__(self, *args, **kwargs):
         """Initialize the point grid."""
@@ -471,10 +467,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
     >>> # from arrays (vtk9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, deep=True)
+    >>> #grid = pyvista.UnstructuredGrid(cells, celltypes, points)
 
     >>> # from arrays (vtk<9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, offset, deep=True)
+    >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
 
     >>> # From a string filename
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
@@ -507,7 +503,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             else:
                 itype = type(args[0])
-                raise Exception('Cannot work with input type %s' % itype)
+                raise TypeError('Cannot work with input type %s' % itype)
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -517,7 +513,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(None, args[0], args[1], args[2], deep)
             else:
-                raise Exception('All input types must be np.ndarray')
+                raise TypeError('All input types must be np.ndarray')
 
         elif len(args) == 4:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -528,7 +524,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
             else:
-                raise Exception('All input types must be np.ndarray')
+                raise TypeError('All input types must be np.ndarray')
 
     def __repr__(self):
         """Return the standard representation."""
@@ -765,7 +761,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
 
         """
         if not(x.shape == y.shape == z.shape):
-            raise Exception('Input point array shapes must match exactly')
+            raise ValueError('Input point array shapes must match exactly')
 
         # make the output points the same precision as the input arrays
         points = np.empty((x.size, 3), x.dtype)
