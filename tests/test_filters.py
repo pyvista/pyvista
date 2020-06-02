@@ -441,6 +441,23 @@ def test_glyph():
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
                           clamping=False, rng=[1, 1])
+    # passing one or more custom glyphs
+    geoms = [pyvista.Sphere(), pyvista.Arrow(), pyvista.ParametricSuperToroid()]
+    indices = range(len(geoms))
+    result = sphere.glyph(geom=geoms[0])
+    result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
+    with pytest.raises(TypeError):
+        # wrong type for the glyph
+        sphere.glyph(geom=pyvista.StructuredGrid())
+    with pytest.raises(TypeError):
+        # missing indices
+        sphere.glyph(geom=geoms)
+    with pytest.raises(TypeError):
+        # wrong type for the indices
+        sphere.glyph(geom=geoms, indices=set(indices))
+    with pytest.raises(ValueError):
+        # wrong length for the indices
+        sphere.glyph(geom=geoms, indices=indices[:-1])
 
 
 def test_split_and_connectivity():
