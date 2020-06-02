@@ -92,6 +92,12 @@ def test_init_from_arrays():
     assert grid.n_cells == 2
     assert np.allclose(cells, grid.cells)
 
+    if VTK9:
+        assert np.allclose(grid.cell_connectivity, np.arange(16))
+    else:
+        with pytest.raises(AttributeError):
+            grid.cell_connectivity
+
 
 def test_destructor():
     ugrid = examples.load_hexbeam()
@@ -153,6 +159,43 @@ def test_linear_copy(hexbeam):
     # need a grid with quadratic cells
     lgrid = hexbeam.linear_copy()
     assert np.all(lgrid.celltypes < 20)
+
+
+def test_linear_copy_surf_elem():
+    cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 6, 8, 9, 10, 11, 12, 13], np.int32)
+    celltypes = np.array([vtk.VTK_QUADRATIC_QUAD, vtk.VTK_QUADRATIC_TRIANGLE],
+                         np.uint8)
+
+    cell0 = [[0.0, 0.0, 0.0],
+             [1.0, 0.0, 0.0],
+             [1.0, 1.0, 0.0],
+             [0.0, 1.0, 0.0],
+             [0.5, 0.1, 0.0],
+             [1.1, 0.5, 0.0],
+             [0.5, 0.9, 0.0],
+             [0.1, 0.5, 0.0]]
+
+    cell1 = [[0.0, 0.0, 1.0],
+             [1.0, 0.0, 1.0],
+             [0.5, 0.5, 1.0],
+             [0.5, 0.0, 1.3],
+             [0.7, 0.7, 1.3],
+             [0.1, 0.1, 1.3]]
+
+    points = np.vstack((cell0, cell1))
+    if VTK9:
+        grid = pyvista.UnstructuredGrid(cells, celltypes, points, deep=False)
+    else:
+        offset = np.array([0, 9])
+        grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points, deep=False)
+
+    lgrid = grid.linear_copy()
+
+    qfilter = vtk.vtkMeshQuality()
+    qfilter.SetInputData(lgrid)
+    qfilter.Update()
+    qual = pyvista.wrap(qfilter.GetOutput())['Quality']
+    assert np.allclose(qual, [1, 1.4], atol=0.01)
 
 
 def test_extract_cells(hexbeam):
