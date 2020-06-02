@@ -623,7 +623,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         carr = self.GetCells()
         if hasattr(carr, 'GetConnectivityArray'):  # available >= VTK9
             return vtk_to_numpy(carr.GetConnectivityArray())
-        return None
+        raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
+                             'Otherwise, use the legacy `cells` method')
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.

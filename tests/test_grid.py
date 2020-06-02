@@ -95,7 +95,8 @@ def test_init_from_arrays():
     if VTK9:
         assert np.allclose(grid.cell_connectivity, np.arange(16))
     else:
-        assert grid.cell_connectivity is None
+        with pytest.raises(AttributeError):
+            grid.cell_connectivity
 
 
 def test_destructor():
