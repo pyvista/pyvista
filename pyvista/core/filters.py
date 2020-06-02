@@ -3353,12 +3353,12 @@ class PolyDataFilters(DataSetFilters):
         if not issubclass(remove.dtype.type, (np.bool_, np.integer)):
             raise TypeError('Remove must be either a mask or an integer array-like')
 
-        if remove.dtype == np.bool:
+        if remove.dtype == np.bool_:
             if remove.size != poly_data.n_points:
                 raise ValueError('Mask different size than n_points')
             remove_mask = remove
         else:
-            remove_mask = np.zeros(poly_data.n_points, np.bool)
+            remove_mask = np.zeros(poly_data.n_points, np.bool_)
             remove_mask[remove] = True
 
         if not poly_data.is_all_triangles():

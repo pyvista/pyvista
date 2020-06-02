@@ -268,8 +268,8 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
             if np.max(mapping) > 1.0 or np.min(mapping) < 0.0:
                 mapping = normalize(mapping)
             # Interpolate transfer function to match lookup table
-            xo = np.linspace(0, n_colors, len(mapping), dtype=np.int)
-            xx = np.linspace(0, n_colors, n_colors, dtype=np.int)
+            xo = np.linspace(0, n_colors, len(mapping), dtype=np.int_)
+            xx = np.linspace(0, n_colors, n_colors, dtype=np.int_)
             try:
                 if not interpolate:
                     raise ValueError('No interpolation.')

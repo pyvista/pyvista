@@ -152,12 +152,12 @@ def test_table_row_arrays():
 def test_table_row_np_bool():
     n = 50
     table = pyvista.Table()
-    bool_arr = np.zeros(n, np.bool)
+    bool_arr = np.zeros(n, np.bool_)
     table.row_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert table.row_arrays['bool_arr'].all()
     assert table._row_array('bool_arr').all()
-    assert table._row_array('bool_arr').dtype == np.bool
+    assert table._row_array('bool_arr').dtype == np.bool_
 
 
 def test_table_row_uint8():

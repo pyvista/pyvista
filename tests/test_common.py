@@ -247,30 +247,30 @@ def test_invalid_points(grid):
 
 
 def test_points_np_bool(grid):
-    bool_arr = np.zeros(grid.n_points, np.bool)
+    bool_arr = np.zeros(grid.n_points, np.bool_)
     grid.point_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.point_arrays['bool_arr'].all()
     assert grid.point_arrays['bool_arr'].all()
-    assert grid.point_arrays['bool_arr'].dtype == np.bool
+    assert grid.point_arrays['bool_arr'].dtype == np.bool_
 
 
 def test_cells_np_bool(grid):
-    bool_arr = np.zeros(grid.n_cells, np.bool)
+    bool_arr = np.zeros(grid.n_cells, np.bool_)
     grid.cell_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.cell_arrays['bool_arr'].all()
     assert grid.cell_arrays['bool_arr'].all()
-    assert grid.cell_arrays['bool_arr'].dtype == np.bool
+    assert grid.cell_arrays['bool_arr'].dtype == np.bool_
 
 
 def test_field_np_bool(grid):
-    bool_arr = np.zeros(grid.n_cells // 3, np.bool)
+    bool_arr = np.zeros(grid.n_cells // 3, np.bool_)
     grid.field_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.field_arrays['bool_arr'].all()
     assert grid.field_arrays['bool_arr'].all()
-    assert grid.field_arrays['bool_arr'].dtype == np.bool
+    assert grid.field_arrays['bool_arr'].dtype == np.bool_
 
 
 def test_cells_uint8(grid):
@@ -298,7 +298,7 @@ def test_field_uint8(grid):
 def test_bitarray_points(grid):
     n = grid.n_points
     vtk_array = vtk.vtkBitArray()
-    np_array = np.empty(n, np.bool)
+    np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
@@ -313,7 +313,7 @@ def test_bitarray_points(grid):
 def test_bitarray_cells(grid):
     n = grid.n_cells
     vtk_array = vtk.vtkBitArray()
-    np_array = np.empty(n, np.bool)
+    np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
@@ -328,7 +328,7 @@ def test_bitarray_cells(grid):
 def test_bitarray_field(grid):
     n = grid.n_cells // 3
     vtk_array = vtk.vtkBitArray()
-    np_array = np.empty(n, np.bool)
+    np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):

@@ -326,10 +326,10 @@ class PickingHelper:
         kwargs.setdefault('pickable', False)
 
         def make_line_cells(n_points):
-            # cells = np.full((n_points-1, 3), 2, dtype=np.int)
-            # cells[:, 1] = np.arange(0, n_points-1, dtype=np.int)
-            # cells[:, 2] = np.arange(1, n_points, dtype=np.int)
-            cells = np.arange(0, n_points, dtype=np.int)
+            # cells = np.full((n_points-1, 3), 2, dtype=np.int_)
+            # cells[:, 1] = np.arange(0, n_points-1, dtype=np.int_)
+            # cells[:, 2] = np.arange(1, n_points, dtype=np.int_)
+            cells = np.arange(0, n_points, dtype=np.int_)
             cells = np.insert(cells, 0, n_points)
             return cells
 
