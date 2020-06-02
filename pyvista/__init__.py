@@ -87,7 +87,7 @@ try:
 except Exception as e:
     warnings.warn('Unable to create `EXAMPLES_PATH` at "%s"\nError: %s\n\n'
                   % (EXAMPLES_PATH, str(e)) +
-                  'Override the default path by setting the enviornmental variable '
+                  'Override the default path by setting the environmental variable '
                   '`PYVISTA_USERDATA_PATH` to a writable path.')
     EXAMPLES_PATH = None
 

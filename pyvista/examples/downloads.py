@@ -12,7 +12,7 @@ import pyvista
 # Helpers:
 
 def _check_examples_path():
-    """Check if the examples path exists"""
+    """Check if the examples path exists."""
     if pyvista.EXAMPLES_PATH is None:
         raise FileNotFoundError('EXAMPLES_PATH does not exist.  Try setting the '
                                 'environment variable `PYVISTA_USERDATA_PATH` '
