@@ -442,13 +442,19 @@ def test_save_uniform(extension, binary, tmpdir):
 def test_grid_points():
     """Test the points methods on UniformGrid and RectilinearGrid"""
     # test creation of 2d grids
-    x_surf = y_surf = range(3)
-    z_surf = np.ones(3)
+    x = y = range(3)
+    z = [0,]
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    points = np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')]
     grid = pyvista.UniformGrid()
-    grid.points = np.array([x_surf, y_surf, z_surf]).transpose()
+    with pytest.raises(AttributeError):
+        grid.points = points
+    grid.origin = (0.0, 0.0, 0.0)
+    grid.dimensions = (3, 3, 1)
+    grid.spacing = (1, 1, 1)
     assert grid.n_points == 9
     assert grid.n_cells == 4
-    del grid
+    assert np.allclose(grid.points, points)
 
     points = np.array([[0, 0, 0],
                        [1, 0, 0],
@@ -459,19 +465,25 @@ def test_grid_points():
                        [1, 1, 1],
                        [0, 1, 1]])
     grid = pyvista.UniformGrid()
-    grid.points = points
-    assert grid.dimensions == [2, 2, 2]
-    assert grid.spacing == [1, 1, 1]
-    assert grid.origin == [0., 0., 0.]
+    grid.dimensions = [2, 2, 2]
+    grid.spacing = [1, 1, 1]
+    grid.origin = [0., 0., 0.]
     assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
     opts = np.c_[grid.x, grid.y, grid.z]
     assert np.allclose(np.unique(opts, axis=0), np.unique(points, axis=0))
+
     # Now test rectilinear grid
-    del grid
     grid = pyvista.RectilinearGrid()
-    grid.points = points
-    assert grid.dimensions == [2, 2, 2]
-    assert np.allclose(np.unique(grid.points, axis=0), np.unique(points, axis=0))
+    with pytest.raises(AttributeError):
+        grid.points = points
+    x, y, z = np.array([0, 1, 3]), np.array([0, 2.5, 5]), np.array([0, 1])
+    xx, yy, zz = np.meshgrid(x, y, z, indexing='ij')
+    grid.x = x
+    grid.y = y
+    grid.z = z
+    assert grid.dimensions == [3, 3, 2]
+    assert np.allclose(grid.meshgrid, (xx, yy, zz))
+    assert np.allclose(grid.points, np.c_[xx.ravel(order='F'), yy.ravel(order='F'), zz.ravel(order='F')])
 
 
 def test_grid_extract_selection_points(struct_grid):
