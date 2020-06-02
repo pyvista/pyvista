@@ -947,11 +947,13 @@ class DataSetFilters:
         return output
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
-              tolerance=0.0, absolute=False, clamping=False, rng=None):
+              indices=None, tolerance=0.0, absolute=False, clamping=False,
+              rng=None):
         """Copy a geometric representation (called a glyph) to every point in the input dataset.
 
         The glyph may be oriented along the input vectors, and it may be scaled according to scalar
-        data or vector magnitude.
+        data or vector magnitude. Passing a table of glyphs to choose from based on scalars or
+        vector magnitudes is also supported.
 
         Parameters
         ----------
@@ -962,10 +964,20 @@ class DataSetFilters:
             Use the active scalars to scale the glyphs
 
         factor : float
-            Scale factor applied to sclaing array
+            Scale factor applied to scaling array
 
-        geom : vtk.vtkDataSet
-            The geometry to use for the glyph
+        geom : vtk.vtkPolyData or tuple, optional
+            The geometry to use for the glyph. If missing, an arrow glyph
+            is used. If a sequence, the datasets inside define a table of
+            geometries to choose from based on scalars or vectors. In this
+            case a sequence of numbers of the same length must be passed as
+            ``indices``. The values of the range (see ``rng``) affect lookup
+            in the table.
+
+        indices : tuple(float), optional
+            Specifies the index of each glyph in the table for lookup in case
+            ``geom`` is a sequence. Must be the same length as ``geom``. Indices
+            are interpreted in terms of the range (see ``rng``).
 
         tolerance : float, optional
             Specify tolerance in terms of fraction of bounding box length.
@@ -990,14 +1002,38 @@ class DataSetFilters:
                               lines_to_points=False, polys_to_lines=False,
                               strips_to_polys=False, inplace=False,
                               absolute=absolute)
-        # Make glyphing geometry
+        # Make glyphing geometry if necessary
         if geom is None:
             arrow = vtk.vtkArrowSource()
             arrow.Update()
             geom = arrow.GetOutput()
+        # Check if a table of geometries was passed
+        if isinstance(geom, (np.ndarray, collections.abc.Sequence)):
+            if not isinstance(indices, (np.ndarray, collections.abc.Sequence)):
+                raise TypeError('If "geom" is a sequence then "indices" must '
+                                'also be a sequence of the same length.')
+            if len(indices) != len(geom):
+                raise ValueError('The sequence "indices" must be the same length '
+                                 'as "geom".')
+        else:
+            geom = [geom]
+        if any(not isinstance(subgeom, vtk.vtkPolyData) for subgeom in geom):
+            raise TypeError('Only PolyData objects can be used as glyphs.')
         # Run the algorithm
         alg = vtk.vtkGlyph3D()
-        alg.SetSourceData(geom)
+        if len(geom) == 1:
+            # use a single glyph, ignore indices
+            alg.SetSourceData(geom[0])
+        else:
+            for index, subgeom in zip(indices, geom):
+                alg.SetSourceData(index, subgeom)
+            if dataset.active_scalars is not None:
+                if dataset.active_scalars.ndim > 1:
+                    alg.SetIndexModeToVector()
+                else:
+                    alg.SetIndexModeToScalar()
+            else:
+                alg.SetIndexModeToOff()
         if isinstance(scale, str):
             dataset.active_scalars_name = scale
             scale = True
