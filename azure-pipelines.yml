@@ -73,18 +73,17 @@ jobs:
 
   - script: |
       pip install wheel
-      pip install -e .
-    displayName: Install pyvista
+      python setup.py bdist_wheel
+      pip install dist/pyvista*.whl
+    displayName: Build wheel and install pyvista
 
   - script: |
       .ci/setup_headless_display.sh
-      # python .ci/pyvista_test.py
     displayName: Install headless display
 
   - script: |
       sudo apt-get install python3-tk
       pip install -r requirements_test.txt
-      # python -c "import vtk; print(vtk.VTK_VERSION)"
       python -c "import pyvista; print(pyvista.Report())"
       which python
       pip list
@@ -92,11 +91,12 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
+      cd tests
       pytest -v --cov pyvista --cov-report html
+      cd ..
     displayName: 'Test Core API'
 
   - script: |
-      pip install pytest pytest-azurepipelines
       pytest -v --doctest-modules pyvista
     displayName: 'Test Package Docstrings'
 
@@ -107,8 +107,7 @@ jobs:
 
   - script: |
       pip install twine
-      python setup.py sdist
-      twine upload --skip-existing dist/pyvista*.gz
+      twine upload --skip-existing dist/pyvista*.whl
     displayName: 'Upload to PyPi'
     condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
