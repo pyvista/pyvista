@@ -947,7 +947,8 @@ class DataSetFilters:
         return output
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
-              tolerance=0.0, absolute=False, clamping=False, rng=None):
+              tolerance=0.0, absolute=False, clamping=False, rng=None,
+              progress_bar=False):
         """Copy a geometric representation (called a glyph) to every point in the input dataset.
 
         The glyph may be oriented along the input vectors, and it may be scaled according to scalar
@@ -982,6 +983,9 @@ class DataSetFilters:
             Set the range of values to be considered by the filter when scalars
             values are provided.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         # Clean the points before glyphing
         small = pyvista.PolyData(dataset.points)
@@ -989,7 +993,7 @@ class DataSetFilters:
         dataset = small.clean(point_merging=True, merge_tol=tolerance,
                               lines_to_points=False, polys_to_lines=False,
                               strips_to_polys=False, inplace=False,
-                              absolute=absolute)
+                              absolute=absolute, progress_bar=progress_bar)
         # Make glyphing geometry
         if geom is None:
             arrow = vtk.vtkArrowSource()
@@ -1019,7 +1023,7 @@ class DataSetFilters:
         alg.SetVectorModeToUseVector()
         alg.SetScaleFactor(factor)
         alg.SetClamping(clamping)
-        alg.Update()
+        _update_alg(alg, progress_bar, 'Computing Glyphs')
         return _get_output(alg)
 
     def connectivity(dataset, largest=False):
@@ -3351,7 +3355,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         remove = np.asarray(remove)
-    
+
         # np.asarray will eat anything, so we have to weed out bogus inputs
         if not issubclass(remove.dtype.type, (np.bool_, np.integer)):
             raise TypeError('Remove must be either a mask or an integer array-like')
