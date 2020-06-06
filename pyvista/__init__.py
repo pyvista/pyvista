@@ -1,7 +1,9 @@
 """PyVista package for 3D plotting and mesh analysis."""
 import warnings
 import os
+import sys
 import appdirs
+
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
@@ -16,6 +18,7 @@ if VTK_ID_TYPE_SIZE == 4:
     ID_TYPE = np.int32
 elif VTK_ID_TYPE_SIZE == 8:
     ID_TYPE = np.int64
+
 
 # for additional error output for VTK segfaults
 try:
@@ -41,10 +44,11 @@ except KeyError:
     pass
 
 # flag for when building the sphinx_gallery
-BUILDING_GALLERY = False
+BUILDING_GALLERY = 'sphinx' in sys.modules
 if 'PYVISTA_BUILDING_GALLERY' in os.environ:
     if os.environ['PYVISTA_BUILDING_GALLERY'].lower() == 'true':
         BUILDING_GALLERY = True
+
 
 # Grab system flag for anti-aliasing
 try:
