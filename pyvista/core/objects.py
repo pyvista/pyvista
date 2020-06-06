@@ -55,7 +55,7 @@ class Table(vtk.vtkTable, DataObject):
 
     def _from_arrays(self, arrays):
         if not arrays.ndim == 2:
-            raise AssertionError('Only 2D arrays are supported by Tables.')
+            raise ValueError('Only 2D arrays are supported by Tables.')
         np_table = arrays.T
         for i, array in enumerate(np_table):
             self.row_arrays['Array {}'.format(i)] = array
@@ -63,8 +63,8 @@ class Table(vtk.vtkTable, DataObject):
 
     def _from_dict(self, array_dict):
         for array in array_dict.values():
-            if not isinstance(array, (np.ndarray)) and array.ndim < 3:
-                raise RuntimeError('Dictionary must contain only NumPy arrays with maximum of 2D.')
+            if not isinstance(array, np.ndarray) and array.ndim < 3:
+                raise ValueError('Dictionary must contain only NumPy arrays with maximum of 2D.')
         for name, array in array_dict.items():
             self.row_arrays[name] = array
         return
@@ -315,11 +315,11 @@ class Texture(vtk.vtkTexture):
     def _from_array(self, image):
         if image.ndim not in [2,3]:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
-            raise AssertionError('Input image must be nn by nm by RGB[A]')
+            raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
             if image.shape[2] != 3 and image.shape[2] != 4:
-                raise AssertionError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
+                raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
 
             n_components = image.shape[2]
 
@@ -335,7 +335,7 @@ class Texture(vtk.vtkTexture):
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
         if axis < 0 or axis > 1:
-            raise RuntimeError("Axis {} out of bounds".format(axis))
+            raise ValueError("Axis {} out of bounds".format(axis))
         ax = [1, 0]
         array = self.to_array()
         array = np.flip(array, axis=ax[axis])

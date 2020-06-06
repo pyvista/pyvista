@@ -26,8 +26,6 @@ log.setLevel('CRITICAL')
 VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 
 
-
-
 class PointSet(Common):
     """PyVista's equivalent of vtk.vtkPointSet.
 
@@ -82,7 +80,7 @@ class PointSet(Common):
         >>> letter_a.remove_cells(range(1000))
         """
         if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool and ind.size != self.n_cells:
+            if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
                                  'number of cells (%d)' % self.n_cells)
         ghost_cells = np.zeros(self.n_cells, np.uint8)
@@ -467,10 +465,10 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
     >>> # from arrays (vtk9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, deep=True)
+    >>> #grid = pyvista.UnstructuredGrid(cells, celltypes, points)
 
     >>> # from arrays (vtk<9)
-    >>> #grid = pyvista.UnstructuredGrid(cells, cell_type, nodes, offset, deep=True)
+    >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
 
     >>> # From a string filename
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
@@ -485,6 +483,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         super().__init__()
         deep = kwargs.pop('deep', False)
 
+        if not len(args):
+            return
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkUnstructuredGrid):
                 if deep:
@@ -505,7 +505,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 itype = type(args[0])
                 raise TypeError('Cannot work with input type %s' % itype)
 
-        elif len(args) == 3:
+        elif len(args) == 3 and VTK9:
             arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
             arg2_is_arr = isinstance(args[2], np.ndarray)
@@ -525,6 +525,14 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
             else:
                 raise TypeError('All input types must be np.ndarray')
+
+        else:
+            err_msg = 'Invalid parameters.  Initialization with arrays ' +\
+                      'requires the following arrays:\n'
+            if VTK9:
+                raise TypeError(err_msg + '`cells`, `cell_type`, `points`')
+            else:
+                raise TypeError(err_msg + '`offset`, `cells`, `cell_type`, `points`')
 
     def __repr__(self):
         """Return the standard representation."""
@@ -606,8 +614,17 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     @property
     def cells(self):
-        """Return a pointer to the cells as a numpy object."""
+        """Legacy method: Return a pointer to the cells as a numpy object."""
         return vtk_to_numpy(self.GetCells().GetData())
+
+    @property
+    def cell_connectivity(self):
+        """Return a the vtk cell connectivity as a numpy array."""
+        carr = self.GetCells()
+        if hasattr(carr, 'GetConnectivityArray'):  # available >= VTK9
+            return vtk_to_numpy(carr.GetConnectivityArray())
+        raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
+                             'Otherwise, use the legacy `cells` method')
 
     def linear_copy(self, deep=False):
         """Return a copy of the unstructured grid containing only linear cells.
@@ -655,19 +672,34 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
         # fixing bug with display of quad cells
         if np.any(quad_quad_mask):
-            quad_offset = lgrid.offset[quad_quad_mask]
-            base_point = lgrid.cells[quad_offset + 1]
-            lgrid.cells[quad_offset + 5] = base_point
-            lgrid.cells[quad_offset + 6] = base_point
-            lgrid.cells[quad_offset + 7] = base_point
-            lgrid.cells[quad_offset + 8] = base_point
+            if VTK9:
+                quad_offset = lgrid.offset[:-1][quad_quad_mask]
+                base_point = lgrid.cell_connectivity[quad_offset]
+                lgrid.cell_connectivity[quad_offset + 4] = base_point
+                lgrid.cell_connectivity[quad_offset + 5] = base_point
+                lgrid.cell_connectivity[quad_offset + 6] = base_point
+                lgrid.cell_connectivity[quad_offset + 7] = base_point
+            else:
+                quad_offset = lgrid.offset[quad_quad_mask]
+                base_point = lgrid.cells[quad_offset + 1]
+                lgrid.cells[quad_offset + 5] = base_point
+                lgrid.cells[quad_offset + 6] = base_point
+                lgrid.cells[quad_offset + 7] = base_point
+                lgrid.cells[quad_offset + 8] = base_point
 
         if np.any(quad_tri_mask):
-            tri_offset = lgrid.offset[quad_tri_mask]
-            base_point = lgrid.cells[tri_offset + 1]
-            lgrid.cells[tri_offset + 4] = base_point
-            lgrid.cells[tri_offset + 5] = base_point
-            lgrid.cells[tri_offset + 6] = base_point
+            if VTK9:
+                tri_offset = lgrid.offset[:-1][quad_tri_mask]
+                base_point = lgrid.cell_connectivity[tri_offset]
+                lgrid.cell_connectivity[tri_offset + 3] = base_point
+                lgrid.cell_connectivity[tri_offset + 4] = base_point
+                lgrid.cell_connectivity[tri_offset + 5] = base_point
+            else:
+                tri_offset = lgrid.offset[quad_tri_mask]
+                base_point = lgrid.cells[tri_offset + 1]
+                lgrid.cells[tri_offset + 4] = base_point
+                lgrid.cells[tri_offset + 5] = base_point
+                lgrid.cells[tri_offset + 6] = base_point
 
         return lgrid
 
@@ -678,8 +710,13 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     @property
     def offset(self):
-        """Get Cell Locations Array."""
-        return vtk_to_numpy(self.GetCellLocationsArray())
+        """Get cell locations Array."""
+        carr = self.GetCells()
+        if hasattr(carr, 'GetOffsetsArray'):  # available >= VTK9
+            # This will be the number of cells + 1.
+            return vtk_to_numpy(carr.GetOffsetsArray())
+        else:  # this is no longer used in >= VTK9
+            return vtk_to_numpy(self.GetCellLocationsArray())
 
 
 class StructuredGrid(vtkStructuredGrid, PointGrid):
@@ -837,7 +874,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         >>> grid.hide_cells(range(79*30, 79*50))
         """
         if isinstance(ind, np.ndarray):
-            if ind.dtype == np.bool and ind.size != self.n_cells:
+            if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
                                  'number of cells (%d)' % self.n_cells)
         ghost_cells = np.zeros(self.n_cells, np.uint8)

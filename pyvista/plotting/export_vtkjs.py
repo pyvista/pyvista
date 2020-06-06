@@ -673,7 +673,7 @@ def get_vtkjs_url(*args):
         host = args[0]
         inURL = args[1]
     else:
-        raise RuntimeError('Arguments not understood.')
+        raise TypeError('Arguments not understood.')
     if host.lower() == "dropbox":
         convertURL = convert_dropbox_url(inURL)
     else:

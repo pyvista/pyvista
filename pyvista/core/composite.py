@@ -3,7 +3,7 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
-import collections
+import collections.abc
 import logging
 
 import numpy as np
@@ -289,7 +289,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         3
 
         """
-        if isinstance(index, collections.Iterable) and not isinstance(index, str):
+        if isinstance(index, (np.ndarray, collections.abc.Sequence)) and not isinstance(index, str):
             i, name = index[0], index[1]
         elif isinstance(index, str):
             try:

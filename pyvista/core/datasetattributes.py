@@ -121,13 +121,13 @@ class DataSetAttributes(VTKObjectWrapper):
         if not isinstance(t_coords, np.ndarray):
             raise TypeError('Texture coordinates must be a numpy array')
         if t_coords.ndim != 2:
-            raise AssertionError('Texture coordinates must be a 2-dimensional array')
+            raise ValueError('Texture coordinates must be a 2-dimensional array')
         valid_length = self.valid_array_len
         if t_coords.shape[0] != valid_length:
-            raise AssertionError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
+            raise ValueError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
         if t_coords.shape[1] != 2:
-            raise AssertionError('Texture coordinates must only have 2 components,'
-                                 ' not ({})'.format(t_coords.shape[1]))
+            raise ValueError('Texture coordinates must only have 2 components,'
+                             ' not ({})'.format(t_coords.shape[1]))
         vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
@@ -158,7 +158,7 @@ class DataSetAttributes(VTKObjectWrapper):
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
         if vtk_arr.GetName() in self.dataset.association_bitarray_names[self.association]:
-            narray = narray.view(np.bool)
+            narray = narray.view(np.bool_)
         return narray
 
     def append(self, narray, name, deep_copy=False, active_vectors=True, active_scalars=True):
@@ -205,7 +205,7 @@ class DataSetAttributes(VTKObjectWrapper):
             raise ValueError('narray length of ({}) != required length ({})'.format(
                 narray.shape[0], array_len))
 
-        if narray.dtype == np.bool:
+        if narray.dtype == np.bool_:
             self.dataset.association_bitarray_names[self.association].add(name)
             narray = narray.view(np.uint8)
 
@@ -245,7 +245,9 @@ class DataSetAttributes(VTKObjectWrapper):
             if active_scalars or self.active_scalars is None:
                 self.active_scalars = name
             if active_vectors or self.active_vectors is None:
-                self.active_vectors = name
+                # verify this is actually vector data
+                if len(shape) == 2 and shape[1] == 3:
+                    self.active_vectors = name
         except TypeError:
             pass
         self.VTKObject.Modified()

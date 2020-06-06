@@ -32,7 +32,7 @@ def insert_arange_narray(hexbeam_point_attributes):
 @fixture()
 def insert_bool_array(hexbeam_point_attributes):
     n_points = hexbeam_point_attributes.dataset.GetNumberOfPoints()
-    sample_array = np.ones(n_points, np.bool)
+    sample_array = np.ones(n_points, np.bool_)
     hexbeam_point_attributes.append(sample_array, 'sample_array')
     return hexbeam_point_attributes, sample_array
 
@@ -74,6 +74,13 @@ def test_set_vectors(hexbeam):
     assert np.allclose(hexbeam.active_vectors, vectors)
 
 
+def test_set_active_vectors_invalid(hexbeam):
+    # verify non-vector data does not become active vectors
+    not_vectors = np.random.random((hexbeam.points.shape))
+    hexbeam.point_arrays['not_vectors'] = not_vectors
+    assert np.allclose(hexbeam.point_arrays.active_vectors, not_vectors)
+
+
 @mark.parametrize('array_key', ['invalid_array_name', -1])
 def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attributes):
     with raises(KeyError):
@@ -83,7 +90,7 @@ def test_get_array_should_fail_if_does_not_exist(array_key, hexbeam_point_attrib
 def test_get_array_should_return_bool_array(insert_bool_array):
     dsa, _ = insert_bool_array
     output_array = dsa.get_array('sample_array')
-    assert output_array.dtype == np.bool
+    assert output_array.dtype == np.bool_
 
 
 def test_get_array_bool_array_should_be_identical(insert_bool_array):

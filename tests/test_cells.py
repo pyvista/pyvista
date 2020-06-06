@@ -23,6 +23,6 @@ def test_init_cell_array(cells, n_cells, deep):
 
 
 def test_numpy_to_idarr_bool():
-    mask = np.ones(10, np.bool)
+    mask = np.ones(10, np.bool_)
     idarr = pyvista.utilities.cells.numpy_to_idarr(mask)
     assert np.allclose(mask.nonzero()[0], vtk_to_numpy(idarr))

@@ -1,6 +1,6 @@
 """Attributes common to PolyData and Grid Objects."""
 
-import collections
+import collections.abc
 import logging
 import warnings
 
@@ -309,7 +309,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FieldAssociation.NONE:
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
-            raise RuntimeError('Array not found.')
+            raise KeyError('Array with name {} not found.'.format(old_name))
         if was_active:
             self.set_active_scalars(new_name, preference=field)
 
@@ -637,7 +637,7 @@ class Common(DataSetFilters, DataObject):
 
     def __getitem__(self, index):
         """Search both point, cell, and field data for an array."""
-        if isinstance(index, collections.Iterable) and not isinstance(index, str):
+        if isinstance(index, collections.abc.Iterable) and not isinstance(index, str):
             name, preference = index
         elif isinstance(index, str):
             name = index
@@ -812,38 +812,6 @@ class Common(DataSetFilters, DataObject):
         alg.Update()
         return pyvista.filters._get_output(alg)
 
-    @property
-    def quality(self):  # pragma: no cover
-        """Return cell quality using PyANSYS.
-
-        Computes the minimum scaled jacobian of each cell.
-        Cells that have values below 0 are invalid for
-        a finite element analysis.
-
-        Note
-        ----
-        This casts the input to an unstructured grid
-
-        Return
-        ------
-        cellquality : np.ndarray
-            Minimum scaled jacobian of each cell.  Ranges from -1 to 1.
-
-        Notes
-        -----
-        Requires pyansys to be installed.
-
-        """
-        try:
-            import pyansys
-        except ImportError:
-            raise ImportError('Install pyansys for this function')
-        if not isinstance(self, pyvista.UnstructuredGrid):
-            dataset = self.cast_to_unstructured_grid()
-        else:
-            dataset = self
-        return pyansys.CellQuality(dataset)
-
     def find_closest_point(self, point, n=1):
         """Find index of closest point in this mesh to the given point.
 
@@ -865,8 +833,8 @@ class Common(DataSetFilters, DataObject):
         ------
         int : the index of the point in this mesh that is closes to the given point.
         """
-        if not isinstance(point, collections.Iterable) or len(point) != 3:
-            raise TypeError("Given point must be a length three iterable.")
+        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+            raise TypeError("Given point must be a length three sequence.")
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
         if n < 1:

@@ -458,7 +458,7 @@ def test_plot_normals(sphere, flip):
 
 def test_remove_points_any():
     sphere = SPHERE.copy()
-    remove_mask = np.zeros(sphere.n_points, np.bool)
+    remove_mask = np.zeros(sphere.n_points, np.bool_)
     remove_mask[:3] = True
     sphere_mod, ind = sphere.remove_points(remove_mask, inplace=False, mode='any')
     assert (sphere_mod.n_points + remove_mask.sum()) == sphere.n_points
@@ -482,7 +482,11 @@ def test_remove_points_fail(sphere, plane):
 
     # invalid bool mask size
     with pytest.raises(ValueError):
-        sphere.remove_points(np.ones(10, np.bool))
+        sphere.remove_points(np.ones(10, np.bool_))
+
+    # invalid mask type
+    with pytest.raises(TypeError):
+        sphere.remove_points([0.0])
 
 
 def test_vertice_cells_on_read(tmpdir):
@@ -516,8 +520,12 @@ def test_project_points_to_plane():
     poly = pyvista.StructuredGrid(xx, yy, zz).extract_geometry()
     poly['elev'] = zz.ravel(order='f')
 
+    # Wrong normal length
     with pytest.raises(TypeError):
         poly.project_points_to_plane(normal=(0, 0, 1, 1))
+    # allow Sequence but not Iterable
+    with pytest.raises(TypeError):
+        poly.project_points_to_plane(normal={0, 1, 2})
 
     # Test the filter
     projected = poly.project_points_to_plane(origin=poly.center, normal=(0,0,1))
@@ -583,16 +591,16 @@ def test_lines():
     # Create line segments
     poly = pyvista.PolyData()
     poly.points = points
-    cells = np.full((len(points)-1, 3), 2, dtype=np.int)
-    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int)
-    cells[:, 2] = np.arange(1, len(points), dtype=np.int)
+    cells = np.full((len(points)-1, 3), 2, dtype=np.int_)
+    cells[:, 1] = np.arange(0, len(points)-1, dtype=np.int_)
+    cells[:, 2] = np.arange(1, len(points), dtype=np.int_)
     poly.lines = cells
     assert poly.n_points == len(points)
     assert poly.n_cells == len(points) - 1
     # Create a poly line
     poly = pyvista.PolyData()
     poly.points = points
-    the_cell = np.arange(0, len(points), dtype=np.int)
+    the_cell = np.arange(0, len(points), dtype=np.int_)
     the_cell = np.insert(the_cell, 0, len(points))
     poly.lines = the_cell
     assert poly.n_points == len(points)

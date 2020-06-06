@@ -94,7 +94,7 @@ class PickingHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Cell picking not available in notebook plotting')
+            raise TypeError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
                 raise AttributeError('Input a mesh into the Plotter class first or '
@@ -243,7 +243,7 @@ class PickingHelper:
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Point picking not available in notebook plotting')
+            raise TypeError('Point picking not available in notebook plotting')
 
         def _end_pick_event(picker, event):
             self.picked_point = np.array(picker.GetPickPosition())
@@ -326,10 +326,10 @@ class PickingHelper:
         kwargs.setdefault('pickable', False)
 
         def make_line_cells(n_points):
-            # cells = np.full((n_points-1, 3), 2, dtype=np.int)
-            # cells[:, 1] = np.arange(0, n_points-1, dtype=np.int)
-            # cells[:, 2] = np.arange(1, n_points, dtype=np.int)
-            cells = np.arange(0, n_points, dtype=np.int)
+            # cells = np.full((n_points-1, 3), 2, dtype=np.int_)
+            # cells[:, 1] = np.arange(0, n_points-1, dtype=np.int_)
+            # cells[:, 2] = np.arange(1, n_points, dtype=np.int_)
+            cells = np.arange(0, n_points, dtype=np.int_)
             cells = np.insert(cells, 0, n_points)
             return cells
 
