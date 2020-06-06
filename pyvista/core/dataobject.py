@@ -11,11 +11,6 @@ from .datasetattributes import DataSetAttributes
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
-# vector array names
-DEFAULT_VECTOR_KEY = '_vectors'
-
-ActiveArrayInfo = collections.namedtuple('ActiveInfo', field_names=['association', 'name'])
-
 
 @abstract_class
 class DataObject:
