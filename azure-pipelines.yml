@@ -108,7 +108,7 @@ jobs:
   - script: |
       pip install twine
       python setup.py sdist
-      twine upload --skip-existing dist/pyvista*.
+      twine upload --skip-existing dist/pyvista*
     displayName: 'Upload to PyPi'
     condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
@@ -119,7 +119,7 @@ jobs:
   - script: |
       pip install twine
       python setup.py sdist
-      twine upload --skip-existing dist/pyvista*.
+      twine upload --skip-existing dist/pyvista*
     displayName: 'Upload to Testing PyPi'
     condition: eq(variables['python.version'], '3.7')
     env:
