@@ -107,13 +107,25 @@ jobs:
 
   - script: |
       pip install twine
-      twine upload --skip-existing dist/pyvista*.whl
+      python setup.py sdist
+      twine upload --skip-existing dist/pyvista*.
     displayName: 'Upload to PyPi'
     condition: and(eq(variables['python.version'], '3.7'), contains(variables['Build.SourceBranch'], 'refs/tags/'))
     env:
       TWINE_USERNAME: $(twine.username)
       TWINE_PASSWORD: $(twine.password)
       TWINE_REPOSITORY_URL: "https://upload.pypi.org/legacy/"
+
+  - script: |
+      pip install twine
+      python setup.py sdist
+      twine upload --skip-existing dist/pyvista*.
+    displayName: 'Upload to Testing PyPi'
+    condition: eq(variables['python.version'], '3.7')
+    env:
+      TWINE_USERNAME: $(twine.username)
+      TWINE_PASSWORD: $(twine.password)
+      TWINE_REPOSITORY_URL: "https://test.pypi.org/legacy/"
 
   # don't run job on no-ci builds
   condition: not(contains(variables['System.PullRequest.SourceBranch'], 'no-ci'))
