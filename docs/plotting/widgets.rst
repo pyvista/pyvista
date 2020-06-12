@@ -105,7 +105,9 @@ Or you could slice a mesh using the plane widget:
 .. image:: ../images/gifs/plane-slice.gif
 
 Or you could leverage the plane widget for some custom task like glyphing a
-vector field along that plane.
+vector field along that plane. Note that we have to pass a ``name`` when
+calling ``add_mesh`` to ensure that there is only one set of glyphs plotted
+at a time.
 
 .. code-block:: python
 
@@ -141,7 +143,8 @@ Unfortunately, PyVista does not have any helper methods to utilize this
 widget, so it is necessary to pass a custom callback method.
 
 One particularly fun example is to use the line widget to create a source for
-the :func:`pyvista.DataSetFilters.streamlines` filter.
+the :func:`pyvista.DataSetFilters.streamlines` filter. Again note the use of
+the ``name`` argument in ``add_mesh``.
 
 .. code-block:: python
 
@@ -208,7 +211,7 @@ slider widget to control a thresholding value.
 
 Or you could leverage a custom callback function that takes a single value
 from the slider as its argument to do something like control the resolution
-of a mesh:
+of a mesh. Again note the use of the ``name`` argument in ``add_mesh``:
 
 .. code-block:: python
 
