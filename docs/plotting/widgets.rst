@@ -9,12 +9,12 @@ widgets to control the positions of boxes, planes, and lines or slider bars
 which can all be highly customized through the use of custom callback
 functions.
 
-Here we'll take a look a the various widgets, some helper methods that leverage
+Here we'll take a look at the various widgets, some helper methods that leverage
 those widgets to do common tasks, and demonstrate how to leverage the widgets
 for user defined tasks and processing routines.
 
 The :class:`pyvista.BasePlotter` class inherits all of the widget methods in
-:class:`pyvista.WidgetHelper` so, all of the following methods
+:class:`pyvista.WidgetHelper`, so all of the following methods
 are available from any PyVista plotter.
 
 .. rubric:: Attributes
@@ -138,9 +138,9 @@ The line widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.add_line_widget` and
 :func:`pyvista.WidgetHelper.clear_line_widgets` methods respectively.
 Unfortunately, PyVista does not have any helper methods to utilize this
-widget, so it is necessary to pas a custom callback method.
+widget, so it is necessary to pass a custom callback method.
 
-One particularly fun example is to use the line widget to create source for
+One particularly fun example is to use the line widget to create a source for
 the :func:`pyvista.DataSetFilters.streamlines` filter.
 
 .. code-block:: python
@@ -186,7 +186,7 @@ The slider widget can be enabled and disabled by the
 This is one of the most versatile widgets as it can control a value that can
 be used for just about anything.
 
-One helper method we've add is the
+One helper method we've added is the
 :func:`pyvista.WidgetHelper.add_mesh_threshold` method which leverages the
 slider widget to control a thresholding value.
 
@@ -233,7 +233,7 @@ Sphere Widget
 The slider widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.add_sphere_widget` and
 :func:`pyvista.WidgetHelper.clear_sphere_widgets` methods respectively.
-This is a very versatile widgets as it can control vertex location that can
+This is a very versatile widget as it can control vertex location that can
 be used to control or update the location of just about anything.
 
 We don't have any convenient helper methods that utilize this widget out of
@@ -387,7 +387,7 @@ Spline Widget
 ~~~~~~~~~~~~~
 
 
-A spline widget can be added to the scenee by the
+A spline widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.add_spline_widget` and
 :func:`pyvista.WidgetHelper.clear_spline_widgets` methods respectively.
 This widget allows users to interactively create a poly line (spline) through
