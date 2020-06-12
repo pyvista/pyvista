@@ -230,7 +230,7 @@ of a mesh:
 Sphere Widget
 ~~~~~~~~~~~~~
 
-The slider widget can be enabled and disabled by the
+The sphere widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.add_sphere_widget` and
 :func:`pyvista.WidgetHelper.clear_sphere_widgets` methods respectively.
 This is a very versatile widget as it can control vertex location that can
@@ -313,7 +313,7 @@ Use several sphere widgets at once
 Example C
 +++++++++
 
-This one is the coolest - use three sphere widgets to update perturbations on
+This one is the coolest - use four sphere widgets to update perturbations on
 a surface and interpolate between them with some boundary conditions
 
 .. code-block:: python
