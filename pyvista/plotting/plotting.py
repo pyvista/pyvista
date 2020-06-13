@@ -63,19 +63,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one renderer.
-        Can also accept a shape as string descriptor. E.g.:
-            shape="3|1" means 3 plots on the left and 1 on the right,
-            shape="4/2" means 4 plots on top of 2 at bottom.
+        Can also accept a string descriptor as shape. E.g.:
+
+            * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
+            * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.
 
     border_color : string or 3 item list, optional, defaults to white
         Either a string, rgb list, or hex color string.  For example:
-            color='white'
-            color='w'
-            color=[1, 1, 1]
-            color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
     border_width : float, optional
         Width of the border in pixels when enabled.
@@ -3663,19 +3665,21 @@ class Plotter(BasePlotter):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one render window.
-        Can also accept a shape as string descriptor. E.g.:
-            shape="3|1" means 3 plots on the left and 1 on the right,
-            shape="4/2" means 4 plots on top of 2 at bottom.
+        Can also accept a string descriptor as shape. E.g.:
+
+            * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
+            * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.
 
     border_color : string or 3 item list, optional, defaults to white
         Either a string, rgb list, or hex color string.  For example:
-            color='white'
-            color='w'
-            color=[1, 1, 1]
-            color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
     window_size : list, optional
         Window size in pixels.  Defaults to [1024, 768]
