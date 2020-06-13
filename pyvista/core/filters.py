@@ -3030,6 +3030,49 @@ class PolyDataFilters(DataSetFilters):
         logging.warning('DEPRECATED: ``clip_with_plane`` is deprecated. Use ``.clip`` instead.')
         return DataSetFilters.clip(poly_data, normal=normal, origin=origin, value=value, invert=invert, inplace=inplace)
 
+    def clip_closed_surface(poly_data, normal='x', origin=None,
+                            tolerance=1e-06, inplace=False):
+        """Clip a closed polydata surface with a plane.
+
+        This currently only supports one plane but could be implemented to
+        handle a plane collection.
+
+        It will produce a new closed surface by creating new polygonal faces
+        where the input data was clipped.
+
+        Non-manifold surfaces should not be used as input for this filter.
+        The input surface should have no open edges, and must not have any
+        edges that are shared by more than two faces. In addition, the input
+        surface should not self-intersect, meaning that the faces of the
+        surface should only touch at their edges.
+        """
+        # verify it is manifold
+        if poly_data.n_open_edges > 0:
+            raise Exception("This surface appears to be non-manifold.")
+        if isinstance(normal, str):
+            normal = NORMALS[normal.lower()]
+        # find center of data if origin not specified
+        if origin is None:
+            origin = poly_data.center
+
+        # create the plane for clipping
+        plane = generate_plane(normal, origin)
+        collection = vtk.vtkPlaneCollection()
+        collection.AddItem(plane)
+
+        alg = vtk.vtkClipClosedSurface()
+        alg.SetGenerateFaces(True)
+        alg.SetInputDataObject(poly_data)
+        alg.SetTolerance(tolerance)
+        alg.SetClippingPlanes(collection)
+        alg.Update() # Perform the Cut
+        result = _get_output(alg)
+
+        if inplace:
+            poly_data.overwrite(result)
+        else:
+            return result
+
     def fill_holes(poly_data, hole_size, inplace=False, progress_bar=False):  # pragma: no cover
         """
         Fill holes in a pyvista.PolyData or vtk.vtkPolyData object.
