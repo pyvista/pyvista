@@ -3048,7 +3048,7 @@ class PolyDataFilters(DataSetFilters):
         """
         # verify it is manifold
         if poly_data.n_open_edges > 0:
-            raise Exception("This surface appears to be non-manifold.")
+            raise ValueError("This surface appears to be non-manifold.")
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
         # find center of data if origin not specified
