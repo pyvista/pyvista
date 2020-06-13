@@ -40,10 +40,8 @@ class PickingHelper:
 
         Warning
         -------
-        Visible cell picking (``through=False``) is known to not perform well
-        and produce incorrect selections on non-triangulated meshes if using
-        any grpahics card other than NVIDIA. A warning will be thrown if the
-        mesh is not purely triangles when using visible cell selection.
+        Visible cell picking (``through=False``) will only work if the mesh is
+        displayed with a ``'surface'`` representation style (the default).
 
         Parameters
         ----------
@@ -149,9 +147,11 @@ class PickingHelper:
                 if selection_node is None:
                     # No selection
                     continue
-                self.selection_node = selection_node
                 cids = pyvista.convert_array(selection_node.GetSelectionList())
-                smesh = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP()).GetMapper().GetInputAsDataSet()
+                actor = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP())
+                if actor.GetProperty().GetRepresentation() != 2: # surface
+                    logging.warning("Display representations other than `surface` will result in incorrect results.")
+                smesh = actor.GetMapper().GetInputAsDataSet()
                 smesh = smesh.copy()
                 smesh["original_cell_ids"] = np.arange(smesh.n_cells)
                 tri_smesh = smesh.extract_surface().triangulate()
