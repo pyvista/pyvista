@@ -60,8 +60,10 @@ Convenience Functions
 Base Plotter
 ~~~~~~~~~~~~
 
-The base plotter class that all PyVista plotters inherit. Please note that the
-:class:`pyvista.BackgroundPlotter` is documented under :ref:`qt_ref`.
+The base plotter class that all PyVista plotters inherit. Please note that the former
+``BackgroundPlotter`` class has been moved to the `pyvistaqt`_ package.
+
+.. _pyvistaqt: http://qtdocs.pyvista.org/
 
 
 .. rubric:: Attributes
