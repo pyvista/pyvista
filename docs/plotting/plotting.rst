@@ -154,17 +154,18 @@ notebook:
     Jupyter Inline Plotting
 
 To display interactive plots in Jupyter notebooks, use the
-:class:`pyvista.BackgroundPlotter` to open a rendering window in the background
+:class:`pyvistaqt.BackgroundPlotter` to open a rendering window in the background
 that you can manipulate in real time from the Jupyter notebook:
 
 .. code-block:: python
 
     import pyvista as pv
+    import pyvistaqt as pvqt
     from pyvista import examples
 
     dataset = examples.load_uniform()
 
-    plotter = pv.BackgroundPlotter()
+    plotter = pvqt.BackgroundPlotter()
     plotter.add_mesh(dataset)
 
     # Then in another cell, you can add more to the plotter
@@ -179,16 +180,17 @@ the background that remains interactive while the user performs their
 processing. This creates the ability to make a rendering scene and interactively
 add or remove datasets from the scene as well as has some useful menu functions
 for common scene manipulation or export tasks. To get started, try instantiating
-the :class:`pyvista.BackgroundPlotter`:
+the :class:`pyvistaqt.BackgroundPlotter`:
 
 .. code:: python
 
     import pyvista as pv
+    import pyvistaqt as pvqt
     from pyvista import examples
 
     dataset = examples.load_hexbeam()
 
-    p = pv.BackgroundPlotter()
+    p = pvqt.BackgroundPlotter()
 
     p.add_mesh(dataset)
 
@@ -209,6 +211,7 @@ values change through time:
     import time
     import numpy as np
     import pyvista as pv
+    import pyvistaqt as pvqt
     from pyvista import examples
 
 
@@ -217,7 +220,7 @@ values change through time:
     globe.set_active_scalars('scalars')
 
 
-    plotter = pv.BackgroundPlotter()
+    plotter = pvqt.BackgroundPlotter()
     plotter.add_mesh(globe, lighting=False, show_edges=True, texture=True, scalars='scalars')
     plotter.view_isometric()
 
