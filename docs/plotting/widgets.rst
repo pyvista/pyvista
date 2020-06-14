@@ -13,27 +13,6 @@ Here we'll take a look at the various widgets, some helper methods that leverage
 those widgets to do common tasks, and demonstrate how to leverage the widgets
 for user defined tasks and processing routines.
 
-The :class:`pyvista.BasePlotter` class inherits all of the widget methods in
-:class:`pyvista.WidgetHelper`, so all of the following methods
-are available from any PyVista plotter.
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.WidgetHelper
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.WidgetHelper
-   :methods:
-
-
-.. autoclass:: pyvista.WidgetHelper
-   :show-inheritance:
-   :members:
-   :inherited-members:
-   :undoc-members:
-
 
 Box Widget
 ~~~~~~~~~~
@@ -400,3 +379,30 @@ A common task with splines is to slice a volumetric dataset using an irregular
 path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.DataSetFilters.slice_along_line` filter named
 :func:`pyvista.WidgetHelper.add_mesh_slice_spline`.
+
+
+Widget API
+~~~~~~~~~~
+
+
+The :class:`pyvista.BasePlotter` class inherits all of the widget methods in
+:class:`pyvista.WidgetHelper`, so all of the following methods
+are available from any PyVista plotter.
+
+.. rubric:: Attributes
+
+.. autoautosummary:: pyvista.WidgetHelper
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.WidgetHelper
+   :methods:
+
+
+.. autoclass:: pyvista.WidgetHelper
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :undoc-members:
+
