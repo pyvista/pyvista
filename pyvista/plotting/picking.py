@@ -40,10 +40,8 @@ class PickingHelper:
 
         Warning
         -------
-        Visible cell picking (``through=False``) is known to not perform well
-        and produce incorrect selections on non-triangulated meshes if using
-        any grpahics card other than NVIDIA. A warning will be thrown if the
-        mesh is not purely triangles when using visible cell selection.
+        Visible cell picking (``through=False``) will only work if the mesh is
+        displayed with a ``'surface'`` representation style (the default).
 
         Parameters
         ----------
@@ -145,18 +143,20 @@ class PickingHelper:
             selection = selector.Select()
             picked = pyvista.MultiBlock()
             for node in range(selection.GetNumberOfNodes()):
-                cellids = selection.GetNode(node)
-                if cellids is None:
+                selection_node = selection.GetNode(node)
+                if selection_node is None:
                     # No selection
                     continue
-                smesh = cellids.GetProperties().Get(vtk.vtkSelectionNode.PROP()).GetMapper().GetInputAsDataSet()
-                selection_filter = vtk.vtkSelection()
-                selection_filter.AddNode(cellids)
-                extract = vtk.vtkExtractSelectedIds()
-                extract.SetInputData(0, smesh)
-                extract.SetInputData(1, selection_filter)
-                extract.Update()
-                picked.append(pyvista.wrap(extract.GetOutput()))
+                cids = pyvista.convert_array(selection_node.GetSelectionList())
+                actor = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP())
+                if actor.GetProperty().GetRepresentation() != 2: # surface
+                    logging.warning("Display representations other than `surface` will result in incorrect results.")
+                smesh = actor.GetMapper().GetInputAsDataSet()
+                smesh = smesh.copy()
+                smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                tri_smesh = smesh.extract_surface().triangulate()
+                cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                picked.append(smesh.extract_cells(cids_to_get))
             if len(picked) == 1:
                 self.picked_cells = picked[0]
             else:
@@ -167,16 +167,11 @@ class PickingHelper:
         if through:
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
         else:
-            # check if mesh is triangulated or not
+            # NOTE: there can be issues with non-triangulated meshes
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
-            message = "Surface picking non-triangulated meshes is known to "\
-                      "not work properly with non-NVIDIA GPUs. Please "\
-                      "consider triangulating your mesh:\n"\
-                      "\t`.extract_geometry().triangulate()`"
-            if not isinstance(mesh, pyvista.PolyData) or not mesh.is_all_triangles():
-                logging.warning(message)
+            #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
