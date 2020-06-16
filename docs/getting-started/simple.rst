@@ -164,7 +164,9 @@ manually interact with the plotting window:
 Be sure to check out all the available plotters for your use case:
 
 * :class:`pyvista.Plotter`: The standard plotter that pauses the code until closed
-* :class:`pyvistaqt.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution (documented under :ref:`qt_ref`)
+* :class:`pyvistaqt.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution (for more information see the `pyvistaqt`_ package)
+
+.. _pyvistaqt: http://qtdocs.pyvista.org/
 
 
 
