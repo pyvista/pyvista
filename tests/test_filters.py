@@ -111,6 +111,15 @@ def test_clip_surface():
     assert 'implicit_distance' in clipped.array_names
 
 
+def test_clip_closed_surface():
+    closed_surface = pyvista.Sphere()
+    clipped = closed_surface.clip_closed_surface()
+    assert closed_surface.n_open_edges == 0
+    open_surface = closed_surface.clip()
+    with pytest.raises(ValueError):
+        _ = open_surface.clip_closed_surface()
+
+
 def test_implicit_distance():
     surface = pyvista.Cone(direction=(0,0,-1),
                            height=3.0, radius=1, resolution=50, )
