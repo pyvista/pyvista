@@ -483,7 +483,11 @@ def test_multi_block_plot():
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
-    multi.plot(scalars='Random Data', off_screen=OFF_SCREEN, multi_colors=True)
+    with pytest.raises(ValueError):
+        # The scalars are not available in all datasets so raises ValueError
+        multi.plot(scalars='Random Data', off_screen=OFF_SCREEN, multi_colors=True)
+    multi.plot(off_screen=OFF_SCREEN, multi_colors=True)
+
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

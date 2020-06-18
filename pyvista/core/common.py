@@ -630,9 +630,14 @@ class Common(DataSetFilters, DataObject):
             # use active scalars array
             _, arr = self.active_scalars_info
         if isinstance(arr, str):
-            arr = get_array(self, arr, preference=preference)
+            name = arr
+            # This can return None when an array is not found - expected
+            arr = get_array(self, name, preference=preference)
+            if arr is None:
+                # Raise a value error if fetching the range of an unknown array
+                raise ValueError('Array `{}` not present.'.format(name))
         # If array has no tuples return a NaN range
-        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)

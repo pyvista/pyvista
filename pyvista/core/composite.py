@@ -179,14 +179,11 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             data = self[i]
             if data is None:
                 continue
-            # get the scalars if available
-            arr = get_array(data, name)
-            if arr is None or not np.issubdtype(arr.dtype, np.number):
-                continue
-            tmi, tma = np.nanmin(arr), np.nanmax(arr)
-            if tmi < mini:
+            # get the scalars if available - recursive
+            tmi, tma = data.get_data_range(name)
+            if not np.isnan(tmi) and tmi < mini:
                 mini = tmi
-            if tma > maxi:
+            if not np.isnan(tma) and tma > maxi:
                 maxi = tma
         return mini, maxi
 
