@@ -3012,6 +3012,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             space to display space during rendering introduces numerical
             round-off.
 
+        reset_camera : bool, optional
+            Reset the camera after adding the points to the scene.
+
         Return
         ------
         labelActor : vtk.vtkActor2D
