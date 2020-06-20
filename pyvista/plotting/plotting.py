@@ -260,7 +260,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.reset_key_events()
 
     #### Manage the active Renderer ####
-    
+
     def loc_to_group(self, loc):
         """Return group id of the given location index. Or None if this location is not part of any group."""
         group_idxs = np.arange(self.groups.shape[0])
@@ -2935,7 +2935,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
                          pickable=False, render_points_as_spheres=False,
-                         tolerance=0.001):
+                         tolerance=0.001, reset_camera=None):
         """Create a point actor with one label from list labels assigned to each point.
 
         Parameters
@@ -3100,7 +3100,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size, name='{}-points'.format(name),
                       pickable=pickable,
-                      render_points_as_spheres=render_points_as_spheres)
+                      render_points_as_spheres=render_points_as_spheres,
+                      reset_camera=reset_camera)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
@@ -3713,7 +3714,7 @@ class Plotter(BasePlotter):
         super().__init__(shape=shape, border=border,
                          border_color=border_color,
                          border_width=border_width,
-                         groups=groups, row_weights=row_weights, 
+                         groups=groups, row_weights=row_weights,
                          col_weights=col_weights,
                          splitting_position=splitting_position,
                          title=title)
