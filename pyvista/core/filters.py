@@ -2345,6 +2345,8 @@ class PolyDataFilters(DataSetFilters):
             The cut mesh when inplace=False
 
         """
+        if not isinstance(cut, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
         if not poly_data.is_all_triangles() or not cut.is_all_triangles():
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
 
@@ -2383,6 +2385,9 @@ class PolyDataFilters(DataSetFilters):
             Initial mesh and the new mesh when inplace=False.
 
         """
+        if not isinstance(mesh, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
+
         vtkappend = vtk.vtkAppendPolyData()
         vtkappend.AddInputData(poly_data)
         vtkappend.AddInputData(mesh)
@@ -2417,6 +2422,9 @@ class PolyDataFilters(DataSetFilters):
             The union mesh when inplace=False.
 
         """
+        if not isinstance(mesh, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
+
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToUnion()
         bfilter.SetInputData(1, mesh)
@@ -2447,6 +2455,9 @@ class PolyDataFilters(DataSetFilters):
             The union mesh when inplace=False.
 
         """
+        if not isinstance(mesh, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
+
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToDifference()
         bfilter.SetInputData(1, mesh)
