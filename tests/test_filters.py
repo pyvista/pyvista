@@ -791,3 +791,10 @@ def test_extract_subset():
     volume = examples.load_uniform()
     voi = volume.extract_subset([0,3,1,4,5,7])
     assert isinstance(voi, pyvista.UniformGrid)
+
+
+def test_poly_data_strip():
+    mesh = examples.load_airplane()
+    slc = mesh.slice(normal='z', origin=(0,0,-10))
+    stripped = slc.strip()
+    assert stripped.n_cells == 1
