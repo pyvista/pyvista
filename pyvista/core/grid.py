@@ -352,7 +352,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         # get the points and convert to spacings
         dx, dy, dz = self.spacing
         # Now make the cell arrays
-        ox, oy, oz = self.origin
+        ox, oy, oz = np.array(self.origin) + np.array(self.extent[::2])
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz
