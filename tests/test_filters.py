@@ -791,3 +791,6 @@ def test_extract_subset():
     volume = examples.load_uniform()
     voi = volume.extract_subset([0,3,1,4,5,7])
     assert isinstance(voi, pyvista.UniformGrid)
+    # Test that we fix the confusin issue from extents in
+    #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+    assert voi.origin == voi.bounds[::2]

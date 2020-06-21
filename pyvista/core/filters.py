@@ -3792,4 +3792,15 @@ class UniformGridFilters(DataSetFilters):
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
         alg.Update()
-        return _get_output(alg)
+        result = _get_output(alg)
+        # Adjust for the confusing issue with the extents
+        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+        fixed = pyvista.UniformGrid()
+        fixed.origin = result.bounds[::2]
+        fixed.spacing = result.spacing
+        fixed.dimensions = result.dimensions
+        fixed.point_arrays.update(result.point_arrays)
+        fixed.cell_arrays.update(result.cell_arrays)
+        fixed.field_arrays.update(result.field_arrays)
+        fixed.copy_meta_from(result)
+        return fixed
