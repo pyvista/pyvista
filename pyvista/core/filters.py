@@ -2345,6 +2345,8 @@ class PolyDataFilters(DataSetFilters):
             The cut mesh when inplace=False
 
         """
+        if not isinstance(cut, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
         if not poly_data.is_all_triangles() or not cut.is_all_triangles():
             raise NotAllTrianglesError("Make sure both the input and output are triangulated.")
 
@@ -2383,6 +2385,9 @@ class PolyDataFilters(DataSetFilters):
             Initial mesh and the new mesh when inplace=False.
 
         """
+        if not isinstance(mesh, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
+
         vtkappend = vtk.vtkAppendPolyData()
         vtkappend.AddInputData(poly_data)
         vtkappend.AddInputData(mesh)
@@ -2417,6 +2422,9 @@ class PolyDataFilters(DataSetFilters):
             The union mesh when inplace=False.
 
         """
+        if not isinstance(mesh, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
+
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToUnion()
         bfilter.SetInputData(1, mesh)
@@ -2447,6 +2455,9 @@ class PolyDataFilters(DataSetFilters):
             The union mesh when inplace=False.
 
         """
+        if not isinstance(mesh, pyvista.PolyData):
+            raise TypeError("Input mesh must be PolyData.")
+
         bfilter = vtk.vtkBooleanOperationPolyDataFilter()
         bfilter.SetOperationToDifference()
         bfilter.SetInputData(1, mesh)
@@ -3848,4 +3859,15 @@ class UniformGridFilters(DataSetFilters):
         alg.SetSampleRate(rate)
         alg.SetIncludeBoundary(boundary)
         alg.Update()
-        return _get_output(alg)
+        result = _get_output(alg)
+        # Adjust for the confusing issue with the extents
+        #   see https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+        fixed = pyvista.UniformGrid()
+        fixed.origin = result.bounds[::2]
+        fixed.spacing = result.spacing
+        fixed.dimensions = result.dimensions
+        fixed.point_arrays.update(result.point_arrays)
+        fixed.cell_arrays.update(result.cell_arrays)
+        fixed.field_arrays.update(result.field_arrays)
+        fixed.copy_meta_from(result)
+        return fixed
