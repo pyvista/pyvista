@@ -3744,6 +3744,7 @@ class PolyDataFilters(DataSetFilters):
             that holds the point index of the original vertex that produced
             each output vertex. This is useful for picking. The default is
             off to conserve memory.
+
         Examples
         --------
         >>> from pyvista import examples
