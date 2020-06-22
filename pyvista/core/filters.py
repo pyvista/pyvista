@@ -3733,7 +3733,14 @@ class PolyDataFilters(DataSetFilters):
             that holds the point index of the original vertex that produced
             each output vertex. This is useful for picking. The default is
             off to conserve memory.
-
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> slc = mesh.slice(normal='z', origin=(0,0,-10))
+        >>> stripped = slc.strip()
+        >>> stripped.n_cells
+        1
         """
         alg = vtk.vtkStripper()
         alg.SetInputDataObject(poly_data)
