@@ -361,7 +361,7 @@ class DataSetFilters:
             (``0``, ``1``, or ``2``).
 
         tolerance : float, optional
-            The toleranceerance to the edge of the dataset bounds to create the slices
+            The tolerance to the edge of the dataset bounds to create the slices
 
         generate_triangles: bool, optional
             If this is enabled (``False`` by default), the output will be
