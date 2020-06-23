@@ -18,7 +18,6 @@ rectfile = os.path.join(dir_path, 'rectilinear.vtk')
 globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 channelsfile = os.path.join(dir_path, 'channels.vti')
-backwardfacingstepfile = os.path.join(dir_path, 'EnSight/foam_case_0_0_0_0.case')
 
 # get location of this folder
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -76,10 +75,6 @@ def load_globe_texture():
 def load_channels():
     """Load a uniform grid of fluvial channels in the subsurface."""
     return pyvista.read(channelsfile)
-
-def load_bfs():
-    """Load ply ant mesh."""
-    return pyvista.read(backwardfacingstepfile)
 
 def plot_ants_plane(off_screen=None, notebook=None):
     """Plot two ants and airplane.

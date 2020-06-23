@@ -1,11 +1,9 @@
 scipy
 matplotlib
-PyQt5==5.11.3
 imageio>=2.5.0
 imageio-ffmpeg
 colorcet
 cmocean
-meshio>=4.0.3, <5.0
 Sphinx
 sphinx-autobuild
 sphinx-rtd-theme

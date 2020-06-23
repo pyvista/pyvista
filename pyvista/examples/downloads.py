@@ -11,22 +11,35 @@ import pyvista
 
 # Helpers:
 
+def _check_examples_path():
+    """Check if the examples path exists."""
+    if pyvista.EXAMPLES_PATH is None:
+        raise FileNotFoundError('EXAMPLES_PATH does not exist.  Try setting the '
+                                'environment variable `PYVISTA_USERDATA_PATH` '
+                                'to a writable path and restarting python')
+
+
 def delete_downloads():
     """Delete all downloaded examples to free space or update the files."""
+    _check_examples_path()
     shutil.rmtree(pyvista.EXAMPLES_PATH)
     os.makedirs(pyvista.EXAMPLES_PATH)
     return True
 
 
 def _decompress(filename):
+    _check_examples_path()
     zip_ref = zipfile.ZipFile(filename, 'r')
     zip_ref.extractall(pyvista.EXAMPLES_PATH)
     return zip_ref.close()
 
+
 def _get_vtk_file_url(filename):
     return 'https://github.com/pyvista/vtk-data/raw/master/Data/{}'.format(filename)
 
+
 def _retrieve_file(url, filename):
+    _check_examples_path()
     # First check if file has already been downloaded
     local_path = os.path.join(pyvista.EXAMPLES_PATH, os.path.basename(filename))
     local_path_no_zip = local_path.replace('.zip', '')
@@ -630,3 +643,9 @@ def download_rgba_texture():
 def download_vtk_logo():
     """Download a texture of the VTK logo."""
     return _download_and_read("vtk.png", texture=True)
+
+def download_backward_facing_step():
+    """Download an ensigh gold case of a fluid simulation."""
+    folder, _ = _download_file('EnSight.zip')
+    filename = os.path.join(folder, "foam_case_0_0_0_0.case")
+    return pyvista.read(filename)

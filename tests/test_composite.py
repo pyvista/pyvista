@@ -3,8 +3,8 @@ import pytest
 import vtk
 
 import pyvista
-from pyvista import examples as ex
 from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
+from pyvista import examples as ex
 
 
 @pytest.fixture()
@@ -144,6 +144,9 @@ def test_multi_block_set_get_ers():
     assert multi.get_block_name(10) is None
     with pytest.raises(KeyError):
         _ = multi.get_index_by_name('foo')
+    # allow Sequence but not Iterable in setitem
+    with pytest.raises(TypeError):
+        multi[{1, 'foo'}] = data
 
 
 def test_multi_block_clean(rectilinear, uniform, ant):
@@ -190,7 +193,7 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 
 
 @pytest.mark.parametrize('binary', [True, False])
-@pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
+@pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
 def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
@@ -207,7 +210,8 @@ def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplan
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
 def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
-    multi = ex.load_bfs()  # .case file
+    # multi = ex.load_bfs()  # .case file
+    multi = ex.download_backward_facing_step()  # .case file
     # Now check everything
     assert multi.n_blocks == 4
     array_names = ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
@@ -229,15 +233,15 @@ def test_multi_io_erros(tmpdir):
     multi = MultiBlock()
     # Check saving with bad extension
     bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         multi.save(bad_ext_name)
     arr = np.random.rand(10, 10)
     np.save(bad_ext_name, arr)
     # Load non existing file
-    with pytest.raises(Exception):
+    with pytest.raises(FileNotFoundError):
         _ = MultiBlock('foo.vtm')
     # Load bad extension
-    with pytest.raises(IOError):
+    with pytest.raises(ValueError):
         _ = MultiBlock(bad_ext_name)
 
 
@@ -342,3 +346,48 @@ def test_multi_block_volume(ant, airplane, sphere, uniform):
 def test_multi_block_length(ant, sphere, uniform, airplane):
     multi = multi_from_datasets(ant, sphere, uniform, airplane, None)
     assert multi.length
+
+
+def test_multi_block_save_lines(tmpdir):
+    radius = 1
+    xr = np.random.random(10)
+    yr = np.random.random(10)
+    x = radius * np.sin(yr) * np.cos(xr)
+    y = radius * np.sin(yr) * np.sin(xr)
+    z = radius * np.cos(yr)
+    xyz = np.stack((x, y, z), axis=1)
+
+    poly = pyvista.lines_from_points(xyz, close=False)
+    blocks = pyvista.MultiBlock()
+    for _ in range(2):
+        blocks.append(poly)
+
+    path = tmpdir.mkdir("tmpdir")
+    line_filename = str(path.join('lines.vtk'))
+    block_filename = str(path.join('blocks.vtmb'))
+    poly.save(line_filename)
+    blocks.save(block_filename)
+
+    poly_load = pyvista.read(line_filename)
+    assert np.allclose(poly_load.points, poly.points)
+
+    blocks_load = pyvista.read(block_filename)
+    assert np.allclose(blocks_load[0].points, blocks[0].points)
+
+
+def test_multi_block_data_range():
+    volume = pyvista.Wavelet()
+    a = volume.slice_along_axis(5,'x')
+    with pytest.raises(ValueError):
+        a.get_data_range('foo')
+    mi, ma = a.get_data_range(volume.active_scalars_name)
+    assert mi is not None
+    assert ma is not None
+    # Test on a nested MultiBlock
+    b = volume.slice_along_axis(5,'y')
+    slices = pyvista.MultiBlock([a,b])
+    with pytest.raises(ValueError):
+        slices.get_data_range('foo')
+    mi, ma = slices.get_data_range(volume.active_scalars_name)
+    assert mi is not None
+    assert ma is not None

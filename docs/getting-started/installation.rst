@@ -58,8 +58,6 @@ The following are a list of optional dependencies and their purpose:
 +===================================+=========================================+
 | ``matplotlib``                    | Using Colormaps                         |
 +-----------------------------------+-----------------------------------------+
-| ``PyQt5==5.11.3``                 | Background plotting                     |
-+-----------------------------------+-----------------------------------------+
 | ``itkwidgets``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``panel``                         | Interactive notebook rendering          |
@@ -223,3 +221,30 @@ Reconnect to the server with port-forwarding, and start Jupyter:
     jupyter notebook --NotebookApp.token='' --no-browser --port=8888
 
 Visit ``localhost:8888`` in the web browser.
+
+
+Running with Sphinx-Gallery
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In your ``conf.py``, add the following:
+
+
+.. code-block:: python
+
+    import pyvista
+    # necessary when building the sphinx gallery
+    pyvista.BUILDING_GALLERY = True
+    pyvista.OFF_SCREEN = True
+
+    # Optional - set parameters like theme or window size
+    pyvista.set_plot_theme('document')
+    pyvista.rcParams['window_size'] = np.array([1024, 768]) * 2
+
+    ...
+
+    # Add the PyVista image scraper to SG
+    sphinx_gallery_conf = {
+        ...
+        "image_scrapers": ('pyvista', ..., ),
+        ...
+    }

@@ -1,13 +1,15 @@
 """Module managing picking events."""
 
 import logging
+
 import numpy as np
 import vtk
 
 import pyvista
 from pyvista.utilities import try_callback
 
-class PickingHelper(object):
+
+class PickingHelper:
     """An internal class to hold picking related features."""
 
     picked_cells = None
@@ -19,7 +21,6 @@ class PickingHelper(object):
     def get_pick_position(self):
         """Get the pick position/area as x0, y0, x1, y1."""
         return self.renderer.get_pick_position()
-
 
     def enable_cell_picking(self, mesh=None, callback=None, through=True,
                             show=True, show_message=True, style='wireframe',
@@ -39,10 +40,8 @@ class PickingHelper(object):
 
         Warning
         -------
-        Visible cell picking (``through=False``) is known to not perform well
-        and produce incorrect selections on non-triangulated meshes if using
-        any grpahics card other than NVIDIA. A warning will be thrown if the
-        mesh is not purely triangles when using visible cell selection.
+        Visible cell picking (``through=False``) will only work if the mesh is
+        displayed with a ``'surface'`` representation style (the default).
 
         Parameters
         ----------
@@ -93,11 +92,11 @@ class PickingHelper(object):
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Cell picking not available in notebook plotting')
+            raise TypeError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh'):
-                raise Exception('Input a mesh into the Plotter class first or '
-                                'or set it in this function')
+                raise AttributeError('Input a mesh into the Plotter class first or '
+                                     'or set it in this function')
             mesh = self.mesh
 
         renderer = self.renderer # make sure to consistently use renderer
@@ -126,7 +125,6 @@ class PickingHelper(object):
             # TODO: Deactivate selection tool
             return
 
-
         def through_pick_call_back(picker, event_id):
             extract = vtk.vtkExtractGeometry()
             mesh.cell_arrays['orig_extract_id'] = np.arange(mesh.n_cells)
@@ -135,7 +133,6 @@ class PickingHelper(object):
             extract.Update()
             self.picked_cells = pyvista.wrap(extract.GetOutput())
             return end_pick_helper(picker, event_id)
-
 
         def visible_pick_call_back(picker, event_id):
             x0,y0,x1,y1 = renderer.get_pick_position()
@@ -146,39 +143,35 @@ class PickingHelper(object):
             selection = selector.Select()
             picked = pyvista.MultiBlock()
             for node in range(selection.GetNumberOfNodes()):
-                cellids = selection.GetNode(node)
-                if cellids is None:
+                selection_node = selection.GetNode(node)
+                if selection_node is None:
                     # No selection
                     continue
-                smesh = cellids.GetProperties().Get(vtk.vtkSelectionNode.PROP()).GetMapper().GetInputAsDataSet()
-                selection_filter = vtk.vtkSelection()
-                selection_filter.AddNode(cellids)
-                extract = vtk.vtkExtractSelectedIds()
-                extract.SetInputData(0, smesh)
-                extract.SetInputData(1, selection_filter)
-                extract.Update()
-                picked.append(pyvista.wrap(extract.GetOutput()))
+                cids = pyvista.convert_array(selection_node.GetSelectionList())
+                actor = selection_node.GetProperties().Get(vtk.vtkSelectionNode.PROP())
+                if actor.GetProperty().GetRepresentation() != 2: # surface
+                    logging.warning("Display representations other than `surface` will result in incorrect results.")
+                smesh = actor.GetMapper().GetInputAsDataSet()
+                smesh = smesh.copy()
+                smesh["original_cell_ids"] = np.arange(smesh.n_cells)
+                tri_smesh = smesh.extract_surface().triangulate()
+                cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
+                picked.append(smesh.extract_cells(cids_to_get))
             if len(picked) == 1:
                 self.picked_cells = picked[0]
             else:
                 self.picked_cells = picked
             return end_pick_helper(picker, event_id)
 
-
         area_picker = vtk.vtkRenderedAreaPicker()
         if through:
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, through_pick_call_back)
         else:
-            # check if mesh is triangulated or not
+            # NOTE: there can be issues with non-triangulated meshes
             # Reference:
             #     https://github.com/pyvista/pyvista/issues/277
             #     https://github.com/pyvista/pyvista/pull/281
-            message = "Surface picking non-triangulated meshes is known to "\
-                      "not work properly with non-NVIDIA GPUs. Please "\
-                      "consider triangulating your mesh:\n"\
-                      "\t`.extract_geometry().triangulate()`"
-            if not isinstance(mesh, pyvista.PolyData) or not mesh.is_all_triangles():
-                logging.warning(message)
+            #     https://discourse.vtk.org/t/visible-cell-selection-hardwareselector-py-example-is-not-working-reliably/1262
             area_picker.AddObserver(vtk.vtkCommand.EndPickEvent, visible_pick_call_back)
 
         self.enable_rubber_band_style()
@@ -196,7 +189,6 @@ class PickingHelper(object):
             self._style.StartSelect()
 
         return
-
 
     def enable_point_picking(self, callback=None, show_message=True,
                              font_size=18, color='pink', point_size=10,
@@ -246,7 +238,7 @@ class PickingHelper(object):
 
         """
         if hasattr(self, 'notebook') and self.notebook:
-            raise AssertionError('Point picking not available in notebook plotting')
+            raise TypeError('Point picking not available in notebook plotting')
 
         def _end_pick_event(picker, event):
             self.picked_point = np.array(picker.GetPickPosition())
@@ -277,7 +269,6 @@ class PickingHelper(object):
             self.add_text(str(show_message), font_size=font_size, name='_point_picking_message')
 
         return
-
 
     def enable_path_picking(self, callback=None, show_message=True,
                             font_size=18, color='pink', point_size=10,
@@ -330,16 +321,15 @@ class PickingHelper(object):
         kwargs.setdefault('pickable', False)
 
         def make_line_cells(n_points):
-            # cells = np.full((n_points-1, 3), 2, dtype=np.int)
-            # cells[:, 1] = np.arange(0, n_points-1, dtype=np.int)
-            # cells[:, 2] = np.arange(1, n_points, dtype=np.int)
-            cells = np.arange(0, n_points, dtype=np.int)
+            # cells = np.full((n_points-1, 3), 2, dtype=np.int_)
+            # cells[:, 1] = np.arange(0, n_points-1, dtype=np.int_)
+            # cells[:, 2] = np.arange(1, n_points, dtype=np.int_)
+            cells = np.arange(0, n_points, dtype=np.int_)
             cells = np.insert(cells, 0, n_points)
             return cells
 
         the_points = []
         the_ids = []
-
 
         def _the_callback(mesh, idx):
             if mesh is None:
@@ -369,7 +359,6 @@ class PickingHelper(object):
         return self.enable_point_picking(callback=_the_callback, use_mesh=True,
                 font_size=font_size, show_message=show_message,
                 show_point=False, tolerance=tolerance)
-
 
     def enable_geodesic_picking(self, callback=None, show_message=True,
                                 font_size=18, color='pink', point_size=10,
@@ -464,8 +453,6 @@ class PickingHelper(object):
                 font_size=font_size, show_message=show_message,
                 tolerance=tolerance, show_point=False)
 
-
-
     def enable_horizon_picking(self, callback=None, normal=(0,0,1),
                                width=None, show_message=True,
                                font_size=18, color='pink', point_size=10,
@@ -549,7 +536,6 @@ class PickingHelper(object):
             point_size=point_size, line_width=line_width, show_path=show_path,
             **kwargs)
 
-
     def pick_click_position(self):
         """Get corresponding click location in the 3D plot."""
         if self.click_position is None:
@@ -558,7 +544,6 @@ class PickingHelper(object):
         picker.Pick(self.click_position[0], self.click_position[1], 0, self.renderer)
         return picker.GetPickPosition()
 
-
     def pick_mouse_position(self):
         """Get corresponding mouse location in the 3D plot."""
         if self.mouse_position is None:
@@ -566,7 +551,6 @@ class PickingHelper(object):
         picker = vtk.vtkWorldPointPicker()
         picker.Pick(self.mouse_position[0], self.mouse_position[1], 0, self.renderer)
         return picker.GetPickPosition()
-
 
     def fly_to_mouse_position(self, focus=False):
         """Focus on last stored mouse position."""
@@ -578,7 +562,6 @@ class PickingHelper(object):
         else:
             self.fly_to(click_point)
 
-
     def enable_fly_to_right_click(self, callback=None):
         """Set the camera to track right click positions.
 
@@ -587,6 +570,7 @@ class PickingHelper(object):
         3D space.
 
         """
+
         def _the_callback(*args):
             click_point = self.pick_mouse_position()
             self.fly_to(click_point)

@@ -1,17 +1,13 @@
 """PyVista package for 3D plotting and mesh analysis."""
-import appdirs
-import os
 import warnings
+import os
+import appdirs
 from pyvista._version import __version__
 from pyvista.plotting import *
 from pyvista.utilities import *
 from pyvista.core import *
 # Per contract with Sphinx-Gallery, this method must be available at top level
 from pyvista.utilities.sphinx_gallery import _get_sg_image_scraper
-
-import numpy as np
-import scooby
-import vtk
 
 # get the int type from vtk
 VTK_ID_TYPE_SIZE = vtk.vtkIdTypeArray().GetDataTypeSize()
@@ -31,7 +27,7 @@ except Exception as e:  # pragma: no cover
 
 # determine if using vtk > 5
 if vtk.vtkVersion().GetVTKMajorVersion() <= 5:
-    raise AssertionError('VTK version must be 5.0 or greater.')
+    raise RuntimeError('VTK version must be 5.0 or greater.')
 
 # catch annoying numpy/vtk future warning:
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -43,6 +39,12 @@ try:
         OFF_SCREEN = True
 except KeyError:
     pass
+
+# flag for when building the sphinx_gallery
+BUILDING_GALLERY = False
+if 'PYVISTA_BUILDING_GALLERY' in os.environ:
+    if os.environ['PYVISTA_BUILDING_GALLERY'].lower() == 'true':
+        BUILDING_GALLERY = True
 
 # Grab system flag for anti-aliasing
 try:
@@ -68,9 +70,26 @@ USER_DATA_PATH = appdirs.user_data_dir('pyvista')
 if not os.path.exists(USER_DATA_PATH):
     os.makedirs(USER_DATA_PATH)
 
-EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
-if not os.path.exists(EXAMPLES_PATH):
-    os.makedirs(EXAMPLES_PATH)
+
+# allow user to override the examples path
+if 'PYVISTA_USERDATA_PATH' in os.environ:
+    USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
+    if not os.path.isdir(USER_DATA_PATH):
+        raise FileNotFoundError('Invalid PYVISTA_USERDATA_PATH at %s' % USER_DATA_PATH)
+
+try:
+    EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
+    if not os.path.exists(EXAMPLES_PATH):
+        try:
+            os.makedirs(EXAMPLES_PATH)
+        except FileExistsError:  # Edge case due to IO race conditions
+            pass
+except Exception as e:
+    warnings.warn('Unable to create `EXAMPLES_PATH` at "%s"\nError: %s\n\n'
+                  % (EXAMPLES_PATH, str(e)) +
+                  'Override the default path by setting the environmental variable '
+                  '`PYVISTA_USERDATA_PATH` to a writable path.')
+    EXAMPLES_PATH = None
 
 # Send VTK messages to the logging module:
 send_errors_to_logging()

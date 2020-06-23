@@ -19,7 +19,6 @@ import vtk
 import pyvista
 from pyvista.utilities import assert_empty_kwargs, check_valid_vector
 
-
 NORMALS = {
     'x': [1, 0, 0],
     'y': [0, 1, 0],
@@ -457,7 +456,7 @@ def Cone(center=(0.,0.,0.), direction=(1.,0.,0.), height=1.0, radius=None,
     src.SetHeight(height)
     # Contributed by @kjelljorner in #249:
     if angle and radius:
-        raise Exception("Both radius and angle specified. They are mutually exclusive.")
+        raise ValueError("Both radius and angle specified. They are mutually exclusive.")
     elif angle and not radius:
         src.SetAngle(angle)
     elif not angle and radius:
@@ -561,7 +560,7 @@ def SuperToroid(*args, **kwargs):
     DEPRECATED: Please use `pyvista.ParametricSuperToroid` instead.
 
     """
-    raise RuntimeError('use `pyvista.ParametricSuperToroid` instead')
+    raise NotImplementedError('use `pyvista.ParametricSuperToroid` instead')
 
 
 def Ellipsoid(*args, **kwargs):
@@ -570,7 +569,7 @@ def Ellipsoid(*args, **kwargs):
     DEPRECATED: Please use :func:`pyvista.ParametricEllipsoid` instead.
 
     """
-    raise RuntimeError('use `pyvista.ParametricEllipsoid` instead')
+    raise NotImplementedError('use `pyvista.ParametricEllipsoid` instead')
 
 
 def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,

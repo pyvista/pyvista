@@ -1,9 +1,9 @@
-from hypothesis import assume, given
-from hypothesis.extra.numpy import arrays, array_shapes
-from hypothesis.strategies import composite, integers, floats, one_of
 import numpy as np
 import pytest
 import vtk
+from hypothesis import assume, given
+from hypothesis.extra.numpy import arrays, array_shapes
+from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
@@ -13,6 +13,11 @@ from pyvista import examples
 @pytest.fixture()
 def grid():
     return pyvista.UnstructuredGrid(examples.hexbeamfile)
+
+
+def test_invalid_overwrite(grid):
+    with pytest.raises(TypeError):
+        grid.overwrite(pyvista.Plane())
 
 
 @composite
@@ -36,7 +41,7 @@ def test_point_arrays(grid):
 
     orig_value = grid.point_arrays[key][0]/1.0
     grid.point_arrays[key][0] += 1
-    assert orig_value == grid._point_array(key)[0] - 1
+    assert orig_value == grid.point_arrays[key][0] - 1
 
     del grid.point_arrays[key]
     assert key not in grid.point_arrays
@@ -58,7 +63,7 @@ def test_point_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.point_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.point_arrays['new_array'] = np.arange(grid.n_points - 1)
 
 
@@ -88,12 +93,6 @@ def test_cell_arrays(grid):
     assert np.allclose(grid.cell_arrays['list'], np.arange(grid.n_cells))
 
 
-def test_cell_array_non_contiguous(grid):
-    arr = np.empty((grid.n_cells, 2))[:, 0]
-    with pytest.raises(ValueError):
-        grid.cell_arrays['tmp'] = arr
-
-
 def test_cell_array_range(grid):
     rng = range(grid.n_cells)
     grid.cell_arrays['tmp'] = rng
@@ -104,7 +103,7 @@ def test_cell_arrays_bad_value(grid):
     with pytest.raises(TypeError):
         grid.cell_arrays['new_array'] = None
 
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid.cell_arrays['new_array'] = np.arange(grid.n_cells - 1)
 
 
@@ -135,7 +134,7 @@ def test_field_arrays(grid):
     assert isinstance(grid.field_arrays['foo'], np.ndarray)
     assert np.allclose(grid.field_arrays['foo'], foo)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.set_active_scalars('foo')
 
 
@@ -248,30 +247,30 @@ def test_invalid_points(grid):
 
 
 def test_points_np_bool(grid):
-    bool_arr = np.zeros(grid.n_points, np.bool)
+    bool_arr = np.zeros(grid.n_points, np.bool_)
     grid.point_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.point_arrays['bool_arr'].all()
-    assert grid._point_array('bool_arr').all()
-    assert grid._point_array('bool_arr').dtype == np.bool
+    assert grid.point_arrays['bool_arr'].all()
+    assert grid.point_arrays['bool_arr'].dtype == np.bool_
 
 
 def test_cells_np_bool(grid):
-    bool_arr = np.zeros(grid.n_cells, np.bool)
+    bool_arr = np.zeros(grid.n_cells, np.bool_)
     grid.cell_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.cell_arrays['bool_arr'].all()
-    assert grid._cell_array('bool_arr').all()
-    assert grid._cell_array('bool_arr').dtype == np.bool
+    assert grid.cell_arrays['bool_arr'].all()
+    assert grid.cell_arrays['bool_arr'].dtype == np.bool_
 
 
 def test_field_np_bool(grid):
-    bool_arr = np.zeros(grid.n_cells // 3, np.bool)
+    bool_arr = np.zeros(grid.n_cells // 3, np.bool_)
     grid.field_arrays['bool_arr'] = bool_arr
     bool_arr[:] = True
     assert grid.field_arrays['bool_arr'].all()
-    assert grid._field_array('bool_arr').all()
-    assert grid._field_array('bool_arr').dtype == np.bool
+    assert grid.field_arrays['bool_arr'].all()
+    assert grid.field_arrays['bool_arr'].dtype == np.bool_
 
 
 def test_cells_uint8(grid):
@@ -299,7 +298,7 @@ def test_field_uint8(grid):
 def test_bitarray_points(grid):
     n = grid.n_points
     vtk_array = vtk.vtkBitArray()
-    np_array = np.empty(n, np.bool)
+    np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
@@ -314,7 +313,7 @@ def test_bitarray_points(grid):
 def test_bitarray_cells(grid):
     n = grid.n_cells
     vtk_array = vtk.vtkBitArray()
-    np_array = np.empty(n, np.bool)
+    np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
@@ -329,7 +328,7 @@ def test_bitarray_cells(grid):
 def test_bitarray_field(grid):
     n = grid.n_cells // 3
     vtk_array = vtk.vtkBitArray()
-    np_array = np.empty(n, np.bool)
+    np_array = np.empty(n, np.bool_)
     vtk_array.SetNumberOfTuples(n)
     vtk_array.SetName('bint_arr')
     for i in range(n):
@@ -413,14 +412,15 @@ def test_texture_airplane():
     assert "tex_a" in cmesh.textures
     assert "tex_b" in cmesh.textures
 
+
 def test_invalid_vector(grid):
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty(10)
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 2))
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.vectors = np.empty((3, 3))
 
 
@@ -462,13 +462,13 @@ def test_set_t_coords(grid):
     with pytest.raises(TypeError):
         grid.t_coords = [1, 2, 3]
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty(10)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((3, 3))
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         grid.t_coords = np.empty((grid.n_points, 1))
 
 
@@ -478,7 +478,7 @@ def test_activate_texture_none(grid):
 
 
 def test_set_active_vectors_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(ValueError):
         grid.set_active_vectors('not a vector')
 
 
@@ -530,14 +530,14 @@ def test_rename_array_field(grid):
 
 
 def test_change_name_fail(grid):
-    with pytest.raises(RuntimeError):
+    with pytest.raises(KeyError):
         grid.rename_array('not a key', '')
 
 
 def test_get_cell_array_fail():
     sphere = pyvista.Sphere()
-    with pytest.raises(RuntimeError):
-        sphere._cell_array(name=None)
+    with pytest.raises(KeyError):
+        sphere.cell_arrays[None]
 
 
 def test_extent_none(grid):
@@ -570,7 +570,7 @@ def test_set_item(grid):
         grid['tmp'] = None
 
     # field data
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         grid['bad_field'] = range(5)
 
 
@@ -593,7 +593,7 @@ def test_set_cell_vectors(grid):
 
 
 def test_axis_rotation_invalid():
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         pyvista.core.common.axis_rotation(np.empty((3, 3)), 0, False, axis='not')
 
 
@@ -729,6 +729,10 @@ def test_find_closest_point():
     with pytest.raises(TypeError):
         sphere.find_closest_point([0, 0, 0], n=3.0)
 
+    with pytest.raises(TypeError):
+        # allow Sequence but not Iterable
+        sphere.find_closest_point({1, 2, 3})
+
     index = sphere.find_closest_point(node)
     assert isinstance(index, int)
     # Make sure we can fetch that point
@@ -755,5 +759,5 @@ def test_no_active():
     pdata = pyvista.PolyData()
     assert pdata.active_scalars is None
 
-    with pytest.raises(ValueError):
-        pdata._point_array()
+    with pytest.raises(KeyError):
+        pdata.point_arrays[None]

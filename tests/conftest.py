@@ -1,4 +1,7 @@
+import numpy as np
 from pytest import fixture
+
+import pyvista
 from pyvista import examples
 
 
@@ -30,3 +33,26 @@ def ant():
 @fixture()
 def globe():
     return examples.load_globe()
+
+
+@fixture()
+def hexbeam():
+    return examples.load_hexbeam()
+
+
+@fixture()
+def struct_grid():
+    x, y, z = np.meshgrid(np.arange(-10, 10, 2),
+                          np.arange(-10, 10, 2),
+                          np.arange(-10, 10, 2))
+    return pyvista.StructuredGrid(x, y, z)
+
+
+@fixture()
+def plane():
+    return pyvista.Plane()
+
+
+@fixture()
+def spline():
+    return examples.load_spline()

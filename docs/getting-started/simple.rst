@@ -134,7 +134,7 @@ to each PyVista data object:
 
 
 You can also create the plotter to highly control the scene. First, instantiate
-a plotter such as :class:`pyvista.Plotter` or :class:`pyvista.BackgroundPlotter`:
+a plotter such as :class:`pyvista.Plotter` or :class:`pyvistaqt.BackgroundPlotter`:
 
 The :class:`pyvista.Plotter` will create a rendering window that will pause the
 execution of the code after calling ``show``.
@@ -164,7 +164,9 @@ manually interact with the plotting window:
 Be sure to check out all the available plotters for your use case:
 
 * :class:`pyvista.Plotter`: The standard plotter that pauses the code until closed
-* :class:`pyvista.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution
+* :class:`pyvistaqt.BackgroundPlotter`: Creates a rendering window that is interactive and does not pause the code execution (for more information see the `pyvistaqt`_ package)
+
+.. _pyvistaqt: http://qtdocs.pyvista.org/
 
 
 

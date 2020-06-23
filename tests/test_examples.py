@@ -28,74 +28,6 @@ except KeyError:
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_docexample_advancedplottingwithnumpy():
-    import pyvista
-    import numpy as np
-
-    # Make a grid
-    x, y, z = np.meshgrid(np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 20),
-                          np.linspace(-5, 5, 5))
-
-    points = np.empty((x.size, 3))
-    points[:, 0] = x.ravel('F')
-    points[:, 1] = y.ravel('F')
-    points[:, 2] = z.ravel('F')
-
-    # Compute a direction for the vector field
-    direction = np.sin(points)**3
-
-    # plot using the plotting class
-    plotter = pyvista.Plotter(off_screen=True)
-    plotter.add_arrows(points, direction, 0.5)
-    plotter.set_background([0, 0, 0]) # RGB set to black
-    plotter.show(auto_close=False)
-    np.any(plotter.screenshot())
-    plotter.close()
-
-
-@pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
-def test_creatingagifmovie(tmpdir, off_screen=True):
-    if tmpdir:
-        filename = str(tmpdir.mkdir("tmpdir").join('wave.gif'))
-    else:
-        filename = '/tmp/wave.gif'
-
-    x = np.arange(-10, 10, 0.25)
-    y = np.arange(-10, 10, 0.25)
-    x, y = np.meshgrid(x, y)
-    r = np.sqrt(x**2 + y**2)
-    z = np.sin(r)
-
-    # Create and structured surface
-    grid = pyvista.StructuredGrid(x, y, z)
-
-    # Make copy of points
-    pts = grid.points.copy()
-
-    # Start a plotter object and set the scalars to the Z height
-    plotter = pyvista.Plotter(off_screen=off_screen)
-    plotter.add_mesh(grid, scalars=z.ravel())
-    plotter.show(auto_close=False)
-
-    # Open a gif
-    plotter.open_gif(filename)
-
-    # Update Z and write a frame for each updated position
-    nframe = 5
-    for phase in np.linspace(0, 2*np.pi, nframe + 1)[:nframe]:
-        z = np.sin(r + phase)
-        pts[:, -1] = z.ravel()
-        plotter.update_coordinates(pts)
-        plotter.update_scalars(z.ravel())
-        plotter.write_frame()
-
-    # Close movie and delete object
-    plotter.close()
-
-
-@pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
 def test_plot_wave():
     points = examples.plot_wave(wavetime=0.1, off_screen=True)
     assert isinstance(points, np.ndarray)
@@ -139,118 +71,143 @@ def test_load_spline():
     mesh = examples.load_spline()
     assert mesh.n_points
 
+
 def test_load_random_hills():
     mesh = examples.load_random_hills()
     assert mesh.n_cells
 
 
-
 if TEST_DOWNLOADS:
-
     def test_download_masonry_texture():
         data = examples.download_masonry_texture()
         assert isinstance(data, vtk.vtkTexture)
+
 
     def test_download_usa_texture():
         data = examples.download_usa_texture()
         assert isinstance(data, vtk.vtkTexture)
 
+
     def test_download_usa():
         data = examples.download_usa()
         assert np.any(data.points)
+
 
     def test_download_st_helens():
         data = examples.download_st_helens()
         assert data.n_points
 
+
     def test_download_bunny():
         data = examples.download_bunny()
         assert data.n_points
+
 
     def test_download_cow():
         data = examples.download_cow()
         assert data.n_points
 
+
     def test_download_faults():
         data = examples.download_faults()
         assert data.n_points
+
 
     def test_download_tensors():
         data = examples.download_tensors()
         assert data.n_points
 
+
     def test_download_head():
         data = examples.download_head()
         assert data.n_points
+
 
     def test_download_bolt_nut():
         data = examples.download_bolt_nut()
         assert isinstance(data, pyvista.MultiBlock)
 
+
     def test_download_clown():
         data = examples.download_clown()
         assert data.n_points
+
 
     def test_download_exodus():
         data = examples.download_exodus()
         assert data.n_blocks
 
+
     def test_download_nefertiti():
         data = examples.download_nefertiti()
         assert data.n_cells
+
 
     def test_download_blood_vessels():
         """Tests the parallel VTU reader"""
         data = examples.download_blood_vessels()
         assert isinstance(data, pyvista.UnstructuredGrid)
 
+
     def test_download_bunny_coarse():
         data = examples.download_bunny_coarse()
         assert data.n_cells
+
 
     def test_download_cow_head():
         data = examples.download_cow_head()
         assert data.n_cells
 
+
     def test_download_knee_full():
         data = examples.download_knee_full()
         assert data.n_cells
+
 
     def test_download_iron_pot():
         data = examples.download_iron_pot()
         assert data.n_cells
 
+
     def test_download_tetrahedron():
         data = examples.download_tetrahedron()
         assert data.n_cells
+
 
     def test_download_saddle_surface():
         data = examples.download_saddle_surface()
         assert data.n_cells
 
+
     def test_download_foot_bones():
         data = examples.download_foot_bones()
         assert data.n_cells
+
 
     def test_download_guitar():
         data = examples.download_guitar()
         assert data.n_cells
 
-    def test_download_quadratic_pyramid():
-        data = examples.download_quadratic_pyramid()
-        assert data.n_cells
 
     def test_download_quadratic_pyramid():
         data = examples.download_quadratic_pyramid()
         assert data.n_cells
+
+
+    def test_download_quadratic_pyramid():
+        data = examples.download_quadratic_pyramid()
+        assert data.n_cells
+
 
     def test_download_bird():
         data = examples.download_bird()
         assert data.n_cells
 
+
     def test_download_bird_texture():
         data = examples.download_bird_texture()
         assert isinstance(data, vtk.vtkTexture)
+
 
     def test_download_office():
         data = examples.download_office()
@@ -261,21 +218,26 @@ if TEST_DOWNLOADS:
         data = examples.download_horse_points()
         assert data.n_points
 
+
     def test_download_horse():
         data = examples.download_horse()
         assert data.n_cells
+
 
     def test_download_cake_easy():
         data = examples.download_cake_easy()
         assert data.n_cells
 
+
     def test_download_cake_easy_texture():
         data = examples.download_cake_easy_texture()
         assert isinstance(data, vtk.vtkTexture)
 
+
     def test_download_rectilinear_grid():
         data = examples.download_rectilinear_grid()
         assert data.n_cells
+
 
     def test_download_gourds():
         data = examples.download_gourds()
@@ -283,11 +245,13 @@ if TEST_DOWNLOADS:
         data = examples.download_gourds(zoom=True)
         assert data.n_cells
 
+
     def test_download_gourds_texture():
         data = examples.download_gourds_texture()
         assert isinstance(data, vtk.vtkTexture)
         data = examples.download_gourds_texture(zoom=True)
         assert isinstance(data, vtk.vtkTexture)
+
 
     def test_download_unstructured_grid():
         data = examples.download_unstructured_grid()
@@ -298,145 +262,181 @@ if TEST_DOWNLOADS:
         data = examples.download_letter_k()
         assert data.n_cells
 
+
     def test_download_letter_a():
         data = examples.download_letter_a()
         assert data.n_cells
+
 
     def test_download_poly_line():
         data = examples.download_poly_line()
         assert data.n_cells
 
+
     def test_download_cad_model():
         data = examples.download_cad_model()
         assert data.n_cells
+
 
     def test_download_frog():
         data = examples.download_frog()
         assert data.n_cells
 
+
     def test_download_prostate():
         data = examples.download_prostate()
         assert data.n_cells
+
 
     def test_download_filled_contours():
         data = examples.download_filled_contours()
         assert data.n_cells
 
+
     def test_download_doorman():
         data = examples.download_doorman()
         assert data.n_cells
+
 
     def test_download_mug():
         data = examples.download_mug()
         assert data.n_blocks
 
+
     def test_download_oblique_cone():
         data = examples.download_oblique_cone()
         assert data.n_cells
+
 
     def test_download_emoji():
         data = examples.download_emoji()
         assert data.n_cells
 
+
     def test_download_emoji_texture():
         data = examples.download_emoji_texture()
         assert isinstance(data, vtk.vtkTexture)
+
 
     def test_download_teapot():
         data = examples.download_teapot()
         assert data.n_cells
 
+
     def test_download_brain():
         data = examples.download_brain()
         assert data.n_cells
+
 
     def test_download_structured_grid():
         data = examples.download_structured_grid()
         assert data.n_cells
 
+
     def test_download_structured_grid_two():
         data = examples.download_structured_grid_two()
         assert data.n_cells
+
 
     def test_download_trumpet():
         data = examples.download_trumpet()
         assert data.n_cells
 
+
     def test_download_face():
         data = examples.download_face()
         assert data.n_cells
+
 
     def test_download_sky_box_nz():
         data = examples.download_sky_box_nz()
         assert data.n_cells
 
+
     def test_download_sky_box_nz_texture():
         data = examples.download_sky_box_nz_texture()
         assert isinstance(data, vtk.vtkTexture)
+
 
     def test_download_disc_quads():
         data = examples.download_disc_quads()
         assert data.n_cells
 
+
     def test_download_honolulu():
         data = examples.download_honolulu()
         assert data.n_cells
+
 
     def test_download_motor():
         data = examples.download_motor()
         assert data.n_cells
 
+
     def test_download_tri_quadratic_hexahedron():
         data = examples.download_tri_quadratic_hexahedron()
         assert data.n_cells
+
 
     def test_download_human():
         data = examples.download_human()
         assert data.n_cells
 
+
     def test_download_vtk():
         data = examples.download_vtk()
         assert data.n_cells
+
 
     def test_download_spider():
         data = examples.download_spider()
         assert data.n_cells
 
+
     def test_download_carotid():
         data = examples.download_carotid()
         assert data.n_cells
+
 
     def test_download_blow():
         data = examples.download_blow()
         assert data.n_cells
 
+
     def test_download_shark():
         data = examples.download_shark()
         assert data.n_cells
+
 
     def test_download_dragon():
         data = examples.download_dragon()
         assert data.n_cells
 
+
     def test_download_armadillo():
         data = examples.download_armadillo()
         assert data.n_cells
+
 
     def test_download_gears():
         data = examples.download_gears()
         assert data.n_cells
 
+
     def test_download_torso():
         data = examples.download_torso()
         assert data.n_cells
+
 
     def test_download_kitchen():
         data = examples.download_kitchen()
         assert data.n_cells
 
+
     def test_download_kitchen_split():
         data = examples.download_kitchen(split=True)
         assert data.n_blocks
+
 
     # def test_download_topo_global():
     #     data = examples.download_topo_global()
@@ -450,9 +450,11 @@ if TEST_DOWNLOADS:
         data = examples.download_coastlines()
         assert data.n_cells
 
+
     def test_download_knee():
         data = examples.download_knee()
         assert data.n_cells
+
 
     def test_download_lidar():
         data = examples.download_lidar()
@@ -462,7 +464,5 @@ if TEST_DOWNLOADS:
     def test_pine_roots():
         data = examples.download_pine_roots()
         assert data.n_points
-
-
 
 # End of download tests

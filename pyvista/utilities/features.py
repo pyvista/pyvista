@@ -1,8 +1,8 @@
 """Module containing geometry helper functions."""
 
 import ctypes
+
 import numpy as np
-import vtk
 
 import pyvista
 
@@ -40,7 +40,7 @@ def voxelize(mesh, density=None, check_surface=True):
     selection = ugrid.select_enclosed_points(mesh.extract_surface(),
                                              tolerance=0.0,
                                              check_surface=check_surface)
-    mask = selection.point_arrays['SelectedPoints'].view(np.bool)
+    mask = selection.point_arrays['SelectedPoints'].view(np.bool_)
 
     # extract cells from point indices
     return ugrid.extract_points(mask)

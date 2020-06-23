@@ -3,12 +3,11 @@
 import logging
 import os
 import re
-import scooby
 import sys
-import warnings
 
-import vtk
 import numpy as np
+import scooby
+import vtk
 
 import pyvista
 
@@ -130,7 +129,6 @@ class GPUInfo():
         """Instantiate a container for the GPU information."""
         self._gpu_info = get_gpu_info()
 
-
     @property
     def renderer(self):
         """GPU renderer name."""
@@ -140,7 +138,6 @@ class GPUInfo():
         except IndexError:
             raise RuntimeError("Unable to parse GPU information for the renderer.")
         return renderer.strip()
-
 
     @property
     def version(self):
@@ -152,7 +149,6 @@ class GPUInfo():
             raise RuntimeError("Unable to parse GPU information for the version.")
         return version.strip()
 
-
     @property
     def vendor(self):
         """GPU renderer vendor."""
@@ -163,14 +159,12 @@ class GPUInfo():
             raise RuntimeError("Unable to parse GPU information for the vendor.")
         return vendor.strip()
 
-
     def get_info(self):
         """All GPU information as tuple pairs."""
         return (("GPU Vendor", self.vendor),
                 ("GPU Renderer", self.renderer),
                 ("GPU Version", self.version),
                )
-
 
     def _repr_html_(self):
         """HTML table representation."""
@@ -181,7 +175,6 @@ class GPUInfo():
         fmt += "</table>"
         return fmt
 
-
     def __repr__(self):
         """Representation method."""
         content = "\n"
@@ -189,7 +182,6 @@ class GPUInfo():
             content += "{:>18}".format(k)+' : {}\n'.format(v)
         content += "\n"
         return content
-
 
 
 class Report(scooby.Report):
@@ -225,7 +217,7 @@ class Report(scooby.Report):
                 'meshio']
 
         # Optional packages.
-        optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
+        optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
                     'cmocean', 'panel', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
