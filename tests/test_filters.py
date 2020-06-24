@@ -794,3 +794,10 @@ def test_extract_subset():
     # Test that we fix the confusing issue from extents in
     #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
     assert voi.origin == voi.bounds[::2]
+
+
+def test_poly_data_strip():
+    mesh = examples.load_airplane()
+    slc = mesh.slice(normal='z', origin=(0,0,-10))
+    stripped = slc.strip()
+    assert stripped.n_cells == 1

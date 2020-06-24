@@ -3700,6 +3700,70 @@ class PolyDataFilters(DataSetFilters):
             return output
         poly_data.overwrite(output)
 
+    def strip(poly_data, join=False, max_length=1000, pass_cell_data=False,
+              pass_cell_ids=False, pass_point_ids=False):
+        """Strip poly data cells.
+
+        Generates triangle strips and/or poly-lines from input polygons,
+        triangle strips, and lines.
+
+        Polygons are assembled into triangle strips only if they are
+        triangles; other types of polygons are passed through to the output
+        and not stripped. (Use  ``triangulate`` filter to triangulate
+        non-triangular polygons prior to running this filter if you need to
+        strip all the data.) The filter will pass through (to the output)
+        vertices if they are present in the input polydata. Also note that if
+        triangle strips or polylines are defined in the input they are passed
+        through and not joined nor extended. (If you wish to strip these use
+        ``triangulate`` filter to fragment the input into triangles and lines
+        prior to running this filter.)
+
+        Parameters
+        ----------
+        join : bool
+            If on, the output polygonal segments will be joined if they are
+            contiguous. This is useful after slicing a surface. The default
+            is off.
+
+        max_length : int
+            Specify the maximum number of triangles in a triangle strip,
+            and/or the maximum number of lines in a poly-line.
+
+        pass_cell_data : bool
+            Enable/Disable passing of the CellData in the input to the output
+            as FieldData. Note the field data is transformed.
+
+        pass_cell_ids : bool
+            If on, the output polygonal dataset will have a celldata array
+            that holds the cell index of the original 3D cell that produced
+            each output cell. This is useful for picking. The default is off
+            to conserve memory.
+
+        pass_point_ids : bool
+            If on, the output polygonal dataset will have a pointdata array
+            that holds the point index of the original vertex that produced
+            each output vertex. This is useful for picking. The default is
+            off to conserve memory.
+
+        Examples
+        --------
+        >>> from pyvista import examples
+        >>> mesh = examples.load_airplane()
+        >>> slc = mesh.slice(normal='z', origin=(0,0,-10))
+        >>> stripped = slc.strip()
+        >>> stripped.n_cells
+        1
+        """
+        alg = vtk.vtkStripper()
+        alg.SetInputDataObject(poly_data)
+        alg.SetJoinContiguousSegments(join)
+        alg.SetMaximumLength(max_length)
+        alg.SetPassCellDataAsFieldData(pass_cell_data)
+        alg.SetPassThroughCellIds(pass_cell_ids)
+        alg.SetPassThroughPointIds(pass_point_ids)
+        alg.Update()
+        return _get_output(alg)
+
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
