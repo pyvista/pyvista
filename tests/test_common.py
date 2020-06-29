@@ -761,3 +761,26 @@ def test_no_active():
 
     with pytest.raises(KeyError):
         pdata.point_arrays[None]
+
+
+def test_get_data_range(grid):
+    # Test with blank mesh
+    mesh = pyvista.Sphere()
+    mesh.clear_arrays()
+    rng = mesh.get_data_range()
+    assert all(np.isnan(rng))
+    with pytest.raises(ValueError):
+        rng = mesh.get_data_range('some data')
+
+    # Test with some data
+    rng = grid.get_data_range() # active scalars
+    assert len(rng) == 2
+    assert np.allclose(rng, (1, 302))
+
+    rng = grid.get_data_range('sample_point_scalars')
+    assert len(rng) == 2
+    assert np.allclose(rng, (1, 302))
+
+    rng = grid.get_data_range('sample_cell_scalars')
+    assert len(rng) == 2
+    assert np.allclose(rng, (1, 40))
