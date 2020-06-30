@@ -51,6 +51,7 @@ def close_all():
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
+log.addHandler(logging.StreamHandler())
 
 
 @abstract_class
@@ -94,6 +95,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  border_width=2.0, title=None, splitting_position=None,
                  groups=None, row_weights=None, col_weights=None):
         """Initialize base plotter."""
+        log.debug('BasePlotter init start')
         self.image_transparent_background = rcParams['transparent_background']
 
         self._store_image = False
@@ -258,6 +260,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Key bindings
         self.reset_key_events()
+        log.debug('BasePlotter init stop')
 
     #### Manage the active Renderer ####
 
@@ -3722,7 +3725,7 @@ class Plotter(BasePlotter):
                          splitting_position=splitting_position,
                          title=title)
 
-        log.debug('Initializing')
+        log.debug('Plotter init start')
 
         def on_timer(iren, event_id):
             """Exit application if interactive renderer stops."""
@@ -3786,6 +3789,7 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+        log.debug('Plotter init stop')
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
