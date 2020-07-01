@@ -607,7 +607,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         # vtk9 does not require an offset array
         if VTK9:
             if offset is not None:
-                warnings.warn('VTK 9 no longer accepts an offset array')
+                warnings.warn('VTK 9 no longer accepts an offset array',
+                              stacklevel=3)
             self.SetCells(cell_type, vtkcells)
         else:
             self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)
