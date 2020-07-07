@@ -148,3 +148,20 @@ curvsurf.t_coords = puppy_coords
 # use the puppy image
 tex = examples.download_puppy_texture()
 curvsurf.plot(texture=tex, cpos="xy")
+
+
+###############################################################################
+# Textures and Scalar Data
+# ++++++++++++++++++++++++
+#
+# Display scalar data along with a texture by ensuring the
+# ``interpolate_before_map`` setting is ``False`` and specifying both the
+# ``texture`` and ``scalars`` arguments.
+
+globe = examples.load_globe().elevation()
+
+globe.plot(scalars="Elevation",
+           cmap="jet",
+           texture=True,
+           lighting=False,
+           interpolate_before_map=False)
