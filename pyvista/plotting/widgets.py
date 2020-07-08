@@ -58,10 +58,6 @@ class WidgetHelper:
             callback
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Box widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "box_widgets"):
             self.box_widgets = []
 
@@ -240,10 +236,6 @@ class WidgetHelper:
             if true, run the callback function after the widget is created.
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Plane widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "plane_widgets"):
             self.plane_widgets = []
 
@@ -542,10 +534,6 @@ class WidgetHelper:
             callback
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Line widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "line_widgets"):
             self.line_widgets = []
 
@@ -729,11 +717,6 @@ class WidgetHelper:
             The name of the slider style. The list of available styles are in
             ``rcParams['slider_style']``. Defaults to None.
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Slider widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
-
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
 
@@ -1018,11 +1001,6 @@ class WidgetHelper:
             callback
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Spline widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
-
         if not hasattr(self, "spline_widgets"):
             self.spline_widgets = []
 
@@ -1184,11 +1162,6 @@ class WidgetHelper:
             if true, run the callback function after the widget is created.
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Sphere widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
-
         if not hasattr(self, "sphere_widgets"):
             self.sphere_widgets = []
 

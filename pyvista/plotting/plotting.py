@@ -706,7 +706,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, 'ren_win') and not self._first_time:
             self.ren_win.Render()
         # Not sure if this is ever needed but here as a reminder
-        # if hasattr(self, 'iren') and not self._first_time:
+        # if not self._first_time:
         #     self.iren.Render()
         return
 
@@ -730,11 +730,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._key_press_event_callbacks[key].append(callback)
 
     def _add_observer(self, event, call):
-        if hasattr(self, 'iren'):
-            self._observers[event] = self.iren.AddObserver(event, call)
+        self._observers[event] = self.iren.AddObserver(event, call)
 
     def _remove_observer(self, event):
-        if hasattr(self, 'iren') and event in self._observers:
+        if event in self._observers:
             self.iren.RemoveObserver(event)
             del self._observers[event]
 
@@ -896,8 +895,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Update the camera interactor style."""
         if not hasattr(self, '_style'):
             self._style = vtk.vtkInteractorStyleTrackballCamera()
-        if hasattr(self, 'iren'):
-            return self.iren.SetInteractorStyle(self._style)
+        return self.iren.SetInteractorStyle(self._style)
 
     def enable_trackball_style(self):
         """Set the interactive style to trackball camera.
@@ -1029,9 +1027,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         curr_time = time.time()
         if Plotter.last_update_time > curr_time:
             Plotter.last_update_time = curr_time
-
-        if not hasattr(self, 'iren'):
-            return
 
         update_rate = self.iren.GetDesiredUpdateRate()
         if (curr_time - Plotter.last_update_time) > (1.0/update_rate):
@@ -2478,7 +2473,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif interactive and self.shape != (1, 1):
             raise ValueError('Interactive scalar bars disabled for multi-renderer plots')
 
-        if interactive and hasattr(self, 'iren'):
+        if interactive:
             self.scalar_widget = vtk.vtkScalarBarWidget()
             self.scalar_widget.SetScalarBarActor(self.scalar_bar)
             self.scalar_widget.SetInteractor(self.iren)
@@ -2618,13 +2613,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if hasattr(self, '_style'):
             del self._style
 
-        if hasattr(self, 'iren'):
-            # self.iren.RemoveAllObservers()
-            for obs in self._observers.values():
-                self.iren.RemoveObservers(obs)
-            del self._observers
-            self.iren.TerminateApp()
-            del self.iren
+        # self.iren.RemoveAllObservers()
+        for obs in self._observers.values():
+            self.iren.RemoveObservers(obs)
+        del self._observers
+        self.iren.TerminateApp()
+        del self.iren
 
         if hasattr(self, 'textActor'):
             del self.textActor
@@ -3475,8 +3469,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         NumberOfFlyFrames. The LOD desired frame rate is used.
 
         """
-        if not hasattr(self, 'iren'):
-            raise AttributeError('This plotter does not have an interactive window')
         return self.iren.FlyTo(self.renderer, *point)
 
     def orbit_on_path(self, path=None, focus=None, step=0.5, viewup=None,
@@ -3629,7 +3621,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._background_renderers[self._active_renderer_index] = renderer
 
         # setup autoscaling of the image
-        if auto_resize and hasattr(self, 'iren'):  # pragma: no cover
+        if auto_resize:  # pragma: no cover
             self._add_observer('ModifiedEvent', renderer.resize)
 
     def remove_background_image(self):
@@ -3766,15 +3758,16 @@ class Plotter(BasePlotter):
 
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
-        else:  # Allow user to interact
-            self.iren = vtk.vtkRenderWindowInteractor()
-            self.iren.LightFollowCameraOff()
-            self.iren.SetDesiredUpdateRate(30.0)
-            self.iren.SetRenderWindow(self.ren_win)
-            self.enable_trackball_style()
-            self._observers = {}    # Map of events to observers of self.iren
-            self._add_observer("KeyPressEvent", self.key_press_event)
-            self.update_style()
+
+        # Add ren win and interactor no matter what - necessary for ipyvtk_simple
+        self.iren = vtk.vtkRenderWindowInteractor()
+        self.iren.LightFollowCameraOff()
+        self.iren.SetDesiredUpdateRate(30.0)
+        self.iren.SetRenderWindow(self.ren_win)
+        self.enable_trackball_style()
+        self._observers = {}    # Map of events to observers of self.iren
+        self._add_observer("KeyPressEvent", self.key_press_event)
+        self.update_style()
 
         # Set background
         self.set_background(rcParams['background'])
