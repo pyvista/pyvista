@@ -12,7 +12,7 @@ from .theme import rcParams
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
+         text='', return_img=False, eye_dome_lighting=False, use_ipyvtk=None,
          volume=False, parallel_projection=False, **kwargs):
     """Plot a vtk or numpy object.
 
@@ -137,7 +137,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           full_screen=full_screen,
                           screenshot=screenshot,
                           return_img=return_img,
-                          use_panel=use_panel,
+                          use_ipyvtk=use_ipyvtk,
                           height=height)
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]

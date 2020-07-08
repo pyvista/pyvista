@@ -3786,8 +3786,7 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
-             screenshot=False, return_img=False, use_panel=None, cpos=None,
-             height=400):
+             screenshot=False, return_img=False, use_ipyvtk=None, cpos=None):
         """Display the plotting window.
 
         Notes
@@ -3819,15 +3818,12 @@ class Plotter(BasePlotter):
             Opens window in full screen.  When enabled, ignores
             window_size.  Default False.
 
-        use_panel : bool, optional
-            If False, the interactive rendering from panel will not be used in
-            notebooks
+        use_ipyvtk : bool, optional
+            If False, the interactive rendering from ipyvtk will not be used in
+            notebooks.
 
         cpos : list(tuple(floats))
             The camera position to use
-
-        height : int, optional
-            height for panel pane. Only used with panel.
 
         Return
         ------
@@ -3835,8 +3831,8 @@ class Plotter(BasePlotter):
             List of camera position, focal point, and view up
 
         """
-        if use_panel is None:
-            use_panel = rcParams['use_panel']
+        if use_ipyvtk is None:
+            use_ipyvtk = rcParams['use_ipyvtk']
 
         if auto_close is None:
             auto_close = rcParams['auto_close']
@@ -3894,13 +3890,6 @@ class Plotter(BasePlotter):
                 log.debug('KeyboardInterrupt')
                 self.close()
                 raise KeyboardInterrupt
-        elif self.notebook and use_panel and not hasattr(self, 'volume'):
-            try:
-                from panel.pane import VTK as panel_display
-                disp = panel_display(self.ren_win, sizing_mode='stretch_width',
-                                     height=height)
-            except:
-                pass
         # In the event that the user hits the exit-button on the GUI  (on
         # Windows OS) then it must be finalized and deleted as accessing it
         # will kill the kernel.
@@ -3908,6 +3897,7 @@ class Plotter(BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         if not self.ren_win.IsCurrent():
+            print("FOOOOOOO")
             self._clear_ren_win() # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
@@ -3923,11 +3913,16 @@ class Plotter(BasePlotter):
         # Get camera position before closing
         cpos = self.camera_position
 
-        # NOTE: our conversion to panel currently does not support mult-view
-        #       so we should display the static screenshot in notebooks for
-        #       multi-view plots until we implement this feature
-        # If notebook is true and panel display failed:
-        if self.notebook and (disp is None or self.shape != (1, 1)):
+        if self.notebook and use_ipyvtk:
+            try:
+                from ipyvtk_simple.viewer import ViewInteractiveWidget
+                auto_close = False
+                disp = ViewInteractiveWidget(self.ren_win,
+                    transparent_background=self.image_transparent_background)
+            except:
+                pass
+        # If notebook is true and ipyvtk display failed:
+        if self.notebook and disp is None:
             import PIL.Image
             # sanity check
             try:
@@ -3942,7 +3937,7 @@ class Plotter(BasePlotter):
         if auto_close:
             self.close()
 
-        # Return the notebook display: either panel object or image display
+        # Return the notebook image display
         if self.notebook:
             return disp
 

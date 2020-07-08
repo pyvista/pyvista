@@ -51,7 +51,7 @@ rcParams = {
     'lighting': True,
     'interactive': False,
     'render_points_as_spheres': False,
-    'use_panel': False,
+    'use_ipyvtk': True,
     'transparent_background': False,
     'title': 'PyVista',
     'axes': {

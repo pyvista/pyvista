@@ -17,9 +17,6 @@ To learn more, please see `this blog post`_.
 import pyvista as pv
 from pyvista import examples
 
-# Eye dome lighting is not currently supported by VTKjs
-pv.rcParams["use_panel"] = False
-
 ###############################################################################
 # Statue
 # +++++++++++
