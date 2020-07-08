@@ -45,6 +45,18 @@ curvsurf.texture_map_to_plane(inplace=True)
 
 curvsurf.plot(texture=tex)
 
+###############################################################################
+# Display scalar data along with a texture by ensuring the
+# ``interpolate_before_map`` setting is ``False`` and specifying both the
+# ``texture`` and ``scalars`` arguments.
+
+elevated = curvsurf.elevation()
+
+elevated.plot(scalars='Elevation',
+              cmap='terrain',
+              texture=tex,
+              interpolate_before_map=False)
+
 
 ###############################################################################
 # Note that this process can be completed with any image texture!
