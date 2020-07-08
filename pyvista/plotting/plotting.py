@@ -37,6 +37,8 @@ try:
 except ImportError:
     has_matplotlib = False
 
+VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+
 _ALL_PLOTTERS = {}
 
 def close_all():
@@ -570,6 +572,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.remove_actor(actor, reset_camera)
         return True
 
+    @wraps(Renderer.set_environment_texture)
+    def set_environment_texture(self, *args, **kwargs):
+        """Wrap ``Renderer.set_environment_texture``."""
+        return self.renderer.set_environment_texture(*args, **kwargs)
+
     #### Properties from Renderer ####
 
     @property
@@ -1058,7 +1065,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
-                 log_scale=False, **kwargs):
+                 log_scale=False, pbr=False, metallic=0.0, roughness=0.5,
+                 **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1255,6 +1263,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         pickable : bool
             Set whether this mesh is pickable
+
+        pbr : bool
+            Enable physics based rendering (PBR) if the mesh if ``PolyData``.
+            Use the ``color`` argument to set the base color. This is only
+            available in VTK>=9.
+
+        metallic : float
+            Usually this value is either 0 or 1 for real material but any value
+            in between is valid. This parameter is only used by PBR
+            Interpolation. Default value is 0.0
+
+        roughness : float
+            This value have to be between 0 (glossy) and 1 (rough). A glossy
+            material have reflections and a high specular part. This parameter
+            is only used by PBR Interpolation. Default value is 0.5
 
         Return
         ------
@@ -1649,7 +1672,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         prop.SetSpecular(specular)
         prop.SetSpecularPower(specular_power)
 
-        if smooth_shading:
+        if pbr and VTK9:
+            prop.SetInterpolationToPBR()
+            prop.SetMetallic(metallic)
+            prop.SetRoughness(roughness)
+        elif smooth_shading:
             prop.SetInterpolationToPhong()
         else:
             prop.SetInterpolationToFlat()

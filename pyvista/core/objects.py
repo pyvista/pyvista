@@ -375,6 +375,24 @@ class Texture(vtk.vtkTexture):
     def repeat(self, flag):
         self.SetRepeat(flag)
 
+    @property
+    def cube_map(self, flag):
+        """Is this texture a cube map, if so it needs 6 inputs one for each
+        side of the cube. You must set this before connecting the inputs.
+        The inputs must all have the same size, data type, and depth.
+        """
+        return self.GetCubeMap()
+
+    @repeat.setter
+    def cube_map(self, flag):
+        self.SetCubeMap(flag)
+
     def copy(self):
         """Make a copy of this textrue."""
         return Texture(self.to_image().copy())
+
+    def to_skybox(self):
+        if self.cube_map:
+            skybox = vtk.vtkSkybox()
+            skybox.SetTexture(self)
+            return skybox

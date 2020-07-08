@@ -1420,6 +1420,23 @@ class Renderer(vtkRenderer):
         self.Modified()
         return
 
+    def set_environment_texture(self, texture):
+        """Set the environment texture used for image based lighting.
+
+        This texture is supposed to represent the scene background. If it
+        is not a cubemap, the texture is supposed to represent an
+        equirectangular projection. If used with raytracing backends, the
+        texture must be an equirectangular projection and must be
+        constructed with a valid vtkImageData. Warning, this texture must
+        be expressed in linear color space. If the texture is in sRGB
+        color space, set the color flag on the texture or set the
+        argument isSRGB to true.
+        """
+        self.UseImageBasedLightingOn()
+        self.SetEnvironmentTexture(texture)
+        self.Modified()
+        return
+
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()

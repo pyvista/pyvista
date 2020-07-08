@@ -643,3 +643,18 @@ def download_rgba_texture():
 def download_vtk_logo():
     """Download a texture of the VTK logo."""
     return _download_and_read("vtk.png", texture=True)
+
+
+def download_sky_box_cube_map():
+    sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
+    images = ['skybox2-' + suffix + '.jpg' for suffix in sets]
+    texture = pyvista.Texture()
+    texture.cube_map = True # Must be set prior to setting images
+    for i, fn in enumerate(images):
+        image = _download_and_read(fn)
+        flip = vtk.vtkImageFlip()
+        flip.SetInputDataObject(image)
+        flip.SetFilteredAxis(1)  # flip y axis
+        flip.Update()
+        texture.SetInputDataObject(i, flip.GetOutput())
+    return texture
