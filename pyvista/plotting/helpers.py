@@ -75,7 +75,6 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    height = kwargs.get('height', 400)
     auto_close = kwargs.get('auto_close', rcParams['auto_close'])
 
     if notebook:
@@ -137,8 +136,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           full_screen=full_screen,
                           screenshot=screenshot,
                           return_img=return_img,
-                          use_ipyvtk=use_ipyvtk,
-                          height=height)
+                          use_ipyvtk=use_ipyvtk)
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
     return result
