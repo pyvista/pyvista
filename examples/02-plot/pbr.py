@@ -39,3 +39,37 @@ p.add_mesh(mesh, color='linen',
            pbr=True, metallic=0.8, roughness=.1,
            diffuse=1)
 p.show(cpos=cpos)
+
+###############################################################################
+
+# Helper to create good sphere
+Sphere = lambda center: pv.Sphere(center=center, radius=0.5,
+                                  theta_resolution=128,
+                                  phi_resolution=128).compute_normals()
+
+###############################################################################
+colors = ['red', 'teal', 'black', 'orange', 'silver']
+
+p = pv.Plotter()
+p.set_environment_texture(texture)
+
+for i in range(5):
+    color = colors[i]
+    for j in range(6):
+        mesh = Sphere((0.0, 4 - i, j))  # flip here for now
+        p.add_mesh(mesh, color=color,
+                   pbr=True, metallic=i*2/8, roughness=j*2/10,  # i*2/8 for metallic?
+                   smooth_shading=True)  # this is the significant new item
+
+p.view_vector((-1,0,0), (0,1,0))
+p.show()
+
+###############################################################################
+color = 0.7, 0.5, 0.1
+
+p = pv.Plotter()
+p.set_environment_texture(texture)
+p.add_mesh(Sphere((0,0,0)), pbr=True, color=color, metallic=0.0, roughness=0.2,)
+p.add_mesh(Sphere((0,0,1)), pbr=True, color=color, metallic=1.0, roughness=0.2)
+p.view_vector((-1,0,0), (0,1,0))
+p.show()
