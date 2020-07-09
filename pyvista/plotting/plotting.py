@@ -3898,7 +3898,6 @@ class Plotter(BasePlotter):
         # the closing routines that might try to still access that
         # render window.
         if not self.ren_win.IsCurrent():
-            print("FOOOOOOO")
             self._clear_ren_win() # The ren_win is deleted
             # proper screenshots cannot be saved if this happens
             if not auto_close:
