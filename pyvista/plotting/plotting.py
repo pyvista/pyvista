@@ -2614,12 +2614,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._style
 
         # self.iren.RemoveAllObservers()
-        if hasattr(self, '_observers'):
+        if hasattr(self, 'iren'):
             for obs in self._observers.values():
                 self.iren.RemoveObservers(obs)
             del self._observers
-        self.iren.TerminateApp()
-        del self.iren
+            self.iren.TerminateApp()
+            del self.iren
 
         if hasattr(self, 'textActor'):
             del self.textActor
