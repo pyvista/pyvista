@@ -2614,9 +2614,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             del self._style
 
         # self.iren.RemoveAllObservers()
-        for obs in self._observers.values():
-            self.iren.RemoveObservers(obs)
-        del self._observers
+        if hasattr(self, '_observers'):
+            for obs in self._observers.values():
+                self.iren.RemoveObservers(obs)
+            del self._observers
         self.iren.TerminateApp()
         del self.iren
 
