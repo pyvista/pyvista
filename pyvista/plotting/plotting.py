@@ -687,6 +687,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
+
+        # Will segfault without this if the ren_win hasn't been shown
+        self._on_first_render_request()
+        self.update()
+
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
         ifilter.ReadFrontBufferOff()
@@ -2835,6 +2840,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if reset_camera_clipping_range:
             self.renderer.ResetCameraClippingRange()
 
+        # Will segfault without this if the ren_win hasn't been shown
+        self._on_first_render_request()
+        self.update()
+
         # Get the z-buffer image
         ifilter = vtk.vtkWindowToImageFilter()
         ifilter.SetInput(self.ren_win)
@@ -3210,6 +3219,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
         if extension not in valid:
             raise ValueError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
+
+        # Will segfault without this if the ren_win hasn't been shown
+        self._on_first_render_request()
+        self.update()
+
         writer = vtk.vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,
@@ -3637,6 +3651,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset camera clipping planes."""
         self.renderer.ResetCameraClippingRange()
 
+    def _on_first_render_request(self, cpos=None):
+        """Once an image or render is officially requested, run this routine.
+
+        For example on the show call or any screenshot producing code.
+        """
+        # reset unless camera for the first render unless camera is set
+        if self._first_time:  # and not self.camera_set:
+            for renderer in self.renderers:
+                if not renderer.camera_set and cpos is None:
+                    renderer.camera_position = renderer.get_default_cam_pos()
+                    renderer.ResetCamera()
+                elif cpos is not None:
+                    renderer.camera_position = cpos
+            self._first_time = False
+
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -3841,15 +3870,7 @@ class Plotter(BasePlotter):
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
 
-        # reset unless camera for the first render unless camera is set
-        if self._first_time:  # and not self.camera_set:
-            for renderer in self.renderers:
-                if not renderer.camera_set and cpos is None:
-                    renderer.camera_position = renderer.get_default_cam_pos()
-                    renderer.ResetCamera()
-                elif cpos is not None:
-                    renderer.camera_position = cpos
-            self._first_time = False
+        self._on_first_render_request(cpos=cpos)
 
         # if full_screen:
         if full_screen:
