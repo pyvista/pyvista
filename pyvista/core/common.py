@@ -637,7 +637,7 @@ class Common(DataSetFilters, DataObject):
                 # Raise a value error if fetching the range of an unknown array
                 raise ValueError('Array `{}` not present.'.format(name))
         # If array has no tuples return a NaN range
-        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
