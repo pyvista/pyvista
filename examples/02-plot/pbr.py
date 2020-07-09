@@ -7,7 +7,7 @@ functionality in PyVista. Read the `blog about PBR <https://blog.kitware.com/vtk
 for more details.
 
 PBR is only supported for :class:`pyvista.PolyData` and can be triggered via
-the ``pbr`` keyword argument of ``add_mesh``. Also use the ``metallic`` and ``roughness` arguments for furhter control.
+the ``pbr`` keyword argument of ``add_mesh``. Also use the ``metallic`` and ``roughness` arguments for further control.
 
 Let's show of this functionality by rendering a high quality mesh of a statue
 as though it were metallic.
@@ -34,7 +34,7 @@ cpos = [(-313.40, 66.09, 1000.61),
 # finish.
 p = pv.Plotter()
 p.add_actor(skybox)
-p.set_environment_texture(texture) # For refecting the environment off the mesh
+p.set_environment_texture(texture) # For reflecting the environment off the mesh
 p.add_mesh(mesh, color='linen',
            pbr=True, metallic=0.8, roughness=.1,
            diffuse=1)
