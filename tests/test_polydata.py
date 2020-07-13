@@ -314,7 +314,7 @@ def test_triangulate_filter(plane):
     plane.triangulate(inplace=True)
     assert plane.is_all_triangles()
     # Make a point cloud and assert false
-    assert not pv.PolyData(plane.points).is_all_triangles()
+    assert not pyvista.PolyData(plane.points).is_all_triangles()
     # Extract lines and make sure false
     assert not plane.extract_all_edges().is_all_triangles()
 
