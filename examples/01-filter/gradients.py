@@ -21,7 +21,7 @@ import numpy as np
 mesh = examples.download_carotid()
 mesh
 ###############################################################################
-# Now compute the gradients of the ``vecotrs`` vector field in the point data
+# Now compute the gradients of the ``vectors`` vector field in the point data
 # of that mesh. This is as simple as calling
 # :func:`pyvista.DataSetFilters.compute_gradient`.
 mesh_g = mesh.compute_gradient(scalars="vectors")

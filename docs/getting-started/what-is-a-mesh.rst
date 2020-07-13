@@ -132,7 +132,7 @@ that's a special case).
 What are attributes?
 --------------------
 
-Attributes a data values that live on either the nodes or cells of a mesh. In
+Attributes are data values that live on either the nodes or cells of a mesh. In
 PyVista, we work with both point data and cell data and allow easy access to
 data dictionaries to hold arrays for attributes that live either on all nodes
 or on all cells of a mesh. These attributes can be accessed by dictionaries
