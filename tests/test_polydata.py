@@ -313,6 +313,10 @@ def test_triangulate_filter(plane):
     assert not plane.is_all_triangles()
     plane.triangulate(inplace=True)
     assert plane.is_all_triangles()
+    # Make a point cloud and assert false
+    assert not pyvista.PolyData(plane.points).is_all_triangles()
+    # Extract lines and make sure false
+    assert not plane.extract_all_edges().is_all_triangles()
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])
