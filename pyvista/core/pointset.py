@@ -233,6 +233,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     def is_all_triangles(self):
         """Return True if all the faces of the polydata are triangles."""
+        # Need to make sure there are only face cells and no lines/verts
+        if not len(self.faces) or len(self.lines) > 0 or len(self.verts) > 0:
+            return False
+        # All we have are faces, check if all faces are indeed triangles
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
 
     def _from_arrays(self, vertices, faces, deep=True, verts=False):
