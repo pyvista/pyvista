@@ -1,5 +1,6 @@
 """Pyvista plotting module."""
 
+import pathlib
 import collections.abc
 import logging
 import os
@@ -3189,13 +3190,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file
         supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
-        if isinstance(filename, str):
-            if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
+        if isinstance(filename, (str, pathlib.Path)):
+            filename = pathlib.Path(filename)
+            if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
                 filename = os.path.join(pyvista.FIGURE_PATH, filename)
-            if not any([filename.lower().endswith(ext) for ext in supported_formats]):
-                filename += ".png"
-            filename = os.path.abspath(os.path.expanduser(filename))
-            w = imageio.imwrite(filename, image)
+            if not filename.suffix:
+                filename = filename.with_suffix('.png')
+            elif filename.suffix not in supported_formats:
+                raise ValueError('Unsupported extension %s\n' % filename.suffix +
+                                 'Must be one of the following: %s' %
+                                 supported_formats)
+            w = imageio.imwrite(filename.expanduser().absolute(), image)
             if not return_img:
                 return w
         return image

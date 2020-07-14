@@ -1,3 +1,5 @@
+import pathlib
+
 import numpy as np
 import pytest
 
@@ -27,6 +29,16 @@ def test_meshio(mesh_in, tmpdir):
         assert np.allclose(v, mesh.point_arrays[k.replace(" ", "_")])
     for k, v in mesh_in.cell_arrays.items():
         assert np.allclose(v, mesh.cell_arrays[k.replace(" ", "_")])
+
+
+def test_pathlib_read_write(tmpdir, sphere):
+    path = pathlib.Path(tmpdir.mkdir("tmpdir").join('tmp.vtk'))
+    pyvista.save_meshio(path, sphere)
+    assert path.is_file()
+
+    mesh = pyvista.read_meshio(path)
+    assert isinstance(mesh, pyvista.UnstructuredGrid)
+    assert mesh.points.shape == sphere.points.shape
 
 
 def test_file_format():

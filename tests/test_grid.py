@@ -1,3 +1,4 @@
+import pathlib
 import os
 import weakref
 
@@ -136,6 +137,22 @@ def test_save(extension, binary, tmpdir, hexbeam):
     assert grid.points.shape == hexbeam.points.shape
 
     grid = pyvista.read(filename)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+    assert isinstance(grid, pyvista.UnstructuredGrid)
+
+
+def test_pathlib_read_write(tmpdir, hexbeam):
+    path = pathlib.Path(tmpdir.mkdir("tmpdir").join('tmp.vtk'))
+    assert not path.is_file()
+    hexbeam.save(path)
+    assert path.is_file()
+
+    grid = pyvista.UnstructuredGrid(path)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+
+    grid = pyvista.read(path)
     assert grid.cells.shape == hexbeam.cells.shape
     assert grid.points.shape == hexbeam.points.shape
     assert isinstance(grid, pyvista.UnstructuredGrid)
@@ -361,6 +378,14 @@ def test_read_rectilinear_grid_from_file():
     assert grid.n_arrays == 1
 
 
+def test_read_rectilinear_grid_from_pathlib():
+    grid = pyvista.RectilinearGrid(pathlib.Path(examples.rectfile))
+    assert grid.n_cells == 16146
+    assert grid.n_points == 18144
+    assert grid.bounds == [-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0]
+    assert grid.n_arrays == 1
+
+
 def test_cast_rectilinear_grid():
     grid = pyvista.read(examples.rectfile)
     structured = grid.cast_to_structured_grid()
@@ -422,6 +447,15 @@ def test_read_uniform_grid_from_file():
     assert grid.n_cells == 729
     assert grid.n_points == 1000
     assert grid.bounds == [0.0,9.0, 0.0,9.0, 0.0,9.0]
+    assert grid.n_arrays == 2
+    assert grid.dimensions == [10, 10, 10]
+
+
+def test_read_uniform_grid_from_pathlib():
+    grid = pyvista.UniformGrid(pathlib.Path(examples.uniformfile))
+    assert grid.n_cells == 729
+    assert grid.n_points == 1000
+    assert grid.bounds == [0.0, 9.0, 0.0, 9.0, 0.0, 9.0]
     assert grid.n_arrays == 2
     assert grid.dimensions == [10, 10, 10]
 

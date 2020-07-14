@@ -61,7 +61,7 @@ class DataObject:
 
         """
         if self._READERS is None:
-            raise NotImplementedError('{} readers are not specified, this should be a' \
+            raise NotImplementedError('{} readers are not specified, this should be a'
                                       ' dict of (file extension: vtkReader type)'
                                       .format(self.__class__.__name__))
 

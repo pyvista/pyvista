@@ -1,3 +1,4 @@
+import pathlib
 import os
 import sys
 from weakref import proxy
@@ -38,7 +39,8 @@ sphere_c = pyvista.Sphere(2.0)
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot(tmpdir):
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.png')
+    tmp_dir = tmpdir.mkdir("tmpdir2")
+    filename = str(tmp_dir.join('tmp.png'))
     scalars = np.arange(sphere.n_points)
     cpos, img = pyvista.plot(sphere,
                              off_screen=OFF_SCREEN,
@@ -57,14 +59,19 @@ def test_plot(tmpdir):
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
-    os.remove(filename)
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'foo')
-    cpos = pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
-    filename = filename + ".png" # Ensure it added a PNG extension by default
-    assert os.path.isfile(filename)
-    # remove file
-    os.remove(filename)
 
+    filename = pathlib.Path(tmp_dir.join('tmp2.png'))
+    cpos = pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
+
+    # Ensure it added a PNG extension by default
+    filename = filename.with_suffix(".png")
+    assert os.path.isfile(filename)
+
+    # test invalid extension
+    with pytest.raises(ValueError):
+        filename = pathlib.Path(tmp_dir.join('tmp3.foo'))
+        pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
+    
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_invalid_style():

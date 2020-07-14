@@ -1,5 +1,6 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
+import pathlib
 import os
 
 import numpy as np
@@ -168,22 +169,40 @@ def read(filename, attrs=None, file_format=None):
     Parameters
     ----------
     filename : str
-        The string path to the file to read. If a list of files is given,
-        a :class:`pyvista.MultiBlock` dataset is returned with each file being
-        a separate block in the dataset.
+        The string path to the file to read. If a list of files is
+        given, a :class:`pyvista.MultiBlock` dataset is returned with
+        each file being a separate block in the dataset.
+
     attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of dictionary are
-        the attribute/method names and values are the arguments passed to those
-        calls. If you do not have any attributes to call, pass ``None`` as the
-        value.
+        A dictionary of attributes to call on the reader. Keys of
+        dictionary are the attribute/method names and values are the
+        arguments passed to those calls. If you do not have any
+        attributes to call, pass ``None`` as the value.
+
     file_format : str, optional
         Format of file to read with meshio.
 
+    Examples
+    --------
+    Load an example mesh
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> mesh = pyvista.read(examples.antfile)
+
+    Load a vtk file
+
+    >>> mesh = pyvista.read('my_mesh.vtk')  # doctest:+SKIP
+
+    Load a meshio file
+
+    >>> mesh = pyvista.read("mesh.obj")
+
     """
+
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:
-            if isinstance(each, str):
+            if isinstance(each, (str, pathlib.Path)):
                 name = os.path.basename(each)
             else:
                 name = None
