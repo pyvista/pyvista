@@ -3193,7 +3193,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if isinstance(filename, (str, pathlib.Path)):
             filename = pathlib.Path(filename)
             if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
-                filename = os.path.join(pyvista.FIGURE_PATH, filename)
+                filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
             if not filename.suffix:
                 filename = filename.with_suffix('.png')
             elif filename.suffix not in supported_formats:
