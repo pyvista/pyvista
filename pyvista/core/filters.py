@@ -2206,6 +2206,81 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
+    def compute_derivative(dataset, scalars=None, gradient='gradient',
+                           divergence=None, vorticity=None, qcriterion=None,
+                           preference='point'):
+        """Compute derivative-based quantities of point/cell scalar field.
+
+        Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
+        such as gradient, divergence, vorticity, and Q-criterion, of the
+        selected point or cell scalar field.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            String name of the scalars array to use when computing gradient.
+
+        gradient: bool, str, optional
+            Whether the gradient should be calculated. If a string is passed,
+            the string will be used for the resulting array name. Otherwise,
+            array name will be 'gradient'. Default: None
+
+        divergence: bool, str, optional
+            Whether the divergence should be calculated. If a string is passed,
+            the string will be used for the resulting array name. Otherwise,
+            array name will be 'divergence'. Default: None
+
+        vorticity: bool, str, optional
+            Whether the vorticity should be calculated. If a string is passed,
+            the string will be used for the resulting array name. Otherwise,
+            array name will be 'vorticity'. Default: None
+
+        qcriterion: bool, str, optional
+            Whether the qcriterion should be calculated. If a string is passed,
+            the string will be used for the resulting array name. Otherwise,
+            array name will be 'qcriterion'. Default: None
+
+        preference: str, optional
+            Data type preference. Either 'point' or 'cell'.
+
+        """
+        alg = vtk.vtkGradientFilter()
+        # Check if scalars array given
+        if scalars is None:
+            field, scalars = dataset.active_scalars_info
+            if scalars is None:
+                raise TypeError('No active scalars.  Must input scalars array name')
+        if not isinstance(scalars, str):
+            raise TypeError('scalars array must be given as a string name')
+
+            # bool(non-empty string/True) == True, bool(None/False) == False
+        alg.SetComputeGradient(bool(gradient))
+        if isinstance(gradient, bool):
+            gradient = 'gradient'
+        alg.SetResultArrayName(gradient)
+
+        alg.SetComputeDivergence(bool(divergence))
+        if isinstance(divergence, bool):
+            divergence = 'divergence'
+        alg.SetDivergenceArrayName(divergence)
+
+        alg.SetComputeVorticity(bool(vorticity))
+        if isinstance(vorticity, bool):
+            vorticity = 'vorticity'
+        alg.SetVorticityArrayName(vorticity)
+
+        alg.SetComputeQCriterion(bool(qcriterion))
+        if isinstance(qcriterion, bool):
+            qcriterion = 'qcriterion'
+        alg.SetResultArrayName(qcriterion)
+
+        _, field = dataset.get_array(scalars, preference=preference, info=True)
+        # args: (idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+        alg.SetInputData(dataset)
+        alg.Update()
+        return _get_output(alg)
+
 
 @abstract_class
 class CompositeFilters:
