@@ -2177,9 +2177,12 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
-    def compute_gradient(dataset, scalars=None, gradient_name='gradient',
+    @wraps(compute_derivative)
+    def compute_gradient(self, dataset, scalars=None, gradient_name='gradient',
                          preference='point'):
         """Compute per cell gradient of point/cell scalar field.
+
+        DEPRECATED: Use ``compute_derivative`` instead.
 
         Parameters
         ----------
@@ -2189,22 +2192,13 @@ class DataSetFilters:
         gradient_name : str, optional
             The name of the output array of the computed gradient.
 
+        preference: str, optional
+            Data type preference. Either 'point' or 'cell'.
+
         """
-        alg = vtk.vtkGradientFilter()
-        # Check if scalars array given
-        if scalars is None:
-            field, scalars = dataset.active_scalars_info
-            if scalars is None:
-                raise TypeError('No active scalars.  Must input scalars array name')
-        if not isinstance(scalars, str):
-            raise TypeError('scalars array must be given as a string name')
-        _, field = dataset.get_array(scalars, preference=preference, info=True)
-        # args: (idx, port, connection, field, name)
-        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
-        alg.SetInputData(dataset)
-        alg.SetResultArrayName(gradient_name)
-        alg.Update()
-        return _get_output(alg)
+        logging.warning('DEPRECATED: ``.compute_gradient`` is deprecated. Use ``.compute_derivative`` instead.')
+        return self.compute_derivative(scalars=scalars, gradient=gradient_name,
+                                       preference=preference)
 
     def compute_derivative(dataset, scalars=None, gradient='gradient',
                            divergence=None, vorticity=None, qcriterion=None,
