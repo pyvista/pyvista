@@ -1722,8 +1722,8 @@ class DataSetFilters:
             in the input mesh. Must be a positive integer.
 
         tolerance: float, optional
-            tolerance used to compute whether a point in the source is in a
-            cell of the input.  If not given, tolerance automatically generated.
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
 
         Return
         ------
