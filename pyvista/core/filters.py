@@ -1413,8 +1413,8 @@ class DataSetFilters:
             this object are sampled onto the nodes of the ``dataset`` mesh
 
         tolerance: float, optional
-            tolerance used to compute whether a point in the source is in a
-            cell of the input.  If not given, tolerance automatically generated.
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
 
         pass_cell_arrays: bool, optional
             Preserve source mesh's original cell data arrays
