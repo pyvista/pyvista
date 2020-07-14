@@ -1,6 +1,6 @@
 """Version info for pyvista."""
 # major, minor, patch
-version_info = 0, 26, 0
+version_info = 0, 26, 'b0'
 suffix = 'b'
 
 # Nice string for the version
