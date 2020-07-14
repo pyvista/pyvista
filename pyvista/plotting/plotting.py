@@ -3200,7 +3200,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 raise ValueError('Unsupported extension %s\n' % filename.suffix +
                                  'Must be one of the following: %s' %
                                  supported_formats)
-            w = imageio.imwrite(os.path.abspath(os.path.expanduser(filename)), image)
+            w = imageio.imwrite(os.path.abspath(os.path.expanduser(str(filename))),
+                                image)
             if not return_img:
                 return w
         return image

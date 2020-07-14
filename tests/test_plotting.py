@@ -64,14 +64,13 @@ def test_plot(tmpdir):
     cpos = pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
 
     # Ensure it added a PNG extension by default
-    filename = filename.with_suffix(".png")
-    assert os.path.isfile(filename)
+    assert filename.with_suffix(".png").is_file()
 
     # test invalid extension
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
-    
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_invalid_style():

@@ -65,7 +65,7 @@ class DataObject:
                                       ' dict of (file extension: vtkReader type)'
                                       .format(self.__class__.__name__))
 
-        filename = os.path.abspath(os.path.expanduser(filename))
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
             raise FileNotFoundError('File %s does not exist' % filename)
 

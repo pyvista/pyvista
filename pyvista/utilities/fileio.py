@@ -201,12 +201,12 @@ def read(filename, attrs=None, file_format=None):
         multi = pyvista.MultiBlock()
         for each in filename:
             if isinstance(each, (str, pathlib.Path)):
-                name = os.path.basename(each)
+                name = os.path.basename(str(each))
             else:
                 name = None
             multi[-1, name] = read(each)
         return multi
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
         raise FileNotFoundError('File ({}) not found'.format(filename))
     ext = get_ext(filename)
