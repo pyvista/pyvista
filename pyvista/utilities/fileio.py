@@ -195,10 +195,8 @@ def read(filename, attrs=None, file_format=None):
 
     Load a meshio file
 
-    >>> mesh = pyvista.read("mesh.obj")
-
+    >>> mesh = pyvista.read("mesh.obj")  # doctest:+SKIP
     """
-
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:

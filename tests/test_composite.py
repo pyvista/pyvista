@@ -199,10 +199,9 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(extension, binary, tmpdir, use_pathlib, ant,
                         sphere, uniform, airplane, globe):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     if use_pathlib:
-        filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
-    else:
-        filename = pathlib.Path(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+        pathlib.Path(filename)
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
     # Now check everything
     assert multi.n_blocks == 5

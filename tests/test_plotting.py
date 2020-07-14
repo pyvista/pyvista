@@ -60,7 +60,7 @@ def test_plot(tmpdir):
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
 
-    filename = pathlib.Path(tmp_dir.join('tmp2.png'))
+    filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
     cpos = pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
 
     # Ensure it added a PNG extension by default
@@ -69,7 +69,7 @@ def test_plot(tmpdir):
 
     # test invalid extension
     with pytest.raises(ValueError):
-        filename = pathlib.Path(tmp_dir.join('tmp3.foo'))
+        filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
     
 

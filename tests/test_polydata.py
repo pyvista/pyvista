@@ -305,7 +305,7 @@ def test_save(extension, binary, tmpdir):
 
 
 def test_pathlib_read_write(tmpdir, sphere):
-    path = pathlib.Path(tmpdir.mkdir("tmpdir").join('tmp.vtk'))
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
     sphere.save(path)
     assert path.is_file()
 
