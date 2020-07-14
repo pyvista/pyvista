@@ -103,7 +103,7 @@ class DataObject:
                                       ' dict of (file extension: vtkWriter type)'
                                       .format(self.__class__.__name__))
 
-        filename = os.path.abspath(os.path.expanduser(filename))
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
         file_ext = fileio.get_ext(filename)
         if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
