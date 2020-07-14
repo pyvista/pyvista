@@ -1413,8 +1413,8 @@ class DataSetFilters:
             this object are sampled onto the nodes of the ``dataset`` mesh
 
         tolerance: float, optional
-            tolerance used to compute whether a point in the source is in a
-            cell of the input.  If not given, tolerance automatically generated.
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
 
         pass_cell_arrays: bool, optional
             Preserve source mesh's original cell data arrays
@@ -1706,7 +1706,7 @@ class DataSetFilters:
         """
         return dataset.extract_geometry().triangulate().decimate(target_reduction)
 
-    def sample_over_line(dataset, pointa, pointb, resolution=None):
+    def sample_over_line(dataset, pointa, pointb, resolution=None, tolerance=None):
         """Sample a dataset onto a line.
 
         Parameters
@@ -1721,6 +1721,10 @@ class DataSetFilters:
             Number of pieces to divide line into. Defaults to number of cells
             in the input mesh. Must be a positive integer.
 
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
         Return
         ------
         sampled_line : pv.PolyData
@@ -1731,12 +1735,12 @@ class DataSetFilters:
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
 
-        sampled_line = line.sample(dataset)
+        sampled_line = line.sample(dataset, tolerance=tolerance)
         return sampled_line
 
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
                        title=None, ylabel=None, figsize=None, figure=True,
-                       show=True):
+                       show=True, tolerance=None):
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D where the X-axis is distance from
@@ -1774,6 +1778,10 @@ class DataSetFilters:
         show : bool
             Shows the matplotlib figure
 
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
         """
         # Ensure matplotlib is available
         try:
@@ -1782,7 +1790,7 @@ class DataSetFilters:
             raise ImportError('matplotlib must be available to use this filter.')
 
         # Sample on line
-        sampled = DataSetFilters.sample_over_line(dataset, pointa, pointb, resolution)
+        sampled = DataSetFilters.sample_over_line(dataset, pointa, pointb, resolution, tolerance)
 
         # Get variable of interest
         if scalars is None:
