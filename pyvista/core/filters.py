@@ -2192,24 +2192,24 @@ class DataSetFilters:
             String name of the scalars array to use when computing gradient.
 
         gradient: bool, str, optional
-            Whether the gradient should be calculated. If a string is passed,
-            the string will be used for the resulting array name. Otherwise,
-            array name will be 'gradient'. Default: None
+            Calculate gradient. If a string is passed, the string will be used
+            for the resulting array name. Otherwise, array name will be
+            'gradient'. Default: True
 
         divergence: bool, str, optional
-            Whether the divergence should be calculated. If a string is passed,
-            the string will be used for the resulting array name. Otherwise,
-            array name will be 'divergence'. Default: None
+            Calculate divergence. If a string is passed, the string will be
+            used for the resulting array name. Otherwise, array name will be
+            'divergence'. Default: None
 
         vorticity: bool, str, optional
-            Whether the vorticity should be calculated. If a string is passed,
-            the string will be used for the resulting array name. Otherwise,
-            array name will be 'vorticity'. Default: None
+            Calculate vorticity. If a string is passed, the string will be used
+            for the resulting array name. Otherwise, array name will be
+            'vorticity'. Default: None
 
         qcriterion: bool, str, optional
-            Whether the qcriterion should be calculated. If a string is passed,
-            the string will be used for the resulting array name. Otherwise,
-            array name will be 'qcriterion'. Default: None
+            Calculate qcriterion. If a string is passed, the string will be
+            used for the resulting array name. Otherwise, array name will be
+            'qcriterion'. Default: None
 
         faster: bool, optional
             Use faster algorithm for computing derivative quantities. Result is
