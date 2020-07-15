@@ -834,6 +834,16 @@ def test_compute_derivatives():
     assert np.shape(grad['gradient'])[0] == mesh.n_points
     assert np.shape(grad['gradient'])[1] == 3
 
+    grad = mesh.compute_derivative(scalars='Elevation', gradient=True, faster=True)
+    assert 'gradient' in grad.array_names
+    assert np.shape(grad['gradient'])[0] == mesh.n_points
+    assert np.shape(grad['gradient'])[1] == 3
+
+    grad = mesh.compute_derivative(scalars='vector', gradient=True, faster=True)
+    assert 'gradient' in grad.array_names
+    assert np.shape(grad['gradient'])[0] == mesh.n_points
+    assert np.shape(grad['gradient'])[1] == 9
+
     with pytest.raises(ValueError):
         grad = mesh.compute_derivative(scalars='Elevation', gradient=False)
 
