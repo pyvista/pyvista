@@ -2179,7 +2179,7 @@ class DataSetFilters:
 
     def compute_derivative(dataset, scalars=None, gradient=True,
                            divergence=None, vorticity=None, qcriterion=None,
-                           preference='point'):
+                           faster=False, preference='point'):
         """Compute derivative-based quantities of point/cell scalar field.
 
         Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
@@ -2210,6 +2210,13 @@ class DataSetFilters:
             Whether the qcriterion should be calculated. If a string is passed,
             the string will be used for the resulting array name. Otherwise,
             array name will be 'qcriterion'. Default: None
+
+        faster: bool, optional
+            Use faster algorithm for computing derivative quantities. Result is
+            less accurate and performs fewer derivative calculations,
+            increasing computation speed. The error will feature smoothing of
+            the output and possibly errors at boundaries. Option has no effect
+            if DataSet is not UnstructuredGrid. Default: False
 
         preference: str, optional
             Data type preference. Either 'point' or 'cell'.
@@ -2247,6 +2254,7 @@ class DataSetFilters:
             qcriterion = 'qcriterion'
         alg.SetQCriterionArrayName(qcriterion)
 
+        alg.SetFasterApproximation(faster)
         _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
