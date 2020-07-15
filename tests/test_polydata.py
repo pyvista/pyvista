@@ -1,3 +1,4 @@
+import pathlib
 import os
 from math import pi
 
@@ -299,6 +300,21 @@ def test_save(extension, binary, tmpdir):
     sphere.save(filename, binary)
 
     mesh = pyvista.PolyData(filename)
+    assert mesh.faces.shape == sphere.faces.shape
+    assert mesh.points.shape == sphere.points.shape
+
+
+def test_pathlib_read_write(tmpdir, sphere):
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    sphere.save(path)
+    assert path.is_file()
+
+    mesh = pyvista.PolyData(path)
+    assert mesh.faces.shape == sphere.faces.shape
+    assert mesh.points.shape == sphere.points.shape
+
+    mesh = pyvista.read(path)
+    assert isinstance(mesh, pyvista.PolyData)
     assert mesh.faces.shape == sphere.faces.shape
     assert mesh.points.shape == sphere.points.shape
 

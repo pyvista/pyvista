@@ -1,4 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
+import pathlib
 import logging
 import os
 import warnings
@@ -155,7 +156,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._load_file(args[0])
             elif isinstance(args[0], (np.ndarray, list)):
                 if isinstance(args[0], list):
@@ -316,7 +317,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
          file size.
 
         """
-        filename = os.path.abspath(os.path.expanduser(filename))
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
@@ -461,10 +462,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> from pyvista import examples
     >>> import vtk
 
-    >>> # Create an empty grid
+    Create an empty grid
+
     >>> grid = pyvista.UnstructuredGrid()
 
-    >>> # Copy a vtkUnstructuredGrid
+    Copy a vtkUnstructuredGrid
+
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
@@ -474,7 +477,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> # from arrays (vtk<9)
     >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
 
-    >>> # From a string filename
+    From a string filename
+
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     """
@@ -496,7 +500,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 else:
                     self.shallow_copy(args[0])
 
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._load_file(args[0])
 
             elif isinstance(args[0], vtk.vtkStructuredGrid):
