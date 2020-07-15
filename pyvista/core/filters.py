@@ -2177,30 +2177,7 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
-    @wraps(compute_derivative)
-    def compute_gradient(self, dataset, scalars=None, gradient_name='gradient',
-                         preference='point'):
-        """Compute per cell gradient of point/cell scalar field.
-
-        DEPRECATED: Use ``compute_derivative`` instead.
-
-        Parameters
-        ----------
-        scalars : str, optional
-            String name of the scalars array to use when computing gradient.
-
-        gradient_name : str, optional
-            The name of the output array of the computed gradient.
-
-        preference: str, optional
-            Data type preference. Either 'point' or 'cell'.
-
-        """
-        logging.warning('DEPRECATED: ``.compute_gradient`` is deprecated. Use ``.compute_derivative`` instead.')
-        return self.compute_derivative(scalars=scalars, gradient=gradient_name,
-                                       preference=preference)
-
-    def compute_derivative(dataset, scalars=None, gradient='gradient',
+    def compute_derivative(dataset, scalars=None, gradient=True,
                            divergence=None, vorticity=None, qcriterion=None,
                            preference='point'):
         """Compute derivative-based quantities of point/cell scalar field.
@@ -2246,6 +2223,8 @@ class DataSetFilters:
                 raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
+        if not any((gradient, divergence, vorticity, qcriterion)):
+            raise ValueError('must set at least one of gradient, divergence, vorticity, or qcriterion')
 
             # bool(non-empty string/True) == True, bool(None/False) == False
         alg.SetComputeGradient(bool(gradient))
@@ -2266,7 +2245,7 @@ class DataSetFilters:
         alg.SetComputeQCriterion(bool(qcriterion))
         if isinstance(qcriterion, bool):
             qcriterion = 'qcriterion'
-        alg.SetResultArrayName(qcriterion)
+        alg.SetQCriterionArrayName(qcriterion)
 
         _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
@@ -2275,6 +2254,28 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
+    @wraps(compute_derivative)
+    def compute_gradient(self, scalars=None, gradient_name='gradient',
+                         preference='point'):
+        """Compute per cell gradient of point/cell scalar field.
+
+        DEPRECATED: Use ``compute_derivative`` instead.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            String name of the scalars array to use when computing gradient.
+
+        gradient_name : str, optional
+            The name of the output array of the computed gradient.
+
+        preference: str, optional
+            Data type preference. Either 'point' or 'cell'.
+
+        """
+        logging.warning('DEPRECATED: ``.compute_gradient`` is deprecated. Use ``.compute_derivative`` instead.')
+        return self.compute_derivative(scalars=scalars, gradient=gradient_name,
+                                       preference=preference)
 
 @abstract_class
 class CompositeFilters:
