@@ -2254,7 +2254,6 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
-    @wraps(compute_derivative)
     def compute_gradient(self, scalars=None, gradient_name='gradient',
                          preference='point'):
         """Compute per cell gradient of point/cell scalar field.
