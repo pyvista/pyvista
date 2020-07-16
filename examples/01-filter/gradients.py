@@ -28,6 +28,11 @@ mesh_g = mesh.compute_derivative(scalars="vectors")
 mesh_g["gradient"]
 
 ###############################################################################
+# .. note:: You can also use :func:`pyvista.DataSetFilters.compute_derivative` for
+#   computing other derivative based quantities, such as divergence, vorticity,
+#   and Q-criterion. See function documentation for options.
+
+###############################################################################
 # ``mesh_g["gradient"]`` is an ``N`` by 9 NumPy array of the gradients, so we
 # could make a dictionary of NumPy arrays of the gradients like:
 
@@ -89,7 +94,3 @@ p.link_views()
 p.view_isometric()
 p.show()
 
-###############################################################################
-# You can also use :func:`pyvista.DataSetFilters.compute_derivative` for
-# computing other derivative based quantities, such as divergence, vorticity,
-# and qcriterion.
