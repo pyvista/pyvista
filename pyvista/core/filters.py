@@ -2189,7 +2189,8 @@ class DataSetFilters:
         Parameters
         ----------
         scalars : str, optional
-            String name of the scalars array to use when computing gradient.
+            String name of the scalars array to use when computing the
+            derivative quantities.
 
         gradient: bool, str, optional
             Calculate gradient. If a string is passed, the string will be used
