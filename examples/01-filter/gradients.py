@@ -8,7 +8,7 @@ The ordering for the output gradient tuple will be
 {du/dx, du/dy, du/dz, dv/dx, dv/dy, dv/dz, dw/dx, dw/dy, dw/dz} for
 an input array {u, v, w}.
 
-Showing the :func:`pyvista.DataSetFilters.compute_gradient` filter.
+Showing the :func:`pyvista.DataSetFilters.compute_derivative` filter.
 """
 
 # sphinx_gallery_thumbnail_number = 1
@@ -23,8 +23,8 @@ mesh
 ###############################################################################
 # Now compute the gradients of the ``vectors`` vector field in the point data
 # of that mesh. This is as simple as calling
-# :func:`pyvista.DataSetFilters.compute_gradient`.
-mesh_g = mesh.compute_gradient(scalars="vectors")
+# :func:`pyvista.DataSetFilters.compute_derivative`.
+mesh_g = mesh.compute_derivative(scalars="vectors")
 mesh_g["gradient"]
 
 ###############################################################################
@@ -66,7 +66,7 @@ p.show()
 ###############################################################################
 # And there you have it, the gradients for a vector field! We could also do
 # this for a scalar  field like for the ``scalars`` field in the given dataset.
-mesh_g = mesh.compute_gradient(scalars="scalars")
+mesh_g = mesh.compute_derivative(scalars="scalars")
 
 gradients = gradients_to_dict(mesh_g["gradient"])
 gradients
@@ -88,3 +88,8 @@ for i in range(keys.shape[0]):
 p.link_views()
 p.view_isometric()
 p.show()
+
+###############################################################################
+# You can also use :func:`pyvista.DataSetFilters.compute_derivative` for
+# computing other derivative based quantities, such as divergence, vorticity,
+# and qcriterion.
