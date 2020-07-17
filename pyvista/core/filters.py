@@ -98,7 +98,7 @@ class DataSetFilters:
         invert : bool
             Flag on whether to flip/invert the clip.
 
-        value : float:
+        value : float, optional
             Set the clipping value along the normal direction.
             The default value is 0.0.
 
