@@ -91,7 +91,7 @@ class DataSetFilters:
             specified as a string conventional direction such as ``'x'`` for
             ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
-        origin : tuple(float)
+        origin : tuple(float), optional
             The center ``(x,y,z)`` coordinate of the plane on which the clip
             occurs. The default is the center of the dataset.
 
