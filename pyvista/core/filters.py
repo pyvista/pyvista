@@ -95,7 +95,7 @@ class DataSetFilters:
             The center ``(x,y,z)`` coordinate of the plane on which the clip
             occurs. The default is the center of the dataset.
 
-        invert : bool
+        invert : bool, optional
             Flag on whether to flip/invert the clip.
 
         value : float, optional
