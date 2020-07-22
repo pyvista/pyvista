@@ -1488,24 +1488,22 @@ class DataSetFilters:
         alg.Update() # Perform the resampling
         return _get_output(alg)
 
-    def interpolate(dataset, points, sharpness=2, radius=1.0,
-                    dimensions=(101, 101, 101), pass_cell_arrays=True,
-                    pass_point_arrays=True, null_value=0.0):
-        """Interpolate values onto this mesh from the point data of a given dataset.
+    def interpolate(dataset, target, sharpness=2, radius=1.0,
+                    strategy='null_value', null_value=0.0, n_points=None,
+                    pass_cell_arrays=False, pass_point_arrays=False):
+        """Interpolate values onto this mesh from a given dataset.
 
         The input dataset is typically a point cloud.
 
         This uses a gaussian interpolation kernel. Use the ``sharpness`` and
-        ``radius`` parameters to adjust this kernel.
-
-        Please note that the source dataset is first interpolated onto a fine
-        UniformGrid which is then sampled to this mesh. The interpolation grid's
-        dimensions will likely need to be tweaked for each individual use case.
+        ``radius`` parameters to adjust this kernel. You can also switch this
+        kernel to use an N closest points approach.
 
         Parameters
         ----------
-        points : pyvista.PolyData
-            The points whose values will be interpolated onto this mesh.
+        target: pyvista.Common
+            The vtk data object to sample from - point and cell arrays from
+            this object are interpolated onto this mesh.
 
         sharpness : float
             Set / Get the sharpness (i.e., falloff) of the Gaussian. By
@@ -1515,16 +1513,23 @@ class DataSetFilters:
         radius : float
             Specify the radius within which the basis points must lie.
 
-        dimensions : tuple(int)
-            When interpolating the points, they are first interpolating on to a
-            :class:`pyvista.UniformGrid` with the same spatial extent -
-            ``dimensions`` is number of points along each axis for that grid.
+        n_points : int, optional
+            If given, specifies the number of the closest points used to form
+            the interpolation basis. This will invalidate the radius and
+            sharpness arguments in favor of an N closest points approach. This
+            typically has poorer results.
 
-        pass_cell_arrays: bool, optional
-            Preserve source mesh's original cell data arrays
-
-        pass_point_arrays: bool, optional
-            Preserve source mesh's original point data arrays
+        strategy : str, optional
+            Specify a strategy to use when encountering a "null" point during
+            the interpolation process. Null points occur when the local
+            neighborhood (of nearby points to interpolate from) is empty. If
+            the strategy is set to ``'mask_points'``, then an output array is
+            created that marks points as being valid (=1) or null (invalid
+            =0) (and the NullValue is set as well). If the strategy is set to
+            ``'null_value'`` (this is the default), then the output data
+            value(s) are set to the ``null_value`` (specified in the output
+            point data). Finally, the strategy ``'closest_point'`` is to simply
+            use the closest point to perform the interpolation.
 
         null_value : float, optional
             Specify the null point value. When a null point is encountered
@@ -1532,22 +1537,36 @@ class DataSetFilters:
             default the null value is set to zero.
 
         """
-        box = pyvista.create_grid(dataset, dimensions=dimensions)
-
         gaussian_kernel = vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
         gaussian_kernel.SetRadius(radius)
+        gaussian_kernel.SetKernelFootprintToRadius()
+        if n_points:
+            gaussian_kernel.SetNumberOfPoints(n_points)
+            gaussian_kernel.SetKernelFootprintToNClosest()
+
+        locator = vtk.vtkStaticPointLocator()
+        locator.SetDataSet(target)
+        locator.BuildLocator()
 
         interpolator = vtk.vtkPointInterpolator()
-        interpolator.SetInputData(box)
-        interpolator.SetSourceData(points)
+        interpolator.SetInputData(dataset)
+        interpolator.SetSourceData(target)
         interpolator.SetKernel(gaussian_kernel)
+        interpolator.SetLocator(locator)
         interpolator.SetNullValue(null_value)
+        if strategy == 'null_value':
+            interpolator.SetNullPointsStrategyToNullValue()
+        elif strategy == 'mask_points':
+            interpolator.SetNullPointsStrategyToMaskPoints()
+        elif strategy == 'closest_point':
+            interpolator.SetNullPointsStrategyToClosestPoint()
+        else:
+            raise ValueError('strategy `{}` not supported.'.format(strategy))
+        interpolator.PassPointArraysOff()
+        interpolator.PassCellArraysOff()
         interpolator.Update()
-
-        return dataset.sample(interpolator.GetOutput(),
-                              pass_cell_arrays=pass_cell_arrays,
-                              pass_point_arrays=pass_point_arrays)
+        return _get_output(interpolator)
 
     def streamlines(dataset, vectors=None, source_center=None,
                     source_radius=None, n_points=100,
