@@ -1490,7 +1490,8 @@ class DataSetFilters:
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
                     strategy='null_value', null_value=0.0, n_points=None,
-                    pass_cell_arrays=False, pass_point_arrays=False):
+                    pass_cell_arrays=False, pass_point_arrays=False,
+                    progress_bar=False):
         """Interpolate values onto this mesh from a given dataset.
 
         The input dataset is typically a point cloud.
@@ -1536,6 +1537,9 @@ class DataSetFilters:
             then all components of each null tuple are set to this value. By
             default the null value is set to zero.
 
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
         gaussian_kernel = vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
@@ -1565,7 +1569,7 @@ class DataSetFilters:
             raise ValueError('strategy `{}` not supported.'.format(strategy))
         interpolator.PassPointArraysOff()
         interpolator.PassCellArraysOff()
-        interpolator.Update()
+        _update_alg(interpolator, progress_bar, 'Interpolating')
         return _get_output(interpolator)
 
     def streamlines(dataset, vectors=None, source_center=None,
