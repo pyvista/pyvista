@@ -1547,6 +1547,14 @@ class DataSetFilters:
             Display a progress bar to indicate progress.
 
         """
+        if not pyvista.is_pyvista_dataset(target):
+            raise TypeError('`target` must be a PyVista mesh type.')
+
+        # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
+        # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
+        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+            target = target.cast_to_unstructured_grid()
+
         gaussian_kernel = vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
         gaussian_kernel.SetRadius(radius)
