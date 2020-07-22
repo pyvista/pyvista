@@ -1397,8 +1397,54 @@ class DataSetFilters:
         out['SelectedPoints'] = bools
         return out
 
+    def probe(dataset, points, tolerance=None, pass_cell_arrays=True,
+               pass_point_arrays=True, categorical=False):
+        """Sample data values at specified point locations.
+
+        This uses :class:`vtk.vtkProbeFilter`.
+
+        Parameters
+        ----------
+        dataset: pyvista.Common
+            The mesh to probe from - point and cell arrays from
+            this object are probed onto the nodes of the ``points`` mesh
+
+        points: pyvista.Common
+            The points to probe values on to. This should be a PyVsita mesh
+            or something :func:`pyvista.wrap` can handle.
+
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        pass_cell_arrays: bool, optional
+            Preserve source mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve source mesh's original point data arrays
+
+        categorical : bool, optional
+            Control whether the source point data is to be treated as
+            categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme.
+
+        """
+        if not pyvista.is_pyvista_dataset(points):
+            points = pyvista.wrap(points)
+        alg = vtk.vtkProbeFilter()
+        alg.SetInputData(points)
+        alg.SetSourceData(dataset)
+        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetCategoricalData(categorical)
+        if tolerance is not None:
+            alg.SetComputeTolerance(False)
+            alg.SetTolerance(tolerance)
+        alg.Update() # Perform the resampling
+        return _get_output(alg)
+
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
-               pass_point_arrays=True):
+               pass_point_arrays=True, categorical=False):
         """Resample array data from a passed mesh onto this mesh.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
@@ -1422,12 +1468,20 @@ class DataSetFilters:
         pass_point_arrays: bool, optional
             Preserve source mesh's original point data arrays
 
+        categorical : bool, optional
+            Control whether the source point data is to be treated as
+            categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme.
+
         """
+        if not pyvista.is_pyvista_dataset(target):
+            raise TypeError('`target` must be a PyVista mesh type.')
         alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
         alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
         alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetPassCellArrays(pass_cell_arrays)
         alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetCategoricalData(categorical)
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
