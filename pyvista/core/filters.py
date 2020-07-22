@@ -1490,7 +1490,8 @@ class DataSetFilters:
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
                     strategy='null_value', null_value=0.0, n_points=None,
-                    progress_bar=False):
+                    pass_cell_arrays=True, pass_point_arrays=True,
+                    progress_bar=False, ):
         """Interpolate values onto this mesh from a given dataset.
 
         The input dataset is typically a point cloud.
@@ -1536,6 +1537,12 @@ class DataSetFilters:
             then all components of each null tuple are set to this value. By
             default the null value is set to zero.
 
+        pass_cell_arrays: bool, optional
+            Preserve input mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve input mesh's original point data arrays
+
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
 
@@ -1566,8 +1573,8 @@ class DataSetFilters:
             interpolator.SetNullPointsStrategyToClosestPoint()
         else:
             raise ValueError('strategy `{}` not supported.'.format(strategy))
-        interpolator.PassPointArraysOff()
-        interpolator.PassCellArraysOff()
+        interpolator.SetPassPointArrays(pass_point_arrays)
+        interpolator.SetPassCellArrays(pass_cell_arrays)
         _update_alg(interpolator, progress_bar, 'Interpolating')
         return _get_output(interpolator)
 
