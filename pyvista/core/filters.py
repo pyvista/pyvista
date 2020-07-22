@@ -1490,7 +1490,6 @@ class DataSetFilters:
 
     def interpolate(dataset, target, sharpness=2, radius=1.0,
                     strategy='null_value', null_value=0.0, n_points=None,
-                    pass_cell_arrays=False, pass_point_arrays=False,
                     progress_bar=False):
         """Interpolate values onto this mesh from a given dataset.
 
