@@ -108,7 +108,7 @@ plt.show()
 # dimensions of your pointset. There are a few ways to figure out the
 # dimensionality of structured grid including:
 #
-# * manually conting the nodes along the edges of the pointset
+# * manually counting the nodes along the edges of the pointset
 # * using a technique like principle component analysis to strip the rotation from the dataset and count the unique values along each axis for the new;y projected dataset.
 
 # Once you've figured out your grid's dimensions, simple create the
