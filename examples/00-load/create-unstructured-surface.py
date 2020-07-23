@@ -144,5 +144,5 @@ print(indices_in_cell)
 # if you are not using VTK 9.0 or newer, you must use the offset array
 grid = pv.UnstructuredGrid(offset, cells, celltypes, points)
 
-# plot the grid
-grid.plot(show_edges=True)
+# plot the grid (and suppress the camera position output)
+_ = grid.plot(show_edges=True)
