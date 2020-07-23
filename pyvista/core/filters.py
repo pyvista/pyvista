@@ -91,16 +91,15 @@ class DataSetFilters:
             specified as a string conventional direction such as ``'x'`` for
             ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
-        origin : tuple(float)
+        origin : tuple(float), optional
             The center ``(x,y,z)`` coordinate of the plane on which the clip
-            occurs
+            occurs. The default is the center of the dataset.
 
-        invert : bool
-            Flag on whether to flip/invert the clip
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
 
-        value : float:
-            Set the clipping value of the implicit function (if clipping with
-            implicit function) or scalar value (if clipping with scalars).
+        value : float, optional
+            Set the clipping value along the normal direction.
             The default value is 0.0.
 
         inplace : bool, optional
