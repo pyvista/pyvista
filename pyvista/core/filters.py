@@ -1398,7 +1398,7 @@ class DataSetFilters:
         return out
 
     def probe(dataset, points, tolerance=None, pass_cell_arrays=True,
-               pass_point_arrays=True, categorical=False):
+              pass_point_arrays=True, categorical=False):
         """Sample data values at specified point locations.
 
         This uses :class:`vtk.vtkProbeFilter`.
@@ -1410,7 +1410,7 @@ class DataSetFilters:
             this object are probed onto the nodes of the ``points`` mesh
 
         points: pyvista.Common
-            The points to probe values on to. This should be a PyVsita mesh
+            The points to probe values on to. This should be a PyVista mesh
             or something :func:`pyvista.wrap` can handle.
 
         tolerance: float, optional
@@ -1427,6 +1427,18 @@ class DataSetFilters:
             Control whether the source point data is to be treated as
             categorical. If the data is categorical, then the resultant data
             will be determined by a nearest neighbor interpolation scheme.
+
+        Examples
+        --------
+        Probe the active scalars in ``grid`` at the points in ``mesh``
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> grid = examples.load_uniform()
+        >>> result = grid.probe(mesh)
+        >>> 'Spatial Point Data' in result.point_arrays
+        True
 
         """
         if not pyvista.is_pyvista_dataset(points):
