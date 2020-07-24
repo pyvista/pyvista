@@ -1116,7 +1116,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             representations.  Default None.
 
         opacity : float, str, array-like
-            Opacity of the mesh. If a siblge float value is given, it will be
+            Opacity of the mesh. If a single float value is given, it will be
             the global opacity of the mesh and uniformly applied everywhere -
             should be between 0 and 1. A string can also be specified to map
             the scalars range to a predefined opacity transfer function
