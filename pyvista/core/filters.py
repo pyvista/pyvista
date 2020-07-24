@@ -2279,17 +2279,50 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
-    def compute_gradient(dataset, scalars=None, gradient_name='gradient',
-                         preference='point'):
-        """Compute per cell gradient of point/cell scalar field.
+    def compute_derivative(dataset, scalars=None, gradient=True,
+                           divergence=None, vorticity=None, qcriterion=None,
+                           faster=False, preference='point'):
+        """Compute derivative-based quantities of point/cell scalar field.
+
+        Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
+        such as gradient, divergence, vorticity, and Q-criterion, of the
+        selected point or cell scalar field.
 
         Parameters
         ----------
         scalars : str, optional
-            String name of the scalars array to use when computing gradient.
+            String name of the scalars array to use when computing the
+            derivative quantities.
 
-        gradient_name : str, optional
-            The name of the output array of the computed gradient.
+        gradient: bool, str, optional
+            Calculate gradient. If a string is passed, the string will be used
+            for the resulting array name. Otherwise, array name will be
+            'gradient'. Default: True
+
+        divergence: bool, str, optional
+            Calculate divergence. If a string is passed, the string will be
+            used for the resulting array name. Otherwise, array name will be
+            'divergence'. Default: None
+
+        vorticity: bool, str, optional
+            Calculate vorticity. If a string is passed, the string will be used
+            for the resulting array name. Otherwise, array name will be
+            'vorticity'. Default: None
+
+        qcriterion: bool, str, optional
+            Calculate qcriterion. If a string is passed, the string will be
+            used for the resulting array name. Otherwise, array name will be
+            'qcriterion'. Default: None
+
+        faster: bool, optional
+            Use faster algorithm for computing derivative quantities. Result is
+            less accurate and performs fewer derivative calculations,
+            increasing computation speed. The error will feature smoothing of
+            the output and possibly errors at boundaries. Option has no effect
+            if DataSet is not UnstructuredGrid. Default: False
+
+        preference: str, optional
+            Data type preference. Either 'point' or 'cell'.
 
         """
         alg = vtk.vtkGradientFilter()
@@ -2300,14 +2333,59 @@ class DataSetFilters:
                 raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
+        if not any((gradient, divergence, vorticity, qcriterion)):
+            raise ValueError('must set at least one of gradient, divergence, vorticity, or qcriterion')
+
+            # bool(non-empty string/True) == True, bool(None/False) == False
+        alg.SetComputeGradient(bool(gradient))
+        if isinstance(gradient, bool):
+            gradient = 'gradient'
+        alg.SetResultArrayName(gradient)
+
+        alg.SetComputeDivergence(bool(divergence))
+        if isinstance(divergence, bool):
+            divergence = 'divergence'
+        alg.SetDivergenceArrayName(divergence)
+
+        alg.SetComputeVorticity(bool(vorticity))
+        if isinstance(vorticity, bool):
+            vorticity = 'vorticity'
+        alg.SetVorticityArrayName(vorticity)
+
+        alg.SetComputeQCriterion(bool(qcriterion))
+        if isinstance(qcriterion, bool):
+            qcriterion = 'qcriterion'
+        alg.SetQCriterionArrayName(qcriterion)
+
+        alg.SetFasterApproximation(faster)
         _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(dataset)
-        alg.SetResultArrayName(gradient_name)
         alg.Update()
         return _get_output(alg)
 
+    def compute_gradient(self, scalars=None, gradient_name='gradient',
+                         preference='point'):
+        """Compute per cell gradient of point/cell scalar field.
+
+        DEPRECATED: Use ``compute_derivative`` instead.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            String name of the scalars array to use when computing gradient.
+
+        gradient_name : str, optional
+            The name of the output array of the computed gradient.
+
+        preference: str, optional
+            Data type preference. Either 'point' or 'cell'.
+
+        """
+        logging.warning('DEPRECATED: ``.compute_gradient`` is deprecated. Use ``.compute_derivative`` instead.')
+        return self.compute_derivative(scalars=scalars, gradient=gradient_name,
+                                       preference=preference)
 
 @abstract_class
 class CompositeFilters:
