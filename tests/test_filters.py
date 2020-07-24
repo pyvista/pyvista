@@ -592,6 +592,25 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
+@pytest.mark.parametrize('use_points', [True, False])
+@pytest.mark.parametrize('categorical', [True, False])
+def test_probe(categorical, use_points):
+    mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+    data_to_probe = examples.load_uniform()
+    if use_points:
+        dataset = np.array(mesh.points)
+    else:
+        dataset = mesh
+    result = data_to_probe.probe(dataset, tolerance=1E-5, categorical=categorical)
+    name = 'Spatial Point Data'
+    assert name in result.array_names
+    assert isinstance(result, type(mesh))
+    result = mesh.sample(data_to_probe, tolerance=1.0)
+    name = 'Spatial Point Data'
+    assert name in result.array_names
+    assert isinstance(result, type(mesh))
+
+
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
 def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines('vectors',

@@ -1396,8 +1396,66 @@ class DataSetFilters:
         out['SelectedPoints'] = bools
         return out
 
+    def probe(dataset, points, tolerance=None, pass_cell_arrays=True,
+              pass_point_arrays=True, categorical=False):
+        """Sample data values at specified point locations.
+
+        This uses :class:`vtk.vtkProbeFilter`.
+
+        Parameters
+        ----------
+        dataset: pyvista.Common
+            The mesh to probe from - point and cell arrays from
+            this object are probed onto the nodes of the ``points`` mesh
+
+        points: pyvista.Common
+            The points to probe values on to. This should be a PyVista mesh
+            or something :func:`pyvista.wrap` can handle.
+
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        pass_cell_arrays: bool, optional
+            Preserve source mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve source mesh's original point data arrays
+
+        categorical : bool, optional
+            Control whether the source point data is to be treated as
+            categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme.
+
+        Examples
+        --------
+        Probe the active scalars in ``grid`` at the points in ``mesh``
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> grid = examples.load_uniform()
+        >>> result = grid.probe(mesh)
+        >>> 'Spatial Point Data' in result.point_arrays
+        True
+
+        """
+        if not pyvista.is_pyvista_dataset(points):
+            points = pyvista.wrap(points)
+        alg = vtk.vtkProbeFilter()
+        alg.SetInputData(points)
+        alg.SetSourceData(dataset)
+        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetCategoricalData(categorical)
+        if tolerance is not None:
+            alg.SetComputeTolerance(False)
+            alg.SetTolerance(tolerance)
+        alg.Update() # Perform the resampling
+        return _get_output(alg)
+
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
-               pass_point_arrays=True):
+               pass_point_arrays=True, categorical=False):
         """Resample array data from a passed mesh onto this mesh.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
@@ -1421,36 +1479,43 @@ class DataSetFilters:
         pass_point_arrays: bool, optional
             Preserve source mesh's original point data arrays
 
+        categorical : bool, optional
+            Control whether the source point data is to be treated as
+            categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme.
+
         """
+        if not pyvista.is_pyvista_dataset(target):
+            raise TypeError('`target` must be a PyVista mesh type.')
         alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
         alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
         alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetPassCellArrays(pass_cell_arrays)
         alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetCategoricalData(categorical)
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
         alg.Update() # Perform the resampling
         return _get_output(alg)
 
-    def interpolate(dataset, points, sharpness=2, radius=1.0,
-                    dimensions=(101, 101, 101), pass_cell_arrays=True,
-                    pass_point_arrays=True, null_value=0.0):
-        """Interpolate values onto this mesh from the point data of a given dataset.
+    def interpolate(dataset, target, sharpness=2, radius=1.0,
+                    strategy='null_value', null_value=0.0, n_points=None,
+                    pass_cell_arrays=True, pass_point_arrays=True,
+                    progress_bar=False, ):
+        """Interpolate values onto this mesh from a given dataset.
 
         The input dataset is typically a point cloud.
 
         This uses a gaussian interpolation kernel. Use the ``sharpness`` and
-        ``radius`` parameters to adjust this kernel.
-
-        Please note that the source dataset is first interpolated onto a fine
-        UniformGrid which is then sampled to this mesh. The interpolation grid's
-        dimensions will likely need to be tweaked for each individual use case.
+        ``radius`` parameters to adjust this kernel. You can also switch this
+        kernel to use an N closest points approach.
 
         Parameters
         ----------
-        points : pyvista.PolyData
-            The points whose values will be interpolated onto this mesh.
+        target: pyvista.Common
+            The vtk data object to sample from - point and cell arrays from
+            this object are interpolated onto this mesh.
 
         sharpness : float
             Set / Get the sharpness (i.e., falloff) of the Gaussian. By
@@ -1460,39 +1525,77 @@ class DataSetFilters:
         radius : float
             Specify the radius within which the basis points must lie.
 
-        dimensions : tuple(int)
-            When interpolating the points, they are first interpolating on to a
-            :class:`pyvista.UniformGrid` with the same spatial extent -
-            ``dimensions`` is number of points along each axis for that grid.
+        n_points : int, optional
+            If given, specifies the number of the closest points used to form
+            the interpolation basis. This will invalidate the radius and
+            sharpness arguments in favor of an N closest points approach. This
+            typically has poorer results.
 
-        pass_cell_arrays: bool, optional
-            Preserve source mesh's original cell data arrays
-
-        pass_point_arrays: bool, optional
-            Preserve source mesh's original point data arrays
+        strategy : str, optional
+            Specify a strategy to use when encountering a "null" point during
+            the interpolation process. Null points occur when the local
+            neighborhood (of nearby points to interpolate from) is empty. If
+            the strategy is set to ``'mask_points'``, then an output array is
+            created that marks points as being valid (=1) or null (invalid
+            =0) (and the NullValue is set as well). If the strategy is set to
+            ``'null_value'`` (this is the default), then the output data
+            value(s) are set to the ``null_value`` (specified in the output
+            point data). Finally, the strategy ``'closest_point'`` is to simply
+            use the closest point to perform the interpolation.
 
         null_value : float, optional
             Specify the null point value. When a null point is encountered
             then all components of each null tuple are set to this value. By
             default the null value is set to zero.
 
+        pass_cell_arrays: bool, optional
+            Preserve input mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve input mesh's original point data arrays
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
-        box = pyvista.create_grid(dataset, dimensions=dimensions)
+        if not pyvista.is_pyvista_dataset(target):
+            raise TypeError('`target` must be a PyVista mesh type.')
+
+        # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
+        # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
+        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+            target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
         gaussian_kernel.SetRadius(radius)
+        gaussian_kernel.SetKernelFootprintToRadius()
+        if n_points:
+            gaussian_kernel.SetNumberOfPoints(n_points)
+            gaussian_kernel.SetKernelFootprintToNClosest()
+
+        locator = vtk.vtkStaticPointLocator()
+        locator.SetDataSet(target)
+        locator.BuildLocator()
 
         interpolator = vtk.vtkPointInterpolator()
-        interpolator.SetInputData(box)
-        interpolator.SetSourceData(points)
+        interpolator.SetInputData(dataset)
+        interpolator.SetSourceData(target)
         interpolator.SetKernel(gaussian_kernel)
+        interpolator.SetLocator(locator)
         interpolator.SetNullValue(null_value)
-        interpolator.Update()
-
-        return dataset.sample(interpolator.GetOutput(),
-                              pass_cell_arrays=pass_cell_arrays,
-                              pass_point_arrays=pass_point_arrays)
+        if strategy == 'null_value':
+            interpolator.SetNullPointsStrategyToNullValue()
+        elif strategy == 'mask_points':
+            interpolator.SetNullPointsStrategyToMaskPoints()
+        elif strategy == 'closest_point':
+            interpolator.SetNullPointsStrategyToClosestPoint()
+        else:
+            raise ValueError('strategy `{}` not supported.'.format(strategy))
+        interpolator.SetPassPointArrays(pass_point_arrays)
+        interpolator.SetPassCellArrays(pass_cell_arrays)
+        _update_alg(interpolator, progress_bar, 'Interpolating')
+        return _get_output(interpolator)
 
     def streamlines(dataset, vectors=None, source_center=None,
                     source_radius=None, n_points=100,
