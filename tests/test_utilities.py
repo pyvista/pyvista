@@ -1,4 +1,5 @@
 """ test pyvista.utilities """
+import pathlib
 import os
 
 import numpy as np
@@ -38,9 +39,12 @@ def test_createvectorpolydata():
     assert np.any(vdata.point_arrays['vectors'])
 
 
-def test_read(tmpdir):
+@pytest.mark.parametrize('use_pathlib', [True, False])
+def test_read(tmpdir, use_pathlib):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
               ex.uniformfile, ex.rectfile)
+    if use_pathlib:
+        fnames = [pathlib.Path(fname) for fname in fnames]
     types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
              pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
     for i, filename in enumerate(fnames):

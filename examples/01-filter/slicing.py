@@ -106,6 +106,41 @@ p.add_mesh(model.outline())
 p.show(cpos=[1, -1, 1])
 
 
+###############################################################################
+# Multiple Slices in Vector Direction
+# +++++++++++++++++++++++++++++++++++
+#
+# Slice a mesh perpendicularly along a vector direction perpendicularly.
+
+mesh = examples.download_brain()
+
+# Create vector
+vec = np.random.rand(3)
+# Normalize the vector
+normal = vec / np.linalg.norm(vec)
+
+# Make points along that vector for the extent of your slices
+a = mesh.center + normal * mesh.length / 3.0
+b = mesh.center - normal * mesh.length / 3.0
+
+# Define the line/points for the slices
+n_slices = 5
+line = pv.Line(a, b, n_slices)
+
+# Generate all of the slices
+slices = pv.MultiBlock()
+for point in line.points:
+    slices.append(mesh.slice(normal=normal, origin=point))
+
+###############################################################################
+
+p = pv.Plotter()
+p.add_mesh(mesh.outline(), color="k")
+p.add_mesh(slices, opacity=0.75)
+p.add_mesh(line, color="red", line_width=5)
+p.show()
+
+
 
 ###############################################################################
 # Slice At Different Bearings

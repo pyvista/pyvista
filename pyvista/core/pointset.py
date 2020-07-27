@@ -1,4 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
+import pathlib
 import logging
 import os
 import warnings
@@ -155,7 +156,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._load_file(args[0])
             elif isinstance(args[0], (np.ndarray, list)):
                 if isinstance(args[0], list):
@@ -233,6 +234,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     def is_all_triangles(self):
         """Return True if all the faces of the polydata are triangles."""
+        # Need to make sure there are only face cells and no lines/verts
+        if not len(self.faces) or len(self.lines) > 0 or len(self.verts) > 0:
+            return False
+        # All we have are faces, check if all faces are indeed triangles
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
 
     def _from_arrays(self, vertices, faces, deep=True, verts=False):
@@ -312,7 +317,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
          file size.
 
         """
-        filename = os.path.abspath(os.path.expanduser(filename))
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
@@ -457,10 +462,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> from pyvista import examples
     >>> import vtk
 
-    >>> # Create an empty grid
+    Create an empty grid
+
     >>> grid = pyvista.UnstructuredGrid()
 
-    >>> # Copy a vtkUnstructuredGrid
+    Copy a vtkUnstructuredGrid
+
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
@@ -470,7 +477,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> # from arrays (vtk<9)
     >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
 
-    >>> # From a string filename
+    From a string filename
+
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     """
@@ -492,7 +500,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 else:
                     self.shallow_copy(args[0])
 
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._load_file(args[0])
 
             elif isinstance(args[0], vtk.vtkStructuredGrid):
@@ -607,7 +615,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         # vtk9 does not require an offset array
         if VTK9:
             if offset is not None:
-                warnings.warn('VTK 9 no longer accepts an offset array')
+                warnings.warn('VTK 9 no longer accepts an offset array',
+                              stacklevel=3)
             self.SetCells(cell_type, vtkcells)
         else:
             self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)

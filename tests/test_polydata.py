@@ -1,3 +1,4 @@
+import pathlib
 import os
 from math import pi
 
@@ -303,6 +304,21 @@ def test_save(extension, binary, tmpdir):
     assert mesh.points.shape == sphere.points.shape
 
 
+def test_pathlib_read_write(tmpdir, sphere):
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    sphere.save(path)
+    assert path.is_file()
+
+    mesh = pyvista.PolyData(path)
+    assert mesh.faces.shape == sphere.faces.shape
+    assert mesh.points.shape == sphere.points.shape
+
+    mesh = pyvista.read(path)
+    assert isinstance(mesh, pyvista.PolyData)
+    assert mesh.faces.shape == sphere.faces.shape
+    assert mesh.points.shape == sphere.points.shape
+
+
 def test_invalid_save():
     sphere = SPHERE.copy()
     with pytest.raises(ValueError):
@@ -313,6 +329,10 @@ def test_triangulate_filter(plane):
     assert not plane.is_all_triangles()
     plane.triangulate(inplace=True)
     assert plane.is_all_triangles()
+    # Make a point cloud and assert false
+    assert not pyvista.PolyData(plane.points).is_all_triangles()
+    # Extract lines and make sure false
+    assert not plane.extract_all_edges().is_all_triangles()
 
 
 @pytest.mark.parametrize('subfilter', ['butterfly', 'loop', 'linear'])

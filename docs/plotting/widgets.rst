@@ -9,30 +9,9 @@ widgets to control the positions of boxes, planes, and lines or slider bars
 which can all be highly customized through the use of custom callback
 functions.
 
-Here we'll take a look a the various widgets, some helper methods that leverage
+Here we'll take a look at the various widgets, some helper methods that leverage
 those widgets to do common tasks, and demonstrate how to leverage the widgets
 for user defined tasks and processing routines.
-
-The :class:`pyvista.BasePlotter` class inherits all of the widget methods in
-:class:`pyvista.WidgetHelper` so, all of the following methods
-are available from any PyVista plotter.
-
-.. rubric:: Attributes
-
-.. autoautosummary:: pyvista.WidgetHelper
-   :attributes:
-
-.. rubric:: Methods
-
-.. autoautosummary:: pyvista.WidgetHelper
-   :methods:
-
-
-.. autoclass:: pyvista.WidgetHelper
-   :show-inheritance:
-   :members:
-   :inherited-members:
-   :undoc-members:
 
 
 Box Widget
@@ -105,7 +84,9 @@ Or you could slice a mesh using the plane widget:
 .. image:: ../images/gifs/plane-slice.gif
 
 Or you could leverage the plane widget for some custom task like glyphing a
-vector field along that plane.
+vector field along that plane. Note that we have to pass a ``name`` when
+calling ``add_mesh`` to ensure that there is only one set of glyphs plotted
+at a time.
 
 .. code-block:: python
 
@@ -138,10 +119,11 @@ The line widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.add_line_widget` and
 :func:`pyvista.WidgetHelper.clear_line_widgets` methods respectively.
 Unfortunately, PyVista does not have any helper methods to utilize this
-widget, so it is necessary to pas a custom callback method.
+widget, so it is necessary to pass a custom callback method.
 
-One particularly fun example is to use the line widget to create source for
-the :func:`pyvista.DataSetFilters.streamlines` filter.
+One particularly fun example is to use the line widget to create a source for
+the :func:`pyvista.DataSetFilters.streamlines` filter. Again note the use of
+the ``name`` argument in ``add_mesh``.
 
 .. code-block:: python
 
@@ -186,7 +168,7 @@ The slider widget can be enabled and disabled by the
 This is one of the most versatile widgets as it can control a value that can
 be used for just about anything.
 
-One helper method we've add is the
+One helper method we've added is the
 :func:`pyvista.WidgetHelper.add_mesh_threshold` method which leverages the
 slider widget to control a thresholding value.
 
@@ -208,7 +190,7 @@ slider widget to control a thresholding value.
 
 Or you could leverage a custom callback function that takes a single value
 from the slider as its argument to do something like control the resolution
-of a mesh:
+of a mesh. Again note the use of the ``name`` argument in ``add_mesh``:
 
 .. code-block:: python
 
@@ -230,10 +212,10 @@ of a mesh:
 Sphere Widget
 ~~~~~~~~~~~~~
 
-The slider widget can be enabled and disabled by the
+The sphere widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.add_sphere_widget` and
 :func:`pyvista.WidgetHelper.clear_sphere_widgets` methods respectively.
-This is a very versatile widgets as it can control vertex location that can
+This is a very versatile widget as it can control vertex location that can
 be used to control or update the location of just about anything.
 
 We don't have any convenient helper methods that utilize this widget out of
@@ -313,7 +295,7 @@ Use several sphere widgets at once
 Example C
 +++++++++
 
-This one is the coolest - use three sphere widgets to update perturbations on
+This one is the coolest - use four sphere widgets to update perturbations on
 a surface and interpolate between them with some boundary conditions
 
 .. code-block:: python
@@ -387,7 +369,7 @@ Spline Widget
 ~~~~~~~~~~~~~
 
 
-A spline widget can be added to the scenee by the
+A spline widget can be enabled and disabled by the
 :func:`pyvista.WidgetHelper.add_spline_widget` and
 :func:`pyvista.WidgetHelper.clear_spline_widgets` methods respectively.
 This widget allows users to interactively create a poly line (spline) through
@@ -396,4 +378,31 @@ a scene and use that spline.
 A common task with splines is to slice a volumetric dataset using an irregular
 path. To do this, we have added a convenient helper method which leverages the
 :func:`pyvista.DataSetFilters.slice_along_line` filter named
-:func:`pyvosta.WidgetHelper.add_mesh_slice_spline`.
+:func:`pyvista.WidgetHelper.add_mesh_slice_spline`.
+
+
+Widget API
+~~~~~~~~~~
+
+
+The :class:`pyvista.BasePlotter` class inherits all of the widget methods in
+:class:`pyvista.WidgetHelper`, so all of the following methods
+are available from any PyVista plotter.
+
+.. rubric:: Attributes
+
+.. autoautosummary:: pyvista.WidgetHelper
+   :attributes:
+
+.. rubric:: Methods
+
+.. autoautosummary:: pyvista.WidgetHelper
+   :methods:
+
+
+.. autoclass:: pyvista.WidgetHelper
+   :show-inheritance:
+   :members:
+   :inherited-members:
+   :undoc-members:
+

@@ -111,6 +111,15 @@ def test_clip_surface():
     assert 'implicit_distance' in clipped.array_names
 
 
+def test_clip_closed_surface():
+    closed_surface = pyvista.Sphere()
+    clipped = closed_surface.clip_closed_surface()
+    assert closed_surface.n_open_edges == 0
+    open_surface = closed_surface.clip()
+    with pytest.raises(ValueError):
+        _ = open_surface.clip_closed_surface()
+
+
 def test_implicit_distance():
     surface = pyvista.Cone(direction=(0,0,-1),
                            height=3.0, radius=1, resolution=50, )
@@ -600,6 +609,25 @@ def test_resample():
     assert isinstance(result, type(mesh))
 
 
+@pytest.mark.parametrize('use_points', [True, False])
+@pytest.mark.parametrize('categorical', [True, False])
+def test_probe(categorical, use_points):
+    mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+    data_to_probe = examples.load_uniform()
+    if use_points:
+        dataset = np.array(mesh.points)
+    else:
+        dataset = mesh
+    result = data_to_probe.probe(dataset, tolerance=1E-5, categorical=categorical)
+    name = 'Spatial Point Data'
+    assert name in result.array_names
+    assert isinstance(result, type(mesh))
+    result = mesh.sample(data_to_probe, tolerance=1.0)
+    name = 'Spatial Point Data'
+    assert name in result.array_names
+    assert isinstance(result, type(mesh))
+
+
 @pytest.mark.parametrize('integration_direction', ['forward', 'backward', 'both'])
 def test_streamlines_dir(uniform_vec, integration_direction):
     stream = uniform_vec.streamlines('vectors',
@@ -794,8 +822,85 @@ def test_compute_gradients():
     with pytest.raises(TypeError):
         grad = mesh.compute_gradient()
 
+def test_compute_derivatives():
+    mesh = examples.load_random_hills()
+    vector = np.zeros((mesh.n_points, 3))
+    vector[:,1] = np.ones(mesh.n_points)
+    mesh['vector'] = vector
+    derv = mesh.compute_derivative(scalars='vector', gradient=True,
+                                   divergence=True, vorticity=True,
+                                   qcriterion=True)
+    assert 'gradient' in derv.array_names
+    assert np.shape(derv['gradient'])[0] == mesh.n_points
+    assert np.shape(derv['gradient'])[1] == 9
+
+    assert 'divergence' in derv.array_names
+    assert np.shape(derv['divergence'])[0] == mesh.n_points
+    assert len(np.shape(derv['divergence'])) == 1
+
+    assert 'vorticity' in derv.array_names
+    assert np.shape(derv['vorticity'])[0] == mesh.n_points
+    assert np.shape(derv['vorticity'])[1] == 3
+
+    assert 'qcriterion' in derv.array_names
+    assert np.shape(derv['qcriterion'])[0] == mesh.n_points
+    assert len(np.shape(derv['qcriterion'])) == 1
+
+    derv = mesh.compute_derivative(scalars='vector', gradient='gradienttest',
+                                   divergence='divergencetest', vorticity='vorticitytest',
+                                   qcriterion='qcriteriontest')
+    assert 'gradienttest' in derv.array_names
+    assert np.shape(derv['gradienttest'])[0] == mesh.n_points
+    assert np.shape(derv['gradienttest'])[1] == 9
+
+    assert 'divergencetest' in derv.array_names
+    assert np.shape(derv['divergencetest'])[0] == mesh.n_points
+    assert len(np.shape(derv['divergencetest'])) == 1
+
+    assert 'vorticitytest' in derv.array_names
+    assert np.shape(derv['vorticitytest'])[0] == mesh.n_points
+    assert np.shape(derv['vorticitytest'])[1] == 3
+
+    assert 'qcriteriontest' in derv.array_names
+    assert np.shape(derv['qcriteriontest'])[0] == mesh.n_points
+    assert len(np.shape(derv['qcriteriontest'])) == 1
+
+    grad = mesh.compute_derivative(scalars='Elevation', gradient=True)
+    assert 'gradient' in grad.array_names
+    assert np.shape(grad['gradient'])[0] == mesh.n_points
+    assert np.shape(grad['gradient'])[1] == 3
+
+    grad = mesh.compute_derivative(scalars='Elevation', gradient=True, faster=True)
+    assert 'gradient' in grad.array_names
+    assert np.shape(grad['gradient'])[0] == mesh.n_points
+    assert np.shape(grad['gradient'])[1] == 3
+
+    grad = mesh.compute_derivative(scalars='vector', gradient=True, faster=True)
+    assert 'gradient' in grad.array_names
+    assert np.shape(grad['gradient'])[0] == mesh.n_points
+    assert np.shape(grad['gradient'])[1] == 9
+
+    with pytest.raises(ValueError):
+        grad = mesh.compute_derivative(scalars='Elevation', gradient=False)
+
+    with pytest.raises(TypeError):
+        derv = mesh.compute_derivative(object)
+
+    mesh.point_arrays.clear()
+    with pytest.raises(TypeError):
+        derv = mesh.compute_derivative()
 
 def test_extract_subset():
     volume = examples.load_uniform()
     voi = volume.extract_subset([0,3,1,4,5,7])
     assert isinstance(voi, pyvista.UniformGrid)
+    # Test that we fix the confusing issue from extents in
+    #   https://gitlab.kitware.com/vtk/vtk/-/issues/17938
+    assert voi.origin == voi.bounds[::2]
+
+
+def test_poly_data_strip():
+    mesh = examples.load_airplane()
+    slc = mesh.slice(normal='z', origin=(0,0,-10))
+    stripped = slc.strip()
+    assert stripped.n_cells == 1

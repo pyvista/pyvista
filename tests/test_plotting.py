@@ -1,3 +1,4 @@
+import pathlib
 import os
 import sys
 from weakref import proxy
@@ -38,7 +39,8 @@ sphere_c = pyvista.Sphere(2.0)
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot(tmpdir):
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.png')
+    tmp_dir = tmpdir.mkdir("tmpdir2")
+    filename = str(tmp_dir.join('tmp.png'))
     scalars = np.arange(sphere.n_points)
     cpos, img = pyvista.plot(sphere,
                              off_screen=OFF_SCREEN,
@@ -57,13 +59,17 @@ def test_plot(tmpdir):
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
-    os.remove(filename)
-    filename = os.path.join(pyvista.USER_DATA_PATH, 'foo')
+
+    filename = pathlib.Path(str(tmp_dir.join('tmp2.png')))
     cpos = pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
-    filename = filename + ".png" # Ensure it added a PNG extension by default
-    assert os.path.isfile(filename)
-    # remove file
-    os.remove(filename)
+
+    # Ensure it added a PNG extension by default
+    assert filename.with_suffix(".png").is_file()
+
+    # test invalid extension
+    with pytest.raises(ValueError):
+        filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
+        pyvista.plot(sphere, off_screen=OFF_SCREEN, screenshot=filename)
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -483,7 +489,11 @@ def test_multi_block_plot():
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
-    multi.plot(scalars='Random Data', off_screen=OFF_SCREEN, multi_colors=True)
+    with pytest.raises(ValueError):
+        # The scalars are not available in all datasets so raises ValueError
+        multi.plot(scalars='Random Data', off_screen=OFF_SCREEN, multi_colors=True)
+    multi.plot(off_screen=OFF_SCREEN, multi_colors=True)
+
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

@@ -1,5 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-
+import pathlib
 import logging
 
 import numpy as np
@@ -91,7 +91,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkRectilinearGrid):
                 self.deep_copy(args[0])
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._load_file(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0], None, None)
@@ -287,7 +287,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkImageData):
                 self.deep_copy(args[0])
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._load_file(args[0])
             else:
                 arg0_is_valid = len(args[0]) == 3
@@ -352,7 +352,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         # get the points and convert to spacings
         dx, dy, dz = self.spacing
         # Now make the cell arrays
-        ox, oy, oz = self.origin
+        ox, oy, oz = np.array(self.origin) + np.array(self.extent[::2])
         x = np.insert(np.cumsum(np.full(nx, dx)), 0, 0.0) + ox
         y = np.insert(np.cumsum(np.full(ny, dy)), 0, 0.0) + oy
         z = np.insert(np.cumsum(np.full(nz, dz)), 0, 0.0) + oz

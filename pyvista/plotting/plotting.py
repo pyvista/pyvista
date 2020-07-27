@@ -1,5 +1,6 @@
 """Pyvista plotting module."""
 
+import pathlib
 import collections.abc
 import logging
 import os
@@ -51,6 +52,7 @@ def close_all():
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
+log.addHandler(logging.StreamHandler())
 
 
 @abstract_class
@@ -63,19 +65,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one renderer.
-        Can also accept a shape as string descriptor. E.g.:
-            shape="3|1" means 3 plots on the left and 1 on the right,
-            shape="4/2" means 4 plots on top of 2 at bottom.
+        Can also accept a string descriptor as shape. E.g.:
+
+            * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
+            * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.
 
     border_color : string or 3 item list, optional, defaults to white
         Either a string, rgb list, or hex color string.  For example:
-            color='white'
-            color='w'
-            color=[1, 1, 1]
-            color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
     border_width : float, optional
         Width of the border in pixels when enabled.
@@ -92,6 +96,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  border_width=2.0, title=None, splitting_position=None,
                  groups=None, row_weights=None, col_weights=None):
         """Initialize base plotter."""
+        log.debug('BasePlotter init start')
         self.image_transparent_background = rcParams['transparent_background']
 
         self._store_image = False
@@ -256,9 +261,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Key bindings
         self.reset_key_events()
+        log.debug('BasePlotter init stop')
 
     #### Manage the active Renderer ####
-    
+
     def loc_to_group(self, loc):
         """Return group id of the given location index. Or None if this location is not part of any group."""
         group_idxs = np.arange(self.groups.shape[0])
@@ -1110,7 +1116,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             representations.  Default None.
 
         opacity : float, str, array-like
-            Opacity of the mesh. If a siblge float value is given, it will be
+            Opacity of the mesh. If a single float value is given, it will be
             the global opacity of the mesh and uniformly applied everywhere -
             should be between 0 and 1. A string can also be specified to map
             the scalars range to a predefined opacity transfer function
@@ -2933,7 +2939,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
                          pickable=False, render_points_as_spheres=False,
-                         tolerance=0.001):
+                         tolerance=0.001, reset_camera=None):
         """Create a point actor with one label from list labels assigned to each point.
 
         Parameters
@@ -3009,6 +3015,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             A tolerance is usually required because the conversion from world
             space to display space during rendering introduces numerical
             round-off.
+
+        reset_camera : bool, optional
+            Reset the camera after adding the points to the scene.
 
         Return
         ------
@@ -3098,7 +3107,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_mesh(vtkpoints, style=style, color=point_color,
                       point_size=point_size, name='{}-points'.format(name),
                       pickable=pickable,
-                      render_points_as_spheres=render_points_as_spheres)
+                      render_points_as_spheres=render_points_as_spheres,
+                      reset_camera=reset_camera)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
@@ -3180,13 +3190,18 @@ class BasePlotter(PickingHelper, WidgetHelper):
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file
         supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
-        if isinstance(filename, str):
-            if isinstance(pyvista.FIGURE_PATH, str) and not os.path.isabs(filename):
-                filename = os.path.join(pyvista.FIGURE_PATH, filename)
-            if not any([filename.lower().endswith(ext) for ext in supported_formats]):
-                filename += ".png"
-            filename = os.path.abspath(os.path.expanduser(filename))
-            w = imageio.imwrite(filename, image)
+        if isinstance(filename, (str, pathlib.Path)):
+            filename = pathlib.Path(filename)
+            if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
+                filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
+            if not filename.suffix:
+                filename = filename.with_suffix('.png')
+            elif filename.suffix not in supported_formats:
+                raise ValueError('Unsupported extension %s\n' % filename.suffix +
+                                 'Must be one of the following: %s' %
+                                 supported_formats)
+            w = imageio.imwrite(os.path.abspath(os.path.expanduser(str(filename))),
+                                image)
             if not return_img:
                 return w
         return image
@@ -3663,19 +3678,21 @@ class Plotter(BasePlotter):
         Number of sub-render windows inside of the main window.
         Specify two across with ``shape=(2, 1)`` and a two by two grid
         with ``shape=(2, 2)``.  By default there is only one render window.
-        Can also accept a shape as string descriptor. E.g.:
-            shape="3|1" means 3 plots on the left and 1 on the right,
-            shape="4/2" means 4 plots on top of 2 at bottom.
+        Can also accept a string descriptor as shape. E.g.:
+
+            * ``shape="3|1"`` means 3 plots on the left and 1 on the right,
+            * ``shape="4/2"`` means 4 plots on top and 2 at the bottom.
 
     border : bool, optional
         Draw a border around each render window.  Default False.
 
     border_color : string or 3 item list, optional, defaults to white
         Either a string, rgb list, or hex color string.  For example:
-            color='white'
-            color='w'
-            color=[1, 1, 1]
-            color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
     window_size : list, optional
         Window size in pixels.  Defaults to [1024, 768]
@@ -3709,12 +3726,12 @@ class Plotter(BasePlotter):
         super().__init__(shape=shape, border=border,
                          border_color=border_color,
                          border_width=border_width,
-                         groups=groups, row_weights=row_weights, 
+                         groups=groups, row_weights=row_weights,
                          col_weights=col_weights,
                          splitting_position=splitting_position,
                          title=title)
 
-        log.debug('Initializing')
+        log.debug('Plotter init start')
 
         def on_timer(iren, event_id):
             """Exit application if interactive renderer stops."""
@@ -3778,6 +3795,7 @@ class Plotter(BasePlotter):
             if self.enable_depth_peeling():
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
+        log.debug('Plotter init stop')
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,

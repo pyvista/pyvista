@@ -19,7 +19,7 @@ grid = pv.StructuredGrid(x, y, z)
 
 # Create a plotter object and set the scalars to the Z height
 plotter = pv.Plotter()
-plotter.add_mesh(grid, scalars=z.ravel())
+plotter.add_mesh(grid, scalars=z.ravel(), smooth_shading=True)
 
 print('Orient the view, then press "q" to close window and produce movie')
 
@@ -36,9 +36,15 @@ nframe = 15
 for phase in np.linspace(0, 2 * np.pi, nframe + 1)[:nframe]:
     z = np.sin(r + phase)
     pts[:, -1] = z.ravel()
-    plotter.update_coordinates(pts)
-    plotter.update_scalars(z.ravel())
-    plotter.write_frame()
+    plotter.update_coordinates(pts, render=False)
+    plotter.update_scalars(z.ravel(), render=False)
+
+    # must update normals when smooth shading is enabled
+    plotter.mesh.compute_normals(cell_normals=False, inplace=True)
+    plotter.write_frame()  # this will trigger the render
+
+    # otherwise, when not writing frames, render with:
+    # plotter.render()
 
 # Close movie and delete object
 plotter.close()

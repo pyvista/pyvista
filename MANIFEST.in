@@ -1,6 +1,4 @@
 # Include docs
-include *.rst LICENSE
-recursive-include docs *.rst
-recursive-include docs *.py
-
-#recursive-include docs *.png
+include LICENSE
+recursive-exclude docs *.rst
+recursive-exclude docs *.py
