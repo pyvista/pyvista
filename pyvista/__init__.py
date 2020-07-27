@@ -40,6 +40,14 @@ try:
 except KeyError:
     pass
 
+# A simple flag to set when set virtual display
+VIRTUAL_DISPLAY = False
+try:
+    if os.environ['PYVISTA_VIRTUAL_DISPLAY'].lower() == 'true':
+        VIRTUAL_DISPLAY = True
+except KeyError:
+    pass
+
 # flag for when building the sphinx_gallery
 BUILDING_GALLERY = False
 if 'PYVISTA_BUILDING_GALLERY' in os.environ:
