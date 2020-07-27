@@ -3811,10 +3811,6 @@ class Plotter(BasePlotter):
                     renderer.enable_depth_peeling()
         log.debug('Plotter init stop')
 
-    def __del__(self):
-        if self.virtual_display:
-            self.display.stop()
-
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
