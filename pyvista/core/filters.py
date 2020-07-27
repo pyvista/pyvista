@@ -965,7 +965,7 @@ class DataSetFilters:
         factor : float
             Scale factor applied to scaling array
 
-        geom : vtk.vtkPolyData or tuple, optional
+        geom : vtk.vtkPolyData or tuple(vtk.vtkPolyData), optional
             The geometry to use for the glyph. If missing, an arrow glyph
             is used. If a sequence, the datasets inside define a table of
             geometries to choose from based on scalars or vectors. In this
@@ -975,8 +975,10 @@ class DataSetFilters:
 
         indices : tuple(float), optional
             Specifies the index of each glyph in the table for lookup in case
-            ``geom`` is a sequence. Must be the same length as ``geom``. Indices
-            are interpreted in terms of the range (see ``rng``).
+            ``geom`` is a sequence. If given, must be the same length as
+            ``geom``. If missing, a default value of ``range(len(geom))`` is
+            used. Indices are interpreted in terms of the scalar range
+            (see ``rng``). Ignored if ``geom`` has length 1.
 
         tolerance : float, optional
             Specify tolerance in terms of fraction of bounding box length.
@@ -1011,10 +1013,13 @@ class DataSetFilters:
             geom = arrow.GetOutput()
         # Check if a table of geometries was passed
         if isinstance(geom, (np.ndarray, collections.abc.Sequence)):
+            if indices is None:
+                # use default "categorical" indices
+                indices = np.arange(len(geom))
             if not isinstance(indices, (np.ndarray, collections.abc.Sequence)):
                 raise TypeError('If "geom" is a sequence then "indices" must '
                                 'also be a sequence of the same length.')
-            if len(indices) != len(geom):
+            if len(indices) != len(geom) and len(geom) != 1:
                 raise ValueError('The sequence "indices" must be the same length '
                                  'as "geom".')
         else:

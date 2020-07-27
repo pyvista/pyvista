@@ -455,12 +455,11 @@ def test_glyph():
     indices = range(len(geoms))
     result = sphere.glyph(geom=geoms[0])
     result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
+    result = sphere.glyph(geom=geoms)
+    result = sphere.glyph(geom=geoms[:1], indices=[None])
     with pytest.raises(TypeError):
         # wrong type for the glyph
         sphere.glyph(geom=pyvista.StructuredGrid())
-    with pytest.raises(TypeError):
-        # missing indices
-        sphere.glyph(geom=geoms)
     with pytest.raises(TypeError):
         # wrong type for the indices
         sphere.glyph(geom=geoms, indices=set(indices))
