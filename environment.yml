@@ -21,6 +21,7 @@ dependencies:
   - pytest-qt
   - codecov
   - hypothesis>=5.8.0
+  - pyvirtualdisplay
   - pip
   - pip:
       - pytest-memprof
