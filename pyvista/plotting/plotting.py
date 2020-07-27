@@ -3670,6 +3670,9 @@ class Plotter(BasePlotter):
     off_screen : bool, optional
         Renders off screen when True.  Useful for automated screenshots.
 
+    virtual_display : bool, optional
+        Use virtual display when True.  Useful for mybinder environment.
+
     notebook : bool, optional
         When True, the resulting plot is placed inline a jupyter notebook.
         Assumes a jupyter console is active.  Automatically enables off_screen.
@@ -3716,7 +3719,7 @@ class Plotter(BasePlotter):
     last_update_time = 0.0
     right_timer_id = -1
 
-    def __init__(self, off_screen=None, notebook=None, shape=(1, 1),
+    def __init__(self, off_screen=None, virtual_display=None, notebook=None, shape=(1, 1),
                  groups=None, row_weights=None, col_weights=None,
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
@@ -3740,6 +3743,9 @@ class Plotter(BasePlotter):
 
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
+
+        if virtual_display is None:
+            virtual_display = pyvista.VIRTUAL_DISPLAY
 
         if notebook is None:
             notebook = scooby.in_ipykernel()
@@ -3782,6 +3788,14 @@ class Plotter(BasePlotter):
             self._add_observer("KeyPressEvent", self.key_press_event)
             self.update_style()
 
+        if self.virtual_display:
+            try:
+                from pyvirtualdisplay import Display
+            except:
+                raise RuntimeError("Cannot import Display from pyvirtualdisplay.")
+            self.display = Display(visible=0, size=(1024, 768), color_depth=24)
+            self.display.start()
+
         # Set background
         self.set_background(rcParams['background'])
 
@@ -3796,6 +3810,10 @@ class Plotter(BasePlotter):
                 for renderer in self.renderers:
                     renderer.enable_depth_peeling()
         log.debug('Plotter init stop')
+
+    def __del__(self):
+        if self.virtual_display:
+            self.display.stop()
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
