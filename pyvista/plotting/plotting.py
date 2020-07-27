@@ -3745,7 +3745,8 @@ class Plotter(BasePlotter):
             off_screen = pyvista.OFF_SCREEN
 
         if virtual_display is None:
-            self.virtual_display = pyvista.VIRTUAL_DISPLAY
+            virtual_display = pyvista.VIRTUAL_DISPLAY
+        self.virtual_display = virtual_display
 
         if notebook is None:
             notebook = scooby.in_ipykernel()
