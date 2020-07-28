@@ -24,6 +24,7 @@ the following projects are required dependencies of PyVista:
 * `appdirs <https://pypi.org/project/appdirs/>`_ - Data management for our example datasets so users can download tutorials on the fly.
 * `meshio <https://pypi.org/project/meshio/>`_ - Input/Output for many mesh formats.
 * `scooby <https://github.com/banesullivan/scooby>`_ - Debugging tools
+* `PyVirtualDisplay <https://pypi.org/project/PyVirtualDisplay/>`_ - python wrapper for Xvfb, Xephyr and Xvnc
 
 PyPI
 ~~~~
