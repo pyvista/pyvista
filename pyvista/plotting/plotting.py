@@ -2653,6 +2653,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             except BaseException:
                 pass
 
+        # stop virtual display
+        if self.virtual_display:
+            self.display.stop()
+
         # this helps managing closed plotters
         self._closed = True
 
