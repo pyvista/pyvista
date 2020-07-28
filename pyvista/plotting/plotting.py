@@ -87,6 +87,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
     title : str, optional
         Window title of the scalar bar
 
+    virtual_display : bool, optional
+        Use virtual display when True.  Useful for mybinder environment.
+
     """
 
     mouse_position = None
@@ -262,6 +265,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Key bindings
         self.reset_key_events()
         log.debug('BasePlotter init stop')
+
+        # Virtual Display
+        if virtual_display is None:
+            virtual_display = pyvista.VIRTUAL_DISPLAY
+        self.virtual_display = virtual_display
+
+        if self.virtual_display:
+            try:
+                from pyvirtualdisplay import Display
+            except:
+                raise RuntimeError("Cannot import Display from pyvirtualdisplay.")
+            self.display = Display(visible=0, size=(1024, 768), color_depth=24)
+            self.display.start()
 
     #### Manage the active Renderer ####
 
@@ -3732,7 +3748,7 @@ class Plotter(BasePlotter):
                          groups=groups, row_weights=row_weights,
                          col_weights=col_weights,
                          splitting_position=splitting_position,
-                         title=title)
+                         title=title, virtual_display=virtual_display)
 
         log.debug('Plotter init start')
 
@@ -3743,10 +3759,6 @@ class Plotter(BasePlotter):
 
         if off_screen is None:
             off_screen = pyvista.OFF_SCREEN
-
-        if virtual_display is None:
-            virtual_display = pyvista.VIRTUAL_DISPLAY
-        self.virtual_display = virtual_display
 
         if notebook is None:
             notebook = scooby.in_ipykernel()
@@ -3788,14 +3800,6 @@ class Plotter(BasePlotter):
             self._observers = {}    # Map of events to observers of self.iren
             self._add_observer("KeyPressEvent", self.key_press_event)
             self.update_style()
-
-        if self.virtual_display:
-            try:
-                from pyvirtualdisplay import Display
-            except:
-                raise RuntimeError("Cannot import Display from pyvirtualdisplay.")
-            self.display = Display(visible=0, size=(1024, 768), color_depth=24)
-            self.display.start()
 
         # Set background
         self.set_background(rcParams['background'])
