@@ -97,7 +97,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=2.0, title=None, splitting_position=None,
-                 groups=None, row_weights=None, col_weights=None):
+                 groups=None, row_weights=None, col_weights=None, virtual_display=None):
         """Initialize base plotter."""
         log.debug('BasePlotter init start')
         self.image_transparent_background = rcParams['transparent_background']
