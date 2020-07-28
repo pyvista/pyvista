@@ -5,9 +5,11 @@ import ctypes
 import enum
 import logging
 import signal
+import sys
 import warnings
 from threading import Thread
 import threading
+import traceback
 
 import numpy as np
 import scooby
@@ -77,7 +79,7 @@ def convert_string_array(arr, name=None):
     ############### OPTIMIZE ###############
     nvalues = arr.GetNumberOfValues()
     return np.array([arr.GetValue(i) for i in range(nvalues)], dtype='|U')
-    ########################################    
+    ########################################
 
 
 def convert_array(arr, name=None, deep=0, array_type=None):
@@ -583,8 +585,14 @@ def try_callback(func, *args):
     """Wrap a given callback in a try statement."""
     try:
         func(*args)
-    except Exception as e:
-        logging.warning('Encountered issue in callback: {}'.format(e))
+    except Exception:
+        etype, exc, tb = sys.exc_info()
+        stack = traceback.extract_tb(tb)[1:]
+        formatted_exception = \
+            'Encountered issue in callback (most recent call last):\n' + \
+            ''.join(traceback.format_list(stack) +
+                    traceback.format_exception_only(etype, exc)).rstrip('\n')
+        logging.warning(formatted_exception)
     return
 
 
