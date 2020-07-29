@@ -73,6 +73,8 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``tqdm``                          | Status bars for monitoring filters      |
 +-----------------------------------+-----------------------------------------+
+| ``pyvirtualdisplay``              | Headless display management             |
++-----------------------------------+-----------------------------------------+
 
 
 Source / Developers
@@ -134,7 +136,7 @@ services like Travis and Azure Pipelines to run PyVista.
 Running on MyBinder
 ~~~~~~~~~~~~~~~~~~~
 
-This section is for advanced users that would like to install and use PyVista
+This section is for users that would like to install and use PyVista
 with headless displays on notebook hosting services like MyBinder_.
 
 Please see `this project`_ for a convenient Cookiecutter_ to get started using
@@ -151,9 +153,15 @@ a file called ``apt.txt``::
     libgl1-mesa-dev
     xvfb
 
-Then, you need to configure the headless display, for MyBinder, create a file
-called ``start`` and include the following set up script that will run every
-time your Docker container is launched:
+You will also need to install `PyVirtualDisplay <https://pypi.org/project/PyVirtualDisplay/>`_ - python wrapper for Xvfb, Xephyr and Xvnc::
+
+    pip install pyvirtualdisplay
+
+Then, you need to configure two environment variables to let PyVista know to
+launch the headless display when plotting: ``PYVISTA_VIRTUAL_DISPLAY`` and
+``PYVISTA_OFF_SCREEN``. For MyBinder, create a file called ``start`` and
+include the following set up script that will run every time your Docker
+container is launched:
 
 .. code-block:: bash
 
@@ -166,12 +174,9 @@ time your Docker container is launched:
     exec "$@"
 
 
-And that's it! Include PyVista in your Python requirements and get to
-visualizing your data! If you need more help than this on setting up PyVista
-for these types of services, hop on Slack and chat with the developers or take
-a look at `this repository`_ that is currently using PyVista on MyBinder.
-
-.. _this repository: https://github.com/OpenGeoVis/PVGeo-Examples
+And that's it! Include PyVista and pyvirtualdisplay in your Python requirements
+and get to visualizing your data! If you need more help than this on setting up
+PyVista for these types of services, hop on Slack and chat with the developers.
 
 
 Running on Remote Servers
@@ -192,7 +197,7 @@ After logging into the remote server, install Miniconda and related packages:
     conda create --name vtk_env python=3.7
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista panel
+    pip install jupyter pyvista panel pyvirtualdisplay
 
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599
