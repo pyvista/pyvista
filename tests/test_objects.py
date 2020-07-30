@@ -1,6 +1,7 @@
 """
 Tests for non-spatially referenced objects
 """
+import imageio
 import numpy as np
 import pytest
 import vtk
@@ -216,3 +217,14 @@ def test_texture():
     texture.flip(1)
     texture = pyvista.Texture(examples.load_globe_texture())
     assert texture is not None
+
+
+@pytest.mark.parametrize('filename', [examples.colorsfile, examples.mapfile])
+def test_texture_array(filename):
+    """Make sure the texture.to_array is constistent with imageio."""
+    tex = pyvista.read_texture(filename)
+    arr = imageio.imread(filename)
+    assert np.allclose(tex.to_array(), arr)
+    # Generate textrue from array, back convert, and match
+    tex = pyvista.Texture(arr)
+    assert np.allclose(tex.to_array(), arr)

@@ -66,7 +66,8 @@ setup(
     package_data={'pyvista.examples': ['airplane.ply', 'ant.ply', 'channels.vti',
                                        'hexbeam.vtk', 'sphere.ply',
                                        'uniform.vtk', 'rectilinear.vtk',
-                                       'globe.vtk', '2k_earth_daymap.jpg']},
+                                       'globe.vtk', '2k_earth_daymap.jpg',
+                                       'color_cells.tif',]},
     python_requires='>=3.5.*',
     install_requires=install_requires,
     extras_require={

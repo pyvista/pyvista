@@ -18,6 +18,7 @@ rectfile = os.path.join(dir_path, 'rectilinear.vtk')
 globefile = os.path.join(dir_path, 'globe.vtk')
 mapfile = os.path.join(dir_path, '2k_earth_daymap.jpg')
 channelsfile = os.path.join(dir_path, 'channels.vti')
+colorsfile = os.path.join(dir_path, 'color_cells.tif')
 
 # get location of this folder
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -47,6 +48,7 @@ def load_rectilinear():
     """Load a sample uniform grid."""
     return pyvista.RectilinearGrid(rectfile)
 
+
 def load_hexbeam():
     """Load a sample UnstructuredGrid."""
     return pyvista.UnstructuredGrid(hexbeamfile)
@@ -61,20 +63,28 @@ def load_structured():
     z = np.sin(r)
     return pyvista.StructuredGrid(x, y, z)
 
+
 def load_globe():
     """Load a globe source."""
     globe = pyvista.PolyData(globefile)
     globe.textures['2k_earth_daymap'] = load_globe_texture()
     return globe
 
+
 def load_globe_texture():
     """Load a vtk.vtkTexture that can be applied to the globe source."""
     return pyvista.read_texture(mapfile)
 
 
+def load_colors_texture():
+    """A simple example texture."""
+    return pyvista.read_texture(colorsfile)
+
+
 def load_channels():
     """Load a uniform grid of fluvial channels in the subsurface."""
     return pyvista.read(channelsfile)
+
 
 def plot_ants_plane(off_screen=None, notebook=None):
     """Plot two ants and airplane.
@@ -246,7 +256,7 @@ def load_spline():
 
 def load_random_hills():
     """Create random hills toy example.
-    
+
     Uses the parametric random hill function to create hills oriented like
     topography and add's an elevation array.
 

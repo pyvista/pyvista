@@ -327,7 +327,7 @@ class Texture(vtk.vtkTexture):
             n_components = 1
 
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
-        grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
+        grid.point_arrays['Image'] = image.swapaxes(1, 0).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
 
         return self._from_image_data(grid)
@@ -360,7 +360,7 @@ class Texture(vtk.vtkTexture):
         else:
             shape = (image.dimensions[1], image.dimensions[0])
 
-        return np.flip(image.active_scalars.reshape(shape, order='F'), axis=1).swapaxes(1,0)
+        return image.active_scalars.reshape(shape, order='F').swapaxes(0, 1)
 
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""
