@@ -901,7 +901,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def update_style(self):
         """Update the camera interactor style."""
         if self._style_class is None:
-            # We need an actualy custom style to
+            # We need an actually custom style to handle button up events
             self._style_class = _style_factory(self._style)(self)
         if hasattr(self, 'iren'):
             return self.iren.SetInteractorStyle(self._style_class)
