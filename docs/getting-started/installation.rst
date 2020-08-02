@@ -173,6 +173,20 @@ container is launched:
     set +x
     exec "$@"
 
+If you want to use pyvista with `Paraview <https://www.paraview.org/>`_ , you should set Xvfb instead of using ``PYVISTA_VIRTUAL_DISPLAY``.
+
+.. code-block:: bash
+
+    #!/bin/bash
+    set -x
+    export DISPLAY=:99.0
+    export PYVISTA_OFF_SCREEN=true
+    export PYVISTA_USE_PANEL=true
+    which Xvfb
+    Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+    sleep 3
+    set +x
+    exec "$@"
 
 And that's it! Include PyVista and pyvirtualdisplay in your Python requirements
 and get to visualizing your data! If you need more help than this on setting up
