@@ -1484,7 +1484,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             opacity = np.array(opacity)
             if scalars.shape[0] == opacity.shape[0]:
                 # User could pass an array of opacities for every point/cell
-                pass
+                _custom_opac = True
             else:
                 opacity = opacity_transfer_function(opacity, n_colors)
 
