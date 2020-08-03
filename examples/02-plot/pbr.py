@@ -9,7 +9,7 @@ for more details.
 PBR is only supported for :class:`pyvista.PolyData` and can be triggered via
 the ``pbr`` keyword argument of ``add_mesh``. Also use the ``metallic`` and ``roughness` arguments for further control.
 
-Let's show of this functionality by rendering a high quality mesh of a statue
+Let's show off this functionality by rendering a high quality mesh of a statue
 as though it were metallic.
 """
 
@@ -69,7 +69,7 @@ color = 0.7, 0.5, 0.1
 
 p = pv.Plotter()
 p.set_environment_texture(texture)
-p.add_mesh(Sphere((0,0,0)), pbr=True, color=color, metallic=0.0, roughness=0.2,)
+p.add_mesh(Sphere((0,0,0)), pbr=True, color=color, metallic=0.0, roughness=0.2)
 p.add_mesh(Sphere((0,0,1)), pbr=True, color=color, metallic=1.0, roughness=0.2)
 p.view_vector((-1,0,0), (0,1,0))
 p.show()

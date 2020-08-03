@@ -1261,22 +1261,22 @@ class BasePlotter(PickingHelper, WidgetHelper):
             scalars range to annotate on the scalar bar and the values are the
             the string annotations.
 
-        pickable : bool
+        pickable : bool, optional
             Set whether this mesh is pickable
 
-        pbr : bool
-            Enable physics based rendering (PBR) if the mesh if ``PolyData``.
+        pbr : bool, optional
+            Enable physics based rendering (PBR) if the mesh is ``PolyData``.
             Use the ``color`` argument to set the base color. This is only
             available in VTK>=9.
 
         metallic : float
-            Usually this value is either 0 or 1 for real material but any value
+            Usually this value is either 0 or 1 for a real material but any value
             in between is valid. This parameter is only used by PBR
             Interpolation. Default value is 0.0
 
         roughness : float
-            This value have to be between 0 (glossy) and 1 (rough). A glossy
-            material have reflections and a high specular part. This parameter
+            This value has to be between 0 (glossy) and 1 (rough). A glossy
+            material has reflections and a high specular part. This parameter
             is only used by PBR Interpolation. Default value is 0.5
 
         Return

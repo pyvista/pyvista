@@ -380,7 +380,7 @@ class Texture(vtk.vtkTexture):
         """
         Return True if cube mapping is enabled and False otherwise.
 
-        Is this texture a cube map, if so it needs 6 inputs one for each
+        Is this texture a cube map, if so it needs 6 inputs, one for each
         side of the cube. You must set this before connecting the inputs.
         The inputs must all have the same size, data type, and depth.
         """
