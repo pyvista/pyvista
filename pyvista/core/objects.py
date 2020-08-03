@@ -377,7 +377,10 @@ class Texture(vtk.vtkTexture):
 
     @property
     def cube_map(self, flag):
-        """Is this texture a cube map, if so it needs 6 inputs one for each
+        """
+        Return True if cube mapping is enabled and False otherwise.
+
+        Is this texture a cube map, if so it needs 6 inputs one for each
         side of the cube. You must set this before connecting the inputs.
         The inputs must all have the same size, data type, and depth.
         """
@@ -385,13 +388,15 @@ class Texture(vtk.vtkTexture):
 
     @repeat.setter
     def cube_map(self, flag):
+        """Enable cube mapping if ``flag`` is True, disable it otherwise."""
         self.SetCubeMap(flag)
 
     def copy(self):
-        """Make a copy of this textrue."""
+        """Make a copy of this texture."""
         return Texture(self.to_image().copy())
 
     def to_skybox(self):
+        """Return the texture as a ``vtkSkyBox`` if cube mapping is supported."""
         if self.cube_map:
             skybox = vtk.vtkSkybox()
             skybox.SetTexture(self)

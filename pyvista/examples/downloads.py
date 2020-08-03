@@ -646,6 +646,7 @@ def download_vtk_logo():
 
 
 def download_sky_box_cube_map():
+    """Download a skybox cube map texture."""
     sets = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz']
     images = ['skybox2-' + suffix + '.jpg' for suffix in sets]
     texture = pyvista.Texture()
