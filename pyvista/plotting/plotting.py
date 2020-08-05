@@ -2,7 +2,6 @@
 
 import pathlib
 import collections.abc
-from functools import partial
 import logging
 import os
 import time
@@ -233,11 +232,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # each render will also have an associated background renderer
         self._background_renderers = [None for _ in range(len(self.renderers))]
 
-        # create a shadow renderer that lives on top of all others
-        self._shadow_renderer = Renderer(
-            self, border, border_color, border_width)
-        self._shadow_renderer.SetViewport(0, 0, 1, 1)
-
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bar_ranges = {}
         self._scalar_bar_mappers = {}
@@ -249,8 +243,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Keep track of the scale
         self._labels = []
         # Set default style
-        self._style = 'RubberBandPick'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleRubberBandPick()
         # this helps managing closed plotters
         self._closed = False
 
@@ -739,7 +732,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def _add_observer(self, event, call):
         if hasattr(self, 'iren'):
-            call = partial(try_callback, call)
             self._observers[event] = self.iren.AddObserver(event, call)
 
     def _remove_observer(self, event):
@@ -816,9 +808,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.store_click_position()
             if hasattr(callback, '__call__'):
                 if viewport:
-                    callback(self.click_position)
+                    try_callback(callback, self.click_position)
                 else:
-                    callback(self.pick_click_position())
+                    try_callback(callback, self.pick_click_position())
 
         self._add_observer(event, _click_callback)
 
@@ -873,14 +865,17 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def key_press_event(self, obj, event):
         """Listen for key press event."""
-        key = self.iren.GetKeySym()
-        log.debug('Key %s pressed' % key)
-        self._last_key = key
-        if key in self._key_press_event_callbacks.keys():
-            # Note that defaultdict's will never throw a key error
-            callbacks = self._key_press_event_callbacks[key]
-            for func in callbacks:
-                func()
+        try:
+            key = self.iren.GetKeySym()
+            log.debug('Key %s pressed' % key)
+            self._last_key = key
+            if key in self._key_press_event_callbacks.keys():
+                # Note that defaultdict's will never throw a key error
+                callbacks = self._key_press_event_callbacks[key]
+                for func in callbacks:
+                    func()
+        except Exception as e:
+            log.error('Exception encountered for keypress "%s": %s' % (key, e))
 
     def left_button_down(self, obj, event_type):
         """Register the event for a left button down click."""
@@ -900,11 +895,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def update_style(self):
         """Update the camera interactor style."""
-        if self._style_class is None:
-            # We need an actually custom style to handle button up events
-            self._style_class = _style_factory(self._style)(self)
+        if not hasattr(self, '_style'):
+            self._style = vtk.vtkInteractorStyleTrackballCamera()
         if hasattr(self, 'iren'):
-            return self.iren.SetInteractorStyle(self._style_class)
+            return self.iren.SetInteractorStyle(self._style)
 
     def enable_trackball_style(self):
         """Set the interactive style to trackball camera.
@@ -912,8 +906,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         The trackball camera is the default interactor style.
 
         """
-        self._style = 'TrackballCamera'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleTrackballCamera()
         return self.update_style()
 
     def enable_trackball_actor_style(self):
@@ -922,8 +915,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         This allows to rotate actors around the scene.
 
         """
-        self._style = 'TrackballActor'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleTrackballActor()
         return self.update_style()
 
     def enable_image_style(self):
@@ -939,8 +931,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
          - SHIFT Right Mouse triggers pick events
 
         """
-        self._style = 'Image'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleImage()
         return self.update_style()
 
     def enable_joystick_style(self):
@@ -958,8 +949,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         for zooming, and shift + left button is for panning.)
 
         """
-        self._style = 'JoystickCamera'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleJoystickCamera()
         return self.update_style()
 
     def enable_zoom_style(self):
@@ -971,8 +961,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         of the drawn rectangle.
 
         """
-        self._style = 'RubberBandZoom'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleRubberBandZoom()
         return self.update_style()
 
     def enable_terrain_style(self):
@@ -984,8 +973,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         (the angle from the horizon).
 
         """
-        self._style = 'Terrain'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleTerrain()
         return self.update_style()
 
     def enable_rubber_band_style(self):
@@ -1000,8 +988,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         rectangle. In other respects it behaves the same as its parent class.
 
         """
-        self._style = 'RubberBandPick'
-        self._style_class = None
+        self._style = vtk.vtkInteractorStyleRubberBandPick()
         return self.update_style()
 
     def hide_axes_all(self):
@@ -2146,7 +2133,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clear plot by removing all actors and properties."""
         for renderer in self.renderers:
             renderer.clear()
-        self._shadow_renderer.clear()
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.clear()
@@ -2616,7 +2602,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Renderer has an axes widget, so close it
         for renderer in self.renderers:
             renderer.close()
-        self._shadow_renderer.close()
 
         # Grab screenshots of last render
         if self._store_image:
@@ -2631,7 +2616,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._clear_ren_win()
 
-        self._style_class = None
+        if hasattr(self, '_style'):
+            del self._style
 
         if hasattr(self, 'iren'):
             # self.iren.RemoveAllObservers()
@@ -2658,7 +2644,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clean the plotter of the memory."""
         for renderer in self.renderers:
             renderer.deep_clean()
-        self._shadow_renderer.deep_clean()
         for renderer in self._background_renderers:
             if renderer is not None:
                 renderer.deep_clean()
@@ -3451,7 +3436,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if all_renderers:
             for renderer in self.renderers:
                 renderer.set_background(color, top=top)
-            self._shadow_renderer.set_background(color)
         else:
             self.renderer.set_background(color, top=top)
 
@@ -3595,7 +3579,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.close()
         self.deep_clean()
         del self.renderers
-        del self._shadow_renderer
 
     def add_background_image(self, image_path, scale=1, auto_resize=True,
                              as_global=True):
@@ -3638,17 +3621,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Need to change the number of layers to support an additional
         # background layer
-        self.ren_win.SetNumberOfLayers(3)
+        self.ren_win.SetNumberOfLayers(2)
         if as_global:
             for renderer in self.renderers:
-                renderer.SetLayer(2)
+                renderer.SetLayer(1)
             view_port = None
         else:
-            self.renderer.SetLayer(2)
+            self.renderer.SetLayer(1)
             view_port = self.renderer.GetViewport()
 
         renderer = BackgroundRenderer(self, image_path, scale, view_port)
-        renderer.SetLayer(1)
         self.ren_win.AddRenderer(renderer)
         self._background_renderers[self._active_renderer_index] = renderer
 
@@ -3788,15 +3770,6 @@ class Plotter(BasePlotter):
         for renderer in self.renderers:
             self.ren_win.AddRenderer(renderer)
 
-        # Add the shadow renderer to allow us to capture interactions within
-        # a given viewport
-        # https://vtk.org/pipermail/vtkusers/2018-June/102030.html
-        self.ren_win.AddRenderer(self._shadow_renderer)
-        self.ren_win.SetNumberOfLayers(2)
-        for renderer in self.renderers:
-            renderer.SetLayer(1)
-        self._shadow_renderer.SetInteractive(False)  # never needs to capture
-
         if self.off_screen:
             self.ren_win.SetOffScreenRendering(1)
         else:  # Allow user to interact
@@ -3804,9 +3777,10 @@ class Plotter(BasePlotter):
             self.iren.LightFollowCameraOff()
             self.iren.SetDesiredUpdateRate(30.0)
             self.iren.SetRenderWindow(self.ren_win)
-            self.enable_trackball_style()  # internally calls update_style()
+            self.enable_trackball_style()
             self._observers = {}    # Map of events to observers of self.iren
             self._add_observer("KeyPressEvent", self.key_press_event)
+            self.update_style()
 
         # Set background
         self.set_background(rcParams['background'])
@@ -4002,40 +3976,3 @@ class Plotter(BasePlotter):
         """
         logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
         return self.show(*args, **kwargs)
-
-
-def _style_factory(klass):
-    """Create a subclass with capturing ability, return it."""
-    # We have to use a custom subclass for this because the default ones
-    # swallow the release events
-    # http://vtk.1045678.n5.nabble.com/Mouse-button-release-event-is-still-broken-in-VTK-6-0-0-td5724762.html  # noqa
-
-    class CustomStyle(getattr(vtk, 'vtkInteractorStyle' + klass)):
-
-        def __init__(self, parent):
-            super().__init__()
-            self._parent = parent
-            self.AddObserver(
-                "LeftButtonPressEvent",
-                partial(try_callback, self._press))
-            self.AddObserver(
-                "LeftButtonReleaseEvent",
-                partial(try_callback, self._release))
-
-        def _press(self, obj, event):
-            # Figure out which renderer has the event and disable the
-            # others
-            super().OnLeftButtonDown()
-            if len(self._parent.renderers) > 1:
-                click_pos = self._parent.iren.GetEventPosition()
-                for renderer in self._parent.renderers:
-                    interact = renderer.IsInViewport(*click_pos)
-                    renderer.SetInteractive(interact)
-
-        def _release(self, obj, event):
-            super().OnLeftButtonUp()
-            if len(self._parent.renderers) > 1:
-                for renderer in self._parent.renderers:
-                    renderer.SetInteractive(True)
-
-    return CustomStyle
