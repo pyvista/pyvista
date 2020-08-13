@@ -28,6 +28,7 @@ def Spline(points, n_points=None):
     Examples
     --------
     Construct a spline
+
     >>> import numpy as np
     >>> import pyvista as pv
     >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
