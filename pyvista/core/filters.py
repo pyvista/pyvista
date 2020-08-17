@@ -946,8 +946,8 @@ class DataSetFilters:
         return output
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
-              tolerance=0.0, absolute=False, clamping=False, rng=None,
-              progress_bar=False):
+              tolerance=0.0, absolute=False, clamping=False, clean=True,
+              rng=None, progress_bar=False):
         """Copy a geometric representation (called a glyph) to every point in the input dataset.
 
         The glyph may be oriented along the input vectors, and it may be scaled according to scalar
@@ -962,7 +962,7 @@ class DataSetFilters:
             Use the active scalars to scale the glyphs
 
         factor : float
-            Scale factor applied to sclaing array
+            Scale factor applied to scaling array
 
         geom : vtk.vtkDataSet
             The geometry to use for the glyph
@@ -978,6 +978,9 @@ class DataSetFilters:
         clamping: bool
             Turn on/off clamping of "scalar" values to range.
 
+        clean: bool
+            Clean the points before glyphing. Defaults to True.
+
         rng: tuple(float), optional
             Set the range of values to be considered by the filter when scalars
             values are provided.
@@ -987,12 +990,13 @@ class DataSetFilters:
 
         """
         # Clean the points before glyphing
-        small = pyvista.PolyData(dataset.points)
-        small.point_arrays.update(dataset.point_arrays)
-        dataset = small.clean(point_merging=True, merge_tol=tolerance,
-                              lines_to_points=False, polys_to_lines=False,
-                              strips_to_polys=False, inplace=False,
-                              absolute=absolute, progress_bar=progress_bar)
+        if clean:
+            small = pyvista.PolyData(dataset.points)
+            small.point_arrays.update(dataset.point_arrays)
+            dataset = small.clean(point_merging=True, merge_tol=tolerance,
+                                  lines_to_points=False, polys_to_lines=False,
+                                  strips_to_polys=False, inplace=False,
+                                  absolute=absolute, progress_bar=progress_bar)
         # Make glyphing geometry
         if geom is None:
             arrow = vtk.vtkArrowSource()
