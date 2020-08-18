@@ -946,7 +946,7 @@ class DataSetFilters:
         return output
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
-              tolerance=0.0, absolute=False, clamping=False, rng=None,
+              tolerance=None, absolute=False, clamping=False, rng=None,
               progress_bar=False):
         """Copy a geometric representation (called a glyph) to every point in the input dataset.
 
@@ -969,7 +969,7 @@ class DataSetFilters:
 
         tolerance : float, optional
             Specify tolerance in terms of fraction of bounding box length.
-            Float value is between 0 and 1. Default is 0.0. If ``absolute``
+            Float value is between 0 and 1. Default is None. If ``absolute``
             is ``True`` then the tolerance can be an absolute distance.
             If None, points merging as a preprocessing step is disabled.
 
