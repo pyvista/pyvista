@@ -946,8 +946,8 @@ class DataSetFilters:
         return output
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
-              tolerance=0.0, absolute=False, clamping=False, clean=True,
-              rng=None, progress_bar=False):
+              tolerance=0.0, absolute=False, clamping=False, rng=None,
+              progress_bar=False):
         """Copy a geometric representation (called a glyph) to every point in the input dataset.
 
         The glyph may be oriented along the input vectors, and it may be scaled according to scalar
@@ -971,15 +971,13 @@ class DataSetFilters:
             Specify tolerance in terms of fraction of bounding box length.
             Float value is between 0 and 1. Default is 0.0. If ``absolute``
             is ``True`` then the tolerance can be an absolute distance.
+            If None, points merging as a preprocessing step is disabled.
 
         absolute : bool, optional
             Control if ``tolerance`` is an absolute distance or a fraction.
 
         clamping: bool
             Turn on/off clamping of "scalar" values to range.
-
-        clean: bool
-            Clean the points before glyphing. Defaults to True.
 
         rng: tuple(float), optional
             Set the range of values to be considered by the filter when scalars
@@ -990,7 +988,7 @@ class DataSetFilters:
 
         """
         # Clean the points before glyphing
-        if clean:
+        if tolerance is not None:
             small = pyvista.PolyData(dataset.points)
             small.point_arrays.update(dataset.point_arrays)
             dataset = small.clean(point_merging=True, merge_tol=tolerance,
