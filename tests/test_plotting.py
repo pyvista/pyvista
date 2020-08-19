@@ -79,6 +79,26 @@ def test_plot_invalid_style():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_interactor_style():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    interactions = (
+        'trackball',
+        'trackball_actor',
+        'image',
+        'joystick',
+        'zoom',
+        'terrain',
+        'rubber_band',
+        'rubber_band_2d',
+    )
+    for interaction in interactions:
+        getattr(plotter, f'enable_{interaction}_style')()
+        assert plotter._style_class is not None
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plotter_shape_invalid():
     # wrong size
     with pytest.raises(ValueError):
