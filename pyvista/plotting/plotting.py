@@ -1004,6 +1004,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._style_class = None
         return self.update_style()
 
+    def enable_rubber_band_2d_style(self):
+        """Set the interactive style to rubber band 2d.
+
+        Camera rotation is not allowed with this interactor style. Zooming
+        affects the camera's parallel scale only, and assumes that the camera
+        is in parallel projection mode. The style also allows draws a rubber
+        band using the left button. All camera changes invoke
+        StartInteractionEvent when the button is pressed, InteractionEvent
+        when the mouse (or wheel) is moved, and EndInteractionEvent when the
+        button is released. The bindings are as follows: Left mouse - Select
+        (invokes a SelectionChangedEvent). Right mouse - Zoom.
+        Middle mouse - Pan. Scroll wheel - Zoom.
+
+        """
+        self._style = 'RubberBand2D'
+        self._style_class = None
+        return self.update_style()
+
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
         for renderer in self.renderers:
