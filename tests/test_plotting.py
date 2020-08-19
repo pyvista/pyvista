@@ -93,7 +93,7 @@ def test_interactor_style():
         'rubber_band_2d',
     )
     for interaction in interactions:
-        getattr(plotter, f'enable_{interaction}_style')()
+        getattr(plotter, 'enable_{}_style'.format(interaction))()
         assert plotter._style_class is not None
     plotter.close()
 
