@@ -91,16 +91,15 @@ class DataSetFilters:
             specified as a string conventional direction such as ``'x'`` for
             ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
 
-        origin : tuple(float)
+        origin : tuple(float), optional
             The center ``(x,y,z)`` coordinate of the plane on which the clip
-            occurs
+            occurs. The default is the center of the dataset.
 
-        invert : bool
-            Flag on whether to flip/invert the clip
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.
 
-        value : float:
-            Set the clipping value of the implicit function (if clipping with
-            implicit function) or scalar value (if clipping with scalars).
+        value : float, optional
+            Set the clipping value along the normal direction.
             The default value is 0.0.
 
         inplace : bool, optional
@@ -947,7 +946,7 @@ class DataSetFilters:
         return output
 
     def glyph(dataset, orient=True, scale=True, factor=1.0, geom=None,
-              tolerance=0.0, absolute=False, clamping=False, rng=None,
+              tolerance=None, absolute=False, clamping=False, rng=None,
               progress_bar=False):
         """Copy a geometric representation (called a glyph) to every point in the input dataset.
 
@@ -963,15 +962,16 @@ class DataSetFilters:
             Use the active scalars to scale the glyphs
 
         factor : float
-            Scale factor applied to sclaing array
+            Scale factor applied to scaling array
 
         geom : vtk.vtkDataSet
             The geometry to use for the glyph
 
         tolerance : float, optional
             Specify tolerance in terms of fraction of bounding box length.
-            Float value is between 0 and 1. Default is 0.0. If ``absolute``
+            Float value is between 0 and 1. Default is None. If ``absolute``
             is ``True`` then the tolerance can be an absolute distance.
+            If None, points merging as a preprocessing step is disabled.
 
         absolute : bool, optional
             Control if ``tolerance`` is an absolute distance or a fraction.
@@ -988,12 +988,13 @@ class DataSetFilters:
 
         """
         # Clean the points before glyphing
-        small = pyvista.PolyData(dataset.points)
-        small.point_arrays.update(dataset.point_arrays)
-        dataset = small.clean(point_merging=True, merge_tol=tolerance,
-                              lines_to_points=False, polys_to_lines=False,
-                              strips_to_polys=False, inplace=False,
-                              absolute=absolute, progress_bar=progress_bar)
+        if tolerance is not None:
+            small = pyvista.PolyData(dataset.points)
+            small.point_arrays.update(dataset.point_arrays)
+            dataset = small.clean(point_merging=True, merge_tol=tolerance,
+                                  lines_to_points=False, polys_to_lines=False,
+                                  strips_to_polys=False, inplace=False,
+                                  absolute=absolute, progress_bar=progress_bar)
         # Make glyphing geometry
         if geom is None:
             arrow = vtk.vtkArrowSource()
@@ -1397,8 +1398,66 @@ class DataSetFilters:
         out['SelectedPoints'] = bools
         return out
 
+    def probe(dataset, points, tolerance=None, pass_cell_arrays=True,
+              pass_point_arrays=True, categorical=False):
+        """Sample data values at specified point locations.
+
+        This uses :class:`vtk.vtkProbeFilter`.
+
+        Parameters
+        ----------
+        dataset: pyvista.Common
+            The mesh to probe from - point and cell arrays from
+            this object are probed onto the nodes of the ``points`` mesh
+
+        points: pyvista.Common
+            The points to probe values on to. This should be a PyVista mesh
+            or something :func:`pyvista.wrap` can handle.
+
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
+        pass_cell_arrays: bool, optional
+            Preserve source mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve source mesh's original point data arrays
+
+        categorical : bool, optional
+            Control whether the source point data is to be treated as
+            categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme.
+
+        Examples
+        --------
+        Probe the active scalars in ``grid`` at the points in ``mesh``
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> mesh = pyvista.Sphere(center=(4.5, 4.5, 4.5), radius=4.5)
+        >>> grid = examples.load_uniform()
+        >>> result = grid.probe(mesh)
+        >>> 'Spatial Point Data' in result.point_arrays
+        True
+
+        """
+        if not pyvista.is_pyvista_dataset(points):
+            points = pyvista.wrap(points)
+        alg = vtk.vtkProbeFilter()
+        alg.SetInputData(points)
+        alg.SetSourceData(dataset)
+        alg.SetPassCellArrays(pass_cell_arrays)
+        alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetCategoricalData(categorical)
+        if tolerance is not None:
+            alg.SetComputeTolerance(False)
+            alg.SetTolerance(tolerance)
+        alg.Update() # Perform the resampling
+        return _get_output(alg)
+
     def sample(dataset, target, tolerance=None, pass_cell_arrays=True,
-               pass_point_arrays=True):
+               pass_point_arrays=True, categorical=False):
         """Resample array data from a passed mesh onto this mesh.
 
         This uses :class:`vtk.vtkResampleWithDataSet`.
@@ -1413,8 +1472,8 @@ class DataSetFilters:
             this object are sampled onto the nodes of the ``dataset`` mesh
 
         tolerance: float, optional
-            tolerance used to compute whether a point in the source is in a
-            cell of the input.  If not given, tolerance automatically generated.
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
 
         pass_cell_arrays: bool, optional
             Preserve source mesh's original cell data arrays
@@ -1422,36 +1481,43 @@ class DataSetFilters:
         pass_point_arrays: bool, optional
             Preserve source mesh's original point data arrays
 
+        categorical : bool, optional
+            Control whether the source point data is to be treated as
+            categorical. If the data is categorical, then the resultant data
+            will be determined by a nearest neighbor interpolation scheme.
+
         """
+        if not pyvista.is_pyvista_dataset(target):
+            raise TypeError('`target` must be a PyVista mesh type.')
         alg = vtk.vtkResampleWithDataSet() # Construct the ResampleWithDataSet object
         alg.SetInputData(dataset)  # Set the Input data (actually the source i.e. where to sample from)
         alg.SetSourceData(target) # Set the Source data (actually the target, i.e. where to sample to)
         alg.SetPassCellArrays(pass_cell_arrays)
         alg.SetPassPointArrays(pass_point_arrays)
+        alg.SetCategoricalData(categorical)
         if tolerance is not None:
             alg.SetComputeTolerance(False)
             alg.SetTolerance(tolerance)
         alg.Update() # Perform the resampling
         return _get_output(alg)
 
-    def interpolate(dataset, points, sharpness=2, radius=1.0,
-                    dimensions=(101, 101, 101), pass_cell_arrays=True,
-                    pass_point_arrays=True, null_value=0.0):
-        """Interpolate values onto this mesh from the point data of a given dataset.
+    def interpolate(dataset, target, sharpness=2, radius=1.0,
+                    strategy='null_value', null_value=0.0, n_points=None,
+                    pass_cell_arrays=True, pass_point_arrays=True,
+                    progress_bar=False, ):
+        """Interpolate values onto this mesh from a given dataset.
 
         The input dataset is typically a point cloud.
 
         This uses a gaussian interpolation kernel. Use the ``sharpness`` and
-        ``radius`` parameters to adjust this kernel.
-
-        Please note that the source dataset is first interpolated onto a fine
-        UniformGrid which is then sampled to this mesh. The interpolation grid's
-        dimensions will likely need to be tweaked for each individual use case.
+        ``radius`` parameters to adjust this kernel. You can also switch this
+        kernel to use an N closest points approach.
 
         Parameters
         ----------
-        points : pyvista.PolyData
-            The points whose values will be interpolated onto this mesh.
+        target: pyvista.Common
+            The vtk data object to sample from - point and cell arrays from
+            this object are interpolated onto this mesh.
 
         sharpness : float
             Set / Get the sharpness (i.e., falloff) of the Gaussian. By
@@ -1461,39 +1527,77 @@ class DataSetFilters:
         radius : float
             Specify the radius within which the basis points must lie.
 
-        dimensions : tuple(int)
-            When interpolating the points, they are first interpolating on to a
-            :class:`pyvista.UniformGrid` with the same spatial extent -
-            ``dimensions`` is number of points along each axis for that grid.
+        n_points : int, optional
+            If given, specifies the number of the closest points used to form
+            the interpolation basis. This will invalidate the radius and
+            sharpness arguments in favor of an N closest points approach. This
+            typically has poorer results.
 
-        pass_cell_arrays: bool, optional
-            Preserve source mesh's original cell data arrays
-
-        pass_point_arrays: bool, optional
-            Preserve source mesh's original point data arrays
+        strategy : str, optional
+            Specify a strategy to use when encountering a "null" point during
+            the interpolation process. Null points occur when the local
+            neighborhood (of nearby points to interpolate from) is empty. If
+            the strategy is set to ``'mask_points'``, then an output array is
+            created that marks points as being valid (=1) or null (invalid
+            =0) (and the NullValue is set as well). If the strategy is set to
+            ``'null_value'`` (this is the default), then the output data
+            value(s) are set to the ``null_value`` (specified in the output
+            point data). Finally, the strategy ``'closest_point'`` is to simply
+            use the closest point to perform the interpolation.
 
         null_value : float, optional
             Specify the null point value. When a null point is encountered
             then all components of each null tuple are set to this value. By
             default the null value is set to zero.
 
+        pass_cell_arrays: bool, optional
+            Preserve input mesh's original cell data arrays
+
+        pass_point_arrays: bool, optional
+            Preserve input mesh's original point data arrays
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
         """
-        box = pyvista.create_grid(dataset, dimensions=dimensions)
+        if not pyvista.is_pyvista_dataset(target):
+            raise TypeError('`target` must be a PyVista mesh type.')
+
+        # Must cast to UnstructuredGrid in some cases (e.g. vtkImageData/vtkRectilinearGrid)
+        # I believe the locator and the interpolator call `GetPoints` and not all mesh types have that method
+        if isinstance(target, (pyvista.UniformGrid, pyvista.RectilinearGrid)):
+            target = target.cast_to_unstructured_grid()
 
         gaussian_kernel = vtk.vtkGaussianKernel()
         gaussian_kernel.SetSharpness(sharpness)
         gaussian_kernel.SetRadius(radius)
+        gaussian_kernel.SetKernelFootprintToRadius()
+        if n_points:
+            gaussian_kernel.SetNumberOfPoints(n_points)
+            gaussian_kernel.SetKernelFootprintToNClosest()
+
+        locator = vtk.vtkStaticPointLocator()
+        locator.SetDataSet(target)
+        locator.BuildLocator()
 
         interpolator = vtk.vtkPointInterpolator()
-        interpolator.SetInputData(box)
-        interpolator.SetSourceData(points)
+        interpolator.SetInputData(dataset)
+        interpolator.SetSourceData(target)
         interpolator.SetKernel(gaussian_kernel)
+        interpolator.SetLocator(locator)
         interpolator.SetNullValue(null_value)
-        interpolator.Update()
-
-        return dataset.sample(interpolator.GetOutput(),
-                              pass_cell_arrays=pass_cell_arrays,
-                              pass_point_arrays=pass_point_arrays)
+        if strategy == 'null_value':
+            interpolator.SetNullPointsStrategyToNullValue()
+        elif strategy == 'mask_points':
+            interpolator.SetNullPointsStrategyToMaskPoints()
+        elif strategy == 'closest_point':
+            interpolator.SetNullPointsStrategyToClosestPoint()
+        else:
+            raise ValueError('strategy `{}` not supported.'.format(strategy))
+        interpolator.SetPassPointArrays(pass_point_arrays)
+        interpolator.SetPassCellArrays(pass_cell_arrays)
+        _update_alg(interpolator, progress_bar, 'Interpolating')
+        return _get_output(interpolator)
 
     def streamlines(dataset, vectors=None, source_center=None,
                     source_radius=None, n_points=100,
@@ -1706,7 +1810,7 @@ class DataSetFilters:
         """
         return dataset.extract_geometry().triangulate().decimate(target_reduction)
 
-    def sample_over_line(dataset, pointa, pointb, resolution=None):
+    def sample_over_line(dataset, pointa, pointb, resolution=None, tolerance=None):
         """Sample a dataset onto a line.
 
         Parameters
@@ -1721,6 +1825,10 @@ class DataSetFilters:
             Number of pieces to divide line into. Defaults to number of cells
             in the input mesh. Must be a positive integer.
 
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
         Return
         ------
         sampled_line : pv.PolyData
@@ -1731,12 +1839,12 @@ class DataSetFilters:
         # Make a line and sample the dataset
         line = pyvista.Line(pointa, pointb, resolution=resolution)
 
-        sampled_line = line.sample(dataset)
+        sampled_line = line.sample(dataset, tolerance=tolerance)
         return sampled_line
 
     def plot_over_line(dataset, pointa, pointb, resolution=None, scalars=None,
                        title=None, ylabel=None, figsize=None, figure=True,
-                       show=True):
+                       show=True, tolerance=None):
         """Sample a dataset along a high resolution line and plot.
 
         Plot the variables of interest in 2D where the X-axis is distance from
@@ -1774,6 +1882,10 @@ class DataSetFilters:
         show : bool
             Shows the matplotlib figure
 
+        tolerance: float, optional
+            Tolerance used to compute whether a point in the source is in a
+            cell of the input.  If not given, tolerance is automatically generated.
+
         """
         # Ensure matplotlib is available
         try:
@@ -1782,7 +1894,7 @@ class DataSetFilters:
             raise ImportError('matplotlib must be available to use this filter.')
 
         # Sample on line
-        sampled = DataSetFilters.sample_over_line(dataset, pointa, pointb, resolution)
+        sampled = DataSetFilters.sample_over_line(dataset, pointa, pointb, resolution, tolerance)
 
         # Get variable of interest
         if scalars is None:
@@ -2169,17 +2281,50 @@ class DataSetFilters:
         alg.Update()
         return _get_output(alg)
 
-    def compute_gradient(dataset, scalars=None, gradient_name='gradient',
-                         preference='point'):
-        """Compute per cell gradient of point/cell scalar field.
+    def compute_derivative(dataset, scalars=None, gradient=True,
+                           divergence=None, vorticity=None, qcriterion=None,
+                           faster=False, preference='point'):
+        """Compute derivative-based quantities of point/cell scalar field.
+
+        Utilize ``vtkGradientFilter`` to compute derivative-based quantities,
+        such as gradient, divergence, vorticity, and Q-criterion, of the
+        selected point or cell scalar field.
 
         Parameters
         ----------
         scalars : str, optional
-            String name of the scalars array to use when computing gradient.
+            String name of the scalars array to use when computing the
+            derivative quantities.
 
-        gradient_name : str, optional
-            The name of the output array of the computed gradient.
+        gradient: bool, str, optional
+            Calculate gradient. If a string is passed, the string will be used
+            for the resulting array name. Otherwise, array name will be
+            'gradient'. Default: True
+
+        divergence: bool, str, optional
+            Calculate divergence. If a string is passed, the string will be
+            used for the resulting array name. Otherwise, array name will be
+            'divergence'. Default: None
+
+        vorticity: bool, str, optional
+            Calculate vorticity. If a string is passed, the string will be used
+            for the resulting array name. Otherwise, array name will be
+            'vorticity'. Default: None
+
+        qcriterion: bool, str, optional
+            Calculate qcriterion. If a string is passed, the string will be
+            used for the resulting array name. Otherwise, array name will be
+            'qcriterion'. Default: None
+
+        faster: bool, optional
+            Use faster algorithm for computing derivative quantities. Result is
+            less accurate and performs fewer derivative calculations,
+            increasing computation speed. The error will feature smoothing of
+            the output and possibly errors at boundaries. Option has no effect
+            if DataSet is not UnstructuredGrid. Default: False
+
+        preference: str, optional
+            Data type preference. Either 'point' or 'cell'.
 
         """
         alg = vtk.vtkGradientFilter()
@@ -2190,14 +2335,59 @@ class DataSetFilters:
                 raise TypeError('No active scalars.  Must input scalars array name')
         if not isinstance(scalars, str):
             raise TypeError('scalars array must be given as a string name')
+        if not any((gradient, divergence, vorticity, qcriterion)):
+            raise ValueError('must set at least one of gradient, divergence, vorticity, or qcriterion')
+
+            # bool(non-empty string/True) == True, bool(None/False) == False
+        alg.SetComputeGradient(bool(gradient))
+        if isinstance(gradient, bool):
+            gradient = 'gradient'
+        alg.SetResultArrayName(gradient)
+
+        alg.SetComputeDivergence(bool(divergence))
+        if isinstance(divergence, bool):
+            divergence = 'divergence'
+        alg.SetDivergenceArrayName(divergence)
+
+        alg.SetComputeVorticity(bool(vorticity))
+        if isinstance(vorticity, bool):
+            vorticity = 'vorticity'
+        alg.SetVorticityArrayName(vorticity)
+
+        alg.SetComputeQCriterion(bool(qcriterion))
+        if isinstance(qcriterion, bool):
+            qcriterion = 'qcriterion'
+        alg.SetQCriterionArrayName(qcriterion)
+
+        alg.SetFasterApproximation(faster)
         _, field = dataset.get_array(scalars, preference=preference, info=True)
         # args: (idx, port, connection, field, name)
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
         alg.SetInputData(dataset)
-        alg.SetResultArrayName(gradient_name)
         alg.Update()
         return _get_output(alg)
 
+    def compute_gradient(self, scalars=None, gradient_name='gradient',
+                         preference='point'):
+        """Compute per cell gradient of point/cell scalar field.
+
+        DEPRECATED: Use ``compute_derivative`` instead.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            String name of the scalars array to use when computing gradient.
+
+        gradient_name : str, optional
+            The name of the output array of the computed gradient.
+
+        preference: str, optional
+            Data type preference. Either 'point' or 'cell'.
+
+        """
+        logging.warning('DEPRECATED: ``.compute_gradient`` is deprecated. Use ``.compute_derivative`` instead.')
+        return self.compute_derivative(scalars=scalars, gradient=gradient_name,
+                                       preference=preference)
 
 @abstract_class
 class CompositeFilters:

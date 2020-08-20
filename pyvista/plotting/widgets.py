@@ -1139,7 +1139,7 @@ class WidgetHelper:
 
         theta_resolution: int , optional
             Set the number of points in the longitude direction (ranging from
-            start_theta to end theta).
+            start_theta to end_theta).
 
         phi_resolution : int, optional
             Set the number of points in the latitude direction (ranging from

@@ -3,6 +3,7 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
+import pathlib
 import collections.abc
 import logging
 
@@ -78,16 +79,22 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
-            elif isinstance(args[0], str):
+            elif isinstance(args[0], (str, pathlib.Path)):
                 self._load_file(args[0])
             elif isinstance(args[0], dict):
                 idx = 0
                 for key, block in args[0].items():
                     self[idx, key] = block
                     idx += 1
+            else:
+                raise TypeError('Type %s is not supported by pyvista.MultiBlock'
+                                % type(args[0]))
 
             # keep a reference of the args
             self.refs.append(args)
+        elif len(args) > 1:
+            raise ValueError('Invalid number of arguments:\n``pyvista.MultiBlock``'
+                             'supports 0 or 1 arguments.')
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()

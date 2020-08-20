@@ -61,11 +61,11 @@ class DataObject:
 
         """
         if self._READERS is None:
-            raise NotImplementedError('{} readers are not specified, this should be a' \
+            raise NotImplementedError('{} readers are not specified, this should be a'
                                       ' dict of (file extension: vtkReader type)'
                                       .format(self.__class__.__name__))
 
-        filename = os.path.abspath(os.path.expanduser(filename))
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
         if not os.path.isfile(filename):
             raise FileNotFoundError('File %s does not exist' % filename)
 
@@ -103,7 +103,7 @@ class DataObject:
                                       ' dict of (file extension: vtkWriter type)'
                                       .format(self.__class__.__name__))
 
-        filename = os.path.abspath(os.path.expanduser(filename))
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
         file_ext = fileio.get_ext(filename)
         if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
@@ -637,7 +637,7 @@ class Common(DataSetFilters, DataObject):
                 # Raise a value error if fetching the range of an unknown array
                 raise ValueError('Array `{}` not present.'.format(name))
         # If array has no tuples return a NaN range
-        if arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
+        if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
         # Use the array range
         return np.nanmin(arr), np.nanmax(arr)
