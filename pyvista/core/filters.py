@@ -2806,8 +2806,20 @@ class PolyDataFilters(DataSetFilters):
         Return
         ------
         mesh : pyvista.PolyData
-            Decimated mesh. None when inplace=True.
+            Smoothed mesh. None when inplace=True.
 
+        Examples
+        --------
+        Smooth the edges of an all triangular cube
+        >>> import pyvista as pv
+        >>> cube = pv.Cube().triangulate().subdivide(5).clean()
+        >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
+        >>> n_edge_cells = cube.extract_feature_edges().n_cells
+        >>> n_smooth_cells = smooth_cube.extract_feature_edges().n_cells
+        >>> print('Sharp Edges on Cube:        %d' % n_edge_cells)
+        Sharp Edges on Cube:        384
+        >>> print('Sharp Edges on Smooth Cube: %d' % n_smooth_cells)
+        Sharp Edges on Smooth Cube: 12
         """
         alg = vtk.vtkSmoothPolyDataFilter()
         alg.SetInputData(poly_data)
