@@ -105,6 +105,29 @@ class DataSetFilters:
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
 
+        Returns
+        -------
+        mesh : pyvista.PolyData
+            Clipped mesh when ``inplace=False``.  When
+            ``inplace=True``, ``None``
+
+        Examples
+        --------
+        Clip a cube along the +X direction.  ``triangulate`` is used as
+        the cube is initially composed of quadrilateral faces and
+        subdivide only works on triangles.
+
+        >>> import pyvista as pv
+        >>> cube = pv.Cube().triangulate().subdivide(3)
+        >>> clipped_cube = cube.clip()
+
+        Clip a cube in the +Z direction.  This leaves half a cube
+        below the XY plane.
+
+        >>> import pyvista as pv
+        >>> cube = pv.Cube().triangulate().subdivide(3)
+        >>> clipped_cube = cube.clip('z')
+
         """
         if isinstance(normal, str):
             normal = NORMALS[normal.lower()]
@@ -144,6 +167,16 @@ class DataSetFilters:
         factor : float, optional
             If bounds are not given this is the factor along each axis to
             extract the default box.
+
+        Examples
+        --------
+        Clip a corner of a cube.  The bounds of a cube are normally
+        ``[-0.5, 0.5, -0.5, 0.5, -0.5, 0.5]``, and this removes 1/8 of
+        the cube's surface.
+
+        >>> import pyvista as pv
+        >>> cube = pv.Cube().triangulate().subdivide(3)
+        >>> clipped_cube = cube.clip_box([0, 1, 0, 1, 0, 1])
 
         """
         if bounds is None:
@@ -202,6 +235,27 @@ class DataSetFilters:
             If True, a new scalar array will be added to the ``point_arrays``
             of this mesh. Otherwise a copy of this mesh is returned with that
             scalar field.
+
+        Examples
+        --------
+        Compute the distance between all the points on a sphere and a
+        plane.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> plane = pv.Plane()
+        >>> sphere.compute_implicit_distance(plane, inplace=True)
+        >>> dist = sphere['implicit_distance']
+        >>> print(type(dist))
+        <class 'numpy.ndarray'>
+
+        Plot these distances as a heatmap
+
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere, scalars='implicit_distance', cmap='bwr')
+        >>> _ = pl.add_mesh(plane, color='w', style='wireframe')
+        >>> pl.show()  # doctest:+SKIP
+
         """
         function = vtk.vtkImplicitPolyDataDistance()
         function.SetInput(surface)
@@ -3538,8 +3592,20 @@ class PolyDataFilters(DataSetFilters):
         Return
         ------
         output : pyvista.PolyData
-            PolyData object consisting of the line segment between the two given
-            vertices.
+            PolyData object consisting of the line segment between the
+            two given vertices.
+
+        Examples
+        --------
+        Plot the path between two points on a sphere
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> path = sphere.geodesic(0, 100)
+        >>> pl = pv.Plotter()
+        >>> _ = pl.add_mesh(sphere)
+        >>> _ = pl.add_mesh(path, line_width=5, color='k')
+        >>> pl.show()  # doctest:+SKIP
 
         """
         if start_vertex < 0 or end_vertex > poly_data.n_points - 1:
@@ -3581,6 +3647,14 @@ class PolyDataFilters(DataSetFilters):
         length : float
             Length of the geodesic segment.
 
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> length = sphere.geodesic_distance(0, 100)
+        >>> print('Length is %.3f' % length)
+        Length is 0.812
+
         """
         path = poly_data.geodesic(start_vertex, end_vertex)
         sizes = path.compute_cell_sizes(length=True, area=False, volume=False)
@@ -3611,7 +3685,7 @@ class PolyDataFilters(DataSetFilters):
             Plots ray trace results
 
         off_screen : bool, optional
-            Plots off screen.  Used for unit testing.
+            Plots off screen when ``plot=True``.  Used for unit testing.
 
         Return
         ------
@@ -3622,6 +3696,17 @@ class PolyDataFilters(DataSetFilters):
         intersection_cells : np.ndarray
             Indices of the intersection cells.  Empty array if no
             intersections.
+
+        Examples
+        --------
+        Compute the intersection between a ray from the origin and
+        [1, 0, 0] and a sphere with radius 0.5 centered at the origin
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
+        >>> print('Intersected at %.3f %.3f %.3f' % (point[0], point[1], point[2]))
+        Intersected at 0.499 0.000 0.000
 
         """
         points = vtk.vtkPoints()
@@ -3726,6 +3811,14 @@ class PolyDataFilters(DataSetFilters):
             Indices of new points relative to the original mesh.  Not
             returned when inplace=False.
 
+        Examples
+        --------
+        Remove the first 100 points from a sphere
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> reduced_sphere = sphere.remove_points(range(100))
+
         """
         remove = np.asarray(remove)
 
@@ -3781,7 +3874,20 @@ class PolyDataFilters(DataSetFilters):
             return newmesh, ridx
 
     def flip_normals(poly_data):
-        """Flip normals of a triangular mesh by reversing the point ordering."""
+        """Flip normals of a triangular mesh by reversing the point ordering.
+
+        Examples
+        --------
+        Flip the normals of a sphere and plot the normals before and
+        after the flip.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> sphere.plot_normals(mag=0.1)  # doctest:+SKIP
+        >>> sphere.flip_normals()
+        >>> sphere.plot_normals(mag=0.1)  # doctest:+SKIP
+
+        """
         if not poly_data.is_all_triangles:
             raise NotAllTrianglesError('Can only flip normals on an all triangle mesh')
 
@@ -3829,6 +3935,19 @@ class PolyDataFilters(DataSetFilters):
 
         progress_bar : bool, optional
             Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Extract the points of a sphere and then convert the point
+        cloud to a surface mesh.  Note that only the bottom half is
+        converted to a mesh.
+
+        >>> import pyvista as pv
+        >>> points = pv.PolyData(pv.Sphere().points)
+        >>> mesh = points.delaunay_2d()
+        >>> mesh.is_all_triangles()
+        True
+
         """
         alg = vtk.vtkDelaunay2D()
         alg.SetProjectionPlaneMode(vtk.VTK_BEST_FITTING_PLANE)
@@ -3860,9 +3979,34 @@ class PolyDataFilters(DataSetFilters):
     def compute_arc_length(poly_data):
         """Compute the arc length over the length of the probed line.
 
-        It adds a new point-data array named "arc_length" with the computed arc
-        length for each of the polylines in the input. For all other cell types,
-        the arc length is set to 0.
+        It adds a new point-data array named "arc_length" with the
+        computed arc length for each of the polylines in the
+        input. For all other cell types, the arc length is set to 0.
+
+        Returns
+        -------
+        arc_length : float
+            Arc length of the length of the probed line
+
+        Examples
+        --------
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> path = sphere.geodesic(0, 100)
+        >>> length = path.compute_arc_length()['arc_length'][-1]
+        >>> print('Length is %.3f' % length)
+        Length is 0.812
+
+        This is identical to the geodesic_distance
+
+        >>> length = sphere.geodesic_distance(0, 100)
+        >>> print('Length is %.3f' % length)
+        Length is 0.812
+
+        You can also plot the arc_length
+
+        >>> arc = path.compute_arc_length()
+        >>> arc.plot(scalars="arc_length")  # doctest:+SKIP
 
         """
         alg = vtk.vtkAppendArcLength()
@@ -3872,7 +4016,30 @@ class PolyDataFilters(DataSetFilters):
 
 
     def project_points_to_plane(poly_data, origin=None, normal=(0,0,1), inplace=False):
-        """Project points of this mesh to a plane."""
+        """Project points of this mesh to a plane.
+
+        Parameters
+        ----------
+        origin : np.ndarray or collections.abc.Sequence, optional
+            Plane origin.  Defaults the approximate center of the
+            input mesh minus half the length of the input mesh in the
+            direction of the normal.
+
+        normal : np.ndarray or collections.abc.Sequence, optional
+            Plane normal.  Defaults to +Z ``[0, 0, 1]``
+
+        inplace : bool, optional
+            Overwrite the original mesh with the projected points
+
+        Examples
+        --------
+        Flatten a sphere to the XY plane
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> projected = sphere.project_points_to_plane([0, 0, 0])
+
+        """
         if not isinstance(normal, (np.ndarray, collections.abc.Sequence)) or len(normal) != 3:
             raise TypeError('Normal must be a length three vector')
         if origin is None:
@@ -3925,6 +4092,16 @@ class PolyDataFilters(DataSetFilters):
             If True, generate texture coordinates along the ribbon. This can
             also be specified to generate the texture coordinates in the
             following ways: ``'length'``, ``'normalized'``,
+
+        Examples
+        --------
+        Convert a line to a ribbon and plot it.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> path = sphere.geodesic(0, 100)
+        >>> ribbon = path.ribbon()
+        >>> pv.plot([sphere, ribbon])  # doctest:+SKIP
 
         """
         if scalars is not None:
