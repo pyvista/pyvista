@@ -17,5 +17,5 @@ pydocstyle:
 	@pydocstyle pyvista
 
 doctest-modules:
-	@echo docstrings
+	@echo "Runnnig module doctesting"
 	pytest -v --doctest-modules pyvista

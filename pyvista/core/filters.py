@@ -2914,17 +2914,17 @@ class PolyDataFilters(DataSetFilters):
         scalars : str, optional
             scalars array by which the radius varies
 
-        capping : bool
-            Turn on/off whether to cap the ends with polygons. Default True.
+        capping : bool, optional
+            Turn on/off whether to cap the ends with polygons. Default ``True``.
 
-        n_sides : int
+        n_sides : int, optional
             Set the number of sides for the tube. Minimum of 3.
 
-        radius_factor : float
+        radius_factor : float, optional
             Maximum tube radius in terms of a multiple of the minimum radius.
 
-        preference : str
-            The field preference when searching for the scalars array by name
+        preference : str, optional
+            The field preference when searching for the scalars array by name.
 
         inplace : bool, optional
             Updates mesh in-place while returning nothing.
@@ -2933,6 +2933,18 @@ class PolyDataFilters(DataSetFilters):
         ------
         mesh : pyvista.PolyData
             Tube-filtered mesh. None when inplace=True.
+
+        Examples
+        --------
+        Convert a single line to a tube
+
+        >>> import pyvista as pv
+        >>> line = pv.Line()
+        >>> tube = line.tube(radius=0.02)
+        >>> print('Line Cells:', line.n_cells)
+        Line Cells: 1
+        >>> print('Tube Cells:', tube.n_cells)
+        Tube Cells: 22
 
         """
         if not isinstance(poly_data, pyvista.PolyData):
@@ -3007,7 +3019,7 @@ class PolyDataFilters(DataSetFilters):
         >>> mesh = pyvista.PolyData(examples.planefile)
         >>> submesh = mesh.subdivide(1, 'loop') # doctest:+SKIP
 
-        alternatively, update mesh in-place
+        Alternatively, update the mesh in-place
 
         >>> mesh.subdivide(1, 'loop', inplace=True) # doctest:+SKIP
 
@@ -3109,6 +3121,24 @@ class PolyDataFilters(DataSetFilters):
         outmesh : pyvista.PolyData
             Decimated mesh.  None when inplace=True.
 
+        Examples
+        --------
+        Decimate a sphere while preserving its volume
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere(theta_resolution=90, phi_resolution=90)
+        >>> print(sphere.n_cells)
+        15840
+        >>> dec_sphere = sphere.decimate(0.9, volume_preservation=True)
+        >>> print(dec_sphere.n_cells)
+        1584
+
+        Notes
+        -----
+        If you encounter a segmentation fault or other error, consider
+        using ``clean`` to remove any invalid cells before using this
+        filter.
+
         """
         # create decimation filter
         alg = vtk.vtkQuadricDecimation()  # vtkDecimatePro as well
@@ -3202,6 +3232,27 @@ class PolyDataFilters(DataSetFilters):
         mesh : pyvista.PolyData
             Updated mesh with cell and point normals if inplace=False
 
+        Examples
+        --------
+        Compute the point normals of the surface of a sphere
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> sphere.compute_normals(cell_normals=False, inplace=True)
+        >>> normals = sphere['Normals']
+        >>> normals.shape
+        (842, 3)
+
+        Alternatively, create a new mesh when computing the normals
+        and compute both cell and point normals.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> sphere_with_norm = sphere.compute_normals()
+        >>> sphere_with_norm.point_arrays['Normals'].shape
+        (842, 3)
+        >>> sphere_with_norm.cell_arrays['Normals'].shape
+        (1680, 3)
+
         Notes
         -----
         Previous arrays named "Normals" will be overwritten.
@@ -3262,6 +3313,49 @@ class PolyDataFilters(DataSetFilters):
         edges that are shared by more than two faces. In addition, the input
         surface should not self-intersect, meaning that the faces of the
         surface should only touch at their edges.
+
+        Parameters
+        ----------
+        normal : str, list, optional
+            Plane normal to clip with.  Plane is centered at
+            ``origin``.  Normal can be either a 3 member list
+            (e.g. ``[0, 0, 1]``) or one of the following strings:
+            ``'x'``, ``'y'``, ``'z'``, ``'-x'``, ``'-y'``, or
+            ``'-z'``.
+
+        origin : list, optional
+            Coordinate of the origin (e.g. ``[1, 0, 0]``).  Defaults
+            to ``[0, 0, 0]```
+
+        tolerance : float, optional
+            The tolerance for creating new points while clipping.  If
+            the tolerance is too small, then degenerate triangles
+            might be produced.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing. Defaults to False.
+
+        Returns
+        -------
+        clipped_mesh : pyvista.PolyData
+            The clipped mesh resulting from this operation when
+            ``inplace==False``.  Otherwise, ``None``.
+
+        Examples
+        --------
+        Clip a sphere in the X direction centered at the origin.  This
+        will leave behind half a sphere in the positive X direction.
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> clipped_mesh = sphere.clip_closed_surface()
+
+        Clip the sphere at the xy plane and leave behind half the
+        sphere in the positive Z direction.  Shift the clip upwards to
+        leave a smaller mesh behind.
+
+        >>> clipped_mesh = sphere.clip_closed_surface('z', origin=[0, 0, 0.3])
+
         """
         # verify it is manifold
         if poly_data.n_open_edges > 0:
@@ -3317,6 +3411,16 @@ class PolyDataFilters(DataSetFilters):
         -------
         mesh : pyvista.PolyData
             Mesh with holes filled.  None when inplace=True
+
+        Examples
+        --------
+        Create a partial sphere with a hole and then fill it
+
+        >>> import pyvista as pv
+        >>> sphere_with_hole = pv.Sphere(end_theta=330)
+        >>> sphere_with_hole.fill_holes(1000, inplace=True)
+        >>> edges = sphere_with_hole.extract_feature_edges(feature_edges=False, manifold_edges=False)
+        >>> assert edges.n_cells is 0
 
         """
         logging.warning('pyvista.PolyData.fill_holes is known to segfault. '
@@ -3375,6 +3479,19 @@ class PolyDataFilters(DataSetFilters):
         ------
         mesh : pyvista.PolyData
             Cleaned mesh.  None when inplace=True
+
+        Examples
+        --------
+        Create a mesh with a degenerate face and then clean it,
+        removing the degenerate face
+
+        >>> import pyvista as pv
+        >>> points = np.array([[0, 0, 0], [0, 1, 0], [1, 0, 0]])
+        >>> faces = np.array([3, 0, 1, 2, 3, 0, 3, 3])
+        >>> mesh = pv.PolyData(points, faces)
+        >>> mout = mesh.clean()
+        >>> print(mout.faces)
+        [3 0 1 2]
 
         """
         if tolerance is None:
