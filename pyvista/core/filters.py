@@ -565,7 +565,7 @@ class DataSetFilters:
 
         continuous : bool, optional
             When True, the continuous interval [minimum cell scalar,
-            maxmimum cell scalar] will be used to intersect the threshold bound,
+            maximum cell scalar] will be used to intersect the threshold bound,
             rather than the set of discrete scalar values from the vertices.
 
         preference : str, optional
@@ -1671,7 +1671,7 @@ class DataSetFilters:
             cell length units. Only valid for an adaptive integrator, e.g., RK45
 
         max_step_length : float
-            Maxmimum step size used for line integration, expressed in length or
+            Maximum step size used for line integration, expressed in length or
             cell length units. Only valid for an adaptive integrator, e.g., RK45
 
         max_steps : int
