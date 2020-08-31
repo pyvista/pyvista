@@ -52,6 +52,24 @@ def test_clip_filter():
             assert isinstance(clp, pyvista.UnstructuredGrid)
 
 
+def test_clip_by_scalars_filter():
+    """This tests the clip filter on all datatypes available filters"""
+    for i, dataset_in in enumerate(DATASETS):
+        dataset = dataset_in.copy()  # don't modify in-place
+        if dataset.active_scalars_info.name is None:
+            dataset['scalars'] = np.arange(dataset.n_points)
+        clip_value = dataset.n_points/2
+        clp = dataset.clip_scalar(value=clip_value)
+
+        assert clp is not None
+        if isinstance(dataset, pyvista.PolyData):
+            assert isinstance(clp, pyvista.PolyData)
+        else:
+            assert isinstance(clp, pyvista.UnstructuredGrid)
+
+        assert dataset.active_scalars.min() <= clip_value
+
+
 @skip_py2_nobind
 def test_clip_filter_composite():
     # Now test composite data structures
