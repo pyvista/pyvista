@@ -192,7 +192,7 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
 Translating the documentation
 *****************************
 
-The recommended way for new contributors to translate pyvista reference is to
+The recommended way for new contributors to translate ``pyvista``'s documentation is to
 join the translation team on Transifex.
 
 There is `pyvista translation page`_ for pyvista (master) documentation.
