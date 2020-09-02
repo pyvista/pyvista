@@ -189,6 +189,26 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    external_examples
 
 
+Translating the documentation
+*****************************
+
+The recommended way for new contributors to translate ``pyvista``'s documentation is to
+join the translation team on Transifex.
+
+There is `pyvista translation page`_ for pyvista (master) documentation.
+
+1. Login to transifex_ service.
+2. Go to `pyvista translation page`_.
+3. Click ``Request language`` and fill form.
+4. Wait acceptance by transifex pyvista translation maintainers.
+5. (After acceptance) Translate on transifex.
+6. You can see the translated document in `Read The Docs`_.
+
+.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista/
+.. _Transifex: https://www.transifex.com/
+.. _`Read The Docs`: https://pyvista-doc.readthedocs.io/en/latest
+
+
 API Reference
 *************
 
