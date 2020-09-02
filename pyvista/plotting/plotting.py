@@ -1004,6 +1004,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._style_class = None
         return self.update_style()
 
+    def enable_rubber_band_2d_style(self):
+        """Set the interactive style to rubber band 2d.
+
+        Camera rotation is not allowed with this interactor style. Zooming
+        affects the camera's parallel scale only, and assumes that the camera
+        is in parallel projection mode. The style also allows draws a rubber
+        band using the left button. All camera changes invoke
+        StartInteractionEvent when the button is pressed, InteractionEvent
+        when the mouse (or wheel) is moved, and EndInteractionEvent when the
+        button is released. The bindings are as follows: Left mouse - Select
+        (invokes a SelectionChangedEvent). Right mouse - Zoom.
+        Middle mouse - Pan. Scroll wheel - Zoom.
+
+        """
+        self._style = 'RubberBand2D'
+        self._style_class = None
+        return self.update_style()
+
     def hide_axes_all(self):
         """Hide the axes orientation widget in all renderers."""
         for renderer in self.renderers:
@@ -1136,7 +1154,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             (options include: 'linear', 'linear_r', 'geom', 'geom_r').
             A string could also be used to map a scalars array from the mesh to
             the opacity (must have same number of elements as the
-            ``scalars`` argument). Or you can pass a custum made transfer
+            ``scalars`` argument). Or you can pass a custom made transfer
             function that is an array either ``n_colors`` in length or shorter.
 
         flip_scalars : bool, optional
@@ -1414,8 +1432,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # remap scalars
                 if isinstance(scalars, np.ndarray):
                     scalars = scalars[ind]
-
+            if texture:
+                _tcoords = mesh.t_coords
             mesh.compute_normals(cell_normals=False, inplace=True)
+            if texture:
+                mesh.t_coords = _tcoords
 
         if mesh.n_points < 1:
             raise ValueError('Empty meshes cannot be plotted. Input mesh has zero points.')
@@ -1743,7 +1764,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Opacity mapping for the scalars array.
             A string can also be specified to map the scalars range to a
             predefined opacity transfer function (options include: 'linear',
-            'linear_r', 'geom', 'geom_r'). Or you can pass a custum made
+            'linear_r', 'geom', 'geom_r'). Or you can pass a custom made
             transfer function that is an array either ``n_colors`` in length or
             shorter.
 

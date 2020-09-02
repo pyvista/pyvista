@@ -971,10 +971,10 @@ class Renderer(vtkRenderer):
             Color of of the edges of the mesh.
 
         pad : float
-            Percantage padding between 0 and 1
+            Percentage padding between 0 and 1
 
         offset : float
-            Percantage offset along plane normal
+            Percentage offset along plane normal
         """
         if store_floor_kwargs:
             kwargs = locals()
