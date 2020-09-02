@@ -204,7 +204,7 @@ There is `pyvista translation page`_ for pyvista (master) documentation.
 5. (After acceptance) Translate on transifex.
 6. You can see the translated document in `Read The Docs`_.
 
-.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista/
+.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista-doc/
 .. _Transifex: https://www.transifex.com/
 .. _`Read The Docs`: https://pyvista-doc.readthedocs.io/en/latest
 
