@@ -215,6 +215,70 @@ class DataSetFilters:
         result.point_arrays['implicit_distance'] = pyvista.convert_array(dists)
         return result
 
+    def clip_scalar(dataset, scalars=None, invert=True, value=0.0, inplace=False):
+        """Clip a dataset by a scalar.
+
+        Parameters
+        ----------
+        scalars : str, optional
+            Name of scalars to clip on.  Defaults to currently active scalars.
+
+        invert : bool, optional
+            Flag on whether to flip/invert the clip.  When ``True``,
+            only the mesh below ``value`` will be kept.  When
+            ``False``, only values above ``value`` will be kept.
+
+        value : float, optional
+            Set the clipping value.  The default value is 0.0.
+
+        inplace : bool, optional
+            Updates mesh in-place while returning nothing.
+
+        Returns
+        -------
+        pdata : pyvista.PolyData
+            Clipped dataset.
+
+        Examples
+        --------
+        Remove the part of the mesh with "sample_point_scalars" above 100.
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.load_hexbeam()
+        >>> clipped = dataset.clip_scalar(scalars="sample_point_scalars", value=100)
+
+        Remove the part of the mesh with "sample_point_scalars" below
+        100.  Since these scalars are already active, there's no need
+        to specify ``scalars=``
+
+        >>> import pyvista as pv
+        >>> from pyvista import examples
+        >>> dataset = examples.load_hexbeam()
+        >>> clipped = dataset.clip_scalar(value=100, invert=False)
+        """
+        if isinstance(dataset, vtk.vtkPolyData):
+            alg = vtk.vtkClipPolyData()
+        else:
+            alg = vtk.vtkTableBasedClipDataSet()
+
+        alg.SetInputDataObject(dataset)
+        alg.SetValue(value)
+        if scalars is None:
+            field, scalars = dataset.active_scalars_info
+        _, field = get_array(dataset, scalars, preference='point', info=True)
+
+        # SetInputArrayToProcess(idx, port, connection, field, name)
+        alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars)
+        alg.SetInsideOut(invert)  # invert the clip if needed
+        alg.Update()  # Perform the Cut
+        result = _get_output(alg)
+
+        if inplace:
+            dataset.overwrite(result)
+        else:
+            return result
+
     def clip_surface(dataset, surface, invert=True, value=0.0,
                      compute_distance=False):
         """Clip any mesh type using a :class:`pyvista.PolyData` surface mesh.
