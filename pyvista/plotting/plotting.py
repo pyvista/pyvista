@@ -3791,7 +3791,7 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, title=None):
+                 splitting_position=None, title=None, illumination=None):
         """Initialize a vtk plotting object."""
         super().__init__(shape=shape, border=border,
                          border_color=border_color,
@@ -3799,7 +3799,7 @@ class Plotter(BasePlotter):
                          groups=groups, row_weights=row_weights,
                          col_weights=col_weights,
                          splitting_position=splitting_position,
-                         title=title)
+                         title=title, illumination=illumination)
 
         log.debug('Plotter init start')
 
