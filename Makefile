@@ -15,3 +15,7 @@ codespell:
 pydocstyle:
 	@echo "Running pydocstyle"
 	@pydocstyle pyvista
+
+doctest-modules:
+	@echo "Runnnig module doctesting"
+	pytest -v --doctest-modules pyvista
