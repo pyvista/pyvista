@@ -104,8 +104,7 @@ def test_lighting():
 
     # test default disable_3_lights()
     lights = list(plotter.renderer.GetLights())
-    switches = [light.GetSwitch() for light in lights]
-    assert all(switches)
+    assert all([light.GetSwitch() for light in lights])
 
     plotter.enable_3_lights()
     lights = list(plotter.renderer.GetLights())
@@ -116,6 +115,9 @@ def test_lighting():
             assert lights[i].GetSwitch()
         else:
             assert not lights[i].GetSwitch()
+    assert lights[0].GetIntensity() == 1.0
+    assert lights[1].GetIntensity() == 0.6
+    assert lights[2].GetIntensity() == 0.5
     plotter.close()
 
 
