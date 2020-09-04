@@ -95,8 +95,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=2.0, title=None, splitting_position=None,
-                 groups=None, row_weights=None, col_weights=None,
-                 illumination=None):
+                 groups=None, row_weights=None, col_weights=None):
         """Initialize base plotter."""
         log.debug('BasePlotter init start')
         self.image_transparent_background = rcParams['transparent_background']
@@ -260,42 +259,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         _ALL_PLOTTERS[self._id_name] = self
 
         # lighting style
-        self.lighting = vtk.vtkLightKit()
-        # self.lighting.SetHeadLightWarmth(1.0)
-        # self.lighting.SetHeadLightWarmth(1.0)
-        for renderer in self.renderers:
-            self.lighting.AddLightsToRenderer(renderer)
-            renderer.LightFollowCameraOn()
-
-        def _to_pos(elevation, azimuth):
-            theta = azimuth * np.pi / 180.0
-            phi = (90.0 - elevation) * np.pi / 180.0
-            x = np.sin(theta) * np.sin(phi)
-            y = np.cos(phi)
-            z = np.cos(theta) * np.sin(phi)
-            return x, y, z
-
-        if illumination == 'raymond':
-            # Inspired from Mayavi's version of Raymond Maple 3-lights illumination
-            lights = list(self.renderer.GetLights())
-            headlight = lights.pop(0)
-            headlight.SetSwitch(False)
-            for i in range(len(lights)):
-                if i < 3:
-                    lights[i].SetSwitch(True)
-                    lights[i].SetIntensity(1.0)
-                    lights[i].SetColor(1.0, 1.0, 1.0)
-                else:
-                    lights[i].SetSwitch(False)
-                    lights[i].SetPosition(_to_pos(0.0, 0.0))
-                    lights[i].SetIntensity(1.0)
-                    lights[i].SetColor(1.0, 1.0, 1.0)
-
-            lights[0].SetPosition(_to_pos(45.0, 45.0))
-            lights[1].SetPosition(_to_pos(-30.0, -60.0))
-            lights[1].SetIntensity(0.6)
-            lights[2].SetPosition(_to_pos(-30.0, 60.0))
-            lights[2].SetIntensity(0.5)
+        self.disable_3_lights()
 
         # Key bindings
         self.reset_key_events()
@@ -400,6 +364,47 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def remove_floors(self, *args, **kwargs):
         """Wrap ``Renderer.remove_floors``."""
         return self.renderer.remove_floors(*args, **kwargs)
+
+    def enable_3_lights(self):
+        """Enable 3-lights illumination."""
+        def _to_pos(elevation, azimuth):
+            theta = azimuth * np.pi / 180.0
+            phi = (90.0 - elevation) * np.pi / 180.0
+            x = np.sin(theta) * np.sin(phi)
+            y = np.cos(phi)
+            z = np.cos(theta) * np.sin(phi)
+            return x, y, z
+
+        # Inspired from Mayavi's version of Raymond Maple 3-lights illumination
+        lights = list(self.renderer.GetLights())
+        headlight = lights.pop(0)
+        headlight.SetSwitch(False)
+        for i in range(len(lights)):
+            if i < 3:
+                lights[i].SetSwitch(True)
+                lights[i].SetIntensity(1.0)
+                lights[i].SetColor(1.0, 1.0, 1.0)
+            else:
+                lights[i].SetSwitch(False)
+                lights[i].SetPosition(_to_pos(0.0, 0.0))
+                lights[i].SetIntensity(1.0)
+                lights[i].SetColor(1.0, 1.0, 1.0)
+
+        lights[0].SetPosition(_to_pos(45.0, 45.0))
+        lights[1].SetPosition(_to_pos(-30.0, -60.0))
+        lights[1].SetIntensity(0.6)
+        lights[2].SetPosition(_to_pos(-30.0, 60.0))
+        lights[2].SetIntensity(0.5)
+
+    def disable_3_lights(self):
+        """Disable 3-lights illumination."""
+        self.lighting = vtk.vtkLightKit()
+        # self.lighting.SetHeadLightWarmth(1.0)
+        # self.lighting.SetHeadLightWarmth(1.0)
+        for renderer in self.renderers:
+            renderer.RemoveAllLights()
+            self.lighting.AddLightsToRenderer(renderer)
+            renderer.LightFollowCameraOn()
 
     @wraps(Renderer.enable_anti_aliasing)
     def enable_anti_aliasing(self, *args, **kwargs):
@@ -3791,7 +3796,7 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, title=None, illumination=None):
+                 splitting_position=None, title=None):
         """Initialize a vtk plotting object."""
         super().__init__(shape=shape, border=border,
                          border_color=border_color,
@@ -3799,7 +3804,7 @@ class Plotter(BasePlotter):
                          groups=groups, row_weights=row_weights,
                          col_weights=col_weights,
                          splitting_position=splitting_position,
-                         title=title, illumination=illumination)
+                         title=title)
 
         log.debug('Plotter init start')
 
