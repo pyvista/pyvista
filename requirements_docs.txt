@@ -14,4 +14,3 @@ sphinx-notfound-page>=0.3.0
 sphinx-copybutton
 sphinx-gallery>=0.4.0
 lxml
-ytsphinx
