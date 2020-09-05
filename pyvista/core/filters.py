@@ -2929,6 +2929,7 @@ class PolyDataFilters(DataSetFilters):
         Examples
         --------
         Smooth the edges of an all triangular cube
+
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(5).clean()
         >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
