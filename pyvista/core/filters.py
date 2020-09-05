@@ -3353,6 +3353,7 @@ class PolyDataFilters(DataSetFilters):
         Examples
         --------
         Compute the point normals of the surface of a sphere
+
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere.compute_normals(cell_normals=False, inplace=True)
