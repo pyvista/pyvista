@@ -2929,6 +2929,7 @@ class PolyDataFilters(DataSetFilters):
         Examples
         --------
         Smooth the edges of an all triangular cube
+
         >>> import pyvista as pv
         >>> cube = pv.Cube().triangulate().subdivide(5).clean()
         >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
@@ -3353,6 +3354,7 @@ class PolyDataFilters(DataSetFilters):
         Examples
         --------
         Compute the point normals of the surface of a sphere
+
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> sphere.compute_normals(cell_normals=False, inplace=True)
