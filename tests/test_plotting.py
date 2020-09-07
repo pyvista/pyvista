@@ -99,6 +99,29 @@ def test_interactor_style():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_lighting():
+    plotter = pyvista.Plotter()
+
+    # test default disable_3_lights()
+    lights = list(plotter.renderer.GetLights())
+    assert all([light.GetSwitch() for light in lights])
+
+    plotter.enable_3_lights()
+    lights = list(plotter.renderer.GetLights())
+    headlight = lights.pop(0)
+    assert not headlight.GetSwitch()
+    for i in range(len(lights)):
+        if i < 3:
+            assert lights[i].GetSwitch()
+        else:
+            assert not lights[i].GetSwitch()
+    assert lights[0].GetIntensity() == 1.0
+    assert lights[1].GetIntensity() == 0.6
+    assert lights[2].GetIntensity() == 0.5
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plotter_shape_invalid():
     # wrong size
     with pytest.raises(ValueError):
