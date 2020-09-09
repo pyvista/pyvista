@@ -91,9 +91,7 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
-      cd tests
       pytest -v --cov pyvista --cov-report html
-      cd ..
     displayName: 'Test Core API'
 
   - script: |
