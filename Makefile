@@ -19,3 +19,15 @@ pydocstyle:
 doctest-modules:
 	@echo "Runnnig module doctesting"
 	pytest -v --doctest-modules pyvista
+
+coverage:
+	@echo "Running coverage"
+	@pytest -v --cov pyvista
+
+coverage-xml:
+	@echo "Reporting XML coverage"
+	@pytest -v --cov pyvista --cov-report xml
+
+coverage-html:
+	@echo "Reporting HTML coverage"
+	@pytest -v --cov pyvista --cov-report html
