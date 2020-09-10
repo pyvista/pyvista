@@ -47,3 +47,28 @@ def test_cell_picking():
     plotter.add_mesh(multi)
     plotter.enable_cell_picking()
     plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_point_picking():
+    with pytest.raises(TypeError, match="notebook"):
+        plotter = pyvista.Plotter(notebook=True)
+        plotter.enable_point_picking()
+
+    sphere = pyvista.Sphere()
+    for use_mesh in (False, True):
+        plotter = pyvista.Plotter(
+            window_size=(100, 100),
+            off_screen=False
+        )
+        plotter.add_mesh(sphere)
+        plotter.enable_point_picking(
+            show_message=True,
+            use_mesh=use_mesh,
+            callback=lambda: None,
+        )
+        # simulate the pick
+        renderer = plotter.renderer
+        picker = plotter.iren.GetPicker()
+        picker.Pick(50, 50, 0, renderer)
+        plotter.close()
