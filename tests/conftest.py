@@ -1,17 +1,8 @@
 import numpy as np
-import pytest
 from pytest import fixture
 
 import pyvista
 from pyvista import examples
-
-import vtk
-
-
-@fixture()
-def vtk9():
-    if not vtk.vtkVersion().GetVTKMajorVersion() >= 9:
-        pytest.skip('Skipping VTK9+ only test')
 
 
 @fixture()

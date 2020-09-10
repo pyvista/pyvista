@@ -1,6 +1,7 @@
 """Module containing useful plotting tools."""
 
 import os
+import pytest
 from subprocess import PIPE, Popen
 
 import numpy as np
@@ -8,6 +9,9 @@ import vtk
 
 import pyvista
 from .theme import parse_color, rcParams
+
+
+skip_no_vtk9 = pytest.mark.skipif(not vtk.vtkVersion().GetVTKMajorVersion() >= 9, reason="Requires VTK9+")
 
 
 def system_supports_plotting():

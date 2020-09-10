@@ -1,12 +1,13 @@
 import pytest
 import pyvista
-from pyvista.plotting import system_supports_plotting
+from pyvista.plotting import system_supports_plotting, skip_no_vtk9
 
 NO_PLOTTING = not system_supports_plotting()
 
 
+@skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_cell_picking(vtk9):
+def test_cell_picking():
     with pytest.raises(TypeError, match="notebook"):
         plotter = pyvista.Plotter(notebook=True)
         plotter.enable_cell_picking()
@@ -49,8 +50,9 @@ def test_cell_picking(vtk9):
     plotter.close()
 
 
+@skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_point_picking(vtk9):
+def test_point_picking():
     with pytest.raises(TypeError, match="notebook"):
         plotter = pyvista.Plotter(notebook=True)
         plotter.enable_point_picking()
@@ -74,8 +76,9 @@ def test_point_picking(vtk9):
         plotter.close()
 
 
+@skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_path_picking(vtk9):
+def test_path_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
         window_size=(100, 100),
@@ -98,8 +101,9 @@ def test_path_picking(vtk9):
     plotter.close()
 
 
+@skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_geodesic_picking(vtk9):
+def test_geodesic_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
         window_size=(100, 100),
@@ -124,8 +128,9 @@ def test_geodesic_picking(vtk9):
     plotter.close()
 
 
+@skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_horizon_picking(vtk9):
+def test_horizon_picking():
     sphere = pyvista.Sphere()
     plotter = pyvista.Plotter(
         window_size=(100, 100),
