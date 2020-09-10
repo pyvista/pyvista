@@ -6,7 +6,7 @@ NO_PLOTTING = not system_supports_plotting()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_cell_picking():
+def test_cell_picking(vtk9):
     with pytest.raises(TypeError, match="notebook"):
         plotter = pyvista.Plotter(notebook=True)
         plotter.enable_cell_picking()
@@ -50,7 +50,7 @@ def test_cell_picking():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_point_picking():
+def test_point_picking(vtk9):
     with pytest.raises(TypeError, match="notebook"):
         plotter = pyvista.Plotter(notebook=True)
         plotter.enable_point_picking()
