@@ -1,8 +1,10 @@
 import pytest
 import pyvista
-from pyvista.plotting import system_supports_plotting, skip_no_vtk9
+from pyvista.plotting import system_supports_plotting
+import vtk
 
 NO_PLOTTING = not system_supports_plotting()
+skip_no_vtk9 = pytest.mark.skipif(not vtk.vtkVersion().GetVTKMajorVersion() >= 9, reason="Requires VTK9+")
 
 
 @skip_no_vtk9
