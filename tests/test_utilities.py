@@ -8,9 +8,14 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
-from pyvista.utilities import errors
-from pyvista.utilities import fileio
-from pyvista.utilities import helpers
+from pyvista.utilities import (
+    check_valid_vector,
+    errors,
+    fileio,
+    GPUInfo,
+    helpers,
+    Observer,
+)
 
 # Only set this here just the once.
 pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
@@ -211,3 +216,44 @@ def test_progress_monitor():
     mesh = pyvista.Sphere()
     ugrid = mesh.delaunay_3d(progress_bar=True)
     assert isinstance(ugrid, pyvista.UnstructuredGrid)
+
+
+def test_observer():
+    msg = "KIND: In PATH, line 0\nfoo (ADDRESS): ALERT"
+    obs = Observer()
+    ret = obs.parse_message("foo")
+    assert ret[3] == "foo"
+    ret = obs.parse_message(msg)
+    assert ret[3] == "ALERT"
+    for kind in ["WARNING", "ERROR"]:
+        obs.log_message(kind, "foo")
+    obs(obj=None, event=None, message=msg)
+    assert obs.has_event_occurred()
+    assert obs.get_message() == "ALERT"
+    assert obs.get_message(etc=True) == msg
+
+    alg = vtk.vtkSphereSource()
+    alg.GetExecutive()
+    obs.observe(alg)
+    with pytest.raises(RuntimeError, match="algorithm"):
+        obs.observe(alg)
+
+
+def test_gpuinfo():
+    gpuinfo = GPUInfo()
+    _repr = gpuinfo.__repr__()
+    _repr_html = gpuinfo._repr_html_()
+    assert isinstance(_repr, str) and len(_repr) > 1
+    assert isinstance(_repr_html, str) and len(_repr_html) > 1
+
+    # test corrupted internal infos
+    gpuinfo._gpu_info = 'foo'
+    for func_name in ['renderer', 'version', 'vendor']:
+        with pytest.raises(RuntimeError, match=func_name):
+            getattr(gpuinfo, func_name)()
+
+
+def test_check_valid_vector():
+    with pytest.raises(TypeError, match="length three"):
+        check_valid_vector([0, 1])
+    check_valid_vector([0, 1, 2])
