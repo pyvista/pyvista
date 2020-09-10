@@ -122,3 +122,31 @@ def test_geodesic_picking(vtk9):
     clear_callback = plotter._key_press_event_callbacks['c']
     clear_callback[0]()
     plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_horizon_picking(vtk9):
+    sphere = pyvista.Sphere()
+    plotter = pyvista.Plotter(
+        window_size=(100, 100),
+        off_screen=False
+    )
+    plotter.add_mesh(sphere)
+    plotter.enable_horizon_picking(
+        show_message=True,
+        callback=lambda: None,
+        show_horizon=True,
+    )
+    # simulate the pick
+    renderer = plotter.renderer
+    picker = plotter.iren.GetPicker()
+    # at least 3 picks
+    picker.Pick(50, 50, 0, renderer)
+    picker.Pick(49, 50, 0, renderer)
+    picker.Pick(48, 50, 0, renderer)
+    # pick nothing
+    picker.Pick(0, 0, 0, renderer)
+    # 'c' to clear
+    clear_callback = plotter._key_press_event_callbacks['c']
+    clear_callback[0]()
+    plotter.close()
