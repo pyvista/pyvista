@@ -96,3 +96,29 @@ def test_path_picking(vtk9):
     clear_callback = plotter._key_press_event_callbacks['c']
     clear_callback[0]()
     plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_geodesic_picking(vtk9):
+    sphere = pyvista.Sphere()
+    plotter = pyvista.Plotter(
+        window_size=(100, 100),
+        off_screen=False
+    )
+    plotter.add_mesh(sphere)
+    plotter.enable_geodesic_picking(
+        show_message=True,
+        callback=lambda: None,
+        show_path=True,
+    )
+    # simulate the pick
+    renderer = plotter.renderer
+    picker = plotter.iren.GetPicker()
+    picker.Pick(50, 50, 0, renderer)
+    picker.Pick(45, 45, 0, renderer)
+    # pick nothing
+    picker.Pick(0, 0, 0, renderer)
+    # 'c' to clear
+    clear_callback = plotter._key_press_event_callbacks['c']
+    clear_callback[0]()
+    plotter.close()
