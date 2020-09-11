@@ -94,7 +94,7 @@ class PickingHelper:
         if hasattr(self, 'notebook') and self.notebook:
             raise TypeError('Cell picking not available in notebook plotting')
         if mesh is None:
-            if not hasattr(self, 'mesh'):
+            if not hasattr(self, 'mesh') or self.mesh is None:
                 raise AttributeError('Input a mesh into the Plotter class first or '
                                      'or set it in this function')
             mesh = self.mesh
@@ -186,7 +186,7 @@ class PickingHelper:
             self.add_text(str(show_message), font_size=font_size, name='_cell_picking_message')
 
         if start:
-            self._style.StartSelect()
+            self._style_class.StartSelect()
 
         return
 
