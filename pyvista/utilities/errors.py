@@ -23,7 +23,7 @@ def set_error_output_file(filename):
 
 
 class Observer:
-    """A standerd class for observing VTK objects."""
+    """A standard class for observing VTK objects."""
 
     def __init__(self, event_type='ErrorEvent', log=True):
         """Initialize observer."""
