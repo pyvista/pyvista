@@ -3848,10 +3848,11 @@ class Plotter(BasePlotter):
         # Add the shadow renderer to allow us to capture interactions within
         # a given viewport
         # https://vtk.org/pipermail/vtkusers/2018-June/102030.html
+        number_or_layers = self.ren_win.GetNumberOfLayers()
+        current_layer = self.renderer.GetLayer()
+        self.ren_win.SetNumberOfLayers(number_or_layers + 1)
         self.ren_win.AddRenderer(self._shadow_renderer)
-        self.ren_win.SetNumberOfLayers(2)
-        for renderer in self.renderers:
-            renderer.SetLayer(1)
+        self._shadow_renderer.SetLayer(current_layer + 1)
         self._shadow_renderer.SetInteractive(False)  # never needs to capture
 
         if self.off_screen:
