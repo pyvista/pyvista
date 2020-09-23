@@ -2722,6 +2722,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Do not remove the renderers on the clean
         self.mesh = None
         self.mapper = None
+        self.volume = None
+        self.textactor = None
 
     def add_text(self, text, position='upper_left', font_size=18, color=None,
                  font=None, shadow=False, name=None, viewport=False):
