@@ -1460,9 +1460,10 @@ def _remove_mapper_from_plotter(plotter, actor, reset_camera):
         except ValueError:
             pass
         if len(plotter._scalar_bar_mappers[name]) < 1:
-            slot = plotter._scalar_bar_slot_lookup.pop(name)
-            plotter._scalar_bar_mappers.pop(name)
-            plotter._scalar_bar_ranges.pop(name)
-            plotter.remove_actor(plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera)
-            plotter._scalar_bar_slots.add(slot)
+            slot = plotter._scalar_bar_slot_lookup.pop(name, None)
+            if slot is not None:
+                plotter._scalar_bar_mappers.pop(name)
+                plotter._scalar_bar_ranges.pop(name)
+                plotter.remove_actor(plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera)
+                plotter._scalar_bar_slots.add(slot)
     return
