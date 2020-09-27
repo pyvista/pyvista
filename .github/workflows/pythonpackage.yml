@@ -21,3 +21,4 @@ jobs:
         use-black: false
         use-mypy: false
         use-isort: true
+        extra-isort-options: "-p pyvista"
