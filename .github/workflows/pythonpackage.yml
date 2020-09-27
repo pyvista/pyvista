@@ -21,4 +21,4 @@ jobs:
     - name: Test with isort
       run: |
         pip install isort
-        isort -c
+        isort -c pyvista
