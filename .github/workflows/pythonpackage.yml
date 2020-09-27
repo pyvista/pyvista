@@ -1,0 +1,23 @@
+# This workflow will run lint
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+name: Python package
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Python Code Quality and Lint
+      uses: ricardochaves/python-lint@v1.1.0
+      with:
+        python-root-list: pyvista
+        use-pylint: false
+        use-pycodestyle: false
+        use-flake8: false
+        use-black: false
+        use-mypy: false
+        use-isort: true
