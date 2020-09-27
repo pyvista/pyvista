@@ -9,9 +9,17 @@ import numpy as np
 import vtk
 
 import pyvista
-from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               parse_field_choice, raise_not_matching, vtk_id_list_to_array,
-                               fileio, abstract_class)
+from pyvista.utilities import (
+    FieldAssociation,
+    abstract_class,
+    fileio,
+    get_array,
+    is_pyvista_dataset,
+    parse_field_choice,
+    raise_not_matching,
+    vtk_id_list_to_array,
+)
+
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
@@ -161,7 +169,7 @@ class DataObject:
             fmt += "</table>\n"
             fmt += "\n"
             if display:
-                from IPython.display import display, HTML
+                from IPython.display import HTML, display
                 display(HTML(fmt))
                 return
             return fmt

@@ -2,7 +2,7 @@
 from collections import Iterable
 
 import numpy as np
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, VTKArray
+from vtk.numpy_interface.dataset_adapter import VTKArray, VTKObjectWrapper
 
 from pyvista.utilities.helpers import FieldAssociation, convert_array
 

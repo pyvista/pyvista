@@ -1,7 +1,7 @@
 """pyvista wrapping of vtkCellArray."""
 import numpy as np
-from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
 from vtk import vtkCellArray
+from vtk.util.numpy_support import numpy_to_vtkIdTypeArray, vtk_to_numpy
 
 import pyvista
 

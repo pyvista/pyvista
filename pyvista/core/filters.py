@@ -31,11 +31,19 @@ import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (FieldAssociation, NORMALS, assert_empty_kwargs,
-                               generate_plane, get_array, vtk_id_list_to_array,
-                               wrap, ProgressMonitor, abstract_class)
-from pyvista.utilities.cells import numpy_to_idarr
 from pyvista.core.errors import NotAllTrianglesError
+from pyvista.utilities import (
+    NORMALS,
+    FieldAssociation,
+    ProgressMonitor,
+    abstract_class,
+    assert_empty_kwargs,
+    generate_plane,
+    get_array,
+    vtk_id_list_to_array,
+    wrap,
+)
+from pyvista.utilities.cells import numpy_to_idarr
 
 
 def _update_alg(alg, progress_bar=False, message=''):

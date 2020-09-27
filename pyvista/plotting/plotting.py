@@ -1,13 +1,12 @@
 """Pyvista plotting module."""
 
-import pathlib
 import collections.abc
-from functools import partial
 import logging
 import os
+import pathlib
 import time
 import warnings
-from functools import wraps
+from functools import partial, wraps
 from threading import Thread
 
 import imageio
@@ -18,18 +17,26 @@ from vtk.util import numpy_support as VN
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (assert_empty_kwargs,
-                               convert_array, convert_string_array, get_array,
-                               is_pyvista_dataset, numpy_to_texture, abstract_class,
-                               raise_not_matching, try_callback, wrap)
+from pyvista.utilities import (
+    abstract_class,
+    assert_empty_kwargs,
+    convert_array,
+    convert_string_array,
+    get_array,
+    is_pyvista_dataset,
+    numpy_to_texture,
+    raise_not_matching,
+    try_callback,
+    wrap,
+)
+
 from .background_renderer import BackgroundRenderer
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
 from .renderer import Renderer
-from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
-                    parse_font_family, rcParams)
+from .theme import FONT_KEYS, MAX_N_COLOR_BARS, parse_color, parse_font_family, rcParams
 from .tools import normalize, opacity_transfer_function
 from .widgets import WidgetHelper
 
@@ -4028,6 +4035,7 @@ class Plotter(BasePlotter):
         # If notebook is true and panel display failed:
         if self.notebook and (disp is None or self.shape != (1, 1)):
             import PIL.Image
+
             # sanity check
             try:
                 import IPython

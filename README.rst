@@ -36,6 +36,9 @@ PyVista
 .. |gitter| image:: https://img.shields.io/gitter/room/pyvista/community?color=darkviolet
    :target: https://gitter.im/pyvista/community
 
+.. |isort| image:: https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336
+  :target: https://timothycrosley.github.io/isort
+  :alt: isort
 
 
 +----------------------+------------------------+

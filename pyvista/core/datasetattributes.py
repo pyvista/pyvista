@@ -8,6 +8,7 @@ from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkData
 
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
+
 from .pyvista_ndarray import pyvista_ndarray
 
 

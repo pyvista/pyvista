@@ -5,7 +5,8 @@ import vtk
 
 import pyvista
 from pyvista.utilities import NORMALS, generate_plane, get_array, try_callback
-from .theme import rcParams, parse_color
+
+from .theme import parse_color, rcParams
 
 
 class WidgetHelper:

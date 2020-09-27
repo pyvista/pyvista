@@ -1,7 +1,7 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
-import pathlib
 import os
+import pathlib
 
 import numpy as np
 import vtk
@@ -308,10 +308,7 @@ def read_exodus(filename,
 
 def from_meshio(mesh):
     """Convert a ``meshio`` mesh instance to a PyVista mesh."""
-    from meshio.vtk._vtk import (
-        meshio_to_vtk_type,
-        vtk_type_to_numnodes,
-    )
+    from meshio.vtk._vtk import meshio_to_vtk_type, vtk_type_to_numnodes
 
     # Extract cells from meshio.Mesh object
     offset = []
@@ -363,6 +360,7 @@ def from_meshio(mesh):
 def read_meshio(filename, file_format=None):
     """Read any mesh file using meshio."""
     import meshio
+
     # Make sure relative paths will work
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     # Read mesh file

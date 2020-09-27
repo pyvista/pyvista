@@ -7,6 +7,7 @@ import numpy as np
 import vtk
 
 import pyvista
+
 from .theme import parse_color, rcParams
 
 
@@ -275,6 +276,7 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                     raise ValueError('No interpolation.')
                 # Use a quadratic interp if scipy is available
                 from scipy.interpolate import interp1d
+
                 # quadratic has best/smoothest results
                 f = interp1d(xo, mapping, kind=kind)
                 vals = f(xx)

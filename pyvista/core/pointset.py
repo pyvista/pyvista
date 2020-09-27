@@ -1,25 +1,37 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
-import pathlib
 import logging
 import os
+import pathlib
 import warnings
 
 import numpy as np
 import vtk
-from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
-                 VTK_QUADRATIC_HEXAHEDRON, VTK_QUADRATIC_PYRAMID,
-                 VTK_QUADRATIC_QUAD, VTK_QUADRATIC_TETRA,
-                 VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
-                 VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
-                 vtkUnstructuredGrid)
-from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
+from vtk import (
+    VTK_HEXAHEDRON,
+    VTK_PYRAMID,
+    VTK_QUAD,
+    VTK_QUADRATIC_HEXAHEDRON,
+    VTK_QUADRATIC_PYRAMID,
+    VTK_QUADRATIC_QUAD,
+    VTK_QUADRATIC_TETRA,
+    VTK_QUADRATIC_TRIANGLE,
+    VTK_QUADRATIC_WEDGE,
+    VTK_TETRA,
+    VTK_TRIANGLE,
+    VTK_WEDGE,
+    vtkPolyData,
+    vtkStructuredGrid,
+    vtkUnstructuredGrid,
+)
+from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr
+
+from ..utilities.fileio import get_ext
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
-from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')

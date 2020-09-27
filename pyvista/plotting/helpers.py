@@ -5,6 +5,7 @@ import scooby
 
 import pyvista
 from pyvista.utilities import is_pyvista_dataset
+
 from .plotting import Plotter
 from .theme import rcParams
 

@@ -3,9 +3,9 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
-import pathlib
 import collections.abc
 import logging
+import pathlib
 
 import numpy as np
 import vtk
@@ -13,6 +13,7 @@ from vtk import vtkMultiBlockDataSet
 
 import pyvista
 from pyvista.utilities import get_array, is_pyvista_dataset, wrap
+
 from .common import DataObject
 from .filters import CompositeFilters
 
