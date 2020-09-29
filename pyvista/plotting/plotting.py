@@ -3013,7 +3013,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                          name=None, shape_color='grey', shape='rounded_rect',
                          fill_shape=True, margin=3, shape_opacity=1.0,
                          pickable=False, render_points_as_spheres=False,
-                         tolerance=0.001, reset_camera=None):
+                         tolerance=0.001, reset_camera=None, always_visible=False):
         """Create a point actor with one label from list labels assigned to each point.
 
         Parameters
@@ -3093,6 +3093,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
         reset_camera : bool, optional
             Reset the camera after adding the points to the scene.
 
+        always_visible : bool, optional
+            Skip adding the visibility filter. Default False.
+
         Return
         ------
         labelActor : vtk.vtkActor2D
@@ -3132,16 +3135,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
             vtklabels.InsertNextValue(str(item))
         vtkpoints.GetPointData().AddArray(vtklabels)
 
-        # Only show visible points
-        vis_points = vtk.vtkSelectVisiblePoints()
-        vis_points.SetInputData(vtkpoints)
-        vis_points.SetRenderer(self.renderer)
-        vis_points.SetTolerance(tolerance)
-
         # Create hierarchy
         hier = vtk.vtkPointSetToLabelHierarchy()
-        hier.SetInputConnection(vis_points.GetOutputPort())
         hier.SetLabelArrayName('labels')
+
+        if always_visible:
+            hier.SetInputData(vtkpoints)
+        else:
+            # Only show visible points
+            vis_points = vtk.vtkSelectVisiblePoints()
+            vis_points.SetInputData(vtkpoints)
+            vis_points.SetRenderer(self.renderer)
+            vis_points.SetTolerance(tolerance)
+
+            hier.SetInputConnection(vis_points.GetOutputPort())
 
         # create label mapper
         labelMapper = vtk.vtkLabelPlacementMapper()

@@ -361,6 +361,16 @@ def test_add_point_labels():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.parametrize('always_visible', [False, True])
+def test_add_point_labels_always_visible(always_visible):
+    # just make sure it runs without exception
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_point_labels(
+        np.array([[0, 0, 0]]), ['hello world'], always_visible=always_visible)
+    plotter.show()
+    
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_set_background():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.set_background('k')
