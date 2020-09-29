@@ -163,7 +163,7 @@ Here are some videos that you can watch to learn pyvista:
 
 - PyConJP2020 talk "How to plot unstructured mesh file on Jupyter Notebook" (15 minutes):
 
-  - Video: https://youtu.be/7HCJD4oxfuo?t=15928
+  - Video: https://youtu.be/X3Z54Kw4I6Y
   - Material: https://docs.google.com/presentation/d/1M_cnS66ja81u_mHACjaUsDj1wSeeEtnEevk_IMZ8-dg/edit?usp=sharing
 
 If there is any material that we can add, please  `report <https://github.com/pyvista/pyvista/issues>`_ .
