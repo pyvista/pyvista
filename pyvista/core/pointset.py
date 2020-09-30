@@ -83,7 +83,7 @@ class PointSet(Common):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
-                                 'number of cells (%d)' % self.n_cells)
+                                 f'number of cells ({self.n_cells}')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = vtk.vtkDataSetAttributes.DUPLICATECELL
 
@@ -511,7 +511,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             else:
                 itype = type(args[0])
-                raise TypeError('Cannot work with input type %s' % itype)
+                raise TypeError(f'Cannot work with input type {itype}')
 
         elif len(args) == 3 and VTK9:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -885,7 +885,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
-                                 'number of cells (%d)' % self.n_cells)
+                                 f'number of cells ({self.n_cells})')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
 

@@ -296,7 +296,7 @@ def test_invalid_curvature():
 @pytest.mark.parametrize('extension', pyvista.core.pointset.PolyData._WRITERS)
 def test_save(extension, binary, tmpdir):
     sphere = SPHERE.copy()
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     sphere.save(filename, binary)
 
     mesh = pyvista.PolyData(filename)

@@ -37,7 +37,7 @@ p = pv.Plotter()
 p.add_mesh(mesh, scalars="node_value")
 for node in np.unique(mesh["node_value"]):
     loc = extract_node(node).center
-    p.add_point_labels(loc, ["Node {}".format(node)])
+    p.add_point_labels(loc, [f"Node {node}"])
 p.show(cpos="xy")
 
 

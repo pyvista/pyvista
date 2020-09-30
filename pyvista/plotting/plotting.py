@@ -255,7 +255,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._closed = False
 
         # Add self to open plotters
-        self._id_name = "{}-{}".format(str(hex(id(self))), len(_ALL_PLOTTERS))
+        self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         _ALL_PLOTTERS[self._id_name] = self
 
         # lighting style
@@ -299,9 +299,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             index_row = loc[0]
             index_column = loc[1]
             if index_row < 0 or index_row >= self.shape[0]:
-                raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
+                raise IndexError(f'Row index is out of range ({self.shape[0]})')
             if index_column < 0 or index_column >= self.shape[1]:
-                raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
+                raise IndexError(f'Column index is out of range ({self.shape[1]})')
             return self._render_idxs[index_row,index_column]
         else:
             raise TypeError('"loc" must be an integer or a sequence.')
@@ -349,9 +349,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return
 
         if index_row < 0 or index_row >= self.shape[0]:
-            raise IndexError('Row index is out of range ({})'.format(self.shape[0]))
+            raise IndexError(f'Row index is out of range ({self.shape[0]})')
         if index_column < 0 or index_column >= self.shape[1]:
-            raise IndexError('Column index is out of range ({})'.format(self.shape[1]))
+            raise IndexError(f'Column index is out of range ({self.shape[1]})')
         self._active_renderer_index = self.loc_to_index((index_row, index_column))
 
     #### Wrap Renderer methods ####
@@ -846,7 +846,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif side in ["left", "l"]:
             event = vtk.vtkCommand.LeftButtonPressEvent
         else:
-            raise TypeError("Side ({}) not supported. Try `left` or `right`".format(side))
+            raise TypeError(f"Side ({side}) not supported. Try `left` or `right`")
 
         def _click_callback(obj, event):
             self.store_click_position()
@@ -910,7 +910,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
     def key_press_event(self, obj, event):
         """Listen for key press event."""
         key = self.iren.GetKeySym()
-        log.debug('Key %s pressed' % key)
+        log.debug(f'Key {key} pressed')
         self._last_key = key
         if key in self._key_press_event_callbacks.keys():
             # Note that defaultdict's will never throw a key error
@@ -1334,7 +1334,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
             if not is_pyvista_dataset(mesh):
-                raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(mesh)))
+                raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.')
 
         ##### Parse arguments to be used for all meshes #####
 
@@ -1362,7 +1362,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             render_points_as_spheres = rcParams['render_points_as_spheres']
 
         if name is None:
-            name = '{}({})'.format(type(mesh).__name__, mesh.memory_address)
+            name = f'{type(mesh).__name__}({mesh.memory_address})'
 
         if nan_color is None:
             nan_color = rcParams['nan_color']
@@ -1421,7 +1421,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if mesh[idx] is None:
                     continue
                 # Get a good name to use
-                next_name = '{}-{}'.format(name, idx)
+                next_name = f'{name}-{idx}'
                 # Get the data object
                 if not is_pyvista_dataset(mesh[idx]):
                     data = wrap(mesh.GetBlock(idx))
@@ -1523,7 +1523,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (vtk.vtkTexture, vtk.vtkOpenGLTexture)):
-                raise TypeError('Invalid texture type ({})'.format(type(texture)))
+                raise TypeError(f'Invalid texture type ({type(texture)})')
             if mesh.GetPointData().GetTCoords() is None:
                 raise ValueError('Input mesh does not have texture coordinates to support the texture.')
             actor.SetTexture(texture)
@@ -1587,7 +1587,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 cats, scalars = np.unique(scalars.astype('|S'), return_inverse=True)
                 values = np.unique(scalars)
                 clim = [np.min(values) - 0.5, np.max(values) + 0.5]
-                title = '{}-digitized'.format(title)
+                title = f'{title}-digitized'
                 n_colors = len(cats)
                 scalar_bar_args.setdefault('n_labels', 0)
                 _using_labels = True
@@ -1601,7 +1601,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     pass
                 elif scalars.ndim == 2 and (scalars.shape[0] == mesh.n_points or scalars.shape[0] == mesh.n_cells):
                     scalars = np.linalg.norm(scalars.copy(), axis=1)
-                    title = '{}-normed'.format(title)
+                    title = f'{title}-normed'
                 else:
                     scalars = scalars.ravel()
 
@@ -1940,7 +1940,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             else:
                 volume = wrap(volume)
                 if not is_pyvista_dataset(volume):
-                    raise TypeError('Object type ({}) not supported for plotting in PyVista.'.format(type(volume)))
+                    raise TypeError(f'Object type ({type(volume)}) not supported for plotting in PyVista.')
         else:
             # HACK: Make a copy so the original object is not altered.
             #       Also, place all data on the nodes as issues arise when
@@ -1948,7 +1948,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             volume = volume.cell_data_to_point_data()
 
         if name is None:
-            name = '{}({})'.format(type(volume).__name__, volume.memory_address)
+            name = f'{type(volume).__name__}({volume.memory_address})'
 
         if isinstance(volume, pyvista.MultiBlock):
             from itertools import cycle
@@ -1959,7 +1959,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 if volume[idx] is None:
                     continue
                 # Get a good name to use
-                next_name = '{}-{}'.format(name, idx)
+                next_name = f'{name}-{idx}'
                 # Get the data object
                 block = wrap(volume.GetBlock(idx))
                 if resolution is None:
@@ -1988,7 +1988,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             return actors
 
         if not isinstance(volume, pyvista.UniformGrid):
-            raise TypeError('Type {} not supported for volume rendering at this time. Use `pyvista.UniformGrid`.'.format(type(volume)))
+            raise TypeError(f'Type {type(volume)} not supported for volume rendering at this time. Use `pyvista.UniformGrid`.')
 
         if opacity_unit_distance is None:
             opacity_unit_distance = volume.length / (np.mean(volume.dimensions) - 1)
@@ -2035,7 +2035,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             'smart': vtk.vtkSmartVolumeMapper,
         }
         if not isinstance(mapper, str) or mapper not in mappers.keys():
-            raise TypeError('Mapper ({}) unknown. Available volume mappers include: {}'.format(mapper, ', '.join(mappers.keys())))
+            raise TypeError(f"Mapper ({mapper}) unknown. Available volume mappers include: {', '.join(mappers.keys())}")
         self.mapper = make_mapper(mappers[mapper])
 
         # Scalars interpolation approach
@@ -2134,7 +2134,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif blending in ['minimum', 'min', 'minimum_intensity']:
             self.mapper.SetBlendModeToMinimumIntensity()
         else:
-            raise ValueError('Blending mode \'{}\' invalid. '.format(blending) +
+            raise ValueError(f'Blending mode \'{blending}\' invalid. ' +
                              'Please choose one ' + 'of \'additive\', '
                              '\'composite\', \'minimum\' or ' + '\'maximum\'.')
         self.mapper.Update()
@@ -2237,7 +2237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     self.renderers[views[0]].camera
         else:
             raise TypeError('Expected type is int, list or tuple:'
-                            '{} is given'.format(type(views)))
+                            f'{type(views)} is given')
 
     def unlink_views(self, views=None):
         """Unlink the views' cameras.
@@ -2263,7 +2263,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 self.renderers[view_index].reset_camera()
         else:
             raise TypeError('Expected type is None, int, list or tuple:'
-                            '{} is given'.format(type(views)))
+                            f'{type(views)} is given')
 
     def add_scalar_bar(self, title=None, n_labels=5, italic=False,
                        bold=False, title_font_size=None,
@@ -3118,13 +3118,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if isinstance(labels, str):
                 labels = points.point_arrays[labels].astype(str)
         else:
-            raise TypeError('Points type not usable: {}'.format(type(points)))
+            raise TypeError(f'Points type not usable: {type(points)}')
 
         if len(vtkpoints.points) != len(labels):
             raise ValueError('There must be one label for each point')
 
         if name is None:
-            name = '{}({})'.format(type(vtkpoints).__name__, vtkpoints.memory_address)
+            name = f'{type(vtkpoints).__name__}({vtkpoints.memory_address})'
 
         vtklabels = vtk.vtkStringArray()
         vtklabels.SetName('labels')
@@ -3153,7 +3153,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         elif shape.lower() in 'rounded_rect':
             labelMapper.SetShapeToRoundedRect()
         else:
-            raise ValueError('Shape ({}) not understood'.format(shape))
+            raise ValueError(f'Shape ({shape}) not understood')
         if fill_shape:
             labelMapper.SetStyleToFilled()
         else:
@@ -3170,8 +3170,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         textprop.SetColor(parse_color(text_color))
         textprop.SetShadow(shadow)
 
-        self.remove_actor('{}-points'.format(name), reset_camera=False)
-        self.remove_actor('{}-labels'.format(name), reset_camera=False)
+        self.remove_actor(f'{name}-points', reset_camera=False)
+        self.remove_actor(f'{name}-labels', reset_camera=False)
 
         # add points
         if show_points:
@@ -3179,7 +3179,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         else:
             style = 'surface'
         self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size, name='{}-points'.format(name),
+                      point_size=point_size, name=f'{name}-points',
                       pickable=pickable,
                       render_points_as_spheres=render_points_as_spheres,
                       reset_camera=reset_camera)
@@ -3187,7 +3187,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
         self.add_actor(labelActor, reset_camera=False,
-                       name='{}-labels'.format(name), pickable=False)
+                       name=f'{name}-labels', pickable=False)
 
         return labelActor
 
@@ -3209,7 +3209,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         """
         if not is_pyvista_dataset(points):
-            raise TypeError('input points must be a pyvista dataset, not: {}'.format(type(points)))
+            raise TypeError(f'input points must be a pyvista dataset, not: {type(points)}')
         if not isinstance(labels, str):
             raise TypeError('labels must be a string name of the scalars array to use')
         if fmt is None:
@@ -3217,7 +3217,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if fmt is None:
             fmt = '%.6e'
         scalars = points.point_arrays[labels]
-        phrase = '{} {}'.format(preamble, '%.3e')
+        phrase = f'{preamble} %.3e'
         labels = [phrase % val for val in scalars]
         return self.add_point_labels(points, labels, **kwargs)
 
@@ -3271,9 +3271,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not filename.suffix:
                 filename = filename.with_suffix('.png')
             elif filename.suffix not in supported_formats:
-                raise ValueError('Unsupported extension %s\n' % filename.suffix +
-                                 'Must be one of the following: %s' %
-                                 supported_formats)
+                raise ValueError(f'Unsupported extension {filename.suffix}\n' +
+                                 f'Must be one of the following: {supported_formats}')
             w = imageio.imwrite(os.path.abspath(os.path.expanduser(str(filename))),
                                 image)
             if not return_img:
@@ -3294,7 +3293,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         extension = pyvista.fileio.get_ext(filename)
         valid = ['.svg', '.eps', '.ps', '.pdf', '.tex']
         if extension not in valid:
-            raise ValueError('Extension ({}) is an invalid choice. Valid options include: {}'.format(extension, ', '.join(valid)))
+            raise ValueError(f"Extension ({extension}) is an invalid choice. Valid options include: {', '.join(valid)}")
         writer = vtk.vtkGL2PSExporter()
         modes = {
             '.svg': writer.SetFileFormatToSVG,

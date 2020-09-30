@@ -122,7 +122,7 @@ def convert_array(arr, name=None, deep=0, array_type=None):
         return vtk_data
     # Otherwise input must be a vtkDataArray
     if not isinstance(arr, (vtk.vtkDataArray, vtk.vtkBitArray, vtk.vtkStringArray)):
-        raise TypeError('Invalid input array type ({}).'.format(type(arr)))
+        raise TypeError(f'Invalid input array type ({type(arr)}).')
     # Handle booleans
     if isinstance(arr, vtk.vtkBitArray):
         arr = vtk_bit_array_to_char(arr)
@@ -202,11 +202,11 @@ def parse_field_choice(field):
         elif field in ['row', 'r',]:
             field = FieldAssociation.ROW
         else:
-            raise ValueError('Data field ({}) not supported.'.format(field))
+            raise ValueError(f'Data field ({field}) not supported.')
     elif isinstance(field, FieldAssociation):
         pass
     else:
-        raise ValueError('Data field ({}) not supported.'.format(field))
+        raise ValueError(f'Data field ({field}) not supported.')
     return field
 
 
@@ -233,7 +233,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
     if isinstance(mesh, vtk.vtkTable):
         arr = row_array(mesh, name)
         if arr is None and err:
-            raise KeyError('Data array ({}) not present in this dataset.'.format(name))
+            raise KeyError(f'Data array ({name}) not present in this dataset.')
         field = FieldAssociation.ROW
         if info:
             return arr, field
@@ -260,7 +260,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
             else:
                 return farr
         else:
-            raise ValueError('Data field ({}) not supported.'.format(preference))
+            raise ValueError(f'Data field ({preference}) not supported.')
     arr = None
     field = None
     if parr is not None:
@@ -273,7 +273,7 @@ def get_array(mesh, name, preference='cell', info=False, err=False):
         arr = farr
         field = FieldAssociation.NONE
     elif err:
-        raise KeyError('Data array ({}) not present in this dataset.'.format(name))
+        raise KeyError(f'Data array ({name}) not present in this dataset.')
     if info:
         return arr, field
     return arr
@@ -474,11 +474,11 @@ def wrap(vtkdataset):
     elif is_meshio_mesh(vtkdataset):
         return from_meshio(vtkdataset)
     else:
-        raise NotImplementedError('Type ({}) not able to be wrapped into a PyVista mesh.'.format(type(vtkdataset)))
+        raise NotImplementedError(f'Type ({type(vtkdataset)}) not able to be wrapped into a PyVista mesh.')
     try:
         wrapped = wrappers[key](vtkdataset)
     except KeyError:
-        logging.warning('VTK data type ({}) is not currently supported by pyvista.'.format(key))
+        logging.warning(f'VTK data type ({key}) is not currently supported by pyvista.')
         return vtkdataset # if not supported just passes the VTK data object
     return wrapped
 
@@ -491,7 +491,7 @@ def image_to_texture(image):
 def numpy_to_texture(image):
     """Convert a NumPy image array to a vtk.vtkTexture."""
     if not isinstance(image, np.ndarray):
-        raise TypeError('Unknown input type ({})'.format(type(image)))
+        raise TypeError(f'Unknown input type ({type(image)})')
     return pyvista.Texture(image)
 
 
@@ -510,7 +510,7 @@ def is_inside_bounds(point, bounds):
         bounds = collections.deque(bounds)
         return is_inside_bounds(point, bounds)
     if not isinstance(point, collections.deque):
-        raise TypeError('Unknown input data type ({}).'.format(type(point)))
+        raise TypeError(f'Unknown input data type ({type(point)}).')
     if len(point) < 1:
         return True
     p = point.popleft()
@@ -545,14 +545,10 @@ def fit_plane_to_points(points, return_meta=False):
 def raise_not_matching(scalars, mesh):
     """Raise exception about inconsistencies."""
     if isinstance(mesh, vtk.vtkTable):
-        raise ValueError('Number of scalars ({})'.format(scalars.size) +
-                         'must match number of rows ' +
-                         '({}).'.format(mesh.n_rows) )
-    raise ValueError('Number of scalars ({}) '.format(scalars.size) +
-                     'must match either the number of points ' +
-                     '({}) '.format(mesh.n_points) +
-                     'or the number of cells ' +
-                     '({}). '.format(mesh.n_cells) )
+        raise ValueError(f'Number of scalars ({scalars.size}) must match number of rows ({mesh.n_rows}).')
+    raise ValueError(f'Number of scalars ({scalars.size}) ' +
+                     f'must match either the number of points ({mesh.n_points}) ' +
+                     f'or the number of cells ({mesh.n_cells}).')
 
 
 def generate_plane(normal, origin):
@@ -729,8 +725,7 @@ def abstract_class(cls_):
 
     def __new__(cls, *args, **kwargs):
         if cls is cls_:
-            raise TypeError('{} is an abstract class and may not be instantiated.'
-                            .format(cls.__name__))
+            raise TypeError(f'{cls.__name__} is an abstract class and may not be instantiated.')
         return object.__new__(cls)
     cls_.__new__ = __new__
     return cls_

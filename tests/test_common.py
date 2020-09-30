@@ -220,7 +220,7 @@ def test_translate_should_translate_grid(grid, axis_amounts):
 @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
 def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     trans = vtk.vtkTransform()
-    getattr(trans, 'Rotate{}'.format(axis.upper()))(angle)
+    getattr(trans, f'Rotate{axis.upper()}')(angle)
     trans.Update()
 
     trans_filter = vtk.vtkTransformFilter()
@@ -230,7 +230,7 @@ def test_rotate_should_match_vtk_rotation(angle, axis, grid):
     grid_a = pyvista.UnstructuredGrid(trans_filter.GetOutput())
 
     grid_b = grid.copy()
-    getattr(grid_b, 'rotate_{}'.format(axis))(angle)
+    getattr(grid_b, f'rotate_{axis}')(angle)
     assert np.allclose(grid_a.points, grid_b.points, equal_nan=True)
 
 
@@ -620,7 +620,7 @@ def test_bad_instantiation():
 
 def test_string_arrays():
     poly = pyvista.PolyData(np.random.rand(10, 3))
-    arr = np.array(['foo{}'.format(i) for i in range(10)])
+    arr = np.array([f'foo{i}' for i in range(10)])
     poly['foo'] = arr
     back = poly['foo']
     assert len(back) == 10
