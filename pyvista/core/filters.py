@@ -3771,7 +3771,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
-        >>> print(f'Intersected at {point[0].3f} {point[1].3f} {point[2].3f}')
+        >>> print(f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}')
         Intersected at 0.499 0.000 0.000
 
         """
