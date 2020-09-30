@@ -348,7 +348,7 @@ def string_to_rgb(string):
         # Convert from single character to full hex
         if string.lower() not in color_char_to_word:
             raise ValueError('Single character string must be one of the following:'
-                             '\n%s' % str(color_char_to_word.keys()))
+                             f'\n{str(color_char_to_word.keys())}')
 
         colorhex = hexcolors[color_char_to_word[string.lower()]]
 

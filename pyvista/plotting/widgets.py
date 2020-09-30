@@ -677,7 +677,7 @@ class WidgetHelper:
             slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, title_callback)
         else:
             raise ValueError("Expected value for `event_type` is 'start',"
-                             " 'end' or 'always': {} was given.".format(event_type))
+                             f" 'end' or 'always': {event_type} was given.")
         title_callback(slider_widget, None)
         return slider_widget
 
@@ -773,12 +773,11 @@ class WidgetHelper:
         if style is not None:
             if not isinstance(style, str):
                 raise TypeError("Expected type for ``style`` is str but"
-                                " {} was given.".format(type(style)))
+                                f" {type(style)} was given.")
             style_params = rcParams['slider_style'].get(style, None)
             if style_params is None:
                 raise KeyError("The requested style does not exist: "
-                               "{}. The styles available are {}.".format(style,
-                                   list(rcParams['slider_style'].keys())))
+                               f"{style}. The styles available are {list(rcParams['slider_style'].keys())}.")
             slider_rep.SetSliderLength(style_params['slider_length'])
             slider_rep.SetSliderWidth(style_params['slider_width'])
             slider_rep.GetSliderProperty().SetColor(style_params['slider_color'])
@@ -804,7 +803,7 @@ class WidgetHelper:
         slider_widget.On()
         if not isinstance(event_type, str):
             raise TypeError("Expected type for `event_type` is str: "
-                            "{} was given.".format(type(event_type)))
+                            f"{type(event_type)} was given.")
         if event_type == 'start':
             slider_widget.AddObserver(vtk.vtkCommand.StartInteractionEvent, _the_callback)
         elif event_type == 'end':
@@ -813,7 +812,7 @@ class WidgetHelper:
             slider_widget.AddObserver(vtk.vtkCommand.InteractionEvent, _the_callback)
         else:
             raise ValueError("Expected value for `event_type` is 'start',"
-                             " 'end' or 'always': {} was given.".format(event_type))
+                             f" 'end' or 'always': {event_type} was given.")
         _the_callback(slider_widget, None)
 
         self.slider_widgets.append(slider_widget)
@@ -935,7 +934,7 @@ class WidgetHelper:
             _, field = get_array(mesh, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != pyvista.FieldAssociation.POINT:
-            raise TypeError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
+            raise TypeError(f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.')
 
         rng = mesh.get_data_range(scalars)
         kwargs.setdefault('clim', kwargs.pop('rng', rng))

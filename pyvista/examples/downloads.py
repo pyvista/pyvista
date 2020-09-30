@@ -35,7 +35,7 @@ def _decompress(filename):
 
 
 def _get_vtk_file_url(filename):
-    return 'https://github.com/pyvista/vtk-data/raw/master/Data/{}'.format(filename)
+    return f'https://github.com/pyvista/vtk-data/raw/master/Data/{filename}'
 
 
 def _retrieve_file(url, filename):

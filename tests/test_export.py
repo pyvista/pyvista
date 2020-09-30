@@ -25,7 +25,7 @@ def test_export_single(tmpdir):
     cpos_out = plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
-    assert os.path.isfile('{}.vtkjs'.format(filename))
+    assert os.path.isfile(f'{filename}.vtkjs')
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -45,7 +45,7 @@ def test_export_multi(tmpdir):
     cpos_out = plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
-    assert os.path.isfile('{}.vtkjs'.format(filename))
+    assert os.path.isfile(f'{filename}.vtkjs')
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -59,7 +59,7 @@ def test_export_texture(tmpdir):
     cpos_out = plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
-    assert os.path.isfile('{}.vtkjs'.format(filename))
+    assert os.path.isfile(f'{filename}.vtkjs')
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -73,7 +73,7 @@ def test_export_verts(tmpdir):
     cpos_out = plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
-    assert os.path.isfile('{}.vtkjs'.format(filename))
+    assert os.path.isfile(f'{filename}.vtkjs')
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -87,7 +87,7 @@ def test_export_color(tmpdir):
     cpos_out = plotter.show() # Export must be called before showing!
     plotter.close()
     # Now make sure the file is there
-    assert os.path.isfile('{}.vtkjs'.format(filename))
+    assert os.path.isfile(f'{filename}.vtkjs')
 
 
 def test_vtkjs_url():

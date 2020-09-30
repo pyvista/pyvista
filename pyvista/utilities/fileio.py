@@ -209,7 +209,7 @@ def read(filename, attrs=None, file_format=None):
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
-        raise FileNotFoundError('File ({}) not found'.format(filename))
+        raise FileNotFoundError(f'File ({filename}) not found')
     ext = get_ext(filename)
 
     # Read file using meshio.read if file_format is present
@@ -298,7 +298,7 @@ def read_exodus(filename,
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError('Could not parse sideset ID/name: {}'.format(sideset))
+            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -400,7 +400,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     pixel_voxel = {8, 11}       # Handle pixels and voxels
     for cell_type in np.unique(vtk_cell_type):
         if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
-            raise TypeError("meshio does not support VTK type {}.".format(cell_type))
+            raise TypeError(f"meshio does not support VTK type {cell_type}.")
 
     # Get cells
     cells = []
@@ -420,7 +420,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         cell_type = cell_type if cell_type not in pixel_voxel else cell_type+1
         cell_type = (
             vtk_to_meshio_type[cell_type] if cell_type != 7
-            else "polygon{}".format(numnodes)
+            else f"polygon{numnodes}"
         )
 
         if len(cells) > 0 and cells[-1][0] == cell_type:

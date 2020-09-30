@@ -96,7 +96,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0], None, None)
             else:
-                raise TypeError("Type ({}) not understood by `RectilinearGrid`.".format(type(args[0])))
+                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], np.ndarray)

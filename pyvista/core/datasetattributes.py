@@ -124,10 +124,10 @@ class DataSetAttributes(VTKObjectWrapper):
             raise ValueError('Texture coordinates must be a 2-dimensional array')
         valid_length = self.valid_array_len
         if t_coords.shape[0] != valid_length:
-            raise ValueError('Number of texture coordinates ({}) must match number of points ({})'.format(t_coords.shape[0], valid_length))
+            raise ValueError(f'Number of texture coordinates ({t_coords.shape[0]}) must match number of points ({valid_length})')
         if t_coords.shape[1] != 2:
             raise ValueError('Texture coordinates must only have 2 components,'
-                             ' not ({})'.format(t_coords.shape[1]))
+                             f' not ({t_coords.shape[1]})')
         vtkarr = numpyTovtkDataArray(t_coords, name='Texture Coordinates')
         self.SetTCoords(vtkarr)
         self.Modified()
@@ -153,7 +153,7 @@ class DataSetAttributes(VTKObjectWrapper):
         if vtk_arr is None:
             vtk_arr = self.GetAbstractArray(key)
             if vtk_arr is None:
-                raise KeyError('{}'.format(key))
+                raise KeyError(f'{key}')
             if type(vtk_arr) == vtk.vtkAbstractArray:
                 return vtk_arr
         narray = pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
@@ -202,8 +202,7 @@ class DataSetAttributes(VTKObjectWrapper):
             narray = tmparray
 
         if narray.shape[0] != array_len:
-            raise ValueError('narray length of ({}) != required length ({})'.format(
-                narray.shape[0], array_len))
+            raise ValueError('narray length of ({narray.shape[0]}) != required length ({array_len})')
 
         if narray.dtype == np.bool_:
             self.dataset.association_bitarray_names[self.association].add(name)
@@ -337,7 +336,7 @@ class DataSetAttributes(VTKObjectWrapper):
         max_index = self.VTKObject.GetNumberOfArrays()
         if isinstance(index, int):
             if index < 0 or index >= self.VTKObject.GetNumberOfArrays():
-                raise KeyError('Array index ({}) out of range [0, {}]'.format(index, max_index))
+                raise KeyError(f'Array index ({index}) out of range [0, {max_index}]')
 
     def _raise_field_data_no_scalars_vectors(self):
         if self.association == FieldAssociation.NONE:

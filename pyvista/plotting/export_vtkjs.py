@@ -473,8 +473,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
 
                 if dataset:# and dataset.GetPoints(): # NOTE: vtkImageData does not have points
-                    componentName = 'data_%d_%d' % (
-                        rIdx, rpIdx)  # getComponentName(renProp)
+                    componentName = f'data_{rIdx}_{rpIdx}' # getComponentName(renProp)
                     scalarVisibility = mapper.GetScalarVisibility()
                     #arrayAccessMode = mapper.GetArrayAccessMode()
                     #colorArrayName = mapper.GetArrayName() #TODO: if arrayAccessMode == 1 else mapper.GetArrayId()
@@ -524,7 +523,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
                     textureName = None
                     if renProp.GetTexture() and renProp.GetTexture().GetInput():
                         textureData = renProp.GetTexture().GetInput()
-                        textureName = 'texture_%d' % get_object_id(textureData)
+                        textureName = f'texture_{get_object_id(textureData)}'
                         textureToSave[textureName] = textureData
 
                     representation = renProp.GetProperty().GetRepresentation(
@@ -611,7 +610,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
 
     # Now zip up the results and get rid of the temp directory
     sceneFileName = os.path.join(
-        root_output_directory, '%s%s' % (sceneName, FILENAME_EXTENSION))
+        root_output_directory, f'{sceneName}{FILENAME_EXTENSION}')
 
     try:
         import zlib
@@ -625,8 +624,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         for dirName, subdirList, fileList in os.walk(output_dir):
             for fname in fileList:
                 fullPath = os.path.join(dirName, fname)
-                relPath = '%s/%s' % (sceneName,
-                                     os.path.relpath(fullPath, output_dir))
+                relPath = f'{sceneName}/{os.path.relpath(fullPath, output_dir)}'
                 zf.write(fullPath, arcname=relPath, compress_type=compression)
     finally:
         zf.close()
@@ -644,7 +642,7 @@ def convert_dropbox_url(url):
 def generate_viewer_url(dataURL):
     """Generate viewer url with data link."""
     viewerURL = "http://viewer.pyvista.org/"
-    return viewerURL + '%s%s' % ("?fileURL=", dataURL)
+    return viewerURL + f'?fileURL={dataURL}'
 
 
 def get_vtkjs_url(*args):

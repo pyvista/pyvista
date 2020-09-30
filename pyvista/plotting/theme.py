@@ -155,13 +155,13 @@ def parse_color(color, opacity=None):
     elif len(color) == 4:
         color = color[:3]
     else:
-        raise ValueError("""
-    Invalid color input: ({})
+        raise ValueError(f"""
+    Invalid color input: ({color})
     Must be string, rgb list, or hex color string.  For example:
         color='white'
         color='w'
         color=[1, 1, 1]
-        color='#FFFFFF'""".format(color))
+        color='#FFFFFF'""")
     if opacity is not None and isinstance(opacity, (float, int)):
         color = [color[0], color[1], color[2], opacity]
     return color
