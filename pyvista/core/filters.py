@@ -4326,6 +4326,42 @@ class PolyDataFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
+    def shrink(poly_data, shrink_factor=1.0, inplace=False, progress_bar=False):
+        """Shrink a mesh
+
+        This helps shrink a mesh.
+
+        Parameters
+        ----------
+        poly_data : pyvista.PolyData
+            Mesh to shrink.
+
+        shrink_factor : float, optional
+            fraction of shrink for each cell.
+
+        inplace : bool, optional
+            Overwrites the original mesh inplace.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Extrude shrink mesh
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> mesh.shrink(shrink_factor=0.8).plot()
+        """
+        assert (0.0 <= shrink_factor <= 1.0), '"shrink_factor" should be more than 0.0 and less than 1.0'
+        alg = vtk.vtkShrinkFilter()
+        alg.SetInputData(poly_data)
+        alg.SetShrinkFactor(shrink_factor)
+        _update_alg(alg, progress_bar, 'Shrinking Mesh')
+        output = pyvista.wrap(alg.GetOutput())
+        if not inplace:
+            return output
+        poly_data.overwrite(output)
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
