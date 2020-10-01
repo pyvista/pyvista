@@ -1144,3 +1144,9 @@ def test_plot_shrink_factor():
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh)
     p.show()
+
+    mesh = pyvista.UnstructuredGrid(examples.hexbeamfile)
+    mesh.shrink(shrink_factor=0.8).plot()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.show()
