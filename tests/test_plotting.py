@@ -1139,6 +1139,8 @@ def test_index_vs_loc():
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_plot_shrink_factor():
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(sphere, shrink_factor = 0.9)
-    plotter.close()
+    mesh = pyvista.Sphere()
+    mesh.shrink(shrink_factor=0.8).plot()
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh)
+    p.show()
