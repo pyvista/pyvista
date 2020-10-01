@@ -1135,12 +1135,8 @@ def test_index_vs_loc():
         assert pl.index_to_loc(np.int_(val)) == val
         assert pl.loc_to_index(val) == val
         assert pl.loc_to_index(np.int_(val)) == val
-
-
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_plot_shrink_factor():
+def test_shrink():
     mesh = pyvista.Sphere()
-    mesh.shrink(shrink_factor=0.8).plot()
-    p = pyvista.Plotter(off_screen=OFF_SCREEN)
-    p.add_mesh(mesh)
-    p.show()
+    shrunk = mesh.shrink(shrink_factor=0.8)
+    assert shrunk.n_points == mesh.n_points
+    assert shrunk.area < mesh.area
