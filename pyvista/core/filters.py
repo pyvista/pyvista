@@ -4327,9 +4327,10 @@ class PolyDataFilters(DataSetFilters):
         return _get_output(alg)
 
     def shrink(poly_data, shrink_factor=1.0, inplace=False, progress_bar=False):
-        """Shrink a mesh.
+        """Shrink the individual faces of a mesh.
 
-        This helps shrink a mesh.
+        This filter shrinks the individual faces of a mesh rather than scaling
+        the entire mesh.
 
         Parameters
         ----------
