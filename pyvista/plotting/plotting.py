@@ -3371,6 +3371,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Plotter hasn't been rendered or was improperly closed
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
 
+        self._first_time = False
         self.render()
 
         # debug: this needs to be called twice for some reason,
