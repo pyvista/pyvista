@@ -1126,7 +1126,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
-                 log_scale=False, shrink_factor = 1.0, **kwargs):
+                 log_scale=False, **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1324,9 +1324,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         pickable : bool
             Set whether this mesh is pickable
 
-        shrink_factor : float, optional
-            The shrink factor. Default 1.0
-
         Return
         ------
         actor: vtk.vtkActor
@@ -1501,20 +1498,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.mapper = make_mapper(vtk.vtkDataSetMapper)
         self.mapper.SetInputData(self.mesh)
         self.mapper.GetLookupTable().SetNumberOfTableValues(n_colors)
-
-        # set shrink factor
-        if isinstance(mesh, pyvista.PolyData):
-            assert (0.0 <= shrink_factor <= 1.0), '"shrink_factor" should be more than 0.0 and less than 1.0'
-            filename = "mesh.vtk"
-            mesh.save(filename)
-            reader = vtk.vtkPolyDataReader()
-            reader.SetFileName(filename)
-            reader.Update()
-            shrink = vtk.vtkShrinkFilter()
-            shrink.SetInputConnection(reader.GetOutputPort())
-            shrink.SetShrinkFactor(shrink_factor)
-            self.mapper.SetInputConnection(shrink.GetOutputPort())
-
         if interpolate_before_map:
             self.mapper.InterpolateScalarsBeforeMappingOn()
 
