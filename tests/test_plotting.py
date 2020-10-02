@@ -1138,11 +1138,25 @@ def test_index_vs_loc():
 
 
 def test_shrink():
-    mesh = pyvista.Cube()
-    shrunk = mesh.shrink(shrink_factor=0.8)
-    assert shrunk.n_points == mesh.n_points
 
-    mesh = pyvista.Sphere()
+    # mesh points
+    vertices = np.array([[0, 0, 0],
+                         [1, 0, 0],
+                         [1, 1, 0],
+                         [0, 1, 0],
+                         [0.5, 0.5, -1]])
+
+    # mesh faces
+    faces = [[4, 0, 1, 2, 3],  # square
+             [3, 0, 1, 4],     # triangle
+             [3, 1, 2, 4]]     # triangle
+
+    # number of points after shrink
+    n_points = 0
+    for face in faces:
+        n_points += face[0]
+
+    mesh = pyvista.PolyData(vertices, np.hstack(faces))
     shrunk = mesh.shrink(shrink_factor=0.8)
-    assert shrunk.n_points == mesh.n_points
+    assert shrunk.n_points == n_points
     assert shrunk.area < mesh.area
