@@ -1075,8 +1075,10 @@ class Common(DataSetFilters, DataObject):
         """
         if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
             raise TypeError("Given point must be a length three sequence.")
-        if not isinstance(n, int) or n < 1:
+        if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
+        if n < 1:
+            raise ValueError("`n` must be a positive integer.")
 
         locator = vtk.vtkPointLocator()
         locator.SetDataSet(self)
