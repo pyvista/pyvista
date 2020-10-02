@@ -1078,17 +1078,16 @@ class Common(DataSetFilters, DataObject):
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
         if n < 1:
-             raise ValueError("`n` must be a positive integer.")
+            raise ValueError("`n` must be a positive integer.")
+
         locator = vtk.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        if n < 2:
-            index = locator.FindClosestPoint(point)
-        else:
+        if n > 1:
             id_list = vtk.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)
-            index = vtk_id_list_to_array(id_list)
-        return index
+            return vtk_id_list_to_array(id_list)
+        return locator.FindClosestPoint(point)
 
 
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
