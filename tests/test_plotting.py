@@ -1135,7 +1135,13 @@ def test_index_vs_loc():
         assert pl.index_to_loc(np.int_(val)) == val
         assert pl.loc_to_index(val) == val
         assert pl.loc_to_index(np.int_(val)) == val
+
+
 def test_shrink():
+    mesh = pyvista.Cube()
+    shrunk = mesh.shrink(shrink_factor=0.8)
+    assert shrunk.n_points == mesh.n_points
+
     mesh = pyvista.Sphere()
     shrunk = mesh.shrink(shrink_factor=0.8)
     assert shrunk.n_points == mesh.n_points
