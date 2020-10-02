@@ -3347,7 +3347,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pyvista.Plotter(off_screen=True)
         >>> actor = plotter.add_mesh(sphere)
         >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
 
@@ -3371,7 +3371,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Plotter hasn't been rendered or was improperly closed
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
 
-        self._first_time = False
+        if self._first_time and not self.off_screen:
+            raise RuntimeError("Nothing to screenshot - call .show first or "
+                               "use the off_screen argument")
         self.render()
 
         # debug: this needs to be called twice for some reason,
