@@ -359,7 +359,7 @@ class Texture(vtk.vtkTexture, DataObject):
         return image.active_scalars.shape[1]
 
     def to_array(self):
-        """Return the texture as an array."""
+        """Return the texture as a np.ndarray."""
         image = self.to_image()
 
         if image.active_scalars.ndim > 1:
