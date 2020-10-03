@@ -157,7 +157,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                 else:
                     self.shallow_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
             elif isinstance(args[0], (np.ndarray, list)):
                 if isinstance(args[0], list):
                     points = np.asarray(args[0])
@@ -501,7 +501,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                     self.shallow_copy(args[0])
 
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
 
             elif isinstance(args[0], vtk.vtkStructuredGrid):
                 vtkappend = vtk.vtkAppendFilter()
@@ -773,7 +773,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if isinstance(args[0], vtk.vtkStructuredGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
-                self._load_file(args[0])
+                self._from_file(args[0])
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)

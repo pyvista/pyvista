@@ -77,7 +77,10 @@ class DataObject:
         reader = self._READERS[file_ext]()
         reader.SetFileName(str(file_path))
         reader.Update()
-        self.shallow_copy(reader.GetOutput())
+        return reader.GetOutputDataObject(0)
+
+    def _from_file(self, filename):
+        self.shallow_copy(self._load_file(filename))
 
     def save(self, filename, binary=True):
         """Save this vtk object to file.
