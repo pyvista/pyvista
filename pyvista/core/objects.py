@@ -294,6 +294,7 @@ class Texture(vtk.vtkTexture, DataObject):
 
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
+        super().__init__(*args, **kwargs)
         assert_empty_kwargs(**kwargs)
 
         if len(args) == 1:
