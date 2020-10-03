@@ -758,8 +758,7 @@ class Common(DataSetFilters, DataObject):
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
         self.clear_textures()
-        for name, tex in ido._textures.items():
-            self._textures[name] = tex.copy()
+        self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
 
     @property
     def point_arrays(self):
