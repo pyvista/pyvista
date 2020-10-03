@@ -490,8 +490,6 @@ def image_to_texture(image):
 
 def numpy_to_texture(image):
     """Convert a NumPy image array to a vtk.vtkTexture."""
-    if not isinstance(image, np.ndarray):
-        raise TypeError(f'Unknown input type ({type(image)})')
     return pyvista.Texture(image)
 
 
