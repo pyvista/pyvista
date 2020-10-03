@@ -391,10 +391,9 @@ class Common(DataSetFilters, DataObject):
             Active scalars represented as arrows.
 
         """
-        if self.active_vectors is None:
-            return
-        name = self.active_vectors_name
-        return self.glyph(scale=name, orient=name)
+        if self.active_vectors is not None:
+            name = self.active_vectors_name
+            return self.glyph(scale=name, orient=name)
 
     @property
     def vectors(self):
