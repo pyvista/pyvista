@@ -323,6 +323,7 @@ class Texture(vtk.vtkTexture, DataObject):
         return self.Update()
 
     def _from_array(self, image):
+        """Create a texture from a np.ndarray."""
         if image.ndim not in (2, 3):
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise ValueError('Input image must be nn by nm by RGB[A]')
