@@ -1090,6 +1090,27 @@ class Common(DataSetFilters, DataObject):
         return locator.FindClosestPoint(point)
 
 
+    def find_closest_cell(self, point):
+        """Find index of closest cell in this mesh to the given point.
+
+        Parameters
+        ----------
+        point : iterable(float)
+            Length 3 coordinate of the point to query.
+
+        Return
+        ------
+        int : the index of the point in this mesh that is closes to the given point.
+        """
+        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
+            raise TypeError("Given point must be a length three sequence.")
+
+        locator = vtk.vtkCellLocator()
+        locator.SetDataSet(self)
+        locator.BuildLocator()
+        return locator.FindCell(point)
+
+
 def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
     """Rotate points angle (in deg) about an axis."""
     axis = axis.lower()

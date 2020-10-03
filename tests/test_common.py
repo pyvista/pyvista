@@ -744,6 +744,24 @@ def test_find_closest_point():
     assert len(index) == 5
 
 
+def test_find_closest_cell():
+    mesh = pyvista.Wavelet()
+    node = np.array([0, 0.2, 0.2])
+
+    with pytest.raises(TypeError):
+        mesh.find_closest_cell([1, 2])
+
+    with pytest.raises(TypeError):
+        # allow Sequence but not Iterable
+        mesh.find_closest_cell({1, 2, 3})
+
+    index = mesh.find_closest_cell(node)
+    assert isinstance(index, int)
+    # Make sure we can fetch that point
+    closest = mesh.points[index]
+    assert len(closest) == 3
+
+
 def test_setting_points_from_self(grid):
     grid_copy = grid.copy()
     grid.points = grid_copy.points
