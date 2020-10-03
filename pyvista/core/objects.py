@@ -283,8 +283,14 @@ class Table(vtk.vtkTable, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
 
-class Texture(vtk.vtkTexture):
+class Texture(vtk.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
+
+    _READERS = {'.bmp': vtk.vtkBMPReader, '.dem': vtk.vtkDEMReader, '.dcm': vtk.vtkDICOMImageReader,
+                '.img': vtk.vtkDICOMImageReader, '.jpeg': vtk.vtkJPEGReader, '.jpg': vtk.vtkJPEGReader,
+                '.mhd': vtk.vtkMetaImageReader, '.nrrd': vtk.vtkNrrdReader, '.nhdr': vtk.vtkNrrdReader,
+                '.png': vtk.vtkPNGReader, '.pnm': vtk.vtkPNMReader, '.slc': vtk.vtkSLCReader,
+                '.tiff': vtk.vtkTIFFReader, '.tif': vtk.vtkTIFFReader}
 
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
@@ -298,9 +304,13 @@ class Texture(vtk.vtkTexture):
             elif isinstance(args[0], vtk.vtkImageData):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
-                self._from_texture(pyvista.read_texture(args[0]))
+                self._from_file(filename=args[0])
             else:
                 raise TypeError(f'Table unable to be made from ({type(args[0])})')
+
+    def _from_file(self, filename):
+        image = self._load_file(filename)
+        self._from_image_data(image)
 
     def _from_texture(self, texture):
         image = texture.GetInput()
