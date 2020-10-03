@@ -402,6 +402,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
 
     def __del__(self):
+        """Delete the object."""
         if hasattr(self, '_obbTree'):
             del self._obbTree
 
