@@ -271,6 +271,7 @@ class Common(DataSetFilters, DataObject):
         self._last_active_scalars_name = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+        self._textures = {}
 
     @property
     def active_scalars_info(self):
@@ -431,8 +432,6 @@ class Common(DataSetFilters, DataObject):
         will not be passed.
 
         """
-        if not hasattr(self, '_textures'):
-            self._textures = {}
         return self._textures
 
     def clear_textures(self):
