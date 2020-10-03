@@ -324,12 +324,12 @@ class Texture(vtk.vtkTexture, DataObject):
 
     def _from_array(self, image):
         """Create a texture from a np.ndarray."""
-        if image.ndim not in (2, 3):
+        if not 2 <= image.ndim <= 3:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
-            if image.shape[2] not in (3, 4):
+            if not 3 <= image.shape[2] <= 4:
                 raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
             n_components = image.shape[2]
         elif image.ndim == 2:
@@ -342,7 +342,7 @@ class Texture(vtk.vtkTexture, DataObject):
 
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
-        if 0 <= axis <= 1:
+        if not 0 <= axis <= 1:
             raise ValueError(f"Axis {axis} out of bounds")
         array = self.to_array()
         array = np.flip(array, axis=1 - axis)
