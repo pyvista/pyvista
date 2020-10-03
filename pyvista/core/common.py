@@ -2,16 +2,16 @@
 
 import collections.abc
 import logging
-import os
 import warnings
+from pathlib import Path
 
 import numpy as np
 import vtk
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
-                               parse_field_choice, raise_not_matching, vtk_id_list_to_array,
-                               fileio, abstract_class)
+                               raise_not_matching, vtk_id_list_to_array, fileio,
+                               abstract_class, axis_rotation)
 from .datasetattributes import DataSetAttributes
 from .filters import DataSetFilters
 
@@ -51,7 +51,7 @@ class DataObject:
 
         Parameters
         ----------
-        filename : str
+        filename : str, pathlib.Path
             Filename of object to be loaded.  File/reader type is inferred from the
             extension of the filename.
 
@@ -64,18 +64,18 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} readers are not specified,'
                                       ' this should be a dict of (file extension: vtkReader type)')
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        if not os.path.isfile(filename):
+        file_path = Path(filename).resolve()
+        if not file_path.exists():
             raise FileNotFoundError(f'File {filename} does not exist')
 
-        file_ext = fileio.get_ext(filename)
+        file_ext = file_path.suffix
         if file_ext not in self._READERS:
-            keys_list = ', '.join(self._READERS.keys())
+            valid_extensions = ', '.join(self._READERS.keys())
             raise ValueError(f'Invalid file extension for {self.__class__.__name__}({file_ext}).'
-                             f' Must be one of: {keys_list}')
+                             f' Must be one of: {valid_extensions}')
 
         reader = self._READERS[file_ext]()
-        reader.SetFileName(filename)
+        reader.SetFileName(str(file_path))
         reader.Update()
         self.shallow_copy(reader.GetOutput())
 
@@ -84,7 +84,7 @@ class DataObject:
 
         Parameters
         ----------
-        filename : str
+        filename : str, pathlib.Path
          Filename of output file. Writer type is inferred from
          the extension of the filename.
 
@@ -101,15 +101,15 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} writers are not specified,'
                                       ' this should be a dict of (file extension: vtkWriter type)')
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        file_ext = fileio.get_ext(filename)
+        file_path = Path(filename).resolve()
+        file_ext = file_path.suffix
         if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type.'
                              f' Must be one of: {self._WRITERS.keys()}')
 
         writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        writer.SetFileName(filename)
+        writer.SetFileName(str(file_path))
         writer.SetInputData(self)
         writer.Write()
 
@@ -271,6 +271,7 @@ class Common(DataSetFilters, DataObject):
         self._last_active_scalars_name = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+        self._textures = {}
 
     @property
     def active_scalars_info(self):
@@ -391,10 +392,9 @@ class Common(DataSetFilters, DataObject):
             Active scalars represented as arrows.
 
         """
-        if self.active_vectors is None:
-            return
-        name = self.active_vectors_name
-        return self.glyph(scale=name, orient=name)
+        if self.active_vectors is not None:
+            name = self.active_vectors_name
+            return self.glyph(scale=name, orient=name)
 
     @property
     def vectors(self):
@@ -432,14 +432,11 @@ class Common(DataSetFilters, DataObject):
         will not be passed.
 
         """
-        if not hasattr(self, '_textures'):
-            self._textures = {}
         return self._textures
 
     def clear_textures(self):
         """Clear the textures from this mesh."""
-        if hasattr(self, '_textures'):
-            del self._textures
+        self._textures.clear()
 
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates.
@@ -760,28 +757,13 @@ class Common(DataSetFilters, DataObject):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
-        if hasattr(ido, '_textures'):
-            self._textures = {}
-            for name, tex in ido._textures.items():
-                self._textures[name] = tex.copy()
+        self.clear_textures()
+        self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
 
     @property
     def point_arrays(self):
         """Return vtkPointData as DataSetAttributes."""
         return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
-
-    def _remove_array(self, field, key):
-        """Remove a single array by name from each field (internal helper)."""
-        field = parse_field_choice(field)
-        if field == FieldAssociation.POINT:
-            self.GetPointData().RemoveArray(key)
-        elif field == FieldAssociation.CELL:
-            self.GetCellData().RemoveArray(key)
-        elif field == FieldAssociation.NONE:
-            self.GetFieldData().RemoveArray(key)
-        else:
-            raise NotImplementedError(f'Not able to remove arrays from the ({field}) data field')
-        return
 
     def clear_point_arrays(self):
         """Remove all point arrays."""
@@ -1088,37 +1070,3 @@ class Common(DataSetFilters, DataObject):
             locator.FindClosestNPoints(n, point, id_list)
             return vtk_id_list_to_array(id_list)
         return locator.FindClosestPoint(point)
-
-
-def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """Rotate points angle (in deg) about an axis."""
-    axis = axis.lower()
-
-    # Copy original array to if not inplace
-    if not inplace:
-        points = points.copy()
-
-    # Convert angle to radians
-    if deg:
-        angle *= np.pi / 180
-
-    if axis == 'x':
-        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
-        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 1] = y
-        points[:, 2] = z
-    elif axis == 'y':
-        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
-        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 2] = z
-    elif axis == 'z':
-        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
-        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 1] = y
-    else:
-        raise ValueError('invalid axis. Must be either "x", "y", or "z"')
-
-    if not inplace:
-        return points

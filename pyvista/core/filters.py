@@ -1219,8 +1219,8 @@ class DataSetFilters:
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
                 # or else object is collected.
-                b._remove_array(FieldAssociation.CELL, 'RegionId')
-                b._remove_array(FieldAssociation.POINT, 'RegionId')
+                b.cell_arrays.remove('RegionId')
+                b.point_arrays.remove('RegionId')
             bodies.append(b)
 
         return bodies
