@@ -2507,6 +2507,38 @@ class DataSetFilters:
         return self.compute_derivative(scalars=scalars, gradient=gradient_name,
                                        preference=preference)
 
+    def shrink(dataset, shrink_factor=1.0, progress_bar=False):
+        """Shrink the individual faces of a mesh.
+
+        This filter shrinks the individual faces of a mesh rather than scaling
+        the entire mesh.
+
+        Parameters
+        ----------
+        shrink_factor : float, optional
+            fraction of shrink for each cell.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Extrude shrink mesh
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)  # doctest:+SKIP
+        """
+        if not (0.0 <= shrink_factor <= 1.0):
+            raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
+        alg = vtk.vtkShrinkFilter()
+        alg.SetInputData(dataset)
+        alg.SetShrinkFactor(shrink_factor)
+        _update_alg(alg, progress_bar, 'Shrinking Mesh')
+        output = pyvista.wrap(alg.GetOutput())
+        if isinstance(dataset, vtk.vtkPolyData):
+            return output.extract_surface()
+
 @abstract_class
 class CompositeFilters:
     """An internal class to manage filtes/algorithms for composite datasets."""
@@ -4325,45 +4357,6 @@ class PolyDataFilters(DataSetFilters):
         alg.SetPassThroughPointIds(pass_point_ids)
         alg.Update()
         return _get_output(alg)
-
-    def shrink(poly_data, shrink_factor=1.0, inplace=False, progress_bar=False):
-        """Shrink the individual faces of a mesh.
-
-        This filter shrinks the individual faces of a mesh rather than scaling
-        the entire mesh.
-
-        Parameters
-        ----------
-        poly_data : pyvista.PolyData
-            Mesh to shrink.
-
-        shrink_factor : float, optional
-            fraction of shrink for each cell.
-
-        inplace : bool, optional
-            Overwrites the original mesh inplace.
-
-        progress_bar : bool, optional
-            Display a progress bar to indicate progress.
-
-        Examples
-        --------
-        Extrude shrink mesh
-
-        >>> import pyvista
-        >>> mesh = pyvista.Sphere()
-        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)  # doctest:+SKIP
-        """
-        if not (0.0 <= shrink_factor <= 1.0):
-            raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
-        alg = vtk.vtkShrinkFilter()
-        alg.SetInputData(poly_data)
-        alg.SetShrinkFactor(shrink_factor)
-        _update_alg(alg, progress_bar, 'Shrinking Mesh')
-        output = pyvista.wrap(alg.GetOutput())
-        if not inplace:
-            return output
-        poly_data.overwrite(output)
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
