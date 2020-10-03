@@ -342,7 +342,7 @@ class Texture(vtk.vtkTexture, DataObject):
 
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
-        if axis < 0 or axis > 1:
+        if 0 <= axis <= 1:
             raise ValueError(f"Axis {axis} out of bounds")
         array = self.to_array()
         array = np.flip(array, axis=1 - axis)
