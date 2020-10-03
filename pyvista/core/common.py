@@ -436,8 +436,7 @@ class Common(DataSetFilters, DataObject):
 
     def clear_textures(self):
         """Clear the textures from this mesh."""
-        if hasattr(self, '_textures'):
-            del self._textures
+        self._textures.clear()
 
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates.
@@ -758,10 +757,9 @@ class Common(DataSetFilters, DataObject):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
-        if hasattr(ido, '_textures'):
-            self._textures = {}
-            for name, tex in ido._textures.items():
-                self._textures[name] = tex.copy()
+        self.clear_textures()
+        for name, tex in ido._textures.items():
+            self._textures[name] = tex.copy()
 
     @property
     def point_arrays(self):
