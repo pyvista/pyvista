@@ -323,23 +323,20 @@ class Texture(vtk.vtkTexture, DataObject):
         return self.Update()
 
     def _from_array(self, image):
-        if image.ndim not in [2,3]:
+        if image.ndim not in (2, 3):
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
-            if image.shape[2] != 3 and image.shape[2] != 4:
+            if image.shape[2] not in (3, 4):
                 raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
-
             n_components = image.shape[2]
-
         elif image.ndim == 2:
             n_components = 1
 
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
         grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
-
         return self._from_image_data(grid)
 
     def flip(self, axis):
