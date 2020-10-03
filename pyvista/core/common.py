@@ -2,8 +2,8 @@
 
 import collections.abc
 import logging
-import os
 import warnings
+from pathlib import Path
 
 import numpy as np
 import vtk
@@ -51,7 +51,7 @@ class DataObject:
 
         Parameters
         ----------
-        filename : str
+        filename : str, pathlib.Path
             Filename of object to be loaded.  File/reader type is inferred from the
             extension of the filename.
 
@@ -64,18 +64,18 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} readers are not specified,'
                                       ' this should be a dict of (file extension: vtkReader type)')
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        if not os.path.isfile(filename):
+        file_path = Path(filename).resolve()
+        if not file_path.exists():
             raise FileNotFoundError(f'File {filename} does not exist')
 
-        file_ext = fileio.get_ext(filename)
+        file_ext = file_path.suffix
         if file_ext not in self._READERS:
-            keys_list = ', '.join(self._READERS.keys())
+            valid_extensions = ', '.join(self._READERS.keys())
             raise ValueError(f'Invalid file extension for {self.__class__.__name__}({file_ext}).'
-                             f' Must be one of: {keys_list}')
+                             f' Must be one of: {valid_extensions}')
 
         reader = self._READERS[file_ext]()
-        reader.SetFileName(filename)
+        reader.SetFileName(str(file_path))
         reader.Update()
         self.shallow_copy(reader.GetOutput())
 
@@ -84,7 +84,7 @@ class DataObject:
 
         Parameters
         ----------
-        filename : str
+        filename : str, pathlib.Path
          Filename of output file. Writer type is inferred from
          the extension of the filename.
 
@@ -101,15 +101,15 @@ class DataObject:
             raise NotImplementedError(f'{self.__class__.__name__} writers are not specified,'
                                       ' this should be a dict of (file extension: vtkWriter type)')
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        file_ext = fileio.get_ext(filename)
+        file_path = Path(filename).resolve()
+        file_ext = file_path.suffix
         if file_ext not in self._WRITERS:
             raise ValueError('Invalid file extension for this data type.'
                              f' Must be one of: {self._WRITERS.keys()}')
 
         writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        writer.SetFileName(filename)
+        writer.SetFileName(str(file_path))
         writer.SetInputData(self)
         writer.Write()
 
