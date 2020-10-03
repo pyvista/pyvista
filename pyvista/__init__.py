@@ -24,7 +24,7 @@ try:
     import faulthandler
     faulthandler.enable()
 except Exception as e:  # pragma: no cover
-    warnings.warn('Unable to enable faulthandler:\n%s' % str(e))
+    warnings.warn(f'Unable to enable faulthandler:\n{e}')
 
 
 # determine if using vtk > 5
@@ -77,7 +77,7 @@ if not os.path.exists(USER_DATA_PATH):
 if 'PYVISTA_USERDATA_PATH' in os.environ:
     USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
     if not os.path.isdir(USER_DATA_PATH):
-        raise FileNotFoundError('Invalid PYVISTA_USERDATA_PATH at %s' % USER_DATA_PATH)
+        raise FileNotFoundError(f'Invalid PYVISTA_USERDATA_PATH at {USER_DATA_PATH}')
 
 try:
     EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
@@ -87,8 +87,7 @@ try:
         except FileExistsError:  # Edge case due to IO race conditions
             pass
 except Exception as e:
-    warnings.warn('Unable to create `EXAMPLES_PATH` at "%s"\nError: %s\n\n'
-                  % (EXAMPLES_PATH, str(e)) +
+    warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\nError: {e}\n\n'
                   'Override the default path by setting the environmental variable '
                   '`PYVISTA_USERDATA_PATH` to a writable path.')
     EXAMPLES_PATH = None

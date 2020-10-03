@@ -26,7 +26,7 @@ poly = pv.PolyData(np.random.rand(10, 3))
 # Add string labels to the point data - this associates a label with every
 # node:
 
-poly["My Labels"] = ["Label {}".format(i) for i in range(poly.n_points)]
+poly["My Labels"] = [f"Label {i}" for i in range(poly.n_points)]
 poly
 
 ###############################################################################

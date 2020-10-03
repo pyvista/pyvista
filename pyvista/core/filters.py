@@ -504,7 +504,7 @@ class DataSetFilters:
             try:
                 ax = axes[axis]
             except KeyError:
-                raise ValueError('Axis ({}) not understood'.format(axis))
+                raise ValueError(f'Axis ({axis}) not understood')
         # get the locations along that axis
         if bounds is None:
             bounds = dataset.bounds
@@ -527,7 +527,7 @@ class DataSetFilters:
             slc = DataSetFilters.slice(dataset, normal=axis, origin=center,
                                        generate_triangles=generate_triangles,
                                        contour=contour)
-            output[i, 'slice%.2d' % i] = slc
+            output[i, f'slice{i}'] = slc
         return output
 
     def slice_along_line(dataset, line, generate_triangles=False,
@@ -554,7 +554,7 @@ class DataSetFilters:
             raise ValueError('Input line must have only one cell.')
         polyline = line.GetCell(0)
         if not isinstance(polyline, vtk.vtkPolyLine):
-            raise TypeError('Input line must have a PolyLine cell, not ({})'.format(type(polyline)))
+            raise TypeError(f'Input line must have a PolyLine cell, not ({type(polyline)})')
         # Generate PolyPlane
         polyplane = vtk.vtkPolyPlane()
         polyplane.SetPolyLine(polyline)
@@ -656,7 +656,7 @@ class DataSetFilters:
         # check if value is a sequence (if so threshold by min max range like ParaView)
         if isinstance(value, (np.ndarray, collections.abc.Sequence)):
             if len(value) != 2:
-                raise ValueError('Value range must be length one for a float value or two for min/max; not ({}).'.format(value))
+                raise ValueError(f'Value range must be length one for a float value or two for min/max; not ({value}).')
             alg.ThresholdBetween(value[0], value[1])
         elif isinstance(value, collections.abc.Iterable):
             raise TypeError('Value must either be a single scalar or a sequence.')
@@ -710,9 +710,9 @@ class DataSetFilters:
             if percent >= 1:
                 percent = float(percent) / 100.0
                 if percent > 1:
-                    raise ValueError('Percentage ({}) is out of range (0, 1).'.format(percent))
+                    raise ValueError(f'Percentage ({percent}) is out of range (0, 1).')
             if percent < 1e-10:
-                raise ValueError('Percentage ({}) is too close to zero or negative.'.format(percent))
+                raise ValueError(f'Percentage ({percent}) is too close to zero or negative.')
             return percent
 
         def _get_val(percent, dmin, dmax):
@@ -865,7 +865,7 @@ class DataSetFilters:
             if len(scalar_range) != 2:
                 raise ValueError('scalar_range must have a length of two defining the min and max')
         else:
-            raise TypeError('scalar_range argument ({}) not understood.'.format(type(scalar_range)))
+            raise TypeError(f'scalar_range argument ({scalar_range}) not understood.')
         # Construct the filter
         alg = vtk.vtkElevationFilter()
         alg.SetInputDataObject(dataset)
@@ -930,7 +930,7 @@ class DataSetFilters:
         elif method == 'flying_edges':
             alg = vtk.vtkFlyingEdges3D()
         else:
-            raise ValueError("Method '{}' is not supported".format(method))
+            raise ValueError(f"Method '{method}' is not supported")
         # Make sure the input has scalars to contour on
         if dataset.n_arrays < 1:
             raise ValueError('Input dataset for the contour filter must have scalar data.')
@@ -945,7 +945,7 @@ class DataSetFilters:
             _, field = get_array(dataset, scalars, preference=preference, info=True)
         # NOTE: only point data is allowed? well cells works but seems buggy?
         if field != FieldAssociation.POINT:
-            raise TypeError('Contour filter only works on Point data. Array ({}) is in the Cell data.'.format(scalars))
+            raise TypeError(f'Contour filter only works on Point data. Array ({scalars}) is in the Cell data.')
         alg.SetInputArrayToProcess(0, 0, 0, field.value, scalars) # args: (idx, port, connection, field, name)
         # set the isosurfaces
         if isinstance(isosurfaces, int):
@@ -1227,8 +1227,8 @@ class DataSetFilters:
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
                 # or else object is collected.
-                b._remove_array(FieldAssociation.CELL, 'RegionId')
-                b._remove_array(FieldAssociation.POINT, 'RegionId')
+                b.cell_arrays.remove('RegionId')
+                b.point_arrays.remove('RegionId')
             bodies.append(b)
 
         return bodies
@@ -1719,7 +1719,7 @@ class DataSetFilters:
         elif strategy == 'closest_point':
             interpolator.SetNullPointsStrategyToClosestPoint()
         else:
-            raise ValueError('strategy `{}` not supported.'.format(strategy))
+            raise ValueError(f'strategy `{strategy}` not supported.')
         interpolator.SetPassPointArrays(pass_point_arrays)
         interpolator.SetPassCellArrays(pass_cell_arrays)
         _update_alg(interpolator, progress_bar, 'Interpolating')
@@ -1842,7 +1842,7 @@ class DataSetFilters:
         """
         integration_direction = str(integration_direction).strip().lower()
         if integration_direction not in ['both', 'back', 'backward', 'forward']:
-            raise ValueError("integration direction must be one of: 'backward', 'forward', or 'both' - not '{}'.".format(integration_direction))
+            raise ValueError(f"integration direction must be one of: 'backward', 'forward', or 'both' - not '{integration_direction}'.")
         if integrator_type not in [2, 4, 45]:
             raise ValueError('integrator type must be one of `2`, `4`, or `45`.')
         if interpolator_type not in ['c', 'cell', 'p', 'point']:
@@ -2034,7 +2034,7 @@ class DataSetFilters:
         # Plot it in 2D
         if values.ndim > 1:
             for i in range(values.shape[1]):
-                plt.plot(distance, values[:, i], label='Component {}'.format(i))
+                plt.plot(distance, values[:, i], label=f'Component {i}')
             plt.legend()
         else:
             plt.plot(distance, values)
@@ -2044,7 +2044,7 @@ class DataSetFilters:
         else:
             plt.ylabel(ylabel)
         if title is None:
-            plt.title('{} Profile'.format(scalars))
+            plt.title(f'{scalars} Profile')
         else:
             plt.title(title)
         if show:  # pragma: no cover
@@ -2302,7 +2302,7 @@ class DataSetFilters:
             if type(dataset) == type(merged):
                 dataset.deep_copy(merged)
             else:
-                raise TypeError("Mesh type {} cannot be overridden by output.".format(type(dataset)))
+                raise TypeError(f"Mesh type {type(dataset)} cannot be overridden by output.")
         else:
             return merged
 
@@ -2400,8 +2400,8 @@ class DataSetFilters:
             # Set user specified quality measure
             measure_setters[quality_measure]()
         except (KeyError, IndexError):
-            options = ', '.join(["'{}'".format(s) for s in list(measure_setters.keys())])
-            raise KeyError('Cell quality type ({}) not available. Options are: {}'.format(quality_measure, options))
+            options = ', '.join([f"'{s}'" for s in list(measure_setters.keys())])
+            raise KeyError(f'Cell quality type ({quality_measure}) not available. Options are: {options}')
         alg.SetInputData(dataset)
         alg.SetUndefinedQuality(null_value)
         alg.Update()
@@ -2853,7 +2853,7 @@ class PolyDataFilters(DataSetFilters):
 
         """
         return poly_data.plot(scalars=poly_data.curvature(curv_type),
-                              stitle='%s\nCurvature' % curv_type, **kwargs)
+                              stitle=f'{curv_type}\nCurvature', **kwargs)
 
     def triangulate(poly_data, inplace=False):
         """Return an all triangle mesh.
@@ -2943,9 +2943,9 @@ class PolyDataFilters(DataSetFilters):
         >>> smooth_cube = cube.smooth(1000, feature_smoothing=False)
         >>> n_edge_cells = cube.extract_feature_edges().n_cells
         >>> n_smooth_cells = smooth_cube.extract_feature_edges().n_cells
-        >>> print('Sharp Edges on Cube:        %d' % n_edge_cells)
+        >>> print(f'Sharp Edges on Cube:        {n_edge_cells}')
         Sharp Edges on Cube:        384
-        >>> print('Sharp Edges on Smooth Cube: %d' % n_smooth_cells)
+        >>> print(f'Sharp Edges on Smooth Cube: {n_smooth_cells}')
         Sharp Edges on Smooth Cube: 12
         """
         alg = vtk.vtkSmoothPolyDataFilter()
@@ -3726,7 +3726,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> length = sphere.geodesic_distance(0, 100)
-        >>> print('Length is %.3f' % length)
+        >>> print(f'Length is {length:.3f}')
         Length is 0.812
 
         """
@@ -3779,7 +3779,7 @@ class PolyDataFilters(DataSetFilters):
         >>> import pyvista as pv
         >>> sphere = pv.Sphere()
         >>> point, cell = sphere.ray_trace([0, 0, 0], [1, 0, 0], first_point=True)
-        >>> print('Intersected at %.3f %.3f %.3f' % (point[0], point[1], point[2]))
+        >>> print(f'Intersected at {point[0]:.3f} {point[1]:.3f} {point[2]:.3f}')
         Intersected at 0.499 0.000 0.000
 
         """
@@ -3939,7 +3939,7 @@ class PolyDataFilters(DataSetFilters):
                 try:
                     newmesh.cell_arrays[key] = poly_data.cell_arrays[key][fmask]
                 except:
-                    logging.warning('Unable to pass cell key %s onto reduced mesh' % key)
+                    logging.warning(f'Unable to pass cell key {key} onto reduced mesh')
 
         # Return vtk surface and reverse indexing array
         if inplace:
@@ -4068,13 +4068,13 @@ class PolyDataFilters(DataSetFilters):
         >>> sphere = pv.Sphere()
         >>> path = sphere.geodesic(0, 100)
         >>> length = path.compute_arc_length()['arc_length'][-1]
-        >>> print('Length is %.3f' % length)
+        >>> print(f'Length is {length:.3f}')
         Length is 0.812
 
         This is identical to the geodesic_distance
 
         >>> length = sphere.geodesic_distance(0, 100)
-        >>> print('Length is %.3f' % length)
+        >>> print(f'Length is {length:.3f}')
         Length is 0.812
 
         You can also plot the arc_length

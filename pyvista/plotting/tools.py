@@ -106,14 +106,14 @@ def create_axes_orientation_box(line_width=1, text_scale=0.366667,
     axes_actor = vtk.vtkAnnotatedCubeActor()
     axes_actor.SetFaceTextScale(text_scale)
     if xlabel is not None:
-        axes_actor.SetXPlusFaceText("+{}".format(xlabel))
-        axes_actor.SetXMinusFaceText("-{}".format(xlabel))
+        axes_actor.SetXPlusFaceText(f"+{xlabel}")
+        axes_actor.SetXMinusFaceText(f"-{xlabel}")
     if ylabel is not None:
-        axes_actor.SetYPlusFaceText("+{}".format(ylabel))
-        axes_actor.SetYMinusFaceText("-{}".format(ylabel))
+        axes_actor.SetYPlusFaceText(f"+{ylabel}")
+        axes_actor.SetYMinusFaceText(f"-{ylabel}")
     if zlabel is not None:
-        axes_actor.SetZPlusFaceText("+{}".format(zlabel))
-        axes_actor.SetZMinusFaceText("-{}".format(zlabel))
+        axes_actor.SetZPlusFaceText(f"+{zlabel}")
+        axes_actor.SetZMinusFaceText(f"-{zlabel}")
     axes_actor.SetFaceTextVisibility(not labels_off)
     axes_actor.SetTextEdgesVisibility(False)
     # axes_actor.GetTextEdgesProperty().SetColor(parse_color(edge_color))
@@ -251,14 +251,14 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
     transfer_func['linear_r'] = transfer_func['linear'][::-1]
     transfer_func['sigmoid_r'] = transfer_func['sigmoid'][::-1]
     for i in range(3, 11):
-        k = 'sigmoid_{}'.format(i)
-        rk = '{}_r'.format(k)
+        k = f'sigmoid_{i}'
+        rk = f'{k}_r'
         transfer_func[rk] = transfer_func[k][::-1]
     if isinstance(mapping, str):
         try:
             return transfer_func[mapping]
         except KeyError:
-            raise KeyError('opactiy transfer function ({}) unknown.'.format(mapping))
+            raise KeyError(f'opactiy transfer function ({mapping}) unknown.')
     elif isinstance(mapping, (np.ndarray, list, tuple)):
         mapping = np.array(mapping)
         if mapping.size == n_colors:
@@ -287,6 +287,6 @@ def opacity_transfer_function(mapping, n_colors, interpolate=True,
                 # Otherwise use simple linear interp
                 mapping = (np.interp(xx, xo, mapping) * 255).astype(np.uint8)
         else:
-            raise RuntimeError('Transfer function cannot have more values than `n_colors`. This has {} elements'.format(mapping.size))
+            raise RuntimeError(f'Transfer function cannot have more values than `n_colors`. This has {mapping.size} elements')
         return mapping
-    raise TypeError('Transfer function type ({}) not understood'.format(type(mapping)))
+    raise TypeError(f'Transfer function type ({type(mapping)}) not understood')

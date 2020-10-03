@@ -57,8 +57,7 @@ class CameraPosition:
 
     def __repr__(self):
         """List representation method."""
-        layout = "[{},\n {},\n {}]"
-        return layout.format(*self.to_list())
+        return "[{},\n {},\n {}]".format(*self.to_list())
 
     def __getitem__(self, index):
         """Fetch a component by index location like a list."""
@@ -148,8 +147,9 @@ class Renderer(vtkRenderer):
             if camera_location not in self.CAMERA_STR_ATTR_MAP:
                 err = pyvista.core.errors.InvalidCameraError
                 raise err('Invalid view direction.  '
-                          'Use one of the following:\n    %s'
-                          % ', '.join(self.CAMERA_STR_ATTR_MAP))
+                          'Use one of the following:\n   '
+                          f'{", ".join(self.CAMERA_STR_ATTR_MAP)}')
+
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
         elif isinstance(camera_location[0], (int, float)):
@@ -396,7 +396,7 @@ class Renderer(vtkRenderer):
                 except AttributeError:  # pragma: no cover
                     pass
             else:
-                raise ValueError('Culling option ({}) not understood.'.format(culling))
+                raise ValueError(f'Culling option ({culling}) not understood.')
 
         actor.SetPickable(pickable)
 
@@ -707,7 +707,7 @@ class Renderer(vtkRenderer):
             elif ticks in ('both'):
                 cube_axes_actor.SetTickLocationToBoth()
             else:
-                raise ValueError('Value of ticks ({}) not understood.'.format(ticks))
+                raise ValueError(f'Value of ticks ({ticks}) not understood.')
 
         if isinstance(location, str):
             location = location.lower()
@@ -722,7 +722,7 @@ class Renderer(vtkRenderer):
             elif location in ('furthest', 'back'):
                 cube_axes_actor.SetFlyModeToFurthestTriad()
             else:
-                raise ValueError('Value of location ({}) not understood.'.format(location))
+                raise ValueError(f'Value of location ({location}) not understood.')
 
         # set bounds
         if bounds is None:
@@ -735,7 +735,7 @@ class Renderer(vtkRenderer):
                 bounds[::2] -= cushion
                 bounds[1::2] += cushion
         else:
-            raise ValueError('padding ({}) not understood. Must be float between 0 and 1'.format(padding))
+            raise ValueError(f'padding ({padding}) not understood. Must be float between 0 and 1')
         cube_axes_actor.SetBounds(bounds)
 
         # show or hide axes
@@ -898,7 +898,7 @@ class Renderer(vtkRenderer):
         self._bounding_box.SetBounds(self.bounds)
         self._bounding_box.Update()
         self._box_object = wrap(self._bounding_box.GetOutput())
-        name = 'BoundingBox({})'.format(hex(id(self._box_object)))
+        name = f'BoundingBox({hex(id(self._box_object))})'
 
         mapper = vtk.vtkDataSetMapper()
         mapper.SetInputData(self._box_object)
@@ -1015,12 +1015,12 @@ class Renderer(vtkRenderer):
             i_size = ranges[2]
             j_size = ranges[1]
         else:
-            raise NotImplementedError('Face ({}) not implementd'.format(face))
+            raise NotImplementedError(f'Face ({face}) not implementd')
         self._floor = pyvista.Plane(center=center, direction=normal,
                                     i_size=i_size, j_size=j_size,
                                     i_resolution=i_resolution,
                                     j_resolution=j_resolution)
-        name = 'Floor({})'.format(face)
+        name = f'Floor({face})'
         # use floor
         if lighting is None:
             lighting = rcParams['lighting']
@@ -1157,7 +1157,7 @@ class Renderer(vtkRenderer):
             keys = list(self._actors.keys())
             names = []
             for k in keys:
-                if k.startswith('{}-'.format(name)):
+                if k.startswith(f'{name}-'):
                     names.append(k)
             if len(names) > 0:
                 self.remove_actor(names, reset_camera=reset_camera)

@@ -16,7 +16,7 @@ except ImportError:
 
 def test_table_init(tmpdir):
     """Save some delimited text to a file and read it"""
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'csv'))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.csv'))
     nr, nc = 50, 3
     arrays = np.random.rand(nr, nc)
 
@@ -39,14 +39,14 @@ def test_table_init(tmpdir):
     # create from dictionary
     array_dict = {}
     for i in range(nc):
-        array_dict['foo{}'.format(i)] = arrays[:, i].copy()
+        array_dict[f'foo{i}'] = arrays[:, i].copy()
     table = pyvista.Table(array_dict)
     assert table.n_rows == nr
     assert table.n_columns == nc
 
     assert len(table.row_arrays) == nc
     for i in range(nc):
-        assert np.allclose(arrays[:,i], table['foo{}'.format(i)])
+        assert np.allclose(arrays[:,i], table[f'foo{i}'])
 
     dataset = examples.load_hexbeam()
     array_dict = dict(dataset.point_arrays)
@@ -59,7 +59,7 @@ def test_table_init(tmpdir):
         assert np.allclose(dataset[name], table[name])
 
     # Create from vtkTable object
-    h = '\t'.join(['a{}'.format(i) for i in range(nc)])
+    h = '\t'.join([f'a{i}' for i in range(nc)])
     np.savetxt(filename, arrays, delimiter='\t', header=h, comments='')
 
     reader = vtk.vtkDelimitedTextReader()
@@ -101,11 +101,11 @@ def test_table_row_arrays():
     arrays = np.random.rand(nr, nc)
     table = pyvista.Table()
     for i in range(nc):
-        table['foo{}'.format(i)] = arrays[:, i]
+        table[f'foo{i}'] = arrays[:, i]
     assert table.n_columns == nc
     assert table.n_rows == nr
     for i in range(nc):
-        assert np.allclose(table['foo{}'.format(i)], arrays[:, i])
+        assert np.allclose(table[f'foo{i}'], arrays[:, i])
     # Multi component
     table = pyvista.Table()
     table['multi'] = arrays
@@ -187,12 +187,12 @@ def test_table_pandas():
     arrays = np.random.rand(nr, nc)
     df = pd.DataFrame()
     for i in range(nc):
-        df['foo{}'.format(i)] = arrays[:, i].copy()
+        df[f'foo{i}'] = arrays[:, i].copy()
     table = pyvista.Table(df)
     assert table.n_rows == nr
     assert table.n_columns == nc
     for i in range(nc):
-        assert np.allclose(table.row_arrays['foo{}'.format(i)], arrays[:, i])
+        assert np.allclose(table.row_arrays[f'foo{i}'], arrays[:, i])
     assert df.equals(table.to_pandas())
 
 

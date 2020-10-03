@@ -119,6 +119,9 @@ class PickingHelper:
                               line_width=line_width, pickable=False,
                               reset_camera=False, **kwargs)
 
+                # render here prior to running the callback
+                self.render()
+
             if callback is not None and is_valid_selection:
                 try_callback(callback, self.picked_cells)
 

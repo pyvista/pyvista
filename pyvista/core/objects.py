@@ -56,14 +56,14 @@ class Table(vtk.vtkTable, DataObject):
             elif pd is not None and isinstance(args[0], pd.DataFrame):
                 self._from_pandas(args[0])
             else:
-                raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
+                raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
     def _from_arrays(self, arrays):
         if not arrays.ndim == 2:
             raise ValueError('Only 2D arrays are supported by Tables.')
         np_table = arrays.T
         for i, array in enumerate(np_table):
-            self.row_arrays['Array {}'.format(i)] = array
+            self.row_arrays[f'Array {i}'] = array
         return
 
     def _from_dict(self, array_dict):
@@ -214,7 +214,7 @@ class Table(vtk.vtkTable, DataObject):
             fmt += "\n"
             fmt += "<table>\n"
             titles = ["Name", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join(["<th>{}</th>".format(t) for t in titles]) + "</tr>\n"
+            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
             row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
 
@@ -305,7 +305,7 @@ class Texture(vtk.vtkTexture):
             elif isinstance(args[0], str):
                 self._from_texture(pyvista.read_texture(args[0]))
             else:
-                raise TypeError('Table unable to be made from ({})'.format(type(args[0])))
+                raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
     def _from_texture(self, texture):
         image = texture.GetInput()
@@ -340,7 +340,7 @@ class Texture(vtk.vtkTexture):
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
         if axis < 0 or axis > 1:
-            raise ValueError("Axis {} out of bounds".format(axis))
+            raise ValueError(f"Axis {axis} out of bounds")
         ax = [1, 0]
         array = self.to_array()
         array = np.flip(array, axis=ax[axis])

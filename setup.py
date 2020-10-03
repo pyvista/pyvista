@@ -55,7 +55,6 @@ setup(
         'Operating System :: Microsoft :: Windows',
         'Operating System :: POSIX',
         'Operating System :: MacOS',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -67,7 +66,7 @@ setup(
                                        'hexbeam.vtk', 'sphere.ply',
                                        'uniform.vtk', 'rectilinear.vtk',
                                        'globe.vtk', '2k_earth_daymap.jpg']},
-    python_requires='>=3.5.*',
+    python_requires='>=3.6.*',
     install_requires=install_requires,
     extras_require={
         'colormaps': ['matplotlib', 'colorcet', 'cmocean']

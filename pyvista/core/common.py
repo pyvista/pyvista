@@ -2,8 +2,8 @@
 
 import collections.abc
 import logging
-import os
 import warnings
+from pathlib import Path
 
 import numpy as np
 import vtk
@@ -12,10 +12,10 @@ import pyvista
 from pyvista.utilities import (
     FieldAssociation,
     abstract_class,
+    axis_rotation,
     fileio,
     get_array,
     is_pyvista_dataset,
-    parse_field_choice,
     raise_not_matching,
     vtk_id_list_to_array,
 )
@@ -59,7 +59,7 @@ class DataObject:
 
         Parameters
         ----------
-        filename : str
+        filename : str, pathlib.Path
             Filename of object to be loaded.  File/reader type is inferred from the
             extension of the filename.
 
@@ -69,22 +69,21 @@ class DataObject:
 
         """
         if self._READERS is None:
-            raise NotImplementedError('{} readers are not specified, this should be a'
-                                      ' dict of (file extension: vtkReader type)'
-                                      .format(self.__class__.__name__))
+            raise NotImplementedError(f'{self.__class__.__name__} readers are not specified,'
+                                      ' this should be a dict of (file extension: vtkReader type)')
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        if not os.path.isfile(filename):
-            raise FileNotFoundError('File %s does not exist' % filename)
+        file_path = Path(filename).resolve()
+        if not file_path.exists():
+            raise FileNotFoundError(f'File {filename} does not exist')
 
-        file_ext = fileio.get_ext(filename)
+        file_ext = file_path.suffix
         if file_ext not in self._READERS:
-            keys_list = ', '.join(self._READERS.keys())
-            raise ValueError('Invalid file extension for {}({}). Must be one of: {}'.format(
-                self.__class__.__name__, file_ext, keys_list))
+            valid_extensions = ', '.join(self._READERS.keys())
+            raise ValueError(f'Invalid file extension for {self.__class__.__name__}({file_ext}).'
+                             f' Must be one of: {valid_extensions}')
 
         reader = self._READERS[file_ext]()
-        reader.SetFileName(filename)
+        reader.SetFileName(str(file_path))
         reader.Update()
         self.shallow_copy(reader.GetOutput())
 
@@ -93,7 +92,7 @@ class DataObject:
 
         Parameters
         ----------
-        filename : str
+        filename : str, pathlib.Path
          Filename of output file. Writer type is inferred from
          the extension of the filename.
 
@@ -107,19 +106,18 @@ class DataObject:
 
         """
         if self._WRITERS is None:
-            raise NotImplementedError('{} writers are not specified, this should be a' \
-                                      ' dict of (file extension: vtkWriter type)'
-                                      .format(self.__class__.__name__))
+            raise NotImplementedError(f'{self.__class__.__name__} writers are not specified,'
+                                      ' this should be a dict of (file extension: vtkWriter type)')
 
-        filename = os.path.abspath(os.path.expanduser(str(filename)))
-        file_ext = fileio.get_ext(filename)
+        file_path = Path(filename).resolve()
+        file_ext = file_path.suffix
         if file_ext not in self._WRITERS:
-            raise ValueError('Invalid file extension for this data type. Must be one of: {}'.format(
-                self._WRITERS.keys()))
+            raise ValueError('Invalid file extension for this data type.'
+                             f' Must be one of: {self._WRITERS.keys()}')
 
         writer = self._WRITERS[file_ext]()
         fileio.set_vtkwriter_mode(vtk_writer=writer, use_binary=binary)
-        writer.SetFileName(filename)
+        writer.SetFileName(str(file_path))
         writer.SetInputData(self)
         writer.Write()
 
@@ -138,7 +136,7 @@ class DataObject:
             ``'cell'``, or ``'field'``.
 
         """
-        raise NotImplementedError('{} mesh type does not have a `get_data_range` method.'.format(type(self)))
+        raise NotImplementedError(f'{type(self)} mesh type does not have a `get_data_range` method.')
 
     def _get_attrs(self):  # pragma: no cover
         """Return the representation methods (internal helper)."""
@@ -156,7 +154,7 @@ class DataObject:
             # HTML version
             fmt += "\n"
             fmt += "<table>\n"
-            fmt += "<tr><th>{}</th><th>Information</th></tr>\n".format(type(self).__name__)
+            fmt += f"<tr><th>{type(self).__name__}</th><th>Information</th></tr>\n"
             row = "<tr><td>{}</td><td>{}</td></tr>\n"
             # now make a call on the object to get its attributes as a list of len 2 tuples
             for attr in self._get_attrs():
@@ -174,7 +172,7 @@ class DataObject:
                 return
             return fmt
         # Otherwise return a string that is Python console friendly
-        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
+        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
         row = "  {}:\t{}\n"
         for attr in self._get_attrs():
@@ -282,6 +280,7 @@ class Common(DataSetFilters, DataObject):
         self._last_active_scalars_name = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+        self._textures = {}
 
     @property
     def active_scalars_info(self):
@@ -402,10 +401,9 @@ class Common(DataSetFilters, DataObject):
             Active scalars represented as arrows.
 
         """
-        if self.active_vectors is None:
-            return
-        name = self.active_vectors_name
-        return self.glyph(scale=name, orient=name)
+        if self.active_vectors is not None:
+            name = self.active_vectors_name
+            return self.glyph(scale=name, orient=name)
 
     @property
     def vectors(self):
@@ -443,14 +441,11 @@ class Common(DataSetFilters, DataObject):
         will not be passed.
 
         """
-        if not hasattr(self, '_textures'):
-            self._textures = {}
         return self._textures
 
     def clear_textures(self):
         """Clear the textures from this mesh."""
-        if hasattr(self, '_textures'):
-            del self._textures
+        self._textures.clear()
 
     def _activate_texture(mesh, name):
         """Grab a texture and update the active texture coordinates.
@@ -482,7 +477,7 @@ class Common(DataSetFilters, DataObject):
         try:
             texture = mesh.textures[name]
         except KeyError:
-            logging.warning('Texture ({}) not associated with this dataset'.format(name))
+            logging.warning(f'Texture ({name}) not associated with this dataset')
             texture = None
         else:
             # Be sure to reset the tcoords if present
@@ -511,7 +506,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveScalars(name)
         else:
-            raise ValueError('Data field ({}) not usable'.format(field))
+            raise ValueError(f'Data field ({field}) not usable')
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
     def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
@@ -538,7 +533,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FieldAssociation.CELL:
             self.GetCellData().SetActiveVectors(name)
         else:
-            raise ValueError('Data field ({}) not usable'.format(field))
+            raise ValueError(f'Data field ({field}) not usable')
         self._active_vectors_info = ActiveArrayInfo(field, name)
 
     def rename_array(self, old_name, new_name, preference='cell'):
@@ -554,7 +549,7 @@ class Common(DataSetFilters, DataObject):
         elif field == FieldAssociation.NONE:
             self.field_arrays[new_name] = self.field_arrays.pop(old_name)
         else:
-            raise KeyError('Array with name {} not found.'.format(old_name))
+            raise KeyError(f'Array with name {old_name} not found.')
         if was_active:
             self.set_active_scalars(new_name, preference=field)
 
@@ -644,7 +639,7 @@ class Common(DataSetFilters, DataObject):
             arr = get_array(self, name, preference=preference)
             if arr is None:
                 # Raise a value error if fetching the range of an unknown array
-                raise ValueError('Array `{}` not present.'.format(name))
+                raise ValueError(f'Array `{name}` not present.')
         # If array has no tuples return a NaN range
         if arr is None or arr.size == 0 or not np.issubdtype(arr.dtype, np.number):
             return (np.nan, np.nan)
@@ -771,28 +766,13 @@ class Common(DataSetFilters, DataObject):
         """Copy pyvista meta data onto this object from another object."""
         self._active_scalars_info = ido.active_scalars_info
         self._active_vectors_info = ido.active_vectors_info
-        if hasattr(ido, '_textures'):
-            self._textures = {}
-            for name, tex in ido._textures.items():
-                self._textures[name] = tex.copy()
+        self.clear_textures()
+        self._textures = {name: tex.copy() for name, tex in ido.textures.items()}
 
     @property
     def point_arrays(self):
         """Return vtkPointData as DataSetAttributes."""
         return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
-
-    def _remove_array(self, field, key):
-        """Remove a single array by name from each field (internal helper)."""
-        field = parse_field_choice(field)
-        if field == FieldAssociation.POINT:
-            self.GetPointData().RemoveArray(key)
-        elif field == FieldAssociation.CELL:
-            self.GetCellData().RemoveArray(key)
-        elif field == FieldAssociation.NONE:
-            self.GetFieldData().RemoveArray(key)
-        else:
-            raise NotImplementedError('Not able to remove arrays from the ({}) data fiedl'.format(field))
-        return
 
     def clear_point_arrays(self):
         """Remove all point arrays."""
@@ -893,7 +873,8 @@ class Common(DataSetFilters, DataObject):
             name = index
             preference = 'cell'
         else:
-            raise KeyError('Index ({}) not understood. Index must be a string name or a tuple of string name and string preference.'.format(index))
+            raise KeyError(f'Index ({index}) not understood.'
+                           ' Index must be a string name or a tuple of string name and string preference.')
         return self.get_array(name, preference=preference, info=False)
 
     def _ipython_key_completions_(self):
@@ -975,7 +956,7 @@ class Common(DataSetFilters, DataObject):
         attrs.append(("N Cells", self.GetNumberOfCells(), "{}"))
         attrs.append(("N Points", self.GetNumberOfPoints(), "{}"))
         bds = self.bounds
-        fmt = "{}, {}".format(pyvista.FLOAT_FORMAT, pyvista.FLOAT_FORMAT)
+        fmt = f"{pyvista.FLOAT_FORMAT}, {pyvista.FLOAT_FORMAT}"
         attrs.append(("X Bounds", (bds[0], bds[1]), fmt))
         attrs.append(("Y Bounds", (bds[2], bds[3]), fmt))
         attrs.append(("Z Bounds", (bds[4], bds[5]), fmt))
@@ -1002,7 +983,7 @@ class Common(DataSetFilters, DataObject):
             fmt += "\n"
             fmt += "<table>\n"
             titles = ["Name", "Field", "Type", "N Comp", "Min", "Max"]
-            fmt += "<tr>" + "".join(["<th>{}</th>".format(t) for t in titles]) + "</tr>\n"
+            fmt += "<tr>" + "".join([f"<th>{t}</th>" for t in titles]) + "</tr>\n"
             row = "<tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>\n"
             row = "<tr>" + "".join(["<td>{}</td>" for i in range(len(titles))]) + "</tr>\n"
 
@@ -1012,7 +993,7 @@ class Common(DataSetFilters, DataObject):
                 dl = pyvista.FLOAT_FORMAT.format(dl)
                 dh = pyvista.FLOAT_FORMAT.format(dh)
                 if name == self.active_scalars_info.name:
-                    name = '<b>{}</b>'.format(name)
+                    name = f'<b>{name}</b>'
                 if arr.ndim > 1:
                     ncomp = arr.shape[1]
                 else:
@@ -1050,7 +1031,7 @@ class Common(DataSetFilters, DataObject):
         """
         if not isinstance(mesh, type(self)):
             raise TypeError('The Input DataSet type must match '
-                            'the one being overwritten %s' % type(self))
+                            f'the one being overwritten {type(self)}')
         self.deep_copy(mesh)
         if is_pyvista_dataset(mesh):
             self.copy_meta_from(mesh)
@@ -1088,48 +1069,13 @@ class Common(DataSetFilters, DataObject):
         if not isinstance(n, int):
             raise TypeError("`n` must be a positive integer.")
         if n < 1:
-             raise ValueError("`n` must be a positive integer.")
+            raise ValueError("`n` must be a positive integer.")
+
         locator = vtk.vtkPointLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        if n < 2:
-            index = locator.FindClosestPoint(point)
-        else:
+        if n > 1:
             id_list = vtk.vtkIdList()
             locator.FindClosestNPoints(n, point, id_list)
-            index = vtk_id_list_to_array(id_list)
-        return index
-
-
-def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """Rotate points angle (in deg) about an axis."""
-    axis = axis.lower()
-
-    # Copy original array to if not inplace
-    if not inplace:
-        points = points.copy()
-
-    # Convert angle to radians
-    if deg:
-        angle *= np.pi / 180
-
-    if axis == 'x':
-        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
-        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 1] = y
-        points[:, 2] = z
-    elif axis == 'y':
-        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
-        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 2] = z
-    elif axis == 'z':
-        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
-        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 1] = y
-    else:
-        raise ValueError('invalid axis. Must be either "x", "y", or "z"')
-
-    if not inplace:
-        return points
+            return vtk_id_list_to_array(id_list)
+        return locator.FindClosestPoint(point)

@@ -93,7 +93,7 @@ def test_interactor_style():
         'rubber_band_2d',
     )
     for interaction in interactions:
-        getattr(plotter, 'enable_{}_style'.format(interaction))()
+        getattr(plotter, f'enable_{interaction}_style')()
         assert plotter._style_class is not None
     plotter.close()
 
@@ -359,6 +359,16 @@ def test_add_point_labels():
     plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
     plotter.show()
 
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.parametrize('always_visible', [False, True])
+def test_add_point_labels_always_visible(always_visible):
+    # just make sure it runs without exception
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_point_labels(
+        np.array([[0, 0, 0]]), ['hello world'], always_visible=always_visible)
+    plotter.show()
+    
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_set_background():
