@@ -765,19 +765,6 @@ class Common(DataSetFilters, DataObject):
         """Return vtkPointData as DataSetAttributes."""
         return DataSetAttributes(self.GetPointData(), dataset=self, association=FieldAssociation.POINT)
 
-    def _remove_array(self, field, key):
-        """Remove a single array by name from each field (internal helper)."""
-        field = parse_field_choice(field)
-        if field == FieldAssociation.POINT:
-            self.GetPointData().RemoveArray(key)
-        elif field == FieldAssociation.CELL:
-            self.GetCellData().RemoveArray(key)
-        elif field == FieldAssociation.NONE:
-            self.GetFieldData().RemoveArray(key)
-        else:
-            raise NotImplementedError(f'Not able to remove arrays from the ({field}) data field')
-        return
-
     def clear_point_arrays(self):
         """Remove all point arrays."""
         self.point_arrays.clear()
