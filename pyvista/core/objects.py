@@ -341,6 +341,21 @@ class Texture(vtk.vtkTexture, DataObject):
         grid.set_active_scalars('Image')
         return self._from_image_data(grid)
 
+    @property
+    def repeat(self):
+        """Repeat the texture."""
+        return self.GetRepeat()
+
+    @repeat.setter
+    def repeat(self, flag):
+        self.SetRepeat(flag)
+
+    @property
+    def n_components(self):
+        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
+        image = self.to_image()
+        return image.active_scalars.shape[1]
+
     def flip(self, axis):
         """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
         if not 0 <= axis <= 1:
@@ -352,12 +367,6 @@ class Texture(vtk.vtkTexture, DataObject):
     def to_image(self):
         """Return the texture as an image."""
         return self.GetInput()
-
-    @property
-    def n_components(self):
-        """Components in the image (e.g. 3 [or 4] for RGB[A])."""
-        image = self.to_image()
-        return image.active_scalars.shape[1]
 
     def to_array(self):
         """Return the texture as a np.ndarray."""
@@ -373,15 +382,6 @@ class Texture(vtk.vtkTexture, DataObject):
     def plot(self, *args, **kwargs):
         """Plot the texture as image data by itself."""
         return self.to_image().plot(*args, **kwargs)
-
-    @property
-    def repeat(self):
-        """Repeat the texture."""
-        return self.GetRepeat()
-
-    @repeat.setter
-    def repeat(self, flag):
-        self.SetRepeat(flag)
 
     def copy(self):
         """Make a copy of this texture."""
