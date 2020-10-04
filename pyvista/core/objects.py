@@ -384,5 +384,5 @@ class Texture(vtk.vtkTexture, DataObject):
         self.SetRepeat(flag)
 
     def copy(self):
-        """Make a copy of this textrue."""
+        """Make a copy of this texture."""
         return Texture(self.to_image().copy())
