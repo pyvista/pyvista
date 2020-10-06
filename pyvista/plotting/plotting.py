@@ -1502,8 +1502,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.mapper.InterpolateScalarsBeforeMappingOn()
 
         actor = vtk.vtkActor()
-        actor.SetMapper(self.mapper)
         prop = vtk.vtkProperty()
+        actor.SetMapper(self.mapper)
+        actor.SetProperty(prop)
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
