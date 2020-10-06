@@ -3,7 +3,7 @@
 The data objects does not have any sort of spatial reference.
 
 """
-
+import imageio
 import numpy as np
 import vtk
 
@@ -310,8 +310,13 @@ class Texture(vtk.vtkTexture, DataObject):
                 raise TypeError(f'Table unable to be made from ({type(args[0])})')
 
     def _from_file(self, filename):
-        image = self._load_file(filename)
-        self._from_image_data(image)
+        try:
+            image = self._load_file(filename)
+            if image.GetNumberOfPoints() < 2:
+                raise ValueError("Problem reading the image with VTK.")
+            self._from_image_data(image)
+        except (KeyError, RuntimeError):
+            self._from_array(imageio.imread(filename))
 
     def _from_texture(self, texture):
         image = texture.GetInput()
