@@ -237,6 +237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._shadow_renderer = Renderer(
             self, border, border_color, border_width)
         self._shadow_renderer.SetViewport(0, 0, 1, 1)
+        self._shadow_renderer.SetDraw(False)
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bar_ranges = {}
