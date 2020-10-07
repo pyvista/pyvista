@@ -1100,6 +1100,7 @@ class Common(DataSetFilters, DataObject):
         ``-1`` indicates that the locator was not able to find a
         reasonably close cell.
 
+        >>> import numpy as np
         >>> points = np.random.random((1000, 3))
         >>> indices = mesh.find_closest_cell(points)
         >>> print(indices.shape)
