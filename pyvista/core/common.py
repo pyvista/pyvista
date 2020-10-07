@@ -1131,37 +1131,3 @@ class Common(DataSetFilters, DataObject):
             return np.array([locator.FindCell(node) for node in point])
 
         return locator.FindCell(point)
-
-
-def axis_rotation(points, angle, inplace=False, deg=True, axis='z'):
-    """Rotate points angle (in deg) about an axis."""
-    axis = axis.lower()
-
-    # Copy original array to if not inplace
-    if not inplace:
-        points = points.copy()
-
-    # Convert angle to radians
-    if deg:
-        angle *= np.pi / 180
-
-    if axis == 'x':
-        y = points[:, 1] * np.cos(angle) - points[:, 2] * np.sin(angle)
-        z = points[:, 1] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 1] = y
-        points[:, 2] = z
-    elif axis == 'y':
-        x = points[:, 0] * np.cos(angle) + points[:, 2] * np.sin(angle)
-        z = - points[:, 0] * np.sin(angle) + points[:, 2] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 2] = z
-    elif axis == 'z':
-        x = points[:, 0] * np.cos(angle) - points[:, 1] * np.sin(angle)
-        y = points[:, 0] * np.sin(angle) + points[:, 1] * np.cos(angle)
-        points[:, 0] = x
-        points[:, 1] = y
-    else:
-        raise ValueError('invalid axis. Must be either "x", "y", or "z"')
-
-    if not inplace:
-        return points
