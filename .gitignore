@@ -66,3 +66,7 @@ docs/external_examples.rst
 
 # vim
 *.swp
+
+
+# benchmark cache from pytest-benchmark
+.benchmarks

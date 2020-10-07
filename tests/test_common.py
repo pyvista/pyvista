@@ -748,18 +748,41 @@ def test_find_closest_cell():
     mesh = pyvista.Wavelet()
     node = np.array([0, 0.2, 0.2])
 
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         mesh.find_closest_cell([1, 2])
 
     with pytest.raises(TypeError):
         # allow Sequence but not Iterable
         mesh.find_closest_cell({1, 2, 3})
 
+    # array but bad size
+    with pytest.raises(ValueError):
+        mesh.find_closest_cell(np.empty(4))
+
     index = mesh.find_closest_cell(node)
     assert isinstance(index, int)
-    # Make sure we can fetch that point
-    closest = mesh.points[index]
-    assert len(closest) == 3
+
+
+def test_find_closest_cells():
+    mesh = pyvista.Sphere()
+    # invalid array dim
+    with pytest.raises(ValueError):
+        mesh.find_closest_cell(np.empty((1, 1, 1)))
+
+    # test invalid array size
+    with pytest.raises(ValueError):
+        mesh.find_closest_cell(np.empty((4, 4)))
+
+    # simply get the face centers
+    fcent = mesh.points[mesh.faces.reshape(-1, 4)[:, 1:]].mean(1)
+    indices = mesh.find_closest_cell(fcent)
+
+    # this will miss a few...
+    mask = indices == -1
+    assert mask.sum() < 10
+
+    # Make sure we match the face centers
+    assert np.allclose(indices[~mask], np.arange(mesh.n_faces)[~mask])
 
 
 def test_setting_points_from_self(grid):

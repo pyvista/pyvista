@@ -1076,19 +1076,60 @@ class Common(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        point : iterable(float)
-            Length 3 coordinate of the point to query.
+        point : iterable(float) or np.ndarray
+            Length 3 coordinate of the point to query or a ``numpy`` array
+            of coordinates.
 
-        Return
-        ------
-        int : the index of the point in this mesh that is closes to the given point.
+        Returns
+        -------
+        index : int or np.ndarray
+            Index or indices of the cell in this mesh that is closest
+            to the given point.
+
+        Examples
+        --------
+        Find nearest cell to a point on a sphere
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> index = mesh.find_closest_cell([0, 0, 0.5])
+        >>> index
+        59
+
+        Find the nearest cells to several random points.  Note that
+        ``-1`` indicates that the locator was not able to find a
+        reasonably close cell.
+
+        >>> points = np.random.random((1000, 3))
+        >>> indices = mesh.find_closest_cell(points)
+        >>> print(indices.shape)
+        (1000,)
         """
-        if not isinstance(point, (np.ndarray, collections.abc.Sequence)) or len(point) != 3:
-            raise TypeError("Given point must be a length three sequence.")
+        if not isinstance(point, (np.ndarray, collections.abc.Sequence)):
+            raise TypeError("Given point be an iterable or an array.")
+
+        # check if this is an array of points
+        is_array = False
+        if isinstance(point, np.ndarray):
+            if point.ndim > 2:
+                raise ValueError("Array of points must be 2D")
+            if point.ndim == 2:
+                if point.shape[1] != 3:
+                    raise ValueError("Array of points must have three values per point")
+                is_array = True
+            else:
+                if point.size != 3:
+                    raise ValueError("Given point must have three values")
+        else:
+            if len(point) != 3:
+                raise ValueError("Given point must have three values")
 
         locator = vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
+        if is_array:  # simply iterate through all the points
+            return np.array([locator.FindCell(node) for node in point])
+
         return locator.FindCell(point)
 
 
