@@ -1219,8 +1219,8 @@ class DataSetFilters:
                 # strange behavior:
                 # must use this method rather than deleting from the point_arrays
                 # or else object is collected.
-                b._remove_array(FieldAssociation.CELL, 'RegionId')
-                b._remove_array(FieldAssociation.POINT, 'RegionId')
+                b.cell_arrays.remove('RegionId')
+                b.point_arrays.remove('RegionId')
             bodies.append(b)
 
         return bodies
@@ -2506,6 +2506,38 @@ class DataSetFilters:
         logging.warning('DEPRECATED: ``.compute_gradient`` is deprecated. Use ``.compute_derivative`` instead.')
         return self.compute_derivative(scalars=scalars, gradient=gradient_name,
                                        preference=preference)
+
+    def shrink(dataset, shrink_factor=1.0, progress_bar=False):
+        """Shrink the individual faces of a mesh.
+
+        This filter shrinks the individual faces of a mesh rather than scaling
+        the entire mesh.
+
+        Parameters
+        ----------
+        shrink_factor : float, optional
+            fraction of shrink for each cell.
+
+        progress_bar : bool, optional
+            Display a progress bar to indicate progress.
+
+        Examples
+        --------
+        Extrude shrink mesh
+
+        >>> import pyvista
+        >>> mesh = pyvista.Sphere()
+        >>> shrunk_mesh = mesh.shrink(shrink_factor=0.8)  # doctest:+SKIP
+        """
+        if not (0.0 <= shrink_factor <= 1.0):
+            raise ValueError('`shrink_factor` should be between 0.0 and 1.0')
+        alg = vtk.vtkShrinkFilter()
+        alg.SetInputData(dataset)
+        alg.SetShrinkFactor(shrink_factor)
+        _update_alg(alg, progress_bar, 'Shrinking Mesh')
+        output = pyvista.wrap(alg.GetOutput())
+        if isinstance(dataset, vtk.vtkPolyData):
+            return output.extract_surface()
 
 @abstract_class
 class CompositeFilters:
@@ -4325,7 +4357,6 @@ class PolyDataFilters(DataSetFilters):
         alg.SetPassThroughPointIds(pass_point_ids)
         alg.Update()
         return _get_output(alg)
-
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):

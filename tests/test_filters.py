@@ -905,3 +905,10 @@ def test_poly_data_strip():
     slc = mesh.slice(normal='z', origin=(0,0,-10))
     stripped = slc.strip()
     assert stripped.n_cells == 1
+
+
+def test_shrink():
+    mesh = pyvista.Sphere()
+    shrunk = mesh.shrink(shrink_factor=0.8)
+    assert shrunk.n_cells == mesh.n_cells
+    assert shrunk.area < mesh.area
