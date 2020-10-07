@@ -1501,10 +1501,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if interpolate_before_map:
             self.mapper.InterpolateScalarsBeforeMappingOn()
 
-        actor, prop = self.add_actor(self.mapper,
-                                     reset_camera=reset_camera,
-                                     name=name, culling=culling,
-                                     pickable=pickable)
+        actor = vtk.vtkActor()
+        prop = vtk.vtkProperty()
+        actor.SetMapper(self.mapper)
+        actor.SetProperty(prop)
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
@@ -1761,6 +1761,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Add scalar bar if available
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
+
+        self.add_actor(actor,
+                       reset_camera=reset_camera,
+                       name=name, culling=culling,
+                       pickable=pickable)
 
         self.renderer.Modified()
 
