@@ -1,3 +1,4 @@
+import os
 import sys
 
 import numpy as np
@@ -26,6 +27,8 @@ COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
                                      reason="Python 2 doesn't support binding methods")
 
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
+
 
 @pytest.fixture(scope='module')
 def uniform_vec():
@@ -41,6 +44,7 @@ def test_datasetfilters_init():
         pyvista.core.filters.DataSetFilters()
 
 
+@skip_windows
 def test_clip_filter():
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(DATASETS):
@@ -52,6 +56,7 @@ def test_clip_filter():
             assert isinstance(clp, pyvista.UnstructuredGrid)
 
 
+@skip_windows
 def test_clip_by_scalars_filter():
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset_in in enumerate(DATASETS):
