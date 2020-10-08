@@ -1127,7 +1127,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
                  annotations=None, pickable=True, preference="point",
-                 log_scale=False, **kwargs):
+                 log_scale=False, render=True, **kwargs):
         """Add any PyVista/VTK mesh or dataset that PyVista can wrap to the scene.
 
         This method is using a mesh representation to view the surfaces
@@ -1766,7 +1766,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.add_actor(actor,
                        reset_camera=reset_camera,
                        name=name, culling=culling,
-                       pickable=pickable)
+                       pickable=pickable,
+                       render=render)
 
         self.renderer.Modified()
 
