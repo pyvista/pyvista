@@ -20,6 +20,9 @@
   ga('send', 'pageview');
 
 </script>
+<!-- This contains our AdSense code -->
+<script data-ad-client="ca-pub-1379117569915790" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+
 {% endblock %}
 
 {% block menu %}
@@ -41,4 +44,7 @@
             {% endfor %}
         </ul>
     {% endif %}
+
+    {% include 'sponsor.html' %}
+
 {% endblock %}
