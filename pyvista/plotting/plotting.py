@@ -237,6 +237,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._shadow_renderer = Renderer(
             self, border, border_color, border_width)
         self._shadow_renderer.SetViewport(0, 0, 1, 1)
+        self._shadow_renderer.SetDraw(False)
 
         # This keeps track of scalars names already plotted and their ranges
         self._scalar_bar_ranges = {}
@@ -1501,10 +1502,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if interpolate_before_map:
             self.mapper.InterpolateScalarsBeforeMappingOn()
 
-        actor, prop = self.add_actor(self.mapper,
-                                     reset_camera=reset_camera,
-                                     name=name, culling=culling,
-                                     pickable=pickable)
+        actor = vtk.vtkActor()
+        prop = vtk.vtkProperty()
+        actor.SetMapper(self.mapper)
+        actor.SetProperty(prop)
 
         # Make sure scalars is a numpy array after this point
         original_scalar_name = None
@@ -1761,6 +1762,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Add scalar bar if available
         if stitle is not None and show_scalar_bar and (not rgb or _custom_opac):
             self.add_scalar_bar(stitle, **scalar_bar_args)
+
+        self.add_actor(actor,
+                       reset_camera=reset_camera,
+                       name=name, culling=culling,
+                       pickable=pickable)
 
         self.renderer.Modified()
 
@@ -3347,7 +3353,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         --------
         >>> import pyvista
         >>> sphere = pyvista.Sphere()
-        >>> plotter = pyvista.Plotter()
+        >>> plotter = pyvista.Plotter(off_screen=True)
         >>> actor = plotter.add_mesh(sphere)
         >>> plotter.screenshot('screenshot.png') # doctest:+SKIP
 
@@ -3371,6 +3377,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             # Plotter hasn't been rendered or was improperly closed
             raise AttributeError('This plotter is closed and unable to save a screenshot.')
 
+        if self._first_time and not self.off_screen:
+            raise RuntimeError("Nothing to screenshot - call .show first or "
+                               "use the off_screen argument")
         self.render()
 
         # debug: this needs to be called twice for some reason,
