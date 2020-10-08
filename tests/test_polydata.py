@@ -18,6 +18,8 @@ SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
 
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
+CUBE_DENSE = pyvista.Cube()
+
 test_path = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -457,6 +459,8 @@ def test_area():
     ideal_area = 4*pi*radius**2
     assert np.isclose(dense_sphere.area, ideal_area, rtol=1E-3)
 
+    ideal_area = np.cbrt(CUBE_DENSE.volume)**2*6.0
+    assert CUBE_DENSE.area == ideal_area
 
 def test_volume():
     dense_sphere = SPHERE_DENSE.copy()
