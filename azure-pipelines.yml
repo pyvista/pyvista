@@ -385,7 +385,7 @@ jobs:
     displayName: Upload Documentation to pyvista-docs
     env:
       GH_TOKEN: $(gh.token)
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
 
   # upload documentation to pyvista-docs develop when merging with master
   - script: |
