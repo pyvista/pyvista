@@ -55,8 +55,8 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
     if not isinstance(data, pyvista.MultiBlock):
         data.copy_meta_from(ido)
         for array_name in ido.array_names:
-            if array_name not in data.array_names and len(ido[array_name]) == 1:
-                data.add_field_array(ido[array_name], array_name)
+            if not data.field_arrays and ido.field_arrays:
+                data.field_arrays.update(ido.field_arrays)
         if active_scalars is not None:
             data.set_active_scalars(active_scalars, preference=active_scalars_field)
     return data
