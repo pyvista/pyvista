@@ -1106,29 +1106,24 @@ class Common(DataSetFilters, DataObject):
         >>> print(indices.shape)
         (1000,)
         """
-        if not isinstance(point, (np.ndarray, collections.abc.Sequence)):
-            raise TypeError("Given point must be an iterable or an array.")
-
+        if isinstance(point, collections.abc.Sequence):
+            point = np.array(point)
         # check if this is an array of points
-        is_array = False
         if isinstance(point, np.ndarray):
             if point.ndim > 2:
                 raise ValueError("Array of points must be 2D")
             if point.ndim == 2:
                 if point.shape[1] != 3:
                     raise ValueError("Array of points must have three values per point")
-                is_array = True
             else:
                 if point.size != 3:
                     raise ValueError("Given point must have three values")
+                point = np.array([point])
         else:
-            if len(point) != 3:
-                raise ValueError("Given point must have three values")
+            raise TypeError("Given point must be an iterable or an array.")
 
         locator = vtk.vtkCellLocator()
         locator.SetDataSet(self)
         locator.BuildLocator()
-        if is_array:  # simply iterate through all the points
-            return np.array([locator.FindCell(node) for node in point])
-
-        return locator.FindCell(point)
+        closest_cells = np.array([locator.FindCell(node) for node in point])
+        return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
