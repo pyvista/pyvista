@@ -326,7 +326,7 @@ class Renderer(vtkRenderer):
         return actor
 
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
-                  pickable=True):
+                  pickable=True, render=True):
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -355,7 +355,7 @@ class Renderer(vtkRenderer):
 
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False)
+        rv = self.remove_actor(name, reset_camera=False, render=render)
 
         if isinstance(uinput, vtk.vtkMapper):
             actor = vtk.vtkActor()
@@ -375,7 +375,7 @@ class Renderer(vtkRenderer):
             self.reset_camera()
         elif not self.camera_set and reset_camera is None and not rv:
             self.reset_camera()
-        else:
+        elif render:
             self.parent.render()
 
         self.update_bounds_axes()
