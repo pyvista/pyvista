@@ -418,6 +418,20 @@ def test_texture_map_to_plane():
     assert 'Texture Coordinates' in dataset.array_names
 
 
+def test_texture_map_to_sphere():
+    dataset = pyvista.Sphere(radius=1.0)
+    # Automatically decide plane
+    out = dataset.texture_map_to_sphere(inplace=False, prevent_seam=False)
+    assert isinstance(out, type(dataset))
+    # Define the center explicitly
+    out = dataset.texture_map_to_sphere(center=(0.1, 0.0, 0.0), prevent_seam=True)
+    assert isinstance(out, type(dataset))
+    assert 'Texture Coordinates' in out.array_names
+    # FINAL: Test in place modifiacation
+    dataset.texture_map_to_sphere(inplace=True)
+    assert 'Texture Coordinates' in dataset.array_names
+
+
 def test_compute_cell_sizes():
     for i, dataset in enumerate(DATASETS):
         result = dataset.compute_cell_sizes()

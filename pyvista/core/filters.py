@@ -1017,6 +1017,58 @@ class DataSetFilters:
         dataset.GetPointData().AddArray(otc) # Add old ones back at the end
         return # No return type because it is inplace
 
+    def texture_map_to_sphere(dataset, center=None, prevent_seam=True,
+                             inplace=False, name='Texture Coordinates'):
+        """Texture map this dataset to a user defined sphere.
+
+        This is often used to define a sphere to texture map an image to this
+        dataset. The sphere defines the spatial reference and extent of that image.
+
+        Parameters
+        ----------
+        center : tuple(float)
+            Length 3 iterable of floats defining the XYZ coordinates of the
+            center of the sphere. If ``None``, this will be automatically
+            calculated.
+
+        prevent_seam : bool
+            Default true. Control how the texture coordinates are generated.
+            If set, the s-coordinate ranges from 0->1 and 1->0 corresponding
+            to the theta angle variation between 0->180 and 180->0 degrees.
+            Otherwise, the s-coordinate ranges from 0->1 between 0->360
+            degrees.
+
+        inplace : bool, optional
+            If True, the new texture coordinates will be added to the dataset
+            inplace. If False (default), a new dataset is returned with the
+            textures coordinates
+
+        name : str, optional
+            The string name to give the new texture coordinates if applying
+            the filter inplace.
+
+        """
+        alg = vtk.vtkTextureMapToSphere()
+        if center is None:
+            alg.SetAutomaticSphereGeneration(True)
+        else:
+            alg.SetAutomaticSphereGeneration(False)
+            alg.SetCenter(center)
+        alg.SetPreventSeam(prevent_seam)
+        alg.SetInputDataObject(dataset)
+        alg.Update()
+        output = _get_output(alg)
+        if not inplace:
+            return output
+        t_coords = output.GetPointData().GetTCoords()
+        t_coords.SetName(name)
+        otc = dataset.GetPointData().GetTCoords()
+        dataset.GetPointData().SetTCoords(t_coords)
+        dataset.GetPointData().AddArray(t_coords)
+        # CRITICAL:
+        dataset.GetPointData().AddArray(otc) # Add old ones back at the end
+        return # No return type because it is inplace
+
     def compute_cell_sizes(dataset, length=True, area=True, volume=True,
                            progress_bar=False):
         """Compute sizes for 1D (length), 2D (area) and 3D (volume) cells.
