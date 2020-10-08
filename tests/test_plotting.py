@@ -368,7 +368,7 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.add_point_labels(
         np.array([[0, 0, 0]]), ['hello world'], always_visible=always_visible)
     plotter.show()
-    
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_set_background():
@@ -833,6 +833,23 @@ def test_image_properties():
     _ = p.image
     # Get the depth image
     _ = p.get_image_depth()
+    p.close()
+
+    # gh-920
+    rr = np.array(
+        [[-0.5, -0.5, 0], [-0.5, 0.5, 1], [0.5, 0.5, 0], [0.5, -0.5, 1]])
+    tris = np.array([[3, 0, 2, 1], [3, 2, 0, 3]])
+    mesh = pyvista.PolyData(rr, tris)
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, color=True)
+    p.renderer.camera_position = (0., 0., 1.)
+    p.renderer.ResetCamera()
+    p.enable_parallel_projection()
+    assert p.renderer.camera_set
+    p.show(interactive=False, auto_close=False)
+    img = p.get_image_depth(fill_value=0.)
+    rng = np.ptp(img)
+    assert 0.3 < rng < 0.4, rng  # 0.3313504 in testing
     p.close()
 
 

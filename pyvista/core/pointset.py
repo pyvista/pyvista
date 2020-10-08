@@ -335,9 +335,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             Total area of the mesh.
 
         """
-        mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self)
-        return mprop.GetSurfaceArea()
+        areas = self.compute_cell_sizes(length=False, area=True, volume=False,)["Area"]
+        return np.sum(areas)
 
     @property
     def volume(self):
@@ -399,6 +398,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         alg.SetInputDataObject(self)
         alg.Update()
         return alg.GetOutput().GetNumberOfCells()
+
+
+    def __del__(self):
+        """Delete the object."""
+        if hasattr(self, '_obbTree'):
+            del self._obbTree
 
 
 @abstract_class
