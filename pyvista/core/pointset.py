@@ -526,6 +526,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(None, args[0], args[1], args[2], deep)
+                self._check_for_consistency()
             else:
                 raise TypeError('All input types must be np.ndarray')
 
@@ -537,6 +538,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
+                self._check_for_consistency()
             else:
                 raise TypeError('All input types must be np.ndarray')
 
@@ -626,6 +628,20 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             self.SetCells(cell_type, vtkcells)
         else:
             self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)
+
+    def _check_for_consistency(self):
+        '''
+        Checks if the number of offsets and celltypes
+        correspond to the number of cells.
+        Called after initialization of the self from arrays.
+        '''
+        if not self.number_of_cells == self.offset.shape[0] or\
+            not self.number_of_cells == self.celltypes.shape[0]:
+            raise ValueError('Number of cells (%s) must be equal to the number of offset values (%s) and to the number of celltypes values (%s)' %
+                             (str(self.number_of_cells),
+                              str(self.offset.shape[0]),
+                              str(self.celltypes.shape[0])),
+                            )
 
     @property
     def cells(self):
