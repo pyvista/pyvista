@@ -525,6 +525,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(None, args[0], args[1], args[2], deep)
+                self._check_for_consistency()
             else:
                 raise TypeError('All input types must be np.ndarray')
 
@@ -536,6 +537,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
+                self._check_for_consistency()
             else:
                 raise TypeError('All input types must be np.ndarray')
 
@@ -625,6 +627,27 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             self.SetCells(cell_type, vtkcells)
         else:
             self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)
+
+    def _check_for_consistency(self):
+        """Check if size of offsets and celltypes match the number of cells.
+
+        Checks if the number of offsets and celltypes correspond to
+        the number of cells.  Called after initialization of the self
+        from arrays.
+        """
+        if self.n_cells != self.celltypes.size:
+            raise ValueError(f'Number of cell types ({self.celltypes.size}) '
+                             f'must match the number of cells {self.n_cells})')
+
+        if VTK9:
+            if self.n_cells != self.offset.size - 1:
+                raise ValueError(f'Size of the offset ({self.offset.size}) '
+                                 'must be one greater than the number of cells '
+                                 f'({self.n_cells})')
+        else:
+            if self.n_cells != self.offset.size:
+                raise ValueError(f'Size of the offset ({self.offset.size}) '
+                                 f'must match the number of cells ({self.n_cells})')
 
     @property
     def cells(self):
