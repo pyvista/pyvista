@@ -1107,7 +1107,7 @@ class Common(DataSetFilters, DataObject):
         (1000,)
         """
         if not isinstance(point, (np.ndarray, collections.abc.Sequence)):
-            raise TypeError("Given point be an iterable or an array.")
+            raise TypeError("Given point must be an iterable or an array.")
 
         # check if this is an array of points
         is_array = False
