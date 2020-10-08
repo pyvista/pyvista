@@ -711,9 +711,11 @@ class Common(DataSetFilters, DataObject):
                             '\tvtk.vtkTransform\n'
                             '\t4x4 np.ndarray\n')
 
-        x = (self.points*t[0, :3]).sum(1) + t[0, -1]
-        y = (self.points*t[1, :3]).sum(1) + t[1, -1]
-        z = (self.points*t[2, :3]).sum(1) + t[2, -1]
+        # Multiply by the transformation matrix and normalize by the
+        # homogeneous scale factor
+        x = ((self.points*t[0, :3]).sum(1) + t[0, -1]) / t[3, 3]
+        y = ((self.points*t[1, :3]).sum(1) + t[1, -1]) / t[3, 3]
+        z = ((self.points*t[2, :3]).sum(1) + t[2, -1]) / t[3, 3]
 
         # overwrite points
         self.points[:, 0] = x
