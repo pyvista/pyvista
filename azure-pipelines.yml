@@ -377,6 +377,7 @@ jobs:
       rm -rf *
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
       cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
       touch .nojekyll
       echo "docs.pyvista.org" >> CNAME
       git add .
@@ -395,6 +396,7 @@ jobs:
       git checkout -b gh-pages
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
       cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
       touch .nojekyll
       echo "dev.pyvista.org" >> CNAME
       git add .
