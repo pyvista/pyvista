@@ -211,37 +211,9 @@ class DataObject:
         newobject.copy_meta_from(self)
         return newobject
 
-    def _add_field_array(self, scalars, name, deep=True):
-        """Add a field array to the mesh.
-
-        Parameters
-        ----------
-        scalars : numpy.ndarray
-            Numpy array of scalars.  Does not have to match number of points or
-            numbers of cells.
-
-        name : str
-            Name of field scalars to add.
-
-        deep : bool, optional
-            Does not copy scalars when False.  A reference to the scalars
-            must be kept to avoid a segfault.
-
-        """
-        self.field_arrays.append(scalars, name, deep_copy=deep)
-
-    def _add_field_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
-        """Add a field array.
-
-        DEPRECATED: Please use `_add_field_array` instead.
-
-        """
-        warnings.warn('Deprecation Warning: `_add_field_scalar` is now `_add_field_array`', RuntimeWarning)
-        return self._add_field_array(scalars, name, deep=deep)
-
     def add_field_array(self, scalars, name, deep=True):
         """Add a field array."""
-        self._add_field_array(scalars, name, deep=deep)
+        self.field_arrays.append(scalars, name, deep_copy=deep)
 
     @property
     def field_arrays(self):
@@ -573,39 +545,6 @@ class Common(DataSetFilters, DataObject):
         warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
         return self.active_scalars
 
-    def _add_point_array(self, scalars, name, set_active=False, deep=True):
-        """Add point scalars to the mesh.
-
-        Parameters
-        ----------
-        scalars : numpy.ndarray
-            Numpy array of scalars.  Must match number of points.
-
-        name : str
-            Name of point scalars to add.
-
-        set_active : bool, optional
-            Sets the scalars to the active plotting scalars.  Default False.
-
-        deep : bool, optional
-            Does not copy scalars when False.  A reference to the scalars
-            must be kept to avoid a segfault.
-
-        """
-        self.point_arrays.append(scalars, name, deep_copy=deep)
-        if set_active or self.active_scalars_info.name is None:
-            self.GetPointData().SetActiveScalars(name)
-            self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name)
-
-    def _add_point_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
-        """Add points array.
-
-        DEPRECATED: Please use `_add_point_array` instead.
-
-        """
-        warnings.warn('Deprecation Warning: `_add_point_scalar` is now `_add_point_array`', RuntimeWarning)
-        return self._add_point_array(scalars, name, set_active=set_active, deep=deep)
-
     def get_data_range(self, arr=None, preference='cell'):
         """Get the non-NaN min and max of a named array.
 
@@ -719,39 +658,6 @@ class Common(DataSetFilters, DataObject):
         self.points[:, 0] = x
         self.points[:, 1] = y
         self.points[:, 2] = z
-
-    def _add_cell_array(self, scalars, name, set_active=False, deep=True):
-        """Add cell scalars to the vtk object.
-
-        Parameters
-        ----------
-        scalars : numpy.ndarray
-            Numpy array of scalars.  Must match number of points.
-
-        name : str
-            Name of point scalars to add.
-
-        set_active : bool, optional
-            Sets the scalars to the active plotting scalars.  Default False.
-
-        deep : bool, optional
-            Does not copy scalars when False.  A reference to the scalars
-            must be kept to avoid a segfault.
-
-        """
-        self.cell_arrays.append(scalars, name, deep_copy=deep)
-        if set_active or self.active_scalars_info.name is None:
-            self.GetCellData().SetActiveScalars(name)
-            self._active_scalars_info = ActiveArrayInfo(FieldAssociation.CELL, name)
-
-    def _add_cell_scalar(self, scalars, name, set_active=False, deep=True):  # pragma: no cover
-        """Add a cell array.
-
-        DEPRECATED: Please use `_add_cell_array` instead.
-
-        """
-        warnings.warn('Deprecation Warning: `_add_cell_scalar` is now `_add_cell_array`', RuntimeWarning)
-        return self._add_cell_array(scalars, name, set_active=set_active, deep=deep)
 
     def copy_meta_from(self, ido):
         """Copy pyvista meta data onto this object from another object."""
