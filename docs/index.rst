@@ -3,7 +3,7 @@
 .. raw:: html
 
     <div class="banner">
-        <img src="_static/pyvista_logo.png" alt="pyvista" width="500px">
+        <a href="./examples/index.html"><img src="_static/pyvista_banner.png" alt="pyvista" width="100%"/></a>
         <h2>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
     </div>
 
