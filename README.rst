@@ -2,8 +2,9 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
-    :alt: pyvista
+.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_banner.png
+   :target: https://docs.pyvista.org/examples/index.html
+   :alt: pyvista
 
 
 .. |zenodo| image:: https://zenodo.org/badge/92974124.svg
