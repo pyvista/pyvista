@@ -1615,10 +1615,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
             def prepare_mapper(scalars):
                 # Scalars interpolation approach
                 if scalars.shape[0] == mesh.n_points:
-                    self.mesh._add_point_array(scalars, title, True)
+                    self.mesh.point_arrays.append(scalars, title, True)
                     self.mapper.SetScalarModeToUsePointData()
                 elif scalars.shape[0] == mesh.n_cells:
-                    self.mesh._add_cell_array(scalars, title, True)
+                    self.mesh.cell_arrays.append(scalars, title, True)
                     self.mapper.SetScalarModeToUseCellData()
                 else:
                     raise_not_matching(scalars, mesh)
@@ -2052,10 +2052,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Scalars interpolation approach
         if scalars.shape[0] == volume.n_points:
-            volume._add_point_array(scalars, title, True)
+            volume.point_arrays.append(scalars, title, True)
             self.mapper.SetScalarModeToUsePointData()
         elif scalars.shape[0] == volume.n_cells:
-            volume._add_cell_array(scalars, title, True)
+            volume.cell_arrays.append(scalars, title, True)
             self.mapper.SetScalarModeToUseCellData()
         else:
             raise_not_matching(scalars, volume)
