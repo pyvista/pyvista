@@ -38,7 +38,7 @@ jobs:
 # DESCRIPTION: Core API and doc string testing for Linux
 - job: Linux
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
@@ -49,6 +49,10 @@ jobs:
         python.version: '3.6'
       Python37:
         python.version: '3.7'
+      Python38:
+        python.version: '3.8'
+      Python39:
+        python.version: '3.9'
 
   steps:
   - task: UsePythonVersion@0
@@ -119,7 +123,7 @@ jobs:
 # DESCRIPTION: Core API and doc string testing across VTK versions using conda
 - job: LinuxConda
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
   variables:
     DISPLAY: ':99.0'
     PYVISTA_OFF_SCREEN: 'True'
@@ -179,6 +183,8 @@ jobs:
         python.version: '3.7'
       Python38-64bit:
         python.version: '3.8'
+      Python38-64bit:
+        python.version: '3.9'
   steps:
   - task: UsePythonVersion@0
     inputs:
@@ -230,6 +236,8 @@ jobs:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
+      Python39:
+        python.version: '3.9'
   pool:
     vmImage: 'macOS-10.15'
   steps:
@@ -258,7 +266,7 @@ jobs:
 # Builds the documentation
 - job: BuildDocumentation
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-20.04'
 
   variables:
     DISPLAY: ':99.0'
