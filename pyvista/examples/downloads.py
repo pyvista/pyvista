@@ -478,6 +478,11 @@ def download_model_with_variance():
     return _download_and_read("model_with_variance.vtu")
 
 
+def download_thermal_probes():
+    """Download model with variance dataset."""
+    return _download_and_read("probes.vtp")
+
+
 def download_carburator():
     """Download scan of a carburator.
 
