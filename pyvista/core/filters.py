@@ -1018,7 +1018,7 @@ class DataSetFilters:
         return # No return type because it is inplace
 
     def texture_map_to_sphere(dataset, center=None, prevent_seam=True,
-                             inplace=False, name='Texture Coordinates'):
+                              inplace=False, name='Texture Coordinates'):
         """Texture map this dataset to a user defined sphere.
 
         This is often used to define a sphere to texture map an image to this
@@ -1047,6 +1047,15 @@ class DataSetFilters:
             The string name to give the new texture coordinates if applying
             the filter inplace.
 
+        Examples
+        --------
+        Map a puppy texture to a sphere
+
+        >>> import pyvista
+        >>> sphere = pyvista.Sphere()
+        >>> sphere.texture_map_to_sphere(inplace=True)
+        >>> tex = examples.download_puppy_texture()  # doctest:+SKIP
+        >>> sphere.plot(texture=tex)  # doctest:+SKIP
         """
         alg = vtk.vtkTextureMapToSphere()
         if center is None:
