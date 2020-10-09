@@ -5,6 +5,7 @@ import shutil
 import sys
 import zipfile
 
+import numpy as np
 import vtk
 
 import pyvista
@@ -643,3 +644,15 @@ def download_rgba_texture():
 def download_vtk_logo():
     """Download a texture of the VTK logo."""
     return _download_and_read("vtk.png", texture=True)
+
+
+def download_gpr_data_array():
+    """Download a texture of the VTK logo."""
+    saved_file, _ = _download_file("gpr-example/data.npy")
+    return np.load(saved_file)
+
+def download_gpr_path():
+    """Download a texture of the VTK logo."""
+    saved_file, _ = _download_file("gpr-example/path.txt")
+    path = np.loadtxt(saved_file, skiprows=1)
+    return pyvista.PolyData(path)
