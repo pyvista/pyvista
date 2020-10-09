@@ -1543,7 +1543,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 # Get array from mesh
                 opacity = get_array(mesh, opacity,
                                     preference=preference, err=True)
-                opacity = normalize(opacity)
+                if np.any(opacity > 1):
+                    warnings.warn("Opacity scalars contain values over 1")
+                if np.any(opacity < 0):
+                    warnings.warn("Opacity scalars contain values less than 0")
                 _custom_opac = True
             except:
                 # Or get opacity transfer function
@@ -1680,11 +1683,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
                     ctable = np.ascontiguousarray(ctable[::-1])
                 table.SetTable(VN.numpy_to_vtk(ctable))
                 if _custom_opac:
+                    # need to round the colors here since we're
+                    # directly displaying the colors
                     hue = normalize(scalars, minimum=clim[0], maximum=clim[1])
-                    scalars = cmap(hue)[:, :3]
-                    # combine colors and alpha into a Nx4 matrix
-                    scalars = np.concatenate((scalars, opacity[:, None]), axis=1)
-                    scalars = (scalars * 255).astype(np.uint8)
+                    scalars = np.round(hue*n_colors)/n_colors
+                    scalars = cmap(scalars)*255
+                    scalars[:, -1] *= opacity
+                    scalars = scalars.astype(np.uint8)
                     prepare_mapper(scalars)
 
             else:  # no cmap specified
