@@ -620,6 +620,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera(self):
         """Return the active camera of the active renderer."""
+        if not self.camera_set:
+            self.camera_position = self.get_default_cam_pos()
+            self.reset_camera()
+            self.camera_set = True
         return self.renderer.camera
 
     @camera.setter

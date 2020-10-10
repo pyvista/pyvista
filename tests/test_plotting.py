@@ -637,7 +637,7 @@ def test_camera():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.add_mesh(sphere)
     plotter.camera.zoom(5)
-    plotter.camera.up(10)
+    plotter.camera.up([0, 0, 10])
     plotter.show()
 
 

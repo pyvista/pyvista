@@ -2,6 +2,7 @@
 
 import collections.abc
 import logging
+import types
 from weakref import proxy
 
 import numpy as np
@@ -178,7 +179,16 @@ class Renderer(vtkRenderer):
     @property
     def camera(self):
         """Return the active camera for the rendering scene."""
-        return self.GetActiveCamera()
+        camera = self.GetActiveCamera()
+        def zoom(self, value):
+            """Zoom of the camera."""
+            self.Zoom(value)
+        camera.zoom = types.MethodType(zoom, camera)
+        def up(self, vector):
+            """Up of the camera."""
+            self.SetViewUp(vector)
+        camera.up = types.MethodType(up, camera)
+        return camera
 
     @camera.setter
     def camera(self, camera):
