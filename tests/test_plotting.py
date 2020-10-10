@@ -634,6 +634,12 @@ def test_camera():
     plotter.show()
     plotter.camera_position = None
 
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.camera.zoom(5)
+    plotter.camera.up(10)
+    plotter.show()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_multi_renderers():
