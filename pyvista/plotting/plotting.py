@@ -609,10 +609,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         return self.renderer.get_default_cam_pos(*args, **kwargs)
 
     @wraps(Renderer.remove_actor)
-    def remove_actor(self, actor, reset_camera=False):
+    def remove_actor(self, *args, **kwargs):
         """Wrap ``Renderer.remove_actor``."""
         for renderer in self.renderers:
-            renderer.remove_actor(actor, reset_camera)
+            renderer.remove_actor(*args, **kwargs)
         return True
 
     #### Properties from Renderer ####
