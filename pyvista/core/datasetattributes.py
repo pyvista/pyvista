@@ -202,7 +202,7 @@ class DataSetAttributes(VTKObjectWrapper):
             narray = tmparray
 
         if narray.shape[0] != array_len:
-            raise ValueError('narray length of ({narray.shape[0]}) != required length ({array_len})')
+            raise ValueError(f'narray length of ({narray.shape[0]}) != required length ({array_len})')
 
         if narray.dtype == np.bool_:
             self.dataset.association_bitarray_names[self.association].add(name)
