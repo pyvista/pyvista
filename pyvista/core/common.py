@@ -711,6 +711,13 @@ class Common(DataSetFilters, DataObject):
                             '\tvtk.vtkTransform\n'
                             '\t4x4 np.ndarray\n')
 
+        if t[3, 3] == 0:
+            raise ValueError(
+                "Transform element (3,3), the inverse scale term, is zero")
+
+        # Normalize the transformation to account for the scale
+        t /= t[3, 3]
+
         x = (self.points*t[0, :3]).sum(1) + t[0, -1]
         y = (self.points*t[1, :3]).sum(1) + t[1, -1]
         z = (self.points*t[2, :3]).sum(1) + t[2, -1]
