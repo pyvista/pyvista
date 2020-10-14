@@ -27,6 +27,7 @@ import logging
 from functools import wraps
 
 import numpy as np
+import trimesh
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
@@ -3902,6 +3903,59 @@ class PolyDataFilters(DataSetFilters):
             plotter.show()
 
         return intersection_points, intersection_cells
+
+
+    def multi_ray_trace(poly_data, origins,
+                            directions,
+                            first_point=True):
+        """Perform simulataneous ray trace calculations.
+
+        This requires a mesh with only triangular faces,
+         an array of origin points and an equal sized array of
+         direction vectors to trace along.
+
+        Parameters
+        ----------
+        origins : np.ndarray or list
+            Starting point for each trace.
+
+        directions : np.ndarray or list
+            direction vector for each trace.
+
+        first_point : bool, optional
+            Returns intersection of first point only.
+
+        Return
+        ------
+        intersection_points : np.ndarray
+            Location of the intersection points.  Empty array if no
+            intersections.
+
+        intersection_rays : np.ndarray
+            Indices of the ray for each intersection point. Empty array if no
+            intersections.
+
+        intersection_cells : np.ndarray
+            Indices of the intersection cells.  Empty array if no
+            intersections.
+
+        Examples
+        --------
+        Compute the intersection between rays from the origin in directions
+        [1, 0, 0], [0, 1, 0] and [0, 0, 1], and a sphere with radius 0.5 centered at the origin
+
+        >>> import pyvista as pv
+        >>> sphere = pv.Sphere()
+        >>> points, rays, cells = sphere.multi_ray_trace([[0, 0, 0]]*3, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], first_point=True)
+        >>> string = ", ".join([f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})" for point in points])
+        >>> print(f'Rays intersected at {string}')
+        Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)
+        """
+        if not poly_data.is_all_triangles():
+            raise NotAllTrianglesError
+        faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:,1:]
+        tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
+        return tmesh.ray.intersects_location(origins, directions, multiple_hits=not first_point)
 
     def plot_boundaries(poly_data, edge_color="red", **kwargs):
         """Plot boundaries of a mesh.
