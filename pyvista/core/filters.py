@@ -3962,7 +3962,8 @@ class PolyDataFilters(DataSetFilters):
         try:
             import trimesh, rtree, pyembree
         except ImportError:
-            raise ImportError("multi_ray_trace requires dependencies trimesh, rtree and pyembree installed")
+            raise ImportError("To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
+                              "pip install trimesh rtree pyembree")
 
         faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
