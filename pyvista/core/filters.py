@@ -3978,8 +3978,11 @@ class PolyDataFilters(DataSetFilters):
                     unit_vector = vector / np.sqrt(np.sum(np.power(vector, 2)))
                     second_point = origin + (unit_vector * poly_data.length)
                     locs, indexes = poly_data.ray_trace(origin, second_point, first_point=first_point)
-                    for loc, id_t in zip(locs, indexes):
-                        ray_tuples.append((id_r, loc, id_t))
+                    if locs.any():
+                        if first_point:
+                            locs = locs.reshape([1, 3])
+                        for loc, id_t in zip(locs, indexes):
+                            ray_tuples.append((id_r, loc, id_t))
             sorted_results = sorted(ray_tuples)
             locations = np.array([loc for id_r, loc, id_t in sorted_results])
             index_ray = np.array([id_r for id_r, loc, id_t in sorted_results])
