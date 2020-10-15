@@ -27,7 +27,6 @@ import logging
 from functools import wraps
 
 import numpy as np
-import trimesh
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
@@ -3905,9 +3904,7 @@ class PolyDataFilters(DataSetFilters):
         return intersection_points, intersection_cells
 
 
-    def multi_ray_trace(poly_data, origins,
-                            directions,
-                            first_point=True):
+    def multi_ray_trace(poly_data, origins, directions, first_point=False, retry=False):
         """Perform simulataneous ray trace calculations.
 
         This requires a mesh with only triangular faces,
@@ -3953,7 +3950,13 @@ class PolyDataFilters(DataSetFilters):
         """
         if not poly_data.is_all_triangles():
             raise NotAllTrianglesError
-        faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:,1:]
+
+        try:
+            import trimesh, rtree, pyembree
+        except ImportError:
+            raise ImportError("multi_ray_trace requires dependencies trimesh, rtree and pyembree installed")
+
+        faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
         return tmesh.ray.intersects_location(origins, directions, multiple_hits=not first_point)
 
