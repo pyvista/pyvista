@@ -3911,6 +3911,11 @@ class PolyDataFilters(DataSetFilters):
          an array of origin points and an equal sized array of
          direction vectors to trace along.
 
+        The embree library used for vectorisation of the ray traces is known to occasionally
+        return no intersections where the VTK implementation would return an intersection.
+        If the result appears to be missing some intersection points, set retry=True to run a second pass over rays
+         that returned no intersections, using the VTK ray_trace implementation.
+
         Parameters
         ----------
         origins : np.ndarray or list
@@ -3921,6 +3926,9 @@ class PolyDataFilters(DataSetFilters):
 
         first_point : bool, optional
             Returns intersection of first point only.
+
+        retry : bool, optional
+            Will retry rays that return no intersections using the ray_trace
 
         Return
         ------
@@ -3958,7 +3966,25 @@ class PolyDataFilters(DataSetFilters):
 
         faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
-        return tmesh.ray.intersects_location(origins, directions, multiple_hits=not first_point)
+        locations, index_ray, index_tri = tmesh.ray.intersects_location(
+            origins, directions, multiple_hits=not first_point
+        )
+        if retry:
+            ray_tuples = [(id_r, l, id_t) for id_r, l, id_t in zip(index_ray, locations, index_tri)]
+            for id_r in range(len(origins)):
+                if id_r not in index_ray:
+                    origin = np.array(origins[id_r])
+                    vector = np.array(directions[id_r])
+                    unit_vector = vector / np.sqrt(np.sum(np.power(vector, 2)))
+                    second_point = origin + (unit_vector * poly_data.length)
+                    locs, indexes = poly_data.ray_trace(origin, second_point, first_point=first_point)
+                    for loc, id_t in zip(locs, indexes):
+                        ray_tuples.append((id_r, loc, id_t))
+            sorted_results = sorted(ray_tuples)
+            locations = np.array([loc for id_r, loc, id_t in sorted_results])
+            index_ray = np.array([id_r for id_r, loc, id_t in sorted_results])
+            index_tri = np.array([id_t for id_r, loc, id_t in sorted_results])
+        return locations, index_ray, index_tri
 
     def plot_boundaries(poly_data, edge_color="red", **kwargs):
         """Plot boundaries of a mesh.
