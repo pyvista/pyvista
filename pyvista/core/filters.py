@@ -3984,7 +3984,7 @@ class PolyDataFilters(DataSetFilters):
                             locs = locs.reshape([1, 3])
                         for loc, id_t in zip(locs, indexes):
                             ray_tuples.append((id_r, loc, id_t))
-            sorted_results = sorted(ray_tuples)
+            sorted_results = sorted(ray_tuples, key=lambda x: x[0])
             locations = np.array([loc for id_r, loc, id_t in sorted_results])
             index_ray = np.array([id_r for id_r, loc, id_t in sorted_results])
             index_tri = np.array([id_t for id_r, loc, id_t in sorted_results])
