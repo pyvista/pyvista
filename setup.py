@@ -2,11 +2,8 @@
 Installation file for python pyvista module
 """
 import os
-import platform
 import sys
-import warnings
 from io import open as io_open
-
 from setuptools import setup
 
 package_name = 'pyvista'
@@ -17,23 +14,19 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
+# Python 3.9 isn't supported at the moment
+if sys.version_info.minor == 9:
+    raise RuntimeError('There are no wheels available for VTK on Python 3.9 yet.  '
+                       'Please use Python 3.6 through 3.8')
+
+
 # pre-compiled vtk available for python3
 install_requires = ['numpy',
                     'imageio',
                     'appdirs',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
-                    ]
-
-# add vtk if not windows and 2.7
-py_ver = int(sys.version[0])
-if os.name == 'nt' and (py_ver < 3 or '64' not in platform.architecture()[0]):
-    warnings.warn('\nYou will need to install VTK manually.'
-                  '  Try using Anaconda.  See:\n'
-                  'https://anaconda.org/anaconda/vtk')
-else:
-    install_requires.append(['vtk'])
-
+                    'vtk']
 
 readme_file = os.path.join(filepath, 'README.rst')
 
