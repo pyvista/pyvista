@@ -3905,7 +3905,7 @@ class PolyDataFilters(DataSetFilters):
 
 
     def multi_ray_trace(poly_data, origins, directions, first_point=False, retry=False):
-        """Perform simulataneous ray trace calculations.
+        """Perform simultaneous ray trace calculations.
 
         This requires a mesh with only triangular faces,
          an array of origin points and an equal sized array of
