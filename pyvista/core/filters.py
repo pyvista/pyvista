@@ -3961,7 +3961,7 @@ class PolyDataFilters(DataSetFilters):
 
         try:
             import trimesh, rtree, pyembree
-        except ImportError:
+        except (ModuleNotFoundError, ImportError):
             raise ImportError("To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
                               "pip install trimesh rtree pyembree")
 
