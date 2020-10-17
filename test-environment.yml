@@ -1,0 +1,5 @@
+name: test-env
+channels:
+  - defaults
+variables:
+  TEST_ENV: test
