@@ -27,7 +27,7 @@ from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .renderer import Renderer
+from .renderer import Renderer, Camera
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
@@ -116,6 +116,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # add render windows
         self._active_renderer_index = 0
         self.renderers = []
+        self.cameras = []
 
         self.groups = np.empty((0,4),dtype=int)
 
@@ -150,6 +151,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     arenderer.SetViewport(i/n, 0, (i+1)/n, xsplit)
                 self.renderers.append(arenderer)
+                self.cameras.append(Camera())
             for i in rangem:
                 arenderer = Renderer(self, border, border_color, border_width)
                 if '|' in shape:
@@ -157,6 +159,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 else:
                     arenderer.SetViewport(i/m, xsplit, (i+1)/m, 1)
                 self.renderers.append(arenderer)
+                self.cameras.append(Camera())
 
             self.shape = (n+m,)
             self._render_idxs = np.arange(n+m)
@@ -227,6 +230,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                         renderer.SetViewport(x0, y0, x1, y1)
                         self._render_idxs[row,col] = len(self.renderers)
                         self.renderers.append(renderer)
+                        self.cameras.append(Camera())
                     else:
                         self._render_idxs[row,col] = self._render_idxs[self.groups[group,0],self.groups[group,1]]
 
@@ -2268,15 +2272,21 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if views is None:
             for renderer in self.renderers:
-                renderer.camera = vtk.vtkCamera()
+                camera = Camera()
+                renderer.camera = camera
+                self.cameras.append(camera)
                 renderer.reset_camera()
         elif isinstance(views, int):
-            self.renderers[views].camera = vtk.vtkCamera()
+            camera = Camera()
+            self.cameras[views] = camera
+            self.renderers[views].camera = camera
             self.renderers[views].reset_camera()
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
-                self.renderers[view_index].camera = vtk.vtkCamera()
+                camera = Camera()
+                self.renderers[view_index].camera = camera
                 self.renderers[view_index].reset_camera()
+                self.cameras[view_index] = camera
         else:
             raise TypeError('Expected type is None, int, list or tuple:'
                             f'{type(views)} is given')

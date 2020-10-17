@@ -1458,6 +1458,13 @@ class Renderer(vtkRenderer):
         self.deep_clean()
 
 
+class Camera(vtk.vtkCamera):
+    """Camera class."""
+
+    def __init__(self):
+        super().__init__()
+
+
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):
     """Remove this actor's mapper from the given plotter's _scalar_bar_mappers."""
     try:
