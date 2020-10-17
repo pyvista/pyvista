@@ -534,7 +534,34 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     src.SetRadialResolution(r_res)
     src.SetCircumferentialResolution(c_res)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+
+    # https://math.stackexchange.com/questions/180418
+    # /calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+
+    a = np.array((0, 0, 1))
+    b = np.array(normal)
+    v = np.cross(a, b)
+    c = np.dot(a, b)
+
+    vx = np.array([
+        [0, -v[2], v[1]],
+        [v[2], 0, -v[0]],
+        [-v[1], v[0], 0],
+    ])
+
+    rotation_matrix = np.identity(3) + vx + vx * vx * (1/(1 + c))
+    rotation_matrix_4x4 = np.identity(4)
+    rotation_matrix_4x4[:3, :3] = rotation_matrix
+
+    transform = vtk.vtkTransform()
+    transform.SetMatrix(rotation_matrix_4x4.flatten())
+
+    transform_filter = vtk.vtkTransformFilter()
+    transform_filter.SetInputConnection(src.GetOutputPort())
+    transform_filter.SetTransform(transform)
+    transform_filter.Update()
+
+    return pyvista.wrap(transform_filter.GetOutput())
 
 
 def Text3D(string, depth=0.5):
