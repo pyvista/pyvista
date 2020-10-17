@@ -97,6 +97,22 @@ class CameraPosition:
         self._viewup = value
 
 
+class Camera(vtk.vtkCamera):
+    """Camera class."""
+
+    def __init__(self):
+        """Initialize a new camera descriptor."""
+        super().__init__()
+
+    def zoom(self, value):
+        """Zoom of the camera."""
+        self.Zoom(value)
+
+    def up(self, vector):
+        """Up of the camera."""
+        self.SetViewUp(vector)
+
+
 class Renderer(vtkRenderer):
     """Renderer class."""
 
@@ -126,6 +142,8 @@ class Renderer(vtkRenderer):
 
         if border:
             self.add_border(border_color, border_width)
+
+        self._camera = Camera()
 
     #### Properties ####
 
@@ -193,6 +211,7 @@ class Renderer(vtkRenderer):
     @camera.setter
     def camera(self, camera):
         """Set the active camera for the rendering scene."""
+        self._camera = camera
         self.SetActiveCamera(camera)
         self.camera_position = CameraPosition(
             scale_point(camera, camera.GetPosition(), invert=True),
@@ -1456,14 +1475,6 @@ class Renderer(vtkRenderer):
     def __del__(self):
         """Delete the renderer."""
         self.deep_clean()
-
-
-class Camera(vtk.vtkCamera):
-    """Camera class."""
-
-    def __init__(self):
-        """Initialize a new camera descriptor."""
-        super().__init__()
 
 
 def _remove_mapper_from_plotter(plotter, actor, reset_camera):
