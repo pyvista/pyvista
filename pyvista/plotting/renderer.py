@@ -1462,6 +1462,7 @@ class Camera(vtk.vtkCamera):
     """Camera class."""
 
     def __init__(self):
+        """Initialize a new camera descriptor."""
         super().__init__()
 
 
