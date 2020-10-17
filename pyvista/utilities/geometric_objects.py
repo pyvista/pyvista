@@ -535,26 +535,18 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     src.SetCircumferentialResolution(c_res)
     src.Update()
 
-    # https://math.stackexchange.com/questions/180418
-    # /calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d
+    default_normal = np.array([0, 0, 1])
+    normal = np.array(normal)
+    center = np.array(center)
 
-    a = np.array((0, 0, 1))
-    b = np.array(normal)
-    v = np.cross(a, b)
-    c = np.dot(a, b)
-
-    vx = np.array([
-        [0, -v[2], v[1]],
-        [v[2], 0, -v[0]],
-        [-v[1], v[0], 0],
-    ])
-
-    rotation_matrix = np.identity(3) + vx + vx * vx * (1/(1 + c))
-    rotation_matrix_4x4 = np.identity(4)
-    rotation_matrix_4x4[:3, :3] = rotation_matrix
+    axis = np.cross(default_normal, normal)
+    angle = np.rad2deg(np.arccos(
+        np.clip(np.dot(normal, default_normal), -1, 1)))
 
     transform = vtk.vtkTransform()
-    transform.SetMatrix(rotation_matrix_4x4.flatten())
+    transform.Translate(-center)
+    transform.RotateWXYZ(angle, axis)
+    transform.Translate(center)
 
     transform_filter = vtk.vtkTransformFilter()
     transform_filter.SetInputConnection(src.GetOutputPort())
