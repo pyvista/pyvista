@@ -3905,7 +3905,7 @@ class PolyDataFilters(DataSetFilters):
 
 
     def multi_ray_trace(poly_data, origins, directions, first_point=False, retry=False):
-        """Perform simultaneous ray trace calculations.
+        """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces,
          an array of origin points and an equal sized array of
@@ -3914,7 +3914,8 @@ class PolyDataFilters(DataSetFilters):
         The embree library used for vectorisation of the ray traces is known to occasionally
         return no intersections where the VTK implementation would return an intersection.
         If the result appears to be missing some intersection points, set retry=True to run a second pass over rays
-         that returned no intersections, using the VTK ray_trace implementation.
+        that returned no intersections, using the VTK ray_trace implementation.
+
 
         Parameters
         ----------
@@ -3962,8 +3963,14 @@ class PolyDataFilters(DataSetFilters):
         try:
             import trimesh, rtree, pyembree
         except (ModuleNotFoundError, ImportError):
-            raise ImportError("To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
-                              "pip install trimesh rtree pyembree")
+            raise ImportError(
+                "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
+                "\tconda install trimesh rtree pyembree\nor:\n"
+                "\tpip install trimesh rtree pyembree\n\n"
+                "NOTE: installation of rtree via pip will fail unless" 
+                "libspatialindex is pre-installed on your system\n"
+                "(see https://libspatialindex.org/)"
+            )
 
         faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:, 1:]
         tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
