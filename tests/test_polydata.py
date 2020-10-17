@@ -22,6 +22,11 @@ CUBE_DENSE = pyvista.Cube()
 
 test_path = os.path.dirname(os.path.abspath(__file__))
 
+try:
+    CONDA_ENV = os.environ['CONDA_ALWAYS_YES'] == "1"
+except KeyError:
+    CONDA_ENV = False
+
 
 def test_init():
     mesh = pyvista.PolyData()
@@ -200,6 +205,7 @@ def test_ray_trace_plot():
     assert np.any(ind)
 
 
+@pytest.mark.skipif(not CONDA_ENV, reason="Requires libspatialindex dependency only installable via conda")
 def test_multi_ray_trace():
     sphere = SPHERE.copy()
     origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
