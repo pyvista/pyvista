@@ -3965,11 +3965,7 @@ class PolyDataFilters(DataSetFilters):
         except (ModuleNotFoundError, ImportError):
             raise ImportError(
                 "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
-                "\tconda install trimesh rtree pyembree\nor:\n"
-                "\tpip install trimesh rtree pyembree\n\n"
-                "NOTE: installation of rtree via pip will fail unless\n" 
-                "libspatialindex is pre-installed on your system\n"
-                "(see https://libspatialindex.org/)"
+                "\tconda install trimesh rtree pyembree"
             )
 
         faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:, 1:]
