@@ -72,6 +72,10 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``tqdm``                          | Status bars for monitoring filters      |
 +-----------------------------------+-----------------------------------------+
+| | ``trimesh``                     | |                                       |
+| | ``rtree``                       | | Vectorised ray tracing           |
+| | ``pyembree``                    |                                         |
++-----------------------------------+-----------------------------------------+
 
 
 Source / Developers
