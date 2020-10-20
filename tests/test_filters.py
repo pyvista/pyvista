@@ -758,6 +758,33 @@ def extract_points_invalid(sphere):
     with pytest.raises(TypeError):
         sphere.extract_points(object)
 
+def test_extract_points():
+    # mesh points (4x4 regular grid)
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
+                     [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0],
+                     [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0],
+                     [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0]])
+    # corresponding mesh faces
+    faces = np.hstack([[4, 0, 1, 5, 4],  # square
+                       [4, 1, 2, 6, 5],  # square
+                       [4, 2, 3, 7, 6],  # square
+                       [4, 4, 5, 9, 8],  # square
+                       [4, 5, 6, 10, 9],  # square
+                       [4, 6, 7, 11, 10],  # square
+                       [4, 8, 9, 13, 12],  # square
+                       [4, 9, 10, 14, 13],  # square
+                       [4, 10, 11, 15, 14]])  # square
+    # create pyvista object
+    surf = pyvista.PolyData(vertices, faces)
+    # extract sub-surface with adjacent cells
+    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]))
+     # extract sub-surface without adjacent cells
+    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False)
+    # check sub-surface size
+    assert sub_surf.n_points == 4
+    assert sub_surf.n_cells == 1
+    assert sub_surf_adj.n_points == 9
+    assert sub_surf_adj.n_cells == 4
 
 @skip_py2_nobind
 def test_slice_along_line_composite():

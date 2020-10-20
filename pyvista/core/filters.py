@@ -2142,13 +2142,18 @@ class DataSetFilters:
 
         return subgrid
 
-    def extract_points(dataset, ind):
+    def extract_points(dataset, ind, adjacent_cells=True):
         """Return a subset of the grid (with cells) that contains any of the given point indices.
 
         Parameters
         ----------
         ind : np.ndarray, list, or sequence
             Numpy array of point indices to be extracted.
+        adjacent_cells : bool, optional
+            If True, extract the cells that contain at least one of the 
+            extracted points. If False, extract the cells that contain 
+            exclusively points from the extracted points list. The default is 
+            True.
 
         Return
         ------
@@ -2160,9 +2165,16 @@ class DataSetFilters:
         selectionNode = vtk.vtkSelectionNode()
         selectionNode.SetFieldType(vtk.vtkSelectionNode.POINT)
         selectionNode.SetContentType(vtk.vtkSelectionNode.INDICES)
+        if not adjacent_cells:
+            # Build array of point indices to be removed.
+            ind_rem = np.ones(dataset.n_points, dtype='bool')
+            ind_rem[ind] = False
+            ind = np.arange(dataset.n_points)[ind_rem]
+            # Invert selection
+            selectionNode.GetProperties().Set(vtk.vtkSelectionNode.INVERSE(), 1)
         selectionNode.SetSelectionList(numpy_to_idarr(ind))
         selectionNode.GetProperties().Set(vtk.vtkSelectionNode.CONTAINING_CELLS(), 1)
-
+        
         selection = vtk.vtkSelection()
         selection.AddNode(selectionNode)
 
