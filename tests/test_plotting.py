@@ -11,6 +11,7 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.plotting import SUPPORTED_FORMATS
 
 NO_PLOTTING = not system_supports_plotting()
 
@@ -515,6 +516,14 @@ def test_screenshot(tmpdir):
         ref
     except:
         raise RuntimeError('Plotter did not close')
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
+def test_save_screenshot(tmpdir, sphere, ext):
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.screenshot(str(tmpdir.mkdir("tmpdir").join('tmp' + ext)))
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

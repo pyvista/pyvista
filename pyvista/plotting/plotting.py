@@ -41,6 +41,9 @@ except ImportError:
 
 _ALL_PLOTTERS = {}
 
+SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
+
+
 def close_all():
     """Close all open/active plotters and clean up memory."""
     for key, p in _ALL_PLOTTERS.items():
@@ -3282,20 +3285,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not image.size:
             raise ValueError('Empty image. Have you run plot() first?')
         # write screenshot to file
-        supported_formats = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
         if isinstance(filename, (str, pathlib.Path)):
+            from PIL import Image
             filename = pathlib.Path(filename)
             if isinstance(pyvista.FIGURE_PATH, str) and not filename.is_absolute():
                 filename = pathlib.Path(os.path.join(pyvista.FIGURE_PATH, filename))
             if not filename.suffix:
                 filename = filename.with_suffix('.png')
-            elif filename.suffix not in supported_formats:
+            elif filename.suffix not in SUPPORTED_FORMATS:
                 raise ValueError(f'Unsupported extension {filename.suffix}\n' +
-                                 f'Must be one of the following: {supported_formats}')
-            w = imageio.imwrite(os.path.abspath(os.path.expanduser(str(filename))),
-                                image)
+                                 f'Must be one of the following: {SUPPORTED_FORMATS}')
+            image_path = os.path.abspath(os.path.expanduser(str(filename)))
+            Image.fromarray(image).save(image_path)
             if not return_img:
-                return w
+                return image
         return image
 
     def save_graphic(self, filename, title='PyVista Export', raster=True, painter=True):
