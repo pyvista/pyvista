@@ -1,3 +1,4 @@
+import gc
 import pathlib
 import os
 import sys
@@ -35,6 +36,26 @@ VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
 sphere_c = pyvista.Sphere(2.0)
+
+
+def _is_vtk(obj):
+    return obj.__class__.__name__.startswith('vtk')
+
+
+@pytest.fixture(autouse=True)
+def check_gc():
+    """Ensure that all VTK objects are garbage-collected by Python."""
+    pyvista.close_all()
+    gc.collect()
+    # in theory this should be empty at the start, but just to be safe:
+    before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
+    yield
+    pyvista.close_all()
+    gc.collect()
+    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
+    assert len(after) == 0, \
+        'Not all objects GCed:\n' + \
+        '\n'.join(sorted(o.__class__.__name__ for o in after))
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -425,14 +446,12 @@ def test_show_axes():
     # if not closed correctly, a seg fault occurs when exitting
     plotter = pyvista.Plotter(off_screen=False)
     plotter.show_axes()
-    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_update():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.update()
-    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
