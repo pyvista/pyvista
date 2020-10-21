@@ -23,6 +23,7 @@ if sys.version_info.minor == 9:
 # pre-compiled vtk available for python3
 install_requires = ['numpy',
                     'imageio',
+                    'pillow',
                     'appdirs',
                     'scooby>=0.5.1',
                     'meshio>=4.0.3, <5.0',
