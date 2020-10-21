@@ -45,9 +45,6 @@ def _is_vtk(obj):
 @pytest.fixture(autouse=True)
 def check_gc():
     """Ensure that all VTK objects are garbage-collected by Python."""
-    pyvista.close_all()
-    gc.collect()
-    # in theory this should be empty at the start, but just to be safe:
     before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
     yield
     pyvista.close_all()
