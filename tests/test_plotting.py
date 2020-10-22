@@ -338,6 +338,8 @@ def test_make_movie():
     # checking if plotter closes
     ref = proxy(plotter)
     plotter.close()
+    # release attached points data
+    movie_sphere.ReleaseData()
 
     # remove file
     os.remove(filename)
