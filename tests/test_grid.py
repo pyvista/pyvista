@@ -57,8 +57,9 @@ def test_init_bad_input():
                                                  np.array(1),
                                                  'woa')
 
-
-def test_init_from_arrays():
+#Try both with and without an offset array
+@pytest.mark.parametrize('specify_offset', [False, True])
+def test_init_from_arrays(specify_offset):
     cells = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15])
     cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON], np.int32)
 
@@ -81,13 +82,16 @@ def test_init_from_arrays():
                       [0, 1, 3]])
 
     points = np.vstack((cell1, cell2)).astype(np.int32)
+    offset = np.array([0, 9], np.int8)
 
     if VTK9:
         grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
-        assert np.allclose(grid.cells, cells)
     else:
-        offset = np.array([0, 9], np.int8)
-        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points, deep=False)
+        if specify_offset:
+            grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points, deep=False)
+        else:
+            grid = pyvista.UnstructuredGrid(cells, cell_type, points, deep=False)
+
         assert np.allclose(grid.offset, offset)
 
     assert grid.n_cells == 2
@@ -99,6 +103,61 @@ def test_init_from_arrays():
         with pytest.raises(AttributeError):
             grid.cell_connectivity
 
+def test_init_from_dict():
+    #Try mixed construction
+    old_vtk_cell_format = np.array([8, 0, 1, 2, 3, 4, 5, 6, 7, 8, 8, 9, 10, 11, 12, 13, 14, 15, 4, 16, 17, 18, 19])
+    old_offsets = np.array([0, 8+1, 2*(8+1)])
+    vtk9_offsets = np.array([0, 8, 16])
+    cells_hex = np.array([[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]])
+    cells_quad = np.array([[16, 17, 18, 19]])
+
+    cell1 = np.array([[0, 0, 0],
+                      [1, 0, 0],
+                      [1, 1, 0],
+                      [0, 1, 0],
+                      [0, 0, 1],
+                      [1, 0, 1],
+                      [1, 1, 1],
+                      [0, 1, 1]])
+
+    cell2 = np.array([[0, 0, 2],
+                      [1, 0, 2],
+                      [1, 1, 2],
+                      [0, 1, 2],
+                      [0, 0, 3],
+                      [1, 0, 3],
+                      [1, 1, 3],
+                      [0, 1, 3]])
+
+    cell3 = np.array([[0, 0, -1],
+                      [1, 0, -1],
+                      [1, 1, -1],
+                      [0, 1, -1]])
+
+    points = np.vstack((cell1, cell2, cell3)).astype(np.int32)
+
+    input_cells_dict = {vtk.VTK_HEXAHEDRON: cells_hex, vtk.VTK_QUAD: cells_quad}
+    grid = pyvista.UnstructuredGrid(input_cells_dict, points, deep=False)
+
+    if VTK9:
+        assert np.all(grid.offset == vtk9_offsets)
+    else:
+        assert np.all(grid.offset == old_offsets)
+
+    assert grid.n_cells == 3
+    assert np.all(grid.cells == old_vtk_cell_format)
+
+    if VTK9:
+        assert np.allclose(grid.cell_connectivity, np.arange(20))
+    else:
+        with pytest.raises(AttributeError):
+            grid.cell_connectivity
+
+    #Now fetch the arrays
+    output_cells_dict = grid.cells_dict
+
+    assert np.all(output_cells_dict[vtk.VTK_HEXAHEDRON] == input_cells_dict[vtk.vtk.VTK_HEXAHEDRON])
+    assert np.all(output_cells_dict[vtk.VTK_QUAD] == input_cells_dict[vtk.vtk.VTK_QUAD])
 
 def test_destructor():
     ugrid = examples.load_hexbeam()
