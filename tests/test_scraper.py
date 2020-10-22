@@ -4,6 +4,7 @@ import pyvista
 from pyvista.utilities import Scraper
 
 
+@pytest.importerskip('sphinx_gallery')
 def test_scraper(tmpdir):
     plotter = pyvista.Plotter(off_screen=False)
     scraper = Scraper()
