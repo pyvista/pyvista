@@ -5,8 +5,8 @@ import pyvista
 from pyvista.utilities import Scraper
 
 
-@pytest.importerskip('sphinx_gallery')
 def test_scraper(tmpdir):
+    pytest.importorskip('sphinx_gallery')
     plotter = pyvista.Plotter(off_screen=False)
     scraper = Scraper()
     src_dir = str(tmpdir)
