@@ -2741,6 +2741,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
                 renderer.deep_clean()
         # Do not remove the renderers on the clean
         self.mesh = None
+        if getattr(self, 'mapper', None) is not None:
+            self.mapper.lookup_table = None
         self.mapper = None
         self.volume = None
         self.textactor = None
