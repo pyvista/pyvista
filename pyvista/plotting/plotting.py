@@ -2693,6 +2693,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             renderer.RemoveAllLights()
         self.lighting = None
 
+        # Clear the scalar bar
+        self.scalar_bar = None
+
         # Grab screenshots of last render
         if self._store_image:
             self.last_image = self.screenshot(None, return_img=True)
