@@ -330,18 +330,14 @@ def test_make_movie():
     for i in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
         random_points = np.random.random(movie_sphere.points.shape)
-        movie_sphere.points = random_points*0.01 + movie_sphere.points*0.99
-        movie_sphere.points -= movie_sphere.points.mean(0)
+        movie_sphere.points[:] = random_points*0.01 + movie_sphere.points*0.99
+        movie_sphere.points[:] -= movie_sphere.points.mean(0)
         scalars = np.random.random(movie_sphere.n_faces)
         plotter.update_scalars(scalars)
 
     # checking if plotter closes
     ref = proxy(plotter)
     plotter.close()
-
-    # release attached scalars
-    movie_sphere.ReleaseData()
-    del movie_sphere
 
     # remove file
     os.remove(filename)
@@ -1110,7 +1106,6 @@ def test_default_name_tracking():
     mesh.ReleaseData()
     del mesh
 
-
 @pytest.mark.parametrize("as_global", [True, False])
 def test_add_background_image(as_global):
     plotter = pyvista.Plotter()
@@ -1146,7 +1141,6 @@ def test_add_remove_floor():
     pl.update_bounds_axes()
     assert len(pl.renderer._floors) == 1
     pl.show()
-    pl.deep_clean()
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -1154,7 +1148,6 @@ def test_add_remove_floor():
     pl.remove_floors()
     assert not pl.renderer._floors
     pl.show()
-    pl.deep_clean()
 
 
 def test_reset_camera_clipping_range():
