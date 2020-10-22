@@ -39,7 +39,10 @@ sphere_c = pyvista.Sphere(2.0)
 
 
 def _is_vtk(obj):
-    return obj.__class__.__name__.startswith('vtk')
+    try:
+        return obj.__class__.__name__.startswith('vtk')
+    except Exception:  # old Python sometimes no __class__.__name__
+        return False
 
 
 @pytest.fixture(autouse=True)
