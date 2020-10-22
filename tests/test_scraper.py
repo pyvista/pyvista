@@ -7,6 +7,7 @@ from pyvista.utilities import Scraper
 
 def test_scraper(tmpdir):
     pytest.importorskip('sphinx_gallery')
+    pyvista.close_all()
     plotter = pyvista.Plotter(off_screen=True)
     scraper = Scraper()
     src_dir = str(tmpdir)
@@ -23,3 +24,4 @@ def test_scraper(tmpdir):
     os.makedirs(out_dir)
     scraper(block, block_vars, gallery_conf)
     assert os.path.isfile(img_fname)
+    plotter.close()
