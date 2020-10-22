@@ -1059,6 +1059,9 @@ class Renderer(vtkRenderer):
 
     def remove_floors(self, clear_kwargs=True):
         """Remove all floor actors."""
+        if getattr(self, '_floor', None) is not None:
+            self._floor.ReleaseData()
+            self._floor = None
         for actor in self._floors:
             self.remove_actor(actor, reset_camera=False)
         self._floors.clear()
@@ -1438,6 +1441,7 @@ class Renderer(vtkRenderer):
         if hasattr(self, '_box_object'):
             self.remove_bounding_box()
 
+        self.remove_floors()
         self.RemoveAllViewProps()
         self._actors = {}
         # remove reference to parent last

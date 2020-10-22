@@ -1131,6 +1131,7 @@ def test_add_remove_floor():
     pl.update_bounds_axes()
     assert len(pl.renderer._floors) == 1
     pl.show()
+    pl.deep_clean()
 
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -1138,6 +1139,7 @@ def test_add_remove_floor():
     pl.remove_floors()
     assert not pl.renderer._floors
     pl.show()
+    pl.deep_clean()
 
 
 def test_reset_camera_clipping_range():
