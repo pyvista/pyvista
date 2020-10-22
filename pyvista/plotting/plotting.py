@@ -7,6 +7,7 @@ import logging
 import os
 import time
 import warnings
+import weakref
 from functools import wraps
 from threading import Thread
 
@@ -4105,7 +4106,7 @@ def _style_factory(klass):
 
         def __init__(self, parent):
             super().__init__()
-            self._parent = parent
+            self._parent = weakref.ref(parent)
             self.AddObserver(
                 "LeftButtonPressEvent",
                 partial(try_callback, self._press))
@@ -4117,16 +4118,18 @@ def _style_factory(klass):
             # Figure out which renderer has the event and disable the
             # others
             super().OnLeftButtonDown()
-            if len(self._parent.renderers) > 1:
-                click_pos = self._parent.iren.GetEventPosition()
-                for renderer in self._parent.renderers:
+            parent = self.parent()
+            if len(parent.renderers) > 1:
+                click_pos = parent.iren.GetEventPosition()
+                for renderer in parent.renderers:
                     interact = renderer.IsInViewport(*click_pos)
                     renderer.SetInteractive(interact)
 
         def _release(self, obj, event):
             super().OnLeftButtonUp()
-            if len(self._parent.renderers) > 1:
-                for renderer in self._parent.renderers:
+            parent = self.parent()
+            if len(parent.renderers) > 1:
+                for renderer in parent.renderers:
                     renderer.SetInteractive(True)
 
     return CustomStyle

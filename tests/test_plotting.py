@@ -435,6 +435,15 @@ def test_key_press_event():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_enable_picking_gc():
+    plotter = pyvista.Plotter(off_screen=False)
+    sphere = pyvista.Sphere()
+    plotter.add_mesh(sphere)
+    plotter.enable_cell_picking()
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     if VTK9:
