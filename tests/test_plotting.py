@@ -446,6 +446,7 @@ def test_show_axes():
     # if not closed correctly, a seg fault occurs when exitting
     plotter = pyvista.Plotter(off_screen=False)
     plotter.show_axes()
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")

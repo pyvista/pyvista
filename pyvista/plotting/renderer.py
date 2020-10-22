@@ -1426,6 +1426,7 @@ class Renderer(vtkRenderer):
         self.camera.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
             self.hide_axes()  # Necessary to avoid segfault
+            self.axes_actor = None
             del self.axes_widget
 
     def deep_clean(self):

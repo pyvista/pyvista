@@ -2684,7 +2684,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         super().close()
         # Renderer has an axes widget, so close it
         for renderer in self.renderers:
-
             renderer.close()
         self._shadow_renderer.close()
 
