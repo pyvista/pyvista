@@ -338,8 +338,10 @@ def test_make_movie():
     # checking if plotter closes
     ref = proxy(plotter)
     plotter.close()
-    # release attached points data
+
+    # release attached scalars
     movie_sphere.ReleaseData()
+    del movie_sphere
 
     # remove file
     os.remove(filename)
@@ -1094,6 +1096,10 @@ def test_default_name_tracking():
     n_made_it = len(p.renderer._actors)
     p.show()
     assert n_made_it == N**2
+
+    # release attached scalars
+    mesh.ReleaseData()
+    del mesh
 
 
 @pytest.mark.parametrize("as_global", [True, False])
