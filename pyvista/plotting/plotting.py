@@ -2737,8 +2737,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
-        if self._id_name in _ALL_PLOTTERS:
-            del _ALL_PLOTTERS[self._id_name]
 
 
     def deep_clean(self):
@@ -2750,6 +2748,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if renderer is not None:
                 renderer.deep_clean()
         # Do not remove the renderers on the clean
+        if getattr(self, 'mesh', None) is not None:
+            self.mesh.point_arrays = None
+            self.mesh.cell_arrays = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None
