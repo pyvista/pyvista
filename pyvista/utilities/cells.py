@@ -92,7 +92,7 @@ def generate_cell_offsets_loop(cells, cell_types):
         offsets[cell_i] = current_cell_pos
         current_cell_pos += cell_size+1
 
-    if current_cell_pos != cell_types.size:
+    if current_cell_pos != cells.size:
         raise ValueError("Cell types and cell array are inconsistent. Got %d values left after reading all types" % (cell_types.size - current_cell_pos))
 
     return offsets
@@ -116,7 +116,7 @@ def generate_cell_offsets(cells, cell_types):
 
     return offsets
 
-def create_mixed_cells(mixed_cell_dict):
+def create_mixed_cells(mixed_cell_dict, nr_points=None):
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
 
@@ -135,6 +135,12 @@ def create_mixed_cells(mixed_cell_dict):
                 or (cells_arr.ndim == 2 and cells_arr.shape[-1] != nr_points_per_elem)):
             raise ValueError("Expected an np.ndarray of size [N, %d] or [N*%d] with an integral type" % (nr_points_per_elem, nr_points_per_elem))
 
+        if np.any(cells_arr < 0):
+            raise ValueError("Non-valid index (<0) given for cells of type %s" % (elem_t))
+
+        if nr_points is not None and np.any(cells_arr >= nr_points):
+            raise ValueError("Non-valid index (>=%d) given for cells of type %s" % (nr_points, elem_t))
+
         if cells_arr.ndim == 1: #Flattened array present
             cells_arr = cells_arr.reshape([-1, nr_points_per_elem])
             
@@ -150,33 +156,12 @@ def create_mixed_cells(mixed_cell_dict):
     final_cell_arr = np.concatenate(final_cell_arr)
 
     if not VTK9:
-        final_cell_offsets = np.concatenate(final_cell_offsets[:-1])
+        final_cell_offsets = np.concatenate(final_cell_offsets)[:-1]
 
     if not VTK9:
         return final_cell_types, final_cell_arr, final_cell_offsets
     else:
         return final_cell_types, final_cell_arr
-
-def get_mixed_cells_loop(vtkobj):
-    """
-    Old fallback method in case variable length elems are present
-
-     Return
-    ------
-    Returns a dictionary mapping of elements vtk_type (int) -> cells (np.ndarray)
-    """
-    return_dict = {}
-
-    for i in range(vtkobj.GetNumberOfCells()):
-        cell = vtkobj.GetCell(i)
-        cell_type = vtkobj.GetCellType(i)
-        nr_points_per_elem = cell.GetNumberOfPoints()
-        if not cell_type in return_dict:
-            return_dict[cell_type] = []
-
-        return_dict[cell_type].append([vtkobj.GetCell(i).GetPointId(j) for j in range(nr_points_per_elem)])
-
-    return return_dict
 
 def get_mixed_cells(vtkobj):
     return_dict = {}
@@ -192,14 +177,18 @@ def get_mixed_cells(vtkobj):
     cells = vtkobj.cells
 
     unique_cell_types = np.unique(cell_types)
+
+    if not np.all([k in enum_cell_type_nr_points_map for k in unique_cell_types]):
+        raise ValueError("Found unknown or unsupported VTK cell type in the present cells")
+
+    if not np.all([enum_cell_type_nr_points_map[k] > 0 for k in unique_cell_types]):
+        raise ValueError("You requested a cell-dictionary with a variable length cell, which is not supported "
+                         "currently")
+
     cell_sizes = np.zeros_like(cell_types)
     for cell_type in unique_cell_types:
       mask = cell_types == cell_type
       cell_sizes[mask] = enum_cell_type_nr_points_map[cell_type]
-
-    #+1 For the cell sizes
-    if np.sum(cell_sizes + 1) != cells.size:
-      return get_mixed_cells_loop()
 
     cell_ends = np.cumsum(cell_sizes + 1)
     cell_starts = np.concatenate([np.array([0], dtype=cell_ends.dtype), cell_ends[:-1]]) + 1

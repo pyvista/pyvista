@@ -563,12 +563,16 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return Common.__str__(self)
 
     def _from_cells_dict(self, cells_dict, points, deep=True):
+        if points.ndim != 2 or points.shape[-1] != 3:
+            raise ValueError("Points array must be a [M, 3] array")
+
+        nr_points = points.shape[0]
         if VTK9:
-            cell_types, cells = create_mixed_cells(cells_dict)
-            self._from_arrays(cells, cell_types, points, deep)
+            cell_types, cells = create_mixed_cells(cells_dict, nr_points)
+            self._from_arrays(None, cells, cell_types, points, deep=deep)
         else:
-            cell_types, cells, offset = create_mixed_cells(cells_dict)
-            self._from_arrays(offset, cells, cell_types, points, deep)
+            cell_types, cells, offset = create_mixed_cells(cells_dict, nr_points)
+            self._from_arrays(offset, cells, cell_types, points, deep=deep)
 
 
 

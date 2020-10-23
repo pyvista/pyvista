@@ -1,5 +1,5 @@
 //https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
-
+// Numbers will be ignored, but are currently part of the regex term
 // Linear cells
 VTK_EMPTY_CELL = 0,
 VTK_VERTEX = 1,
