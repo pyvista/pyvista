@@ -4118,7 +4118,7 @@ def _style_factory(klass):
             # Figure out which renderer has the event and disable the
             # others
             super().OnLeftButtonDown()
-            parent = self.parent()
+            parent = self._parent()
             if len(parent.renderers) > 1:
                 click_pos = parent.iren.GetEventPosition()
                 for renderer in parent.renderers:
@@ -4127,7 +4127,7 @@ def _style_factory(klass):
 
         def _release(self, obj, event):
             super().OnLeftButtonUp()
-            parent = self.parent()
+            parent = self._parent()
             if len(parent.renderers) > 1:
                 for renderer in parent.renderers:
                     renderer.SetInteractive(True)
