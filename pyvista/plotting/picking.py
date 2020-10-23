@@ -1,6 +1,7 @@
 """Module managing picking events."""
 
 import logging
+import weakref
 
 import numpy as np
 import vtk
@@ -98,12 +99,14 @@ class PickingHelper:
                 raise AttributeError('Input a mesh into the Plotter class first or '
                                      'or set it in this function')
             mesh = self.mesh
+        self_ = weakref.ref(self)
 
-        renderer = self.renderer # make sure to consistently use renderer
+        # make sure to consistently use renderer
+        renderer_ = weakref.ref(self.renderer)
 
         def end_pick_helper(picker, event_id):
             # Merge the selection into a single mesh
-            picked = self.picked_cells
+            picked = self_().picked_cells
             if isinstance(picked, pyvista.MultiBlock):
                 if picked.n_blocks > 0:
                     picked = picked.combine()
@@ -114,16 +117,16 @@ class PickingHelper:
 
             if show and is_valid_selection:
                 # Use try in case selection is empty
-                self.add_mesh(picked, name='_cell_picking_selection',
-                              style=style, color=color,
-                              line_width=line_width, pickable=False,
-                              reset_camera=False, **kwargs)
+                self_().add_mesh(picked, name='_cell_picking_selection',
+                                 style=style, color=color,
+                                 line_width=line_width, pickable=False,
+                                 reset_camera=False, **kwargs)
 
                 # render here prior to running the callback
-                self.render()
+                self_().render()
 
             if callback is not None and is_valid_selection:
-                try_callback(callback, self.picked_cells)
+                try_callback(callback, self_().picked_cells)
 
             # TODO: Deactivate selection tool
             return
@@ -134,14 +137,14 @@ class PickingHelper:
             extract.SetInputData(mesh)
             extract.SetImplicitFunction(picker.GetFrustum())
             extract.Update()
-            self.picked_cells = pyvista.wrap(extract.GetOutput())
+            self_().picked_cells = pyvista.wrap(extract.GetOutput())
             return end_pick_helper(picker, event_id)
 
         def visible_pick_call_back(picker, event_id):
-            x0,y0,x1,y1 = renderer.get_pick_position()
+            x0,y0,x1,y1 = renderer_().get_pick_position()
             selector = vtk.vtkOpenGLHardwareSelector()
             selector.SetFieldAssociation(vtk.vtkDataObject.FIELD_ASSOCIATION_CELLS)
-            selector.SetRenderer(renderer)
+            selector.SetRenderer(renderer_())
             selector.SetArea(x0,y0,x1,y1)
             selection = selector.Select()
             picked = pyvista.MultiBlock()
@@ -161,9 +164,9 @@ class PickingHelper:
                 cids_to_get = tri_smesh.extract_cells(cids)["original_cell_ids"]
                 picked.append(smesh.extract_cells(cids_to_get))
             if len(picked) == 1:
-                self.picked_cells = picked[0]
+                self_().picked_cells = picked[0]
             else:
-                self.picked_cells = picked
+                self_().picked_cells = picked
             return end_pick_helper(picker, event_id)
 
         area_picker = vtk.vtkRenderedAreaPicker()

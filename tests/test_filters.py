@@ -7,20 +7,14 @@ import pytest
 import pyvista
 from pyvista import examples
 
-try:
-    import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
-except:
-    HAS_MATPLOTLIB = False
-
 DATASETS = [
-    examples.load_uniform(), # UniformGrid
-    examples.load_rectilinear(), # RectilinearGrid
-    examples.load_hexbeam(), # UnstructuredGrid
-    examples.load_airplane(), # PolyData
-    examples.load_structured(), # StructuredGrid
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
 ]
-normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
+normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
@@ -708,9 +702,9 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Requires matplotlib")
 def test_plot_over_line():
     """this requires matplotlib"""
+    pytest.importorskip('matplotlib')
     mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]

@@ -1,3 +1,4 @@
+import gc
 import pathlib
 import os
 import sys
@@ -37,6 +38,26 @@ VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
 sphere_c = pyvista.Sphere(2.0)
+
+
+def _is_vtk(obj):
+    try:
+        return obj.__class__.__name__.startswith('vtk')
+    except Exception:  # old Python sometimes no __class__.__name__
+        return False
+
+
+@pytest.fixture(autouse=True)
+def check_gc():
+    """Ensure that all VTK objects are garbage-collected by Python."""
+    before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
+    yield
+    pyvista.close_all()
+    gc.collect()
+    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
+    assert len(after) == 0, \
+        'Not all objects GCed:\n' + \
+        '\n'.join(sorted(o.__class__.__name__ for o in after))
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -311,8 +332,8 @@ def test_make_movie():
     for i in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
         random_points = np.random.random(movie_sphere.points.shape)
-        movie_sphere.points = random_points*0.01 + movie_sphere.points*0.99
-        movie_sphere.points -= movie_sphere.points.mean(0)
+        movie_sphere.points[:] = random_points*0.01 + movie_sphere.points*0.99
+        movie_sphere.points[:] -= movie_sphere.points.mean(0)
         scalars = np.random.random(movie_sphere.n_faces)
         plotter.update_scalars(scalars)
 
@@ -412,6 +433,15 @@ def test_key_press_event():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_enable_picking_gc():
+    plotter = pyvista.Plotter(off_screen=False)
+    sphere = pyvista.Sphere()
+    plotter.add_mesh(sphere)
+    plotter.enable_cell_picking()
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     if VTK9:
@@ -434,7 +464,6 @@ def test_show_axes():
 def test_update():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.update()
-    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -1086,6 +1115,9 @@ def test_default_name_tracking():
     p.show()
     assert n_made_it == N**2
 
+    # release attached scalars
+    mesh.ReleaseData()
+    del mesh
 
 @pytest.mark.parametrize("as_global", [True, False])
 def test_add_background_image(as_global):
