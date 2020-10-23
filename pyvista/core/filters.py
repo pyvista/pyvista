@@ -3915,6 +3915,96 @@ class PolyDataFilters(DataSetFilters):
 
         return intersection_points, intersection_cells
 
+
+    def multi_ray_trace(poly_data, origins, directions, first_point=False, retry=False):
+        """Perform multiple ray trace calculations.
+
+        This requires a mesh with only triangular faces,
+         an array of origin points and an equal sized array of
+         direction vectors to trace along.
+
+        The embree library used for vectorisation of the ray traces is known to occasionally
+        return no intersections where the VTK implementation would return an intersection.
+        If the result appears to be missing some intersection points, set retry=True to run a second pass over rays
+        that returned no intersections, using the VTK ray_trace implementation.
+
+
+        Parameters
+        ----------
+        origins : np.ndarray or list
+            Starting point for each trace.
+
+        directions : np.ndarray or list
+            direction vector for each trace.
+
+        first_point : bool, optional
+            Returns intersection of first point only.
+
+        retry : bool, optional
+            Will retry rays that return no intersections using the ray_trace
+
+        Return
+        ------
+        intersection_points : np.ndarray
+            Location of the intersection points.  Empty array if no
+            intersections.
+
+        intersection_rays : np.ndarray
+            Indices of the ray for each intersection point. Empty array if no
+            intersections.
+
+        intersection_cells : np.ndarray
+            Indices of the intersection cells.  Empty array if no
+            intersections.
+
+        Examples
+        --------
+        Compute the intersection between rays from the origin in directions
+        [1, 0, 0], [0, 1, 0] and [0, 0, 1], and a sphere with radius 0.5 centered at the origin
+
+        >>> import pyvista as pv # doctest: +SKIP
+        ... sphere = pv.Sphere()
+        ... points, rays, cells = sphere.multi_ray_trace([[0, 0, 0]]*3, [[1, 0, 0], [0, 1, 0], [0, 0, 1]], first_point=True)
+        ... string = ", ".join([f"({point[0]:.3f}, {point[1]:.3f}, {point[2]:.3f})" for point in points])
+        ... print(f'Rays intersected at {string}')
+        Rays intersected at (0.499, 0.000, 0.000), (0.000, 0.497, 0.000), (0.000, 0.000, 0.500)
+        """
+        if not poly_data.is_all_triangles():
+            raise NotAllTrianglesError
+
+        try:
+            import trimesh, rtree, pyembree
+        except (ModuleNotFoundError, ImportError):
+            raise ImportError(
+                "To use multi_ray_trace please install trimesh, rtree and pyembree with:\n"
+                "\tconda install trimesh rtree pyembree"
+            )
+
+        faces_as_array = poly_data.faces.reshape((poly_data.number_of_faces, 4))[:, 1:]
+        tmesh = trimesh.Trimesh(poly_data.points, faces_as_array)
+        locations, index_ray, index_tri = tmesh.ray.intersects_location(
+            origins, directions, multiple_hits=not first_point
+        )
+        if retry:
+            ray_tuples = [(id_r, l, id_t) for id_r, l, id_t in zip(index_ray, locations, index_tri)]
+            for id_r in range(len(origins)):
+                if id_r not in index_ray:
+                    origin = np.array(origins[id_r])
+                    vector = np.array(directions[id_r])
+                    unit_vector = vector / np.sqrt(np.sum(np.power(vector, 2)))
+                    second_point = origin + (unit_vector * poly_data.length)
+                    locs, indexes = poly_data.ray_trace(origin, second_point, first_point=first_point)
+                    if locs.any():
+                        if first_point:
+                            locs = locs.reshape([1, 3])
+                        for loc, id_t in zip(locs, indexes):
+                            ray_tuples.append((id_r, loc, id_t))
+            sorted_results = sorted(ray_tuples, key=lambda x: x[0])
+            locations = np.array([loc for id_r, loc, id_t in sorted_results])
+            index_ray = np.array([id_r for id_r, loc, id_t in sorted_results])
+            index_tri = np.array([id_t for id_r, loc, id_t in sorted_results])
+        return locations, index_ray, index_tri
+
     def plot_boundaries(poly_data, edge_color="red", **kwargs):
         """Plot boundaries of a mesh.
 

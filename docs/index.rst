@@ -198,7 +198,7 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    getting-started/simple
    examples/index
    external_examples
-
+   optional_features
 
 Translating the documentation
 *****************************
