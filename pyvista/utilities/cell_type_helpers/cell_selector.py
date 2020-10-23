@@ -25,7 +25,7 @@ def generate_all_cell_types():
 
       try:
         enum_val = convert_cell_string_to_enum(enum_str)
-        enum_cell_type_map[enum_val] = (convert_enuM_string_to_cell_instancer(enum_str), enum_str)
+        enum_cell_type_map[enum_val] = (convert_enum_string_to_cell_instancer(enum_str), enum_str)
         enum_cell_type_nr_points_map[enum_val] = enum_cell_type_map[enum_val][0]().GetNumberOfPoints()
         all_cell_types.append(enum_val)
         all_cell_strings.append(enum_str)
@@ -41,7 +41,7 @@ def convert_cell_string_to_enum(cell_string):
   assert(hasattr(vtk, cell_string))
   return getattr(vtk, cell_string)
 
-def convert_enuM_string_to_cell_instancer(cell_enum_string):
+def convert_enum_string_to_cell_instancer(cell_enum_string):
   #assert(cell_enum_string in all_cell_strings)
   matches = vtk_re_enums_wo_num.match(cell_enum_string)
   descr = matches.group(2)

@@ -81,11 +81,31 @@ class CellArray(vtkCellArray):
         return self.GetNumberOfCells()
 
 def generate_cell_offsets_loop(cells, cell_types):
+    """Creates cell offsets, required by VTK < 9 versions
+
+    This method creates the cell offsets, that need to be passed to the
+    vtk unstructured grid constructor. The offsets are automatically generated
+    from the data.
+    Parameters
+    ----------
+    cells : np.ndarray (int)
+        The cells array in VTK format
+    cell_types : np.ndarray (int)
+        The types of the cell arrays given to the function
+    Return
+    ------
+    offset : np.ndarray (int)
+        Array of VTK offsets
+    """
+
+    if (not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(cell_types.dtype, np.integer)):
+        raise ValueError("The cells and cell-type arrays must have an integral data-type")
+
     offsets = np.zeros(shape=[cell_types.size], dtype=np.int64)
 
     current_cell_pos = 0
     for cell_i, cell_t in enumerate(cell_types):
-        if current_cell_pos >= cell_types.size:
+        if current_cell_pos >= cells.size:
             raise ValueError("Cell types and cell array are inconsistent. Got %d values left after reading all types" % (cell_types.size - current_cell_pos))
 
         cell_size = cells[current_cell_pos]
@@ -112,7 +132,7 @@ def generate_cell_offsets(cells, cell_types):
     if cell_sizes_cum[-1] != cells.size:
         raise ValueError("Cell types and cell array are inconsistent. Expected a cell array of length %d according to the cell types" % (cell_sizes_cum[-1]))
 
-    offsets = np.concatenate([[0], np.cumsum(cell_sizes_cum)[:-1]])
+    offsets = np.concatenate([[0], cell_sizes_cum])[:-1]
 
     return offsets
 

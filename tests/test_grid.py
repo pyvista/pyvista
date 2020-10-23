@@ -209,6 +209,21 @@ def test_cells_dict_variable_length():
     with pytest.raises(ValueError):
         grid.cells_dict
 
+def test_cells_dict_alternating_cells():
+    cells = np.concatenate([[4], [1, 2, 3, 4], [3], [0, 1, 2], [4], [0, 1, 5, 6]])
+    cells_types = np.array([vtk.VTK_QUAD, vtk.VTK_TRIANGLE, vtk.VTK_QUAD])
+    points = np.random.normal(size=(3+2*2, 3))
+    grid = pyvista.UnstructuredGrid(cells, cells_types, points)
+
+    cells_dict = grid.cells_dict
+
+    if VTK9:
+        assert np.all(grid.offset == np.array([0, 4, 7, 11]))
+    else:
+        assert np.all(grid.offset == np.array([0, 5, 9]))
+
+    assert np.all(grid.cells_dict[vtk.VTK_QUAD] == np.array([cells[1:5], cells[-4:]]))
+    assert np.all(grid.cells_dict[vtk.VTK_TRIANGLE] == [0, 1, 2])
 
 def test_destructor():
     ugrid = examples.load_hexbeam()
