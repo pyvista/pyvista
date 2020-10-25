@@ -47,12 +47,11 @@ SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 
 def close_all():
     """Close all open/active plotters and clean up memory."""
-    # need list() because the values() can be modified along the way
-    for p in list(_ALL_PLOTTERS.values()):
+    for key, p in _ALL_PLOTTERS.items():
         if not p._closed:
             p.close()
         p.deep_clean()
-    _ALL_PLOTTERS.clear()  # XXX in theory this should no longer be necessary
+    _ALL_PLOTTERS.clear()
     return True
 
 
@@ -2685,8 +2684,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def close(self):
         """Close the render window."""
-        if self._closed:
-            return
         # must close out widgets first
         super().close()
         # Renderer has an axes widget, so close it
@@ -2737,8 +2734,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
-        if self._id_name in _ALL_PLOTTERS:
-            del _ALL_PLOTTERS[self._id_name]
 
 
     def deep_clean(self):
@@ -2750,6 +2745,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if renderer is not None:
                 renderer.deep_clean()
         # Do not remove the renderers on the clean
+        if getattr(self, 'mesh', None) is not None:
+            self.mesh.point_arrays = None
+            self.mesh.cell_arrays = None
         self.mesh = None
         if getattr(self, 'mapper', None) is not None:
             self.mapper.lookup_table = None
