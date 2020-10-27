@@ -453,9 +453,26 @@ def test_arrows(grid):
     assert sphere.active_vectors_name == '_vectors'
 
 
-def test_set_active_vectors_name(grid):
+def test_set_active_vectors(grid):
+    vector_arr = np.arange(grid.n_points*3).reshape([grid.n_points, 3])
+    grid.point_arrays['vector_arr'] = vector_arr
+    grid.active_vectors_name = 'vector_arr'
+    assert grid.active_vectors_name == 'vector_arr'  
+    assert np.allclose(grid.active_vectors, vector_arr)
+    
     grid.active_vectors_name = None
     assert grid.active_vectors_name is None
+
+
+def test_set_active_tensors(grid):
+    tensor_arr = np.arange(grid.n_points*9).reshape([grid.n_points, 9])
+    grid.point_arrays['tensor_arr'] = tensor_arr
+    grid.active_tensors_name = 'tensor_arr'
+    assert grid.active_tensors_name == 'tensor_arr'
+    assert np.allclose(grid.active_tensors, tensor_arr)
+
+    grid.active_tensors_name = None
+    assert grid.active_tensors_name is None
 
 
 def test_set_t_coords(grid):
@@ -480,6 +497,37 @@ def test_activate_texture_none(grid):
 def test_set_active_vectors_fail(grid):
     with pytest.raises(ValueError):
         grid.set_active_vectors('not a vector')
+
+    vector_arr = np.arange(grid.n_points * 3).reshape([grid.n_points, 3])
+    grid.point_arrays['vector_arr'] = vector_arr
+    grid.active_vectors_name = 'vector_arr'
+
+    grid.point_arrays['scalar_arr'] = np.zeros([grid.n_points])
+
+    with pytest.raises(ValueError):
+        grid.set_active_vectors('scalar_arr')
+
+    assert grid.active_vectors_name == 'vector_arr'
+
+
+def test_set_active_tensors_fail(grid):
+    with pytest.raises(ValueError):
+        grid.set_active_tensors('not a tensor')
+
+    tensor_arr = np.arange(grid.n_points * 9).reshape([grid.n_points, 9])
+    grid.point_arrays['tensor_arr'] = tensor_arr
+    grid.active_tensors_name = 'tensor_arr'
+
+    grid.point_arrays['scalar_arr'] = np.zeros([grid.n_points])
+    grid.point_arrays['vector_arr'] = np.zeros([grid.n_points, 3])
+
+    with pytest.raises(ValueError):
+        grid.set_active_tensors('scalar_arr')
+
+    with pytest.raises(ValueError):
+        grid.set_active_tensors('vector_arr')
+
+    assert grid.active_tensors_name == 'tensor_arr'
 
 
 def test_set_active_scalars(grid):
