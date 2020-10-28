@@ -493,12 +493,12 @@ def wrap(dataset):
     >>> p = [1.0, 2.0, 3.0]
     >>> vertices = vtk.vtkCellArray()
     >>> pid = points.InsertNextPoint(p)
-    >>> vertices.InsertNextCell(1)
-    >>> vertices.InsertCellPoint(pid)
+    >>> _ = vertices.InsertNextCell(1)
+    >>> _ = vertices.InsertCellPoint(pid)
     >>> point = vtk.vtkPolyData()
-    >>> point.SetPoints(points)
-    >>> point.SetVerts(vertices)
-    >>> mesh = pv.wrap(point)
+    >>> _ = point.SetPoints(points)
+    >>> _ = point.SetVerts(vertices)
+    >>> mesh = pyvista.wrap(point)
     >>> mesh  # doctest:+SKIP
     PolyData (0x7fc55ff27ad0)
       N Cells:  1
