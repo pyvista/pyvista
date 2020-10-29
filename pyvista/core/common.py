@@ -243,6 +243,7 @@ class Common(DataSetFilters, DataObject):
         self._last_active_scalars_name = None
         self._active_scalars_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._active_vectors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
+        self._active_tensors_info = ActiveArrayInfo(FieldAssociation.POINT, name=None)
         self._textures = {}
 
     @property
@@ -285,6 +286,11 @@ class Common(DataSetFilters, DataObject):
         return self._active_vectors_info
 
     @property
+    def active_tensors_info(self):
+        """Return the active tensor's field and name: [field, name]."""
+        return self._active_tensors_info
+
+    @property
     def active_vectors(self):
         """Return the active vectors array."""
         field, name = self.active_vectors_info
@@ -293,6 +299,26 @@ class Common(DataSetFilters, DataObject):
                 return self.point_arrays[name]
             if field is FieldAssociation.CELL:
                 return self.cell_arrays[name]
+
+    @property
+    def active_tensors(self):
+        """Return the active tensors array."""
+        field, name = self.active_tensors_info
+        if name:
+            if field is FieldAssociation.POINT:
+                return self.point_arrays[name]
+            if field is FieldAssociation.CELL:
+                return self.cell_arrays[name]
+
+    @property
+    def active_tensors_name(self):
+        """Return the name of the active tensor array."""
+        return self.active_tensors_info.name
+
+    @active_tensors_name.setter
+    def active_tensors_name(self, name):
+        """Set the name of the active tensor."""
+        self.set_active_tensors(name)
 
     @property
     def active_vectors_name(self):
@@ -465,11 +491,15 @@ class Common(DataSetFilters, DataObject):
         _, field = get_array(self, name, preference=preference, info=True)
         self._last_active_scalars_name = self.active_scalars_info.name
         if field == FieldAssociation.POINT:
-            self.GetPointData().SetActiveScalars(name)
+            ret = self.GetPointData().SetActiveScalars(name)
         elif field == FieldAssociation.CELL:
-            self.GetCellData().SetActiveScalars(name)
+            ret = self.GetCellData().SetActiveScalars(name)
         else:
             raise ValueError(f'Data field ({field}) not usable')
+
+        if ret < 0:
+            raise ValueError(f'Data field ({field}) could not be set as the active scalars')
+
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
     def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
@@ -483,21 +513,48 @@ class Common(DataSetFilters, DataObject):
     def set_active_vectors(self, name, preference='point'):
         """Find the vectors by name and appropriately sets it as active.
 
-        To deactivate any active scalars, pass ``None`` as the ``name``.
-
+        To deactivate any active vectors, pass ``None`` as the ``name``.
         """
         if name is None:
             self.GetCellData().SetActiveVectors(None)
             self.GetPointData().SetActiveVectors(None)
-            return
-        _, field = get_array(self, name, preference=preference, info=True)
-        if field == FieldAssociation.POINT:
-            self.GetPointData().SetActiveVectors(name)
-        elif field == FieldAssociation.CELL:
-            self.GetCellData().SetActiveVectors(name)
+            field = FieldAssociation.POINT
         else:
-            raise ValueError(f'Data field ({field}) not usable')
+            _, field = get_array(self, name, preference=preference, info=True)
+            if field == FieldAssociation.POINT:
+                ret = self.GetPointData().SetActiveVectors(name)
+            elif field == FieldAssociation.CELL:
+                ret = self.GetCellData().SetActiveVectors(name)
+            else:
+                raise ValueError(f'Data field ({field}) not usable')
+
+            if ret < 0:
+                raise ValueError(f'Data field ({field}) could not be set as the active vectors')
+
         self._active_vectors_info = ActiveArrayInfo(field, name)
+
+    def set_active_tensors(self, name, preference='point'):
+        """Find the tensors by name and appropriately sets it as active.
+
+        To deactivate any active tensors, pass ``None`` as the ``name``.
+        """
+        if name is None:
+            self.GetCellData().SetActiveTensors(None)
+            self.GetPointData().SetActiveTensors(None)
+            field = FieldAssociation.POINT
+        else:
+            _, field = get_array(self, name, preference=preference, info=True)
+            if field == FieldAssociation.POINT:
+                ret = self.GetPointData().SetActiveTensors(name)
+            elif field == FieldAssociation.CELL:
+                ret = self.GetCellData().SetActiveTensors(name)
+            else:
+                raise ValueError(f'Data field ({field}) not usable')
+
+            if ret < 0:
+                raise ValueError(f'Data field ({field}) could not be set as the active tensors')
+
+        self._active_tensors_info = ActiveArrayInfo(field, name)
 
     def rename_array(self, old_name, new_name, preference='cell'):
         """Change array name by searching for the array then renaming it."""
