@@ -1,5 +1,6 @@
 import os
 import sys
+import platform
 
 import numpy as np
 import pytest
@@ -22,6 +23,7 @@ skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
                                      reason="Python 2 doesn't support binding methods")
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 
 @pytest.fixture(scope='module')
@@ -51,6 +53,7 @@ def test_clip_filter():
 
 
 @skip_windows
+@skip_mac
 def test_clip_by_scalars_filter():
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset_in in enumerate(DATASETS):
