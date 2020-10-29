@@ -1525,6 +1525,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             texture = mesh._activate_texture(texture)
 
         if texture:
+
             if isinstance(texture, np.ndarray):
                 texture = numpy_to_texture(texture)
             if not isinstance(texture, (vtk.vtkTexture, vtk.vtkOpenGLTexture)):
@@ -1538,6 +1539,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if scalars is None:
                 show_scalar_bar = False
             self.mapper.SetScalarModeToUsePointFieldData()
+
+            # see https://github.com/pyvista/pyvista/issues/950
+            mesh.set_active_scalars(None)
 
         # Handle making opacity array =========================================
 
