@@ -679,7 +679,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
     @property
     def cells_dict(self):
-        """ Return a dictionary that contains all cells mapped from cell types.
+        """Return a dictionary that contains all cells mapped from cell types.
 
         This function returns a np.ndarray for each cell type in an ordered fashion.
         Note that this function only works with element types of fixed sizes

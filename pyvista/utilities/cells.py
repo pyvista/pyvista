@@ -80,24 +80,32 @@ class CellArray(vtkCellArray):
         """Return the number of cells."""
         return self.GetNumberOfCells()
 
+
 def generate_cell_offsets_loop(cells, cell_types):
-    """Creates cell offsets, required by VTK < 9 versions
+    """Create cell offsets that are required by VTK < 9 versions.
 
     This method creates the cell offsets, that need to be passed to the
     vtk unstructured grid constructor. The offsets are automatically generated
-    from the data.
+    from the data. This function will generate the cell offset in an iterative fashion,
+    usable also for dynamic sized cells.
+    
     Parameters
     ----------
     cells : np.ndarray (int)
         The cells array in VTK format
     cell_types : np.ndarray (int)
         The types of the cell arrays given to the function
+
     Return
     ------
     offset : np.ndarray (int)
         Array of VTK offsets
-    """
 
+    Raises
+    ------
+    ValueError
+        If cell types and cell arrays are inconsistent, or have wrong size/dtype
+    """
     if (not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(cell_types.dtype, np.integer)):
         raise ValueError("The cells and cell-type arrays must have an integral data-type")
 
@@ -119,6 +127,29 @@ def generate_cell_offsets_loop(cells, cell_types):
 
 
 def generate_cell_offsets(cells, cell_types):
+    """Create cell offsets that are required by VTK < 9 versions.
+
+    Similar to generate_cell_offsets_loop, but only works for fixed sized cells
+    to gain additional speedup. Will use generate_cell_offsets_loop as a fallback
+    method if dynamic sized cells are present.
+
+    Parameters
+    ----------
+    cells : np.ndarray (int)
+        The cells array in VTK format
+    cell_types : np.ndarray (int)
+        The types of the cell arrays given to the function
+
+    Return
+    ------
+    offset : np.ndarray (int)
+        Array of VTK offsets
+
+    Raises
+    ------
+    ValueError
+        If cell types and cell arrays are inconsistent, or have wrong size/dtype
+    """
     try:
         cell_sizes = np.array([enum_cell_type_nr_points_map[cell_t] for cell_t in cell_types], dtype=np.int32)
     except KeyError as err:
@@ -137,6 +168,52 @@ def generate_cell_offsets(cells, cell_types):
     return offsets
 
 def create_mixed_cells(mixed_cell_dict, nr_points=None):
+    """Generate the required cell arrays for the creation of a pyvista.UnstructuredGrid from a cell dictionary.
+
+    This function generates all required cell arrays (cells, celltypes and offsets for VTK versions < 9.0),
+    according to a given cell dictionary. The given cell-dictionary should contain a proper mapping of
+    vtk_type -> np.ndarray (int), where the given ndarray for each cell-type has to be an array of dimensions
+    [N, D] or [N*D], where N is the number of cells and D is the size of the cells for the given type (e.g. 3 for triangles).
+    Multiple vtk_type keys with associated arrays can be present in one dictionary.
+    This function only accepts cell types of fixed size and not dynamic sized cells like VTK_POLYGON
+
+    Parameters
+    ----------
+    mixed_cell_dict : dict
+        A dictionary that maps VTK-Enum-types (e.g. VTK_TRIANGLE) to np.ndarrays of type int.
+        The np.ndarrays describe the cell connectivity
+    nr_points : int, optional
+        Number of points of the grid. Used only to allow additional runtime checks for
+        invalid indices, by default None
+
+    Returns
+    -------
+    cell_types : np.ndarray (uint8)
+        Types of each cell
+
+    cell_arr : np.ndarray (int)
+        VTK-cell array. Format depends if the VTK version is < 9.0 or not
+
+    cell_offsets : np.ndarray (int) (for VTK versions < 9.0 only!)
+        Array of VTK offsets
+
+    Raises
+    ------
+    ValueError
+        If any of the cell types are not supported, have dynamic sized cells, map to
+        values with wrong size, or cell indices point outside the given number of points.
+
+    Examples
+    --------
+    Create the cell arrays containing two triangles.
+
+    >>> from pyvista.utilities.cells import create_mixed_cells
+    >>> #Will generate cell arrays two generate a mesh with two disconnected triangles from 6 points
+    >>> #VTK versions < 9.0
+    >>> cell_types, cell_arr, cell_offsets = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
+    >>> #VTK versions >= 9.0
+    >>> cell_types, cell_arr = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
+    """
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
 
@@ -184,6 +261,29 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
         return final_cell_types, final_cell_arr
 
 def get_mixed_cells(vtkobj):
+    """Create the cells dictionary from the given pyvista.UnstructuredGrid.
+
+    This functions creates a cells dictionary (see create_mixed_cells), with
+    a mapping vtk_type -> np.ndarray (int) for fixed size cell types. The
+    returned dictionary will have arrays of size [N, D], where N is the number 
+    of cells and D is the size of the cells for the given type (e.g. 3 for triangles).
+
+    Parameters
+    ----------
+    vtkobj : pyvista.UnstructuredGrid
+        The unstructured grid for which the cells dictionary should be computed
+
+    Returns
+    -------
+    cells_dict : dict
+        Contains the 
+
+    Raises
+    ------
+    ValueError
+        If vtkobj is not a pyvista.UnstructuredGrid, any of the present cells are unsupported, 
+        or have dynamic cell sizes, like VTK_POLYGON.
+    """
     return_dict = {}
 
     if not isinstance(vtkobj, pyvista.UnstructuredGrid):

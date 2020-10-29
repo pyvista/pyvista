@@ -222,8 +222,8 @@ def test_cells_dict_alternating_cells():
     else:
         assert np.all(grid.offset == np.array([0, 5, 9]))
 
-    assert np.all(grid.cells_dict[vtk.VTK_QUAD] == np.array([cells[1:5], cells[-4:]]))
-    assert np.all(grid.cells_dict[vtk.VTK_TRIANGLE] == [0, 1, 2])
+    assert np.all(cells_dict[vtk.VTK_QUAD] == np.array([cells[1:5], cells[-4:]]))
+    assert np.all(cells_dict[vtk.VTK_TRIANGLE] == [0, 1, 2])
 
 def test_destructor():
     ugrid = examples.load_hexbeam()
