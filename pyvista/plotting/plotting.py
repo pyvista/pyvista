@@ -1344,7 +1344,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ##### Parse arguments to be used for all meshes #####
 
         if scalar_bar_args is None:
-            scalar_bar_args = {}
+            scalar_bar_args = {'n_colors': n_colors}
 
         if show_edges is None:
             show_edges = rcParams['show_edges']
