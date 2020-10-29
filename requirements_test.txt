@@ -11,3 +11,4 @@ itkwidgets>=0.25.2
 tqdm
 hypothesis>=5.8.0
 sphinx_gallery
+trimesh
