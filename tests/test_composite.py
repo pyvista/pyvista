@@ -1,4 +1,5 @@
 import pathlib
+import platform
 
 import numpy as np
 import pytest
@@ -8,6 +9,7 @@ import pyvista
 from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
 from pyvista import examples as ex
 
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 @pytest.fixture()
 def vtk_multi():
@@ -212,9 +214,11 @@ def test_multi_block_io(extension, binary, tmpdir, use_pathlib, ant,
     foo = pyvista.read(filename)
     assert foo.n_blocks == multi.n_blocks
 
+@skip_mac  # fails due to download examples
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
-def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
+def test_ensight_multi_block_io(extension, binary, tmpdir, ant,
+                                sphere, uniform, airplane, globe):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
     # multi = ex.load_bfs()  # .case file
     multi = ex.download_backward_facing_step()  # .case file
@@ -233,6 +237,7 @@ def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform,
     assert foo.n_blocks == multi.n_blocks
     for block in foo:
         assert block.array_names == array_names
+
 
 def test_invalid_arg():
     with pytest.raises(TypeError):
