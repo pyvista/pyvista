@@ -185,7 +185,7 @@ class DataObject:
         This includes header details and information about all arrays.
 
         """
-        raise NotImplemented('Called only by the inherited class')
+        raise NotImplementedError('Called only by the inherited class')
 
     def copy_meta_from(self, ido):  # pragma: no cover
         """Copy pyvista meta data onto this object from another object."""
