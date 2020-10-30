@@ -75,7 +75,10 @@ class DataObject:
                              f' Must be one of: {valid_extensions}')
 
         reader = self._READERS[file_ext]()
-        reader.SetFileName(str(file_path))
+        if file_ext == ".case":
+            reader.SetCaseFileName(str(file_path))
+        else:
+            reader.SetFileName(str(file_path))
         reader.Update()
         return reader.GetOutputDataObject(0)
 

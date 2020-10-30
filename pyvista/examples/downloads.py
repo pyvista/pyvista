@@ -650,6 +650,11 @@ def download_vtk_logo():
     """Download a texture of the VTK logo."""
     return _download_and_read("vtk.png", texture=True)
 
+def download_backward_facing_step():
+    """Download an ensigh gold case of a fluid simulation."""
+    folder, _ = _download_file('EnSight.zip')
+    filename = os.path.join(folder, "foam_case_0_0_0_0.case")
+    return pyvista.read(filename)
 
 def download_gpr_data_array():
     """Download a texture of the VTK logo."""
@@ -661,3 +666,4 @@ def download_gpr_path():
     saved_file, _ = _download_file("gpr-example/path.txt")
     path = np.loadtxt(saved_file, skiprows=1)
     return pyvista.PolyData(path)
+
