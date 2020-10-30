@@ -193,11 +193,13 @@ def test_init_from_dict(multiple_cell_types, flat_cells):
     with pytest.raises(ValueError):
         pyvista.UnstructuredGrid({vtk.VTK_POLYGON: cells_hex.reshape([-1])}, points, deep=False)
 
+
 def test_cells_dict_hexbeam_file():
     grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
     cells = np.delete(grid.cells, np.arange(0, grid.cells.size, 9)).reshape([-1, 8])
 
     assert np.all(grid.cells_dict[vtk.VTK_HEXAHEDRON] == cells)
+
 
 def test_cells_dict_variable_length():
     cells_poly = np.concatenate([[5], np.arange(5)])
@@ -208,6 +210,12 @@ def test_cells_dict_variable_length():
     # Dynamic sizes cell types are currently unsupported
     with pytest.raises(ValueError):
         grid.cells_dict
+
+
+def test_cells_dict_empty_grid():
+    grid = pyvista.UnstructuredGrid()
+    assert grid.cells_dict is None
+
 
 def test_cells_dict_alternating_cells():
     cells = np.concatenate([[4], [1, 2, 3, 4], [3], [0, 1, 2], [4], [0, 1, 5, 6]])

@@ -209,10 +209,9 @@ def create_mixed_cells(mixed_cell_dict, nr_points=None):
 
     >>> from pyvista.utilities.cells import create_mixed_cells
     >>> #Will generate cell arrays two generate a mesh with two disconnected triangles from 6 points
-    >>> #VTK versions < 9.0
-    >>> cell_types, cell_arr, cell_offsets = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
-    >>> #VTK versions >= 9.0
-    >>> cell_types, cell_arr = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
+    >>> cell_arrays = create_mixed_cells({vtk.VTK_TRIANGLE: np.array([[0, 1, 2], [3, 4, 5]])})
+    >>> #VTK versions < 9.0: cell_types, cell_arr, cell_offsets = cell_arrays
+    >>> #VTK versions >= 9.0: cell_types, cell_arr = cell_arrays
     """
     if not np.all([k in enum_cell_type_nr_points_map for k in mixed_cell_dict.keys()]):
         raise ValueError("Found unknown or unsupported VTK cell type in your requested cells")
