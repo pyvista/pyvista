@@ -267,9 +267,9 @@ def read_texture(filename, attrs=None):
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         if image.n_points < 2:
-            raise RuntimeError("Problem reading the image with VTK.")
+            raise ValueError("Problem reading the image with VTK.")
         return pyvista.Texture(image)
-    except (KeyError, RuntimeError):
+    except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
     import imageio

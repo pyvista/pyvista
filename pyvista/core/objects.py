@@ -315,7 +315,7 @@ class Texture(vtk.vtkTexture, DataObject):
             if image.GetNumberOfPoints() < 2:
                 raise ValueError("Problem reading the image with VTK.")
             self._from_image_data(image)
-        except (KeyError, RuntimeError):
+        except (KeyError, ValueError):
             self._from_array(imageio.imread(filename))
 
     def _from_texture(self, texture):
