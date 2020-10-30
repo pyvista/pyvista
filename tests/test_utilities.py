@@ -1,4 +1,5 @@
 """ test pyvista.utilities """
+import pathlib
 import os
 
 import numpy as np
@@ -7,9 +8,14 @@ import vtk
 
 import pyvista
 from pyvista import examples as ex
-from pyvista.utilities import errors
-from pyvista.utilities import fileio
-from pyvista.utilities import helpers
+from pyvista.utilities import (
+    check_valid_vector,
+    errors,
+    fileio,
+    GPUInfo,
+    helpers,
+    Observer,
+)
 
 # Only set this here just the once.
 pyvista.set_error_output_file(os.path.join(os.path.dirname(__file__), 'ERROR_OUTPUT.txt'))
@@ -38,9 +44,12 @@ def test_createvectorpolydata():
     assert np.any(vdata.point_arrays['vectors'])
 
 
-def test_read(tmpdir):
+@pytest.mark.parametrize('use_pathlib', [True, False])
+def test_read(tmpdir, use_pathlib):
     fnames = (ex.antfile, ex.planefile, ex.hexbeamfile, ex.spherefile,
               ex.uniformfile, ex.rectfile)
+    if use_pathlib:
+        fnames = [pathlib.Path(fname) for fname in fnames]
     types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
              pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
     for i, filename in enumerate(fnames):
@@ -52,7 +61,7 @@ def test_read(tmpdir):
         obj = fileio.read(filename, attrs={'DebugOn': None})
         assert isinstance(obj, types[i])
     # this is also tested for each mesh types init from file tests
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % 'npy'))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.npy'))
     arr = np.random.rand(10, 10)
     np.save(filename, arr)
     with pytest.raises(IOError):
@@ -78,14 +87,14 @@ def test_get_array():
     grid = pyvista.UnstructuredGrid(ex.hexbeamfile)
     # add array to both point/cell data with same name
     carr = np.random.rand(grid.n_cells)
-    grid._add_cell_array(carr, 'test_data')
+    grid.cell_arrays.append(carr, 'test_data')
     parr = np.random.rand(grid.n_points)
-    grid._add_point_array(parr, 'test_data')
+    grid.point_arrays.append(parr, 'test_data')
     # add other data
     oarr = np.random.rand(grid.n_points)
-    grid._add_point_array(oarr, 'other')
+    grid.point_arrays.append(oarr, 'other')
     farr = np.random.rand(grid.n_points * grid.n_cells)
-    grid._add_field_array(farr, 'field_data')
+    grid.field_arrays.append(farr, 'field_data')
     assert np.allclose(carr, helpers.get_array(grid, 'test_data', preference='cell'))
     assert np.allclose(parr, helpers.get_array(grid, 'test_data', preference='point'))
     assert np.allclose(oarr, helpers.get_array(grid, 'other'))
@@ -207,3 +216,44 @@ def test_progress_monitor():
     mesh = pyvista.Sphere()
     ugrid = mesh.delaunay_3d(progress_bar=True)
     assert isinstance(ugrid, pyvista.UnstructuredGrid)
+
+
+def test_observer():
+    msg = "KIND: In PATH, line 0\nfoo (ADDRESS): ALERT"
+    obs = Observer()
+    ret = obs.parse_message("foo")
+    assert ret[3] == "foo"
+    ret = obs.parse_message(msg)
+    assert ret[3] == "ALERT"
+    for kind in ["WARNING", "ERROR"]:
+        obs.log_message(kind, "foo")
+    obs(obj=None, event=None, message=msg)
+    assert obs.has_event_occurred()
+    assert obs.get_message() == "ALERT"
+    assert obs.get_message(etc=True) == msg
+
+    alg = vtk.vtkSphereSource()
+    alg.GetExecutive()
+    obs.observe(alg)
+    with pytest.raises(RuntimeError, match="algorithm"):
+        obs.observe(alg)
+
+
+def test_gpuinfo():
+    gpuinfo = GPUInfo()
+    _repr = gpuinfo.__repr__()
+    _repr_html = gpuinfo._repr_html_()
+    assert isinstance(_repr, str) and len(_repr) > 1
+    assert isinstance(_repr_html, str) and len(_repr_html) > 1
+
+    # test corrupted internal infos
+    gpuinfo._gpu_info = 'foo'
+    for func_name in ['renderer', 'version', 'vendor']:
+        with pytest.raises(RuntimeError, match=func_name):
+            getattr(gpuinfo, func_name)()
+
+
+def test_check_valid_vector():
+    with pytest.raises(TypeError, match="length three"):
+        check_valid_vector([0, 1])
+    check_valid_vector([0, 1, 2])

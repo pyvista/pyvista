@@ -1,3 +1,4 @@
+import pathlib
 import os
 import weakref
 
@@ -128,7 +129,7 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     hexbeam.save(filename, binary)
 
     grid = pyvista.UnstructuredGrid(filename)
@@ -136,6 +137,22 @@ def test_save(extension, binary, tmpdir, hexbeam):
     assert grid.points.shape == hexbeam.points.shape
 
     grid = pyvista.read(filename)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+    assert isinstance(grid, pyvista.UnstructuredGrid)
+
+
+def test_pathlib_read_write(tmpdir, hexbeam):
+    path = pathlib.Path(str(tmpdir.mkdir("tmpdir").join('tmp.vtk')))
+    assert not path.is_file()
+    hexbeam.save(path)
+    assert path.is_file()
+
+    grid = pyvista.UnstructuredGrid(path)
+    assert grid.cells.shape == hexbeam.cells.shape
+    assert grid.points.shape == hexbeam.points.shape
+
+    grid = pyvista.read(path)
     assert grid.cells.shape == hexbeam.cells.shape
     assert grid.points.shape == hexbeam.points.shape
     assert isinstance(grid, pyvista.UnstructuredGrid)
@@ -280,7 +297,7 @@ def test_invalid_init_structured():
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     struct_grid.save(filename, binary)
 
     grid = pyvista.StructuredGrid(filename)
@@ -361,6 +378,14 @@ def test_read_rectilinear_grid_from_file():
     assert grid.n_arrays == 1
 
 
+def test_read_rectilinear_grid_from_pathlib():
+    grid = pyvista.RectilinearGrid(pathlib.Path(examples.rectfile))
+    assert grid.n_cells == 16146
+    assert grid.n_points == 18144
+    assert grid.bounds == [-350.0, 1350.0, -400.0, 1350.0, -850.0, 0.0]
+    assert grid.n_arrays == 1
+
+
 def test_cast_rectilinear_grid():
     grid = pyvista.read(examples.rectfile)
     structured = grid.cast_to_structured_grid()
@@ -426,6 +451,15 @@ def test_read_uniform_grid_from_file():
     assert grid.dimensions == [10, 10, 10]
 
 
+def test_read_uniform_grid_from_pathlib():
+    grid = pyvista.UniformGrid(pathlib.Path(examples.uniformfile))
+    assert grid.n_cells == 729
+    assert grid.n_points == 1000
+    assert grid.bounds == [0.0, 9.0, 0.0, 9.0, 0.0, 9.0]
+    assert grid.n_arrays == 2
+    assert grid.dimensions == [10, 10, 10]
+
+
 def test_cast_uniform_to_structured():
     grid = examples.load_uniform()
     structured = grid.cast_to_structured_grid()
@@ -445,7 +479,7 @@ def test_cast_uniform_to_rectilinear():
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.grid.RectilinearGrid._READERS)
 def test_save_rectilinear(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
     grid = pyvista.RectilinearGrid(filename)
@@ -466,7 +500,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.grid.UniformGrid._READERS)
 def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
     grid = pyvista.UniformGrid(filename)

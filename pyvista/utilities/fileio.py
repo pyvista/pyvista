@@ -1,5 +1,6 @@
 """Contains a dictionary that maps file extensions to VTK readers."""
 
+import pathlib
 import os
 
 import numpy as np
@@ -169,30 +170,47 @@ def read(filename, attrs=None, file_format=None):
     Parameters
     ----------
     filename : str
-        The string path to the file to read. If a list of files is given,
-        a :class:`pyvista.MultiBlock` dataset is returned with each file being
-        a separate block in the dataset.
+        The string path to the file to read. If a list of files is
+        given, a :class:`pyvista.MultiBlock` dataset is returned with
+        each file being a separate block in the dataset.
+
     attrs : dict, optional
-        A dictionary of attributes to call on the reader. Keys of dictionary are
-        the attribute/method names and values are the arguments passed to those
-        calls. If you do not have any attributes to call, pass ``None`` as the
-        value.
+        A dictionary of attributes to call on the reader. Keys of
+        dictionary are the attribute/method names and values are the
+        arguments passed to those calls. If you do not have any
+        attributes to call, pass ``None`` as the value.
+
     file_format : str, optional
         Format of file to read with meshio.
 
+    Examples
+    --------
+    Load an example mesh
+
+    >>> import pyvista
+    >>> from pyvista import examples
+    >>> mesh = pyvista.read(examples.antfile)
+
+    Load a vtk file
+
+    >>> mesh = pyvista.read('my_mesh.vtk')  # doctest:+SKIP
+
+    Load a meshio file
+
+    >>> mesh = pyvista.read("mesh.obj")  # doctest:+SKIP
     """
     if isinstance(filename, (list, tuple)):
         multi = pyvista.MultiBlock()
         for each in filename:
-            if isinstance(each, str):
-                name = os.path.basename(each)
+            if isinstance(each, (str, pathlib.Path)):
+                name = os.path.basename(str(each))
             else:
                 name = None
             multi[-1, name] = read(each)
         return multi
-    filename = os.path.abspath(os.path.expanduser(filename))
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
-        raise FileNotFoundError('File ({}) not found'.format(filename))
+        raise FileNotFoundError(f'File ({filename}) not found')
     ext = get_ext(filename)
 
     # Read file using meshio.read if file_format is present
@@ -221,7 +239,7 @@ def read(filename, attrs=None, file_format=None):
         # Attempt to use the legacy reader...
         return read_legacy(filename)
     elif ext in ['.jpeg', '.jpg']:
-        return read_texture(filename).to_image()
+        return pyvista.Texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:
@@ -250,13 +268,13 @@ def read_texture(filename, attrs=None):
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         if image.n_points < 2:
-            raise RuntimeError("Problem reading the image with VTK.")
-        return pyvista.image_to_texture(image)
-    except (KeyError, RuntimeError):
+            raise ValueError("Problem reading the image with VTK.")
+        return pyvista.Texture(image)
+    except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
     import imageio
-    return pyvista.numpy_to_texture(imageio.imread(filename))
+    return pyvista.Texture(imageio.imread(filename))
 
 
 def read_exodus(filename,
@@ -281,7 +299,7 @@ def read_exodus(filename,
         elif isinstance(sideset, str):
             name = sideset
         else:
-            raise ValueError('Could not parse sideset ID/name: {}'.format(sideset))
+            raise ValueError(f'Could not parse sideset ID/name: {sideset}')
 
         reader.SetSideSetArrayStatus(name, 1)
 
@@ -383,7 +401,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
     pixel_voxel = {8, 11}       # Handle pixels and voxels
     for cell_type in np.unique(vtk_cell_type):
         if cell_type not in vtk_to_meshio_type.keys() and cell_type not in pixel_voxel:
-            raise TypeError("meshio does not support VTK type {}.".format(cell_type))
+            raise TypeError(f"meshio does not support VTK type {cell_type}.")
 
     # Get cells
     cells = []
@@ -403,7 +421,7 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         cell_type = cell_type if cell_type not in pixel_voxel else cell_type+1
         cell_type = (
             vtk_to_meshio_type[cell_type] if cell_type != 7
-            else "polygon{}".format(numnodes)
+            else f"polygon{numnodes}"
         )
 
         if len(cells) > 0 and cells[-1][0] == cell_type:

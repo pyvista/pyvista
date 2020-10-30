@@ -3,6 +3,7 @@
 These classes hold many VTK datasets in one object that can be passed
 to VTK algorithms and PyVista filtering/plotting routines.
 """
+import pathlib
 import collections.abc
 import logging
 
@@ -79,16 +80,21 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
             elif isinstance(args[0], (list, tuple)):
                 for block in args[0]:
                     self.append(block)
-            elif isinstance(args[0], str):
-                self._load_file(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0])
             elif isinstance(args[0], dict):
                 idx = 0
                 for key, block in args[0].items():
                     self[idx, key] = block
                     idx += 1
+            else:
+                raise TypeError(f'Type {type(args[0])} is not supported by pyvista.MultiBlock')
 
             # keep a reference of the args
             self.refs.append(args)
+        elif len(args) > 1:
+            raise ValueError('Invalid number of arguments:\n``pyvista.MultiBlock``'
+                             'supports 0 or 1 arguments.')
 
         # Upon creation make sure all nested structures are wrapped
         self.wrap_nested()
@@ -193,7 +199,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         for i in range(self.n_blocks):
             if self.get_block_name(i) == name:
                 return i
-        raise KeyError('Block name ({}) not found'.format(name))
+        raise KeyError(f'Block name ({name}) not found')
 
     def __getitem__(self, index):
         """Get a block by its index or name.
@@ -223,7 +229,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         if index < 0:
             index = self.n_blocks + index
         if index < 0 or index >= self.n_blocks:
-            raise IndexError('index ({}) out of range for this dataset.'.format(index))
+            raise IndexError(f'index ({index}) out of range for this dataset.')
         data = self.GetBlock(index)
         if data is None:
             return data
@@ -305,7 +311,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         else:
             self.SetBlock(i, data)
         if name is None:
-            name = 'Block-{0:02}'.format(i)
+            name = f'Block-{i:02}'
         self.set_block_name(i, name) # Note that this calls self.Modified()
         if data not in self.refs:
             self.refs.append(data)
@@ -384,7 +390,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
         fmt += "<tr><td>"
         fmt += "\n"
         fmt += "<table>\n"
-        fmt += "<tr><th>{}</th><th>Values</th></tr>\n".format(type(self).__name__)
+        fmt += f"<tr><th>{type(self).__name__}</th><th>Values</th></tr>\n"
         row = "<tr><td>{}</td><td>{}</td></tr>\n"
 
         # now make a call on the object to get its attributes as a list of len 2 tuples
@@ -414,7 +420,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
     def __repr__(self):
         """Define an adequate representation."""
         # return a string that is Python console friendly
-        fmt = "{} ({})\n".format(type(self).__name__, hex(id(self)))
+        fmt = f"{type(self).__name__} ({hex(id(self))})\n"
         # now make a call on the object to get its attributes as a list of len 2 tuples
         row = "  {}:\t{}\n"
         for attr in self._get_attrs():

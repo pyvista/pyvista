@@ -5,6 +5,7 @@ import shutil
 import sys
 import zipfile
 
+import numpy as np
 import vtk
 
 import pyvista
@@ -35,7 +36,7 @@ def _decompress(filename):
 
 
 def _get_vtk_file_url(filename):
-    return 'https://github.com/pyvista/vtk-data/raw/master/Data/{}'.format(filename)
+    return f'https://github.com/pyvista/vtk-data/raw/master/Data/{filename}'
 
 
 def _retrieve_file(url, filename):
@@ -477,6 +478,11 @@ def download_model_with_variance():
     return _download_and_read("model_with_variance.vtu")
 
 
+def download_thermal_probes():
+    """Download model with variance dataset."""
+    return _download_and_read("probes.vtp")
+
+
 def download_carburator():
     """Download scan of a carburator.
 
@@ -649,3 +655,15 @@ def download_backward_facing_step():
     folder, _ = _download_file('EnSight.zip')
     filename = os.path.join(folder, "foam_case_0_0_0_0.case")
     return pyvista.read(filename)
+
+def download_gpr_data_array():
+    """Download a texture of the VTK logo."""
+    saved_file, _ = _download_file("gpr-example/data.npy")
+    return np.load(saved_file)
+
+def download_gpr_path():
+    """Download a texture of the VTK logo."""
+    saved_file, _ = _download_file("gpr-example/path.txt")
+    path = np.loadtxt(saved_file, skiprows=1)
+    return pyvista.PolyData(path)
+

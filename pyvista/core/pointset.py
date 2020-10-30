@@ -1,4 +1,5 @@
 """Sub-classes and wrappers for vtk.vtkPointSet."""
+import pathlib
 import logging
 import os
 import warnings
@@ -82,7 +83,7 @@ class PointSet(Common):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
-                                 'number of cells (%d)' % self.n_cells)
+                                 f'number of cells ({self.n_cells}')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = vtk.vtkDataSetAttributes.DUPLICATECELL
 
@@ -155,8 +156,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                     self.deep_copy(args[0])
                 else:
                     self.shallow_copy(args[0])
-            elif isinstance(args[0], str):
-                self._load_file(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0])
             elif isinstance(args[0], (np.ndarray, list)):
                 if isinstance(args[0], list):
                     points = np.asarray(args[0])
@@ -233,6 +234,10 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
 
     def is_all_triangles(self):
         """Return True if all the faces of the polydata are triangles."""
+        # Need to make sure there are only face cells and no lines/verts
+        if not len(self.faces) or len(self.lines) > 0 or len(self.verts) > 0:
+            return False
+        # All we have are faces, check if all faces are indeed triangles
         return self.faces.size % 4 == 0 and (self.faces.reshape(-1, 4)[:, 0] == 3).all()
 
     def _from_arrays(self, vertices, faces, deep=True, verts=False):
@@ -312,7 +317,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
          file size.
 
         """
-        filename = os.path.abspath(os.path.expanduser(filename))
+        filename = os.path.abspath(os.path.expanduser(str(filename)))
         ftype = get_ext(filename)
         # Recompute normals prior to save.  Corrects a bug were some
         # triangular meshes are not saved correctly
@@ -330,9 +335,8 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
             Total area of the mesh.
 
         """
-        mprop = vtk.vtkMassProperties()
-        mprop.SetInputData(self)
-        return mprop.GetSurfaceArea()
+        areas = self.compute_cell_sizes(length=False, area=True, volume=False,)["Area"]
+        return np.sum(areas)
 
     @property
     def volume(self):
@@ -396,6 +400,12 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         return alg.GetOutput().GetNumberOfCells()
 
 
+    def __del__(self):
+        """Delete the object."""
+        if hasattr(self, '_obbTree'):
+            del self._obbTree
+
+
 @abstract_class
 class PointGrid(PointSet):
     """Class in common with structured and unstructured grids."""
@@ -457,10 +467,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> from pyvista import examples
     >>> import vtk
 
-    >>> # Create an empty grid
+    Create an empty grid
+
     >>> grid = pyvista.UnstructuredGrid()
 
-    >>> # Copy a vtkUnstructuredGrid
+    Copy a vtkUnstructuredGrid
+
     >>> vtkgrid = vtk.vtkUnstructuredGrid()
     >>> grid = pyvista.UnstructuredGrid(vtkgrid)  # Initialize from a vtkUnstructuredGrid
 
@@ -470,7 +482,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     >>> # from arrays (vtk<9)
     >>> #grid = pyvista.UnstructuredGrid(offset, cells, celltypes, points)
 
-    >>> # From a string filename
+    From a string filename
+
     >>> grid = pyvista.UnstructuredGrid(examples.hexbeamfile)
 
     """
@@ -492,8 +505,8 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 else:
                     self.shallow_copy(args[0])
 
-            elif isinstance(args[0], str):
-                self._load_file(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0])
 
             elif isinstance(args[0], vtk.vtkStructuredGrid):
                 vtkappend = vtk.vtkAppendFilter()
@@ -503,7 +516,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             else:
                 itype = type(args[0])
-                raise TypeError('Cannot work with input type %s' % itype)
+                raise TypeError(f'Cannot work with input type {itype}')
 
         elif len(args) == 3 and VTK9:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -512,6 +525,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr]):
                 self._from_arrays(None, args[0], args[1], args[2], deep)
+                self._check_for_consistency()
             else:
                 raise TypeError('All input types must be np.ndarray')
 
@@ -523,6 +537,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
 
             if all([arg0_is_arr, arg1_is_arr, arg2_is_arr, arg3_is_arr]):
                 self._from_arrays(args[0], args[1], args[2], args[3], deep)
+                self._check_for_consistency()
             else:
                 raise TypeError('All input types must be np.ndarray')
 
@@ -607,10 +622,32 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         # vtk9 does not require an offset array
         if VTK9:
             if offset is not None:
-                warnings.warn('VTK 9 no longer accepts an offset array')
+                warnings.warn('VTK 9 no longer accepts an offset array',
+                              stacklevel=3)
             self.SetCells(cell_type, vtkcells)
         else:
             self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)
+
+    def _check_for_consistency(self):
+        """Check if size of offsets and celltypes match the number of cells.
+
+        Checks if the number of offsets and celltypes correspond to
+        the number of cells.  Called after initialization of the self
+        from arrays.
+        """
+        if self.n_cells != self.celltypes.size:
+            raise ValueError(f'Number of cell types ({self.celltypes.size}) '
+                             f'must match the number of cells {self.n_cells})')
+
+        if VTK9:
+            if self.n_cells != self.offset.size - 1:
+                raise ValueError(f'Size of the offset ({self.offset.size}) '
+                                 'must be one greater than the number of cells '
+                                 f'({self.n_cells})')
+        else:
+            if self.n_cells != self.offset.size:
+                raise ValueError(f'Size of the offset ({self.offset.size}) '
+                                 f'must match the number of cells ({self.n_cells})')
 
     @property
     def cells(self):
@@ -764,7 +801,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if isinstance(args[0], vtk.vtkStructuredGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
-                self._load_file(args[0])
+                self._from_file(args[0])
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -876,7 +913,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         if isinstance(ind, np.ndarray):
             if ind.dtype == np.bool_ and ind.size != self.n_cells:
                 raise ValueError('Boolean array size must match the '
-                                 'number of cells (%d)' % self.n_cells)
+                                 f'number of cells ({self.n_cells})')
         ghost_cells = np.zeros(self.n_cells, np.uint8)
         ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
 

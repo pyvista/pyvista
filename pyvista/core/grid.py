@@ -1,5 +1,5 @@
 """Sub-classes for vtk.vtkRectilinearGrid and vtk.vtkImageData."""
-
+import pathlib
 import logging
 
 import numpy as np
@@ -91,12 +91,12 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkRectilinearGrid):
                 self.deep_copy(args[0])
-            elif isinstance(args[0], str):
-                self._load_file(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0], None, None)
             else:
-                raise TypeError("Type ({}) not understood by `RectilinearGrid`.".format(type(args[0])))
+                raise TypeError(f'Type ({type(args[0])}) not understood by `RectilinearGrid`')
 
         elif len(args) == 3 or len(args) == 2:
             arg0_is_arr = isinstance(args[0], np.ndarray)
@@ -287,8 +287,8 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
         if len(args) == 1:
             if isinstance(args[0], vtk.vtkImageData):
                 self.deep_copy(args[0])
-            elif isinstance(args[0], str):
-                self._load_file(args[0])
+            elif isinstance(args[0], (str, pathlib.Path)):
+                self._from_file(args[0])
             else:
                 arg0_is_valid = len(args[0]) == 3
                 self._from_specs(args[0])

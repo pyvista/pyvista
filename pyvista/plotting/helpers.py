@@ -132,17 +132,13 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
         plotter.enable_parallel_projection()
 
     result = plotter.show(window_size=window_size,
-                          auto_close=False,
+                          auto_close=auto_close,
                           interactive=interactive,
                           full_screen=full_screen,
                           screenshot=screenshot,
                           return_img=return_img,
                           use_panel=use_panel,
                           height=height)
-
-    # close and return camera position and maybe image
-    if auto_close:
-        plotter.close()
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
     return result

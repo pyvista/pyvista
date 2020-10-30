@@ -1,3 +1,5 @@
+import pathlib
+
 import numpy as np
 import pytest
 import vtk
@@ -194,8 +196,12 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.composite.MultiBlock._WRITERS)
-def test_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform, airplane, globe):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+@pytest.mark.parametrize('use_pathlib', [True, False])
+def test_multi_block_io(extension, binary, tmpdir, use_pathlib, ant,
+                        sphere, uniform, airplane, globe):
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
+    if use_pathlib:
+        pathlib.Path(filename)
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
     # Now check everything
     assert multi.n_blocks == 5
@@ -228,11 +234,18 @@ def test_ensight_multi_block_io(extension, binary, tmpdir, ant, sphere, uniform,
     for block in foo:
         assert block.array_names == array_names
 
+def test_invalid_arg():
+    with pytest.raises(TypeError):
+        pyvista.MultiBlock(np.empty(10))
+    with pytest.raises(ValueError):
+        pyvista.MultiBlock(np.empty(10), np.empty(10))
+
+
 def test_multi_io_erros(tmpdir):
     fdir = tmpdir.mkdir("tmpdir")
     multi = MultiBlock()
     # Check saving with bad extension
-    bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
+    bad_ext_name = str(fdir.join('tmp.npy'))
     with pytest.raises(ValueError):
         multi.save(bad_ext_name)
     arr = np.random.rand(10, 10)
