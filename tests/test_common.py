@@ -7,7 +7,7 @@ from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import examples
+from pyvista import examples, Texture
 
 
 @pytest.fixture()
@@ -386,7 +386,7 @@ def test_texture():
     # now grab the texture coordinates
     foo = mesh.t_coords
     assert np.allclose(foo, t_coords)
-    texture = pyvista.read_texture(examples.mapfile)
+    texture = Texture(examples.mapfile)
     mesh.textures['map'] = texture
     assert mesh.textures['map'] is not None
     mesh.clear_textures()
@@ -398,7 +398,7 @@ def test_texture_airplane():
     mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
     assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
-    texture = pyvista.read_texture(examples.mapfile)
+    texture = Texture(examples.mapfile)
     mesh.textures["tex_a"] = texture.copy()
     mesh.textures["tex_b"] = texture.copy()
     mesh._activate_texture("tex_a")

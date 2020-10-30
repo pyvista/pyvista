@@ -3,7 +3,7 @@
 The data objects does not have any sort of spatial reference.
 
 """
-
+import imageio
 import numpy as np
 import vtk
 
@@ -283,11 +283,18 @@ class Table(vtk.vtkTable, DataObject):
         return np.nanmin(arr), np.nanmax(arr)
 
 
-class Texture(vtk.vtkTexture):
+class Texture(vtk.vtkTexture, DataObject):
     """A helper class for vtkTextures."""
+
+    _READERS = {'.bmp': vtk.vtkBMPReader, '.dem': vtk.vtkDEMReader, '.dcm': vtk.vtkDICOMImageReader,
+                '.img': vtk.vtkDICOMImageReader, '.jpeg': vtk.vtkJPEGReader, '.jpg': vtk.vtkJPEGReader,
+                '.mhd': vtk.vtkMetaImageReader, '.nrrd': vtk.vtkNrrdReader, '.nhdr': vtk.vtkNrrdReader,
+                '.png': vtk.vtkPNGReader, '.pnm': vtk.vtkPNMReader, '.slc': vtk.vtkSLCReader,
+                '.tiff': vtk.vtkTIFFReader, '.tif': vtk.vtkTIFFReader}
 
     def __init__(self, *args, **kwargs):
         """Initialize the texture."""
+        super().__init__(*args, **kwargs)
         assert_empty_kwargs(**kwargs)
 
         if len(args) == 1:
@@ -298,9 +305,18 @@ class Texture(vtk.vtkTexture):
             elif isinstance(args[0], vtk.vtkImageData):
                 self._from_image_data(args[0])
             elif isinstance(args[0], str):
-                self._from_texture(pyvista.read_texture(args[0]))
+                self._from_file(filename=args[0])
             else:
                 raise TypeError(f'Table unable to be made from ({type(args[0])})')
+
+    def _from_file(self, filename):
+        try:
+            image = self._load_file(filename)
+            if image.GetNumberOfPoints() < 2:
+                raise ValueError("Problem reading the image with VTK.")
+            self._from_image_data(image)
+        except (KeyError, ValueError):
+            self._from_array(imageio.imread(filename))
 
     def _from_texture(self, texture):
         image = texture.GetInput()
@@ -313,37 +329,31 @@ class Texture(vtk.vtkTexture):
         return self.Update()
 
     def _from_array(self, image):
-        if image.ndim not in [2,3]:
+        """Create a texture from a np.ndarray."""
+        if not 2 <= image.ndim <= 3:
             # we support 2 [single component image] or 3 [e.g. rgb or rgba] dims
             raise ValueError('Input image must be nn by nm by RGB[A]')
 
         if image.ndim == 3:
-            if image.shape[2] != 3 and image.shape[2] != 4:
+            if not 3 <= image.shape[2] <= 4:
                 raise ValueError('Third dimension of the array must be of size 3 (RGB) or 4 (RGBA)')
-
             n_components = image.shape[2]
-
         elif image.ndim == 2:
             n_components = 1
 
         grid = pyvista.UniformGrid((image.shape[1], image.shape[0], 1))
         grid.point_arrays['Image'] = np.flip(image.swapaxes(0, 1), axis=1).reshape((-1, n_components), order='F')
         grid.set_active_scalars('Image')
-
         return self._from_image_data(grid)
 
-    def flip(self, axis):
-        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
-        if axis < 0 or axis > 1:
-            raise ValueError(f"Axis {axis} out of bounds")
-        ax = [1, 0]
-        array = self.to_array()
-        array = np.flip(array, axis=ax[axis])
-        return self._from_array(array)
+    @property
+    def repeat(self):
+        """Repeat the texture."""
+        return self.GetRepeat()
 
-    def to_image(self):
-        """Return the texture as an image."""
-        return self.GetInput()
+    @repeat.setter
+    def repeat(self, flag):
+        self.SetRepeat(flag)
 
     @property
     def n_components(self):
@@ -351,8 +361,20 @@ class Texture(vtk.vtkTexture):
         image = self.to_image()
         return image.active_scalars.shape[1]
 
+    def flip(self, axis):
+        """Flip this texture inplace along the specified axis. 0 for X and 1 for Y."""
+        if not 0 <= axis <= 1:
+            raise ValueError(f"Axis {axis} out of bounds")
+        array = self.to_array()
+        array = np.flip(array, axis=1 - axis)
+        return self._from_array(array)
+
+    def to_image(self):
+        """Return the texture as an image."""
+        return self.GetInput()
+
     def to_array(self):
-        """Return the texture as an array."""
+        """Return the texture as a np.ndarray."""
         image = self.to_image()
 
         if image.active_scalars.ndim > 1:
@@ -366,15 +388,6 @@ class Texture(vtk.vtkTexture):
         """Plot the texture as image data by itself."""
         return self.to_image().plot(*args, **kwargs)
 
-    @property
-    def repeat(self):
-        """Repeat the texture."""
-        return self.GetRepeat()
-
-    @repeat.setter
-    def repeat(self, flag):
-        self.SetRepeat(flag)
-
     def copy(self):
-        """Make a copy of this textrue."""
+        """Make a copy of this texture."""
         return Texture(self.to_image().copy())

@@ -80,7 +80,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 for block in args[0]:
                     self.append(block)
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
             elif isinstance(args[0], dict):
                 idx = 0
                 for key, block in args[0].items():

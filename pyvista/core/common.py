@@ -77,7 +77,10 @@ class DataObject:
         reader = self._READERS[file_ext]()
         reader.SetFileName(str(file_path))
         reader.Update()
-        self.shallow_copy(reader.GetOutput())
+        return reader.GetOutputDataObject(0)
+
+    def _from_file(self, filename):
+        self.shallow_copy(self._load_file(filename))
 
     def save(self, filename, binary=True):
         """Save this vtk object to file.
@@ -182,7 +185,7 @@ class DataObject:
         This includes header details and information about all arrays.
 
         """
-        raise NotImplemented('Called only by the inherited class')
+        raise NotImplementedError('Called only by the inherited class')
 
     def copy_meta_from(self, ido):  # pragma: no cover
         """Copy pyvista meta data onto this object from another object."""

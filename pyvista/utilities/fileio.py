@@ -238,7 +238,7 @@ def read(filename, attrs=None, file_format=None):
         # Attempt to use the legacy reader...
         return read_legacy(filename)
     elif ext in ['.jpeg', '.jpg']:
-        return read_texture(filename).to_image()
+        return pyvista.Texture(filename).to_image()
     else:
         # Attempt find a reader in the readers mapping
         try:
@@ -267,13 +267,13 @@ def read_texture(filename, attrs=None):
         reader = get_reader(filename)
         image = standard_reader_routine(reader, filename, attrs=attrs)
         if image.n_points < 2:
-            raise RuntimeError("Problem reading the image with VTK.")
-        return pyvista.image_to_texture(image)
-    except (KeyError, RuntimeError):
+            raise ValueError("Problem reading the image with VTK.")
+        return pyvista.Texture(image)
+    except (KeyError, ValueError):
         # Otherwise, use the imageio reader
         pass
     import imageio
-    return pyvista.numpy_to_texture(imageio.imread(filename))
+    return pyvista.Texture(imageio.imread(filename))
 
 
 def read_exodus(filename,
