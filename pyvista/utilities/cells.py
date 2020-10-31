@@ -150,6 +150,9 @@ def generate_cell_offsets(cells, cell_types):
     ValueError
         If cell types and cell arrays are inconsistent, or have wrong size/dtype
     """
+    if (not np.issubdtype(cells.dtype, np.integer) or not np.issubdtype(cell_types.dtype, np.integer)):
+        raise ValueError("The cells and cell-type arrays must have an integral data-type")
+    
     try:
         cell_sizes = np.array([enum_cell_type_nr_points_map[cell_t] for cell_t in cell_types], dtype=np.int32)
     except KeyError as err:

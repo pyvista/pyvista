@@ -15,6 +15,7 @@ from pyvista.utilities import (
     GPUInfo,
     helpers,
     Observer,
+    cells
 )
 
 # Only set this here just the once.
@@ -257,3 +258,44 @@ def test_check_valid_vector():
     with pytest.raises(TypeError, match="length three"):
         check_valid_vector([0, 1])
     check_valid_vector([0, 1, 2])
+
+
+def test_cells_dict_utils():
+
+    # No pyvista object
+    with pytest.raises(ValueError):
+        cells.get_mixed_cells(None)
+
+    with pytest.raises(ValueError):
+        cells.get_mixed_cells(np.zeros(shape=[3, 3]))
+
+    cells_arr = np.array([3, 0, 1, 2, 3, 3, 4, 5])
+    cells_types = np.array([vtk.VTK_TRIANGLE] * 2)
+
+    assert np.all(cells.generate_cell_offsets(cells_arr, cells_types)
+                  == cells.generate_cell_offsets(cells_arr, cells_types))
+
+    # Non-integer type
+    with pytest.raises(ValueError):
+        cells.generate_cell_offsets(cells_arr, cells_types.astype(np.float32))
+
+    with pytest.raises(ValueError):
+        cells.generate_cell_offsets_loop(cells_arr, cells_types.astype(np.float32))
+
+    # Inconsistency of cell array lengths
+    with pytest.raises(ValueError):
+        cells.generate_cell_offsets(np.array(cells_arr.tolist() + [6]), cells_types)
+
+    with pytest.raises(ValueError):
+        cells.generate_cell_offsets_loop(np.array(cells_arr.tolist() + [6]), cells_types)
+
+    with pytest.raises(ValueError):
+        cells.generate_cell_offsets(cells_arr, np.array(cells_types.tolist() + [vtk.VTK_TRIANGLE]))
+
+    with pytest.raises(ValueError):
+        cells.generate_cell_offsets_loop(cells_arr, np.array(cells_types.tolist() + [vtk.VTK_TRIANGLE]))
+
+    # Unknown cell type
+    np.all(cells.generate_cell_offsets(cells_arr, cells_types) ==
+           cells.generate_cell_offsets(cells_arr, np.array([255, 255])))
+
