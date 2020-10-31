@@ -175,12 +175,13 @@ so we ask that you perform the following sequence locally to track down any new
 issues from your changes.
 
 To run our comprehensive suite of unit tests, install all the dependencies
-listed in ``requirements_test.txt``, ``requirements_docs.txt``:
+listed in ``requirements_test.txt``, ``requirements_docs.txt``, ``requirements_style.txt``:
 
 
 ```bash
 pip install -r requirements_test.txt
 pip install -r requirements_docs.txt
+pip install -r requirements_style.txt
 ```
 
 Then, if you have everything installed, you can run the various test suites.

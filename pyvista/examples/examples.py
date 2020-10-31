@@ -246,13 +246,11 @@ def load_spline():
 
 def load_random_hills():
     """Create random hills toy example.
-    
-    Uses the parametric random hill function to create hills oriented like
-    topography and add's an elevation array.
 
+    Uses the parametric random hill function to create hills oriented
+    like topography and adds an elevation array.
     """
     mesh = pyvista.ParametricRandomHills()
-    mesh.rotate_y(90)
     return mesh.elevation()
 
 

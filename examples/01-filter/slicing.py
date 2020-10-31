@@ -163,7 +163,7 @@ increment = np.pi/6.
 slices = pv.MultiBlock() # treat like a dictionary/list
 for theta in np.arange(0, np.pi, increment):
     normal = np.array([np.cos(theta), np.sin(theta), 0.0]).dot(np.pi/2.)
-    name = 'Bearing: {:.2f}'.format(np.rad2deg(theta))
+    name = f'Bearing: {np.rad2deg(theta):.2f}'
     slices[name] = model.slice(origin=point, normal=normal)
 slices
 

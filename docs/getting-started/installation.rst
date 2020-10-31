@@ -3,7 +3,7 @@
 Installation
 ============
 
-PyVista is supported on Python versions 3.5+. Previous versions of Python are
+PyVista is supported on Python versions 3.6+. Previous versions of Python are
 no longer supported as outlined in `this issue`_.
 
 .. _this issue: https://github.com/pyvista/pyvista/issues/164
@@ -71,6 +71,10 @@ The following are a list of optional dependencies and their purpose:
 | ``imageio-ffmpeg``                | Saving movie files                      |
 +-----------------------------------+-----------------------------------------+
 | ``tqdm``                          | Status bars for monitoring filters      |
++-----------------------------------+-----------------------------------------+
+| ``trimesh``                       |                                         |
+| ``rtree``                         | Vectorised ray tracing                  |
+| ``pyembree``                      |                                         |
 +-----------------------------------+-----------------------------------------+
 
 

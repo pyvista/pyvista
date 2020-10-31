@@ -45,8 +45,6 @@ jobs:
 
   strategy:
     matrix:
-      Python35:
-        python.version: '3.5'
       Python36:
         python.version: '3.6'
       Python37:
@@ -91,9 +89,7 @@ jobs:
 
   - script: |
       pip install pytest-azurepipelines
-      cd tests
       pytest -v --cov pyvista --cov-report html
-      cd ..
     displayName: 'Test Core API'
 
   - script: |
@@ -177,8 +173,6 @@ jobs:
   strategy:
     maxParallel: 4
     matrix:
-      Python35-64bit:
-        python.version: '3.5'
       Python36-64bit:
         python.version: '3.6'
       Python37-64bit:
@@ -230,7 +224,6 @@ jobs:
     python.architecture: 'x64'
   strategy:
     matrix:
-      # Skipping Python 3.5: Python 3.5 not supported on Azure Mac OS
       Python36:
         python.version: '3.6'
       Python37:
@@ -384,6 +377,7 @@ jobs:
       rm -rf *
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
       cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
       touch .nojekyll
       echo "docs.pyvista.org" >> CNAME
       git add .
@@ -402,6 +396,7 @@ jobs:
       git checkout -b gh-pages
       cp -r $BUILD_SOURCESDIRECTORY/docs/_build/html/* .
       cp $BUILD_SOURCESDIRECTORY/docs/README.md .
+      cp $BUILD_SOURCESDIRECTORY/docs/ads.txt .
       touch .nojekyll
       echo "dev.pyvista.org" >> CNAME
       git add .

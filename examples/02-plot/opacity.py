@@ -132,17 +132,23 @@ contours.array_names
 ###############################################################################
 # Make sure to flag ``use_transparency=True`` since we want areas of high
 # variance to have high transparency.
+#
+# Also, since the opacity array must be between 0 and 1, we normalize
+# the temperature variance array by the maximum value.  That way high
+# variance will be completely transparent.
 
-p = pv.Plotter(shape=(1,2))
+contours['Temperature_var'] /= contours['Temperature_var'].max()
 
-p.subplot(0,0)
+p = pv.Plotter(shape=(1, 2))
+
+p.subplot(0, 0)
 p.add_text('Opacity by Array')
 p.add_mesh(contours.copy(), scalars='Temperature',
            opacity='Temperature_var',
            use_transparency=True,
            cmap='bwr')
 
-p.subplot(0,1)
+p.subplot(0, 1)
 p.add_text('No Opacity')
 p.add_mesh(contours, scalars='Temperature',
            cmap='bwr')
