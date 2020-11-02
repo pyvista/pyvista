@@ -2,8 +2,9 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
-    :alt: pyvista
+.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_banner.png
+   :target: https://docs.pyvista.org/examples/index.html
+   :alt: pyvista
 
 
 .. |zenodo| image:: https://zenodo.org/badge/92974124.svg
@@ -136,7 +137,7 @@ Installation
 ============
 
 PyVista can be installed from `PyPI <https://pypi.org/project/pyvista/>`_
-using ``pip`` on Python >= 3.5::
+using ``pip`` on Python >= 3.6::
 
     pip install pyvista
 

@@ -1,4 +1,6 @@
+import os
 import sys
+import platform
 
 import numpy as np
 import pytest
@@ -6,25 +8,22 @@ import pytest
 import pyvista
 from pyvista import examples
 
-try:
-    import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
-except:
-    HAS_MATPLOTLIB = False
-
 DATASETS = [
-    examples.load_uniform(), # UniformGrid
-    examples.load_rectilinear(), # RectilinearGrid
-    examples.load_hexbeam(), # UnstructuredGrid
-    examples.load_airplane(), # PolyData
-    examples.load_structured(), # StructuredGrid
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
 ]
-normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
+normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
 skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
                                      reason="Python 2 doesn't support binding methods")
+
+skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 
 @pytest.fixture(scope='module')
@@ -41,6 +40,7 @@ def test_datasetfilters_init():
         pyvista.core.filters.DataSetFilters()
 
 
+@skip_windows
 def test_clip_filter():
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset in enumerate(DATASETS):
@@ -50,6 +50,26 @@ def test_clip_filter():
             assert isinstance(clp, pyvista.PolyData)
         else:
             assert isinstance(clp, pyvista.UnstructuredGrid)
+
+
+@skip_windows
+@skip_mac
+def test_clip_by_scalars_filter():
+    """This tests the clip filter on all datatypes available filters"""
+    for i, dataset_in in enumerate(DATASETS):
+        dataset = dataset_in.copy()  # don't modify in-place
+        if dataset.active_scalars_info.name is None:
+            dataset['scalars'] = np.arange(dataset.n_points)
+        clip_value = dataset.n_points/2
+        clp = dataset.clip_scalar(value=clip_value)
+
+        assert clp is not None
+        if isinstance(dataset, pyvista.PolyData):
+            assert isinstance(clp, pyvista.PolyData)
+        else:
+            assert isinstance(clp, pyvista.UnstructuredGrid)
+
+        assert dataset.active_scalars.min() <= clip_value
 
 
 @skip_py2_nobind
@@ -395,6 +415,20 @@ def test_texture_map_to_plane():
     assert 'Texture Coordinates' in dataset.array_names
 
 
+def test_texture_map_to_sphere():
+    dataset = pyvista.Sphere(radius=1.0)
+    # Automatically decide plane
+    out = dataset.texture_map_to_sphere(inplace=False, prevent_seam=False)
+    assert isinstance(out, type(dataset))
+    # Define the center explicitly
+    out = dataset.texture_map_to_sphere(center=(0.1, 0.0, 0.0), prevent_seam=True)
+    assert isinstance(out, type(dataset))
+    assert 'Texture Coordinates' in out.array_names
+    # FINAL: Test in place modifiacation
+    dataset.texture_map_to_sphere(inplace=True)
+    assert 'Texture Coordinates' in dataset.array_names
+
+
 def test_compute_cell_sizes():
     for i, dataset in enumerate(DATASETS):
         result = dataset.compute_cell_sizes()
@@ -671,9 +705,9 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Requires matplotlib")
 def test_plot_over_line():
     """this requires matplotlib"""
+    pytest.importorskip('matplotlib')
     mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
@@ -721,6 +755,33 @@ def extract_points_invalid(sphere):
     with pytest.raises(TypeError):
         sphere.extract_points(object)
 
+def test_extract_points():
+    # mesh points (4x4 regular grid)
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0],
+                     [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0],
+                     [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0],
+                     [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0]])
+    # corresponding mesh faces
+    faces = np.hstack([[4, 0, 1, 5, 4],  # square
+                       [4, 1, 2, 6, 5],  # square
+                       [4, 2, 3, 7, 6],  # square
+                       [4, 4, 5, 9, 8],  # square
+                       [4, 5, 6, 10, 9],  # square
+                       [4, 6, 7, 11, 10],  # square
+                       [4, 8, 9, 13, 12],  # square
+                       [4, 9, 10, 14, 13],  # square
+                       [4, 10, 11, 15, 14]])  # square
+    # create pyvista object
+    surf = pyvista.PolyData(vertices, faces)
+    # extract sub-surface with adjacent cells
+    sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]))
+     # extract sub-surface without adjacent cells
+    sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False)
+    # check sub-surface size
+    assert sub_surf.n_points == 4
+    assert sub_surf.n_cells == 1
+    assert sub_surf_adj.n_points == 9
+    assert sub_surf_adj.n_cells == 4
 
 @skip_py2_nobind
 def test_slice_along_line_composite():
@@ -887,3 +948,10 @@ def test_poly_data_strip():
     slc = mesh.slice(normal='z', origin=(0,0,-10))
     stripped = slc.strip()
     assert stripped.n_cells == 1
+
+
+def test_shrink():
+    mesh = pyvista.Sphere()
+    shrunk = mesh.shrink(shrink_factor=0.8)
+    assert shrunk.n_cells == mesh.n_cells
+    assert shrunk.area < mesh.area

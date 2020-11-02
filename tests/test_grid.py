@@ -129,7 +129,7 @@ def test_triangulate_inplace(hexbeam):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.UnstructuredGrid._WRITERS)
 def test_save(extension, binary, tmpdir, hexbeam):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     hexbeam.save(filename, binary)
 
     grid = pyvista.UnstructuredGrid(filename)
@@ -297,7 +297,7 @@ def test_invalid_init_structured():
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.pointset.StructuredGrid._WRITERS)
 def test_save_structured(extension, binary, tmpdir, struct_grid):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     struct_grid.save(filename, binary)
 
     grid = pyvista.StructuredGrid(filename)
@@ -479,7 +479,7 @@ def test_cast_uniform_to_rectilinear():
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.grid.RectilinearGrid._READERS)
 def test_save_rectilinear(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_rectilinear()
     ogrid.save(filename, binary)
     grid = pyvista.RectilinearGrid(filename)
@@ -500,7 +500,7 @@ def test_save_rectilinear(extension, binary, tmpdir):
 @pytest.mark.parametrize('binary', [True, False])
 @pytest.mark.parametrize('extension', pyvista.core.grid.UniformGrid._READERS)
 def test_save_uniform(extension, binary, tmpdir):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     ogrid = examples.load_uniform()
     ogrid.save(filename, binary)
     grid = pyvista.UniformGrid(filename)

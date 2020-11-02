@@ -1,7 +1,9 @@
+import gc
 import pathlib
 import os
 import sys
 from weakref import proxy
+from pathlib import Path
 
 import imageio
 import numpy as np
@@ -11,6 +13,7 @@ import vtk
 import pyvista
 from pyvista import examples
 from pyvista.plotting import system_supports_plotting
+from pyvista.plotting.plotting import SUPPORTED_FORMATS
 
 NO_PLOTTING = not system_supports_plotting()
 
@@ -35,6 +38,26 @@ VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
 sphere_c = pyvista.Sphere(2.0)
+
+
+def _is_vtk(obj):
+    try:
+        return obj.__class__.__name__.startswith('vtk')
+    except Exception:  # old Python sometimes no __class__.__name__
+        return False
+
+
+@pytest.fixture(autouse=True)
+def check_gc():
+    """Ensure that all VTK objects are garbage-collected by Python."""
+    before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
+    yield
+    pyvista.close_all()
+    gc.collect()
+    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
+    assert len(after) == 0, \
+        'Not all objects GCed:\n' + \
+        '\n'.join(sorted(o.__class__.__name__ for o in after))
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -76,6 +99,49 @@ def test_plot(tmpdir):
 def test_plot_invalid_style():
     with pytest.raises(ValueError):
         pyvista.plot(sphere, style='not a style')
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_interactor_style():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    interactions = (
+        'trackball',
+        'trackball_actor',
+        'image',
+        'joystick',
+        'zoom',
+        'terrain',
+        'rubber_band',
+        'rubber_band_2d',
+    )
+    for interaction in interactions:
+        getattr(plotter, f'enable_{interaction}_style')()
+        assert plotter._style_class is not None
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_lighting():
+    plotter = pyvista.Plotter()
+
+    # test default disable_3_lights()
+    lights = list(plotter.renderer.GetLights())
+    assert all([light.GetSwitch() for light in lights])
+
+    plotter.enable_3_lights()
+    lights = list(plotter.renderer.GetLights())
+    headlight = lights.pop(0)
+    assert not headlight.GetSwitch()
+    for i in range(len(lights)):
+        if i < 3:
+            assert lights[i].GetSwitch()
+        else:
+            assert not lights[i].GetSwitch()
+    assert lights[0].GetIntensity() == 1.0
+    assert lights[1].GetIntensity() == 0.6
+    assert lights[2].GetIntensity() == 0.5
+    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -258,7 +324,7 @@ def test_make_movie():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.open_movie(filename)
     actor = plotter.add_axes_at_origin()
-    plotter.remove_actor(actor)
+    plotter.remove_actor(actor, reset_camera=False, render=True)
     plotter.add_mesh(movie_sphere,
                      scalars=np.random.random(movie_sphere.n_faces))
     plotter.show(auto_close=False, window_size=[304, 304])
@@ -266,8 +332,8 @@ def test_make_movie():
     for i in range(3):  # limiting number of frames to write for speed
         plotter.write_frame()
         random_points = np.random.random(movie_sphere.points.shape)
-        movie_sphere.points = random_points*0.01 + movie_sphere.points*0.99
-        movie_sphere.points -= movie_sphere.points.mean(0)
+        movie_sphere.points[:] = random_points*0.01 + movie_sphere.points*0.99
+        movie_sphere.points[:] -= movie_sphere.points.mean(0)
         scalars = np.random.random(movie_sphere.n_faces)
         plotter.update_scalars(scalars)
 
@@ -318,6 +384,16 @@ def test_add_point_labels():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.parametrize('always_visible', [False, True])
+def test_add_point_labels_always_visible(always_visible):
+    # just make sure it runs without exception
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_point_labels(
+        np.array([[0, 0, 0]]), ['hello world'], always_visible=always_visible)
+    plotter.show()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_set_background():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     plotter.set_background('k')
@@ -357,6 +433,15 @@ def test_key_press_event():
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+def test_enable_picking_gc():
+    plotter = pyvista.Plotter(off_screen=False)
+    sphere = pyvista.Sphere()
+    plotter.add_mesh(sphere)
+    plotter.enable_cell_picking()
+    plotter.close()
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_left_button_down():
     plotter = pyvista.Plotter(off_screen=False)
     if VTK9:
@@ -379,7 +464,6 @@ def test_show_axes():
 def test_update():
     plotter = pyvista.Plotter(off_screen=True)
     plotter.update()
-    plotter.close()
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -465,6 +549,17 @@ def test_screenshot(tmpdir):
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
+def test_save_screenshot(tmpdir, sphere, ext):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp' + ext))
+    plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
+    plotter.add_mesh(sphere)
+    plotter.screenshot(filename)
+    assert os.path.isfile(filename)
+    assert Path(filename).stat().st_size
+
+
+@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_scalars_by_name():
     plotter = pyvista.Plotter(off_screen=OFF_SCREEN)
     data = examples.load_uniform()
@@ -485,7 +580,7 @@ def test_multi_block_plot():
     multi.append(examples.load_rectilinear())
     uni = examples.load_uniform()
     arr = np.random.rand(uni.n_cells)
-    uni._add_cell_array(arr, 'Random Data')
+    uni.cell_arrays.append(arr, 'Random Data')
     multi.append(uni)
     # And now add a data set without the desired array and a NULL component
     multi[3] = examples.load_airplane()
@@ -782,6 +877,23 @@ def test_image_properties():
     _ = p.get_image_depth()
     p.close()
 
+    # gh-920
+    rr = np.array(
+        [[-0.5, -0.5, 0], [-0.5, 0.5, 1], [0.5, 0.5, 0], [0.5, -0.5, 1]])
+    tris = np.array([[3, 0, 2, 1], [3, 2, 0, 3]])
+    mesh = pyvista.PolyData(rr, tris)
+    p = pyvista.Plotter(off_screen=OFF_SCREEN)
+    p.add_mesh(mesh, color=True)
+    p.renderer.camera_position = (0., 0., 1.)
+    p.renderer.ResetCamera()
+    p.enable_parallel_projection()
+    assert p.renderer.camera_set
+    p.show(interactive=False, auto_close=False)
+    img = p.get_image_depth(fill_value=0.)
+    rng = np.ptp(img)
+    assert 0.3 < rng < 0.4, rng  # 0.3313504 in testing
+    p.close()
+
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_volume_rendering():
@@ -853,13 +965,14 @@ def test_plot_eye_dome_lighting():
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_opacity_by_array():
     mesh = examples.load_uniform()
+    opac = mesh['Spatial Point Data'] / mesh['Spatial Point Data'].max()
     # Test with opacity array
-    mesh['opac'] = mesh['Spatial Point Data'] / 100.
+    mesh['opac'] = opac
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='opac',)
     p.show()
     # Test with uncertainty array (transparency)
-    mesh['unc'] = mesh['Spatial Point Data']
+    mesh['unc'] = opac
     p = pyvista.Plotter(off_screen=OFF_SCREEN)
     p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',
                use_transparency=True)
@@ -1002,6 +1115,9 @@ def test_default_name_tracking():
     p.show()
     assert n_made_it == N**2
 
+    # release attached scalars
+    mesh.ReleaseData()
+    del mesh
 
 @pytest.mark.parametrize("as_global", [True, False])
 def test_add_background_image(as_global):

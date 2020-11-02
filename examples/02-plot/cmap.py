@@ -104,15 +104,19 @@ mesh.plot(scalars=scalars, cmap=['black', 'blue', 'yellow', 'grey', 'red'])
 
 p = pv.Plotter(shape=(2, 2), border=False)
 p.subplot(0, 0)
-p.add_mesh(mesh, cmap="fire", lighting=True, stitle="Colorcet Fire")
+p.add_mesh(mesh, scalars='Elevation', cmap="fire",
+           lighting=True, stitle="Colorcet Fire")
 
 p.subplot(0, 1)
-p.add_mesh(mesh, cmap="fire", lighting=False, stitle="Colorcet Fire (No Lighting)")
+p.add_mesh(mesh, scalars='Elevation', cmap="fire",
+           lighting=False, stitle="Colorcet Fire (No Lighting)")
 
 p.subplot(1, 0)
-p.add_mesh(mesh, cmap="hot", lighting=True, stitle="Matplotlib Hot")
+p.add_mesh(mesh, scalars='Elevation', cmap="hot",
+           lighting=True, stitle="Matplotlib Hot")
 
 p.subplot(1, 1)
-p.add_mesh(mesh, cmap="hot", lighting=False, stitle="Matplotlib Hot (No Lighting)")
+p.add_mesh(mesh, scalars='Elevation', cmap="hot",
+           lighting=False, stitle="Matplotlib Hot (No Lighting)")
 
 p.show()

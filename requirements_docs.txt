@@ -15,3 +15,4 @@ sphinx-copybutton
 sphinx-gallery>=0.4.0
 lxml
 pyvirtualdisplay
+trimesh

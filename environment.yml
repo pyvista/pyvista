@@ -23,5 +23,8 @@ dependencies:
   - hypothesis>=5.8.0
   - pyvirtualdisplay
   - pip
+  - trimesh
+  - rtree
+  - pyembree
   - pip:
       - pytest-memprof

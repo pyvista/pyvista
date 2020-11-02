@@ -1,6 +1,6 @@
 """
-Warping a mesh using ``warp_by_vector``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Warping by Vectors
+~~~~~~~~~~~~~~~~~~
 
 This example applies the ``warp_by_vector`` filter to a sphere mesh that has
 3D displacement vectors defined at each node.

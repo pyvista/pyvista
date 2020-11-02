@@ -534,7 +534,26 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
     src.SetRadialResolution(r_res)
     src.SetCircumferentialResolution(c_res)
     src.Update()
-    return pyvista.wrap(src.GetOutput())
+
+    default_normal = np.array([0, 0, 1])
+    normal = np.array(normal)
+    center = np.array(center)
+
+    axis = np.cross(default_normal, normal)
+    angle = np.rad2deg(np.arccos(
+        np.clip(np.dot(normal, default_normal), -1, 1)))
+
+    transform = vtk.vtkTransform()
+    transform.Translate(-center)
+    transform.RotateWXYZ(angle, axis)
+    transform.Translate(center)
+
+    transform_filter = vtk.vtkTransformFilter()
+    transform_filter.SetInputConnection(src.GetOutputPort())
+    transform_filter.SetTransform(transform)
+    transform_filter.Update()
+
+    return pyvista.wrap(transform_filter.GetOutput())
 
 
 def Text3D(string, depth=0.5):
