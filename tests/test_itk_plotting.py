@@ -78,13 +78,3 @@ def test_itk_plotting_class_unstructured(hexbeam):
     pl.add_mesh(hexbeam, smooth_shading=True)
     viewer = pl.show()
     assert isinstance(viewer, itkwidgets.Viewer)
-
-
-@no_itk
-def test_itk_plotting_class_actor():
-    pv_pl = pyvista.Plotter()
-    actor = pv_pl.add_mesh(pyvista.Sphere())
-    pl = pyvista.PlotterITK()
-    pl.add_actor(actor)
-    viewer = pl.show()
-    assert isinstance(viewer, itkwidgets.Viewer)

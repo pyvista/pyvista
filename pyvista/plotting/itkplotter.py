@@ -45,7 +45,6 @@ class PlotterITK():
         if not meets_version(__version__, "0.25.2"):  # pragma: no cover
             raise itk_import_err
 
-        self._actors = []
         self._point_sets = []
         self._geometries = []
         self._geometry_colors = []
@@ -55,16 +54,6 @@ class PlotterITK():
         self._camera_position = None
         self._point_set_sizes = []
         self._point_set_representations = []
-
-    def add_actor(self, actor):
-        """Add an actor to the plotter.
-
-        Parameters
-        ----------
-        actor : vtk.vtkActor
-            ``vtk.Actor`` to be added.
-        """
-        self._actors.append(actor)
 
     def add_points(self, points, color=None, point_size=3.0):
         """Add points to plotter.
@@ -279,7 +268,6 @@ class PlotterITK():
                         ui_collapsed=ui_collapsed,
                         rotate=rotate,
                         axes=show_bounds,
-                        actors=self._actors,
                         **kwargs)
 
         # always show if iPython is installed
