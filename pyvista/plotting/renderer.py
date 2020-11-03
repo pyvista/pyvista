@@ -151,10 +151,6 @@ class Renderer(vtkRenderer):
 
             getattr(self, self.CAMERA_STR_ATTR_MAP[camera_location])()
 
-        elif isinstance(camera_location[0], (int, float)):
-            if len(camera_location) != 3:
-                raise pyvista.core.errors.InvalidCameraError
-            self.view_vector(camera_location)
         else:
             # check if a valid camera position
             if not isinstance(camera_location, CameraPosition):
@@ -163,17 +159,8 @@ class Renderer(vtkRenderer):
                 elif any([len(item) != 3 for item in camera_location]):
                     raise pyvista.core.errors.InvalidCameraError
 
-            # everything is set explicitly
-            self.camera.SetPosition(scale_point(self.camera, camera_location[0],
-                                                invert=False))
-            self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1],
-                                                  invert=False))
-            self.camera.SetViewUp(camera_location[2])
+            self._camera_position = camera_location
 
-        # reset clipping range
-        self.ResetCameraClippingRange()
-        self.camera_set = True
-        self.Modified()
 
     @property
     def camera(self):
