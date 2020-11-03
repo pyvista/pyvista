@@ -143,43 +143,16 @@ def point_array(mesh, name):
     return convert_array(vtkarr)
 
 
-def point_scalar(mesh, name):
-    """Return point array of a vtk object.
-
-    DEPRECATED: please use `point_array` instead.
-    """
-    warnings.warn("DEPRECATED: please use `point_array` instead.")
-    return point_array(mesh, name)
-
-
 def field_array(mesh, name):
     """Return field array of a vtk object."""
     vtkarr = mesh.GetFieldData().GetAbstractArray(name)
     return convert_array(vtkarr)
 
 
-def field_scalar(mesh, name):
-    """Return field array of a vtk object.
-
-    DEPRECATED: please use `field_array` instead.
-    """
-    warnings.warn("DEPRECATED: please use `field_array` instead.")
-    return field_array(mesh, name)
-
-
 def cell_array(mesh, name):
     """Return cell array of a vtk object."""
     vtkarr = mesh.GetCellData().GetAbstractArray(name)
     return convert_array(vtkarr)
-
-
-def cell_scalar(mesh, name):
-    """Return cell array of a vtk object.
-
-    DEPRECATED: please use `cell_array` instead.
-    """
-    warnings.warn("DEPRECATED: please use `cell_array` instead.")
-    return cell_array(mesh, name)
 
 
 def row_array(data_object, name):
@@ -631,22 +604,6 @@ def generate_plane(normal, origin):
     plane.SetNormal(normal)
     plane.SetOrigin(origin)
     return plane
-
-
-def generate_report(additional=None, ncol=3, text_width=54, sort=False):
-    """Generate a report.
-
-    DEPRECATED: Please use :class:`pyvista.Report` instead.
-
-    """
-    logging.warning('DEPRECATED: Please use `pyvista.Report` instead.')
-    core = ['pyvista', 'vtk', 'numpy', 'imageio', 'appdirs', 'scooby']
-    optional = ['matplotlib', 'PyQt5', 'IPython', 'colorcet',
-                'cmocean']
-    report = scooby.Report(core=core, optional=optional,
-                           additional=additional, ncol=ncol,
-                           text_width=text_width, sort=sort)
-    return report
 
 
 def try_callback(func, *args):

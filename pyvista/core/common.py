@@ -274,15 +274,6 @@ class Common(DataSetFilters, DataObject):
         return self._active_scalars_info
 
     @property
-    def active_scalar_info(self):  # pragma: no cover
-        """Return the active scalar's field and name.
-
-        DEPRECATED: use `.active_scalars_info` instead
-        """
-        warnings.warn("DEPRECATED: use `.active_scalars_info` instead")
-        return self.active_scalars_info
-
-    @property
     def active_vectors_info(self):
         """Return the active scalar's field and name: [field, name]."""
         if self._active_vectors_info.name is None:
@@ -345,18 +336,6 @@ class Common(DataSetFilters, DataObject):
     def active_scalars_name(self, name):
         """Set the name of the active scalar."""
         self.set_active_scalars(name)
-
-    @property
-    def active_scalar_name(self):  # pragma: no cover
-        """Return the active scalar's name."""
-        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
-        return self.active_scalars_name
-
-    @active_scalar_name.setter
-    def active_scalar_name(self, name):  # pragma: no cover
-        """Set the name of the active scalar."""
-        warnings.warn("DEPRECATED: use `.active_scalars_name` instead.")
-        self.active_scalars_name = name
 
     @property
     def points(self):
@@ -508,14 +487,6 @@ class Common(DataSetFilters, DataObject):
 
         self._active_scalars_info = ActiveArrayInfo(field, name)
 
-    def set_active_scalar(self, name, preference='cell'):  # pragma: no cover
-        """Find the scalars by name and appropriately sets it as active.
-
-        To deactivate any active scalars, pass ``None`` as the ``name``.
-        """
-        warnings.warn("DEPRECATED: please use `.set_active_scalars` instead.")
-        return self.set_active_scalars(name, preference=preference)
-
     def set_active_vectors(self, name, preference='point'):
         """Find the vectors by name and appropriately sets it as active.
 
@@ -579,15 +550,6 @@ class Common(DataSetFilters, DataObject):
         if was_active:
             self.set_active_scalars(new_name, preference=field)
 
-    def rename_scalar(self, old_name, new_name, preference='cell'):  # pragma: no cover
-        """Change an array name by searching for the array then renaming it.
-
-        DEPRECATED: please use `.rename_array` instead.
-
-        """
-        warnings.warn("DEPRECATED: please use `.rename_array` instead.")
-        return self.rename_array(old_name, new_name, preference=preference)
-
     @property
     def active_scalars(self):
         """Return the active scalars as an array."""
@@ -597,16 +559,6 @@ class Common(DataSetFilters, DataObject):
                 return self.point_arrays[name]
             elif field == FieldAssociation.CELL:
                 return self.cell_arrays[name]
-
-    @property
-    def active_scalar(self):  # pragma: no cover
-        """Return the active scalars as an array.
-
-        DEPRECATED: Please use `.active_scalars` instead.
-
-        """
-        warnings.warn("DEPRECATED: please use `.active_scalars` instead.")
-        return self.active_scalars
 
     def get_data_range(self, arr=None, preference='cell'):
         """Get the non-NaN min and max of a named array.
@@ -880,16 +832,6 @@ class Common(DataSetFilters, DataObject):
         return n
 
     @property
-    def n_scalars(self):  # pragma: no cover
-        """Return the number of scalars.
-
-        DEPRECATED: Please use `n_arrays` instead.
-
-        """
-        warnings.warn('Deprecation Warning: `n_scalars` is now `n_arrays`', RuntimeWarning)
-        return self.n_arrays
-
-    @property
     def array_names(self):
         """Return a list of array names for the dataset.
 
@@ -906,16 +848,6 @@ class Common(DataSetFilters, DataObject):
         except ValueError:
             pass
         return names
-
-    @property
-    def scalar_names(self):  # pragma: no cover
-        """Return the array names.
-
-        DEPRECATED: Please use `array_names` instead.
-
-        """
-        warnings.warn('Deprecation Warning: `scalar_names` is now `array_names`', RuntimeWarning)
-        return self.array_names
 
     def _get_attrs(self):
         """Return the representation methods (internal helper)."""

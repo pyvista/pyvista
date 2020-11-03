@@ -852,20 +852,6 @@ def test_compute_cell_quality():
         qual = mesh.compute_cell_quality(quality_measure='foo')
 
 
-def test_compute_gradients():
-    mesh = examples.load_random_hills()
-    grad = mesh.compute_gradient()
-    assert 'gradient' in grad.array_names
-    assert np.shape(grad['gradient'])[0] == mesh.n_points
-    assert np.shape(grad['gradient'])[1] == 3
-
-    with pytest.raises(TypeError):
-        grad = mesh.compute_gradient(object)
-
-    mesh.point_arrays.clear()
-    with pytest.raises(TypeError):
-        grad = mesh.compute_gradient()
-
 def test_compute_derivatives():
     mesh = examples.load_random_hills()
     vector = np.zeros((mesh.n_points, 3))
