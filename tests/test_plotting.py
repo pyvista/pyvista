@@ -227,14 +227,6 @@ def test_plot_show_bounds():
                         show_ylabels=False,
                         show_zlabels=False,
                         use_2d=True)
-    # And test backwards compatibility
-    plotter.add_bounds_axes(show_xaxis=False,
-                            show_yaxis=False,
-                            show_zaxis=False,
-                            show_xlabels=False,
-                            show_ylabels=False,
-                            show_zlabels=False,
-                            use_2d=True)
     plotter.show()
 
 

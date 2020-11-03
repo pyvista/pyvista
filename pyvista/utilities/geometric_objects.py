@@ -573,24 +573,6 @@ def Text3D(string, depth=0.5):
     return pyvista.wrap(tri_filter.GetOutput())
 
 
-def SuperToroid(*args, **kwargs):
-    """Create a super toroid.
-
-    DEPRECATED: Please use `pyvista.ParametricSuperToroid` instead.
-
-    """
-    raise NotImplementedError('use `pyvista.ParametricSuperToroid` instead')
-
-
-def Ellipsoid(*args, **kwargs):
-    """Create an ellipsoid.
-
-    DEPRECATED: Please use :func:`pyvista.ParametricEllipsoid` instead.
-
-    """
-    raise NotImplementedError('use `pyvista.ParametricEllipsoid` instead')
-
-
 def Wavelet(extent=(-10,10,-10,10,-10,10), center=(0,0,0), maximum=255,
             x_freq=60, y_freq=30, z_freq=40, x_mag=10, y_mag=18, z_mag=5,
             std=0.5, subsample_rate=1):

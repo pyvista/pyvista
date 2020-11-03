@@ -16,7 +16,7 @@ from .widgets import WidgetHelper
 
 class QtDeprecationError(Exception):
     """Depreciation Error for features that moved to `pyvistaqt`."""
-    
+
     message = """`{}` has moved to pyvistaqt.
     You can install this from PyPI with: `pip install pyvistaqt`
     Then import it via: `from pyvistaqt import {}`

@@ -488,11 +488,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.show_bounds``."""
         return self.renderer.show_bounds(*args, **kwargs)
 
-    @wraps(Renderer.add_bounds_axes)
-    def add_bounds_axes(self, *args, **kwargs):
-        """Wrap ``add_bounds_axes``."""
-        return self.renderer.add_bounds_axes(*args, **kwargs)
-
     @wraps(Renderer.add_bounding_box)
     def add_bounding_box(self, *args, **kwargs):
         """Wrap ``Renderer.add_bounding_box``."""
@@ -4094,16 +4089,6 @@ class Plotter(BasePlotter):
 
         # default to returning last used camera position
         return cpos
-
-    def plot(self, *args, **kwargs):
-        """Create a plotting window.
-
-        Present for backwards compatibility.
-        DEPRECATED: Please use `show()` instead.
-
-        """
-        logging.warning("`.plot()` is deprecated. Please use `.show()` instead.")
-        return self.show(*args, **kwargs)
 
 
 def _style_factory(klass):

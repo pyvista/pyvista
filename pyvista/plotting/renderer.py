@@ -815,15 +815,6 @@ class Renderer(vtkRenderer):
         self.Modified()
         return cube_axes_actor
 
-    def add_bounds_axes(self, *args, **kwargs):
-        """Add bounds axes.
-
-        DEPRECATED: Please use ``show_bounds`` or ``show_grid``.
-
-        """
-        logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
-        return self.show_bounds(*args, **kwargs)
-
     def show_grid(self, **kwargs):
         """Show gridlines and axes labels.
 
