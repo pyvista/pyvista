@@ -10,9 +10,6 @@ import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
 
-# Used to detect that a default value was not set
-# See https://stackoverflow.com/a/13287922/3369879
-sentinel = object()
 
 class DataSetAttributes(VTKObjectWrapper):
     """Python friendly wrapper of ``vtk.DataSetAttributes``.
@@ -271,7 +268,7 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(self, key, default=sentinel):
+    def pop(self, key, default=pyvista_ndarray(array=[])):
         """Remove an array and return it.
 
         Parameters
@@ -294,12 +291,12 @@ class DataSetAttributes(VTKObjectWrapper):
             copy = vtk_arr.NewInstance()
             copy.DeepCopy(vtk_arr)
             vtk_arr = copy
+        try:
             self.remove(key)
-        elif default is not sentinel:
+        except KeyError:
+            if default in self.pop.__defaults__:
+                raise
             return default
-        else:
-            raise KeyError(f'{key}')
-        
         return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
     def items(self):
