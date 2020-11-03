@@ -3928,7 +3928,7 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
-             height=400):
+             use_ipyvtk=False, height=400):
         """Display the plotting window.
 
         Notes
@@ -4063,6 +4063,23 @@ class Plotter(BasePlotter):
 
         # Get camera position before closing
         cpos = self.camera_position
+
+        if self.notebook and use_ipyvtk:
+
+            # might have to enable interactive widget...
+            if not hasattr(self, 'iren'):
+                self.iren = vtk.vtkRenderWindowInteractor()
+                self.iren.LightFollowCameraOff()
+                self.iren.SetDesiredUpdateRate(30.0)
+                self.iren.SetRenderWindow(self.ren_win)
+                self.enable_trackball_style()  # internally calls update_style()
+                self._observers = {}    # Map of events to observers of self.iren
+                self._add_observer("KeyPressEvent", self.key_press_event)
+
+            from ipyvtk_simple.viewer import ViewInteractiveWidget
+            auto_close = False
+            disp = ViewInteractiveWidget(self.ren_win,
+                                         transparent_background=self.image_transparent_background)
 
         # NOTE: our conversion to panel currently does not support mult-view
         #       so we should display the static screenshot in notebooks for
