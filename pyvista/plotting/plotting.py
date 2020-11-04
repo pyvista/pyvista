@@ -899,7 +899,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         b_left_down_callback = lambda: self._add_observer('LeftButtonPressEvent', self.left_button_down)
         self.add_key_event('b', b_left_down_callback)
         self.add_key_event('v', lambda: self.isometric_view_interactive())
-        self.add_key_event('f', self.fly_to_mouse_position)
         self.add_key_event('C', lambda: self.enable_cell_picking())
         self.add_key_event('Up', lambda: self.camera.Zoom(1.05))
         self.add_key_event('Down', lambda: self.camera.Zoom(0.95))
