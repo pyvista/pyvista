@@ -3928,7 +3928,7 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
-             use_ipyvtk=False, height=400):
+             use_ipyvtk=None, height=400):
         """Display the plotting window.
 
         Notes
@@ -3970,6 +3970,10 @@ class Plotter(BasePlotter):
         height : int, optional
             height for panel pane. Only used with panel.
 
+        use_ipyvtk : bool, optional
+            Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
+            visualize the plot within a juyterlab notebook.
+
         Return
         ------
         cpos : list
@@ -3981,6 +3985,9 @@ class Plotter(BasePlotter):
 
         if auto_close is None:
             auto_close = rcParams['auto_close']
+
+        if use_ipyvtk is None:
+            use_ipyvtk = rcParams['use_ipyvtk']
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
@@ -4066,6 +4073,11 @@ class Plotter(BasePlotter):
 
         if self.notebook and use_ipyvtk:
 
+            try:
+                from ipyvtk_simple.viewer import ViewInteractiveWidget
+            except ImportError:
+                raise ImportError('Please install `ipyvtk_simple` to use this feature')
+
             # might have to enable interactive widget...
             if not hasattr(self, 'iren'):
                 self.iren = vtk.vtkRenderWindowInteractor()
@@ -4076,7 +4088,6 @@ class Plotter(BasePlotter):
                 self._observers = {}    # Map of events to observers of self.iren
                 self._add_observer("KeyPressEvent", self.key_press_event)
 
-            from ipyvtk_simple.viewer import ViewInteractiveWidget
             auto_close = False
             disp = ViewInteractiveWidget(self.ren_win,
                                          transparent_background=self.image_transparent_background)

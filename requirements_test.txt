@@ -12,3 +12,4 @@ tqdm
 hypothesis>=5.8.0
 sphinx_gallery
 trimesh
+ipyvtk-simple>=0.2.0

@@ -1208,3 +1208,10 @@ def test_index_vs_loc():
         assert pl.index_to_loc(np.int_(val)) == val
         assert pl.loc_to_index(val) == val
         assert pl.loc_to_index(np.int_(val)) == val
+
+
+def test_ipyvtk():
+    pl = pyvista.Plotter(notebook=True)
+    pl.add_mesh(sphere)
+    pl.show(use_ipyvtk=True)
+    pl.close()  # this must be closed manually

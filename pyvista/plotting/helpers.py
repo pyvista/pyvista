@@ -13,7 +13,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
          text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         volume=False, parallel_projection=False, **kwargs):
+         volume=False, parallel_projection=False, use_ipyvtk=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -54,6 +54,10 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
 
     volume : bool, optional
         Use the ``add_volume`` method for volume rendering.
+
+    use_ipyvtk : bool, optional
+        Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
+        visualize the plot within a juyterlab notebook.
 
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
@@ -138,6 +142,7 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           screenshot=screenshot,
                           return_img=return_img,
                           use_panel=use_panel,
+                          use_ipyvtk=use_ipyvtk,
                           height=height)
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
