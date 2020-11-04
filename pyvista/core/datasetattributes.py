@@ -295,7 +295,7 @@ class DataSetAttributes(VTKObjectWrapper):
             self.remove(key)
         except KeyError:
             if default in self.pop.__defaults__:
-                raise KeyError
+                raise
             return default
         return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
