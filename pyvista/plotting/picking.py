@@ -124,6 +124,8 @@ class PickingHelper:
 
                 # render here prior to running the callback
                 self_().render()
+            elif not is_valid_selection:
+                self.remove_actor('_cell_picking_selection')
 
             if callback is not None and is_valid_selection:
                 try_callback(callback, self_().picked_cells)
