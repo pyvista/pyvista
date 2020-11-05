@@ -4071,8 +4071,9 @@ class Plotter(BasePlotter):
                 self._observers = {}    # Map of events to observers of self.iren
                 self._add_observer("KeyPressEvent", self.key_press_event)
 
+            # Have to leave the Plotter open for the widget to use
             auto_close = False
-            disp = ViewInteractiveWidget(self.ren_win,
+            disp = ViewInteractiveWidget(self.ren_win, on_close=self.close,
                                          transparent_background=self.image_transparent_background)
 
         # If notebook is true and ipyvtk_simple display failed:
