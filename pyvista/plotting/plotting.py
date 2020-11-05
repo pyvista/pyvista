@@ -3927,12 +3927,8 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
-<<<<<<< HEAD
-             screenshot=False, return_img=False, use_panel=None, cpos=None,
-             use_ipyvtk=None, height=400, **kwargs):
-=======
-             screenshot=False, return_img=False, cpos=None, use_ipyvtk=None):
->>>>>>> a8cb650d2492dccfb276d7e1868be3dfe90e53cf
+             screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
+             **kwargs):
         """Display the plotting window.
 
         Notes
@@ -3964,13 +3960,6 @@ class Plotter(BasePlotter):
             Opens window in full screen.  When enabled, ignores
             window_size.  Default ``False``.
 
-<<<<<<< HEAD
-        use_panel : bool, optional
-            If ``False``, the interactive rendering from panel will
-            not be used in notebooks.
-
-=======
->>>>>>> a8cb650d2492dccfb276d7e1868be3dfe90e53cf
         cpos : list(tuple(floats))
             The camera position to use
 
@@ -3991,17 +3980,11 @@ class Plotter(BasePlotter):
         >>> pl.show(use_ipyvtk=True)
 
         """
-<<<<<<< HEAD
         # developer keyword argument: return notebook viewer
         # normally supressed since it's shown by default
         return_viewer = kwargs.get('return_viewer', False)
         assert_empty_kwargs(**kwargs)
 
-        if use_panel is None:
-            use_panel = rcParams['use_panel']
-
-=======
->>>>>>> a8cb650d2492dccfb276d7e1868be3dfe90e53cf
         if auto_close is None:
             auto_close = rcParams['auto_close']
 
