@@ -4005,7 +4005,7 @@ class Plotter(BasePlotter):
         """
         # developer keyword argument: return notebook viewer
         # normally suppressed since it's shown by default
-        return_viewer = kwargs.get('return_viewer', False)
+        return_viewer = kwargs.pop('return_viewer', False)
         assert_empty_kwargs(**kwargs)
 
         if auto_close is None:
@@ -4119,10 +4119,10 @@ class Plotter(BasePlotter):
 
         # Simply display the result: either ipyvtk_simple object or image display
         if self.notebook:
-            from IPython import display
-            display.display_html(disp)
             if return_viewer:  # developer option
                 return disp
+            from IPython import display
+            display.display_html(disp)
 
         # If user asked for screenshot, return as numpy array after camera
         # position
