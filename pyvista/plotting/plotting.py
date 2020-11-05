@@ -3928,7 +3928,7 @@ class Plotter(BasePlotter):
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
              screenshot=False, return_img=False, use_panel=None, cpos=None,
-             use_ipyvtk=None, height=400):
+             use_ipyvtk=None, height=400, **kwargs):
         """Display the plotting window.
 
         Notes
@@ -3950,19 +3950,19 @@ class Plotter(BasePlotter):
 
         auto_close : bool, optional
             Enabled by default.  Exits plotting session when user
-            closes the window when interactive is True.
+            closes the window when interactive is ``True``.
 
         interactive_update: bool, optional
             Disabled by default.  Allows user to non-blocking draw,
-            user should call Update() in each iteration.
+            user should call ``Update()`` in each iteration.
 
         full_screen : bool, optional
             Opens window in full screen.  When enabled, ignores
-            window_size.  Default False.
+            window_size.  Default ``False``.
 
         use_panel : bool, optional
-            If False, the interactive rendering from panel will not be used in
-            notebooks
+            If ``False``, the interactive rendering from panel will
+            not be used in notebooks.
 
         cpos : list(tuple(floats))
             The camera position to use
@@ -3979,7 +3979,19 @@ class Plotter(BasePlotter):
         cpos : list
             List of camera position, focal point, and view up
 
+        Examples
+        --------
+        Show the plotting window and display it using the
+        ipyvtk-simple viewer
+
+        >>> pl.show(use_ipyvtk=True)
+
         """
+        # developer keyword argument: return notebook viewer
+        # normally supressed since it's shown by default
+        return_viewer = kwargs.get('return_viewer', False)
+        assert_empty_kwargs(**kwargs)
+
         if use_panel is None:
             use_panel = rcParams['use_panel']
 
@@ -4111,9 +4123,12 @@ class Plotter(BasePlotter):
         if auto_close:
             self.close()
 
-        # Return the notebook display: either panel object or image display
+        # Simply display the result: either panel object or image display
         if self.notebook:
-            return disp
+            from IPython import display
+            display.display_html(disp)
+            if return_viewer:  # developer option
+                return disp
 
         # If user asked for screenshot, return as numpy array after camera
         # position
