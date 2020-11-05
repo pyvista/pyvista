@@ -3963,6 +3963,10 @@ class Plotter(BasePlotter):
         cpos : list(tuple(floats))
             The camera position to use
 
+        return_img : bool
+            Returns a numpy array representing the last image along
+            with the camera position.
+
         use_ipyvtk : bool, optional
             Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
             visualize the plot within a juyterlab notebook.
@@ -3972,16 +3976,25 @@ class Plotter(BasePlotter):
         cpos : list
             List of camera position, focal point, and view up
 
+        image : np.ndarray
+            Numpy array of the last image when either ``return_img=True``
+            or ``screenshot`` is set.
+
         Examples
         --------
         Show the plotting window and display it using the
         ipyvtk-simple viewer
 
-        >>> pl.show(use_ipyvtk=True)
+        >>> pl.show(use_ipyvtk=True)  # doctest:+SKIP
+
+        Take a screenshot interactively.  Screenshot will be of the
+        last image shown.
+
+        >>> pl.show(screenshot='my_image.png')  # doctest:+SKIP
 
         """
         # developer keyword argument: return notebook viewer
-        # normally supressed since it's shown by default
+        # normally suppressed since it's shown by default
         return_viewer = kwargs.get('return_viewer', False)
         assert_empty_kwargs(**kwargs)
 
