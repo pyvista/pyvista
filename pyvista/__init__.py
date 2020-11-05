@@ -93,13 +93,6 @@ except Exception as e:
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
-# Set default rcParam for ipyvtk_simple
-if scooby.in_ipykernel():
-    try:
-        import ipyvtk_simple
-    except:
-        rcParams['use_ipyvtk'] = False
-
 # Set preferred plot theme
 try:
     theme = os.environ['PYVISTA_PLOT_THEME'].lower()
