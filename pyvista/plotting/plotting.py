@@ -3927,8 +3927,12 @@ class Plotter(BasePlotter):
 
     def show(self, title=None, window_size=None, interactive=True,
              auto_close=None, interactive_update=False, full_screen=False,
+<<<<<<< HEAD
              screenshot=False, return_img=False, use_panel=None, cpos=None,
              use_ipyvtk=None, height=400, **kwargs):
+=======
+             screenshot=False, return_img=False, cpos=None, use_ipyvtk=None):
+>>>>>>> a8cb650d2492dccfb276d7e1868be3dfe90e53cf
         """Display the plotting window.
 
         Notes
@@ -3960,15 +3964,15 @@ class Plotter(BasePlotter):
             Opens window in full screen.  When enabled, ignores
             window_size.  Default ``False``.
 
+<<<<<<< HEAD
         use_panel : bool, optional
             If ``False``, the interactive rendering from panel will
             not be used in notebooks.
 
+=======
+>>>>>>> a8cb650d2492dccfb276d7e1868be3dfe90e53cf
         cpos : list(tuple(floats))
             The camera position to use
-
-        height : int, optional
-            height for panel pane. Only used with panel.
 
         use_ipyvtk : bool, optional
             Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
@@ -3987,6 +3991,7 @@ class Plotter(BasePlotter):
         >>> pl.show(use_ipyvtk=True)
 
         """
+<<<<<<< HEAD
         # developer keyword argument: return notebook viewer
         # normally supressed since it's shown by default
         return_viewer = kwargs.get('return_viewer', False)
@@ -3995,6 +4000,8 @@ class Plotter(BasePlotter):
         if use_panel is None:
             use_panel = rcParams['use_panel']
 
+=======
+>>>>>>> a8cb650d2492dccfb276d7e1868be3dfe90e53cf
         if auto_close is None:
             auto_close = rcParams['auto_close']
 
@@ -4054,13 +4061,6 @@ class Plotter(BasePlotter):
                 log.debug('KeyboardInterrupt')
                 self.close()
                 raise KeyboardInterrupt
-        elif self.notebook and use_panel and not hasattr(self, 'volume'):
-            try:
-                from panel.pane import VTK as panel_display
-                disp = panel_display(self.ren_win, sizing_mode='stretch_width',
-                                     height=height)
-            except:
-                pass
         # In the event that the user hits the exit-button on the GUI  (on
         # Windows OS) then it must be finalized and deleted as accessing it
         # will kill the kernel.
@@ -4088,7 +4088,8 @@ class Plotter(BasePlotter):
             try:
                 from ipyvtk_simple.viewer import ViewInteractiveWidget
             except ImportError:
-                raise ImportError('Please install `ipyvtk_simple` to use this feature')
+                raise ImportError('Please install `ipyvtk_simple` to use this feature:' \
+                                  '\thttps://github.com/Kitware/ipyvtk-simple')
 
             # might have to enable interactive widget...
             if not hasattr(self, 'iren'):
@@ -4100,14 +4101,12 @@ class Plotter(BasePlotter):
                 self._observers = {}    # Map of events to observers of self.iren
                 self._add_observer("KeyPressEvent", self.key_press_event)
 
+            # Have to leave the Plotter open for the widget to use
             auto_close = False
-            disp = ViewInteractiveWidget(self.ren_win,
+            disp = ViewInteractiveWidget(self.ren_win, on_close=self.close,
                                          transparent_background=self.image_transparent_background)
 
-        # NOTE: our conversion to panel currently does not support mult-view
-        #       so we should display the static screenshot in notebooks for
-        #       multi-view plots until we implement this feature
-        # If notebook is true and panel display failed:
+        # If notebook is true and ipyvtk_simple display failed:
         if self.notebook and (disp is None or self.shape != (1, 1)):
             import PIL.Image
             # sanity check
@@ -4123,7 +4122,7 @@ class Plotter(BasePlotter):
         if auto_close:
             self.close()
 
-        # Simply display the result: either panel object or image display
+        # Simply display the result: either ipyvtk_simple object or image display
         if self.notebook:
             from IPython import display
             display.display_html(disp)
