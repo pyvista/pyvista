@@ -147,7 +147,7 @@ jobs:
         pip install -e .
         conda list
         which python
-        python -c "import pyvista; print(pyvista.Report())"
+        python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: Create Anaconda environment
 
     - script: |
