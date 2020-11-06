@@ -17,9 +17,13 @@ from pyvista import examples
 
 vol = examples.download_brain()
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 p.add_mesh_clip_plane(vol)
 p.show()
+
+###############################################################################
+# After interacting with the scene, the clipped mesh is available as:
+p.plane_clipped_meshes
 
 ###############################################################################
 # And here is a screen capture of a user interacting with this
@@ -29,9 +33,12 @@ p.show()
 ###############################################################################
 # Or you could slice a mesh using the plane widget:
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 p.add_mesh_slice(vol)
 p.show()
+###############################################################################
+# After interacting with the scene, the slice is available as:
+p.plane_sliced_meshes
 
 ###############################################################################
 # And here is a screen capture of a user interacting with this
@@ -49,7 +56,7 @@ from pyvista import examples
 
 mesh = examples.download_carotid()
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 p.add_mesh(mesh.contour(8).extract_largest(), opacity=0.5)
 
 def my_plane_func(normal, origin):

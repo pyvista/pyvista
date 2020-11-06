@@ -32,7 +32,7 @@ surf.points = np.array([[-10,-10,-10],
                     [-10,10,0],])
 surf.faces = np.array([3, 0, 1, 2])
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 
 def callback(point):
     surf.points[0] = point
@@ -66,7 +66,7 @@ surf.points = np.array([[-10,-10,-10],
 surf.faces = np.array([3, 0, 1, 2])
 
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 
 def callback(point, i):
     surf.points[i] = point
@@ -138,7 +138,7 @@ colors = get_colors(len(points))
 ##############################################################################
 
 # Begin the plotting routine
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 
 # Add the surface to the scene
 p.add_mesh(surf, color=True)

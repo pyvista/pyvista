@@ -20,9 +20,13 @@ from pyvista import examples
 
 mesh = examples.download_knee_full()
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 p.add_mesh_threshold(mesh)
 p.show()
+
+###############################################################################
+# After interacting with the scene, the threshold mesh is available as:
+p.threshold_meshes
 
 ##############################################################################
 # And here is a screen capture of a user interacting with this
@@ -37,7 +41,7 @@ p.show()
 # from the slider as its argument to do something like control the resolution
 # of a mesh. Again note the use of the ``name`` argument in ``add_mesh``:
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 
 def create_mesh(value):
     res = int(value)

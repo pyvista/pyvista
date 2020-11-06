@@ -27,7 +27,7 @@ clim = [arr.min(), arr.max()]
 
 ###############################################################################
 
-p = pv.Plotter(notebook=False)
+p = pv.Plotter()
 p.add_mesh(furniture, name='furniture', color=True)
 p.add_mesh(mesh.outline(), color='black')
 p.add_axes()
