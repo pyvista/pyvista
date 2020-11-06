@@ -28,18 +28,9 @@ points = np.array([[-8.64208925, -7.34294559, -9.13803458],
                    [ 3.24099167,  2.05814768,  3.39041509],
                    [ 4.39935227,  4.18804542,  8.96391132]])
 
-spline = pv.Spline(points, n_points=25)
-slc = mesh.slice_along_line(spline)
-
-def callback(spline):
-    slc.overwrite(mesh.slice_along_line(spline))
-
-##############################################################################
-
 p = pv.Plotter()
 p.add_mesh(mesh.outline(), color='black')
-p.add_mesh(slc)
-p.add_spline_widget(callback, initial_points=points, n_handles=5)
+p.add_mesh_slice_spline(mesh, initial_points=points, n_handles=5)
 p.camera_position = [(30, -42, 30),
  (0.0, 0.0, 0.0),
  (-0.09, 0.53, 0.84)]

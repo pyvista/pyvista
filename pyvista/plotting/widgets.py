@@ -1067,9 +1067,10 @@ class WidgetHelper:
             del self.spline_widgets
 
     def add_mesh_slice_spline(self, mesh, generate_triangles=False,
-                              n_hanldes=5, resolution=25,
+                              n_handles=5, resolution=25,
                               widget_color=None, show_ribbon=False,
                               ribbon_color="pink", ribbon_opacity=0.5,
+                              initial_points=None, closed=False,
                               **kwargs):
         """Slice a mesh with a spline widget.
 
@@ -1121,10 +1122,12 @@ class WidgetHelper:
 
         self.add_spline_widget(callback=callback, bounds=mesh.bounds,
                                factor=1.25, color=widget_color,
-                               n_hanldes=n_hanldes, resolution=resolution,
+                               n_handles=n_handles, resolution=resolution,
                                show_ribbon=show_ribbon,
                                ribbon_color=ribbon_color,
-                               ribbon_opacity=ribbon_opacity)
+                               ribbon_opacity=ribbon_opacity,
+                               initial_points=initial_points,
+                               closed=closed)
 
         actor = self.add_mesh(spline_sliced_mesh, **kwargs)
 
