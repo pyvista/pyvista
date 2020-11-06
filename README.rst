@@ -102,7 +102,7 @@ Overview of Features
 --------------------
 
 * Extensive gallery of examples (see `Quick Examples`_)
-* Embeddable rendering in Jupyter Notebooks (static and interactive with `ipyvtk_simple`_)
+* Interactive plotting in Jupyter Notebooks (server-side rendering with `ipyvtk_simple`_)
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
