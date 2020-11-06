@@ -6,12 +6,32 @@ Use a checkbox to turn on/off the visibilty of meshes in a scene.
 
 See :func:`pyvista.WidgetHelper.add_checkbox_button_widget` for more details.
 
-In this example, we will add many meshes to a scene with unique colors and
-create corresponding checkboxes for those meshes of the same color to toggle
-their visibilty in the scene.
 """
-
+# sphinx_gallery_thumbnail_number = 2
 import pyvista as pv
+
+###############################################################################
+# Single Checkbox
+# +++++++++++++++
+
+mesh = pv.Sphere()
+
+p = pv.Plotter()
+actor = p.add_mesh(mesh)
+
+def toggle_vis(flag):
+    actor.SetVisibility(flag)
+
+p.add_checkbox_button_widget(toggle_vis, value=True)
+p.show()
+
+###############################################################################
+# Multiple Checkboxes
+# +++++++++++++++++++
+#
+# In this example, we will add many meshes to a scene with unique colors and
+# create corresponding checkboxes for those meshes of the same color to toggle
+# their visibilty in the scene.
 
 colors = [["ff0000", "28e5da", "0000ff"],
           ["ffff00", "c8bebe", "f79292"],
