@@ -1091,6 +1091,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
             Call ``render`` immediately.
 
         """
+        if self.off_screen:
+            return
+
         if stime <= 0:
             stime = 1
 
@@ -4080,8 +4083,8 @@ class Plotter(BasePlotter):
         self._on_first_render_request(cpos)
 
         # Render
-        # self.render()  # Replaced by below.  May no longer be necessary
-        self.update()  # For Windows issues. Resolves #186
+        self.render()  # Replaced by below.  May no longer be necessary
+        # self.update(force_redraw=False)  # For Windows issues. Resolves #186
 
         # This has to be after the first render for some reason
         if title is None:
