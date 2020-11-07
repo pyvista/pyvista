@@ -3,6 +3,8 @@ from pytest import fixture
 
 import pyvista
 from pyvista import examples
+pyvista.rcParams['off_screen'] = True
+pyvista.OFF_SCREEN = True
 
 
 @fixture(scope='session')

@@ -372,9 +372,9 @@ class Renderer(vtkRenderer):
         self._actors[name] = actor
 
         if reset_camera:
-            self.reset_camera()
+            self.reset_camera(render)
         elif not self.camera_set and reset_camera is None and not rv:
-            self.reset_camera()
+            self.reset_camera(render)
         elif render:
             self.parent.render()
 
@@ -534,13 +534,13 @@ class Renderer(vtkRenderer):
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                     show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                    show_ylabels=True, show_zlabels=True, italic=False,
-                    bold=True, shadow=False, font_size=None,
+                    show_ylabels=True, show_zlabels=True,
+                    bold=True, font_size=None,
                     font_family=None, color=None,
                     xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                     use_2d=False, grid=None, location='closest', ticks=None,
                     all_edges=False, corner_factor=0.5, fmt=None,
-                    minor_ticks=False, padding=0.0):
+                    minor_ticks=False, padding=0.0, render=None):
         """Add bounds axes.
 
         Shows the bounds of the most recent input mesh unless mesh is specified.
@@ -1170,7 +1170,7 @@ class Renderer(vtkRenderer):
             return False
 
         # First remove this actor's mapper from _scalar_bar_mappers
-        _remove_mapper_from_plotter(self.parent, actor, False)
+        _remove_mapper_from_plotter(self.parent, actor, False, render=render)
         self.RemoveActor(actor)
 
         if name is None:
@@ -1251,15 +1251,21 @@ class Renderer(vtkRenderer):
                 self.cube_axes_actor.SetUse2DMode(False)
             self.Modified()
 
-    def reset_camera(self):
+    def reset_camera(self, render=True):
         """Reset the camera of the active render window.
 
-        The camera slides along the vector defined from camera position to focal point
-        until all of the actors can be seen.
+        The camera slides along the vector defined from camera
+        position to focal point until all of the actors can be seen.
+
+        Parameters
+        ----------
+        render : bool
+            Trigger a render after resetting the camera.
 
         """
         self.ResetCamera()
-        self.parent.render()
+        if render:
+            self.parent.render()
         self.Modified()
 
     def isometric_view(self):
@@ -1444,7 +1450,7 @@ class Renderer(vtkRenderer):
         self.deep_clean()
 
 
-def _remove_mapper_from_plotter(plotter, actor, reset_camera):
+def _remove_mapper_from_plotter(plotter, actor, reset_camera, render=False):
     """Remove this actor's mapper from the given plotter's _scalar_bar_mappers."""
     try:
         mapper = actor.GetMapper()
@@ -1460,6 +1466,8 @@ def _remove_mapper_from_plotter(plotter, actor, reset_camera):
             if slot is not None:
                 plotter._scalar_bar_mappers.pop(name)
                 plotter._scalar_bar_ranges.pop(name)
-                plotter.remove_actor(plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera)
+                plotter.remove_actor(plotter._scalar_bar_actors.pop(name),
+                                     reset_camera=reset_camera,
+                                     render=render)
                 plotter._scalar_bar_slots.add(slot)
     return

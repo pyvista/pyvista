@@ -147,7 +147,7 @@ jobs:
         pip install -e .
         conda list
         which python
-        python -c "import pyvista; print(pyvista.Report())"
+        python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: Create Anaconda environment
 
     - script: |
@@ -205,7 +205,7 @@ jobs:
   - script: |
       pip install wheel
       pip install .
-      python -c "import pyvista; print(pyvista.Report())"
+      python -c "import pyvista; print(pyvista.Report(gpu=False))"
     displayName: 'Install PyVista'
   - script: |
       pip install -r requirements_test.txt
@@ -239,7 +239,7 @@ jobs:
     - script: |
         python setup.py sdist
         python setup.py install
-        python -c "import pyvista; print(pyvista.Report())"
+        python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: 'Install PyVista'
 
     - script: |

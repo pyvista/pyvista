@@ -27,3 +27,4 @@ dependencies:
   - pyembree
   - pip:
       - pytest-memprof
+      - ipyvtk-simple>=0.1.2
