@@ -301,17 +301,9 @@ def test_make_movie():
         scalars = np.random.random(movie_sphere.n_faces)
         plotter.update_scalars(scalars)
 
-    # checking if plotter closes
-    ref = proxy(plotter)
-    # plotter.close()
-
     # remove file
-    os.remove(filename)
-
-    try:
-        ref
-    except:
-        raise RuntimeError('Plotter did not close')
+    plotter.close()
+    os.remove(filename)  # verifies that the plotter has closed
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
