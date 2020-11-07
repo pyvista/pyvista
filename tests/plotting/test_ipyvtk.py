@@ -1,4 +1,5 @@
 from ipyvtk_simple.viewer import ViewInteractiveWidget
+import pytest
 
 import pyvista
 
@@ -10,11 +11,7 @@ def test_ipyvtk(sphere):
     assert isinstance(viewer, ViewInteractiveWidget)
 
 
-def test_ipyvtk_sub_render(sphere, cube):
+def test_ipyvtk_sub_render_fail():
     pl = pyvista.Plotter(notebook=True, shape=(2, 1))
-    pl.add_mesh(sphere)
-    plotter.subplot(0, 1)
-    pl.add_mesh()
-    breakpoint()
-    viewer = pl.show(use_ipyvtk=True, return_viewer=True)
-    assert isinstance(viewer, ViewInteractiveWidget)
+    with pytest.raises(NotImplementedError):
+        pl.show(use_ipyvtk=True)

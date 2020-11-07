@@ -4129,6 +4129,9 @@ class Plotter(BasePlotter):
         cpos = self.camera_position
 
         if self.notebook and use_ipyvtk:
+            if self.shape != (1, 1):
+                raise NotImplementedError('`ipyvtk-simple` does not support multiple'
+                                          ' render windows (i.e. shape != (1, 1)')
 
             try:
                 from ipyvtk_simple.viewer import ViewInteractiveWidget
