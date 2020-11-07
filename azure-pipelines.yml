@@ -315,6 +315,12 @@ jobs:
     displayName: Build pyvista doc examples cache
 
   - script: |
+      make -C docs clean
+      cat docs/_build/coverage/python.txt
+    displayName: 'Clean documentation cache on release'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
+
+  - script: |
       make -C docs html -b coverage
       cat docs/_build/coverage/python.txt
     displayName: 'Build documentation'
