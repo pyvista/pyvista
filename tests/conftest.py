@@ -1,5 +1,8 @@
+import gc
+
 import numpy as np
 from pytest import fixture
+import pytest
 
 import pyvista
 from pyvista import examples
@@ -69,3 +72,23 @@ def plane():
 @fixture()
 def spline():
     return examples.load_spline()
+
+
+def _is_vtk(obj):
+    try:
+        return obj.__class__.__name__.startswith('vtk')
+    except Exception:  # old Python sometimes no __class__.__name__
+        return False
+
+
+@pytest.fixture(autouse=True)
+def check_gc():
+    """Ensure that all VTK objects are garbage-collected by Python."""
+    before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
+    yield
+    pyvista.close_all()
+    gc.collect()
+    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
+    assert len(after) == 0, \
+        'Not all objects GCed:\n' + \
+        '\n'.join(sorted(o.__class__.__name__ for o in after))

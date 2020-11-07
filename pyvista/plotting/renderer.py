@@ -829,13 +829,13 @@ class Renderer(vtkRenderer):
         kwargs.setdefault('ticks', 'both')
         return self.show_bounds(**kwargs)
 
-    def remove_bounding_box(self):
+    def remove_bounding_box(self, render=True):
         """Remove bounding box."""
         if hasattr(self, '_box_object'):
             actor = self.bounding_box_actor
             self.bounding_box_actor = None
             del self._box_object
-            self.remove_actor(actor, reset_camera=False)
+            self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
     def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
@@ -1048,13 +1048,13 @@ class Renderer(vtkRenderer):
         self._floors.append(actor)
         return actor
 
-    def remove_floors(self, clear_kwargs=True):
+    def remove_floors(self, clear_kwargs=True, render=True):
         """Remove all floor actors."""
         if getattr(self, '_floor', None) is not None:
             self._floor.ReleaseData()
             self._floor = None
         for actor in self._floors:
-            self.remove_actor(actor, reset_camera=False)
+            self.remove_actor(actor, reset_camera=False, render=render)
         self._floors.clear()
         if clear_kwargs:
             self._floor_kwargs.clear()
@@ -1429,16 +1429,16 @@ class Renderer(vtkRenderer):
             self.axes_actor = None
             del self.axes_widget
 
-    def deep_clean(self):
+    def deep_clean(self, render=False):
         """Clean the renderer of the memory."""
         if hasattr(self, 'cube_axes_actor'):
             del self.cube_axes_actor
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
         if hasattr(self, '_box_object'):
-            self.remove_bounding_box()
+            self.remove_bounding_box(render=render)
 
-        self.remove_floors()
+        self.remove_floors(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
         # remove reference to parent last

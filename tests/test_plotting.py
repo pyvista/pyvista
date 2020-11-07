@@ -1,4 +1,3 @@
-import gc
 import pathlib
 import os
 from weakref import proxy
@@ -32,26 +31,6 @@ VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
 sphere = pyvista.Sphere()
 sphere_b = pyvista.Sphere(1.0)
 sphere_c = pyvista.Sphere(2.0)
-
-
-def _is_vtk(obj):
-    try:
-        return obj.__class__.__name__.startswith('vtk')
-    except Exception:  # old Python sometimes no __class__.__name__
-        return False
-
-
-@pytest.fixture(autouse=True)
-def check_gc():
-    """Ensure that all VTK objects are garbage-collected by Python."""
-    before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
-    yield
-    pyvista.close_all()
-    gc.collect()
-    after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
-    assert len(after) == 0, \
-        'Not all objects GCed:\n' + \
-        '\n'.join(sorted(o.__class__.__name__ for o in after))
 
 
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
@@ -324,7 +303,7 @@ def test_make_movie():
 
     # checking if plotter closes
     ref = proxy(plotter)
-    plotter.close()
+    # plotter.close()
 
     # remove file
     os.remove(filename)
@@ -1192,10 +1171,3 @@ def test_index_vs_loc():
         assert pl.index_to_loc(np.int_(val)) == val
         assert pl.loc_to_index(val) == val
         assert pl.loc_to_index(np.int_(val)) == val
-
-
-def test_ipyvtk():
-    pl = pyvista.Plotter(notebook=True)
-    pl.add_mesh(sphere)
-    pl.show(use_ipyvtk=True)
-    pl.close()  # this must be closed manually
