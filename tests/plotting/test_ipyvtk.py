@@ -1,7 +1,4 @@
-import gc
-
 from ipyvtk_simple.viewer import ViewInteractiveWidget
-import pytest
 
 import pyvista
 
