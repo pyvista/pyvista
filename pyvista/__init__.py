@@ -93,6 +93,15 @@ except Exception as e:
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
+# Set ipyvtk_vtk rcParam flag for interactive notebook rendering
+try:
+    if os.environ['PYVISTA_USE_IPYVTK'].lower() == 'false':
+        rcParams['use_ipyvtk'] = False
+    elif os.environ['PYVISTA_USE_IPYVTK'].lower() == 'true':
+        rcParams['use_ipyvtk'] = True
+except KeyError:
+    pass
+
 # Set preferred plot theme
 try:
     theme = os.environ['PYVISTA_PLOT_THEME'].lower()
