@@ -316,7 +316,6 @@ jobs:
 
   - script: |
       make -C docs clean
-      cat docs/_build/coverage/python.txt
     displayName: 'Clean documentation cache on release'
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'))
 
