@@ -7,6 +7,7 @@ import pytest
 
 import pyvista
 
+
 def _is_vtk(obj):
     try:
         return obj.__class__.__name__.startswith('vtk')
