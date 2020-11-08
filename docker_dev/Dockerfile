@@ -12,7 +12,7 @@ RUN apt-get update \
  && apt-get clean && rm -rf /var/lib/apt/lists/*
 USER jovyan
 
-# setup the itkwidgets conda enviornment
+# setup the itkwidgets conda environment
 COPY environment.yml labextensions.txt /tmp/
 RUN conda env update --name base --file /tmp/environment.yml
 RUN conda run conda install -y nodejs
