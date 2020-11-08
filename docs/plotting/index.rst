@@ -11,3 +11,4 @@ Plotting
    itk_plotting
    widgets
    qt_plotting
+   ipyvtk_plotting

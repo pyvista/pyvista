@@ -1,7 +1,7 @@
 .. _jupyter_ref:
 
-PyVista Jupyter Notebook Integration
-------------------------------------
+PyVista Jupyter Notebook Integration using ``itkwidgets``
+---------------------------------------------------------
 
 PyVista has an interface for visualizing plots in Jupyter.  The
 ``pyvista.PlotterITK`` class allows you interactively visualize a mesh
