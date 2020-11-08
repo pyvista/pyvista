@@ -1,16 +1,14 @@
-"""
-
-"""
+"""Start xvfb from Python"""
 import time
 import os
 
 XVFB_INSTALL_NOTES = """Please install Xvfb with:
 
 Debian
-$ sudo apt install libgl1-mesa-glx libglu1-mesa libsm6 xvfb
+$ sudo apt install libgl1-mesa-glx xvfb
 
 CentOS / RHL
-$ sudo yum install libgl1-mesa-glx libglu1-mesa libsm6 xvfb
+$ sudo yum install libgl1-mesa-glx xvfb
 
 """
 
