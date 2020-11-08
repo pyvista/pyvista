@@ -16,8 +16,14 @@ with io_open(version_file, mode='r') as fd:
 
 # Python 3.9 isn't supported at the moment
 if sys.version_info.minor == 9:
-    raise RuntimeError('There are no wheels available for VTK on Python 3.9 yet.  '
-                       'Please use Python 3.6 through 3.8')
+    # but, the user might have installed vtk from a non-pypi wheel.
+    try:
+        import vtk
+    except ImportError:
+        raise RuntimeError('There are no wheels available for VTK on Python 3.9 yet.  '
+                           'Please use Python 3.6 through 3.8, or build and install '
+                           'VTK from source with a wheel.  Please see:\n'
+                           'https://docs.pyvista.org/building_vtk.html')
 
 
 # pre-compiled vtk available for python3
