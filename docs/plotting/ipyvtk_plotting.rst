@@ -120,4 +120,4 @@ Or alternatively, start it using the built in ``pyvista.start_xvfb()``.  Please 
 
 .. code-block:: bash
 
-    sudo apt-get libgl1-mesa-dev xvfb
+    sudo apt-get install libgl1-mesa-dev xvfb
