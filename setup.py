@@ -21,7 +21,8 @@ if sys.version_info.minor == 9:
         import vtk
     except ImportError:
         raise RuntimeError('There are no wheels available for VTK on Python 3.9 yet.  '
-                           'Please use Python 3.6 through 3.8')
+                           'Please use Python 3.6 through 3.8, or build and install '
+                           'VTK from source with a wheel.')
 
 
 # pre-compiled vtk available for python3
