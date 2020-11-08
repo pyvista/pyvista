@@ -2699,7 +2699,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             self.ren_win.Finalize()
             del self.ren_win
 
-    def close(self):
+    def close(self, render=False):
         """Close the render window."""
         # must close out widgets first
         super().close()
@@ -2731,13 +2731,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         self._style_class = None
 
-        if hasattr(self, 'iren'):
-            # self.iren.RemoveAllObservers()
+        if hasattr(self, '_observers'):
             for obs in self._observers.values():
                 self.iren.RemoveObservers(obs)
             del self._observers
+
+        if self.iren is not None:
             self.iren.TerminateApp()
-            del self.iren
+            self.iren = None
 
         if hasattr(self, 'textActor'):
             del self.textActor
@@ -2751,7 +2752,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
-
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -4129,6 +4129,9 @@ class Plotter(BasePlotter):
         cpos = self.camera_position
 
         if self.notebook and use_ipyvtk:
+            if self.shape != (1, 1):
+                raise NotImplementedError('`ipyvtk-simple` does not support multiple'
+                                          ' render windows (i.e. shape != (1, 1)')
 
             try:
                 from ipyvtk_simple.viewer import ViewInteractiveWidget
