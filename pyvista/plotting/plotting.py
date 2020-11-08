@@ -4133,6 +4133,12 @@ class Plotter(BasePlotter):
                 raise NotImplementedError('`ipyvtk-simple` does not support multiple'
                                           ' render windows (i.e. shape != (1, 1)')
 
+            # Widgets do not work in spyder
+            if any('SPYDER' in name for name in os.environ):
+                warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
+                              'Use notebook=False for interactive '
+                              'plotting within spyder')
+
             try:
                 from ipyvtk_simple.viewer import ViewInteractiveWidget
             except ImportError:

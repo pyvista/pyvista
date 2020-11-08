@@ -1,0 +1,4 @@
+@jupyter-widgets/jupyterlab-manager@2.0
+itkwidgets@0.32.0
+ipycanvas@0.6.1
+ipyevents@1.8.1
