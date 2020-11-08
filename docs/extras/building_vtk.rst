@@ -1,3 +1,5 @@
+.. _ref_building_vtk:
+
 Building VTK
 ============
 Kitware provides Python wheels for VTK at `PyPi VTK <https://pypi.org/project/vtk/>`_, but there are situations where you
@@ -12,7 +14,7 @@ Building VTK Python Wheels on Linux and Mac OS
 Building VTK from source on Linux is fairly easy.  Using the default
 build settings, build a Python wheel of VTK using ``ninja`` using the following script.  This script assumes Python 3.9, but you can use any modern Python version.
 
-.. code::
+.. code-block:: bash
 
     git clone https://github.com/Kitware/VTK
     cd VTK
@@ -28,6 +30,20 @@ build settings, build a Python wheel of VTK using ``ninja`` using the following 
 
 You may need to install ``python3.9-dev`` and ``ninja`` if you have
 not already installed it.
+
+
+Building with Off-Screen Plotting GPU Support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+You can also build VTK for off-screen plotting using GPU support by modifying the above ``cmake`` command with:
+
+.. code-block:: bash
+
+  cmake -GNinja -DVTK_BUILD_TESTING=OFF -DVTK_WHEEL_BUILD=ON -DVTK_PYTHON_VERSION=3 -DVTK_WRAP_PYTHON=ON -DVTK_OPENGL_HAS_EGL=True -DVTK_USE_X=False -DPython3_EXECUTABLE=$PYBIN ../
+
+This disables any plotting using the X server, so be prepared to use
+this module only on a headless display where you either intend to save
+static images or stream the render window to another computer with a
+display (e.g using ``use_ipyvtk=True`` and jupyterlab)
 
 
 Building VTK on Windows

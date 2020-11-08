@@ -253,7 +253,7 @@ Extras
    :hidden:
 
    building_vtk
-
+   docker
 
 Project Index
 *************

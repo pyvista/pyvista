@@ -1,4 +1,4 @@
-.. _qt_plotting:
+.. _ipyvtk_plotting:
 
 Interactive Notebook Plotting Using ``ipyvtk-simple``
 -----------------------------------------------------

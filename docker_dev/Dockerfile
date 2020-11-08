@@ -20,6 +20,9 @@ RUN conda run jupyter labextension install $(cat /tmp/labextensions.txt)
 
 RUN pip install ipyvtk-simple==0.1.2
 
+# COPY vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl /tmp/
+# RUN pip install /tmp/vtk-9.0.20201105-cp38-cp38-linux_x86_64.whl
+
 COPY pyvista-0.27.dev1-py3-none-any.whl /tmp/
 RUN pip install /tmp/pyvista-0.27.dev1-py3-none-any.whl
 

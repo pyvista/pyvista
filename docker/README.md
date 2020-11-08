@@ -5,8 +5,8 @@ To create a local docker image install ``docker`` and be sure you've logged into
 Next, pull, and run the image with:
 
 ```bash
-docker pull docker.pkg.github.com/pyvista/pyvista/pyvista-jupyterlab:latest
-docker run -it --rm -p 8888:8888 pyvista-jupyterlab:v0.27.0
+docker pull docker.pkg.github.com/pyvista/pyvista/pyvista-jupyterlab:v0.27.0
+docker run -p 8888:8888 docker.pkg.github.com/pyvista/pyvista/pyvista-jupyterlab:v0.27.0
 ```
 
 Finally, open the link that shows up and start playing around with

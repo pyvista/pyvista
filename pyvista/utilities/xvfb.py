@@ -1,4 +1,4 @@
-"""Start xvfb from Python"""
+"""Start xvfb from Python."""
 import time
 import os
 
