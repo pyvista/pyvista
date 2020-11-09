@@ -64,7 +64,7 @@ def image_from_window(ren_win, as_vtk=False, ignore_alpha=False):
 #     return img_diff.GetError()
 
 
-def compare_images(im1, im2, threshold=1, use_vtk=False):
+def compare_images(im1, im2, threshold=1, use_vtk=True):
     """Compare two different images of the same size.
 
     Parameters
@@ -130,6 +130,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=False):
         return img_diff.GetError()
 
     # otherwise, simply compute the mean pixel differnce
+    if im1.shape != im2.shape:
+        raise RuntimeError('Image shapes do not match')
     diff = np.abs(im1.point_arrays[0] - im2.point_arrays[0])
     return np.sum(diff) / im1.point_arrays[0].shape[0]
-    

@@ -7,6 +7,10 @@ import pytest
 
 import pyvista
 
+def pytest_addoption(parser):
+    parser.addoption("--reset_image_cache", action='store_true', default=False)
+    parser.addoption("--ignore_image_cache", action='store_true', default=False)
+
 
 def _is_vtk(obj):
     try:

@@ -4,7 +4,7 @@ from pytest import fixture
 import pyvista
 from pyvista import examples
 pyvista.rcParams['off_screen'] = True
-pyvista.rcParams['window_size'] = [400, 300]  # default is [1024, 768]
+pyvista.rcParams['window_size'] = [400, 400]  # default is [1024, 768]
 pyvista.OFF_SCREEN = True
 
 

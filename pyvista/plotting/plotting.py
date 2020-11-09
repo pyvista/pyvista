@@ -105,6 +105,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self.image_transparent_background = rcParams['transparent_background']
 
+        # optional function to be called prior to closing
+        self.__before_close_callback = None
         self._store_image = False
         self.mesh = None
         if title is None:
@@ -270,6 +272,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Key bindings
         self.reset_key_events()
         log.debug('BasePlotter init stop')
+
+    @property
+    def _before_close_callback(self):
+        """Return the cached function (expecting a reference)"""
+        if self.__before_close_callback is not None:
+            return self.__before_close_callback()
+
+    @_before_close_callback.setter
+    def _before_close_callback(self, func):
+        """Always store a weakref.ref of the function being called"""
+        if func is not None:
+            self.__before_close_callback = weakref.ref(func)
+        else:
+            self.__before_close_callback = None
 
     #### Manage the active Renderer ####
 
@@ -2699,6 +2715,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def close(self, render=False):
         """Close the render window."""
+        # optionally run just prior to exiting the plotter
+        if self._before_close_callback is not None:
+            self._before_close_callback(self)
+            self._before_close_callback = None
+
         # must close out widgets first
         super().close()
         # Renderer has an axes widget, so close it
@@ -4052,6 +4073,9 @@ class Plotter(BasePlotter):
         # developer keyword argument: return notebook viewer
         # normally suppressed since it's shown by default
         return_viewer = kwargs.pop('return_viewer', False)
+
+        # developer keyword argument: runs a function immediately prior to ``close``
+        self._before_close_callback = kwargs.pop('before_close_callback', None)
         assert_empty_kwargs(**kwargs)
 
         if auto_close is None:
