@@ -164,8 +164,8 @@ any given branch is introducing before looking at the code.
 - `maint/`: for general maintenance of the repository or CI routines
 - `doc/`: for any changes only pertaining to documentation
 - `no-ci/`: for low impact activity that should NOT trigger the CI routines
+- `testing/`: improvements or changes to testing
 - `release/`: releases (see below)
-
 
 #### Testing
 
