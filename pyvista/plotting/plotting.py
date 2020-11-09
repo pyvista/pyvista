@@ -732,7 +732,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
 
-        width, height = self.window_size
+        width, height = self.ren_win.GetSize()
         arr = vtk.vtkUnsignedCharArray()
         self.ren_win.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
         data = vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
