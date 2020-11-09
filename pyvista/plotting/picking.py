@@ -92,8 +92,6 @@ class PickingHelper:
             selection is intereactively displayed.
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Cell picking not available in notebook plotting')
         if mesh is None:
             if not hasattr(self, 'mesh') or self.mesh is None:
                 raise AttributeError('Input a mesh into the Plotter class first or '
@@ -245,8 +243,6 @@ class PickingHelper:
             picked point is intereactively displayed
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Point picking not available in notebook plotting')
 
         def _end_pick_event(picker, event):
             self.picked_point = np.array(picker.GetPickPosition())
