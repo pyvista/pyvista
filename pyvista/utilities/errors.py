@@ -23,7 +23,7 @@ def set_error_output_file(filename):
 
 
 class Observer:
-    """A standerd class for observing VTK objects."""
+    """A standard class for observing VTK objects."""
 
     def __init__(self, event_type='ErrorEvent', log=True):
         """Initialize observer."""
@@ -179,7 +179,7 @@ class GPUInfo():
         """Representation method."""
         content = "\n"
         for k, v in self.get_info():
-            content += "{:>18}".format(k)+' : {}\n'.format(v)
+            content += f"{k:>18} : {v}\n"
         content += "\n"
         return content
 
@@ -218,7 +218,7 @@ class Report(scooby.Report):
 
         # Optional packages.
         optional = ['matplotlib', 'pyvistaqt', 'PyQt5', 'IPython', 'colorcet',
-                    'cmocean', 'panel', 'scipy', 'itkwidgets', 'tqdm']
+                    'cmocean', 'ipyvtk_simple', 'scipy', 'itkwidgets', 'tqdm']
 
         # Information about the GPU - bare except in case there is a rendering
         # bug that the user is trying to report.
@@ -246,12 +246,12 @@ def assert_empty_kwargs(**kwargs):
         return True
     caller = sys._getframe(1).f_code.co_name
     keys = list(kwargs.keys())
-    bad_arguments = ', '.join(['"%s"' % key for key in keys])
+    bad_arguments = ', '.join([f'"{key}"' for key in keys])
     if n == 1:
         grammar = "is an invalid keyword argument"
     else:
         grammar = "are invalid keyword arguments"
-    message = "{} {} for `{}`".format(bad_arguments, grammar, caller)
+    message = f"{bad_arguments} {grammar} for `{caller}`"
     raise TypeError(message)
 
 
@@ -260,4 +260,4 @@ def check_valid_vector(point, name=''):
     if np.array(point).size != 3:
         if name == '':
             name = 'Vector'
-        raise TypeError('%s must be a length three tuple of floats.' % name)
+        raise TypeError(f'{name} must be a length three tuple of floats.')

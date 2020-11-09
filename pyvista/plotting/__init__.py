@@ -16,15 +16,17 @@ from .widgets import WidgetHelper
 
 class QtDeprecationError(Exception):
     """Depreciation Error for features that moved to `pyvistaqt`."""
-    
+
     message = """`{}` has moved to pyvistaqt.
     You can install this from PyPI with: `pip install pyvistaqt`
+    Then import it via: `from pyvistaqt import {}`
+    `{}` is no longer accessible by `pyvista.{}`
     See https://github.com/pyvista/pyvistaqt
 """
 
     def __init__(self, feature_name):
         """Empty init."""
-        Exception.__init__(self, self.message.format(feature_name))
+        Exception.__init__(self, self.message.format(*[feature_name] * 4))
 
 
 class BackgroundPlotter():

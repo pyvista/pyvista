@@ -1,4 +1,5 @@
 import pathlib
+import platform
 
 import numpy as np
 import pytest
@@ -8,6 +9,7 @@ import pyvista
 from pyvista import PolyData, RectilinearGrid, UniformGrid, StructuredGrid, MultiBlock
 from pyvista import examples as ex
 
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 @pytest.fixture()
 def vtk_multi():
@@ -199,7 +201,7 @@ def test_multi_block_repr(ant, sphere, uniform, airplane):
 @pytest.mark.parametrize('use_pathlib', [True, False])
 def test_multi_block_io(extension, binary, tmpdir, use_pathlib, ant,
                         sphere, uniform, airplane, globe):
-    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    filename = str(tmpdir.mkdir("tmpdir").join(f'tmp.{extension}'))
     if use_pathlib:
         pathlib.Path(filename)
     multi = multi_from_datasets(ant, sphere, uniform, airplane, globe)
@@ -211,6 +213,30 @@ def test_multi_block_io(extension, binary, tmpdir, use_pathlib, ant,
     assert foo.n_blocks == multi.n_blocks
     foo = pyvista.read(filename)
     assert foo.n_blocks == multi.n_blocks
+
+@skip_mac  # fails due to download examples
+@pytest.mark.parametrize('binary', [True, False])
+@pytest.mark.parametrize('extension', ['vtm', 'vtmb'])
+def test_ensight_multi_block_io(extension, binary, tmpdir, ant,
+                                sphere, uniform, airplane, globe):
+    filename = str(tmpdir.mkdir("tmpdir").join('tmp.%s' % extension))
+    # multi = ex.load_bfs()  # .case file
+    multi = ex.download_backward_facing_step()  # .case file
+    # Now check everything
+    assert multi.n_blocks == 4
+    array_names = ['v2', 'nut', 'k', 'nuTilda', 'p', 'omega', 'f', 'epsilon', 'U']
+    for block in multi:
+        assert block.array_names == array_names
+    # Save it out
+    multi.save(filename, binary)
+    foo = MultiBlock(filename)
+    assert foo.n_blocks == multi.n_blocks
+    for block in foo:
+        assert block.array_names == array_names
+    foo = pyvista.read(filename)
+    assert foo.n_blocks == multi.n_blocks
+    for block in foo:
+        assert block.array_names == array_names
 
 
 def test_invalid_arg():
@@ -224,7 +250,7 @@ def test_multi_io_erros(tmpdir):
     fdir = tmpdir.mkdir("tmpdir")
     multi = MultiBlock()
     # Check saving with bad extension
-    bad_ext_name = str(fdir.join('tmp.%s' % 'npy'))
+    bad_ext_name = str(fdir.join('tmp.npy'))
     with pytest.raises(ValueError):
         multi.save(bad_ext_name)
     arr = np.random.rand(10, 10)

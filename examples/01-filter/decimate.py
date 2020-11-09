@@ -23,7 +23,7 @@ mesh.plot(cpos=cpos, **dargs)
 # :func:`pyvista.PolyData.decimate` and :func:`pyvista.PolyData.decimate_pro`
 # filters.
 target_reduction = 0.7
-print("Reducing {} percent out of the original mesh".format(target_reduction * 100.0))
+print(f"Reducing {target_reduction * 100.0} percent out of the original mesh")
 
 ###############################################################################
 decimated = mesh.decimate(target_reduction)

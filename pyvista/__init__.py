@@ -22,7 +22,7 @@ try:
     import faulthandler
     faulthandler.enable()
 except Exception as e:  # pragma: no cover
-    warnings.warn('Unable to enable faulthandler:\n%s' % str(e))
+    warnings.warn(f'Unable to enable faulthandler:\n{e}')
 
 
 # determine if using vtk > 5
@@ -52,7 +52,7 @@ try:
 except KeyError:
     pass
 
-# Grab system flag for auto-closing because of Panel issues
+# Grab system flag for auto-closing
 try:
     # This only sets to false if PYVISTA_AUTO_CLOSE is false
     rcParams['auto_close'] = not os.environ['PYVISTA_AUTO_CLOSE'].lower() == 'false'
@@ -75,7 +75,7 @@ if not os.path.exists(USER_DATA_PATH):
 if 'PYVISTA_USERDATA_PATH' in os.environ:
     USER_DATA_PATH = os.environ['PYVISTA_USERDATA_PATH']
     if not os.path.isdir(USER_DATA_PATH):
-        raise FileNotFoundError('Invalid PYVISTA_USERDATA_PATH at %s' % USER_DATA_PATH)
+        raise FileNotFoundError(f'Invalid PYVISTA_USERDATA_PATH at {USER_DATA_PATH}')
 
 try:
     EXAMPLES_PATH = os.path.join(USER_DATA_PATH, 'examples')
@@ -85,8 +85,7 @@ try:
         except FileExistsError:  # Edge case due to IO race conditions
             pass
 except Exception as e:
-    warnings.warn('Unable to create `EXAMPLES_PATH` at "%s"\nError: %s\n\n'
-                  % (EXAMPLES_PATH, str(e)) +
+    warnings.warn(f'Unable to create `EXAMPLES_PATH` at "{EXAMPLES_PATH}"\nError: {e}\n\n'
                   'Override the default path by setting the environmental variable '
                   '`PYVISTA_USERDATA_PATH` to a writable path.')
     EXAMPLES_PATH = None
@@ -94,22 +93,14 @@ except Exception as e:
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
-
-# Set up panel for interactive notebook rendering
+# Set ipyvtk_vtk rcParam flag for interactive notebook rendering
 try:
-    if os.environ['PYVISTA_USE_PANEL'].lower() == 'false':
-        rcParams['use_panel'] = False
-    elif os.environ['PYVISTA_USE_PANEL'].lower() == 'true':
-        rcParams['use_panel'] = True
+    if os.environ['PYVISTA_USE_IPYVTK'].lower() == 'false':
+        rcParams['use_ipyvtk'] = False
+    elif os.environ['PYVISTA_USE_IPYVTK'].lower() == 'true':
+        rcParams['use_ipyvtk'] = True
 except KeyError:
     pass
-# Only initialize panel if in a Jupyter environment
-if scooby.in_ipykernel():
-    try:
-        import panel
-        panel.extension('vtk')
-    except:
-        rcParams['use_panel'] = False
 
 # Set preferred plot theme
 try:

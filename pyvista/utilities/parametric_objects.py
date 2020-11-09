@@ -28,6 +28,7 @@ def Spline(points, n_points=None):
     Examples
     --------
     Construct a spline
+
     >>> import numpy as np
     >>> import pyvista as pv
     >>> theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
@@ -70,6 +71,7 @@ def ParametricBohemianDome(a=None, **kwargs):
     Examples
     --------
     Create a ParametricBohemianDome mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricBohemianDome()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -80,7 +82,7 @@ def ParametricBohemianDome(a=None, **kwargs):
         parametric_function.SetA(a)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -99,6 +101,7 @@ def ParametricBour(**kwargs):
     Examples
     --------
     Create a ParametricBour mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricBour()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -107,7 +110,7 @@ def ParametricBour(**kwargs):
     parametric_function = vtk.vtkParametricBour()
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -140,6 +143,7 @@ def ParametricBoy(zscale=None, **kwargs):
     Examples
     --------
     Create a ParametricBoy mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricBoy()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -150,7 +154,7 @@ def ParametricBoy(zscale=None, **kwargs):
         parametric_function.SetZScale(zscale)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -173,6 +177,7 @@ def ParametricCatalanMinimal(**kwargs):
     Example
     -------
     Create a ParametricCatalanMinimal mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricCatalanMinimal()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -181,7 +186,7 @@ def ParametricCatalanMinimal(**kwargs):
     parametric_function = vtk.vtkParametricCatalanMinimal()
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -225,6 +230,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
     Examples
     --------
     Create a ParametricConicSpiral mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricConicSpiral()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -244,7 +250,7 @@ def ParametricConicSpiral(a=None, b=None, c=None, n=None, **kwargs):
         parametric_function.SetN(n)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -267,6 +273,7 @@ def ParametricCrossCap(**kwargs):
     Examples
     --------
     Create a ParametricCrossCap mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricCrossCap()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -275,7 +282,7 @@ def ParametricCrossCap(**kwargs):
     parametric_function = vtk.vtkParametricCrossCap()
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -309,6 +316,7 @@ def ParametricDini(a=None, b=None, **kwargs):
     Examples
     --------
     Create a ParametricDini mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricDini()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -322,7 +330,7 @@ def ParametricDini(a=None, b=None, **kwargs):
         parametric_function.SetB(b)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -359,6 +367,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
     Examples
     --------
     Create a ParametricEllipsoid mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricEllipsoid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -385,7 +394,7 @@ def ParametricEllipsoid(xradius=None, yradius=None, zradius=None,
         parametric_function.SetZRadius(zradius)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -408,6 +417,7 @@ def ParametricEnneper(**kwargs):
     Examples
     --------
     Create a ParametricEnneper mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricEnneper()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -416,7 +426,7 @@ def ParametricEnneper(**kwargs):
     parametric_function = vtk.vtkParametricEnneper()
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -444,6 +454,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
     Examples
     --------
     Create a ParametricFigure8Klein mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricFigure8Klein()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -454,7 +465,7 @@ def ParametricFigure8Klein(radius=None, **kwargs):
         parametric_function.SetRadius(radius)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -473,6 +484,7 @@ def ParametricHenneberg(**kwargs):
     Examples
     --------
     Create a ParametricHenneberg mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricHenneberg()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -481,7 +493,7 @@ def ParametricHenneberg(**kwargs):
     parametric_function = vtk.vtkParametricHenneberg()
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -505,6 +517,7 @@ def ParametricKlein(**kwargs):
     Examples
     --------
     Create a ParametricKlein mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricKlein()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -513,7 +526,7 @@ def ParametricKlein(**kwargs):
     parametric_function = vtk.vtkParametricKlein()
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -544,6 +557,7 @@ def ParametricKuen(deltav0=None, **kwargs):
     Examples
     --------
     Create a ParametricKuen mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricKuen()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -554,7 +568,7 @@ def ParametricKuen(deltav0=None, **kwargs):
         parametric_function.SetDeltaV0(deltav0)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -578,6 +592,7 @@ def ParametricMobius(radius=None, **kwargs):
     Examples
     --------
     Create a ParametricMobius mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricMobius()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -588,7 +603,7 @@ def ParametricMobius(radius=None, **kwargs):
         parametric_function.SetRadius(radius)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -618,6 +633,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
     Examples
     --------
     Create a ParametricPluckerConoid mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricPluckerConoid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -628,7 +644,7 @@ def ParametricPluckerConoid(n=None, **kwargs):
         parametric_function.SetN(n)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -652,6 +668,7 @@ def ParametricPseudosphere(**kwargs):
     Examples
     --------
     Create a ParametricPseudosphere mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricPseudosphere()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -660,7 +677,7 @@ def ParametricPseudosphere(**kwargs):
     parametric_function = vtk.vtkParametricPseudosphere()
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -726,6 +743,7 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
     Examples
     --------
     Create a ParametricRandomHills mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricRandomHills()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -757,7 +775,7 @@ def ParametricRandomHills(numberofhills=None, hillxvariance=None,
         parametric_function.SetAmplitudeScaleFactor(amplitudescalefactor)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -781,6 +799,7 @@ def ParametricRoman(radius=None, **kwargs):
     Examples
     --------
     Create a ParametricRoman mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricRoman()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -791,7 +810,7 @@ def ParametricRoman(radius=None, **kwargs):
         parametric_function.SetRadius(radius)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -833,6 +852,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
     Examples
     --------
     Create a ParametricSuperEllipsoid mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperEllipsoid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -855,7 +875,7 @@ def ParametricSuperEllipsoid(xradius=None, yradius=None, zradius=None,
         parametric_function.SetN2(n2)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -910,6 +930,7 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
     Examples
     --------
     Create a ParametricSuperToroid mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricSuperToroid()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -938,7 +959,7 @@ def ParametricSuperToroid(ringradius=None, crosssectionradius=None,
         parametric_function.SetN2(n2)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)
@@ -966,6 +987,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
     Examples
     --------
     Create a ParametricTorus mesh
+
     >>> import pyvista
     >>> mesh = pyvista.ParametricTorus()
     >>> mesh.plot(color='w', smooth_shading=True)  # doctest:+SKIP
@@ -979,7 +1001,7 @@ def ParametricTorus(ringradius=None, crosssectionradius=None, **kwargs):
         parametric_function.SetCrossSectionRadius(crosssectionradius)
 
     center = kwargs.pop('center', [0., 0., 0.])
-    direction = kwargs.pop('direction', [0., 0., 1.])
+    direction = kwargs.pop('direction', [1., 0., 0.])
     surf = surface_from_para(parametric_function, **kwargs)
 
     translate(surf, center, direction)

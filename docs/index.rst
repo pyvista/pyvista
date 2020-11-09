@@ -3,7 +3,7 @@
 .. raw:: html
 
     <div class="banner">
-        <img src="_static/pyvista_logo.png" alt="pyvista" width="500px">
+        <a href="./examples/index.html"><img src="_static/pyvista_banner.png" alt="pyvista" width="100%"/></a>
         <h2>3D plotting and mesh analysis through a streamlined interface for the Visualization Toolkit (VTK)</h2>
     </div>
 
@@ -156,6 +156,17 @@ If you are using PyVista in your scientific research, please help our scientific
 visibility by citing our work! Head over to :ref:`citation_ref` to learn more
 about citing PyVista.
 
+Videos
+======
+
+Here are some videos that you can watch to learn pyvista:
+
+- PyConJP2020 talk "How to plot unstructured mesh file on Jupyter Notebook" (15 minutes):
+
+  - Video: https://youtu.be/X3Z54Kw4I6Y
+  - Material: https://docs.google.com/presentation/d/1M_cnS66ja81u_mHACjaUsDj1wSeeEtnEevk_IMZ8-dg/edit?usp=sharing
+
+If there is any material that we can add, please  `report <https://github.com/pyvista/pyvista/issues>`_ .
 
 Getting Started
 ***************
@@ -187,6 +198,29 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    getting-started/simple
    examples/index
    external_examples
+   optional_features
+
+
+Translating the documentation
+*****************************
+
+The recommended way for new contributors to translate ``pyvista``'s documentation is to
+join the translation team on Transifex.
+
+There is a `pyvista translation page`_ for pyvista (master) documentation.
+
+1. Login to transifex_ service.
+2. Go to `pyvista translation page`_.
+3. Click ``Request language`` and fill form.
+4. Wait acceptance by transifex pyvista translation maintainers.
+5. (After acceptance) Translate on transifex.
+6. You can see the translated document in `Read The Docs`_.
+
+Details can be found here: https://docs.transifex.com/getting-started-1/translators
+
+.. _`pyvista translation page`: https://www.transifex.com/getfem-doc/pyvista-doc/
+.. _Transifex: https://www.transifex.com/
+.. _`Read The Docs`: https://pyvista-doc.readthedocs.io/en/latest
 
 
 API Reference
@@ -210,8 +244,16 @@ Highlights of the API include:
    plotting/index
    utilities/index
 
+Extras
+******
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Extras
+   :hidden:
 
+   building_vtk
+   docker
 
 Project Index
 *************

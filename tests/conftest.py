@@ -3,6 +3,19 @@ from pytest import fixture
 
 import pyvista
 from pyvista import examples
+pyvista.rcParams['off_screen'] = True
+pyvista.OFF_SCREEN = True
+
+
+@fixture(scope='session')
+def set_mpl():
+    """Avoid matplotlib windows popping up."""
+    try:
+        import matplotlib
+    except Exception:
+        pass
+    else:
+        matplotlib.use('agg', force=True)
 
 
 @fixture()

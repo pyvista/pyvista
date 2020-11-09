@@ -16,7 +16,7 @@ earth_alt = examples.download_topo_global()
 pl = pv.Plotter()
 actor = pl.add_mesh(examples.load_airplane(), smooth_shading=True)
 # pl.add_background_image(examples.mapfile)
-pl.plot()
+pl.show()
 
 ###############################################################################
 # Plot several earth related plots
