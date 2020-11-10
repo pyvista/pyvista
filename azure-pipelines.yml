@@ -153,8 +153,14 @@ jobs:
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
-        pytest -v --cov pyvista --cov-report html
-      displayName: 'Test Core API against VTK'
+        pytest -v --ignore=tests/plotting
+      displayName: 'Test Core API'
+
+    - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pytest -v tests/plotting --cov-report html
+      displayName: 'Test Core Plotting API'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
