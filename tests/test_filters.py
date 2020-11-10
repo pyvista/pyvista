@@ -470,6 +470,7 @@ def test_glyph():
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
     sphere = pyvista.Sphere(radius=3.14)
+    sphere_sans_arrays = sphere.copy()
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
                         np.cos(sphere.points[:, 1]),
@@ -492,7 +493,7 @@ def test_glyph():
     result = sphere.glyph(geom=geoms)
     result = sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
     result = sphere.glyph(geom=geoms[:1], indices=[None])
-    result = pyvista.Sphere(radius=3.14).glyph(geom=geoms)
+    result = sphere_sans_arrays.glyph(geom=geoms)
     with pytest.raises(TypeError):
         # wrong type for the glyph
         sphere.glyph(geom=pyvista.StructuredGrid())
