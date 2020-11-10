@@ -252,8 +252,9 @@ Extras
    :caption: Extras
    :hidden:
 
-   building_vtk
-   docker
+   extras/building_vtk
+   extras/docker
+   extras/developer_notes
 
 Project Index
 *************

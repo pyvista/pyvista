@@ -1,3 +1,6 @@
+"""
+See the image regression notes in docs/extras/developer_notes.rst
+"""
 import warnings
 import inspect
 import pathlib
@@ -76,7 +79,8 @@ def verify_cache_image(plotter):
     global glb_reset_image_cache, glb_ignore_image_cache
 
     # Image cache is only valid for VTK9 on Linux
-    if not VTK9 or os.name != 'linux':
+    # if not VTK9 or os.name != 'linux':
+    if os.name != 'linux':
         return
 
     # since each test must contain a unique name, we can simply
