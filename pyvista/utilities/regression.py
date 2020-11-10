@@ -124,8 +124,8 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         img_diff.SetThreshold(threshold)
         img_diff.SetInputData(im1)
         img_diff.SetImageData(im2)
-        img_diff.AllowShiftOff()  # vastly increases compute time
-        img_diff.AveragingOff()  # increases compute time
+        img_diff.AllowShiftOff()  # vastly increases compute time when enabled
+        # img_diff.AveragingOff()  # increases compute time
         img_diff.Update()
         return img_diff.GetError()
 
