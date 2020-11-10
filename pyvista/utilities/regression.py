@@ -68,18 +68,36 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         greater than 0, otherwise it will always return an error, even
         on identical images.
 
-    fast : bool
-        Compute the mean pixel error over the entire image using
-        numpy.  The difference between pixel is calculated for each
-        RGB channel, summed, and then divided by the number of pixels.
-        This is faster than using ``vtk.vtkImageDifference`` but
-        potentially less accurate.
+    use_vtk : bool
+        When disabled, computes the mean pixel error over the entire
+        image using numpy.  The difference between pixel is calculated
+        for each RGB channel, summed, and then divided by the number
+        of pixels.  This is faster than using
+        ``vtk.vtkImageDifference`` but potentially less accurate.
 
     Returns
     -------
     error : float
-        Total error between the images if using ``use_vtk``, and the
-        mean pixel error when ``use_vtk=False``.
+        Total error between the images if using ``use_vtk=True``, and
+        the mean pixel error when ``use_vtk=False``.
+
+    Examples
+    --------
+    Compare two active plotters
+
+    >>> import pyvista
+    >>> pl1 = pyvista.Plotter()
+    >>> _ = pl1.add_mesh(pyvista.Sphere(), smooth_shading=True)
+    >>> pl2 = pyvista.Plotter()
+    >>> _ = pl2.add_mesh(pyvista.Sphere(), smooth_shading=False)
+    >>> pyvista.compare_images(pl1, pl2)  # doctest:+SKIP
+
+    Compare two active plotters
+
+    >>> import pyvista
+    >>> img1 = pyvista.read('img1.png')  # doctest:+SKIP
+    >>> img2 = pyvista.read('img2.png')  # doctest:+SKIP
+    >>> pyvista.compare_images(img1, img2)  # doctest:+SKIP
 
     """
     from pyvista import wrap, UniformGrid, read, Plotter
