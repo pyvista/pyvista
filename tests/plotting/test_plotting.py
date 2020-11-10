@@ -1,3 +1,8 @@
+"""
+See the image regression notes in docs/extras/developer_notes.rst
+"""
+import warnings
+import inspect
 import pathlib
 import os
 from weakref import proxy
@@ -13,7 +18,6 @@ from pyvista import examples
 from pyvista.plotting import system_supports_plotting
 from pyvista.plotting.plotting import SUPPORTED_FORMATS
 
-NO_PLOTTING = not system_supports_plotting()
 
 ffmpeg_failed = False
 try:
@@ -33,7 +37,91 @@ sphere_b = pyvista.Sphere(1.0)
 sphere_c = pyvista.Sphere(2.0)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+# Reset image cache with new images
+glb_reset_image_cache = False
+IMAGE_CACHE_DIR = os.path.join(Path(__file__).parent.absolute(), 'image_cache')
+if not os.path.isdir(IMAGE_CACHE_DIR):
+    os.mkdir(IMAGE_CACHE_DIR)
+
+skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
+                                      reason="Test requires system to support plotting")
+
+# IMAGE warning/error thresholds (assumes using use_vtk)
+IMAGE_REGRESSION_ERROR = 500  # major differences
+IMAGE_REGRESSION_WARNING = 200  # minor differences
+
+
+# this must be a session fixture to ensure this runs before any other test
+@pytest.fixture(scope="session", autouse=True)
+def get_cmd_opt(pytestconfig):
+    global glb_reset_image_cache, glb_ignore_image_cache
+    glb_reset_image_cache = pytestconfig.getoption('reset_image_cache')
+    glb_ignore_image_cache = pytestconfig.getoption('ignore_image_cache')
+
+
+def verify_cache_image(plotter):
+    """Either store or validate an image.
+
+    This is function should only be called within a pytest
+    environment.  Pass it to either the ``Plotter.show()`` or the
+    ``pyvista.plot()`` functions as the before_close_callback keyword
+    arg.
+
+    Assign this only once for each test you'd like to validate the
+    previous image of.  This will not work with parameterized tests.
+
+    Example Usage:
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
+    """
+    global glb_reset_image_cache, glb_ignore_image_cache
+
+    # Image cache is only valid for VTK9 on Linux
+    # if not VTK9 or os.name != 'linux':
+    if os.name != 'linux':
+        return
+
+    # since each test must contain a unique name, we can simply
+    # use the function test to name the image
+    stack = inspect.stack()
+    test_name = None
+    for item in stack:
+        if item.function == 'check_gc':
+            return
+        if item.function[:5] == 'test_':
+            test_name = item.function
+            break
+
+    if test_name is None:
+        raise RuntimeError('Unable to identify calling test function.  This function '
+                           'should only be used within a pytest environment.')
+
+    # cached image name
+    image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
+
+    # simply save the last screenshot if it doesn't exist of the cache
+    # is being reset.
+    if glb_reset_image_cache or not os.path.isfile(image_filename):
+        return plotter.screenshot(image_filename)
+
+    if glb_ignore_image_cache:
+        return
+
+    # otherwise, compare with the existing cached image
+    error = pyvista.compare_images(image_filename, plotter)
+    if error > IMAGE_REGRESSION_ERROR:
+        raise RuntimeError('Exceeded image regression error of '
+                           f'{IMAGE_REGRESSION_ERROR} with an image error of '
+                           f'{error}')
+    if error > IMAGE_REGRESSION_WARNING:
+        warnings.warn('Exceeded image regression warning of '
+                      f'{IMAGE_REGRESSION_WARNING} with an image error of '
+                      f'{error}')
+
+
+@skip_no_plotting
 def test_plot(tmpdir):
     tmp_dir = tmpdir.mkdir("tmpdir2")
     filename = str(tmp_dir.join('tmp.png'))
@@ -44,13 +132,14 @@ def test_plot(tmpdir):
                              show_bounds=True,
                              color='r',
                              style='wireframe',
-                             line_width=10,
+                             line_width=2,
                              scalars=scalars,
                              flip_scalars=True,
                              cmap='bwr',
                              interpolate_before_map=True,
                              screenshot=filename,
-                             return_img=True)
+                             return_img=True,
+                             before_close_callback=verify_cache_image)
     assert isinstance(cpos, pyvista.CameraPosition)
     assert isinstance(img, np.ndarray)
     assert os.path.isfile(filename)
@@ -67,13 +156,13 @@ def test_plot(tmpdir):
         pyvista.plot(sphere, screenshot=filename)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_invalid_style():
     with pytest.raises(ValueError):
         pyvista.plot(sphere, style='not a style')
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_interactor_style():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -93,7 +182,7 @@ def test_interactor_style():
     plotter.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_lighting():
     plotter = pyvista.Plotter()
 
@@ -116,7 +205,7 @@ def test_lighting():
     plotter.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plotter_shape_invalid():
     # wrong size
     with pytest.raises(ValueError):
@@ -131,20 +220,19 @@ def test_plotter_shape_invalid():
         pyvista.Plotter(shape={1, 2})
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_bounds_axes_with_no_data():
     plotter = pyvista.Plotter()
     plotter.show_bounds()
-    plotter.close()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_show_grid():
     plotter = pyvista.Plotter()
     plotter.show_grid()
     plotter.add_mesh(sphere)
-    plotter.close()
-
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 cpos_param = [[(2.0, 5.0, 13.0),
@@ -154,7 +242,7 @@ cpos_param = [[(2.0, 5.0, 13.0),
              [1.0, 2.0, 3.0],
 ]
 cpos_param.extend(pyvista.plotting.Renderer.CAMERA_STR_ATTR_MAP)
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 @pytest.mark.parametrize('cpos', cpos_param)
 def test_set_camera_position(cpos, sphere):
     plotter = pyvista.Plotter()
@@ -163,7 +251,7 @@ def test_set_camera_position(cpos, sphere):
     plotter.show()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 @pytest.mark.parametrize('cpos', [[(2.0, 5.0),
                                    (0.0, 0.0, 0.0),
                                    (-0.7, -0.5, 0.3)],
@@ -178,7 +266,7 @@ def test_set_camera_position_invalid(cpos, sphere):
 
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_no_active_scalars():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -188,7 +276,7 @@ def test_plot_no_active_scalars():
         plotter.update_scalars(np.arange(sphere.n_faces))
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_show_bounds():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -199,18 +287,18 @@ def test_plot_show_bounds():
                         show_ylabels=False,
                         show_zlabels=False,
                         use_2d=True)
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_label_fmt():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.show_bounds(xlabel='My X', fmt=r'%.3f')
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 @pytest.mark.parametrize('grid', [True, 'both', 'front', 'back'])
 @pytest.mark.parametrize('location', ['all', 'origin', 'outer', 'front', 'back'])
 def test_plot_show_bounds_params(grid, location):
@@ -222,7 +310,7 @@ def test_plot_show_bounds_params(grid, location):
     plotter.show()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plotter_scale():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -234,44 +322,41 @@ def test_plotter_scale():
     assert plotter.scale == [5.0, 6.0, 9.0]
     plotter.scale = [1.0, 4.0, 2.0]
     assert plotter.scale == [1.0, 4.0, 2.0]
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_add_scalar_bar():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.add_scalar_bar(label_font_size=10, title_font_size=20, title='woa',
                            interactive=True, vertical=True)
     plotter.add_scalar_bar(background_color='white', n_colors=256)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_invalid_add_scalar_bar():
     with pytest.raises(AttributeError):
         plotter = pyvista.Plotter()
         plotter.add_scalar_bar()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_list():
-    pyvista.plot([sphere, sphere_b],
-                 off_screen=OFF_SCREEN,
-                 style='points')
-
     pyvista.plot([sphere, sphere_b, sphere_c],
-                 off_screen=OFF_SCREEN,
-                 style='wireframe')
+                 style='wireframe',
+                 before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_add_lines_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(TypeError):
         plotter.add_lines(range(10))
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_open_gif_invalid():
     plotter = pyvista.Plotter()
     with pytest.raises(ValueError):
@@ -279,7 +364,7 @@ def test_open_gif_invalid():
 
 
 @pytest.mark.skipif(ffmpeg_failed, reason="Requires imageio-ffmpeg")
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_make_movie():
     # Make temporary file
     filename = os.path.join(pyvista.USER_DATA_PATH, 'tmp.mp4')
@@ -306,7 +391,7 @@ def test_make_movie():
     os.remove(filename)  # verifies that the plotter has closed
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_add_legend():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -315,31 +400,39 @@ def test_add_legend():
     legend_labels = [['sphere', 'r']]
     plotter.add_legend(labels=legend_labels, border=True, bcolor=None,
                        size=[0.1, 0.1])
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_add_axes_twice():
     plotter = pyvista.Plotter()
     plotter.add_axes()
     plotter.add_axes(interactive=True)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_add_point_labels():
-    n = 10
     plotter = pyvista.Plotter()
-    points = np.random.random((n, 3))
+
+    # cannot use random points with image regression
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [0, 1, 0],
+                       [1, 1, 0],
+                       [0.5, 0.5, 0.5],
+                       [1, 1, 1]])
+    n = points.shape[0]
 
     with pytest.raises(ValueError):
         plotter.add_point_labels(points, range(n - 1))
 
     plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
     plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 @pytest.mark.parametrize('always_visible', [False, True])
 def test_add_point_labels_always_visible(always_visible):
     # just make sure it runs without exception
@@ -349,46 +442,53 @@ def test_add_point_labels_always_visible(always_visible):
     plotter.show()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_set_background():
     plotter = pyvista.Plotter()
     plotter.set_background('k')
     plotter.background_color = "yellow"
-    plotter.set_background([0, 0, 0], top=[1,1,1]) # Gradient
-    _ = plotter.background_color
+    plotter.set_background([0, 0, 0], top=[1, 1, 1])  # Gradient
+    plotter.background_color
     plotter.show()
 
-    plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
+    plotter = pyvista.Plotter(shape=(1, 2))
     plotter.set_background('orange')
     for renderer in plotter.renderers:
         assert renderer.GetBackground() == pyvista.parse_color('orange')
     plotter.show()
 
-    plotter = pyvista.Plotter(off_screen=OFF_SCREEN, shape=(1,2))
-    plotter.subplot(0,1)
+    plotter = pyvista.Plotter(shape=(1, 2))
+    plotter.subplot(0, 1)
     plotter.set_background('orange', all_renderers=False)
     assert plotter.renderers[0].GetBackground() != pyvista.parse_color('orange')
     assert plotter.renderers[1].GetBackground() == pyvista.parse_color('orange')
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_add_points():
-    n = 10
     plotter = pyvista.Plotter()
-    points = np.random.random((n, 3))
-    plotter.add_points(points, scalars=np.arange(10), cmap=None, flip_scalars=True)
-    plotter.show()
+
+    points = np.array([[0, 0, 0],
+                       [1, 0, 0],
+                       [0, 1, 0],
+                       [1, 1, 0],
+                       [0.5, 0.5, 0.5],
+                       [1, 1, 1]])
+    n = points.shape[0]
+
+    plotter.add_points(points, scalars=np.arange(n), cmap=None, flip_scalars=True)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_key_press_event():
     plotter = pyvista.Plotter()
     plotter.key_press_event(None, None)
     plotter.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_enable_picking_gc():
     plotter = pyvista.Plotter()
     sphere = pyvista.Sphere()
@@ -397,7 +497,7 @@ def test_enable_picking_gc():
     plotter.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_left_button_down():
     plotter = pyvista.Plotter()
     if VTK9:
@@ -408,39 +508,39 @@ def test_left_button_down():
     plotter.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_show_axes():
     plotter = pyvista.Plotter()
     plotter.show_axes()
-    plotter.close()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_update():
     plotter = pyvista.Plotter()
     plotter.update()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_cell_arrays():
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
                      n_colors=5, rng=10)
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_clim():
     plotter = pyvista.Plotter()
     scalars = np.arange(sphere.n_faces)
     plotter.add_mesh(sphere, interpolate_before_map=True, scalars=scalars,
                      n_colors=5, clim=10)
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
     assert plotter.mapper.GetScalarRange() == (-10, 10)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_invalid_n_arrays():
     with pytest.raises(ValueError):
         plotter = pyvista.Plotter()
@@ -448,41 +548,39 @@ def test_invalid_n_arrays():
         plotter.show()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_arrow():
-    cent = np.random.random(3)
-    direction = np.random.random(3)
-    pyvista.plot_arrows(cent, direction)
+    cent = np.array([0, 0, 0])
+    direction = np.array([1, 0, 0])
+    pyvista.plot_arrows(cent, direction, before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_arrows():
-    cent = np.random.random((100, 3))
-    direction = np.random.random((100, 3))
-    pyvista.plot_arrows(cent, direction)
+    cent = np.array([[0, 0, 0],
+                     [1, 0, 0]])
+    direction = np.array([[1, 1, 1],
+                          [-1, -1, -1]])
+    pyvista.plot_arrows(cent, direction, before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_axes():
-    plotter = pyvista.Plotter()
-    plotter.add_axes()
-    plotter.add_mesh(pyvista.Sphere())
-    plotter.show()
     plotter = pyvista.Plotter()
     plotter.add_orientation_widget(pyvista.Cube())
     plotter.add_mesh(pyvista.Cube())
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_box_axes():
     plotter = pyvista.Plotter()
-    plotter.add_axes(box=True, box_args={'color_box':True})
+    plotter.add_axes(box=True, box_args={'color_box': True})
     plotter.add_mesh(pyvista.Sphere())
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_screenshot(tmpdir):
     plotter = pyvista.Plotter()
     plotter.add_mesh(pyvista.Sphere())
@@ -503,7 +601,7 @@ def test_screenshot(tmpdir):
         raise RuntimeError('Plotter did not close')
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 @pytest.mark.parametrize('ext', SUPPORTED_FORMATS)
 def test_save_screenshot(tmpdir, sphere, ext):
     filename = str(tmpdir.mkdir("tmpdir").join('tmp' + ext))
@@ -514,22 +612,25 @@ def test_save_screenshot(tmpdir, sphere, ext):
     assert Path(filename).stat().st_size
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_scalars_by_name():
     plotter = pyvista.Plotter()
     data = examples.load_uniform()
     plotter.add_mesh(data, scalars='Spatial Cell Data')
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 def test_themes():
+    old_rcParms = dict(pyvista.rcParams)  # must cache old rcParams
     pyvista.set_plot_theme('paraview')
     pyvista.set_plot_theme('document')
     pyvista.set_plot_theme('night')
     pyvista.set_plot_theme('default')
+    for key, value in old_rcParms.items():
+        pyvista.rcParams[key] = value
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_multi_block_plot():
     multi = pyvista.MultiBlock()
     multi.append(examples.load_rectilinear())
@@ -542,49 +643,47 @@ def test_multi_block_plot():
     with pytest.raises(ValueError):
         # The scalars are not available in all datasets so raises ValueError
         multi.plot(scalars='Random Data', multi_colors=True)
-    multi.plot(off_screen=OFF_SCREEN, multi_colors=True)
+    multi.plot(multi_colors=True, before_close_callback=verify_cache_image)
 
 
-
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_clear():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
     plotter.clear()
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_texture():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
     texture = examples.load_globe_texture()
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=texture)
-    plotter.show()
-    texture.plot()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_texture_associated():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=True)
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_read_texture_from_numpy():
     """"Test adding a texture to a plot"""
     globe = examples.load_globe()
     texture = pyvista.numpy_to_texture(imageio.imread(examples.mapfile))
     plotter = pyvista.Plotter()
     plotter.add_mesh(globe, texture=texture)
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_rgb():
     """"Test adding a texture to a plot"""
     cube = pyvista.Cube()
@@ -602,20 +701,32 @@ def test_plot_rgb():
     cube.cell_arrays['face_colors'] = face_colors
     plotter = pyvista.Plotter()
     plotter.add_mesh(cube, scalars='face_colors', rgb=True)
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_multi_component_array():
     """"Test adding a texture to a plot"""
-    image = pyvista.UniformGrid((3,3,3))
-    image['array'] = np.random.randn(*image.dimensions).ravel(order='f')
+    image = pyvista.UniformGrid((3, 3, 3))
+
+    # fixed this to allow for image regression testing
+    # image['array'] = np.random.randn(*image.dimensions).ravel(order='f')
+    image['array'] = np.array([-0.2080155 ,  0.45258783,  1.03826775,
+                                0.38214289,  0.69745718, -2.04209996,
+                                0.7361947 , -1.59777205,  0.74254271,
+                               -0.27793002, -1.5788904 , -0.71479534,
+                               -0.93487136, -0.95082609, -0.64480196,
+                               -1.79935993, -0.9481572 , -0.34988819,
+                                0.17934252,  0.30425682, -1.31709916,
+                                0.02550247, -0.27620985,  0.89869448,
+                               -0.13012903,  1.05667384,  1.52085349])
+
     plotter = pyvista.Plotter()
     plotter.add_mesh(image, scalars='array')
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_camera():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
@@ -628,11 +739,11 @@ def test_camera():
     plotter.view_xy(True)
     plotter.view_xz(True)
     plotter.view_yz(True)
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
     plotter.camera_position = None
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_multi_renderers():
     plotter = pyvista.Plotter(shape=(2, 2))
 
@@ -659,7 +770,11 @@ def test_multi_renderers():
     plotter.show_bounds(all_edges=True)
 
     plotter.update_bounds_axes()
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_multi_renderers_subplot_ind_2x1():
 
     # Test subplot indices (2 rows by 1 column)
     plotter = pyvista.Plotter(shape=(2, 1))
@@ -669,27 +784,35 @@ def test_multi_renderers():
     # Second row
     plotter.subplot(1,0)
     plotter.add_mesh(pyvista.Cube())
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
+
+@skip_no_plotting
+def test_multi_renderers_subplot_ind_1x2():
     # Test subplot indices (1 row by 2 columns)
     plotter = pyvista.Plotter(shape=(1, 2))
     # First column
-    plotter.subplot(0,0)
+    plotter.subplot(0, 0)
     plotter.add_mesh(pyvista.Sphere())
     # Second column
-    plotter.subplot(0,1)
+    plotter.subplot(0, 1)
     plotter.add_mesh(pyvista.Cube())
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
+@skip_no_plotting
+def test_multi_renderers_bad_indices():
     with pytest.raises(IndexError):
         # Test bad indices
         plotter = pyvista.Plotter(shape=(1, 2))
-        plotter.subplot(0,0)
+        plotter.subplot(0, 0)
         plotter.add_mesh(pyvista.Sphere())
-        plotter.subplot(1,0)
+        plotter.subplot(1, 0)
         plotter.add_mesh(pyvista.Cube())
         plotter.show()
 
+
+@skip_no_plotting
+def test_multi_renderers_subplot_ind_3x1():
     # Test subplot 3 on left, 1 on right
     plotter = pyvista.Plotter(shape='3|1')
     # First column
@@ -701,8 +824,11 @@ def test_multi_renderers():
     plotter.add_mesh(pyvista.Cylinder())
     plotter.subplot(3)
     plotter.add_mesh(pyvista.Cone())
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
+
+@skip_no_plotting
+def test_multi_renderers_subplot_ind_1x3():
     # Test subplot 3 on bottom, 1 on top
     plotter = pyvista.Plotter(shape='1|3')
     # First column
@@ -714,39 +840,43 @@ def test_multi_renderers():
     plotter.add_mesh(pyvista.Cylinder())
     plotter.subplot(3)
     plotter.add_mesh(pyvista.Cone())
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_no_plotting
 def test_subplot_groups():
     plotter = pyvista.Plotter(shape=(3,3), groups=[(1,[1,2]),(np.s_[:],0)])
-    plotter.subplot(0,0)
+    plotter.subplot(0, 0)
     plotter.add_mesh(pyvista.Sphere())
-    plotter.subplot(0,1)
+    plotter.subplot(0, 1)
     plotter.add_mesh(pyvista.Cube())
-    plotter.subplot(0,2)
+    plotter.subplot(0, 2)
     plotter.add_mesh(pyvista.Arrow())
-    plotter.subplot(1,1)
+    plotter.subplot(1, 1)
     plotter.add_mesh(pyvista.Cylinder())
-    plotter.subplot(2,1)
+    plotter.subplot(2, 1)
     plotter.add_mesh(pyvista.Cone())
-    plotter.subplot(2,2)
+    plotter.subplot(2, 2)
     plotter.add_mesh(pyvista.Box())
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+def test_subplot_groups_fail():
     # Test group overlap
     with pytest.raises(AssertionError):
         # Partial overlap
-        pyvista.Plotter(shape=(3,3),groups=[([1,2],[0,1]),([0,1],[1,2])])
+        pyvista.Plotter(shape=(3, 3), groups=[([1, 2], [0, 1]), ([0, 1], [1, 2])])
     with pytest.raises(AssertionError):
         # Full overlap (inner)
-        pyvista.Plotter(shape=(4,4),groups=[(np.s_[:],np.s_[:]),([1,2],[1,2])])
+        pyvista.Plotter(shape=(4, 4), groups=[(np.s_[:], np.s_[:]), ([1, 2], [1, 2])])
     with pytest.raises(AssertionError):
         # Full overlap (outer)
-        pyvista.Plotter(shape=(4,4),groups=[(1,[1,2]),([0,3],np.s_[:])])
+        pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
-
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_link_views():
+ 
+@skip_no_plotting
+def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
-    sphere = pyvista.Sphere()
     plotter.subplot(0, 0)
     plotter.add_mesh(sphere, smooth_shading=False, show_edges=False)
     plotter.subplot(0, 1)
@@ -764,35 +894,33 @@ def test_link_views():
     plotter.unlink_views([0, 1])
     plotter.unlink_views(2)
     plotter.unlink_views()
-    plotter.show()
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_orthographic_slicer():
-    data = examples.load_uniform()
-    data.set_active_scalars('Spatial Cell Data')
-
-    slices = data.slice_orthogonal()
+@skip_no_plotting
+def test_orthographic_slicer(uniform):
+    uniform.set_active_scalars('Spatial Cell Data')
+    slices = uniform.slice_orthogonal()
 
     # Orthographic Slicer
-    p = pyvista.Plotter(shape=(2,2))
+    p = pyvista.Plotter(shape=(2, 2))
 
-    p.subplot(1,1)
-    p.add_mesh(slices, clim=data.get_data_range())
+    p.subplot(1, 1)
+    p.add_mesh(slices, clim=uniform.get_data_range())
     p.add_axes()
     p.enable()
 
-    p.subplot(0,0)
+    p.subplot(0, 0)
     p.add_mesh(slices['XY'])
     p.view_xy()
     p.disable()
 
-    p.subplot(0,1)
+    p.subplot(0, 1)
     p.add_mesh(slices['XZ'])
     p.view_xz(negative=True)
     p.disable()
 
-    p.subplot(1,0)
+    p.subplot(1, 0)
     p.add_mesh(slices['YZ'])
     p.view_yz()
     p.disable()
@@ -800,22 +928,21 @@ def test_orthographic_slicer():
     p.show()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_remove_actor():
-    data = examples.load_uniform()
+@skip_no_plotting
+def test_remove_actor(uniform):
     plotter = pyvista.Plotter()
-    plotter.add_mesh(data, name='data')
-    plotter.add_mesh(data, name='data')
-    plotter.add_mesh(data, name='data')
-    plotter.show()
+    plotter.add_mesh(uniform.copy(), name='data')
+    plotter.add_mesh(uniform.copy(), name='data')
+    plotter.add_mesh(uniform.copy(), name='data')
+    plotter.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_image_properties():
     mesh = examples.load_uniform()
     p = pyvista.Plotter()
     p.add_mesh(mesh)
-    p.show(auto_close=False) # DO NOT close plotter
+    p.show(auto_close=False)  # DO NOT close plotter
     # Get RGB image
     _ = p.image
     # Get the depth image
@@ -850,11 +977,11 @@ def test_image_properties():
     p.close()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_volume_rendering():
     # Really just making sure no errors are thrown
     vol = examples.load_uniform()
-    vol.plot(off_screen=OFF_SCREEN, volume=True, opacity='linear')
+    vol.plot(volume=True, opacity='linear')
 
     plotter = pyvista.Plotter()
     plotter.add_volume(vol, opacity='sigmoid', cmap='jet', n_colors=15)
@@ -876,7 +1003,7 @@ def test_volume_rendering():
     pyvista.plot(arr, volume=True, opacity='linear')
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_compar_four():
     # Really just making sure no errors are thrown
     mesh = examples.load_uniform()
@@ -885,63 +1012,85 @@ def test_plot_compar_four():
     data_c = mesh.decimate_boundary(0.5)
     data_d = mesh.glyph()
     pyvista.plot_compare_four(data_a, data_b, data_c, data_d,
-                              disply_kwargs={'color':'w'},
-                              plotter_kwargs={'off_screen':OFF_SCREEN},)
-    return
+                              disply_kwargs={'color': 'w'},
+                              show_kwargs={'before_close_callback': verify_cache_image})
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_depth_peeling():
     mesh = examples.load_airplane()
     p = pyvista.Plotter()
     p.add_mesh(mesh)
     p.enable_depth_peeling()
     p.disable_depth_peeling()
-    p.show()
+    p.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 @pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
-def test_plot_eye_dome_lighting():
-    mesh = examples.load_airplane()
-    mesh.plot(off_screen=OFF_SCREEN, eye_dome_lighting=True)
-    p = pyvista.Plotter()
-    p.add_mesh(mesh)
-    p.enable_eye_dome_lighting()
-    p.show()
+def test_plot_eye_dome_lighting_plot(airplane):
+    airplane.plot(eye_dome_lighting=True, before_close_callback=verify_cache_image)
 
+
+@skip_no_plotting
+@pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
+def test_plot_eye_dome_lighting_plotter(airplane):
     p = pyvista.Plotter()
-    p.add_mesh(mesh)
+    p.add_mesh(airplane)
+    p.enable_eye_dome_lighting()
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+@pytest.mark.skipif(os.name == 'nt', reason="No testing on windows for EDL")
+def test_plot_eye_dome_lighting_enable_disable(airplane):
+    p = pyvista.Plotter()
+    p.add_mesh(airplane)
     p.enable_eye_dome_lighting()
     p.disable_eye_dome_lighting()
-    p.show()
+    p.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_opacity_by_array():
-    mesh = examples.load_uniform()
-    opac = mesh['Spatial Point Data'] / mesh['Spatial Point Data'].max()
+@skip_no_plotting
+def test_opacity_by_array(uniform):
     # Test with opacity array
-    mesh['opac'] = opac
+    opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
+    uniform['opac'] = opac
     p = pyvista.Plotter()
-    p.add_mesh(mesh, scalars='Spatial Point Data', opacity='opac',)
-    p.show()
+    p.add_mesh(uniform, scalars='Spatial Point Data', opacity='opac')
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_opacity_by_array_uncertainty(uniform):
     # Test with uncertainty array (transparency)
-    mesh['unc'] = opac
+    opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
+    uniform['unc'] = opac
     p = pyvista.Plotter()
-    p.add_mesh(mesh, scalars='Spatial Point Data', opacity='unc',
+    p.add_mesh(uniform, scalars='Spatial Point Data', opacity='unc',
                use_transparency=True)
-    p.show()
-    # Test using mismatched arrays
-    with pytest.raises(ValueError):
-        p = pyvista.Plotter()
-        p.add_mesh(mesh, scalars='Spatial Cell Data', opacity='unc',)
-        p.show()
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_opacity_by_array_user_transform(uniform):
+    uniform['Spatial Point Data'] /= uniform['Spatial Point Data'].max()
+
     # Test with user defined transfer function
-    opacities = [0,0.2,0.9,0.2,0.1]
+    opacities = [0, 0.2, 0.9, 0.2, 0.1]
     p = pyvista.Plotter()
-    p.add_mesh(mesh, scalars='Spatial Point Data', opacity=opacities,)
-    p.show()
+    p.add_mesh(uniform, scalars='Spatial Point Data', opacity=opacities)
+    p.show()  # note: =verify_cache_image does not work between Xvfb
+
+
+def test_opactity_mismatched_fail(uniform):
+    opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
+    uniform['unc'] = opac
+
+    # Test using mismatched arrays
+    p = pyvista.Plotter()
+    with pytest.raises(ValueError):
+        p.add_mesh(uniform, scalars='Spatial Cell Data', opacity='unc')
 
 
 def test_opacity_transfer_functions():
@@ -957,7 +1106,7 @@ def test_opacity_transfer_functions():
     foo = np.linspace(0, n, n)
     mapping = pyvista.opacity_transfer_function(foo, n)
     assert np.allclose(foo, mapping)
-    foo = [0,0.2,0.9,0.2,0.1]
+    foo = [0, 0.2, 0.9, 0.2, 0.1]
     mapping = pyvista.opacity_transfer_function(foo, n, interpolate=False)
     assert len(mapping) == n
     foo = [3, 5, 6, 10]
@@ -965,7 +1114,7 @@ def test_opacity_transfer_functions():
     assert len(mapping) == n
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_closing_and_mem_cleanup():
     n = 5
     for _ in range(n):
@@ -977,25 +1126,29 @@ def test_closing_and_mem_cleanup():
         pyvista.close_all()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_above_below_scalar_range_annotations():
     p = pyvista.Plotter()
     p.add_mesh(examples.load_uniform(), clim=[100, 500], cmap='viridis',
                below_color='blue', above_color='red')
-    p.show()
+    p.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
-def test_user_annotations_scalar_bar():
+@skip_no_plotting
+def test_user_annotations_scalar_bar_mesh(uniform):
     p = pyvista.Plotter()
-    p.add_mesh(examples.load_uniform(), annotations={100.:'yum'})
-    p.show()
+    p.add_mesh(uniform, annotations={100.: 'yum'})
+    p.show(before_close_callback=verify_cache_image)
+
+
+@skip_no_plotting
+def test_user_annotations_scalar_bar_volume(uniform):
     p = pyvista.Plotter()
-    p.add_volume(examples.load_uniform(), annotations={100.:'yum'})
-    p.show()
+    p.add_volume(uniform, annotations={100.: 'yum'})
+    p.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_plot_string_array():
     mesh = examples.load_uniform()
     labels = np.empty(mesh.n_cells, dtype='<U10')
@@ -1005,10 +1158,10 @@ def test_plot_string_array():
     mesh['labels'] = labels
     p = pyvista.Plotter()
     p.add_mesh(mesh, scalars='labels')
-    p.show()
+    p.show(before_close_callback=verify_cache_image)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_fail_plot_table():
     """Make sure tables cannot be plotted"""
     table = pyvista.Table(np.random.rand(50, 3))
@@ -1019,7 +1172,7 @@ def test_fail_plot_table():
         plotter.add_mesh(table)
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_bad_keyword_arguments():
     """Make sure bad keyword arguments raise an error"""
     mesh = examples.load_uniform()
@@ -1037,7 +1190,7 @@ def test_bad_keyword_arguments():
         plotter.show()
 
 
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_cmap_list():
     mesh = sphere.copy()
 
@@ -1048,14 +1201,12 @@ def test_cmap_list():
     scalars[2*n//3:] = 2
 
     with pytest.raises(TypeError):
-        mesh.plot(off_screen=OFF_SCREEN,
-                  scalars=scalars, cmap=['red', None, 'blue'])
+        mesh.plot(scalars=scalars, cmap=['red', None, 'blue'])
 
-    mesh.plot(off_screen=OFF_SCREEN,
-              scalars=scalars, cmap=['red', 'green', 'blue'])
+    mesh.plot(scalars=scalars, cmap=['red', 'green', 'blue'],
+              before_close_callback=verify_cache_image)
 
-
-@pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
+@skip_no_plotting
 def test_default_name_tracking():
     N = 10
     color = "tan"
@@ -1074,14 +1225,25 @@ def test_default_name_tracking():
     mesh.ReleaseData()
     del mesh
 
-@pytest.mark.parametrize("as_global", [True, False])
-def test_add_background_image(as_global):
+
+@skip_no_plotting
+def test_add_background_image_global():
     plotter = pyvista.Plotter()
     plotter.add_mesh(sphere)
-    plotter.add_background_image(examples.mapfile, as_global=as_global)
-    plotter.show()
+    plotter.add_background_image(examples.mapfile, as_global=True)
+    plotter.show(before_close_callback=verify_cache_image)
 
 
+@skip_no_plotting
+def test_add_background_image_not_global():
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.add_background_image(examples.mapfile, as_global=False)
+    plotter.show(before_close_callback=verify_cache_image)
+
+
+
+@skip_no_plotting
 def test_add_background_image_subplots():
     pl = pyvista.Plotter(shape=(2, 2))
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
@@ -1096,9 +1258,10 @@ def test_add_background_image_subplots():
         pl.remove_background_image()
 
     pl.add_background_image(examples.mapfile, scale=1, as_global=False)
-    pl.show()
+    pl.show(before_close_callback=verify_cache_image)
 
 
+@skip_no_plotting
 def test_add_remove_floor():
     pl = pyvista.Plotter()
     pl.add_mesh(sphere)
@@ -1115,7 +1278,7 @@ def test_add_remove_floor():
     pl.add_floor(color='b', line_width=2, lighting=True)
     pl.remove_floors()
     assert not pl.renderer._floors
-    pl.show()
+    pl.show(before_close_callback=verify_cache_image)
 
 
 def test_reset_camera_clipping_range():
@@ -1123,14 +1286,14 @@ def test_reset_camera_clipping_range():
     pl.add_mesh(sphere)
 
     default_clipping_range = pl.camera.GetClippingRange() # get default clipping range
-    assert default_clipping_range != (10,100) # make sure we assign something different than default
+    assert default_clipping_range != (10, 100) # make sure we assign something different than default
 
     pl.camera.SetClippingRange(10,100) # set clipping range to some random numbers
-    assert pl.camera.GetClippingRange() == (10,100) # make sure assignment is successful
+    assert pl.camera.GetClippingRange() == (10, 100) # make sure assignment is successful
 
     pl.reset_camera_clipping_range()
-    assert pl.camera.GetClippingRange() ==  default_clipping_range
-    assert pl.camera.GetClippingRange() != (10,100)
+    assert pl.camera.GetClippingRange() == default_clipping_range
+    assert pl.camera.GetClippingRange() != (10, 100)
 
 
 def test_index_vs_loc():
