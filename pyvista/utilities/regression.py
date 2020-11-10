@@ -1,21 +1,7 @@
-"""Image regression module"""
+"""Image regression module."""
 import vtk
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import numpy as np
-
-
-# def _window_to_image(pl):
-#     """Older method using potentially slower vtkWindowToImageFilter"""
-#     ifilter = vtk.vtkWindowToImageFilter()
-#     ifilter.SetInput(pl.ren_win)
-#     ifilter.ReadFrontBufferOff()
-#     if pl.image_transparent_background:
-#         ifilter.SetInputBufferTypeToRGBA()
-#     else:
-#         ifilter.SetInputBufferTypeToRGB()
-#     ifilter.Update()
-#     return ifilter.GetOutput()
-
 
 
 def wrap_image_array(arr):
@@ -44,7 +30,7 @@ def wrap_image_array(arr):
 
 
 def image_from_window(ren_win, as_vtk=False, ignore_alpha=False):
-    """Extract the image from the render window as an array"""
+    """Extract the image from the render window as an array."""
     width, height = ren_win.GetSize()
     arr = vtk.vtkUnsignedCharArray()
     ren_win.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
@@ -129,7 +115,7 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         img_diff.Update()
         return img_diff.GetError()
 
-    # otherwise, simply compute the mean pixel differnce
+    # otherwise, simply compute the mean pixel difference
     if im1.shape != im2.shape:
         raise RuntimeError('Image shapes do not match')
     diff = np.abs(im1.point_arrays[0] - im2.point_arrays[0])

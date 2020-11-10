@@ -275,13 +275,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     @property
     def _before_close_callback(self):
-        """Return the cached function (expecting a reference)"""
+        """Return the cached function (expecting a reference)."""
         if self.__before_close_callback is not None:
             return self.__before_close_callback()
 
     @_before_close_callback.setter
     def _before_close_callback(self, func):
-        """Always store a weakref.ref of the function being called"""
+        """Store a weakref.ref of the function being called."""
         if func is not None:
             self.__before_close_callback = weakref.ref(func)
         else:

@@ -58,21 +58,26 @@ def get_cmd_opt(pytestconfig):
 
 
 def verify_cache_image(plotter):
-    """Either store or validate an image
+    """Either store or validate an image.
 
     This is function should only be called within a pytest
-    enviornment.  Pass it to either the ``Plotter.show()`` or the
+    environment.  Pass it to either the ``Plotter.show()`` or the
     ``pyvista.plot()`` functions as the before_close_callback keyword
     arg.
 
     Assign this only once for each test you'd like to validate the
     previous image of.  This will not work with parameterized tests.
 
+    Example Usage:
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(sphere)
+    plotter.show(before_close_callback=verify_cache_image)
+
     """
     global glb_reset_image_cache, glb_ignore_image_cache
 
-    # Cache is only valid for VTK9
-    if not VTK9:
+    # Image cache is only valid for VTK9 on Linux
+    if not VTK9 or os.name != 'linux':
         return
 
     # since each test must contain a unique name, we can simply
@@ -88,7 +93,7 @@ def verify_cache_image(plotter):
 
     if test_name is None:
         raise RuntimeError('Unable to identify calling test function.  This function '
-                           'should only be used within a pytest enviornment.')
+                           'should only be used within a pytest environment.')
 
     # cached image name
     image_filename = os.path.join(IMAGE_CACHE_DIR, test_name[5:] + '.png')
