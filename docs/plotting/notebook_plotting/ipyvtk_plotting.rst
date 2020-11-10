@@ -1,7 +1,7 @@
 .. _ipyvtk_plotting:
 
-Interactive Notebook Plotting Using ``ipyvtk-simple``
------------------------------------------------------
+Using ``ipyvtk-simple``
+~~~~~~~~~~~~~~~~~~~~~~~
 
 ``pyvista`` has the ability to display fully featured plots within a
 jupyterlab environment using ``ipyvtk-simple``.  This feature works by
@@ -39,7 +39,7 @@ For convenience, you can enable ``use_ipyvtk`` by default with:
 
 
 Installation
-------------
+++++++++++++
 If you're using an Anaconda environment, installation is the quite straightforward:
 
 .. code::
@@ -71,36 +71,11 @@ On Linux, you can setup your jupyterlab environment with:
 
 
 
-Off-Screen GPU Acceleration
----------------------------
-Local usage on ``jupyterlab`` uses your GPU for off-screen rendering,
-but on a headless instance (e.g. VM or kubernetes cluster), you're
-limited to software rendering on the CPU.  This will result in
-substancially slower renders and will appear quite slow (especially on
-mybinder).
-
-Fortuantly, VTK supports rendering with EGL, enabling rapid off-screen
-using GPU hardware acceleration.  Unfortuantly, the default VTK wheels
-are not built with this feature as it results in a > 400 MB wheel.
-For the adventurous/desperate, build VTK with EGL for a given Python wheel on
-Linux with the following:
-
-.. code-block:: bash
-
-    PYBIN=/usr/bin/python3.8  # replace with your version...
-    cmake -GNinja -DVTK_BUILD_TESTING=OFF -DVTK_WHEEL_BUILD=ON -DVTK_PYTHON_VERSION=3 -DVTK_WRAP_PYTHON=ON -DVTK_OPENGL_HAS_EGL=True -DVTK_USE_X=False -DPython3_EXECUTABLE=$PYBIN ../
-    ninja
-
-    $PYBIN setup.py bdist_wheel
-    $PYBIN -m pip install dist/vtk-*.whl  # optional
-
-Note that this wheel will make VTK unusable outside of an off-screen
-environment, so only plan on installing it on a headless system
-without a X server.
-
-
 Other Considerations
 --------------------
+
+It may be worth using GPU acceleration, see :ref:`gpu_off_screen`.
+
 If you do not have GPU acceleration, be sure to start up a virtual
 framebuffer using ``Xvfb``.  You can either start it using bash with:
 

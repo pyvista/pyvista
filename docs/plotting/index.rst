@@ -8,7 +8,6 @@ Plotting
    :maxdepth: 2
 
    plotting
-   itk_plotting
    widgets
    qt_plotting
-   ipyvtk_plotting
+   notebook_plotting/index

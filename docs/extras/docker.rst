@@ -1,11 +1,11 @@
 
 
-Pyvista within a Docker Container
+PyVista within a Docker Container
 =================================
 You can use ``pyvista`` from within a docker container with
 jupyterlab.  To create a local docker image install ``docker`` and be
 sure you've logged into docker by following the directions at
-[Configuring Docker for use with GitHub Packages](https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-with-a-personal-access-token)
+`Configuring Docker for use with GitHub Packages <https://docs.github.com/en/free-pro-team@latest/packages/using-github-packages-with-your-projects-ecosystem/configuring-docker-for-use-with-github-packages#authenticating-with-a-personal-access-token>`_)
 
 Next pull and run the image with:
 
@@ -69,7 +69,7 @@ To verify that you're rendering on a GPU, first check the output of
 .. code::
 
   $ nvidia-smi
-  Sun Nov  8 05:48:46 2020       
+  Sun Nov  8 05:48:46 2020
   +-----------------------------------------------------------------------------+
   | NVIDIA-SMI 450.51.06    Driver Version: 450.51.06    CUDA Version: 11.0     |
   |-------------------------------+----------------------+----------------------+
@@ -97,7 +97,7 @@ Finally, check that your render window is using NVIDIA by running
   OpenGL vendor string:  NVIDIA Corporation
   OpenGL renderer string:  Tesla K80/PCIe/SSE2
   OpenGL version string:  4.6.0 NVIDIA 450.51.06
-  OpenGL extensions:  
+  OpenGL extensions:
     GL_AMD_multi_draw_indirect
     GL_AMD_seamless_cubemap_per_texture
     GL_ARB_arrays_of_arrays

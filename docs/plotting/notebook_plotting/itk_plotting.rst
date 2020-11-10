@@ -1,7 +1,7 @@
 .. _jupyter_ref:
 
-PyVista Jupyter Notebook Integration using ``itkwidgets``
----------------------------------------------------------
+Using ``itkwidgets``
+~~~~~~~~~~~~~~~~~~~~
 
 PyVista has an interface for visualizing plots in Jupyter.  The
 ``pyvista.PlotterITK`` class allows you interactively visualize a mesh
@@ -14,7 +14,7 @@ Special thanks to thewtex
 
 
 Installation
-~~~~~~~~~~~~
+++++++++++++
 To use `PlotterITK` you'll need to install ``itkwidgets>=0.25.2``.
 Follow the installation steps here:
 .. _itkwidgets: https://github.com/InsightSoftwareConsortium/itkwidgets#installation
@@ -25,7 +25,7 @@ uninstall and reinstall jupyterlab using pip.
 
 
 Example Plotting with ITKwidgets
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+++++++++++++++++++++++++++++++++
 The following example shows how to create a simple plot that shows a
 simple sphere.
 
@@ -43,7 +43,7 @@ simple sphere.
     pl.show(True)
 
 
-.. figure:: ../images/user-generated/itk_plotting_sphere.png
+.. figure:: ../../images/user-generated/itk_plotting_sphere.png
     :width: 600pt
 
     ITKwidgets with pyvista
