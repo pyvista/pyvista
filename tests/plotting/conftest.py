@@ -4,8 +4,13 @@ memory leaks for all plotting tests
 import gc
 
 import pytest
+import vtk
 
 import pyvista
+
+def pytest_addoption(parser):
+    parser.addoption("--reset_image_cache", action='store_true', default=False)
+    parser.addoption("--ignore_image_cache", action='store_true', default=False)
 
 
 def _is_vtk(obj):
@@ -21,6 +26,7 @@ def check_gc():
     before = set(id(o) for o in gc.get_objects() if _is_vtk(o))
     yield
     pyvista.close_all()
+
     gc.collect()
     after = [o for o in gc.get_objects() if _is_vtk(o) and id(o) not in before]
     assert len(after) == 0, \

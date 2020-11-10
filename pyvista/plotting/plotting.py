@@ -19,9 +19,11 @@ from vtk.util import numpy_support as VN
 from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 import pyvista
-from pyvista.utilities import (assert_empty_kwargs, convert_array, convert_string_array,
-                               get_array, is_pyvista_dataset, abstract_class,
+from pyvista.utilities import (assert_empty_kwargs, convert_array,
+                               convert_string_array, get_array,
+                               is_pyvista_dataset, abstract_class,
                                raise_not_matching, try_callback, wrap)
+from pyvista.utilities.regression import image_from_window
 from .background_renderer import BackgroundRenderer
 from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
@@ -103,6 +105,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         log.debug('BasePlotter init start')
         self.image_transparent_background = rcParams['transparent_background']
 
+        # optional function to be called prior to closing
+        self.__before_close_callback = None
         self._store_image = False
         self.mesh = None
         if title is None:
@@ -268,6 +272,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Key bindings
         self.reset_key_events()
         log.debug('BasePlotter init stop')
+
+    @property
+    def _before_close_callback(self):
+        """Return the cached function (expecting a reference)."""
+        if self.__before_close_callback is not None:
+            return self.__before_close_callback()
+
+    @_before_close_callback.setter
+    def _before_close_callback(self, func):
+        """Store a weakref.ref of the function being called."""
+        if func is not None:
+            self.__before_close_callback = weakref.ref(func)
+        else:
+            self.__before_close_callback = None
 
     #### Manage the active Renderer ####
 
@@ -727,16 +745,12 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return an image array of current render window.
 
         To retrieve an image after the render window has been closed,
-        set: `plotter.store_image = True`
+        set: `plotter.store_image = True` before closing the plotter.
         """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
 
-        width, height = self.ren_win.GetSize()
-        arr = vtk.vtkUnsignedCharArray()
-        self.ren_win.GetRGBACharPixelData(0, 0, width - 1, height - 1, 0, arr)
-        data = vtk_to_numpy(arr).reshape(height, width, -1)[::-1]
-
+        data = image_from_window(self.ren_win)
         if self.image_transparent_background:
             return data
         else:  # ignore alpha channel
@@ -2701,6 +2715,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def close(self, render=False):
         """Close the render window."""
+        # optionally run just prior to exiting the plotter
+        if self._before_close_callback is not None:
+            self._before_close_callback(self)
+            self._before_close_callback = None
+
         # must close out widgets first
         super().close()
         # Renderer has an axes widget, so close it
@@ -4054,6 +4073,9 @@ class Plotter(BasePlotter):
         # developer keyword argument: return notebook viewer
         # normally suppressed since it's shown by default
         return_viewer = kwargs.pop('return_viewer', False)
+
+        # developer keyword argument: runs a function immediately prior to ``close``
+        self._before_close_callback = kwargs.pop('before_close_callback', None)
         assert_empty_kwargs(**kwargs)
 
         if auto_close is None:
