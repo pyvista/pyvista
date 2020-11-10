@@ -104,15 +104,18 @@ You can test your installation by running an example:
     from pyvista import examples
     examples.plot_wave()
 
-See other examples:
+See other examples and demos:
 
 .. code:: python
 
     from pyvista import examples
+    from pyvista import demos
 
     # list all examples
     print(dir(examples))
 
+    # list all demos
+    print(dir(demos))
 
 .. note::
 
