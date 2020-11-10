@@ -745,7 +745,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Return an image array of current render window.
 
         To retrieve an image after the render window has been closed,
-        set: `plotter.store_image = True`
+        set: `plotter.store_image = True` before closing the plotter.
         """
         if not hasattr(self, 'ren_win') and hasattr(self, 'last_image'):
             return self.last_image
@@ -4151,10 +4151,6 @@ class Plotter(BasePlotter):
         cpos = self.camera_position
 
         if self.notebook and use_ipyvtk:
-            if self.shape != (1, 1):
-                raise NotImplementedError('`ipyvtk-simple` does not support multiple'
-                                          ' render windows (i.e. shape != (1, 1)')
-
             # Widgets do not work in spyder
             if any('SPYDER' in name for name in os.environ):
                 warnings.warn('``use_ipyvtk`` is incompatible with Spyder.\n'
@@ -4172,7 +4168,7 @@ class Plotter(BasePlotter):
                                          transparent_background=self.image_transparent_background)
 
         # If notebook is true and ipyvtk_simple display failed:
-        if self.notebook and (disp is None or self.shape != (1, 1)):
+        if self.notebook and (disp is None):
             import PIL.Image
             # sanity check
             try:
