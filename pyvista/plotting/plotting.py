@@ -4202,15 +4202,16 @@ class Plotter(BasePlotter):
                   shadow=False):
         """Add text to the top center of the plot.
 
-        This is merely a convience method that calls ``add_text``
+        This is merely a convenience method that calls ``add_text``
+        with ``position='upper_edge'``.
 
         Parameters
         ----------
         text : str
-            The text to add the rendering
+            The text to add the rendering.
 
         font : string, optional
-            Font name may be courier, times, or arial
+            Font name may be courier, times, or arial.
 
         shadow : bool, optional
             Adds a black shadow to the text.  Defaults to False
