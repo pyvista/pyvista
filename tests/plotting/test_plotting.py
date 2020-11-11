@@ -80,8 +80,7 @@ def verify_cache_image(plotter):
     global glb_reset_image_cache, glb_ignore_image_cache
 
     # Image cache is only valid for VTK9 on Linux
-    # if not VTK9 or platform.system() != 'Linux':
-    if platform.system() != 'Linux':
+    if not VTK9 or platform.system() != 'Linux':
         return
 
     # since each test must contain a unique name, we can simply
