@@ -4198,6 +4198,40 @@ class Plotter(BasePlotter):
         # default to returning last used camera position
         return cpos
 
+    def add_title(self, title, font_size=18, color=None, font=None,
+                  shadow=False):
+        """Add text to the top center of the plot.
+
+        This is merely a convience method that calls ``add_text``
+
+        Parameters
+        ----------
+        text : str
+            The text to add the rendering
+
+        font : string, optional
+            Font name may be courier, times, or arial
+
+        shadow : bool, optional
+            Adds a black shadow to the text.  Defaults to False
+
+        name : str, optional
+            The name for the added actor so that it can be easily
+            updated.  If an actor of this name already exists in the
+            rendering window, it will be replaced by the new actor.
+
+        Return
+        ------
+        textActor : vtk.vtkTextActor
+            Text actor added to plot.
+
+        """
+        # add additional spacing from the top of the figure by default
+        title = '\n' + title
+        return self.add_text(title, position='upper_edge',
+                             font_size=font_size, color=color, font=font,
+                             shadow=shadow, name='title', viewport=False)
+
 
 def _style_factory(klass):
     """Create a subclass with capturing ability, return it."""
