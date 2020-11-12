@@ -183,6 +183,14 @@ def download_blood_vessels():
     return mesh
 
 def download_iron_pot():
+    """Download iron protein dataset.
+
+    DEPRECATED: Please use ``download_iron_protein``.
+
+    """
+    return self.view_isometric()
+
+def download_iron_protein():
     """Download iron protein dataset."""
     return _download_and_read('ironProt.vtk')
 
