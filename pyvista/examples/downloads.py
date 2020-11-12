@@ -183,7 +183,7 @@ def download_blood_vessels():
     return mesh
 
 def download_iron_pot():
-    """Download iron pot dataset."""
+    """Download iron protein dataset."""
     return _download_and_read('ironProt.vtk')
 
 def download_tetrahedron():
@@ -479,7 +479,7 @@ def download_model_with_variance():
 
 
 def download_thermal_probes():
-    """Download model with variance dataset."""
+    """Download thermal probes dataset."""
     return _download_and_read("probes.vtp")
 
 
@@ -539,7 +539,7 @@ def download_urn():
 
 
 def download_pepper():
-    """Download scan of a burial urn.
+    """Download scan of a pepper (capsicum).
 
     https://www.laserdesign.com/sample-files/hot-red-pepper/
 
@@ -558,7 +558,6 @@ def download_drill():
     url = "http://3dgallery.gks.com/2015/ryobi/index1.php"
     filename, _ = _retrieve_file(url, 'pepper.obj')
     return pyvista.read(filename)
-
 
 
 def download_action_figure():
@@ -599,7 +598,7 @@ def download_crater_imagery():
 
 
 def download_dolfin():
-    """Download crater texture."""
+    """Download dolfin mesh."""
     return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml")
 
 
@@ -651,18 +650,18 @@ def download_vtk_logo():
     return _download_and_read("vtk.png", texture=True)
 
 def download_backward_facing_step():
-    """Download an ensigh gold case of a fluid simulation."""
+    """Download an ensight gold case of a fluid simulation."""
     folder, _ = _download_file('EnSight.zip')
     filename = os.path.join(folder, "foam_case_0_0_0_0.case")
     return pyvista.read(filename)
 
 def download_gpr_data_array():
-    """Download a texture of the VTK logo."""
+    """Download GPR example data array."""
     saved_file, _ = _download_file("gpr-example/data.npy")
     return np.load(saved_file)
 
 def download_gpr_path():
-    """Download a texture of the VTK logo."""
+    """Download GPR example path."""
     saved_file, _ = _download_file("gpr-example/path.txt")
     path = np.loadtxt(saved_file, skiprows=1)
     return pyvista.PolyData(path)
