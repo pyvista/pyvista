@@ -455,7 +455,6 @@ def download_kitchen(split=False):
         kitchen[key] = result
     return kitchen
 
-
 def download_tetra_dc_mesh():
     """Download two meshes defining an electrical inverse problem.
 
@@ -472,16 +471,13 @@ def download_tetra_dc_mesh():
     inv.set_active_scalars('Resistivity(log10)')
     return pyvista.MultiBlock({'forward':fwd, 'inverse':inv})
 
-
 def download_model_with_variance():
     """Download model with variance dataset."""
     return _download_and_read("model_with_variance.vtu")
 
-
 def download_thermal_probes():
     """Download thermal probes dataset."""
     return _download_and_read("probes.vtp")
-
 
 def download_carburator():
     """Download scan of a carburator.
@@ -493,7 +489,6 @@ def download_carburator():
     filename, _ = _retrieve_file(url, 'carburator.ply')
     return pyvista.read(filename)
 
-
 def download_woman():
     """Download scan of a woman.
 
@@ -503,7 +498,6 @@ def download_woman():
     url = "http://3dgallery.gks.com/2012/bodyscan/bodyscan3.php"
     filename, _ = _retrieve_file(url, 'woman.stl')
     return pyvista.read(filename)
-
 
 def download_lobster():
     """Download scan of a lobster.
@@ -515,7 +509,6 @@ def download_lobster():
     filename, _ = _retrieve_file(url, 'lobster.ply')
     return pyvista.read(filename)
 
-
 def download_face2():
     """Download scan of a man's face.
 
@@ -525,7 +518,6 @@ def download_face2():
     url = "http://3dgallery.gks.com/2012/face/"
     filename, _ = _retrieve_file(url, 'man_face.stl')
     return pyvista.read(filename)
-
 
 def download_urn():
     """Download scan of a burial urn.
@@ -537,7 +529,6 @@ def download_urn():
     filename, _ = _retrieve_file(url, 'urn.stl')
     return pyvista.read(filename)
 
-
 def download_pepper():
     """Download scan of a pepper (capsicum).
 
@@ -547,7 +538,6 @@ def download_pepper():
     url = "http://3dgallery.gks.com/2012/redpepper/redpepper2.php"
     filename, _ = _retrieve_file(url, 'pepper.ply')
     return pyvista.read(filename)
-
 
 def download_drill():
     """Download scan of a power drill.
@@ -559,7 +549,6 @@ def download_drill():
     filename, _ = _retrieve_file(url, 'pepper.obj')
     return pyvista.read(filename)
 
-
 def download_action_figure():
     """Download scan of an action figure.
 
@@ -569,7 +558,6 @@ def download_action_figure():
     url = "http://3dgallery.gks.com/2013/tigerfighter"
     filename, _ = _retrieve_file(url, 'tigerfighter.obj')
     return pyvista.read(filename)
-
 
 def download_turbine_blade():
     """Download scan of a turbine blade.
@@ -581,26 +569,21 @@ def download_turbine_blade():
     filename, _ = _retrieve_file(url, 'turbine_blade.stl')
     return pyvista.read(filename)
 
-
 def download_pine_roots():
     """Download pine roots dataset."""
     return _download_and_read('pine_root.tri')
-
 
 def download_crater_topo():
     """Download crater dataset."""
     return _download_and_read('Ruapehu_mag_dem_15m_NZTM.vtk')
 
-
 def download_crater_imagery():
     """Download crater texture."""
     return _download_and_read('BJ34_GeoTifv1-04_crater_clip.tif', texture=True)
 
-
 def download_dolfin():
     """Download dolfin mesh."""
     return _download_and_read('dolfin_fine.xml', file_format="dolfin-xml")
-
 
 def download_damavand_volcano():
     """Download damavand volcano model."""
@@ -608,21 +591,17 @@ def download_damavand_volcano():
     volume.rename_array("None", "data")
     return volume
 
-
 def download_delaunay_example():
     """Download a pointset for the Delaunay example."""
     return _download_and_read('250.vtk')
-
 
 def download_embryo():
     """Download a volume of an embryo."""
     return _download_and_read('embryo.slc')
 
-
 def download_antarctica_velocity():
     """Download the antarctica velocity simulation results."""
     return _download_and_read("antarctica_velocity.vtp")
-
 
 def download_room_surface_mesh():
     """Download the room surface mesh.
@@ -634,16 +613,13 @@ def download_room_surface_mesh():
     """
     return _download_and_read("room_surface_mesh.obj")
 
-
 def download_beach():
     """Download the beach NRRD image."""
     return _download_and_read("beach.nrrd")
 
-
 def download_rgba_texture():
     """Download a texture with an alpha channel."""
     return _download_and_read("alphachannel.png", texture=True)
-
 
 def download_vtk_logo():
     """Download a texture of the VTK logo."""
