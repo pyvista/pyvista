@@ -5,7 +5,7 @@ import numpy as np
 
 
 def remove_alpha(img):
-    """Remove the alpha channel"""
+    """Remove the alpha channel from ``vtk.vtkImageData``."""
     ec = vtk.vtkImageExtractComponents()
     ec.SetComponents(0, 1, 2)
     ec.SetInputData(img)
