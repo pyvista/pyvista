@@ -14,7 +14,7 @@ version_file = os.path.join(filepath, package_name, '_version.py')
 with io_open(version_file, mode='r') as fd:
     exec(fd.read())
 
-# leaving this out for conda compatability...
+# leaving this out for conda compatibility...
 # python3_9_linux_wheel = 'https://github.com/pyvista/pyvista/releases/download/0.27.0/vtk-9.0.1-cp39-cp39-manylinux2010_x86_64.whl'
 
 # # Python 3.9 isn't supported at the moment
