@@ -182,7 +182,7 @@ def download_blood_vessels():
     mesh.set_active_vectors('velocity')
     return mesh
 
-def download_iron_pot():
+def download_iron_pot():  # pragma: no cover
     """Download iron protein dataset.
 
     DEPRECATED: Please use ``download_iron_protein``.
