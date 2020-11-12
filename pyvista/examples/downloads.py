@@ -66,9 +66,11 @@ def _retrieve_file(url, filename):
         local_path = local_path[:-4]
     return local_path, resp
 
+
 def _download_file(filename):
     url = _get_vtk_file_url(filename)
     return _retrieve_file(url, filename)
+
 
 def _download_and_read(filename, texture=False, file_format=None):
     saved_file, _ = _download_file(filename)
@@ -83,54 +85,67 @@ def download_masonry_texture():
     """Download masonry texture."""
     return _download_and_read('masonry.bmp', texture=True)
 
+
 def download_usa_texture():
     """Download usa texture."""
     return _download_and_read('usa_image.jpg', texture=True)
+
 
 def download_puppy_texture():
     """Download puppy texture."""
     return _download_and_read('puppy.jpg', texture=True)
 
+
 def download_puppy():
     """Download puppy dataset."""
     return _download_and_read('puppy.jpg')
+
 
 def download_usa():
     """Download usa dataset."""
     return _download_and_read('usa.vtk')
 
+
 def download_st_helens():
     """Download Saint Helens dataset."""
     return _download_and_read('SainteHelens.dem')
+
 
 def download_bunny():
     """Download bunny dataset."""
     return _download_and_read('bunny.ply')
 
+
 def download_bunny_coarse():
     """Download coarse bunny dataset."""
     return _download_and_read('Bunny.vtp')
+
 
 def download_cow():
     """Download cow dataset."""
     return _download_and_read('cow.vtp')
 
+
 def download_cow_head():
     """Download cow head dataset."""
     return _download_and_read('cowHead.vtp')
+
 
 def download_faults():
     """Download faults dataset."""
     return _download_and_read('faults.vtk')
 
+
 def download_tensors():
     """Download tensors dataset."""
     return _download_and_read('tensors.vtk')
+
 
 def download_head():
     """Download head dataset."""
     _download_file('HeadMRVolume.raw')
     return _download_and_read('HeadMRVolume.mhd')
+
 
 def download_bolt_nut():
     """Download bolt nut dataset."""
@@ -139,41 +154,51 @@ def download_bolt_nut():
     blocks['nut'] = _download_and_read('nut.slc')
     return blocks
 
+
 def download_clown():
     """Download clown dataset."""
     return _download_and_read('clown.facet')
+
 
 def download_topo_global():
     """Download topo dataset."""
     return _download_and_read('EarthModels/ETOPO_10min_Ice.vtp')
 
+
 def download_topo_land():
     """Download topo land dataset."""
     return _download_and_read('EarthModels/ETOPO_10min_Ice_only-land.vtp')
+
 
 def download_coastlines():
     """Download coastlines dataset."""
     return _download_and_read('EarthModels/Coastlines_Los_Alamos.vtp')
 
+
 def download_knee():
     """Download knee dataset."""
     return _download_and_read('DICOM_KNEE.dcm')
+
 
 def download_knee_full():
     """Download full knee dataset."""
     return _download_and_read('vw_knee.slc')
 
+
 def download_lidar():
     """Download lidar dataset."""
     return _download_and_read('kafadar-lidar-interp.vtp')
+
 
 def download_exodus():
     """Sample ExodusII data file."""
     return _download_and_read('mesh_fs8.exo')
 
+
 def download_nefertiti():
     """Download mesh of Queen Nefertiti."""
     return _download_and_read('Nefertiti.obj.zip')
+
 
 def download_blood_vessels():
     """Download data representing the bifurcation of blood vessels."""
@@ -182,6 +207,7 @@ def download_blood_vessels():
     mesh = pyvista.read(filename)
     mesh.set_active_vectors('velocity')
     return mesh
+
 
 def download_iron_pot():  # pragma: no cover
     """Download iron protein dataset.
