@@ -1344,12 +1344,13 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert the VTK data object to a pyvista wrapped object if necessary
         if not is_pyvista_dataset(mesh):
             mesh = wrap(mesh)
-            try:  # attempt a shallow copy
-                mesh = mesh.copy(deep=False)
-            except:
-                log.error('Unable to copy type `%s`', str(type(mesh)))
             if not is_pyvista_dataset(mesh):
                 raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.')
+
+        try:  # attempt a shallow copy to avoid side effects
+            mesh = mesh.copy(deep=False)
+        except:
+            log.error('Unable to copy type `%s`', str(type(mesh)))
 
         ##### Parse arguments to be used for all meshes #####
 
