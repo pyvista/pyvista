@@ -1347,11 +1347,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
             if not is_pyvista_dataset(mesh):
                 raise TypeError(f'Object type ({type(mesh)}) not supported for plotting in PyVista.')
 
-        try:  # attempt a shallow copy to avoid side effects
-            mesh = mesh.copy(deep=False)
-        except:
-            log.error('Unable to copy type `%s`', str(type(mesh)))
-
         ##### Parse arguments to be used for all meshes #####
 
         if scalar_bar_args is None:
