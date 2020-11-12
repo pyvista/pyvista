@@ -189,7 +189,7 @@ def download_iron_pot():  # pragma: no cover
     DEPRECATED: Please use ``download_iron_protein``.
 
     """
-    return DeprecationError('DEPRECATED: Please use ``download_iron_protein``')
+    raise DeprecationError('DEPRECATED: Please use ``download_iron_protein``')
 
 
 def download_iron_protein():
