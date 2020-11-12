@@ -28,3 +28,10 @@ class InvalidCameraError(ValueError):
     def __init__(self, message=CAMERA_ERROR_MESSAGE):
         """Empty init."""
         ValueError.__init__(self, message)
+
+
+class DeprecationError(RuntimeError):
+    """Used for depreciated methods and functions"""
+
+    def __init__(self, message='This feature has been depreciated'):
+        RuntimeError.__init__(self, message)
