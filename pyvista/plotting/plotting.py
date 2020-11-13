@@ -2782,7 +2782,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self._closed = True
 
     def _kill_display(self):
-        """Forcibly closet the display on Linux
+        """Forcibly close the display on Linux.
 
         See:
         https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
