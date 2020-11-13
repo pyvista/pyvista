@@ -1,5 +1,7 @@
 """Pyvista plotting module."""
 
+import platform
+import ctypes
 import pathlib
 import collections.abc
 from functools import partial
@@ -41,10 +43,14 @@ try:
 except ImportError:
     has_matplotlib = False
 
+VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
+
 _ALL_PLOTTERS = {}
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 
+if VTK9 and platform.system() == 'Linux':
+    X11 = ctypes.CDLL("libX11.so")
 
 def close_all():
     """Close all open/active plotters and clean up memory."""
@@ -2711,6 +2717,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clear the render window."""
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
+            if VTK9 and platform.system() == 'Linux':
+                self._kill_display()
             del self.ren_win
 
     def close(self, render=False):
@@ -2746,6 +2754,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # reset scalar bar stuff
         self.clear()
 
+        # grab the display id before clearing the window
         self._clear_ren_win()
 
         self._style_class = None
@@ -2771,6 +2780,24 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
+
+    def _kill_display(self):
+        """Forcibly closet the display on Linux
+
+        See:
+        https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
+
+        And more details into why...
+        https://stackoverflow.com/questions/64811503
+
+        """ 
+        if platform.system() != 'Linux':
+            raise OSError('This method only works on Linux')
+
+        disp_id = self.ren_win.GetGenericDisplayId()
+        if disp_id:
+            cdisp_id = ctypes.c_size_t(int(disp_id[1:].split('_')[0], 16))
+            X11.XCloseDisplay(cdisp_id)
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
