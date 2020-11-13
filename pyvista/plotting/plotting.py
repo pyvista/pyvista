@@ -2797,7 +2797,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         disp_id = self.ren_win.GetGenericDisplayId()
         if disp_id:
             cdisp_id = ctypes.c_size_t(int(disp_id[1:].split('_')[0], 16))
-            X11.XCloseDisplay(cdisp_id)
+            # thread this as it take time and we don't need to wait
+            Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
