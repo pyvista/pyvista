@@ -412,7 +412,7 @@ def wrap(dataset):
     Other formats that are supported include:
     * 2D :class:`numpy.ndarray` of XYZ vertices
     * 3D :class:`numpy.ndarray` representing a volume. Values will be scalars.
-    * 3d :class:`trimesh.Trimesh` mesh.
+    * 3D :class:`trimesh.Trimesh` mesh.
 
     Parameters
     ----------
