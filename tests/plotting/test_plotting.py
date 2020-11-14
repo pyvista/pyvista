@@ -564,7 +564,6 @@ def test_plot_arrows():
     pyvista.plot_arrows(cent, direction, before_close_callback=verify_cache_image)
 
 
-
 @skip_no_plotting
 def test_add_arrows():
     vector = np.array([1, 0, 0])
