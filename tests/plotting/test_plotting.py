@@ -564,6 +564,16 @@ def test_plot_arrows():
     pyvista.plot_arrows(cent, direction, before_close_callback=verify_cache_image)
 
 
+
+@skip_no_plotting
+def test_add_arrows():
+    vector = np.array([1, 0, 0])
+    center = np.array([0, 0, 0])
+    plotter = pyvista.Plotter()
+    plotter.add_arrows(cent=center, direction=vector, mag=2.2, color="#009900")
+    plotter.show(before_close_callback=verify_cache_image)
+
+
 @skip_no_plotting
 def test_axes():
     plotter = pyvista.Plotter()
