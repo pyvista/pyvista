@@ -619,6 +619,10 @@ class DataSetFilters:
             field, scalars = dataset.active_scalars_info
         arr, field = get_array(dataset, scalars, preference=preference, info=True)
 
+        if all_scalars and scalars is not None:
+            raise ValueError('Setting `all_scalars=True` and designating `scalars` '
+                             'is incompatible.  Set one or the other but not both')
+
         if arr is None:
             raise ValueError('No arrays present to threshold.')
 
