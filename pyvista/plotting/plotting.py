@@ -1129,7 +1129,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
                  stitle=None, multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None, render_lines_as_tubes=False,
-                 smooth_shading=False, ambient=0.0, diffuse=1.0, specular=0.0,
+                 smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
@@ -1363,6 +1363,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if lighting is None:
             lighting = rcParams['lighting']
+
+        if smooth_shading is None:
+            smooth_shading = rcParams['smooth_shading']
 
         # supported aliases
         clim = kwargs.pop('rng', clim)
