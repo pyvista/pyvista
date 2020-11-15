@@ -12,8 +12,9 @@ FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'times': vtk.VTK_TIMES}
 
 rcParams = {
-    'auto_close': True, # DANGER: set to False with extreme caution
+    'auto_close': True,  # DANGER: set to False with extreme caution
     'background': [0.3, 0.3, 0.3],
+    'full_screen': False,
     'camera': {
         'position': [1, 1, 1],
         'viewup': [0, 0, 1],

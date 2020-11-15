@@ -4006,7 +4006,7 @@ class Plotter(BasePlotter):
         log.debug('Plotter init stop')
 
     def show(self, title=None, window_size=None, interactive=True,
-             auto_close=None, interactive_update=False, full_screen=False,
+             auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
              **kwargs):
         """Display the plotting window.
@@ -4089,6 +4089,9 @@ class Plotter(BasePlotter):
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
+
+        if full_screen is None:
+            full_screen = rcParams['full_screen']
 
         if full_screen:
             self.ren_win.SetFullScreen(True)
