@@ -3936,7 +3936,10 @@ class Plotter(BasePlotter):
             off_screen = pyvista.OFF_SCREEN
 
         if notebook is None:
-            notebook = scooby.in_ipykernel()
+            if rcParams['notebook'] is not None:
+                notebook = rcParams['notebook']
+            else:
+                notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
         if self.notebook:

@@ -18,6 +18,7 @@ rcParams = {
         'position': [1, 1, 1],
         'viewup': [0, 0, 1],
     },
+    'notebook': None,
     'window_size': [1024, 768],
     'font': {
         'family': 'arial',
