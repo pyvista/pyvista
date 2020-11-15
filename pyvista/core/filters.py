@@ -565,7 +565,7 @@ class DataSetFilters:
         return output
 
     def threshold(dataset, value=None, scalars=None, invert=False, continuous=False,
-                  preference='cell', all_scalars=True):
+                  preference='cell', all_scalars=False):
         """Apply a ``vtkThreshold`` filter to the input dataset.
 
         This filter will apply a ``vtkThreshold`` filter to the input dataset
