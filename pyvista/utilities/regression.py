@@ -4,6 +4,14 @@ from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 import numpy as np
 
 
+def remove_alpha(img):
+    """Remove the alpha channel from ``vtk.vtkImageData``."""
+    ec = vtk.vtkImageExtractComponents()
+    ec.SetComponents(0, 1, 2)
+    ec.SetInputData(img)
+    return ec.GetOutput()
+
+
 def wrap_image_array(arr):
     """Wrap a numpy array as a pyvista.UniformGrid.
 
@@ -120,8 +128,11 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
             raise TypeError(f'Unsupported data type {type(img)}.  Should be '
                             'Either a np.ndarray, vtkRenderWindow, or vtkImageData')
 
-    im1 = to_img(im1)
-    im2 = to_img(im2)
+    im1 = remove_alpha(to_img(im1))
+    im2 = remove_alpha(to_img(im2))
+
+    if im1.GetDimensions() != im2.GetDimensions():
+        raise RuntimeError('Input images %s and %s are not of equal size.')
 
     if use_vtk:
         img_diff = vtk.vtkImageDifference()
@@ -134,7 +145,5 @@ def compare_images(im1, im2, threshold=1, use_vtk=True):
         return img_diff.GetError()
 
     # otherwise, simply compute the mean pixel difference
-    if im1.shape != im2.shape:
-        raise RuntimeError('Image shapes do not match')
     diff = np.abs(im1.point_arrays[0] - im2.point_arrays[0])
     return np.sum(diff) / im1.point_arrays[0].shape[0]
