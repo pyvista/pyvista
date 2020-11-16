@@ -242,7 +242,9 @@ def test_threshold():
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300])
-
+    with pytest.raises(ValueError):
+        DATASETS[0].threshold([10, 500], scalars='Spatial Point Data',
+                              all_scalars=True)
 
 def test_threshold_percent():
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
