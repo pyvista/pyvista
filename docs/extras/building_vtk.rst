@@ -13,6 +13,8 @@ Wheels on Linux and Mac OS
 
 Building VTK from source on Linux is fairly easy.  Using the default
 build settings, build a Python wheel of VTK using ``ninja`` using the following script.  This script assumes Python 3.9, but you can use any modern Python version.
+For some additional useful options, see the `conda-forge recipe <https://github.com/conda-forge/vtk-feedstock/blob/master/recipe/build.sh>`__.
+Most of the ones below are designed to reduce the build time and resulting wheel size.
 
 .. code-block:: bash
 
@@ -22,8 +24,11 @@ build settings, build a Python wheel of VTK using ``ninja`` using the following 
     mkdir build
     cd build
     PYBIN=/usr/bin/python3.9
-    cmake -GNinja -DVTK_BUILD_TESTING=OFF -DVTK_WHEEL_BUILD=ON -DVTK_PYTHON_VERSION=3 -DVTK_WRAP_PYTHON=ON -DPython3_EXECUTABLE=$PYBIN ../
-
+    cmake -GNinja -DCMAKE_BUILD_TYPE=Release -DVTK_BUILD_TESTING=OFF \
+        -DVTK_BUILD_DOCUMENTATION=OFF -DVTK_BUILD_EXAMPLES=OFF -DVTK_DATA_EXCLUDE_FROM_ALL:BOOL=ON \
+        -DVTK_MODULE_ENABLE_VTK_PythonInterpreter:STRING=NO \
+        -DVTK_WHEEL_BUILD=ON -DVTK_PYTHON_VERSION=3 -DVTK_WRAP_PYTHON=ON \
+        -DPython3_EXECUTABLE=$PYBIN ../
     ninja
     $PYBIN setup.py bdist_wheel
     pip install dist/vtk-*.whl  # optionally install it
