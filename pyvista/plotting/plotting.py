@@ -3322,7 +3322,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         >>> cent = np.random.random((10, 3))
         >>> direction = np.random.random((10, 3))
         >>> plotter = pyvista.Plotter()
-        >>> _ = plotter.add_arrows(cent, direction)
+        >>> _ = plotter.add_arrows(cent, direction, mag=2)
         >>> plotter.show()  # doctest:+SKIP
 
         """
@@ -3337,9 +3337,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
             direction = direction.reshape((-1, 3))
 
         if mag != 1:
-            direction[:, 0] *= mag
-            direction[:, 1] *= mag
-            direction[:, 2] *= mag
+            direction = direction*mag
 
         pdata = pyvista.vector_poly_data(cent, direction)
         # Create arrow object
@@ -3352,7 +3350,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         glyph3D.Update()
 
         arrows = wrap(glyph3D.GetOutput())
-
         return self.add_mesh(arrows, **kwargs)
 
     @staticmethod
