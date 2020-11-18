@@ -264,7 +264,35 @@ def test_set_camera_position_invalid(cpos, sphere):
     with pytest.raises(pyvista.core.errors.InvalidCameraError):
         plotter.camera_position = cpos
 
+@skip_no_plotting
+def test_parallel_projection():
+    plotter = pyvista.Plotter()
+    assert isinstance(plotter.parallel_projection, bool)
 
+@skip_no_plotting
+@pytest.mark.parametrize("state", [True, False])
+def test_set_parallel_projection(state):
+    plotter = pyvista.Plotter()
+    plotter.parallel_projection = state
+    assert plotter.parallel_projection == state
+
+@skip_no_plotting
+def test_parallel_scale():
+    plotter = pyvista.Plotter()
+    assert isinstance(plotter.parallel_scale, float)
+
+@skip_no_plotting
+@pytest.mark.parametrize("value", [1, 1.5, 0.3, 10])
+def test_set_parallel_scale(value):
+    plotter = pyvista.Plotter()
+    plotter.parallel_scale = value
+    assert plotter.parallel_scale == value
+
+@skip_no_plotting
+def test_set_parallel_scale_invalid():
+    plotter = pyvista.Plotter()
+    with pytest.raises(TypeError):
+        plotter.parallel_scale = "invalid"
 
 @skip_no_plotting
 def test_plot_no_active_scalars():
