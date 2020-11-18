@@ -12,12 +12,14 @@ FONT_KEYS = {'arial': vtk.VTK_ARIAL,
              'times': vtk.VTK_TIMES}
 
 rcParams = {
-    'auto_close': True, # DANGER: set to False with extreme caution
+    'auto_close': True,  # DANGER: set to False with extreme caution
     'background': [0.3, 0.3, 0.3],
+    'full_screen': False,
     'camera': {
         'position': [1, 1, 1],
         'viewup': [0, 0, 1],
     },
+    'notebook': None,
     'window_size': [1024, 768],
     'font': {
         'family': 'arial',
@@ -64,6 +66,7 @@ rcParams = {
     'multi_samples': 4,
     'multi_rendering_splitting_position': None,
     'volume_mapper': 'fixed_point' if os.name == 'nt' else 'smart',
+    'smooth_shading': False,
     'depth_peeling': {
         'number_of_peels': 4,
         'occlusion_ratio': 0.0,

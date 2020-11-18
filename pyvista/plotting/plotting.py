@@ -1155,7 +1155,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
                  reset_camera=None, scalar_bar_args=None, show_scalar_bar=None,
                  stitle=None, multi_colors=False, name=None, texture=None,
                  render_points_as_spheres=None, render_lines_as_tubes=False,
-                 smooth_shading=False, ambient=0.0, diffuse=1.0, specular=0.0,
+                 smooth_shading=None, ambient=0.0, diffuse=1.0, specular=0.0,
                  specular_power=100.0, nan_color=None, nan_opacity=1.0,
                  culling=None, rgb=False, categories=False,
                  use_transparency=False, below_color=None, above_color=None,
@@ -1389,6 +1389,9 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if lighting is None:
             lighting = rcParams['lighting']
+
+        if smooth_shading is None:
+            smooth_shading = rcParams['smooth_shading']
 
         # supported aliases
         clim = kwargs.pop('rng', clim)
@@ -3981,7 +3984,10 @@ class Plotter(BasePlotter):
             off_screen = pyvista.OFF_SCREEN
 
         if notebook is None:
-            notebook = scooby.in_ipykernel()
+            if rcParams['notebook'] is not None:
+                notebook = rcParams['notebook']
+            else:
+                notebook = scooby.in_ipykernel()
 
         self.notebook = notebook
         if self.notebook:
@@ -4048,7 +4054,7 @@ class Plotter(BasePlotter):
         log.debug('Plotter init stop')
 
     def show(self, title=None, window_size=None, interactive=True,
-             auto_close=None, interactive_update=False, full_screen=False,
+             auto_close=None, interactive_update=False, full_screen=None,
              screenshot=False, return_img=False, cpos=None, use_ipyvtk=None,
              **kwargs):
         """Display the plotting window.
@@ -4131,6 +4137,9 @@ class Plotter(BasePlotter):
 
         if not hasattr(self, "ren_win"):
             raise RuntimeError("This plotter has been closed and cannot be shown.")
+
+        if full_screen is None:
+            full_screen = rcParams['full_screen']
 
         if full_screen:
             self.ren_win.SetFullScreen(True)
