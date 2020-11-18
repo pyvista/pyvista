@@ -497,6 +497,26 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.disable_parallel_projection``."""
         return self.renderer.disable_parallel_projection(*args, **kwargs)
 
+    @property
+    def parallel_projection(self):
+        """Return parallel projection state of active render window."""
+        return self.renderer.parallel_projection
+
+    @parallel_projection.setter
+    def parallel_projection(self, state):
+        """Set parallel projection state of all active render windows."""
+        self.renderer.parallel_projection = state
+
+    @property
+    def parallel_scale(self):
+        """Return parallel scale of active render window."""
+        return self.renderer.parallel_scale
+
+    @parallel_scale.setter
+    def parallel_scale(self, value):
+        """Set parallel scale of all active render windows."""
+        self.renderer.parallel_scale = value
+
     @wraps(Renderer.add_axes_at_origin)
     def add_axes_at_origin(self, *args, **kwargs):
         """Wrap ``Renderer.add_axes_at_origin``."""

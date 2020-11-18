@@ -1119,6 +1119,28 @@ class Renderer(vtkRenderer):
         self.camera.SetParallelProjection(False)
         self.Modified()
 
+    @property
+    def parallel_projection(self):
+        """Return parallel projection state of active render window."""
+        return bool(self.camera.GetParallelProjection())
+
+    @parallel_projection.setter
+    def parallel_projection(self, state):
+        """Set parallel projection state of all active render windows."""
+        self.camera.SetParallelProjection(state)
+        self.Modified()
+
+    @property
+    def parallel_scale(self):
+        """Return parallel scale of active render window."""
+        return self.camera.GetParallelScale()
+
+    @parallel_scale.setter
+    def parallel_scale(self, value):
+        """Set parallel scale of all active render windows."""
+        self.camera.SetParallelScale(value)
+        self.Modified()
+
     def remove_actor(self, actor, reset_camera=False, render=True):
         """Remove an actor from the Renderer.
 
