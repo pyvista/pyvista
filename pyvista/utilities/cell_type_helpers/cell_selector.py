@@ -26,8 +26,8 @@ def generate_all_cell_types():
   """
   # Using readlines()
   current_dir = os.path.dirname(__file__)
-  cell_type_f = open(current_dir + '/vtk_cell_types.txt', 'r')
-  lines = cell_type_f.readlines()
+  with open(current_dir + '/vtk_cell_types.txt', 'r') as cell_type_f:
+    lines = cell_type_f.readlines()
 
   # Strips the newline character
   for line in lines:
