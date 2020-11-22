@@ -93,6 +93,16 @@ class BasePlotter(PickingHelper, WidgetHelper):
     title : str, optional
         Window title of the scalar bar
 
+    lighting : str, optional
+        What lighting to set up for the plotter.
+        Accepted options:
+
+            * ``'light_kit'``: a vtk Light Kit composed of 5 lights.
+            * ``'three lights'``: illumination using 3 lights.
+            * ``'none'``: no light sources at instantiation.
+
+        The default is a Light Kit.
+
     """
 
     mouse_position = None
@@ -100,7 +110,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
     def __init__(self, shape=(1, 1), border=None, border_color='k',
                  border_width=2.0, title=None, splitting_position=None,
-                 groups=None, row_weights=None, col_weights=None):
+                 groups=None, row_weights=None, col_weights=None,
+                 lighting='light kit'):
         """Initialize base plotter."""
         log.debug('BasePlotter init start')
         self.image_transparent_background = rcParams['transparent_background']
@@ -262,12 +273,20 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # this helps managing closed plotters
         self._closed = False
 
+        # lighting style; be forgiving with input (accept underscores and ignore case)
+        if lighting is None:
+            lighting = 'none'
+        lighting_normalized = lighting.replace('_', ' ').lower()
+        if lighting_normalized == 'light kit':
+            self.disable_3_lights()
+        elif lighting_normalized == 'three lights':
+            self.enable_3_lights()
+        elif lighting_normalized != 'none':
+            raise ValueError(f'Invalid lighting option "{lighting}".')
+
         # Add self to open plotters
         self._id_name = f"{hex(id(self))}-{len(_ALL_PLOTTERS)}"
         _ALL_PLOTTERS[self._id_name] = self
-
-        # lighting style
-        self.disable_3_lights()
 
         # Key bindings
         self.reset_key_events()
@@ -387,8 +406,19 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Wrap ``Renderer.remove_floors``."""
         return self.renderer.remove_floors(*args, **kwargs)
 
-    def enable_3_lights(self):
-        """Enable 3-lights illumination."""
+    def enable_3_lights(self, only_active=False):
+        """Enable 3-lights illumination.
+
+        This will replace all pre-existing lights in the scene.
+
+        Parameters
+        ----------
+        only_active : bool
+            If ``True``, only change the active renderer. The default is that
+            every renderer is affected.
+
+        """
+        # TODO: this changes every renderer now by default, which is what it should be doing anyway I think
         def _to_pos(elevation, azimuth):
             theta = azimuth * np.pi / 180.0
             phi = (90.0 - elevation) * np.pi / 180.0
@@ -397,35 +427,53 @@ class BasePlotter(PickingHelper, WidgetHelper):
             z = np.cos(theta) * np.sin(phi)
             return x, y, z
 
+        renderers = [self.renderer] if only_active else self.renderers
+        for renderer in renderers:
+            renderer.remove_all_lights()
+
         # Inspired from Mayavi's version of Raymond Maple 3-lights illumination
-        lights = list(self.renderer.GetLights())
-        headlight = lights.pop(0)
-        headlight.SetSwitch(False)
-        for i in range(len(lights)):
-            if i < 3:
-                lights[i].SetSwitch(True)
-                lights[i].SetIntensity(1.0)
-                lights[i].SetColor(1.0, 1.0, 1.0)
-            else:
-                lights[i].SetSwitch(False)
-                lights[i].SetPosition(_to_pos(0.0, 0.0))
-                lights[i].SetIntensity(1.0)
-                lights[i].SetColor(1.0, 1.0, 1.0)
+        intensities = [1, 0.6, 0.5]
+        all_angles = [(45.0, 45.0), (-30.0, -60.0), (-30.0, 60.0)]
+        # TODO: do we want to add two placeholder lights for backwards compat?
+        for intensity, angles in zip(intensities, all_angles):
+            light = pyvista.Light(light_type='camera light')
+            light.intensity = intensity
+            light.position = _to_pos(*angles)
+            for renderer in renderers:
+                renderer.add_light(light)
 
-        lights[0].SetPosition(_to_pos(45.0, 45.0))
-        lights[1].SetPosition(_to_pos(-30.0, -60.0))
-        lights[1].SetIntensity(0.6)
-        lights[2].SetPosition(_to_pos(-30.0, 60.0))
-        lights[2].SetIntensity(0.5)
+    def disable_3_lights(self, only_active=False):
+        """Disable 3-lights illumination and switch to a light kit.
 
-    def disable_3_lights(self):
-        """Disable 3-lights illumination."""
+        This will replace all pre-existing lights in the renderer.
+
+        Parameters
+        ----------
+        only_active : bool
+            If ``True``, only change the active renderer. The default is that
+            every renderer is affected.
+
+        """
+        # TODO: rename this to enable_lightkit() and deprecate the old name in a separate PR
+        renderers = [self.renderer] if only_active else self.renderers
+
         self.lighting = vtk.vtkLightKit()
+        # TODO: we should probably do something to self.lighting...
         # self.lighting.SetHeadLightWarmth(1.0)
         # self.lighting.SetHeadLightWarmth(1.0)
-        for renderer in self.renderers:
-            renderer.RemoveAllLights()
+        for renderer in renderers:
+            renderer.remove_all_lights()
+            # Use the renderer as a vtkLightKit parser.
+            # Feed it the LightKit, pop off the vtkLights, put back
+            # pyvista Lights. This is the price we must pay for using
+            # inheritance rather than composition.
             self.lighting.AddLightsToRenderer(renderer)
+            vtk_lights = renderer.lights
+            renderer.remove_all_lights()
+            for vtk_light in vtk_lights:
+                light = pyvista.Light.from_vtk(vtk_light)
+                renderer.add_light(light)
+            # TODO: at this point self.lighting is meaningless...
             renderer.LightFollowCameraOn()
 
     @wraps(Renderer.enable_anti_aliasing)
@@ -2752,7 +2800,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # Turn off the lights
         for renderer in self.renderers:
-            renderer.RemoveAllLights()
+            renderer.remove_all_lights()
         self.lighting = None
 
         # Clear the scalar bar
@@ -3864,6 +3912,39 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Reset camera clipping planes."""
         self.renderer.ResetCameraClippingRange()
 
+    def add_light(self, light, only_active=False):
+        """Add a Light to the scene.
+
+        Parameters
+        ----------
+        light : Light or vtkLight
+            The light to be added.
+
+        only_active : bool
+            If ``True``, only add the light to the active renderer. The default
+            is that every renderer adds the light. To add the light to an arbitrary
+            renderer, see the ``add_light`` method of the Renderer class.
+
+        """
+        # TODO: is this design OK?
+        renderers = [self.renderer] if only_active else self.renderers
+        for renderer in renderers:
+            renderer.add_light(light)
+
+    def remove_all_lights(self, only_active=False):
+        """Remove all lights from the scene.
+
+        Parameters
+        ----------
+        only_active : bool
+            If ``True``, only remove lights from the active renderer. The default
+            is that lights are stripped from every renderer.
+
+        """
+        # TODO: is this design OK?
+        renderers = [self.renderer] if only_active else self.renderers
+        for renderer in renderers:
+            renderer.remove_all_lights()
 
 class Plotter(BasePlotter):
     """Plotting object to display vtk meshes or numpy arrays.
@@ -3935,7 +4016,7 @@ class Plotter(BasePlotter):
                  border=None, border_color='k', border_width=2.0,
                  window_size=None, multi_samples=None, line_smoothing=False,
                  point_smoothing=False, polygon_smoothing=False,
-                 splitting_position=None, title=None):
+                 splitting_position=None, title=None, lighting='light kit'):
         """Initialize a vtk plotting object."""
         super().__init__(shape=shape, border=border,
                          border_color=border_color,
@@ -3943,7 +4024,7 @@ class Plotter(BasePlotter):
                          groups=groups, row_weights=row_weights,
                          col_weights=col_weights,
                          splitting_position=splitting_position,
-                         title=title)
+                         title=title, lighting=lighting)
 
         log.debug('Plotter init start')
 

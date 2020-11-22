@@ -1065,6 +1065,23 @@ class Renderer(vtkRenderer):
             self.remove_actor(self.cube_axes_actor)
             self.Modified()
 
+    def add_light(self, light):
+        """Add a Light to the renderer."""
+        if not isinstance(light, vtk.vtkLight):
+            raise TypeError('Expected Light or vtkLight instance,'
+                            f' got {type(light)} instead.')
+        self.AddLight(light)
+        self.Modified()
+
+    @property
+    def lights(self):
+        """Return a list of all lights in the renderer."""
+        return list(self.GetLights())
+
+    def remove_all_lights(self):
+        """Remove all lights from the renderer."""
+        self.RemoveAllLights()
+
     def clear(self):
         """Remove all actors and properties."""
         if self._actors:
