@@ -12,6 +12,7 @@ from .theme import (DEFAULT_THEME, FONT_KEYS, MAX_N_COLOR_BARS,
 from .tools import (create_axes_marker, create_axes_orientation_box,
                     opacity_transfer_function, system_supports_plotting)
 from .widgets import WidgetHelper
+from .lights import Light
 
 
 class QtDeprecationError(Exception):
