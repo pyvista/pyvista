@@ -587,18 +587,18 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         write_data_set('', val, output_dir, None, new_name=key,
                        compress=doCompressArrays)
 
-    cameraClippingRange = plotter.camera.GetClippingRange()
+    cameraClippingRange = plotter.camera.get_clipping_range()
 
     sceneDescription = {
         "fetchGzip": doCompressArrays,
         "background": plotter.background_color,
         "camera": {
-            "focalPoint": plotter.camera.GetFocalPoint(),
-            "position": plotter.camera.GetPosition(),
-            "viewUp": plotter.camera.GetViewUp(),
+            "focalPoint": plotter.camera.get_focal_point(),
+            "position": plotter.camera.get_position(),
+            "viewUp": plotter.camera.up(),
             "clippingRange": [elt for elt in cameraClippingRange],
         },
-        "centerOfRotation": plotter.camera.GetFocalPoint(),
+        "centerOfRotation": plotter.camera.get_focal_point(),
         "scene": sceneComponents
     }
 

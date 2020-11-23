@@ -2941,8 +2941,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore')
-            near, far = self.camera.GetClippingRange()
-            if self.camera.GetParallelProjection():
+            near, far = self.camera.get_clipping_range()
+            if self.camera.get_parallel_projection():
                 zval = (zbuff - near) / (far - near)
             else:
                 zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)

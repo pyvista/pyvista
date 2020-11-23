@@ -20,7 +20,7 @@ def scale_point(camera, point, invert=False):
 
     Parameters
     ----------
-    camera : vtk.vtkCamera
+    camera : Camera
         The camera who's matrix to use.
 
     point : tuple(float)
@@ -34,10 +34,10 @@ def scale_point(camera, point, invert=False):
     """
     if invert:
         mtx = vtk.vtkMatrix4x4()
-        mtx.DeepCopy(camera.GetModelTransformMatrix())
+        mtx.DeepCopy(camera.get_model_transform_matrix())
         mtx.Invert()
     else:
-        mtx = camera.GetModelTransformMatrix()
+        mtx = camera.get_model_transform_matrix()
     scaled = mtx.MultiplyDoublePoint((point[0], point[1], point[2], 0.0))
     return (scaled[0], scaled[1], scaled[2])
 
@@ -97,20 +97,81 @@ class CameraPosition:
         self._viewup = value
 
 
-class Camera(vtk.vtkCamera):
-    """Camera class."""
+class Camera:
+    """Container to hold vtkCamera class."""
 
-    def __init__(self):
+    def __init__(self, vtk_camera=None):
         """Initialize a new camera descriptor."""
-        super().__init__()
+        if vtk_camera is None:
+            self.vtk_camera = vtk.vtkCamera()
+        elif (isinstance(vtk_camera, vtk.vtkCamera) or
+              isinstance(vtk_camera, vtk.vtkOpenGLCamera)):
+            self.vtk_camera = vtk_camera
+        else:
+            raise TypeError('vtk_camera must be vtk.vtkCamera or vtk.vtkOpenGLCamera')
+
+    def set_position(self, point):
+        """Position of the camera in world coordinates."""
+        self.vtk_camera.SetPosition(point)
+
+    def get_position(self):
+        """Get the position of the camera in world coordinates."""
+        return self.vtk_camera.GetPosition()
+
+    def set_focus(self, point):
+        """Set focus to a point."""
+        self.vtk_camera.SetFocalPoint(point)
+
+    def get_focal_point(self):
+        """Get focus to a point."""
+        return self.vtk_camera.GetFocalPoint()
 
     def zoom(self, value):
         """Zoom of the camera."""
-        self.Zoom(value)
+        self.vtk_camera.Zoom(value)
 
-    def up(self, vector):
+    def up(self, vector=None):
         """Up of the camera."""
-        self.SetViewUp(vector)
+        if vector is None:
+            return self.vtk_camera.GetViewUp()
+        else:
+            self.vtk_camera.SetViewUp(vector)
+
+    def set_clipping_range(self, near, far):
+        """Set the location of the near and far clipping
+           planes along the direction of projection."""
+        self.vtk_camera.SetClippingRange(near, far)
+
+    def get_clipping_range(self):
+        """Get the location of the near and far clipping
+           planes along the direction of projection."""
+        return self.vtk_camera.GetClippingRange()
+
+    def set_model_transform_matrix(self, matrix):
+        """Set model transformation matrix."""
+        self.vtk_camera.SetModelTransformMatrix(matrix)
+
+    def get_model_transform_matrix(self):
+        """Get model transformation matrix."""
+        return self.vtk_camera.GetModelTransformMatrix()
+
+    def get_parallel_projection(self):
+        return self.vtk_camera.GetParallelProjection()
+
+    def set_parallel_projection(self, flag):
+        self.vtk_camera.SetParallelProjection(flag)
+
+    def remove_all_observers(self):
+        self.vtk_camera.RemoveAllObservers()
+
+    def parallel_projection_on(self):
+        self.vtk_camera.ParallelProjectionOn()
+
+    def get_distance(self):
+        return self.vtk_camera.GetDistance()
+
+    def set_parallel_scale(self, scale):
+        self.vtk_camera.SetParallelScale(scale)
 
 
 class Renderer(vtkRenderer):
@@ -143,17 +204,15 @@ class Renderer(vtkRenderer):
         if border:
             self.add_border(border_color, border_width)
 
-        self._camera = Camera()
-
     #### Properties ####
 
     @property
     def camera_position(self):
         """Return camera position of active render window."""
         return CameraPosition(
-            scale_point(self.camera, self.camera.GetPosition(), invert=True),
-            scale_point(self.camera, self.camera.GetFocalPoint(), invert=True),
-            self.camera.GetViewUp())
+            scale_point(self.camera, self.camera.get_position(), invert=True),
+            scale_point(self.camera, self.camera.get_focal_point(), invert=True),
+            self.camera.up())
 
     @camera_position.setter
     def camera_position(self, camera_location):
@@ -183,11 +242,11 @@ class Renderer(vtkRenderer):
                     raise pyvista.core.errors.InvalidCameraError
 
             # everything is set explicitly
-            self.camera.SetPosition(scale_point(self.camera, camera_location[0],
+            self.camera.set_position(scale_point(self.camera, camera_location[0],
                                                 invert=False))
-            self.camera.SetFocalPoint(scale_point(self.camera, camera_location[1],
+            self.camera.set_focus(scale_point(self.camera, camera_location[1],
                                                   invert=False))
-            self.camera.SetViewUp(camera_location[2])
+            self.camera.up(camera_location[2])
 
         # reset clipping range
         self.ResetCameraClippingRange()
@@ -197,28 +256,19 @@ class Renderer(vtkRenderer):
     @property
     def camera(self):
         """Return the active camera for the rendering scene."""
-        camera = self.GetActiveCamera()
-        def zoom(self, value):
-            """Zoom of the camera."""
-            self.Zoom(value)
-        camera.zoom = types.MethodType(zoom, camera)
-        def up(self, vector):
-            """Up of the camera."""
-            self.SetViewUp(vector)
-        camera.up = types.MethodType(up, camera)
-        return camera
+        return Camera(self.GetActiveCamera())
 
     @camera.setter
     def camera(self, camera):
         """Set the active camera for the rendering scene."""
-        self._camera = camera
-        self.SetActiveCamera(camera)
+        self.SetActiveCamera(camera.vtk_camera)
         self.camera_position = CameraPosition(
-            scale_point(camera, camera.GetPosition(), invert=True),
-            scale_point(camera, camera.GetFocalPoint(), invert=True),
-            camera.GetViewUp()
+            scale_point(camera, camera.get_position(), invert=True),
+            scale_point(camera, camera.get_focal_point(), invert=True),
+            camera.up()
         )
         self.Modified()
+        self.camera_set = True
 
     @property
     def bounds(self):
@@ -777,7 +827,7 @@ class Renderer(vtkRenderer):
             cube_axes_actor.YAxisMinorTickVisibilityOff()
             cube_axes_actor.ZAxisMinorTickVisibilityOff()
 
-        cube_axes_actor.SetCamera(self.camera)
+        cube_axes_actor.SetCamera(self.camera.vtk_camera)
 
         # set color
         cube_axes_actor.GetXAxesLinesProperty().SetColor(color)
@@ -1117,7 +1167,7 @@ class Renderer(vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.SetFocalPoint(scale_point(self.camera, point, invert=False))
+        self.camera.set_focus(scale_point(self.camera, point, invert=False))
         self.Modified()
 
     def set_position(self, point, reset=False):
@@ -1125,7 +1175,7 @@ class Renderer(vtkRenderer):
         if isinstance(point, np.ndarray):
             if point.ndim != 1:
                 point = point.ravel()
-        self.camera.SetPosition(scale_point(self.camera, point, invert=False))
+        self.camera.set_position(scale_point(self.camera, point, invert=False))
         if reset:
             self.reset_camera()
         self.camera_set = True
@@ -1136,7 +1186,7 @@ class Renderer(vtkRenderer):
         if isinstance(vector, np.ndarray):
             if vector.ndim != 1:
                 vector = vector.ravel()
-        self.camera.SetViewUp(vector)
+        self.camera.up(vector)
         self.Modified()
 
     def enable_parallel_projection(self):
@@ -1146,7 +1196,7 @@ class Renderer(vtkRenderer):
         often useful when viewing images or 2D datasets.
 
         """
-        self.camera.SetParallelProjection(True)
+        self.camera.set_parallel_projection(True)
         self.Modified()
 
     def disable_parallel_projection(self):
@@ -1242,7 +1292,7 @@ class Renderer(vtkRenderer):
         # Update the camera's coordinate system
         transform = vtk.vtkTransform()
         transform.Scale(xscale, yscale, zscale)
-        self.camera.SetModelTransformMatrix(transform.GetMatrix())
+        self.camera.set_model_transform_matrix(transform.GetMatrix())
         self.parent.render()
         if reset_camera:
             self.update_bounds_axes()
@@ -1452,7 +1502,7 @@ class Renderer(vtkRenderer):
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        self.camera.RemoveAllObservers()
+        self.camera.remove_all_observers()
         if hasattr(self, 'axes_widget'):
             self.hide_axes()  # Necessary to avoid segfault
             del self.axes_widget
