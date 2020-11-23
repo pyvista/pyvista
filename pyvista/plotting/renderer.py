@@ -259,13 +259,13 @@ class Renderer(vtkRenderer):
         return Camera(self.GetActiveCamera())
 
     @camera.setter
-    def camera(self, camera):
+    def camera(self, source):
         """Set the active camera for the rendering scene."""
-        self.SetActiveCamera(camera.vtk_camera)
+        self.SetActiveCamera(source.vtk_camera)
         self.camera_position = CameraPosition(
-            scale_point(camera, camera.get_position(), invert=True),
-            scale_point(camera, camera.get_focal_point(), invert=True),
-            camera.up()
+            scale_point(source, source.get_position(), invert=True),
+            scale_point(source, source.get_focal_point(), invert=True),
+            source.up()
         )
         self.Modified()
         self.camera_set = True
