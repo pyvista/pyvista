@@ -1,6 +1,7 @@
 """
 See the image regression notes in docs/extras/developer_notes.rst
 """
+import platform
 import warnings
 import inspect
 import pathlib
@@ -79,8 +80,7 @@ def verify_cache_image(plotter):
     global glb_reset_image_cache, glb_ignore_image_cache
 
     # Image cache is only valid for VTK9 on Linux
-    # if not VTK9 or os.name != 'linux':
-    if os.name != 'linux':
+    if not VTK9 or platform.system() != 'Linux':
         return
 
     # since each test must contain a unique name, we can simply
@@ -154,6 +154,13 @@ def test_plot(tmpdir):
     with pytest.raises(ValueError):
         filename = pathlib.Path(str(tmp_dir.join('tmp3.foo')))
         pyvista.plot(sphere, screenshot=filename)
+
+
+@skip_no_plotting
+def test_add_title():
+    plotter = pyvista.Plotter()
+    plotter.add_title('Plot Title')
+    plotter.show(before_close_callback=verify_cache_image)
 
 
 @skip_no_plotting
