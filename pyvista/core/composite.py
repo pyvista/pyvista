@@ -61,7 +61,8 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
 
     # Bind pyvista.plotting.plot to the object
     plot = pyvista.plot
-    _READERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataReader)
+    _READERS = {'.vtm': vtk.vtkXMLMultiBlockDataReader, '.vtmb': vtk.vtkXMLMultiBlockDataReader,
+                '.case': vtk.vtkGenericEnSightReader}
     _WRITERS = dict.fromkeys(['.vtm', '.vtmb'], vtk.vtkXMLMultiBlockDataWriter)
 
     def __init__(self, *args, **kwargs):
@@ -80,7 +81,7 @@ class MultiBlock(vtkMultiBlockDataSet, CompositeFilters, DataObject):
                 for block in args[0]:
                     self.append(block)
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
             elif isinstance(args[0], dict):
                 idx = 0
                 for key, block in args[0].items():

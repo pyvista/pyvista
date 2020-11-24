@@ -4,7 +4,7 @@ import numpy as np
 import scooby
 
 import pyvista
-from pyvista.utilities import is_pyvista_dataset
+from pyvista.utilities import is_pyvista_dataset, assert_empty_kwargs
 from .plotting import Plotter
 from .theme import rcParams
 
@@ -12,8 +12,8 @@ from .theme import rcParams
 def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
          interactive=True, cpos=None, window_size=None,
          show_bounds=False, show_axes=True, notebook=None, background=None,
-         text='', return_img=False, eye_dome_lighting=False, use_panel=None,
-         volume=False, parallel_projection=False, **kwargs):
+         text='', return_img=False, eye_dome_lighting=False, volume=False,
+         parallel_projection=False, use_ipyvtk=None, **kwargs):
     """Plot a vtk or numpy object.
 
     Parameters
@@ -55,6 +55,10 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     volume : bool, optional
         Use the ``add_volume`` method for volume rendering.
 
+    use_ipyvtk : bool, optional
+        Use the ``ipyvtk-simple`` ``ViewInteractiveWidget`` to
+        visualize the plot within a juyterlab notebook.
+
     **kwargs : optional keyword arguments
         See help(Plotter.add_mesh) for additional options.
 
@@ -73,9 +77,11 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
     if notebook is None:
         notebook = scooby.in_ipykernel()
 
+    # undocumented kwarg used within pytest to run a function before closing
+    before_close_callback = kwargs.pop('before_close_callback', None)
+
     eye_dome_lighting = kwargs.pop("edl", eye_dome_lighting)
     show_grid = kwargs.pop('show_grid', False)
-    height = kwargs.get('height', 400)
     auto_close = kwargs.get('auto_close', rcParams['auto_close'])
 
     if notebook:
@@ -137,8 +143,8 @@ def plot(var_item, off_screen=None, full_screen=False, screenshot=None,
                           full_screen=full_screen,
                           screenshot=screenshot,
                           return_img=return_img,
-                          use_panel=use_panel,
-                          height=height)
+                          use_ipyvtk=use_ipyvtk,
+                          before_close_callback=before_close_callback)
 
     # Result will be handled by plotter.show(): cpos or [cpos, img]
     return result
@@ -161,7 +167,25 @@ def plot_arrows(cent, direction, **kwargs):
 
     Returns
     -------
-    Same as Plot.  See help(pyvista.Plot)
+    Same as ``pyvista.plot``.  See ``help(pyvista.plot)``
+
+    Examples
+    --------
+    Plot a single random arrow.
+
+    >>> import numpy as np
+    >>> import pyvista
+    >>> cent = np.random.random(3)
+    >>> direction = np.random.random(3)
+    >>> pyvista.plot_arrows(cent, direction)  # doctest:+SKIP
+
+    Plot 100 random arrows.
+
+    >>> import numpy as np
+    >>> import pyvista
+    >>> cent = np.random.random((100, 3))
+    >>> direction = np.random.random((100, 3))
+    >>> pyvista.plot_arrows(cent, direction)  # doctest:+SKIP
 
     """
     return plot([cent, direction], **kwargs)

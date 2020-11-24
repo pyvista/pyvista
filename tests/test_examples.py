@@ -164,8 +164,8 @@ if TEST_DOWNLOADS:
         assert data.n_cells
 
 
-    def test_download_iron_pot():
-        data = examples.download_iron_pot()
+    def test_download_iron_protein():
+        data = examples.download_iron_protein()
         assert data.n_cells
 
 

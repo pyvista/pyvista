@@ -9,9 +9,6 @@ from pyvista import examples
 import pyvista as pv
 import numpy as np
 
-# Labels are not currently supported by the VTKjs conversion script
-pv.rcParams["use_panel"] = False
-
 ###############################################################################
 # Label String Array
 # ++++++++++++++++++

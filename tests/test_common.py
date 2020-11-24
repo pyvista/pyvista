@@ -7,7 +7,7 @@ from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
-from pyvista import examples
+from pyvista import examples, Texture
 
 
 @pytest.fixture()
@@ -386,7 +386,7 @@ def test_texture():
     # now grab the texture coordinates
     foo = mesh.t_coords
     assert np.allclose(foo, t_coords)
-    texture = pyvista.read_texture(examples.mapfile)
+    texture = Texture(examples.mapfile)
     mesh.textures['map'] = texture
     assert mesh.textures['map'] is not None
     mesh.clear_textures()
@@ -398,7 +398,7 @@ def test_texture_airplane():
     mesh.texture_map_to_plane(inplace=True, name="tex_a", use_bounds=False)
     mesh.texture_map_to_plane(inplace=True, name="tex_b", use_bounds=True)
     assert not np.allclose(mesh["tex_a"], mesh["tex_b"])
-    texture = pyvista.read_texture(examples.mapfile)
+    texture = Texture(examples.mapfile)
     mesh.textures["tex_a"] = texture.copy()
     mesh.textures["tex_b"] = texture.copy()
     mesh._activate_texture("tex_a")
@@ -453,9 +453,46 @@ def test_arrows(grid):
     assert sphere.active_vectors_name == '_vectors'
 
 
-def test_set_active_vectors_name(grid):
+def active_component_consistency_check(grid, component_type, field_association="point"):
+    """
+    Tests if the active component (scalars, vectors, tensors) actually reflects the underlying VTK dataset
+    """
+    component_type = component_type.lower()
+    vtk_component_type = component_type.capitalize()
+
+    field_association = field_association.lower()
+    vtk_field_association = field_association.capitalize()
+
+    pv_arr = getattr(grid, "active_" + component_type)
+    vtk_arr = getattr(getattr(grid, "Get" + vtk_field_association + "Data")(), "Get" + vtk_component_type)()
+
+    assert (pv_arr is None and vtk_arr is None) or np.allclose(pv_arr, vtk_to_numpy(vtk_arr))
+
+
+def test_set_active_vectors(grid):
+    vector_arr = np.arange(grid.n_points*3).reshape([grid.n_points, 3])
+    grid.point_arrays['vector_arr'] = vector_arr
+    grid.active_vectors_name = 'vector_arr'
+    active_component_consistency_check(grid, "vectors", "point")
+    assert grid.active_vectors_name == 'vector_arr'  
+    assert np.allclose(grid.active_vectors, vector_arr)
+    
     grid.active_vectors_name = None
     assert grid.active_vectors_name is None
+    active_component_consistency_check(grid, "vectors", "point")
+
+
+def test_set_active_tensors(grid):
+    tensor_arr = np.arange(grid.n_points*9).reshape([grid.n_points, 9])
+    grid.point_arrays['tensor_arr'] = tensor_arr
+    grid.active_tensors_name = 'tensor_arr'
+    active_component_consistency_check(grid, "tensors", "point")
+    assert grid.active_tensors_name == 'tensor_arr'
+    assert np.allclose(grid.active_tensors, tensor_arr)
+
+    grid.active_tensors_name = None
+    assert grid.active_tensors_name is None
+    active_component_consistency_check(grid, "tensors", "point")
 
 
 def test_set_t_coords(grid):
@@ -480,6 +517,43 @@ def test_activate_texture_none(grid):
 def test_set_active_vectors_fail(grid):
     with pytest.raises(ValueError):
         grid.set_active_vectors('not a vector')
+
+    active_component_consistency_check(grid, "vectors", "point")
+    vector_arr = np.arange(grid.n_points * 3).reshape([grid.n_points, 3])
+    grid.point_arrays['vector_arr'] = vector_arr
+    grid.active_vectors_name = 'vector_arr'
+    active_component_consistency_check(grid, "vectors", "point")
+
+    grid.point_arrays['scalar_arr'] = np.zeros([grid.n_points])
+
+    with pytest.raises(ValueError):
+        grid.set_active_vectors('scalar_arr')
+
+    assert grid.active_vectors_name == 'vector_arr'
+    active_component_consistency_check(grid, "vectors", "point")
+
+
+def test_set_active_tensors_fail(grid):
+    with pytest.raises(ValueError):
+        grid.set_active_tensors('not a tensor')
+
+    active_component_consistency_check(grid, "tensors", "point")
+    tensor_arr = np.arange(grid.n_points * 9).reshape([grid.n_points, 9])
+    grid.point_arrays['tensor_arr'] = tensor_arr
+    grid.active_tensors_name = 'tensor_arr'
+    active_component_consistency_check(grid, "tensors", "point")
+
+    grid.point_arrays['scalar_arr'] = np.zeros([grid.n_points])
+    grid.point_arrays['vector_arr'] = np.zeros([grid.n_points, 3])
+
+    with pytest.raises(ValueError):
+        grid.set_active_tensors('scalar_arr')
+
+    with pytest.raises(ValueError):
+        grid.set_active_tensors('vector_arr')
+
+    assert grid.active_tensors_name == 'tensor_arr'
+    active_component_consistency_check(grid, "tensors", "point")
 
 
 def test_set_active_scalars(grid):

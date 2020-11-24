@@ -20,9 +20,10 @@ import numpy as np
 
 # A helper to make a random surface
 def hill(seed):
-    mesh = pv.ParametricRandomHills(randomseed=seed,
+    mesh = pv.ParametricRandomHills(randomseed=seed, u_res=50, v_res=50,
                                     hillamplitude=0.5)
-    mesh.rotate_y(80) # give the surfaces some tilt
+    mesh.rotate_y(-10) # give the surfaces some tilt
+    
     return mesh
 
 h0 = hill(1).elevation()
@@ -34,8 +35,8 @@ h1 = h1.elevation()
 ###############################################################################
 
 p = pv.Plotter()
-p.add_mesh(h0)
-p.add_mesh(h1)
+p.add_mesh(h0, smooth_shading=True)
+p.add_mesh(h1, smooth_shading=True)
 p.show_grid()
 p.show()
 
@@ -45,7 +46,7 @@ p.show()
 #
 # Compute normals of lower surface
 h0n = h0.compute_normals(point_normals=True, cell_normals=False,
-                         auto_orient_normals=True, )
+                         auto_orient_normals=True)
 
 ###############################################################################
 # Travel along noramals to the other surface and compute the thickness on each
@@ -68,8 +69,8 @@ np.nanmean(h0n["distances"])
 
 ###############################################################################
 p = pv.Plotter()
-p.add_mesh(h0n, scalars="distances")
-p.add_mesh(h1, color=True, opacity=0.75)
+p.add_mesh(h0n, scalars="distances", smooth_shading=True)
+p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
 p.show()
 
 
@@ -90,6 +91,6 @@ np.mean(d)
 
 ###############################################################################
 p = pv.Plotter()
-p.add_mesh(h0, scalars="distances")
-p.add_mesh(h1, color=True, opacity=0.75)
+p.add_mesh(h0, scalars="distances", smooth_shading=True)
+p.add_mesh(h1, color=True, opacity=0.75, smooth_shading=True)
 p.show()

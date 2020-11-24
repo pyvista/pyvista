@@ -198,6 +198,7 @@ for 3D visualization in our `external examples list <./external_examples.html>`_
    getting-started/simple
    examples/index
    external_examples
+   optional_features
 
 
 Translating the documentation
@@ -243,8 +244,17 @@ Highlights of the API include:
    plotting/index
    utilities/index
 
+Extras
+******
 
+.. toctree::
+   :maxdepth: 2
+   :caption: Extras
+   :hidden:
 
+   extras/building_vtk
+   extras/docker
+   extras/developer_notes
 
 Project Index
 *************
