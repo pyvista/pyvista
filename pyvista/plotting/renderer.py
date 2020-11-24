@@ -186,19 +186,35 @@ class Camera:
         """Reset the camera to use perspective projection."""
         self.enable_parallel_projection(False)
 
-    def set_clipping_range(self, near, far):
-        """Set the location of the near and far clipping
-           planes along the direction of projection."""
-        self.vtk_camera.SetClippingRange(near, far)
+    def set_clipping_range(self, near_point, far_point):
+        """Set clipping range.
+
+        Set the location of the near and far clipping
+        planes along the direction of projection.
+
+        Parameters
+        near_point : tuple(float)
+            Length 3 tuple of the near point coordinates.
+
+        far_point : tuple(float)
+            Length 3 tuple of the near far coordinates.
+
+        """
+        self.vtk_camera.SetClippingRange(near_point, far_point)
 
     def get_clipping_range(self):
-        """Get the location of the near and far clipping
-           planes along the direction of projection."""
+        """Get clipping range.
+
+           Get the location of the near and far clipping
+           planes along the direction of projection.
+
+        """
         return self.vtk_camera.GetClippingRange()
 
-    def remove_all_observers(self):
-        """ Remove all observers """
-        self.vtk_camera.RemoveAllObservers()
+    def __del__(self):
+        """Delete the camera."""
+        self.vtk_caemra.RemoveAllObservers()
+        self.vtk_camera = None
 
 
 class Renderer(vtkRenderer):
@@ -1228,23 +1244,23 @@ class Renderer(vtkRenderer):
     @property
     def parallel_projection(self):
         """Return parallel projection state of active render window."""
-        return bool(self.camera.GetParallelProjection())
+        return self.camera.is_parallel_projection
 
     @parallel_projection.setter
     def parallel_projection(self, state):
         """Set parallel projection state of all active render windows."""
-        self.camera.SetParallelProjection(state)
+        self.camera.enable_parallel_projection(state)
         self.Modified()
 
     @property
     def parallel_scale(self):
         """Return parallel scale of active render window."""
-        return self.camera.GetParallelScale()
+        return self.camera.parallel_scale
 
     @parallel_scale.setter
     def parallel_scale(self, value):
         """Set parallel scale of all active render windows."""
-        self.camera.SetParallelScale(value)
+        self.camera.parallel_scale = value
         self.Modified()
 
     def remove_actor(self, actor, reset_camera=False, render=True):
@@ -1551,7 +1567,6 @@ class Renderer(vtkRenderer):
     def close(self):
         """Close out widgets and sensitive elements."""
         self.RemoveAllObservers()
-        self.camera.remove_all_observers()
         if hasattr(self, 'axes_widget'):
             self.hide_axes()  # Necessary to avoid segfault
             self.axes_actor = None
@@ -1569,6 +1584,7 @@ class Renderer(vtkRenderer):
         self.remove_floors(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
+        self._camera = None
         # remove reference to parent last
         self.parent = None
         return
