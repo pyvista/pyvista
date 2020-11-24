@@ -29,7 +29,7 @@ class BackgroundRenderer(Renderer):
         image_actor = vtk.vtkImageActor()
         image_actor.SetInputData(image_data)
         self.add_actor(image_actor, name='background')
-        self.camera.parallel_projection_on()
+        self.camera.enable_parallel_projection()
         self.resize()
 
     def resize(self, *args):
@@ -48,12 +48,12 @@ class BackgroundRenderer(Renderer):
         xc = origin[0] + 0.5*(extent[0] + extent[1]) * spacing[0]
         yc = origin[1] + 0.5*(extent[2] + extent[3]) * spacing[1]
         yd = (extent[3] - extent[2] + 1) * spacing[1]
-        d = self.camera.get_distance()
+        d = self.camera.distance
 
         # make the longest dimensions match the plotting window
         img_dim = np.array(image_data.dimensions[:2])
-        self.camera.set_focus(np.array([xc, yc, 0.0]))
-        self.camera.set_position(np.array([xc, yc, d]))
+        self.camera.focus = np.array([xc, yc, 0.0])
+        self.camera.position = np.array([xc, yc, d])
 
         ratio = img_dim/np.array(self.parent.window_size)
         scale_value = 1
@@ -64,4 +64,4 @@ class BackgroundRenderer(Renderer):
         if self._scale is not None:
             scale_value /= self._scale
 
-        self.camera.set_parallel_scale(0.5 * yd / self._scale)
+        self.camera.parallel_scale = 0.5 * yd / self._scale
