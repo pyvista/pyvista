@@ -103,15 +103,20 @@ class Camera:
     def __init__(self, vtk_camera=None):
         """Initialize a new camera descriptor."""
         if vtk_camera is None:
-            self.vtk_camera = vtk.vtkCamera()
+            self._vtk_camera = vtk.vtkCamera()
         elif (isinstance(vtk_camera, vtk.vtkCamera) or
               isinstance(vtk_camera, vtk.vtkOpenGLCamera)):
-            self.vtk_camera = vtk_camera
+            self._vtk_camera = vtk_camera
         else:
             raise TypeError('vtk_camera must be vtk.vtkCamera or vtk.vtkOpenGLCamera')
-        self._position = self.vtk_camera.GetPosition()
-        self._focus = self.vtk_camera.GetFocalPoint()
+        self._position = self._vtk_camera.GetPosition()
+        self._focus = self._vtk_camera.GetFocalPoint()
         self._is_parallel_projection = False
+
+    @property
+    def vtk_camera(self):
+        """Containing vtkCamera object."""
+        return self._vtk_camera
 
     @property
     def position(self):
@@ -120,8 +125,8 @@ class Camera:
 
     @position.setter
     def position(self, value):
-        self.vtk_camera.SetPosition(value)
-        self._position = self.vtk_camera.GetPosition()
+        self._vtk_camera.SetPosition(value)
+        self._position = self._vtk_camera.GetPosition()
 
     @property
     def focal_point(self):
@@ -130,17 +135,17 @@ class Camera:
 
     @focal_point.setter
     def focal_point(self, point):
-        self.vtk_camera.SetFocalPoint(point)
-        self._focus = self.vtk_camera.GetFocalPoint()
+        self._vtk_camera.SetFocalPoint(point)
+        self._focus = self._vtk_camera.GetFocalPoint()
 
     @property
     def model_transform_matrix(self):
         """Model transformation matrix."""
-        return self.vtk_camera.GetModelTransformMatrix()
+        return self._vtk_camera.GetModelTransformMatrix()
 
     @model_transform_matrix.setter
     def model_transform_matrix(self, matrix):
-        self.vtk_camera.SetModelTransformMatrix(matrix)
+        self._vtk_camera.SetModelTransformMatrix(matrix)
 
     @property
     def is_parallel_projection(self):
@@ -150,27 +155,27 @@ class Camera:
     @property
     def distance(self):
         """Distance from the camera position to the focal point."""
-        return self.vtk_camera.GetDistance()
+        return self._vtk_camera.GetDistance()
 
     @property
     def parallel_scale(self):
         """Scaling used for a parallel projection, i.e."""
-        return self.vtk_camera.GetParallelScale()
+        return self._vtk_camera.GetParallelScale()
 
     @parallel_scale.setter
     def parallel_scale(self, scale):
-        self.vtk_camera.SetParallelScale(scale)
+        self._vtk_camera.SetParallelScale(scale)
 
     def zoom(self, value):
         """Zoom of the camera."""
-        self.vtk_camera.Zoom(value)
+        self._vtk_camera.Zoom(value)
 
     def up(self, vector=None):
         """Up of the camera."""
         if vector is None:
-            return self.vtk_camera.GetViewUp()
+            return self._vtk_camera.GetViewUp()
         else:
-            self.vtk_camera.SetViewUp(vector)
+            self._vtk_camera.SetViewUp(vector)
 
     def enable_parallel_projection(self, flag=True):
         """Enable parallel projection.
@@ -180,19 +185,17 @@ class Camera:
 
         """
         self._is_parallel_projection = flag
-        self.vtk_camera.SetParallelProjection(flag)
+        self._vtk_camera.SetParallelProjection(flag)
 
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
         self.enable_parallel_projection(False)
 
     def set_clipping_range(self, near_point, far_point):
-        """Set clipping range.
-
-        Set the location of the near and far clipping
-        planes along the direction of projection.
+        """Set clipping range along the direction of projection.
 
         Parameters
+        ----------
         near_point : tuple(float)
             Length 3 tuple of the near point coordinates.
 
@@ -200,21 +203,16 @@ class Camera:
             Length 3 tuple of the near far coordinates.
 
         """
-        self.vtk_camera.SetClippingRange(near_point, far_point)
+        self._vtk_camera.SetClippingRange(near_point, far_point)
 
     def get_clipping_range(self):
-        """Get clipping range.
-
-           Get the location of the near and far clipping
-           planes along the direction of projection.
-
-        """
-        return self.vtk_camera.GetClippingRange()
+        """Get clipping range."""
+        return self._vtk_camera.GetClippingRange()
 
     def __del__(self):
         """Delete the camera."""
-        self.vtk_caemra.RemoveAllObservers()
-        self.vtk_camera = None
+        self._vtk_camera.RemoveAllObservers()
+        self._vtk_camera = None
 
 
 class Renderer(vtkRenderer):
