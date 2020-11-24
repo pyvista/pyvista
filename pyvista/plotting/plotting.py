@@ -3725,7 +3725,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points = path.points
 
         # Make sure the whole scene is visible
-        self.camera.SetThickness(path.length)
+        self.camera.thickness = path.length
 
         def orbit():
             """Define the internal thread for running the orbit."""

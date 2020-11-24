@@ -158,6 +158,15 @@ class Camera:
         return self._vtk_camera.GetDistance()
 
     @property
+    def thickness(self):
+        """Distance between clipping planes."""
+        return self._vtk_camera.GetThickness()
+
+    @thickness.setter
+    def thickness(self, length):
+        self._vtk_camera.SetThickness(length)
+
+    @property
     def parallel_scale(self):
         """Scaling used for a parallel projection, i.e."""
         return self._vtk_camera.GetParallelScale()
