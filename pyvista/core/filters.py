@@ -2170,9 +2170,10 @@ class DataSetFilters:
         subgrid = _get_output(extract_sel)
 
         # extracts only in float32
-        if dataset.points.dtype is not np.dtype('float32'):
-            ind = subgrid.point_arrays['vtkOriginalPointIds']
-            subgrid.points = dataset.points[ind]
+        if subgrid.n_points:
+            if dataset.points.dtype is not np.dtype('float32'):
+                ind = subgrid.point_arrays['vtkOriginalPointIds']
+                subgrid.points = dataset.points[ind]
 
         return subgrid
 
