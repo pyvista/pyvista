@@ -43,13 +43,14 @@ try:
 except ImportError:
     has_matplotlib = False
 
-VTK9 = vtk.vtkVersion().GetVTKMajorVersion() >= 9
-
 _ALL_PLOTTERS = {}
 
 SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 
-if VTK9 and platform.system() == 'Linux':
+# VTK version matches 9.0.0 or 9.0.1
+# used to close windows for vtk 9.0.0 and 9.0.1 on Linux
+VTK9_EARLY = vtk.vtkVersion().GetVTKVersion() in ['9.0.0', '9.0.1']
+if VTK9_EARLY and platform.system() == 'Linux':
     X11 = ctypes.CDLL("libX11.so")
 
 def close_all():
@@ -2717,7 +2718,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clear the render window."""
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
-            if VTK9 and platform.system() == 'Linux':
+            if VTK9_EARLY and platform.system() == 'Linux':
                 self._kill_display()
             del self.ren_win
 
