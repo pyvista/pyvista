@@ -4268,5 +4268,7 @@ def _kill_display(disp_id):
 
     if disp_id:
         cdisp_id = ctypes.c_size_t(int(disp_id[1:].split('_')[0], 16))
-        # thread this as it take time and we don't need to wait
-        Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
+
+        # check display can be closed and then close it in the background
+        if not X11.XEventsQueued(cdisp_id, 0):
+            Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
