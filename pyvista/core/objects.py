@@ -13,11 +13,6 @@ from pyvista.utilities import (FieldAssociation, assert_empty_kwargs, get_array,
 from .common import DataObject
 from .datasetattributes import DataSetAttributes
 
-try:
-    import pandas as pd
-except ImportError:
-    pd = None
-
 
 class Table(vtk.vtkTable, DataObject):
     """Wrapper for the ``vtkTable`` class.
@@ -48,7 +43,7 @@ class Table(vtk.vtkTable, DataObject):
                 self._from_arrays(args[0])
             elif isinstance(args[0], dict):
                 self._from_dict(args[0])
-            elif pd is not None and isinstance(args[0], pd.DataFrame):
+            elif 'pandas.core.frame.DataFrame' in str(type(args[0])):
                 self._from_pandas(args[0])
             else:
                 raise TypeError(f'Table unable to be made from ({type(args[0])})')
@@ -244,8 +239,10 @@ class Table(vtk.vtkTable, DataObject):
 
     def to_pandas(self):
         """Create a Pandas DataFrame from this Table."""
-        if pd is None:
-            raise ImportError('You must have Pandas installed.')
+        try:
+            import pandas as pd
+        except ImportError:
+            raise ImportError('Install ``pandas`` to use this feature.')
         data_frame = pd.DataFrame()
         for name, array in self.items():
             data_frame[name] = array
