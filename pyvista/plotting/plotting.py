@@ -49,9 +49,11 @@ SUPPORTED_FORMATS = [".png", ".jpeg", ".jpg", ".bmp", ".tif", ".tiff"]
 
 # VTK version matches 9.0.0 or 9.0.1
 # used to close windows for vtk 9.0.0 and 9.0.1 on Linux
+# VTK9_EARLY = False
 VTK9_EARLY = vtk.vtkVersion().GetVTKVersion() in ['9.0.0', '9.0.1']
 if VTK9_EARLY and platform.system() == 'Linux':
     X11 = ctypes.CDLL("libX11.so")
+
 
 def close_all():
     """Close all open/active plotters and clean up memory."""
@@ -2718,8 +2720,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Clear the render window."""
         if hasattr(self, 'ren_win'):
             self.ren_win.Finalize()
-            if VTK9_EARLY and platform.system() == 'Linux':
-                self._kill_display()
             del self.ren_win
 
     def close(self, render=False):
@@ -2756,6 +2756,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.clear()
 
         # grab the display id before clearing the window
+        if VTK9_EARLY and platform.system() == 'Linux':
+            disp_id = None
+            if hasattr(self, 'ren_win'):
+                disp_id = self.ren_win.GetGenericDisplayId()
         self._clear_ren_win()
 
         self._style_class = None
@@ -2767,6 +2771,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         if self.iren is not None:
             self.iren.TerminateApp()
+            if VTK9_EARLY and platform.system() == 'Linux':
+                _kill_display(disp_id)
             self.iren = None
 
         if hasattr(self, 'textActor'):
@@ -2781,25 +2787,6 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # this helps managing closed plotters
         self._closed = True
-
-    def _kill_display(self):
-        """Forcibly close the display on Linux.
-
-        See:
-        https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
-
-        And more details into why...
-        https://stackoverflow.com/questions/64811503
-
-        """ 
-        if platform.system() != 'Linux':
-            raise OSError('This method only works on Linux')
-
-        disp_id = self.ren_win.GetGenericDisplayId()
-        if disp_id:
-            cdisp_id = ctypes.c_size_t(int(disp_id[1:].split('_')[0], 16))
-            # thread this as it take time and we don't need to wait
-            Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
 
     def deep_clean(self):
         """Clean the plotter of the memory."""
@@ -4265,3 +4252,21 @@ def _style_factory(klass):
                     renderer.SetInteractive(True)
 
     return CustomStyle
+
+def _kill_display(disp_id):
+    """Forcibly close the display on Linux.
+
+    See:
+    https://gitlab.kitware.com/vtk/vtk/-/issues/17917#note_783584
+
+    And more details into why...
+    https://stackoverflow.com/questions/64811503
+
+    """ 
+    if platform.system() != 'Linux':
+        raise OSError('This method only works on Linux')
+
+    if disp_id:
+        cdisp_id = ctypes.c_size_t(int(disp_id[1:].split('_')[0], 16))
+        # thread this as it take time and we don't need to wait
+        Thread(target=X11.XCloseDisplay, args=(cdisp_id, )).start()
