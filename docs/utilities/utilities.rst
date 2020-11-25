@@ -66,3 +66,8 @@ Array Access
 .. autofunction:: pyvista.vtk_bit_array_to_char
 
 .. autofunction:: pyvista.convert_string_array
+
+
+Image Comparison and Regression
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autofunction:: pyvista.compare_images

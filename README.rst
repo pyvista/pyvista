@@ -2,8 +2,9 @@
 PyVista
 #######
 
-.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_logo.png
-    :alt: pyvista
+.. image:: https://github.com/pyvista/pyvista/raw/master/docs/_static/pyvista_banner.png
+   :target: https://docs.pyvista.org/examples/index.html
+   :alt: pyvista
 
 
 .. |zenodo| image:: https://zenodo.org/badge/92974124.svg
@@ -104,14 +105,14 @@ Overview of Features
 --------------------
 
 * Extensive gallery of examples (see `Quick Examples`_)
-* Embeddable rendering in Jupyter Notebooks (static and interactive with `Panel`_)
+* Interactive plotting in Jupyter Notebooks (server-side rendering with `ipyvtk_simple`_)
 * Filtering/plotting tools built for interactivity (see `Widgets`_)
 * Direct access to mesh analysis and transformation routines (see Filters_)
 * Intuitive plotting routines with ``matplotlib`` similar syntax (see Plotting_)
 * Import meshes from many common formats (use ``pyvista.read()``). Support for all formats handled by `meshio`_ is built-in!
 * Export meshes as VTK, STL, OBJ, or PLY (``mesh.save()``) file types or any formats supported by meshio_ (``pyvista.save_meshio()``)
 
-.. _Panel: https://panel.pyviz.org/
+.. _ipyvtk_simple: https://github.com/Kitware/ipyvtk-simple
 .. _Widgets: https://docs.pyvista.org/plotting/widgets.html
 .. _Filters: https://docs.pyvista.org/core/filters.html
 .. _Plotting: https://docs.pyvista.org/plotting/index.html

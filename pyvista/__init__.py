@@ -54,7 +54,7 @@ try:
 except KeyError:
     pass
 
-# Grab system flag for auto-closing because of Panel issues
+# Grab system flag for auto-closing
 try:
     # This only sets to false if PYVISTA_AUTO_CLOSE is false
     rcParams['auto_close'] = not os.environ['PYVISTA_AUTO_CLOSE'].lower() == 'false'
@@ -95,22 +95,14 @@ except Exception as e:
 # Send VTK messages to the logging module:
 send_errors_to_logging()
 
-
-# Set up panel for interactive notebook rendering
+# Set ipyvtk_vtk rcParam flag for interactive notebook rendering
 try:
-    if os.environ['PYVISTA_USE_PANEL'].lower() == 'false':
-        rcParams['use_panel'] = False
-    elif os.environ['PYVISTA_USE_PANEL'].lower() == 'true':
-        rcParams['use_panel'] = True
+    if os.environ['PYVISTA_USE_IPYVTK'].lower() == 'false':
+        rcParams['use_ipyvtk'] = False
+    elif os.environ['PYVISTA_USE_IPYVTK'].lower() == 'true':
+        rcParams['use_ipyvtk'] = True
 except KeyError:
     pass
-# Only initialize panel if in a Jupyter environment
-if scooby.in_ipykernel():
-    try:
-        import panel
-        panel.extension('vtk')
-    except:
-        rcParams['use_panel'] = False
 
 # Set preferred plot theme
 try:

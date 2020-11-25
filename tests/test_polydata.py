@@ -18,7 +18,14 @@ SPHERE_SHIFTED = pyvista.Sphere(center=[0.5, 0.5, 0.5],
 
 SPHERE_DENSE = pyvista.Sphere(radius, theta_resolution=100, phi_resolution=100)
 
+CUBE_DENSE = pyvista.Cube()
+
 test_path = os.path.dirname(os.path.abspath(__file__))
+
+try:
+    CONDA_ENV = os.environ['CONDA_ALWAYS_YES'] == "1"
+except KeyError:
+    CONDA_ENV = False
 
 
 def test_init():
@@ -196,6 +203,17 @@ def test_ray_trace_plot():
                                    off_screen=True)
     assert np.any(points)
     assert np.any(ind)
+
+
+@pytest.mark.skipif(not CONDA_ENV, reason="Requires libspatialindex dependency only installable via conda")
+def test_multi_ray_trace():
+    sphere = SPHERE.copy()
+    origins = [[1, 0, 1], [0.5, 0, 1], [0.25, 0, 1], [0, 0, 1]]
+    directions = [[0, 0, -1]] * 4
+    points, ind_r, ind_t = sphere.multi_ray_trace(origins, directions, retry=True)
+    assert np.any(points)
+    assert np.any(ind_r)
+    assert np.any(ind_t)
 
 
 @pytest.mark.skipif(not system_supports_plotting(), reason="Requires system to support plotting")
@@ -457,6 +475,9 @@ def test_area():
     ideal_area = 4*pi*radius**2
     assert np.isclose(dense_sphere.area, ideal_area, rtol=1E-3)
 
+    dense_cube = CUBE_DENSE.copy()
+    ideal_area = 6*np.cbrt(CUBE_DENSE.volume)**2
+    assert np.isclose(dense_cube.area, ideal_area, rtol=1E-3)
 
 def test_volume():
     dense_sphere = SPHERE_DENSE.copy()

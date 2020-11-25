@@ -203,7 +203,7 @@ class DataSetAttributes(VTKObjectWrapper):
             narray = tmparray
 
         if narray.shape[0] != array_len:
-            raise ValueError('narray length of ({narray.shape[0]}) != required length ({array_len})')
+            raise ValueError(f'narray length of ({narray.shape[0]}) != required length ({array_len})')
 
         if narray.dtype == np.bool_:
             self.dataset.association_bitarray_names[self.association].add(name)
@@ -252,7 +252,6 @@ class DataSetAttributes(VTKObjectWrapper):
             pass
         self.VTKObject.Modified()
 
-
     def remove(self, key):
         """Remove an array.
 
@@ -270,13 +269,17 @@ class DataSetAttributes(VTKObjectWrapper):
         self.VTKObject.RemoveArray(key)
         self.VTKObject.Modified()
 
-    def pop(self, key):
+    def pop(self, key, default=pyvista_ndarray(array=[])):
         """Remove an array and return it.
 
         Parameters
         ----------
         key : int, str
             The name or index of the array to remove and return.
+
+        default : anything
+            If default is not given and key is not in the dictionary,
+            a KeyError is raised.
 
         Returns
         -------
@@ -289,7 +292,12 @@ class DataSetAttributes(VTKObjectWrapper):
             copy = vtk_arr.NewInstance()
             copy.DeepCopy(vtk_arr)
             vtk_arr = copy
-        self.remove(key)
+        try:
+            self.remove(key)
+        except KeyError:
+            if default in self.pop.__defaults__:
+                raise
+            return default
         return pyvista_ndarray(vtk_arr, dataset=self.dataset, association=self.association)
 
     def items(self):

@@ -1,5 +1,5 @@
 """Contains pyvista_ndarray a numpy ndarray type used in pyvista."""
-from collections import Iterable
+from collections.abc import Iterable
 
 import numpy as np
 from vtk.numpy_interface.dataset_adapter import VTKArray, VTKObjectWrapper

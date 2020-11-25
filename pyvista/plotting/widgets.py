@@ -59,10 +59,6 @@ class WidgetHelper:
             callback
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Box widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "box_widgets"):
             self.box_widgets = []
 
@@ -241,10 +237,6 @@ class WidgetHelper:
             if true, run the callback function after the widget is created.
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Plane widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "plane_widgets"):
             self.plane_widgets = []
 
@@ -543,10 +535,6 @@ class WidgetHelper:
             callback
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Line widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
         if not hasattr(self, "line_widgets"):
             self.line_widgets = []
 
@@ -730,11 +718,6 @@ class WidgetHelper:
             The name of the slider style. The list of available styles are in
             ``rcParams['slider_style']``. Defaults to None.
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Slider widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
-
         if not hasattr(self, "slider_widgets"):
             self.slider_widgets = []
 
@@ -973,9 +956,10 @@ class WidgetHelper:
         return actor
 
     def add_spline_widget(self, callback, bounds=None, factor=1.25,
-                          n_hanldes=5, resolution=25, color="yellow",
+                          n_handles=5, resolution=25, color="yellow",
                           show_ribbon=False, ribbon_color="pink",
-                          ribbon_opacity=0.5, pass_widget=False):
+                          ribbon_opacity=0.5, pass_widget=False,
+                          closed=False, initial_points=None):
         """Create and add a spline widget to the scene.
 
         Use the bounds argument to place this widget. Several "handles" are
@@ -1017,11 +1001,17 @@ class WidgetHelper:
             If true, the widget will be passed as the last argument of the
             callback
 
+        closed : bool
+            Make the spline a closed loop.
+
+        initial_points : np.ndarray
+            The points to initialize the widget placement. Must have same
+            number of elements as ``n_handles``. If the first and last point
+            are the same, this will be a closed loop spline.
+
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Spline widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
+        if initial_points is not None and len(initial_points) != n_handles:
+            raise ValueError("`initial_points` must be length `n_handles`.")
 
         if not hasattr(self, "spline_widgets"):
             self.spline_widgets = []
@@ -1035,8 +1025,10 @@ class WidgetHelper:
         ribbon = pyvista.PolyData()
 
         def _the_callback(widget, event_id):
-            polyline = pyvista.PolyData()
-            widget.GetPolyData(polyline)
+            para_source = vtk.vtkParametricFunctionSource()
+            para_source.SetParametricFunction(widget.GetParametricSpline())
+            para_source.Update()
+            polyline = pyvista.wrap(para_source.GetOutput())
             ribbon.shallow_copy(polyline.ribbon(normal=(0,0,1), angle=90.0))
             if hasattr(callback, '__call__'):
                 if pass_widget:
@@ -1047,12 +1039,16 @@ class WidgetHelper:
 
         spline_widget = vtk.vtkSplineWidget()
         spline_widget.GetLineProperty().SetColor(parse_color(color))
-        spline_widget.SetNumberOfHandles(n_hanldes)
+        spline_widget.SetNumberOfHandles(n_handles)
         spline_widget.SetInteractor(self.iren)
         spline_widget.SetCurrentRenderer(self.renderer)
         spline_widget.SetPlaceFactor(factor)
         spline_widget.PlaceWidget(bounds)
         spline_widget.SetResolution(resolution)
+        if initial_points is not None:
+            spline_widget.InitializeHandles(pyvista.vtk_points((initial_points)))
+        else:
+            spline_widget.SetClosed(closed)
         spline_widget.Modified()
         spline_widget.On()
         spline_widget.AddObserver(vtk.vtkCommand.EndInteractionEvent, _the_callback)
@@ -1072,9 +1068,10 @@ class WidgetHelper:
             del self.spline_widgets
 
     def add_mesh_slice_spline(self, mesh, generate_triangles=False,
-                              n_hanldes=5, resolution=25,
+                              n_handles=5, resolution=25,
                               widget_color=None, show_ribbon=False,
                               ribbon_color="pink", ribbon_opacity=0.5,
+                              initial_points=None, closed=False,
                               **kwargs):
         """Slice a mesh with a spline widget.
 
@@ -1126,10 +1123,12 @@ class WidgetHelper:
 
         self.add_spline_widget(callback=callback, bounds=mesh.bounds,
                                factor=1.25, color=widget_color,
-                               n_hanldes=n_hanldes, resolution=resolution,
+                               n_handles=n_handles, resolution=resolution,
                                show_ribbon=show_ribbon,
                                ribbon_color=ribbon_color,
-                               ribbon_opacity=ribbon_opacity)
+                               ribbon_opacity=ribbon_opacity,
+                               initial_points=initial_points,
+                               closed=closed)
 
         actor = self.add_mesh(spline_sliced_mesh, **kwargs)
 
@@ -1184,11 +1183,6 @@ class WidgetHelper:
             if true, run the callback function after the widget is created.
 
         """
-        if hasattr(self, 'notebook') and self.notebook:
-            raise TypeError('Sphere widget not available in notebook plotting')
-        if not hasattr(self, 'iren'):
-            raise AttributeError('Widgets must be used with an intereactive renderer. No off screen plotting.')
-
         if not hasattr(self, "sphere_widgets"):
             self.sphere_widgets = []
 

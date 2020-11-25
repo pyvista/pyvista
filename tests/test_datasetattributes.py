@@ -181,6 +181,14 @@ def test_pop_should_return_array(insert_arange_narray):
     assert np.array_equal(other_array, sample_array)
 
 
+def test_should_pop_array(insert_arange_narray):
+    dsa, sample_array = insert_arange_narray
+    key = 'invalid_key'
+    assert key not in dsa
+    default = 20
+    assert dsa.pop(key, default) is default
+
+
 @mark.parametrize('removed_key', [None, 'nonexistant_array_name', '', -1])
 def test_remove_should_fail_on_bad_argument(removed_key, hexbeam_point_attributes):
     with raises(KeyError):
@@ -260,3 +268,11 @@ def test_active_scalars_setter(hexbeam_point_attributes):
     dsa.active_scalars = 'sample_point_scalars'
     assert dsa.active_scalars is not None
     assert dsa.GetScalars().GetName() == 'sample_point_scalars'
+
+
+@given(arr=arrays(dtype='U', shape=10))
+def test_preserve_field_arrays_after_extract_cells(hexbeam, arr):
+    # https://github.com/pyvista/pyvista/pull/934
+    hexbeam.field_arrays["foo"] = arr
+    extracted = hexbeam.extract_cells([0, 1, 2, 3])
+    assert "foo" in extracted.field_arrays

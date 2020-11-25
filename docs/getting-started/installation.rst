@@ -60,7 +60,7 @@ The following are a list of optional dependencies and their purpose:
 +-----------------------------------+-----------------------------------------+
 | ``itkwidgets``                    | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
-| ``panel``                         | Interactive notebook rendering          |
+| ``ipyvtk_simple``                 | Interactive notebook rendering          |
 +-----------------------------------+-----------------------------------------+
 | ``sphinx_gallery``                | Capturing PyVista output for docs       |
 +-----------------------------------+-----------------------------------------+
@@ -71,6 +71,10 @@ The following are a list of optional dependencies and their purpose:
 | ``imageio-ffmpeg``                | Saving movie files                      |
 +-----------------------------------+-----------------------------------------+
 | ``tqdm``                          | Status bars for monitoring filters      |
++-----------------------------------+-----------------------------------------+
+| ``trimesh``                       |                                         |
+| ``rtree``                         | Vectorised ray tracing                  |
+| ``pyembree``                      |                                         |
 +-----------------------------------+-----------------------------------------+
 
 
@@ -100,15 +104,18 @@ You can test your installation by running an example:
     from pyvista import examples
     examples.plot_wave()
 
-See other examples:
+See other examples and demos:
 
 .. code:: python
 
     from pyvista import examples
+    from pyvista import demos
 
     # list all examples
     print(dir(examples))
 
+    # list all demos
+    print(dir(demos))
 
 .. note::
 
@@ -160,7 +167,7 @@ time your Docker container is launched:
     set -x
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_PANEL=true
+    export PYVISTA_USE_IPYVTK=true
     which Xvfb
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
@@ -194,7 +201,7 @@ After logging into the remote server, install Miniconda and related packages:
     conda create --name vtk_env python=3.7
     conda activate vtk_env
     conda install nodejs  # required when importing pyvista in Jupyter
-    pip install jupyter pyvista panel
+    pip install jupyter pyvista ipyvtk_simple
 
     # To avoid "ModuleNotFoundError: No module named 'vtkOpenGLKitPython' " when importing vtk
     # https://stackoverflow.com/q/32389599
@@ -208,7 +215,7 @@ Then, configure the headless display:
     sudo apt-get install xvfb
     export DISPLAY=:99.0
     export PYVISTA_OFF_SCREEN=true
-    export PYVISTA_USE_PANEL=true
+    export PYVISTA_USE_IPYVTK=true
     Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
     sleep 3
 

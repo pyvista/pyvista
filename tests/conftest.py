@@ -3,6 +3,25 @@ from pytest import fixture
 
 import pyvista
 from pyvista import examples
+pyvista.rcParams['off_screen'] = True
+
+# necessary for image regression.  Xvfb doesn't support
+# multi-sampling, so we disable it here for consistency between
+# desktops and remote testing
+pyvista.rcParams['multi_samples'] = 1
+pyvista.rcParams['window_size'] = [400, 400]  # default is [1024, 768]
+pyvista.OFF_SCREEN = True
+
+
+@fixture(scope='session')
+def set_mpl():
+    """Avoid matplotlib windows popping up."""
+    try:
+        import matplotlib
+    except Exception:
+        pass
+    else:
+        matplotlib.use('agg', force=True)
 
 
 @fixture()

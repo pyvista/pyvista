@@ -327,7 +327,7 @@ class Renderer(vtkRenderer):
         return actor
 
     def add_actor(self, uinput, reset_camera=False, name=None, culling=False,
-                  pickable=True):
+                  pickable=True, render=True):
         """Add an actor to render window.
 
         Creates an actor if input is a mapper.
@@ -356,7 +356,7 @@ class Renderer(vtkRenderer):
 
         """
         # Remove actor by that name if present
-        rv = self.remove_actor(name, reset_camera=False)
+        rv = self.remove_actor(name, reset_camera=False, render=render)
 
         if isinstance(uinput, vtk.vtkMapper):
             actor = vtk.vtkActor()
@@ -373,10 +373,10 @@ class Renderer(vtkRenderer):
         self._actors[name] = actor
 
         if reset_camera:
-            self.reset_camera()
+            self.reset_camera(render)
         elif not self.camera_set and reset_camera is None and not rv:
-            self.reset_camera()
-        else:
+            self.reset_camera(render)
+        elif render:
             self.parent.render()
 
         self.update_bounds_axes()
@@ -535,13 +535,13 @@ class Renderer(vtkRenderer):
 
     def show_bounds(self, mesh=None, bounds=None, show_xaxis=True,
                     show_yaxis=True, show_zaxis=True, show_xlabels=True,
-                    show_ylabels=True, show_zlabels=True, italic=False,
-                    bold=True, shadow=False, font_size=None,
+                    show_ylabels=True, show_zlabels=True,
+                    bold=True, font_size=None,
                     font_family=None, color=None,
                     xlabel='X Axis', ylabel='Y Axis', zlabel='Z Axis',
                     use_2d=False, grid=None, location='closest', ticks=None,
                     all_edges=False, corner_factor=0.5, fmt=None,
-                    minor_ticks=False, padding=0.0):
+                    minor_ticks=False, padding=0.0, render=None):
         """Add bounds axes.
 
         Shows the bounds of the most recent input mesh unless mesh is specified.
@@ -816,15 +816,6 @@ class Renderer(vtkRenderer):
         self.Modified()
         return cube_axes_actor
 
-    def add_bounds_axes(self, *args, **kwargs):
-        """Add bounds axes.
-
-        DEPRECATED: Please use ``show_bounds`` or ``show_grid``.
-
-        """
-        logging.warning('`add_bounds_axes` is deprecated. Use `show_bounds` or `show_grid`.')
-        return self.show_bounds(*args, **kwargs)
-
     def show_grid(self, **kwargs):
         """Show gridlines and axes labels.
 
@@ -839,13 +830,13 @@ class Renderer(vtkRenderer):
         kwargs.setdefault('ticks', 'both')
         return self.show_bounds(**kwargs)
 
-    def remove_bounding_box(self):
+    def remove_bounding_box(self, render=True):
         """Remove bounding box."""
         if hasattr(self, '_box_object'):
             actor = self.bounding_box_actor
             self.bounding_box_actor = None
             del self._box_object
-            self.remove_actor(actor, reset_camera=False)
+            self.remove_actor(actor, reset_camera=False, render=render)
             self.Modified()
 
     def add_bounding_box(self, color="grey", corner_factor=0.5, line_width=None,
@@ -1058,10 +1049,13 @@ class Renderer(vtkRenderer):
         self._floors.append(actor)
         return actor
 
-    def remove_floors(self, clear_kwargs=True):
+    def remove_floors(self, clear_kwargs=True, render=True):
         """Remove all floor actors."""
+        if getattr(self, '_floor', None) is not None:
+            self._floor.ReleaseData()
+            self._floor = None
         for actor in self._floors:
-            self.remove_actor(actor, reset_camera=False)
+            self.remove_actor(actor, reset_camera=False, render=render)
         self._floors.clear()
         if clear_kwargs:
             self._floor_kwargs.clear()
@@ -1126,6 +1120,28 @@ class Renderer(vtkRenderer):
         self.camera.SetParallelProjection(False)
         self.Modified()
 
+    @property
+    def parallel_projection(self):
+        """Return parallel projection state of active render window."""
+        return bool(self.camera.GetParallelProjection())
+
+    @parallel_projection.setter
+    def parallel_projection(self, state):
+        """Set parallel projection state of all active render windows."""
+        self.camera.SetParallelProjection(state)
+        self.Modified()
+
+    @property
+    def parallel_scale(self):
+        """Return parallel scale of active render window."""
+        return self.camera.GetParallelScale()
+
+    @parallel_scale.setter
+    def parallel_scale(self, value):
+        """Set parallel scale of all active render windows."""
+        self.camera.SetParallelScale(value)
+        self.Modified()
+
     def remove_actor(self, actor, reset_camera=False, render=True):
         """Remove an actor from the Renderer.
 
@@ -1177,7 +1193,7 @@ class Renderer(vtkRenderer):
             return False
 
         # First remove this actor's mapper from _scalar_bar_mappers
-        _remove_mapper_from_plotter(self.parent, actor, False)
+        _remove_mapper_from_plotter(self.parent, actor, False, render=render)
         self.RemoveActor(actor)
 
         if name is None:
@@ -1258,15 +1274,21 @@ class Renderer(vtkRenderer):
                 self.cube_axes_actor.SetUse2DMode(False)
             self.Modified()
 
-    def reset_camera(self):
+    def reset_camera(self, render=True):
         """Reset the camera of the active render window.
 
-        The camera slides along the vector defined from camera position to focal point
-        until all of the actors can be seen.
+        The camera slides along the vector defined from camera
+        position to focal point until all of the actors can be seen.
+
+        Parameters
+        ----------
+        render : bool
+            Trigger a render after resetting the camera.
 
         """
         self.ResetCamera()
-        self.parent.render()
+        if render:
+            self.parent.render()
         self.Modified()
 
     def isometric_view(self):
@@ -1427,17 +1449,19 @@ class Renderer(vtkRenderer):
         self.camera.RemoveAllObservers()
         if hasattr(self, 'axes_widget'):
             self.hide_axes()  # Necessary to avoid segfault
+            self.axes_actor = None
             del self.axes_widget
 
-    def deep_clean(self):
+    def deep_clean(self, render=False):
         """Clean the renderer of the memory."""
         if hasattr(self, 'cube_axes_actor'):
             del self.cube_axes_actor
         if hasattr(self, 'edl_pass'):
             del self.edl_pass
         if hasattr(self, '_box_object'):
-            self.remove_bounding_box()
+            self.remove_bounding_box(render=render)
 
+        self.remove_floors(render=render)
         self.RemoveAllViewProps()
         self._actors = {}
         # remove reference to parent last
@@ -1449,7 +1473,7 @@ class Renderer(vtkRenderer):
         self.deep_clean()
 
 
-def _remove_mapper_from_plotter(plotter, actor, reset_camera):
+def _remove_mapper_from_plotter(plotter, actor, reset_camera, render=False):
     """Remove this actor's mapper from the given plotter's _scalar_bar_mappers."""
     try:
         mapper = actor.GetMapper()
@@ -1465,6 +1489,8 @@ def _remove_mapper_from_plotter(plotter, actor, reset_camera):
             if slot is not None:
                 plotter._scalar_bar_mappers.pop(name)
                 plotter._scalar_bar_ranges.pop(name)
-                plotter.remove_actor(plotter._scalar_bar_actors.pop(name), reset_camera=reset_camera)
+                plotter.remove_actor(plotter._scalar_bar_actors.pop(name),
+                                     reset_camera=reset_camera,
+                                     render=render)
                 plotter._scalar_bar_slots.add(slot)
     return

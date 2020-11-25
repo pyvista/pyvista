@@ -1,6 +1,13 @@
-"""Version info for pyvista."""
+"""Version info for pyvista.
+
+On the ``master`` branch, use 'dev0' to denote a development version.
+For example:
+
+version_info = 0, 27, 'dev0'
+
+"""
 # major, minor, patch
-version_info = 0, 26, 0
+version_info = 0, 28, 'dev0'
 
 # Nice string for the version
 __version__ = '.'.join(map(str, version_info))
