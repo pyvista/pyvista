@@ -37,6 +37,7 @@ def test_itk_plotting_points():
     assert isinstance(viewer, itkwidgets.Viewer)
 
 
+@no_itk
 def test_itk_plotting_points_polydata():
     points = pyvista.wrap(np.random.random((100, 3)))
     viewer = pyvista.plot_itk(points)
