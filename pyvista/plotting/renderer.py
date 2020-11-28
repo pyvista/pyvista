@@ -97,26 +97,14 @@ class CameraPosition:
         self._viewup = value
 
 
-class Camera:
-    """Container to hold vtkCamera class."""
+class Camera(vtk.vtkCamera):
+    """Camera class."""
 
-    def __init__(self, vtk_camera=None):
+    def __init__(self):
         """Initialize a new camera descriptor."""
-        if vtk_camera is None:
-            self._vtk_camera = vtk.vtkCamera()
-        elif (isinstance(vtk_camera, vtk.vtkCamera) or
-              isinstance(vtk_camera, vtk.vtkOpenGLCamera)):
-            self._vtk_camera = vtk_camera
-        else:
-            raise TypeError('vtk_camera must be vtk.vtkCamera or vtk.vtkOpenGLCamera')
-        self._position = self._vtk_camera.GetPosition()
-        self._focus = self._vtk_camera.GetFocalPoint()
+        self._position = self.GetPosition()
+        self._focus = self.GetFocalPoint()
         self._is_parallel_projection = False
-
-    @property
-    def vtk_camera(self):
-        """Containing vtkCamera object."""
-        return self._vtk_camera
 
     @property
     def position(self):
@@ -125,8 +113,8 @@ class Camera:
 
     @position.setter
     def position(self, value):
-        self._vtk_camera.SetPosition(value)
-        self._position = self._vtk_camera.GetPosition()
+        self.SetPosition(value)
+        self._position = self.GetPosition()
 
     @property
     def focal_point(self):
@@ -135,17 +123,17 @@ class Camera:
 
     @focal_point.setter
     def focal_point(self, point):
-        self._vtk_camera.SetFocalPoint(point)
-        self._focus = self._vtk_camera.GetFocalPoint()
+        self.SetFocalPoint(point)
+        self._focus = self.GetFocalPoint()
 
     @property
     def model_transform_matrix(self):
         """Model transformation matrix."""
-        return self._vtk_camera.GetModelTransformMatrix()
+        return self.GetModelTransformMatrix()
 
     @model_transform_matrix.setter
     def model_transform_matrix(self, matrix):
-        self._vtk_camera.SetModelTransformMatrix(matrix)
+        self.SetModelTransformMatrix(matrix)
 
     @property
     def is_parallel_projection(self):
@@ -155,36 +143,36 @@ class Camera:
     @property
     def distance(self):
         """Distance from the camera position to the focal point."""
-        return self._vtk_camera.GetDistance()
+        return self.GetDistance()
 
     @property
     def thickness(self):
         """Distance between clipping planes."""
-        return self._vtk_camera.GetThickness()
+        return self.GetThickness()
 
     @thickness.setter
     def thickness(self, length):
-        self._vtk_camera.SetThickness(length)
+        self.SetThickness(length)
 
     @property
     def parallel_scale(self):
         """Scaling used for a parallel projection, i.e."""
-        return self._vtk_camera.GetParallelScale()
+        return self.GetParallelScale()
 
     @parallel_scale.setter
     def parallel_scale(self, scale):
-        self._vtk_camera.SetParallelScale(scale)
+        self.SetParallelScale(scale)
 
     def zoom(self, value):
         """Zoom of the camera."""
-        self._vtk_camera.Zoom(value)
+        self.Zoom(value)
 
     def up(self, vector=None):
         """Up of the camera."""
         if vector is None:
-            return self._vtk_camera.GetViewUp()
+            return self.GetViewUp()
         else:
-            self._vtk_camera.SetViewUp(vector)
+            self.SetViewUp(vector)
 
     def enable_parallel_projection(self, flag=True):
         """Enable parallel projection.
@@ -194,7 +182,7 @@ class Camera:
 
         """
         self._is_parallel_projection = flag
-        self._vtk_camera.SetParallelProjection(flag)
+        self.SetParallelProjection(flag)
 
     def disable_parallel_projection(self):
         """Reset the camera to use perspective projection."""
@@ -212,16 +200,16 @@ class Camera:
             Length 3 tuple of the near far coordinates.
 
         """
-        self._vtk_camera.SetClippingRange(near_point, far_point)
+        self.SetClippingRange(near_point, far_point)
 
     def get_clipping_range(self):
         """Get clipping range."""
-        return self._vtk_camera.GetClippingRange()
+        return self.GetClippingRange()
 
     def __del__(self):
         """Delete the camera."""
-        self._vtk_camera.RemoveAllObservers()
-        self._vtk_camera = None
+        self.RemoveAllObservers()
+        self.parent = None
 
 
 class Renderer(vtkRenderer):
@@ -245,7 +233,8 @@ class Renderer(vtkRenderer):
         self.AutomaticLightCreationOff()
         self._floors = []
         self._floor_kwargs = []
-        self._camera = Camera(self.GetActiveCamera())
+        self._camera = Camera()
+        self.SetActiveCamera(self._camera)
 
         # This is a private variable to keep track of how many colorbars exist
         # This allows us to keep adding colorbars without overlapping
@@ -310,14 +299,14 @@ class Renderer(vtkRenderer):
     @camera.setter
     def camera(self, source):
         """Set the active camera for the rendering scene."""
-        self.SetActiveCamera(source.vtk_camera)
+        self._camera = source
+        self.SetActiveCamera(self._camera)
         self.camera_position = CameraPosition(
             scale_point(source, source.position, invert=True),
             scale_point(source, source.focal_point, invert=True),
             source.up()
         )
         self.Modified()
-        self._camera = Camera(self.GetActiveCamera())
         self.camera_set = True
 
     @property
@@ -877,7 +866,7 @@ class Renderer(vtkRenderer):
             cube_axes_actor.YAxisMinorTickVisibilityOff()
             cube_axes_actor.ZAxisMinorTickVisibilityOff()
 
-        cube_axes_actor.SetCamera(self.camera.vtk_camera)
+        cube_axes_actor.SetCamera(self.camera)
 
         # set color
         cube_axes_actor.GetXAxesLinesProperty().SetColor(color)
