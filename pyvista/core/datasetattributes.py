@@ -4,11 +4,18 @@ from collections.abc import Iterable
 
 import numpy as np
 import vtk
-from vtk.numpy_interface.dataset_adapter import VTKObjectWrapper, numpyTovtkDataArray
 
 import pyvista.utilities.helpers as helpers
 from pyvista.utilities.helpers import FieldAssociation
 from .pyvista_ndarray import pyvista_ndarray
+
+# necessary for pyinstaller on VTK9
+if vtk.vtkVersion().GetVTKMajorVersion() >= 9:
+    from vtkmodules.numpy_interface.dataset_adapter import (VTKObjectWrapper,
+                                                            numpyTovtkDataArray)
+else:
+    from vtk.numpy_interface.dataset_adapter import (VTKObjectWrapper,
+                                                     numpyTovtkDataArray)
 
 
 class DataSetAttributes(VTKObjectWrapper):
