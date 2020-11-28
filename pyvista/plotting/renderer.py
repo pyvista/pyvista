@@ -2,7 +2,6 @@
 
 import collections.abc
 import logging
-import types
 from weakref import proxy
 
 import numpy as np
