@@ -44,6 +44,7 @@ class Light(vtkLight):
         A scene light is stationary with respect to the scene, as it does not
         follow the camera. This is the default.
     """
+
     # TODO: better/more explanation for ``position``?
 
     # pull in light type enum values as class constants
@@ -317,7 +318,7 @@ class Light(vtkLight):
 
     @shadow_attenuation.setter
     def shadow_attenuation(self, shadow_intensity):
-        """Set the shadow intensity"""
+        """Set the shadow intensity."""
         self.SetShadowAttenuation(shadow_intensity)
 
     #### Everything else ####
@@ -434,7 +435,7 @@ class Light(vtkLight):
 
     @classmethod
     def from_vtk(cls, vtk_light):
-        """Creates a Light object from a vtkLight, resulting in a copy.
+        """Create a Light object from a vtkLight, resulting in a copy.
 
         Parameters
         ----------
