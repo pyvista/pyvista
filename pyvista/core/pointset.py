@@ -697,7 +697,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def cell_connectivity(self):
         """Return a the vtk cell connectivity as a numpy array."""
         carr = self.GetCells()
-        if hasattr(carr, 'GetConnectivityArray'):  # available >= VTK9
+        if VTK9:
             return vtk_to_numpy(carr.GetConnectivityArray())
         raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
                              'Otherwise, use the legacy `cells` method')
@@ -788,7 +788,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def offset(self):
         """Get cell locations Array."""
         carr = self.GetCells()
-        if hasattr(carr, 'GetOffsetsArray'):  # available >= VTK9
+        if VTK9:
             # This will be the number of cells + 1.
             return vtk_to_numpy(carr.GetOffsetsArray())
         else:  # this is no longer used in >= VTK9
