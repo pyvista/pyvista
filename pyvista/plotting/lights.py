@@ -84,14 +84,15 @@ class Light(vtkLight):
 
         self.light_type = light_type
 
+        # TODO: more init kwargs (focal_point, cone angle etc.)
         # TODO: default Positional state?
         # TODO: should setting attenuation and cone angle automatically switch to positional?
         # TODO: should color and point and direction_angle have more flexible signatures? (only for non-properties)
         # TODO: ndarray type and shape and size checking for color and point
 
     def __repr__(self):
-        """Print a repr specifying the id of the light and the vtkLight it wraps."""
-        return (f'<pyvista.Light ({self.light_type}) at {hex(id(self))}>')
+        """Print a repr specifying the id of the light and its light type."""
+        return (f'<{self.__class__.__name__} ({self.light_type}) at {hex(id(self))}>')
 
     #### Properties ####
 
@@ -284,10 +285,9 @@ class Light(vtkLight):
 
         """
         if not isinstance(ltype, int):
+            # note that LightType is an int subclass
             raise TypeError('Light type must be an integer subclass,'
                             f' got {ltype} instead.')
-        # LightType is an int subclass; convert to proper int
-        ltype = int(ltype)
         self.SetLightType(ltype)
 
     @property
