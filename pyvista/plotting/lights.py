@@ -74,9 +74,10 @@ class Light(vtkLight):
                        'cameralight': LightType.CAMERA_LIGHT,
                        'scenelight': LightType.SCENE_LIGHT,
                       }
-            light_type = mapping.get(type_normalized)
-            if light_type is None:
-                raise ValueError(f'Invalid ``light_type`` "{light_type_orig}"')
+            try:
+                light_type = mapping[type_normalized]
+            except KeyError:
+                raise ValueError(f'Invalid ``light_type`` "{light_type_orig}"') from None
         elif not isinstance(light_type, int):
             raise TypeError('Parameter ``light_type`` must be int or str,'
                             f' not {type(light_type)}.')
