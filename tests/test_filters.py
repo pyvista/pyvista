@@ -796,13 +796,16 @@ def test_extract_points():
     surf = pyvista.PolyData(vertices, faces)
     # extract sub-surface with adjacent cells
     sub_surf_adj = surf.extract_points(np.array([0, 1, 4, 5]))
-     # extract sub-surface without adjacent cells
+    # extract sub-surface without adjacent cells
     sub_surf = surf.extract_points(np.array([0, 1, 4, 5]), adjacent_cells=False)
+    # extract sub-surface without cells
+    sub_surf_nocells = surf.extract_points(np.array([0, 1, 4, 5]), include_cells=False)
     # check sub-surface size
     assert sub_surf.n_points == 4
     assert sub_surf.n_cells == 1
     assert sub_surf_adj.n_points == 9
     assert sub_surf_adj.n_cells == 4
+    assert sub_surf_nocells.cells[0] == 1
 
 @skip_py2_nobind
 def test_slice_along_line_composite():
