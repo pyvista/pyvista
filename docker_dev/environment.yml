@@ -1,0 +1,6 @@
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - itkwidgets=0.32.0
+  - ipywidgets=7.5.1

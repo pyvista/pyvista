@@ -1,5 +1,6 @@
 import os
 import sys
+import platform
 
 import numpy as np
 import pytest
@@ -7,20 +8,14 @@ import pytest
 import pyvista
 from pyvista import examples
 
-try:
-    import matplotlib.pyplot as plt
-    HAS_MATPLOTLIB = True
-except:
-    HAS_MATPLOTLIB = False
-
 DATASETS = [
-    examples.load_uniform(), # UniformGrid
-    examples.load_rectilinear(), # RectilinearGrid
-    examples.load_hexbeam(), # UnstructuredGrid
-    examples.load_airplane(), # PolyData
-    examples.load_structured(), # StructuredGrid
+    examples.load_uniform(),  # UniformGrid
+    examples.load_rectilinear(),  # RectilinearGrid
+    examples.load_hexbeam(),  # UnstructuredGrid
+    examples.load_airplane(),  # PolyData
+    examples.load_structured(),  # StructuredGrid
 ]
-normals = ['x', 'y', '-z', (1,1,1), (3.3, 5.4, 0.8)]
+normals = ['x', 'y', '-z', (1, 1, 1), (3.3, 5.4, 0.8)]
 
 COMPOSITE = pyvista.MultiBlock(DATASETS, deep=True)
 
@@ -28,6 +23,7 @@ skip_py2_nobind = pytest.mark.skipif(int(sys.version[0]) < 3,
                                      reason="Python 2 doesn't support binding methods")
 
 skip_windows = pytest.mark.skipif(os.name == 'nt', reason="Flaky Windows tests")
+skip_mac = pytest.mark.skipif(platform.system() == 'Darwin', reason="Flaky Mac tests")
 
 
 @pytest.fixture(scope='module')
@@ -57,6 +53,7 @@ def test_clip_filter():
 
 
 @skip_windows
+@skip_mac
 def test_clip_by_scalars_filter():
     """This tests the clip filter on all datatypes available filters"""
     for i, dataset_in in enumerate(DATASETS):
@@ -245,7 +242,9 @@ def test_threshold():
     dataset = examples.load_uniform()
     with pytest.raises(ValueError):
         dataset.threshold([10, 100, 300])
-
+    with pytest.raises(ValueError):
+        DATASETS[0].threshold([10, 500], scalars='Spatial Point Data',
+                              all_scalars=True)
 
 def test_threshold_percent():
     percents = [25, 50, [18.0, 85.0], [19.0, 80.0], 0.70]
@@ -473,6 +472,7 @@ def test_glyph():
         assert isinstance(result, pyvista.PolyData)
     # Test different options for glyph filter
     sphere = pyvista.Sphere(radius=3.14)
+    sphere_sans_arrays = sphere.copy()
     # make cool swirly pattern
     vectors = np.vstack((np.sin(sphere.points[:, 0]),
                         np.cos(sphere.points[:, 1]),
@@ -487,6 +487,24 @@ def test_glyph():
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
     result = sphere.glyph(scale='arr', orient='Normals', factor=0.1, tolerance=0.1,
                           clamping=False, rng=[1, 1])
+    # passing one or more custom glyphs; many cases for full coverage
+    geoms = [pyvista.Sphere(), pyvista.Arrow(), pyvista.ParametricSuperToroid()]
+    indices = range(len(geoms))
+    result = sphere.glyph(geom=geoms[0])
+    result = sphere.glyph(geom=geoms, indices=indices, rng=(0, len(geoms)))
+    result = sphere.glyph(geom=geoms)
+    result = sphere.glyph(geom=geoms, scale='arr', orient='Normals', factor=0.1, tolerance=0.1)
+    result = sphere.glyph(geom=geoms[:1], indices=[None])
+    result = sphere_sans_arrays.glyph(geom=geoms)
+    with pytest.raises(TypeError):
+        # wrong type for the glyph
+        sphere.glyph(geom=pyvista.StructuredGrid())
+    with pytest.raises(TypeError):
+        # wrong type for the indices
+        sphere.glyph(geom=geoms, indices=set(indices))
+    with pytest.raises(ValueError):
+        # wrong length for the indices
+        sphere.glyph(geom=geoms, indices=indices[:-1])
 
 
 def test_split_and_connectivity():
@@ -708,9 +726,9 @@ def test_sample_over_line():
     assert isinstance(sampled_from_sphere, pyvista.PolyData)
 
 
-@pytest.mark.skipif(not HAS_MATPLOTLIB, reason="Requires matplotlib")
 def test_plot_over_line():
     """this requires matplotlib"""
+    pytest.importorskip('matplotlib')
     mesh = examples.load_uniform()
     # Make two points to construct the line between
     a = [mesh.bounds[0], mesh.bounds[2], mesh.bounds[4]]
@@ -854,20 +872,6 @@ def test_compute_cell_quality():
     with pytest.raises(KeyError):
         qual = mesh.compute_cell_quality(quality_measure='foo')
 
-
-def test_compute_gradients():
-    mesh = examples.load_random_hills()
-    grad = mesh.compute_gradient()
-    assert 'gradient' in grad.array_names
-    assert np.shape(grad['gradient'])[0] == mesh.n_points
-    assert np.shape(grad['gradient'])[1] == 3
-
-    with pytest.raises(TypeError):
-        grad = mesh.compute_gradient(object)
-
-    mesh.point_arrays.clear()
-    with pytest.raises(TypeError):
-        grad = mesh.compute_gradient()
 
 def test_compute_derivatives():
     mesh = examples.load_random_hills()

@@ -10,10 +10,6 @@ skip_no_vtk9 = pytest.mark.skipif(not vtk.vtkVersion().GetVTKMajorVersion() >= 9
 @skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_cell_picking():
-    with pytest.raises(TypeError, match="notebook"):
-        plotter = pyvista.Plotter(notebook=True)
-        plotter.enable_cell_picking()
-
     with pytest.raises(AttributeError, match="mesh"):
         plotter = pyvista.Plotter(off_screen=False)
         plotter.enable_cell_picking(mesh=None)
@@ -55,10 +51,6 @@ def test_cell_picking():
 @skip_no_vtk9
 @pytest.mark.skipif(NO_PLOTTING, reason="Requires system to support plotting")
 def test_point_picking():
-    with pytest.raises(TypeError, match="notebook"):
-        plotter = pyvista.Plotter(notebook=True)
-        plotter.enable_point_picking()
-
     sphere = pyvista.Sphere()
     for use_mesh in (False, True):
         plotter = pyvista.Plotter(

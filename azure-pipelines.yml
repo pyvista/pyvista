@@ -147,14 +147,20 @@ jobs:
         pip install -e .
         conda list
         which python
-        python -c "import pyvista; print(pyvista.Report())"
+        python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: Create Anaconda environment
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
         conda activate pyvista-vtk$(VTK.VERSION)
-        pytest -v --cov pyvista --cov-report html
-      displayName: 'Test Core API against VTK'
+        pytest -v --ignore=tests/plotting
+      displayName: 'Test Core API'
+
+    - script: |
+        source /usr/share/miniconda/etc/profile.d/conda.sh
+        conda activate pyvista-vtk$(VTK.VERSION)
+        pytest -v tests/plotting --cov-report html
+      displayName: 'Test Core Plotting API'
 
     - script: |
         source /usr/share/miniconda/etc/profile.d/conda.sh
@@ -190,11 +196,11 @@ jobs:
       $PYVISTA_VERSION = $(python -c "import io; exec(io.open('pyvista/_version.py').read()); print(__version__)") | Out-String
       echo "##vso[task.setvariable variable=PYVISTA_VERSION]$PYVISTA_VERSION"
     displayName: 'Store pip cache path and pyvista version'
-  - task: Cache@2
-    inputs:
-      key: 'PIP_WHEEL_CACHE | $(Agent.OS) | "$(python.version)" | "$(PYVISTA_VERSION)"'
-      path: $(PIP_CACHE_PATH)
-    displayName: Cache pip
+  # - task: Cache@2
+  #   inputs:
+  #     key: 'PIP_WHEEL_CACHE | $(Agent.OS) | "$(python.version)" | "$(PYVISTA_VERSION)"'
+  #     path: $(PIP_CACHE_PATH)
+  #   displayName: Cache pip
   - powershell: |
       Set-StrictMode -Version Latest
       $ErrorActionPreference = "Stop"
@@ -205,7 +211,7 @@ jobs:
   - script: |
       pip install wheel
       pip install .
-      python -c "import pyvista; print(pyvista.Report())"
+      python -c "import pyvista; print(pyvista.Report(gpu=False))"
     displayName: 'Install PyVista'
   - script: |
       pip install -r requirements_test.txt
@@ -239,16 +245,16 @@ jobs:
     - script: |
         python setup.py sdist
         python setup.py install
-        python -c "import pyvista; print(pyvista.Report())"
+        python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: 'Install PyVista'
 
     - script: |
         python -m pip install -r requirements_test.txt
-        python -m pip install pytest-azurepipelines pytest-xdist
+        python -m pip install pytest-azurepipelines
       displayName: 'Install test dependencies'
 
     - script: |
-        python -m pytest -v --cov pyvista --cov-report html --durations=0 -n 2
+        python -m pytest -v --cov pyvista --cov-report html --durations=0
       displayName: 'Run Tests'
 
   # don't run job on no-ci builds

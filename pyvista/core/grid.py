@@ -92,7 +92,7 @@ class RectilinearGrid(vtkRectilinearGrid, Grid):
             if isinstance(args[0], vtk.vtkRectilinearGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
             elif isinstance(args[0], np.ndarray):
                 self._from_arrays(args[0], None, None)
             else:
@@ -288,7 +288,7 @@ class UniformGrid(vtkImageData, Grid, UniformGridFilters):
             if isinstance(args[0], vtk.vtkImageData):
                 self.deep_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
             else:
                 arg0_is_valid = len(args[0]) == 3
                 self._from_specs(args[0])

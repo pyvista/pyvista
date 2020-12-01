@@ -16,7 +16,7 @@ from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
 from pyvista.utilities import abstract_class
-from pyvista.utilities.cells import CellArray, numpy_to_idarr
+from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, get_mixed_cells
 from .common import Common
 from .filters import PolyDataFilters, UnstructuredGridFilters
 from ..utilities.fileio import get_ext
@@ -157,7 +157,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
                 else:
                     self.shallow_copy(args[0])
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
             elif isinstance(args[0], (np.ndarray, list)):
                 if isinstance(args[0], list):
                     points = np.asarray(args[0])
@@ -506,7 +506,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                     self.shallow_copy(args[0])
 
             elif isinstance(args[0], (str, pathlib.Path)):
-                self._load_file(args[0])
+                self._from_file(args[0])
 
             elif isinstance(args[0], vtk.vtkStructuredGrid):
                 vtkappend = vtk.vtkAppendFilter()
@@ -518,7 +518,12 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                 itype = type(args[0])
                 raise TypeError(f'Cannot work with input type {itype}')
 
-        elif len(args) == 3 and VTK9:
+        #Cell dictionary creation
+        elif len(args) == 2 and isinstance(args[0], dict) and isinstance(args[1], np.ndarray):
+            self._from_cells_dict(args[0], args[1], deep)
+            self._check_for_consistency()
+
+        elif len(args) == 3: # and VTK9:
             arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
             arg2_is_arr = isinstance(args[2], np.ndarray)
@@ -547,7 +552,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
             if VTK9:
                 raise TypeError(err_msg + '`cells`, `cell_type`, `points`')
             else:
-                raise TypeError(err_msg + '`offset`, `cells`, `cell_type`, `points`')
+                raise TypeError(err_msg + '(`offset` optional), `cells`, `cell_type`, `points`')
 
     def __repr__(self):
         """Return the standard representation."""
@@ -556,6 +561,20 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def __str__(self):
         """Return the standard str representation."""
         return Common.__str__(self)
+
+    def _from_cells_dict(self, cells_dict, points, deep=True):
+        if points.ndim != 2 or points.shape[-1] != 3:
+            raise ValueError("Points array must be a [M, 3] array")
+
+        nr_points = points.shape[0]
+        if VTK9:
+            cell_types, cells = create_mixed_cells(cells_dict, nr_points)
+            self._from_arrays(None, cells, cell_types, points, deep=deep)
+        else:
+            cell_types, cells, offset = create_mixed_cells(cells_dict, nr_points)
+            self._from_arrays(offset, cells, cell_types, points, deep=deep)
+
+
 
     def _from_arrays(self, offset, cells, cell_type, points, deep=True):
         """Create VTK unstructured grid from numpy arrays.
@@ -613,6 +632,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         vtkcells = CellArray(cells, cell_type.size, deep)
         if cell_type.dtype != np.uint8:
             cell_type = cell_type.astype(np.uint8)
+        cell_type_np = cell_type
         cell_type = numpy_to_vtk(cell_type, deep=deep)
 
         # Convert points to vtkPoints object
@@ -626,6 +646,9 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
                               stacklevel=3)
             self.SetCells(cell_type, vtkcells)
         else:
+            if offset is None:
+                offset = generate_cell_offsets(cells, cell_type_np)
+
             self.SetCells(cell_type, numpy_to_idarr(offset), vtkcells)
 
     def _check_for_consistency(self):
@@ -655,10 +678,26 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
         return vtk_to_numpy(self.GetCells().GetData())
 
     @property
+    def cells_dict(self):
+        """Return a dictionary that contains all cells mapped from cell types.
+
+        This function returns a np.ndarray for each cell type in an ordered fashion.
+        Note that this function only works with element types of fixed sizes
+
+        Return
+        ------
+        cells_dict : dict
+            A dictionary mapping containing all cells of this unstructured grid.
+            Structure: vtk_enum_type (int) -> cells (np.ndarray)
+
+        """
+        return get_mixed_cells(self)
+
+    @property
     def cell_connectivity(self):
         """Return a the vtk cell connectivity as a numpy array."""
         carr = self.GetCells()
-        if hasattr(carr, 'GetConnectivityArray'):  # available >= VTK9
+        if VTK9:
             return vtk_to_numpy(carr.GetConnectivityArray())
         raise AttributeError('Install vtk>=9.0.0 for `cell_connectivity`\n'
                              'Otherwise, use the legacy `cells` method')
@@ -749,7 +788,7 @@ class UnstructuredGrid(vtkUnstructuredGrid, PointGrid, UnstructuredGridFilters):
     def offset(self):
         """Get cell locations Array."""
         carr = self.GetCells()
-        if hasattr(carr, 'GetOffsetsArray'):  # available >= VTK9
+        if VTK9:
             # This will be the number of cells + 1.
             return vtk_to_numpy(carr.GetOffsetsArray())
         else:  # this is no longer used in >= VTK9
@@ -801,7 +840,7 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
             if isinstance(args[0], vtk.vtkStructuredGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
-                self._load_file(args[0])
+                self._from_file(args[0])
 
         elif len(args) == 3:
             arg0_is_arr = isinstance(args[0], np.ndarray)
