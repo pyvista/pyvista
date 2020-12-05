@@ -47,7 +47,7 @@ readme_file = os.path.join(filepath, 'README.rst')
 setup(
     name=package_name,
     packages=[package_name, 'pyvista.examples', 'pyvista.core', 'pyvista.demos',
-              'pyvista.plotting', 'pyvista.utilities', 'pyvista.utilities.cell_type_helpers'],
+              'pyvista.plotting', 'pyvista.utilities'],
     version=__version__,
     description='Easier Pythonic interface to VTK',
     long_description=io_open(readme_file, encoding="utf-8").read(),
@@ -73,7 +73,8 @@ setup(
                                        'hexbeam.vtk', 'sphere.ply',
                                        'uniform.vtk', 'rectilinear.vtk',
                                        'globe.vtk', '2k_earth_daymap.jpg'],
-                  'pyvista.utilities.cell_type_helpers': ['vtk_cell_types.txt']},
+    },
+
     python_requires='>=3.6.*',
     install_requires=install_requires,
     extras_require={
