@@ -34,10 +34,10 @@ def scale_point(camera, point, invert=False):
     """
     if invert:
         mtx = vtk.vtkMatrix4x4()
-        mtx.DeepCopy(camera.model_transform_matrix)
+        mtx.DeepCopy(camera.GetModelTransformMatrix())
         mtx.Invert()
     else:
-        mtx = camera.model_transform_matrix
+        mtx = camera.GetModelTransformMatrix()
     scaled = mtx.MultiplyDoublePoint((point[0], point[1], point[2], 0.0))
     return (scaled[0], scaled[1], scaled[2])
 
@@ -1232,7 +1232,7 @@ class Renderer(vtkRenderer):
         # Update the camera's coordinate system
         transform = vtk.vtkTransform()
         transform.Scale(xscale, yscale, zscale)
-        self.camera.model_transform_matrix = transform.GetMatrix()
+        self.camera.SetModelTransformMatrix(transform.GetMatrix())
         self.parent.render()
         if reset_camera:
             self.update_bounds_axes()

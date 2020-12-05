@@ -587,7 +587,7 @@ def export_plotter_vtkjs(plotter, filename, compress_arrays=False):
         write_data_set('', val, output_dir, None, new_name=key,
                        compress=doCompressArrays)
 
-    cameraClippingRange = plotter.camera.get_clipping_range()
+    cameraClippingRange = plotter.camera.clipping_range
 
     sceneDescription = {
         "fetchGzip": doCompressArrays,

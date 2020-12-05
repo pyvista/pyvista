@@ -1,5 +1,6 @@
 """Module containing pyvista implementation of vtkCamera."""
 
+import numpy as np
 import vtk
 
 
@@ -35,11 +36,16 @@ class Camera(vtk.vtkCamera):
     @property
     def model_transform_matrix(self):
         """Model transformation matrix."""
-        return self.GetModelTransformMatrix()
+        vtk_matrix = self.GetModelTransformMatrix()
+        matrix = np.empty((4, 4))
+        vtk_matrix.DeepCopy(matrix.ravel(), vtk_matrix)
+        return matrix
 
     @model_transform_matrix.setter
     def model_transform_matrix(self, matrix):
-        self.SetModelTransformMatrix(matrix)
+        vtk_matrix = vtk.vtkMatrix4x4()
+        vtk_matrix.DeepCopy(matrix.ravel())
+        self.SetModelTransformMatrix(vtk_matrix)
 
     @property
     def is_parallel_projection(self):
@@ -94,23 +100,16 @@ class Camera(vtk.vtkCamera):
         """Reset the camera to use perspective projection."""
         self.enable_parallel_projection(False)
 
-    def set_clipping_range(self, near_point, far_point):
-        """Set clipping range along the direction of projection.
-
-        Parameters
-        ----------
-        near_point : tuple(float)
-            Length 3 tuple of the near point coordinates.
-
-        far_point : tuple(float)
-            Length 3 tuple of the near far coordinates.
-
-        """
-        self.SetClippingRange(near_point, far_point)
-
-    def get_clipping_range(self):
-        """Get clipping range."""
+    @property
+    def clipping_range(self):
+        """Clipping range."""
         return self.GetClippingRange()
+
+    @clipping_range.setter
+    def clipping_range(self, points):
+        if points[0] > points[1]:
+            raise ValueError(f'Near point should lower than far point.')
+        self.SetClippingRange(points[0], points[1])
 
     def __del__(self):
         """Delete the camera."""
