@@ -4125,8 +4125,11 @@ class Plotter(BasePlotter):
         self._on_first_render_request(cpos)
 
         # Render
-        self.render()  # Replaced by below.  May no longer be necessary
-        # self.update(force_redraw=False)  # For Windows issues. Resolves #186
+        if os.name == 'nt':
+            # For Windows issues. Resolves #186 and #1018
+            self.update(force_redraw=False)
+        else:
+            self.render()
 
         # This has to be after the first render for some reason
         if title is None:
