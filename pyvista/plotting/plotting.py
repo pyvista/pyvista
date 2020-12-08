@@ -4125,7 +4125,7 @@ class Plotter(BasePlotter):
         self._on_first_render_request(cpos)
 
         # Render
-        if os.name == 'nt':
+        if os.name == 'nt' and not use_ipyvtk:
             # For Windows issues. Resolves #186 and #1018
             self.update(force_redraw=False)
         else:
