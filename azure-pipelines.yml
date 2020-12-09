@@ -238,8 +238,8 @@ jobs:
       displayName: Install Python
 
     - script: |
-        python setup.py sdist
-        pip install dist/pyvista*.whl
+        pip install wheel
+        pip install -e .
         python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: 'Install PyVista'
 
