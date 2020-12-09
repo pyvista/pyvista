@@ -4125,9 +4125,9 @@ class Plotter(BasePlotter):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.update_style()
+                self.iren.Initialize()
                 if not interactive_update:
                     self.iren.Start()
-                self.iren.Initialize()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
