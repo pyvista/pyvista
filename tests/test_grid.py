@@ -82,7 +82,10 @@ def test_init_from_numpy_arrays():
     )
 
     points = np.vstack((cell1, cell2))
-    grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
+    if VTK9:
+        grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+    else:
+        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
 
     assert grid.number_of_points == 16
     assert grid.number_of_cells == 2
