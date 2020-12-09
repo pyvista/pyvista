@@ -242,9 +242,13 @@ jobs:
     - script: .ci/macos-install-python.sh '$(python.version)'
       displayName: Install Python
 
+    - script: |  # resolve numpy 1.20 dependancy for Python 3.6
+      pip install numpy==1.19.4
+      condition: eq(variables['python.version'], '3.6')
+
     - script: |
         python setup.py sdist
-        python setup.py install
+        pip install dist/pyvista*.whl
         python -c "import pyvista; print(pyvista.Report(gpu=False))"
       displayName: 'Install PyVista'
 
