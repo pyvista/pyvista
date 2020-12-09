@@ -47,6 +47,50 @@ def test_init_from_unstructured(hexbeam):
     assert not np.any(grid.points == hexbeam.points)
 
 
+def test_init_from_numpy_arrays():
+    offset = np.array([0, 9])
+    cells = [
+        [8, 0, 1, 2, 3, 4, 5, 6, 7],
+        [8, 8, 9, 10, 11, 12, 13, 14, 15]
+    ]
+    cells = np.array(cells).ravel()
+    cell_type = np.array([vtk.VTK_HEXAHEDRON, vtk.VTK_HEXAHEDRON])
+    cell1 = np.array(
+        [
+            [0, 0, 0],
+            [1, 0, 0],
+            [1, 1, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            [1, 0, 1],
+            [1, 1, 1],
+            [0, 1, 1],
+        ]
+    )
+
+    cell2 = np.array(
+        [
+            [0, 0, 2],
+            [1, 0, 2],
+            [1, 1, 2],
+            [0, 1, 2],
+            [0, 0, 3],
+            [1, 0, 3],
+            [1, 1, 3],
+            [0, 1, 3],
+        ]
+    )
+
+    points = np.vstack((cell1, cell2))
+    if VTK9:
+        grid = pyvista.UnstructuredGrid(cells, cell_type, points)
+    else:
+        grid = pyvista.UnstructuredGrid(offset, cells, cell_type, points)
+
+    assert grid.number_of_points == 16
+    assert grid.number_of_cells == 2
+
+
 def test_init_bad_input():
     with pytest.raises(TypeError):
         unstruct_grid = pyvista.UnstructuredGrid(np.array(1))
