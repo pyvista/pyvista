@@ -4125,8 +4125,15 @@ class Plotter(BasePlotter):
         self._on_first_render_request(cpos)
 
         # Render
-        self.render()  # Replaced by below.  May no longer be necessary
-        # self.update(force_redraw=False)  # For Windows issues. Resolves #186
+        # For Windows issues. Resolves #186 and #1018
+        if os.name == 'nt' and not pyvista.VERY_FIRST_RENDER:
+            if interactive and (not self.off_screen):
+                self.iren.Start()
+        pyvista.VERY_FIRST_RENDER = False
+        # for some reason iren needs to start before rendering on
+        # Windows (but not after the very first render window
+
+        self.render()
 
         # This has to be after the first render for some reason
         if title is None:
@@ -4147,9 +4154,9 @@ class Plotter(BasePlotter):
             try:  # interrupts will be caught here
                 log.debug('Starting iren')
                 self.update_style()
-                self.iren.Initialize()
                 if not interactive_update:
                     self.iren.Start()
+                self.iren.Initialize()
             except KeyboardInterrupt:
                 log.debug('KeyboardInterrupt')
                 self.close()
