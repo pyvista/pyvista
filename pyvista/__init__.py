@@ -112,3 +112,5 @@ except KeyError:
 
 # Set a parameter to control default print format for floats
 FLOAT_FORMAT = "{:.3e}"
+
+VERY_FIRST_RENDER = [True]
