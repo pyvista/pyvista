@@ -28,7 +28,7 @@ if not os.path.exists(pyvista.FIGURE_PATH):
 # necessary when building the sphinx gallery
 pyvista.BUILDING_GALLERY = True
 
-# SG warnins
+# SG warnings
 import warnings
 warnings.filterwarnings(
     "ignore",
