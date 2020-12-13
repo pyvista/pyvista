@@ -1,8 +1,14 @@
 import pytest
 import pyvista
 import vtk
+from pyvista.plotting import system_supports_plotting
 
 
+skip_no_plotting = pytest.mark.skipif(not system_supports_plotting(),
+                                      reason="Test requires system to support plotting")
+
+
+@skip_no_plotting
 def test_interactive_update():
     # Regression test for #1053
     p = pyvista.Plotter()
