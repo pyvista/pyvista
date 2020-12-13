@@ -1,5 +1,5 @@
-import pyvista
 import pytest
+import pyvista
 import vtk
 
 
