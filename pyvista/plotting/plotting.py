@@ -5,6 +5,7 @@ import collections.abc
 from functools import partial
 import logging
 import os
+import textwrap
 import time
 import warnings
 import weakref
@@ -4101,7 +4102,16 @@ class Plotter(BasePlotter):
         self._before_close_callback = kwargs.pop('before_close_callback', None)
         assert_empty_kwargs(**kwargs)
 
-        if auto_close is None:
+        if interactive_update and auto_close is None:
+            auto_close = False
+        elif interactive_update and auto_close:
+            warnings.warn(textwrap.dedent("""\
+                The plotter will close immediately automatically since ``auto_close=True``.
+                Either, do not specify ``auto_close``, or set it to ``False`` if you want to
+                interact with the plotter interactively.\
+                """)
+            )
+        elif auto_close is None:
             auto_close = rcParams['auto_close']
 
         if use_ipyvtk is None:
