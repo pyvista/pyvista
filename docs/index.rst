@@ -255,6 +255,7 @@ Extras
    extras/building_vtk
    extras/docker
    extras/developer_notes
+   extras/pyinstaller
 
 Project Index
 *************
