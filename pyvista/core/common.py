@@ -1035,3 +1035,7 @@ class Common(DataSetFilters, DataObject):
         locator.BuildLocator()
         closest_cells = np.array([locator.FindCell(node) for node in point])
         return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
+
+    def copy_attributes(self, dataset):
+        """Copy the data attributes of the input dataset."""
+        self.CopyAttributes(dataset)

@@ -98,6 +98,10 @@ class PointSet(Common):
         if not inplace:
             return target
 
+    def copy_structure(self, dataset):
+        """Copy the geometric and topological structure of an input dataset."""
+        self.CopyStructure(dataset)
+
 
 class PolyData(vtkPolyData, PointSet, PolyDataFilters):
     """Extend the functionality of a vtk.vtkPolyData object.
