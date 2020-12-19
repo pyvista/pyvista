@@ -233,6 +233,11 @@ notfound_context = {
 notfound_no_urls_prefix = True
 
 
+# Copy button customization ---------------------------------------------------
+# exclude traditional Python prompts from the copied code
+copybutton_prompt_text = ">>> "
+
+
 # -- Autosummary options
 from sphinx.ext.autosummary import Autosummary
 from sphinx.ext.autosummary import get_documenter
