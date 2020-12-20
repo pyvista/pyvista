@@ -483,6 +483,7 @@ def wrap(dataset):
 
     """
     wrappers = {
+        'vtkExplicitStructuredGrid': pyvista.ExplicitStructuredGrid,
         'vtkUnstructuredGrid': pyvista.UnstructuredGrid,
         'vtkRectilinearGrid': pyvista.RectilinearGrid,
         'vtkStructuredGrid': pyvista.StructuredGrid,

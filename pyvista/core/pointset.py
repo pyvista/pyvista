@@ -11,14 +11,15 @@ from vtk import (VTK_HEXAHEDRON, VTK_PYRAMID, VTK_QUAD,
                  VTK_QUADRATIC_QUAD, VTK_QUADRATIC_TETRA,
                  VTK_QUADRATIC_TRIANGLE, VTK_QUADRATIC_WEDGE, VTK_TETRA,
                  VTK_TRIANGLE, VTK_WEDGE, vtkPolyData, vtkStructuredGrid,
-                 vtkUnstructuredGrid)
+                 vtkUnstructuredGrid, vtkExplicitStructuredGrid)
 from vtk.util.numpy_support import (numpy_to_vtk, vtk_to_numpy)
 
 import pyvista
 from pyvista.utilities import abstract_class
 from pyvista.utilities.cells import CellArray, numpy_to_idarr, generate_cell_offsets, create_mixed_cells, get_mixed_cells
 from .common import Common
-from .filters import PolyDataFilters, UnstructuredGridFilters
+from .filters import (PolyDataFilters, UnstructuredGridFilters,
+                      ExplicitStructuredGridFilters)
 from ..utilities.fileio import get_ext
 
 log = logging.getLogger(__name__)
@@ -967,3 +968,103 @@ class StructuredGrid(vtkStructuredGrid, PointGrid):
         # have no effect
 
         self.cell_arrays[vtk.vtkDataSetAttributes.GhostArrayName()] = ghost_cells
+
+
+class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
+                             ExplicitStructuredGridFilters):
+    """Extends the functionality of a vtk.vtkExplicitStructuredGrid object.
+
+    Can be initialized by the following:
+
+    - Creating an empty grid
+    - From a vtk.vtkExplicitStructuredGrid object
+    - From a file
+    - From dims, points, and cell arrays
+
+    """
+
+    _READERS = {'.vtu': vtk.vtkXMLUnstructuredGridReader,
+                '.vtk': vtk.vtkUnstructuredGridReader}
+    _WRITERS = {'.vtu': vtk.vtkXMLUnstructuredGridWriter,
+                '.vtk': vtk.vtkUnstructuredGridWriter}
+
+    def __init__(self, *args, **kwargs):
+        """Initializes the explicit structured grid."""
+        super().__init__()
+        n = len(args)
+        if n == 1:
+            if isinstance(args[0], vtk.vtkExplicitStructuredGrid):
+                self.deep_copy(args[0])
+            elif isinstance(args[0], str):
+                self.GlobalWarningDisplayOff()  # see self.hide_cells()
+                grid = UnstructuredGrid(args[0])
+                grid = grid.explicit_structured_grid()
+                self.deep_copy(grid)
+        elif n == 3:
+            dims, points, cells = args
+            n_cells = np.prod(dims)
+            vtk_points = pyvista.vtk_points(points)
+            vtk_cells = CellArray(cells, n_cells)
+            self.SetDimensions(dims)
+            self.SetPoints(vtk_points)
+            self.SetCells(vtk_cells)
+
+    def __repr__(self):
+        """Returns the standard representation."""
+        return Common.__repr__(self)
+
+    def __str__(self):
+        """Returns the standard str representation."""
+        return Common.__str__(self)
+
+    def save(self, filename, binary=True):
+        """Saves this VTK object to file.
+
+        Parameters
+        ----------
+        filename : str, pathlib.Path
+            Filename of output file. Writer type is inferred from the
+            extension of the filename.
+        binary : bool, optional
+            If True, write as binary, else ASCII.
+
+        Notes
+        -----
+        Binary files write much faster than ASCII and have a smaller file size.
+
+        """
+        grid = self.unstructured_grid()
+        grid.save(filename, binary)
+
+    def hide_cells(self, ind):
+        """Hides cells without deleting them.
+
+        Hides cells by setting the ghost_cells array to HIDDEN_CELL.
+
+        Parameters
+        ----------
+        ind : iterable
+            List or array of cell indices to be hidden. The array can also be
+            a boolean array of the same size as the number of cells.
+
+        """
+        # Attention:
+        #
+        # VTK is producing the following error during the cell blanking of
+        # explicit structured grid:
+        #
+        #   2020-12-20 18:04:08.844 (   0.727s) [                ]
+        #   vtkPolyData.cxx:1068   ERR| vtkPolyData (0000021F5F0E44E0):
+        #   Invalid cell type: 0
+        #
+        # self.GlobalWarningDisplayOff() is used provisionally to overcome the
+        # problem.
+        #
+        # See <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-
+        # explicit-structured-grid/4863>
+        self.GlobalWarningDisplayOff()
+        ind = numpy_to_idarr(ind)
+        ghost_cells = np.zeros(self.n_cells, np.uint8)
+        ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
+        array_name = vtk.vtkDataSetAttributes.GhostArrayName()
+        self.cell_arrays[array_name] = ghost_cells
