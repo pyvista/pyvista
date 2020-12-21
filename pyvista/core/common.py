@@ -235,6 +235,11 @@ class DataObject:
         """Get address of the underlying C++ object in format 'Addr=%p'."""
         return self.GetInformation().GetAddressAsString("")
 
+    @property
+    def actual_memory_size(self):
+        """Returns the actual size of the data in kibibytes (1024 bytes)."""
+        return self.GetActualMemorySize()
+
 
 @abstract_class
 class Common(DataSetFilters, DataObject):
