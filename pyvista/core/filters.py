@@ -2614,6 +2614,34 @@ class DataSetFilters:
         if isinstance(dataset, vtk.vtkPolyData):
             return output.extract_surface()
 
+    def reflect(dataset, plane, copy=False, center=0):
+        """Reflects a dataset across a plane.
+
+        Parameters
+        ----------
+        plane : str
+            Reflection plane: xmin, ymin, zmin, xmax, ymax, zmax, x, y, or z.
+        copy : bool
+            If True, copy the input geometry to the output.
+        center : float
+            If the reflection plane is set to x, y or z, this variable is use
+            to set the position of the plane.
+
+        """
+        reflection_plane = {
+            'xmin': 0, 'ymin': 1, 'zmin': 2,
+            'xmax': 3, 'ymax': 4, 'zmax': 5,
+            'x': 6, 'y': 7, 'z': 8,
+        }
+        alg = vtk.vtkReflectionFilter()
+        alg.SetInputDataObject(dataset)
+        alg.SetPlane(reflection_plane[plane])
+        alg.SetCopyInput(copy)
+        alg.SetCenter(center)
+        alg.Update()
+        return _get_output(alg)
+
+
 @abstract_class
 class CompositeFilters:
     """An internal class to manage filtes/algorithms for composite datasets."""
@@ -4635,46 +4663,16 @@ class ExplicitStructuredGridFilters(DataSetFilters):
         return _get_output(alg)
 
     def extract_subset(dataset, voi):
-        """Extract a piece of explicit structured grid changing its extents."""
-        alg = vtk.vtkExplicitStructuredGridCrop()
-        alg.SetInputDataObject(dataset)
-        alg.SetOutputWholeExtent(*voi)
-        alg.Update()
-        return _get_output(alg)
-
-    def extract_surface(dataset, pass_point_ids=True, pass_cell_ids=True):
-        """Create a surface (PolyData) from an explicit structured grid.
+        """Extract a piece of explicit structured grid changing its extents.
 
         Parameters
         ----------
-        pass_point_ids : bool, optional
-            Adds a point array "vtkOriginalPointIds" that idenfities which
-            original points these surface points correspond to.
-
-        pass_cell_ids : bool, optional
-            Adds a cell array "vtkOriginalPointIds" that idenfities which
-            original cells these surface cells correspond to.
-
-        Return
-        ------
-        pyvista.PolyData
-            Surface mesh of the grid
+        voi : tuple(int)
+            Specify (xmin, xmax, ymin, ymax, zmin, zmax) to extract.
 
         """
-        # Attention
-        #
-        # vtkExplicitStructuredGridSurfaceFilter is producing the following
-        # error:
-        #
-        #   Windows fatal exception: access violation
-        #
-        # See <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-
-        # explicit-structured-grid/4863>
-        alg = vtk.vtkExplicitStructuredGridSurfaceFilter()
+        alg = vtk.vtkExplicitStructuredGridCrop()
         alg.SetInputDataObject(dataset)
-        if pass_point_ids:
-            alg.PassThroughCellIdsOn()
-        if pass_cell_ids:
-            alg.PassThroughPointIdsOn()
+        alg.SetOutputWholeExtent(*voi)
         alg.Update()
         return _get_output(alg)
