@@ -981,6 +981,51 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
     - From a file
     - From dims, points, and cell arrays
 
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> import pyvista as pv
+    >>>
+    >>> corners = '''
+    >>> 0 100 100 200 200 300 300 400
+    >>> 0 100 100 200 200 300 300 400
+    >>> 0 100 100 200 200 300 300 400
+    >>> 0 100 100 200 200 300 300 400
+    >>> 0 100 100 200 200 300 300 400
+    >>> 0 100 100 200 200 300 300 400
+    >>> 0 100 100 200 200 300 300 400
+    >>> 0 100 100 200 200 300 300 400
+    >>>
+    >>> 0 0 0 0 0 0 0 0
+    >>> 200 200 200 200 200 200 200 200
+    >>> 200 200 200 200 200 200 200 200
+    >>> 400 400 400 400 400 400 400 400
+    >>> 0 0 0 0 0 0 0 0
+    >>> 200 200 200 200 200 200 200 200
+    >>> 200 200 200 200 200 200 200 200
+    >>> 400 400 400 400 400 400 400 400
+    >>>
+    >>> 2000 2001 2001 2002 2002 2003 2003 2004
+    >>> 2000 2001 2001 2002 2002 2003 2003 2004
+    >>> 2000 2001 2001 2002 2002 2003 2003 2004
+    >>> 2000 2001 2001 2002 2002 2003 2003 2004
+    >>> 2010 2011 2011 2012 2012 2013 2013 2014
+    >>> 2010 2011 2011 2012 2012 2013 2013 2014
+    >>> 2010 2011 2011 2012 2012 2013 2013 2014
+    >>> 2010 2011 2011 2012 2012 2013 2013 2014
+    >>> '''
+    >>> corners = corners.split()
+    >>>
+    >>> points = np.asarray(corners, np.int)
+    >>> points = points.reshape((3, -1))
+    >>> points = points.transpose()
+    >>>
+    >>> dims = (5, 3, 2)
+    >>> grid = pv.ExplicitStructuredGrid(dims, points)
+    >>> grid.hide_cells((0, 7))
+    >>> grid.plot(color='w', show_edges=True)
+
     """
 
     _READERS = {'.vtu': vtk.vtkXMLUnstructuredGridReader,
@@ -1000,14 +1045,11 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
                 grid = UnstructuredGrid(args[0])
                 grid = grid.explicit_structured_grid()
                 self.deep_copy(grid)
-        elif n == 3:
-            dims, points, cells = args
-            n_cells = np.prod(dims)
-            vtk_points = pyvista.vtk_points(points)
-            vtk_cells = CellArray(cells, n_cells)
-            self.SetDimensions(dims)
-            self.SetPoints(vtk_points)
-            self.SetCells(vtk_cells)
+        elif n == 2:
+            arg0_is_tpl = isinstance(args[0], tuple)
+            arg1_is_arr = isinstance(args[1], np.ndarray)
+            if all([arg0_is_tpl, arg1_is_arr]):
+                self._from_arrays(args[0], args[1])
 
     def __repr__(self):
         """Returns the standard representation."""
@@ -1016,6 +1058,38 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
     def __str__(self):
         """Returns the standard str representation."""
         return Common.__str__(self)
+
+    def _from_arrays(self, dims, points):
+        """Create VTK unstructured grid from numpy arrays.
+
+        Parameters
+        ----------
+        dims : tuple
+            Grid dimensions.
+        points : np.ndarray
+            Numpy array containing point locations.
+
+        """
+        dims = np.asarray(dims)-1
+        ncells = np.prod(dims)
+        cells = 8*np.ones((ncells, 9), np.int)
+        dims2 = 2*dims
+        connectivity = np.asarray([[0, 1, 1, 0, 0, 1, 1, 0],
+                                   [0, 0, 1, 1, 0, 0, 1, 1],
+                                   [0, 0, 0, 0, 1, 1, 1, 1]])
+        for c in range(ncells):
+            i, j, k = np.unravel_index(c, dims, order='F')
+            coord = (2*i + connectivity[0],
+                     2*j + connectivity[1],
+                     2*k + connectivity[2])
+            pinds = np.ravel_multi_index(coord, dims2, order='F')
+            cells[c, 1:] = pinds
+        cells = cells.flatten()
+        points = pyvista.vtk_points(points)
+        cells = CellArray(cells, ncells)
+        self.SetDimensions(dims+1)
+        self.SetPoints(points)
+        self.SetCells(cells)
 
     def save(self, filename, binary=True):
         """Saves this VTK object to file.
