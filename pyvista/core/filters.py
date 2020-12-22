@@ -2627,6 +2627,10 @@ class DataSetFilters:
             If the reflection plane is set to x, y or z, this variable is use
             to set the position of the plane.
 
+        Returns
+        -------
+        UnstructuredGrid
+
         """
         reflection_plane = {
             'xmin': 0, 'ymin': 1, 'zmin': 2,
@@ -4544,15 +4548,30 @@ class UnstructuredGridFilters(DataSetFilters):
                                                           bound=bound,
                                                           progress_bar=progress_bar)
 
-    def explicit_structured_grid(dataset):
+    def explicit_structured_grid(dataset, dims=None):
         """Converts an unstructured grid into an explicit structured grid."""
+        s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
+        s2 = dataset.cell_arrays.keys()
+        if not s1.issubset(s2):
+            ni, nj, nk = dims
+            ii = np.arange(ni-1)
+            jj = np.arange(nj-1)
+            kk = np.arange(nk-1)
+            jj, kk, ii = np.meshgrid(jj, kk, ii)
+            dataset['BLOCK_I'] = ii.flatten()
+            dataset['BLOCK_J'] = jj.flatten()
+            dataset['BLOCK_K'] = kk.flatten()
         alg = vtk.vtkUnstructuredGridToExplicitStructuredGrid()
         alg.SetInputData(dataset)
         alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
         alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
         alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
         alg.Update()
-        return _get_output(alg)
+        output = _get_output(alg)
+        s1.add('ConnectivityFlags')
+        for k in s1:
+            del output.cell_arrays[k]
+        return output
 
 
 @abstract_class
