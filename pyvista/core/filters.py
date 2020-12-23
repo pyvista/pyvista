@@ -4561,7 +4561,22 @@ class UnstructuredGridFilters(DataSetFilters):
             dataset['BLOCK_I'] = ii.flatten()
             dataset['BLOCK_J'] = jj.flatten()
             dataset['BLOCK_K'] = kk.flatten()
+        # Attention:
+        #
+        # VTK is producing the following error during the cell blanking of
+        # explicit structured grid:
+        #
+        #   2020-12-20 18:04:08.844 (   0.727s) [                ]
+        #   vtkPolyData.cxx:1068   ERR| vtkPolyData (0000021F5F0E44E0):
+        #   Invalid cell type: 0
+        #
+        # self.GlobalWarningDisplayOff() is used provisionally to overcome the
+        # problem.
+        #
+        # See <https://discourse.vtk.org/t/error-during-the-cell-blanking-of-
+        # explicit-structured-grid/4863>
         alg = vtk.vtkUnstructuredGridToExplicitStructuredGrid()
+        alg.GlobalWarningDisplayOff()
         alg.SetInputData(dataset)
         alg.SetInputArrayToProcess(0, 0, 0, 1, 'BLOCK_I')
         alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
