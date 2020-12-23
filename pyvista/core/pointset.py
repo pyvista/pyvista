@@ -1041,7 +1041,6 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
             if isinstance(args[0], vtk.vtkExplicitStructuredGrid):
                 self.deep_copy(args[0])
             elif isinstance(args[0], str):
-                self.GlobalWarningDisplayOff()  # see self.hide_cells()
                 grid = UnstructuredGrid(args[0])
                 grid = grid.explicit_structured_grid()
                 self.deep_copy(grid)
@@ -1151,3 +1150,15 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         ghost_cells[ind] = vtk.vtkDataSetAttributes.HIDDENCELL
         array_name = vtk.vtkDataSetAttributes.GhostArrayName()
         self.cell_arrays[array_name] = ghost_cells
+
+    @property
+    def visible_bounds(self):
+        """Return the bounding box of the visible grid cells."""
+        array_name = vtk.vtkDataSetAttributes.GhostArrayName()
+        if array_name in self.cell_arrays.keys():
+            array = self.cell_arrays[array_name]
+            grid = self.extract_cells(array == 0)
+            bounds = grid.GetBounds()
+        else:
+            bounds = self.GetBounds()
+        return list(bounds)
