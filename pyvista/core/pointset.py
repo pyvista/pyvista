@@ -1091,6 +1091,15 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         self.SetPoints(points)
         self.SetCells(cells)
 
+    @property
+    def dimensions(self):
+        """Returns the grid dimensions."""
+        xmin, xmax, ymin, ymax, zmin, zmax = self.extent
+        nx = xmax - xmin + 1
+        ny = ymax - ymin + 1
+        nz = zmax - zmin + 1
+        return (nx, ny, nz)
+
     def save(self, filename, binary=True):
         """Saves this VTK object to file.
 
