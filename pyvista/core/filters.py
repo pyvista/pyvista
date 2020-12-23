@@ -4567,11 +4567,7 @@ class UnstructuredGridFilters(DataSetFilters):
         alg.SetInputArrayToProcess(1, 0, 0, 1, 'BLOCK_J')
         alg.SetInputArrayToProcess(2, 0, 0, 1, 'BLOCK_K')
         alg.Update()
-        output = _get_output(alg)
-        s1.add('ConnectivityFlags')
-        for k in s1:
-            del output.cell_arrays[k]
-        return output
+        return _get_output(alg)
 
 
 @abstract_class
