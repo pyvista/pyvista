@@ -4706,3 +4706,29 @@ class ExplicitStructuredGridFilters(DataSetFilters):
         alg.SetOutputWholeExtent(*voi)
         alg.Update()
         return _get_output(alg)
+
+    def extract_neighbors(dataset, ind):
+        """Extracts the topological cell neighbors.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        subgrid : pyvista.UnstructuredGrid
+            Subselected grid.
+
+        """
+        coord = dataset.cell_coords(ind)
+        coord = np.asarray(coord)
+        indices = []
+        for x in [(-1, 0, 0), (1, 0, 0),
+                  (0, -1, 0), (0, 1, 0),
+                  (0, 0, -1), (0, 0, 1)]:
+            n = coord + x
+            i = dataset.cell_id(n)
+            indices.append(i)
+        subgrid = dataset.extract_cells(indices)
+        return subgrid
