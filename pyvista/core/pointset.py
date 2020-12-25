@@ -1177,3 +1177,20 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         nx, ny, nz = self._compute_dimensions()
         coords = np.unravel_index(ind, (nx-1, ny-1, nz-1), order='F')
         return coords
+
+    def cell_n_points(self, ind):
+        """Returns the number of points in a cell."""
+        return self.GetCell(ind).GetPoints().GetNumberOfPoints()
+
+    def cell_points(self, ind):
+        """Returns the points in a cell."""
+        points = self.GetCell(ind).GetPoints().GetData()
+        return vtk_to_numpy(points)
+
+    def cell_bounds(self, ind):
+        """Returns the bounds of a cell."""
+        return self.GetCell(ind).GetBounds()
+
+    def cell_type(self, ind):
+        """Returns the type of a cell."""
+        return self.GetCellType(ind)
