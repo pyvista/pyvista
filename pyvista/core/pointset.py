@@ -1090,8 +1090,8 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         self.SetPoints(points)
         self.SetCells(cells)
 
-    def _compute_dimensions(self):
-        """Computes the grid dimensions."""
+    def _dimensions(self):
+        """Returns the grid dimensions."""
         xmin, xmax, ymin, ymax, zmin, zmax = self.extent
         nx = xmax - xmin + 1
         ny = ymax - ymin + 1
@@ -1101,7 +1101,7 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
     @property
     def dimensions(self):
         """Returns the grid dimensions."""
-        return self._compute_dimensions()
+        return self._dimensions()
 
     def save(self, filename, binary=True):
         """Saves this VTK object to file.
@@ -1167,16 +1167,25 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
             bounds = self.GetBounds()
         return list(bounds)
 
-    def compute_cell_id(self, coords):
-        """Computes the cell ID."""
-        i, j, k = coords
-        return self.ComputeCellId(i, j, k, False)
+    def cell_id(self, coord):
+        """Returns the cell ID."""
+        # vtkExplicitStructuredGrid has the method ComputeCellId, but it's
+        # producing unwanted values.
+        nx, ny, nz = self._dimensions()
+        dims = (nx-1, ny-1, nz-1)
+        try:
+            ind = np.ravel_multi_index(coord, dims, order='F')
+        except ValueError:
+            return -1
+        else:
+            return ind
 
-    def compute_cell_coords(self, ind):
-        """Computes the cell structured coordinates."""
-        nx, ny, nz = self._compute_dimensions()
-        coords = np.unravel_index(ind, (nx-1, ny-1, nz-1), order='F')
-        return coords
+    def cell_coords(self, ind):
+        """Returns the cell structured coordinates."""
+        nx, ny, nz = self._dimensions()
+        shape = (nx-1, ny-1, nz-1)
+        coord = np.unravel_index(ind, shape, order='F')
+        return coord
 
     def cell_n_points(self, ind):
         """Returns the number of points in a cell."""
