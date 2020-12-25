@@ -1090,14 +1090,18 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         self.SetPoints(points)
         self.SetCells(cells)
 
-    @property
-    def dimensions(self):
-        """Returns the grid dimensions."""
+    def _compute_dimensions(self):
+        """Computes the grid dimensions."""
         xmin, xmax, ymin, ymax, zmin, zmax = self.extent
         nx = xmax - xmin + 1
         ny = ymax - ymin + 1
         nz = zmax - zmin + 1
         return (nx, ny, nz)
+
+    @property
+    def dimensions(self):
+        """Returns the grid dimensions."""
+        return self._compute_dimensions()
 
     def save(self, filename, binary=True):
         """Saves this VTK object to file.
@@ -1162,3 +1166,14 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         else:
             bounds = self.GetBounds()
         return list(bounds)
+
+    def compute_cell_id(self, coords):
+        """Computes the cell ID."""
+        i, j, k = coords
+        return self.ComputeCellId(i, j, k, False)
+
+    def compute_cell_coords(self, ind):
+        """Computes the cell structured coordinates."""
+        nx, ny, nz = self._compute_dimensions()
+        coords = np.unravel_index(ind, (nx-1, ny-1, nz-1), order='F')
+        return coords
