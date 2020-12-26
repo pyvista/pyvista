@@ -155,6 +155,70 @@ class DataSetFilters:
         else:
             return result
 
+    def cut_like_bread(dataset, normal, origins):
+        """
+        Cut up a grid into bread-like pieces with parallel cut planes defined by a normal and origins.
+
+        Uses the clip filter, recursively subdividing the domain so that it gets smaller and smaller.
+
+        Parameters
+        ----------
+        normal : tuple(float) or str
+            Length 3 tuple for the normal vector direction. Can also be
+            specified as a string conventional direction such as ``'x'`` for
+            ``(1,0,0)`` or ``'-x'`` for ``(-1,0,0)``, etc.
+
+        origins : list or iterable of tuple(float)
+            A list of ``(x,y,z)`` coordinates of the planes on which the clip
+            occurs.
+
+        Returns
+        -------
+        mesh : pyvista.MultiBlock
+            A MultiBlock dataset where the blocks are the pieces of the grid.
+        """
+
+        def _split_grid_recursive(grid, normal, origins, leaves=None):
+
+            def _split(grid, normal, origin):
+                a, b = grid.clip(normal=normal, origin=origin, inplace=False, invert=True, get_clipped=True)
+
+                # VTK clip operations return odd things when get_clipped is True and the clipping function does not
+                # intersect the data. For this filter just return a null dataset of the same type being cut.
+                if a.area == 0:
+                    a = type(dataset)()
+                if b.area == 0:
+                    b = type(dataset)()
+                return a, b
+
+            n_pts = len(origins)
+
+            if leaves is None:
+                leaves = []
+
+            if n_pts == 0:
+                leaves.append(grid)
+                return grid
+
+            if n_pts == 1:
+                grid_a, grid_b = _split(grid, normal, origins[0])
+                leaves.extend([grid_a, grid_b])
+                return grid_a, grid_b
+
+            origins_a = origins[:len(origins) // 2]
+            origins_b = origins[len(origins) // 2:]
+
+            grid_a, grid_b = _split(grid, normal=normal, origin=origins_a[-1])
+
+            return [_split_grid_recursive(grid_a, normal, origins_a[:-1], leaves=leaves),
+                    _split_grid_recursive(grid_b, normal, origins_b, leaves=leaves)]
+
+        sections = []
+        _split_grid_recursive(dataset, normal, origins, leaves=sections)
+
+        return pyvista.MultiBlock(sections)
+
+
     def clip_box(dataset, bounds=None, invert=True, factor=0.35):
         """Clip a dataset by a bounding box defined by the bounds.
 
