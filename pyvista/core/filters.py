@@ -65,7 +65,7 @@ def _get_output(algorithm, iport=0, iconnection=0, oport=0, active_scalars=None,
 class DataSetFilters:
     """A set of common filters that can be applied to any vtkDataSet."""
 
-    def _clip_with_function(dataset, function, invert=True, value=0.0):
+    def _clip_with_function(dataset, function, invert=True, value=0.0, get_clipped=False):
         """Clip using an implicit function (internal helper)."""
         if isinstance(dataset, vtk.vtkPolyData):
             alg = vtk.vtkClipPolyData()
@@ -78,10 +78,18 @@ class DataSetFilters:
         alg.SetValue(value)
         alg.SetClipFunction(function) # the implicit function
         alg.SetInsideOut(invert) # invert the clip if needed
+        if get_clipped:
+            alg.GenerateClippedOutputOn()
         alg.Update() # Perform the Cut
-        return _get_output(alg)
 
-    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False):
+        if get_clipped:
+            a = _get_output(alg, oport=0)
+            b = _get_output(alg, oport=1)
+            return a, b
+        else:
+            return _get_output(alg)
+
+    def clip(dataset, normal='x', origin=None, invert=True, value=0.0, inplace=False, get_clipped=False):
         """Clip a dataset by a plane by specifying the origin and normal.
 
         If no parameters are given the clip will occur in the center of that dataset.
@@ -140,8 +148,9 @@ class DataSetFilters:
         function = generate_plane(normal, origin)
         # run the clip
         result = DataSetFilters._clip_with_function(dataset, function,
-                                                    invert=invert, value=value)
+                                                    invert=invert, value=value, get_clipped=get_clipped)
         if inplace:
+            overwrite_with = result[0] if get_clipped else result
             dataset.overwrite(result)
         else:
             return result
