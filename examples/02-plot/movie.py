@@ -37,6 +37,7 @@ for i in range(100):
     mesh.points = random_points * 0.01 + mesh.points * 0.99
     mesh.points -= mesh.points.mean(0)
     mesh.cell_arrays["data"] = np.random.random(mesh.n_cells)
+    plotter.add_text("Iteration: {:d}".format(i), name='time-label')
     plotter.write_frame()  # Write this frame
 
 # Be sure to close the plotter when finished
