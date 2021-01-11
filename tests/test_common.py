@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 import vtk
-from hypothesis import assume, given
+from hypothesis import assume, given, settings, HealthCheck
 from hypothesis.extra.numpy import arrays, array_shapes
 from hypothesis.strategies import composite, integers, floats, one_of
 from vtk.util.numpy_support import vtk_to_numpy
@@ -178,6 +178,7 @@ def test_copy(grid):
     assert np.all(grid_copy_shallow.points[0] == grid.points[0])
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(rotate_amounts=n_numbers(3), translate_amounts=n_numbers(3))
 def test_translate_should_match_vtk_transformation(rotate_amounts, translate_amounts, grid):
     trans = vtk.vtkTransform()
@@ -200,6 +201,7 @@ def test_translate_should_fail_given_none(grid):
         grid.transform(None)
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(array=arrays(dtype=np.float32, shape=array_shapes(max_dims=5, max_side=5)))
 def test_transform_should_fail_given_wrong_numpy_shape(array, grid):
     assume(array.shape != (4, 4))
@@ -216,6 +218,7 @@ def test_translate_should_translate_grid(grid, axis_amounts):
     assert np.allclose(grid_copy.points, grid_points)
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(angle=one_of(floats(allow_infinity=False, allow_nan=False), integers()))
 @pytest.mark.parametrize('axis', ('x', 'y', 'z'))
 def test_rotate_should_match_vtk_rotation(angle, axis, grid):
