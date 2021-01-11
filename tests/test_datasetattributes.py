@@ -2,7 +2,7 @@ import sys
 from string import ascii_letters, digits, whitespace
 
 import numpy as np
-from hypothesis import given, settings
+from hypothesis import given, settings, HealthCheck
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import integers, lists, text
 from pytest import fixture, mark, raises
@@ -126,13 +126,13 @@ def test_contains_should_contain_when_added(insert_arange_narray):
     assert 'sample_array' in dsa
 
 
-@settings(max_examples=20)
+@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_append_should_accept_scalar_value(scalar, hexbeam_point_attributes):
     hexbeam_point_attributes.append(narray=scalar, name='int_array')
 
 
-@settings(max_examples=20)
+@settings(max_examples=20, suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(scalar=integers(min_value=-sys.maxsize - 1, max_value=sys.maxsize))
 def test_append_scalar_value_should_give_array(scalar, hexbeam_point_attributes):
     hexbeam_point_attributes.append(narray=scalar, name='int_array')
@@ -140,12 +140,14 @@ def test_append_scalar_value_should_give_array(scalar, hexbeam_point_attributes)
     assert np.array_equal(expected, hexbeam_point_attributes['int_array'])
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=lists(text(alphabet=ascii_letters + digits + whitespace), max_size=16))
 def test_append_string_lists_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
     assert arr == hexbeam_field_attributes['string_arr'].tolist()
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_append_string_array_should_equal(arr, hexbeam_field_attributes):
     hexbeam_field_attributes['string_arr'] = arr
@@ -270,6 +272,7 @@ def test_active_scalars_setter(hexbeam_point_attributes):
     assert dsa.GetScalars().GetName() == 'sample_point_scalars'
 
 
+@settings(suppress_health_check=[HealthCheck.function_scoped_fixture])
 @given(arr=arrays(dtype='U', shape=10))
 def test_preserve_field_arrays_after_extract_cells(hexbeam, arr):
     # https://github.com/pyvista/pyvista/pull/934
