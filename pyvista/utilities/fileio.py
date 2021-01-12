@@ -183,7 +183,8 @@ def read(filename, attrs=None, override_ext=None, file_format=None):
         attributes to call, pass ``None`` as the value.
 
     override_ext : str, optional
-        Override the file extension (e.g., ``.vtu``)
+        Use the reader corresponding to the given extension (e.g.,
+        ``.vtu``) instead of the actual extension of the filename.
 
     file_format : str, optional
         Format of file to read with meshio.
