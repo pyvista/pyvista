@@ -330,8 +330,7 @@ def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
         reader.AddFileName(q_filename)
 
     attrs = {} if not attrs else attrs
-    if auto_detect:
-        attrs['SetAutoDetectFormat'] = True
+    attrs['SetAutoDetectFormat'] = auto_detect
 
     return standard_reader_routine(reader, filename=None, attrs=attrs)
 
