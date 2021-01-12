@@ -86,6 +86,22 @@ def test_read(tmpdir, use_pathlib):
     assert multi[1].n_blocks == 2
 
 
+@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
+def test_read_legacy(srr_mock):
+    srr_mock.return_value = pyvista.read(ex.planefile)
+    pyvista.read_legacy('legacy.vtk')
+    args, kwargs = srr_mock.call_args
+    reader = args[0]
+    assert isinstance(reader, vtk.vtkDataSetReader)
+    assert reader.GetFileName().endswith('legacy.vtk')
+
+    # check error is raised when no data returned
+    srr_mock.reset_mock()
+    srr_mock.return_value = None
+    with pytest.raises(RuntimeError):
+        pyvista.read_legacy('legacy.vtk')
+
+
 @pytest.mark.parametrize('auto_detect', (True, False))
 @mock.patch('pyvista.utilities.fileio.standard_reader_routine')
 def test_read_plot3d(srr_mock, auto_detect):

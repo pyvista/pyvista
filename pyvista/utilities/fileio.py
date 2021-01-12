@@ -156,11 +156,10 @@ def read_legacy(filename):
     reader.ReadAllTCoordsOn()
     reader.ReadAllVectorsOn()
     # Perform the read
-    reader.Update()
-    output = reader.GetOutputDataObject(0)
+    output = standard_reader_routine(reader, None)
     if output is None:
         raise RuntimeError('No output when using VTKs legacy reader')
-    return pyvista.wrap(output)
+    return output
 
 
 def read(filename, attrs=None, override_ext=None, file_format=None):
