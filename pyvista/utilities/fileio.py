@@ -205,7 +205,9 @@ def read(filename, attrs=None, file_format=None):
                 name = os.path.basename(str(each))
             else:
                 name = None
-            multi[-1, name] = read(each)
+            multi[-1, name] = read(each, attrs=attrs,
+                                   override_ext=override_ext,
+                                   file_format=file_format)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
