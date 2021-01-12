@@ -311,6 +311,29 @@ def read_exodus(filename,
     return standard_reader_routine(reader, filename=None, attrs=None)
 
 
+def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
+    """Read a Plot3D grid file (grid.in) and optional q file(s)."""
+
+    filename = _process_filename(filename)
+
+    reader = vtk.vtkMultiBlockPLOT3DReader()
+    reader.SetFileName(filename)
+
+    # q_filenames may be a list or a single filename
+    if q_filenames:
+        if isinstance(q_filenames, (str, pathlib.Path)):
+            q_filenames = [q_filenames]
+    q_filenames = [_process_filename(f) for f in q_filenames]
+
+    for q_filename in q_filenames:
+        reader.AddFileName(q_filename)
+
+    attrs = {} if not attrs else attrs
+    if auto_detect:
+        attrs['SetAutoDetectFormat'] = True
+
+    return standard_reader_routine(reader, filename=None, attrs=attrs)
+
 
 def from_meshio(mesh):
     """Convert a ``meshio`` mesh instance to a PyVista mesh."""
