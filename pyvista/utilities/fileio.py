@@ -128,9 +128,7 @@ def standard_reader_routine(reader, filename, attrs=None):
         attrs = {}
     if not isinstance(attrs, dict):
         raise TypeError('Attributes must be a dictionary of name and arguments.')
-    if filename is not None:
-        # allow this method to be used with readers where the filename has already been set
-        reader.SetFileName(filename)
+    reader.SetFileName(filename)
     # Apply any attributes listed
     for name, args in attrs.items():
         attr = getattr(reader, name)
@@ -162,7 +160,7 @@ def read_legacy(filename):
     return output
 
 
-def read(filename, attrs=None, override_ext=None, file_format=None):
+def read(filename, attrs=None, file_format=None):
     """Read any VTK file.
 
     It will figure out what reader to use then wrap the VTK object for
@@ -180,10 +178,6 @@ def read(filename, attrs=None, override_ext=None, file_format=None):
         dictionary are the attribute/method names and values are the
         arguments passed to those calls. If you do not have any
         attributes to call, pass ``None`` as the value.
-
-    override_ext : str, optional
-        Use the reader corresponding to the given extension (e.g.,
-        ``.vtu``) instead of the actual extension of the filename.
 
     file_format : str, optional
         Format of file to read with meshio.
@@ -213,10 +207,10 @@ def read(filename, attrs=None, override_ext=None, file_format=None):
                 name = None
             multi[-1, name] = read(each)
         return multi
-    filename = _process_filename(filename)
+    filename = os.path.abspath(os.path.expanduser(str(filename)))
     if not os.path.isfile(filename):
         raise FileNotFoundError(f'File ({filename}) not found')
-    ext = get_ext(filename) if override_ext is None else override_ext
+    ext = get_ext(filename)
 
     # Read file using meshio.read if file_format is present
     if file_format:
@@ -308,7 +302,8 @@ def read_exodus(filename,
 
         reader.SetSideSetArrayStatus(name, 1)
 
-    return standard_reader_routine(reader, filename=None, attrs=None)
+    reader.Update()
+    return pyvista.wrap(reader.GetOutput())
 
 
 def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
@@ -481,7 +476,3 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         file_format=file_format,
         **kwargs
     )
-
-
-def _process_filename(filename):
-    return os.path.abspath(os.path.expanduser(str(filename)))
