@@ -22,6 +22,8 @@ from .filters import (PolyDataFilters, UnstructuredGridFilters,
                       ExplicitStructuredGridFilters)
 from ..utilities.fileio import get_ext
 
+from ordered_set import OrderedSet
+
 log = logging.getLogger(__name__)
 log.setLevel('CRITICAL')
 
@@ -978,12 +980,11 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
 
     - Creating an empty grid
     - From a vtk.vtkExplicitStructuredGrid object
-    - From a file
-    - From dims, points, and cell arrays
+    - From a VTK or VTU file
+    - From dims and points arrays
 
     Examples
     --------
-
     >>> import numpy as np
     >>> import pyvista as pv
     >>>
@@ -1017,11 +1018,10 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
     >>> '''
     >>> corners = corners.split()
     >>>
-    >>> points = np.asarray(corners, np.int)
-    >>> points = points.reshape((3, -1))
-    >>> points = points.transpose()
+    >>> points = np.asarray(corners, dtype=np.int)
+    >>> points = points.reshape((-1, 3), order='F')
     >>>
-    >>> dims = (5, 3, 2)
+    >>> dims = np.asarray((5, 3, 2))
     >>> grid = pv.ExplicitStructuredGrid(dims, points)
     >>> grid.hide_cells((0, 7))
     >>> grid.plot(color='w', show_edges=True)
@@ -1045,9 +1045,9 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
                 grid = grid.explicit_structured_grid()
                 self.deep_copy(grid)
         elif n == 2:
-            arg0_is_tpl = isinstance(args[0], tuple)
+            arg0_is_arr = isinstance(args[0], np.ndarray)
             arg1_is_arr = isinstance(args[1], np.ndarray)
-            if all([arg0_is_tpl, arg1_is_arr]):
+            if all([arg0_is_arr, arg1_is_arr]):
                 self._from_arrays(args[0], args[1])
 
     def __repr__(self):
@@ -1059,39 +1059,40 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         return Common.__str__(self)
 
     def _from_arrays(self, dims, points):
-        """Create VTK unstructured grid from numpy arrays.
+        """Creates a VTK explicit structured grid from numpy arrays.
 
         Parameters
         ----------
         dims : tuple
             Grid dimensions.
         points : np.ndarray
-            Numpy array containing point locations.
+            Point locations.
 
         """
-        dims = np.asarray(dims)-1
-        ncells = np.prod(dims)
+        cshape = dims-1
+        pshape = 2*cshape
+        ncells = np.prod(cshape)
         cells = 8*np.ones((ncells, 9), np.int)
-        dims2 = 2*dims
+        unique, unique_indices = np.unique(points, axis=0, return_inverse=True)
         connectivity = np.asarray([[0, 1, 1, 0, 0, 1, 1, 0],
                                    [0, 0, 1, 1, 0, 0, 1, 1],
                                    [0, 0, 0, 0, 1, 1, 1, 1]])
         for c in range(ncells):
-            i, j, k = np.unravel_index(c, dims, order='F')
+            i, j, k = np.unravel_index(c, cshape, order='F')
             coord = (2*i + connectivity[0],
                      2*j + connectivity[1],
                      2*k + connectivity[2])
-            pinds = np.ravel_multi_index(coord, dims2, order='F')
-            cells[c, 1:] = pinds
+            pinds = np.ravel_multi_index(coord, pshape, order='F')
+            cells[c, 1:] = unique_indices[pinds]
         cells = cells.flatten()
-        points = pyvista.vtk_points(points)
+        points = pyvista.vtk_points(unique)
         cells = CellArray(cells, ncells)
-        self.SetDimensions(dims+1)
+        self.SetDimensions(dims)
         self.SetPoints(points)
         self.SetCells(cells)
 
     def _dimensions(self):
-        """Returns the grid dimensions."""
+        """Computes the grid dimensions."""
         xmin, xmax, ymin, ymax, zmin, zmax = self.extent
         nx = xmax - xmin + 1
         ny = ymax - ymin + 1
@@ -1100,7 +1101,14 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
 
     @property
     def dimensions(self):
-        """Returns the grid dimensions."""
+        """Returns the grid dimensions.
+
+        Returns
+        -------
+        tuple(int)
+            Grid dimensions.
+
+        """
         return self._dimensions()
 
     def save(self, filename, binary=True):
@@ -1119,7 +1127,15 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         Binary files write much faster than ASCII and have a smaller file size.
 
         """
-        grid = self.unstructured_grid()
+        array_name = vtk.vtkDataSetAttributes.GhostArrayName()
+        if array_name in self.cell_arrays.keys():
+            grid = self.copy(False)
+            array = grid[array_name]
+            del grid.cell_arrays[array_name]
+            grid = grid.unstructured_grid()
+            grid[array_name] = array
+        else:
+            grid = self.unstructured_grid()
         grid.save(filename, binary)
 
     def hide_cells(self, ind):
@@ -1169,8 +1185,9 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
 
     def cell_id(self, coord):
         """Returns the cell ID."""
-        # vtkExplicitStructuredGrid has the method ComputeCellId, but it's
-        # producing unwanted values.
+        # Attention:
+        # vtkExplicitStructuredGrid has the method ComputeCellId, but it
+        # produces unwanted value when coord is out the extend grid.
         nx, ny, nz = self._dimensions()
         dims = (nx-1, ny-1, nz-1)
         try:
@@ -1187,6 +1204,19 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         coord = np.unravel_index(ind, shape, order='F')
         return coord
 
+    def topological_neighbors(self, ind):
+        """Returns the indices of the topological cell neighbors."""
+        coord = self.cell_coords(ind)
+        coord = np.asarray(coords)
+        indices = []
+        for x in [(-1, 0, 0), (1, 0, 0),   # left and right neighbors
+                  (0, -1, 0), (0, 1, 0),   # back and front neighbors
+                  (0, 0, -1), (0, 0, 1)]:  # bottom and top neighbors
+            n = coord + x
+            i = self.cell_id(n)
+            indices.append(i)
+        return indices
+
     def cell_n_points(self, ind):
         """Returns the number of points in a cell."""
         return self.GetCell(ind).GetPoints().GetNumberOfPoints()
@@ -1197,9 +1227,45 @@ class ExplicitStructuredGrid(vtkExplicitStructuredGrid, PointGrid,
         return vtk_to_numpy(points)
 
     def cell_bounds(self, ind):
-        """Returns the bounds of a cell."""
+        """Returns the bounds of a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        tuple(int)
+            imin, imax, jmin, jmax, kmin, kmax
+
+        """
         return self.GetCell(ind).GetBounds()
 
     def cell_type(self, ind):
-        """Returns the type of a cell."""
+        """Returns the type of a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell index.
+
+        Returns
+        -------
+        int
+            See <https://vtk.org/doc/nightly/html/vtkCellType_8h.html>
+
+        """
         return self.GetCellType(ind)
+
+    def compute_connectivity(self):
+        """Computes the faces connectivity flags array.
+
+        """
+        self.ComputeFacesConnectivityFlagsArray()
+
+    # def compute_number_connections(self):
+    #     self.compute_connectivity()
+        # array_name = self.GetFacesConnectivityFlagsArrayName()
+        # array = self.cell_arrays[array_name]
+        # np.sum(array, axis=)

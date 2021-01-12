@@ -4548,19 +4548,27 @@ class UnstructuredGridFilters(DataSetFilters):
                                                           bound=bound,
                                                           progress_bar=progress_bar)
 
-    def explicit_structured_grid(dataset, dims=None):
-        """Converts an unstructured grid into an explicit structured grid."""
-        s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
-        s2 = dataset.cell_arrays.keys()
-        if not s1.issubset(s2):
-            ni, nj, nk = dims
-            ii = np.arange(ni-1)
-            jj = np.arange(nj-1)
-            kk = np.arange(nk-1)
-            jj, kk, ii = np.meshgrid(jj, kk, ii)
-            dataset['BLOCK_I'] = ii.flatten()
-            dataset['BLOCK_J'] = jj.flatten()
-            dataset['BLOCK_K'] = kk.flatten()
+    def explicit_structured_grid(dataset):
+        """Converts an unstructured grid into an explicit structured grid.
+
+        Returns
+        -------
+        ExplicitStructuredGrid
+            VTK adds the cell array 'ConnectivityFlags'.
+
+        """
+        # s1 = {'BLOCK_I', 'BLOCK_J', 'BLOCK_K'}
+        # s2 = dataset.cell_arrays.keys()
+        # if not s1.issubset(s2):
+        #     ni, nj, nk = dims
+        #     ii = np.arange(ni-1)
+        #     jj = np.arange(nj-1)
+        #     kk = np.arange(nk-1)
+        #     jj, kk, ii = np.meshgrid(jj, kk, ii)
+        #     dataset['BLOCK_I'] = ii.flatten()
+        #     dataset['BLOCK_J'] = jj.flatten()
+        #     dataset['BLOCK_K'] = kk.flatten()
+
         # Attention:
         #
         # VTK is producing the following error during the cell blanking of
@@ -4686,7 +4694,15 @@ class ExplicitStructuredGridFilters(DataSetFilters):
     grid datasets."""
 
     def unstructured_grid(dataset):
-        """Convert an explicit structured grid into an unstructured grid."""
+        """Convert an explicit structured grid into an unstructured grid.
+
+        Returns
+        -------
+        UnstructuredGrid
+            VTK adds the cell arrays 'vtkOriginalCellIds', 'BLOCK_I', 'BLOCK_J'
+            and 'BLOCK_K'.
+
+        """
         alg = vtk.vtkExplicitStructuredGridToUnstructuredGrid()
         alg.SetInputDataObject(dataset)
         alg.Update()
@@ -4721,14 +4737,11 @@ class ExplicitStructuredGridFilters(DataSetFilters):
             Subselected grid.
 
         """
-        coord = dataset.cell_coords(ind)
-        coord = np.asarray(coord)
-        indices = []
-        for x in [(-1, 0, 0), (1, 0, 0),
-                  (0, -1, 0), (0, 1, 0),
-                  (0, 0, -1), (0, 0, 1)]:
-            n = coord + x
-            i = dataset.cell_id(n)
-            indices.append(i)
+        indices = dataset.neighbors(ind)
         subgrid = dataset.extract_cells(indices)
         return subgrid
+
+    # def extract_geometric_neighbors(self, ind):
+    #     """Extracts the geometric cell neighbors."""
+    #     subgrid = dataset.extract_cells(indices)
+    #     return subgrid
