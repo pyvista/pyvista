@@ -12,7 +12,7 @@ We can compute the thickness between the two surfaces using a few different
 methods. First, we will demo a method where we compute the normals of the
 bottom surface, and then project a ray to the top surface to compute the
 distance along the surface normals. Second, we will use a KDTree to compute
-the distance from eevery point in the bottom mesh to it's closest point in
+the distance from every point in the bottom mesh to it's closest point in
 the top mesh.
 """
 import pyvista as pv
@@ -23,7 +23,7 @@ def hill(seed):
     mesh = pv.ParametricRandomHills(randomseed=seed, u_res=50, v_res=50,
                                     hillamplitude=0.5)
     mesh.rotate_y(-10) # give the surfaces some tilt
-    
+
     return mesh
 
 h0 = hill(1).elevation()
@@ -49,7 +49,7 @@ h0n = h0.compute_normals(point_normals=True, cell_normals=False,
                          auto_orient_normals=True)
 
 ###############################################################################
-# Travel along noramals to the other surface and compute the thickness on each
+# Travel along normals to the other surface and compute the thickness on each
 # vector.
 
 h0n["distances"] = np.empty(h0.n_points)

@@ -31,7 +31,7 @@ import pyvista as pv
 #
 # So lets take a look at the difference:
 
-# Load a cylider which has cells with a wide spread
+# Load a cylinder which has cells with a wide spread
 cyl = pv.Cylinder(direction=(0,0,1), height=2).elevation()
 
 # Common display argument to make sure all else is constant
@@ -74,7 +74,7 @@ p.camera_position = [(-1.67, -5.10, 2.06),
 p.show()
 
 ###############################################################################
-# The cylider mesh above is a great example dataset for this as it has a wide
+# The cylinder mesh above is a great example dataset for this as it has a wide
 # spread between the vertices (points are only at the top and bottom of the
 # cylinder) which means high surface are of the mesh has to be interpolated.
 #
@@ -101,7 +101,7 @@ p.show()
 
 ###############################################################################
 # This time is pretty difficult to notice the differences - they are there,
-# subtle, but present. The differences become more apperant when we decrease
+# subtle, but present. The differences become more apparent when we decrease
 # the number of colors in colormap.
 # Let's take a look at the differences when using eight discrete colors via
 # the ``n_colors`` argument:
