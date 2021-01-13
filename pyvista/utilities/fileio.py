@@ -310,7 +310,6 @@ def read_exodus(filename,
 
 def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
     """Read a Plot3D grid file (grid.in) and optional q file(s)."""
-
     filename = _process_filename(filename)
 
     reader = vtk.vtkMultiBlockPLOT3DReader()
