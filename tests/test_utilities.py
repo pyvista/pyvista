@@ -56,7 +56,6 @@ def test_read(tmpdir, use_pathlib):
     types = (pyvista.PolyData, pyvista.PolyData, pyvista.UnstructuredGrid,
              pyvista.PolyData, pyvista.UniformGrid, pyvista.RectilinearGrid)
     for i, filename in enumerate(fnames):
-        print(filename)
         obj = fileio.read(filename)
         assert isinstance(obj, types[i])
     # Now test the standard_reader_routine
