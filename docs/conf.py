@@ -203,6 +203,10 @@ latex_documents = [
      author, 'manual'),
 ]
 
+# -- Options for gettext output -------------------------------------------
+
+# To specify names to enable gettext extracting and translation applying for i18n additionally. You can specify below names:
+gettext_additional_targets = ['raw'] 
 
 # -- Options for manual page output ---------------------------------------
 
