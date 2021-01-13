@@ -2,6 +2,7 @@
 
 import pathlib
 import os
+from packaging import version
 
 import numpy as np
 import vtk
@@ -66,10 +67,10 @@ READERS = {
     '.inp': vtk.vtkAVSucdReader,
 }
 
-VTK_MAJOR = vtk.vtkVersion().GetVTKMajorVersion()
-VTK_MINOR = vtk.vtkVersion().GetVTKMinorVersion()
+VTK_VERSION = str(vtk.vtkVersion().GetVTKMajorVersion()) + \
+              str(vtk.vtkVersion().GetVTKMinorVersion())
 
-if (VTK_MAJOR >= 8 and VTK_MINOR >= 2):
+if version.parse(VTK_VERSION) >= version.parse('8.2'):
     try:
         READERS['.sgy'] = vtk.vtkSegYReader
         READERS['.segy'] = vtk.vtkSegYReader
