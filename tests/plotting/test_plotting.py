@@ -665,12 +665,12 @@ def test_scalars_by_name():
 
 
 def test_themes():
-    old_rcParms = dict(pyvista.rcParams)  # must cache old rcParams
+    old_rcParams = dict(pyvista.rcParams)  # must cache old rcParams
     pyvista.set_plot_theme('paraview')
     pyvista.set_plot_theme('document')
     pyvista.set_plot_theme('night')
     pyvista.set_plot_theme('default')
-    for key, value in old_rcParms.items():
+    for key, value in old_rcParams.items():
         pyvista.rcParams[key] = value
 
 
@@ -917,7 +917,7 @@ def test_subplot_groups_fail():
         # Full overlap (outer)
         pyvista.Plotter(shape=(4, 4), groups=[(1, [1, 2]), ([0, 3], np.s_[:])])
 
- 
+
 @skip_no_plotting
 def test_link_views(sphere):
     plotter = pyvista.Plotter(shape=(1, 4))
@@ -1127,7 +1127,7 @@ def test_opacity_by_array_user_transform(uniform):
     p.show()  # note: =verify_cache_image does not work between Xvfb
 
 
-def test_opactity_mismatched_fail(uniform):
+def test_opacity_mismatched_fail(uniform):
     opac = uniform['Spatial Point Data'] / uniform['Spatial Point Data'].max()
     uniform['unc'] = opac
 

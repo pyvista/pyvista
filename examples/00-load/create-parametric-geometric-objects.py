@@ -127,7 +127,7 @@ henneberg.plot(color="tan")
 ###############################################################################
 # Klein
 # +++++
-
+Bour
 klein = pv.ParametricKlein()
 klein.plot(color="tan")
 
