@@ -128,7 +128,8 @@ def standard_reader_routine(reader, filename, attrs=None):
         attrs = {}
     if not isinstance(attrs, dict):
         raise TypeError('Attributes must be a dictionary of name and arguments.')
-    reader.SetFileName(filename)
+    if filename is not None:
+        reader.SetFileName(filename)
     # Apply any attributes listed
     for name, args in attrs.items():
         attr = getattr(reader, name)
@@ -206,7 +207,6 @@ def read(filename, attrs=None, file_format=None):
             else:
                 name = None
             multi[-1, name] = read(each, attrs=attrs,
-                                   override_ext=override_ext,
                                    file_format=file_format)
         return multi
     filename = os.path.abspath(os.path.expanduser(str(filename)))
@@ -478,3 +478,6 @@ def save_meshio(filename, mesh, file_format = None, **kwargs):
         file_format=file_format,
         **kwargs
     )
+
+def _process_filename(filename):
+    return os.path.abspath(os.path.expanduser(str(filename)))
