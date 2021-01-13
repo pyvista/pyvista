@@ -81,7 +81,7 @@ for i in range(k_grid.n_cells):
         #                  scalars=[x_dist + 0.2], rng=[x_min, x_max],
         #                  show_edges=True)
     else:
-        # opactity = opacity
+        # opacity = opacity
         plotter.add_mesh(cell, color='w', show_edges=True, opacity=opacity)
 
 keep_k = k_grid.extract_cells(keep)

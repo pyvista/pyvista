@@ -29,7 +29,7 @@ def make_cube():
     grid = pv.StructuredGrid(*np.meshgrid(x, x, x))
     return grid.extract_surface().triangulate()
 
-# Create to examplee PolyData meshes for boolean operations
+# Create to example PolyData meshes for boolean operations
 sphere = pv.Sphere(radius=0.65, center=(0, 0, 0))
 cube = make_cube()
 

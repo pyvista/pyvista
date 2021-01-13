@@ -16,7 +16,7 @@ def _cell_bounds(points, bound_position=0.5):
     Parameters
     ----------
     points: numpy.array
-        One-dimensional array of uniformy spaced values of shape (M,)
+        One-dimensional array of uniformly spaced values of shape (M,)
     bound_position: bool, optional
         The desired position of the bounds relative to the position
         of the points.
