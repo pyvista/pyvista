@@ -4,6 +4,8 @@ import os
 
 import numpy as np
 import pytest
+import unittest.mock as mock
+
 import vtk
 
 import pyvista
@@ -82,6 +84,48 @@ def test_read(tmpdir, use_pathlib):
     assert multi.n_blocks == 2
     assert isinstance(multi[1], pyvista.MultiBlock)
     assert multi[1].n_blocks == 2
+
+
+@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
+def test_read_legacy(srr_mock):
+    srr_mock.return_value = pyvista.read(ex.planefile)
+    pyvista.read_legacy('legacy.vtk')
+    args, kwargs = srr_mock.call_args
+    reader = args[0]
+    assert isinstance(reader, vtk.vtkDataSetReader)
+    assert reader.GetFileName().endswith('legacy.vtk')
+
+    # check error is raised when no data returned
+    srr_mock.reset_mock()
+    srr_mock.return_value = None
+    with pytest.raises(RuntimeError):
+        pyvista.read_legacy('legacy.vtk')
+
+
+@pytest.mark.parametrize('auto_detect', (True, False))
+@mock.patch('pyvista.utilities.fileio.standard_reader_routine')
+def test_read_plot3d(srr_mock, auto_detect):
+    # with grid only
+    pyvista.read_plot3d(filename='grid.in', auto_detect=auto_detect)
+    srr_mock.assert_called_once()
+    args, kwargs = srr_mock.call_args
+    reader = args[0]
+    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
+    assert reader.GetFileName().endswith('grid.in')
+    assert kwargs['filename'] == None
+    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
+
+    # with grid and q
+    srr_mock.reset_mock()
+    pyvista.read_plot3d(filename='grid.in', q_filenames='q1.save',
+                        auto_detect=auto_detect)
+    args, kwargs = srr_mock.call_args
+    reader = args[0]
+    assert isinstance(reader, vtk.vtkMultiBlockPLOT3DReader)
+    assert reader.GetFileName().endswith('grid.in')
+    assert args[0].GetQFileName().endswith('q1.save')
+    assert kwargs['filename'] == None
+    assert kwargs['attrs'] == {'SetAutoDetectFormat': auto_detect}
 
 
 def test_get_array():
