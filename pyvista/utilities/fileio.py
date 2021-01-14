@@ -309,7 +309,33 @@ def read_exodus(filename,
 
 
 def read_plot3d(filename, q_filenames=(), auto_detect=True, attrs=None):
-    """Read a Plot3D grid file (grid.in) and optional q file(s)."""
+    """Read a Plot3D grid file (e.g., grid.in) and optional q file(s).
+    
+    Parameters
+    ----------
+    filename : str
+        The string filename to the data file to read.
+
+    q_filenames : str or tuple(str), optional
+        The string filename of the q-file, or iterable of such filenames.
+
+    auto_detect : bool, optional
+        When this option is turned on, the reader will try to figure out the
+        values of various options such as byte order, byte count etc. Default is
+        True.
+
+    attrs : dict, optional
+        A dictionary of attributes to call on the reader. Keys of dictionary are
+        the attribute/method names and values are the arguments passed to those
+        calls. If you do not have any attributes to call, pass ``None`` as the
+        value.
+
+    Returns
+    -------
+    mesh : pyvista.MultiBlock
+        Data read from the file.
+
+    """
     filename = _process_filename(filename)
 
     reader = vtk.vtkMultiBlockPLOT3DReader()
