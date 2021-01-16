@@ -3900,8 +3900,8 @@ class PolyDataFilters(DataSetFilters):
         """Perform multiple ray trace calculations.
 
         This requires a mesh with only triangular faces,
-         an array of origin points and an equal sized array of
-         direction vectors to trace along.
+        an array of origin points and an equal sized array of
+        direction vectors to trace along.
 
         The embree library used for vectorisation of the ray traces is known to occasionally
         return no intersections where the VTK implementation would return an intersection.
@@ -3915,7 +3915,7 @@ class PolyDataFilters(DataSetFilters):
             Starting point for each trace.
 
         directions : np.ndarray or list
-            direction vector for each trace.
+            Direction vector for each trace.
 
         first_point : bool, optional
             Returns intersection of first point only.

@@ -749,7 +749,7 @@ def abstract_class(cls_):
     """Decorate a class, overriding __new__.
 
     Preventing a class from being instantiated similar to abc.ABCMeta
-      but does not require an abstract method.
+    but does not require an abstract method.
     """
 
     def __new__(cls, *args, **kwargs):

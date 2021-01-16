@@ -233,7 +233,7 @@ class WidgetHelper:
             callback
 
         test_callback: bool
-            if true, run the callback function after the widget is created.
+            If true, run the callback function after the widget is created.
 
         """
         if not hasattr(self, "plane_widgets"):

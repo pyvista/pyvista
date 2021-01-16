@@ -591,10 +591,10 @@ class Renderer(vtkRenderer):
             Color of all labels and axis titles.  Default white.
             Either a string, rgb list, or hex color string.  For example:
 
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         xlabel : string, optional
             Title of the x axis.  Default "X Axis"
@@ -1415,10 +1415,11 @@ class Renderer(vtkRenderer):
         ----------
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         top : string or 3 item list, optional, defaults to None
             If given, this will enable a gradient background where the
