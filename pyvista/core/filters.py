@@ -2913,7 +2913,6 @@ class PolyDataFilters(DataSetFilters):
             The second mesh split along the intersection. Returns the original second mesh
             if `split_second` is False.
         """
-
         intfilter = vtk.vtkIntersectionPolyDataFilter()
         intfilter.SetInputDataObject(0, poly_data)
         intfilter.SetInputDataObject(1, mesh)
