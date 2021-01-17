@@ -2701,7 +2701,7 @@ class CompositeFilters:
             controls the relative size of the corners to the length of the
             corresponding bounds
 
-        ested : bool, optional
+        nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
         """
