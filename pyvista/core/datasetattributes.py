@@ -24,17 +24,17 @@ class DataSetAttributes(VTKObjectWrapper):
     Implement a ``dict`` like interface for interacting with vtkDataArrays.
 
     Parameters
-        ----------
-        vtkobject : vtkFieldData
-            The vtk object to wrap as a DataSetAttribute, usually an
-             instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
-             ``vtk.vtkFieldData``.
+    ----------
+    vtkobject : vtkFieldData
+        The vtk object to wrap as a DataSetAttribute, usually an
+        instance of ``vtk.vtkCellData``, ``vtk.vtkPointData``, or
+        ``vtk.vtkFieldData``.
 
-        dataset : vtkDataSet
-            The vtkDataSet containing the vtkobject.
+    dataset : vtkDataSet
+        The vtkDataSet containing the vtkobject.
 
-        association : FieldAssociation
-            The array association type of the vtkobject.
+    association : FieldAssociation
+        The array association type of the vtkobject.
     """
 
     def __init__(self, vtkobject, dataset, association):

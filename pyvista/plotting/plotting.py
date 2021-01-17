@@ -1239,11 +1239,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             result is showing colors that are not present in the color map.
 
         cmap : str, list, optional
-           Name of the Matplotlib colormap to us when mapping the ``scalars``.
-           See available Matplotlib colormaps.  Only applicable for when
-           displaying ``scalars``. Requires Matplotlib to be installed.
-           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-           ``cmocean`` are installed, their colormaps can be specified by name.
+            Name of the Matplotlib colormap to us when mapping the ``scalars``.
+            See available Matplotlib colormaps.  Only applicable for when
+            displaying ``scalars``. Requires Matplotlib to be installed.
+            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+            ``cmocean`` are installed, their colormaps can be specified by name.
 
             You can also specify a list of colors to override an
             existing colormap with a custom one.  For example, to
@@ -1860,11 +1860,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
             The scalar bar will also have this many colors.
 
         cmap : str, optional
-           Name of the Matplotlib colormap to us when mapping the ``scalars``.
-           See available Matplotlib colormaps.  Only applicable for when
-           displaying ``scalars``. Requires Matplotlib to be installed.
-           ``colormap`` is also an accepted alias for this. If ``colorcet`` or
-           ``cmocean`` are installed, their colormaps can be specified by name.
+            Name of the Matplotlib colormap to us when mapping the ``scalars``.
+            See available Matplotlib colormaps.  Only applicable for when
+            displaying ``scalars``. Requires Matplotlib to be installed.
+            ``colormap`` is also an accepted alias for this. If ``colorcet`` or
+            ``cmocean`` are installed, their colormaps can be specified by name.
 
         flip_scalars : bool, optional
             Flip direction of cmap. Most colormaps allow ``*_r`` suffix to do
@@ -2360,10 +2360,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         font_family : string, optional
             Font family.  Must be either courier, times, or arial.
@@ -3042,10 +3043,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         width : float, optional
             Thickness of lines
@@ -3144,10 +3146,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
         point_color : string or 3 item list, optional. Color of points (if visible).
             Either a string, rgb list, or hex color string.  For example:
 
-                text_color='white'
-                text_color='w'
-                text_color=[1, 1, 1]
-                text_color='#FFFFFF'
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         point_size : float, optional
             Size of points (if visible)
@@ -3617,10 +3619,11 @@ class BasePlotter(PickingHelper, WidgetHelper):
         ----------
         color : string or 3 item list, optional, defaults to white
             Either a string, rgb list, or hex color string.  For example:
-                color='white'
-                color='w'
-                color=[1, 1, 1]
-                color='#FFFFFF'
+
+            * ``color='white'``
+            * ``color='w'``
+            * ``color=[1, 1, 1]``
+            * ``color='#FFFFFF'``
 
         top : string or 3 item list, optional, defaults to None
             If given, this will enable a gradient background where the

@@ -314,7 +314,7 @@ class PolyData(vtkPolyData, PointSet, PolyDataFilters):
         Notes
         -----
         Binary files write much faster than ASCII and have a smaller
-         file size.
+        file size.
 
         """
         filename = os.path.abspath(os.path.expanduser(str(filename)))

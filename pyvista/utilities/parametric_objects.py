@@ -133,7 +133,7 @@ def ParametricBoy(zscale=None, **kwargs):
     ----------
     zscale : double, optional
         The scale factor for the z-coordinate.
-      Default is 18, giving a nice shape.
+        Default is 18, giving a nice shape.
 
     Return
     ------
@@ -1033,7 +1033,7 @@ def parametric_keywords(parametric_function, min_u=0, max_u=2*pi,
         the u direction.
 
     join_v : bool, optional
-        joins the first triangle strip to the last one with a twist in
+        Joins the first triangle strip to the last one with a twist in
         the v direction.
 
     twist_u : bool, optional
