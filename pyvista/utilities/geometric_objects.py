@@ -544,7 +544,6 @@ def Disc(center=(0.,0.,0.), inner=0.25, outer=0.5, normal=(0,0,1), r_res=1,
         np.clip(np.dot(normal, default_normal), -1, 1)))
 
     transform = vtk.vtkTransform()
-    transform.Translate(-center)
     transform.RotateWXYZ(angle, axis)
     transform.Translate(center)
 
