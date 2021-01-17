@@ -2884,6 +2884,50 @@ class PolyDataFilters(DataSetFilters):
         else:
             return mesh
 
+    def intersection(poly_data, mesh, split_first=True, split_second=True):
+        """Compute the intersection between two meshes.
+
+        Parameters
+        ----------
+        mesh : pyvista.PolyData
+            The mesh to intersect with.
+
+        split_first : bool, optional
+            If `True`, return the first input mesh split by the intersection with the
+            second input mesh.
+
+        split_second : bool, optional
+            If `True`, return the second input mesh split by the intersection with the
+            first input mesh.
+
+        Return
+        ------
+        intersection: pyvista.PolyData
+            The intersection line.
+
+        first_split: pyvista.PolyData
+            The first mesh split along the intersection. Returns the original first mesh
+            if `split_first` is False.
+
+        second_split: pyvista.PolyData
+            The second mesh split along the intersection. Returns the original second mesh
+            if `split_second` is False.
+        """
+
+        intfilter = vtk.vtkIntersectionPolyDataFilter()
+        intfilter.SetInputDataObject(0, poly_data)
+        intfilter.SetInputDataObject(1, mesh)
+        intfilter.SetComputeIntersectionPointArray(True)
+        intfilter.SetSplitFirstOutput(split_first)
+        intfilter.SetSplitSecondOutput(split_second)
+        intfilter.Update()
+
+        intersection = _get_output(intfilter, oport=0)
+        first = _get_output(intfilter, oport=1)
+        second = _get_output(intfilter, oport=2)
+
+        return intersection, first, second
+
     def curvature(poly_data, curv_type='mean'):
         """Return the pointwise curvature of a mesh.
 
