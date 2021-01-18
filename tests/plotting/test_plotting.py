@@ -462,8 +462,9 @@ def test_add_point_labels():
     with pytest.raises(ValueError):
         plotter.add_point_labels(points, range(n - 1))
 
-    plotter.add_point_labels(points, range(n), show_points=True, point_color='r')
-    plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r')
+    plotter.add_point_labels(points, range(n), show_points=True, point_color='r', point_size=10)
+    plotter.add_point_labels(points - 1, range(n), show_points=False, point_color='r',
+                             point_size=10)
     plotter.show(before_close_callback=verify_cache_image)
 
 
