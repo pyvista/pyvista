@@ -2927,8 +2927,8 @@ class PolyDataFilters(DataSetFilters):
         off for either mesh individually.
 
         >>> intersection, _, s2_split = s1.intersection(s2,
-        >>>                                             split_first=False,
-        >>>                                             split_second=True)
+                                                        split_first=False,
+                                                        split_second=True)
 
         """
         intfilter = vtk.vtkIntersectionPolyDataFilter()
