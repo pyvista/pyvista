@@ -2912,6 +2912,24 @@ class PolyDataFilters(DataSetFilters):
         second_split: pyvista.PolyData
             The second mesh split along the intersection. Returns the original second mesh
             if `split_second` is False.
+
+        Examples
+        --------
+        Intersect two spheres, returning the intersection and both spheres
+        which have new points/cells along the intersection line.
+
+        >>> import pyvista as pv
+        >>> s1 = pv.Sphere()
+        >>> s2 = pv.Sphere(center=(0.25, 0, 0))
+        >>> intersection, s1_split, s2_split = s1.intersection(s2)
+
+        The mesh splitting takes additional time and can be turned
+        off for either mesh individually.
+
+        >>> intersection, _, s2_split = s1.intersection(s2,
+        >>>                                             split_first=False,
+        >>>                                             split_second=True)
+
         """
         intfilter = vtk.vtkIntersectionPolyDataFilter()
         intfilter.SetInputDataObject(0, poly_data)
