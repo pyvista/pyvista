@@ -2926,8 +2926,8 @@ class PolyDataFilters(DataSetFilters):
         The mesh splitting takes additional time and can be turned
         off for either mesh individually.
 
-        >>> intersection, _, s2_split = s1.intersection(s2,
-                                                        split_first=False,
+        >>> intersection, _, s2_split = s1.intersection(s2, \
+                                                        split_first=False, \
                                                         split_second=True)
 
         """
