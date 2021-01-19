@@ -634,7 +634,7 @@ class Common(DataSetFilters, DataObject):
 
         Parameters
         ----------
-        xyz : list or np.ndarray
+        xyz : list or tuple or np.ndarray
             Length 3 list or array.
 
         """
