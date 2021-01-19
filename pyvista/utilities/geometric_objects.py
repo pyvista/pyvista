@@ -60,10 +60,10 @@ def Cylinder(center=(0.,0.,0.), direction=(1.,0.,0.), radius=0.5, height=1.0,
 
     Parameters
     ----------
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder points to  in [x, y, z]
 
     radius : float
@@ -121,10 +121,10 @@ def CylinderStructured(radius=0.5, height=1.0,
     height : float
         Height (length) of the cylinder along its Z-axis
 
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder Z-axis in [x, y, z]
 
     theta_resolution : int
@@ -185,7 +185,7 @@ def Arrow(start=(0.,0.,0.), direction=(1.,0.,0.), tip_length=0.25,
     start : np.ndarray
         Start location in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction the arrow points to in [x, y, z]
 
     tip_length : float, optional
@@ -246,7 +246,7 @@ def Sphere(radius=0.5, center=(0, 0, 0), direction=(0, 0, 1), theta_resolution=3
     center : np.ndarray or list, optional
         Center in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction the top of the sphere points to in [x, y, z]
 
     theta_resolution: int , optional
@@ -296,10 +296,10 @@ def Plane(center=(0, 0, 0), direction=(0, 0, 1), i_size=1, j_size=1,
 
     Parameters
     ----------
-    center : list or np.ndarray
+    center : list or tuple or np.ndarray
         Location of the centroid in [x, y, z]
 
-    direction : list or np.ndarray
+    direction : list or tuple or np.ndarray
         Direction cylinder points to  in [x, y, z]
 
     i_size : float
