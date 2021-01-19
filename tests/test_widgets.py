@@ -3,7 +3,7 @@ import pytest
 
 import pyvista
 from pyvista import examples
-from pyvista.plotting import system_supports_plotting
+from pyvista.plotting import system_supports_plotting, rcParams
 
 NO_PLOTTING = not system_supports_plotting()
 mesh = examples.load_uniform()
@@ -97,7 +97,8 @@ def test_widget_text_slider():
         p.add_text_slider_widget(callback=func, data='foo')
     with pytest.raises(ValueError, match='list of values is empty'):
         p.add_text_slider_widget(callback=func, data=[])
-    p.add_text_slider_widget(callback=func, data=['foo', 'bar'])
+    for style in rcParams["slider_style"].keys():
+        p.add_text_slider_widget(callback=func, data=['foo', 'bar'], style=style)
     p.close()
 
 
