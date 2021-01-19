@@ -2701,7 +2701,7 @@ class CompositeFilters:
             controls the relative size of the corners to the length of the
             corresponding bounds
 
-        ested : bool, optional
+        nested : bool, optional
             If True, these creates individual outlines for each nested dataset
 
         """
@@ -2883,6 +2883,67 @@ class PolyDataFilters(DataSetFilters):
             poly_data.overwrite(mesh)
         else:
             return mesh
+
+    def intersection(poly_data, mesh, split_first=True, split_second=True):
+        """Compute the intersection between two meshes.
+
+        Parameters
+        ----------
+        mesh : pyvista.PolyData
+            The mesh to intersect with.
+
+        split_first : bool, optional
+            If `True`, return the first input mesh split by the intersection with the
+            second input mesh.
+
+        split_second : bool, optional
+            If `True`, return the second input mesh split by the intersection with the
+            first input mesh.
+
+        Return
+        ------
+        intersection: pyvista.PolyData
+            The intersection line.
+
+        first_split: pyvista.PolyData
+            The first mesh split along the intersection. Returns the original first mesh
+            if `split_first` is False.
+
+        second_split: pyvista.PolyData
+            The second mesh split along the intersection. Returns the original second mesh
+            if `split_second` is False.
+
+        Examples
+        --------
+        Intersect two spheres, returning the intersection and both spheres
+        which have new points/cells along the intersection line.
+
+        >>> import pyvista as pv
+        >>> s1 = pv.Sphere()
+        >>> s2 = pv.Sphere(center=(0.25, 0, 0))
+        >>> intersection, s1_split, s2_split = s1.intersection(s2)
+
+        The mesh splitting takes additional time and can be turned
+        off for either mesh individually.
+
+        >>> intersection, _, s2_split = s1.intersection(s2, \
+                                                        split_first=False, \
+                                                        split_second=True)
+
+        """
+        intfilter = vtk.vtkIntersectionPolyDataFilter()
+        intfilter.SetInputDataObject(0, poly_data)
+        intfilter.SetInputDataObject(1, mesh)
+        intfilter.SetComputeIntersectionPointArray(True)
+        intfilter.SetSplitFirstOutput(split_first)
+        intfilter.SetSplitSecondOutput(split_second)
+        intfilter.Update()
+
+        intersection = _get_output(intfilter, oport=0)
+        first = _get_output(intfilter, oport=1)
+        second = _get_output(intfilter, oport=2)
+
+        return intersection, first, second
 
     def curvature(poly_data, curv_type='mean'):
         """Return the pointwise curvature of a mesh.
