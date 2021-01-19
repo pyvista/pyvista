@@ -3273,7 +3273,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         self.remove_actor(f'{name}-labels', reset_camera=False)
 
         # add points
-        if show_points is True:
+        if show_points:
             self.add_mesh(vtkpoints, color=point_color, point_size=point_size,
                           name=f'{name}-points', pickable=pickable,
                           render_points_as_spheres=render_points_as_spheres,
