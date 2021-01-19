@@ -3274,14 +3274,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
 
         # add points
         if show_points:
-            style = 'points'
-        else:
-            style = 'surface'
-        self.add_mesh(vtkpoints, style=style, color=point_color,
-                      point_size=point_size, name=f'{name}-points',
-                      pickable=pickable,
-                      render_points_as_spheres=render_points_as_spheres,
-                      reset_camera=reset_camera)
+            self.add_mesh(vtkpoints, color=point_color, point_size=point_size,
+                          name=f'{name}-points', pickable=pickable,
+                          render_points_as_spheres=render_points_as_spheres,
+                          reset_camera=reset_camera)
 
         labelActor = vtk.vtkActor2D()
         labelActor.SetMapper(labelMapper)
