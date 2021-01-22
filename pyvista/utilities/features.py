@@ -30,7 +30,7 @@ def voxelize(mesh, density=None, check_surface=True):
         density = mesh.length / 100
     if isinstance(density, (int, float)):
         density_x, density_y, density_z = [density] * 3
-    if isinstance(density, (list, set, np.ndarray)):
+    if isinstance(density, (list, set, tuple)):
         density_x, density_y, density_z = density
         
     x_min, x_max, y_min, y_max, z_min, z_max = mesh.bounds
