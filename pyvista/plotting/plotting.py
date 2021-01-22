@@ -30,7 +30,7 @@ from .colors import get_cmap_safe
 from .export_vtkjs import export_plotter_vtkjs
 from .mapper import make_mapper
 from .picking import PickingHelper
-from .renderer import Renderer
+from .renderer import Renderer, Camera
 from .theme import (FONT_KEYS, MAX_N_COLOR_BARS, parse_color,
                     parse_font_family, rcParams)
 from .tools import normalize, opacity_transfer_function
@@ -658,6 +658,10 @@ class BasePlotter(PickingHelper, WidgetHelper):
     @property
     def camera(self):
         """Return the active camera of the active renderer."""
+        if not self.camera_set:
+            self.camera_position = self.get_default_cam_pos()
+            self.reset_camera()
+            self.camera_set = True
         return self.renderer.camera
 
     @camera.setter
@@ -2310,14 +2314,14 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """
         if views is None:
             for renderer in self.renderers:
-                renderer.camera = vtk.vtkCamera()
+                renderer.camera = Camera()
                 renderer.reset_camera()
         elif isinstance(views, int):
-            self.renderers[views].camera = vtk.vtkCamera()
+            self.renderers[views].camera = Camera()
             self.renderers[views].reset_camera()
         elif isinstance(views, collections.abc.Iterable):
             for view_index in views:
-                self.renderers[view_index].camera = vtk.vtkCamera()
+                self.renderers[view_index].camera = Camera()
                 self.renderers[view_index].reset_camera()
         else:
             raise TypeError('Expected type is None, int, list or tuple:'
@@ -3017,8 +3021,8 @@ class BasePlotter(PickingHelper, WidgetHelper):
         # Convert z-buffer values to depth from camera
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore')
-            near, far = self.camera.GetClippingRange()
-            if self.camera.GetParallelProjection():
+            near, far = self.camera.clipping_range
+            if self.camera.is_parallel_projection:
                 zval = (zbuff - near) / (far - near)
             else:
                 zval = 2 * near * far / ((zbuff - 0.5) * 2 * (far - near) - near - far)
@@ -3722,7 +3726,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         points = path.points
 
         # Make sure the whole scene is visible
-        self.camera.SetThickness(path.length)
+        self.camera.thickness = path.length
 
         def orbit():
             """Define the internal thread for running the orbit."""
