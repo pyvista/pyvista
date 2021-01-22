@@ -169,6 +169,16 @@ def test_voxelize():
     vox = pyvista.voxelize(mesh, 0.5)
     assert vox.n_cells
 
+def test_voxelize_non_uniform_desnity():
+    mesh = pyvista.PolyData(ex.load_uniform().points)
+    vox = pyvista.voxelize(mesh, [0.5, 0.3, 0.2])
+    assert vox.n_cells
+
+def test_voxelize_throws_when_density_is_not_length_3():
+    with pytest.raises(ValueError) as e:
+        mesh = pyvista.PolyData(ex.load_uniform().points)
+        vox = pyvista.voxelize(mesh, [0.5, 0.3])
+    assert "not enough values to unpack" in str(e.value)
 
 def test_report():
     report = pyvista.Report(gpu=True)
