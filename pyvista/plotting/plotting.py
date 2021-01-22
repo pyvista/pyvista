@@ -2957,6 +2957,7 @@ class BasePlotter(PickingHelper, WidgetHelper):
         """Write a single frame to the movie file."""
         if not hasattr(self, 'mwriter'):
             raise RuntimeError('This plotter has not opened a movie or GIF file.')
+        self.update()
         self.mwriter.append_data(self.image)
 
     def _run_image_filter(self, ifilter):
