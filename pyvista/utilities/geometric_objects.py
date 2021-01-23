@@ -701,8 +701,8 @@ def Pyramid(points):
         four points are the four counterclockwise points on the
         quadrilateral face, and the last point is the apex.
 
-    Return
-    ------
+    Returns
+    -------
     pyramid : pyvista.UnstructuredGrid
 
     Examples
@@ -716,20 +716,14 @@ def Pyramid(points):
     >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
     >>> pyramid.plot() # doctest:+SKIP
     """
-    assert(len(points) == 5)
+    if len(points) != 5:
+        raise TypeError('Points must be given as length 5 np.ndarray or list')
 
     check_valid_vector(points[0], 'points[0]')
     check_valid_vector(points[1], 'points[1]')
     check_valid_vector(points[2], 'points[2]')
     check_valid_vector(points[3], 'points[3]')
     check_valid_vector(points[4], 'points[4]')
-
-    pts = vtk.vtkPoints()
-    pts.InsertNextPoint(points[0])
-    pts.InsertNextPoint(points[1])
-    pts.InsertNextPoint(points[2])
-    pts.InsertNextPoint(points[3])
-    pts.InsertNextPoint(points[4])
 
     pyramid = vtk.vtkPyramid()
     pyramid.GetPointIds().SetId(0, 0)
@@ -739,7 +733,7 @@ def Pyramid(points):
     pyramid.GetPointIds().SetId(4, 4)
 
     ug = vtk.vtkUnstructuredGrid()
-    ug.SetPoints(pts)
+    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
     ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
 
     return pyvista.wrap(ug)
