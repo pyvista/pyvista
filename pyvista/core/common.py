@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import vtk
+from vtk.util.numpy_support import vtk_to_numpy
 
 import pyvista
 from pyvista.utilities import (FieldAssociation, get_array, is_pyvista_dataset,
@@ -1048,3 +1049,70 @@ class Common(DataSetFilters, DataObject):
         locator.BuildLocator()
         closest_cells = np.array([locator.FindCell(node) for node in point])
         return int(closest_cells[0]) if len(closest_cells) == 1 else closest_cells
+
+    def cell_n_points(self, ind):
+        """Return the number of points in a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        int
+            Number of points in the cell.
+
+        """
+        return self.GetCell(ind).GetPoints().GetNumberOfPoints()
+
+    def cell_points(self, ind):
+        """Return the points in a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        numpy.ndarray
+            An array of floats with shape (number of points, 3) containing the coordinates of the
+            cell corners.
+
+        """
+        points = self.GetCell(ind).GetPoints().GetData()
+        return vtk_to_numpy(points)
+
+    def cell_bounds(self, ind):
+        """Return the bounding box of a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        list(float)
+            The limits of the cell in the X, Y and Z directions respectivelly.
+
+        """
+        bounds = self.GetCell(ind).GetBounds()
+        return list(bounds)
+
+    def cell_type(self, ind):
+        """Return the type of a cell.
+
+        Parameters
+        ----------
+        ind : int
+            Cell ID.
+
+        Returns
+        -------
+        int
+            VTK cell type.
+
+        """
+        return self.GetCellType(ind)
