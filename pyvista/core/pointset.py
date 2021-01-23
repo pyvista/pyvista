@@ -935,6 +935,8 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
         # convert slice to VOI specification - only "basic indexing" is supported
         voi = []
         rate = []
+        if len(key) != 3:
+            raise RuntimeError('Slices must have exactly 3 dimensions.')
         for i, k in enumerate(key):
             if isinstance(k, collections.Iterable):
                 raise RuntimeError('Fancy indexing is not supported.')

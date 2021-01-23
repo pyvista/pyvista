@@ -489,6 +489,11 @@ def test_slice_structured(struct_grid):
         # fancy indexing error
         struct_grid[[1, 2, 3], :, 1:3]
 
+    with pytest.raises(RuntimeError):
+        # incorrect number of dims error
+        struct_grid[:, :]
+
+
 
 def test_invalid_init_structured():
     xrng = np.arange(-10, 10, 2)
