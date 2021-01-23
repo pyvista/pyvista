@@ -697,7 +697,9 @@ def Pyramid(points):
     Parameters
     ----------
     points : np.ndarray or list
-        List of Position of the points.
+        Points of the pyramid.  Points are ordered such that the first
+        four points are the four counterclockwise points on the
+        quadrilateral face, and the last point is the apex.
 
     Return
     ------
