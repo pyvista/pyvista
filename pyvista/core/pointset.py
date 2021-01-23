@@ -928,7 +928,6 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
 
     def __getitem__(self, key):
         """Slice subsets of the StructuredGrid, or extract an array field."""
-
         # legacy behavior which looks for a point or cell array
         if not isinstance(key, tuple):
             return super().__getitem__(key)
