@@ -337,9 +337,12 @@ def lines_from_points(points, close=False):
 
 
 def make_tri_mesh(points, faces):
-    """Construct a pyvista.PolyData from an Nx3 array of points and an
-    Mx3 array of triangle indices, resulting in a mesh with N vertices and
-    M triangles.
+    """Construct a ``pyvista.PolyData`` mesh using points and faces arrays.
+
+    Construct a mesh from an Nx3 array of points and an Mx3 array of
+    triangle indices, resulting in a mesh with N vertices and M
+    triangles.  This function does not require the standard VTK
+    "padding" column and simplifies mesh creation.
 
     Parameters
     ----------
