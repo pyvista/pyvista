@@ -408,27 +408,28 @@ def Cube(center=(0., 0., 0.), x_length=1.0, y_length=1.0, z_length=1.0, bounds=N
     return pyvista.wrap(src.GetOutput())
 
 
-def Box(bounds=(-1.,1.,-1.,1.,-1.,1.), level = 0, quads = True):
+def Box(bounds=(-1., 1., -1., 1., -1., 1.), level=0, quads=True):
     """Create a box with solid faces for the given bounds.
 
     Parameters
     ----------
     bounds : np.ndarray or list
         Specify the bounding box of the cube.
-        ``(xMin,xMax, yMin,yMax, zMin,zMax)``
+        ``(xMin, xMax, yMin, yMax, zMin, zMax)``
 
     level : int
         Level of subdivision of the faces.
 
     quads : bool, optional
-        Flag to tell the source to generate either a quad or two triangle for a set of four points.  Default True
+        Flag to tell the source to generate either a quad or two
+        triangle for a set of four points.  Default ``True``.
 
     """
     if np.array(bounds).size != 6:
-        raise TypeError('Bounds must be given as length 6 tuple: (xMin,xMax, yMin,yMax, zMin,zMax)')
+        raise TypeError('Bounds must be given as length 6 tuple: (xMin, xMax, yMin, yMax, zMin, zMax)')
     src = vtk.vtkTessellatedBoxSource()
     src.SetLevel(level)
-    if quads is True:
+    if quads:
        src.QuadsOn()
     else:
        src.QuadsOff()
