@@ -3,6 +3,8 @@ import pathlib
 import logging
 import os
 import warnings
+import numbers
+import collections
 
 import numpy as np
 import vtk
@@ -923,6 +925,31 @@ class StructuredGrid(vtkStructuredGrid, PointGrid, StructuredGridFilters):
         attrs = PointGrid._get_attrs(self)
         attrs.append(("Dimensions", self.dimensions, "{:d}, {:d}, {:d}"))
         return attrs
+
+    def __getitem__(self, key):
+        """Slice subsets of the StructuredGrid, or extract an array field."""
+
+        # legacy behavior which looks for a point or cell array
+        if not isinstance(key, tuple):
+            return super().__getitem__(key)
+
+        # convert slice to VOI specification - only "basic indexing" is supported
+        voi = []
+        rate = []
+        for i, k in enumerate(key):
+            if isinstance(k, collections.Iterable):
+                raise RuntimeError('Fancy indexing is not supported.')
+            if isinstance(k, numbers.Integral):
+                start = stop = k
+                step = 1
+            elif isinstance(k, slice):
+                start = k.start if k.start is not None else 0
+                stop = k.stop - 1 if k.stop is not None else self.dimensions[i]
+                step = k.step if k.step is not None else 1
+            voi.extend((start, stop))
+            rate.append(step)
+
+        return self.extract_subset(voi, rate, boundary=False)
 
     def hide_cells(self, ind):
         """Hide cells without deleting them.
