@@ -11,6 +11,7 @@ vtkCubeSource
 vtkConeSource
 vtkDiskSource
 vtkRegularPolygonSource
+vtkPyramid
 
 """
 import numpy as np
@@ -688,3 +689,51 @@ def CircularArc(pointa, pointb, center, resolution=100, normal=None,
 
     arc.Update()
     return pyvista.wrap(arc.GetOutput())
+
+
+def Pyramid(points):
+    """Create a pyramid defined by 5 points.
+
+    Parameters
+    ----------
+    points : np.ndarray or list
+        Points of the pyramid.  Points are ordered such that the first
+        four points are the four counterclockwise points on the
+        quadrilateral face, and the last point is the apex.
+
+    Returns
+    -------
+    pyramid : pyvista.UnstructuredGrid
+
+    Examples
+    --------
+    >>> import pyvista
+    >>> pointa = [1.0, 1.0, 1.0]
+    >>> pointb = [-1.0, 1.0, 1.0]
+    >>> pointc = [-1.0, -1.0, 1.0]
+    >>> pointd = [1.0, -1.0, 1.0]
+    >>> pointe = [0.0, 0.0, 0.0]
+    >>> pyramid = pyvista.Pyramid([pointa, pointb, pointc, pointd, pointe])
+    >>> pyramid.plot() # doctest:+SKIP
+    """
+    if len(points) != 5:
+        raise TypeError('Points must be given as length 5 np.ndarray or list')
+
+    check_valid_vector(points[0], 'points[0]')
+    check_valid_vector(points[1], 'points[1]')
+    check_valid_vector(points[2], 'points[2]')
+    check_valid_vector(points[3], 'points[3]')
+    check_valid_vector(points[4], 'points[4]')
+
+    pyramid = vtk.vtkPyramid()
+    pyramid.GetPointIds().SetId(0, 0)
+    pyramid.GetPointIds().SetId(1, 1)
+    pyramid.GetPointIds().SetId(2, 2)
+    pyramid.GetPointIds().SetId(3, 3)
+    pyramid.GetPointIds().SetId(4, 4)
+
+    ug = vtk.vtkUnstructuredGrid()
+    ug.SetPoints(pyvista.vtk_points(np.array(points), False))
+    ug.InsertNextCell(pyramid.GetCellType(), pyramid.GetPointIds())
+
+    return pyvista.wrap(ug)
