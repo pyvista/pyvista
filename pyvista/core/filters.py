@@ -4639,6 +4639,25 @@ class StructuredGridFilters(DataSetFilters):
         alg.Update()
         return _get_output(alg)
 
+    def concatenate(dataset, *structured_grids):
+        """Concatenate other structured grids to this grid.
+
+        Takes the components from multiple inputs and merges them into one output.
+        All inputs must have the same number of scalar components. All inputs must
+        have the same scalar type.
+
+        Parameters
+        ----------
+        *structured_grids : pyvista.StructuredGrid
+            Structured grids to append.
+        """
+        alg = vtk.vtkStructuredGridAppend()
+        alg.AddInputData(dataset)
+        for grid in structured_grids:
+            alg.AddInputData(grid)
+        alg.Update()
+        return _get_output(alg)
+
 
 @abstract_class
 class UniformGridFilters(DataSetFilters):
