@@ -235,6 +235,19 @@ class DataObject:
         """Get address of the underlying C++ object in format 'Addr=%p'."""
         return self.GetInformation().GetAddressAsString("")
 
+    @property
+    def actual_memory_size(self):
+        """Return the actual size of the dataset object in kibibytes (1024 bytes)."""
+        return self.GetActualMemorySize()
+
+    def copy_structure(self, dataset):
+        """Copy the structure (geometry and topology) of the input dataset object."""
+        self.CopyStructure(dataset)
+
+    def copy_attributes(self, dataset):
+        """Copy the data attributes of the input dataset object."""
+        self.CopyAttributes(dataset)
+
 
 @abstract_class
 class Common(DataSetFilters, DataObject):
