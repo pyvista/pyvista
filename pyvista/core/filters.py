@@ -2636,7 +2636,7 @@ class DataSetFilters:
 
 @abstract_class
 class CompositeFilters:
-    """An internal class to manage filtes/algorithms for composite datasets."""
+    """An internal class to manage filters/algorithms for composite datasets."""
 
     def extract_geometry(composite):
         """Combine the geomertry of all blocks into a single ``PolyData`` object.
@@ -2733,7 +2733,7 @@ class CompositeFilters:
 
 @abstract_class
 class PolyDataFilters(DataSetFilters):
-    """An internal class to manage filtes/algorithms for polydata datasets."""
+    """An internal class to manage filters/algorithms for polydata datasets."""
 
     def edge_mask(poly_data, angle):
         """Return a mask of the points of a surface mesh that has a surface angle greater than angle.
@@ -4579,7 +4579,7 @@ class PolyDataFilters(DataSetFilters):
 
 @abstract_class
 class UnstructuredGridFilters(DataSetFilters):
-    """An internal class to manage filtes/algorithms for unstructured grid datasets."""
+    """An internal class to manage filters/algorithms for unstructured grid datasets."""
 
     def delaunay_2d(ugrid, tol=1e-05, alpha=0.0, offset=1.0, bound=False,
                     progress_bar=False):
@@ -4600,6 +4600,8 @@ class UnstructuredGridFilters(DataSetFilters):
 
 @abstract_class
 class StructuredGridFilters(DataSetFilters):
+    """An internal class to manage filters/algorithms for structured grid datasets."""
+    
     def extract_subset(dataset, voi, rate=(1, 1, 1), boundary=False):
         """Select piece (e.g., volume of interest).
 
@@ -4661,7 +4663,7 @@ class StructuredGridFilters(DataSetFilters):
 
 @abstract_class
 class UniformGridFilters(DataSetFilters):
-    """An internal class to manage filtes/algorithms for uniform grid datasets."""
+    """An internal class to manage filters/algorithms for uniform grid datasets."""
 
     def gaussian_smooth(dataset, radius_factor=1.5, std_dev=2.,
                         scalars=None, preference='points', progress_bar=False):
