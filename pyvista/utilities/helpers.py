@@ -337,9 +337,9 @@ def lines_from_points(points, close=False):
 
 
 def make_tri_mesh(points, faces):
-    """Construct a pyvista.PolyData from an Nx3 array of points and an Mx3
-array of triangle indices, resulting in a mesh with N vertices and M
-triangles.
+    """Construct a pyvista.PolyData from an Nx3 array of points and an
+    Mx3 array of triangle indices, resulting in a mesh with N vertices and
+    M triangles.
 
     Parameters
     ----------
@@ -374,7 +374,7 @@ triangles.
     """
     if points.shape[1] != 3:
         raise ValueError("Points array should have shape (N, 3).")
-    if faces.shape[1] != 3:
+    if faces.ndim != 2 or faces.shape[1] != 3:
         raise ValueError("Face array should have shape (M, 3).")
     cells = np.empty((faces.shape[0], 4), dtype=faces.dtype)
     cells[:, 0] = 3
